@@ -4,6 +4,7 @@
         android:label="ruby_native_client"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:enableOnBackInvokedCallback="true"
         android:usesCleartextTraffic="true">
         <!-- Required by google_mobile_ads (flet_ads). Using Google's test app id. -->
         <meta-data

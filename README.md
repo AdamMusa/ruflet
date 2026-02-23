@@ -71,6 +71,7 @@ Set `RUBY_NATIVE_CLIENT_DIR` to override.
 ## Documentation
 
 - New app guide: `docs/creating_new_app.md`
+- Android emulator guide: `docs/android_emulator_guide.md`
 - Widget guide: `docs/widgets.md`
 - Framework feature guide: `docs/framework_feature_guide.md`
 - Example apps: `/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native/example/main.rb`, `/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native/example/solitaire.rb`

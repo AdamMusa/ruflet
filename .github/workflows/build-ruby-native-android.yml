@@ -34,8 +34,8 @@ permissions:
   contents: read
 
 jobs:
-  build-android-aab:
-    name: Flutter Android AAB build
+  build-android-apk:
+    name: Flutter Android APK build
     if: github.event_name != 'release'
     runs-on: ubuntu-latest
 
@@ -59,19 +59,19 @@ jobs:
         working-directory: ruby_native_client
         run: flutter pub get
 
-      - name: Build Android release AAB (Flutter only)
+      - name: Build Android release APK (Flutter only)
         working-directory: ruby_native_client
-        run: flutter build appbundle --release
+        run: flutter build apk --release
 
-      - name: Upload AAB artifact
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-aab
-          path: ruby_native_client/build/app/outputs/bundle/release/*.aab
+          name: android-apk
+          path: ruby_native_client/build/app/outputs/flutter-apk/*release.apk
           if-no-files-found: error
 
-  android-aab-release:
-    name: Android AAB-only release build
+  android-apk-release:
+    name: Android APK-only release build
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
     permissions:
@@ -97,18 +97,18 @@ jobs:
         working-directory: ruby_native_client
         run: flutter pub get
 
-      - name: Build Android release AAB (Flutter only)
+      - name: Build Android release APK (Flutter only)
         working-directory: ruby_native_client
-        run: flutter build appbundle --release
+        run: flutter build apk --release
 
-      - name: Upload AAB workflow artifact
+      - name: Upload APK workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-aab-release
-          path: ruby_native_client/build/app/outputs/bundle/release/*.aab
+          name: android-apk-release
+          path: ruby_native_client/build/app/outputs/flutter-apk/*release.apk
           if-no-files-found: error
 
-      - name: Attach AABs to GitHub release
+      - name: Attach APKs to GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          files: ruby_native_client/build/app/outputs/bundle/release/*.aab
+          files: ruby_native_client/build/app/outputs/flutter-apk/*release.apk

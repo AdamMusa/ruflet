@@ -1,591 +1,246 @@
 require "ruby_native"
-
-class Suite
-  attr_reader :name, :color
-
-  def initialize(name, color)
-    @name = name
-    @color = color
-  end
-end
-
-class Rank
-  attr_reader :name, :value
-
-  def initialize(name, value)
-    @name = name
-    @value = value
-  end
-end
-
+Suite = Struct.new(:name, :color)
+Rank = Struct.new(:name, :value)
 class Slot
   attr_reader :type, :left, :top, :width, :height, :pile
-
   def initialize(type:, left:, top:, width:, height:, border: true)
-    @type = type
-    @left = left
-    @top = top
-    @width = width
-    @height = height
-    @border = border
+    @type, @left, @top, @width, @height, @border = type, left, top, width, height, border
     @pile = []
   end
-
-  def key
-    "#{type}-#{left}-#{top}"
-  end
-
-  def add_card(card)
-    @pile << card
-  end
-
-  def remove_card(card)
-    @pile.delete(card)
-  end
-
-  def top_card
-    @pile.last
-  end
-
-  def top_three_cards
-    n = @pile.length
-    @pile[[0, n - 3].max...n] || []
-  end
-
-  def upper_card_top(card_offset)
-    return top + card_offset * (@pile.length - 1) if type == :tableau && @pile.length > 1
-
-    top
-  end
-
+  def add(card); @pile << card; end
+  def remove(card); @pile.delete(card); end
+  def top_card; @pile.last; end
+  def snap_top(offset); type == :tableau && @pile.length > 1 ? top + offset * (@pile.length - 1) : top; end
   def view(page, on_click: nil)
-    props = {
-      left: left,
-      top: top,
-      width: width,
-      height: height,
-      border_radius: 12,
-      bgcolor: "#cfccd2"
-    }
-    props[:on_click] = on_click if on_click
-
-    if @border
-      props[:border] = { width: 1, color: "#b9b6be" }
-    end
-
-    page.container(**props, content: page.text(value: "", size: 1))
+    p = { left: left, top: top, width: width, height: height, border_radius: 12, bgcolor: "#cfccd2" }
+    p[:border] = { width: 1, color: "#b9b6be" } if @border
+    p[:on_click] = on_click if on_click
+    page.container(**p, content: page.text(value: "", size: 1))
   end
 end
-
 class Card
-  RANK_CODE = {
-    "Ace" => "A", "Jack" => "J", "Queen" => "Q", "King" => "K"
-  }.freeze
-  SUIT_CODE = {
-    "spades" => "S", "hearts" => "H", "diamonds" => "D", "clubs" => "C"
-  }.freeze
-
+  RANK_CODE = { "Ace" => "A", "Jack" => "J", "Queen" => "Q", "King" => "K" }.freeze
+  SUIT_CODE = { "spades" => "S", "hearts" => "H", "diamonds" => "D", "clubs" => "C" }.freeze
   attr_reader :suite, :rank, :control
   attr_accessor :left, :top, :slot, :face_up, :visible
-
-  def initialize(solitaire:, suite:, rank:, width:, height:)
-    @solitaire = solitaire
-    @suite = suite
-    @rank = rank
-    @width = width
-    @height = height
-    @slot = nil
-    @face_up = false
-    @visible = true
-    @left = 0
-    @top = 0
-    @drag_origin_top = 0
-    @drag_origin_left = 0
-    @control = nil
+  def initialize(game:, suite:, rank:, w:, h:)
+    @game, @suite, @rank, @w, @h = game, suite, rank, w, h
+    @slot, @face_up, @visible, @left, @top = nil, false, true, 0, 0
+    @origin_left, @origin_top, @control = 0, 0, nil
   end
-
-  def code
-    rank_code = RANK_CODE.fetch(rank.name, rank.name)
-    rank_code = "0" if rank.name == "10"
-    "#{rank_code}#{SUIT_CODE.fetch(suite.name)}"
+  def can_move?
+    return false unless visible && slot
+    slot.type == :waste ? slot.top_card == self : face_up
   end
-
-  def image_url
-    return "https://deckofcardsapi.com/static/img/back.png" unless face_up
-
-    "https://deckofcardsapi.com/static/img/#{code}.png"
-  end
-
-  def can_be_moved?
-    return false unless visible
-
-    if slot.type == :waste
-      slot.top_card == self
-    else
-      face_up
-    end
-  end
-
-  def get_cards_to_move
-    return [self] unless slot && slot.type == :tableau
-
-    idx = slot.pile.index(self)
-    idx ? slot.pile[idx..] : [self]
-  end
-
-  def remember_origin
-    @drag_origin_top = top
-    @drag_origin_left = left
-  end
-
+  def moving_group; return [self] unless slot && slot.type == :tableau; i = slot.pile.index(self); i ? slot.pile[i..-1] : [self]; end
+  def remember_origin; @origin_left, @origin_top = left, top; end
+  def turn_up!; @face_up = true; @game.patch(self); end
+  def turn_down!; @face_up = false; @visible = true; @game.patch(self); end
   def bounce_back!
-    cards = get_cards_to_move
-    cards.each_with_index do |card, i|
-      card.top = @drag_origin_top + (slot.type == :tableau ? i * @solitaire.card_offset : 0)
-      card.left = @drag_origin_left
-      @solitaire.patch_card(card)
+    moving_group.each_with_index do |c, i|
+      c.left = @origin_left
+      c.top = @origin_top + (slot.type == :tableau ? i * @game.card_offset : 0)
+      @game.patch(c)
     end
   end
-
-  def turn_face_up!
-    @face_up = true
-    @solitaire.patch_card(self)
+  def place(dst)
+    slot.remove(self) if slot
+    @slot = dst
+    @left = dst.left
+    @top = dst.top + (dst.type == :tableau ? @game.card_offset * dst.pile.length : 0)
+    dst.add(self)
+    @game.raise_cards([self])
+    @game.patch(self)
   end
-
-  def turn_face_down!
-    @face_up = false
-    @visible = true
-    @solitaire.patch_card(self)
+  def code; r = RANK_CODE.fetch(rank.name, rank.name); r = "0" if rank.name == "10"; "#{r}#{SUIT_CODE.fetch(suite.name)}"; end
+  def image_url
+    face_up ? "https://deckofcardsapi.com/static/img/#{code}.png" : "https://deckofcardsapi.com/static/img/back.png"
   end
-
-  def place(slot)
-    old_slot = @slot
-    old_slot.remove_card(self) if old_slot
-
-    @slot = slot
-    @left = slot.left
-    @top = slot.top + (slot.type == :tableau ? @solitaire.card_offset * slot.pile.length : 3)
-
-    slot.add_card(self)
-    # Match Python version: each placement brings this card to top render order.
-    @solitaire.move_on_top([self])
-    @solitaire.patch_card(self)
-  end
-
   def view(page)
     return nil unless visible
-
     @control ||= page.gesture_detector(
-      left: left,
-      top: top,
-      visible: visible,
-      on_pan_start: ->(_e) { @solitaire.start_drag(self) },
-      on_pan_update: ->(e) { @solitaire.drag(self, e) },
-      on_pan_end: ->(_e) { @solitaire.drop(self) },
-      on_tap: ->(_e) { @solitaire.card_tap(self) },
-      on_double_tap: ->(_e) { @solitaire.card_double_tap(self) },
-      content: page.image(image_url, width: @width, height: @height, fit: "fill")
+      left: left, top: top, visible: visible,
+      on_pan_start: ->(_e) { @game.start_drag(self) },
+      on_pan_update: ->(e) { @game.drag(self, e) },
+      on_pan_end: ->(_e) { @game.drop(self) },
+      on_tap: ->(_e) { @game.card_tap(self) },
+      on_double_tap: ->(_e) { @game.card_double_tap(self) },
+      content: page.image(image_url, width: @w, height: @h, fit: "fill")
     )
   end
 end
-
 class Solitaire
   TABLE_BG = "#d9d7db".freeze
-  TITLE_COLOR = "#232329".freeze
-  STATUS_COLOR = "#4d4c57".freeze
-
+  TITLE = "#232329".freeze
+  STATUS = "#4d4c57".freeze
   attr_reader :card_offset
-
   def initialize(page)
-    @page = page
-    @status_text = "Drag cards"
-
-    @card_offset = 20
-    @deck_passes_allowed = 3
-    @deck_passes_remaining = @deck_passes_allowed
-    @waste_size = 3
-
-    @slots = []
-    @cards = []
-    @status_control = nil
-
+    @page, @status, @passes = page, "Drag cards", 3
+    @cards, @drag_cards = [], []
     setup_layout
     create_slots
     create_deck
-    deal_cards
-    render_scene
+    deal
+    render
   end
-
   def start_drag(card)
-    return unless card.can_be_moved?
-
-    @drag_cards = card.get_cards_to_move
-    move_on_top(@drag_cards)
+    return unless card.can_move?
+    @drag_cards = card.moving_group
+    raise_cards(@drag_cards)
     card.remember_origin
-    @status_text = "Dragging #{card.rank.name} #{card.suite.name}"
-    @page.update(@status_control, value: @status_text) if @status_control
+    set_status("Dragging #{card.rank.name} #{card.suite.name}")
   end
-
   def drag(card, event)
-    return unless card.can_be_moved?
-    return if @drag_cards.nil? || @drag_cards.empty?
-
-    dx = dig_number(event.data, "ld", "x")
-    dy = dig_number(event.data, "ld", "y")
+    return unless card.can_move?
+    return if @drag_cards.empty?
+    dx, dy = n(event.data, "ld", "x"), n(event.data, "ld", "y")
     return if dx.zero? && dy.zero?
-
-    base_left = card.left + dx
-    base_top = card.top + dy
-
+    x, y = card.left + dx, card.top + dy
     @drag_cards.each_with_index do |c, i|
-      c.left = base_left
-      c.top = base_top + (c.slot.type == :tableau ? i * @card_offset : 0)
-      patch_card(c)
+      c.left = x
+      c.top = y + (c.slot.type == :tableau ? i * @card_offset : 0)
+      patch(c)
     end
   end
-
   def drop(card)
-    return unless card.can_be_moved?
-    return if @drag_cards.nil? || @drag_cards.empty?
-
-    target = nil
-    candidate_slots.each do |slot|
-      next unless (card.top - slot.upper_card_top(@card_offset)).abs < 40
-      next unless (card.left - slot.left).abs < 40
-
-      if slot.type == :tableau
-        if check_tableau_rules(card, slot.top_card)
-          target = slot
-          break
-        end
-      elsif slot.type == :foundation
-        if @drag_cards.length == 1 && check_foundation_rules(card, slot.top_card)
-          target = slot
-          break
-        end
-      end
+    return unless card.can_move?
+    return if @drag_cards.empty?
+    target = candidate_slots.find do |s|
+      near = (card.left - s.left).abs <= @drop_proximity && (card.top - s.snap_top(@card_offset)).abs <= @drop_proximity
+      ok_t = s.type == :tableau && valid_tableau?(card, s.top_card)
+      ok_f = s.type == :foundation && @drag_cards.length == 1 && valid_foundation?(card, s.top_card)
+      near && (ok_t || ok_f)
     end
-
     if target
-      old_slot = card.slot
+      old = card.slot
       @drag_cards.each { |c| c.place(target) }
-      reveal_old_tableau_top(old_slot)
-      display_waste if old_slot&.type == :waste
-      @status_text = "Moved #{card.rank.name} #{card.suite.name}"
+      old.top_card.turn_up! if old && old.type == :tableau && old.top_card
+      set_status("Moved #{card.rank.name} #{card.suite.name}")
     else
       card.bounce_back!
-      @status_text = "Invalid move"
+      set_status("Invalid move")
     end
-
     @drag_cards = []
-    @page.update(@status_control, value: @status_text) if @status_control
   end
-
   def card_tap(card)
     if card.slot.type == :stock
-      draw_from_stock
+      stock_click
     elsif card.slot.type == :tableau
-      top = card.slot.top_card
-      top.turn_face_up! if top == card && !card.face_up
+      t = card.slot.top_card
+      t.turn_up! if t == card && !card.face_up
     end
   end
-
   def card_double_tap(card)
-    return unless [:waste, :tableau].include?(card.slot.type)
-    return unless card.face_up
-
-    move_on_top([card])
-    old_slot = card.slot
-    @foundation.each do |slot|
-      next unless check_foundation_rules(card, slot.top_card)
-
-      card.place(slot)
-      reveal_old_tableau_top(old_slot)
-      display_waste if old_slot.type == :waste
-      @status_text = "Moved to foundation"
-      @page.update(@status_control, value: @status_text) if @status_control
-      return
+    return unless [:waste, :tableau].include?(card.slot.type) && card.face_up
+    old = card.slot
+    raise_cards([card])
+    @foundation.each do |s|
+      next unless valid_foundation?(card, s.top_card)
+      card.place(s)
+      old.top_card.turn_up! if old.type == :tableau && old.top_card
+      return set_status("Moved to foundation")
     end
   end
-
-  def patch_card(card)
+  def patch(card)
     return unless card.control
-
     @page.update(card.control, left: card.left, top: card.top, visible: card.visible)
     @page.update(card.control.children.first, src: card.image_url) rescue nil
   end
-
-  def move_on_top(cards)
+  def raise_cards(cards)
     cards.each { |c| @cards.delete(c) }
     @cards.concat(cards)
   end
-
   private
-
+  def set_status(text)
+    @status = text
+    @page.update(@status_control, value: @status) if @status_control
+  end
   def setup_layout
-    screen_width = viewport_dimension("width")
-    screen_height = viewport_dimension("height")
-
-    # Some Android builds report physical pixels in width/height.
-    # If media.size is unavailable and values look like raw px, normalize to dp-ish units.
-    if screen_width > 700 && screen_height > 1000
-      screen_width /= 2.0
-      screen_height /= 2.0
-    end
-
-    compact = screen_width <= 520
-
-    @outer_padding = compact ? 6 : 10
-    @board_padding = compact ? 6 : 12
-    @slot_gap = compact ? 8 : 24
-    @card_offset = compact ? 14 : 26
-
-    min_slot_width = compact ? 44 : 74
-    usable_width = screen_width - (2 * @board_padding) - (6 * @slot_gap)
-    usable_width = [usable_width, min_slot_width * 7].max
-
-    @slot_w = [(usable_width / 7.0).floor, 128].min
+    w, h = viewport("width"), viewport("height")
+    w, h = [w / 2.0, h / 2.0] if w > 700 && h > 1000
+    compact = w <= 520
+    outer = compact ? 6 : 10
+    avail_w = [w - 2 * outer - (compact ? 10 : 8), 310].max
+    gap = compact ? 4 : 10
+    @slot_w = ((avail_w - 6 * gap) / 7.0).floor
+    @slot_w = [[@slot_w, 42].max, 56].min
+    gap = ((avail_w - 7 * @slot_w) / 6.0).floor
+    gap = [[gap, compact ? 3 : 8].max, 20].min
+    @step = @slot_w + gap
     @slot_h = (@slot_w * 1.42).round
-    @card_width = [@slot_w - 2, 40].max
-    @card_height = [@slot_h - 2, 58].max
-
-    @top_row_y = compact ? 12 : 20
-    @tableau_y = @top_row_y + @slot_h + (compact ? 28 : 52)
-
-    natural_board_width = @board_padding + (7 * @slot_w) + (6 * @slot_gap) + @board_padding
-    @board_width = [natural_board_width, screen_width - (2 * @outer_padding)].min
-
-    needed = @tableau_y + @card_height + (6 * @card_offset) + (compact ? 18 : 36)
-    max_height = [screen_height - (compact ? 78 : 120), 360].max
-    @board_height = [needed, max_height].min
-
-    @board_left = ((screen_width - @board_width) / 2.0).floor
-    @board_left = 0 if @board_left < 0
+    @top_y = compact ? 10 : 16
+    @tableau_y = @top_y + @slot_h + (compact ? 22 : 34)
+    @card_offset = [(@slot_h * 0.30).round, 14].max
+    @drop_proximity = [(@slot_w * 0.50).round, 14].max
+    @board_w = 7 * @slot_w + 6 * gap
+    need_h = @tableau_y + @slot_h + 6 * @card_offset + 20
+    max_h = [(h * 0.52).round, 320].max
+    @board_h = [need_h, max_h].min
+    @outer = outer
   end
-
   def create_slots
-    x0 = @board_padding
-    step = @slot_w + @slot_gap
-
-    @stock = Slot.new(type: :stock, left: x0, top: @top_row_y, width: @slot_w, height: @slot_h, border: true)
-    @waste = Slot.new(type: :waste, left: x0 + step, top: @top_row_y, width: @slot_w, height: @slot_h, border: false)
-
-    @foundation = Array.new(4) do |i|
-      Slot.new(type: :foundation, left: x0 + step * (3 + i), top: @top_row_y, width: @slot_w, height: @slot_h, border: false)
-    end
-
-    @tableau = Array.new(7) do |i|
-      Slot.new(type: :tableau, left: x0 + step * i, top: @tableau_y, width: @slot_w, height: @slot_h, border: false)
-    end
-
-    @slots = [@stock, @waste] + @foundation + @tableau
+    @stock = Slot.new(type: :stock, left: 0, top: @top_y, width: @slot_w, height: @slot_h, border: true)
+    @waste = Slot.new(type: :waste, left: @step, top: @top_y, width: @slot_w, height: @slot_h, border: false)
+    @foundation = (0...4).map { |i| Slot.new(type: :foundation, left: @step * (3 + i), top: @top_y, width: @slot_w, height: @slot_h, border: false) }
+    @tableau = (0...7).map { |i| Slot.new(type: :tableau, left: @step * i, top: @tableau_y, width: @slot_w, height: @slot_h, border: false) }
   end
-
   def create_deck
-    suites = [
-      Suite.new("hearts", "RED"),
-      Suite.new("diamonds", "RED"),
-      Suite.new("clubs", "BLACK"),
-      Suite.new("spades", "BLACK")
-    ]
-    ranks = [
-      Rank.new("Ace", 1), Rank.new("2", 2), Rank.new("3", 3), Rank.new("4", 4),
-      Rank.new("5", 5), Rank.new("6", 6), Rank.new("7", 7), Rank.new("8", 8),
-      Rank.new("9", 9), Rank.new("10", 10), Rank.new("Jack", 11), Rank.new("Queen", 12), Rank.new("King", 13)
-    ]
-
-    @cards = suites.product(ranks).map do |suite, rank|
-      Card.new(solitaire: self, suite: suite, rank: rank, width: @card_width, height: @card_height)
-    end.shuffle
+    suites = [Suite.new("hearts", "RED"), Suite.new("diamonds", "RED"), Suite.new("clubs", "BLACK"), Suite.new("spades", "BLACK")]
+    ranks = [["Ace",1],["2",2],["3",3],["4",4],["5",5],["6",6],["7",7],["8",8],["9",9],["10",10],["Jack",11],["Queen",12],["King",13]].map { |n,v| Rank.new(n,v) }
+    @cards = suites.product(ranks).map { |s, r| Card.new(game: self, suite: s, rank: r, w: @slot_w, h: @slot_h) }.shuffle
   end
-
-  def deal_cards
-    reset_deck_state!
-
-    card_index = 0
-    first_slot = 0
-
-    while card_index <= 27
-      (first_slot...@tableau.length).each do |slot_index|
-        @cards[card_index].place(@tableau[slot_index])
-        card_index += 1
-      end
-      first_slot += 1
+  def deal
+    (@tableau + @foundation + [@stock, @waste]).each { |s| s.pile.clear }
+    @cards.each { |c| c.slot = nil; c.face_up = false; c.visible = true; c.left = 0; c.top = 0 }
+    idx = 0
+    (0...7).each do |start|
+      (start...7).each { |i| @cards[idx].place(@tableau[i]); idx += 1 }
     end
-
-    @tableau.each do |slot|
-      slot.top_card&.turn_face_up!
-    end
-
-    (28...@cards.length).each do |i|
-      @cards[i].place(@stock)
-    end
-
-    @status_text = "Drag cards"
+    @tableau.each { |t| t.top_card.turn_up! if t.top_card }
+    (idx...@cards.length).each { |i| @cards[i].place(@stock) }
   end
-
-  def render_scene
-    @page.title = "Solitaire"
-    @page.bgcolor = TABLE_BG
-    @page.vertical_alignment = "start"
-    @page.horizontal_alignment = "start"
-
-    appbar = @page.app_bar(
-      bgcolor: TABLE_BG,
-      color: TITLE_COLOR,
-      title: @page.text(value: "RubyNative Solitaire", color: TITLE_COLOR, size: 18)
-    )
-
-    @status_control = @page.text(value: @status_text, size: 12, color: STATUS_COLOR)
-
-    controls = []
-    controls << @stock.view(@page, on_click: ->(_e) { stock_click })
-    controls << @waste.view(@page)
+  def render
+    @page.title = "Solitaire"; @page.bgcolor = TABLE_BG; @page.vertical_alignment = "start"; @page.horizontal_alignment = "start"
+    appbar = @page.app_bar(bgcolor: TABLE_BG, color: TITLE, title: @page.text(value: "RubyNative Solitaire", color: TITLE, size: 18))
+    @status_control = @page.text(value: @status, size: 12, color: STATUS)
+    controls = [@stock.view(@page, on_click: ->(_e) { stock_click }), @waste.view(@page)]
     controls.concat(@foundation.map { |s| s.view(@page) })
     controls.concat(@tableau.map { |s| s.view(@page) })
     controls.concat(@cards.map { |c| c.view(@page) }.compact)
-
-    @page.add(
-      @page.container(
-        expand: true,
-        bgcolor: TABLE_BG,
-        padding: @outer_padding,
-        content: @page.column(
-          expand: true,
-          spacing: 10,
-          controls: [
-            @status_control,
-            @page.row(
-              expand: true,
-              alignment: "center",
-              vertical_alignment: "start",
-              controls: [
-                @page.container(
-                  width: @board_width,
-                  height: @board_height,
-                  content: @page.stack(controls: controls)
-                )
-              ]
-            )
-          ]
-        )
-      ),
-      appbar: appbar
-    )
+    board = @page.container(width: @board_w, height: @board_h, content: @page.stack(controls: controls))
+    body = @page.container(expand: true, bgcolor: TABLE_BG, padding: @outer, content: @page.column(expand: true, spacing: 10, controls: [@status_control, board]))
+    @page.add(body, appbar: appbar)
   end
-
-  def draw_from_stock
-    return if @stock.pile.empty?
-
-    hide_waste_preview
-
-    [@waste_size, @stock.pile.length].min.times do
-      top_card = @stock.top_card
-      top_card.place(@waste)
-      top_card.turn_face_up!
-    end
-
-    display_waste
-    @status_text = "Draw"
-    @page.update(@status_control, value: @status_text) if @status_control
-  end
-
   def stock_click
-    return unless @stock.pile.empty?
-    return unless @deck_passes_remaining > 1
-
-    @deck_passes_remaining -= 1
-    restart_stock
-    @status_text = "Restart stock"
-    @page.update(@status_control, value: @status_text) if @status_control
-  end
-
-  def hide_waste_preview
-    @waste.top_three_cards.each do |card|
-      card.visible = false
-      patch_card(card)
+    if @stock.pile.any?
+      c = @stock.top_card; c.place(@waste); c.turn_up!
+      return set_status("Draw")
     end
-  end
-
-  def display_waste
-    top_cards = @waste.top_three_cards
-    top_cards.each_with_index do |card, idx|
-      card.left = @waste.left + (idx * @card_offset)
-      card.top = @waste.top + 3
-      card.visible = true
-      patch_card(card)
-    end
-  end
-
-  def restart_stock
-    @waste.pile.reverse_each do |card|
-      card.turn_face_down!
-      card.place(@stock)
-    end
+    return unless @waste.pile.any? && @passes > 1
+    @passes -= 1
+    @waste.pile.reverse_each { |c| c.turn_down!; c.place(@stock) }
     @waste.pile.clear
+    set_status("Restart stock")
   end
-
-  def check_foundation_rules(current_card, top_card = nil)
-    if top_card
-      current_card.suite.name == top_card.suite.name && (current_card.rank.value - top_card.rank.value == 1)
-    else
-      current_card.rank.name == "Ace"
-    end
+  def valid_foundation?(card, top)
+    top ? card.suite.name == top.suite.name && (card.rank.value - top.rank.value == 1) : card.rank.name == "Ace"
   end
-
-  def check_tableau_rules(current_card, top_card = nil)
-    if top_card
-      current_card.suite.color != top_card.suite.color && (top_card.rank.value - current_card.rank.value == 1)
-    else
-      current_card.rank.name == "King"
-    end
+  def valid_tableau?(card, top)
+    top ? top.face_up && card.suite.color != top.suite.color && (top.rank.value - card.rank.value == 1) : card.rank.name == "King"
   end
-
-  def reveal_old_tableau_top(old_slot)
-    return unless old_slot && old_slot.type == :tableau
-
-    old_slot.top_card&.turn_face_up!
+  def candidate_slots; @tableau + @foundation; end
+  def viewport(axis)
+    vals = [n(@page.client_details, axis), n(@page.client_details, "media", "size", axis)].select { |v| v > 0 }
+    vals.empty? ? (axis == "width" ? 390.0 : 760.0) : vals.min
   end
-
-  def reset_deck_state!
-    (@slots || []).each { |s| s.pile.clear }
-    @cards.each do |card|
-      card.slot = nil
-      card.face_up = false
-      card.visible = true
-      card.left = 0
-      card.top = 0
-    end
-  end
-
-  def candidate_slots
-    @tableau + @foundation
-  end
-
-  def viewport_dimension(axis)
-    raw = dig_number(@page.client_details, axis)
-    media = dig_number(@page.client_details, "media", "size", axis)
-
-    candidates = [raw, media].select { |v| v > 0 }
-    return candidates.min unless candidates.empty?
-
-    axis == "width" ? 390.0 : 760.0
-  end
-
-  def dig_number(data, *keys)
-    value = keys.reduce(data) { |acc, k| acc.is_a?(Hash) ? acc[k] : nil }
-    return 0.0 if value.nil?
-
-    value.to_f
+  def n(data, *keys)
+    v = keys.reduce(data) { |a, k| a.is_a?(Hash) ? a[k] : nil }
+    v ? v.to_f : 0.0
   rescue StandardError
     0.0
   end
 end
-
 class SolitaireApp < RubyNative::App
-  def view(page)
-    Solitaire.new(page)
-  end
+  def view(page); Solitaire.new(page); end
 end
-
 SolitaireApp.new.run
