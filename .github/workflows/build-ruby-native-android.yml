@@ -15,6 +15,7 @@ on:
       - 'Rakefile'
       - 'Gemfile'
       - 'Gemfile.lock'
+      - 'ruby_native_client/**'
   push:
     branches: [ main ]
     paths:
@@ -27,22 +28,16 @@ on:
       - 'Rakefile'
       - 'Gemfile'
       - 'Gemfile.lock'
+      - 'ruby_native_client/**'
 
 permissions:
   contents: read
 
 jobs:
-  build-android:
-    name: Android native build (${{ matrix.abi }})
+  build-android-aab:
+    name: Flutter Android AAB build
+    if: github.event_name != 'release'
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        abi: ["armeabi-v7a", "arm64-v8a", "x86_64"]
-
-    env:
-      ANDROID_NDK_VERSION: "26.3.11579264"
-      ANDROID_ABI: ${{ matrix.abi }}
 
     steps:
       - name: Checkout code
@@ -54,58 +49,26 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android NDK
-        run: sdkmanager "ndk;${ANDROID_NDK_VERSION}"
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          ruby-version: .ruby-version
-          bundler-cache: true
+          channel: stable
+          cache: true
 
-      - name: Install native toolchain dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends -y build-essential autoconf automake libtool pkg-config
+      - name: Install Flutter dependencies
+        working-directory: ruby_native_client
+        run: flutter pub get
 
-      - name: Build Ruby native client for Android
-        shell: bash
-        run: |
-          set -euo pipefail
+      - name: Build Android release AAB (Flutter only)
+        working-directory: ruby_native_client
+        run: flutter build appbundle --release
 
-          if [ -x ./scripts/build_android_native_client.sh ]; then
-            ./scripts/build_android_native_client.sh
-          elif [ -x ./script/build_android_native_client.sh ]; then
-            ./script/build_android_native_client.sh
-          elif bundle exec rake -T | grep -qE '^rake (android:native:build|native:android:build)'; then
-            if bundle exec rake -T | grep -q '^rake android:native:build'; then
-              bundle exec rake android:native:build
-            else
-              bundle exec rake native:android:build
-            fi
-          else
-            echo "No Android native build entrypoint found."
-            echo "Add one of:"
-            echo "  1) scripts/build_android_native_client.sh"
-            echo "  2) script/build_android_native_client.sh"
-            echo "  3) Rake task: android:native:build or native:android:build"
-            exit 1
-          fi
-
-      - name: Upload Android native artifacts
-        if: always()
+      - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-native-${{ matrix.abi }}
-          if-no-files-found: warn
-          path: |
-            build/android/**
-            pkg/android/**
-            vendor/native/android/**
-            tmp/android-native/**
+          name: android-aab
+          path: ruby_native_client/build/app/outputs/bundle/release/*.aab
+          if-no-files-found: error
 
   android-aab-release:
     name: Android AAB-only release build
@@ -124,74 +87,28 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          ruby-version: .ruby-version
-          bundler-cache: true
+          channel: stable
+          cache: true
 
-      - name: Build Android release AAB
-        shell: bash
-        run: |
-          set -euo pipefail
+      - name: Install Flutter dependencies
+        working-directory: ruby_native_client
+        run: flutter pub get
 
-          if [ -x ./scripts/build_android_aab.sh ]; then
-            ./scripts/build_android_aab.sh
-          elif [ -x ./script/build_android_aab.sh ]; then
-            ./script/build_android_aab.sh
-          elif [ -f ./android/gradlew ]; then
-            chmod +x ./android/gradlew
-            (cd android && ./gradlew bundleRelease)
-          elif bundle exec rake -T | grep -qE '^rake (android:aab:release|android:release:aab)'; then
-            if bundle exec rake -T | grep -q '^rake android:aab:release'; then
-              bundle exec rake android:aab:release
-            else
-              bundle exec rake android:release:aab
-            fi
-          else
-            echo "No Android AAB release build entrypoint found."
-            echo "Add one of:"
-            echo "  1) scripts/build_android_aab.sh"
-            echo "  2) script/build_android_aab.sh"
-            echo "  3) android/gradlew with bundleRelease task"
-            echo "  4) Rake task: android:aab:release or android:release:aab"
-            exit 1
-          fi
-
-      - name: Collect AAB paths
-        id: collect_aab
-        shell: bash
-        run: |
-          set -euo pipefail
-          shopt -s globstar nullglob
-
-          aabs=(
-            android/**/build/outputs/bundle/release/*.aab
-            build/android/**/*.aab
-            pkg/android/**/*.aab
-          )
-
-          if [ ${#aabs[@]} -eq 0 ]; then
-            echo "No AAB files found after release build."
-            exit 1
-          fi
-
-          {
-            echo "aab_files<<EOF"
-            printf '%s\n' "${aabs[@]}"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+      - name: Build Android release AAB (Flutter only)
+        working-directory: ruby_native_client
+        run: flutter build appbundle --release
 
       - name: Upload AAB workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: android-aab-release
-          path: ${{ steps.collect_aab.outputs.aab_files }}
+          path: ruby_native_client/build/app/outputs/bundle/release/*.aab
+          if-no-files-found: error
 
       - name: Attach AABs to GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ steps.collect_aab.outputs.aab_files }}
+          files: ruby_native_client/build/app/outputs/bundle/release/*.aab

@@ -200,7 +200,7 @@ class Solitaire
     @page = page
     @status_text = "Drag cards"
 
-    @card_offset = 26
+    @card_offset = 20
     @deck_passes_allowed = 3
     @deck_passes_remaining = @deck_passes_allowed
     @waste_size = 3
@@ -323,31 +323,48 @@ class Solitaire
   private
 
   def setup_layout
-    screen_width = dig_number(@page.client_details, "width")
-    screen_height = dig_number(@page.client_details, "height")
-    screen_width = 1000 if screen_width <= 0
-    screen_height = 700 if screen_height <= 0
+    screen_width = viewport_dimension("width")
+    screen_height = viewport_dimension("height")
 
-    board_padding = 12
-    @slot_gap = 24
-    @slot_w = [[((screen_width - (2 * board_padding) - (6 * @slot_gap)) / 7.0).floor, 82].max, 128].min
+    # Some Android builds report physical pixels in width/height.
+    # If media.size is unavailable and values look like raw px, normalize to dp-ish units.
+    if screen_width > 700 && screen_height > 1000
+      screen_width /= 2.0
+      screen_height /= 2.0
+    end
+
+    compact = screen_width <= 520
+
+    @outer_padding = compact ? 6 : 10
+    @board_padding = compact ? 6 : 12
+    @slot_gap = compact ? 8 : 24
+    @card_offset = compact ? 14 : 26
+
+    min_slot_width = compact ? 44 : 74
+    usable_width = screen_width - (2 * @board_padding) - (6 * @slot_gap)
+    usable_width = [usable_width, min_slot_width * 7].max
+
+    @slot_w = [(usable_width / 7.0).floor, 128].min
     @slot_h = (@slot_w * 1.42).round
-    @card_width = @slot_w - 2
-    @card_height = @slot_h - 2
+    @card_width = [@slot_w - 2, 40].max
+    @card_height = [@slot_h - 2, 58].max
 
-    @top_row_y = 20
-    @tableau_y = @top_row_y + @slot_h + 52
+    @top_row_y = compact ? 12 : 20
+    @tableau_y = @top_row_y + @slot_h + (compact ? 28 : 52)
 
-    @board_width = board_padding + (7 * @slot_w) + (6 * @slot_gap) + board_padding
-    needed = @tableau_y + @card_height + (6 * @card_offset) + 36
-    @board_height = [needed, [screen_height - 120, 460].max].min
+    natural_board_width = @board_padding + (7 * @slot_w) + (6 * @slot_gap) + @board_padding
+    @board_width = [natural_board_width, screen_width - (2 * @outer_padding)].min
+
+    needed = @tableau_y + @card_height + (6 * @card_offset) + (compact ? 18 : 36)
+    max_height = [screen_height - (compact ? 78 : 120), 360].max
+    @board_height = [needed, max_height].min
 
     @board_left = ((screen_width - @board_width) / 2.0).floor
     @board_left = 0 if @board_left < 0
   end
 
   def create_slots
-    x0 = 12
+    x0 = @board_padding
     step = @slot_w + @slot_gap
 
     @stock = Slot.new(type: :stock, left: x0, top: @top_row_y, width: @slot_w, height: @slot_h, border: true)
@@ -432,7 +449,7 @@ class Solitaire
       @page.container(
         expand: true,
         bgcolor: TABLE_BG,
-        padding: 10,
+        padding: @outer_padding,
         content: @page.column(
           expand: true,
           spacing: 10,
@@ -543,6 +560,16 @@ class Solitaire
 
   def candidate_slots
     @tableau + @foundation
+  end
+
+  def viewport_dimension(axis)
+    raw = dig_number(@page.client_details, axis)
+    media = dig_number(@page.client_details, "media", "size", axis)
+
+    candidates = [raw, media].select { |v| v > 0 }
+    return candidates.min unless candidates.empty?
+
+    axis == "width" ? 390.0 : 760.0
   end
 
   def dig_number(data, *keys)
