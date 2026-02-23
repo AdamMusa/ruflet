@@ -13,8 +13,8 @@ class TodoApp < RubyNative::App
 
   def view(page)
     page.title = "Todo"
-    page.bgcolor = "#F5F5F5"
-    page.vertical_alignment = "start"
+    page.bgcolor = "#E5E7EB"
+    page.vertical_alignment = "center"
     page.horizontal_alignment = "center"
 
     render(page)
@@ -48,19 +48,26 @@ class TodoApp < RubyNative::App
       page.container(
         width: 720,
         padding: 20,
+        bgcolor: "#FFFFFF",
+        border_radius: 12,
         content: page.column(
           spacing: 14,
           controls: [
-            page.text(value: "Todo List", size: 28, weight: "w600"),
+            page.text(value: "Todo List", size: 28, weight: "w600", color: "#111827"),
             page.row(
               spacing: 10,
               controls: [
                 input,
-                page.elevated_button(text: "Add", on_click: ->(e) { add_task(e.page) })
+                page.elevated_button(
+                  text: "Add",
+                  bgcolor: "#2563EB",
+                  color: "#FFFFFF",
+                  on_click: ->(e) { add_task(e.page) }
+                )
               ]
             ),
             page.container(
-              bgcolor: "#FFFFFF",
+              bgcolor: "#F9FAFB",
               border_radius: 10,
               padding: 8,
               content: page.column(spacing: 6, controls: task_controls)
@@ -100,12 +107,16 @@ class TodoApp < RubyNative::App
       alignment: "spaceBetween",
       vertical_alignment: "center",
       controls: [
-        page.text(value: "#{active_count} item#{active_count == 1 ? "" : "s"} left"),
+        page.text(value: "#{active_count} item#{active_count == 1 ? "" : "s"} left", color: "#374151"),
         page.row(
           spacing: 6,
           controls: FILTERS.map { |name| filter_button(page, name) }
         ),
-        page.text_button(text: "Clear completed", on_click: ->(e) { clear_completed(e.page) })
+        page.text_button(
+          text: "Clear completed",
+          color: "#1D4ED8",
+          on_click: ->(e) { clear_completed(e.page) }
+        )
       ]
     )
   end
@@ -115,11 +126,14 @@ class TodoApp < RubyNative::App
     if selected
       page.filled_button(
         text: name.capitalize,
+        bgcolor: "#1D4ED8",
+        color: "#FFFFFF",
         on_click: ->(e) { set_filter(name, e.page) }
       )
     else
       page.text_button(
         text: name.capitalize,
+        color: "#1D4ED8",
         on_click: ->(e) { set_filter(name, e.page) }
       )
     end

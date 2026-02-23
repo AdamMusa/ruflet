@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 require "ruby_native_protocol"
+require_relative "ruby_native/colors"
+require_relative "ruby_native/icon_data"
+require_relative "ruby_native/icons/material_icons"
+require_relative "ruby_native/icons/cupertino/cupertino_icons"
 require_relative "ruby_native/control"
 require_relative "ruby_native/ui/widget_builder"
 require_relative "ruby_native/ui/shared_control_forwarders"
@@ -29,8 +33,8 @@ module RubyNative
   end
 
   module Icons
-    REMOVE = :remove
-    ADD = :add
+    REMOVE = MaterialIcons::REMOVE
+    ADD = MaterialIcons::ADD
   end
 
   class << self

@@ -2,6 +2,7 @@
 
 require "securerandom"
 require_relative "ui/control_registry"
+require_relative "icon_data"
 
 module RubyNative
   class Control
@@ -61,6 +62,8 @@ module RubyNative
       case value
       when Control
         value.to_patch
+      when RubyNative::IconData
+        value.value
       when Array
         value.map { |v| serialize_value(v) }
       when Hash
@@ -89,7 +92,14 @@ module RubyNative
       hash.each_with_object({}) do |(k, v), result|
         key = k.to_s
         mapped_key = key
-        value = v.is_a?(Symbol) ? v.to_s : v
+        value =
+          if v.is_a?(Symbol)
+            v.to_s
+          elsif v.is_a?(RubyNative::IconData)
+            v.value
+          else
+            v
+          end
 
         result[mapped_key] = value
       end

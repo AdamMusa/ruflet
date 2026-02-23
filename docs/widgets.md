@@ -91,6 +91,23 @@ Notes:
 text value: "Hello", size: 24
 ```
 
+## Colors
+
+Use Flet-style named colors via `RubyNative::Colors`:
+
+```ruby
+text value: "Hello", color: RubyNative::Colors.BLUE_700
+container bgcolor: RubyNative::Colors.SURFACE_CONTAINER_LOW
+```
+
+Helpers:
+
+```ruby
+RubyNative::Colors.random
+RubyNative::Colors.random(exclude: [RubyNative::Colors.RED, RubyNative::Colors.GREEN])
+RubyNative::Colors.with_opacity(0.5, RubyNative::Colors.BLUE)
+```
+
 ## `text_field`
 
 ```ruby
@@ -140,6 +157,14 @@ iconbutton icon: :add
 
 ```ruby
 icon name: "add"
+```
+
+You can also use typed icon constants:
+
+```ruby
+icon icon: RubyNative::MaterialIcons::ADD
+icon icon: RubyNative::CupertinoIcons::HEART_FILL
+icon_button icon: RubyNative::MaterialIcons::SETTINGS
 ```
 
 ## `gesture_detector`
