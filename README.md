@@ -72,7 +72,8 @@ Set `RUBY_NATIVE_CLIENT_DIR` to override.
 
 - New app guide: `docs/creating_new_app.md`
 - Widget guide: `docs/widgets.md`
+- Framework feature guide: `docs/framework_feature_guide.md`
 - Example apps: `/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native/example/main.rb`, `/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native/example/solitaire.rb`
 
 
-<!-- If you want, I can now add Flet-style helpers for more controls next (stack, list_view, tabs, etc.) using the same generic approach. -->
+<!-- hey create a to do list example check the python version https://docs.flet.dev/tutorials/todo/ -->

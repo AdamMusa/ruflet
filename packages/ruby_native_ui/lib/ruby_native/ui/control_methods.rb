@@ -1,81 +1,16 @@
 # frozen_string_literal: true
 
+require_relative "material_control_methods"
+require_relative "cupertino_control_methods"
+
 module RubyNative
   module UI
     module ControlMethods
+      include MaterialControlMethods
+      include CupertinoControlMethods
+
       def control(type, **props, &block) = build_widget(type, **props, &block)
       def widget(type, **props, &block) = build_widget(type, **props, &block)
-      def view(**props, &block) = build_widget(:view, **props, &block)
-
-      def column(**props, &block) = build_widget(:column, **props, &block)
-
-      def center(**props, &block)
-        mapped = props.dup
-        mapped.delete(:spacing)
-        defaults = { expand: true, alignment: "center", horizontal_alignment: "center" }
-        build_widget(:column, **defaults.merge(mapped), &block)
-      end
-
-      def row(**props, &block) = build_widget(:row, **props, &block)
-      def stack(**props, &block) = build_widget(:stack, **props, &block)
-      def container(**props, &block) = build_widget(:container, **props, &block)
-      def gesture_detector(**props, &block) = build_widget(:gesturedetector, **props, &block)
-      def gesturedetector(**props, &block) = gesture_detector(**props, &block)
-      def draggable(**props, &block) = build_widget(:draggable, **props, &block)
-      def drag_target(**props, &block) = build_widget(:dragtarget, **props, &block)
-      def dragtarget(**props, &block) = drag_target(**props, &block)
-
-      def text(value = nil, **props)
-        mapped = props.dup
-        mapped[:value] = value unless value.nil?
-        build_widget(:text, **mapped)
-      end
-
-      def button(**props) = build_widget(:button, **props)
-      def elevated_button(**props) = build_widget(:elevatedbutton, **props)
-      def elevatedbutton(**props) = elevated_button(**props)
-      def text_button(**props) = build_widget(:textbutton, **props)
-      def textbutton(**props) = text_button(**props)
-      def filled_button(**props) = build_widget(:filledbutton, **props)
-      def filledbutton(**props) = filled_button(**props)
-
-      def icon_button(**props)
-        build_widget(:iconbutton, **props)
-      end
-
-      def iconbutton(**props) = icon_button(**props)
-      def text_field(**props) = build_widget(:textfield, **props)
-      def textfield(**props) = text_field(**props)
-      def checkbox(**props) = build_widget(:checkbox, **props)
-      def radio(**props) = build_widget(:radio, **props)
-      def radio_group(**props) = build_widget(:radiogroup, **props)
-      def radiogroup(**props) = radio_group(**props)
-      def alert_dialog(**props) = build_widget(:alertdialog, **props)
-      def alertdialog(**props) = alert_dialog(**props)
-      def markdown(value = nil, **props)
-        mapped = props.dup
-        mapped[:value] = value unless value.nil?
-        build_widget(:markdown, **mapped)
-      end
-
-      def icon(**props) = build_widget(:icon, **props)
-
-      def image(src = nil, **props)
-        mapped = props.dup
-        mapped[:src] = src unless src.nil?
-        build_widget(:image, **mapped)
-      end
-
-      def app_bar(**props) = build_widget(:appbar, **props)
-      def appbar(**props) = app_bar(**props)
-      def floating_action_button(**props) = build_widget(:floatingactionbutton, **props)
-      def floatingactionbutton(**props) = floating_action_button(**props)
-
-      def fab(content = nil, **props)
-        mapped = props.dup
-        mapped[:content] = content unless content.nil?
-        build_widget(:floatingactionbutton, **mapped)
-      end
     end
   end
 end

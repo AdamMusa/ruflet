@@ -26,7 +26,7 @@ class TodoApp < RubyNative::App
     input = page.text_field(
       value: @draft,
       hint_text: "What needs to be done?",
-      expand: true,
+      width: 560,
       on_change: ->(e) { @draft = e.data.to_s },
       on_submit: ->(e) { add_task(e.page) }
     )
