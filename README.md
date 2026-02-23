@@ -74,6 +74,3 @@ Set `RUBY_NATIVE_CLIENT_DIR` to override.
 - Widget guide: `docs/widgets.md`
 - Framework feature guide: `docs/framework_feature_guide.md`
 - Example apps: `/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native/example/main.rb`, `/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native/example/solitaire.rb`
-
-
-<!-- hey create a to do list example check the python version https://docs.flet.dev/tutorials/todo/ -->
