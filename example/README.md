@@ -14,6 +14,7 @@ bundle install
 bundle exec ruby_native run main
 bundle exec ruby_native run calculator
 bundle exec ruby_native run solitaire
+bundle exec ruby_native run todo
 ```
 
 ## Build
