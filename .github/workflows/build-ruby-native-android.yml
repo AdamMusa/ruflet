@@ -1,0 +1,247 @@
+name: Build Ruby Native Client
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+  pull_request:
+    paths:
+      - '.github/workflows/build-ruby-native-android.yml'
+      - 'ext/**'
+      - 'android/**'
+      - 'native/**'
+      - 'scripts/**'
+      - 'script/**'
+      - 'Rakefile'
+      - 'Gemfile'
+      - 'Gemfile.lock'
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/build-ruby-native-android.yml'
+      - 'ext/**'
+      - 'android/**'
+      - 'native/**'
+      - 'scripts/**'
+      - 'script/**'
+      - 'Rakefile'
+      - 'Gemfile'
+      - 'Gemfile.lock'
+
+permissions:
+  contents: read
+
+jobs:
+  build-android:
+    name: Android native build (${{ matrix.abi }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        abi: ["armeabi-v7a", "arm64-v8a", "x86_64"]
+
+    env:
+      ANDROID_NDK_VERSION: "26.3.11579264"
+      ANDROID_ABI: ${{ matrix.abi }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android NDK
+        run: sdkmanager "ndk;${ANDROID_NDK_VERSION}"
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Install native toolchain dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y build-essential autoconf automake libtool pkg-config
+
+      - name: Build Ruby native client for Android
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -x ./scripts/build_android_native_client.sh ]; then
+            ./scripts/build_android_native_client.sh
+          elif [ -x ./script/build_android_native_client.sh ]; then
+            ./script/build_android_native_client.sh
+          elif bundle exec rake -T | grep -qE '^rake (android:native:build|native:android:build)'; then
+            if bundle exec rake -T | grep -q '^rake android:native:build'; then
+              bundle exec rake android:native:build
+            else
+              bundle exec rake native:android:build
+            fi
+          else
+            echo "No Android native build entrypoint found."
+            echo "Add one of:"
+            echo "  1) scripts/build_android_native_client.sh"
+            echo "  2) script/build_android_native_client.sh"
+            echo "  3) Rake task: android:native:build or native:android:build"
+            exit 1
+          fi
+
+      - name: Upload Android native artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-native-${{ matrix.abi }}
+          if-no-files-found: warn
+          path: |
+            build/android/**
+            pkg/android/**
+            vendor/native/android/**
+            tmp/android-native/**
+
+  build-macos:
+    name: macOS native build
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Build Ruby native client for macOS
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -x ./scripts/build_macos_native_client.sh ]; then
+            ./scripts/build_macos_native_client.sh
+          elif [ -x ./script/build_macos_native_client.sh ]; then
+            ./script/build_macos_native_client.sh
+          elif bundle exec rake -T | grep -qE '^rake (macos:native:build|native:macos:build)'; then
+            if bundle exec rake -T | grep -q '^rake macos:native:build'; then
+              bundle exec rake macos:native:build
+            else
+              bundle exec rake native:macos:build
+            fi
+          else
+            echo "No macOS native build entrypoint found."
+            echo "Add one of:"
+            echo "  1) scripts/build_macos_native_client.sh"
+            echo "  2) script/build_macos_native_client.sh"
+            echo "  3) Rake task: macos:native:build or native:macos:build"
+            exit 1
+          fi
+
+      - name: Upload macOS native artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-native
+          if-no-files-found: warn
+          path: |
+            build/macos/**
+            pkg/macos/**
+            vendor/native/macos/**
+            tmp/macos-native/**
+
+  android-apk-release:
+    name: Android APK-only release build
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Build Android release APK (no AAB)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -x ./scripts/build_android_apk.sh ]; then
+            ./scripts/build_android_apk.sh
+          elif [ -x ./script/build_android_apk.sh ]; then
+            ./script/build_android_apk.sh
+          elif [ -f ./android/gradlew ]; then
+            chmod +x ./android/gradlew
+            (cd android && ./gradlew assembleRelease)
+          elif bundle exec rake -T | grep -qE '^rake (android:apk:release|android:release:apk)'; then
+            if bundle exec rake -T | grep -q '^rake android:apk:release'; then
+              bundle exec rake android:apk:release
+            else
+              bundle exec rake android:release:apk
+            fi
+          else
+            echo "No Android APK release build entrypoint found."
+            echo "Add one of:"
+            echo "  1) scripts/build_android_apk.sh"
+            echo "  2) script/build_android_apk.sh"
+            echo "  3) android/gradlew with assembleRelease task"
+            echo "  4) Rake task: android:apk:release or android:release:apk"
+            exit 1
+          fi
+
+      - name: Collect APK paths (no AAB)
+        id: collect_apk
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+
+          apks=(
+            android/**/build/outputs/apk/release/*.apk
+            build/android/**/*.apk
+            pkg/android/**/*.apk
+          )
+
+          if [ ${#apks[@]} -eq 0 ]; then
+            echo "No APK files found after release build."
+            exit 1
+          fi
+
+          {
+            echo "apk_files<<EOF"
+            printf '%s\n' "${apks[@]}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk-release
+          path: ${{ steps.collect_apk.outputs.apk_files }}
+
+      - name: Attach APKs to GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.collect_apk.outputs.apk_files }}
