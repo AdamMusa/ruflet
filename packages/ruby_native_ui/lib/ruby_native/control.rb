@@ -100,6 +100,7 @@ module RubyNative
           else
             v
           end
+        value = normalize_color_prop(mapped_key, value)
 
         result[mapped_key] = value
       end
@@ -107,6 +108,17 @@ module RubyNative
 
     def preprocess_props(props)
       props
+    end
+
+    def normalize_color_prop(key, value)
+      return value unless value.is_a?(String)
+      return value.downcase if color_prop_key?(key)
+
+      value
+    end
+
+    def color_prop_key?(key)
+      key == "color" || key == "bgcolor" || key.end_with?("_color")
     end
 
     def normalized_event_name(event_name)

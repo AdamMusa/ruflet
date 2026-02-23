@@ -190,5 +190,11 @@ module RubyNative
     DEPRECATED_ALIASES.each do |alias_name, target|
       const_set(alias_name, const_get(target))
     end
+
+    constants(false).each do |name|
+      next if respond_to?(name)
+
+      define_singleton_method(name) { const_get(name) }
+    end
   end
 end

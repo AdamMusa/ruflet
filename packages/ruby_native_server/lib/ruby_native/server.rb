@@ -36,14 +36,24 @@ module RubyNative
             handle_message(ws, raw)
           rescue Exception => e
             warn "server error: #{e.class}: #{e.message}"
-            send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => e.message })
+            warn e.backtrace.join("\n") if e.backtrace
+            send_message(
+              ws,
+              Protocol::ACTIONS[:session_crashed],
+              { "message" => e.message.to_s.dup.force_encoding("UTF-8") }
+            )
           end
 
           ws.onbinary do |raw|
             handle_message(ws, raw)
           rescue Exception => e
             warn "server error: #{e.class}: #{e.message}"
-            send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => e.message })
+            warn e.backtrace.join("\n") if e.backtrace
+            send_message(
+              ws,
+              Protocol::ACTIONS[:session_crashed],
+              { "message" => e.message.to_s.dup.force_encoding("UTF-8") }
+            )
           end
 
           ws.onclose do
@@ -110,7 +120,9 @@ module RubyNative
 
     def normalize_incoming(value)
       case value
-      when String, Integer, Float, TrueClass, FalseClass, NilClass
+      when String
+        value.dup.force_encoding("UTF-8")
+      when Integer, Float, TrueClass, FalseClass, NilClass
         value
       when Symbol
         value.to_s

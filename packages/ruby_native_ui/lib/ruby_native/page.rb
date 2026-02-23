@@ -122,16 +122,20 @@ module RubyNative
       add(*builder.children)
     end
 
-    def appbar
-      @view_props["appbar"]
+    def appbar(**props, &block)
+      return @view_props["appbar"] if props.empty? && !block
+
+      WidgetBuilder.new.appbar(**props, &block)
     end
 
     def appbar=(value)
       @view_props["appbar"] = value
     end
 
-    def floating_action_button
-      @view_props["floating_action_button"]
+    def floating_action_button(**props, &block)
+      return @view_props["floating_action_button"] if props.empty? && !block
+
+      WidgetBuilder.new.floating_action_button(**props, &block)
     end
 
     def floating_action_button=(value)
