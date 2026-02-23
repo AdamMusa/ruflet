@@ -64,13 +64,13 @@ class Slot
       top: top,
       width: width,
       height: height,
-      border_radius: 8,
-      bgcolor: "#d0ced4"
+      border_radius: 12,
+      bgcolor: "#cfccd2"
     }
     props[:on_click] = on_click if on_click
 
     if @border
-      props[:border] = { width: 1, color: "#8a8891" }
+      props[:border] = { width: 1, color: "#b9b6be" }
     end
 
     page.container(**props, content: page.text(value: "", size: 1))
@@ -200,7 +200,7 @@ class Solitaire
     @page = page
     @status_text = "Drag cards"
 
-    @card_offset = 20
+    @card_offset = 26
     @deck_passes_allowed = 3
     @deck_passes_remaining = @deck_passes_allowed
     @waste_size = 3
@@ -328,32 +328,33 @@ class Solitaire
     screen_width = 1000 if screen_width <= 0
     screen_height = 700 if screen_height <= 0
 
-    board_padding = 8
-    @slot_w = [[((screen_width - 2 * board_padding - 6 * 20) / 7.0).floor, 70].max, 106].min
-    @slot_h = (@slot_w * 1.43).round
-    @card_width = @slot_w - 4
-    @card_height = @slot_h - 6
+    board_padding = 12
+    @slot_gap = 24
+    @slot_w = [[((screen_width - (2 * board_padding) - (6 * @slot_gap)) / 7.0).floor, 82].max, 128].min
+    @slot_h = (@slot_w * 1.42).round
+    @card_width = @slot_w - 2
+    @card_height = @slot_h - 2
 
-    @top_row_y = 14
-    @tableau_y = @top_row_y + @slot_h + 44
+    @top_row_y = 20
+    @tableau_y = @top_row_y + @slot_h + 52
 
-    @board_width = board_padding + (7 * @slot_w) + (6 * 20) + board_padding
-    needed = @tableau_y + @card_height + (6 * @card_offset) + 30
-    @board_height = [needed, [screen_height - 120, 420].max].min
+    @board_width = board_padding + (7 * @slot_w) + (6 * @slot_gap) + board_padding
+    needed = @tableau_y + @card_height + (6 * @card_offset) + 36
+    @board_height = [needed, [screen_height - 120, 460].max].min
 
     @board_left = ((screen_width - @board_width) / 2.0).floor
     @board_left = 0 if @board_left < 0
   end
 
   def create_slots
-    x0 = 8
-    step = @slot_w + 20
+    x0 = 12
+    step = @slot_w + @slot_gap
 
     @stock = Slot.new(type: :stock, left: x0, top: @top_row_y, width: @slot_w, height: @slot_h, border: true)
     @waste = Slot.new(type: :waste, left: x0 + step, top: @top_row_y, width: @slot_w, height: @slot_h, border: false)
 
     @foundation = Array.new(4) do |i|
-      Slot.new(type: :foundation, left: x0 + step * (3 + i), top: @top_row_y, width: @slot_w, height: @slot_h, border: true)
+      Slot.new(type: :foundation, left: x0 + step * (3 + i), top: @top_row_y, width: @slot_w, height: @slot_h, border: false)
     end
 
     @tableau = Array.new(7) do |i|
