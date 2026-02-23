@@ -1,0 +1,25 @@
+current directory: /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native/example/vendor/bundle/ruby/3.4.0/gems/http_parser.rb-0.8.1/ext/ruby_http_parser
+/opt/homebrew/opt/ruby/bin/ruby extconf.rb
+creating Makefile
+
+current directory: /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native/example/vendor/bundle/ruby/3.4.0/gems/http_parser.rb-0.8.1/ext/ruby_http_parser
+make DESTDIR\= sitearchdir\=./.gem.20260222-77144-skot4e sitelibdir\=./.gem.20260222-77144-skot4e clean
+
+current directory: /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native/example/vendor/bundle/ruby/3.4.0/gems/http_parser.rb-0.8.1/ext/ruby_http_parser
+make DESTDIR\= sitearchdir\=./.gem.20260222-77144-skot4e sitelibdir\=./.gem.20260222-77144-skot4e
+compiling ruby_http_parser.c
+ruby_http_parser.c:373:17: warning: comparison of integers of different signs: 'size_t' (aka 'unsigned long') and 'long' [-Wsign-compare]
+  373 |     if (nparsed < len)
+      |         ~~~~~~~ ^ ~~~
+1 warning generated.
+compiling ryah_http_parser.c
+linking shared-object ruby_http_parser.bundle
+ld: warning: search path '/opt/homebrew/Cellar/openssl@3/3.5.1/lib' not found
+ld: warning: search path '/opt/homebrew/Cellar/openssl@3/3.5.1/lib' not found
+
+current directory: /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native/example/vendor/bundle/ruby/3.4.0/gems/http_parser.rb-0.8.1/ext/ruby_http_parser
+make DESTDIR\= sitearchdir\=./.gem.20260222-77144-skot4e sitelibdir\=./.gem.20260222-77144-skot4e install
+/usr/bin/install -c -m 0755 ruby_http_parser.bundle ./.gem.20260222-77144-skot4e
+
+current directory: /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native/example/vendor/bundle/ruby/3.4.0/gems/http_parser.rb-0.8.1/ext/ruby_http_parser
+make DESTDIR\= sitearchdir\=./.gem.20260222-77144-skot4e sitelibdir\=./.gem.20260222-77144-skot4e clean

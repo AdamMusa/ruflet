@@ -1,0 +1,41 @@
+current directory: /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native/example/vendor/bundle/ruby/3.4.0/gems/msgpack-1.8.0/ext/msgpack
+/opt/homebrew/opt/ruby/bin/ruby extconf.rb
+checking for rb_enc_interned_str() in ruby.h... yes
+checking for rb_hash_new_capa() in ruby.h... yes
+checking for rb_proc_call_with_block() in ruby.h... yes
+checking for rb_gc_mark_locations() in ruby.h... yes
+checking for whether -fvisibility=hidden is accepted as CFLAGS... yes
+checking for whether -I.. is accepted as CFLAGS... yes
+checking for whether -Wall is accepted as CFLAGS... yes
+checking for whether -std=gnu99 is accepted as CFLAGS... yes
+checking for whether -DHASH_ASET_DEDUPE=1 is accepted as CFLAGS... yes
+checking for whether -DSTR_UMINUS_DEDUPE_FROZEN=1 is accepted as CFLAGS... yes
+creating Makefile
+
+current directory: /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native/example/vendor/bundle/ruby/3.4.0/gems/msgpack-1.8.0/ext/msgpack
+make DESTDIR\= sitearchdir\=./.gem.20260222-77144-1oas8a sitelibdir\=./.gem.20260222-77144-1oas8a clean
+
+current directory: /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native/example/vendor/bundle/ruby/3.4.0/gems/msgpack-1.8.0/ext/msgpack
+make DESTDIR\= sitearchdir\=./.gem.20260222-77144-1oas8a sitelibdir\=./.gem.20260222-77144-1oas8a
+compiling buffer.c
+compiling buffer_class.c
+compiling extension_value_class.c
+compiling factory_class.c
+compiling packer.c
+compiling packer_class.c
+compiling packer_ext_registry.c
+compiling rbinit.c
+compiling rmem.c
+compiling unpacker.c
+compiling unpacker_class.c
+compiling unpacker_ext_registry.c
+linking shared-object msgpack/msgpack.bundle
+ld: warning: search path '/opt/homebrew/Cellar/openssl@3/3.5.1/lib' not found
+ld: warning: search path '/opt/homebrew/Cellar/openssl@3/3.5.1/lib' not found
+
+current directory: /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native/example/vendor/bundle/ruby/3.4.0/gems/msgpack-1.8.0/ext/msgpack
+make DESTDIR\= sitearchdir\=./.gem.20260222-77144-1oas8a sitelibdir\=./.gem.20260222-77144-1oas8a install
+/usr/bin/install -c -m 0755 msgpack.bundle ./.gem.20260222-77144-1oas8a/msgpack
+
+current directory: /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native/example/vendor/bundle/ruby/3.4.0/gems/msgpack-1.8.0/ext/msgpack
+make DESTDIR\= sitearchdir\=./.gem.20260222-77144-1oas8a sitelibdir\=./.gem.20260222-77144-1oas8a clean
