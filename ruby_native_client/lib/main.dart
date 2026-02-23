@@ -42,21 +42,31 @@ String normalizePageUrlForPlatform(String rawUrl) {
   final uri = Uri.tryParse(rawUrl);
   if (uri == null || uri.host.isEmpty) return rawUrl;
 
-  if (uri.host != '0.0.0.0' && uri.host != '::' && uri.host != '[::]') {
+  final localHosts = {
+    '0.0.0.0',
+    '::',
+    '[::]',
+    '127.0.0.1',
+    'localhost',
+    '::1',
+    '[::1]',
+  };
+  if (!localHosts.contains(uri.host)) {
     return rawUrl;
   }
 
   String host;
   switch (defaultTargetPlatform) {
+    case TargetPlatform.android:
+      // Android emulator reaches host machine via 10.0.2.2.
+      host = '10.0.2.2';
+      break;
     case TargetPlatform.macOS:
     case TargetPlatform.windows:
     case TargetPlatform.linux:
-      host = 'localhost';
-      break;
-    case TargetPlatform.android:
     case TargetPlatform.iOS:
     case TargetPlatform.fuchsia:
-      host = '127.0.0.1';
+      host = 'localhost';
       break;
   }
 
@@ -70,9 +80,14 @@ String normalizeUserUrl(String raw) {
   if (input.contains('://')) {
     final uri = Uri.tryParse(input);
     if (uri != null && (uri.scheme == 'ws' || uri.scheme == 'wss')) {
-      input = uri
-          .replace(scheme: uri.scheme == 'wss' ? 'https' : 'http')
-          .toString();
+      // Accept websocket URLs from users, but keep page URL in http(s) form.
+      final normalizedWsInput = uri.replace(
+        scheme: uri.scheme == 'wss' ? 'https' : 'http',
+        path: (uri.path.isEmpty || uri.path == '/ws') ? '' : uri.path,
+        query: '',
+        fragment: '',
+      );
+      input = normalizedWsInput.toString();
     }
     return normalizePageUrlForPlatform(input);
   }
@@ -290,7 +305,7 @@ class _RubyNativeBootstrapAppState extends State<RubyNativeBootstrapApp> {
       _connecting = false;
       _error = auto
           ? (_isMobilePlatform
-              ? 'Unable to connect to $url. Enter URL or paste QR payload.'
+              ? 'Unable to connect to $url. On Android emulator use 10.0.2.2 (not 127.0.0.1).'
               : 'Unable to connect to $url')
           : 'Unable to connect to $url';
     });
@@ -345,7 +360,7 @@ class _RubyNativeBootstrapAppState extends State<RubyNativeBootstrapApp> {
                       controller: _urlController,
                       decoration: const InputDecoration(
                         labelText: 'Server URL',
-                        hintText: 'http://localhost:8550',
+                        hintText: 'http://10.0.2.2:8550 or ws://10.0.2.2:8550/ws',
                       ),
                     ),
                     const SizedBox(height: 12),

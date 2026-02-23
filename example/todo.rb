@@ -78,7 +78,7 @@ class TodoApp < RubyNative::App
       floating_action_button: page.floating_action_button(
         content: "+",
         bgcolor: RubyNative::Colors.PRIMARY,
-        forground_color: "white",
+        forground_color: "white74",
         on_click: ->(e) { add_task(e.page) }
       )
     )
