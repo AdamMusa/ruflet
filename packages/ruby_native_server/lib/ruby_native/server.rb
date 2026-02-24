@@ -94,7 +94,7 @@ module RubyNative
       when Protocol::ACTIONS[:control_event], Protocol::ACTIONS[:page_event_from_web]
         on_control_event(ws, payload)
       when Protocol::ACTIONS[:update_control], Protocol::ACTIONS[:update_control_props]
-        # Client-side optimistic updates. No-op for now.
+        on_update_control(ws, payload)
       else
         raise "Unknown action: #{action.inspect}"
       end
@@ -189,6 +189,17 @@ module RubyNative
           data: payload["eventData"]
         )
       end
+    end
+
+    def on_update_control(ws, payload)
+      session = @sessions[ws.object_id]
+      return unless session
+
+      control_id = payload["id"] || payload["target"] || payload["eventTarget"]
+      props = payload["props"] || {}
+      return if control_id.nil? || props.nil? || !props.is_a?(Hash)
+
+      session[:page].apply_client_update(control_id, props)
     end
 
     def send_message(ws, action, payload)

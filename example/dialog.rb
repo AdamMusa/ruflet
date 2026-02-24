@@ -9,6 +9,15 @@ class FeedbackSurfacesApp < RubyNative::App
     page.title = "Feedback Surfaces Demo"
 
     status = page.text(value: "Ready", size: 14)
+    build_snack_bar = lambda {
+      page.snack_bar(
+        open: true,
+        content: page.text(value: "Profile saved"),
+        action: "UNDO",
+        on_action: ->(_e) { page.update(status, value: "SnackBar action pressed") },
+        on_dismiss: ->(_e) { page.update(status, value: "SnackBar dismissed") }
+      )
+    }
 
     dialog = page.alert_dialog(
       open: false,
@@ -33,23 +42,20 @@ class FeedbackSurfacesApp < RubyNative::App
       ]
     )
 
-    snack_bar = page.snack_bar(
-      open: false,
-      content: page.text(value: "Profile saved"),
-      action: "UNDO",
-      on_action: ->(_e) { page.update(status, value: "SnackBar action pressed") },
-      on_dismiss: ->(_e) { page.update(status, value: "SnackBar dismissed") }
-    )
-
     bottom_sheet = page.bottom_sheet(
       open: false,
+      scrollable: true,
+      show_drag_handle: true,
       content: page.container(
+        expand: true,
+        height: 300,
         padding: 16,
         content: page.column(
           spacing: 10,
           controls: [
-            page.text(value: "Bottom Sheet", size: 20),
+            page.text(value: "Bottom Sheet", size: 24),
             page.text(value: "This is shown using BottomSheet control."),
+            page.text(value: "It is intentionally larger in this sample."),
             page.button(
               text: "Close bottom sheet",
               on_click: ->(_e) {
@@ -73,21 +79,24 @@ class FeedbackSurfacesApp < RubyNative::App
             page.button(
               text: "Open dialog",
               on_click: ->(_e) {
-                page.update(dialog, open: true)
+                close_all_dialogs(page)
+                page.show_dialog(dialog)
                 page.update(status, value: "Dialog opened")
               }
             ),
             page.button(
               text: "Open snackbar",
               on_click: ->(_e) {
-                page.update(snack_bar, open: true)
+                close_all_dialogs(page)
+                page.show_dialog(build_snack_bar.call)
                 page.update(status, value: "SnackBar opened")
               }
             ),
             page.button(
               text: "Open bottom sheet",
               on_click: ->(_e) {
-                page.update(bottom_sheet, open: true)
+                close_all_dialogs(page)
+                page.show_dialog(bottom_sheet)
                 page.update(status, value: "BottomSheet opened")
               }
             )
@@ -98,11 +107,17 @@ class FeedbackSurfacesApp < RubyNative::App
         bgcolor: "#d9d7db",
         color: "#232329",
         title: page.text(value: "Feedback Surfaces", size: 18)
-      ),
-      dialog: dialog,
-      snack_bar: snack_bar,
-      bottom_sheet: bottom_sheet
+      )
     )
+  end
+
+  private
+
+  def close_all_dialogs(page)
+    loop do
+      closed = page.pop_dialog
+      break if closed.nil?
+    end
   end
 end
 

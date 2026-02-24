@@ -15,6 +15,8 @@ module RubyNative
     include UI::ControlMethods
 
     PAGE_PROP_KEYS = %w[route title vertical_alignment horizontal_alignment].freeze
+    DIALOG_PROP_KEYS = %w[dialog snack_bar bottom_sheet].freeze
+    BUTTON_TEXT_TYPES = %w[button elevatedbutton textbutton filledbutton].freeze
 
     attr_reader :session_id, :client_details, :views
 
@@ -28,9 +30,22 @@ module RubyNative
       @view_id = 20
       @root_controls = []
       @views = []
+      @dialogs = []
       @page_event_handlers = {}
       @view_props = {}
       @page_props = { "route" => (client_details["route"] || "/") }
+      @overlay_container = RubyNative::Control.new(
+        type: "overlay",
+        id: "_overlay",
+        controls: []
+      )
+      @dialogs_container = RubyNative::Control.new(
+        type: "dialogs",
+        id: "_dialogs",
+        controls: []
+      )
+      refresh_overlay_container!
+      refresh_dialogs_container!
     end
 
     def set_view_props(props)
@@ -87,12 +102,15 @@ module RubyNative
       visited = Set.new
       controls.each { |c| register_control_tree(c, visited) }
       @root_controls = controls
+
       @view_props["appbar"] = appbar if appbar
       @view_props["floating_action_button"] = floating_action_button if floating_action_button
       @view_props["navigation_bar"] = navigation_bar if navigation_bar
-      @view_props["dialog"] = dialog if dialog
-      @view_props["snack_bar"] = snack_bar if snack_bar
-      @view_props["bottom_sheet"] = bottom_sheet if bottom_sheet
+      @dialog = dialog if dialog
+      @snack_bar = snack_bar if snack_bar
+      @bottom_sheet = bottom_sheet if bottom_sheet
+
+      refresh_dialogs_container!
       @view_props.each_value { |value| register_embedded_value(value, visited) }
 
       send_view_patch
@@ -151,44 +169,72 @@ module RubyNative
       @view_props["floating_action_button"] = value
     end
 
-    def dialog
-      @view_props["dialog"]
-    end
+    def dialog = @dialog
 
     def dialog=(value)
-      @view_props["dialog"] = value
+      @dialog = value
+      refresh_dialogs_container!
     end
 
-    def snack_bar
-      @view_props["snack_bar"]
+    def snack_bar(**props, &block)
+      return @snack_bar if props.empty? && !block
+
+      super
     end
 
     def snack_bar=(value)
-      @view_props["snack_bar"] = value
+      @snack_bar = value
+      refresh_dialogs_container!
     end
 
-    def snackbar
-      snack_bar
+    def snackbar(**props, &block)
+      snack_bar(**props, &block)
     end
 
     def snackbar=(value)
       self.snack_bar = value
     end
 
-    def bottom_sheet
-      @view_props["bottom_sheet"]
+    def bottom_sheet(**props, &block)
+      return @bottom_sheet if props.empty? && !block
+
+      super
     end
 
     def bottom_sheet=(value)
-      @view_props["bottom_sheet"] = value
+      @bottom_sheet = value
+      refresh_dialogs_container!
     end
 
-    def bottomsheet
-      bottom_sheet
+    def bottomsheet(**props, &block)
+      bottom_sheet(**props, &block)
     end
 
     def bottomsheet=(value)
       self.bottom_sheet = value
+    end
+
+    def show_dialog(dialog_control)
+      return self unless dialog_control
+
+      return self if dialog_open?(dialog_control)
+
+      dialog_control.props["open"] = true
+      @dialogs << dialog_control unless @dialogs.include?(dialog_control)
+      refresh_dialogs_container!
+      send_view_patch unless @dialogs_container.wire_id
+      push_dialogs_update!
+      self
+    end
+
+    def pop_dialog
+      dialog_control = latest_open_dialog
+      return nil unless dialog_control
+
+      dialog_control.props["open"] = false
+      refresh_dialogs_container!
+      push_dialogs_update!
+      dialog_control
     end
 
     def update(control_or_id = nil, **props)
@@ -207,7 +253,7 @@ module RubyNative
       return self unless control
 
       patch = normalize_props(props)
-      if %w[button elevatedbutton textbutton filledbutton].include?(control.type) && patch.key?("text")
+      if BUTTON_TEXT_TYPES.include?(control.type) && patch.key?("text")
         patch["content"] = patch.delete("text")
       end
 
@@ -225,6 +271,18 @@ module RubyNative
       update(control_id, **props)
     end
 
+    def apply_client_update(control_or_id, props)
+      control = resolve_control(control_or_id)
+      return self unless control
+
+      patch = normalize_props(props || {})
+      patch.each { |k, v| control.props[k] = v }
+
+      remove_dialog_tracking(control) if patch.key?("open") && patch["open"] == false
+
+      self
+    end
+
     def dispatch_event(target:, name:, data:)
       if page_control_target?(target)
         if name.to_s == "route_change"
@@ -240,6 +298,10 @@ module RubyNative
 
       event = Event.new(name: name, target: target, raw_data: data, page: self, control: control)
       control.emit(name, event)
+
+      if name.to_s == "dismiss" && remove_dialog_tracking(control)
+        push_dialogs_update!
+      end
     end
 
     private
@@ -248,14 +310,7 @@ module RubyNative
 
     def split_props(props)
       props.each do |k, v|
-        if k == "vertical_alignment" || k == "horizontal_alignment"
-          @page_props[k] = v
-          @view_props[k] = v
-        elsif PAGE_PROP_KEYS.include?(k)
-          @page_props[k] = v
-        else
-          @view_props[k] = v
-        end
+        assign_split_prop(k, v)
       end
     end
 
@@ -265,30 +320,16 @@ module RubyNative
 
     def send_view_patch
       refresh_control_indexes!
-      view_patches = if @views.any?
-                       @views.map(&:to_patch)
-                     else
-                       [implicit_view_patch]
-                     end
+      view_patches = build_view_patches
+      page_patch_ops = build_page_patch_ops
 
       send_message(Protocol::ACTIONS[:patch_control], {
         "id" => 1,
         "patch" => [
           [0],
-          [0, 0, "views", view_patches]
+          [0, 0, "views", view_patches],
+          *page_patch_ops
         ]
-      })
-
-      send_page_props_patch
-    end
-
-    def send_page_props_patch
-      page_patch_ops = @page_props.map { |k, v| [0, 0, k, v] }
-      return if page_patch_ops.empty?
-
-      send_message(Protocol::ACTIONS[:patch_control], {
-        "id" => 1,
-        "patch" => [[0], *page_patch_ops]
       })
     end
 
@@ -330,6 +371,7 @@ module RubyNative
         @root_controls.each { |control| register_control_tree(control, visited) }
         @view_props.each_value { |value| register_embedded_value(value, visited) }
       end
+      @page_props.each_value { |value| register_embedded_value(value, visited) }
     end
 
     def register_embedded_value(value, visited)
@@ -369,8 +411,7 @@ module RubyNative
 
     def normalize_value(key, value)
       if icon_prop_key?(key) && (value.is_a?(String) || value.is_a?(Symbol) || value.is_a?(Integer))
-        codepoint = RubyNative::MaterialIconLookup.codepoint_for(value)
-        codepoint = RubyNative::CupertinoIconLookup.codepoint_for(value) if codepoint.nil? || codepoint == value
+        codepoint = resolve_icon_codepoint(value)
         return codepoint unless codepoint.nil?
       end
 
@@ -427,6 +468,83 @@ module RubyNative
 
     def icon_prop_key?(key)
       key == "icon" || key.end_with?("_icon")
+    end
+
+    def refresh_dialogs_container!
+      dialog_controls = (@dialogs + dialog_slots).uniq
+      @dialogs_container.props["controls"] = dialog_controls
+      @page_props["_dialogs"] = @dialogs_container
+    end
+
+    def refresh_overlay_container!
+      @page_props["_overlay"] = @overlay_container
+    end
+
+    def push_dialogs_update!
+      refresh_control_indexes!
+
+      if @dialogs_container.wire_id
+        send_message(Protocol::ACTIONS[:patch_control], {
+          "id" => @dialogs_container.wire_id,
+          "patch" => [[0], [0, 0, "controls", serialize_patch_value(@dialogs_container.props["controls"])]]
+        })
+      else
+        send_view_patch
+      end
+    end
+
+    def dialog_slots
+      [@dialog, @snack_bar, @bottom_sheet].compact
+    end
+
+    def latest_open_dialog
+      @dialogs.reverse.find { |d| d.props["open"] != false }
+    end
+
+    def dialog_open?(dialog_control)
+      @dialogs.include?(dialog_control) && dialog_control.props["open"] == true
+    end
+
+    def remove_dialog_tracking(control)
+      return false unless @dialogs.include?(control)
+
+      @dialogs.delete(control)
+      refresh_dialogs_container!
+      true
+    end
+
+    def assign_split_prop(key, value)
+      if key == "vertical_alignment" || key == "horizontal_alignment"
+        @page_props[key] = value
+        @view_props[key] = value
+      elsif DIALOG_PROP_KEYS.include?(key)
+        instance_variable_set("@#{key}", value)
+        refresh_dialogs_container!
+      elsif PAGE_PROP_KEYS.include?(key)
+        @page_props[key] = value
+      else
+        @view_props[key] = value
+      end
+    end
+
+    def build_view_patches
+      if @views.any?
+        @views.map(&:to_patch)
+      else
+        [implicit_view_patch]
+      end
+    end
+
+    def build_page_patch_ops
+      @page_props.map { |k, v| [0, 0, k, serialize_patch_value(v)] }
+    end
+
+    def resolve_icon_codepoint(value)
+      codepoint = RubyNative::MaterialIconLookup.codepoint_for(value)
+      if codepoint.nil? || codepoint == value
+        codepoint = RubyNative::CupertinoIconLookup.codepoint_for(value)
+      end
+      codepoint
     end
   end
 end
