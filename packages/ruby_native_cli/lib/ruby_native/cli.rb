@@ -21,8 +21,8 @@ module RubyNative
         def view(page)
           app_name = "%<app_title>s"
           page.title = app_name
-          page.vertical_alignment = "center"
-          page.horizontal_alignment = "center"
+          page.vertical_alignment = RubyNative::MainAxisAlignment::CENTER
+          page.horizontal_alignment = RubyNative::CrossAxisAlignment::CENTER
 
           counter = page.text(value: @count.to_s, size: 48)
 

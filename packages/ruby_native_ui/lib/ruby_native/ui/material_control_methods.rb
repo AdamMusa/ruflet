@@ -8,14 +8,26 @@ module RubyNative
 
       def center(**props, &block)
         mapped = props.dup
-        mapped.delete(:spacing)
-        defaults = { expand: true, alignment: "center", horizontal_alignment: "center" }
-        build_widget(:column, **defaults.merge(mapped), &block)
+        defaults = { expand: true, alignment: { x: 0, y: 0 } }
+
+        if block
+          nested = WidgetBuilder.new
+          block_result = nested.instance_eval(&block)
+          child =
+            if nested.children.any?
+              nested.children.first
+            elsif block_result.is_a?(RubyNative::Control)
+              block_result
+            end
+          mapped[:content] = child if child
+        end
+
+        build_widget(:container, **normalize_container_props(defaults.merge(mapped)))
       end
 
       def row(**props, &block) = build_widget(:row, **props, &block)
       def stack(**props, &block) = build_widget(:stack, **props, &block)
-      def container(**props, &block) = build_widget(:container, **props, &block)
+      def container(**props, &block) = build_widget(:container, **normalize_container_props(props), &block)
       def gesture_detector(**props, &block) = build_widget(:gesturedetector, **props, &block)
       def gesturedetector(**props, &block) = gesture_detector(**props, &block)
       def draggable(**props, &block) = build_widget(:draggable, **props, &block)
@@ -70,6 +82,20 @@ module RubyNative
         mapped = props.dup
         mapped[:content] = content unless content.nil?
         build_widget(:floatingactionbutton, **mapped)
+      end
+
+      private
+
+      # Flet container alignment expects a vector-like object ({x:, y:}),
+      # not a plain string. Keep common shorthand compatible.
+      def normalize_container_props(props)
+        mapped = props.dup
+        alignment = mapped[:alignment] || mapped["alignment"]
+        if alignment == "center" || alignment == :center
+          mapped[:alignment] = { x: 0, y: 0 }
+          mapped.delete("alignment")
+        end
+        mapped
       end
     end
   end

@@ -75,6 +75,5 @@ cd /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native
 ## Documentation
 
 - [Creating New App](docs/creating_new_app.md)
-- [Android Emulator Guide](docs/android_emulator_guide.md)
 - [Widgets Guide](docs/widgets.md)
 - Example apps: [main.rb](example/main.rb), [solitaire.rb](example/solitaire.rb), [calculator.rb](example/calculator.rb)

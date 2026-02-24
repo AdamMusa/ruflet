@@ -53,19 +53,23 @@ module RubyNative
     end
 
     def vertical_alignment
-      @page_props["vertical_alignment"]
+      @page_props["vertical_alignment"] || @view_props["vertical_alignment"]
     end
 
     def vertical_alignment=(value)
-      @page_props["vertical_alignment"] = normalize_value(value)
+      v = normalize_value(value)
+      @page_props["vertical_alignment"] = v
+      @view_props["vertical_alignment"] = v
     end
 
     def horizontal_alignment
-      @page_props["horizontal_alignment"]
+      @page_props["horizontal_alignment"] || @view_props["horizontal_alignment"]
     end
 
     def horizontal_alignment=(value)
-      @page_props["horizontal_alignment"] = normalize_value(value)
+      v = normalize_value(value)
+      @page_props["horizontal_alignment"] = v
+      @view_props["horizontal_alignment"] = v
     end
 
     def bgcolor
@@ -199,7 +203,10 @@ module RubyNative
 
     def split_props(props)
       props.each do |k, v|
-        if PAGE_PROP_KEYS.include?(k)
+        if k == "vertical_alignment" || k == "horizontal_alignment"
+          @page_props[k] = v
+          @view_props[k] = v
+        elsif PAGE_PROP_KEYS.include?(k)
           @page_props[k] = v
         else
           @view_props[k] = v

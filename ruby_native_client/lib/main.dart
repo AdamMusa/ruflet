@@ -232,6 +232,7 @@ class RubyNativeBootstrapApp extends StatefulWidget {
 class _RubyNativeBootstrapAppState extends State<RubyNativeBootstrapApp> {
   late final FletAppErrorsHandler _errorsHandler;
   late final TextEditingController _urlController;
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   bool _connecting = true;
   bool _connected = false;
@@ -310,7 +311,15 @@ class _RubyNativeBootstrapAppState extends State<RubyNativeBootstrapApp> {
   }
 
   Future<void> _scanQrAndConnect() async {
-    final payload = await Navigator.of(context).push<String>(
+    final navigator = _navigatorKey.currentState;
+    if (navigator == null) {
+      setState(() {
+        _error = 'Navigator not ready yet. Please try again.';
+      });
+      return;
+    }
+
+    final payload = await navigator.push<String>(
       MaterialPageRoute(builder: (_) => const QrScannerPage()),
     );
     if (!mounted || payload == null || payload.trim().isEmpty) return;
@@ -344,6 +353,7 @@ class _RubyNativeBootstrapAppState extends State<RubyNativeBootstrapApp> {
     }
 
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         appBar: AppBar(title: const Text('RubyNative Connect')),

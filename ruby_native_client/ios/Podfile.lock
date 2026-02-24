@@ -64,6 +64,9 @@ PODS:
     - Flutter
   - media_kit_video (0.0.1):
     - Flutter
+  - mobile_scanner (7.0.0):
+    - Flutter
+    - FlutterMacOS
   - package_info_plus (0.4.5):
     - Flutter
   - pasteboard (0.0.1):
@@ -114,6 +117,7 @@ DEPENDENCIES:
   - google_mobile_ads (from `.symlinks/plugins/google_mobile_ads/ios`)
   - media_kit_libs_ios_video (from `.symlinks/plugins/media_kit_libs_ios_video/ios`)
   - media_kit_video (from `.symlinks/plugins/media_kit_video/ios`)
+  - mobile_scanner (from `.symlinks/plugins/mobile_scanner/darwin`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - pasteboard (from `.symlinks/plugins/pasteboard/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
@@ -165,6 +169,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/media_kit_libs_ios_video/ios"
   media_kit_video:
     :path: ".symlinks/plugins/media_kit_video/ios"
+  mobile_scanner:
+    :path: ".symlinks/plugins/mobile_scanner/darwin"
   package_info_plus:
     :path: ".symlinks/plugins/package_info_plus/ios"
   pasteboard:
@@ -212,6 +218,7 @@ SPEC CHECKSUMS:
   GoogleUserMessagingPlatform: befe603da6501006420c206222acd449bba45a9c
   media_kit_libs_ios_video: 5a18affdb97d1f5d466dc79988b13eff6c5e2854
   media_kit_video: 1746e198cb697d1ffb734b1d05ec429d1fcd1474
+  mobile_scanner: 9157936403f5a0644ca3779a38ff8404c5434a93
   package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
   pasteboard: 49088aeb6119d51f976a421db60d8e1ab079b63c
   path_provider_foundation: bb55f6dbba17d0dccd6737fe6f7f34fbd0376880

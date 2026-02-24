@@ -54,6 +54,21 @@ page title: "Home", route: "/", bgcolor: "#F5F5F5", vertical_alignment: "start" 
 end
 ```
 
+Page-level centering (Flet Python style):
+
+```ruby
+class CenteredApp < RubyNative::App
+  def view(page)
+    page.title = "Centered"
+    page.vertical_alignment = RubyNative::MainAxisAlignment::CENTER
+    page.horizontal_alignment = RubyNative::CrossAxisAlignment::CENTER
+    page.add(page.text(value: "Hello World!", size: 32))
+  end
+end
+
+CenteredApp.new.run
+```
+
 ## 3) Layout widgets
 
 ### `column`
@@ -109,6 +124,47 @@ Centers one child.
 ```ruby
 center do
   text value: "Centered"
+end
+```
+
+Framework note:
+- `center` is implemented as an expanding `container` with `alignment: "center"` (Flet-style behavior).
+- It centers both horizontally and vertically in available space.
+
+Flet Python equivalent:
+
+```python
+import flet as ft
+
+def main(page: ft.Page):
+    page.add(
+        ft.Container(
+            expand=True,
+            alignment=ft.alignment.center,
+            content=ft.Text("Centered")
+        )
+    )
+```
+
+RubyNative equivalent:
+
+```ruby
+page.add(
+  center do
+    text value: "Centered"
+  end
+)
+```
+
+For axis-based centering in layouts:
+
+```ruby
+column expand: true, alignment: "center", horizontal_alignment: "center" do
+  text value: "Centered in column"
+end
+
+row expand: true, alignment: "center", vertical_alignment: "center" do
+  text value: "Centered in row"
 end
 ```
 
@@ -249,8 +305,8 @@ class CounterApp < RubyNative::App
 
   def view(page)
     page.title = "Counter"
-    page.vertical_alignment = "center"
-    page.horizontal_alignment = "center"
+    page.vertical_alignment = RubyNative::MainAxisAlignment::CENTER
+    page.horizontal_alignment = RubyNative::CrossAxisAlignment::CENTER
 
     counter = page.text(value: @count.to_s, size: 48)
 

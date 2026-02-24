@@ -23,6 +23,13 @@ module RubyNative
     SPACE_EVENLY = "spaceEvenly"
   end
 
+  module CrossAxisAlignment
+    CENTER = "center"
+    START = "start"
+    FINISH = "end"
+    STRETCH = "stretch"
+  end
+
   module TextAlign
     LEFT = "left"
     RIGHT = "right"

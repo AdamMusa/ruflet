@@ -9,8 +9,8 @@ class CounterApp < RubyNative::App
   def view(page)
     app_name = "Example"
     page.title = app_name
-    page.vertical_alignment = "center"
-    page.horizontal_alignment = "center"
+    page.vertical_alignment = RubyNative::MainAxisAlignment::CENTER
+    page.horizontal_alignment = RubyNative::CrossAxisAlignment::CENTER
 
     counter = page.text(value: @count.to_s, size: 48)
 
