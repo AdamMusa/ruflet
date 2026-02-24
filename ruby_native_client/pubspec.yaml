@@ -107,6 +107,7 @@ dependencies:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-webview/src/flutter/flet_webview
   flutter_native_splash: ^2.4.7
+  mobile_scanner: ^7.1.2
 dev_dependencies:
   flutter_launcher_icons: "^0.14.4"
   

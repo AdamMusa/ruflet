@@ -25,6 +25,13 @@ module RubyNative
     end
 
     def start
+      previous_int = Signal.trap("INT") do
+        EventMachine.stop_event_loop if EventMachine.reactor_running?
+      end
+      previous_term = Signal.trap("TERM") do
+        EventMachine.stop_event_loop if EventMachine.reactor_running?
+      end
+
       EventMachine.run do
         EventMachine.error_handler do |e|
           warn "eventmachine error: #{e.class}: #{e.message}"
@@ -61,8 +68,16 @@ module RubyNative
           end
         end
 
-        warn "RubyNative server listening on ws://#{@host}:#{@port}/ws"
+        unless ENV["RUBY_NATIVE_SUPPRESS_SERVER_BANNER"] == "1"
+          warn "RubyNative server listening on ws://#{@host}:#{@port}/ws"
+        end
       end
+    rescue Interrupt
+      # Allow clean Ctrl+C shutdown without printing an exception backtrace.
+      nil
+    ensure
+      Signal.trap("INT", previous_int) if previous_int
+      Signal.trap("TERM", previous_term) if previous_term
     end
 
     private

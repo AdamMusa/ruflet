@@ -35,6 +35,30 @@ cd /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native
 bundle install
 ```
 
+## Start Playing RubyNative
+
+1. Install RubyNative mobile app from GitHub Releases:
+- [RubyNative Releases](https://github.com/AdamMusa/RubyNative/releases)
+- Download and install the latest Android APK or iOS build.
+
+2. Install RubyNative CLI from GitHub:
+
+```bash
+gem install specific_install
+gem specific_install -l https://github.com/AdamMusa/RubyNative.git -d packages/ruby_native_cli
+```
+
+3. Create your first app:
+
+```bash
+ruby_native new my_app
+cd my_app
+bundle install
+ruby_native run main.rb
+```
+
+New projects now pull RubyNative gems directly from GitHub (`main` branch), so you can start immediately with latest changes.
+
 Create a new app:
 
 ```bash
@@ -74,4 +98,4 @@ Set `RUBY_NATIVE_CLIENT_DIR` to override.
 - Android emulator guide: `docs/android_emulator_guide.md`
 - Widget guide: `docs/widgets.md`
 - Framework feature guide: `docs/framework_feature_guide.md`
-- Example apps: `/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native/example/main.rb`, `/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native/example/solitaire.rb`
+- Example apps: `example/main.rb`, `example/solitaire.rb`, `example/calculator.rb`

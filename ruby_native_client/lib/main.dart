@@ -31,6 +31,7 @@ import 'package:flet_webview/flet_webview.dart' as flet_webview;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 import 'connection_probe.dart';
 
@@ -231,7 +232,6 @@ class RubyNativeBootstrapApp extends StatefulWidget {
 class _RubyNativeBootstrapAppState extends State<RubyNativeBootstrapApp> {
   late final FletAppErrorsHandler _errorsHandler;
   late final TextEditingController _urlController;
-  late final TextEditingController _qrPayloadController;
 
   bool _connecting = true;
   bool _connected = false;
@@ -248,7 +248,6 @@ class _RubyNativeBootstrapAppState extends State<RubyNativeBootstrapApp> {
     super.initState();
     _errorsHandler = FletAppErrorsHandler();
     _urlController = TextEditingController(text: widget.initialUrl);
-    _qrPayloadController = TextEditingController();
     if (!_isMobilePlatform) {
       _activeUrl = normalizePageUrlForPlatform(widget.initialUrl);
       _connected = true;
@@ -261,7 +260,6 @@ class _RubyNativeBootstrapAppState extends State<RubyNativeBootstrapApp> {
   @override
   void dispose() {
     _urlController.dispose();
-    _qrPayloadController.dispose();
     super.dispose();
   }
 
@@ -311,15 +309,18 @@ class _RubyNativeBootstrapAppState extends State<RubyNativeBootstrapApp> {
     });
   }
 
-  void _useQrPayload() {
-    final parsed = parseUrlFromQrOrDeepLinkPayload(_qrPayloadController.text);
+  Future<void> _scanQrAndConnect() async {
+    final payload = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => const QrScannerPage()),
+    );
+    if (!mounted || payload == null || payload.trim().isEmpty) return;
+    final parsed = parseUrlFromQrOrDeepLinkPayload(payload);
     if (parsed == null || parsed.isEmpty) {
       setState(() {
-        _error = 'Could not parse URL from QR payload';
+        _error = 'Could not parse URL from scanned QR code';
       });
       return;
     }
-
     _urlController.text = parsed;
     _tryConnect(parsed);
   }
@@ -363,17 +364,6 @@ class _RubyNativeBootstrapAppState extends State<RubyNativeBootstrapApp> {
                         hintText: 'http://10.0.2.2:8550 or ws://10.0.2.2:8550/ws',
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _qrPayloadController,
-                      minLines: 1,
-                      maxLines: 3,
-                      decoration: const InputDecoration(
-                        labelText: 'QR / deep-link payload',
-                        hintText:
-                            'Paste scanned payload, link, or text containing url=',
-                      ),
-                    ),
                   ] else ...[
                     Text('Target URL: ${_urlController.text}'),
                   ],
@@ -389,9 +379,10 @@ class _RubyNativeBootstrapAppState extends State<RubyNativeBootstrapApp> {
                         child: Text(_isMobilePlatform ? 'Connect URL' : 'Retry'),
                       ),
                       if (_isMobilePlatform)
-                        OutlinedButton(
-                          onPressed: _connecting ? null : _useQrPayload,
-                          child: const Text('Use QR Payload'),
+                        OutlinedButton.icon(
+                          onPressed: _connecting ? null : _scanQrAndConnect,
+                          icon: const Icon(Icons.qr_code_scanner),
+                          label: const Text('Scan QR'),
                         ),
                     ],
                   ),
@@ -409,6 +400,59 @@ class _RubyNativeBootstrapAppState extends State<RubyNativeBootstrapApp> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class QrScannerPage extends StatefulWidget {
+  const QrScannerPage({super.key});
+
+  @override
+  State<QrScannerPage> createState() => _QrScannerPageState();
+}
+
+class _QrScannerPageState extends State<QrScannerPage> {
+  final MobileScannerController _controller = MobileScannerController();
+  bool _handled = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onDetect(BarcodeCapture capture) {
+    if (_handled) return;
+    if (capture.barcodes.isEmpty) return;
+    final code = capture.barcodes.first.rawValue?.trim();
+    if (code == null || code.isEmpty) return;
+    _handled = true;
+    Navigator.of(context).pop(code);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Scan RubyNative QR')),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          MobileScanner(controller: _controller, onDetect: _onDetect),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              width: double.infinity,
+              color: Colors.black54,
+              padding: const EdgeInsets.all(12),
+              child: const Text(
+                'Point camera at the QR shown by `ruby_native run ...`',
+                style: TextStyle(color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

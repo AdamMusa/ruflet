@@ -19,5 +19,4 @@ Gem::Specification.new do |spec|
   spec.add_dependency "ruby_native_protocol", "= #{RubyNative::VERSION}"
   spec.add_dependency "ruby_native_ui", "= #{RubyNative::VERSION}"
   spec.add_dependency "ruby_native_server", "= #{RubyNative::VERSION}"
-  spec.add_dependency "ruby_native_cli", "= #{RubyNative::VERSION}"
 end

@@ -3,6 +3,7 @@
 require "fileutils"
 require "optparse"
 require "rbconfig"
+require "socket"
 
 module RubyNative
   module CLI
@@ -50,7 +51,7 @@ module RubyNative
     GEMFILE_TEMPLATE = <<~GEMFILE
       source "https://rubygems.org"
 
-      gem "ruby_native", path: "%<gem_path>s"
+      gem "ruby_native", git: "https://github.com/AdamMusa/RubyNative.git", branch: "main", glob: "packages/ruby_native/*.gemspec"
     GEMFILE
 
     BUNDLE_CONFIG_TEMPLATE = <<~YAML
@@ -122,7 +123,7 @@ module RubyNative
       FileUtils.mkdir_p(root)
       FileUtils.mkdir_p(File.join(root, ".bundle"))
       File.write(File.join(root, "main.rb"), format(MAIN_TEMPLATE, app_title: humanize_name(File.basename(root))))
-      File.write(File.join(root, "Gemfile"), format(GEMFILE_TEMPLATE, gem_path: gem_path_from(root)))
+      File.write(File.join(root, "Gemfile"), GEMFILE_TEMPLATE)
       File.write(File.join(root, ".bundle", "config"), BUNDLE_CONFIG_TEMPLATE)
       File.write(File.join(root, "README.md"), format(README_TEMPLATE, app_name: File.basename(root)))
 
@@ -152,7 +153,11 @@ module RubyNative
         return 1
       end
 
-      env = { "RUBY_NATIVE_TARGET" => options[:target] }
+      env = {
+        "RUBY_NATIVE_TARGET" => options[:target],
+        "RUBY_NATIVE_SUPPRESS_SERVER_BANNER" => "1"
+      }
+      print_mobile_qr_hint if options[:target] == "mobile"
       cmd =
         if File.file?(File.expand_path("Gemfile", Dir.pwd))
           env["BUNDLE_PATH"] = "vendor/bundle"
@@ -167,6 +172,22 @@ module RubyNative
 
       ok = system(env, *cmd)
       ok ? 0 : 1
+    end
+
+    def print_mobile_qr_hint(port: 8550)
+      host = best_lan_host
+      payload = "http://#{host}:#{port}"
+
+      puts
+      puts "RubyNative mobile connect URL:"
+      puts "  #{payload}"
+      puts "RubyNative server ws URL:"
+      puts "  ws://0.0.0.0:#{port}/ws"
+      puts "Scan this QR from ruby_native_client (Connect -> Scan QR):"
+      print_ascii_qr(payload)
+      puts
+    rescue StandardError => e
+      warn "QR setup failed: #{e.class}: #{e.message}"
     end
 
     def command_build(args)
@@ -245,17 +266,55 @@ module RubyNative
       end
     end
 
-    def gem_path_from(app_root)
-      cli_root = File.expand_path("../..", __dir__)
-      monorepo_umbrella = File.expand_path("../ruby_native", cli_root)
-      ruby_native_root = Dir.exist?(monorepo_umbrella) ? monorepo_umbrella : cli_root
-      app_root = File.expand_path(app_root)
+    def best_lan_host
+      ips = Socket.ip_address_list
+      addr = ips.find { |ip| ip.ipv4_private? && !ip.ipv4_loopback? }
+      return addr.ip_address if addr
 
+      "127.0.0.1"
+    end
+
+    def print_ascii_qr(payload)
       begin
-        require "pathname"
-        Pathname.new(ruby_native_root).relative_path_from(Pathname.new(app_root)).to_s
-      rescue StandardError
-        ruby_native_root
+        require "rqrcode"
+      rescue LoadError
+        puts "(Install 'rqrcode' gem in CLI package for terminal QR rendering.)"
+        return
+      end
+
+      q = RQRCode::QRCode.new(payload)
+      border = 1
+      core = q.modules
+      size = core.length + (2 * border)
+
+      matrix = Array.new(size) do |y|
+        Array.new(size) do |x|
+          cy = y - border
+          cx = x - border
+          cy >= 0 && cx >= 0 && cy < core.length && cx < core.length && core[cy][cx]
+        end
+      end
+
+      # Compact square-ish terminal rendering: combine two QR rows into one character row.
+      # This stays small and scans better than freeform resizing.
+      y = 0
+      while y < size
+        line = +""
+        (0...size).each do |x|
+          top = matrix[y][x]
+          bottom = (y + 1 < size) ? matrix[y + 1][x] : false
+          line << if top && bottom
+            "\u2588" # full block
+          elsif top
+            "\u2580" # upper half block
+          elsif bottom
+            "\u2584" # lower half block
+          else
+            " "
+          end
+        end
+        puts line
+        y += 2
       end
     end
 

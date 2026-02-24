@@ -19,4 +19,5 @@ Gem::Specification.new do |spec|
   spec.executables = ["ruby_native"]
 
   spec.add_dependency "ruby_native_server", "= #{RubyNative::VERSION}"
+  spec.add_dependency "rqrcode", "~> 2.2"
 end
