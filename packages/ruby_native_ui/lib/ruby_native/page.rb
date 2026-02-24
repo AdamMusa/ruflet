@@ -82,7 +82,7 @@ module RubyNative
       @view_props["bgcolor"] = normalize_value("bgcolor", value)
     end
 
-    def add(*controls, appbar: nil, floating_action_button: nil, navigation_bar: nil)
+    def add(*controls, appbar: nil, floating_action_button: nil, navigation_bar: nil, dialog: nil, snack_bar: nil, bottom_sheet: nil)
       controls = controls.flatten
       visited = Set.new
       controls.each { |c| register_control_tree(c, visited) }
@@ -90,9 +90,10 @@ module RubyNative
       @view_props["appbar"] = appbar if appbar
       @view_props["floating_action_button"] = floating_action_button if floating_action_button
       @view_props["navigation_bar"] = navigation_bar if navigation_bar
-      register_control_tree(appbar, visited) if appbar
-      register_control_tree(floating_action_button, visited) if floating_action_button
-      register_control_tree(navigation_bar, visited) if navigation_bar
+      @view_props["dialog"] = dialog if dialog
+      @view_props["snack_bar"] = snack_bar if snack_bar
+      @view_props["bottom_sheet"] = bottom_sheet if bottom_sheet
+      @view_props.each_value { |value| register_embedded_value(value, visited) }
 
       send_view_patch
 
@@ -148,6 +149,46 @@ module RubyNative
 
     def floating_action_button=(value)
       @view_props["floating_action_button"] = value
+    end
+
+    def dialog
+      @view_props["dialog"]
+    end
+
+    def dialog=(value)
+      @view_props["dialog"] = value
+    end
+
+    def snack_bar
+      @view_props["snack_bar"]
+    end
+
+    def snack_bar=(value)
+      @view_props["snack_bar"] = value
+    end
+
+    def snackbar
+      snack_bar
+    end
+
+    def snackbar=(value)
+      self.snack_bar = value
+    end
+
+    def bottom_sheet
+      @view_props["bottom_sheet"]
+    end
+
+    def bottom_sheet=(value)
+      @view_props["bottom_sheet"] = value
+    end
+
+    def bottomsheet
+      bottom_sheet
+    end
+
+    def bottomsheet=(value)
+      self.bottom_sheet = value
     end
 
     def update(control_or_id = nil, **props)
@@ -287,9 +328,7 @@ module RubyNative
         @views.each { |view| register_control_tree(view, visited) }
       else
         @root_controls.each { |control| register_control_tree(control, visited) }
-        register_control_tree(@view_props["appbar"], visited) if @view_props["appbar"]
-        fab = @view_props["floating_action_button"]
-        register_control_tree(fab, visited) if fab
+        @view_props.each_value { |value| register_embedded_value(value, visited) }
       end
     end
 

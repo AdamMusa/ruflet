@@ -10,6 +10,7 @@ class MainApp < RubyNative::App
     page.title = app_name
 
     tabs = page.tabs(
+      height: 320,
       selected_index: 0,
       tabs: [
         page.tab(
@@ -29,6 +30,7 @@ class MainApp < RubyNative::App
 
     bottom_tabs = page.navigation_bar(
       selected_index: 0,
+      on_change: ->(e) { page.title = "#{app_name} (tab #{e.data})" },
       destinations: [
         page.navigation_bar_destination(icon: page.icon(icon: RubyNative::MaterialIcons::HOME), label: "Home"),
         page.navigation_bar_destination(icon: page.icon(icon: RubyNative::MaterialIcons::SPORTS_ESPORTS), label: "Play"),
@@ -45,6 +47,8 @@ class MainApp < RubyNative::App
       ),
       floating_action_button: page.fab(
         page.icon(icon: RubyNative::MaterialIcons::ADD),
+        bgcolor: "#232329",
+        color: "#ffffff",
         on_click: ->(_e) {}
       ),
       navigation_bar: bottom_tabs

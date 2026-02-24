@@ -45,16 +45,15 @@ module RubyNative
           end
 
           tab_bar = RubyNative::UI::Controls::TabBarControl.new(tabs: tab_controls)
-          tab_bar_view = RubyNative::UI::Controls::TabBarViewControl.new(expand: 1, controls: view_controls)
+          tab_bar_view_props = { controls: view_controls }
+          # Only opt into flexed TabBarView when developer explicitly sizes Tabs.
+          if mapped.key?(:expand) || mapped.key?("expand") || mapped.key?(:height) || mapped.key?("height")
+            tab_bar_view_props[:expand] = 1
+          end
+          tab_bar_view = RubyNative::UI::Controls::TabBarViewControl.new(**tab_bar_view_props)
           content = RubyNative::UI::Controls::ColumnControl.new(expand: true, spacing: 0, controls: [tab_bar, tab_bar_view])
 
           mapped[:length] = tab_controls.length unless mapped.key?(:length) || mapped.key?("length")
-          # In common page layouts Tabs is placed directly into View controls.
-          # Ensure Tabs itself participates in flex so TabBarView receives
-          # bounded height constraints.
-          unless mapped.key?(:expand) || mapped.key?("expand") || mapped.key?(:height) || mapped.key?("height")
-            mapped[:expand] = 1
-          end
           mapped[:content] = content
           mapped
         end

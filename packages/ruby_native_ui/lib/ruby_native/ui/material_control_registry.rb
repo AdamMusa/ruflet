@@ -16,6 +16,10 @@ module RubyNative
         "radio_group" => "RadioGroup",
         "alertdialog" => "AlertDialog",
         "alert_dialog" => "AlertDialog",
+        "snackbar" => "SnackBar",
+        "snack_bar" => "SnackBar",
+        "bottomsheet" => "BottomSheet",
+        "bottom_sheet" => "BottomSheet",
         "markdown" => "Markdown",
         "textbutton" => "TextButton",
         "text_button" => "TextButton",
@@ -54,6 +58,7 @@ module RubyNative
       EVENT_PROPS = {
         on_click: "click",
         on_change: "change",
+        on_action: "action",
         on_submit: "submit",
         on_dismiss: "dismiss",
         on_tap: "tap",

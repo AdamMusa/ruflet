@@ -23,6 +23,8 @@ require_relative "controls/material/checkbox_control"
 require_relative "controls/material/radio_control"
 require_relative "controls/material/radio_group_control"
 require_relative "controls/material/alert_dialog_control"
+require_relative "controls/material/snack_bar_control"
+require_relative "controls/material/bottom_sheet_control"
 require_relative "controls/material/markdown_control"
 require_relative "controls/material/tabs_control"
 require_relative "controls/material/tab_control"
@@ -71,6 +73,10 @@ module RubyNative
         "radio_group" => Controls::RadioGroupControl,
         "alertdialog" => Controls::AlertDialogControl,
         "alert_dialog" => Controls::AlertDialogControl,
+        "snackbar" => Controls::SnackBarControl,
+        "snack_bar" => Controls::SnackBarControl,
+        "bottomsheet" => Controls::BottomSheetControl,
+        "bottom_sheet" => Controls::BottomSheetControl,
         "markdown" => Controls::MarkdownControl,
         "tabs" => Controls::TabsControl,
         "tab" => Controls::TabControl,

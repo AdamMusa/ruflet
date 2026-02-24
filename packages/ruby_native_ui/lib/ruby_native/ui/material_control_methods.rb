@@ -58,6 +58,10 @@ module RubyNative
       def radiogroup(**props) = radio_group(**props)
       def alert_dialog(**props) = build_widget(:alertdialog, **props)
       def alertdialog(**props) = alert_dialog(**props)
+      def snack_bar(**props) = build_widget(:snackbar, **props)
+      def snackbar(**props) = snack_bar(**props)
+      def bottom_sheet(**props) = build_widget(:bottomsheet, **props)
+      def bottomsheet(**props) = bottom_sheet(**props)
 
       def markdown(value = nil, **props)
         mapped = props.dup
