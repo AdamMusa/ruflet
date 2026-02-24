@@ -1,81 +1,34 @@
 # frozen_string_literal: true
 
 require_relative "../icon_data"
+require_relative "material_icon_lookup"
 
 module RubyNative
   module MaterialIcons
     module_function
 
-    ICONS = {
-      ADD: "add",
-      REMOVE: "remove",
-      CHECK: "check",
-      CLOSE: "close",
-      MENU: "menu",
-      SEARCH: "search",
-      SETTINGS: "settings",
-      HOME: "home",
-      FAVORITE: "favorite",
-      FAVORITE_BORDER: "favorite_border",
-      STAR: "star",
-      STAR_BORDER: "star_border",
-      DELETE: "delete",
-      EDIT: "edit",
-      SAVE: "save",
-      INFO: "info",
-      WARNING: "warning",
-      ERROR: "error",
-      HELP: "help",
-      LOGIN: "login",
-      LOGOUT: "logout",
-      PERSON: "person",
-      GROUP: "group",
-      EMAIL: "email",
-      PHONE: "phone",
-      LOCK: "lock",
-      VISIBILITY: "visibility",
-      VISIBILITY_OFF: "visibility_off",
-      ARROW_BACK: "arrow_back",
-      ARROW_FORWARD: "arrow_forward",
-      ARROW_UPWARD: "arrow_upward",
-      ARROW_DOWNWARD: "arrow_downward",
-      CHEVRON_LEFT: "chevron_left",
-      CHEVRON_RIGHT: "chevron_right",
-      KEYBOARD_ARROW_UP: "keyboard_arrow_up",
-      KEYBOARD_ARROW_DOWN: "keyboard_arrow_down",
-      REFRESH: "refresh",
-      DOWNLOAD: "download",
-      UPLOAD: "upload",
-      FILE_DOWNLOAD: "file_download",
-      FILE_UPLOAD: "file_upload",
-      PLAY_ARROW: "play_arrow",
-      PAUSE: "pause",
-      STOP: "stop",
-      SKIP_NEXT: "skip_next",
-      SKIP_PREVIOUS: "skip_previous",
-      VOLUME_UP: "volume_up",
-      VOLUME_OFF: "volume_off",
-      IMAGE: "image",
-      PHOTO_CAMERA: "photo_camera",
-      VIDEO_CALL: "video_call",
-      FOLDER: "folder",
-      FOLDER_OPEN: "folder_open",
-      CALENDAR_MONTH: "calendar_month",
-      DATE_RANGE: "date_range",
-      ACCESS_TIME: "access_time",
-      SHOPPING_CART: "shopping_cart",
-      PAYMENT: "payment",
-      ATTACH_MONEY: "attach_money",
-      LANGUAGE: "language",
-      LOCATION_ON: "location_on",
-      MAP: "map",
-      DARK_MODE: "dark_mode",
-      LIGHT_MODE: "light_mode",
-      BUILD: "build",
-      CODE: "code"
-    }.freeze
+    ICONS = begin
+      source = RubyNative::MaterialIconLookup.icon_map
+      if source.empty?
+        {
+          HOME: "home",
+          SETTINGS: "settings",
+          SEARCH: "search",
+          ADD: "add",
+          CLOSE: "close"
+        }
+      else
+        source.keys.each_with_object({}) do |name, result|
+          text = name.to_s.gsub(/[^a-zA-Z0-9]/, "_").gsub(/_+/, "_").sub(/\A_/, "").sub(/_\z/, "")
+          text = "ICON_#{text}" if text.match?(/\A\d/)
+          result[text.upcase.to_sym] = name
+        end
+      end.freeze
+    end
 
     ICONS.each do |const_name, icon_name|
+      next if const_defined?(const_name, false)
+
       const_set(const_name, RubyNative::IconData.new(icon_name))
     end
 
@@ -85,5 +38,18 @@ module RubyNative
 
       RubyNative::IconData.new(name.to_s)
     end
+
+    def all
+      ICONS.keys.map { |k| const_get(k) }
+    end
+
+    def random
+      all.sample || RubyNative::IconData.new(RubyNative::MaterialIconLookup.fallback_codepoint)
+    end
+
+    def names
+      ICONS.values
+    end
+
   end
 end

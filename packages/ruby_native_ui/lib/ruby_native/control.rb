@@ -3,11 +3,14 @@
 require "securerandom"
 require_relative "ui/control_registry"
 require_relative "icon_data"
+require_relative "icons/material_icon_lookup"
+require_relative "icons/cupertino_icon_lookup"
 
 module RubyNative
   class Control
     TYPE_MAP = UI::ControlRegistry::TYPE_MAP
     EVENT_PROPS = UI::ControlRegistry::EVENT_PROPS
+    HOST_EXPANDED_TYPES = %w[view row column].freeze
 
     attr_reader :type, :id, :props, :children
     attr_accessor :wire_id, :runtime_page
@@ -47,9 +50,10 @@ module RubyNative
         "_i" => wire_id
       }
 
-      # Flet uses control internals to enable layout behaviors like absolute
-      # positioning for Stack children.
-      patch["_internals"] = { "host_positioned" => true } if type == "stack"
+      internals = {}
+      internals["host_positioned"] = true if type == "stack"
+      internals["host_expanded"] = true if HOST_EXPANDED_TYPES.include?(type)
+      patch["_internals"] = internals unless internals.empty?
 
       props.each { |k, v| patch[k] = serialize_value(v) }
       patch["controls"] = children.map(&:to_patch) unless children.empty?
@@ -100,6 +104,7 @@ module RubyNative
           else
             v
           end
+        value = normalize_icon_prop(mapped_key, value)
         value = normalize_color_prop(mapped_key, value)
 
         result[mapped_key] = value
@@ -119,6 +124,27 @@ module RubyNative
 
     def color_prop_key?(key)
       key == "color" || key == "bgcolor" || key.end_with?("_color")
+    end
+
+    def normalize_icon_prop(key, value)
+      return value unless icon_prop_key?(key)
+      codepoint = resolve_icon_codepoint(value)
+      codepoint.nil? ? value : codepoint
+    end
+
+    def icon_prop_key?(key)
+      key == "icon" || key.end_with?("_icon")
+    end
+
+    def resolve_icon_codepoint(value)
+      return nil unless value.is_a?(Integer) || value.is_a?(Symbol) || value.is_a?(String)
+
+      codepoint = RubyNative::MaterialIconLookup.codepoint_for(value)
+      if codepoint.nil? || (value.is_a?(Integer) && codepoint == value)
+        cupertino = RubyNative::CupertinoIconLookup.codepoint_for(value)
+        codepoint = cupertino unless cupertino.nil?
+      end
+      codepoint
     end
 
     def normalized_event_name(event_name)

@@ -24,6 +24,12 @@ require_relative "controls/material/radio_control"
 require_relative "controls/material/radio_group_control"
 require_relative "controls/material/alert_dialog_control"
 require_relative "controls/material/markdown_control"
+require_relative "controls/material/tabs_control"
+require_relative "controls/material/tab_control"
+require_relative "controls/material/tab_bar_control"
+require_relative "controls/material/tab_bar_view_control"
+require_relative "controls/material/navigation_bar_control"
+require_relative "controls/material/navigation_bar_destination_control"
 
 module RubyNative
   module UI
@@ -65,7 +71,17 @@ module RubyNative
         "radio_group" => Controls::RadioGroupControl,
         "alertdialog" => Controls::AlertDialogControl,
         "alert_dialog" => Controls::AlertDialogControl,
-        "markdown" => Controls::MarkdownControl
+        "markdown" => Controls::MarkdownControl,
+        "tabs" => Controls::TabsControl,
+        "tab" => Controls::TabControl,
+        "tabbar" => Controls::TabBarControl,
+        "tab_bar" => Controls::TabBarControl,
+        "tabbarview" => Controls::TabBarViewControl,
+        "tab_bar_view" => Controls::TabBarViewControl,
+        "navigationbar" => Controls::NavigationBarControl,
+        "navigation_bar" => Controls::NavigationBarControl,
+        "navigationbardestination" => Controls::NavigationBarDestinationControl,
+        "navigation_bar_destination" => Controls::NavigationBarDestinationControl
       }.freeze
     end
   end

@@ -183,6 +183,56 @@ class AppBarApp < RubyNative::App
 end
 ```
 
+## 7) Tabs and bottom tabs
+
+```ruby
+class TabsApp < RubyNative::App
+  def view(page)
+    top_tabs = page.tabs(
+      expand: 1,
+      length: 3,
+      selected_index: 0,
+      content: page.column(
+        expand: true,
+        spacing: 0,
+        controls: [
+          page.tab_bar(
+            tabs: [
+              page.tab(label: page.text(value: "Home")),
+              page.tab(label: page.text(value: "Play")),
+              page.tab(label: page.text(value: "About"))
+            ]
+          ),
+          page.tab_bar_view(
+            expand: 1,
+            controls: [
+              page.container(expand: true, content: page.text(value: "Home tab")),
+              page.container(expand: true, content: page.text(value: "Play tab")),
+              page.container(expand: true, content: page.text(value: "About tab"))
+            ]
+          )
+        ]
+      )
+    )
+
+    bottom_tabs = page.navigation_bar(
+      selected_index: 0,
+      destinations: [
+        page.navigation_bar_destination(icon: page.icon(icon: 0xe88a), label: "Home"),
+        page.navigation_bar_destination(icon: page.icon(icon: 0xea28), label: "Play"),
+        page.navigation_bar_destination(icon: page.icon(icon: 0xe8b8), label: "Settings")
+      ]
+    )
+
+    page.add(
+      top_tabs,
+      appbar: page.app_bar(title: page.text(value: "Tabs Demo")),
+      navigation_bar: bottom_tabs
+    )
+  end
+end
+```
+
 ## Notes
 
 - Use class-based apps for new projects and examples.

@@ -77,6 +77,16 @@ module RubyNative
       def appbar(**props) = app_bar(**props)
       def floating_action_button(**props) = build_widget(:floatingactionbutton, **props)
       def floatingactionbutton(**props) = floating_action_button(**props)
+      def tabs(**props, &block) = build_widget(:tabs, **props, &block)
+      def tab(**props, &block) = build_widget(:tab, **props, &block)
+      def tab_bar(**props, &block) = build_widget(:tabbar, **props, &block)
+      def tabbar(**props, &block) = tab_bar(**props, &block)
+      def tab_bar_view(**props, &block) = build_widget(:tabbarview, **props, &block)
+      def tabbarview(**props, &block) = tab_bar_view(**props, &block)
+      def navigation_bar(**props, &block) = build_widget(:navigationbar, **props, &block)
+      def navigationbar(**props, &block) = navigation_bar(**props, &block)
+      def navigation_bar_destination(**props, &block) = build_widget(:navigationbardestination, **props, &block)
+      def navigationbardestination(**props, &block) = navigation_bar_destination(**props, &block)
 
       def fab(content = nil, **props)
         mapped = props.dup

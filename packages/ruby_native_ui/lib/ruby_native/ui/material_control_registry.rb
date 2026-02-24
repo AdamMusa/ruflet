@@ -37,7 +37,17 @@ module RubyNative
         "image" => "Image",
         "appbar" => "AppBar",
         "app_bar" => "AppBar",
-        "floatingactionbutton" => "FloatingActionButton"
+        "floatingactionbutton" => "FloatingActionButton",
+        "tabs" => "Tabs",
+        "tab" => "Tab",
+        "tabbar" => "TabBar",
+        "tab_bar" => "TabBar",
+        "tabbarview" => "TabBarView",
+        "tab_bar_view" => "TabBarView",
+        "navigationbar" => "NavigationBar",
+        "navigation_bar" => "NavigationBar",
+        "navigationbardestination" => "NavigationBarDestination",
+        "navigation_bar_destination" => "NavigationBarDestination"
       }.freeze
 
       EVENT_PROPS = {

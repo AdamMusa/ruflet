@@ -5,6 +5,8 @@ require "ruby_native_protocol"
 require_relative "control"
 require_relative "ui/control_methods"
 require_relative "ui/widget_builder"
+require_relative "icons/material_icon_lookup"
+require_relative "icons/cupertino_icon_lookup"
 require "set"
 require "cgi"
 
@@ -57,7 +59,7 @@ module RubyNative
     end
 
     def vertical_alignment=(value)
-      v = normalize_value(value)
+      v = normalize_value("vertical_alignment", value)
       @page_props["vertical_alignment"] = v
       @view_props["vertical_alignment"] = v
     end
@@ -67,7 +69,7 @@ module RubyNative
     end
 
     def horizontal_alignment=(value)
-      v = normalize_value(value)
+      v = normalize_value("horizontal_alignment", value)
       @page_props["horizontal_alignment"] = v
       @view_props["horizontal_alignment"] = v
     end
@@ -77,18 +79,20 @@ module RubyNative
     end
 
     def bgcolor=(value)
-      @view_props["bgcolor"] = normalize_value(value)
+      @view_props["bgcolor"] = normalize_value("bgcolor", value)
     end
 
-    def add(*controls, appbar: nil, floating_action_button: nil)
+    def add(*controls, appbar: nil, floating_action_button: nil, navigation_bar: nil)
       controls = controls.flatten
       visited = Set.new
       controls.each { |c| register_control_tree(c, visited) }
       @root_controls = controls
       @view_props["appbar"] = appbar if appbar
       @view_props["floating_action_button"] = floating_action_button if floating_action_button
+      @view_props["navigation_bar"] = navigation_bar if navigation_bar
       register_control_tree(appbar, visited) if appbar
       register_control_tree(floating_action_button, visited) if floating_action_button
+      register_control_tree(navigation_bar, visited) if navigation_bar
 
       send_view_patch
 
@@ -264,7 +268,10 @@ module RubyNative
       view_patch = {
         "_c" => "View",
         "_i" => @view_id,
-        "route" => (@page_props["route"] || @client_details["route"] || "/")
+        "route" => (@page_props["route"] || @client_details["route"] || "/"),
+        # Required by Flet layout engine so children with `expand` inside View
+        # are wrapped with Expanded/Flexible on the Flutter side.
+        "_internals" => { "host_expanded" => true }
       }
       @view_props.each { |k, v| view_patch[k] = serialize_patch_value(v) }
       view_patch["controls"] = @root_controls.map(&:to_patch)
@@ -316,11 +323,19 @@ module RubyNative
 
     def normalize_props(hash)
       hash.each_with_object({}) do |(k, v), result|
-        result[k.to_s] = normalize_value(v)
+        key = k.to_s
+        result[key] = normalize_value(key, v)
       end
     end
 
-    def normalize_value(value)
+    def normalize_value(key, value)
+      if icon_prop_key?(key) && (value.is_a?(String) || value.is_a?(Symbol) || value.is_a?(Integer))
+        codepoint = RubyNative::MaterialIconLookup.codepoint_for(value)
+        codepoint = RubyNative::CupertinoIconLookup.codepoint_for(value) if codepoint.nil? || codepoint == value
+        return codepoint unless codepoint.nil?
+      end
+
+      return value.value if value.is_a?(RubyNative::IconData)
       value.is_a?(Symbol) ? value.to_s : value
     end
 
@@ -360,6 +375,8 @@ module RubyNative
       case value
       when Control
         value.to_patch
+      when RubyNative::IconData
+        value.value
       when Array
         value.map { |v| serialize_patch_value(v) }
       when Hash
@@ -367,6 +384,10 @@ module RubyNative
       else
         value
       end
+    end
+
+    def icon_prop_key?(key)
+      key == "icon" || key.end_with?("_icon")
     end
   end
 end

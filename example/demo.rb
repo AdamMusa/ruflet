@@ -1,13 +1,12 @@
 require "ruby_native"
-class LayoutApp < RubyNative::App
+
+class MyApp < RubyNative::App
   def view(page)
-    page.add(
-      page.column(spacing: 12) do
-        text value: "Line 1"
-        text value: "Line 2"
-      end
-    )
+    page.vertical_alignment = RubyNative::MainAxisAlignment::CENTER
+    page.horizontal_alignment = RubyNative::CrossAxisAlignment::CENTER
+    page.title = "Hello"
+    page.add(page.text(value: "Hello RubyNative"))
   end
 end
 
-LayoutApp.new.run
+MyApp.new.run

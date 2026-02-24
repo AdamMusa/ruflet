@@ -1,66 +1,34 @@
 # frozen_string_literal: true
 
 require_relative "../../icon_data"
+require_relative "../cupertino_icon_lookup"
 
 module RubyNative
   module CupertinoIcons
     module_function
 
-    ICONS = {
-      ADD: "add",
-      ADD_CIRCLED: "add_circled",
-      MINUS: "minus",
-      CHECK_MARK: "check_mark",
-      CLEAR: "clear",
-      XMARK: "xmark",
-      SEARCH: "search",
-      SETTINGS: "settings",
-      HOME: "home",
-      HEART: "heart",
-      HEART_FILL: "heart_fill",
-      STAR: "star",
-      STAR_FILL: "star_fill",
-      DELETE: "delete",
-      PERSON: "person",
-      PERSON_2: "person_2",
-      MAIL: "mail",
-      PHONE: "phone",
-      LOCK: "lock",
-      EYE: "eye",
-      EYE_SLASH: "eye_slash",
-      LEFT_CHEVRON: "left_chevron",
-      RIGHT_CHEVRON: "right_chevron",
-      UP_ARROW: "up_arrow",
-      DOWN_ARROW: "down_arrow",
-      REFRESH: "refresh",
-      CLOUD_DOWNLOAD: "cloud_download",
-      CLOUD_UPLOAD: "cloud_upload",
-      PLAY: "play",
-      PAUSE: "pause",
-      STOP: "stop",
-      FORWARD: "forward",
-      BACK: "back",
-      VOLUME_UP: "volume_up",
-      VOLUME_OFF: "volume_off",
-      PHOTO: "photo",
-      CAMERA: "camera",
-      VIDEOCAM: "videocam",
-      FOLDER: "folder",
-      CALENDAR: "calendar",
-      CLOCK: "clock",
-      CART: "cart",
-      CREDITCARD: "creditcard",
-      MONEY_DOLLAR: "money_dollar",
-      GLOBE: "globe",
-      LOCATION: "location",
-      MAP: "map",
-      MOON: "moon",
-      SUN_MAX: "sun_max",
-      HAMMER: "hammer",
-      CHEVRON_UP_CHEVRON_DOWN: "chevron_up_chevron_down"
-    }.freeze
+    ICONS = begin
+      source = RubyNative::CupertinoIconLookup.icon_map
+      if source.empty?
+        {
+          HOME: "house",
+          SEARCH: "search",
+          SETTINGS: "gear",
+          ADD: "add",
+          CLOSE: "clear"
+        }
+      else
+        source.keys.each_with_object({}) do |name, result|
+          text = name.to_s.gsub(/[^a-zA-Z0-9]/, "_").gsub(/_+/, "_").sub(/\A_/, "").sub(/_\z/, "")
+          text = "ICON_#{text}" if text.match?(/\A\d/)
+          result[text.upcase.to_sym] = name
+        end
+      end.freeze
+    end
 
     ICONS.each do |const_name, icon_name|
+      next if const_defined?(const_name, false)
+
       const_set(const_name, RubyNative::IconData.new(icon_name))
     end
 
@@ -69,6 +37,18 @@ module RubyNative
       return const_get(key) if const_defined?(key, false)
 
       RubyNative::IconData.new(name.to_s)
+    end
+
+    def all
+      ICONS.keys.map { |k| const_get(k) }
+    end
+
+    def random
+      all.sample || RubyNative::IconData.new(RubyNative::CupertinoIconLookup.fallback_codepoint)
+    end
+
+    def names
+      ICONS.values
     end
   end
 end

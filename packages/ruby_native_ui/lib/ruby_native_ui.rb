@@ -42,6 +42,28 @@ module RubyNative
   module Icons
     REMOVE = MaterialIcons::REMOVE
     ADD = MaterialIcons::ADD
+
+    class << self
+      def const_missing(name)
+        if RubyNative::MaterialIcons.const_defined?(name, false)
+          return RubyNative::MaterialIcons.const_get(name)
+        end
+
+        if RubyNative::CupertinoIcons.const_defined?(name, false)
+          return RubyNative::CupertinoIcons.const_get(name)
+        end
+
+        super
+      end
+
+      def [](name)
+        key = name.to_s.upcase.to_sym
+        return RubyNative::MaterialIcons.const_get(key) if RubyNative::MaterialIcons.const_defined?(key, false)
+        return RubyNative::CupertinoIcons.const_get(key) if RubyNative::CupertinoIcons.const_defined?(key, false)
+
+        RubyNative::IconData.new(name.to_s)
+      end
+    end
   end
 
   class << self
