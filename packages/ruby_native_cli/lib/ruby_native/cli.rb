@@ -12,40 +12,34 @@ module RubyNative
     MAIN_TEMPLATE = <<~RUBY
       require "ruby_native"
 
-      class CounterApp < RubyNative::App
-        def initialize
-          super
-          @count = 0
-        end
-
+      class MainApp < RubyNative::App
         def view(page)
           app_name = "%<app_title>s"
           page.title = app_name
-          page.vertical_alignment = RubyNative::MainAxisAlignment::CENTER
-          page.horizontal_alignment = RubyNative::CrossAxisAlignment::CENTER
 
-          counter = page.text(value: @count.to_s, size: 48)
+          body = page.column(
+            expand: true,
+            alignment: RubyNative::MainAxisAlignment::CENTER,
+            horizontal_alignment: RubyNative::CrossAxisAlignment::CENTER,
+            spacing: 8
+          ) do
+            text value: "Hello RubyNative", size: 28
+            text value: "Edit main.rb and run again", size: 12
+          end
 
           page.add(
-            page.column(horizontal_alignment: "center", spacing: 8) do
-              text "You have pushed the button this many times"
-              counter
-            end,
+            body,
             appbar: page.app_bar(
               bgcolor: "#2196F3",
               color: "#FFFFFF",
               title: page.text(value: app_name)
             ),
-            floating_action_button: page.fab("+", bgcolor: "#2196F3",
-              color: "#FFFFFF", on_click: ->(e) {
-              @count += 1
-              e.page.update(counter, value: @count.to_s)
-            })
+            floating_action_button: page.fab("+", bgcolor: "#2196F3", color: "#FFFFFF", on_click: ->(_e) {})
           )
         end
       end
 
-      CounterApp.new.run
+      MainApp.new.run
     RUBY
 
     GEMFILE_TEMPLATE = <<~GEMFILE

@@ -2,6 +2,10 @@
 
 RubyNative is a Ruby port of Flet for building web, desktop, and mobile apps in Ruby.
 
+Class-based apps are the recommended and documented standard:
+- `class MyApp < RubyNative::App`
+- implement `def view(page)`
+
 ## Start Here
 
 1. Install mobile client app from releases:
@@ -33,7 +37,7 @@ ruby_native run main.rb
 RubyNative is split into packages:
 
 - `ruby_native_protocol`: protocol layer
-- `ruby_native_ui`: controls/page/widget builder/DSL
+- `ruby_native_ui`: controls, page, widget builder
 - `ruby_native_server`: WebSocket runtime (`RubyNative.run`)
 - `ruby_native_cli`: CLI executable (`ruby_native`)
 - `ruby_native`: runtime umbrella package (`ui + server + protocol`)
@@ -53,6 +57,23 @@ Monorepo folders:
 It does **not** add `ruby_native_cli` to app dependencies.
 
 That keeps CLI global/tooling-level and app deps runtime-focused.
+
+## App Style (Required in docs/examples)
+
+Use class-based apps:
+
+```ruby
+require "ruby_native"
+
+class MyApp < RubyNative::App
+  def view(page)
+    page.title = "Hello"
+    page.add(page.text(value: "Hello RubyNative"))
+  end
+end
+
+MyApp.new.run
+```
 
 ## CLI
 

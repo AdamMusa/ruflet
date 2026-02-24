@@ -65,3 +65,37 @@ ruby_native build linux
 
 - `ruby_native new` generates app `Gemfile` pulling `ruby_native` from GitHub.
 - It does not include `ruby_native_cli` in app dependencies.
+- App code should use class-based style (`class App < RubyNative::App`), not DSL style.
+
+## Default app structure (class-based, scaffold-style)
+
+`main.rb`:
+
+```ruby
+require "ruby_native"
+
+class MyApp < RubyNative::App
+  def view(page)
+    app_name = "My App"
+    page.title = app_name
+
+    body = page.column(
+      expand: true,
+      alignment: RubyNative::MainAxisAlignment::CENTER,
+      horizontal_alignment: RubyNative::CrossAxisAlignment::CENTER,
+      spacing: 8
+    ) do
+      text value: "Hello RubyNative", size: 28
+      text value: "Edit main.rb and run again", size: 12
+    end
+
+    page.add(
+      body,
+      appbar: page.app_bar(title: page.text(value: app_name)),
+      floating_action_button: page.fab("+", on_click: ->(_e) {})
+    )
+  end
+end
+
+MyApp.new.run
+```
