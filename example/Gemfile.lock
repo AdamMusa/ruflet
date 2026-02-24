@@ -30,7 +30,6 @@ PATH
   remote: ../packages/ruby_native
   specs:
     ruby_native (0.2.0)
-      ruby_native_cli (= 0.2.0)
       ruby_native_protocol (= 0.2.0)
       ruby_native_server (= 0.2.0)
       ruby_native_ui (= 0.2.0)

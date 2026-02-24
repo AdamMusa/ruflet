@@ -1,67 +1,67 @@
 # Creating a New RubyNative App
 
-## 1) Create app skeleton
-
-From the RubyNative project root:
+## 1) Install CLI (one-time)
 
 ```bash
-cd /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native
-ruby bin/ruby_native new my_app
+gem install specific_install
+gem specific_install -l https://github.com/AdamMusa/RubyNative.git -d packages/ruby_native_cli
 ```
 
-This creates:
-
-- `my_app/main.rb`
-- `my_app/Gemfile`
-- `my_app/README.md`
-
-## 2) Install dependencies in the new app
+## 2) Create app
 
 ```bash
+ruby_native new my_app
 cd my_app
+```
+
+## 3) Install dependencies
+
+```bash
 bundle install
 ```
 
-## 3) Run your app
+## 4) Run app server
 
 ```bash
-bundle exec ruby_native run main
+ruby_native run main.rb
 ```
 
-You can also run without a script name (defaults to `main`):
+When running mobile target, CLI prints:
+- mobile connect URL
+- WebSocket URL
+- QR code for scan-connect
+
+## 5) Connect from mobile client
+
+Install RubyNative mobile app from:
+- [RubyNative Releases](https://github.com/AdamMusa/RubyNative/releases)
+
+Then either:
+- manually enter URL shown in terminal, or
+- tap `Scan QR` and scan terminal QR
+
+## 6) Target modes
 
 ```bash
-bundle exec ruby_native run
-```
-
-## 4) Run Flutter client
-
-In another terminal:
-
-```bash
-cd /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native/ruby_native_client
-flutter run
-```
-
-## 5) Choose target mode
-
-```bash
-bundle exec ruby_native run main --mobile
-bundle exec ruby_native run main --web
-bundle exec ruby_native run main --desktop
+ruby_native run main.rb --mobile
+ruby_native run main.rb --web
+ruby_native run main.rb --desktop
 ```
 
 `--mobile` is default.
 
-## 6) Build binaries
-
-Run from RubyNative root (or set `RUBY_NATIVE_CLIENT_DIR`):
+## 7) Build binaries
 
 ```bash
-bundle exec ruby_native build apk
-bundle exec ruby_native build ios
-bundle exec ruby_native build web
-bundle exec ruby_native build macos
-bundle exec ruby_native build windows
-bundle exec ruby_native build linux
+ruby_native build apk
+ruby_native build ios
+ruby_native build web
+ruby_native build macos
+ruby_native build windows
+ruby_native build linux
 ```
+
+## Notes
+
+- `ruby_native new` generates app `Gemfile` pulling `ruby_native` from GitHub.
+- It does not include `ruby_native_cli` in app dependencies.

@@ -1,78 +1,110 @@
-# RubyNative Widget Guide
+# RubyNative Widgets Guide
 
-RubyNative DSL is widget-first, similar to Flet.
+This guide covers the basics of building UI in RubyNative: app structure, layout widgets, content widgets, events, and updating controls.
 
-## Core concepts
+## 1) App structure
 
-- `page` defines page-level properties (`title`, `route`, `vertical_alignment`, ...)
-- layout widgets compose children: `column`, `row`, `container`, `center`, `gesture_detector`
-- content widgets: `text`, `text_field`, `button`, `icon_button`, `icon`
-- IDs are auto-generated if you do not pass `id:`
+RubyNative apps usually follow one of these styles:
 
-## Basic counter example
+- DSL style (`page do ... end`)
+- Class style (`class MyApp < RubyNative::App`)
+
+### DSL style
 
 ```ruby
 require "ruby_native"
 
-page title: "Counter", vertical_alignment: "center" do
-  center do
-    row spacing: 8, alignment: "center" do
-      icon_button icon: :remove
-      text_field value: "0", width: 100, text_align: "right"
-      icon_button icon: :add
-    end
+page title: "Hello", vertical_alignment: "center", horizontal_alignment: "center" do
+  text value: "Hello RubyNative"
+end
+
+RubyNative.app.run
+```
+
+### Class style
+
+```ruby
+require "ruby_native"
+
+class MyApp < RubyNative::App
+  def view(page)
+    page.title = "Hello"
+    page.add(page.text(value: "Hello RubyNative"))
   end
 end
 
-app = RubyNative.app(host: "0.0.0.0", port: Integer(ENV.fetch("FLET_PORT", "8550")))
-app.run
+MyApp.new.run
 ```
 
-## Widget reference
+## 2) Page basics
 
-Note: controls are explicit and class-backed in `ruby_native_ui/lib/ruby_native/ui/controls/*.rb`.
-If a control is not implemented yet, RubyNative raises `Unsupported control type`.
-
-## `page`
-
-```ruby
-page title: "Home", route: "/", vertical_alignment: "center" do
-  # children
-end
-```
-
-Common props:
+Common page properties:
 
 - `title`
 - `route`
+- `bgcolor`
 - `vertical_alignment`
 - `horizontal_alignment`
 
-## `column`
+Example:
+
+```ruby
+page title: "Home", route: "/", bgcolor: "#F5F5F5", vertical_alignment: "start" do
+  text value: "Dashboard"
+end
+```
+
+## 3) Layout widgets
+
+### `column`
 
 Vertical layout.
 
 ```ruby
-column spacing: 12, expand: true do
-  text value: "A"
-  text value: "B"
+column spacing: 12 do
+  text value: "Line 1"
+  text value: "Line 2"
 end
 ```
 
-## `row`
+Useful props:
+
+- `spacing`
+- `alignment`
+- `horizontal_alignment`
+- `expand`
+
+### `row`
 
 Horizontal layout.
 
 ```ruby
 row spacing: 8, alignment: "center" do
-  text value: "Left"
-  text value: "Right"
+  button text: "Cancel"
+  button text: "Save"
 end
 ```
 
-## `center`
+Useful props:
 
-Center wrapper.
+- `spacing`
+- `alignment`
+- `vertical_alignment`
+- `expand`
+
+### `container`
+
+Box wrapper for size, padding, color, border, and content.
+
+```ruby
+container width: 240, padding: 12, bgcolor: "#FFFFFF", border_radius: 10 do
+  text value: "Card content"
+end
+```
+
+### `center`
+
+Centers one child.
 
 ```ruby
 center do
@@ -80,20 +112,54 @@ center do
 end
 ```
 
-Notes:
+### `stack`
 
-- behaves as centered container
-- ignores `spacing` (by design)
-
-## `text`
+Absolute/overlay layout.
 
 ```ruby
-text value: "Hello", size: 24
+stack do
+  container left: 10, top: 10, width: 120, height: 80, bgcolor: "#ddd"
+  text left: 20, top: 20, value: "On top"
+end
 ```
 
-## Colors
+## 4) Content widgets
 
-Use Flet-style named colors via `RubyNative::Colors`:
+### `text`
+
+```ruby
+text value: "Title", size: 24, weight: "bold"
+```
+
+### `text_field` / `textfield`
+
+```ruby
+text_field label: "Name", value: "", width: 220
+```
+
+### `button` / `elevated_button`
+
+```ruby
+button text: "Submit"
+elevated_button text: "Primary"
+```
+
+### `icon` and `icon_button`
+
+```ruby
+icon icon: RubyNative::MaterialIcons::HOME
+icon_button icon: RubyNative::MaterialIcons::ADD
+```
+
+### `image`
+
+```ruby
+image src: "https://example.com/pic.png", width: 120, height: 120, fit: "contain"
+```
+
+## 5) Colors
+
+You can use hex strings or `RubyNative::Colors`.
 
 ```ruby
 text value: "Hello", color: RubyNative::Colors.BLUE_700
@@ -104,135 +170,111 @@ Helpers:
 
 ```ruby
 RubyNative::Colors.random
-RubyNative::Colors.random(exclude: [RubyNative::Colors.RED, RubyNative::Colors.GREEN])
 RubyNative::Colors.with_opacity(0.5, RubyNative::Colors.BLUE)
 ```
 
-## `text_field`
+## 6) Events and gestures
+
+### Button click
 
 ```ruby
-text_field value: "0", width: 100, text_align: "right"
+elevated_button text: "Tap", on_click: ->(e) { puts e.name }
 ```
 
-Alias also available:
+### Gesture detector
 
 ```ruby
-textfield value: "0"
-```
-
-## `button`
-
-```ruby
-button text: "Click"
-```
-
-## `elevated_button`
-
-Flet-compatible alias for elevated material button.
-
-```ruby
-elevated_button text: "7", on_click: ->(e) { puts e.name }
-```
-
-Alias:
-
-```ruby
-elevatedbutton text: "7"
-```
-
-## `icon_button`
-
-```ruby
-icon_button icon: :add
-icon_button icon: :remove
-```
-
-Alias:
-
-```ruby
-iconbutton icon: :add
-```
-
-## `icon`
-
-```ruby
-icon name: "add"
-```
-
-You can also use typed icon constants:
-
-```ruby
-icon icon: RubyNative::MaterialIcons::ADD
-icon icon: RubyNative::CupertinoIcons::HEART_FILL
-icon_button icon: RubyNative::MaterialIcons::SETTINGS
-```
-
-## `gesture_detector`
-
-Flet-style gesture wrapper for pointer/touch events.
-
-```ruby
-gesture_detector on_tap: lambda { |e| puts "tap: #{e.target}" } do
-  container do
+gesture_detector on_tap: ->(_e) { puts "tap" } do
+  container padding: 8 do
     text value: "Tap me"
   end
 end
 ```
 
-Supported gesture callbacks:
+Common callbacks:
 
 - `on_tap`
 - `on_double_tap`
 - `on_long_press`
-- `on_hover`
 - `on_pan_start`, `on_pan_update`, `on_pan_end`
 - `on_scale_start`, `on_scale_update`, `on_scale_end`
-- `on_vertical_drag_start`, `on_vertical_drag_update`, `on_vertical_drag_end`
-- `on_horizontal_drag_start`, `on_horizontal_drag_update`, `on_horizontal_drag_end`
 
-Alias also available:
+## 7) Updating controls (state)
+
+Pattern:
+
+1. Keep a reference to a control.
+2. Update it via `page.update(...)` from events.
 
 ```ruby
-gesturedetector on_tap: lambda { |_e| } do
-  text value: "Alias form"
+count = 0
+counter = nil
+
+page title: "Counter" do
+  counter = text value: count.to_s, size: 40
+
+  elevated_button text: "+", on_click: ->(e) {
+    count += 1
+    e.page.update(counter, value: count.to_s)
+  }
 end
 ```
 
-## Generic `widget`
-
-Use explicit widget type when needed:
+## 8) App bar and floating action button
 
 ```ruby
-widget :text, value: "via generic widget"
+page.add(
+  page.column do
+    page.text(value: "Body")
+  end,
+  appbar: page.app_bar(
+    bgcolor: "#2196F3",
+    color: "#FFFFFF",
+    title: page.text(value: "My App")
+  ),
+  floating_action_button: page.fab("+", on_click: ->(_e) { puts "fab" })
+)
 ```
 
-## UI namespace helpers
-
-You can call helpers through `RubyNative::UI`:
+## 9) Complete basic example
 
 ```ruby
-RubyNative::UI.page title: "UI API" do
-  RubyNative::UI.row alignment: "center" do
-    RubyNative::UI.text value: "Hello"
+require "ruby_native"
+
+class CounterApp < RubyNative::App
+  def initialize
+    super
+    @count = 0
   end
-end
-```
 
-## Calculator pattern
+  def view(page)
+    page.title = "Counter"
+    page.vertical_alignment = "center"
+    page.horizontal_alignment = "center"
 
-```ruby
-display = nil
+    counter = page.text(value: @count.to_s, size: 48)
 
-page title: "Calculator" do
-  column width: 360, spacing: 8 do
-    display = text_field value: "0", read_only: true, text_align: "right"
-    row spacing: 8 do
-      elevated_button text: "1", on_click: ->(e) { e.page.update(display, value: "1") }
-      elevated_button text: "2", on_click: ->(e) { e.page.update(display, value: "2") }
-      elevated_button text: "+"
+    body = page.column(horizontal_alignment: "center", spacing: 8) do
+      text "You clicked:"
+      counter
     end
+
+    page.add(
+      body,
+      appbar: page.app_bar(title: page.text(value: "Counter")),
+      floating_action_button: page.fab("+", on_click: ->(e) {
+        @count += 1
+        e.page.update(counter, value: @count.to_s)
+      })
+    )
   end
 end
 
-app.run
+CounterApp.new.run
 ```
+
+## 10) Notes
+
+- Control names are aligned with Flet-style naming.
+- Some controls may be unavailable; unsupported controls raise an error.
+- Use `ruby_native run main.rb` to run your app.
