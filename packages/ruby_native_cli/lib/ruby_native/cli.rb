@@ -13,36 +13,51 @@ module RubyNative
       require "ruby_native"
 
       class MainApp < RubyNative::App
+        def initialize
+          super
+          @count = 0
+        end
+
         def view(page)
-          app_name = "%<app_title>s"
-          page.title = app_name
-          page.vertical_alignment = RubyNative::MainAxisAlignment::CENTER
-          page.horizontal_alignment = RubyNative::CrossAxisAlignment::CENTER
-          body = page.column(
-            expand: true,
-            alignment: RubyNative::MainAxisAlignment::CENTER,
-            horizontal_alignment: RubyNative::CrossAxisAlignment::CENTER,
-            spacing: 8
-          ) do
-            text value: "Hello RubyNative", size: 28
-            text value: "Edit main.rb and run again", size: 12
-          end
+          page.title = "Counter Demo"
+
+          count_text = page.text(value: @count.to_s, size: 40)
 
           page.add(
-            body,
+            page.container(
+              expand: true,
+              padding: 24,
+              content: page.column(
+                expand: true,
+                alignment: RubyNative::MainAxisAlignment::CENTER,
+                horizontal_alignment: RubyNative::CrossAxisAlignment::CENTER,
+                spacing: 12,
+                controls: [
+                  page.text(value: "You have pushed the button this many times:"),
+                  count_text
+                ]
+              )
+            ),
             appbar: page.app_bar(
               bgcolor: "#2196F3",
               color: "#FFFFFF",
-              title: page.text(value: app_name)
+              title: page.text(value: "Counter Demo")
             ),
             floating_action_button: page.fab(
-              page.icon(icon: RubyNative::MaterialIcons::ADD)
+              page.icon(icon: RubyNative::MaterialIcons::ADD),
+              bgcolor: "#2196F3",
+              color: "#FFFFFF",
+              on_click: ->(_e) {
+                @count += 1
+                page.update(count_text, value: @count.to_s)
+              }
             )
           )
         end
       end
 
       MainApp.new.run
+
     RUBY
 
     GEMFILE_TEMPLATE = <<~GEMFILE
