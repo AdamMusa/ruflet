@@ -45,7 +45,13 @@ module RubyNative
     GEMFILE_TEMPLATE = <<~GEMFILE
       source "https://rubygems.org"
 
-      gem "ruby_native", git: "https://github.com/AdamMusa/RubyNative.git", branch: "main", glob: "packages/ruby_native/*.gemspec"
+      RUBY_NATIVE_GIT = "https://github.com/AdamMusa/RubyNative.git"
+      RUBY_NATIVE_BRANCH = "main"
+
+      gem "ruby_native_protocol", git: RUBY_NATIVE_GIT, branch: RUBY_NATIVE_BRANCH, glob: "packages/ruby_native_protocol/*.gemspec"
+      gem "ruby_native_ui", git: RUBY_NATIVE_GIT, branch: RUBY_NATIVE_BRANCH, glob: "packages/ruby_native_ui/*.gemspec"
+      gem "ruby_native_server", git: RUBY_NATIVE_GIT, branch: RUBY_NATIVE_BRANCH, glob: "packages/ruby_native_server/*.gemspec"
+      gem "ruby_native", git: RUBY_NATIVE_GIT, branch: RUBY_NATIVE_BRANCH, glob: "packages/ruby_native/*.gemspec"
     GEMFILE
 
     BUNDLE_CONFIG_TEMPLATE = <<~YAML
