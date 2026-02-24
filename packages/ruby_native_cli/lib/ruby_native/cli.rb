@@ -16,7 +16,8 @@ module RubyNative
         def view(page)
           app_name = "%<app_title>s"
           page.title = app_name
-
+          page.vertical_alignment = RubyNative::MainAxisAlignment::CENTER
+          page.horizontal_alignment = RubyNative::CrossAxisAlignment::CENTER
           body = page.column(
             expand: true,
             alignment: RubyNative::MainAxisAlignment::CENTER,
@@ -34,7 +35,9 @@ module RubyNative
               color: "#FFFFFF",
               title: page.text(value: app_name)
             ),
-            floating_action_button: page.fab("+", bgcolor: "#2196F3", color: "#FFFFFF", on_click: ->(_e) {})
+            floating_action_button: page.fab(
+              page.icon(icon: RubyNative::MaterialIcons::ADD)
+            )
           )
         end
       end
