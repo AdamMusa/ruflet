@@ -133,7 +133,6 @@ class TodoApp < RubyNative::App
     )
     clear_btn = page.text_button(
       text: "Clear completed",
-      color: RubyNative::Colors.PRIMARY,
       on_click: ->(e) { clear_completed(e.page) }
     )
 

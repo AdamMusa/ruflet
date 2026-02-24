@@ -29,8 +29,9 @@ module RubyNative
 
           tabs.each do |tab|
             unless tab.is_a?(RubyNative::Control) && tab.type == "tab"
-              # Non-tab controls are still rendered as tab headers.
-              tab_controls << tab
+              # Keep TabBar and TabBarView lengths aligned.
+              tab_controls << RubyNative::UI::Controls::TabControl.new(label: tab)
+              view_controls << RubyNative::UI::Controls::ColumnControl.new(controls: [])
               next
             end
 

@@ -38,6 +38,7 @@ module RubyNative
         "appbar" => "AppBar",
         "app_bar" => "AppBar",
         "floatingactionbutton" => "FloatingActionButton",
+        "floating_action_button" => "FloatingActionButton",
         "tabs" => "Tabs",
         "tab" => "Tab",
         "tabbar" => "TabBar",

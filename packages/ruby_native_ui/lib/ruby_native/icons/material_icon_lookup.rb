@@ -5,12 +5,7 @@ module RubyNative
     module_function
 
     def codepoint_for(value)
-      if value.is_a?(Integer)
-        return value if value >= (1 << 16)
-        translated = legacy_codepoint_map[value]
-        return translated unless translated.nil?
-        return value
-      end
+      return value if value.is_a?(Integer)
 
       text = value.to_s.strip
       return nil if text.empty?
@@ -34,10 +29,6 @@ module RubyNative
 
     def icon_map
       @icon_map ||= load_icon_map
-    end
-
-    def legacy_codepoint_map
-      @legacy_codepoint_map ||= build_legacy_codepoint_map
     end
 
     def candidate_names(name)
@@ -93,21 +84,6 @@ module RubyNative
       candidates.max_by { |p| File.mtime(p) rescue Time.at(0) }
     end
 
-    def flutter_icons_file
-      root = ENV["FLUTTER_ROOT"]
-      if root && !root.empty?
-        candidate = File.join(root, "packages", "flutter", "lib", "src", "material", "icons.dart")
-        return candidate if File.file?(candidate)
-      end
-
-      flutter_bin = `which flutter 2>/dev/null`.strip
-      return nil if flutter_bin.empty?
-
-      sdk_root = File.expand_path("..", File.dirname(flutter_bin))
-      candidate = File.join(sdk_root, "packages", "flutter", "lib", "src", "material", "icons.dart")
-      File.file?(candidate) ? candidate : nil
-    end
-
     def parse_icons_json(path)
       require "json"
       parsed = JSON.parse(File.read(path))
@@ -132,46 +108,5 @@ module RubyNative
       mapping
     end
 
-    def parse_flutter_icons_file(path)
-      mapping = {}
-      pending_name = nil
-
-      File.foreach(path) do |line|
-        if (match = line.match(/^\s*static const IconData (\w+) = IconData\((0x[0-9a-fA-F]+|\d+)/))
-          mapping[match[1].upcase] = Integer(match[2])
-          pending_name = nil
-          next
-        end
-
-        if (match = line.match(/^\s*static const IconData (\w+) = IconData\(\s*$/))
-          pending_name = match[1]
-          next
-        end
-
-        next unless pending_name
-
-        if (match = line.match(/^\s*(0x[0-9a-fA-F]+|\d+),/))
-          mapping[pending_name.upcase] = Integer(match[1])
-          pending_name = nil
-        elsif line.include?(");")
-          pending_name = nil
-        end
-      end
-
-      mapping
-    end
-
-    def build_legacy_codepoint_map
-      flutter_path = flutter_icons_file
-      return {} unless flutter_path && File.file?(flutter_path)
-
-      flutter_map = parse_flutter_icons_file(flutter_path) # NAME => codepoint
-      encoded_map = icon_map # NAME => encoded
-
-      flutter_map.each_with_object({}) do |(name, codepoint), out|
-        encoded = encoded_map[name]
-        out[codepoint] = encoded unless encoded.nil?
-      end
-    end
   end
 end
