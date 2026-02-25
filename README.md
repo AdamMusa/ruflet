@@ -12,11 +12,10 @@ Class-based apps are the recommended and documented standard:
 - [Ruflet Releases](https://github.com/AdamMusa/Ruflet/releases)
 - Install latest Android APK or iOS build.
 
-2. Install Ruflet CLI from GitHub:
+2. Install Ruflet CLI from RubyGems:
 
 ```bash
-gem install specific_install
-gem specific_install -l https://github.com/AdamMusa/Ruflet.git -d packages/ruflet_cli
+gem install ruflet_cli
 ```
 
 3. Create and run your first app:
@@ -56,7 +55,10 @@ Monorepo folders:
 
 ## New Project Behavior
 
-`ruflet new <appname>` now generates a `Gemfile` that pulls `ruflet` from GitHub (`main` branch).
+`ruflet new <appname>` generates a `Gemfile` using RubyGems dependencies:
+
+- `gem "ruflet", ">= 0.0.2"`
+- `gem "ruflet_server", ">= 0.0.2"`
 
 It does **not** add `ruflet_cli` to app dependencies.
 

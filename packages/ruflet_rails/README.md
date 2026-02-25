@@ -9,9 +9,7 @@ No separate protocol gem is required.
 
 ```ruby
 # Gemfile
-path "/path/to/ruflet/packages" do
-  gem "ruflet_rails"
-end
+gem "ruflet_rails", ">= 0.0.2"
 ```
 
 ```ruby

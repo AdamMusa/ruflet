@@ -53,8 +53,8 @@ module Ruflet
     GEMFILE_TEMPLATE = <<~GEMFILE
       source "https://rubygems.org"
 
-      gem "ruflet", ">= 0.0.1"
-      gem "ruflet_server", ">= 0.0.1"
+      gem "ruflet", ">= 0.0.2"
+      gem "ruflet_server", ">= 0.0.2"
     GEMFILE
 
     BUNDLE_CONFIG_TEMPLATE = <<~YAML

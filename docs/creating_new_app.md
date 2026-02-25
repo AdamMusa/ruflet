@@ -3,8 +3,7 @@
 ## 1) Install CLI (one-time)
 
 ```bash
-gem install specific_install
-gem specific_install -l https://github.com/AdamMusa/Ruflet.git -d packages/ruflet_cli
+gem install ruflet_cli
 ```
 
 ## 2) Create app
@@ -69,7 +68,7 @@ ruflet build linux
 
 ## Notes
 
-- `ruflet new` generates app `Gemfile` pulling `ruflet` from GitHub.
+- `ruflet new` generates app `Gemfile` using RubyGems dependencies (`ruflet` and `ruflet_server`).
 - It does not include `ruflet_cli` in app dependencies.
 - App code should use class-based style (`class App < Ruflet::App`), not DSL style.
 
