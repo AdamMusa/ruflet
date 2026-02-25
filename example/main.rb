@@ -1,10 +1,10 @@
-$LOAD_PATH.unshift(File.expand_path("../packages/ruby_native/lib", __dir__))
-$LOAD_PATH.unshift(File.expand_path("../packages/ruby_native_ui/lib", __dir__))
-$LOAD_PATH.unshift(File.expand_path("../packages/ruby_native_server/lib", __dir__))
-$LOAD_PATH.unshift(File.expand_path("../packages/ruby_native_protocol/lib", __dir__))
-require "ruby_native"
+$LOAD_PATH.unshift(File.expand_path("../packages/ruflet/lib", __dir__))
+$LOAD_PATH.unshift(File.expand_path("../packages/ruflet_ui/lib", __dir__))
+$LOAD_PATH.unshift(File.expand_path("../packages/ruflet_server/lib", __dir__))
+$LOAD_PATH.unshift(File.expand_path("../packages/ruflet_protocol/lib", __dir__))
+require "ruflet"
 
-class MainApp < RubyNative::App
+class MainApp < Ruflet::App
   def view(page)
     page.title = "Navigation: Go + Replace"
 

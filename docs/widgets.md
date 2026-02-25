@@ -1,24 +1,24 @@
-# RubyNative Widgets Guide (Class-Based)
+# Ruflet Widgets Guide (Class-Based)
 
 This guide uses class-based apps only.
 
 ## 1) App structure
 
 ```ruby
-require "ruby_native"
+require "ruflet"
 
-class MyApp < RubyNative::App
+class MyApp < Ruflet::App
   def view(page)
     app_name = "Hello"
     page.title = app_name
 
     body = page.column(
       expand: true,
-      alignment: RubyNative::MainAxisAlignment::CENTER,
-      horizontal_alignment: RubyNative::CrossAxisAlignment::CENTER,
+      alignment: Ruflet::MainAxisAlignment::CENTER,
+      horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
       spacing: 8
     ) do
-      text value: "Hello RubyNative", size: 28
+      text value: "Hello Ruflet", size: 28
     end
 
     page.add(
@@ -49,11 +49,11 @@ Common page properties:
 Flet-style page centering:
 
 ```ruby
-class CenteredApp < RubyNative::App
+class CenteredApp < Ruflet::App
   def view(page)
     page.title = "Centered"
-    page.vertical_alignment = RubyNative::MainAxisAlignment::CENTER
-    page.horizontal_alignment = RubyNative::CrossAxisAlignment::CENTER
+    page.vertical_alignment = Ruflet::MainAxisAlignment::CENTER
+    page.horizontal_alignment = Ruflet::CrossAxisAlignment::CENTER
     page.add(page.text(value: "Hello World!", size: 32))
   end
 end
@@ -66,7 +66,7 @@ CenteredApp.new.run
 ### `column`
 
 ```ruby
-class LayoutApp < RubyNative::App
+class LayoutApp < Ruflet::App
   def view(page)
     page.add(
       page.column(spacing: 12) do
@@ -81,7 +81,7 @@ end
 ### `row`
 
 ```ruby
-class RowApp < RubyNative::App
+class RowApp < Ruflet::App
   def view(page)
     page.add(
       page.row(spacing: 8, alignment: "center") do
@@ -96,7 +96,7 @@ end
 ### `container`
 
 ```ruby
-class ContainerApp < RubyNative::App
+class ContainerApp < Ruflet::App
   def view(page)
     page.add(
       page.container(width: 240, padding: 12, bgcolor: "#FFFFFF", border_radius: 10) do
@@ -110,7 +110,7 @@ end
 ### `center`
 
 ```ruby
-class CenterWidgetApp < RubyNative::App
+class CenterWidgetApp < Ruflet::App
   def view(page)
     page.add(
       page.center do
@@ -124,7 +124,7 @@ end
 ## 4) Content widgets
 
 ```ruby
-class ContentApp < RubyNative::App
+class ContentApp < Ruflet::App
   def view(page)
     page.add(
       page.column(spacing: 10) do
@@ -140,7 +140,7 @@ end
 ## 5) Events and updates
 
 ```ruby
-class CounterApp < RubyNative::App
+class CounterApp < Ruflet::App
   def initialize
     super
     @count = 0
@@ -168,7 +168,7 @@ CounterApp.new.run
 ## 6) App bar and FAB
 
 ```ruby
-class AppBarApp < RubyNative::App
+class AppBarApp < Ruflet::App
   def view(page)
     page.add(
       page.text(value: "Body"),
@@ -186,7 +186,7 @@ end
 ## 7) Tabs and bottom tabs
 
 ```ruby
-class TabsApp < RubyNative::App
+class TabsApp < Ruflet::App
   def view(page)
     top_tabs = page.tabs(
       expand: 1,
@@ -236,4 +236,4 @@ end
 ## Notes
 
 - Use class-based apps for new projects and examples.
-- Use `ruby_native run main.rb` to run your app.
+- Use `ruflet run main.rb` to run your app.

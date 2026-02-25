@@ -1,16 +1,16 @@
-# Creating a New RubyNative App
+# Creating a New Ruflet App
 
 ## 1) Install CLI (one-time)
 
 ```bash
 gem install specific_install
-gem specific_install -l https://github.com/AdamMusa/RubyNative.git -d packages/ruby_native_cli
+gem specific_install -l https://github.com/AdamMusa/Ruflet.git -d packages/ruflet_cli
 ```
 
 ## 2) Create app
 
 ```bash
-ruby_native new my_app
+ruflet new my_app
 cd my_app
 ```
 
@@ -23,7 +23,7 @@ bundle install
 ## 4) Run app server
 
 ```bash
-ruby_native run main.rb
+ruflet run main.rb
 ```
 
 When running mobile target, CLI prints:
@@ -33,8 +33,8 @@ When running mobile target, CLI prints:
 
 ## 5) Connect from mobile client
 
-Install RubyNative mobile app from:
-- [RubyNative Releases](https://github.com/AdamMusa/RubyNative/releases)
+Install Ruflet mobile app from:
+- [Ruflet Releases](https://github.com/AdamMusa/Ruflet/releases)
 
 Then either:
 - manually enter URL shown in terminal, or
@@ -43,9 +43,9 @@ Then either:
 ## 6) Target modes
 
 ```bash
-ruby_native run main.rb --mobile
-ruby_native run main.rb --web
-ruby_native run main.rb --desktop
+ruflet run main.rb --mobile
+ruflet run main.rb --web
+ruflet run main.rb --desktop
 ```
 
 `--mobile` is default.
@@ -53,39 +53,39 @@ ruby_native run main.rb --desktop
 ## 7) Build binaries
 
 ```bash
-ruby_native build apk
-ruby_native build ios
-ruby_native build web
-ruby_native build macos
-ruby_native build windows
-ruby_native build linux
+ruflet build apk
+ruflet build ios
+ruflet build web
+ruflet build macos
+ruflet build windows
+ruflet build linux
 ```
 
 ## Notes
 
-- `ruby_native new` generates app `Gemfile` pulling `ruby_native` from GitHub.
-- It does not include `ruby_native_cli` in app dependencies.
-- App code should use class-based style (`class App < RubyNative::App`), not DSL style.
+- `ruflet new` generates app `Gemfile` pulling `ruflet` from GitHub.
+- It does not include `ruflet_cli` in app dependencies.
+- App code should use class-based style (`class App < Ruflet::App`), not DSL style.
 
 ## Default app structure (class-based, scaffold-style)
 
 `main.rb`:
 
 ```ruby
-require "ruby_native"
+require "ruflet"
 
-class MyApp < RubyNative::App
+class MyApp < Ruflet::App
   def view(page)
     app_name = "My App"
     page.title = app_name
 
     body = page.column(
       expand: true,
-      alignment: RubyNative::MainAxisAlignment::CENTER,
-      horizontal_alignment: RubyNative::CrossAxisAlignment::CENTER,
+      alignment: Ruflet::MainAxisAlignment::CENTER,
+      horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
       spacing: 8
     ) do
-      text value: "Hello RubyNative", size: 28
+      text value: "Hello Ruflet", size: 28
       text value: "Edit main.rb and run again", size: 12
     end
 

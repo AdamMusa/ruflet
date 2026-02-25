@@ -1,11 +1,11 @@
-require "ruby_native"
+require "ruflet"
 
-class MyApp < RubyNative::App
+class MyApp < Ruflet::App
   def view(page)
-    page.vertical_alignment = RubyNative::MainAxisAlignment::CENTER
-    page.horizontal_alignment = RubyNative::CrossAxisAlignment::CENTER
+    page.vertical_alignment = Ruflet::MainAxisAlignment::CENTER
+    page.horizontal_alignment = Ruflet::CrossAxisAlignment::CENTER
     page.title = "Hello"
-    page.add(page.text(value: "Hello RubyNative"))
+    page.add(page.text(value: "Hello Ruflet"))
   end
 end
 

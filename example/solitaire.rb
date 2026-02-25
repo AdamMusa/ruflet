@@ -1,4 +1,4 @@
-require "ruby_native"
+require "ruflet"
 Suite = Struct.new(:name, :color)
 Rank = Struct.new(:name, :value)
 class Slot
@@ -201,7 +201,7 @@ class Solitaire
   end
   def render
     @page.title = "Solitaire"; @page.bgcolor = TABLE_BG; @page.vertical_alignment = "start"; @page.horizontal_alignment = "start"
-    appbar = @page.app_bar(bgcolor: TABLE_BG, color: TITLE, title: @page.text(value: "RubyNative Solitaire", color: TITLE, size: 18))
+    appbar = @page.app_bar(bgcolor: TABLE_BG, color: TITLE, title: @page.text(value: "Ruflet Solitaire", color: TITLE, size: 18))
     @status_control = @page.text(value: @status, size: 12, color: STATUS)
     controls = [@stock.view(@page, on_click: ->(_e) { stock_click }), @waste.view(@page)]
     controls.concat(@foundation.map { |s| s.view(@page) })
@@ -240,7 +240,7 @@ class Solitaire
     0.0
   end
 end
-class SolitaireApp < RubyNative::App
+class SolitaireApp < Ruflet::App
   def view(page); Solitaire.new(page); end
 end
 SolitaireApp.new.run

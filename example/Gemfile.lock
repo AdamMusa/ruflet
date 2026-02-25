@@ -1,38 +1,38 @@
 PATH
-  remote: ../packages/ruby_native_cli
+  remote: ../packages/ruflet_cli
   specs:
-    ruby_native_cli (0.2.0)
+    ruflet_cli (0.2.0)
       rqrcode (~> 2.2)
-      ruby_native_server (= 0.2.0)
+      ruflet_server (= 0.2.0)
 
 PATH
-  remote: ../packages/ruby_native_protocol
+  remote: ../packages/ruflet_protocol
   specs:
-    ruby_native_protocol (0.2.0)
+    ruflet_protocol (0.2.0)
 
 PATH
-  remote: ../packages/ruby_native_server
+  remote: ../packages/ruflet_server
   specs:
-    ruby_native_server (0.2.0)
+    ruflet_server (0.2.0)
       base64
       em-websocket (~> 0.5)
       msgpack (~> 1.8)
-      ruby_native_protocol (= 0.2.0)
-      ruby_native_ui (= 0.2.0)
+      ruflet_protocol (= 0.2.0)
+      ruflet_ui (= 0.2.0)
 
 PATH
-  remote: ../packages/ruby_native_ui
+  remote: ../packages/ruflet_ui
   specs:
-    ruby_native_ui (0.2.0)
-      ruby_native_protocol (= 0.2.0)
+    ruflet_ui (0.2.0)
+      ruflet_protocol (= 0.2.0)
 
 PATH
-  remote: ../packages/ruby_native
+  remote: ../packages/ruflet
   specs:
-    ruby_native (0.2.0)
-      ruby_native_protocol (= 0.2.0)
-      ruby_native_server (= 0.2.0)
-      ruby_native_ui (= 0.2.0)
+    ruflet (0.2.0)
+      ruflet_protocol (= 0.2.0)
+      ruflet_server (= 0.2.0)
+      ruflet_ui (= 0.2.0)
 
 GEM
   remote: https://rubygems.org/
@@ -55,11 +55,11 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  ruby_native!
-  ruby_native_cli!
-  ruby_native_protocol!
-  ruby_native_server!
-  ruby_native_ui!
+  ruflet!
+  ruflet_cli!
+  ruflet_protocol!
+  ruflet_server!
+  ruflet_ui!
 
 CHECKSUMS
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
@@ -70,11 +70,11 @@ CHECKSUMS
   msgpack (1.8.0) sha256=e64ce0212000d016809f5048b48eb3a65ffb169db22238fb4b72472fecb2d732
   rqrcode (2.2.0) sha256=23eea88bb44c7ee6d6cab9354d08c287f7ebcdc6112e1fe7bcc2d010d1ffefc1
   rqrcode_core (1.2.0) sha256=cf4989dc82d24e2877984738c4ee569308625fed2a810960f1b02d68d0308d1a
-  ruby_native (0.2.0)
-  ruby_native_cli (0.2.0)
-  ruby_native_protocol (0.2.0)
-  ruby_native_server (0.2.0)
-  ruby_native_ui (0.2.0)
+  ruflet (0.2.0)
+  ruflet_cli (0.2.0)
+  ruflet_protocol (0.2.0)
+  ruflet_server (0.2.0)
+  ruflet_ui (0.2.0)
 
 BUNDLED WITH
   4.0.6

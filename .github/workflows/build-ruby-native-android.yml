@@ -15,7 +15,7 @@ on:
       - 'Rakefile'
       - 'Gemfile'
       - 'Gemfile.lock'
-      - 'ruby_native_client/**'
+      - 'ruflet_client/**'
   push:
     branches: [ main ]
     paths:
@@ -28,7 +28,7 @@ on:
       - 'Rakefile'
       - 'Gemfile'
       - 'Gemfile.lock'
-      - 'ruby_native_client/**'
+      - 'ruflet_client/**'
 
 permissions:
   contents: read
@@ -56,18 +56,18 @@ jobs:
           cache: true
 
       - name: Install Flutter dependencies
-        working-directory: ruby_native_client
+        working-directory: ruflet_client
         run: flutter pub get
 
       - name: Build Android release APK (Flutter only)
-        working-directory: ruby_native_client
+        working-directory: ruflet_client
         run: flutter build apk --release
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: ruby_native_client/build/app/outputs/flutter-apk/*release.apk
+          path: ruflet_client/build/app/outputs/flutter-apk/*release.apk
           if-no-files-found: error
 
   android-apk-release:
@@ -94,21 +94,21 @@ jobs:
           cache: true
 
       - name: Install Flutter dependencies
-        working-directory: ruby_native_client
+        working-directory: ruflet_client
         run: flutter pub get
 
       - name: Build Android release APK (Flutter only)
-        working-directory: ruby_native_client
+        working-directory: ruflet_client
         run: flutter build apk --release
 
       - name: Upload APK workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: android-apk-release
-          path: ruby_native_client/build/app/outputs/flutter-apk/*release.apk
+          path: ruflet_client/build/app/outputs/flutter-apk/*release.apk
           if-no-files-found: error
 
       - name: Attach APKs to GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          files: ruby_native_client/build/app/outputs/flutter-apk/*release.apk
+          files: ruflet_client/build/app/outputs/flutter-apk/*release.apk

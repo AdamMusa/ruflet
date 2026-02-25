@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
-gem "ruby_native_protocol", path: "../packages/ruby_native_protocol"
-gem "ruby_native_ui", path: "../packages/ruby_native_ui"
-gem "ruby_native_server", path: "../packages/ruby_native_server"
-gem "ruby_native_cli", path: "../packages/ruby_native_cli"
-gem "ruby_native", path: "../packages/ruby_native"
+gem "ruflet_protocol", path: "../packages/ruflet_protocol"
+gem "ruflet_ui", path: "../packages/ruflet_ui"
+gem "ruflet_server", path: "../packages/ruflet_server"
+gem "ruflet_cli", path: "../packages/ruflet_cli"
+gem "ruflet", path: "../packages/ruflet"
