@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require "ruflet_rails_protocol"
+require "ruflet"
+require_relative "ruflet/rails/protocol"
 require_relative "ruflet/rails"
 
 if defined?(::Rails::Railtie)

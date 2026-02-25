@@ -17,5 +17,5 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "rails", ">= 7.0"
-  spec.add_dependency "ruflet_rails_protocol", "= #{Ruflet::VERSION}"
+  spec.add_dependency "ruflet", "= #{Ruflet::VERSION}"
 end

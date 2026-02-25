@@ -2,8 +2,8 @@
 
 `ruflet_rails` is the Rails-first integration package for Ruflet.
 
-It follows Rails routing conventions: you mount the app, and Rails `at:` decides URL path.
-No `host`, `port`, or protocol `path` options are required in API calls.
+Internal Rails transport/protocol code is bundled inside this gem as `Ruflet::Rails::Protocol`.
+No separate protocol gem is required.
 
 ## Usage
 
