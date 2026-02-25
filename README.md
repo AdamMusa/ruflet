@@ -42,19 +42,17 @@ Ruflet app created: my_app
 
 Ruflet is split into packages:
 
-- `ruflet_protocol`: protocol layer
-- `ruflet_ui`: controls, page, widget builder
-- `ruflet_server`: WebSocket runtime (`Ruflet.run`)
+- `ruflet`: core runtime (includes protocol + UI)
+- `ruflet_server`: WebSocket runtime (`Ruflet.run` backend)
 - `ruflet_cli`: CLI executable (`ruflet`)
-- `ruflet`: runtime umbrella package (`ui + server + protocol`)
+- `ruflet_rails`: Rails integration/protocol adapter
 
 Monorepo folders:
 
-- `packages/ruflet_protocol`
-- `packages/ruflet_ui`
+- `packages/ruflet`
 - `packages/ruflet_server`
 - `packages/ruflet_cli`
-- `packages/ruflet`
+- `packages/ruflet_rails`
 
 ## New Project Behavior
 

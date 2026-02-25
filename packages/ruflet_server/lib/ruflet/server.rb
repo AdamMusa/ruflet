@@ -4,361 +4,15 @@ require "digest/sha1"
 require "socket"
 require "thread"
 
-require "ruflet_protocol"
-require "ruflet_ui"
+require "ruflet"
+require_relative "server/wire_codec"
+require_relative "server/web_socket_connection"
 
 module Ruflet
   class Server
     attr_reader :port
 
     WEBSOCKET_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
-
-    class WireCodec
-      class << self
-        def pack(value)
-          case value
-          when NilClass
-            "\xc0".b
-          when TrueClass
-            "\xc3".b
-          when FalseClass
-            "\xc2".b
-          when Integer
-            pack_integer(value)
-          when Float
-            "\xcb".b + [value].pack("G")
-          when String
-            pack_string(value)
-          when Symbol
-            pack_string(value.to_s)
-          when Array
-            pack_array(value)
-          when Hash
-            pack_map(value)
-          else
-            pack_string(value.to_s)
-          end
-        end
-
-        def unpack(bytes)
-          reader = ByteReader.new(bytes)
-          read_value(reader)
-        end
-
-        private
-
-        def pack_integer(value)
-          if value >= 0
-            return [value].pack("C") if value <= 0x7f
-            return "\xcc".b + [value].pack("C") if value <= 0xff
-            return "\xcd".b + [value].pack("n") if value <= 0xffff
-            return "\xce".b + [value].pack("N") if value <= 0xffff_ffff
-
-            "\xcf".b + [value].pack("Q>")
-          else
-            return [value & 0xff].pack("C") if value >= -32
-            return "\xd0".b + [value].pack("c") if value >= -128
-            return "\xd1".b + [value].pack("s>") if value >= -32_768
-            return "\xd2".b + [value].pack("l>") if value >= -2_147_483_648
-
-            "\xd3".b + [value].pack("q>")
-          end
-        end
-
-        def pack_string(value)
-          str = value.to_s.dup.force_encoding("UTF-8")
-          bytes = str.b
-          len = bytes.bytesize
-
-          if len <= 31
-            [0xA0 | len].pack("C") + bytes
-          elsif len <= 0xff
-            "\xd9".b + [len].pack("C") + bytes
-          elsif len <= 0xffff
-            "\xda".b + [len].pack("n") + bytes
-          else
-            "\xdb".b + [len].pack("N") + bytes
-          end
-        end
-
-        def pack_array(value)
-          len = value.length
-          head =
-            if len <= 15
-              [0x90 | len].pack("C")
-            elsif len <= 0xffff
-              "\xdc".b + [len].pack("n")
-            else
-              "\xdd".b + [len].pack("N")
-            end
-
-          body = +"".b
-          value.each { |item| body << pack(item) }
-          head + body
-        end
-
-        def pack_map(value)
-          pairs = value.each_with_object({}) { |(k, v), out| out[k.to_s] = v }
-          len = pairs.length
-          head =
-            if len <= 15
-              [0x80 | len].pack("C")
-            elsif len <= 0xffff
-              "\xde".b + [len].pack("n")
-            else
-              "\xdf".b + [len].pack("N")
-            end
-
-          body = +"".b
-          pairs.each do |k, v|
-            body << pack(k)
-            body << pack(v)
-          end
-          head + body
-        end
-
-        def read_value(reader)
-          marker = reader.read_u8
-
-          return marker if marker <= 0x7f
-          return marker - 256 if marker >= 0xe0
-
-          case marker
-          when 0xc0 then nil
-          when 0xc2 then false
-          when 0xc3 then true
-          when 0xcc then reader.read_u8
-          when 0xcd then reader.read_u16
-          when 0xce then reader.read_u32
-          when 0xcf then reader.read_u64
-          when 0xd0 then reader.read_i8
-          when 0xd1 then reader.read_i16
-          when 0xd2 then reader.read_i32
-          when 0xd3 then reader.read_i64
-          when 0xca then reader.read_f32
-          when 0xcb then reader.read_f64
-          when 0xd9 then reader.read_string(reader.read_u8)
-          when 0xda then reader.read_string(reader.read_u16)
-          when 0xdb then reader.read_string(reader.read_u32)
-          when 0xdc then read_array(reader, reader.read_u16)
-          when 0xdd then read_array(reader, reader.read_u32)
-          when 0xde then read_map(reader, reader.read_u16)
-          when 0xdf then read_map(reader, reader.read_u32)
-          else
-            if (marker & 0xf0) == 0x90
-              read_array(reader, marker & 0x0f)
-            elsif (marker & 0xf0) == 0x80
-              read_map(reader, marker & 0x0f)
-            elsif (marker & 0xe0) == 0xa0
-              reader.read_string(marker & 0x1f)
-            else
-              raise "Unsupported MessagePack marker: 0x#{marker.to_s(16)}"
-            end
-          end
-        end
-
-        def read_array(reader, size)
-          Array.new(size) { read_value(reader) }
-        end
-
-        def read_map(reader, size)
-          out = {}
-          size.times do
-            key = read_value(reader)
-            out[key.to_s] = read_value(reader)
-          end
-          out
-        end
-      end
-
-      class ByteReader
-        def initialize(bytes)
-          @data = bytes.to_s.b
-          @offset = 0
-        end
-
-        def read_u8
-          value = @data.getbyte(@offset)
-          raise "Unexpected EOF" if value.nil?
-
-          @offset += 1
-          value
-        end
-
-        def read_exact(size)
-          chunk = @data.byteslice(@offset, size)
-          raise "Unexpected EOF" if chunk.nil? || chunk.bytesize != size
-
-          @offset += size
-          chunk
-        end
-
-        def read_u16
-          read_exact(2).unpack1("n")
-        end
-
-        def read_u32
-          read_exact(4).unpack1("N")
-        end
-
-        def read_u64
-          read_exact(8).unpack1("Q>")
-        end
-
-        def read_i8
-          read_exact(1).unpack1("c")
-        end
-
-        def read_i16
-          read_exact(2).unpack1("s>")
-        end
-
-        def read_i32
-          read_exact(4).unpack1("l>")
-        end
-
-        def read_i64
-          read_exact(8).unpack1("q>")
-        end
-
-        def read_f32
-          read_exact(4).unpack1("g")
-        end
-
-        def read_f64
-          read_exact(8).unpack1("G")
-        end
-
-        def read_string(size)
-          read_exact(size).force_encoding("UTF-8")
-        end
-      end
-    end
-
-    class WebSocketConnection
-      def initialize(socket)
-        @socket = socket
-        @write_mutex = Mutex.new
-      end
-
-      def session_key
-        @socket.object_id
-      end
-
-      def closed?
-        @socket.closed?
-      rescue IOError
-        true
-      end
-
-      def send_binary(payload)
-        send_frame(0x2, payload.to_s.b)
-      end
-
-      def send_text(payload)
-        send_frame(0x1, payload.to_s.b)
-      end
-
-      def read_message
-        frame = read_frame
-        return nil if frame.nil?
-
-        opcode = frame[:opcode]
-        payload = frame[:payload]
-
-        case opcode
-        when 0x8
-          close
-          nil
-        when 0x9
-          send_frame(0xA, payload)
-          read_message
-        when 0xA
-          read_message
-        when 0x1, 0x2
-          payload
-        else
-          read_message
-        end
-      end
-
-      def close
-        return if closed?
-
-        begin
-          @socket.close
-        rescue IOError
-          nil
-        end
-      end
-
-      private
-
-      def read_frame
-        header = read_exact(2)
-        return nil if header.nil?
-
-        b1 = header.getbyte(0)
-        b2 = header.getbyte(1)
-
-        masked = (b2 & 0x80) != 0
-        payload_len = b2 & 0x7f
-
-        payload_len = read_exact(2).unpack1("n") if payload_len == 126
-        payload_len = read_exact(8).unpack1("Q>") if payload_len == 127
-
-        masking_key = masked ? read_exact(4) : nil
-        payload = payload_len.zero? ? "".b : read_exact(payload_len)
-        return nil if payload.nil?
-
-        payload = unmask(payload, masking_key) if masked
-
-        { opcode: b1 & 0x0f, payload: payload }
-      end
-
-      def send_frame(opcode, payload)
-        bytes = payload.to_s.b
-        len = bytes.bytesize
-        header = [0x80 | (opcode & 0x0f)].pack("C")
-
-        header <<
-          if len <= 125
-            [len].pack("C")
-          elsif len <= 0xffff
-            [126].pack("C") + [len].pack("n")
-          else
-            [127].pack("C") + [len].pack("Q>")
-          end
-
-        @write_mutex.synchronize do
-          @socket.write(header)
-          @socket.write(bytes) unless bytes.empty?
-        end
-      end
-
-      def unmask(payload, mask)
-        out = +""
-        out.force_encoding(Encoding::BINARY)
-        payload.bytes.each_with_index do |byte, idx|
-          out << (byte ^ mask.getbyte(idx % 4))
-        end
-        out
-      end
-
-      def read_exact(length)
-        chunk = +""
-        chunk.force_encoding(Encoding::BINARY)
-
-        while chunk.bytesize < length
-          part = @socket.read(length - chunk.bytesize)
-          return nil if part.nil? || part.empty?
-
-          chunk << part
-        end
-
-        chunk
-      end
-    end
 
     def initialize(host: "0.0.0.0", port: 8550, &app_block)
       @host = host
@@ -381,50 +35,21 @@ module Ruflet
     end
 
     def start
-      previous_int = Signal.trap("INT") do
-        stop
-        Thread.main.raise(Interrupt)
-      rescue StandardError
-        nil
-      end
-      previous_term = Signal.trap("TERM") do
-        stop
-        Thread.main.raise(Interrupt)
-      rescue StandardError
-        nil
-      end
-
+      previous_signals = trap_stop_signals
       bind_server_socket!
       @running = true
-
-      warn "Ruflet server listening on ws://#{@host}:#{@port}/ws" unless ENV["RUFLET_SUPPRESS_SERVER_BANNER"] == "1"
-
-      while @running
-        begin
-          accepted = @server_socket.accept
-          socket = accepted.is_a?(Array) ? accepted.first : accepted
-          Thread.new(socket) do |client|
-            Thread.current.report_on_exception = false if Thread.current.respond_to?(:report_on_exception=)
-            handle_socket(client)
-          end
-        rescue IOError, Errno::EBADF
-          break
-        rescue StandardError => e
-          warn "accept error: #{e.class}: #{e.message}"
-          warn e.backtrace.join("\n") if e.backtrace
-        end
-      end
+      print_server_banner
+      accept_loop
     rescue Interrupt
       nil
     ensure
       stop
-      Signal.trap("INT", previous_int) if previous_int
-      Signal.trap("TERM", previous_term) if previous_term
+      restore_stop_signals(previous_signals)
     end
 
     # For Rack-hosted mode: caller already performed the HTTP upgrade.
     def handle_upgraded_socket(io)
-      ws = WebSocketConnection.new(io)
+      ws = Ruflet::WebSocketConnection.new(io)
       run_connection(ws)
     end
 
@@ -471,6 +96,63 @@ module Ruflet
 
     private
 
+    def trap_stop_signals
+      {
+        "INT" => trap_signal("INT"),
+        "TERM" => trap_signal("TERM")
+      }
+    end
+
+    def trap_signal(signal_name)
+      Signal.trap(signal_name) do
+        stop
+        Thread.main.raise(Interrupt)
+      rescue StandardError
+        nil
+      end
+    end
+
+    def restore_stop_signals(previous_signals)
+      return unless previous_signals
+
+      previous_signals.each do |signal_name, handler|
+        Signal.trap(signal_name, handler) if handler
+      end
+    end
+
+    def print_server_banner
+      return if ENV["RUFLET_SUPPRESS_SERVER_BANNER"] == "1"
+
+      warn "Ruflet server listening on ws://#{@host}:#{@port}/ws"
+    end
+
+    def accept_loop
+      while @running
+        socket = accept_client_socket
+        break unless socket
+
+        start_client_thread(socket)
+      end
+    end
+
+    def accept_client_socket
+      accepted = @server_socket.accept
+      accepted.is_a?(Array) ? accepted.first : accepted
+    rescue IOError, Errno::EBADF
+      nil
+    rescue StandardError => e
+      warn "accept error: #{e.class}: #{e.message}"
+      warn e.backtrace.join("\n") if e.backtrace
+      nil
+    end
+
+    def start_client_thread(socket)
+      Thread.new(socket) do |client|
+        Thread.current.report_on_exception = false if Thread.current.respond_to?(:report_on_exception=)
+        handle_socket(client)
+      end
+    end
+
     def handle_socket(socket)
       ws = nil
       begin
@@ -478,16 +160,14 @@ module Ruflet
         return unless websocket_upgrade_request?(path, headers)
 
         send_handshake_response(socket, headers["sec-websocket-key"])
-        ws = WebSocketConnection.new(socket)
+        ws = Ruflet::WebSocketConnection.new(socket)
         run_connection(ws)
       rescue StandardError => e
         warn "server error: #{e.class}: #{e.message}"
         warn e.backtrace.join("\n") if e.backtrace
         send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => e.message.to_s.dup.force_encoding("UTF-8") }) if ws
       ensure
-        remove_session(ws)
-        unregister_connection(ws)
-        ws&.close
+        close_connection(ws)
       end
     end
 
@@ -502,6 +182,10 @@ module Ruflet
       warn e.backtrace.join("\n") if e.backtrace
       send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => e.message.to_s.dup.force_encoding("UTF-8") })
     ensure
+      close_connection(ws)
+    end
+
+    def close_connection(ws)
       remove_session(ws)
       unregister_connection(ws)
       ws&.close
@@ -590,7 +274,7 @@ module Ruflet
     end
 
     def decode_incoming(raw)
-      parsed = normalize_incoming(WireCodec.unpack(raw.to_s.b))
+      parsed = normalize_incoming(Ruflet::WireCodec.unpack(raw.to_s.b))
 
       if parsed.is_a?(Array) && parsed.length >= 2
         return [parsed[0], parsed[1]]
@@ -654,7 +338,7 @@ module Ruflet
           "error" => nil
         }
       ]
-      ws.send_binary(WireCodec.pack(initial_response))
+      ws.send_binary(Ruflet::WireCodec.pack(initial_response))
 
       @app_block.call(page)
       page.update
@@ -703,7 +387,7 @@ module Ruflet
 
     def send_message(ws, action, payload)
       message = [action, payload]
-      ws.send_binary(WireCodec.pack(message))
+      ws.send_binary(Ruflet::WireCodec.pack(message))
     rescue StandardError => e
       warn "send error: #{e.class}: #{e.message}"
     end

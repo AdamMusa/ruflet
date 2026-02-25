@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
 require "ruflet_protocol"
-require_relative "ruflet/colors"
-require_relative "ruflet/icon_data"
-require_relative "ruflet/icons/material_icons"
-require_relative "ruflet/icons/cupertino/cupertino_icons"
-require_relative "ruflet/control"
-require_relative "ruflet/ui/widget_builder"
-require_relative "ruflet/ui/shared_control_forwarders"
-require_relative "ruflet/event"
-require_relative "ruflet/page"
-require_relative "ruflet/app"
-require_relative "ruflet/dsl"
+require_relative "ruflet_ui/ruflet/colors"
+require_relative "ruflet_ui/ruflet/icon_data"
+require_relative "ruflet_ui/ruflet/icons/material_icons"
+require_relative "ruflet_ui/ruflet/icons/cupertino/cupertino_icons"
+require_relative "ruflet_ui/ruflet/control"
+require_relative "ruflet_ui/ruflet/ui/widget_builder"
+require_relative "ruflet_ui/ruflet/ui/shared_control_forwarders"
+require_relative "ruflet_ui/ruflet/event"
+require_relative "ruflet_ui/ruflet/page"
+require_relative "ruflet_ui/ruflet/app"
+require_relative "ruflet_ui/ruflet/dsl"
 
 module Ruflet
   module MainAxisAlignment

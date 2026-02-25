@@ -16,6 +16,5 @@ Gem::Specification.new do |spec|
   spec.files = Dir.glob("lib/**/*.rb") + ["README.md"]
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "ruflet_protocol", "= #{Ruflet::VERSION}"
-  spec.add_dependency "ruflet_ui", "= #{Ruflet::VERSION}"
+  spec.add_dependency "ruflet", "= #{Ruflet::VERSION}"
 end

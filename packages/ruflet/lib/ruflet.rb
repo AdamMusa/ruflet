@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require "thread"
+require "ruflet_protocol"
 require "ruflet_ui"
-require "ruflet_server"
 
 module Ruflet
   @run_interceptors = []
@@ -11,6 +11,12 @@ module Ruflet
   module_function
 
   def run(entrypoint = nil, host: "0.0.0.0", port: 8550, &block)
+    begin
+      require "ruflet_server"
+    rescue LoadError => e
+      raise LoadError, "Ruflet.run requires the 'ruflet_server' gem. Add it to your Gemfile.", e.backtrace
+    end
+
     callback = entrypoint || block
     raise ArgumentError, "Ruflet.run requires a callable entrypoint or block" unless callback.respond_to?(:call)
 

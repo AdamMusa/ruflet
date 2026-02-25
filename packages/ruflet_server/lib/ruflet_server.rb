@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "ruflet_ui"
+require "ruflet"
 require_relative "ruflet/server"
 
 module Ruflet

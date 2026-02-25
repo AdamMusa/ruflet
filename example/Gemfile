@@ -1,7 +1,5 @@
 source "https://rubygems.org"
 
-gem "ruflet_protocol", path: "../packages/ruflet_protocol"
-gem "ruflet_ui", path: "../packages/ruflet_ui"
 gem "ruflet_server", path: "../packages/ruflet_server"
 gem "ruflet_cli", path: "../packages/ruflet_cli"
 gem "ruflet", path: "../packages/ruflet"
