@@ -3,7 +3,6 @@ PATH
   specs:
     ruflet_cli (0.2.0)
       rqrcode (~> 2.2)
-      ruflet_server (= 0.2.0)
 
 PATH
   remote: ../packages/ruflet_protocol

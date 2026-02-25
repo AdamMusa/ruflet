@@ -28,6 +28,12 @@ bundle install
 ruflet run main.rb
 ```
 
+CLI output after creation:
+
+```text
+Ruflet app created: my_app
+```
+
 4. Open Ruflet mobile client and connect:
 - Enter URL manually, or
 - Tap `Scan QR` and scan QR shown by `ruflet run ...`

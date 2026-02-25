@@ -1,4 +1,4 @@
-name: Build Ruby Native Client
+name: Build Ruflet Client
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
     types: [published]
   pull_request:
     paths:
-      - '.github/workflows/build-ruby-native-android.yml'
+      - '.github/workflows/build-ruflet-android.yml'
       - 'ext/**'
       - 'android/**'
       - 'native/**'
@@ -19,7 +19,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - '.github/workflows/build-ruby-native-android.yml'
+      - '.github/workflows/build-ruflet-android.yml'
       - 'ext/**'
       - 'android/**'
       - 'native/**'

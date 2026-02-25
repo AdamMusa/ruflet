@@ -14,6 +14,12 @@ ruflet new my_app
 cd my_app
 ```
 
+CLI output after creation:
+
+```text
+Ruflet app created: my_app
+```
+
 ## 3) Install dependencies
 
 ```bash

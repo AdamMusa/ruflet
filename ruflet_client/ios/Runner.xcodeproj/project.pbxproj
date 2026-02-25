@@ -491,7 +491,7 @@
 				DEVELOPMENT_TEAM = 7Z35W53SMQ;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Ruby Native Explorer";
+				INFOPLIST_KEY_CFBundleDisplayName = "Ruflet Explorer";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -676,7 +676,7 @@
 				DEVELOPMENT_TEAM = 7Z35W53SMQ;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Ruby Native Explorer";
+				INFOPLIST_KEY_CFBundleDisplayName = "Ruflet Explorer";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -701,7 +701,7 @@
 				DEVELOPMENT_TEAM = 7Z35W53SMQ;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Ruby Native Explorer";
+				INFOPLIST_KEY_CFBundleDisplayName = "Ruflet Explorer";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

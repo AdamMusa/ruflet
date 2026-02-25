@@ -1,7 +1,3 @@
-$LOAD_PATH.unshift(File.expand_path("../packages/ruflet/lib", __dir__))
-$LOAD_PATH.unshift(File.expand_path("../packages/ruflet_ui/lib", __dir__))
-$LOAD_PATH.unshift(File.expand_path("../packages/ruflet_server/lib", __dir__))
-$LOAD_PATH.unshift(File.expand_path("../packages/ruflet_protocol/lib", __dir__))
 require "ruflet"
 
 class FeedbackSurfacesApp < Ruflet::App

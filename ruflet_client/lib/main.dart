@@ -193,7 +193,8 @@ void main([List<String>? args]) async {
     }
   }
 
-  final isDesktop = !kIsWeb &&
+  final isDesktop =
+      !kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.windows ||
           defaultTargetPlatform == TargetPlatform.macOS ||
           defaultTargetPlatform == TargetPlatform.linux);
@@ -304,8 +305,8 @@ class _RufletBootstrapAppState extends State<RufletBootstrapApp> {
       _connecting = false;
       _error = auto
           ? (_isMobilePlatform
-              ? 'Unable to connect to $url. On Android emulator use 10.0.2.2 (not 127.0.0.1).'
-              : 'Unable to connect to $url')
+                ? 'Unable to connect to $url. On Android emulator use 10.0.2.2 (not 127.0.0.1).'
+                : 'Unable to connect to $url')
           : 'Unable to connect to $url';
     });
   }
@@ -339,7 +340,7 @@ class _RufletBootstrapAppState extends State<RufletBootstrapApp> {
     if (_connected && _activeUrl != null) {
       debugPrint('Page URL: $_activeUrl');
       return FletApp(
-        title: 'Ruby Native',
+        title: 'Ruflet',
         pageUrl: _activeUrl!,
         assetsDir: widget.assetsDir,
         errorsHandler: _errorsHandler,
@@ -356,7 +357,7 @@ class _RufletBootstrapAppState extends State<RufletBootstrapApp> {
       navigatorKey: _navigatorKey,
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        appBar: AppBar(title: const Text('Ruflet Connect')),
+        appBar: AppBar(title: const Text('Ruflet Explorer')),
         body: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 560),
@@ -371,7 +372,8 @@ class _RufletBootstrapAppState extends State<RufletBootstrapApp> {
                       controller: _urlController,
                       decoration: const InputDecoration(
                         labelText: 'Server URL',
-                        hintText: 'http://10.0.2.2:8550 or ws://10.0.2.2:8550/ws',
+                        hintText:
+                            'http://10.0.2.2:8550 or ws://10.0.2.2:8550/ws',
                       ),
                     ),
                   ] else ...[
@@ -386,7 +388,9 @@ class _RufletBootstrapAppState extends State<RufletBootstrapApp> {
                         onPressed: _connecting
                             ? null
                             : () => _tryConnect(_urlController.text),
-                        child: Text(_isMobilePlatform ? 'Connect URL' : 'Retry'),
+                        child: Text(
+                          _isMobilePlatform ? 'Connect URL' : 'Retry',
+                        ),
                       ),
                       if (_isMobilePlatform)
                         OutlinedButton.icon(

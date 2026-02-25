@@ -20,7 +20,8 @@ module Ruflet
 
         def view(page)
           page.title = "Counter Demo"
-
+          page.vertical_alignment = Ruflet::MainAxisAlignment::CENTER
+          page.horizontal_alignment = Ruflet::CrossAxisAlignment::CENTER
           count_text = page.text(value: @count.to_s, size: 40)
 
           page.add(
@@ -39,14 +40,10 @@ module Ruflet
               )
             ),
             appbar: page.app_bar(
-              bgcolor: "#2196F3",
-              color: "#FFFFFF",
               title: page.text(value: "Counter Demo")
             ),
             floating_action_button: page.fab(
               page.icon(icon: Ruflet::MaterialIcons::ADD),
-              bgcolor: "#2196F3",
-              color: "#FFFFFF",
               on_click: ->(_e) {
                 @count += 1
                 page.update(count_text, value: @count.to_s)
@@ -144,10 +141,10 @@ module Ruflet
       File.write(File.join(root, "Gemfile"), GEMFILE_TEMPLATE)
       File.write(File.join(root, ".bundle", "config"), BUNDLE_CONFIG_TEMPLATE)
       File.write(File.join(root, "README.md"), format(README_TEMPLATE, app_name: File.basename(root)))
-
-      puts "Ruflet app created at #{root}"
+      project_name = File.basename(root)
+      puts "Ruflet app created: #{project_name}"
       puts "Run:"
-      puts "  cd #{root}"
+      puts "  cd #{project_name}"
       puts "  bundle install"
       puts "  bundle exec ruflet run main"
       0
