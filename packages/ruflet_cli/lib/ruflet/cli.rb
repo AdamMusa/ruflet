@@ -149,61 +149,88 @@ module Ruflet
       puts "  bundle exec ruflet run main"
       0
     end
+def command_run(args)
+  options = { target: "mobile" }
+  parser = OptionParser.new do |o|
+    o.on("--web") { options[:target] = "web" }
+    o.on("--mobile") { options[:target] = "mobile" }
+    o.on("--desktop") { options[:target] = "desktop" }
+  end
+  parser.parse!(args)
 
-    def command_run(args)
-      options = { target: "mobile" }
-      parser = OptionParser.new do |o|
-        o.on("--web") { options[:target] = "web" }
-        o.on("--mobile") { options[:target] = "mobile" }
-        o.on("--desktop") { options[:target] = "desktop" }
-      end
-      parser.parse!(args)
+  script_token = args.shift || "main"
 
-      script_token = args.shift || "main"
+  script_path = resolve_script(script_token)
+  unless script_path
+    warn "Script not found: #{script_token}"
+    warn "Expected: ./#{script_token}.rb, ./#{script_token}, or explicit file path."
+    return 1
+  end
 
-      script_path = resolve_script(script_token)
-      unless script_path
-        warn "Script not found: #{script_token}"
-        warn "Expected: ./#{script_token}.rb, ./#{script_token}, or explicit file path."
-        return 1
-      end
+  selected_port = find_available_port(8550)
+  env = {
+    "RUFLET_TARGET" => options[:target],
+    "RUFLET_SUPPRESS_SERVER_BANNER" => "1",
+    "RUFLET_PORT" => selected_port.to_s
+  }
 
-      env = {
-        "RUFLET_TARGET" => options[:target],
-        "RUFLET_SUPPRESS_SERVER_BANNER" => "1"
-      }
-      print_mobile_qr_hint if options[:target] == "mobile"
-      cmd =
-        if File.file?(File.expand_path("Gemfile", Dir.pwd))
-          env["BUNDLE_PATH"] = "vendor/bundle"
-          env["BUNDLE_DISABLE_SHARED_GEMS"] = "true"
-          bundle_ready = system(env, "bundle", "check", out: File::NULL, err: File::NULL)
-          return 1 unless bundle_ready || system(env, "bundle", "install")
+  puts "Requested port 8550 is busy; bound to #{selected_port}" if selected_port != 8550
+  print_mobile_qr_hint(port: selected_port) if options[:target] == "mobile"
 
-          ["bundle", "exec", RbConfig.ruby, script_path]
-        else
-          [RbConfig.ruby, script_path]
-        end
+  cmd =
+    if File.file?(File.expand_path("Gemfile", Dir.pwd))
+      env["BUNDLE_PATH"] = "vendor/bundle"
+      env["BUNDLE_DISABLE_SHARED_GEMS"] = "true"
+      bundle_ready = system(env, "bundle", "check", out: File::NULL, err: File::NULL)
+      return 1 unless bundle_ready || system(env, "bundle", "install")
 
-      ok = system(env, *cmd)
-      ok ? 0 : 1
+      ["bundle", "exec", RbConfig.ruby, script_path]
+    else
+      [RbConfig.ruby, script_path]
     end
 
-    def print_mobile_qr_hint(port: 8550)
-      host = best_lan_host
-      payload = "http://#{host}:#{port}"
-
-      puts
-      puts "Ruflet mobile connect URL:"
-      puts "  #{payload}"
-      puts "Ruflet server ws URL:"
-      puts "  ws://0.0.0.0:#{port}/ws"
-      puts "Scan this QR from ruflet_client (Connect -> Scan QR):"
-      print_ascii_qr(payload)
-      puts
-    rescue StandardError => e
-      warn "QR setup failed: #{e.class}: #{e.message}"
+  child_pid = Process.spawn(env, *cmd, pgroup: true)
+  forward_signal = lambda do |signal|
+    begin
+      Process.kill(signal, -child_pid)
+    rescue Errno::ESRCH
+      nil
     end
+  end
+
+  previous_int = Signal.trap("INT") { forward_signal.call("INT") }
+  previous_term = Signal.trap("TERM") { forward_signal.call("TERM") }
+
+  _pid, status = Process.wait2(child_pid)
+  status.success? ? 0 : (status.exitstatus || 1)
+ensure
+  Signal.trap("INT", previous_int) if defined?(previous_int) && previous_int
+  Signal.trap("TERM", previous_term) if defined?(previous_term) && previous_term
+
+  if defined?(child_pid) && child_pid
+    begin
+      Process.kill("TERM", -child_pid)
+    rescue Errno::ESRCH
+      nil
+    end
+  end
+end
+
+def print_mobile_qr_hint(port: 8550)
+  host = best_lan_host
+  payload = "http://#{host}:#{port}"
+
+  puts
+  puts "Ruflet mobile connect URL:"
+  puts "  #{payload}"
+  puts "Ruflet server ws URL:"
+  puts "  ws://0.0.0.0:#{port}/ws"
+  puts "Scan this QR from ruflet_client (Connect -> Scan QR):"
+  print_ascii_qr(payload)
+  puts
+rescue StandardError => e
+  warn "QR setup failed: #{e.class}: #{e.message}"
+end
 
     def command_build(args)
       platform = (args.shift || "").downcase
@@ -281,7 +308,27 @@ module Ruflet
       end
     end
 
-    def best_lan_host
+def find_available_port(start_port, max_attempts: 100)
+  port = start_port.to_i
+
+  max_attempts.times do
+    begin
+begin
+  probe = TCPServer.new("0.0.0.0", port)
+rescue Errno::EACCES, Errno::EPERM
+  probe = TCPServer.new("127.0.0.1", port)
+end
+probe.close
+return port
+    rescue Errno::EADDRINUSE
+      port += 1
+    end
+  end
+
+  start_port
+end
+
+def best_lan_host
       ips = Socket.ip_address_list
       addr = ips.find { |ip| ip.ipv4_private? && !ip.ipv4_loopback? }
       return addr.ip_address if addr

@@ -18,7 +18,4 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "ruflet_protocol", "= #{Ruflet::VERSION}"
   spec.add_dependency "ruflet_ui", "= #{Ruflet::VERSION}"
-  spec.add_dependency "em-websocket", "~> 0.5"
-  spec.add_dependency "base64"
-  spec.add_dependency "msgpack", "~> 1.8"
 end

@@ -13,9 +13,6 @@ PATH
   remote: ../packages/ruflet_server
   specs:
     ruflet_server (0.2.0)
-      base64
-      em-websocket (~> 0.5)
-      msgpack (~> 1.8)
       ruflet_protocol (= 0.2.0)
       ruflet_ui (= 0.2.0)
 
@@ -36,14 +33,7 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    base64 (0.3.0)
     chunky_png (1.4.0)
-    em-websocket (0.5.3)
-      eventmachine (>= 0.12.9)
-      http_parser.rb (~> 0)
-    eventmachine (1.2.7)
-    http_parser.rb (0.8.1)
-    msgpack (1.8.0)
     rqrcode (2.2.0)
       chunky_png (~> 1.0)
       rqrcode_core (~> 1.0)
@@ -61,12 +51,7 @@ DEPENDENCIES
   ruflet_ui!
 
 CHECKSUMS
-  base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   chunky_png (1.4.0) sha256=89d5b31b55c0cf4da3cf89a2b4ebc3178d8abe8cbaf116a1dba95668502fdcfe
-  em-websocket (0.5.3) sha256=f56a92bde4e6cb879256d58ee31f124181f68f8887bd14d53d5d9a292758c6a8
-  eventmachine (1.2.7) sha256=994016e42aa041477ba9cff45cbe50de2047f25dd418eba003e84f0d16560972
-  http_parser.rb (0.8.1) sha256=9ae8df145b39aa5398b2f90090d651c67bd8e2ebfe4507c966579f641e11097a
-  msgpack (1.8.0) sha256=e64ce0212000d016809f5048b48eb3a65ffb169db22238fb4b72472fecb2d732
   rqrcode (2.2.0) sha256=23eea88bb44c7ee6d6cab9354d08c287f7ebcdc6112e1fe7bcc2d010d1ffefc1
   rqrcode_core (1.2.0) sha256=cf4989dc82d24e2877984738c4ee569308625fed2a810960f1b02d68d0308d1a
   ruflet (0.2.0)
