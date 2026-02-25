@@ -420,7 +420,6 @@ end
       Signal.trap("INT", previous_int) if previous_int
       Signal.trap("TERM", previous_term) if previous_term
     end
-
 def bind_server_socket!(max_attempts: 100)
   requested = @port.to_i
   candidate = requested
@@ -439,8 +438,7 @@ def bind_server_socket!(max_attempts: 100)
   raise Errno::EADDRINUSE, "Unable to bind starting at #{requested} after #{max_attempts} attempts"
 end
 
-
-    def stop
+def stop
   return unless @running || @server_socket
 
   @running = false
@@ -461,9 +459,9 @@ end
       nil
     end
   end
-    end
+end
 
-    private
+private
 
     def handle_socket(socket)
       ws = nil

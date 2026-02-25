@@ -159,7 +159,6 @@ def command_run(args)
   parser.parse!(args)
 
   script_token = args.shift || "main"
-
   script_path = resolve_script(script_token)
   unless script_path
     warn "Script not found: #{script_token}"
@@ -307,19 +306,18 @@ end
         nil
       end
     end
-
 def find_available_port(start_port, max_attempts: 100)
   port = start_port.to_i
 
   max_attempts.times do
     begin
-begin
-  probe = TCPServer.new("0.0.0.0", port)
-rescue Errno::EACCES, Errno::EPERM
-  probe = TCPServer.new("127.0.0.1", port)
-end
-probe.close
-return port
+      begin
+        probe = TCPServer.new("0.0.0.0", port)
+      rescue Errno::EACCES, Errno::EPERM
+        probe = TCPServer.new("127.0.0.1", port)
+      end
+      probe.close
+      return port
     rescue Errno::EADDRINUSE
       port += 1
     end
@@ -329,12 +327,12 @@ return port
 end
 
 def best_lan_host
-      ips = Socket.ip_address_list
-      addr = ips.find { |ip| ip.ipv4_private? && !ip.ipv4_loopback? }
-      return addr.ip_address if addr
+  ips = Socket.ip_address_list
+  addr = ips.find { |ip| ip.ipv4_private? && !ip.ipv4_loopback? }
+  return addr.ip_address if addr
 
-      "127.0.0.1"
-    end
+  "127.0.0.1"
+end
 
     def print_ascii_qr(payload)
       begin
