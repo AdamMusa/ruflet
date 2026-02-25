@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 module Ruflet
-  module Rack
+  module RailsProtocol
     module Context
-      THREAD_KEY = :ruflet_rack_env
+      THREAD_KEY = :ruflet_rails_env
 
       module_function
 

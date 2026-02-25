@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Ruflet
-  module Rack
+  module RailsProtocol
     class Middleware
       def initialize(app)
         @app = app

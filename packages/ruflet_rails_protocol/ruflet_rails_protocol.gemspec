@@ -3,13 +3,13 @@
 require_relative "lib/ruflet/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "ruflet_rack"
+  spec.name = "ruflet_rails_protocol"
   spec.version = Ruflet::VERSION
   spec.authors = ["AdamMusa"]
   spec.email = ["adammusa2222@gmail.com"]
 
-  spec.summary = "Ruflet Rack integration package."
-  spec.description = "Rack middleware and runner helpers for integrating Ruflet with Rack-based frameworks such as Rails and Sinatra."
+  spec.summary = "Rails WebSocket protocol adapter for Ruflet."
+  spec.description = "Provides Rack/WebSocket bridge and mobile loader used by ruflet_rails."
   spec.homepage = "https://github.com/AdamMusa/Ruflet"
   spec.required_ruby_version = ">= 3.1"
 

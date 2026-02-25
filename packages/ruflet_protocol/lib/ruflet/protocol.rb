@@ -23,8 +23,6 @@ module Ruflet
     end
 
     def normalize_register_payload(payload)
-      # New protocol payload shape:
-      # {"session_id"=>..., "page_name"=>..., "page"=>{...}}
       page = payload["page"] || {}
       {
         "session_id" => payload["session_id"],
@@ -35,6 +33,21 @@ module Ruflet
         "platform" => page["platform"],
         "platform_brightness" => page["platform_brightness"],
         "media" => page["media"] || {}
+      }
+    end
+
+    def normalize_control_event_payload(payload)
+      {
+        "target" => payload["target"] || payload["eventTarget"],
+        "name" => payload["name"] || payload["eventName"],
+        "data" => payload["data"] || payload["eventData"]
+      }
+    end
+
+    def normalize_update_control_payload(payload)
+      {
+        "id" => payload["id"] || payload["target"] || payload["eventTarget"],
+        "props" => payload["props"].is_a?(Hash) ? payload["props"] : {}
       }
     end
 

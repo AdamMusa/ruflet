@@ -10,6 +10,7 @@ require "ruflet_ui"
 module Ruflet
   class Server
     attr_reader :port
+
     WEBSOCKET_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
     class WireCodec
@@ -44,7 +45,7 @@ module Ruflet
           read_value(reader)
         end
 
-    private
+        private
 
         def pack_integer(value)
           if value >= 0
@@ -294,70 +295,70 @@ module Ruflet
       private
 
       def read_frame
-  header = read_exact(2)
-  return nil if header.nil?
+        header = read_exact(2)
+        return nil if header.nil?
 
-  b1 = header.getbyte(0)
-  b2 = header.getbyte(1)
+        b1 = header.getbyte(0)
+        b2 = header.getbyte(1)
 
-  masked = (b2 & 0x80) != 0
-  payload_len = b2 & 0x7f
+        masked = (b2 & 0x80) != 0
+        payload_len = b2 & 0x7f
 
-  payload_len = read_exact(2).unpack1("n") if payload_len == 126
-  payload_len = read_exact(8).unpack1("Q>") if payload_len == 127
+        payload_len = read_exact(2).unpack1("n") if payload_len == 126
+        payload_len = read_exact(8).unpack1("Q>") if payload_len == 127
 
-  masking_key = masked ? read_exact(4) : nil
-  payload = payload_len.zero? ? "".b : read_exact(payload_len)
-  return nil if payload.nil?
+        masking_key = masked ? read_exact(4) : nil
+        payload = payload_len.zero? ? "".b : read_exact(payload_len)
+        return nil if payload.nil?
 
-  payload = unmask(payload, masking_key) if masked
+        payload = unmask(payload, masking_key) if masked
 
-  { opcode: b1 & 0x0f, payload: payload }
-end
+        { opcode: b1 & 0x0f, payload: payload }
+      end
 
-def send_frame(opcode, payload)
-  bytes = payload.to_s.b
-  len = bytes.bytesize
-  header = [0x80 | (opcode & 0x0f)].pack("C")
+      def send_frame(opcode, payload)
+        bytes = payload.to_s.b
+        len = bytes.bytesize
+        header = [0x80 | (opcode & 0x0f)].pack("C")
 
-  header <<
-    if len <= 125
-      [len].pack("C")
-    elsif len <= 0xffff
-      [126].pack("C") + [len].pack("n")
-    else
-      [127].pack("C") + [len].pack("Q>")
+        header <<
+          if len <= 125
+            [len].pack("C")
+          elsif len <= 0xffff
+            [126].pack("C") + [len].pack("n")
+          else
+            [127].pack("C") + [len].pack("Q>")
+          end
+
+        @write_mutex.synchronize do
+          @socket.write(header)
+          @socket.write(bytes) unless bytes.empty?
+        end
+      end
+
+      def unmask(payload, mask)
+        out = +""
+        out.force_encoding(Encoding::BINARY)
+        payload.bytes.each_with_index do |byte, idx|
+          out << (byte ^ mask.getbyte(idx % 4))
+        end
+        out
+      end
+
+      def read_exact(length)
+        chunk = +""
+        chunk.force_encoding(Encoding::BINARY)
+
+        while chunk.bytesize < length
+          part = @socket.read(length - chunk.bytesize)
+          return nil if part.nil? || part.empty?
+
+          chunk << part
+        end
+
+        chunk
+      end
     end
-
-  @write_mutex.synchronize do
-    @socket.write(header)
-    @socket.write(bytes) unless bytes.empty?
-  end
-end
-
-  def unmask(payload, mask)
-    out = +""
-    out.force_encoding(Encoding::BINARY)
-    payload.bytes.each_with_index do |byte, idx|
-      out << (byte ^ mask.getbyte(idx % 4))
-    end
-    out
-  end
-
-  def read_exact(length)
-    chunk = +""
-    chunk.force_encoding(Encoding::BINARY)
-
-    while chunk.bytesize < length
-      part = @socket.read(length - chunk.bytesize)
-      return nil if part.nil? || part.empty?
-
-      chunk << part
-    end
-
-    chunk
-  end
-end
 
     def initialize(host: "0.0.0.0", port: 8550, &app_block)
       @host = host
@@ -420,48 +421,55 @@ end
       Signal.trap("INT", previous_int) if previous_int
       Signal.trap("TERM", previous_term) if previous_term
     end
-def bind_server_socket!(max_attempts: 100)
-  requested = @port.to_i
-  candidate = requested
 
-  max_attempts.times do
-    begin
-      @server_socket = TCPServer.new(@host, candidate)
-      @port = candidate
-      warn "Requested port #{requested} is busy; bound to #{@port}" if @port != requested
-      return
-    rescue Errno::EADDRINUSE
-      candidate += 1
+    # For Rack-hosted mode: caller already performed the HTTP upgrade.
+    def handle_upgraded_socket(io)
+      ws = WebSocketConnection.new(io)
+      run_connection(ws)
     end
-  end
 
-  raise Errno::EADDRINUSE, "Unable to bind starting at #{requested} after #{max_attempts} attempts"
-end
+    def bind_server_socket!(max_attempts: 100)
+      requested = @port.to_i
+      candidate = requested
 
-def stop
-  return unless @running || @server_socket
+      max_attempts.times do
+        begin
+          @server_socket = TCPServer.new(@host, candidate)
+          @port = candidate
+          warn "Requested port #{requested} is busy; bound to #{@port}" if @port != requested
+          return
+        rescue Errno::EADDRINUSE
+          candidate += 1
+        end
+      end
 
-  @running = false
-
-  server = @server_socket
-  @server_socket = nil
-  begin
-    server&.close
-  rescue IOError
-    nil
-  end
-
-  live_connections = @connections_mutex.synchronize { @connections.values.dup }
-  live_connections.each do |conn|
-    begin
-      conn.close
-    rescue StandardError
-      nil
+      raise Errno::EADDRINUSE, "Unable to bind starting at #{requested} after #{max_attempts} attempts"
     end
-  end
-end
 
-private
+    def stop
+      return unless @running || @server_socket
+
+      @running = false
+
+      server = @server_socket
+      @server_socket = nil
+      begin
+        server&.close
+      rescue IOError
+        nil
+      end
+
+      live_connections = @connections_mutex.synchronize { @connections.values.dup }
+      live_connections.each do |conn|
+        begin
+          conn.close
+        rescue StandardError
+          nil
+        end
+      end
+    end
+
+    private
 
     def handle_socket(socket)
       ws = nil
@@ -471,11 +479,7 @@ private
 
         send_handshake_response(socket, headers["sec-websocket-key"])
         ws = WebSocketConnection.new(socket)
-        register_connection(ws)
-
-        while (raw = ws.read_message)
-          handle_message(ws, raw)
-        end
+        run_connection(ws)
       rescue StandardError => e
         warn "server error: #{e.class}: #{e.message}"
         warn e.backtrace.join("\n") if e.backtrace
@@ -485,6 +489,22 @@ private
         unregister_connection(ws)
         ws&.close
       end
+    end
+
+    def run_connection(ws)
+      register_connection(ws)
+
+      while (raw = ws.read_message)
+        handle_message(ws, raw)
+      end
+    rescue StandardError => e
+      warn "server error: #{e.class}: #{e.message}"
+      warn e.backtrace.join("\n") if e.backtrace
+      send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => e.message.to_s.dup.force_encoding("UTF-8") })
+    ensure
+      remove_session(ws)
+      unregister_connection(ws)
+      ws&.close
     end
 
     def read_http_upgrade_request(socket)
@@ -615,79 +635,89 @@ private
       page = Page.new(
         session_id: session_id,
         client_details: normalized,
-        sender: lambda { |action, msg_payload|
+        sender: lambda do |action, msg_payload|
           send_message(ws, action, msg_payload)
-        }
+        end
       )
 
+      page.title = "Ruflet App"
+
       @sessions_mutex.synchronize do
-        @sessions[ws.session_key] = { page: page }
+        @sessions[ws.session_key] = page
       end
 
-      send_message(ws, Protocol::ACTIONS[:register_client], Protocol.register_response(session_id: session_id))
-      @app_block&.call(page)
+      initial_response = [
+        Protocol::ACTIONS[:register_client],
+        {
+          "session_id" => session_id,
+          "page_patch" => {},
+          "error" => nil
+        }
+      ]
+      ws.send_binary(WireCodec.pack(initial_response))
+
+      @app_block.call(page)
+      page.update
+    rescue StandardError => e
+      send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => e.message })
+      raise
     end
 
     def on_control_event(ws, payload)
-      session = @sessions_mutex.synchronize { @sessions[ws.session_key] }
-      return unless session
+      event = Protocol.normalize_control_event_payload(payload)
+      page = fetch_page(ws)
+      return if event["target"].nil? || event["name"].to_s.empty?
 
-      if payload.key?("target")
-        session[:page].dispatch_event(
-          target: payload["target"],
-          name: payload["name"],
-          data: payload["data"]
-        )
-      else
-        session[:page].dispatch_event(
-          target: payload["eventTarget"],
-          name: payload["eventName"],
-          data: payload["eventData"]
-        )
-      end
+      page.dispatch_event(
+        target: event["target"],
+        name: event["name"],
+        data: normalize_event_data(event["data"])
+      )
     end
 
     def on_update_control(ws, payload)
-      session = @sessions_mutex.synchronize { @sessions[ws.session_key] }
-      return unless session
+      update = Protocol.normalize_update_control_payload(payload)
+      page = fetch_page(ws)
+      return if update["id"].nil?
 
-      control_id = payload["id"] || payload["target"] || payload["eventTarget"]
-      props = payload["props"] || {}
-      return if control_id.nil? || !props.is_a?(Hash)
+      page.apply_client_update(update["id"], update["props"] || {})
+    end
 
-      session[:page].apply_client_update(control_id, props)
+    def fetch_page(ws)
+      page = @sessions_mutex.synchronize { @sessions[ws.session_key] }
+      raise "Session not found" unless page
+
+      page
+    end
+
+    def normalize_event_data(value)
+      case value
+      when Hash
+        value.each_with_object({}) { |(k, v), out| out[k.to_sym] = normalize_event_data(v) }
+      when Array
+        value.map { |entry| normalize_event_data(entry) }
+      else
+        value
+      end
     end
 
     def send_message(ws, action, payload)
-      packet = Protocol.pack_message(action: action, payload: normalize_for_wire(payload))
-      ws.send_binary(WireCodec.pack(packet))
+      message = [action, payload]
+      ws.send_binary(WireCodec.pack(message))
     rescue StandardError => e
       warn "send error: #{e.class}: #{e.message}"
     end
 
-    def normalize_for_wire(value)
-      case value
-      when String, Integer, Float, TrueClass, FalseClass, NilClass
-        value
-      when Symbol
-        value.to_s
-      when Array
-        value.map { |v| normalize_for_wire(v) }
-      when Hash
-        value.each_with_object({}) do |(k, v), out|
-          out[k.to_s] = normalize_for_wire(v)
-        end
-      else
-        value.to_s
-      end
-    end
-
     def pseudo_uuid
-      # Lightweight UUID-like ID without SecureRandom dependency.
-      time_part = (Time.now.to_f * 1_000_000).to_i
-      rand_part = rand(1 << 64)
-      hex = format("%016x%016x", time_part, rand_part)
-      "#{hex[0, 8]}-#{hex[8, 4]}-4#{hex[13, 3]}-a#{hex[17, 3]}-#{hex[20, 12]}"
+      now = Process.clock_gettime(Process::CLOCK_REALTIME, :nanosecond)
+      rnd = rand(0..0xffff_ffff)
+      "%08x-%04x-%04x-%04x-%012x" % [
+        rnd,
+        now & 0xffff,
+        (now >> 16) & 0xffff,
+        (now >> 32) & 0xffff,
+        (now >> 48) & 0xffff_ffff_ffff
+      ]
     end
   end
 end

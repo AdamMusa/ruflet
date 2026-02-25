@@ -1,0 +1,30 @@
+# frozen_string_literal: true
+
+module Ruflet
+  module RailsProtocol
+    class MobileLoader
+      def initialize(file_path)
+        @file_path = file_path
+      end
+
+      def load!
+        absolute = File.expand_path(@file_path)
+        raise ArgumentError, "Mobile file not found: #{absolute}" unless File.file?(absolute)
+
+        captured = nil
+        interceptor = lambda do |entrypoint:, host:, port:|
+          captured = { entrypoint: entrypoint, host: host, port: port }
+          :captured
+        end
+
+        Ruflet.with_run_interceptor(interceptor) do
+          Kernel.load(absolute)
+        end
+
+        raise ArgumentError, "No Ruflet app boot found in #{absolute}. Expected MyApp.new.run" unless captured
+
+        captured
+      end
+    end
+  end
+end
