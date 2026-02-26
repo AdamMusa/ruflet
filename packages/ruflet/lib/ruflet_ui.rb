@@ -40,9 +40,6 @@ module Ruflet
   end
 
   module Icons
-    REMOVE = MaterialIcons::REMOVE
-    ADD = MaterialIcons::ADD
-
     class << self
       def const_missing(name)
         if Ruflet::MaterialIcons.const_defined?(name, false)
