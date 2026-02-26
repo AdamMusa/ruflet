@@ -1,6 +1,6 @@
 # Ruflet
 
-Ruflet is a Ruby port of Flet for building web, desktop, and mobile apps in Ruby.
+Ruflet is a Ruby port of [Flet](https://flet.dev/) for building web, desktop, and mobile apps in Ruby.
 
 Class-based apps are the recommended and documented standard:
 - `class MyApp < Ruflet::App`
