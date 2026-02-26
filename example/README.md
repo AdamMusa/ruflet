@@ -1,6 +1,6 @@
 # example
 
-RubyNative examples.
+Ruflet examples.
 
 ## Setup
 
@@ -11,16 +11,16 @@ bundle install
 ## Run
 
 ```bash
-bundle exec ruby_native run main
-bundle exec ruby_native run calculator
-bundle exec ruby_native run solitaire
-bundle exec ruby_native run todo
-bundle exec ruby_native run feedback_surfaces
+bundle exec ruflet run main
+bundle exec ruflet run calculator
+bundle exec ruflet run solitaire
+bundle exec ruflet run todo
+bundle exec ruflet run feedback_surfaces
 ```
 
 ## Build
 
 ```bash
-bundle exec ruby_native build apk
-bundle exec ruby_native build ios
+bundle exec ruflet build apk
+bundle exec ruflet build ios
 ```

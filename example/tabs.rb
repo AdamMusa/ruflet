@@ -1,12 +1,8 @@
-$LOAD_PATH.unshift(File.expand_path("../packages/ruby_native/lib", __dir__))
-$LOAD_PATH.unshift(File.expand_path("../packages/ruby_native_ui/lib", __dir__))
-$LOAD_PATH.unshift(File.expand_path("../packages/ruby_native_server/lib", __dir__))
-$LOAD_PATH.unshift(File.expand_path("../packages/ruby_native_protocol/lib", __dir__))
-require "ruby_native"
+require "ruflet"
 
-class MainApp < RubyNative::App
+class MainApp < Ruflet::App
   def view(page)
-    app_name = "RubyNative Tabs Demo"
+    app_name = "Ruflet Tabs Demo"
     page.title = app_name
 
     tabs = page.tabs(
@@ -32,9 +28,9 @@ class MainApp < RubyNative::App
       selected_index: 0,
       on_change: ->(e) { page.title = "#{app_name} (tab #{e.data})" },
       destinations: [
-        page.navigation_bar_destination(icon: page.icon(icon: RubyNative::MaterialIcons::HOME), label: "Home"),
-        page.navigation_bar_destination(icon: page.icon(icon: RubyNative::MaterialIcons::SPORTS_ESPORTS), label: "Play"),
-        page.navigation_bar_destination(icon: page.icon(icon: RubyNative::MaterialIcons::SETTINGS), label: "Settings")
+        page.navigation_bar_destination(icon: page.icon(icon: Ruflet::MaterialIcons::HOME), label: "Home"),
+        page.navigation_bar_destination(icon: page.icon(icon: Ruflet::MaterialIcons::SPORTS_ESPORTS), label: "Play"),
+        page.navigation_bar_destination(icon: page.icon(icon: Ruflet::MaterialIcons::SETTINGS), label: "Settings")
       ]
     )
 
@@ -46,7 +42,7 @@ class MainApp < RubyNative::App
         title: page.text(value: app_name, size: 18)
       ),
       floating_action_button: page.fab(
-        page.icon(icon: RubyNative::MaterialIcons::ADD),
+        page.icon(icon: Ruflet::MaterialIcons::ADD),
         bgcolor: "#232329",
         color: "#ffffff",
         on_click: ->(_e) {}

@@ -1,60 +1,66 @@
-# RubyNative
+# Ruflet
 
-RubyNative is a Ruby port of Flet for building web, desktop, and mobile apps in Ruby.
+Ruflet is a Ruby port of Flet for building web, desktop, and mobile apps in Ruby.
 
 Class-based apps are the recommended and documented standard:
-- `class MyApp < RubyNative::App`
+- `class MyApp < Ruflet::App`
 - implement `def view(page)`
 
 ## Start Here
 
 1. Install mobile client app from releases:
-- [RubyNative Releases](https://github.com/AdamMusa/RubyNative/releases)
+- [Ruflet Releases](https://github.com/AdamMusa/Ruflet/releases)
 - Install latest Android APK or iOS build.
 
-2. Install RubyNative CLI from GitHub:
+2. Install Ruflet CLI from RubyGems:
 
 ```bash
-gem install specific_install
-gem specific_install -l https://github.com/AdamMusa/RubyNative.git -d packages/ruby_native_cli
+gem install ruflet_cli
 ```
 
 3. Create and run your first app:
 
 ```bash
-ruby_native new my_app
+ruflet new my_app
 cd my_app
 bundle install
-ruby_native run main.rb
+ruflet run main.rb
 ```
 
-4. Open RubyNative mobile client and connect:
+CLI output after creation:
+
+```text
+Ruflet app created: my_app
+```
+
+4. Open Ruflet mobile client and connect:
 - Enter URL manually, or
-- Tap `Scan QR` and scan QR shown by `ruby_native run ...`
+- Tap `Scan QR` and scan QR shown by `ruflet run ...`
 
 ## Package Split
 
-RubyNative is split into packages:
+Ruflet is split into packages:
 
-- `ruby_native_protocol`: protocol layer
-- `ruby_native_ui`: controls, page, widget builder
-- `ruby_native_server`: WebSocket runtime (`RubyNative.run`)
-- `ruby_native_cli`: CLI executable (`ruby_native`)
-- `ruby_native`: runtime umbrella package (`ui + server + protocol`)
+- `ruflet`: core runtime (includes protocol + UI)
+- `ruflet_server`: WebSocket runtime (`Ruflet.run` backend)
+- `ruflet_cli`: CLI executable (`ruflet`)
+- `ruflet_rails`: Rails integration/protocol adapter
 
 Monorepo folders:
 
-- `packages/ruby_native_protocol`
-- `packages/ruby_native_ui`
-- `packages/ruby_native_server`
-- `packages/ruby_native_cli`
-- `packages/ruby_native`
+- `packages/ruflet`
+- `packages/ruflet_server`
+- `packages/ruflet_cli`
+- `packages/ruflet_rails`
 
 ## New Project Behavior
 
-`ruby_native new <appname>` now generates a `Gemfile` that pulls `ruby_native` from GitHub (`main` branch).
+`ruflet new <appname>` generates a `Gemfile` using RubyGems dependencies:
 
-It does **not** add `ruby_native_cli` to app dependencies.
+- `gem "ruflet", ">= 0.0.2"`
+- `gem "ruflet_server", ">= 0.0.2"`
+
+It does **not** add `ruflet_cli` to app dependencies.
 
 That keeps CLI global/tooling-level and app deps runtime-focused.
 
@@ -63,14 +69,14 @@ That keeps CLI global/tooling-level and app deps runtime-focused.
 Use class-based apps:
 
 ```ruby
-require "ruby_native"
+require "ruflet"
 
-class MyApp < RubyNative::App
+class MyApp < Ruflet::App
   def view(page)
-    page.vertical_alignment = RubyNative::MainAxisAlignment::CENTER
-    page.horizontal_alignment = RubyNative::CrossAxisAlignment::CENTER
+    page.vertical_alignment = Ruflet::MainAxisAlignment::CENTER
+    page.horizontal_alignment = Ruflet::CrossAxisAlignment::CENTER
     page.title = "Hello"
-    page.add(page.text(value: "Hello RubyNative"))
+    page.add(page.text(value: "Hello Ruflet"))
   end
 end
 
@@ -80,18 +86,18 @@ MyApp.new.run
 ## CLI
 
 ```bash
-ruby_native new <appname>
-ruby_native run [scriptname|path] [--web|--mobile|--desktop]
-ruby_native build <apk|ios|aab|web|macos|windows|linux>
+ruflet new <appname>
+ruflet run [scriptname|path] [--web|--mobile|--desktop]
+ruflet build <apk|ios|aab|web|macos|windows|linux>
 ```
 
-By default `ruby_native build ...` looks for Flutter client at `./ruby_native_client`.
-Set `RUBY_NATIVE_CLIENT_DIR` to override.
+By default `ruflet build ...` looks for Flutter client at `./ruflet_client`.
+Set `RUFLET_CLIENT_DIR` to override.
 
 ## Development (Monorepo)
 
 ```bash
-cd /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruby_native
+cd /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet
 /opt/homebrew/opt/ruby/bin/bundle install
 ```
 

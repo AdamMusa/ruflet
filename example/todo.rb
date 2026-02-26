@@ -1,6 +1,6 @@
-require "ruby_native"
+require "ruflet"
 
-class TodoApp < RubyNative::App
+class TodoApp < Ruflet::App
   FILTERS = %w[all active completed].freeze
 
   def initialize
@@ -13,7 +13,7 @@ class TodoApp < RubyNative::App
 
   def view(page)
     page.title = "Todo"
-    page.bgcolor = RubyNative::Colors.SURFACE
+    page.bgcolor = Ruflet::Colors.SURFACE
     page.vertical_alignment = "center"
     page.horizontal_alignment = "center"
 
@@ -32,7 +32,7 @@ class TodoApp < RubyNative::App
       value: @draft,
       hint_text: "What needs to be done?",
       width: compact ? (content_width - 24) : [content_width - 110, 560].min,
-      color: RubyNative::Colors.ON_SURFACE,
+      color: Ruflet::Colors.ON_SURFACE,
       on_change: ->(e) { @draft = e.data.to_s },
       on_submit: ->(e) { add_task(e.page) }
     )
@@ -43,7 +43,7 @@ class TodoApp < RubyNative::App
       [
         page.container(
           padding: 16,
-          content: page.text(value: "No tasks", color: RubyNative::Colors.ON_SURFACE_VARIANT)
+          content: page.text(value: "No tasks", color: Ruflet::Colors.ON_SURFACE_VARIANT)
         )
       ]
       else
@@ -54,15 +54,15 @@ class TodoApp < RubyNative::App
       page.container(
         width: content_width,
         padding: 20,
-        bgcolor: RubyNative::Colors.SURFACE_CONTAINER_LOW,
+        bgcolor: Ruflet::Colors.SURFACE_CONTAINER_LOW,
         border_radius: 12,
         content: page.column(
           spacing: 14,
           controls: [
-            page.text(value: "Todo List", size: 28, weight: "w600", color: RubyNative::Colors.ON_SURFACE),
+            page.text(value: "Todo List", size: 28, weight: "w600", color: Ruflet::Colors.ON_SURFACE),
             add_row(page, input, compact),
             page.container(
-              bgcolor: RubyNative::Colors.SURFACE_CONTAINER,
+              bgcolor: Ruflet::Colors.SURFACE_CONTAINER,
               border_radius: 10,
               padding: 8,
               content: page.column(spacing: 6, controls: task_controls)
@@ -72,12 +72,12 @@ class TodoApp < RubyNative::App
         )
       ),
       appbar: page.app_bar(
-        title: page.text(value: "Todo List", color: RubyNative::Colors.ON_PRIMARY),
-        bgcolor: RubyNative::Colors.PRIMARY
+        title: page.text(value: "Todo List", color: Ruflet::Colors.ON_PRIMARY),
+        bgcolor: Ruflet::Colors.PRIMARY
       ),
       floating_action_button: page.floating_action_button(
         content: "+",
-        bgcolor: RubyNative::Colors.PRIMARY,
+        bgcolor: Ruflet::Colors.PRIMARY,
         forground_color: "white74",
         on_click: ->(e) { add_task(e.page) }
       )
@@ -108,8 +108,8 @@ class TodoApp < RubyNative::App
   def add_row(page, input, compact)
     add_button = page.elevated_button(
       text: "Add",
-      bgcolor: RubyNative::Colors.PRIMARY,
-      color: RubyNative::Colors.ON_PRIMARY,
+      bgcolor: Ruflet::Colors.PRIMARY,
+      color: Ruflet::Colors.ON_PRIMARY,
       on_click: ->(e) { add_task(e.page) }
     )
 
@@ -125,7 +125,7 @@ class TodoApp < RubyNative::App
 
     counter = page.text(
       value: "#{active_count} item#{active_count == 1 ? "" : "s"} left",
-      color: RubyNative::Colors.ON_SURFACE_VARIANT
+      color: Ruflet::Colors.ON_SURFACE_VARIANT
     )
     filters = page.row(
       spacing: 6,
@@ -152,14 +152,14 @@ class TodoApp < RubyNative::App
     if selected
       page.filled_button(
         text: name.capitalize,
-        bgcolor: RubyNative::Colors.PRIMARY,
-        color: RubyNative::Colors.ON_PRIMARY,
+        bgcolor: Ruflet::Colors.PRIMARY,
+        color: Ruflet::Colors.ON_PRIMARY,
         on_click: ->(e) { set_filter(name, e.page) }
       )
     else
       page.text_button(
         text: name.capitalize,
-        color: RubyNative::Colors.PRIMARY,
+        color: Ruflet::Colors.PRIMARY,
         on_click: ->(e) { set_filter(name, e.page) }
       )
     end

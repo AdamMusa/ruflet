@@ -1,0 +1,114 @@
+name: Build Ruflet Client
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+  pull_request:
+    paths:
+      - '.github/workflows/build-ruflet-android.yml'
+      - 'ext/**'
+      - 'android/**'
+      - 'native/**'
+      - 'scripts/**'
+      - 'script/**'
+      - 'Rakefile'
+      - 'Gemfile'
+      - 'Gemfile.lock'
+      - 'ruflet_client/**'
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/build-ruflet-android.yml'
+      - 'ext/**'
+      - 'android/**'
+      - 'native/**'
+      - 'scripts/**'
+      - 'script/**'
+      - 'Rakefile'
+      - 'Gemfile'
+      - 'Gemfile.lock'
+      - 'ruflet_client/**'
+
+permissions:
+  contents: read
+
+jobs:
+  build-android-apk:
+    name: Flutter Android APK build
+    if: github.event_name != 'release'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Flutter dependencies
+        working-directory: ruflet_client
+        run: flutter pub get
+
+      - name: Build Android release APK (Flutter only)
+        working-directory: ruflet_client
+        run: flutter build apk --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: ruflet_client/build/app/outputs/flutter-apk/*release.apk
+          if-no-files-found: error
+
+  android-apk-release:
+    name: Android APK-only release build
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Flutter dependencies
+        working-directory: ruflet_client
+        run: flutter pub get
+
+      - name: Build Android release APK (Flutter only)
+        working-directory: ruflet_client
+        run: flutter build apk --release
+
+      - name: Upload APK workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk-release
+          path: ruflet_client/build/app/outputs/flutter-apk/*release.apk
+          if-no-files-found: error
+
+      - name: Attach APKs to GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ruflet_client/build/app/outputs/flutter-apk/*release.apk
