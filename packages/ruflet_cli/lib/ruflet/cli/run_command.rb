@@ -5,6 +5,10 @@ require "rbconfig"
 require "socket"
 require "timeout"
 require "tmpdir"
+require "fileutils"
+require "json"
+require "net/http"
+require "uri"
 
 module Ruflet
   module CLI
@@ -128,9 +132,8 @@ module Ruflet
       def launch_web_client(port)
         web_dir = detect_web_client_dir
         unless web_dir
-          warn "Web client build not found."
-          warn "Build it first: ruflet build web"
-          return nil
+          warn "Web client build not found and prebuilt download failed."
+          return []
         end
 
         web_port = find_available_port(port + 1)
@@ -259,19 +262,27 @@ module Ruflet
       def detect_desktop_client_command(url)
         root = ENV["RUFLET_CLIENT_DIR"]
         root = File.expand_path("ruflet_client", Dir.pwd) if root.to_s.strip.empty?
-        return nil unless Dir.exist?(root)
+        root = nil unless Dir.exist?(root)
+        root ||= ensure_prebuilt_client(desktop: true)
+        return nil unless root && Dir.exist?(root)
 
         host_os = RbConfig::CONFIG["host_os"]
         if host_os.match?(/darwin/i)
           release_bin = File.join(root, "build", "macos", "Build", "Products", "Release", "ruflet_client.app", "Contents", "MacOS", "ruflet_client")
           debug_bin = File.join(root, "build", "macos", "Build", "Products", "Debug", "ruflet_client.app", "Contents", "MacOS", "ruflet_client")
+          prebuilt_bin = File.join(root, "desktop", "ruflet_client.app", "Contents", "MacOS", "ruflet_client")
           executable = [release_bin, debug_bin].find { |p| File.file?(p) && File.executable?(p) }
+          executable ||= prebuilt_bin if File.file?(prebuilt_bin) && File.executable?(prebuilt_bin)
           return [executable, url] if executable
         elsif host_os.match?(/mswin|mingw|cygwin/i)
           exe = File.join(root, "build", "windows", "x64", "runner", "Release", "ruflet_client.exe")
+          prebuilt = File.join(root, "desktop", "ruflet_client.exe")
+          exe = prebuilt if !File.file?(exe) && File.file?(prebuilt)
           return [exe, url] if File.file?(exe)
         else
           direct = File.join(root, "build", "linux", "x64", "release", "bundle", "ruflet_client")
+          prebuilt_direct = File.join(root, "desktop", "ruflet_client")
+          direct = prebuilt_direct if !File.file?(direct) && File.file?(prebuilt_direct)
           return [direct, url] if File.file?(direct)
           bundle_dir = File.join(root, "build", "linux", "x64", "release", "bundle")
           if Dir.exist?(bundle_dir)
@@ -287,12 +298,165 @@ module Ruflet
       def detect_web_client_dir
         root = ENV["RUFLET_CLIENT_DIR"]
         root = File.expand_path("ruflet_client", Dir.pwd) if root.to_s.strip.empty?
-        return nil unless Dir.exist?(root)
+        root = nil unless Dir.exist?(root)
+        root ||= ensure_prebuilt_client(web: true)
+        return nil unless root && Dir.exist?(root)
 
         built = File.join(root, "build", "web")
         return built if Dir.exist?(built) && File.file?(File.join(built, "index.html"))
+        prebuilt = File.join(root, "web")
+        return prebuilt if Dir.exist?(prebuilt) && File.file?(File.join(prebuilt, "index.html"))
 
         nil
+      end
+
+      def ensure_prebuilt_client(web: false, desktop: false)
+        platform = host_platform_name
+        return nil if platform.nil?
+
+        cache_root = File.join(Dir.home, ".ruflet", "client", Ruflet::VERSION, platform)
+        FileUtils.mkdir_p(cache_root)
+
+        wanted_assets = []
+        wanted_assets << "ruflet_client-web.tar.gz" if web
+        if desktop
+          desktop_asset = desktop_asset_name_for(platform)
+          return nil if desktop_asset.nil?
+          wanted_assets << desktop_asset
+        end
+        return cache_root if wanted_assets.empty? || prebuilt_assets_present?(cache_root, web: web, desktop: desktop)
+
+        release = fetch_release_for_version
+        return nil unless release
+
+        assets = release.fetch("assets", [])
+        Dir.mktmpdir("ruflet-prebuilt-") do |tmpdir|
+          wanted_assets.each do |asset_name|
+            asset = assets.find { |a| a["name"] == asset_name }
+            unless asset
+              warn "Missing release asset: #{asset_name}"
+              return nil
+            end
+            archive_path = File.join(tmpdir, asset_name)
+            download_file(asset.fetch("browser_download_url"), archive_path)
+            subdir = asset_name.include?("-web.") ? "web" : "desktop"
+            target = File.join(cache_root, subdir)
+            FileUtils.mkdir_p(target)
+            unless extract_archive(archive_path, target)
+              warn "Failed to extract asset: #{asset_name}"
+              return nil
+            end
+          end
+        end
+
+        return cache_root if prebuilt_assets_present?(cache_root, web: web, desktop: desktop)
+
+        nil
+      rescue StandardError => e
+        warn "Prebuilt client bootstrap failed: #{e.class}: #{e.message}"
+        nil
+      end
+
+      def prebuilt_assets_present?(root, web:, desktop:)
+        ok_web = !web || File.file?(File.join(root, "web", "index.html"))
+        ok_desktop = !desktop || prebuilt_desktop_present?(root)
+        ok_web && ok_desktop
+      end
+
+      def prebuilt_desktop_present?(root)
+        platform = host_platform_name
+        return false if platform.nil?
+
+        case platform
+        when "macos"
+          File.file?(File.join(root, "desktop", "ruflet_client.app", "Contents", "MacOS", "ruflet_client"))
+        when "linux"
+          File.file?(File.join(root, "desktop", "ruflet_client"))
+        when "windows"
+          File.file?(File.join(root, "desktop", "ruflet_client.exe"))
+        else
+          false
+        end
+      end
+
+      def host_platform_name
+        host_os = RbConfig::CONFIG["host_os"]
+        return "macos" if host_os.match?(/darwin/i)
+        return "linux" if host_os.match?(/linux/i)
+        return "windows" if host_os.match?(/mswin|mingw|cygwin/i)
+
+        nil
+      end
+
+      def desktop_asset_name_for(platform)
+        case platform
+        when "macos" then "ruflet_client-macos-universal.zip"
+        when "linux" then "ruflet_client-linux-x64.tar.gz"
+        when "windows" then "ruflet_client-windows-x64.zip"
+        end
+      end
+
+      def fetch_release_for_version
+        release_by_tag("v#{Ruflet::VERSION}") || release_latest
+      end
+
+      def release_latest
+        github_get_json("https://api.github.com/repos/AdamMusa/Ruflet/releases/latest")
+      end
+
+      def release_by_tag(tag)
+        github_get_json("https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/#{tag}")
+      rescue StandardError
+        nil
+      end
+
+      def github_get_json(url)
+        uri = URI(url)
+        response = Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
+          req = Net::HTTP::Get.new(uri)
+          req["Accept"] = "application/vnd.github+json"
+          req["User-Agent"] = "ruflet-cli"
+          http.request(req)
+        end
+        return JSON.parse(response.body) if response.is_a?(Net::HTTPSuccess)
+
+        raise "GitHub API failed (#{response.code})"
+      end
+
+      def download_file(url, destination, limit: 5)
+        raise "Too many redirects while downloading #{url}" if limit <= 0
+
+        uri = URI(url)
+        Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
+          req = Net::HTTP::Get.new(uri)
+          req["User-Agent"] = "ruflet-cli"
+          http.request(req) do |res|
+            case res
+            when Net::HTTPSuccess
+              File.open(destination, "wb") { |f| res.read_body { |chunk| f.write(chunk) } }
+              return destination
+            when Net::HTTPRedirection
+              return download_file(res["location"], destination, limit: limit - 1)
+            else
+              raise "Download failed (#{res.code})"
+            end
+          end
+        end
+      end
+
+      def extract_archive(archive, destination)
+        if archive.end_with?(".tar.gz")
+          return system("tar", "-xzf", archive, "-C", destination, out: File::NULL, err: File::NULL)
+        end
+        if archive.end_with?(".zip")
+          host_os = RbConfig::CONFIG["host_os"]
+          if host_os.match?(/darwin/i)
+            return system("ditto", "-x", "-k", archive, destination, out: File::NULL, err: File::NULL)
+          end
+          return system("unzip", "-oq", archive, "-d", destination, out: File::NULL, err: File::NULL)
+        end
+
+        false
       end
 
       def print_mobile_qr_hint(port: 8550)
