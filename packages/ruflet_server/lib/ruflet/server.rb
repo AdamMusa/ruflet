@@ -61,7 +61,9 @@ module Ruflet
         begin
           @server_socket = TCPServer.new(@host, candidate)
           @port = candidate
-          warn "Requested port #{requested} is busy; bound to #{@port}" if @port != requested
+          if @port != requested && ENV["RUFLET_SUPPRESS_SERVER_BANNER"] != "1"
+            warn "Requested port #{requested} is busy; bound to #{@port}"
+          end
           return
         rescue Errno::EADDRINUSE
           candidate += 1
