@@ -17,10 +17,7 @@ Class-based apps are the recommended and documented standard:
 2. Install gems from RubyGems:
 
 ```bash
-gem install ruflet -v 0.0.3
-gem install ruflet_server -v 0.0.3
-gem install ruflet_cli -v 0.0.3
-gem install ruflet_rails -v 0.0.3
+gem install ruflet
 ```
 
 3. Create and run your first app:
