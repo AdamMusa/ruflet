@@ -3,6 +3,8 @@
 require "optparse"
 require "rbconfig"
 require "socket"
+require "timeout"
+require "tmpdir"
 
 module Ruflet
   module CLI
@@ -31,7 +33,7 @@ module Ruflet
           "RUFLET_PORT" => selected_port.to_s
         }
 
-        puts "Requested port 8550 is busy; bound to #{selected_port}" if selected_port != 8550
+        print_run_banner(target: options[:target], port: selected_port)
         print_mobile_qr_hint(port: selected_port) if options[:target] == "mobile"
 
         cmd =
@@ -47,6 +49,7 @@ module Ruflet
           end
 
         child_pid = Process.spawn(env, *cmd, pgroup: true)
+        launched_client_pids = launch_target_client(options[:target], selected_port)
         forward_signal = lambda do |signal|
           begin
             Process.kill(signal, -child_pid)
@@ -71,6 +74,18 @@ module Ruflet
             nil
           end
         end
+
+        Array(defined?(launched_client_pids) ? launched_client_pids : nil).compact.each do |pid|
+          begin
+            Process.kill("TERM", -pid)
+          rescue Errno::ESRCH
+            begin
+              Process.kill("TERM", pid)
+            rescue Errno::ESRCH
+              nil
+            end
+          end
+        end
       end
 
       private
@@ -81,6 +96,201 @@ module Ruflet
 
         candidate = File.expand_path("#{token}.rb", Dir.pwd)
         return candidate if File.file?(candidate)
+
+        nil
+      end
+
+      def print_run_banner(target:, port:)
+        if port != 8550
+          puts "Requested port 8550 is busy; bound to #{port}"
+        end
+        if target == "desktop"
+          puts "Ruflet desktop URL: http://localhost:#{port}"
+        else
+          puts "Ruflet target: #{target}"
+          puts "Ruflet URL: http://localhost:#{port}"
+        end
+      end
+
+      def launch_target_client(target, port)
+        wait_for_server_boot(port)
+
+        case target
+        when "web"
+          launch_web_client(port)
+        when "desktop"
+          launch_desktop_client("http://localhost:#{port}")
+        else
+          []
+        end
+      end
+
+      def launch_web_client(port)
+        web_dir = detect_web_client_dir
+        unless web_dir
+          warn "Web client build not found."
+          warn "Build it first: ruflet build web"
+          return nil
+        end
+
+        web_port = find_available_port(port + 1)
+        web_pid = Process.spawn("python3", "-m", "http.server", web_port.to_s, "--bind", "127.0.0.1", chdir: web_dir, out: File::NULL, err: File::NULL)
+        Process.detach(web_pid)
+        wait_for_server_boot(web_port)
+        browser_pid = open_in_browser_app_mode("http://localhost:#{web_port}")
+        open_in_browser("http://localhost:#{web_port}") if browser_pid.nil?
+        puts "Ruflet web client: http://localhost:#{web_port}"
+        puts "Ruflet backend ws: ws://localhost:#{port}/ws"
+        [web_pid, browser_pid].compact
+      rescue Errno::ENOENT
+        warn "python3 is required to host web client locally."
+        warn "Install Python 3 and rerun."
+        []
+      rescue StandardError => e
+        warn "Failed to launch web client: #{e.class}: #{e.message}"
+        []
+      end
+
+      def wait_for_server_boot(port, timeout_seconds: 10)
+        Timeout.timeout(timeout_seconds) do
+          loop do
+            begin
+              sock = TCPSocket.new("127.0.0.1", port)
+              sock.write("GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")
+              sock.close
+              break
+            rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
+              sleep 0.15
+            end
+          end
+        end
+      rescue Timeout::Error
+        warn "Server did not become reachable at http://localhost:#{port} yet."
+      end
+
+      def open_in_browser(url)
+        cmd =
+          case RbConfig::CONFIG["host_os"]
+          when /darwin/i
+            ["open", url]
+          when /mswin|mingw|cygwin/i
+            ["cmd", "/c", "start", "", url]
+          else
+            ["xdg-open", url]
+          end
+        if system(*cmd, out: File::NULL, err: File::NULL)
+          puts "Opened browser at #{url}"
+        else
+          warn "Could not auto-open browser. Open manually: #{url}"
+        end
+      end
+
+      def open_in_browser_app_mode(url)
+        host_os = RbConfig::CONFIG["host_os"]
+        if host_os.match?(/darwin/i)
+          chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          chromium = "/Applications/Chromium.app/Contents/MacOS/Chromium"
+          browser = [chrome, chromium].find { |p| File.file?(p) && File.executable?(p) }
+          return nil unless browser
+
+          profile_dir = Dir.mktmpdir("ruflet-webapp-")
+          pid = Process.spawn(
+            browser,
+            "--new-window",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--user-data-dir=#{profile_dir}",
+            "--app=#{url}",
+            pgroup: true,
+            out: File::NULL,
+            err: File::NULL
+          )
+          Process.detach(pid)
+          return pid
+        end
+
+        if host_os.match?(/linux/i)
+          browser = %w[google-chrome chromium chromium-browser].find { |cmd| system("which", cmd, out: File::NULL, err: File::NULL) }
+          return nil unless browser
+
+          profile_dir = Dir.mktmpdir("ruflet-webapp-")
+          pid = Process.spawn(
+            browser,
+            "--new-window",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--user-data-dir=#{profile_dir}",
+            "--app=#{url}",
+            pgroup: true,
+            out: File::NULL,
+            err: File::NULL
+          )
+          Process.detach(pid)
+          return pid
+        end
+
+        nil
+      rescue StandardError
+        nil
+      end
+
+      def launch_desktop_client(url)
+        cmd = detect_desktop_client_command(url)
+        unless cmd
+          warn "Desktop client executable not found."
+          warn "Set RUFLET_CLIENT_DIR to your client path."
+          warn "Example: export RUFLET_CLIENT_DIR=/path/to/ruflet_client"
+          return
+        end
+
+        pid = Process.spawn(*cmd, out: File::NULL, err: File::NULL)
+        Process.detach(pid)
+        if !pid
+          warn "Failed to launch desktop client: #{cmd.first}"
+          warn "Start it manually with URL: #{url}"
+        end
+        [pid]
+      rescue StandardError => e
+        warn "Failed to launch desktop client: #{e.class}: #{e.message}"
+        warn "Start it manually with URL: #{url}"
+        []
+      end
+
+      def detect_desktop_client_command(url)
+        root = ENV["RUFLET_CLIENT_DIR"]
+        root = File.expand_path("ruflet_client", Dir.pwd) if root.to_s.strip.empty?
+        return nil unless Dir.exist?(root)
+
+        host_os = RbConfig::CONFIG["host_os"]
+        if host_os.match?(/darwin/i)
+          release_bin = File.join(root, "build", "macos", "Build", "Products", "Release", "ruflet_client.app", "Contents", "MacOS", "ruflet_client")
+          debug_bin = File.join(root, "build", "macos", "Build", "Products", "Debug", "ruflet_client.app", "Contents", "MacOS", "ruflet_client")
+          executable = [release_bin, debug_bin].find { |p| File.file?(p) && File.executable?(p) }
+          return [executable, url] if executable
+        elsif host_os.match?(/mswin|mingw|cygwin/i)
+          exe = File.join(root, "build", "windows", "x64", "runner", "Release", "ruflet_client.exe")
+          return [exe, url] if File.file?(exe)
+        else
+          direct = File.join(root, "build", "linux", "x64", "release", "bundle", "ruflet_client")
+          return [direct, url] if File.file?(direct)
+          bundle_dir = File.join(root, "build", "linux", "x64", "release", "bundle")
+          if Dir.exist?(bundle_dir)
+            candidate = Dir.children(bundle_dir).map { |f| File.join(bundle_dir, f) }
+              .find { |path| File.file?(path) && File.executable?(path) }
+            return [candidate, url] if candidate
+          end
+        end
+
+        nil
+      end
+
+      def detect_web_client_dir
+        root = ENV["RUFLET_CLIENT_DIR"]
+        root = File.expand_path("ruflet_client", Dir.pwd) if root.to_s.strip.empty?
+        return nil unless Dir.exist?(root)
+
+        built = File.join(root, "build", "web")
+        return built if Dir.exist?(built) && File.file?(File.join(built, "index.html"))
 
         nil
       end
