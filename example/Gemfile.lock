@@ -1,0 +1,45 @@
+PATH
+  remote: ../packages/ruflet_cli
+  specs:
+    ruflet_cli (0.0.3)
+      rqrcode (~> 2.2)
+
+PATH
+  remote: ../packages/ruflet_server
+  specs:
+    ruflet_server (0.0.3)
+      ruflet (= 0.0.3)
+
+PATH
+  remote: ../packages/ruflet
+  specs:
+    ruflet (0.0.3)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    chunky_png (1.4.0)
+    rqrcode (2.2.0)
+      chunky_png (~> 1.0)
+      rqrcode_core (~> 1.0)
+    rqrcode_core (1.2.0)
+
+PLATFORMS
+  arm64-darwin-24
+  ruby
+
+DEPENDENCIES
+  ruflet!
+  ruflet_cli!
+  ruflet_server!
+
+CHECKSUMS
+  chunky_png (1.4.0) sha256=89d5b31b55c0cf4da3cf89a2b4ebc3178d8abe8cbaf116a1dba95668502fdcfe
+  rqrcode (2.2.0) sha256=23eea88bb44c7ee6d6cab9354d08c287f7ebcdc6112e1fe7bcc2d010d1ffefc1
+  rqrcode_core (1.2.0) sha256=cf4989dc82d24e2877984738c4ee569308625fed2a810960f1b02d68d0308d1a
+  ruflet (0.0.3)
+  ruflet_cli (0.0.3)
+  ruflet_server (0.0.3)
+
+BUNDLED WITH
+  4.0.6
