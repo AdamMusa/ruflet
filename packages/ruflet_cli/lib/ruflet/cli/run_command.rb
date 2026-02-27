@@ -4,6 +4,7 @@ require "optparse"
 require "rbconfig"
 require "socket"
 require "timeout"
+require "tmpdir"
 
 module Ruflet
   module CLI
@@ -48,7 +49,7 @@ module Ruflet
           end
 
         child_pid = Process.spawn(env, *cmd, pgroup: true)
-        launched_client_pid = launch_target_client(options[:target], selected_port)
+        launched_client_pids = launch_target_client(options[:target], selected_port)
         forward_signal = lambda do |signal|
           begin
             Process.kill(signal, -child_pid)
@@ -74,11 +75,15 @@ module Ruflet
           end
         end
 
-        if defined?(launched_client_pid) && launched_client_pid
+        Array(defined?(launched_client_pids) ? launched_client_pids : nil).compact.each do |pid|
           begin
-            Process.kill("TERM", launched_client_pid)
+            Process.kill("TERM", -pid)
           rescue Errno::ESRCH
-            nil
+            begin
+              Process.kill("TERM", pid)
+            rescue Errno::ESRCH
+              nil
+            end
           end
         end
       end
@@ -115,6 +120,8 @@ module Ruflet
           launch_web_client(port)
         when "desktop"
           launch_desktop_client("http://localhost:#{port}")
+        else
+          []
         end
       end
 
@@ -127,20 +134,21 @@ module Ruflet
         end
 
         web_port = find_available_port(port + 1)
-        pid = Process.spawn("python3", "-m", "http.server", web_port.to_s, "--bind", "127.0.0.1", chdir: web_dir, out: File::NULL, err: File::NULL)
-        Process.detach(pid)
+        web_pid = Process.spawn("python3", "-m", "http.server", web_port.to_s, "--bind", "127.0.0.1", chdir: web_dir, out: File::NULL, err: File::NULL)
+        Process.detach(web_pid)
         wait_for_server_boot(web_port)
-        open_in_browser("http://localhost:#{web_port}")
+        browser_pid = open_in_browser_app_mode("http://localhost:#{web_port}")
+        open_in_browser("http://localhost:#{web_port}") if browser_pid.nil?
         puts "Ruflet web client: http://localhost:#{web_port}"
         puts "Ruflet backend ws: ws://localhost:#{port}/ws"
-        pid
+        [web_pid, browser_pid].compact
       rescue Errno::ENOENT
         warn "python3 is required to host web client locally."
         warn "Install Python 3 and rerun."
-        nil
+        []
       rescue StandardError => e
         warn "Failed to launch web client: #{e.class}: #{e.message}"
-        nil
+        []
       end
 
       def wait_for_server_boot(port, timeout_seconds: 10)
@@ -177,6 +185,55 @@ module Ruflet
         end
       end
 
+      def open_in_browser_app_mode(url)
+        host_os = RbConfig::CONFIG["host_os"]
+        if host_os.match?(/darwin/i)
+          chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          chromium = "/Applications/Chromium.app/Contents/MacOS/Chromium"
+          browser = [chrome, chromium].find { |p| File.file?(p) && File.executable?(p) }
+          return nil unless browser
+
+          profile_dir = Dir.mktmpdir("ruflet-webapp-")
+          pid = Process.spawn(
+            browser,
+            "--new-window",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--user-data-dir=#{profile_dir}",
+            "--app=#{url}",
+            pgroup: true,
+            out: File::NULL,
+            err: File::NULL
+          )
+          Process.detach(pid)
+          return pid
+        end
+
+        if host_os.match?(/linux/i)
+          browser = %w[google-chrome chromium chromium-browser].find { |cmd| system("which", cmd, out: File::NULL, err: File::NULL) }
+          return nil unless browser
+
+          profile_dir = Dir.mktmpdir("ruflet-webapp-")
+          pid = Process.spawn(
+            browser,
+            "--new-window",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--user-data-dir=#{profile_dir}",
+            "--app=#{url}",
+            pgroup: true,
+            out: File::NULL,
+            err: File::NULL
+          )
+          Process.detach(pid)
+          return pid
+        end
+
+        nil
+      rescue StandardError
+        nil
+      end
+
       def launch_desktop_client(url)
         cmd = detect_desktop_client_command(url)
         unless cmd
@@ -192,11 +249,11 @@ module Ruflet
           warn "Failed to launch desktop client: #{cmd.first}"
           warn "Start it manually with URL: #{url}"
         end
-        pid
+        [pid]
       rescue StandardError => e
         warn "Failed to launch desktop client: #{e.class}: #{e.message}"
         warn "Start it manually with URL: #{url}"
-        nil
+        []
       end
 
       def detect_desktop_client_command(url)
