@@ -1,53 +1,30 @@
-name: Build Ruflet Client
+name: Build Ruflet Client Prebuilds
 
 on:
   workflow_dispatch:
   release:
     types: [published]
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-ruflet-android.yml'
+      - 'ruflet_client/**'
   pull_request:
     paths:
       - '.github/workflows/build-ruflet-android.yml'
-      - 'ext/**'
-      - 'android/**'
-      - 'native/**'
-      - 'scripts/**'
-      - 'script/**'
-      - 'Rakefile'
-      - 'Gemfile'
-      - 'Gemfile.lock'
-      - 'ruflet_client/**'
-  push:
-    branches: [ main ]
-    paths:
-      - '.github/workflows/build-ruflet-android.yml'
-      - 'ext/**'
-      - 'android/**'
-      - 'native/**'
-      - 'scripts/**'
-      - 'script/**'
-      - 'Rakefile'
-      - 'Gemfile'
-      - 'Gemfile.lock'
       - 'ruflet_client/**'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  build-android-apk:
-    name: Flutter Android APK build
-    if: github.event_name != 'release'
+  build-web:
+    name: Build Web
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -55,60 +32,235 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Install Flutter dependencies
+      - name: Install dependencies
         working-directory: ruflet_client
         run: flutter pub get
 
-      - name: Build Android release APK (Flutter only)
+      - name: Build web
         working-directory: ruflet_client
-        run: flutter build apk --release
+        run: flutter build web --release
 
-      - name: Upload APK artifact
+      - name: Package web artifact
+        run: tar -C ruflet_client/build/web -czf ruflet_client-web.tar.gz .
+
+      - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-apk
-          path: ruflet_client/build/app/outputs/flutter-apk/*release.apk
-          if-no-files-found: error
+          name: ruflet_client-web
+          path: ruflet_client-web.tar.gz
 
-  android-apk-release:
-    name: Android APK-only release build
-    if: github.event_name == 'release'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-
-      - name: Install Flutter dependencies
-        working-directory: ruflet_client
-        run: flutter pub get
-
-      - name: Build Android release APK (Flutter only)
-        working-directory: ruflet_client
-        run: flutter build apk --release
-
-      - name: Upload APK workflow artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-apk-release
-          path: ruflet_client/build/app/outputs/flutter-apk/*release.apk
-          if-no-files-found: error
-
-      - name: Attach APKs to GitHub release
+      - name: Attach to GitHub release
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: ruflet_client/build/app/outputs/flutter-apk/*release.apk
+          files: ruflet_client-web.tar.gz
+
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Linux build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: ruflet_client
+        run: flutter pub get
+
+      - name: Build Linux
+        working-directory: ruflet_client
+        run: flutter build linux --release
+
+      - name: Package Linux artifact
+        run: tar -C ruflet_client/build/linux/x64/release/bundle -czf ruflet_client-linux-x64.tar.gz .
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruflet_client-linux
+          path: ruflet_client-linux-x64.tar.gz
+
+      - name: Attach to GitHub release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ruflet_client-linux-x64.tar.gz
+
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: ruflet_client
+        run: flutter pub get
+
+      - name: Build Windows
+        working-directory: ruflet_client
+        run: flutter build windows --release
+
+      - name: Package Windows artifact
+        shell: pwsh
+        run: |
+          Compress-Archive -Path ruflet_client/build/windows/x64/runner/Release/* -DestinationPath ruflet_client-windows-x64.zip -Force
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruflet_client-windows
+          path: ruflet_client-windows-x64.zip
+
+      - name: Attach to GitHub release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ruflet_client-windows-x64.zip
+
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: ruflet_client
+        run: flutter pub get
+
+      - name: Build macOS
+        working-directory: ruflet_client
+        run: flutter build macos --release
+
+      - name: Package macOS artifact
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent ruflet_client/build/macos/Build/Products/Release/ruflet_client.app ruflet_client-macos-universal.zip
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruflet_client-macos
+          path: ruflet_client-macos-universal.zip
+
+      - name: Attach to GitHub release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ruflet_client-macos-universal.zip
+
+  build-ios-simulator:
+    name: Build iOS Simulator
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: ruflet_client
+        run: flutter pub get
+
+      - name: Build iOS simulator
+        working-directory: ruflet_client
+        run: flutter build ios --simulator --debug
+
+      - name: Package iOS simulator artifact
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent ruflet_client/build/ios/iphonesimulator/Runner.app ruflet_client-ios-simulator.zip
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruflet_client-ios-simulator
+          path: ruflet_client-ios-simulator.zip
+
+      - name: Attach to GitHub release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ruflet_client-ios-simulator.zip
+
+  build-android:
+    name: Build Android
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: ruflet_client
+        run: flutter pub get
+
+      - name: Build Android APK
+        working-directory: ruflet_client
+        run: flutter build apk --release
+
+      - name: Build Android App Bundle
+        working-directory: ruflet_client
+        run: flutter build appbundle --release
+
+      - name: Package Android artifacts
+        run: |
+          cp ruflet_client/build/app/outputs/flutter-apk/app-release.apk ruflet_client-android-apk.apk
+          cp ruflet_client/build/app/outputs/bundle/release/app-release.aab ruflet_client-android-appbundle.aab
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruflet_client-android
+          path: |
+            ruflet_client-android-apk.apk
+            ruflet_client-android-appbundle.aab
+
+      - name: Attach to GitHub release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ruflet_client-android-apk.apk
+            ruflet_client-android-appbundle.aab
