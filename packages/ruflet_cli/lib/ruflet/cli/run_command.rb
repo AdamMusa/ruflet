@@ -48,7 +48,7 @@ module Ruflet
           end
 
         child_pid = Process.spawn(env, *cmd, pgroup: true)
-        web_client_pid = launch_target_client(options[:target], selected_port)
+        launched_client_pid = launch_target_client(options[:target], selected_port)
         forward_signal = lambda do |signal|
           begin
             Process.kill(signal, -child_pid)
@@ -74,9 +74,9 @@ module Ruflet
           end
         end
 
-        if defined?(web_client_pid) && web_client_pid
+        if defined?(launched_client_pid) && launched_client_pid
           begin
-            Process.kill("TERM", web_client_pid)
+            Process.kill("TERM", launched_client_pid)
           rescue Errno::ESRCH
             nil
           end
@@ -192,9 +192,11 @@ module Ruflet
           warn "Failed to launch desktop client: #{cmd.first}"
           warn "Start it manually with URL: #{url}"
         end
+        pid
       rescue StandardError => e
         warn "Failed to launch desktop client: #{e.class}: #{e.message}"
         warn "Start it manually with URL: #{url}"
+        nil
       end
 
       def detect_desktop_client_command(url)
@@ -204,10 +206,10 @@ module Ruflet
 
         host_os = RbConfig::CONFIG["host_os"]
         if host_os.match?(/darwin/i)
-          release_app = File.join(root, "build", "macos", "Build", "Products", "Release", "ruflet_client.app")
-          debug_app = File.join(root, "build", "macos", "Build", "Products", "Debug", "ruflet_client.app")
-          app = [release_app, debug_app].find { |p| Dir.exist?(p) }
-          return ["open", app, "--args", url] if app
+          release_bin = File.join(root, "build", "macos", "Build", "Products", "Release", "ruflet_client.app", "Contents", "MacOS", "ruflet_client")
+          debug_bin = File.join(root, "build", "macos", "Build", "Products", "Debug", "ruflet_client.app", "Contents", "MacOS", "ruflet_client")
+          executable = [release_bin, debug_bin].find { |p| File.file?(p) && File.executable?(p) }
+          return [executable, url] if executable
         elsif host_os.match?(/mswin|mingw|cygwin/i)
           exe = File.join(root, "build", "windows", "x64", "runner", "Release", "ruflet_client.exe")
           return [exe, url] if File.file?(exe)
