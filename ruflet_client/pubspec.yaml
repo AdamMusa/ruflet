@@ -42,70 +42,87 @@ dependencies:
     git:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-ads/src/flutter/flet_ads
+      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flet_audio:
     git:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-audio/src/flutter/flet_audio
+      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flet_audio_recorder:
     git:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-audio-recorder/src/flutter/flet_audio_recorder
+      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flet_camera:
     git:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-camera/src/flutter/flet_camera
+      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flet_charts:
     git:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-charts/src/flutter/flet_charts
+      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flet_code_editor:
     git:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-code-editor/src/flutter/flet_code_editor
+      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flet_color_pickers:
     git:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-color-pickers/src/flutter/flet_color_pickers
+      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flet_datatable2:
     git:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-datatable2/src/flutter/flet_datatable2
+      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flet_flashlight:
     git:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-flashlight/src/flutter/flet_flashlight
+      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flet_geolocator:
     git:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-geolocator/src/flutter/flet_geolocator
+      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flet_lottie:
     git:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-lottie/src/flutter/flet_lottie
+      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flet_map:
     git:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-map/src/flutter/flet_map
+      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flet_permission_handler:
     git:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-permission-handler/src/flutter/flet_permission_handler
+      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flet_rive:
     git:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-rive/src/flutter/flet_rive
+      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flet_secure_storage:
     git:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-secure-storage/src/flutter/flet_secure_storage
+      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flet_video:
     git:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-video/src/flutter/flet_video
+      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flet_webview:
     git:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-webview/src/flutter/flet_webview
+      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flutter_native_splash: ^2.4.7
   mobile_scanner: ^7.1.2
 dev_dependencies:

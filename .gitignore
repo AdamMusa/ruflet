@@ -1,1 +1,7 @@
 vendor/*
+
+# Upstream mruby sources vendored from GitHub
+ruby_runtime/third_party/mruby/
+
+# Local demo app
+mruby_runtime_demo/

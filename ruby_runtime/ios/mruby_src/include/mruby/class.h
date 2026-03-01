@@ -1,0 +1,157 @@
+/**
+** @file mruby/class.h - Class class
+**
+** See Copyright Notice in mruby.h
+*/
+
+#ifndef MRUBY_CLASS_H
+#define MRUBY_CLASS_H
+
+#include "common.h"
+
+/**
+ * Class class
+ */
+MRB_BEGIN_DECL
+
+struct RClass {
+  MRB_OBJECT_HEADER;
+  struct iv_tbl *iv;
+  struct mrb_mt_tbl *mt;
+  struct RClass *super;
+};
+
+#define mrb_class_ptr(v)    ((struct RClass*)(mrb_ptr(v)))
+
+MRB_INLINE struct RClass*
+mrb_class(mrb_state *mrb, mrb_value v)
+{
+  if (!mrb_immediate_p(v)) {
+    return mrb_obj_ptr(v)->c;
+  }
+
+  switch (mrb_type(v)) {
+  case MRB_TT_FALSE:
+    if (mrb_fixnum(v))
+      return mrb->false_class;
+    return mrb->nil_class;
+  case MRB_TT_TRUE:
+    return mrb->true_class;
+  case MRB_TT_SYMBOL:
+    return mrb->symbol_class;
+  case MRB_TT_INTEGER:
+    return mrb->integer_class;
+#ifndef MRB_NO_FLOAT
+  case MRB_TT_FLOAT:
+    return mrb->float_class;
+#endif
+  case MRB_TT_CPTR:
+    return mrb->object_class;
+  default:
+    return NULL;
+  }
+}
+
+/* flags:
+   20:   frozen
+   19:   is_prepended
+   18:   is_origin
+   17:   is_inherited (used by method cache)
+   7-16: unused
+   6:    prohibit Class#allocate
+   0-5:  instance type
+*/
+#define MRB_FL_CLASS_IS_PREPENDED (1 << 19)
+#define MRB_FL_CLASS_IS_ORIGIN (1 << 18)
+#define MRB_CLASS_ORIGIN(c) do {\
+  if ((c)->flags & MRB_FL_CLASS_IS_PREPENDED) {\
+    (c) = (c)->super;\
+    while (!((c)->flags & MRB_FL_CLASS_IS_ORIGIN)) {\
+      (c) = (c)->super;\
+    }\
+  }\
+} while (0)
+#define MRB_FL_CLASS_IS_INHERITED (1 << 17)
+#define MRB_INSTANCE_TT_MASK (0x1F)
+#define MRB_SET_INSTANCE_TT(c, tt) ((c)->flags = (((c)->flags & ~MRB_INSTANCE_TT_MASK) | (char)(tt)))
+#define MRB_INSTANCE_TT(c) (enum mrb_vtype)((c)->flags & MRB_INSTANCE_TT_MASK)
+#define MRB_FL_UNDEF_ALLOCATE (1 << 6)
+#define MRB_UNDEF_ALLOCATOR(c) (mrb_assert((c)->tt == MRB_TT_CLASS), (c)->flags |= MRB_FL_UNDEF_ALLOCATE)
+#define MRB_UNDEF_ALLOCATOR_P(c) ((c)->flags & MRB_FL_UNDEF_ALLOCATE)
+#define MRB_DEFINE_ALLOCATOR(c) ((c)->flags &= ~MRB_FL_UNDEF_ALLOCATE)
+
+MRB_API void mrb_define_method_raw(mrb_state*, struct RClass*, mrb_sym, mrb_method_t);
+MRB_API void mrb_alias_method(mrb_state*, struct RClass *c, mrb_sym a, mrb_sym b);
+MRB_API void mrb_remove_method(mrb_state *mrb, struct RClass *c, mrb_sym sym);
+
+MRB_API mrb_method_t mrb_method_search_vm(mrb_state*, struct RClass**, mrb_sym);
+MRB_API mrb_method_t mrb_method_search(mrb_state*, struct RClass*, mrb_sym);
+
+MRB_API struct RClass* mrb_class_real(struct RClass* cl);
+MRB_API struct RClass* mrb_class_outer(mrb_state *mrb, struct RClass *c);
+
+#ifndef MRB_NO_METHOD_CACHE
+void mrb_mc_clear_by_class(mrb_state *mrb, struct RClass* c);
+#else
+#define mrb_mc_clear_by_class(mrb,c)
+#endif
+
+/* return non zero to break the loop */
+typedef int (mrb_mt_foreach_func)(mrb_state*,mrb_sym,mrb_method_t,void*);
+MRB_API void mrb_mt_foreach(mrb_state*, struct RClass*, mrb_mt_foreach_func*, void*);
+
+/* ROM method table types for static method registration */
+union mrb_mt_ptr {
+  const struct RProc *proc;
+  mrb_func_t func;
+};
+
+/* entry combining function pointer, symbol key, and flags */
+typedef struct mrb_mt_entry {
+  union mrb_mt_ptr val;
+  mrb_sym key;              /* pure symbol ID (no flags packed) */
+  uint32_t flags;           /* method flags + aspec */
+} mrb_mt_entry;
+
+typedef struct mrb_mt_tbl {
+  int               size;
+  int               alloc;  /* bit 30: MRB_MT_READONLY_BIT, bit 29: MRB_MT_FROZEN_BIT */
+  mrb_mt_entry     *ptr;
+  struct mrb_mt_tbl *next;
+} mrb_mt_tbl;
+
+#define MRB_MT_READONLY_BIT  (1 << 30)
+#define MRB_MT_FROZEN_BIT    (1 << 29)
+#define MRB_MT_FUNC    (1 << 24)  /* MRB_METHOD_FUNC_FL */
+#define MRB_MT_PUBLIC  0
+#define MRB_MT_PRIVATE (1 << 25)  /* MRB_METHOD_PRIVATE_FL */
+
+/* ROM table entry: 3rd param is MRB_ARGS_*() optionally OR'd with MRB_MT_PRIVATE. */
+#define MRB_MT_ENTRY(fn, sym, flags) \
+  { { .func = (fn) }, (sym), (flags) | MRB_MT_FUNC }
+#define MRB_MT_ASPEC(flags) ((mrb_aspec)((flags) & 0xffffff))
+
+/* "removed" tombstone: MRB_MT_FUNC flag set with NULL function pointer.
+   This combination never occurs naturally (C functions are never NULL).
+   Unlike undef (proc=NULL without MRB_MT_FUNC), a removed marker makes
+   mt_get() return 0 ("not found"), blocking ROM chain walk while
+   allowing superclass lookup. */
+#define MRB_MT_REMOVED_P(e) (((e).flags&MRB_MT_FUNC) && (e).val.func==NULL)
+
+/* Singly-linked list node for tracking heap-allocated ROM wrappers. */
+struct mrb_mt_rom_list {
+  mrb_mt_tbl *tbl;
+  struct mrb_mt_rom_list *next;
+};
+
+/* Allocate a per-state ROM layer wrapping the const entries array,
+   and push it onto the class's method table chain. */
+void mrb_mt_init_rom(mrb_state *mrb, struct RClass *c,
+                     const mrb_mt_entry *entries, int size);
+#define MRB_MT_INIT_ROM(mrb, cls, entries) \
+  mrb_mt_init_rom(mrb, cls, entries, \
+                  (int)(sizeof(entries)/sizeof(entries[0])))
+
+MRB_END_DECL
+
+#endif  /* MRUBY_CLASS_H */
