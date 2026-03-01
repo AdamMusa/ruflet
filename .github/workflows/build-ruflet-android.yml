@@ -18,52 +18,32 @@ permissions:
   contents: write
 
 jobs:
-  build-web:
-    name: Build Web
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-
-      - name: Install dependencies
-        working-directory: ruflet_client
-        run: flutter pub get
-
-      - name: Build web
-        working-directory: ruflet_client
-        run: flutter build web --release
-
-      - name: Package web artifact
-        run: tar -C ruflet_client/build/web -czf ruflet_client-web.tar.gz .
-
-      - name: Upload workflow artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ruflet_client-web
-          path: ruflet_client-web.tar.gz
-
-      - name: Attach to GitHub release
-        if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ruflet_client-web.tar.gz
-
-  build-linux:
-    name: Build Linux
-    runs-on: ubuntu-latest
+  build-platforms:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: web
+            runner: ubuntu-latest
+            artifact: ruflet_client-web.tar.gz
+          - target: linux
+            runner: ubuntu-latest
+            artifact: ruflet_client-linux-x64.tar.gz
+          - target: windows
+            runner: windows-latest
+            artifact: ruflet_client-windows-x64.zip
+          - target: macos
+            runner: macos-latest
+            artifact: ruflet_client-macos-universal.zip
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Install Linux build deps
+        if: matrix.target == 'linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -83,48 +63,45 @@ jobs:
         working-directory: ruflet_client
         run: flutter pub get
 
-      - name: Build Linux
+      - name: Build target
         working-directory: ruflet_client
-        run: flutter build linux --release
+        run: |
+          case "${{ matrix.target }}" in
+            web)
+              flutter build web --release
+              ;;
+            linux)
+              flutter build linux --release
+              ;;
+            windows)
+              flutter build windows --release
+              ;;
+            macos)
+              flutter build macos --release
+              ;;
+            *)
+              echo "Unsupported target: ${{ matrix.target }}"
+              exit 1
+              ;;
+          esac
 
-      - name: Package Linux artifact
-        run: tar -C ruflet_client/build/linux/x64/release/bundle -czf ruflet_client-linux-x64.tar.gz .
+      - name: Package artifact (Unix)
+        if: matrix.target != 'windows'
+        run: |
+          case "${{ matrix.target }}" in
+            web)
+              tar -C ruflet_client/build/web -czf ruflet_client-web.tar.gz .
+              ;;
+            linux)
+              tar -C ruflet_client/build/linux/x64/release/bundle -czf ruflet_client-linux-x64.tar.gz .
+              ;;
+            macos)
+              ditto -c -k --sequesterRsrc --keepParent ruflet_client/build/macos/Build/Products/Release/ruflet_client.app ruflet_client-macos-universal.zip
+              ;;
+          esac
 
-      - name: Upload workflow artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ruflet_client-linux
-          path: ruflet_client-linux-x64.tar.gz
-
-      - name: Attach to GitHub release
-        if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ruflet_client-linux-x64.tar.gz
-
-  build-windows:
-    name: Build Windows
-    runs-on: windows-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-
-      - name: Install dependencies
-        working-directory: ruflet_client
-        run: flutter pub get
-
-      - name: Build Windows
-        working-directory: ruflet_client
-        run: flutter build windows --release
-
-      - name: Package Windows artifact
+      - name: Package artifact (Windows)
+        if: matrix.target == 'windows'
         shell: pwsh
         run: |
           Compress-Archive -Path ruflet_client/build/windows/x64/runner/Release/* -DestinationPath ruflet_client-windows-x64.zip -Force
@@ -132,52 +109,14 @@ jobs:
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ruflet_client-windows
-          path: ruflet_client-windows-x64.zip
+          name: ruflet_client-${{ matrix.target }}
+          path: ${{ matrix.artifact }}
 
       - name: Attach to GitHub release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: ruflet_client-windows-x64.zip
-
-  build-macos:
-    name: Build macOS
-    runs-on: macos-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-
-      - name: Install dependencies
-        working-directory: ruflet_client
-        run: flutter pub get
-
-      - name: Build macOS
-        working-directory: ruflet_client
-        run: flutter build macos --release
-
-      - name: Package macOS artifact
-        run: |
-          ditto -c -k --sequesterRsrc --keepParent ruflet_client/build/macos/Build/Products/Release/ruflet_client.app ruflet_client-macos-universal.zip
-
-      - name: Upload workflow artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ruflet_client-macos
-          path: ruflet_client-macos-universal.zip
-
-      - name: Attach to GitHub release
-        if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ruflet_client-macos-universal.zip
+          files: ${{ matrix.artifact }}
 
   build-ios-simulator:
     name: Build iOS Simulator
@@ -220,6 +159,77 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: ruflet_client-ios-simulator.zip
+
+  build-ios-release:
+    name: Build iOS Release IPA (Signed)
+    if: github.event_name == 'release'
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: ruflet_client
+        run: flutter pub get
+
+      - name: Import signing certificate and provisioning profile
+        env:
+          IOS_CERT_P12_BASE64: ${{ secrets.IOS_CERT_P12_BASE64 }}
+          IOS_CERT_PASSWORD: ${{ secrets.IOS_CERT_PASSWORD }}
+          IOS_PROFILE_BASE64: ${{ secrets.IOS_PROFILE_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          if [ -z "$IOS_CERT_P12_BASE64" ] || [ -z "$IOS_CERT_PASSWORD" ] || [ -z "$IOS_PROFILE_BASE64" ] || [ -z "$KEYCHAIN_PASSWORD" ]; then
+            echo "Missing iOS signing secrets. Expected IOS_CERT_P12_BASE64, IOS_CERT_PASSWORD, IOS_PROFILE_BASE64, KEYCHAIN_PASSWORD."
+            exit 1
+          fi
+
+          CERT_PATH="$RUNNER_TEMP/cert.p12"
+          PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
+
+          echo -n "$IOS_CERT_P12_BASE64" | base64 --decode -o "$CERT_PATH"
+          echo -n "$IOS_PROFILE_BASE64" | base64 --decode -o "$PROFILE_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$IOS_CERT_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/"
+
+      - name: Build signed IPA
+        working-directory: ruflet_client
+        run: flutter build ipa --release
+
+      - name: Package iOS release artifact
+        run: |
+          IPA_PATH=$(find ruflet_client/build/ios/ipa -name "*.ipa" | head -n 1)
+          if [ -z "$IPA_PATH" ]; then
+            echo "No IPA produced."
+            exit 1
+          fi
+          cp "$IPA_PATH" ruflet_client-ios-release.ipa
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruflet_client-ios-release
+          path: ruflet_client-ios-release.ipa
+
+      - name: Attach IPA to GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ruflet_client-ios-release.ipa
 
   build-android:
     name: Build Android

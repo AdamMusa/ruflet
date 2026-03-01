@@ -198,14 +198,7 @@ void main([List<String>? args]) async {
       (defaultTargetPlatform == TargetPlatform.windows ||
           defaultTargetPlatform == TargetPlatform.macOS ||
           defaultTargetPlatform == TargetPlatform.linux);
-  if (kIsWeb) {
-    initialUrl = 'http://localhost:8550';
-  } else if (isDesktop &&
-      (args == null || args.isEmpty) &&
-      (initialUrl.trim().isEmpty ||
-          initialUrl.contains('0.0.0.0') ||
-          initialUrl.contains('localhost'))) {
-    // Keep old default behavior only when no explicit desktop URL is passed.
+  if (kIsWeb || isDesktop) {
     initialUrl = 'http://localhost:8550';
   }
 
