@@ -306,6 +306,22 @@ module Ruflet
       self
     end
 
+    def invoke(control_or_id, method_name, args: nil, timeout: 10)
+      control = resolve_control(control_or_id)
+      return nil unless control
+
+      call_id = "call_#{Ruflet::Control.generate_id}"
+      send_message(Protocol::ACTIONS[:invoke_control_method], {
+        "control_id" => control.wire_id,
+        "call_id" => call_id,
+        "name" => method_name.to_s,
+        "args" => args,
+        "timeout" => timeout
+      })
+
+      call_id
+    end
+
     def patch_page(control_id, **props)
       update(control_id, **props)
     end

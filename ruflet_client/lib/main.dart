@@ -1,5 +1,6 @@
 import 'package:flet/flet.dart';
 import 'package:flet_ads/flet_ads.dart' as flet_ads;
+import 'package:flet_audio/flet_audio.dart' as flet_audio;
 // --FAT_CLIENT_START--
 // --FAT_CLIENT_END--
 import 'package:flet_camera/flet_camera.dart' as flet_camera;
@@ -18,6 +19,7 @@ import 'package:flet_permission_handler/flet_permission_handler.dart'
 // --FAT_CLIENT_END--
 import 'package:flet_secure_storage/flet_secure_storage.dart'
     as flet_secure_storage;
+import 'package:flet_video/flet_video.dart' as flet_video;
 // --FAT_CLIENT_END--
 import 'package:flet_webview/flet_webview.dart' as flet_webview;
 import 'package:flutter/foundation.dart';
@@ -128,6 +130,7 @@ void main([List<String>? args]) async {
   WidgetsFlutterBinding.ensureInitialized();
   final extensions = <FletExtension>[
     flet_ads.Extension(),
+    flet_audio.Extension(),
     flet_camera.Extension(),
     flet_charts.Extension(),
     flet_code_editor.Extension(),
@@ -139,6 +142,7 @@ void main([List<String>? args]) async {
     flet_map.Extension(),
     flet_permission_handler.Extension(),
     flet_secure_storage.Extension(),
+    flet_video.Extension(),
     flet_webview.Extension(),
 
     // --FAT_CLIENT_START--

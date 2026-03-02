@@ -27,7 +27,7 @@ flutter run -d chrome
 1. Start a Ruflet backend demo app:
 
 ```bash
-cd ../example
+cd ../examples
 bundle install
 ruflet run main.rb
 ```

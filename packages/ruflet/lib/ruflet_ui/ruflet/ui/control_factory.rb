@@ -2,6 +2,7 @@
 
 require_relative "material_control_factory"
 require_relative "cupertino_control_factory"
+require_relative "../control"
 
 module Ruflet
   module UI
@@ -13,9 +14,9 @@ module Ruflet
       def build(type, id: nil, **props)
         normalized_type = type.to_s.downcase
         klass = CLASS_MAP[normalized_type]
-        raise ArgumentError, "Unsupported control type: #{normalized_type}" unless klass
+        return klass.new(id: id, **props) if klass
 
-        klass.new(id: id, **props)
+        Ruflet::Control.new(type: normalized_type, id: id, **props)
       end
     end
   end
