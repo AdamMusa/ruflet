@@ -78,6 +78,7 @@ module Ruflet
         "canvas" => "Canvas",
         "line" => "Line",
         "service_registry" => "ServiceRegistry",
+        "url_launcher" => "UrlLauncher",
         "audio" => "Audio",
         "video" => "Video",
         "flashlight" => "Flashlight",

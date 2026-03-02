@@ -81,6 +81,7 @@ module Ruflet
 
       def app_bar(**props) = build_widget(:appbar, **props)
       def appbar(**props) = app_bar(**props)
+      def url_launcher(**props) = build_widget(:url_launcher, **props)
       def floating_action_button(**props) = build_widget(:floatingactionbutton, **props)
       def floatingactionbutton(**props) = floating_action_button(**props)
       def tabs(**props, &block) = build_widget(:tabs, **props, &block)

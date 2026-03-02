@@ -10,7 +10,8 @@ module RufletStudio
         appbar: page.app_bar(
           bgcolor: color_surface(page),
           color: color_text(page),
-          title: page.text(value: "Home", size: 20)
+          title: page.text(value: "Home", size: 20),
+          actions: []
         ),
         navigation_bar: nav_bar(page, route),
         padding: 16,

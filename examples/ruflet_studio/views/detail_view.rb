@@ -2,7 +2,7 @@
 
 module RufletStudio
   module Views
-    def detail_view(page, title, content)
+    def detail_view(page, title, content, source_path: nil)
       route = page.route
       page.view(
         route: route,
@@ -16,7 +16,10 @@ module RufletStudio
             icon: "arrow_back",
             on_click: ->(_e) { page.go("/gallery") }
           ),
-          actions: []
+          actions: begin
+            action = github_action(page, source_path)
+            action ? [action] : []
+          end
         ),
         navigation_bar: nav_bar(page, "/gallery"),
         padding: 16,

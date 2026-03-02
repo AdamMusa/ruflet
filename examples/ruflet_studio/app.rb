@@ -45,29 +45,41 @@ module RufletStudio
       when "/settings"
         page.views = [settings_view(page)]
       when "/counter"
-        page.views = [detail_view(page, "Counter", build_counter(page, status_text(page)))]
+        page.views = [detail_view(page, "Counter", build_counter(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_controls/counter.rb")]
       when "/todo"
-        page.views = [detail_view(page, "To-do", build_todo(page, status_text(page)))]
+        page.views = [detail_view(page, "To-do", build_todo(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_controls/todo.rb")]
       when "/calculator"
-        page.views = [detail_view(page, "Calculator", build_calculator(page, status_text(page)))]
+        page.views = [detail_view(page, "Calculator", build_calculator(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_controls/calculator.rb")]
       when "/drawing"
-        page.views = [detail_view(page, "Drawing Tool", build_drawing(page, status_text(page)))]
+        page.views = [detail_view(page, "Drawing Tool", build_drawing(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_drawing.rb")]
       when "/material"
-        page.views = [detail_view(page, "Material controls", build_material_controls(page, status_text(page)))]
+        page.views = [detail_view(page, "Material controls", build_material_controls(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_controls/material_controls.rb")]
       when "/cupertino"
-        page.views = [detail_view(page, "Cupertino controls", build_cupertino_controls(page, status_text(page)))]
+        page.views = [detail_view(page, "Cupertino controls", build_cupertino_controls(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_controls/cupertino_controls.rb")]
       when "/charts"
-        page.views = [detail_view(page, "Charts", build_charts(page, status_text(page)))]
+        page.views = [detail_view(page, "Charts", build_charts(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_charts.rb")]
       when "/minesweeper"
-        page.views = [detail_view(page, "Minesweeper", build_minesweeper(page, status_text(page)))]
+        page.views = [detail_view(page, "Minesweeper", build_minesweeper(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_minesweeper.rb")]
       when "/animation"
-        page.views = [detail_view(page, "Ruflet Animation", build_animation(page, status_text(page)))]
+        page.views = [detail_view(page, "Ruflet Animation", build_animation(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_media/animation.rb")]
       when "/audio"
-        page.views = [detail_view(page, "Audio Player", build_audio(page, status_text(page)))]
+        page.views = [detail_view(page, "Audio Player", build_audio(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_media/audio.rb")]
       when "/video"
-        page.views = [detail_view(page, "Video Player", build_video(page, status_text(page)))]
+        page.views = [detail_view(page, "Video Player", build_video(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_media/video.rb")]
       when "/flashlight"
-        page.views = [detail_view(page, "Flashlight", build_flashlight(page, status_text(page)))]
+        page.views = [detail_view(page, "Flashlight", build_flashlight(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_media/flashlight.rb")]
       else
         page.views = [gallery_view(page)]
       end
