@@ -19,7 +19,6 @@ import package_info_plus
 import pasteboard
 import path_provider_foundation
 import record_macos
-import rive_native
 import screen_brightness_macos
 import screen_retriever_macos
 import share_plus
@@ -45,7 +44,6 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   PasteboardPlugin.register(with: registry.registrar(forPlugin: "PasteboardPlugin"))
   PathProviderPlugin.register(with: registry.registrar(forPlugin: "PathProviderPlugin"))
   RecordMacOsPlugin.register(with: registry.registrar(forPlugin: "RecordMacOsPlugin"))
-  RiveNativePlugin.register(with: registry.registrar(forPlugin: "RiveNativePlugin"))
   ScreenBrightnessMacosPlugin.register(with: registry.registrar(forPlugin: "ScreenBrightnessMacosPlugin"))
   ScreenRetrieverMacosPlugin.register(with: registry.registrar(forPlugin: "ScreenRetrieverMacosPlugin"))
   SharePlusMacosPlugin.register(with: registry.registrar(forPlugin: "SharePlusMacosPlugin"))

@@ -13,8 +13,6 @@ module Ruflet
 
         def view(page)
           page.title = "Counter Demo"
-          page.vertical_alignment = Ruflet::MainAxisAlignment::CENTER
-          page.horizontal_alignment = Ruflet::CrossAxisAlignment::CENTER
           count_text = page.text(value: @count.to_s, size: 40)
 
           page.add(
@@ -47,13 +45,13 @@ module Ruflet
       end
 
       MainApp.new.run
-
     RUBY
 
     GEMFILE_TEMPLATE = <<~GEMFILE
       source "https://rubygems.org"
 
       gem "ruflet", ">= 0.0.3"
+      gem "ruflet_protocol", ">= 0.0.3"
       gem "ruflet_server", ">= 0.0.3"
     GEMFILE
 
@@ -77,7 +75,17 @@ module Ruflet
       ## Run
 
       ```bash
-      bundle exec ruflet run main
+      bundle exec ruflet run main.rb
+      ```
+
+      ## Client Template
+
+      `ruflet_client` template is generated inside this app.
+
+      ```bash
+      cd ruflet_client
+      flutter pub get
+      flutter run
       ```
 
       ## Build

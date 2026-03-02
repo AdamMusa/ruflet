@@ -4,6 +4,7 @@
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <cstdlib>
 
 extern "C" {
 #include <mruby.h>
@@ -21,6 +22,8 @@ struct EvalResult {
   std::string value;
 };
 
+EvalResult eval_locked(const std::string& code, const char* filename = nullptr);
+
 mrb_state* ensure_mrb() {
   if (g_mrb == nullptr) {
     g_mrb = mrb_open();
@@ -36,6 +39,14 @@ std::string read_file(const std::string& path) {
   std::ostringstream content;
   content << in.rdbuf();
   return content.str();
+}
+
+EvalResult run_file_locked(const std::string& file_path) {
+  std::string source = read_file(file_path);
+  if (source.empty()) {
+    return {false, "unable to read Ruby file: " + file_path};
+  }
+  return eval_locked(source, file_path.c_str());
 }
 
 std::string exception_to_string(mrb_state* mrb) {
@@ -63,7 +74,7 @@ std::string exception_to_string(mrb_state* mrb) {
   return message;
 }
 
-EvalResult eval_locked(const std::string& code) {
+EvalResult eval_locked(const std::string& code, const char* filename) {
   mrb_state* mrb = ensure_mrb();
   if (mrb == nullptr) {
     return {false, "failed to initialize mruby runtime"};
@@ -72,6 +83,10 @@ EvalResult eval_locked(const std::string& code) {
   mrbc_context* context = mrbc_context_new(mrb);
   if (context == nullptr) {
     return {false, "failed to create mruby compile context"};
+  }
+
+  if (filename != nullptr && filename[0] != '\0') {
+    mrbc_filename(mrb, context, filename);
   }
 
   mrb_value result_value = mrb_load_string_cxt(mrb, code.c_str(), context);
@@ -124,7 +139,7 @@ Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeEval(
   env->ReleaseStringUTFChars(code, code_chars);
 
   std::lock_guard<std::mutex> lock(g_mutex);
-  EvalResult result = eval_locked(source);
+  EvalResult result = eval_locked(source, nullptr);
   if (!result.ok) {
     throw_runtime_error(env, result.value);
     return nullptr;
@@ -152,14 +167,8 @@ Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeRunFile(
   std::string file_path(path_chars);
   env->ReleaseStringUTFChars(path, path_chars);
 
-  std::string source = read_file(file_path);
-  if (source.empty()) {
-    throw_runtime_error(env, "unable to read Ruby file: " + file_path);
-    return nullptr;
-  }
-
   std::lock_guard<std::mutex> lock(g_mutex);
-  EvalResult result = eval_locked(source);
+  EvalResult result = run_file_locked(file_path);
   if (!result.ok) {
     throw_runtime_error(env, result.value);
     return nullptr;
@@ -178,4 +187,48 @@ Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeReset(
     g_mrb = nullptr;
   }
   (void)env;
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeStartFileServer(
+    JNIEnv* env,
+    jobject /* this */,
+    jstring path,
+    jstring stop_signal_path) {
+  if (path == nullptr) {
+    throw_runtime_error(env, "path argument is null");
+    return nullptr;
+  }
+  if (stop_signal_path == nullptr) {
+    throw_runtime_error(env, "stopSignalPath argument is null");
+    return nullptr;
+  }
+
+  const char* path_chars = env->GetStringUTFChars(path, nullptr);
+  if (path_chars == nullptr) {
+    throw_runtime_error(env, "failed to access path argument");
+    return nullptr;
+  }
+  const char* stop_chars = env->GetStringUTFChars(stop_signal_path, nullptr);
+  if (stop_chars == nullptr) {
+    env->ReleaseStringUTFChars(path, path_chars);
+    throw_runtime_error(env, "failed to access stopSignalPath argument");
+    return nullptr;
+  }
+
+  std::string file_path(path_chars);
+  std::string stop_path(stop_chars);
+  env->ReleaseStringUTFChars(path, path_chars);
+  env->ReleaseStringUTFChars(stop_signal_path, stop_chars);
+
+  setenv("RUFLET_PROD_STOP_FILE", stop_path.c_str(), 1);
+
+  std::lock_guard<std::mutex> lock(g_mutex);
+  EvalResult result = run_file_locked(file_path);
+  if (!result.ok) {
+    throw_runtime_error(env, result.value);
+    return nullptr;
+  }
+
+  return env->NewStringUTF(result.value.c_str());
 }

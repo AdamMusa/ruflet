@@ -64,6 +64,7 @@ ruflet build web
 ruflet build macos
 ruflet build windows
 ruflet build linux
+ruflet build zip
 ```
 
 ## Notes

@@ -7,14 +7,43 @@ require_relative "ui/control_methods"
 require_relative "ui/widget_builder"
 require_relative "icons/material_icon_lookup"
 require_relative "icons/cupertino_icon_lookup"
-require "set"
-require "cgi"
+begin
+  require "set"
+rescue LoadError
+  class Set
+    def initialize
+      @index = {}
+    end
+
+    def include?(value)
+      @index.key?(value)
+    end
+
+    def <<(value)
+      @index[value] = true
+      self
+    end
+  end
+end
+
+begin
+  require "cgi"
+rescue LoadError
+  module CGI
+    module_function
+
+    def escape(text)
+      value = text.to_s
+      value.gsub(/[^a-zA-Z0-9_.~-]/) { |ch| "%%%02X" % ch.ord }
+    end
+  end
+end
 
 module Ruflet
   class Page
     include UI::ControlMethods
 
-    PAGE_PROP_KEYS = %w[route title vertical_alignment horizontal_alignment].freeze
+    PAGE_PROP_KEYS = %w[route title vertical_alignment horizontal_alignment scroll].freeze
     DIALOG_PROP_KEYS = %w[dialog snack_bar bottom_sheet].freeze
     BUTTON_TEXT_TYPES = %w[button elevatedbutton textbutton filledbutton].freeze
 
@@ -39,12 +68,18 @@ module Ruflet
         id: "_overlay",
         controls: []
       )
+      @services_container = Ruflet::Control.new(
+        type: "service_registry",
+        id: "_services",
+        "_services": []
+      )
       @dialogs_container = Ruflet::Control.new(
         type: "dialogs",
         id: "_dialogs",
         controls: []
       )
       refresh_overlay_container!
+      refresh_services_container!
       refresh_dialogs_container!
     end
 
@@ -67,6 +102,16 @@ module Ruflet
 
     def route=(value)
       @page_props["route"] = value
+    end
+
+    def scroll
+      @page_props["scroll"]
+    end
+
+    def scroll=(value)
+      v = normalize_value("scroll", value)
+      @page_props["scroll"] = v
+      @view_props["scroll"] = v
     end
 
     def vertical_alignment
@@ -115,6 +160,24 @@ module Ruflet
 
       send_view_patch
 
+      self
+    end
+
+    def services
+      @services_container.props["_services"] ||= []
+    end
+
+    def services=(value)
+      @services_container.props["_services"] = Array(value).compact
+      refresh_services_container!
+      push_services_update!
+      self
+    end
+
+    def add_service(*value)
+      @services_container.props["_services"] = services + value.flatten.compact
+      refresh_services_container!
+      push_services_update!
       self
     end
 
@@ -232,6 +295,7 @@ module Ruflet
       return nil unless dialog_control
 
       dialog_control.props["open"] = false
+      @dialogs.delete(dialog_control)
       refresh_dialogs_container!
       push_dialogs_update!
       dialog_control
@@ -252,7 +316,21 @@ module Ruflet
       control = resolve_control(control_or_id)
       return self unless control
 
-      patch = normalize_props(props)
+      visited = Set.new
+      props.each_value { |value| register_embedded_value(value, visited) }
+
+      raw_props = props.dup
+      if BUTTON_TEXT_TYPES.include?(control.type)
+        if raw_props.key?(:text) || raw_props.key?("text")
+          text_value = raw_props.key?(:text) ? raw_props.delete(:text) : raw_props.delete("text")
+          raw_props[:content] = text_value unless raw_props.key?(:content) || raw_props.key?("content")
+        end
+      end
+
+      normalized_control_props = control.send(:normalize_props, raw_props)
+      normalized_control_props.each { |k, v| control.props[k] = v }
+
+      patch = normalize_props(raw_props)
       if BUTTON_TEXT_TYPES.include?(control.type) && patch.key?("text")
         patch["content"] = patch.delete("text")
       end
@@ -265,6 +343,22 @@ module Ruflet
       })
 
       self
+    end
+
+    def invoke(control_or_id, method_name, args: nil, timeout: 10)
+      control = resolve_control(control_or_id)
+      return nil unless control
+
+      call_id = "call_#{Ruflet::Control.generate_id}"
+      send_message(Protocol::ACTIONS[:invoke_control_method], {
+        "control_id" => control.wire_id,
+        "call_id" => call_id,
+        "name" => method_name.to_s,
+        "args" => args,
+        "timeout" => timeout
+      })
+
+      call_id
     end
 
     def patch_page(control_id, **props)
@@ -395,7 +489,7 @@ module Ruflet
     def resolve_control(control_or_id)
       if control_or_id.respond_to?(:wire_id)
         control_or_id
-      elsif control_or_id.to_s.match?(/^\d+$/)
+      elsif numeric_string?(control_or_id.to_s)
         @wire_index[control_or_id.to_i]
       else
         @control_index[control_or_id.to_s]
@@ -415,8 +509,30 @@ module Ruflet
         return codepoint unless codepoint.nil?
       end
 
+      if value.is_a?(Ruflet::Control)
+        register_control_tree(value, Set.new)
+        return value.to_patch
+      end
+      return serialize_value(value) if value.is_a?(Array) || value.is_a?(Hash)
+
       return value.value if value.is_a?(Ruflet::IconData)
       value.is_a?(Symbol) ? value.to_s : value
+    end
+
+    def serialize_value(value)
+      case value
+      when Ruflet::Control
+        register_control_tree(value, Set.new)
+        value.to_patch
+      when Ruflet::IconData
+        value.value
+      when Array
+        value.map { |v| serialize_value(v) }
+      when Hash
+        value.transform_values { |v| serialize_value(v) }
+      else
+        value
+      end
     end
 
     def build_route(route, query_params = {})
@@ -470,6 +586,12 @@ module Ruflet
       key == "icon" || key.end_with?("_icon")
     end
 
+    def numeric_string?(value)
+      return false if value.empty?
+      value.each_byte { |b| return false unless b >= 0x30 && b <= 0x39 }
+      true
+    end
+
     def refresh_dialogs_container!
       dialog_controls = (@dialogs + dialog_slots).uniq
       @dialogs_container.props["controls"] = dialog_controls
@@ -478,6 +600,23 @@ module Ruflet
 
     def refresh_overlay_container!
       @page_props["_overlay"] = @overlay_container
+    end
+
+    def refresh_services_container!
+      @page_props["_services"] = @services_container
+    end
+
+    def push_services_update!
+      refresh_control_indexes!
+
+      if @services_container.wire_id
+        send_message(Protocol::ACTIONS[:patch_control], {
+          "id" => @services_container.wire_id,
+          "patch" => [[0], [0, 0, "_services", serialize_patch_value(@services_container.props["_services"])]]
+        })
+      else
+        send_view_patch
+      end
     end
 
     def push_dialogs_update!
@@ -540,10 +679,24 @@ module Ruflet
     end
 
     def resolve_icon_codepoint(value)
-      codepoint = Ruflet::MaterialIconLookup.codepoint_for(value)
-      if codepoint.nil? || codepoint == value
-        codepoint = Ruflet::CupertinoIconLookup.codepoint_for(value)
+      return nil unless value.is_a?(Integer) || value.is_a?(Symbol) || value.is_a?(String)
+
+      codepoint = nil
+      begin
+        codepoint = Ruflet::MaterialIconLookup.codepoint_for(value)
+      rescue NameError
+        codepoint = nil
       end
+
+      if codepoint.nil? || (value.is_a?(Integer) && codepoint == value)
+        begin
+          cupertino = Ruflet::CupertinoIconLookup.codepoint_for(value)
+          codepoint = cupertino unless cupertino.nil?
+        rescue NameError
+          codepoint = nil
+        end
+      end
+
       codepoint
     end
   end

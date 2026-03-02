@@ -78,8 +78,6 @@ PODS:
     - Flutter
   - record_ios (1.2.0):
     - Flutter
-  - rive_native (0.0.1):
-    - Flutter
   - screen_brightness_ios (0.1.0):
     - Flutter
   - SDWebImage (5.21.6):
@@ -123,7 +121,6 @@ DEPENDENCIES:
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - record_ios (from `.symlinks/plugins/record_ios/ios`)
-  - rive_native (from `.symlinks/plugins/rive_native/ios`)
   - screen_brightness_ios (from `.symlinks/plugins/screen_brightness_ios/ios`)
   - sensors_plus (from `.symlinks/plugins/sensors_plus/ios`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
@@ -181,8 +178,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
   record_ios:
     :path: ".symlinks/plugins/record_ios/ios"
-  rive_native:
-    :path: ".symlinks/plugins/rive_native/ios"
   screen_brightness_ios:
     :path: ".symlinks/plugins/screen_brightness_ios/ios"
   sensors_plus:
@@ -201,7 +196,7 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/webview_flutter_wkwebview/darwin"
 
 SPEC CHECKSUMS:
-  audioplayers_darwin: 4f9ca89d92d3d21cec7ec580e78ca888e5fb68bd
+  audioplayers_darwin: 835ced6edd4c9fc8ebb0a7cc9e294a91d99917d5
   battery_plus: b42253f6d2dde71712f8c36fef456d99121c5977
   camera_avfoundation: 5675ca25298b6f81fa0a325188e7df62cc217741
   connectivity_plus: cb623214f4e1f6ef8fe7403d580fdad517d2f7dd
@@ -224,7 +219,6 @@ SPEC CHECKSUMS:
   path_provider_foundation: bb55f6dbba17d0dccd6737fe6f7f34fbd0376880
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
   record_ios: 412daca2350b228e698fffcd08f1f94ceb1e3844
-  rive_native: c9ed76ccf380f38205edcb8f552121aac8ec39da
   screen_brightness_ios: 9953fd7da5bd480f1a93990daeec2eb42d4f3b52
   SDWebImage: 1bb6a1b84b6fe87b972a102bdc77dd589df33477
   sensors_plus: 6a11ed0c2e1d0bd0b20b4029d3bad27d96e0c65b
@@ -236,6 +230,6 @@ SPEC CHECKSUMS:
   wakelock_plus: e29112ab3ef0b318e58cfa5c32326458be66b556
   webview_flutter_wkwebview: 8ebf4fded22593026f7dbff1fbff31ea98573c8d
 
-PODFILE CHECKSUM: 3c63482e143d1b91d2d2560aee9fb04ecc74ac7e
+PODFILE CHECKSUM: f815cc60fef984739aa0c9ecd0312d6c04e3fc2c
 
 COCOAPODS: 1.16.2

@@ -36,6 +36,8 @@ module Ruflet
           "RUFLET_SUPPRESS_SERVER_BANNER" => "1",
           "RUFLET_PORT" => selected_port.to_s
         }
+        assets_dir = File.join(File.dirname(script_path), "assets")
+        env["RUFLET_ASSETS_DIR"] = assets_dir if File.directory?(assets_dir)
 
         print_run_banner(target: options[:target], port: selected_port)
         print_mobile_qr_hint(port: selected_port) if options[:target] == "mobile"

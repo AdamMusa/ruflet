@@ -1,4 +1,4 @@
-# example
+# examples
 
 Ruflet examples.
 
@@ -15,7 +15,9 @@ bundle exec ruflet run main
 bundle exec ruflet run calculator
 bundle exec ruflet run solitaire
 bundle exec ruflet run todo
-bundle exec ruflet run feedback_surfaces
+bundle exec ruflet run dialog
+bundle exec ruflet run image_gallery
+bundle exec ruflet run studio_gallery
 ```
 
 ## Build

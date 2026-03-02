@@ -103,11 +103,6 @@ dependencies:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-permission-handler/src/flutter/flet_permission_handler
       ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
-  flet_rive:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-rive/src/flutter/flet_rive
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flet_secure_storage:
     git:
       url: https://github.com/flet-dev/flet.git

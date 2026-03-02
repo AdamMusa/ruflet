@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
-require "securerandom"
+begin
+  require "securerandom"
+rescue LoadError
+  nil
+end
 require_relative "ui/control_registry"
 require_relative "icon_data"
 require_relative "icons/material_icon_lookup"
@@ -17,7 +21,7 @@ module Ruflet
 
     def initialize(type:, id: nil, **props)
       @type = type.to_s.downcase
-      @id = (id || props.delete(:id) || "ctrl_#{SecureRandom.hex(4)}").to_s
+      @id = (id || props.delete(:id) || "ctrl_#{self.class.generate_id}").to_s
       @children = []
       @handlers = {}
       @wire_id = nil
@@ -61,6 +65,16 @@ module Ruflet
     end
 
     private
+
+    class << self
+      def generate_id
+        if defined?(SecureRandom) && SecureRandom.respond_to?(:hex)
+          SecureRandom.hex(4)
+        else
+          format("%08x", rand(0..0xffff_ffff))
+        end
+      end
+    end
 
     def serialize_value(value)
       case value

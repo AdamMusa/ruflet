@@ -88,7 +88,7 @@ MyApp.new.run
 ```bash
 ruflet new <appname>
 ruflet run [scriptname|path] [--web|--mobile|--desktop]
-ruflet build <apk|ios|aab|web|macos|windows|linux>
+ruflet build <apk|ios|aab|web|macos|windows|linux|zip>
 ```
 
 By default `ruflet build ...` looks for Flutter client at `./ruflet_client`.
@@ -105,4 +105,4 @@ cd /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet
 
 - [Creating New App](docs/creating_new_app.md)
 - [Widgets Guide](docs/widgets.md)
-- Example apps: [main.rb](example/main.rb), [solitaire.rb](example/solitaire.rb), [calculator.rb](example/calculator.rb)
+- Example apps: [main.rb](examples/main.rb), [solitaire.rb](examples/solitaire.rb), [calculator.rb](examples/calculator.rb)

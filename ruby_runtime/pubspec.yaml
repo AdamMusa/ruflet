@@ -1,7 +1,7 @@
 name: ruby_runtime
 description: Embedded mruby runtime plugin for Flutter (Android/iOS).
 version: 0.0.1
-homepage:
+homepage: https://github.com/AdamMusa/ruflet
 
 environment:
   sdk: ^3.11.0

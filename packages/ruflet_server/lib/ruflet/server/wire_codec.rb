@@ -132,6 +132,12 @@ module Ruflet
         when 0xdd then read_array(reader, reader.read_u32)
         when 0xde then read_map(reader, reader.read_u16)
         when 0xdf then read_map(reader, reader.read_u32)
+        when 0xc7
+          read_ext(reader, reader.read_u8)
+        when 0xc8
+          read_ext(reader, reader.read_u16)
+        when 0xc9
+          read_ext(reader, reader.read_u32)
         else
           if (marker & 0xf0) == 0x90
             read_array(reader, marker & 0x0f)
@@ -156,6 +162,11 @@ module Ruflet
           out[key.to_s] = read_value(reader)
         end
         out
+      end
+
+      def read_ext(reader, size)
+        reader.read_i8 # type (ignored)
+        reader.read_exact(size)
       end
     end
 

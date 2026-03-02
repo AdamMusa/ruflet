@@ -27,4 +27,16 @@ abstract class RubyRuntimePlatform extends PlatformInterface {
   Future<void> reset() {
     throw UnimplementedError('reset() has not been implemented.');
   }
+
+  Future<void> startFileServer(String path, {String? stopSignalPath}) {
+    throw UnimplementedError('startFileServer() has not been implemented.');
+  }
+
+  Future<void> stopFileServer() {
+    throw UnimplementedError('stopFileServer() has not been implemented.');
+  }
+
+  Future<bool> isFileServerRunning() {
+    throw UnimplementedError('isFileServerRunning() has not been implemented.');
+  }
 }

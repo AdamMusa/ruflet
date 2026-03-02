@@ -39,4 +39,24 @@ class MethodChannelRubyRuntime extends RubyRuntimePlatform {
   Future<void> reset() async {
     await methodChannel.invokeMethod<void>('reset');
   }
+
+  @override
+  Future<void> startFileServer(String path, {String? stopSignalPath}) async {
+    await methodChannel.invokeMethod<void>('startFileServer', {
+      'path': path,
+      if (stopSignalPath != null && stopSignalPath.isNotEmpty)
+        'stopSignalPath': stopSignalPath,
+    });
+  }
+
+  @override
+  Future<void> stopFileServer() async {
+    await methodChannel.invokeMethod<void>('stopFileServer');
+  }
+
+  @override
+  Future<bool> isFileServerRunning() async {
+    final value = await methodChannel.invokeMethod<bool>('isFileServerRunning');
+    return value ?? false;
+  }
 }

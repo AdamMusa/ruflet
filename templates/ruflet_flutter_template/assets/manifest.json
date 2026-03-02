@@ -1,0 +1,143 @@
+{
+  "schema": "ruflet_prod_manifest/v1",
+  "generated_at": "2026-03-01T10:38:28Z",
+  "route": "/",
+  "navigation": {
+    "events": [
+      {
+        "target": 103,
+        "name": "click",
+        "route": "/go"
+      },
+      {
+        "target": 104,
+        "name": "click",
+        "route": "/replace"
+      },
+      {
+        "target": 203,
+        "name": "click",
+        "route": "/"
+      },
+      {
+        "target": 204,
+        "name": "click",
+        "route": "/"
+      }
+    ],
+    "routes": {
+      "/go": {
+        "title": "Go Screen",
+        "body_title": "Go Screen",
+        "body_text": "This screen was opened via page.go()-style navigation.",
+        "button_label": "Back to Home",
+        "button_id": 203
+      },
+      "/replace": {
+        "title": "Replace Screen",
+        "body_title": "Replace Screen",
+        "body_text": "This screen replaced current view (manifest mode demo).",
+        "button_label": "Back to Home",
+        "button_id": 204
+      }
+    }
+  },
+  "messages": [
+    {
+      "action": 2,
+      "payload": {
+        "id": 1,
+        "patch": [
+          [
+            0
+          ],
+          [
+            0,
+            0,
+            "views",
+            [
+              {
+                "_c": "View",
+                "_i": 100,
+                "_internals": {
+                  "host_expanded": true
+                },
+                "route": "/",
+                "appbar": {
+                  "_c": "AppBar",
+                  "_i": 105,
+                  "bgcolor": "#d9d7db",
+                  "color": "#232329",
+                  "title": {
+                    "_c": "Text",
+                    "_i": 106,
+                    "value": "Home",
+                    "size": 18
+                  }
+                },
+                "padding": 16,
+                "controls": [
+                  {
+                    "_c": "Text",
+                    "_i": 101,
+                    "value": "Home Screen",
+                    "size": 24
+                  },
+                  {
+                    "_c": "Text",
+                    "_i": 102,
+                    "value": "Tap to go to Replace screen using page.go()."
+                  },
+                  {
+                    "_c": "Button",
+                    "_i": 103,
+                    "content": "Go to Go Screen (with back nav)",
+                    "on_click": true
+                  },
+                  {
+                    "_c": "Button",
+                    "_i": 104,
+                    "content": "Go to Replace",
+                    "on_click": true
+                  }
+                ]
+              }
+            ]
+          ],
+          [
+            0,
+            0,
+            "route",
+            "/"
+          ],
+          [
+            0,
+            0,
+            "_overlay",
+            {
+              "_c": "Overlay",
+              "_i": 107,
+              "controls": []
+            }
+          ],
+          [
+            0,
+            0,
+            "_dialogs",
+            {
+              "_c": "Dialogs",
+              "_i": 108,
+              "controls": []
+            }
+          ],
+          [
+            0,
+            0,
+            "title",
+            "Navigation: Go + Replace"
+          ]
+        ]
+      }
+    }
+  ]
+}
