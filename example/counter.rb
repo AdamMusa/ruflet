@@ -8,8 +8,6 @@ class MainApp < Ruflet::App
 
   def view(page)
     page.title = "Counter Demo"
-    page.vertical_alignment = Ruflet::MainAxisAlignment::CENTER
-    page.horizontal_alignment = Ruflet::CrossAxisAlignment::CENTER
     count_text = page.text(value: @count.to_s, size: 40)
 
     page.add(

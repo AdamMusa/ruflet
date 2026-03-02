@@ -105,5 +105,7 @@ module Kernel
     Ruflet::DSL
   end
 
-  private(*Ruflet::UI::SharedControlForwarders.instance_methods(false))
+  if Ruflet::UI::SharedControlForwarders.respond_to?(:instance_methods)
+    private(*Ruflet::UI::SharedControlForwarders.instance_methods(false))
+  end
 end

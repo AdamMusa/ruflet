@@ -7,14 +7,43 @@ require_relative "ui/control_methods"
 require_relative "ui/widget_builder"
 require_relative "icons/material_icon_lookup"
 require_relative "icons/cupertino_icon_lookup"
-require "set"
-require "cgi"
+begin
+  require "set"
+rescue LoadError
+  class Set
+    def initialize
+      @index = {}
+    end
+
+    def include?(value)
+      @index.key?(value)
+    end
+
+    def <<(value)
+      @index[value] = true
+      self
+    end
+  end
+end
+
+begin
+  require "cgi"
+rescue LoadError
+  module CGI
+    module_function
+
+    def escape(text)
+      value = text.to_s
+      value.gsub(/[^a-zA-Z0-9_.~-]/) { |ch| "%%%02X" % ch.ord }
+    end
+  end
+end
 
 module Ruflet
   class Page
     include UI::ControlMethods
 
-    PAGE_PROP_KEYS = %w[route title vertical_alignment horizontal_alignment].freeze
+    PAGE_PROP_KEYS = %w[route title vertical_alignment horizontal_alignment scroll].freeze
     DIALOG_PROP_KEYS = %w[dialog snack_bar bottom_sheet].freeze
     BUTTON_TEXT_TYPES = %w[button elevatedbutton textbutton filledbutton].freeze
 
@@ -67,6 +96,16 @@ module Ruflet
 
     def route=(value)
       @page_props["route"] = value
+    end
+
+    def scroll
+      @page_props["scroll"]
+    end
+
+    def scroll=(value)
+      v = normalize_value("scroll", value)
+      @page_props["scroll"] = v
+      @view_props["scroll"] = v
     end
 
     def vertical_alignment
@@ -395,7 +434,7 @@ module Ruflet
     def resolve_control(control_or_id)
       if control_or_id.respond_to?(:wire_id)
         control_or_id
-      elsif control_or_id.to_s.match?(/^\d+$/)
+      elsif numeric_string?(control_or_id.to_s)
         @wire_index[control_or_id.to_i]
       else
         @control_index[control_or_id.to_s]
@@ -470,6 +509,12 @@ module Ruflet
       key == "icon" || key.end_with?("_icon")
     end
 
+    def numeric_string?(value)
+      return false if value.empty?
+      value.each_byte { |b| return false unless b >= 0x30 && b <= 0x39 }
+      true
+    end
+
     def refresh_dialogs_container!
       dialog_controls = (@dialogs + dialog_slots).uniq
       @dialogs_container.props["controls"] = dialog_controls
@@ -540,10 +585,24 @@ module Ruflet
     end
 
     def resolve_icon_codepoint(value)
-      codepoint = Ruflet::MaterialIconLookup.codepoint_for(value)
-      if codepoint.nil? || codepoint == value
-        codepoint = Ruflet::CupertinoIconLookup.codepoint_for(value)
+      return nil unless value.is_a?(Integer) || value.is_a?(Symbol) || value.is_a?(String)
+
+      codepoint = nil
+      begin
+        codepoint = Ruflet::MaterialIconLookup.codepoint_for(value)
+      rescue NameError
+        codepoint = nil
       end
+
+      if codepoint.nil? || (value.is_a?(Integer) && codepoint == value)
+        begin
+          cupertino = Ruflet::CupertinoIconLookup.codepoint_for(value)
+          codepoint = cupertino unless cupertino.nil?
+        rescue NameError
+          codepoint = nil
+        end
+      end
+
       codepoint
     end
   end

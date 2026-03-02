@@ -2,8 +2,6 @@
 
 module Ruflet
   module Colors
-    module_function
-
     SEMANTIC_COLORS = {
       PRIMARY: "primary",
       ON_PRIMARY: "onprimary",
@@ -127,14 +125,32 @@ module Ruflet
     end
 
     def all_values
-      @all_values ||= constants(false)
-                      .map { |c| const_get(c) }
-                      .select { |v| v.is_a?(String) }
-                      .uniq
-                      .freeze
+      return @all_values if @all_values
+
+      values = []
+      SEMANTIC_COLORS.each_value { |v| values << v }
+      FIXED_COLORS.each_value { |v| values << v }
+
+      BASE_PRIMARY.each do |base|
+        values << base
+        PRIMARY_SHADES.each do |shade|
+          values << "#{base}#{shade}"
+        end
+      end
+
+      BASE_ACCENT.each do |base|
+        values << "#{base}accent"
+        ACCENT_SHADES.each do |shade|
+          values << "#{base}accent#{shade}"
+        end
+      end
+
+      uniq_map = {}
+      values.each { |v| uniq_map[v] = true }
+      @all_values = uniq_map.keys.freeze
     end
 
-    def normalize_color(color)
+    def self.normalize_color(color)
       return color.to_s if color.is_a?(Symbol)
       return color if color.is_a?(String)
       return color.to_s unless color.respond_to?(:to_s)
@@ -164,15 +180,17 @@ module Ruflet
       "yellow" => "YELLOW"
     }.freeze
 
-    def constant_prefix_for(base_name)
-      BASE_PREFIX.fetch(base_name) { base_name.upcase }
+    def self.constant_prefix_for(base_name)
+      key = base_name.to_s
+      return BASE_PREFIX[key] if BASE_PREFIX.key?(key)
+      key.upcase
     end
 
     SEMANTIC_COLORS.each { |k, v| const_set(k, v) }
     FIXED_COLORS.each { |k, v| const_set(k, v) }
 
     BASE_PRIMARY.each do |base|
-      prefix = constant_prefix_for(base)
+      prefix = self.constant_prefix_for(base)
       const_set(prefix, base)
       PRIMARY_SHADES.each do |shade|
         const_set("#{prefix}_#{shade}", "#{base}#{shade}")
@@ -180,7 +198,7 @@ module Ruflet
     end
 
     BASE_ACCENT.each do |base|
-      prefix = "#{constant_prefix_for(base)}_ACCENT"
+      prefix = "#{self.constant_prefix_for(base)}_ACCENT"
       const_set(prefix, "#{base}accent")
       ACCENT_SHADES.each do |shade|
         const_set("#{prefix}_#{shade}", "#{base}accent#{shade}")
@@ -191,10 +209,26 @@ module Ruflet
       const_set(alias_name, const_get(target))
     end
 
-    constants(false).each do |name|
-      next if respond_to?(name)
+    constant_names = []
+    SEMANTIC_COLORS.each_key { |k| constant_names << k }
+    FIXED_COLORS.each_key { |k| constant_names << k }
+    BASE_PRIMARY.each do |base|
+      constant_names << constant_prefix_for(base).to_sym
+      PRIMARY_SHADES.each { |shade| constant_names << "#{constant_prefix_for(base)}_#{shade}".to_sym }
+    end
+    BASE_ACCENT.each do |base|
+      constant_names << "#{constant_prefix_for(base)}_ACCENT".to_sym
+      ACCENT_SHADES.each { |shade| constant_names << "#{constant_prefix_for(base)}_ACCENT_#{shade}".to_sym }
+    end
+    DEPRECATED_ALIASES.each_key { |k| constant_names << k }
 
-      define_singleton_method(name) { const_get(name) }
+    uniq_constants = {}
+    constant_names.each { |n| uniq_constants[n] = true }
+    if respond_to?(:define_singleton_method)
+      uniq_constants.keys.each do |name|
+        next if respond_to?(name)
+        define_singleton_method(name) { const_get(name) }
+      end
     end
   end
 end

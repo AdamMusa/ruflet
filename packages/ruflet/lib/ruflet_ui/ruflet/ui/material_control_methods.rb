@@ -71,9 +71,11 @@ module Ruflet
 
       def icon(**props) = build_widget(:icon, **props)
 
-      def image(src = nil, **props)
+      def image(src = nil, src_base64: nil, placeholder_src: nil, **props)
         mapped = props.dup
-        mapped[:src] = src unless src.nil?
+        mapped[:src] = normalize_image_source(src) unless src.nil?
+        mapped[:src] = normalize_image_source(src_base64) if mapped[:src].nil? && !src_base64.nil?
+        mapped[:placeholder_src] = normalize_image_source(placeholder_src) unless placeholder_src.nil?
         build_widget(:image, **mapped)
       end
 
@@ -99,6 +101,12 @@ module Ruflet
       end
 
       private
+
+      def normalize_image_source(value)
+        return value unless value.is_a?(Array)
+        return value.pack("C*") if value.all? { |v| v.is_a?(Integer) }
+        value
+      end
 
       # Flet container alignment expects a vector-like object ({x:, y:}),
       # not a plain string. Keep common shorthand compatible.

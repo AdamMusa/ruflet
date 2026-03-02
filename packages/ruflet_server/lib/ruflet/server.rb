@@ -159,11 +159,13 @@ module Ruflet
       ws = nil
       begin
         path, headers = read_http_upgrade_request(socket)
-        return unless websocket_upgrade_request?(path, headers)
-
-        send_handshake_response(socket, headers["sec-websocket-key"])
-        ws = Ruflet::WebSocketConnection.new(socket)
-        run_connection(ws)
+        if websocket_upgrade_request?(path, headers)
+          send_handshake_response(socket, headers["sec-websocket-key"])
+          ws = Ruflet::WebSocketConnection.new(socket)
+          run_connection(ws)
+        else
+          handle_http_request(socket, path)
+        end
       rescue StandardError => e
         warn "server error: #{e.class}: #{e.message}"
         warn e.backtrace.join("\n") if e.backtrace
@@ -221,6 +223,91 @@ module Ruflet
       return false if headers["sec-websocket-key"].to_s.empty?
 
       true
+    end
+
+    def handle_http_request(socket, path)
+      case path
+      when "/health"
+        write_http_response(socket, 200, "text/plain", "ok")
+      when "/"
+        write_http_response(socket, 200, "text/plain", "ruflet server")
+      else
+        if path.start_with?("/assets/")
+          serve_asset(socket, path)
+        else
+          write_http_response(socket, 404, "text/plain", "not found")
+        end
+      end
+    rescue StandardError => e
+      warn "http error: #{e.class}: #{e.message}"
+      write_http_response(socket, 500, "text/plain", "server error")
+    end
+
+    def serve_asset(socket, path)
+      asset_path = resolve_asset_path(path)
+      unless asset_path
+        write_http_response(socket, 404, "text/plain", "not found")
+        return
+      end
+
+      content = File.binread(asset_path)
+      write_http_response(socket, 200, content_type_for(asset_path), content, binary: true)
+    end
+
+    def resolve_asset_path(path)
+      root = assets_root
+      return nil unless root
+
+      root = File.expand_path(root)
+      relative = path.sub(%r{\A/assets/}, "")
+      full = File.expand_path(File.join(root, relative))
+      return nil unless full.start_with?(root + File::SEPARATOR) || full == root
+      return nil unless File.file?(full)
+
+      full
+    end
+
+    def assets_root
+      root = ENV["RUFLET_ASSETS_DIR"].to_s
+      return root unless root.empty?
+
+      default_root = File.join(Dir.pwd, "assets")
+      File.directory?(default_root) ? default_root : nil
+    end
+
+    def content_type_for(path)
+      case File.extname(path).downcase
+      when ".png"
+        "image/png"
+      when ".jpg", ".jpeg"
+        "image/jpeg"
+      when ".gif"
+        "image/gif"
+      when ".webp"
+        "image/webp"
+      when ".svg"
+        "image/svg+xml"
+      else
+        "application/octet-stream"
+      end
+    end
+
+    def write_http_response(socket, status, content_type, body, binary: false)
+      reason = {
+        200 => "OK",
+        404 => "Not Found",
+        500 => "Internal Server Error"
+      }[status] || "OK"
+
+      body_str = binary ? body : body.to_s
+      length = body_str.bytesize
+
+      socket.write("HTTP/1.1 #{status} #{reason}\r\n")
+      socket.write("Content-Type: #{content_type}\r\n")
+      socket.write("Content-Length: #{length}\r\n")
+      socket.write("Connection: close\r\n")
+      socket.write("\r\n")
+      socket.write(body_str)
     end
 
     def send_handshake_response(socket, key)

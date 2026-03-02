@@ -1,7 +1,11 @@
 # frozen_string_literal: true
 
-require_relative "icons/material_icon_lookup"
-require_relative "icons/cupertino_icon_lookup"
+begin
+  require_relative "icons/material_icon_lookup"
+  require_relative "icons/cupertino_icon_lookup"
+rescue StandardError
+  nil
+end
 
 module Ruflet
   class IconData
@@ -44,7 +48,8 @@ module Ruflet
         return codepoint
       end
 
-      raw = input.to_s.strip
+      raw = input.to_s
+      raw = raw.strip if raw.respond_to?(:strip)
       return raw if raw.empty?
 
       codepoint = Ruflet::MaterialIconLookup.codepoint_for(raw)

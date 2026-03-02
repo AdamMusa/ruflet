@@ -22,4 +22,19 @@ class RubyRuntime {
   static Future<void> reset() {
     return RubyRuntimePlatform.instance.reset();
   }
+
+  static Future<void> startFileServer(String path, {String? stopSignalPath}) {
+    return RubyRuntimePlatform.instance.startFileServer(
+      path,
+      stopSignalPath: stopSignalPath,
+    );
+  }
+
+  static Future<void> stopFileServer() {
+    return RubyRuntimePlatform.instance.stopFileServer();
+  }
+
+  static Future<bool> isFileServerRunning() {
+    return RubyRuntimePlatform.instance.isFileServerRunning();
+  }
 }

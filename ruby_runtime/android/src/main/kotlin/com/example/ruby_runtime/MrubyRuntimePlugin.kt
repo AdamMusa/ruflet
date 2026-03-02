@@ -5,13 +5,20 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import java.io.File
 
 class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
     private lateinit var channel: MethodChannel
 
     private external fun nativeEval(code: String): String
     private external fun nativeRunFile(path: String): String
+    private external fun nativeStartFileServer(path: String, stopSignalPath: String): String
     private external fun nativeReset()
+
+    @Volatile
+    private var serverRunning: Boolean = false
+    private var serverThread: Thread? = null
+    private var stopSignalPath: String? = null
 
     companion object {
         init {
@@ -48,6 +55,50 @@ class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
                 "reset" -> {
                     nativeReset()
                     result.success(null)
+                }
+
+                "startFileServer" -> {
+                    val path = call.argument<String>("path")
+                    if (path.isNullOrBlank()) {
+                        result.error("invalid_args", "Missing 'path' argument.", null)
+                        return
+                    }
+                    if (serverRunning) {
+                        result.success(null)
+                        return
+                    }
+
+                    val stopPathArg = call.argument<String>("stopSignalPath")
+                    val stopPath = if (stopPathArg.isNullOrBlank()) "$path.stop" else stopPathArg
+                    stopSignalPath = stopPath
+                    File(stopPath).delete()
+
+                    serverRunning = true
+                    val worker = Thread {
+                        try {
+                            nativeStartFileServer(path, stopPath)
+                        } catch (_: Throwable) {
+                            // Keep plugin resilient; Dart side handles reconnect logic.
+                        } finally {
+                            serverRunning = false
+                        }
+                    }
+                    serverThread = worker
+                    worker.start()
+                    result.success(null)
+                }
+
+                "stopFileServer" -> {
+                    val stopPath = stopSignalPath
+                    if (!stopPath.isNullOrBlank()) {
+                        File(stopPath).writeText("stop")
+                    }
+                    serverThread?.interrupt()
+                    result.success(null)
+                }
+
+                "isFileServerRunning" -> {
+                    result.success(serverRunning)
                 }
 
                 else -> result.notImplemented()

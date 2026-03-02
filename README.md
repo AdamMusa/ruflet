@@ -88,7 +88,7 @@ MyApp.new.run
 ```bash
 ruflet new <appname>
 ruflet run [scriptname|path] [--web|--mobile|--desktop]
-ruflet build <apk|ios|aab|web|macos|windows|linux>
+ruflet build <apk|ios|aab|web|macos|windows|linux|zip>
 ```
 
 By default `ruflet build ...` looks for Flutter client at `./ruflet_client`.

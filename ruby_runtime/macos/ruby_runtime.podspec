@@ -22,6 +22,8 @@ Embeds mruby in native macOS code and exposes eval/runFile/reset over a Flutter 
     'mruby_src/mrbgems/mruby-io/src/file_test.c',
     'mruby_src/mrbgems/mruby-io/src/mruby_io_gem.c',
     'mruby_src/mrbgems/mruby-socket/src/socket.c',
+    'mruby_src/mrbgems/mruby-pack/src/pack.c',
+    'mruby_src/mrbgems/mruby-sprintf/src/sprintf.c',
     'mruby_src/mrbgems/hal-posix-io/src/io_hal.c',
     'mruby_src/mrbgems/hal-posix-socket/src/socket_hal.c',
     'mruby_src/build_host/mrblib/mrblib.c',

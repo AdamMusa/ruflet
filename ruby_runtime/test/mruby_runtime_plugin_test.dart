@@ -15,6 +15,15 @@ class MockRubyRuntimePlatform
 
   @override
   Future<void> reset() async {}
+
+  @override
+  Future<void> startFileServer(String path, {String? stopSignalPath}) async {}
+
+  @override
+  Future<void> stopFileServer() async {}
+
+  @override
+  Future<bool> isFileServerRunning() async => true;
 }
 
 void main() {
@@ -29,6 +38,9 @@ void main() {
 
     expect(await RubyRuntime.eval('1+1'), 'eval:1+1');
     expect(await RubyRuntime.runFile('/tmp/demo.rb'), 'file:/tmp/demo.rb');
+    await RubyRuntime.startFileServer('/tmp/demo.rb');
+    expect(await RubyRuntime.isFileServerRunning(), true);
+    await RubyRuntime.stopFileServer();
     await RubyRuntime.reset();
   });
 }

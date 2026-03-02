@@ -18,6 +18,12 @@ void main() {
               return 'ok-file';
             case 'reset':
               return null;
+            case 'startFileServer':
+              return null;
+            case 'stopFileServer':
+              return null;
+            case 'isFileServerRunning':
+              return true;
             default:
               return null;
           }
@@ -39,5 +45,17 @@ void main() {
 
   test('reset', () async {
     await platform.reset();
+  });
+
+  test('startFileServer', () async {
+    await platform.startFileServer('/tmp/server.rb', stopSignalPath: '/tmp/server.stop');
+  });
+
+  test('isFileServerRunning', () async {
+    expect(await platform.isFileServerRunning(), true);
+  });
+
+  test('stopFileServer', () async {
+    await platform.stopFileServer();
   });
 }

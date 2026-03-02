@@ -1,16 +1,45 @@
 # ruflet_client
 
-A new Flutter project.
+Ruflet Flutter client template (mobile, desktop, web).
 
-## Getting Started
+## What is included
 
-This project is a starting point for a Flutter application.
+- Ruflet/Flet client bootstrap and QR/manual connect flow.
+- Flet client bootstrap and QR/manual connect flow.
 
-A few resources to get you started if this is your first Flutter project:
+## Run client template
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+```bash
+cd ruflet_client
+flutter pub get
+flutter run
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+For desktop or web testing:
+
+```bash
+flutter run -d macos
+flutter run -d chrome
+```
+
+## Run with Ruflet demo app
+
+1. Start a Ruflet backend demo app:
+
+```bash
+cd ../example
+bundle install
+ruflet run main.rb
+```
+
+2. Start this client template:
+
+```bash
+cd ../ruflet_client
+flutter run
+```
+
+3. Connect from client:
+
+- Mobile: scan QR from `ruflet run ...` output or enter URL manually.
+- Desktop/Web: opens and targets local backend URL automatically.
