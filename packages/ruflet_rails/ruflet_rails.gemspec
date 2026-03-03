@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
 
   spec.summary = "Rails integration for Ruflet."
   spec.description = "Rails-first integration package for mounting Ruflet mobile apps in Rails routes."
-  spec.homepage = "https://github.com/AdamMusa/Ruflet"
+  spec.homepage = "https://github.com/AdamMusa/ruflet/tree/main/packages/ruflet_rails"
   spec.required_ruby_version = ">= 3.1"
 
   spec.files = Dir.glob("lib/**/*.rb") + ["README.md"]
