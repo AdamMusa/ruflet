@@ -22,7 +22,7 @@ module Ruflet
         private
 
         def build_server(entrypoint)
-          Ruflet::Server.new do |page|
+          LocalServer.new do |page|
             env = Context.current_env
             if entrypoint.arity == 1
               entrypoint.call(page)
