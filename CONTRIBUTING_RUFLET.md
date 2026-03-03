@@ -116,3 +116,91 @@ page.column(
 - Example added
 - Patch logs validated
 
+## 6. Writing Tests (Step-by-Step)
+Keep tests small and independent. Do not put an entire gem's coverage into one large file.
+
+### Test Layout Rules
+- Add tests under each gem package:
+  - `packages/ruflet/test/`
+  - `packages/ruflet_server/test/`
+  - `packages/ruflet_cli/test/`
+- Use one `test_helper.rb` per gem package.
+- Split by behavior:
+  - `run_interceptor_test.rb`
+  - `wire_codec_test.rb`
+  - `new_command_test.rb`
+
+### Step 1 — Pick one behavior
+Example: `Ruflet.run` should return interceptor result without requiring `ruflet_server`.
+
+### Step 2 — Create (or reuse) test helper
+`packages/ruflet/test/test_helper.rb`
+
+```ruby
+# frozen_string_literal: true
+
+require "minitest/autorun"
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+require "ruflet"
+```
+
+### Step 3 — Write one focused test file
+`packages/ruflet/test/run_interceptor_test.rb`
+
+```ruby
+# frozen_string_literal: true
+
+require_relative "test_helper"
+
+class RufletRunInterceptorTest < Minitest::Test
+  def test_run_short_circuits_when_interceptor_handles_execution
+    interceptor = ->(**) { :handled }
+
+    result = Ruflet.with_run_interceptor(interceptor) do
+      Ruflet.run { nil }
+    end
+
+    assert_equal :handled, result
+  end
+end
+```
+
+### Step 4 — Run only that file
+From the package directory:
+
+```bash
+/opt/homebrew/opt/ruby/bin/ruby -Ilib -Itest test/run_interceptor_test.rb
+```
+
+### Step 5 — Add neighboring tests in separate files
+Examples:
+- `packages/ruflet/test/manifest_compiler_test.rb`
+- `packages/ruflet_server/test/wire_codec_test.rb`
+- `packages/ruflet_server/test/server_bind_test.rb`
+- `packages/ruflet_cli/test/new_command_test.rb`
+- `packages/ruflet_cli/test/templates_test.rb`
+
+### Step 6 — Verify each gem independently
+Run tests per gem package, not as one global monolith.
+
+```bash
+cd packages/ruflet
+/opt/homebrew/opt/ruby/bin/ruby -Ilib -Itest test/run_interceptor_test.rb
+/opt/homebrew/opt/ruby/bin/ruby -Ilib -Itest test/manifest_compiler_test.rb
+
+cd ../ruflet_server
+/opt/homebrew/opt/ruby/bin/ruby -Ilib -Itest test/wire_codec_test.rb
+/opt/homebrew/opt/ruby/bin/ruby -Ilib -Itest test/server_bind_test.rb
+
+cd ../ruflet_cli
+/opt/homebrew/opt/ruby/bin/ruby -Ilib -Itest test/new_command_test.rb
+/opt/homebrew/opt/ruby/bin/ruby -Ilib -Itest test/templates_test.rb
+```
+
+### Testing Checklist
+- One behavior per test file.
+- No cross-gem coupling in assertions.
+- No hidden network dependency for unit tests.
+- Deterministic assertions (no timing-sensitive flakiness).
+- Tests runnable directly from each package.
+
