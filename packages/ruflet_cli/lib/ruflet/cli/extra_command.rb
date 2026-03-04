@@ -63,41 +63,6 @@ module Ruflet
         end
       end
 
-      def command_serve(args)
-        options = { port: 8550, root: Dir.pwd }
-        parser = OptionParser.new do |o|
-          o.on("-p", "--port PORT", Integer, "Port (default: 8550)") { |v| options[:port] = v }
-          o.on("-r", "--root PATH", "Root directory (default: current dir)") { |v| options[:root] = v }
-        end
-        parser.parse!(args)
-
-        require "webrick"
-        root = File.expand_path(options[:root])
-        server = WEBrick::HTTPServer.new(
-          Port: options[:port],
-          DocumentRoot: root,
-          AccessLog: [],
-          Logger: WEBrick::Log.new($stderr, WEBrick::Log::WARN)
-        )
-        trap("INT") { server.shutdown }
-        puts "Serving #{root} on http://127.0.0.1:#{options[:port]}"
-        server.start
-        0
-      end
-
-      def command_pack(args)
-        platform = default_desktop_platform
-        unless platform
-          warn "pack is only supported on desktop hosts (macOS, Windows, Linux)"
-          return 1
-        end
-        command_build([platform] + args)
-      end
-
-      def command_publish(args)
-        command_build(["web"] + args)
-      end
-
       def command_debug(args)
         ensure_flutter!("debug")
         options = {
@@ -139,6 +104,8 @@ module Ruflet
         unless client_dir
           warn "Could not find Flutter client directory."
           warn "Set RUFLET_CLIENT_DIR or place client at ./ruflet_client"
+          warn "`ruflet debug` requires Flutter client source code."
+          warn "For prebuilt clients, use: `ruflet run --web` or `ruflet run --desktop`."
           return 1
         end
 
@@ -158,14 +125,6 @@ module Ruflet
         template = File.expand_path("templates/ruflet_flutter_template", Dir.pwd)
         return template if Dir.exist?(template)
 
-        nil
-      end
-
-      def default_desktop_platform
-        host = RbConfig::CONFIG["host_os"]
-        return "macos" if host =~ /darwin/i
-        return "windows" if host =~ /mswin|mingw|cygwin/i
-        return "linux" if host =~ /linux/i
         nil
       end
 

@@ -19,10 +19,8 @@ module Ruflet
         end
 
         FileUtils.mkdir_p(root)
-        FileUtils.mkdir_p(File.join(root, ".bundle"))
         File.write(File.join(root, "main.rb"), format(Ruflet::CLI::MAIN_TEMPLATE, app_title: humanize_name(File.basename(root))))
         File.write(File.join(root, "Gemfile"), Ruflet::CLI::GEMFILE_TEMPLATE)
-        File.write(File.join(root, ".bundle", "config"), Ruflet::CLI::BUNDLE_CONFIG_TEMPLATE)
         File.write(File.join(root, "README.md"), format(Ruflet::CLI::README_TEMPLATE, app_name: File.basename(root)))
         copy_ruflet_client_template(root)
 
