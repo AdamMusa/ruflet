@@ -53,7 +53,7 @@ module RufletStudio
       scattered = true
 
       parts_controls = parts.map do |_x, _y, _color|
-        page.container(
+        container(
           animate: duration,
           animate_position: duration,
           animate_rotation: duration,
@@ -67,7 +67,7 @@ module RufletStudio
         )
       end
 
-      canvas = page.stack(
+      canvas = stack(
         width: width,
         height: height,
         animate_scale: duration,
@@ -77,7 +77,7 @@ module RufletStudio
       )
       canvas.children.replace(parts_controls)
 
-      btn = page.button(text: "Go!")
+      btn = button(text: "Go!")
       toggle = lambda do
         scattered = !scattered
         page.update(canvas, scale: scattered ? 5 : 1, opacity: scattered ? 0.3 : 1)
@@ -111,9 +111,9 @@ module RufletStudio
       end
       btn.on(:click) { |_e| toggle.call }
 
-      page.container(
+      container(
         alignment: "center",
-        content: page.column(
+        content: column(
           alignment: "center",
           horizontal_alignment: "center",
           tight: true,

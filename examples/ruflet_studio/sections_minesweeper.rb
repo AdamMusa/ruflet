@@ -47,9 +47,9 @@ module RufletStudio
       end
 
       mines_left = mine_count
-      mines_text = page.text(value: format("%03d", mines_left), color: "#ff6b6b", size: 16, weight: "w600")
-      face_text = page.text(value: "🙂", size: 18)
-      timer_text = page.text(value: "000", color: "#ff6b6b", size: 16, weight: "w600")
+      mines_text = text(value: format("%03d", mines_left), color: "#ff6b6b", size: 16, weight: "w600")
+      face_text = text(value: "🙂", size: 18)
+      timer_text = text(value: "000", color: "#ff6b6b", size: 16, weight: "w600")
 
       cell_texts = []
       cell_containers = []
@@ -68,10 +68,10 @@ module RufletStudio
           end
 
         label = sq[:flagged] ? "🚩" : ""
-        text = page.text(value: label, size: 14, color: number_color)
-        cell_texts[idx] = text
+        label_text = text(value: label, size: 14, color: number_color)
+        cell_texts[idx] = label_text
 
-        cell_containers[idx] = page.container(
+        cell_containers[idx] = container(
           width: size,
           height: size,
           left: sq[:col] * size,
@@ -84,11 +84,11 @@ module RufletStudio
             right: { width: 2, color: "#7b7b7b" }
           },
           alignment: "center",
-          content: text
+          content: label_text
         )
       end
 
-      board = page.stack(width: board_width, height: board_height, controls: cell_containers)
+      board = stack(width: board_width, height: board_height, controls: cell_containers)
 
       safe_update = lambda do |control, props|
         return unless control
@@ -272,7 +272,7 @@ module RufletStudio
         rebuild.call
       end
 
-      board_gesture = page.gesture_detector(
+      board_gesture = gesture_detector(
         on_tap_down: ->(e) {
           pos = extract_pos(e)
           if pos
@@ -294,7 +294,7 @@ module RufletStudio
       rebuild.call
 
       bevel = lambda do |content, padding: 6|
-        page.container(
+        container(
           padding: padding,
           bgcolor: "#bcbcbc",
           border: {
@@ -308,7 +308,7 @@ module RufletStudio
       end
 
       counter_box = lambda do |content|
-        page.container(
+        container(
           width: 70,
           height: 36,
           alignment: "center",
@@ -323,12 +323,12 @@ module RufletStudio
         )
       end
 
-      page.column(
+      column(
         spacing: 8,
         horizontal_alignment: "center",
         tight: true,
         controls: [
-          page.container(
+          container(
             padding: 8,
             width: board_width + 16,
             bgcolor: "#c0c0c0",
@@ -338,16 +338,16 @@ module RufletStudio
               bottom: { width: 2, color: "#8d8d8d" },
               right: { width: 2, color: "#8d8d8d" }
             },
-            content: page.row(
+            content: row(
               alignment: "spaceBetween",
               controls: [
                 counter_box.call(mines_text),
-                bevel.call(page.container(width: 36, height: 36, alignment: "center", bgcolor: "#d0d0d0", content: face_text)),
+                bevel.call(container(width: 36, height: 36, alignment: "center", bgcolor: "#d0d0d0", content: face_text)),
                 counter_box.call(timer_text)
               ]
             )
           ),
-          page.container(
+          container(
             padding: 8,
             width: board_width + 16,
             height: board_height + 16,
@@ -370,7 +370,7 @@ module RufletStudio
       controls = []
       9.times do |r|
         9.times do |c|
-          controls << page.container(
+          controls << container(
             width: size,
             height: size,
             left: c * size,

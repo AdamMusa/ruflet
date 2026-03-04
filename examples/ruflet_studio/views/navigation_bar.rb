@@ -9,7 +9,7 @@ module RufletStudio
         "/settings" => 2
       }[route] || 1
 
-      page.navigation_bar(
+      navigation_bar(
         bgcolor: color_surface(page),
         indicator_color: effective_theme(page) == "light" ? "#dbe4ff" : "#2b3036",
         label_text_style: { size: 12, color: color_subtle(page) },
@@ -27,9 +27,9 @@ module RufletStudio
           end
         },
         destinations: [
-          page.navigation_bar_destination(icon: "home", label: "Home", icon_color: color_subtle(page), selected_icon_color: color_text(page)),
-          page.navigation_bar_destination(icon: "grid_view", label: "Gallery", icon_color: color_subtle(page), selected_icon_color: color_text(page)),
-          page.navigation_bar_destination(icon: "settings", label: "Settings", icon_color: color_subtle(page), selected_icon_color: color_text(page))
+          navigation_bar_destination(icon: "home", label: "Home", icon_color: color_subtle(page), selected_icon_color: color_text(page)),
+          navigation_bar_destination(icon: "grid_view", label: "Gallery", icon_color: color_subtle(page), selected_icon_color: color_text(page)),
+          navigation_bar_destination(icon: "settings", label: "Settings", icon_color: color_subtle(page), selected_icon_color: color_text(page))
         ]
       )
     end

@@ -5,7 +5,7 @@ class MainApp < Ruflet::App
     app_name = "Ruflet Tabs Demo"
     page.title = app_name
 
-    tabs = tabs(
+    tabs_control = tabs(
       height: 320,
       selected_index: 0,
       tabs: [
@@ -35,7 +35,7 @@ class MainApp < Ruflet::App
     )
 
     page.add(
-      tabs,
+      tabs_control,
       appbar: app_bar(
         bgcolor: "#d9d7db",
         color: "#232329",

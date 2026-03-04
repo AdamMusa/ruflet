@@ -3,7 +3,7 @@
 module RufletStudio
   module SectionsMedia
     def build_video(page, status)
-      video = page.control(
+      video = control(
         :video,
         width: 320,
         height: 180,
@@ -28,33 +28,33 @@ module RufletStudio
         page.invoke(video, method_name, args: args)
       end
 
-      page.column(
+      column(
         spacing: 8,
         controls: [
           status,
-          page.control(:safe_area, content: page.column(
+          control(:safe_area, content: column(
             spacing: 12,
             controls: [
               video,
-              page.column(
+              column(
                 spacing: 8,
                 controls: [
-                  page.button(text: "Play", on_click: ->(_e) { send_video.call("Play", "play") }),
-                  page.button(text: "Pause", on_click: ->(_e) { send_video.call("Pause", "pause") }),
-                  page.button(text: "Play/Pause", on_click: ->(_e) { send_video.call("Play/Pause", "play_or_pause") }),
-                  page.button(text: "Stop", on_click: ->(_e) { send_video.call("Stop", "stop") }),
-                  page.button(text: "Next", on_click: ->(_e) { send_video.call("Next", "next") }),
-                  page.button(text: "Prev", on_click: ->(_e) { send_video.call("Prev", "previous") })
+                  button(text: "Play", on_click: ->(_e) { send_video.call("Play", "play") }),
+                  button(text: "Pause", on_click: ->(_e) { send_video.call("Pause", "pause") }),
+                  button(text: "Play/Pause", on_click: ->(_e) { send_video.call("Play/Pause", "play_or_pause") }),
+                  button(text: "Stop", on_click: ->(_e) { send_video.call("Stop", "stop") }),
+                  button(text: "Next", on_click: ->(_e) { send_video.call("Next", "next") }),
+                  button(text: "Prev", on_click: ->(_e) { send_video.call("Prev", "previous") })
                 ]
               ),
-              page.column(
+              column(
                 spacing: 8,
                 controls: [
-                  page.button(text: "Seek 10s", on_click: ->(_e) { send_video.call("Seek 10s", "seek", args: { position: 10_000 }) }),
-                  page.button(text: "Fullscreen", on_click: ->(_e) { page.update(video, fullscreen: true) })
+                  button(text: "Seek 10s", on_click: ->(_e) { send_video.call("Seek 10s", "seek", args: { position: 10_000 }) }),
+                  button(text: "Fullscreen", on_click: ->(_e) { page.update(video, fullscreen: true) })
                 ]
               ),
-              page.control(
+              control(
                 :slider,
                 min: 0,
                 max: 100,
@@ -65,7 +65,7 @@ module RufletStudio
                   page.update(video, volume: read_number(e.data, "value") || 100)
                 }
               ),
-              page.control(
+              control(
                 :slider,
                 min: 1,
                 max: 3,

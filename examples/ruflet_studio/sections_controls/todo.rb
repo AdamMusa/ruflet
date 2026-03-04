@@ -9,15 +9,15 @@ module RufletStudio
       ]
 
       input_text = ""
-      input = page.text_field(
+      input = text_field(
         hint_text: "What needs to be done?",
         on_change: ->(e) { input_text = e.data.to_s }
       )
-      list = page.column(spacing: 6, controls: [])
+      list = column(spacing: 6, controls: [])
 
       render_list = lambda do
         new_controls = todos.each_with_index.map do |item, idx|
-          checkbox = page.checkbox(
+          checkbox_control = checkbox(
             label: item[:text],
             value: item[:done],
             on_change: ->(e) {
@@ -31,11 +31,11 @@ module RufletStudio
             }
           )
 
-          page.row(
+          row(
             alignment: "spaceBetween",
             controls: [
-              checkbox,
-              page.icon_button(
+              checkbox_control,
+              icon_button(
                 icon: "delete",
                 tooltip: "Delete",
                 on_click: ->(_e) {
@@ -62,14 +62,14 @@ module RufletStudio
 
       render_list.call
 
-      page.column(
+      column(
         spacing: 8,
         controls: [
-          page.text(value: "Todos", size: 20, weight: "w600", color: "#e7e9ec"),
+          text(value: "Todos", size: 20, weight: "w600", color: "#e7e9ec"),
           input,
-          page.button(text: "Add", on_click: ->(_e) { add_todo.call }),
+          button(text: "Add", on_click: ->(_e) { add_todo.call }),
           list,
-          page.control(
+          control(
             :outlined_button,
             content: "Clear completed",
             on_click: ->(_e) {

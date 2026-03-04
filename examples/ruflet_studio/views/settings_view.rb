@@ -4,28 +4,29 @@ module RufletStudio
   module Views
     def settings_view(page)
       route = "/settings"
-      gestures_shake = page.checkbox(value: false)
-      gestures_long_press = page.checkbox(value: false)
+      gestures_shake = checkbox(value: false)
+      gestures_long_press = checkbox(value: false)
       gestures_shake_state = false
       gestures_long_press_state = false
-      page.view(
+      widget(
+        :view,
         route: route,
         bgcolor: color_bg(page),
-        appbar: page.app_bar(
+        appbar: app_bar(
           bgcolor: color_surface(page),
           color: color_text(page),
-          title: page.text(value: "Settings", size: 20),
+          title: text(value: "Settings", size: 20),
           actions: []
         ),
         navigation_bar: nav_bar(page, route),
         padding: 20,
         scroll: "auto",
         controls: [
-          page.column(
+          column(
             spacing: 16,
             controls: [
-              page.text(value: "Theme", size: 14, color: color_icon(page)),
-              page.control(
+              text(value: "Theme", size: 14, color: color_icon(page)),
+              control(
                 :radiogroup,
                 value: theme_mode,
                 on_change: ->(e) {
@@ -34,94 +35,94 @@ module RufletStudio
                   page.views = [settings_view(page)]
                   page.update
                 },
-                content: page.column(
+                content: column(
                   spacing: 14,
                   controls: [
-                    page.row(
+                    row(
                       alignment: "spaceBetween",
                       controls: [
-                        page.row(
+                        row(
                           spacing: 12,
                           controls: [
-                            page.icon(name: "contrast", color: color_icon(page)),
-                            page.text(value: "System", color: color_text(page))
+                            icon(name: "contrast", color: color_icon(page)),
+                            text(value: "System", color: color_text(page))
                           ]
                         ),
-                        page.radio(value: "system")
+                        radio(value: "system")
                       ]
                     ),
-                    page.row(
+                    row(
                       alignment: "spaceBetween",
                       controls: [
-                        page.row(
+                        row(
                           spacing: 12,
                           controls: [
-                            page.icon(name: "light_mode", color: color_icon(page)),
-                            page.text(value: "Light", color: color_text(page))
+                            icon(name: "light_mode", color: color_icon(page)),
+                            text(value: "Light", color: color_text(page))
                           ]
                         ),
-                        page.radio(value: "light")
+                        radio(value: "light")
                       ]
                     ),
-                    page.row(
+                    row(
                       alignment: "spaceBetween",
                       controls: [
-                        page.row(
+                        row(
                           spacing: 12,
                           controls: [
-                            page.icon(name: "dark_mode", color: color_icon(page)),
-                            page.text(value: "Dark", color: color_text(page))
+                            icon(name: "dark_mode", color: color_icon(page)),
+                            text(value: "Dark", color: color_text(page))
                           ]
                         ),
-                        page.radio(value: "dark")
+                        radio(value: "dark")
                       ]
                     )
                   ]
                 )
               ),
-              page.container(height: 1, bgcolor: color_divider(page), margin: { top: 8, bottom: 8 }),
-              page.text(value: "Home gestures", size: 14, color: color_icon(page)),
-              page.control(
+              container(height: 1, bgcolor: color_divider(page), margin: { top: 8, bottom: 8 }),
+              text(value: "Home gestures", size: 14, color: color_icon(page)),
+              control(
                 :list_tile,
-                leading: page.icon(name: "vibration", color: color_icon(page)),
-                title: page.text(value: "Shake device", color: color_text(page)),
+                leading: icon(name: "vibration", color: color_icon(page)),
+                title: text(value: "Shake device", color: color_text(page)),
                 trailing: gestures_shake,
                 on_click: ->(_e) {
                   gestures_shake_state = !gestures_shake_state
                   page.update(gestures_shake, value: gestures_shake_state)
                 }
               ),
-              page.control(
+              control(
                 :list_tile,
-                leading: page.icon(name: "pan_tool_alt", color: color_icon(page)),
-                title: page.text(value: "Long press with two fingers", color: color_text(page)),
+                leading: icon(name: "pan_tool_alt", color: color_icon(page)),
+                title: text(value: "Long press with two fingers", color: color_text(page)),
                 trailing: gestures_long_press,
                 on_click: ->(_e) {
                   gestures_long_press_state = !gestures_long_press_state
                   page.update(gestures_long_press, value: gestures_long_press_state)
                 }
               ),
-              page.container(height: 1, bgcolor: color_divider(page), margin: { top: 8, bottom: 8 }),
-              page.text(value: "Application details", size: 14, color: color_icon(page)),
-              page.row(
+              container(height: 1, bgcolor: color_divider(page), margin: { top: 8, bottom: 8 }),
+              text(value: "Application details", size: 14, color: color_icon(page)),
+              row(
                 alignment: "spaceBetween",
                 controls: [
-                  page.text(value: "Client version:", color: color_text(page)),
-                  page.text(value: "#{Ruflet::VERSION}", color: color_subtle(page))
+                  text(value: "Client version:", color: color_text(page)),
+                  text(value: "#{Ruflet::VERSION}", color: color_subtle(page))
                 ]
               ),
-              page.row(
+              row(
                 alignment: "spaceBetween",
                 controls: [
-                  page.text(value: "Ruflet SDK version:", color: color_text(page)),
-                  page.text(value: "#{Ruflet::VERSION}", color: color_subtle(page))
+                  text(value: "Ruflet SDK version:", color: color_text(page)),
+                  text(value: "#{Ruflet::VERSION}", color: color_subtle(page))
                 ]
               ),
-              page.row(
+              row(
                 alignment: "spaceBetween",
                 controls: [
-                  page.text(value: "Ruby version:", color: color_text(page)),
-                  page.text(value: "#{RUBY_VERSION}", color: color_subtle(page))
+                  text(value: "Ruby version:", color: color_text(page)),
+                  text(value: "#{RUBY_VERSION}", color: color_subtle(page))
                 ]
               )
             ]
