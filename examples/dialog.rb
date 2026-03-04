@@ -56,6 +56,7 @@ class FeedbackSurfacesApp < Ruflet::App
       open: true,
       content: text(value: "Profile saved"),
       action: "UNDO",
+      duration: duration(seconds: 3),
       on_action: ->(_e) { set_status(page, status, "SnackBar action pressed") },
       on_dismiss: ->(_e) { set_status(page, status, "SnackBar dismissed") }
     )
@@ -90,7 +91,7 @@ class FeedbackSurfacesApp < Ruflet::App
 
   def build_bottom_sheet(page, status)
     bottom_sheet = nil
-    bottom_sheet = bottom_sheet(
+    bottom_sheet_control = bottom_sheet(
       open: false,
       scrollable: true,
       show_drag_handle: true,
@@ -116,7 +117,7 @@ class FeedbackSurfacesApp < Ruflet::App
         )
       )
     )
-    bottom_sheet
+    bottom_sheet_control
   end
 
   def open_surface(page, control, status, message)

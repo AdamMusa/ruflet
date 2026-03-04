@@ -3,76 +3,75 @@
 module RufletStudio
   module SectionsControls
     def build_cupertino_controls(page, status)
-      radio_group = page.radio_group(value: "r1")
-      cupertino_dialog = page.control(
+      cupertino_dialog = control(
         :cupertino_alert_dialog,
-        title: page.text(value: "Cupertino"),
-        content: page.text(value: "Hello from Cupertino"),
+        title: text(value: "Cupertino"),
+        content: text(value: "Hello from Cupertino"),
         actions: [
-          page.control(:cupertino_dialog_action, content: "OK", on_click: ->(_e) { page.pop_dialog })
+          control(:cupertino_dialog_action, content: "OK", on_click: ->(_e) { page.pop_dialog })
         ]
       )
 
-      cupertino_picker = page.control(
+      cupertino_picker = control(
         :cupertino_picker,
         magnification: 1.2,
         use_magnifier: true,
         item_extent: 32,
         controls: [
-          page.text(value: "One", color: "#111318"),
-          page.text(value: "Two", color: "#111318"),
-          page.text(value: "Three", color: "#111318")
+          text(value: "One", color: "#111318"),
+          text(value: "Two", color: "#111318"),
+          text(value: "Three", color: "#111318")
         ]
       )
 
-      radio_group = page.radio_group(
+      radio_group_control = radio_group(
         value: "r1",
-        content: page.row(
+        content: row(
           spacing: 8,
           controls: [
-            page.control(:cupertino_radio, label: "Radio 1", value: "r1"),
-            page.control(:cupertino_radio, label: "Radio 2", value: "r2")
+            control(:cupertino_radio, label: "Radio 1", value: "r1"),
+            control(:cupertino_radio, label: "Radio 2", value: "r2")
           ]
         )
       )
 
-      page.column(
+      column(
         spacing: 12,
         controls: [
           status,
-          page.control(:cupertino_text_field, label: "Text Field"),
-          page.control(:cupertino_checkbox, label: "Checkbox"),
-          page.control(:cupertino_switch, label: "Switch"),
-          page.control(:cupertino_slider, min: 0, max: 100, divisions: 10, value: 50),
-          radio_group,
-          page.column(
+          control(:cupertino_text_field, label: "Text Field"),
+          control(:cupertino_checkbox, label: "Checkbox"),
+          control(:cupertino_switch, label: "Switch"),
+          control(:cupertino_slider, min: 0, max: 100, divisions: 10, value: 50),
+          radio_group_control,
+          column(
             spacing: 8,
             controls: [
-              page.cupertino_button(
-                content: page.text(value: "Show Dialog"),
+              cupertino_button(
+                content: text(value: "Show Dialog"),
                 on_click: ->(_e) { page.show_dialog(cupertino_dialog) }
               ),
-              page.cupertino_button(
-                content: page.text(value: "Show Picker"),
+              cupertino_button(
+                content: text(value: "Show Picker"),
                 on_click: ->(_e) {
-                  page.show_dialog(page.control(:cupertino_bottom_sheet, content: cupertino_picker, height: 216, padding: { top: 6 }))
+                  page.show_dialog(control(:cupertino_bottom_sheet, content: cupertino_picker, height: 216, padding: { top: 6 }))
                 }
               )
             ]
           ),
-          page.column(
+          column(
             spacing: 8,
             controls: [
-              page.cupertino_button(
-                content: page.text(value: "Show DatePicker"),
+              cupertino_button(
+                content: text(value: "Show DatePicker"),
                 on_click: ->(_e) {
-                  page.show_dialog(page.control(:cupertino_bottom_sheet, content: page.control(:cupertino_date_picker), height: 216, padding: { top: 6 }))
+                  page.show_dialog(control(:cupertino_bottom_sheet, content: control(:cupertino_date_picker), height: 216, padding: { top: 6 }))
                 }
               ),
-              page.cupertino_button(
-                content: page.text(value: "Show TimerPicker"),
+              cupertino_button(
+                content: text(value: "Show TimerPicker"),
                 on_click: ->(_e) {
-                  page.show_dialog(page.control(:cupertino_bottom_sheet, content: page.control(:cupertino_timer_picker), height: 216, padding: { top: 6 }))
+                  page.show_dialog(control(:cupertino_bottom_sheet, content: control(:cupertino_timer_picker), height: 216, padding: { top: 6 }))
                 }
               )
             ]
