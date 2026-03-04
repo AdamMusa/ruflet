@@ -9,7 +9,7 @@ No separate protocol gem is required.
 
 ```ruby
 # Gemfile
-gem "ruflet_rails", ">= 0.0.2"
+gem "ruflet_rails", ">= 0.0.4"
 ```
 
 ```ruby
@@ -19,7 +19,7 @@ require "ruflet"
 class MyApp < Ruflet::App
   def view(page)
     page.title = "Hello"
-    page.add(page.text(value: "Hello Ruflet"))
+    page.add(text(value: "Hello Ruflet"))
   end
 end
 

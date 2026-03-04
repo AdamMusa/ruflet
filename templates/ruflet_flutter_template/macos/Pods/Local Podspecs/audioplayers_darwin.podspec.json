@@ -1,0 +1,37 @@
+{
+  "name": "audioplayers_darwin",
+  "version": "0.0.1",
+  "summary": "Flutter Audioplayers Plugin",
+  "description": "Darwin implementation of audioplayers, a Flutter plugin to play multiple audio files simultaneously.",
+  "homepage": "https://github.com/bluefireteam/audioplayers",
+  "license": {
+    "type": "MIT",
+    "file": "../LICENSE"
+  },
+  "authors": {
+    "Blue Fire": "contact@blue-fire.xyz"
+  },
+  "source": {
+    "path": "."
+  },
+  "documentation_url": "https://pub.dev/packages/audioplayers",
+  "source_files": "audioplayers_darwin/Sources/audioplayers_darwin/**/*.swift",
+  "ios": {
+    "dependencies": {
+      "Flutter": []
+    }
+  },
+  "osx": {
+    "dependencies": {
+      "FlutterMacOS": []
+    }
+  },
+  "platforms": {
+    "ios": "12.0",
+    "osx": "10.14"
+  },
+  "pod_target_xcconfig": {
+    "DEFINES_MODULE": "YES",
+    "EXCLUDED_ARCHS[sdk=iphonesimulator*]": "i386"
+  }
+}

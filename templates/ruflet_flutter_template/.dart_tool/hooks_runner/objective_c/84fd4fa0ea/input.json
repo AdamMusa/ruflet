@@ -1,0 +1,30 @@
+{
+  "assets": {},
+  "config": {
+    "build_asset_types": [
+      "code_assets/code"
+    ],
+    "extensions": {
+      "code_assets": {
+        "c_compiler": {
+          "ar": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar",
+          "cc": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+          "ld": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
+        },
+        "ios": {
+          "target_sdk": "iphonesimulator",
+          "target_version": 13
+        },
+        "link_mode_preference": "dynamic",
+        "target_architecture": "arm64",
+        "target_os": "ios"
+      }
+    },
+    "linking_enabled": false
+  },
+  "out_dir_shared": "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/templates/ruflet_flutter_template/.dart_tool/hooks_runner/shared/objective_c/build/",
+  "out_file": "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/templates/ruflet_flutter_template/.dart_tool/hooks_runner/objective_c/84fd4fa0ea/output.json",
+  "package_name": "objective_c",
+  "package_root": "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/",
+  "user_defines": {}
+}

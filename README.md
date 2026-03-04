@@ -76,12 +76,15 @@ class MyApp < Ruflet::App
     page.vertical_alignment = Ruflet::MainAxisAlignment::CENTER
     page.horizontal_alignment = Ruflet::CrossAxisAlignment::CENTER
     page.title = "Hello"
-    page.add(page.text(value: "Hello Ruflet"))
+    page.add(text(value: "Hello Ruflet"))
   end
 end
 
 MyApp.new.run
 ```
+
+Widget builders are global/free helpers (`text`, `row`, `column`, `container`, etc.).
+Use `page` only for runtime/page operations (`add`, `update`, `go`, `show_dialog`, `pop_dialog`).
 
 ## CLI
 

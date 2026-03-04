@@ -1,0 +1,46 @@
+{
+  "assets": [
+    {
+      "encoding": {
+        "file": "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/templates/ruflet_flutter_template/.dart_tool/hooks_runner/shared/objective_c/build/84fd4fa0ea/objective_c.dylib",
+        "id": "package:objective_c/objective_c.dylib",
+        "link_mode": {
+          "type": "dynamic_loading_bundle"
+        }
+      },
+      "type": "code_assets/code"
+    }
+  ],
+  "assets_for_linking": {},
+  "dependencies": [
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/include/dart_api_dl.c",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c.c",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/input_stream_adapter.m",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c.m",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/observer.m",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/ns_number.m",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/protocol.m",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c_bindings_generated.m",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/protocol.h",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/ns_number.h",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/observer.h",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c_runtime.h",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/include/dart_api.h",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/include/dart_version.h",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/include/analyze_snapshot_api.h",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/include/bin/dart_io_api.h",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/include/bin/native_assets_api.h",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/include/dart_embedder_api.h",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/include/dart_native_api.h",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/include/internal/dart_api_dl_impl.h",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/include/dart_tools_api.h",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/include/dart_api_dl.h",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/foundation.h",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/input_stream_adapter.h",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c.h",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/os_version.h",
+    "/Users/macbookpro/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/ffi.h"
+  ],
+  "status": "success",
+  "timestamp": "2026-03-02 00:11:26.000"
+}

@@ -84,7 +84,7 @@ class MyApp < Ruflet::App
     app_name = "My App"
     page.title = app_name
 
-    body = page.column(
+    body = column(
       expand: true,
       alignment: Ruflet::MainAxisAlignment::CENTER,
       horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
@@ -96,8 +96,8 @@ class MyApp < Ruflet::App
 
     page.add(
       body,
-      appbar: page.app_bar(title: page.text(value: app_name)),
-      floating_action_button: page.fab("+", on_click: ->(_e) {})
+      appbar: app_bar(title: text(value: app_name)),
+      floating_action_button: fab("+", on_click: ->(_e) {})
     )
   end
 end

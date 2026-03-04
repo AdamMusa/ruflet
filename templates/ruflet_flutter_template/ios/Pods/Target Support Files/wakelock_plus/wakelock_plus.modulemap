@@ -1,0 +1,6 @@
+framework module wakelock_plus {
+  umbrella header "wakelock_plus-umbrella.h"
+
+  export *
+  module * { export * }
+}

@@ -1,0 +1,42 @@
+{
+  "name": "flutter_secure_storage_darwin",
+  "version": "10.0.0",
+  "summary": "A Flutter plugin to store data in secure storage.",
+  "description": "A Flutter plugin to store data in secure storage.",
+  "homepage": "http://example.com",
+  "license": {
+    "file": "../LICENSE"
+  },
+  "authors": {
+    "German Saprykin": "saprykin.h@gmail.com"
+  },
+  "source": {
+    "path": "."
+  },
+  "source_files": "flutter_secure_storage_darwin/Sources/flutter_secure_storage_darwin/**/*.swift",
+  "ios": {
+    "dependencies": {
+      "Flutter": []
+    }
+  },
+  "osx": {
+    "dependencies": {
+      "FlutterMacOS": []
+    }
+  },
+  "platforms": {
+    "ios": "12.0",
+    "osx": "10.14"
+  },
+  "pod_target_xcconfig": {
+    "DEFINES_MODULE": "YES",
+    "EXCLUDED_ARCHS[sdk=iphonesimulator*]": "i386"
+  },
+  "swift_versions": "5.0",
+  "resource_bundles": {
+    "flutter_secure_storage": [
+      "flutter_secure_storage_darwin/Sources/flutter_secure_storage_darwin/Resources/PrivacyInfo.xcprivacy"
+    ]
+  },
+  "swift_version": "5.0"
+}

@@ -1,0 +1,6 @@
+framework module record_ios {
+  umbrella header "record_ios-umbrella.h"
+
+  export *
+  module * { export * }
+}

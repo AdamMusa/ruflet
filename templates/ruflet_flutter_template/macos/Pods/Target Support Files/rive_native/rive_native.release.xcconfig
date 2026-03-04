@@ -1,0 +1,19 @@
+CLANG_CXX_LANGUAGE_STANDARD = c++17
+CLANG_CXX_LIBRARY = libc++
+CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO
+CODE_SIGN_IDENTITY =
+CONFIGURATION_BUILD_DIR = ${PODS_CONFIGURATION_BUILD_DIR}/rive_native
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) COCOAPODS=1
+LIBRARY_SEARCH_PATHS = $(inherited) "${TOOLCHAIN_DIR}/usr/lib/swift/${PLATFORM_NAME}" /usr/lib/swift "$(PODS_TARGET_SRCROOT)/../native/build/macosx/bin/release"
+OTHER_LDFLAGS = $(inherited) -Wl,-force_load,$(PODS_TARGET_SRCROOT)/../native/build/macosx/bin/release/librive_native.a -l"brotli" -l"libjpeg" -l"libpng" -l"libwebp" -l"luau_analyzer" -l"luau_compiler" -l"luau_vm" -l"miniaudio" -l"rive" -l"rive_decoders" -l"rive_harfbuzz" -l"rive_pls_renderer" -l"rive_scripting_workspace" -l"rive_sheenbidi" -l"rive_yoga" -l"stylua_ffi" -l"zlib"
+OTHER_SWIFT_FLAGS = $(inherited) -D COCOAPODS
+PODS_BUILD_DIR = ${BUILD_DIR}
+PODS_CONFIGURATION_BUILD_DIR = ${PODS_BUILD_DIR}/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)
+PODS_DEVELOPMENT_LANGUAGE = ${DEVELOPMENT_LANGUAGE}
+PODS_ROOT = ${SRCROOT}
+PODS_TARGET_SRCROOT = ${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/rive_native/macos
+PODS_XCFRAMEWORKS_BUILD_DIR = $(PODS_CONFIGURATION_BUILD_DIR)/XCFrameworkIntermediates
+PRODUCT_BUNDLE_IDENTIFIER = org.cocoapods.${PRODUCT_NAME:rfc1034identifier}
+SKIP_INSTALL = YES
+USER_HEADER_SEARCH_PATHS = "$(PODS_TARGET_SRCROOT)/../native/include"
+USE_RECURSIVE_SCRIPT_INPUTS_IN_SCRIPT_PHASES = YES

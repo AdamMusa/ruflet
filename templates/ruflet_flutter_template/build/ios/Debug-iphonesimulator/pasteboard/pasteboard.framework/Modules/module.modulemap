@@ -1,0 +1,11 @@
+framework module pasteboard {
+  umbrella header "pasteboard-umbrella.h"
+
+  export *
+  module * { export * }
+}
+
+module pasteboard.Swift {
+  header "pasteboard-Swift.h"
+  requires objc
+}

@@ -1,0 +1,19 @@
+${PODS_ROOT}/Target Support Files/media_kit_libs_ios_video/media_kit_libs_ios_video-xcframeworks.sh
+${PODS_ROOT}/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/Ass.xcframework
+${PODS_ROOT}/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/Avcodec.xcframework
+${PODS_ROOT}/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/Avfilter.xcframework
+${PODS_ROOT}/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/Avformat.xcframework
+${PODS_ROOT}/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/Avutil.xcframework
+${PODS_ROOT}/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/Dav1d.xcframework
+${PODS_ROOT}/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/Freetype.xcframework
+${PODS_ROOT}/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/Fribidi.xcframework
+${PODS_ROOT}/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/Harfbuzz.xcframework
+${PODS_ROOT}/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/Mbedcrypto.xcframework
+${PODS_ROOT}/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/Mbedtls.xcframework
+${PODS_ROOT}/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/Mbedx509.xcframework
+${PODS_ROOT}/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/Mpv.xcframework
+${PODS_ROOT}/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/Png16.xcframework
+${PODS_ROOT}/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/Swresample.xcframework
+${PODS_ROOT}/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/Swscale.xcframework
+${PODS_ROOT}/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/Uchardet.xcframework
+${PODS_ROOT}/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/Xml2.xcframework

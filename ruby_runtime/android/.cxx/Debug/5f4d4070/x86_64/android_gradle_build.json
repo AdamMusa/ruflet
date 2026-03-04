@@ -1,0 +1,40 @@
+{
+  "buildFiles": [
+    "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/android/src/main/cpp/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/macbookpro/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/android/.cxx/Debug/5f4d4070/x86_64",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/macbookpro/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/android/.cxx/Debug/5f4d4070/x86_64",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "ruby_runtime::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "x86_64",
+      "artifactName": "ruby_runtime",
+      "output": "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime_demo/build/ruby_runtime/intermediates/cxx/Debug/5f4d4070/obj/x86_64/libruby_runtime.so",
+      "runtimeFiles": []
+    }
+  },
+  "toolchains": {
+    "toolchain": {
+      "cCompilerExecutable": "/Users/macbookpro/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang.lld",
+      "cppCompilerExecutable": "/Users/macbookpro/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++.lld"
+    }
+  },
+  "cFileExtensions": [
+    "c"
+  ],
+  "cppFileExtensions": [
+    "cpp"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "name": "battery_plus",
+  "version": "1.0.0",
+  "summary": "Flutter plugin for accessing information about the battery_plus.",
+  "description": "A Flutter plugin to access various information about the battery of the device the app is running on.\nDownloaded by pub (not CocoaPods).",
+  "homepage": "https://plus.fluttercommunity.dev/",
+  "license": {
+    "type": "BSD",
+    "file": "../LICENSE"
+  },
+  "authors": {
+    "Flutter Community Team": "authors@fluttercommunity.dev"
+  },
+  "source": {
+    "http": "https://github.com/fluttercommunity/plus_plugins/tree/main/packages/battery_plus"
+  },
+  "documentation_url": "https://pub.dev/packages/battery_plus",
+  "source_files": "battery_plus/Sources/battery_plus/**/*.{h,m}",
+  "public_header_files": "battery_plus/Sources/battery_plus/include/**/*.h",
+  "dependencies": {
+    "Flutter": []
+  },
+  "platforms": {
+    "ios": "12.0"
+  },
+  "pod_target_xcconfig": {
+    "DEFINES_MODULE": "YES"
+  },
+  "resource_bundles": {
+    "battery_plus_privacy": [
+      "battery_plus/Sources/battery_plus/PrivacyInfo.xcprivacy"
+    ]
+  }
+}

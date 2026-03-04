@@ -1,0 +1,6 @@
+framework module pasteboard {
+  umbrella header "pasteboard-umbrella.h"
+
+  export *
+  module * { export * }
+}

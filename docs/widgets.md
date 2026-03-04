@@ -1,6 +1,7 @@
 # Ruflet Widgets Guide (Class-Based)
 
 This guide uses class-based apps only.
+All widget builders are free helpers (`text`, `row`, `column`, etc.), not `page.*`.
 
 ## 1) App structure
 
@@ -12,7 +13,7 @@ class MyApp < Ruflet::App
     app_name = "Hello"
     page.title = app_name
 
-    body = page.column(
+    body = column(
       expand: true,
       alignment: Ruflet::MainAxisAlignment::CENTER,
       horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
@@ -23,8 +24,8 @@ class MyApp < Ruflet::App
 
     page.add(
       body,
-      appbar: page.app_bar(title: page.text(value: app_name)),
-      floating_action_button: page.fab("+", on_click: ->(_e) {})
+      appbar: app_bar(title: text(value: app_name)),
+      floating_action_button: fab("+", on_click: ->(_e) {})
     )
   end
 end
@@ -54,7 +55,7 @@ class CenteredApp < Ruflet::App
     page.title = "Centered"
     page.vertical_alignment = Ruflet::MainAxisAlignment::CENTER
     page.horizontal_alignment = Ruflet::CrossAxisAlignment::CENTER
-    page.add(page.text(value: "Hello World!", size: 32))
+    page.add(text(value: "Hello World!", size: 32))
   end
 end
 
@@ -69,7 +70,7 @@ CenteredApp.new.run
 class LayoutApp < Ruflet::App
   def view(page)
     page.add(
-      page.column(spacing: 12) do
+      column(spacing: 12) do
         text value: "Line 1"
         text value: "Line 2"
       end
@@ -84,7 +85,7 @@ end
 class RowApp < Ruflet::App
   def view(page)
     page.add(
-      page.row(spacing: 8, alignment: "center") do
+      row(spacing: 8, alignment: "center") do
         button text: "Cancel"
         button text: "Save"
       end
@@ -99,7 +100,7 @@ end
 class ContainerApp < Ruflet::App
   def view(page)
     page.add(
-      page.container(width: 240, padding: 12, bgcolor: "#FFFFFF", border_radius: 10) do
+      container(width: 240, padding: 12, bgcolor: "#FFFFFF", border_radius: 10) do
         text value: "Card content"
       end
     )
@@ -127,7 +128,7 @@ end
 class ContentApp < Ruflet::App
   def view(page)
     page.add(
-      page.column(spacing: 10) do
+      column(spacing: 10) do
         text value: "Title", size: 24, weight: "bold"
         text_field label: "Name", width: 220
         elevated_button text: "Primary"
@@ -147,14 +148,14 @@ class CounterApp < Ruflet::App
   end
 
   def view(page)
-    counter = page.text(value: @count.to_s, size: 48)
+    counter = text(value: @count.to_s, size: 48)
 
     page.add(
-      page.column(horizontal_alignment: "center", spacing: 8) do
+      column(horizontal_alignment: "center", spacing: 8) do
         text value: "You clicked:"
         counter
       end,
-      floating_action_button: page.fab("+", on_click: ->(e) {
+      floating_action_button: fab("+", on_click: ->(e) {
         @count += 1
         e.page.update(counter, value: @count.to_s)
       })
@@ -171,13 +172,13 @@ CounterApp.new.run
 class AppBarApp < Ruflet::App
   def view(page)
     page.add(
-      page.text(value: "Body"),
-      appbar: page.app_bar(
+      text(value: "Body"),
+      appbar: app_bar(
         bgcolor: "#2196F3",
         color: "#FFFFFF",
-        title: page.text(value: "My App")
+        title: text(value: "My App")
       ),
-      floating_action_button: page.fab("+", on_click: ->(_e) { puts "fab" })
+      floating_action_button: fab("+", on_click: ->(_e) { puts "fab" })
     )
   end
 end
@@ -188,45 +189,45 @@ end
 ```ruby
 class TabsApp < Ruflet::App
   def view(page)
-    top_tabs = page.tabs(
+    top_tabs = tabs(
       expand: 1,
       length: 3,
       selected_index: 0,
-      content: page.column(
+      content: column(
         expand: true,
         spacing: 0,
         controls: [
-          page.tab_bar(
+          tab_bar(
             tabs: [
-              page.tab(label: page.text(value: "Home")),
-              page.tab(label: page.text(value: "Play")),
-              page.tab(label: page.text(value: "About"))
+              tab(label: text(value: "Home")),
+              tab(label: text(value: "Play")),
+              tab(label: text(value: "About"))
             ]
           ),
-          page.tab_bar_view(
+          tab_bar_view(
             expand: 1,
             controls: [
-              page.container(expand: true, content: page.text(value: "Home tab")),
-              page.container(expand: true, content: page.text(value: "Play tab")),
-              page.container(expand: true, content: page.text(value: "About tab"))
+              container(expand: true, content: text(value: "Home tab")),
+              container(expand: true, content: text(value: "Play tab")),
+              container(expand: true, content: text(value: "About tab"))
             ]
           )
         ]
       )
     )
 
-    bottom_tabs = page.navigation_bar(
+    bottom_tabs = navigation_bar(
       selected_index: 0,
       destinations: [
-        page.navigation_bar_destination(icon: page.icon(icon: 0xe88a), label: "Home"),
-        page.navigation_bar_destination(icon: page.icon(icon: 0xea28), label: "Play"),
-        page.navigation_bar_destination(icon: page.icon(icon: 0xe8b8), label: "Settings")
+        navigation_bar_destination(icon: icon(icon: 0xe88a), label: "Home"),
+        navigation_bar_destination(icon: icon(icon: 0xea28), label: "Play"),
+        navigation_bar_destination(icon: icon(icon: 0xe8b8), label: "Settings")
       ]
     )
 
     page.add(
       top_tabs,
-      appbar: page.app_bar(title: page.text(value: "Tabs Demo")),
+      appbar: app_bar(title: text(value: "Tabs Demo")),
       navigation_bar: bottom_tabs
     )
   end

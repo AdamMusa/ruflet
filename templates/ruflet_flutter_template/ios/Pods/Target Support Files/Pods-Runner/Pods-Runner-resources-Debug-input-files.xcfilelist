@@ -1,0 +1,26 @@
+${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources.sh
+${PODS_CONFIGURATION_BUILD_DIR}/DKImagePickerController/DKImagePickerController.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/DKPhotoGallery/DKPhotoGallery.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/Google-Mobile-Ads-SDK/GoogleMobileAdsResources.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/GoogleUserMessagingPlatform/UserMessagingPlatformResources.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/SDWebImage/SDWebImage.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/SwiftyGif/SwiftyGif.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/battery_plus/battery_plus_privacy.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/camera_avfoundation/camera_avfoundation_privacy.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/connectivity_plus/connectivity_plus_privacy.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/device_info_plus/device_info_plus_privacy.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/file_picker/file_picker_ios_privacy.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/flutter_native_splash/flutter_native_splash_privacy.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/flutter_secure_storage_darwin/flutter_secure_storage.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/geolocator_apple/geolocator_apple_privacy.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/google_mobile_ads/google_mobile_ads.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/package_info_plus/package_info_plus_privacy.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/permission_handler_apple/permission_handler_apple_privacy.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/record_ios/record_ios_privacy.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/screen_brightness_ios/screen_brightness_ios_privacy.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/sensors_plus/sensors_plus_privacy.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/share_plus/share_plus_privacy.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/shared_preferences_foundation/shared_preferences_foundation_privacy.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/url_launcher_ios/url_launcher_ios_privacy.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/wakelock_plus/wakelock_plus_privacy.bundle
+${PODS_CONFIGURATION_BUILD_DIR}/webview_flutter_wkwebview/webview_flutter_wkwebview_privacy.bundle

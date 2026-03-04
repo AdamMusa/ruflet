@@ -1,0 +1,6 @@
+framework module ruby_runtime {
+  umbrella header "ruby_runtime-umbrella.h"
+
+  export *
+  module * { export * }
+}

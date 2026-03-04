@@ -1,0 +1,45 @@
+{
+  "name": "rive_native",
+  "version": "0.0.1",
+  "summary": "Rive Flutter's native macOS plugin",
+  "description": "Rive Flutter's native macOS plugin",
+  "homepage": "https://rive.app",
+  "license": {
+    "file": "../LICENSE"
+  },
+  "authors": {
+    "Rive": "support@rive.app"
+  },
+  "source": {
+    "path": "."
+  },
+  "source_files": "rive_native/Sources/rive_native/**/*.{h,mm,swift}",
+  "public_header_files": "rive_native/Sources/rive_native/include/**/*.h",
+  "dependencies": {
+    "FlutterMacOS": []
+  },
+  "platforms": {
+    "osx": "10.11"
+  },
+  "pod_target_xcconfig": {
+    "USER_HEADER_SEARCH_PATHS": "\"$(PODS_TARGET_SRCROOT)/../native/include\"",
+    "LIBRARY_SEARCH_PATHS": "\"$(PODS_TARGET_SRCROOT)/../native/build/macosx/bin/release\"",
+    "OTHER_LDFLAGS": "-Wl,-force_load,$(PODS_TARGET_SRCROOT)/../native/build/macosx/bin/release/librive_native.a -lrive -lrive_pls_renderer -lrive_yoga -lrive_harfbuzz -lrive_sheenbidi -lrive_decoders -llibpng -lzlib -llibjpeg -llibwebp -lrive_scripting_workspace -lluau_vm -lluau_compiler -lluau_analyzer -lstylua_ffi -lminiaudio -lbrotli",
+    "OTHER_CFLAGS": "",
+    "CLANG_CXX_LANGUAGE_STANDARD": "c++17",
+    "CLANG_CXX_LIBRARY": "libc++"
+  },
+  "swift_versions": "5.0",
+  "script_phases": [
+    {
+      "name": "Rive Native Compile",
+      "script": "  #!/bin/sh\n  set -e\n\n  MARKER=\"${PODS_TARGET_SRCROOT}/rive_marker_macos_setup_complete\"\n  DEV_MARKER=\"${PODS_TARGET_SRCROOT}/rive_marker_macos_development\"\n\n\n  if [ -f \"$MARKER\" ] || [ -f \"$DEV_MARKER\" ]; then\n    echo \"[rive_native] Setup already complete. Skipping.\"\n  else\n    echo \"[rive_native] Setup marker not found. Running setup script...\"\n    echo \"[rive_native] If this fails, make sure you have Dart installed and available in your PATH.\"\n    echo \"[rive_native] You can run the setup manually with:\"\n    echo \"  dart run rive_native:setup --verbose --platform macos\"\n\n    # macOS path to Flutter-Generated.xcconfig\n    GENERATED_XCCONFIG=\"${SRCROOT}/../Flutter/ephemeral/Flutter-Generated.xcconfig\"\n    if [ -f \"$GENERATED_XCCONFIG\" ]; then\n      FLUTTER_ROOT=$(grep FLUTTER_ROOT \"$GENERATED_XCCONFIG\" | cut -d '=' -f2 | tr -d '[:space:]')\n    fi\n\n    if [ -n \"$FLUTTER_ROOT\" ] && [ -x \"$FLUTTER_ROOT/bin/dart\" ]; then\n      echo \"[rive_native] Using dart from FLUTTER_ROOT: $FLUTTER_ROOT\"\n      \"$FLUTTER_ROOT/bin/dart\" run rive_native:setup --verbose --platform macos\n    else\n      echo \"[rive_native] FLUTTER_ROOT not set or dart not found in FLUTTER_ROOT. Using system dart...\"\n      dart run rive_native:setup --verbose --platform macos\n    fi\n  fi\n",
+      "execution_position": "before_compile",
+      "output_files": [
+        "${PODS_TARGET_SRCROOT}/rive_marker_macos_setup_complete",
+        "$(PODS_TARGET_SRCROOT)/../native/build/macosx/bin/release/librive_native.a"
+      ]
+    }
+  ],
+  "swift_version": "5.0"
+}

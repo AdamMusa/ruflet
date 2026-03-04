@@ -1,0 +1,34 @@
+{
+  "name": "screen_brightness_ios",
+  "version": "0.1.0",
+  "summary": "The iOS federated plugin implementation of the screen_brightness.",
+  "description": "The iOS federated plugin implementation of the screen_brightness.",
+  "homepage": "https://github.com/aaassseee/screen_brightness",
+  "license": {
+    "file": "../LICENSE"
+  },
+  "authors": {
+    "Jack Liu": "ywp033319@gmail.com"
+  },
+  "source": {
+    "path": "."
+  },
+  "source_files": "screen_brightness_ios/Sources/screen_brightness_ios/**/*.swift",
+  "resource_bundles": {
+    "screen_brightness_ios_privacy": [
+      "screen_brightness_ios/Sources/screen_brightness_ios/PrivacyInfo.xcprivacy"
+    ]
+  },
+  "dependencies": {
+    "Flutter": []
+  },
+  "platforms": {
+    "ios": "9.0"
+  },
+  "pod_target_xcconfig": {
+    "DEFINES_MODULE": "YES",
+    "EXCLUDED_ARCHS[sdk=iphonesimulator*]": "i386"
+  },
+  "swift_versions": "5.0",
+  "swift_version": "5.0"
+}

@@ -3,7 +3,6 @@
 require_relative "event"
 require "ruflet_protocol"
 require_relative "control"
-require_relative "ui/control_methods"
 require_relative "ui/widget_builder"
 require_relative "icons/material_icon_lookup"
 require_relative "icons/cupertino_icon_lookup"
@@ -12,11 +11,21 @@ require "cgi"
 
 module Ruflet
   class Page
-    include UI::ControlMethods
-
     PAGE_PROP_KEYS = %w[route title vertical_alignment horizontal_alignment].freeze
     DIALOG_PROP_KEYS = %w[dialog snack_bar bottom_sheet].freeze
     BUTTON_TEXT_TYPES = %w[button elevatedbutton textbutton filledbutton].freeze
+    DEPRECATED_PAGE_WIDGET_METHODS = %i[
+      control widget view column center row stack container gesture_detector gesturedetector draggable
+      drag_target dragtarget text button elevated_button elevatedbutton text_button textbutton filled_button
+      filledbutton icon_button iconbutton text_field textfield checkbox radio radio_group radiogroup
+      alert_dialog alertdialog markdown icon image app_bar appbar floating_action_button snack_bar snackbar
+      bottom_sheet bottomsheet tabs tab tab_bar tabbar tab_bar_view tabbarview navigation_bar navigationbar
+      navigation_bar_destination navigationbardestination fab cupertino_button
+      cupertinobutton cupertino_filled_button cupertinofilledbutton cupertino_text_field cupertinotextfield
+      cupertino_switch cupertinoswitch cupertino_slider cupertinoslider cupertino_alert_dialog
+      cupertinoalertdialog cupertino_action_sheet cupertinoactionsheet cupertino_dialog_action
+      cupertinodialogaction cupertino_navigation_bar cupertinonavigationbar
+    ].freeze
 
     attr_reader :session_id, :client_details, :views
 
@@ -149,20 +158,8 @@ module Ruflet
       add(*builder.children)
     end
 
-    def appbar(**props, &block)
-      return @view_props["appbar"] if props.empty? && !block
-
-      WidgetBuilder.new.appbar(**props, &block)
-    end
-
     def appbar=(value)
       @view_props["appbar"] = value
-    end
-
-    def floating_action_button(**props, &block)
-      return @view_props["floating_action_button"] if props.empty? && !block
-
-      WidgetBuilder.new.floating_action_button(**props, &block)
     end
 
     def floating_action_button=(value)
@@ -176,38 +173,18 @@ module Ruflet
       refresh_dialogs_container!
     end
 
-    def snack_bar(**props, &block)
-      return @snack_bar if props.empty? && !block
-
-      super
-    end
-
     def snack_bar=(value)
       @snack_bar = value
       refresh_dialogs_container!
-    end
-
-    def snackbar(**props, &block)
-      snack_bar(**props, &block)
     end
 
     def snackbar=(value)
       self.snack_bar = value
     end
 
-    def bottom_sheet(**props, &block)
-      return @bottom_sheet if props.empty? && !block
-
-      super
-    end
-
     def bottom_sheet=(value)
       @bottom_sheet = value
       refresh_dialogs_container!
-    end
-
-    def bottomsheet(**props, &block)
-      bottom_sheet(**props, &block)
     end
 
     def bottomsheet=(value)
@@ -302,6 +279,17 @@ module Ruflet
       if name.to_s == "dismiss" && remove_dialog_tracking(control)
         push_dialogs_update!
       end
+    end
+
+    def method_missing(name, *args, &block)
+      return super unless DEPRECATED_PAGE_WIDGET_METHODS.include?(name.to_sym)
+
+      Kernel.warn("[DEPRECATION] `page.#{name}(...)` is no longer supported.")
+      raise NoMethodError, "Use `#{name}(...)` as a free widget helper, then attach with `page.add(...)`."
+    end
+
+    def respond_to_missing?(name, include_private = false)
+      DEPRECATED_PAGE_WIDGET_METHODS.include?(name.to_sym) || super
     end
 
     private
