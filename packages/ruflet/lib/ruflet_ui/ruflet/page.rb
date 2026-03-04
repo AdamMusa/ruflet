@@ -11,7 +11,7 @@ require "cgi"
 
 module Ruflet
   class Page
-    PAGE_PROP_KEYS = %w[route title vertical_alignment horizontal_alignment].freeze
+    PAGE_PROP_KEYS = %w[route title vertical_alignment horizontal_alignment scroll].freeze
     DIALOG_PROP_KEYS = %w[dialog snack_bar bottom_sheet].freeze
     BUTTON_TEXT_TYPES = %w[button elevatedbutton textbutton filledbutton].freeze
     DEPRECATED_PAGE_WIDGET_METHODS = %i[
@@ -48,12 +48,18 @@ module Ruflet
         id: "_overlay",
         controls: []
       )
+      @services_container = Ruflet::Control.new(
+        type: "service_registry",
+        id: "_services",
+        "_services": []
+      )
       @dialogs_container = Ruflet::Control.new(
         type: "dialogs",
         id: "_dialogs",
         controls: []
       )
       refresh_overlay_container!
+      refresh_services_container!
       refresh_dialogs_container!
     end
 
@@ -132,6 +138,24 @@ module Ruflet
       self
     end
 
+    def services
+      @services_container.props["_services"] ||= []
+    end
+
+    def services=(value)
+      @services_container.props["_services"] = Array(value).compact
+      refresh_services_container!
+      push_services_update!
+      self
+    end
+
+    def add_service(*value)
+      @services_container.props["_services"] = services + value.flatten.compact
+      refresh_services_container!
+      push_services_update!
+      self
+    end
+
     def go(route, **query_params)
       @page_props["route"] = build_route(route, query_params)
       dispatch_page_event(name: "route_change", data: @page_props["route"])
@@ -202,6 +226,43 @@ module Ruflet
       send_view_patch unless @dialogs_container.wire_id
       push_dialogs_update!
       self
+    end
+
+    def invoke(control_or_id, method_name, args: nil, timeout: 10)
+      control = resolve_control(control_or_id)
+      return nil unless control
+
+      call_id = "call_#{Ruflet::Control.generate_id}"
+      send_message(Protocol::ACTIONS[:invoke_control_method], {
+        "control_id" => control.wire_id,
+        "call_id" => call_id,
+        "name" => method_name.to_s,
+        "args" => args,
+        "timeout" => timeout
+      })
+
+      call_id
+    end
+
+    def launch_url(url, mode: "external_application", web_view_configuration: nil, browser_configuration: nil, web_only_window_name: nil, timeout: 10)
+      launcher = ensure_url_launcher_service
+      invoke(
+        launcher,
+        "launch_url",
+        args: {
+          "url" => url,
+          "mode" => mode,
+          "web_view_configuration" => web_view_configuration,
+          "browser_configuration" => browser_configuration,
+          "web_only_window_name" => web_only_window_name
+        }.compact,
+        timeout: timeout
+      )
+    end
+
+    def can_launch_url(url, timeout: 10)
+      launcher = ensure_url_launcher_service
+      invoke(launcher, "can_launch_url", args: { "url" => url }, timeout: timeout)
     end
 
     def pop_dialog
@@ -282,14 +343,42 @@ module Ruflet
     end
 
     def method_missing(name, *args, &block)
-      return super unless DEPRECATED_PAGE_WIDGET_METHODS.include?(name.to_sym)
+      method_name = name.to_s
+      prop_name = method_name.delete_suffix("=")
 
-      Kernel.warn("[DEPRECATION] `page.#{name}(...)` is no longer supported.")
-      raise NoMethodError, "Use `#{name}(...)` as a free widget helper, then attach with `page.add(...)`."
+      if method_name.end_with?("=")
+        if DEPRECATED_PAGE_WIDGET_METHODS.include?(prop_name.to_sym)
+          Kernel.warn("[DEPRECATION] `page.#{prop_name}(...)` is no longer supported.")
+          raise NoMethodError, "Use `#{prop_name}(...)` as a free widget helper, then attach with `page.add(...)`."
+        end
+        assign_split_prop(prop_name, normalize_value(prop_name, args.first))
+        return args.first
+      end
+
+      if args.empty? && !block
+        return @page_props[method_name] if @page_props.key?(method_name)
+        return @view_props[method_name] if @view_props.key?(method_name)
+        return instance_variable_get("@#{method_name}") if DIALOG_PROP_KEYS.include?(method_name)
+      end
+
+      if DEPRECATED_PAGE_WIDGET_METHODS.include?(name.to_sym)
+        Kernel.warn("[DEPRECATION] `page.#{name}(...)` is no longer supported.")
+        raise NoMethodError, "Use `#{name}(...)` as a free widget helper, then attach with `page.add(...)`."
+      end
+
+      super
     end
 
     def respond_to_missing?(name, include_private = false)
-      DEPRECATED_PAGE_WIDGET_METHODS.include?(name.to_sym) || super
+      method_name = name.to_s
+      prop_name = method_name.delete_suffix("=")
+      DEPRECATED_PAGE_WIDGET_METHODS.include?(name.to_sym) ||
+        DEPRECATED_PAGE_WIDGET_METHODS.include?(prop_name.to_sym) ||
+        method_name.end_with?("=") ||
+        @page_props.key?(method_name) ||
+        @view_props.key?(method_name) ||
+        DIALOG_PROP_KEYS.include?(method_name) ||
+        super
     end
 
     private
@@ -468,6 +557,23 @@ module Ruflet
       @page_props["_overlay"] = @overlay_container
     end
 
+    def refresh_services_container!
+      @page_props["_services"] = @services_container
+    end
+
+    def push_services_update!
+      refresh_control_indexes!
+
+      if @services_container.wire_id
+        send_message(Protocol::ACTIONS[:patch_control], {
+          "id" => @services_container.wire_id,
+          "patch" => [[0], [0, 0, "_services", serialize_patch_value(@services_container.props["_services"])]]
+        })
+      else
+        send_view_patch
+      end
+    end
+
     def push_dialogs_update!
       refresh_control_indexes!
 
@@ -533,6 +639,15 @@ module Ruflet
         codepoint = Ruflet::CupertinoIconLookup.codepoint_for(value)
       end
       codepoint
+    end
+
+    def ensure_url_launcher_service
+      launcher = services.find { |service| service.is_a?(Control) && service.type == "url_launcher" }
+      return launcher if launcher
+
+      launcher = build_widget(:url_launcher)
+      add_service(launcher)
+      launcher
     end
   end
 end

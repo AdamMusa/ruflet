@@ -30,12 +30,6 @@ module Ruflet
         command_debug(argv)
       when "build"
         command_build(argv)
-      when "pack"
-        command_pack(argv)
-      when "publish"
-        command_publish(argv)
-      when "serve"
-        command_serve(argv)
       when "devices"
         command_devices(argv)
       when "emulators"
@@ -62,9 +56,6 @@ module Ruflet
           ruflet run [scriptname|path] [--web|--mobile|--desktop]
           ruflet debug [scriptname|path]
           ruflet build <apk|ios|aab|web|macos|windows|linux>
-          ruflet pack
-          ruflet publish
-          ruflet serve [--port N] [--root PATH]
           ruflet devices
           ruflet emulators
           ruflet doctor

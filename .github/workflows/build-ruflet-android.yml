@@ -5,7 +5,7 @@ on:
   release:
     types: [published]
   push:
-    branches: [main]
+    branches: [main, prebuild]
     paths:
       - '.github/workflows/build-ruflet-android.yml'
       - 'ruflet_client/**'
@@ -121,6 +121,17 @@ jobs:
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
+          files: ${{ matrix.artifact }}
+
+      - name: Publish prebuild channel release
+        if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'prebuild')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name == 'prebuild' && 'prebuild' || 'prebuild-main' }}
+          name: ${{ github.ref_name == 'prebuild' && 'Ruflet Client Prebuild (prebuild)' || 'Ruflet Client Prebuild (main)' }}
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
           files: ${{ matrix.artifact }}
 
   build-ios-simulator:

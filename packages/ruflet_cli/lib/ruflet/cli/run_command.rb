@@ -43,10 +43,10 @@ module Ruflet
         print_run_banner(target: options[:target], port: selected_port)
         print_mobile_qr_hint(port: selected_port) if options[:target] == "mobile"
 
+        gemfile_path = find_nearest_gemfile(Dir.pwd)
         cmd =
-          if File.file?(File.expand_path("Gemfile", Dir.pwd))
-            env["BUNDLE_PATH"] = "vendor/bundle"
-            env["BUNDLE_DISABLE_SHARED_GEMS"] = "true"
+          if gemfile_path
+            env["BUNDLE_GEMFILE"] = gemfile_path
             bundle_ready = system(env, "bundle", "check", out: File::NULL, err: File::NULL)
             return 1 unless bundle_ready || system(env, "bundle", "install")
 
@@ -105,6 +105,19 @@ module Ruflet
         return candidate if File.file?(candidate)
 
         nil
+      end
+
+      def find_nearest_gemfile(start_dir)
+        current = File.expand_path(start_dir)
+        loop do
+          candidate = File.join(current, "Gemfile")
+          return candidate if File.file?(candidate)
+
+          parent = File.expand_path("..", current)
+          return nil if parent == current
+
+          current = parent
+        end
       end
 
       def print_run_banner(target:, port:)
@@ -317,15 +330,15 @@ module Ruflet
         platform = host_platform_name
         return nil if platform.nil?
 
-        cache_root = File.join(Dir.home, ".ruflet", "client", Ruflet::VERSION, platform)
+        cache_root = File.join(Dir.home, ".ruflet", "client", ruflet_version, platform)
         FileUtils.mkdir_p(cache_root)
 
         wanted_assets = []
-        wanted_assets << "ruflet_client-web.tar.gz" if web
+        wanted_assets << { kind: :web, name: "ruflet_client-web.tar.gz" } if web
         if desktop
           desktop_asset = desktop_asset_name_for(platform)
           return nil if desktop_asset.nil?
-          wanted_assets << desktop_asset
+          wanted_assets << { kind: :desktop, name: desktop_asset, platform: platform }
         end
         return cache_root if wanted_assets.empty? || prebuilt_assets_present?(cache_root, web: web, desktop: desktop)
 
@@ -334,19 +347,22 @@ module Ruflet
 
         assets = release.fetch("assets", [])
         Dir.mktmpdir("ruflet-prebuilt-") do |tmpdir|
-          wanted_assets.each do |asset_name|
+          wanted_assets.each do |wanted|
+            asset_name = wanted.fetch(:name)
             asset = assets.find { |a| a["name"] == asset_name }
+            asset ||= fallback_release_asset(assets, wanted)
             unless asset
               warn "Missing release asset: #{asset_name}"
               return nil
             end
-            archive_path = File.join(tmpdir, asset_name)
+            resolved_name = asset.fetch("name")
+            archive_path = File.join(tmpdir, resolved_name)
             download_file(asset.fetch("browser_download_url"), archive_path)
-            subdir = asset_name.include?("-web.") ? "web" : "desktop"
+            subdir = wanted[:kind] == :web ? "web" : "desktop"
             target = File.join(cache_root, subdir)
             FileUtils.mkdir_p(target)
             unless extract_archive(archive_path, target)
-              warn "Failed to extract asset: #{asset_name}"
+              warn "Failed to extract asset: #{resolved_name}"
               return nil
             end
           end
@@ -400,7 +416,18 @@ module Ruflet
       end
 
       def fetch_release_for_version
-        release_by_tag("v#{Ruflet::VERSION}") || release_latest
+        release_by_tag("v#{ruflet_version}") ||
+          release_by_tag(ruflet_version) ||
+          release_by_tag("prebuild") ||
+          release_by_tag("prebuild-main") ||
+          release_latest
+      end
+
+      def ruflet_version
+        return Ruflet::VERSION if Ruflet.const_defined?(:VERSION)
+
+        require_relative "../version"
+        Ruflet::VERSION
       end
 
       def release_latest
@@ -411,6 +438,33 @@ module Ruflet
         github_get_json("https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/#{tag}")
       rescue StandardError
         nil
+      end
+
+      def fallback_release_asset(assets, wanted)
+        kind = wanted[:kind]
+        platform = wanted[:platform]
+        candidates = assets.select { |asset| release_asset_matches?(asset.fetch("name", ""), kind, platform) }
+        candidates.first
+      end
+
+      def release_asset_matches?(name, kind, platform)
+        n = name.to_s.downcase
+        return false unless n.include?("ruflet_client")
+
+        if kind == :web
+          return n.include?("web") && (n.end_with?(".tar.gz") || n.end_with?(".zip"))
+        end
+
+        case platform
+        when "macos"
+          n.include?("macos") && n.end_with?(".zip")
+        when "linux"
+          n.include?("linux") && (n.end_with?(".tar.gz") || n.end_with?(".tgz"))
+        when "windows"
+          n.include?("windows") && n.end_with?(".zip")
+        else
+          false
+        end
       end
 
       def github_get_json(url)

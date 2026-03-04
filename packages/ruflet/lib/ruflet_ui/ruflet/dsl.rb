@@ -5,6 +5,15 @@ require_relative "ui/control_factory"
 
 module Ruflet
   module DSL
+    DURATION_FACTORS_MS = {
+      days: 86_400_000.0,
+      hours: 3_600_000.0,
+      minutes: 60_000.0,
+      seconds: 1_000.0,
+      milliseconds: 1.0,
+      microseconds: 0.001
+    }.freeze
+
     module_function
 
     def _pending_app
@@ -95,6 +104,7 @@ module Ruflet
     def cupertinodialogaction(**props) = _pending_app.cupertinodialogaction(**props)
     def cupertino_navigation_bar(**props) = _pending_app.cupertino_navigation_bar(**props)
     def cupertinonavigationbar(**props) = _pending_app.cupertinonavigationbar(**props)
+    def duration(**parts) = duration_in_milliseconds(parts)
 
     class App
       include UI::ControlMethods
@@ -146,6 +156,10 @@ module Ruflet
         c
       end
 
+      def duration(**parts)
+        DSL.duration(**parts)
+      end
+
       def run
         app_roots = @roots
         page_props = @page_props.dup
@@ -177,6 +191,27 @@ module Ruflet
         "#{type}_#{@seq}"
       end
 
+      def duration_in_milliseconds(parts)
+        DSL.send(:duration_in_milliseconds, parts)
+      end
+
+    end
+
+    def duration_in_milliseconds(parts)
+      return 0 if parts.nil? || parts.empty?
+
+      DURATION_FACTORS_MS.reduce(0.0) do |sum, (key, factor)|
+        sum + read_duration_part(parts, key) * factor
+      end.round
+    end
+
+    def read_duration_part(parts, key)
+      raw = parts[key] || parts[key.to_s]
+      return 0.0 if raw.nil?
+      return raw.to_f if raw.is_a?(Numeric)
+      return raw.to_f if raw.is_a?(String) && raw.match?(/\A-?\d+(\.\d+)?\z/)
+
+      0.0
     end
   end
 end

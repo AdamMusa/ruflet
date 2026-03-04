@@ -57,12 +57,6 @@ module Ruflet
       gem "ruflet_server", ">= 0.0.3"
     GEMFILE
 
-    BUNDLE_CONFIG_TEMPLATE = <<~YAML
-      ---
-      BUNDLE_PATH: "vendor/bundle"
-      BUNDLE_DISABLE_SHARED_GEMS: "true"
-    YAML
-
     README_TEMPLATE = <<~MD
       # %<app_name>s
 
