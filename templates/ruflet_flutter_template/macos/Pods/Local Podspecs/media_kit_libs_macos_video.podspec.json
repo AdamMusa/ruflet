@@ -1,0 +1,29 @@
+{
+  "name": "media_kit_libs_macos_video",
+  "version": "1.0.4",
+  "summary": "macOS dependency package for package:media_kit",
+  "description": "macOS dependency package for package:media_kit.",
+  "homepage": "https://github.com/media-kit/media-kit.git",
+  "license": {
+    "file": "../LICENSE"
+  },
+  "authors": {
+    "Hitesh Kumar Saini": "saini123hitesh@gmail.com"
+  },
+  "source": {
+    "path": "."
+  },
+  "source_files": "Classes/**/*",
+  "dependencies": {
+    "FlutterMacOS": []
+  },
+  "vendored_frameworks": "Frameworks/*.xcframework",
+  "platforms": {
+    "osx": "10.9"
+  },
+  "pod_target_xcconfig": {
+    "DEFINES_MODULE": "YES"
+  },
+  "swift_versions": "5.0",
+  "swift_version": "5.0"
+}

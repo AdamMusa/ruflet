@@ -28,7 +28,7 @@ class TodoApp < Ruflet::App
     compact = viewport_width <= 600
     content_width = [[viewport_width - 24, 300].max, 720].min
 
-    input = page.text_field(
+    input = text_field(
       value: @draft,
       hint_text: "What needs to be done?",
       width: compact ? (content_width - 24) : [content_width - 110, 560].min,
@@ -41,9 +41,9 @@ class TodoApp < Ruflet::App
 
     task_controls = if filtered.empty?
       [
-        page.container(
+        container(
           padding: 16,
-          content: page.text(value: "No tasks", color: Ruflet::Colors.ON_SURFACE_VARIANT)
+          content: text(value: "No tasks", color: Ruflet::Colors.ON_SURFACE_VARIANT)
         )
       ]
       else
@@ -51,31 +51,31 @@ class TodoApp < Ruflet::App
       end
 
     page.add(
-      page.container(
+      container(
         width: content_width,
         padding: 20,
         bgcolor: Ruflet::Colors.SURFACE_CONTAINER_LOW,
         border_radius: 12,
-        content: page.column(
+        content: column(
           spacing: 14,
           controls: [
-            page.text(value: "Todo List", size: 28, weight: "w600", color: Ruflet::Colors.ON_SURFACE),
+            text(value: "Todo List", size: 28, weight: "w600", color: Ruflet::Colors.ON_SURFACE),
             add_row(page, input, compact),
-            page.container(
+            container(
               bgcolor: Ruflet::Colors.SURFACE_CONTAINER,
               border_radius: 10,
               padding: 8,
-              content: page.column(spacing: 6, controls: task_controls)
+              content: column(spacing: 6, controls: task_controls)
             ),
             footer(page, compact)
           ]
         )
       ),
-      appbar: page.app_bar(
-        title: page.text(value: "Todo List", color: Ruflet::Colors.ON_PRIMARY),
+      appbar: app_bar(
+        title: text(value: "Todo List", color: Ruflet::Colors.ON_PRIMARY),
         bgcolor: Ruflet::Colors.PRIMARY
       ),
-      floating_action_button: page.floating_action_button(
+      floating_action_button: floating_action_button(
         content: "+",
         bgcolor: Ruflet::Colors.PRIMARY,
         forground_color: "white74",
@@ -87,17 +87,17 @@ class TodoApp < Ruflet::App
   def task_row(page, task)
     label = task[:done] ? "✓ #{task[:text]}" : task[:text]
 
-    page.row(
+    row(
       alignment: "spaceBetween",
       vertical_alignment: "center",
       controls: [
-        page.checkbox(
+        checkbox(
           value: task[:done],
           label: label,
           expand: true,
           on_change: ->(e) { toggle_task(task[:id], e.page) }
         ),
-        page.text_button(
+        text_button(
           text: "Delete",
           on_click: ->(e) { delete_task(task[:id], e.page) }
         )
@@ -106,7 +106,7 @@ class TodoApp < Ruflet::App
   end
 
   def add_row(page, input, compact)
-    add_button = page.elevated_button(
+    add_button = elevated_button(
       text: "Add",
       bgcolor: Ruflet::Colors.PRIMARY,
       color: Ruflet::Colors.ON_PRIMARY,
@@ -114,32 +114,32 @@ class TodoApp < Ruflet::App
     )
 
     if compact
-      page.column(spacing: 10, controls: [input, add_button])
+      column(spacing: 10, controls: [input, add_button])
     else
-      page.row(spacing: 10, controls: [input, add_button])
+      row(spacing: 10, controls: [input, add_button])
     end
   end
 
   def footer(page, compact)
     active_count = @tasks.count { |task| !task[:done] }
 
-    counter = page.text(
+    counter = text(
       value: "#{active_count} item#{active_count == 1 ? "" : "s"} left",
       color: Ruflet::Colors.ON_SURFACE_VARIANT
     )
-    filters = page.row(
+    filters = row(
       spacing: 6,
       controls: FILTERS.map { |name| filter_button(page, name) }
     )
-    clear_btn = page.text_button(
+    clear_btn = text_button(
       text: "Clear completed",
       on_click: ->(e) { clear_completed(e.page) }
     )
 
     if compact
-      page.column(spacing: 8, controls: [counter, filters, clear_btn])
+      column(spacing: 8, controls: [counter, filters, clear_btn])
     else
-      page.row(
+      row(
         alignment: "spaceBetween",
         vertical_alignment: "center",
         controls: [counter, filters, clear_btn]
@@ -150,14 +150,14 @@ class TodoApp < Ruflet::App
   def filter_button(page, name)
     selected = (@filter == name)
     if selected
-      page.filled_button(
+      filled_button(
         text: name.capitalize,
         bgcolor: Ruflet::Colors.PRIMARY,
         color: Ruflet::Colors.ON_PRIMARY,
         on_click: ->(e) { set_filter(name, e.page) }
       )
     else
-      page.text_button(
+      text_button(
         text: name.capitalize,
         color: Ruflet::Colors.PRIMARY,
         on_click: ->(e) { set_filter(name, e.page) }

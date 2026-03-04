@@ -1,0 +1,33 @@
+{
+  "name": "flutter_native_splash",
+  "version": "2.4.3",
+  "summary": "Flutter Native Splash",
+  "description": "Customize Flutter's default white native splash screen with background color and splash image. Supports dark mode, full screen, and more.",
+  "homepage": "https://github.com/jonbhanson/flutter_native_splash",
+  "license": {
+    "file": "../LICENSE"
+  },
+  "authors": {
+    "Jon Hanson": "jon@jonhanson.net"
+  },
+  "source": {
+    "path": "."
+  },
+  "source_files": "flutter_native_splash/Sources/flutter_native_splash/**/*.{h,m}",
+  "public_header_files": "flutter_native_splash/Sources/flutter_native_splash/include/**/*.h",
+  "dependencies": {
+    "Flutter": []
+  },
+  "platforms": {
+    "ios": "9.0"
+  },
+  "resource_bundles": {
+    "flutter_native_splash_privacy": [
+      "flutter_native_splash/Sources/flutter_native_splash/PrivacyInfo.xcprivacy"
+    ]
+  },
+  "pod_target_xcconfig": {
+    "DEFINES_MODULE": "YES",
+    "EXCLUDED_ARCHS[sdk=iphonesimulator*]": "i386"
+  }
+}

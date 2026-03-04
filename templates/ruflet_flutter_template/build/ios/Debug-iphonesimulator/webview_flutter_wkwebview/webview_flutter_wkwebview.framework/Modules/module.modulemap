@@ -1,0 +1,11 @@
+framework module webview_flutter_wkwebview {
+  umbrella header "webview_flutter_wkwebview-umbrella.h"
+
+  export *
+  module * { export * }
+}
+
+module webview_flutter_wkwebview.Swift {
+  header "webview_flutter_wkwebview-Swift.h"
+  requires objc
+}

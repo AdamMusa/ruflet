@@ -1,0 +1,6 @@
+framework module window_to_front {
+  umbrella header "window_to_front-umbrella.h"
+
+  export *
+  module * { export * }
+}

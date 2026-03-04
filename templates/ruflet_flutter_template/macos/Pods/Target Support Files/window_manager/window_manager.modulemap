@@ -1,0 +1,6 @@
+framework module window_manager {
+  umbrella header "window_manager-umbrella.h"
+
+  export *
+  module * { export * }
+}

@@ -1,0 +1,506 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime_demo/build/mruby_runtime/intermediates/cxx/Debug/3i3sc69c/obj/x86_64/libmruby_runtime.so"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"target_link_libraries",
+			"target_compile_definitions",
+			"target_include_directories"
+		],
+		"files" : 
+		[
+			"CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 16,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 39,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 33,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 25,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -std=c++17 -fno-limit-debug-info  -fPIC"
+				},
+				{
+					"fragment" : "-std=c++17"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 3,
+					"define" : "MRB_NO_PRESYM=1"
+				},
+				{
+					"define" : "mruby_runtime_EXPORTS"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 4,
+					"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/android/src/main/cpp/../../../../third_party/mruby/include"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/android/src/main/cpp/../../../../third_party/mruby/src"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/android/src/main/cpp/../../../../third_party/mruby/mrbgems/mruby-compiler/core"
+				}
+			],
+			"language" : "CXX",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					1
+				],
+				"standard" : "17"
+			},
+			"sourceIndexes" : 
+			[
+				0
+			],
+			"sysroot" : 
+			{
+				"path" : "/Users/macbookpro/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot"
+			}
+		},
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC"
+				},
+				{
+					"fragment" : "-std=gnu99"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 3,
+					"define" : "MRB_NO_PRESYM=1"
+				},
+				{
+					"define" : "mruby_runtime_EXPORTS"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 4,
+					"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/android/src/main/cpp/../../../../third_party/mruby/include"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/android/src/main/cpp/../../../../third_party/mruby/src"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/android/src/main/cpp/../../../../third_party/mruby/mrbgems/mruby-compiler/core"
+				}
+			],
+			"language" : "C",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					1
+				],
+				"standard" : "99"
+			},
+			"sourceIndexes" : 
+			[
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+				21,
+				22,
+				23,
+				24,
+				25,
+				26,
+				27,
+				28,
+				29,
+				30,
+				31,
+				32,
+				33,
+				34,
+				35,
+				36
+			],
+			"sysroot" : 
+			{
+				"path" : "/Users/macbookpro/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot"
+			}
+		}
+	],
+	"id" : "mruby_runtime::@6890427a1f51a3e7e1df",
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-static-libstdc++ -Wl,--build-id=sha1 -Wl,--no-rosegment -Wl,--no-undefined-version -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-lm",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-llog",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-latomic -lm",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX",
+		"sysroot" : 
+		{
+			"path" : "/Users/macbookpro/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot"
+		}
+	},
+	"name" : "mruby_runtime",
+	"nameOnDisk" : "libmruby_runtime.so",
+	"paths" : 
+	{
+		"build" : ".",
+		"source" : "."
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+				21,
+				22,
+				23,
+				24,
+				25,
+				26,
+				27,
+				28,
+				29,
+				30,
+				31,
+				32,
+				33,
+				34,
+				35,
+				36
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "mruby_runtime_jni.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "mruby_stubs.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/allocf.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/array.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/backtrace.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/cdump.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/class.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/codedump.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/debug.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/dump.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/enum.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/error.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/etc.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/fmt_fp.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/gc.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/hash.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/init.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/kernel.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/load.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/mempool.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/numeric.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/numops.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/object.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/print.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/proc.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/range.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/readfloat.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/readint.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/readnum.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/state.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/string.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/symbol.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/variable.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/version.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/src/vm.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/mrbgems/mruby-compiler/core/codegen.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime/third_party/mruby/mrbgems/mruby-compiler/core/y.tab.c",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "SHARED_LIBRARY"
+}

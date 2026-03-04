@@ -1,0 +1,30 @@
+{
+  "name": "media_kit_libs_ios_video",
+  "version": "1.0.4",
+  "summary": "iOS dependency package for package:media_kit",
+  "description": "iOS dependency package for package:media_kit.",
+  "homepage": "https://github.com/media-kit/media-kit.git",
+  "license": {
+    "file": "../LICENSE"
+  },
+  "authors": {
+    "Hitesh Kumar Saini": "saini123hitesh@gmail.com"
+  },
+  "source": {
+    "path": "."
+  },
+  "source_files": "Classes/**/*",
+  "dependencies": {
+    "Flutter": []
+  },
+  "vendored_frameworks": "Frameworks/*.xcframework",
+  "platforms": {
+    "ios": "9.0"
+  },
+  "pod_target_xcconfig": {
+    "DEFINES_MODULE": "YES",
+    "EXCLUDED_ARCHS[sdk=iphonesimulator*]": "i386"
+  },
+  "swift_versions": "5.0",
+  "swift_version": "5.0"
+}

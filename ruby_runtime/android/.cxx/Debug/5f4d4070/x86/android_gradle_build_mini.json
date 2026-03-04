@@ -1,0 +1,27 @@
+{
+  "buildFiles": [
+    "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/android/src/main/cpp/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/macbookpro/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/android/.cxx/Debug/5f4d4070/x86",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/macbookpro/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/android/.cxx/Debug/5f4d4070/x86",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "ruby_runtime::@6890427a1f51a3e7e1df": {
+      "artifactName": "ruby_runtime",
+      "abi": "x86",
+      "output": "/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/mruby_runtime_demo/build/ruby_runtime/intermediates/cxx/Debug/5f4d4070/obj/x86/libruby_runtime.so",
+      "runtimeFiles": []
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "name": "record_ios",
+  "version": "1.2.0",
+  "summary": "record package for iOS implementation",
+  "description": "A Flutter plugin for voice recording.",
+  "homepage": "https://github.com/llfbandit/record/tree/master/record_ios",
+  "license": {
+    "file": "../LICENSE"
+  },
+  "authors": {
+    "llfbandit": "email@example.com"
+  },
+  "source": {
+    "http": "https://github.com/llfbandit/record/tree/master/record_ios"
+  },
+  "source_files": "record_ios/Sources/record_ios/**/*.swift",
+  "swift_versions": "5.0",
+  "dependencies": {
+    "Flutter": []
+  },
+  "platforms": {
+    "ios": "12.0"
+  },
+  "resource_bundles": {
+    "record_ios_privacy": [
+      "record_ios/Sources/record_ios/Resources/PrivacyInfo.xcprivacy"
+    ]
+  },
+  "pod_target_xcconfig": {
+    "DEFINES_MODULE": "YES",
+    "EXCLUDED_ARCHS[sdk=iphonesimulator*]": "i386"
+  },
+  "swift_version": "5.0"
+}

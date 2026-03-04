@@ -15,7 +15,7 @@ class Slot
     p = { left: left, top: top, width: width, height: height, border_radius: 12, bgcolor: "#cfccd2" }
     p[:border] = { width: 1, color: "#b9b6be" } if @border
     p[:on_click] = on_click if on_click
-    page.container(**p, content: page.text(value: "", size: 1))
+    container(**p, content: text(value: "", size: 1))
   end
 end
 class Card
@@ -58,14 +58,14 @@ class Card
   end
   def view(page)
     return nil unless visible
-    @control ||= page.gesture_detector(
+    @control ||= gesture_detector(
       left: left, top: top, visible: visible,
       on_pan_start: ->(_e) { @game.start_drag(self) },
       on_pan_update: ->(e) { @game.drag(self, e) },
       on_pan_end: ->(_e) { @game.drop(self) },
       on_tap: ->(_e) { @game.card_tap(self) },
       on_double_tap: ->(_e) { @game.card_double_tap(self) },
-      content: page.image(image_url, width: @w, height: @h, fit: "fill")
+      content: image(image_url, width: @w, height: @h, fit: "fill")
     )
   end
 end
@@ -201,14 +201,14 @@ class Solitaire
   end
   def render
     @page.title = "Solitaire"; @page.bgcolor = TABLE_BG; @page.vertical_alignment = "start"; @page.horizontal_alignment = "start"
-    appbar = @page.app_bar(bgcolor: TABLE_BG, color: TITLE, title: @page.text(value: "Ruflet Solitaire", color: TITLE, size: 18))
-    @status_control = @page.text(value: @status, size: 12, color: STATUS)
+    appbar = app_bar(bgcolor: TABLE_BG, color: TITLE, title: text(value: "Ruflet Solitaire", color: TITLE, size: 18))
+    @status_control = text(value: @status, size: 12, color: STATUS)
     controls = [@stock.view(@page, on_click: ->(_e) { stock_click }), @waste.view(@page)]
     controls.concat(@foundation.map { |s| s.view(@page) })
     controls.concat(@tableau.map { |s| s.view(@page) })
     controls.concat(@cards.map { |c| c.view(@page) }.compact)
-    board = @page.container(width: @board_w, height: @board_h, content: @page.stack(controls: controls))
-    body = @page.container(expand: true, bgcolor: TABLE_BG, padding: @outer, content: @page.column(expand: true, spacing: 10, controls: [@status_control, board]))
+    board = container(width: @board_w, height: @board_h, content: stack(controls: controls))
+    body = container(expand: true, bgcolor: TABLE_BG, padding: @outer, content: column(expand: true, spacing: 10, controls: [@status_control, board]))
     @page.add(body, appbar: appbar)
   end
   def stock_click

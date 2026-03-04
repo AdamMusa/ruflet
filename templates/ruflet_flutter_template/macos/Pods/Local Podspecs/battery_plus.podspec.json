@@ -1,0 +1,33 @@
+{
+  "name": "battery_plus",
+  "version": "0.0.1",
+  "summary": "Flutter Battery Plus",
+  "description": "A Flutter plugin for accessing information about the battery state(full, charging, discharging).",
+  "homepage": "https://github.com/fluttercommunity/plus_plugins/tree/main/packages/battery_plus",
+  "license": {
+    "file": "../LICENSE"
+  },
+  "authors": {
+    "Flutter Community": "authors@fluttercommunity.dev"
+  },
+  "source": {
+    "path": "https://github.com/fluttercommunity/plus_plugins/tree/main/packages/battery_plus"
+  },
+  "source_files": "battery_plus/Sources/battery_plus/**/*.swift",
+  "dependencies": {
+    "FlutterMacOS": []
+  },
+  "platforms": {
+    "osx": "10.14"
+  },
+  "pod_target_xcconfig": {
+    "DEFINES_MODULE": "YES"
+  },
+  "swift_versions": "5.0",
+  "resource_bundles": {
+    "battery_plus_privacy": [
+      "battery_plus/Sources/battery_plus/PrivacyInfo.xcprivacy"
+    ]
+  },
+  "swift_version": "5.0"
+}

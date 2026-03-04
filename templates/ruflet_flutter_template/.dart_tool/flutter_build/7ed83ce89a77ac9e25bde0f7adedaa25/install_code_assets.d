@@ -1,0 +1,1 @@
+ /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/templates/ruflet_flutter_template/.dart_tool/flutter_build/7ed83ce89a77ac9e25bde0f7adedaa25/native_assets.json:  /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/templates/ruflet_flutter_template/.dart_tool/hooks_runner/shared/objective_c/build/84fd4fa0ea/objective_c.dylib

@@ -13,28 +13,30 @@ module Ruflet
 
         def view(page)
           page.title = "Counter Demo"
-          count_text = page.text(value: @count.to_s, size: 40)
+          page.vertical_alignment = Ruflet::MainAxisAlignment::CENTER
+          page.horizontal_alignment = Ruflet::CrossAxisAlignment::CENTER
+          count_text = text(value: @count.to_s, size: 40)
 
           page.add(
-            page.container(
+            container(
               expand: true,
               padding: 24,
-              content: page.column(
+              content: column(
                 expand: true,
                 alignment: Ruflet::MainAxisAlignment::CENTER,
                 horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
                 spacing: 12,
                 controls: [
-                  page.text(value: "You have pushed the button this many times:"),
+                  text(value: "You have pushed the button this many times:"),
                   count_text
                 ]
               )
             ),
-            appbar: page.app_bar(
-              title: page.text(value: "Counter Demo")
+            appbar: app_bar(
+              title: text(value: "Counter Demo")
             ),
-            floating_action_button: page.fab(
-              page.icon(icon: Ruflet::MaterialIcons::ADD),
+            floating_action_button: fab(
+              icon(icon: Ruflet::MaterialIcons::ADD),
               on_click: ->(_e) {
                 @count += 1
                 page.update(count_text, value: @count.to_s)
@@ -45,13 +47,13 @@ module Ruflet
       end
 
       MainApp.new.run
+
     RUBY
 
     GEMFILE_TEMPLATE = <<~GEMFILE
       source "https://rubygems.org"
 
       gem "ruflet", ">= 0.0.3"
-      gem "ruflet_protocol", ">= 0.0.3"
       gem "ruflet_server", ">= 0.0.3"
     GEMFILE
 
@@ -75,17 +77,7 @@ module Ruflet
       ## Run
 
       ```bash
-      bundle exec ruflet run main.rb
-      ```
-
-      ## Client Template
-
-      `ruflet_client` template is generated inside this app.
-
-      ```bash
-      cd ruflet_client
-      flutter pub get
-      flutter run
+      bundle exec ruflet run main
       ```
 
       ## Build

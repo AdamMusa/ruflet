@@ -1,0 +1,36 @@
+{
+  "name": "sensors_plus",
+  "version": "0.0.1",
+  "summary": "Flutter Sensors",
+  "description": "Flutter plugin to access the accelerometer, gyroscope, magnetometer and barometer sensors.",
+  "homepage": "https://github.com/fluttercommunity/plus_plugins",
+  "license": {
+    "type": "BSD",
+    "file": "../LICENSE"
+  },
+  "authors": {
+    "Flutter Community Team": "authors@fluttercommunity.dev"
+  },
+  "source": {
+    "http": "https://github.com/fluttercommunity/plus_plugins/tree/main/packages/sensors_plus"
+  },
+  "documentation_url": "https://pub.dev/packages/sensors_plus",
+  "source_files": "sensors_plus/Sources/sensors_plus/**/*.swift",
+  "dependencies": {
+    "Flutter": []
+  },
+  "platforms": {
+    "ios": "12.0"
+  },
+  "pod_target_xcconfig": {
+    "DEFINES_MODULE": "YES",
+    "EXCLUDED_ARCHS[sdk=iphonesimulator*]": "i386"
+  },
+  "swift_versions": "5.0",
+  "resource_bundles": {
+    "sensors_plus_privacy": [
+      "sensors_plus/Sources/sensors_plus/PrivacyInfo.xcprivacy"
+    ]
+  },
+  "swift_version": "5.0"
+}

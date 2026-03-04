@@ -1,0 +1,3 @@
+/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/android/.cxx/Debug/5f4d4070/x86_64/CMakeFiles/ruby_runtime.dir
+/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/android/.cxx/Debug/5f4d4070/x86_64/CMakeFiles/edit_cache.dir
+/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/android/.cxx/Debug/5f4d4070/x86_64/CMakeFiles/rebuild_cache.dir

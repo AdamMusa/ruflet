@@ -1,0 +1,32 @@
+{
+  "name": "package_info_plus",
+  "version": "0.0.1",
+  "summary": "Flutter Package Info",
+  "description": "A macOS implementation of the package_info_plus plugin.",
+  "homepage": "https://github.com/fluttercommunity/package_info_plus",
+  "license": {
+    "file": "../LICENSE"
+  },
+  "authors": {
+    "Flutter Community": "authors@fluttercommunity.dev"
+  },
+  "source": {
+    "path": "."
+  },
+  "source_files": "package_info_plus/Sources/package_info_plus/**/*.{h,m}",
+  "public_header_files": "package_info_plus/Sources/package_info_plus/include/**/*.h",
+  "dependencies": {
+    "FlutterMacOS": []
+  },
+  "platforms": {
+    "osx": "10.14"
+  },
+  "pod_target_xcconfig": {
+    "DEFINES_MODULE": "YES"
+  },
+  "resource_bundles": {
+    "package_info_plus_privacy": [
+      "package_info_plus/Sources/package_info_plus/PrivacyInfo.xcprivacy"
+    ]
+  }
+}

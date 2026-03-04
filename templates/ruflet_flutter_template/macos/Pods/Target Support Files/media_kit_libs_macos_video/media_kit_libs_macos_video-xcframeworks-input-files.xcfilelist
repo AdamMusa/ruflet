@@ -1,0 +1,19 @@
+${PODS_ROOT}/Target Support Files/media_kit_libs_macos_video/media_kit_libs_macos_video-xcframeworks.sh
+${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/Ass.xcframework
+${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/Avcodec.xcframework
+${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/Avfilter.xcframework
+${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/Avformat.xcframework
+${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/Avutil.xcframework
+${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/Dav1d.xcframework
+${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/Freetype.xcframework
+${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/Fribidi.xcframework
+${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/Harfbuzz.xcframework
+${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/Mbedcrypto.xcframework
+${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/Mbedtls.xcframework
+${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/Mbedx509.xcframework
+${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/Mpv.xcframework
+${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/Png16.xcframework
+${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/Swresample.xcframework
+${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/Swscale.xcframework
+${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/Uchardet.xcframework
+${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/Xml2.xcframework

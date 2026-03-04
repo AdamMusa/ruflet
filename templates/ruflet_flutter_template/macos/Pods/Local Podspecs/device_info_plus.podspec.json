@@ -1,0 +1,29 @@
+{
+  "name": "device_info_plus",
+  "version": "0.0.1",
+  "summary": "No-op implementation of the macos device_info_plus to avoid build issues on macos",
+  "description": "No-op implementation of the device_info_plus plugin to avoid build issues on macos.\nhttps://github.com/flutter/flutter/issues/46618",
+  "homepage": "https://github.com/fluttercommunity/plus_plugins/tree/master/packages/device_info_plus",
+  "license": {
+    "file": "../LICENSE"
+  },
+  "authors": {
+    "Flutter Community": "authors@fluttercommunity.dev"
+  },
+  "source": {
+    "path": "."
+  },
+  "source_files": "device_info_plus/Sources/device_info_plus/**/*.swift",
+  "public_header_files": "device_info_plus/Sources/device_info_plus/**/*.h",
+  "dependencies": {
+    "FlutterMacOS": []
+  },
+  "platforms": {
+    "osx": "10.14"
+  },
+  "resource_bundles": {
+    "device_info_plus_privacy": [
+      "device_info_plus/Sources/device_info_plus/PrivacyInfo.xcprivacy"
+    ]
+  }
+}

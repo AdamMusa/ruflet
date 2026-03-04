@@ -1,0 +1,11 @@
+framework module media_kit_video {
+  umbrella header "media_kit_video-umbrella.h"
+
+  export *
+  module * { export * }
+}
+
+module media_kit_video.Swift {
+  header "media_kit_video-Swift.h"
+  requires objc
+}

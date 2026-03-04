@@ -1,0 +1,22 @@
+PODS:
+  - Flutter (1.0.0)
+  - ruby_runtime (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - Flutter (from `Flutter`)
+  - ruby_runtime (from `.symlinks/plugins/ruby_runtime/ios`)
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: Flutter
+  ruby_runtime:
+    :path: ".symlinks/plugins/ruby_runtime/ios"
+
+SPEC CHECKSUMS:
+  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  ruby_runtime: 7b47d5b8bf73a59f8587ccfdb9496ba66c66f58d
+
+PODFILE CHECKSUM: 3c63482e143d1b91d2d2560aee9fb04ecc74ac7e
+
+COCOAPODS: 1.16.2

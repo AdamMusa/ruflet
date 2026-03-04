@@ -1,0 +1,33 @@
+{
+  "name": "wakelock_plus",
+  "version": "0.0.1",
+  "summary": "Plugin that allows you to keep the device screen awake, i.e. prevent the screen from sleeping on Android, iOS, macOS, Windows, Linux, and web.",
+  "description": "Plugin that allows you to keep the device screen awake, i.e. prevent the screen from sleeping on Android, iOS, macOS, Windows, Linux, and web.",
+  "homepage": "https://github.com/fluttercommunity/wakelock_plus",
+  "license": {
+    "file": "../LICENSE"
+  },
+  "authors": {
+    "Flutter Team": "flutter-dev@googlegroups.com"
+  },
+  "source": {
+    "path": "."
+  },
+  "source_files": "wakelock_plus/Sources/wakelock_plus/**/*.{h,m}",
+  "public_header_files": "wakelock_plus/Sources/wakelock_plus/include/**/*.h",
+  "dependencies": {
+    "Flutter": []
+  },
+  "platforms": {
+    "ios": "12.0"
+  },
+  "pod_target_xcconfig": {
+    "DEFINES_MODULE": "YES",
+    "EXCLUDED_ARCHS[sdk=iphonesimulator*]": "i386"
+  },
+  "resource_bundles": {
+    "wakelock_plus_privacy": [
+      "wakelock_plus/Sources/wakelock_plus/Resources/PrivacyInfo.xcprivacy"
+    ]
+  }
+}

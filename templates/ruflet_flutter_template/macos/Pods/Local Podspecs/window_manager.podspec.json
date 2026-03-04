@@ -1,0 +1,28 @@
+{
+  "name": "window_manager",
+  "version": "0.5.0",
+  "summary": "A new Flutter plugin project.",
+  "description": "A new Flutter plugin project.",
+  "homepage": "https://leanflutter.dev",
+  "license": {
+    "file": "../LICENSE"
+  },
+  "authors": {
+    "LiJianying": "lijy91@foxmail.com"
+  },
+  "source": {
+    "path": "."
+  },
+  "source_files": "window_manager/Sources/window_manager/**/*",
+  "dependencies": {
+    "FlutterMacOS": []
+  },
+  "platforms": {
+    "osx": "10.11"
+  },
+  "pod_target_xcconfig": {
+    "DEFINES_MODULE": "YES"
+  },
+  "swift_versions": "5.0",
+  "swift_version": "5.0"
+}

@@ -1,0 +1,33 @@
+{
+  "name": "record_macos",
+  "version": "1.2.0",
+  "summary": "record package for macOS implementation",
+  "description": "A Flutter plugin for voice recording.",
+  "homepage": "https://github.com/llfbandit/record/tree/master/record_macos",
+  "license": {
+    "file": "../LICENSE"
+  },
+  "authors": {
+    "llfbandit": "email@example.com"
+  },
+  "source": {
+    "http": "https://github.com/llfbandit/record/tree/master/record_macos"
+  },
+  "source_files": "record_macos/Sources/record_macos/**/*.swift",
+  "swift_versions": "5.0",
+  "dependencies": {
+    "FlutterMacOS": []
+  },
+  "platforms": {
+    "osx": "10.15"
+  },
+  "resource_bundles": {
+    "record_macos_privacy": [
+      "record_macos/Sources/record_macos/Resources/PrivacyInfo.xcprivacy"
+    ]
+  },
+  "pod_target_xcconfig": {
+    "DEFINES_MODULE": "YES"
+  },
+  "swift_version": "5.0"
+}

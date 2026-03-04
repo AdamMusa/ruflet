@@ -1,0 +1,11 @@
+framework module screen_brightness_ios {
+  umbrella header "screen_brightness_ios-umbrella.h"
+
+  export *
+  module * { export * }
+}
+
+module screen_brightness_ios.Swift {
+  header "screen_brightness_ios-Swift.h"
+  requires objc
+}

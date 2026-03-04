@@ -5,7 +5,7 @@ class MyApp < Ruflet::App
     page.vertical_alignment = Ruflet::MainAxisAlignment::CENTER
     page.horizontal_alignment = Ruflet::CrossAxisAlignment::CENTER
     page.title = "Hello"
-    page.add(page.text(value: "Hello Ruflet"))
+    page.add(text(value: "Hello Ruflet"))
   end
 end
 

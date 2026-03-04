@@ -1,0 +1,28 @@
+{
+  "name": "screen_brightness_macos",
+  "version": "0.1.0",
+  "summary": "The macOS federated plugin implementation of the screen_brightness.",
+  "description": "The macOS federated plugin implementation of the screen_brightness.",
+  "homepage": "https://github.com/aaassseee/screen_brightness",
+  "license": {
+    "file": "../LICENSE"
+  },
+  "authors": {
+    "Jack Liu": "ywp033319@gmail.com"
+  },
+  "source": {
+    "path": "."
+  },
+  "source_files": "Classes/**/*",
+  "dependencies": {
+    "FlutterMacOS": []
+  },
+  "platforms": {
+    "osx": "10.11"
+  },
+  "pod_target_xcconfig": {
+    "DEFINES_MODULE": "YES"
+  },
+  "swift_versions": "5.0",
+  "swift_version": "5.0"
+}

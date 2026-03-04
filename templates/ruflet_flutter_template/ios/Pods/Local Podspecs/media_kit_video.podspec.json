@@ -1,0 +1,37 @@
+{
+  "name": "media_kit_video",
+  "version": "0.0.1",
+  "summary": "Native implementation for video playback in package:media_kit",
+  "description": "Native implementation for video playback in package:media_kit.",
+  "homepage": "https://github.com/media-kit/media-kit.git",
+  "license": {
+    "file": "../LICENSE"
+  },
+  "authors": {
+    "Hitesh Kumar Saini": "saini123hitesh@gmail.com"
+  },
+  "source": {
+    "path": "."
+  },
+  "platforms": {
+    "ios": "9.0"
+  },
+  "swift_versions": "5.0",
+  "dependencies": {
+    "Flutter": []
+  },
+  "source_files": [
+    "Classes/plugin/**/*.swift",
+    "Headers/**/*.h"
+  ],
+  "pod_target_xcconfig": {
+    "DEFINES_MODULE": "YES",
+    "GCC_WARN_INHIBIT_ALL_WARNINGS": "YES",
+    "GCC_PREPROCESSOR_DEFINITIONS": "\"$(inherited)\" GL_SILENCE_DEPRECATION COREVIDEO_SILENCE_GL_DEPRECATION",
+    "FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]": "\"$(inherited)\" \"$(PROJECT_DIR)/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/.symlinks/mpv/ios\"",
+    "FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]": "\"$(inherited)\" \"$(PROJECT_DIR)/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/.symlinks/mpv/ios-simulator\"",
+    "OTHER_LDFLAGS": "\"$(inherited)\" -framework Mpv",
+    "EXCLUDED_ARCHS[sdk=iphonesimulator*]": "i386"
+  },
+  "swift_version": "5.0"
+}
