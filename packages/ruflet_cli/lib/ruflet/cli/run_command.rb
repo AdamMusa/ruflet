@@ -346,6 +346,7 @@ module Ruflet
         return nil unless release
 
         assets = release.fetch("assets", [])
+        asset_names = assets.map { |a| a["name"].to_s }
         Dir.mktmpdir("ruflet-prebuilt-") do |tmpdir|
           wanted_assets.each do |wanted|
             asset_name = wanted.fetch(:name)
@@ -353,9 +354,11 @@ module Ruflet
             asset ||= fallback_release_asset(assets, wanted)
             unless asset
               warn "Missing release asset: #{asset_name}"
+              warn "Available assets: #{asset_names.join(', ')}" unless asset_names.empty?
               return nil
             end
             resolved_name = asset.fetch("name")
+            puts "Downloading prebuilt client asset: #{resolved_name}"
             archive_path = File.join(tmpdir, resolved_name)
             download_file(asset.fetch("browser_download_url"), archive_path)
             subdir = wanted[:kind] == :web ? "web" : "desktop"
