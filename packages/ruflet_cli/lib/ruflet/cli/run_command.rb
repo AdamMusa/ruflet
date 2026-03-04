@@ -30,7 +30,8 @@ module Ruflet
           return 1
         end
 
-        selected_port = find_available_port(8550)
+        selected_port = resolve_backend_port(options[:target])
+        return 1 unless selected_port
         env = {
           "RUFLET_TARGET" => options[:target],
           "RUFLET_SUPPRESS_SERVER_BANNER" => "1",
@@ -120,7 +121,7 @@ module Ruflet
       end
 
       def print_run_banner(target:, port:)
-        if port != 8550
+        if target == "mobile" && port != 8550
           puts "Requested port 8550 is busy; bound to #{port}"
         end
         if target == "desktop"
@@ -549,6 +550,32 @@ module Ruflet
         end
 
         start_port
+      end
+
+      def resolve_backend_port(target)
+        return find_available_port(8550) if target == "mobile"
+
+        return 8550 if port_available?(8550)
+
+        warn "Port 8550 is required for `ruflet run --#{target}`."
+        warn "Stop the process using 8550 and run again."
+        nil
+      end
+
+      def port_available?(port)
+        probe = nil
+        begin
+          begin
+            probe = TCPServer.new("0.0.0.0", port)
+          rescue Errno::EACCES, Errno::EPERM
+            probe = TCPServer.new("127.0.0.1", port)
+          end
+          true
+        rescue Errno::EADDRINUSE
+          false
+        ensure
+          probe&.close
+        end
       end
 
       def best_lan_host
