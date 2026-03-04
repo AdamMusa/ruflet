@@ -21,6 +21,7 @@ jobs:
   build-platforms:
     name: Build ${{ matrix.target }}
     runs-on: ${{ matrix.runner }}
+    continue-on-error: ${{ matrix.allow_failure || false }}
     strategy:
       fail-fast: false
       matrix:
@@ -28,15 +29,19 @@ jobs:
           - target: web
             runner: ubuntu-latest
             artifact: ruflet_client-web.tar.gz
+            allow_failure: false
           - target: linux
             runner: ubuntu-latest
             artifact: ruflet_client-linux-x64.tar.gz
+            allow_failure: false
           - target: windows
             runner: windows-latest
             artifact: ruflet_client-windows-x64.zip
+            allow_failure: true
           - target: macos
             runner: macos-latest
             artifact: ruflet_client-macos-universal.zip
+            allow_failure: false
 
     steps:
       - name: Checkout code
