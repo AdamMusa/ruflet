@@ -23,6 +23,7 @@ class RufletCliNewCommandTest < Minitest::Test
         assert File.exist?(File.join(dir, "demo_app", "main.rb"))
         assert File.exist?(File.join(dir, "demo_app", "Gemfile"))
         assert File.exist?(File.join(dir, "demo_app", "README.md"))
+        refute File.exist?(File.join(dir, "demo_app", ".bundle", "config"))
       ensure
         $stdout = original_stdout
 

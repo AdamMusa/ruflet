@@ -74,6 +74,7 @@ module Ruflet
       def cupertinodialogaction(**props) = control_delegate.cupertinodialogaction(**props)
       def cupertino_navigation_bar(**props) = control_delegate.cupertino_navigation_bar(**props)
       def cupertinonavigationbar(**props) = control_delegate.cupertinonavigationbar(**props)
+      def duration(**parts) = control_delegate.duration(**parts)
 
       private
 
