@@ -46,6 +46,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ruflet_client
+            .github/workflows/build-ruflet-android.yml
 
       - name: Install Linux build deps
         if: matrix.target == 'linux'
@@ -141,6 +145,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ruflet_client
+            .github/workflows/build-ruflet-android.yml
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -184,6 +192,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ruflet_client
+            .github/workflows/build-ruflet-android.yml
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -254,6 +266,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ruflet_client
+            .github/workflows/build-ruflet-android.yml
 
       - name: Set up Java
         uses: actions/setup-java@v4
