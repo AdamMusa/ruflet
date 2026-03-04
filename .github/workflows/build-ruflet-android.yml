@@ -72,42 +72,38 @@ jobs:
         working-directory: ruflet_client
         run: flutter pub get
 
-      - name: Build target
+      - name: Build web
+        if: matrix.target == 'web'
         working-directory: ruflet_client
-        run: |
-          case "${{ matrix.target }}" in
-            web)
-              flutter build web --release
-              ;;
-            linux)
-              flutter build linux --release
-              ;;
-            windows)
-              flutter build windows --release
-              ;;
-            macos)
-              flutter build macos --release
-              ;;
-            *)
-              echo "Unsupported target: ${{ matrix.target }}"
-              exit 1
-              ;;
-          esac
+        run: flutter build web --release
 
-      - name: Package artifact (Unix)
-        if: matrix.target != 'windows'
-        run: |
-          case "${{ matrix.target }}" in
-            web)
-              tar -C ruflet_client/build/web -czf ruflet_client-web.tar.gz .
-              ;;
-            linux)
-              tar -C ruflet_client/build/linux/x64/release/bundle -czf ruflet_client-linux-x64.tar.gz .
-              ;;
-            macos)
-              ditto -c -k --sequesterRsrc --keepParent ruflet_client/build/macos/Build/Products/Release/ruflet_client.app ruflet_client-macos-universal.zip
-              ;;
-          esac
+      - name: Build linux
+        if: matrix.target == 'linux'
+        working-directory: ruflet_client
+        run: flutter build linux --release
+
+      - name: Build windows
+        if: matrix.target == 'windows'
+        working-directory: ruflet_client
+        shell: pwsh
+        run: flutter build windows --release
+
+      - name: Build macos
+        if: matrix.target == 'macos'
+        working-directory: ruflet_client
+        run: flutter build macos --release
+
+      - name: Package web artifact
+        if: matrix.target == 'web'
+        run: tar -C ruflet_client/build/web -czf ruflet_client-web.tar.gz .
+
+      - name: Package linux artifact
+        if: matrix.target == 'linux'
+        run: tar -C ruflet_client/build/linux/x64/release/bundle -czf ruflet_client-linux-x64.tar.gz .
+
+      - name: Package macos artifact
+        if: matrix.target == 'macos'
+        run: ditto -c -k --sequesterRsrc --keepParent ruflet_client/build/macos/Build/Products/Release/ruflet_client.app ruflet_client-macos-universal.zip
 
       - name: Package artifact (Windows)
         if: matrix.target == 'windows'

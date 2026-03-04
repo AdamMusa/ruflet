@@ -6,6 +6,8 @@ require "yaml"
 module Ruflet
   module CLI
     module BuildCommand
+      include FlutterSdk
+
       def command_build(args)
         platform = (args.shift || "").downcase
         if platform.empty?
@@ -26,10 +28,11 @@ module Ruflet
           return 1
         end
 
-        ok = prepare_flutter_client(client_dir)
+        tools = ensure_flutter!("build", client_dir: client_dir)
+        ok = prepare_flutter_client(client_dir, tools: tools)
         return 1 unless ok
 
-        ok = system(*flutter_cmd, *args, chdir: client_dir)
+        ok = system(tools[:env], tools[:flutter], *flutter_cmd, *args, chdir: client_dir)
         ok ? 0 : 1
       end
 
@@ -48,19 +51,19 @@ module Ruflet
         nil
       end
 
-      def prepare_flutter_client(client_dir)
+      def prepare_flutter_client(client_dir, tools:)
         apply_build_config(client_dir)
-        unless system("flutter", "pub", "get", chdir: client_dir)
+        unless system(tools[:env], tools[:flutter], "pub", "get", chdir: client_dir)
           warn "flutter pub get failed"
           return false
         end
 
-        unless system("dart", "run", "flutter_native_splash:create", chdir: client_dir)
+        unless system(tools[:env], tools[:dart], "run", "flutter_native_splash:create", chdir: client_dir)
           warn "flutter_native_splash failed"
           return false
         end
 
-        unless system("dart", "run", "flutter_launcher_icons", chdir: client_dir)
+        unless system(tools[:env], tools[:dart], "run", "flutter_launcher_icons", chdir: client_dir)
           warn "flutter_launcher_icons failed"
           return false
         end
@@ -213,19 +216,19 @@ module Ruflet
       def flutter_build_command(platform)
         case platform
         when "apk", "android"
-          ["flutter", "build", "apk"]
+          ["build", "apk"]
         when "aab", "appbundle"
-          ["flutter", "build", "appbundle"]
+          ["build", "appbundle"]
         when "ios"
-          ["flutter", "build", "ios", "--no-codesign"]
+          ["build", "ios", "--no-codesign"]
         when "web"
-          ["flutter", "build", "web"]
+          ["build", "web"]
         when "macos"
-          ["flutter", "build", "macos"]
+          ["build", "macos"]
         when "windows"
-          ["flutter", "build", "windows"]
+          ["build", "windows"]
         when "linux"
-          ["flutter", "build", "linux"]
+          ["build", "linux"]
         else
           nil
         end

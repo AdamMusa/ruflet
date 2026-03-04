@@ -5,6 +5,8 @@ require "optparse"
 module Ruflet
   module CLI
     module ExtraCommand
+      include FlutterSdk
+
       def command_create(args)
         command_new(args)
       end
@@ -13,23 +15,20 @@ module Ruflet
         verbose = args.delete("--verbose") || args.delete("-v")
         puts "Ruflet doctor"
         puts "  Ruby: #{RUBY_VERSION}"
-        flutter = system("which flutter > /dev/null 2>&1")
-        puts "  Flutter: #{flutter ? 'found' : 'missing'}"
-        if flutter
-          system("flutter", "doctor", *(verbose ? ["-v"] : []))
-          return $?.exitstatus || 0
-        end
-        1
+        tools = ensure_flutter!("doctor")
+        puts "  Flutter: #{tools[:flutter]}"
+        system(tools[:env], tools[:flutter], "doctor", *(verbose ? ["-v"] : []))
+        $?.exitstatus || 1
       end
 
       def command_devices(args)
-        ensure_flutter!("devices")
-        system("flutter", "devices", *args)
+        tools = ensure_flutter!("devices")
+        system(tools[:env], tools[:flutter], "devices", *args)
         $?.exitstatus || 1
       end
 
       def command_emulators(args)
-        ensure_flutter!("emulators")
+        tools = ensure_flutter!("emulators")
         action = nil
         emulator_id = nil
         verbose = false
@@ -48,23 +47,22 @@ module Ruflet
             warn "Missing --emulator for start"
             return 1
           end
-          cmd = ["flutter", "emulators", "--launch", emulator_id]
+          cmd = [tools[:flutter], "emulators", "--launch", emulator_id]
           cmd << "-v" if verbose
-          system(*cmd)
+          system(tools[:env], *cmd)
           $?.exitstatus || 1
         when "create", "delete"
           warn "ruflet emulators --#{action} is not implemented yet. Use your platform tools."
           1
         else
-          cmd = ["flutter", "emulators"]
+          cmd = [tools[:flutter], "emulators"]
           cmd << "-v" if verbose
-          system(*cmd)
+          system(tools[:env], *cmd)
           $?.exitstatus || 1
         end
       end
 
       def command_debug(args)
-        ensure_flutter!("debug")
         options = {
           platform: nil,
           device_id: nil,
@@ -82,7 +80,17 @@ module Ruflet
         parser.parse!(args)
 
         options[:platform] ||= args.shift
-        cmd = ["flutter", "run"]
+        client_dir = detect_client_dir
+        unless client_dir
+          warn "Could not find Flutter client directory."
+          warn "Set RUFLET_CLIENT_DIR or place client at ./ruflet_client"
+          warn "`ruflet debug` requires Flutter client source code."
+          warn "For prebuilt clients, use: `ruflet run --web` or `ruflet run --desktop`."
+          return 1
+        end
+
+        tools = ensure_flutter!("debug", client_dir: client_dir)
+        cmd = [tools[:flutter], "run"]
         cmd << "--release" if options[:release]
         cmd << "-v" if options[:verbose]
         cmd += ["--web-renderer", options[:web_renderer]] if options[:web_renderer]
@@ -100,16 +108,7 @@ module Ruflet
           end
         end
 
-        client_dir = detect_client_dir
-        unless client_dir
-          warn "Could not find Flutter client directory."
-          warn "Set RUFLET_CLIENT_DIR or place client at ./ruflet_client"
-          warn "`ruflet debug` requires Flutter client source code."
-          warn "For prebuilt clients, use: `ruflet run --web` or `ruflet run --desktop`."
-          return 1
-        end
-
-        system(*cmd, chdir: client_dir)
+        system(tools[:env], *cmd, chdir: client_dir)
         $?.exitstatus || 1
       end
 
@@ -128,12 +127,6 @@ module Ruflet
         nil
       end
 
-      def ensure_flutter!(command_name)
-        return if system("which flutter > /dev/null 2>&1")
-
-        warn "Flutter is required for `ruflet #{command_name}`. Install Flutter and ensure it is on PATH."
-        exit 1
-      end
     end
   end
 end

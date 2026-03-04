@@ -5,6 +5,7 @@ require "optparse"
 require_relative "cli/templates"
 require_relative "cli/new_command"
 require_relative "cli/run_command"
+require_relative "cli/flutter_sdk"
 require_relative "cli/build_command"
 require_relative "cli/extra_command"
 
