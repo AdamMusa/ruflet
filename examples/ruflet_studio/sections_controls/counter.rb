@@ -4,19 +4,19 @@ module RufletStudio
   module SectionsControls
     def build_counter(page, status)
       count = 0
-      value = page.text_field(value: count.to_s, text_align: "right", width: 80)
+      value = text_field(value: count.to_s, text_align: "right", width: 80)
 
-      page.row(
+      row(
         spacing: 8,
         alignment: "center",
         controls: [
-          page.icon_button(icon: "remove", on_click: ->(_e) {
+          icon_button(icon: "remove", on_click: ->(_e) {
             count -= 1
             page.update(value, value: count.to_s)
             page.update(status, value: "Counter: #{count}")
           }),
           value,
-          page.icon_button(icon: "add", on_click: ->(_e) {
+          icon_button(icon: "add", on_click: ->(_e) {
             count += 1
             page.update(value, value: count.to_s)
             page.update(status, value: "Counter: #{count}")

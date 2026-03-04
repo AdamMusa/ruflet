@@ -6,11 +6,11 @@ module RufletStudio
       duration_ms = 0.0
       position_ms = 0.0
 
-      progress = page.control(:progress_bar, value: 0.0)
+      progress = control(:progress_bar, value: 0.0)
 
       audio = page.instance_variable_get(:@audio_service)
       unless audio
-        audio = page.control(
+        audio = control(
           :audio,
           src: "https://github.com/flet-dev/media/raw/refs/heads/main/sounds/sweet-life-luxury-chill-438146.mp3",
           autoplay: false,
@@ -56,10 +56,10 @@ module RufletStudio
         page.invoke(audio, method_name, args: args)
       end
 
-      play_btn = page.button(text: "Play", on_click: ->(_e) { send_audio.call("Play", "play") })
-      pause_btn = page.button(text: "Pause", on_click: ->(_e) { send_audio.call("Pause", "pause") })
-      resume_btn = page.button(text: "Resume", on_click: ->(_e) { send_audio.call("Resume", "resume") })
-      release_btn = page.button(text: "Release", on_click: ->(_e) { send_audio.call("Release", "release") })
+      play_btn = button(text: "Play", on_click: ->(_e) { send_audio.call("Play", "play") })
+      pause_btn = button(text: "Pause", on_click: ->(_e) { send_audio.call("Pause", "pause") })
+      resume_btn = button(text: "Resume", on_click: ->(_e) { send_audio.call("Resume", "resume") })
+      release_btn = button(text: "Release", on_click: ->(_e) { send_audio.call("Release", "release") })
 
       adjust_volume = lambda do |delta|
         next_volume = (audio.props["volume"].to_f + delta).clamp(0.0, 1.0)
@@ -73,12 +73,12 @@ module RufletStudio
         page.update(status, value: "Balance: #{next_balance.round(2)}")
       end
 
-      page.column(
+      column(
         spacing: 8,
         controls: [
           status,
           progress,
-          page.column(
+          column(
             spacing: 8,
             controls: [
               play_btn,
@@ -87,26 +87,26 @@ module RufletStudio
               release_btn
             ]
           ),
-          page.column(
+          column(
             spacing: 8,
             controls: [
-              page.button(text: "Seek 2s", on_click: ->(_e) { send_audio.call("Seek 2s", "seek", args: { position: 2000 }) }),
-              page.button(text: "Get duration", on_click: ->(_e) { send_audio.call("Get duration", "get_duration") }),
-              page.button(text: "Get position", on_click: ->(_e) { send_audio.call("Get position", "get_current_position") })
+              button(text: "Seek 2s", on_click: ->(_e) { send_audio.call("Seek 2s", "seek", args: { position: 2000 }) }),
+              button(text: "Get duration", on_click: ->(_e) { send_audio.call("Get duration", "get_duration") }),
+              button(text: "Get position", on_click: ->(_e) { send_audio.call("Get position", "get_current_position") })
             ]
           ),
-          page.column(
+          column(
             spacing: 8,
             controls: [
-              page.button(text: "Volume -", on_click: ->(_e) { adjust_volume.call(-0.1) }),
-              page.button(text: "Volume +", on_click: ->(_e) { adjust_volume.call(0.1) })
+              button(text: "Volume -", on_click: ->(_e) { adjust_volume.call(-0.1) }),
+              button(text: "Volume +", on_click: ->(_e) { adjust_volume.call(0.1) })
             ]
           ),
-          page.column(
+          column(
             spacing: 8,
             controls: [
-              page.button(text: "Balance L", on_click: ->(_e) { adjust_balance.call(-0.1) }),
-              page.button(text: "Balance R", on_click: ->(_e) { adjust_balance.call(0.1) })
+              button(text: "Balance L", on_click: ->(_e) { adjust_balance.call(-0.1) }),
+              button(text: "Balance R", on_click: ->(_e) { adjust_balance.call(0.1) })
             ]
           ),
         ]

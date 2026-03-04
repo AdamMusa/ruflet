@@ -13,7 +13,7 @@ module RufletStudio
     end
 
     def github_icon_image(page)
-      page.image(
+      image(
         src: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
         width: 18,
         height: 18
@@ -25,7 +25,7 @@ module RufletStudio
       service = @url_launcher_services[page.object_id]
       return service if service
 
-      service = page.url_launcher
+      service = control(:url_launcher)
       page.add_service(service)
       @url_launcher_services[page.object_id] = service
       service
@@ -35,33 +35,21 @@ module RufletStudio
       url = github_url_for(path)
       return unless url
 
-      service = url_launcher_service(page)
-
-      in_app_supported = page.invoke(
-        service,
-        "supports_launch_mode",
-        args: { "mode" => "in_app_web_view" }
-      )
-
-      mode = in_app_supported ? "in_app_web_view" : "external_application"
-
-      page.invoke(
-        service,
-        "launch_url",
-        args: {
-          "url" => url,
-          "mode" => mode,
-          "web_view_configuration" => {
-            "enable_javascript" => true,
-            "enable_dom_storage" => true
-          },
-          "web_only_window_name" => "_blank"
-        }
+      # Ensure service is registered once, then use Page-level helper.
+      url_launcher_service(page)
+      page.launch_url(
+        url,
+        mode: "external_application",
+        web_view_configuration: {
+          "enable_javascript" => true,
+          "enable_dom_storage" => true
+        },
+        web_only_window_name: "_blank"
       )
     end
 
     def github_action(page, path)
-      page.text_button(
+      text_button(
         content: github_icon_image(page),
         on_click: ->(_e) { open_github(page, path) }
       )

@@ -4,20 +4,21 @@ module RufletStudio
   module Views
     def gallery_view(page)
       route = "/gallery"
-      page.view(
+      widget(
+        :view,
         route: route,
         bgcolor: color_bg(page),
         scroll: "auto",
         padding: 8,
-        appbar: page.app_bar(
+        appbar: app_bar(
           bgcolor: color_surface(page),
           color: color_text(page),
-          title: page.text(value: "Gallery", size: 20),
+          title: text(value: "Gallery", size: 20),
           actions: []
         ),
         navigation_bar: nav_bar(page, route),
         controls: [
-          page.column(
+          column(
             spacing: 6,
             controls: gallery_items(page)
           )
@@ -43,11 +44,11 @@ module RufletStudio
     end
 
     def tile(page, icon, title, route)
-      page.control(
+      control(
         :list_tile,
-        leading: page.icon(name: icon, color: color_icon(page)),
-        title: page.text(value: title, color: color_text(page), size: 16),
-        trailing: page.icon(name: "chevron_right", color: color_subtle(page)),
+        leading: icon(name: icon, color: color_icon(page)),
+        title: text(value: title, color: color_text(page), size: 16),
+        trailing: icon(name: "chevron_right", color: color_subtle(page)),
         on_click: ->(_e) { page.go(route) }
       )
     end

@@ -8,29 +8,29 @@ class ImageGalleryApp < Ruflet::App
     page.scroll = "auto"
 
     page.add(
-      page.container(
+      container(
         padding: 16,
-        content: page.column(
+        content: column(
           scroll: "auto",
           spacing: 12,
           controls: [
-            page.text(value: "Vertical List (mix of web + local)", size: 18),
-            page.column(
+            text(value: "Vertical List (mix of web + local)", size: 18),
+            column(
               spacing: 8,
               controls: [
-                page.image(
+                image(
                   src: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800",
                   width: 300,
                   height: 170,
                   fit: "cover"
                 ),
-                page.image(
+                image(
                   src: "assets/splash.png",
                   width: 300,
                   height: 170,
                   fit: "cover"
                 ),
-                page.image(
+                image(
                   src: "assets/icon.png",
                   width: 300,
                   height: 170,
@@ -38,26 +38,26 @@ class ImageGalleryApp < Ruflet::App
                 )
               ]
             ),
-            page.text(value: "Horizontal List (web images)", size: 18),
-            page.container(
+            text(value: "Horizontal List (web images)", size: 18),
+            container(
               height: 150,
-              content: page.row(
+              content: row(
                 spacing: 8,
                 scroll: "auto",
                 controls: [
-                  page.image(
+                  image(
                     src: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400",
                     width: 220,
                     height: 140,
                     fit: "cover"
                   ),
-                  page.image(
+                  image(
                     src: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=400",
                     width: 220,
                     height: 140,
                     fit: "cover"
                   ),
-                  page.image(
+                  image(
                     src: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400",
                     width: 220,
                     height: 140,
@@ -69,8 +69,8 @@ class ImageGalleryApp < Ruflet::App
           ]
         )
       ),
-      appbar: page.app_bar(
-        title: page.text(value: "Image Gallery")
+      appbar: app_bar(
+        title: text(value: "Image Gallery")
       )
     )
   end

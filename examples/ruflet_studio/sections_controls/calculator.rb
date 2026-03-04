@@ -2,112 +2,200 @@
 
 module RufletStudio
   module SectionsControls
+    DIGITS = %w[0 1 2 3 4 5 6 7 8 9].freeze
+
     def build_calculator(page, status)
-      display = page.text(value: "0", color: "#ffffff", size: 20)
-      calc_state = { display: "0", operand1: 0.0, operator: "+", new_operand: true }
-
-      on_button = lambda do |label|
-        if calc_state[:display] == "Error" || label == "AC"
-          calc_state[:display] = "0"
-          calc_state[:operand1] = 0.0
-          calc_state[:operator] = "+"
-          calc_state[:new_operand] = true
-          page.update(display, value: "0")
-          return
-        end
-
-        if label.match?(/^[0-9.]$/)
-          if calc_state[:display] == "0" || calc_state[:new_operand]
-            calc_state[:display] = label
-            calc_state[:new_operand] = false
-          else
-            calc_state[:display] += label
-          end
-          page.update(display, value: calc_state[:display])
-          return
-        end
-
-        if ["+", "-", "*", "/"].include?(label)
-          val = compute(calc_state[:operand1], calc_state[:display], calc_state[:operator])
-          calc_state[:display] = val.to_s
-          calc_state[:operator] = label
-          calc_state[:operand1] = val == "Error" ? 0.0 : val.to_f
-          calc_state[:new_operand] = true
-          page.update(display, value: calc_state[:display])
-          return
-        end
-
-        if label == "="
-          val = compute(calc_state[:operand1], calc_state[:display], calc_state[:operator])
-          calc_state[:display] = val.to_s
-          calc_state[:operand1] = 0.0
-          calc_state[:operator] = "+"
-          calc_state[:new_operand] = true
-          page.update(display, value: calc_state[:display])
-          page.update(status, value: "Calculator result: #{calc_state[:display]}")
-          return
-        end
-
-        if label == "%"
-          calc_state[:display] = (calc_state[:display].to_f / 100).to_s
-          calc_state[:operand1] = 0.0
-          calc_state[:operator] = "+"
-          calc_state[:new_operand] = true
-          page.update(display, value: calc_state[:display])
-        end
-      end
-
-      make_btn = lambda do |label, bgcolor, color, expand|
-        page.button(
-          text: label,
-          expand: expand,
-          bgcolor: bgcolor,
-          color: color,
-          on_click: ->(_e) { on_button.call(label) }
-        )
-      end
-
-      page.container(
-        width: 320,
-        bgcolor: "#000000",
-        border_radius: 20,
-        padding: 16,
-        content: page.column(
-          spacing: 8,
+      container(
+        expand: true,
+        padding: 12,
+        content: column(
+          expand: true,
+          spacing: 12,
           controls: [
-            page.row(controls: [display], alignment: "end"),
-            page.row(controls: [
-              make_btn.call("AC", "#ced4da", "#000000", 1),
-              make_btn.call("+/-", "#ced4da", "#000000", 1),
-              make_btn.call("%", "#ced4da", "#000000", 1),
-              make_btn.call("/", "#f76707", "#ffffff", 1)
-            ]),
-            page.row(controls: [
-              make_btn.call("7", "#495057", "#ffffff", 1),
-              make_btn.call("8", "#495057", "#ffffff", 1),
-              make_btn.call("9", "#495057", "#ffffff", 1),
-              make_btn.call("*", "#f76707", "#ffffff", 1)
-            ]),
-            page.row(controls: [
-              make_btn.call("4", "#495057", "#ffffff", 1),
-              make_btn.call("5", "#495057", "#ffffff", 1),
-              make_btn.call("6", "#495057", "#ffffff", 1),
-              make_btn.call("-", "#f76707", "#ffffff", 1)
-            ]),
-            page.row(controls: [
-              make_btn.call("1", "#495057", "#ffffff", 1),
-              make_btn.call("2", "#495057", "#ffffff", 1),
-              make_btn.call("3", "#495057", "#ffffff", 1),
-              make_btn.call("+", "#f76707", "#ffffff", 1)
-            ]),
-            page.row(controls: [
-              make_btn.call("0", "#495057", "#ffffff", 2),
-              make_btn.call(".", "#495057", "#ffffff", 1),
-              make_btn.call("=", "#f76707", "#ffffff", 1)
-            ])
+            container(height: 24),
+            row(alignment: "end", controls: [calculator_display(status)]),
+            container(expand: true),
+            container(height: 20),
+            calculator_keypad_row(page, status, "BS", "AC", "%", "/"),
+            calculator_keypad_row(page, status, "7", "8", "9", "x"),
+            calculator_keypad_row(page, status, "4", "5", "6", "-"),
+            calculator_keypad_row(page, status, "1", "2", "3", "+"),
+            calculator_keypad_row(page, status, "+/-", "0", ".", "=")
           ]
         )
       )
+    end
+
+    def calculator_state
+      @calculator_state ||= { display: "0", operand: nil, operator: nil, start_new_value: false }
+    end
+
+    def calculator_display(_status)
+      @calculator_display = text(
+        value: calculator_state[:display],
+        text_align: "right",
+        size: 84,
+        color: "#FFFFFF"
+      )
+    end
+
+    def calculator_keypad_row(page, status, *labels)
+      row(
+        alignment: "center",
+        spacing: 10,
+        controls: labels.map do |label|
+          elevated_button(
+            text: label,
+            expand: true,
+            height: 65,
+            color: "#FFFFFF",
+            bgcolor: calculator_key_bg(label),
+            on_click: ->(e) { calculator_handle_input(label, e, page, status) }
+          )
+        end
+      )
+    end
+
+    def calculator_key_bg(label)
+      %w[/ x - + =].include?(label) ? "#FF9F0A" : "#2C2C2E"
+    end
+
+    def calculator_handle_input(label, event, page, status)
+      if DIGITS.include?(label)
+        calculator_on_digit(label)
+      elsif label == "."
+        calculator_on_decimal
+      elsif %w[x / - +].include?(label)
+        calculator_on_operator(label)
+      elsif label == "="
+        calculator_on_equals
+      elsif label == "AC"
+        calculator_reset
+      elsif label == "+/-"
+        calculator_on_toggle_sign
+      elsif label == "%"
+        calculator_on_percent
+      elsif label == "BS"
+        calculator_on_backspace
+      end
+
+      page.update(@calculator_display, value: calculator_state[:display])
+      page.update(status, value: "Calculator result: #{calculator_state[:display]}") if label == "="
+      event
+    end
+
+    def calculator_on_digit(digit)
+      if calculator_state[:start_new_value] || calculator_state[:display] == "Error"
+        calculator_state[:display] = digit
+        calculator_state[:start_new_value] = false
+        return
+      end
+
+      calculator_state[:display] = (calculator_state[:display] == "0" ? digit : "#{calculator_state[:display]}#{digit}")
+    end
+
+    def calculator_on_decimal
+      if calculator_state[:start_new_value] || calculator_state[:display] == "Error"
+        calculator_state[:display] = "0."
+        calculator_state[:start_new_value] = false
+        return
+      end
+
+      calculator_state[:display] += "." unless calculator_state[:display].include?(".")
+    end
+
+    def calculator_on_operator(next_operator)
+      if calculator_state[:operator] && !calculator_state[:start_new_value]
+        calculator_apply_calculation
+        return if calculator_state[:display] == "Error"
+      else
+        calculator_state[:operand] = calculator_to_number(calculator_state[:display])
+      end
+
+      calculator_state[:operator] = next_operator
+      calculator_state[:start_new_value] = true
+    end
+
+    def calculator_on_equals
+      return unless calculator_state[:operator]
+
+      calculator_apply_calculation
+      calculator_state[:operator] = nil if calculator_state[:display] != "Error"
+    end
+
+    def calculator_on_toggle_sign
+      return if calculator_state[:display] == "0" || calculator_state[:display] == "Error"
+
+      calculator_state[:display] = if calculator_state[:display].start_with?("-")
+                                     calculator_state[:display][1..]
+                                   else
+                                     "-#{calculator_state[:display]}"
+                                   end
+    end
+
+    def calculator_on_percent
+      return if calculator_state[:display] == "Error"
+
+      calculator_state[:display] = calculator_format_number(calculator_to_number(calculator_state[:display]) / 100.0)
+      calculator_state[:start_new_value] = true
+    end
+
+    def calculator_on_backspace
+      return if calculator_state[:display] == "Error"
+
+      if calculator_state[:display].length <= 1 || (calculator_state[:display].length == 2 && calculator_state[:display].start_with?("-"))
+        calculator_state[:display] = "0"
+        return
+      end
+
+      calculator_state[:display] = calculator_state[:display][0...-1]
+    end
+
+    def calculator_apply_calculation
+      right = calculator_to_number(calculator_state[:display])
+      result = case calculator_state[:operator]
+               when "+"
+                 calculator_state[:operand] + right
+               when "-"
+                 calculator_state[:operand] - right
+               when "x"
+                 calculator_state[:operand] * right
+               when "/"
+                 return calculator_show_error if right.zero?
+
+                 calculator_state[:operand] / right
+               end
+
+      calculator_state[:display] = calculator_format_number(result)
+      calculator_state[:operand] = calculator_to_number(calculator_state[:display])
+      calculator_state[:start_new_value] = true
+    end
+
+    def calculator_to_number(value)
+      Float(value)
+    rescue StandardError
+      0.0
+    end
+
+    def calculator_format_number(value)
+      number = value.to_f
+      return number.to_i.to_s if number == number.to_i
+
+      number.to_s.sub(/\.?0+\z/, "")
+    end
+
+    def calculator_show_error
+      calculator_state[:display] = "Error"
+      calculator_state[:operator] = nil
+      calculator_state[:operand] = nil
+      calculator_state[:start_new_value] = true
+    end
+
+    def calculator_reset
+      calculator_state[:display] = "0"
+      calculator_state[:operand] = nil
+      calculator_state[:operator] = nil
+      calculator_state[:start_new_value] = false
     end
   end
 end

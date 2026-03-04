@@ -7,12 +7,12 @@ module RufletStudio
       last_point = nil
       next_shape_id = 1
 
-      canvas = page.control(
+      canvas = control(
         :canvas,
         width: 260,
         height: 260,
         shapes: [],
-        content: page.gesture_detector(
+        content: gesture_detector(
           on_pan_start: ->(e) {
             pos = extract_pos(e)
             last_point = pos
@@ -41,7 +41,7 @@ module RufletStudio
         )
       )
 
-      page.column(spacing: 8, tight: true, controls: [status, canvas])
+      column(spacing: 8, tight: true, controls: [status, canvas])
     end
   end
 end
