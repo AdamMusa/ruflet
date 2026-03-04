@@ -12,7 +12,7 @@ class CalculatorApp < Ruflet::App
     page.title = "Calculator"
     page.bgcolor = "#000000"
 
-    @display_control = page.text(
+    @display_control = text(
       value: @display,
       text_align: "right",
       size: 84,
@@ -20,28 +20,28 @@ class CalculatorApp < Ruflet::App
     )
 
     page.add(
-      page.container(
+      container(
         expand: true,
         bgcolor: "#000000",
         padding: 12,
-        content: page.column(
+        content: column(
           expand: true,
           spacing: 12,
           controls: [
-            page.container(height: 24),
-            page.row(alignment: "end", controls: [@display_control]),
+            container(height: 24),
+            row(alignment: "end", controls: [@display_control]),
 
             # pushes keypad toward bottom
-            page.container(expand: true),
+            container(expand: true),
 
             # gap between result and keyboard
-            page.container(height: 20),
+            container(height: 20),
 
-            row(page, "BS", "AC", "%", "/"),
-            row(page, "7", "8", "9", "x"),
-            row(page, "4", "5", "6", "-"),
-            row(page, "1", "2", "3", "+"),
-            row(page, "+/-", "0", ".", "=")
+            keypad_row(page, "BS", "AC", "%", "/"),
+            keypad_row(page, "7", "8", "9", "x"),
+            keypad_row(page, "4", "5", "6", "-"),
+            keypad_row(page, "1", "2", "3", "+"),
+            keypad_row(page, "+/-", "0", ".", "=")
           ]
         )
       )
@@ -50,12 +50,12 @@ class CalculatorApp < Ruflet::App
 
   private
 
-  def row(page, *labels)
-    page.row(
+  def keypad_row(page, *labels)
+    row(
       alignment: "center",
       spacing: 10,
       controls: labels.map do |label|
-        page.elevated_button(
+        elevated_button(
           text: label,
           expand: true,
           height: 65,
@@ -212,4 +212,3 @@ class CalculatorApp < Ruflet::App
 end
 
 CalculatorApp.new.run
-

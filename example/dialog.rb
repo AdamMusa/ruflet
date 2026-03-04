@@ -4,31 +4,31 @@ class FeedbackSurfacesApp < Ruflet::App
   def view(page)
     page.title = "Feedback Surfaces Demo"
 
-    status = page.text(value: "Ready", size: 14)
+    status = text(value: "Ready", size: 14)
     dialog = build_dialog(page, status)
     bottom_sheet = build_bottom_sheet(page, status)
 
     page.add(
-      page.container(
+      container(
         padding: 16,
-        content: page.column(
+        content: column(
           spacing: 12,
           controls: [
-            page.text(value: "Dialog, SnackBar and BottomSheet", size: 22),
+            text(value: "Dialog, SnackBar and BottomSheet", size: 22),
             status,
-            page.button(
+            button(
               text: "Open dialog",
               on_click: ->(_e) {
                 open_surface(page, dialog, status, "Dialog opened")
               }
             ),
-            page.button(
+            button(
               text: "Open snackbar",
               on_click: ->(_e) {
                 open_surface(page, build_snack_bar(page, status), status, "SnackBar opened")
               }
             ),
-            page.button(
+            button(
               text: "Open bottom sheet",
               on_click: ->(_e) {
                 open_surface(page, bottom_sheet, status, "BottomSheet opened")
@@ -37,10 +37,10 @@ class FeedbackSurfacesApp < Ruflet::App
           ]
         )
       ),
-      appbar: page.app_bar(
+      appbar: app_bar(
         bgcolor: "#d9d7db",
         color: "#232329",
-        title: page.text(value: "Feedback Surfaces", size: 18)
+        title: text(value: "Feedback Surfaces", size: 18)
       )
     )
   end
@@ -52,9 +52,9 @@ class FeedbackSurfacesApp < Ruflet::App
   end
 
   def build_snack_bar(page, status)
-    page.snack_bar(
+    snack_bar(
       open: true,
-      content: page.text(value: "Profile saved"),
+      content: text(value: "Profile saved"),
       action: "UNDO",
       on_action: ->(_e) { set_status(page, status, "SnackBar action pressed") },
       on_dismiss: ->(_e) { set_status(page, status, "SnackBar dismissed") }
@@ -63,20 +63,20 @@ class FeedbackSurfacesApp < Ruflet::App
 
   def build_dialog(page, status)
     dialog = nil
-    dialog = page.alert_dialog(
+    dialog = alert_dialog(
       open: false,
       modal: true,
-      title: page.text(value: "Delete item?"),
-      content: page.text(value: "This demonstrates AlertDialog data shape."),
+      title: text(value: "Delete item?"),
+      content: text(value: "This demonstrates AlertDialog data shape."),
       actions: [
-        page.text_button(
+        text_button(
           text: "Cancel",
           on_click: ->(_e) {
             page.update(dialog, open: false)
             set_status(page, status, "Dialog closed")
           }
         ),
-        page.filled_button(
+        filled_button(
           text: "Delete",
           on_click: ->(_e) {
             page.update(dialog, open: false)
@@ -90,22 +90,22 @@ class FeedbackSurfacesApp < Ruflet::App
 
   def build_bottom_sheet(page, status)
     bottom_sheet = nil
-    bottom_sheet = page.bottom_sheet(
+    bottom_sheet = bottom_sheet(
       open: false,
       scrollable: true,
       show_drag_handle: true,
-      content: page.container(
+      content: container(
         expand: true,
         height: 300,
         width: 600,
         padding: 16,
-        content: page.column(
+        content: column(
           spacing: 10,
           controls: [
-            page.text(value: "Bottom Sheet", size: 24),
-            page.text(value: "This is shown using BottomSheet control."),
-            page.text(value: "It is intentionally larger in this sample."),
-            page.button(
+            text(value: "Bottom Sheet", size: 24),
+            text(value: "This is shown using BottomSheet control."),
+            text(value: "It is intentionally larger in this sample."),
+            button(
               text: "Close bottom sheet",
               on_click: ->(_e) {
                 page.update(bottom_sheet, open: false)
