@@ -5,3 +5,4 @@ ruby_runtime/third_party/mruby/
 
 # Local demo app
 mruby_runtime_demo/
+.bundle/
