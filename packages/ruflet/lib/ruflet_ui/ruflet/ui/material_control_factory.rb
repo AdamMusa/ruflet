@@ -6,6 +6,7 @@ require_relative "controls/material/container_control"
 require_relative "controls/material/column_control"
 require_relative "controls/material/row_control"
 require_relative "controls/material/stack_control"
+require_relative "controls/material/grid_view_control"
 require_relative "controls/material/gesture_detector_control"
 require_relative "controls/material/draggable_control"
 require_relative "controls/material/drag_target_control"
@@ -44,6 +45,8 @@ module Ruflet
         "column" => Controls::ColumnControl,
         "row" => Controls::RowControl,
         "stack" => Controls::StackControl,
+        "gridview" => Controls::GridViewControl,
+        "grid_view" => Controls::GridViewControl,
         "container" => Controls::ContainerControl,
         "gesturedetector" => Controls::GestureDetectorControl,
         "gesture_detector" => Controls::GestureDetectorControl,

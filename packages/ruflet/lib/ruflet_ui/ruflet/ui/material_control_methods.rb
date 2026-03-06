@@ -27,6 +27,8 @@ module Ruflet
 
       def row(**props, &block) = build_widget(:row, **props, &block)
       def stack(**props, &block) = build_widget(:stack, **props, &block)
+      def grid_view(**props, &block) = build_widget(:gridview, **props, &block)
+      def gridview(**props, &block) = grid_view(**props, &block)
       def container(**props, &block) = build_widget(:container, **normalize_container_props(props), &block)
       def gesture_detector(**props, &block) = build_widget(:gesturedetector, **props, &block)
       def gesturedetector(**props, &block) = gesture_detector(**props, &block)

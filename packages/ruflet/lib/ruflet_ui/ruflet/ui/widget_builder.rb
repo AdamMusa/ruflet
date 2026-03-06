@@ -19,7 +19,7 @@ module Ruflet
 
     def control(type, **props, &block)
       mapped_props = props.dup
-      prop_children = mapped_props.delete(:controls) || mapped_props.delete("controls")
+      prop_children = extract_children_prop(mapped_props)
 
       node = UI::ControlFactory.build(type, **mapped_props)
       if block
@@ -44,5 +44,12 @@ module Ruflet
     def build_widget(type, **props, &block) = control(type, **props, &block)
 
     private
+
+    def extract_children_prop(props)
+      props.delete(:children) ||
+        props.delete("children") ||
+        props.delete(:controls) ||
+        props.delete("controls")
+    end
   end
 end

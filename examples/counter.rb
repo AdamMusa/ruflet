@@ -14,11 +14,10 @@ class MainApp < Ruflet::App
       container(
         expand: true,
         padding: 24,
+        alignment: Ruflet::MainAxisAlignment::CENTER,
         content: column(
-          expand: true,
           alignment: Ruflet::MainAxisAlignment::CENTER,
           horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
-          spacing: 12,
           controls: [
             text(value: "You have pushed the button this many times:"),
             count_text
