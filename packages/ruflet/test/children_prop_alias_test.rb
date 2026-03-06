@@ -21,4 +21,12 @@ class ChildrenPropAliasTest < Minitest::Test
 
     assert_equal [first, second], column.children
   end
+
+  def test_grid_view_is_available
+    grid = Ruflet.grid_view(runs_count: 2, controls: [Ruflet.text(value: "a")])
+
+    assert_equal "gridview", grid.type
+    assert_equal 1, grid.children.size
+    assert_equal 2, grid.props["runs_count"]
+  end
 end

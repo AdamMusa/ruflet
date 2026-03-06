@@ -10,6 +10,7 @@ class IconSearchApp < Ruflet::App
     @query = ""
     @summary_control = nil
     @results_grid = nil
+    @copy_status_control = nil
   end
 
   def view(page)
@@ -22,6 +23,7 @@ class IconSearchApp < Ruflet::App
   def render(page)
     names = filtered_icon_names(@query)
     @summary_control = text(value: summary_text(names), size: 12, color: "#6c757d")
+    @copy_status_control = text(value: "Tap an item to copy icon name", size: 12, color: "#6c757d")
     @results_grid = build_results_grid(names)
 
     page.add(
@@ -31,7 +33,7 @@ class IconSearchApp < Ruflet::App
         alignment: Ruflet::MainAxisAlignment::CENTER,
         content: column(
           expand: true,
-         alignment: Ruflet::MainAxisAlignment::CENTER,
+          alignment: Ruflet::MainAxisAlignment::CENTER,
           horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
           spacing: 12,
           controls: [
@@ -45,6 +47,7 @@ class IconSearchApp < Ruflet::App
               }
             ),
             @summary_control,
+            @copy_status_control,
             @results_grid
           ]
         )
@@ -59,6 +62,7 @@ class IconSearchApp < Ruflet::App
     names = filtered_icon_names(@query)
     page.update(@summary_control, value: summary_text(names))
     page.update(@results_grid, controls: grid_items(names))
+    page.update(@copy_status_control, value: "Tap an item to copy icon name", color: "#6c757d")
   end
 
   def build_results_grid(names)
@@ -81,7 +85,7 @@ class IconSearchApp < Ruflet::App
     container(
       padding: 10,
       border_radius: 8,
-      bgcolor: "#f4f5f7",
+      on_click: ->(e) { copy_icon_name(e.page, name) },
       content: row(
         spacing: 8,
         controls: [
@@ -93,6 +97,43 @@ class IconSearchApp < Ruflet::App
         ]
       )
     )
+  end
+
+  def copy_icon_name(page, name)
+    copied = copy_to_clipboard(name)
+    if copied
+      @copy_status_control.props["value"] = "Copied: #{name}"
+      @copy_status_control.props["color"] = "#2b8a3e"
+    else
+      @copy_status_control.props["value"] = "Copy failed on this platform for: #{name}"
+      @copy_status_control.props["color"] = "#c92a2a"
+    end
+    page.update(@copy_status_control, value: @copy_status_control.props["value"], color: @copy_status_control.props["color"])
+  end
+
+  def copy_to_clipboard(text)
+    return write_to_command("pbcopy", text) if command_available?("pbcopy")
+    return write_to_command("wl-copy", text) if command_available?("wl-copy")
+    return write_to_command("xclip", text, "-selection", "clipboard") if command_available?("xclip")
+    return write_to_command("xsel", text, "--clipboard", "--input") if command_available?("xsel")
+    return write_to_command("clip", text) if command_available?("clip")
+
+    false
+  rescue StandardError
+    false
+  end
+
+  def command_available?(name)
+    system("which", name, out: File::NULL, err: File::NULL)
+  end
+
+  def write_to_command(command, text, *args)
+    io = IO.popen([command, *args], "w")
+    io.write(text.to_s)
+    io.close
+    $?.success?
+  rescue StandardError
+    false
   end
 
   def event_value(event)

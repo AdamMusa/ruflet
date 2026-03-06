@@ -295,7 +295,10 @@ module Ruflet
         patch["content"] = patch.delete("text")
       end
 
-      patch_ops = patch.map { |k, v| [0, 0, k, v] }
+      visited = Set.new
+      patch.each_value { |value| register_embedded_value(value, visited) }
+
+      patch_ops = patch.map { |k, v| [0, 0, k, serialize_patch_value(v)] }
 
       send_message(Protocol::ACTIONS[:patch_control], {
         "id" => control.wire_id,

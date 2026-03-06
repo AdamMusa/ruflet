@@ -81,6 +81,7 @@ module Ruflet
         "line" => "Line",
         "service_registry" => "ServiceRegistry",
         "url_launcher" => "UrlLauncher",
+        "clipboard" => "Clipboard",
         "audio" => "Audio",
         "video" => "Video",
         "flashlight" => "Flashlight",
