@@ -8,6 +8,8 @@ module Ruflet
         "column" => "Column",
         "row" => "Row",
         "stack" => "Stack",
+        "gridview" => "GridView",
+        "grid_view" => "GridView",
         "view" => "View",
         "container" => "Container",
         "checkbox" => "Checkbox",

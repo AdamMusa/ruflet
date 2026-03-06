@@ -40,6 +40,8 @@ module Ruflet
     def center(**props, &block) = _pending_app.center(**props, &block)
     def row(**props, &block) = _pending_app.row(**props, &block)
     def stack(**props, &block) = _pending_app.stack(**props, &block)
+    def grid_view(**props, &block) = _pending_app.grid_view(**props, &block)
+    def gridview(**props, &block) = _pending_app.gridview(**props, &block)
     def container(**props, &block) = _pending_app.container(**props, &block)
     def gesture_detector(**props, &block) = _pending_app.gesture_detector(**props, &block)
     def gesturedetector(**props, &block) = _pending_app.gesturedetector(**props, &block)
@@ -137,7 +139,7 @@ module Ruflet
 
       def control(type, **props, &block)
         mapped_props = props.dup
-        prop_children = mapped_props.delete(:controls) || mapped_props.delete("controls")
+        prop_children = extract_children_prop(mapped_props)
 
         id = mapped_props.delete(:id)&.to_s || next_id(type)
         c = Ruflet::UI::ControlFactory.build(type.to_s, id: id, **normalize_props(mapped_props))
@@ -184,6 +186,13 @@ module Ruflet
 
       def normalize_props(hash)
         hash.transform_keys(&:to_s).transform_values { |v| v.is_a?(Symbol) ? v.to_s : v }
+      end
+
+      def extract_children_prop(props)
+        props.delete(:children) ||
+          props.delete("children") ||
+          props.delete(:controls) ||
+          props.delete("controls")
       end
 
       def next_id(type)

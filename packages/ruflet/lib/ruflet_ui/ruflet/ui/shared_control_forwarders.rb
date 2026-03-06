@@ -10,6 +10,8 @@ module Ruflet
       def center(**props, &block) = control_delegate.center(**props, &block)
       def row(**props, &block) = control_delegate.row(**props, &block)
       def stack(**props, &block) = control_delegate.stack(**props, &block)
+      def grid_view(**props, &block) = control_delegate.grid_view(**props, &block)
+      def gridview(**props, &block) = control_delegate.gridview(**props, &block)
       def container(**props, &block) = control_delegate.container(**props, &block)
       def gesture_detector(**props, &block) = control_delegate.gesture_detector(**props, &block)
       def gesturedetector(**props, &block) = control_delegate.gesturedetector(**props, &block)
