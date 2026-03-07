@@ -11,9 +11,9 @@ module RufletStudio
         content: column(
           expand: true,
           spacing: 12,
-          controls: [
+          children: [
             container(height: 24),
-            row(alignment: "end", controls: [calculator_display(status)]),
+            row(alignment: "end", children: [calculator_display(status)]),
             container(expand: true),
             container(height: 20),
             calculator_keypad_row(page, status, "BS", "AC", "%", "/"),
@@ -43,7 +43,7 @@ module RufletStudio
       row(
         alignment: "center",
         spacing: 10,
-        controls: labels.map do |label|
+        children: labels.map do |label|
           elevated_button(
             text: label,
             expand: true,

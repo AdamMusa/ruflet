@@ -58,14 +58,14 @@ class TodoApp < Ruflet::App
         border_radius: 12,
         content: column(
           spacing: 14,
-          controls: [
+          children: [
             text(value: "Todo List", size: 28, weight: "w600", color: Ruflet::Colors.ON_SURFACE),
             add_row(page, input, compact),
             container(
               bgcolor: Ruflet::Colors.SURFACE_CONTAINER,
               border_radius: 10,
               padding: 8,
-              content: column(spacing: 6, controls: task_controls)
+              content: column(spacing: 6, children: task_controls)
             ),
             footer(page, compact)
           ]
@@ -90,7 +90,7 @@ class TodoApp < Ruflet::App
     row(
       alignment: "spaceBetween",
       vertical_alignment: "center",
-      controls: [
+      children: [
         checkbox(
           value: task[:done],
           label: label,
@@ -114,9 +114,9 @@ class TodoApp < Ruflet::App
     )
 
     if compact
-      column(spacing: 10, controls: [input, add_button])
+      column(spacing: 10, children: [input, add_button])
     else
-      row(spacing: 10, controls: [input, add_button])
+      row(spacing: 10, children: [input, add_button])
     end
   end
 
@@ -129,7 +129,7 @@ class TodoApp < Ruflet::App
     )
     filters = row(
       spacing: 6,
-      controls: FILTERS.map { |name| filter_button(page, name) }
+      children: FILTERS.map { |name| filter_button(page, name) }
     )
     clear_btn = text_button(
       text: "Clear completed",
@@ -137,12 +137,12 @@ class TodoApp < Ruflet::App
     )
 
     if compact
-      column(spacing: 8, controls: [counter, filters, clear_btn])
+      column(spacing: 8, children: [counter, filters, clear_btn])
     else
       row(
         alignment: "spaceBetween",
         vertical_alignment: "center",
-        controls: [counter, filters, clear_btn]
+        children: [counter, filters, clear_btn]
       )
     end
   end

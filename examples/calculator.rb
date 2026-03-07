@@ -27,9 +27,9 @@ class CalculatorApp < Ruflet::App
         content: column(
           expand: true,
           spacing: 12,
-          controls: [
+          children: [
             container(height: 24),
-            row(alignment: "end", controls: [@display_control]),
+            row(alignment: "end", children: [@display_control]),
 
             # pushes keypad toward bottom
             container(expand: true),
@@ -54,7 +54,7 @@ class CalculatorApp < Ruflet::App
     row(
       alignment: "center",
       spacing: 10,
-      controls: labels.map do |label|
+      children: labels.map do |label|
         elevated_button(
           text: label,
           expand: true,

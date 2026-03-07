@@ -46,6 +46,7 @@ module Ruflet
       def fab(content = nil, **props) = control_delegate.fab(content, **props)
       def app_bar(**props) = control_delegate.app_bar(**props)
       def appbar(**props) = control_delegate.appbar(**props)
+      def clipboard(**props) = control_delegate.clipboard(**props)
       def floating_action_button(**props) = control_delegate.floating_action_button(**props)
       def floatingactionbutton(**props) = control_delegate.floatingactionbutton(**props)
       def tabs(**props, &block) = control_delegate.tabs(**props, &block)

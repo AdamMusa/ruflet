@@ -75,12 +75,12 @@ module RufletStudio
 
       column(
         spacing: 8,
-        controls: [
+        children: [
           status,
           progress,
           column(
             spacing: 8,
-            controls: [
+            children: [
               play_btn,
               pause_btn,
               resume_btn,
@@ -89,7 +89,7 @@ module RufletStudio
           ),
           column(
             spacing: 8,
-            controls: [
+            children: [
               button(text: "Seek 2s", on_click: ->(_e) { send_audio.call("Seek 2s", "seek", args: { position: 2000 }) }),
               button(text: "Get duration", on_click: ->(_e) { send_audio.call("Get duration", "get_duration") }),
               button(text: "Get position", on_click: ->(_e) { send_audio.call("Get position", "get_current_position") })
@@ -97,14 +97,14 @@ module RufletStudio
           ),
           column(
             spacing: 8,
-            controls: [
+            children: [
               button(text: "Volume -", on_click: ->(_e) { adjust_volume.call(-0.1) }),
               button(text: "Volume +", on_click: ->(_e) { adjust_volume.call(0.1) })
             ]
           ),
           column(
             spacing: 8,
-            controls: [
+            children: [
               button(text: "Balance L", on_click: ->(_e) { adjust_balance.call(-0.1) }),
               button(text: "Balance R", on_click: ->(_e) { adjust_balance.call(0.1) })
             ]

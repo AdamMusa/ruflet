@@ -21,10 +21,10 @@ module RufletStudio
         navigation_bar: nav_bar(page, route),
         padding: 20,
         scroll: "auto",
-        controls: [
+        children: [
           column(
             spacing: 16,
-            controls: [
+            children: [
               text(value: "Theme", size: 14, color: color_icon(page)),
               control(
                 :radiogroup,
@@ -37,13 +37,13 @@ module RufletStudio
                 },
                 content: column(
                   spacing: 14,
-                  controls: [
+                  children: [
                     row(
                       alignment: "spaceBetween",
-                      controls: [
+                      children: [
                         row(
                           spacing: 12,
-                          controls: [
+                          children: [
                             icon(name: "contrast", color: color_icon(page)),
                             text(value: "System", color: color_text(page))
                           ]
@@ -53,10 +53,10 @@ module RufletStudio
                     ),
                     row(
                       alignment: "spaceBetween",
-                      controls: [
+                      children: [
                         row(
                           spacing: 12,
-                          controls: [
+                          children: [
                             icon(name: "light_mode", color: color_icon(page)),
                             text(value: "Light", color: color_text(page))
                           ]
@@ -66,10 +66,10 @@ module RufletStudio
                     ),
                     row(
                       alignment: "spaceBetween",
-                      controls: [
+                      children: [
                         row(
                           spacing: 12,
-                          controls: [
+                          children: [
                             icon(name: "dark_mode", color: color_icon(page)),
                             text(value: "Dark", color: color_text(page))
                           ]
@@ -106,21 +106,21 @@ module RufletStudio
               text(value: "Application details", size: 14, color: color_icon(page)),
               row(
                 alignment: "spaceBetween",
-                controls: [
+                children: [
                   text(value: "Client version:", color: color_text(page)),
                   text(value: "#{Ruflet::VERSION}", color: color_subtle(page))
                 ]
               ),
               row(
                 alignment: "spaceBetween",
-                controls: [
+                children: [
                   text(value: "Ruflet SDK version:", color: color_text(page)),
                   text(value: "#{Ruflet::VERSION}", color: color_subtle(page))
                 ]
               ),
               row(
                 alignment: "spaceBetween",
-                controls: [
+                children: [
                   text(value: "Ruby version:", color: color_text(page)),
                   text(value: "#{RUBY_VERSION}", color: color_subtle(page))
                 ]

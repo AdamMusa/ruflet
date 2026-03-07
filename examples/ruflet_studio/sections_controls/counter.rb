@@ -9,7 +9,7 @@ module RufletStudio
       row(
         spacing: 8,
         alignment: "center",
-        controls: [
+        children: [
           icon_button(icon: "remove", on_click: ->(_e) {
             count -= 1
             page.update(value, value: count.to_s)

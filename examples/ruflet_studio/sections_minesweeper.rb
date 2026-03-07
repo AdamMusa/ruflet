@@ -88,7 +88,7 @@ module RufletStudio
         )
       end
 
-      board = stack(width: board_width, height: board_height, controls: cell_containers)
+      board = stack(width: board_width, height: board_height, children: cell_containers)
 
       safe_update = lambda do |control, props|
         return unless control
@@ -327,7 +327,7 @@ module RufletStudio
         spacing: 8,
         horizontal_alignment: "center",
         tight: true,
-        controls: [
+        children: [
           container(
             padding: 8,
             width: board_width + 16,
@@ -340,7 +340,7 @@ module RufletStudio
             },
             content: row(
               alignment: "spaceBetween",
-              controls: [
+              children: [
                 counter_box.call(mines_text),
                 bevel.call(container(width: 36, height: 36, alignment: "center", bgcolor: "#d0d0d0", content: face_text)),
                 counter_box.call(timer_text)

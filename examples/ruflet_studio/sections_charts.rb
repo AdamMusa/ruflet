@@ -131,7 +131,7 @@ module RufletStudio
       column(
         spacing: 12,
         tight: true,
-        controls: [
+        children: [
           text(value: "BarChart", size: 14, weight: "w600", color: "#e7e9ec"),
           bar_chart,
           text(value: "LineChart", size: 14, weight: "w600", color: "#e7e9ec"),

@@ -30,15 +30,15 @@ module RufletStudio
 
       column(
         spacing: 8,
-        controls: [
+        children: [
           status,
           control(:safe_area, content: column(
             spacing: 12,
-            controls: [
+            children: [
               video,
               column(
                 spacing: 8,
-                controls: [
+                children: [
                   button(text: "Play", on_click: ->(_e) { send_video.call("Play", "play") }),
                   button(text: "Pause", on_click: ->(_e) { send_video.call("Pause", "pause") }),
                   button(text: "Play/Pause", on_click: ->(_e) { send_video.call("Play/Pause", "play_or_pause") }),
@@ -49,7 +49,7 @@ module RufletStudio
               ),
               column(
                 spacing: 8,
-                controls: [
+                children: [
                   button(text: "Seek 10s", on_click: ->(_e) { send_video.call("Seek 10s", "seek", args: { position: 10_000 }) }),
                   button(text: "Fullscreen", on_click: ->(_e) { page.update(video, fullscreen: true) })
                 ]

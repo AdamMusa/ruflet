@@ -17,10 +17,10 @@ module RufletStudio
           actions: []
         ),
         navigation_bar: nav_bar(page, route),
-        controls: [
+        children: [
           column(
             spacing: 6,
-            controls: gallery_items(page)
+            children: gallery_items(page)
           )
         ]
       )

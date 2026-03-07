@@ -207,8 +207,8 @@ class Solitaire
     controls.concat(@foundation.map { |s| s.view(@page) })
     controls.concat(@tableau.map { |s| s.view(@page) })
     controls.concat(@cards.map { |c| c.view(@page) }.compact)
-    board = container(width: @board_w, height: @board_h, content: stack(controls: controls))
-    body = container(expand: true, bgcolor: TABLE_BG, padding: @outer, content: column(expand: true, spacing: 10, controls: [@status_control, board]))
+    board = container(width: @board_w, height: @board_h, content: stack(children: controls))
+    body = container(expand: true, bgcolor: TABLE_BG, padding: @outer, content: column(expand: true, spacing: 10, children: [@status_control, board]))
     @page.add(body, appbar: appbar)
   end
   def stock_click

@@ -60,6 +60,7 @@ module Ruflet
     def iconbutton(**props) = _pending_app.iconbutton(**props)
     def app_bar(**props) = _pending_app.app_bar(**props)
     def appbar(**props) = _pending_app.appbar(**props)
+    def clipboard(**props) = _pending_app.clipboard(**props)
     def text_button(**props) = _pending_app.text_button(**props)
     def textbutton(**props) = _pending_app.textbutton(**props)
     def filled_button(**props) = _pending_app.filled_button(**props)

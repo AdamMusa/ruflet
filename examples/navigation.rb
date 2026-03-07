@@ -42,7 +42,7 @@ class MainApp < Ruflet::App
         title: text(value: "Home", size: 18)
       ),
       padding: 16,
-      controls: [
+      children: [
         text(value: "Home Screen", size: 24),
         text(value: "Tap to go to Replace screen using page.go()."),
         button(
@@ -67,7 +67,7 @@ class MainApp < Ruflet::App
         title: text(value: "Replace", size: 18)
       ),
       padding: 16,
-      controls: [
+      children: [
         text(value: "Replace Screen", size: 24),
         text(value: "Current route: #{page.route}"),
         text(value: "Use replace below to return Home without back stack."),
@@ -89,7 +89,7 @@ class MainApp < Ruflet::App
         title: text(value: "Go Screen", size: 18)
       ),
       padding: 16,
-      controls: [
+      children: [
         text(value: "Go Screen", size: 24),
         text(value: "Opened via page.go('/go')."),
         text(value: "Back navigation should return to Home."),

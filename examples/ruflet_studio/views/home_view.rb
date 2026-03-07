@@ -16,7 +16,7 @@ module RufletStudio
         ),
         navigation_bar: nav_bar(page, route),
         padding: 16,
-        controls: [
+        children: [
           text(value: "Home", size: 18, color: color_text(page)),
           text(value: "Use the Gallery tab to explore controls.", color: color_subtle(page))
         ]

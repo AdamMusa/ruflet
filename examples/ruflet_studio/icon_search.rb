@@ -36,7 +36,7 @@ class IconSearchApp < Ruflet::App
           alignment: Ruflet::MainAxisAlignment::CENTER,
           horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
           spacing: 12,
-          controls: [
+          children: [
             text_field(
               label: "Search Material icons",
               value: @query,
@@ -61,7 +61,7 @@ class IconSearchApp < Ruflet::App
   def update_results(page)
     names = filtered_icon_names(@query)
     page.update(@summary_control, value: summary_text(names))
-    page.update(@results_grid, controls: grid_items(names))
+    page.update(@results_grid, children: grid_items(names))
     page.update(@copy_status_control, value: "Tap an item to copy icon name", color: "#6c757d")
   end
 
@@ -73,7 +73,7 @@ class IconSearchApp < Ruflet::App
       child_aspect_ratio: 2.0,
       spacing: 10,
       run_spacing: 10,
-      controls: grid_items(names)
+      children: grid_items(names)
     )
   end
 
@@ -88,7 +88,7 @@ class IconSearchApp < Ruflet::App
       on_click: ->(e) { copy_icon_name(e.page, name) },
       content: row(
         spacing: 8,
-        controls: [
+        children: [
           icon(icon: Ruflet::MaterialIcons.const_get(name)),
           container(
             expand: true,
@@ -100,40 +100,17 @@ class IconSearchApp < Ruflet::App
   end
 
   def copy_icon_name(page, name)
-    copied = copy_to_clipboard(name)
-    if copied
+    call_id = page.set_clipboard(name)
+    if call_id
       @copy_status_control.props["value"] = "Copied: #{name}"
       @copy_status_control.props["color"] = "#2b8a3e"
     else
-      @copy_status_control.props["value"] = "Copy failed on this platform for: #{name}"
+      @copy_status_control.props["value"] = "Copy failed: clipboard service unavailable"
       @copy_status_control.props["color"] = "#c92a2a"
     end
     page.update(@copy_status_control, value: @copy_status_control.props["value"], color: @copy_status_control.props["color"])
-  end
-
-  def copy_to_clipboard(text)
-    return write_to_command("pbcopy", text) if command_available?("pbcopy")
-    return write_to_command("wl-copy", text) if command_available?("wl-copy")
-    return write_to_command("xclip", text, "-selection", "clipboard") if command_available?("xclip")
-    return write_to_command("xsel", text, "--clipboard", "--input") if command_available?("xsel")
-    return write_to_command("clip", text) if command_available?("clip")
-
-    false
   rescue StandardError
-    false
-  end
-
-  def command_available?(name)
-    system("which", name, out: File::NULL, err: File::NULL)
-  end
-
-  def write_to_command(command, text, *args)
-    io = IO.popen([command, *args], "w")
-    io.write(text.to_s)
-    io.close
-    $?.success?
-  rescue StandardError
-    false
+    page.update(@copy_status_control, value: "Copy failed: #{name}", color: "#c92a2a")
   end
 
   def event_value(event)

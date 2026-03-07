@@ -13,7 +13,7 @@ module RufletStudio
         hint_text: "What needs to be done?",
         on_change: ->(e) { input_text = e.data.to_s }
       )
-      list = column(spacing: 6, controls: [])
+      list = column(spacing: 6, children: [])
 
       render_list = lambda do
         new_controls = todos.each_with_index.map do |item, idx|
@@ -33,7 +33,7 @@ module RufletStudio
 
           row(
             alignment: "spaceBetween",
-            controls: [
+            children: [
               checkbox_control,
               icon_button(
                 icon: "delete",
@@ -64,7 +64,7 @@ module RufletStudio
 
       column(
         spacing: 8,
-        controls: [
+        children: [
           text(value: "Todos", size: 20, weight: "w600", color: "#e7e9ec"),
           input,
           button(text: "Add", on_click: ->(_e) { add_todo.call }),

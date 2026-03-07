@@ -27,7 +27,7 @@ module RufletStudio
 
       column(
         spacing: 12,
-        controls: [
+        children: [
           status,
           control(
             :card,
@@ -35,7 +35,7 @@ module RufletStudio
               padding: 12,
               content: column(
                 spacing: 8,
-                controls: [
+                children: [
                   text(value: "TextField", size: 14, weight: "w600", color: "#1f2328"),
                   text_field(label: "Name", value: "Ruflet")
                 ]
@@ -48,11 +48,11 @@ module RufletStudio
               padding: 12,
               content: column(
                 spacing: 8,
-                controls: [
+                children: [
                   text(value: "Buttons", size: 14, weight: "w600", color: "#1f2328"),
                   row(
                     spacing: 8,
-                    controls: [
+                    children: [
                       filled_button(text: "Filled", on_click: ->(_e) { page.update(status, value: "Filled pressed") }),
                       control(:filled_tonal_button, text: "Tonal", on_click: ->(_e) { page.update(status, value: "Tonal pressed") }),
                       control(:outlined_button, text: "Outlined", on_click: ->(_e) { page.update(status, value: "Outlined pressed") })
@@ -68,7 +68,7 @@ module RufletStudio
               padding: 12,
               content: column(
                 spacing: 8,
-                controls: [
+                children: [
                   text(value: "Selection", size: 14, weight: "w600", color: "#1f2328"),
                   control(:switch, label: "Wi-Fi", value: true),
                   control(:slider, min: 0, max: 100, divisions: 10, value: 35, label: "Value = {value}")
@@ -82,7 +82,7 @@ module RufletStudio
               padding: 12,
               content: column(
                 spacing: 8,
-                controls: [
+                children: [
                   text(value: "Dialogs", size: 14, weight: "w600", color: "#1f2328"),
                   text_button(text: "Show dialog", on_click: ->(_e) { page.show_dialog(material_dialog) })
                 ]
@@ -95,7 +95,7 @@ module RufletStudio
               padding: 12,
               content: column(
                 spacing: 8,
-                controls: [
+                children: [
                   text(value: "Banners", size: 14, weight: "w600", color: "#1f2328"),
                   text_button(text: "Show banner", on_click: ->(_e) {
                     page.show_dialog(build_banner.call)

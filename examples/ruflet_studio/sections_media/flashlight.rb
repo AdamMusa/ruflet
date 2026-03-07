@@ -12,11 +12,11 @@ module RufletStudio
 
       column(
         spacing: 8,
-        controls: [
+        children: [
           status,
           row(
             spacing: 8,
-            controls: [
+            children: [
               text_button(text: "On", on_click: ->(_e) {
                 if platform == "ios" || platform == "android"
                   page.invoke(flashlight, "on")

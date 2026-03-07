@@ -13,11 +13,11 @@ class ImageGalleryApp < Ruflet::App
         content: column(
           scroll: "auto",
           spacing: 12,
-          controls: [
+          children: [
             text(value: "Vertical List (mix of web + local)", size: 18),
             column(
               spacing: 8,
-              controls: [
+              children: [
                 image(
                   src: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800",
                   width: 300,
@@ -44,7 +44,7 @@ class ImageGalleryApp < Ruflet::App
               content: row(
                 spacing: 8,
                 scroll: "auto",
-                controls: [
+                children: [
                   image(
                     src: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400",
                     width: 220,

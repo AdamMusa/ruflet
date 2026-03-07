@@ -13,7 +13,7 @@ class FeedbackSurfacesApp < Ruflet::App
         padding: 16,
         content: column(
           spacing: 12,
-          controls: [
+          children: [
             text(value: "Dialog, SnackBar and BottomSheet", size: 22),
             status,
             button(
@@ -102,7 +102,7 @@ class FeedbackSurfacesApp < Ruflet::App
         padding: 16,
         content: column(
           spacing: 10,
-          controls: [
+          children: [
             text(value: "Bottom Sheet", size: 24),
             text(value: "This is shown using BottomSheet control."),
             text(value: "It is intentionally larger in this sample."),

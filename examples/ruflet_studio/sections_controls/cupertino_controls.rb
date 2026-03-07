@@ -17,7 +17,7 @@ module RufletStudio
         magnification: 1.2,
         use_magnifier: true,
         item_extent: 32,
-        controls: [
+        children: [
           text(value: "One", color: "#111318"),
           text(value: "Two", color: "#111318"),
           text(value: "Three", color: "#111318")
@@ -28,7 +28,7 @@ module RufletStudio
         value: "r1",
         content: row(
           spacing: 8,
-          controls: [
+          children: [
             control(:cupertino_radio, label: "Radio 1", value: "r1"),
             control(:cupertino_radio, label: "Radio 2", value: "r2")
           ]
@@ -37,7 +37,7 @@ module RufletStudio
 
       column(
         spacing: 12,
-        controls: [
+        children: [
           status,
           control(:cupertino_text_field, label: "Text Field"),
           control(:cupertino_checkbox, label: "Checkbox"),
@@ -46,7 +46,7 @@ module RufletStudio
           radio_group_control,
           column(
             spacing: 8,
-            controls: [
+            children: [
               cupertino_button(
                 content: text(value: "Show Dialog"),
                 on_click: ->(_e) { page.show_dialog(cupertino_dialog) }
@@ -61,7 +61,7 @@ module RufletStudio
           ),
           column(
             spacing: 8,
-            controls: [
+            children: [
               cupertino_button(
                 content: text(value: "Show DatePicker"),
                 on_click: ->(_e) {

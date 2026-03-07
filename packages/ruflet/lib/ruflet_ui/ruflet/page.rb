@@ -265,6 +265,36 @@ module Ruflet
       invoke(launcher, "can_launch_url", args: { "url" => url }, timeout: timeout)
     end
 
+    def set_clipboard(value, timeout: 10)
+      clipboard = ensure_clipboard_service
+      invoke(clipboard, "set", args: { "data" => value.to_s }, timeout: timeout)
+    end
+
+    def get_clipboard(timeout: 10)
+      clipboard = ensure_clipboard_service
+      invoke(clipboard, "get", timeout: timeout)
+    end
+
+    def set_clipboard_files(files, timeout: 10)
+      clipboard = ensure_clipboard_service
+      invoke(clipboard, "set_files", args: { "files" => Array(files).map(&:to_s) }, timeout: timeout)
+    end
+
+    def get_clipboard_files(timeout: 10)
+      clipboard = ensure_clipboard_service
+      invoke(clipboard, "get_files", timeout: timeout)
+    end
+
+    def set_clipboard_image(value, timeout: 10)
+      clipboard = ensure_clipboard_service
+      invoke(clipboard, "set_image", args: { "data" => value }, timeout: timeout)
+    end
+
+    def get_clipboard_image(timeout: 10)
+      clipboard = ensure_clipboard_service
+      invoke(clipboard, "get_image", timeout: timeout)
+    end
+
     def pop_dialog
       dialog_control = latest_open_dialog
       return nil unless dialog_control
@@ -651,6 +681,15 @@ module Ruflet
       launcher = build_widget(:url_launcher)
       add_service(launcher)
       launcher
+    end
+
+    def ensure_clipboard_service
+      clipboard = services.find { |service| service.is_a?(Control) && service.type == "clipboard" }
+      return clipboard if clipboard
+
+      clipboard = build_widget(:clipboard)
+      add_service(clipboard)
+      clipboard
     end
   end
 end

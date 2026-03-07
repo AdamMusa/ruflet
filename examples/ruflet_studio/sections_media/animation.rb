@@ -117,7 +117,7 @@ module RufletStudio
           alignment: "center",
           horizontal_alignment: "center",
           tight: true,
-          controls: [canvas, btn]
+          children: [canvas, btn]
         )
       )
     end

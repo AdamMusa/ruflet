@@ -41,7 +41,7 @@ module RufletStudio
         )
       )
 
-      column(spacing: 8, tight: true, controls: [status, canvas])
+      column(spacing: 8, tight: true, children: [status, canvas])
     end
   end
 end
