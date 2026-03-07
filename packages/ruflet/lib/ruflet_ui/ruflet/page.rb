@@ -515,6 +515,7 @@ module Ruflet
     def normalize_props(hash)
       hash.each_with_object({}) do |(k, v), result|
         key = k.to_s
+        key = "controls" if key == "children"
         result[key] = normalize_value(key, v)
       end
     end

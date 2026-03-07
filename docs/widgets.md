@@ -196,7 +196,7 @@ class TabsApp < Ruflet::App
       content: column(
         expand: true,
         spacing: 0,
-        controls: [
+        children: [
           tab_bar(
             tabs: [
               tab(label: text(value: "Home")),
@@ -206,7 +206,7 @@ class TabsApp < Ruflet::App
           ),
           tab_bar_view(
             expand: 1,
-            controls: [
+            children: [
               container(expand: true, content: text(value: "Home tab")),
               container(expand: true, content: text(value: "Play tab")),
               container(expand: true, content: text(value: "About tab"))

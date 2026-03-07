@@ -27,4 +27,29 @@ class PageUpdateSerializationTest < Minitest::Test
     assert_equal "Container", controls_value.first["_c"]
     refute_nil controls_value.first["_i"]
   end
+
+  def test_update_accepts_children_alias_and_patches_controls
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    grid = Ruflet.grid_view
+    page.add(grid)
+    tile = Ruflet.container(content: Ruflet.text(value: "B"))
+
+    page.update(grid, children: [tile])
+
+    payload = sent.last[1]
+    controls_patch = payload["patch"].find { |op| op[2] == "controls" }
+    refute_nil controls_patch
+    refute payload["patch"].any? { |op| op[2] == "children" }
+
+    controls_value = controls_patch[3]
+    assert_instance_of Array, controls_value
+    assert_instance_of Hash, controls_value.first
+    assert_equal "Container", controls_value.first["_c"]
+  end
 end

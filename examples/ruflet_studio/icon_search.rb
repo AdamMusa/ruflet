@@ -103,6 +103,7 @@ class IconSearchApp < Ruflet::App
     call_id = page.set_clipboard(name)
     if call_id
       @copy_status_control.props["value"] = "Copied: #{name}"
+      puts "Copied to clipboard: #{name}"
       @copy_status_control.props["color"] = "#2b8a3e"
     else
       @copy_status_control.props["value"] = "Copy failed: clipboard service unavailable"

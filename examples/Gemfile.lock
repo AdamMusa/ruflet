@@ -1,13 +1,13 @@
 PATH
   remote: ../packages/ruflet_server
   specs:
-    ruflet_server (0.0.4)
-      ruflet (= 0.0.4)
+    ruflet_server (0.0.6)
+      ruflet (= 0.0.6)
 
 PATH
   remote: ../packages/ruflet
   specs:
-    ruflet (0.0.4)
+    ruflet (0.0.6)
 
 GEM
   remote: https://rubygems.org/
@@ -22,8 +22,8 @@ DEPENDENCIES
   ruflet_server!
 
 CHECKSUMS
-  ruflet (0.0.4)
-  ruflet_server (0.0.4)
+  ruflet (0.0.6)
+  ruflet_server (0.0.6)
 
 BUNDLED WITH
   4.0.6
