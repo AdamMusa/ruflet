@@ -4,7 +4,7 @@ class FeedbackSurfacesApp < Ruflet::App
   def view(page)
     page.title = "Feedback Surfaces Demo"
 
-    status = text(value: "Ready", size: 14)
+    status = text(value: "Ready", style: { size: 14 })
     dialog = build_dialog(page, status)
     bottom_sheet = build_bottom_sheet(page, status)
 
@@ -14,7 +14,7 @@ class FeedbackSurfacesApp < Ruflet::App
         content: column(
           spacing: 12,
           children: [
-            text(value: "Dialog, SnackBar and BottomSheet", size: 22),
+            text(value: "Dialog, SnackBar and BottomSheet", style: { size: 22 }),
             status,
             button(
               text: "Open dialog",
@@ -40,7 +40,7 @@ class FeedbackSurfacesApp < Ruflet::App
       appbar: app_bar(
         bgcolor: "#d9d7db",
         color: "#232329",
-        title: text(value: "Feedback Surfaces", size: 18)
+        title: text(value: "Feedback Surfaces", style: { size: 18 })
       )
     )
   end
@@ -103,7 +103,7 @@ class FeedbackSurfacesApp < Ruflet::App
         content: column(
           spacing: 10,
           children: [
-            text(value: "Bottom Sheet", size: 24),
+            text(value: "Bottom Sheet", style: { size: 24 }),
             text(value: "This is shown using BottomSheet control."),
             text(value: "It is intentionally larger in this sample."),
             button(

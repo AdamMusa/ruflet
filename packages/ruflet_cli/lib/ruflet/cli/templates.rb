@@ -8,7 +8,7 @@ module Ruflet
       page.title = "Counter Demo"
       count = 0
       count_text = nil
-      count_text ||= text(value: count.to_s, size: 40)
+      count_text ||= text(value: count.to_s, style: { size: 40 })
       page.add(
         container(
           expand: true,
@@ -37,8 +37,8 @@ module Ruflet
     GEMFILE_TEMPLATE = <<~GEMFILE
       source "https://rubygems.org"
 
-      gem "ruflet", ">= 0.0.6"
-      gem "ruflet_server", ">= 0.0.6"
+      gem "ruflet", ">= 0.0.7"
+      gem "ruflet_server", ">= 0.0.7"
     GEMFILE
 
     README_TEMPLATE = <<~MD

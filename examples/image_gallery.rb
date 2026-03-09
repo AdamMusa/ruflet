@@ -14,7 +14,7 @@ class ImageGalleryApp < Ruflet::App
           scroll: "auto",
           spacing: 12,
           children: [
-            text(value: "Vertical List (mix of web + local)", size: 18),
+            text(value: "Vertical List (mix of web + local)", style: { size: 18 }),
             column(
               spacing: 8,
               children: [
@@ -38,7 +38,7 @@ class ImageGalleryApp < Ruflet::App
                 )
               ]
             ),
-            text(value: "Horizontal List (web images)", size: 18),
+            text(value: "Horizontal List (web images)", style: { size: 18 }),
             container(
               height: 150,
               content: row(

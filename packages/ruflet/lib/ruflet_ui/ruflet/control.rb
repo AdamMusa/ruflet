@@ -1,19 +1,17 @@
 # frozen_string_literal: true
 
 begin
-  require "securerandom"
+require "securerandom"
 rescue LoadError
   nil
 end
-require_relative "ui/control_registry"
 require_relative "icon_data"
 require_relative "icons/material_icon_lookup"
 require_relative "icons/cupertino_icon_lookup"
+require "set"
 
 module Ruflet
   class Control
-    TYPE_MAP = UI::ControlRegistry::TYPE_MAP
-    EVENT_PROPS = UI::ControlRegistry::EVENT_PROPS
     HOST_EXPANDED_TYPES = %w[view row column].freeze
 
     attr_reader :type, :id, :props, :children
@@ -30,6 +28,7 @@ module Ruflet
 
     def on(event_name, &block)
       name = normalized_event_name(event_name)
+      validate_event_name!(name)
       @handlers[name] = block
       @props["on_#{name}"] = true
       runtime_page&.update(self, "on_#{name}": true) if wire_id
@@ -49,8 +48,14 @@ module Ruflet
     end
 
     def to_patch
+      wire_type = schema_wire_type_for_class
+      if wire_type.nil?
+        compact_type_key = type.delete("_")
+        wire_type = type_map[type] || type_map[compact_type_key]
+      end
+      raise ArgumentError, "Unknown control type: #{type}" unless wire_type
       patch = {
-        "_c" => TYPE_MAP.fetch(type, type.split("_").map(&:capitalize).join),
+        "_c" => wire_type,
         "_i" => wire_id
       }
 
@@ -87,16 +92,33 @@ module Ruflet
       when Hash
         value.transform_values { |v| serialize_value(v) }
       else
-        value
+        value.respond_to?(:to_h) ? serialize_value(value.to_h) : value
       end
     end
 
     def extract_handlers(input)
       output = input.dup
+      allowed_events = event_names
+      allowed_events_set = allowed_events.to_set
 
-      EVENT_PROPS.each do |prop, event_name|
+      output.keys.each do |key|
+        key_string = key.to_s
+        next unless key_string.start_with?("on_")
+
+        event_name = normalized_event_name(key_string)
+        if allowed_events.any? && !allowed_events_set.include?(event_name)
+          raise ArgumentError, "Unknown event `#{key_string}` for control type `#{type}`"
+        end
+
+        handler = output.delete(key)
+        @handlers[event_name] = handler if handler.respond_to?(:call)
+        output["on_#{event_name}"] = true
+      end
+
+      event_props.each do |prop, event_name|
         string_prop = prop.to_s
         next unless output.key?(prop) || output.key?(string_prop)
+        next if allowed_events.any? && !allowed_events_set.include?(event_name)
 
         handler = output.key?(prop) ? output.delete(prop) : output.delete(string_prop)
         @handlers[event_name] = handler if handler.respond_to?(:call)
@@ -107,9 +129,19 @@ module Ruflet
     end
 
     def normalize_props(hash)
+      allowed_props = property_names
+      normalized_allowed = allowed_props.to_set
+
       hash.each_with_object({}) do |(k, v), result|
         key = k.to_s
         mapped_key = key
+        if strict_schema_enforced?(allowed_props) &&
+            !mapped_key.start_with?("_") &&
+            !mapped_key.start_with?("on_") &&
+            !normalized_allowed.include?(mapped_key)
+          raise ArgumentError, "Unknown attribute `#{mapped_key}` for control type `#{type}`"
+        end
+
         value =
           if v.is_a?(Symbol)
             v.to_s
@@ -163,6 +195,87 @@ module Ruflet
 
     def normalized_event_name(event_name)
       event_name.to_s.sub(/\Aon_/, "")
+    end
+
+    def validate_event_name!(event_name)
+      events = event_names
+      return if events.empty? || events.include?(event_name)
+
+      raise ArgumentError, "Unknown event `on_#{event_name}` for control type `#{type}`"
+    end
+
+    def strict_schema_enforced?(allowed_props)
+      !allowed_props.empty?
+    end
+
+    def property_names
+      constructor_keywords_for_schema_class
+        .reject { |name| name.to_s.start_with?("on_") }
+        .map(&:to_s)
+    end
+
+    def event_names
+      constructor_keywords_for_schema_class
+        .select { |name| name.to_s.start_with?("on_") }
+        .map { |name| name.to_s.sub(/\Aon_/, "") }
+    end
+
+    def schema_wire_type_for_class
+      return nil unless self.class.const_defined?(:WIRE)
+
+      self.class::WIRE.to_s
+    end
+
+    def schema_class_for_validation
+      if self.class != Ruflet::Control && has_explicit_initialize_keywords?(self.class)
+        return self.class
+      end
+      begin
+        require_relative "ui/control_factory"
+        mapped = UI::ControlFactory::CLASS_MAP[type]
+        return mapped if mapped && has_explicit_initialize_keywords?(mapped)
+      rescue LoadError
+        nil
+      end
+
+      begin
+        require_relative "ui/controls/ruflet_controls"
+        mapped = UI::Controls::RufletControls::CLASS_MAP[type]
+        return mapped if mapped && has_explicit_initialize_keywords?(mapped)
+      rescue LoadError
+        nil
+      end
+
+      nil
+    end
+
+    def constructor_keywords_for_schema_class
+      schema_class = schema_class_for_validation
+      return [] unless schema_class
+
+      schema_class.instance_method(:initialize).parameters
+                 .select { |kind, _| kind == :key || kind == :keyreq }
+                 .map { |_, name| name }
+                 .reject { |name| name == :id }
+    rescue StandardError
+      []
+    end
+
+    def has_explicit_initialize_keywords?(klass)
+      params = klass.instance_method(:initialize).parameters
+      params.any? { |kind, _| kind == :key || kind == :keyreq }
+    rescue StandardError
+      false
+    end
+
+    def type_map
+      require_relative "ui/control_registry"
+      UI::ControlRegistry::TYPE_MAP
+    end
+
+    def event_props
+      require_relative "ui/control_registry"
+      UI::ControlRegistry::EVENT_PROPS
     end
   end
 end

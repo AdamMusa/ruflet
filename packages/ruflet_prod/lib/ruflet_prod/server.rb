@@ -166,6 +166,8 @@ module RufletProd
         on_control_event(ws, payload)
       when Protocol::ACTIONS[:update_control], Protocol::ACTIONS[:update_control_props]
         on_update_control(ws, payload)
+      when Protocol::ACTIONS[:invoke_control_method]
+        on_invoke_control_method(ws, payload)
       else
         raise "Unknown action: #{action.inspect}"
       end
@@ -257,6 +259,13 @@ module RufletProd
       return if update["id"].nil?
 
       page.apply_client_update(update["id"], update["props"] || {})
+    end
+
+    def on_invoke_control_method(ws, payload)
+      return if @manifest
+
+      page = fetch_page(ws)
+      page.handle_invoke_method_result(payload)
     end
 
     def fetch_page(ws)

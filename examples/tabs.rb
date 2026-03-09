@@ -11,15 +11,15 @@ class MainApp < Ruflet::App
       tabs: [
         tab(
           label: text(value: "Home"),
-          content: container(padding: 16, content: text(value: "Home tab", size: 24))
+          content: container(padding: 16, content: text(value: "Home tab", style: { size: 24 }))
         ),
         tab(
           label: text(value: "Play"),
-          content: container(padding: 16, content: text(value: "Play tab", size: 24))
+          content: container(padding: 16, content: text(value: "Play tab", style: { size: 24 }))
         ),
         tab(
           label: text(value: "About"),
-          content: container(padding: 16, content: text(value: "About tab", size: 24))
+          content: container(padding: 16, content: text(value: "About tab", style: { size: 24 }))
         )
       ]
     )
@@ -39,7 +39,7 @@ class MainApp < Ruflet::App
       appbar: app_bar(
         bgcolor: "#d9d7db",
         color: "#232329",
-        title: text(value: app_name, size: 18)
+        title: text(value: app_name, style: { size: 18 })
       ),
       floating_action_button: fab(
         icon(icon: Ruflet::MaterialIcons::ADD),

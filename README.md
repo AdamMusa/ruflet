@@ -94,6 +94,8 @@ ruflet run [scriptname|path] [--web|--mobile|--desktop]
 ruflet build <apk|ios|aab|web|macos|windows|linux|zip>
 ```
 
+For monorepo development (always uses local CLI source), run:
+
 By default `ruflet build ...` looks for Flutter client at `./ruflet_client`.
 Set `RUFLET_CLIENT_DIR` to override.
 

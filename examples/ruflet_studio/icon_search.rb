@@ -22,8 +22,8 @@ class IconSearchApp < Ruflet::App
 
   def render(page)
     names = filtered_icon_names(@query)
-    @summary_control = text(value: summary_text(names), size: 12, color: "#6c757d")
-    @copy_status_control = text(value: "Tap an item to copy icon name", size: 12, color: "#6c757d")
+    @summary_control = text(value: summary_text(names), style: { size: 12, color: "#6c757d" })
+    @copy_status_control = text(value: "Tap an item to copy icon name", style: { size: 12, color: "#6c757d" })
     @results_grid = build_results_grid(names)
 
     page.add(
@@ -62,7 +62,7 @@ class IconSearchApp < Ruflet::App
     names = filtered_icon_names(@query)
     page.update(@summary_control, value: summary_text(names))
     page.update(@results_grid, children: grid_items(names))
-    page.update(@copy_status_control, value: "Tap an item to copy icon name", color: "#6c757d")
+    page.update(@copy_status_control, value: "Tap an item to copy icon name", style: { color: "#6c757d" })
   end
 
   def build_results_grid(names)
@@ -109,9 +109,9 @@ class IconSearchApp < Ruflet::App
       @copy_status_control.props["value"] = "Copy failed: clipboard service unavailable"
       @copy_status_control.props["color"] = "#c92a2a"
     end
-    page.update(@copy_status_control, value: @copy_status_control.props["value"], color: @copy_status_control.props["color"])
-  rescue StandardError
-    page.update(@copy_status_control, value: "Copy failed: #{name}", color: "#c92a2a")
+    page.update(@copy_status_control, value: @copy_status_control.props["value"], style: { color: @copy_status_control.props["color"] })
+  rescue StandardError => e
+    page.update(@copy_status_control, value: "Copy failed: #{e.message}", style: { color: "#c92a2a" })
   end
 
   def event_value(event)

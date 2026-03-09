@@ -5,7 +5,10 @@ require_relative "ruflet_ui/ruflet/colors"
 require_relative "ruflet_ui/ruflet/icon_data"
 require_relative "ruflet_ui/ruflet/icons/material_icons"
 require_relative "ruflet_ui/ruflet/icons/cupertino/cupertino_icons"
+require_relative "ruflet_ui/ruflet/types/text_style"
+require_relative "ruflet_ui/ruflet/types/geometry"
 require_relative "ruflet_ui/ruflet/control"
+require_relative "ruflet_ui/ruflet/ui/control_registry"
 require_relative "ruflet_ui/ruflet/ui/widget_builder"
 require_relative "ruflet_ui/ruflet/ui/shared_control_forwarders"
 require_relative "ruflet_ui/ruflet/event"
@@ -14,6 +17,16 @@ require_relative "ruflet_ui/ruflet/app"
 require_relative "ruflet_ui/ruflet/dsl"
 
 module Ruflet
+  TextStyle = UI::Types::TextStyle
+  StrutStyle = UI::Types::StrutStyle
+  TextOverflow = UI::Types::TextOverflow
+  TextBaseline = UI::Types::TextBaseline
+  TextThemeStyle = UI::Types::TextThemeStyle
+  TextDecoration = UI::Types::TextDecoration
+  TextDecorationStyle = UI::Types::TextDecorationStyle
+  Offset = UI::Types::Offset
+  Duration = UI::Types::Duration
+
   module MainAxisAlignment
     CENTER = "center"
     START = "start"

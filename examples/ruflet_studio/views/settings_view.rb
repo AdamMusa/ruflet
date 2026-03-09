@@ -8,14 +8,13 @@ module RufletStudio
       gestures_long_press = checkbox(value: false)
       gestures_shake_state = false
       gestures_long_press_state = false
-      widget(
-        :view,
+      view(
         route: route,
         bgcolor: color_bg(page),
         appbar: app_bar(
           bgcolor: color_surface(page),
           color: color_text(page),
-          title: text(value: "Settings", size: 20),
+          title: text(value: "Settings", style: { size: 20 }),
           actions: []
         ),
         navigation_bar: nav_bar(page, route),
@@ -25,9 +24,8 @@ module RufletStudio
           column(
             spacing: 16,
             children: [
-              text(value: "Theme", size: 14, color: color_icon(page)),
-              control(
-                :radiogroup,
+              text(value: "Theme", style: { size: 14, color: color_icon(page) }),
+              radio_group(
                 value: theme_mode,
                 on_change: ->(e) {
                   value = read_string(e.data, "value") || read_string(e.data, "selected") || e.data.to_s
@@ -45,7 +43,7 @@ module RufletStudio
                           spacing: 12,
                           children: [
                             icon(name: "contrast", color: color_icon(page)),
-                            text(value: "System", color: color_text(page))
+                            text(value: "System", style: { color: color_text(page) })
                           ]
                         ),
                         radio(value: "system")
@@ -58,7 +56,7 @@ module RufletStudio
                           spacing: 12,
                           children: [
                             icon(name: "light_mode", color: color_icon(page)),
-                            text(value: "Light", color: color_text(page))
+                            text(value: "Light", style: { color: color_text(page) })
                           ]
                         ),
                         radio(value: "light")
@@ -71,7 +69,7 @@ module RufletStudio
                           spacing: 12,
                           children: [
                             icon(name: "dark_mode", color: color_icon(page)),
-                            text(value: "Dark", color: color_text(page))
+                            text(value: "Dark", style: { color: color_text(page) })
                           ]
                         ),
                         radio(value: "dark")
@@ -81,11 +79,11 @@ module RufletStudio
                 )
               ),
               container(height: 1, bgcolor: color_divider(page), margin: { top: 8, bottom: 8 }),
-              text(value: "Home gestures", size: 14, color: color_icon(page)),
+              text(value: "Home gestures", style: { size: 14, color: color_icon(page) }),
               control(
                 :list_tile,
                 leading: icon(name: "vibration", color: color_icon(page)),
-                title: text(value: "Shake device", color: color_text(page)),
+                title: text(value: "Shake device", style: { color: color_text(page) }),
                 trailing: gestures_shake,
                 on_click: ->(_e) {
                   gestures_shake_state = !gestures_shake_state
@@ -95,7 +93,7 @@ module RufletStudio
               control(
                 :list_tile,
                 leading: icon(name: "pan_tool_alt", color: color_icon(page)),
-                title: text(value: "Long press with two fingers", color: color_text(page)),
+                title: text(value: "Long press with two fingers", style: { color: color_text(page) }),
                 trailing: gestures_long_press,
                 on_click: ->(_e) {
                   gestures_long_press_state = !gestures_long_press_state
@@ -103,26 +101,26 @@ module RufletStudio
                 }
               ),
               container(height: 1, bgcolor: color_divider(page), margin: { top: 8, bottom: 8 }),
-              text(value: "Application details", size: 14, color: color_icon(page)),
+              text(value: "Application details", style: { size: 14, color: color_icon(page) }),
               row(
                 alignment: "spaceBetween",
                 children: [
-                  text(value: "Client version:", color: color_text(page)),
-                  text(value: "#{Ruflet::VERSION}", color: color_subtle(page))
+                  text(value: "Client version:", style: { color: color_text(page) }),
+                  text(value: "#{Ruflet::VERSION}", style: { color: color_subtle(page) })
                 ]
               ),
               row(
                 alignment: "spaceBetween",
                 children: [
-                  text(value: "Ruflet SDK version:", color: color_text(page)),
-                  text(value: "#{Ruflet::VERSION}", color: color_subtle(page))
+                  text(value: "Ruflet SDK version:", style: { color: color_text(page) }),
+                  text(value: "#{Ruflet::VERSION}", style: { color: color_subtle(page) })
                 ]
               ),
               row(
                 alignment: "spaceBetween",
                 children: [
-                  text(value: "Ruby version:", color: color_text(page)),
-                  text(value: "#{RUBY_VERSION}", color: color_subtle(page))
+                  text(value: "Ruby version:", style: { color: color_text(page) }),
+                  text(value: "#{RUBY_VERSION}", style: { color: color_subtle(page) })
                 ]
               )
             ]

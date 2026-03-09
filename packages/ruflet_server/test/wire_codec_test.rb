@@ -23,4 +23,11 @@ class RufletServerWireCodecTest < Minitest::Test
 
     assert_equal({ "status" => "ok" }, decoded)
   end
+
+  def test_unpack_supports_bin16_marker
+    bytes = ["c5 00 03 61 62 63".delete(" ")].pack("H*")
+    decoded = Ruflet::WireCodec.unpack(bytes)
+
+    assert_equal "abc".b, decoded
+  end
 end

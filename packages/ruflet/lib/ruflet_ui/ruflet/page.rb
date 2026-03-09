@@ -4,28 +4,23 @@ require_relative "event"
 require "ruflet_protocol"
 require_relative "control"
 require_relative "ui/widget_builder"
+require_relative "ui/control_factory"
 require_relative "icons/material_icon_lookup"
 require_relative "icons/cupertino_icon_lookup"
 require "set"
 require "cgi"
+require "thread"
+require "timeout"
 
 module Ruflet
   class Page
     PAGE_PROP_KEYS = %w[route title vertical_alignment horizontal_alignment scroll].freeze
     DIALOG_PROP_KEYS = %w[dialog snack_bar bottom_sheet].freeze
-    BUTTON_TEXT_TYPES = %w[button elevatedbutton textbutton filledbutton].freeze
-    DEPRECATED_PAGE_WIDGET_METHODS = %i[
-      control widget view column center row stack container gesture_detector gesturedetector draggable
-      drag_target dragtarget text button elevated_button elevatedbutton text_button textbutton filled_button
-      filledbutton icon_button iconbutton text_field textfield checkbox radio radio_group radiogroup
-      alert_dialog alertdialog markdown icon image app_bar appbar floating_action_button snack_bar snackbar
-      bottom_sheet bottomsheet tabs tab tab_bar tabbar tab_bar_view tabbarview navigation_bar navigationbar
-      navigation_bar_destination navigationbardestination fab cupertino_button
-      cupertinobutton cupertino_filled_button cupertinofilledbutton cupertino_text_field cupertinotextfield
-      cupertino_switch cupertinoswitch cupertino_slider cupertinoslider cupertino_alert_dialog
-      cupertinoalertdialog cupertino_action_sheet cupertinoactionsheet cupertino_dialog_action
-      cupertinodialogaction cupertino_navigation_bar cupertinonavigationbar
-    ].freeze
+    WIDGET_HELPER_METHODS = (
+      Ruflet::UI::MaterialControlMethods.instance_methods(false) +
+      Ruflet::UI::CupertinoControlMethods.instance_methods(false) +
+      %i[control widget]
+    ).map(&:to_s).to_set.freeze
 
     attr_reader :session_id, :client_details, :views
 
@@ -51,13 +46,17 @@ module Ruflet
       @services_container = Ruflet::Control.new(
         type: "service_registry",
         id: "_services",
-        "_services": []
+        "_services": [],
+        "_internals": { "uid" => Ruflet::Control.generate_id }
       )
       @dialogs_container = Ruflet::Control.new(
         type: "dialogs",
         id: "_dialogs",
         controls: []
       )
+      @invoke_waiters = {}
+      @invoke_callbacks = {}
+      @invoke_waiters_mutex = Mutex.new
       refresh_overlay_container!
       refresh_services_container!
       refresh_dialogs_container!
@@ -156,6 +155,24 @@ module Ruflet
       self
     end
 
+    def service(type, **props)
+      mapped_props = normalize_props(props || {})
+      id = mapped_props.delete("id")
+      normalized_type = type.to_s.downcase
+
+      existing =
+        if id
+          services.find { |s| s.is_a?(Control) && s.id.to_s == id.to_s }
+        else
+          services.find { |s| s.is_a?(Control) && s.type.to_s.downcase == normalized_type }
+        end
+      return existing if existing
+
+      svc = Ruflet::UI::ControlFactory.build(type.to_s, id: id&.to_s, **mapped_props)
+      add_service(svc) unless services.include?(svc)
+      svc
+    end
+
     def go(route, **query_params)
       @page_props["route"] = build_route(route, query_params)
       dispatch_page_event(name: "route_change", data: @page_props["route"])
@@ -228,13 +245,29 @@ module Ruflet
       self
     end
 
-    def invoke(control_or_id, method_name, args: nil, timeout: 10)
-      control = resolve_control(control_or_id)
-      return nil unless control
+    def invoke(control_or_id, method_name, args: nil, timeout: 10, on_result: nil)
+      control_id =
+        if page_control_target?(control_or_id)
+          1
+        else
+          control = resolve_control(control_or_id)
+          return nil unless control
+          control.wire_id
+        end
 
       call_id = "call_#{Ruflet::Control.generate_id}"
+      if on_result.respond_to?(:call)
+        @invoke_waiters_mutex.synchronize { @invoke_callbacks[call_id] = on_result }
+        Thread.new(call_id, timeout.to_f) do |pending_call_id, invoke_timeout|
+          sleep([invoke_timeout, 0.0].max + 0.1)
+          callback = @invoke_waiters_mutex.synchronize { @invoke_callbacks.delete(pending_call_id) }
+          callback&.call(nil, "execution expired")
+        rescue StandardError => e
+          Kernel.warn("invoke timeout callback error: #{e.class}: #{e.message}")
+        end
+      end
       send_message(Protocol::ACTIONS[:invoke_control_method], {
-        "control_id" => control.wire_id,
+        "control_id" => control_id,
         "call_id" => call_id,
         "name" => method_name.to_s,
         "args" => args,
@@ -244,11 +277,16 @@ module Ruflet
       call_id
     end
 
+    # Synchronous invoke for controls/services that must return a value
+    # before continuing (e.g. picker selection, camera discovery/init).
+    def invoke_sync(control_or_id, method_name, args: nil, timeout: 10)
+      invoke_and_wait(control_or_id, method_name, args: args, timeout: timeout)
+    end
+
     def launch_url(url, mode: "external_application", web_view_configuration: nil, browser_configuration: nil, web_only_window_name: nil, timeout: 10)
-      launcher = ensure_url_launcher_service
       invoke(
-        launcher,
-        "launch_url",
+        1,
+        "launchUrl",
         args: {
           "url" => url,
           "mode" => mode,
@@ -261,18 +299,17 @@ module Ruflet
     end
 
     def can_launch_url(url, timeout: 10)
-      launcher = ensure_url_launcher_service
-      invoke(launcher, "can_launch_url", args: { "url" => url }, timeout: timeout)
+      invoke(1, "canLaunchUrl", args: { "url" => url }, timeout: timeout)
     end
 
     def set_clipboard(value, timeout: 10)
       clipboard = ensure_clipboard_service
-      invoke(clipboard, "set", args: { "data" => value.to_s }, timeout: timeout)
+      invoke(clipboard, "set_data", args: { "data" => value.to_s }, timeout: timeout)
     end
 
     def get_clipboard(timeout: 10)
       clipboard = ensure_clipboard_service
-      invoke(clipboard, "get", timeout: timeout)
+      invoke(clipboard, "get_data", timeout: timeout)
     end
 
     def set_clipboard_files(files, timeout: 10)
@@ -293,6 +330,24 @@ module Ruflet
     def get_clipboard_image(timeout: 10)
       clipboard = ensure_clipboard_service
       invoke(clipboard, "get_image", timeout: timeout)
+    end
+
+    def handle_invoke_method_result(payload)
+      call_id = payload["call_id"].to_s
+      waiter = @invoke_waiters_mutex.synchronize { @invoke_waiters[call_id] }
+      if waiter
+        waiter << payload
+        return true
+      end
+
+      callback = @invoke_waiters_mutex.synchronize { @invoke_callbacks.delete(call_id) }
+      return false unless callback
+
+      callback.call(payload["result"], payload["error"])
+      true
+    rescue StandardError => e
+      Kernel.warn("invoke callback error: #{e.class}: #{e.message}")
+      false
     end
 
     def pop_dialog
@@ -321,8 +376,14 @@ module Ruflet
       return self unless control
 
       patch = normalize_props(props)
-      if BUTTON_TEXT_TYPES.include?(control.type) && patch.key?("text")
+      if text_maps_to_content?(control, patch)
         patch["content"] = patch.delete("text")
+      end
+
+      # Keep runtime control tree aligned with incremental patches.
+      if patch.key?("controls")
+        control.children.clear
+        Array(patch["controls"]).each { |child| control.children << child if child.is_a?(Control) }
       end
 
       visited = Set.new
@@ -380,8 +441,7 @@ module Ruflet
       prop_name = method_name.delete_suffix("=")
 
       if method_name.end_with?("=")
-        if DEPRECATED_PAGE_WIDGET_METHODS.include?(prop_name.to_sym)
-          Kernel.warn("[DEPRECATION] `page.#{prop_name}(...)` is no longer supported.")
+        if widget_helper_method?(prop_name)
           raise NoMethodError, "Use `#{prop_name}(...)` as a free widget helper, then attach with `page.add(...)`."
         end
         assign_split_prop(prop_name, normalize_value(prop_name, args.first))
@@ -394,8 +454,7 @@ module Ruflet
         return instance_variable_get("@#{method_name}") if DIALOG_PROP_KEYS.include?(method_name)
       end
 
-      if DEPRECATED_PAGE_WIDGET_METHODS.include?(name.to_sym)
-        Kernel.warn("[DEPRECATION] `page.#{name}(...)` is no longer supported.")
+      if widget_helper_method?(name)
         raise NoMethodError, "Use `#{name}(...)` as a free widget helper, then attach with `page.add(...)`."
       end
 
@@ -405,8 +464,8 @@ module Ruflet
     def respond_to_missing?(name, include_private = false)
       method_name = name.to_s
       prop_name = method_name.delete_suffix("=")
-      DEPRECATED_PAGE_WIDGET_METHODS.include?(name.to_sym) ||
-        DEPRECATED_PAGE_WIDGET_METHODS.include?(prop_name.to_sym) ||
+      widget_helper_method?(name) ||
+        widget_helper_method?(prop_name) ||
         method_name.end_with?("=") ||
         @page_props.key?(method_name) ||
         @view_props.key?(method_name) ||
@@ -416,7 +475,46 @@ module Ruflet
 
     private
 
+    def invoke_and_wait(control_or_id, method_name, args: nil, timeout: 10)
+      control_id =
+        if page_control_target?(control_or_id)
+          1
+        else
+          control = resolve_control(control_or_id)
+          return nil unless control
+          control.wire_id
+        end
+
+      call_id = "call_#{Ruflet::Control.generate_id}"
+      waiter = Queue.new
+      @invoke_waiters_mutex.synchronize { @invoke_waiters[call_id] = waiter }
+
+      send_message(Protocol::ACTIONS[:invoke_control_method], {
+        "control_id" => control_id,
+        "call_id" => call_id,
+        "name" => method_name.to_s,
+        "args" => args,
+        "timeout" => timeout
+      })
+
+      response = Timeout.timeout(timeout.to_f) { waiter.pop }
+      error = response["error"]
+      raise RuntimeError, error if error && !error.to_s.empty?
+
+      response["result"]
+    ensure
+      @invoke_waiters_mutex.synchronize { @invoke_waiters.delete(call_id) } if call_id
+    end
+
     def build_widget(type, **props, &block) = WidgetBuilder.new.control(type, **props, &block)
+
+    def widget_helper_method?(name)
+      WIDGET_HELPER_METHODS.include?(name.to_s)
+    end
+
+    def text_maps_to_content?(control, patch)
+      patch.key?("text") && control.type.end_with?("button")
+    end
 
     def split_props(props)
       props.each do |k, v|
@@ -673,15 +771,6 @@ module Ruflet
         codepoint = Ruflet::CupertinoIconLookup.codepoint_for(value)
       end
       codepoint
-    end
-
-    def ensure_url_launcher_service
-      launcher = services.find { |service| service.is_a?(Control) && service.type == "url_launcher" }
-      return launcher if launcher
-
-      launcher = build_widget(:url_launcher)
-      add_service(launcher)
-      launcher
     end
 
     def ensure_clipboard_service

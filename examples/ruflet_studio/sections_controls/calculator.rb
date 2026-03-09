@@ -34,8 +34,7 @@ module RufletStudio
       @calculator_display = text(
         value: calculator_state[:display],
         text_align: "right",
-        size: 84,
-        color: "#FFFFFF"
+        style: { size: 84, color: "#FFFFFF" }
       )
     end
 

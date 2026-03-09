@@ -65,7 +65,7 @@ module RufletStudio
       column(
         spacing: 8,
         children: [
-          text(value: "Todos", size: 20, weight: "w600", color: "#e7e9ec"),
+          text(value: "Todos", style: { size: 20, weight: "w600", color: "#e7e9ec" }),
           input,
           button(text: "Add", on_click: ->(_e) { add_todo.call }),
           list,

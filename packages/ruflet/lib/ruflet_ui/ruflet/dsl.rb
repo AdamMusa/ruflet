@@ -36,6 +36,7 @@ module Ruflet
     def page(**props, &block) = _pending_app.page(**props, &block)
     def control(type, **props, &block) = _pending_app.control(type, **props, &block)
     def widget(type, **props, &block) = _pending_app.widget(type, **props, &block)
+    def service(type, **props, &block) = _pending_app.service(type, **props, &block)
     def column(**props, &block) = _pending_app.column(**props, &block)
     def center(**props, &block) = _pending_app.center(**props, &block)
     def row(**props, &block) = _pending_app.row(**props, &block)
@@ -88,6 +89,44 @@ module Ruflet
     def navigationbar(**props, &block) = _pending_app.navigationbar(**props, &block)
     def navigation_bar_destination(**props, &block) = _pending_app.navigation_bar_destination(**props, &block)
     def navigationbardestination(**props, &block) = _pending_app.navigationbardestination(**props, &block)
+    def bar_chart(**props) = _pending_app.bar_chart(**props)
+    def barchart(**props) = _pending_app.barchart(**props)
+    def bar_chart_group(**props) = _pending_app.bar_chart_group(**props)
+    def barchartgroup(**props) = _pending_app.barchartgroup(**props)
+    def bar_chart_rod(**props) = _pending_app.bar_chart_rod(**props)
+    def barchartrod(**props) = _pending_app.barchartrod(**props)
+    def bar_chart_rod_stack_item(**props) = _pending_app.bar_chart_rod_stack_item(**props)
+    def barchartrodstackitem(**props) = _pending_app.barchartrodstackitem(**props)
+    def line_chart(**props) = _pending_app.line_chart(**props)
+    def linechart(**props) = _pending_app.linechart(**props)
+    def line_chart_data(**props) = _pending_app.line_chart_data(**props)
+    def linechartdata(**props) = _pending_app.linechartdata(**props)
+    def line_chart_data_point(**props) = _pending_app.line_chart_data_point(**props)
+    def linechartdatapoint(**props) = _pending_app.linechartdatapoint(**props)
+    def pie_chart(**props) = _pending_app.pie_chart(**props)
+    def piechart(**props) = _pending_app.piechart(**props)
+    def pie_chart_section(**props) = _pending_app.pie_chart_section(**props)
+    def piechartsection(**props) = _pending_app.piechartsection(**props)
+    def candlestick_chart(**props) = _pending_app.candlestick_chart(**props)
+    def candlestickchart(**props) = _pending_app.candlestickchart(**props)
+    def candlestick_chart_spot(**props) = _pending_app.candlestick_chart_spot(**props)
+    def candlestickchartspot(**props) = _pending_app.candlestickchartspot(**props)
+    def radar_chart(**props) = _pending_app.radar_chart(**props)
+    def radarchart(**props) = _pending_app.radarchart(**props)
+    def radar_chart_title(**props) = _pending_app.radar_chart_title(**props)
+    def radarcharttitle(**props) = _pending_app.radarcharttitle(**props)
+    def radar_data_set(**props) = _pending_app.radar_data_set(**props)
+    def radardataset(**props) = _pending_app.radardataset(**props)
+    def radar_data_set_entry(**props) = _pending_app.radar_data_set_entry(**props)
+    def radardatasetentry(**props) = _pending_app.radardatasetentry(**props)
+    def scatter_chart(**props) = _pending_app.scatter_chart(**props)
+    def scatterchart(**props) = _pending_app.scatterchart(**props)
+    def scatter_chart_spot(**props) = _pending_app.scatter_chart_spot(**props)
+    def scatterchartspot(**props) = _pending_app.scatterchartspot(**props)
+    def chart_axis(**props) = _pending_app.chart_axis(**props)
+    def chartaxis(**props) = _pending_app.chartaxis(**props)
+    def chart_axis_label(**props) = _pending_app.chart_axis_label(**props)
+    def chartaxislabel(**props) = _pending_app.chartaxislabel(**props)
     def fab(content = nil, **props) = _pending_app.fab(content, **props)
     def cupertino_button(**props) = _pending_app.cupertino_button(**props)
     def cupertinobutton(**props) = _pending_app.cupertinobutton(**props)
@@ -118,6 +157,7 @@ module Ruflet
         @host = host
         @port = port
         @roots = []
+        @services = []
         @stack = []
         @page_props = { "route" => "/" }
         @seq = 0
@@ -159,16 +199,26 @@ module Ruflet
         c
       end
 
+      def service(type, **props, &block)
+        mapped_props = props.dup
+        id = mapped_props.delete(:id)&.to_s || next_id(type)
+        svc = Ruflet::UI::ControlFactory.build(type.to_s, id: id, **normalize_props(mapped_props))
+        @services << svc unless @services.include?(svc)
+        svc
+      end
+
       def duration(**parts)
         DSL.duration(**parts)
       end
 
       def run
         app_roots = @roots
+        app_services = @services
         page_props = @page_props.dup
 
         Ruflet::Server.new(host: host, port: port) do |runtime_page|
           runtime_page.set_view_props(page_props)
+          runtime_page.add_service(*app_services) if app_services.any?
           runtime_page.add(*app_roots)
         end.start
       end
@@ -176,6 +226,7 @@ module Ruflet
       private
 
       def build_widget(type, **props, &block) = control(type.to_s, **props, &block)
+      def build_service(type, **props, &block) = service(type.to_s, **props, &block)
 
       def attach(control)
         if @stack.empty?

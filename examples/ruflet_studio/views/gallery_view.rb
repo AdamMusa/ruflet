@@ -4,8 +4,7 @@ module RufletStudio
   module Views
     def gallery_view(page)
       route = "/gallery"
-      widget(
-        :view,
+      view(
         route: route,
         bgcolor: color_bg(page),
         scroll: "auto",
@@ -13,7 +12,7 @@ module RufletStudio
         appbar: app_bar(
           bgcolor: color_surface(page),
           color: color_text(page),
-          title: text(value: "Gallery", size: 20),
+          title: text(value: "Gallery", style: { size: 20 }),
           actions: []
         ),
         navigation_bar: nav_bar(page, route),
@@ -36,10 +35,13 @@ module RufletStudio
         tile(page, "phone_iphone", "Cupertino controls", "/cupertino"),
         tile(page, "show_chart", "Charts", "/charts"),
         tile(page, "grid_on", "Minesweeper", "/minesweeper"),
+        tile(page, "search", "Icon Search", "/icon-search"),
         tile(page, "animation", "Ruflet Animation", "/animation"),
         tile(page, "music_note", "Audio Player", "/audio"),
         tile(page, "video_library", "Video Player", "/video"),
-        tile(page, "flash_on", "Flashlight", "/flashlight")
+        tile(page, "flash_on", "Flashlight", "/flashlight"),
+        tile(page, "photo_camera", "Camera", "/camera"),
+        tile(page, "attach_file", "File Picker", "/file-picker")
       ]
     end
 
@@ -47,7 +49,7 @@ module RufletStudio
       control(
         :list_tile,
         leading: icon(name: icon, color: color_icon(page)),
-        title: text(value: title, color: color_text(page), size: 16),
+        title: text(value: title, style: { color: color_text(page), size: 16 }),
         trailing: icon(name: "chevron_right", color: color_subtle(page)),
         on_click: ->(_e) { page.go(route) }
       )

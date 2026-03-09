@@ -21,14 +21,7 @@ module RufletStudio
     end
 
     def url_launcher_service(page)
-      @url_launcher_services ||= {}
-      service = @url_launcher_services[page.object_id]
-      return service if service
-
-      service = control(:url_launcher)
-      page.add_service(service)
-      @url_launcher_services[page.object_id] = service
-      service
+      page.service(:url_launcher)
     end
 
     def open_github(page, path)

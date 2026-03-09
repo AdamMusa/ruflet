@@ -96,6 +96,33 @@ module Ruflet
       end
     end
 
+    def reload_app!
+      snapshots = @sessions_mutex.synchronize { @sessions.to_a }
+
+      snapshots.each do |session_key, current_page|
+        ws = @connections_mutex.synchronize { @connections[session_key] }
+        next unless ws
+
+        refreshed_page = Page.new(
+          session_id: current_page.session_id,
+          client_details: current_page.client_details,
+          sender: lambda do |action, payload|
+            send_message(ws, action, payload)
+          end
+        )
+        refreshed_page.title = "Ruflet App"
+
+        @sessions_mutex.synchronize do
+          @sessions[session_key] = refreshed_page
+        end
+
+        @app_block.call(refreshed_page)
+        refreshed_page.update
+      rescue StandardError => e
+        warn "reload error: #{e.class}: #{e.message}"
+      end
+    end
+
     private
 
     def trap_stop_signals
@@ -159,6 +186,8 @@ module Ruflet
       ws = nil
       begin
         path, headers = read_http_upgrade_request(socket)
+        return if path.nil?
+
         if websocket_upgrade_request?(path, headers)
           send_handshake_response(socket, headers["sec-websocket-key"])
           ws = Ruflet::WebSocketConnection.new(socket)
@@ -197,10 +226,12 @@ module Ruflet
 
     def read_http_upgrade_request(socket)
       request_line = socket.gets("\r\n")
-      raise "Invalid HTTP request" if request_line.nil?
+      return [nil, {}] if request_line.nil?
+      return [nil, {}] unless request_line.include?(" ")
 
       method, path, _version = request_line.strip.split(" ", 3)
-      raise "Unsupported HTTP method: #{method}" unless method == "GET"
+      return [nil, {}] unless method == "GET"
+      return [nil, {}] if path.to_s.empty?
 
       headers = {}
       loop do
@@ -438,9 +469,9 @@ module Ruflet
       raise
     end
 
-    def on_invoke_control_method(_ws, _payload)
-      # Client response to invoke_control_method; no server-side handling yet.
-      nil
+    def on_invoke_control_method(ws, payload)
+      page = fetch_page(ws)
+      page.handle_invoke_method_result(payload)
     end
 
     def on_control_event(ws, payload)
@@ -482,10 +513,15 @@ module Ruflet
     end
 
     def send_message(ws, action, payload)
+      return if ws.nil? || ws.closed?
+
       message = [action, payload]
       ws.send_binary(Ruflet::WireCodec.pack(message))
     rescue StandardError => e
       warn "send error: #{e.class}: #{e.message}"
+      remove_session(ws)
+      unregister_connection(ws)
+      ws&.close
     end
 
     def pseudo_uuid

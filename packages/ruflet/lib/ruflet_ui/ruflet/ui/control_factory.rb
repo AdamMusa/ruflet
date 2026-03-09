@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "material_control_factory"
-require_relative "cupertino_control_factory"
+require_relative "controls/ruflet_controls"
+require_relative "services/ruflet_services"
 require_relative "../control"
 
 module Ruflet
@@ -9,14 +9,44 @@ module Ruflet
     module ControlFactory
       module_function
 
-      CLASS_MAP = MaterialControlFactory::CLASS_MAP.merge(CupertinoControlFactory::CLASS_MAP).freeze
+      CLASS_MAP =
+        Controls::RufletControls::CLASS_MAP
+          .merge(Services::RufletServices::CLASS_MAP)
+          .freeze
 
       def build(type, id: nil, **props)
         normalized_type = type.to_s.downcase
         klass = CLASS_MAP[normalized_type]
-        return klass.new(id: id, **props) if klass
+        if klass
+          normalized_props = normalize_constructor_props(klass, props)
+          return klass.new(id: id, **normalized_props)
+        end
 
-        Ruflet::Control.new(type: normalized_type, id: id, **props)
+        raise ArgumentError, "Unknown control type: #{normalized_type}"
+      end
+
+      def normalize_constructor_props(klass, props)
+        keywords = constructor_keywords(klass)
+        return props if keywords.empty?
+
+        allowed = keywords.map(&:to_s)
+        mapped = props.each_with_object({}) { |(k, v), out| out[k.to_sym] = v }
+        if mapped.key?("value") && !allowed.include?("value") && allowed.include?("text") && !mapped.key?("text")
+          mapped["text"] = mapped.delete("value")
+        end
+        if mapped.key?(:value) && !allowed.include?("value") && allowed.include?("text") && !mapped.key?(:text)
+          mapped[:text] = mapped.delete(:value)
+        end
+        mapped
+      end
+
+      def constructor_keywords(klass)
+        klass.instance_method(:initialize).parameters
+             .select { |kind, _| kind == :key || kind == :keyreq }
+             .map { |_, name| name }
+             .reject { |name| name == :id }
+      rescue StandardError
+        []
       end
     end
   end

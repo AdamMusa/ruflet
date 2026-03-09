@@ -97,6 +97,44 @@ module Ruflet
       def navigationbar(**props, &block) = navigation_bar(**props, &block)
       def navigation_bar_destination(**props, &block) = build_widget(:navigationbardestination, **props, &block)
       def navigationbardestination(**props, &block) = navigation_bar_destination(**props, &block)
+      def bar_chart(**props) = build_widget(:barchart, **props)
+      def barchart(**props) = bar_chart(**props)
+      def bar_chart_group(**props) = build_widget(:barchartgroup, **props)
+      def barchartgroup(**props) = bar_chart_group(**props)
+      def bar_chart_rod(**props) = build_widget(:barchartrod, **props)
+      def barchartrod(**props) = bar_chart_rod(**props)
+      def bar_chart_rod_stack_item(**props) = build_widget(:barchartrodstackitem, **props)
+      def barchartrodstackitem(**props) = bar_chart_rod_stack_item(**props)
+      def line_chart(**props) = build_widget(:linechart, **props)
+      def linechart(**props) = line_chart(**props)
+      def line_chart_data(**props) = build_widget(:linechartdata, **props)
+      def linechartdata(**props) = line_chart_data(**props)
+      def line_chart_data_point(**props) = build_widget(:linechartdatapoint, **props)
+      def linechartdatapoint(**props) = line_chart_data_point(**props)
+      def pie_chart(**props) = build_widget(:piechart, **props)
+      def piechart(**props) = pie_chart(**props)
+      def pie_chart_section(**props) = build_widget(:piechartsection, **props)
+      def piechartsection(**props) = pie_chart_section(**props)
+      def candlestick_chart(**props) = build_widget(:candlestickchart, **props)
+      def candlestickchart(**props) = candlestick_chart(**props)
+      def candlestick_chart_spot(**props) = build_widget(:candlestickchartspot, **props)
+      def candlestickchartspot(**props) = candlestick_chart_spot(**props)
+      def radar_chart(**props) = build_widget(:radarchart, **props)
+      def radarchart(**props) = radar_chart(**props)
+      def radar_chart_title(**props) = build_widget(:radarcharttitle, **props)
+      def radarcharttitle(**props) = radar_chart_title(**props)
+      def radar_data_set(**props) = build_widget(:radardataset, **props)
+      def radardataset(**props) = radar_data_set(**props)
+      def radar_data_set_entry(**props) = build_widget(:radardatasetentry, **props)
+      def radardatasetentry(**props) = radar_data_set_entry(**props)
+      def scatter_chart(**props) = build_widget(:scatterchart, **props)
+      def scatterchart(**props) = scatter_chart(**props)
+      def scatter_chart_spot(**props) = build_widget(:scatterchartspot, **props)
+      def scatterchartspot(**props) = scatter_chart_spot(**props)
+      def chart_axis(**props) = build_widget(:chartaxis, **props)
+      def chartaxis(**props) = chart_axis(**props)
+      def chart_axis_label(**props) = build_widget(:chartaxislabel, **props)
+      def chartaxislabel(**props) = chart_axis_label(**props)
 
       def fab(content = nil, **props)
         mapped = props.dup
@@ -123,6 +161,7 @@ module Ruflet
         end
         mapped
       end
+
     end
   end
 end

@@ -15,8 +15,7 @@ class CalculatorApp < Ruflet::App
     @display_control = text(
       value: @display,
       text_align: "right",
-      size: 84,
-      color: "#FFFFFF"
+      style: { size: 84, color: "#FFFFFF" }
     )
 
     page.add(

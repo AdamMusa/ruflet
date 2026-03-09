@@ -9,6 +9,8 @@ require "fileutils"
 require "json"
 require "net/http"
 require "uri"
+require "thread"
+require "io/console"
 
 module Ruflet
   module CLI
@@ -17,7 +19,6 @@ module Ruflet
         options = { target: "mobile" }
         parser = OptionParser.new do |o|
           o.on("--web") { options[:target] = "web" }
-          o.on("--mobile") { options[:target] = "mobile" }
           o.on("--desktop") { options[:target] = "desktop" }
         end
         parser.parse!(args)
@@ -44,16 +45,8 @@ module Ruflet
         print_mobile_qr_hint(port: selected_port) if options[:target] == "mobile"
 
         gemfile_path = find_nearest_gemfile(Dir.pwd)
-        cmd =
-          if gemfile_path
-            env["BUNDLE_GEMFILE"] = gemfile_path
-            bundle_ready = system(env, "bundle", "check", out: File::NULL, err: File::NULL)
-            return 1 unless bundle_ready || system(env, "bundle", "install")
-
-            ["bundle", "exec", RbConfig.ruby, script_path]
-          else
-            [RbConfig.ruby, script_path]
-          end
+        cmd = build_runtime_command(script_path, gemfile_path: gemfile_path, env: env)
+        return 1 unless cmd
 
         child_pid = Process.spawn(env, *cmd, pgroup: true)
         launched_client_pids = launch_target_client(options[:target], selected_port)
@@ -93,9 +86,22 @@ module Ruflet
             end
           end
         end
+
       end
 
       private
+
+      def build_runtime_command(script_path, gemfile_path:, env:)
+        if gemfile_path
+          env["BUNDLE_GEMFILE"] = gemfile_path
+          bundle_ready = system(env, RbConfig.ruby, "-S", "bundle", "check", out: File::NULL, err: File::NULL)
+          return nil unless bundle_ready || system(env, RbConfig.ruby, "-S", "bundle", "install")
+
+          return [RbConfig.ruby, "-rbundler/setup", script_path]
+        end
+
+        [RbConfig.ruby, script_path]
+      end
 
       def resolve_script(token)
         path = File.expand_path(token, Dir.pwd)
@@ -547,7 +553,7 @@ module Ruflet
             end
             probe.close
             return port
-          rescue Errno::EADDRINUSE
+          rescue Errno::EADDRINUSE, Errno::EACCES, Errno::EPERM
             port += 1
           end
         end
@@ -556,13 +562,7 @@ module Ruflet
       end
 
       def resolve_backend_port(target)
-        return find_available_port(8550) if target == "mobile"
-
-        return 8550 if port_available?(8550)
-
-        warn "Port 8550 is required for `ruflet run --#{target}`."
-        warn "Stop the process using 8550 and run again."
-        nil
+        find_available_port(8550)
       end
 
       def port_available?(port)

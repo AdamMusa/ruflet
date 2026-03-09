@@ -3,7 +3,7 @@ Ruflet.run do |page|
   page.title = "Counter Demo"
   count = 0
   count_text = nil
-  count_text ||= text(value: count.to_s, size: 40)
+  count_text ||= text(value: count.to_s, style: { size: 40 })
   page.add(
     container(
       expand: true,
@@ -12,7 +12,7 @@ Ruflet.run do |page|
         alignment: Ruflet::MainAxisAlignment::CENTER,
         horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
         children: [
-          text(value: "You have pushed the button this many times:"),
+          text(value: "You have pushed the button this many time:"),
           count_text
         ]
       )

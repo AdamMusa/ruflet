@@ -3,6 +3,7 @@
 require_relative "test_helper"
 require "tmpdir"
 require "fileutils"
+require "rbconfig"
 
 class RufletCliRunCommandTest < Minitest::Test
   class DummyRunner
@@ -42,4 +43,29 @@ class RufletCliRunCommandTest < Minitest::Test
     refute runner.send(:release_asset_matches?, "other_project-web.tar.gz", :web, nil)
     refute runner.send(:release_asset_matches?, "ruflet_client-macos.tar.gz", :desktop, "macos")
   end
+
+  def test_build_runtime_command_without_gemfile_runs_script_directly
+    runner = DummyRunner.new
+    env = {}
+
+    cmd = runner.send(:build_runtime_command, "/tmp/app.rb", gemfile_path: nil, env: env)
+
+    assert_equal [RbConfig.ruby, "/tmp/app.rb"], cmd
+  end
+
+  def test_build_runtime_command_with_gemfile_uses_bundler_setup
+    runner = DummyRunner.new
+    Dir.mktmpdir do |dir|
+      gemfile = File.join(dir, "Gemfile")
+      File.write(gemfile, "source \"https://rubygems.org\"\n")
+      env = {}
+      runner.define_singleton_method(:system) { |_env, *_args| true }
+
+      cmd = runner.send(:build_runtime_command, "/tmp/app.rb", gemfile_path: gemfile, env: env)
+      assert_equal "ruby", File.basename(cmd[0])
+      assert_equal "-rbundler/setup", cmd[1]
+      assert_equal "/tmp/app.rb", cmd[2]
+    end
+  end
+
 end

@@ -4,15 +4,14 @@ module RufletStudio
   module Views
     def detail_view(page, title, content, source_path: nil)
       route = page.route
-      widget(
-        :view,
+      view(
         route: route,
         bgcolor: color_bg(page),
         scroll: "auto",
         appbar: app_bar(
           bgcolor: color_surface(page),
           color: color_text(page),
-          title: text(value: title, size: 18),
+          title: text(value: title, style: { size: 18 }),
           leading: icon_button(
             icon: "arrow_back",
             on_click: ->(_e) { page.go("/gallery") }

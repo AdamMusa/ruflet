@@ -1,0 +1,88 @@
+# GestureDetector
+
+- Python class: `GestureDetector`
+- Source: `sdk/python/packages/flet/src/flet/controls/core/gesture_detector.py`
+
+## Serialized Properties (Python layer)
+- `content`
+- `mouse_cursor`
+- `drag_interval`
+- `hover_interval`
+- `multi_tap_touches`
+- `exclude_from_semantics`
+- `trackpad_scroll_causes_scale`
+- `allowed_devices`
+
+## Event Fields
+- `on_force_press_start`
+- `on_force_press_peak`
+- `on_force_press_update`
+- `on_force_press_end`
+- `on_tap`
+- `on_tap_down`
+- `on_tap_up`
+- `on_tap_move`
+- `on_tap_cancel`
+- `on_multi_tap`
+- `on_multi_long_press`
+- `on_secondary_tap`
+- `on_secondary_tap_down`
+- `on_secondary_tap_up`
+- `on_secondary_tap_cancel`
+- `on_tertiary_tap_down`
+- `on_tertiary_tap_up`
+- `on_tertiary_tap_cancel`
+- `on_long_press_down`
+- `on_long_press_cancel`
+- `on_long_press`
+- `on_long_press_start`
+- `on_long_press_move_update`
+- `on_long_press_up`
+- `on_long_press_end`
+- `on_secondary_long_press_down`
+- `on_secondary_long_press_cancel`
+- `on_secondary_long_press`
+- `on_secondary_long_press_start`
+- `on_secondary_long_press_move_update`
+- `on_secondary_long_press_up`
+- `on_secondary_long_press_end`
+- `on_tertiary_long_press_down`
+- `on_tertiary_long_press_cancel`
+- `on_tertiary_long_press`
+- `on_tertiary_long_press_start`
+- `on_tertiary_long_press_move_update`
+- `on_tertiary_long_press_up`
+- `on_tertiary_long_press_end`
+- `on_double_tap`
+- `on_double_tap_down`
+- `on_double_tap_cancel`
+- `on_horizontal_drag_down`
+- `on_horizontal_drag_start`
+- `on_horizontal_drag_update`
+- `on_horizontal_drag_end`
+- `on_horizontal_drag_cancel`
+- `on_vertical_drag_down`
+- `on_vertical_drag_start`
+- `on_vertical_drag_update`
+- `on_vertical_drag_end`
+- `on_vertical_drag_cancel`
+- `on_pan_down`
+- `on_pan_start`
+- `on_pan_update`
+- `on_pan_end`
+- `on_pan_cancel`
+- `on_right_pan_start`
+- `on_right_pan_update`
+- `on_right_pan_end`
+- `on_scale_start`
+- `on_scale_update`
+- `on_scale_end`
+- `on_hover`
+- `on_enter`
+- `on_exit`
+- `on_scroll`
+
+## Notes
+- Extracted from `@control("GestureDetector")` class declaration.
+- Property list is based on dataclass field declarations in class body.
+- Final wire payload is MessagePack-encoded by Python messaging protocol.

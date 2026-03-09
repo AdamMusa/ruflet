@@ -3,11 +3,10 @@
 module RufletStudio
   module SectionsMedia
     def build_flashlight(page, status)
-      flashlight = control(
+      flashlight = page.service(
         :flashlight,
         on_error: ->(e) { page.update(status, value: "Flashlight error: #{e.data}") }
       )
-      page.add_service(flashlight)
       platform = page.client_details&.dig("platform") || page.client_details&.dig(:platform)
 
       column(

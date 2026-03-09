@@ -128,10 +128,23 @@ module RufletProd
         when 0xd9 then reader.read_string(reader.read_u8)
         when 0xda then reader.read_string(reader.read_u16)
         when 0xdb then reader.read_string(reader.read_u32)
+        when 0xc4 then reader.read_binary(reader.read_u8)
+        when 0xc5 then reader.read_binary(reader.read_u16)
+        when 0xc6 then reader.read_binary(reader.read_u32)
         when 0xdc then read_array(reader, reader.read_u16)
         when 0xdd then read_array(reader, reader.read_u32)
         when 0xde then read_map(reader, reader.read_u16)
         when 0xdf then read_map(reader, reader.read_u32)
+        when 0xd4
+          read_ext(reader, 1)
+        when 0xd5
+          read_ext(reader, 2)
+        when 0xd6
+          read_ext(reader, 4)
+        when 0xd7
+          read_ext(reader, 8)
+        when 0xd8
+          read_ext(reader, 16)
         else
           if (marker & 0xf0) == 0x90
             read_array(reader, marker & 0x0f)
@@ -221,6 +234,10 @@ module RufletProd
         out = read_exact(size)
         out.force_encoding("UTF-8") if out.respond_to?(:force_encoding)
         out
+      end
+
+      def read_binary(size)
+        read_exact(size)
       end
     end
   end

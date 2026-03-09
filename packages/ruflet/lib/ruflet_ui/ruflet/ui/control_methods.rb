@@ -11,6 +11,7 @@ module Ruflet
 
       def control(type, **props, &block) = build_widget(type, **props, &block)
       def widget(type, **props, &block) = build_widget(type, **props, &block)
+      def service(type, **props, &block) = build_service(type, **props, &block)
     end
   end
 end

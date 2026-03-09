@@ -17,6 +17,10 @@ module Ruflet
       control(type, **props, &block)
     end
 
+    def service(type, **props, &block)
+      build_service(type, **props, &block)
+    end
+
     def control(type, **props, &block)
       mapped_props = props.dup
       prop_children = extract_children_prop(mapped_props)
@@ -42,6 +46,11 @@ module Ruflet
     end
 
     def build_widget(type, **props, &block) = control(type, **props, &block)
+    def build_service(type, **props, &block)
+      mapped_props = props.dup
+      node = UI::ControlFactory.build(type, **mapped_props)
+      node
+    end
 
     private
 

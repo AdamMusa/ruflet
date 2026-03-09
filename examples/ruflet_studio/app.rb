@@ -68,6 +68,9 @@ module RufletStudio
       when "/minesweeper"
         page.views = [detail_view(page, "Minesweeper", build_minesweeper(page, status_text(page)),
                                   source_path: "examples/ruflet_studio/sections_minesweeper.rb")]
+      when "/icon-search"
+        page.views = [detail_view(page, "Icon Search", build_icon_search(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_misc/icon_search.rb")]
       when "/animation"
         page.views = [detail_view(page, "Ruflet Animation", build_animation(page, status_text(page)),
                                   source_path: "examples/ruflet_studio/sections_media/animation.rb")]
@@ -80,6 +83,12 @@ module RufletStudio
       when "/flashlight"
         page.views = [detail_view(page, "Flashlight", build_flashlight(page, status_text(page)),
                                   source_path: "examples/ruflet_studio/sections_media/flashlight.rb")]
+      when "/camera"
+        page.views = [detail_view(page, "Camera", build_camera(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_media/camera.rb")]
+      when "/file-picker"
+        page.views = [detail_view(page, "File Picker", build_file_picker(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_media/file_picker.rb")]
       else
         page.views = [gallery_view(page)]
       end

@@ -27,9 +27,21 @@ module RufletStudio
           end
         },
         destinations: [
-          navigation_bar_destination(icon: "home", label: "Home", icon_color: color_subtle(page), selected_icon_color: color_text(page)),
-          navigation_bar_destination(icon: "grid_view", label: "Gallery", icon_color: color_subtle(page), selected_icon_color: color_text(page)),
-          navigation_bar_destination(icon: "settings", label: "Settings", icon_color: color_subtle(page), selected_icon_color: color_text(page))
+          navigation_bar_destination(
+            icon: icon(name: "home", color: color_subtle(page)),
+            selected_icon: icon(name: "home", color: color_text(page)),
+            label: "Home"
+          ),
+          navigation_bar_destination(
+            icon: icon(name: "grid_view", color: color_subtle(page)),
+            selected_icon: icon(name: "grid_view", color: color_text(page)),
+            label: "Gallery"
+          ),
+          navigation_bar_destination(
+            icon: icon(name: "settings", color: color_subtle(page)),
+            selected_icon: icon(name: "settings", color: color_text(page)),
+            label: "Settings"
+          )
         ]
       )
     end
