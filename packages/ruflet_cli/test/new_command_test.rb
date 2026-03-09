@@ -65,25 +65,25 @@ class RufletCliNewCommandTest < Minitest::Test
         File.join(client_dir, "lib", "main.dart"),
         <<~DART
           import 'package:flet/flet.dart';
-          import 'package:flet_camera/flet_camera.dart' as flet_camera;
-          import 'package:flet_video/flet_video.dart' as flet_video;
+          import 'package:flet_camera/flet_camera.dart' as ruflet_camera;
+          import 'package:flet_video/flet_video.dart' as ruflet_video;
 
           final extensions = <FletExtension>[
-            flet_camera.Extension(),
-            flet_video.Extension(),
+            ruflet_camera.Extension(),
+            ruflet_video.Extension(),
           ];
         DART
       )
 
-      Ruflet::CLI.send(:apply_client_manifest!, client_dir, ["flet_camera"], ["flet_camera"])
+      Ruflet::CLI.send(:apply_client_manifest!, client_dir, ["flet_camera"], ["ruflet_camera"])
 
       pruned_pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
       pruned_main = File.read(File.join(client_dir, "lib", "main.dart"))
 
       assert_includes pruned_pubspec, "flet_camera:"
       refute_includes pruned_pubspec, "flet_video:"
-      assert_includes pruned_main, "flet_camera.Extension()"
-      refute_includes pruned_main, "flet_video.Extension()"
+      assert_includes pruned_main, "ruflet_camera.Extension()"
+      refute_includes pruned_main, "ruflet_video.Extension()"
     end
   end
 end

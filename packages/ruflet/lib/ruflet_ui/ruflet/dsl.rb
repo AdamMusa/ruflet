@@ -138,6 +138,8 @@ module Ruflet
     def chartaxis(**props) = _pending_app.chartaxis(**props)
     def chart_axis_label(**props) = _pending_app.chart_axis_label(**props)
     def chartaxislabel(**props) = _pending_app.chartaxislabel(**props)
+    def web_view(**props) = _pending_app.web_view(**props)
+    def webview(**props) = _pending_app.webview(**props)
     def fab(content = nil, **props) = _pending_app.fab(content, **props)
     def cupertino_button(**props) = _pending_app.cupertino_button(**props)
     def cupertinobutton(**props) = _pending_app.cupertinobutton(**props)

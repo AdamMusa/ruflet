@@ -97,6 +97,8 @@ module Ruflet
       def chartaxis(**props) = control_delegate.chartaxis(**props)
       def chart_axis_label(**props) = control_delegate.chart_axis_label(**props)
       def chartaxislabel(**props) = control_delegate.chartaxislabel(**props)
+      def web_view(**props) = control_delegate.web_view(**props)
+      def webview(**props) = control_delegate.webview(**props)
       def cupertino_button(**props) = control_delegate.cupertino_button(**props)
       def cupertinobutton(**props) = control_delegate.cupertinobutton(**props)
       def cupertino_filled_button(**props) = control_delegate.cupertino_filled_button(**props)

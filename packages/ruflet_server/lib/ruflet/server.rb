@@ -196,6 +196,8 @@ module Ruflet
           handle_http_request(socket, path)
         end
       rescue StandardError => e
+        return if disconnect_error?(e)
+
         warn "server error: #{e.class}: #{e.message}"
         warn e.backtrace.join("\n") if e.backtrace
         send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => e.message.to_s.dup.force_encoding("UTF-8") }) if ws
@@ -211,6 +213,8 @@ module Ruflet
         handle_message(ws, raw)
       end
     rescue StandardError => e
+      return if disconnect_error?(e)
+
       warn "server error: #{e.class}: #{e.message}"
       warn e.backtrace.join("\n") if e.backtrace
       send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => e.message.to_s.dup.force_encoding("UTF-8") })
@@ -518,10 +522,25 @@ module Ruflet
       message = [action, payload]
       ws.send_binary(Ruflet::WireCodec.pack(message))
     rescue StandardError => e
-      warn "send error: #{e.class}: #{e.message}"
+      unless disconnect_error?(e)
+        warn "send error: #{e.class}: #{e.message}"
+      end
       remove_session(ws)
       unregister_connection(ws)
       ws&.close
+    end
+
+    def disconnect_error?(error)
+      return true if error.is_a?(IOError)
+      return true if error.is_a?(Errno::EPIPE)
+      return true if error.is_a?(Errno::ECONNRESET)
+      return true if error.is_a?(Errno::ECONNABORTED)
+      return true if error.is_a?(Errno::ENOTCONN)
+      return true if error.is_a?(Errno::ESHUTDOWN)
+      return true if error.is_a?(Errno::EBADF)
+      return true if error.is_a?(Errno::EINVAL)
+
+      false
     end
 
     def pseudo_uuid

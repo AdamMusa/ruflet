@@ -17,9 +17,12 @@ module RufletStudio
         ),
         navigation_bar: nav_bar(page, route),
         children: [
-          column(
-            spacing: 6,
-            children: gallery_items(page)
+          container(
+            padding: { top: 12, left: 0, right: 0, bottom: 8 },
+            content: column(
+              spacing: 6,
+              children: gallery_items(page)
+            )
           )
         ]
       )
@@ -31,6 +34,7 @@ module RufletStudio
         tile(page, "check", "To-do", "/todo"),
         tile(page, "calculate", "Calculator", "/calculator"),
         tile(page, "brush", "Drawing Tool", "/drawing"),
+        tile(page, "public", "WebView", "/webview"),
         tile(page, "view_module", "Material controls", "/material"),
         tile(page, "phone_iphone", "Cupertino controls", "/cupertino"),
         tile(page, "show_chart", "Charts", "/charts"),
@@ -48,8 +52,10 @@ module RufletStudio
     def tile(page, icon, title, route)
       control(
         :list_tile,
+        bgcolor: color_surface(page),
+        content_padding: { left: 12, right: 12, top: 8, bottom: 8 },
         leading: icon(icon: icon, color: color_icon(page)),
-        title: text(value: title, style: { color: color_text(page), size: 16 }),
+        title: text(value: title, style: { size: 16 }),
         trailing: icon(icon: "chevron_right", color: color_subtle(page)),
         on_click: ->(_e) { page.go(route) }
       )
