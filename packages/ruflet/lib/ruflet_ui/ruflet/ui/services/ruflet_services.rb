@@ -7,6 +7,7 @@ require_relative "ruflet/camera_control"
 require_relative "ruflet/clipboard_control"
 require_relative "ruflet/connectivity_control"
 require_relative "ruflet/filepicker_control"
+require_relative "ruflet/flashlight_control"
 require_relative "ruflet/gyroscope_control"
 require_relative "ruflet/hapticfeedback_control"
 require_relative "ruflet/magnetometer_control"
@@ -36,6 +37,7 @@ module Ruflet
           "connectivity" => RufletServicesComponents::ConnectivityControl,
           "file_picker" => RufletServicesComponents::FilePickerControl,
           "filepicker" => RufletServicesComponents::FilePickerControl,
+          "flashlight" => RufletServicesComponents::FlashlightControl,
           "gyroscope" => RufletServicesComponents::GyroscopeControl,
           "haptic_feedback" => RufletServicesComponents::HapticFeedbackControl,
           "hapticfeedback" => RufletServicesComponents::HapticFeedbackControl,

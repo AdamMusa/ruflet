@@ -78,7 +78,7 @@ class TodoApp < Ruflet::App
       floating_action_button: floating_action_button(
         content: "+",
         bgcolor: Ruflet::Colors.PRIMARY,
-        forground_color: "white74",
+        color: "white74",
         on_click: ->(e) { add_task(e.page) }
       )
     )
@@ -98,7 +98,7 @@ class TodoApp < Ruflet::App
           on_change: ->(e) { toggle_task(task[:id], e.page) }
         ),
         text_button(
-          text: "Delete",
+          content: text(value: "Delete"),
           on_click: ->(e) { delete_task(task[:id], e.page) }
         )
       ]
@@ -107,7 +107,7 @@ class TodoApp < Ruflet::App
 
   def add_row(page, input, compact)
     add_button = elevated_button(
-      text: "Add",
+      content: text(value: "Add"),
       bgcolor: Ruflet::Colors.PRIMARY,
       color: Ruflet::Colors.ON_PRIMARY,
       on_click: ->(e) { add_task(e.page) }
@@ -132,7 +132,7 @@ class TodoApp < Ruflet::App
       children: FILTERS.map { |name| filter_button(page, name) }
     )
     clear_btn = text_button(
-      text: "Clear completed",
+      content: text(value: "Clear completed"),
       on_click: ->(e) { clear_completed(e.page) }
     )
 
@@ -151,14 +151,14 @@ class TodoApp < Ruflet::App
     selected = (@filter == name)
     if selected
       filled_button(
-        text: name.capitalize,
+        content: text(value: name.capitalize),
         bgcolor: Ruflet::Colors.PRIMARY,
         color: Ruflet::Colors.ON_PRIMARY,
         on_click: ->(e) { set_filter(name, e.page) }
       )
     else
       text_button(
-        text: name.capitalize,
+        content: text(value: name.capitalize),
         color: Ruflet::Colors.PRIMARY,
         on_click: ->(e) { set_filter(name, e.page) }
       )

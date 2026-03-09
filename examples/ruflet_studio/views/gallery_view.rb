@@ -4,7 +4,7 @@ module RufletStudio
   module Views
     def gallery_view(page)
       route = "/gallery"
-      view(
+      control(:view,
         route: route,
         bgcolor: color_bg(page),
         scroll: "auto",
@@ -48,9 +48,9 @@ module RufletStudio
     def tile(page, icon, title, route)
       control(
         :list_tile,
-        leading: icon(name: icon, color: color_icon(page)),
+        leading: icon(icon: icon, color: color_icon(page)),
         title: text(value: title, style: { color: color_text(page), size: 16 }),
-        trailing: icon(name: "chevron_right", color: color_subtle(page)),
+        trailing: icon(icon: "chevron_right", color: color_subtle(page)),
         on_click: ->(_e) { page.go(route) }
       )
     end

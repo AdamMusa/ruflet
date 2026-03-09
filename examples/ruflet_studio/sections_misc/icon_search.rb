@@ -15,14 +15,14 @@ module RufletStudio
         child_aspect_ratio: 2.0,
         spacing: 10,
         run_spacing: 10,
-        children: []
+        controls: []
       )
 
       on_query_change = lambda do |new_query|
         query = new_query.to_s
         names = icon_search_filtered_names(query)
         page.update(summary, value: icon_search_summary_text(query, names))
-        page.update(results_grid, children: names.map { |name| icon_search_tile(page, name, copy_status) })
+        page.update(results_grid, controls: names.map { |name| icon_search_tile(page, name, copy_status) })
         page.update(copy_status, value: "Tap an item to copy icon name", style: { color: color_subtle(page) })
       end
 
@@ -65,7 +65,7 @@ module RufletStudio
             icon(icon: Ruflet::MaterialIcons.const_get(name)),
             container(
               expand: true,
-              content: text(value: name, max_lines: 1, overflow: "ellipsis")
+              content: text(value: name, max_lines: 1, ellipsis: true)
             )
           ]
         )

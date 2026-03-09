@@ -55,7 +55,7 @@ class CalculatorApp < Ruflet::App
       spacing: 10,
       children: labels.map do |label|
         elevated_button(
-          text: label,
+          content: text(value: label),
           expand: true,
           height: 65,
           color: "#FFFFFF",

@@ -67,11 +67,11 @@ module RufletStudio
         children: [
           text(value: "Todos", style: { size: 20, weight: "w600", color: "#e7e9ec" }),
           input,
-          button(text: "Add", on_click: ->(_e) { add_todo.call }),
+          button(content: text(value: "Add"), on_click: ->(_e) { add_todo.call }),
           list,
           control(
             :outlined_button,
-            content: "Clear completed",
+            content: text(value: "Clear completed"),
             on_click: ->(_e) {
               todos.reject! { |item| item[:done] }
               render_list.call

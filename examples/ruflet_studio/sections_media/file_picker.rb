@@ -12,7 +12,7 @@ module RufletStudio
         children: [
           status,
           button(
-            text: "Open file picker",
+            content: text(value: "Open file picker"),
             on_click: ->(_e) do
               page.update(status, value: "Opening file picker...")
               page.invoke(

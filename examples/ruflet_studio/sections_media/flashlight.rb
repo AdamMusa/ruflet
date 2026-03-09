@@ -16,7 +16,7 @@ module RufletStudio
           row(
             spacing: 8,
             children: [
-              text_button(text: "On", on_click: ->(_e) {
+              text_button(content: text(value: "On"), on_click: ->(_e) {
                 if platform == "ios" || platform == "android"
                   page.invoke(flashlight, "on")
                   page.update(status, value: "Flashlight on")
@@ -24,7 +24,7 @@ module RufletStudio
                   page.update(status, value: "Flashlight requires a real device.")
                 end
               }),
-              text_button(text: "Off", on_click: ->(_e) {
+              text_button(content: text(value: "Off"), on_click: ->(_e) {
                 if platform == "ios" || platform == "android"
                   page.invoke(flashlight, "off")
                   page.update(status, value: "Flashlight off")

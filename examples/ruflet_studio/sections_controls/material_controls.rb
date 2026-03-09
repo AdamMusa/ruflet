@@ -9,7 +9,7 @@ module RufletStudio
         title: text(value: "Hello"),
         content: text(value: "Hello from Ruflet"),
         actions: [
-          text_button(text: "OK", on_click: ->(_e) { page.update(material_dialog, open: false) })
+          text_button(content: text(value: "OK"), on_click: ->(_e) { page.update(material_dialog, open: false) })
         ]
       )
 
@@ -17,10 +17,10 @@ module RufletStudio
         control(
           :banner,
           open: true,
-          leading: icon(name: "info"),
+          leading: icon(icon: "info"),
           content: text(value: "Backup completed successfully."),
           actions: [
-            text_button(text: "Dismiss", on_click: ->(_e) { page.pop_dialog })
+            text_button(content: text(value: "Dismiss"), on_click: ->(_e) { page.pop_dialog })
           ]
         )
       end
@@ -53,9 +53,9 @@ module RufletStudio
                   row(
                     spacing: 8,
                     children: [
-                      filled_button(text: "Filled", on_click: ->(_e) { page.update(status, value: "Filled pressed") }),
-                      control(:filled_tonal_button, text: "Tonal", on_click: ->(_e) { page.update(status, value: "Tonal pressed") }),
-                      control(:outlined_button, text: "Outlined", on_click: ->(_e) { page.update(status, value: "Outlined pressed") })
+                      filled_button(content: text(value: "Filled"), on_click: ->(_e) { page.update(status, value: "Filled pressed") }),
+                      control(:filled_tonal_button, content: text(value: "Tonal"), on_click: ->(_e) { page.update(status, value: "Tonal pressed") }),
+                      control(:outlined_button, content: text(value: "Outlined"), on_click: ->(_e) { page.update(status, value: "Outlined pressed") })
                     ]
                   )
                 ]
@@ -84,7 +84,7 @@ module RufletStudio
                 spacing: 8,
                 children: [
                   text(value: "Dialogs", style: { size: 14, weight: "w600", color: "#1f2328" }),
-                  text_button(text: "Show dialog", on_click: ->(_e) { page.show_dialog(material_dialog) })
+                  text_button(content: text(value: "Show dialog"), on_click: ->(_e) { page.show_dialog(material_dialog) })
                 ]
               )
             )
@@ -97,14 +97,14 @@ module RufletStudio
                 spacing: 8,
                 children: [
                   text(value: "Banners", style: { size: 14, weight: "w600", color: "#1f2328" }),
-                  text_button(text: "Show banner", on_click: ->(_e) {
+                  text_button(content: text(value: "Show banner"), on_click: ->(_e) {
                     page.show_dialog(build_banner.call)
                   })
                 ]
               )
             )
           ),
-          control(:list_tile, leading: icon(name: "info"), title: text(value: "ListTile"))
+          control(:list_tile, leading: icon(icon: "info"), title: text(value: "ListTile"))
         ]
       )
     end

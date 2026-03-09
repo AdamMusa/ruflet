@@ -61,7 +61,7 @@ class IconSearchApp < Ruflet::App
   def update_results(page)
     names = filtered_icon_names(@query)
     page.update(@summary_control, value: summary_text(names))
-    page.update(@results_grid, children: grid_items(names))
+    page.update(@results_grid, controls: grid_items(names))
     page.update(@copy_status_control, value: "Tap an item to copy icon name", style: { color: "#6c757d" })
   end
 
@@ -73,7 +73,7 @@ class IconSearchApp < Ruflet::App
       child_aspect_ratio: 2.0,
       spacing: 10,
       run_spacing: 10,
-      children: grid_items(names)
+      controls: grid_items(names)
     )
   end
 
@@ -92,7 +92,7 @@ class IconSearchApp < Ruflet::App
           icon(icon: Ruflet::MaterialIcons.const_get(name)),
           container(
             expand: true,
-            content: text(value: name, max_lines: 1, overflow: "ellipsis")
+            content: text(value: name, max_lines: 1, ellipsis: true)
           )
         ]
       )

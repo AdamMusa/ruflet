@@ -56,10 +56,10 @@ module RufletStudio
         page.invoke(audio, method_name, args: args)
       end
 
-      play_btn = button(text: "Play", on_click: ->(_e) { send_audio.call("Play", "play") })
-      pause_btn = button(text: "Pause", on_click: ->(_e) { send_audio.call("Pause", "pause") })
-      resume_btn = button(text: "Resume", on_click: ->(_e) { send_audio.call("Resume", "resume") })
-      release_btn = button(text: "Release", on_click: ->(_e) { send_audio.call("Release", "release") })
+      play_btn = button(content: text(value: "Play"), on_click: ->(_e) { send_audio.call("Play", "play") })
+      pause_btn = button(content: text(value: "Pause"), on_click: ->(_e) { send_audio.call("Pause", "pause") })
+      resume_btn = button(content: text(value: "Resume"), on_click: ->(_e) { send_audio.call("Resume", "resume") })
+      release_btn = button(content: text(value: "Release"), on_click: ->(_e) { send_audio.call("Release", "release") })
 
       adjust_volume = lambda do |delta|
         next_volume = (audio.props["volume"].to_f + delta).clamp(0.0, 1.0)
@@ -90,23 +90,23 @@ module RufletStudio
           column(
             spacing: 8,
             children: [
-              button(text: "Seek 2s", on_click: ->(_e) { send_audio.call("Seek 2s", "seek", args: { position: 2000 }) }),
-              button(text: "Get duration", on_click: ->(_e) { send_audio.call("Get duration", "get_duration") }),
-              button(text: "Get position", on_click: ->(_e) { send_audio.call("Get position", "get_current_position") })
+              button(content: text(value: "Seek 2s"), on_click: ->(_e) { send_audio.call("Seek 2s", "seek", args: { position: 2000 }) }),
+              button(content: text(value: "Get duration"), on_click: ->(_e) { send_audio.call("Get duration", "get_duration") }),
+              button(content: text(value: "Get position"), on_click: ->(_e) { send_audio.call("Get position", "get_current_position") })
             ]
           ),
           column(
             spacing: 8,
             children: [
-              button(text: "Volume -", on_click: ->(_e) { adjust_volume.call(-0.1) }),
-              button(text: "Volume +", on_click: ->(_e) { adjust_volume.call(0.1) })
+              button(content: text(value: "Volume -"), on_click: ->(_e) { adjust_volume.call(-0.1) }),
+              button(content: text(value: "Volume +"), on_click: ->(_e) { adjust_volume.call(0.1) })
             ]
           ),
           column(
             spacing: 8,
             children: [
-              button(text: "Balance L", on_click: ->(_e) { adjust_balance.call(-0.1) }),
-              button(text: "Balance R", on_click: ->(_e) { adjust_balance.call(0.1) })
+              button(content: text(value: "Balance L"), on_click: ->(_e) { adjust_balance.call(-0.1) }),
+              button(content: text(value: "Balance R"), on_click: ->(_e) { adjust_balance.call(0.1) })
             ]
           ),
         ]

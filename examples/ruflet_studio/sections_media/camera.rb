@@ -24,7 +24,7 @@ module RufletStudio
         children: [
           status,
           button(
-            text: "Open camera",
+            content: text(value: "Open camera"),
             on_click: ->(_e) do
               page.update(status, value: "Checking available cameras...")
               page.invoke(camera, "get_available_cameras", timeout: 30, on_result: lambda { |result, error|

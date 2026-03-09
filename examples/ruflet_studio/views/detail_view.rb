@@ -4,7 +4,7 @@ module RufletStudio
   module Views
     def detail_view(page, title, content, source_path: nil)
       route = page.route
-      view(
+      control(:view,
         route: route,
         bgcolor: color_bg(page),
         scroll: "auto",

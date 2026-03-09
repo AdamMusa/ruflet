@@ -93,6 +93,7 @@ require_relative "materials/textbutton_control"
 require_relative "materials/textfield_control"
 require_relative "materials/timepicker_control"
 require_relative "materials/verticaldivider_control"
+require_relative "materials/video_control"
 require_relative "shared/animatedswitcher_control"
 require_relative "shared/arc_control"
 require_relative "shared/autofillgroup_control"
@@ -390,6 +391,7 @@ module Ruflet
           "transparentpointer" => RufletComponents::TransparentPointerControl,
           "vertical_divider" => RufletComponents::VerticalDividerControl,
           "verticaldivider" => RufletComponents::VerticalDividerControl,
+          "video" => RufletComponents::VideoControl,
           "view" => RufletComponents::ViewControl,
           "window" => RufletComponents::WindowControl,
           "window_drag_area" => RufletComponents::WindowDragAreaControl,

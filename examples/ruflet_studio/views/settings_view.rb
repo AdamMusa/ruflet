@@ -8,7 +8,7 @@ module RufletStudio
       gestures_long_press = checkbox(value: false)
       gestures_shake_state = false
       gestures_long_press_state = false
-      view(
+      control(:view,
         route: route,
         bgcolor: color_bg(page),
         appbar: app_bar(
@@ -42,7 +42,7 @@ module RufletStudio
                         row(
                           spacing: 12,
                           children: [
-                            icon(name: "contrast", color: color_icon(page)),
+                            icon(icon: "contrast", color: color_icon(page)),
                             text(value: "System", style: { color: color_text(page) })
                           ]
                         ),
@@ -55,7 +55,7 @@ module RufletStudio
                         row(
                           spacing: 12,
                           children: [
-                            icon(name: "light_mode", color: color_icon(page)),
+                            icon(icon: "light_mode", color: color_icon(page)),
                             text(value: "Light", style: { color: color_text(page) })
                           ]
                         ),
@@ -68,7 +68,7 @@ module RufletStudio
                         row(
                           spacing: 12,
                           children: [
-                            icon(name: "dark_mode", color: color_icon(page)),
+                            icon(icon: "dark_mode", color: color_icon(page)),
                             text(value: "Dark", style: { color: color_text(page) })
                           ]
                         ),
@@ -82,7 +82,7 @@ module RufletStudio
               text(value: "Home gestures", style: { size: 14, color: color_icon(page) }),
               control(
                 :list_tile,
-                leading: icon(name: "vibration", color: color_icon(page)),
+                leading: icon(icon: "vibration", color: color_icon(page)),
                 title: text(value: "Shake device", style: { color: color_text(page) }),
                 trailing: gestures_shake,
                 on_click: ->(_e) {
@@ -92,7 +92,7 @@ module RufletStudio
               ),
               control(
                 :list_tile,
-                leading: icon(name: "pan_tool_alt", color: color_icon(page)),
+                leading: icon(icon: "pan_tool_alt", color: color_icon(page)),
                 title: text(value: "Long press with two fingers", style: { color: color_text(page) }),
                 trailing: gestures_long_press,
                 on_click: ->(_e) {

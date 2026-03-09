@@ -12,8 +12,6 @@ module RufletStudio
       navigation_bar(
         bgcolor: color_surface(page),
         indicator_color: effective_theme(page) == "light" ? "#dbe4ff" : "#2b3036",
-        label_text_style: { size: 12, color: color_subtle(page) },
-        selected_label_text_style: { size: 12, color: color_text(page) },
         selected_index: selected,
         on_change: ->(e) {
           idx = read_number(e.data, "selected_index") || read_number(e.data, "selectedIndex")
@@ -28,18 +26,18 @@ module RufletStudio
         },
         destinations: [
           navigation_bar_destination(
-            icon: icon(name: "home", color: color_subtle(page)),
-            selected_icon: icon(name: "home", color: color_text(page)),
+            icon: "home",
+            selected_icon: "home",
             label: "Home"
           ),
           navigation_bar_destination(
-            icon: icon(name: "grid_view", color: color_subtle(page)),
-            selected_icon: icon(name: "grid_view", color: color_text(page)),
+            icon: "grid_view",
+            selected_icon: "grid_view",
             label: "Gallery"
           ),
           navigation_bar_destination(
-            icon: icon(name: "settings", color: color_subtle(page)),
-            selected_icon: icon(name: "settings", color: color_text(page)),
+            icon: "settings",
+            selected_icon: "settings",
             label: "Settings"
           )
         ]

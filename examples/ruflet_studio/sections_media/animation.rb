@@ -77,7 +77,7 @@ module RufletStudio
       )
       canvas.children.replace(parts_controls)
 
-      btn = button(text: "Go!")
+      btn = button(content: text(value: "Go!"))
       toggle = lambda do
         scattered = !scattered
         page.update(canvas, scale: scattered ? 5 : 1, opacity: scattered ? 0.3 : 1)
@@ -107,7 +107,7 @@ module RufletStudio
             )
           end
         end
-        page.update(btn, text: scattered ? "Go!" : "Again!")
+        page.update(btn, content: text(value: scattered ? "Go!" : "Again!"))
       end
       btn.on(:click) { |_e| toggle.call }
 

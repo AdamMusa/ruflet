@@ -39,19 +39,19 @@ module RufletStudio
               column(
                 spacing: 8,
                 children: [
-                  button(text: "Play", on_click: ->(_e) { send_video.call("Play", "play") }),
-                  button(text: "Pause", on_click: ->(_e) { send_video.call("Pause", "pause") }),
-                  button(text: "Play/Pause", on_click: ->(_e) { send_video.call("Play/Pause", "play_or_pause") }),
-                  button(text: "Stop", on_click: ->(_e) { send_video.call("Stop", "stop") }),
-                  button(text: "Next", on_click: ->(_e) { send_video.call("Next", "next") }),
-                  button(text: "Prev", on_click: ->(_e) { send_video.call("Prev", "previous") })
+                  button(content: text(value: "Play"), on_click: ->(_e) { send_video.call("Play", "play") }),
+                  button(content: text(value: "Pause"), on_click: ->(_e) { send_video.call("Pause", "pause") }),
+                  button(content: text(value: "Play/Pause"), on_click: ->(_e) { send_video.call("Play/Pause", "play_or_pause") }),
+                  button(content: text(value: "Stop"), on_click: ->(_e) { send_video.call("Stop", "stop") }),
+                  button(content: text(value: "Next"), on_click: ->(_e) { send_video.call("Next", "next") }),
+                  button(content: text(value: "Prev"), on_click: ->(_e) { send_video.call("Prev", "previous") })
                 ]
               ),
               column(
                 spacing: 8,
                 children: [
-                  button(text: "Seek 10s", on_click: ->(_e) { send_video.call("Seek 10s", "seek", args: { position: 10_000 }) }),
-                  button(text: "Fullscreen", on_click: ->(_e) { page.update(video, fullscreen: true) })
+                  button(content: text(value: "Seek 10s"), on_click: ->(_e) { send_video.call("Seek 10s", "seek", args: { position: 10_000 }) }),
+                  button(content: text(value: "Fullscreen"), on_click: ->(_e) { page.update(video, fullscreen: true) })
                 ]
               ),
               control(

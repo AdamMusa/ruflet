@@ -4,7 +4,7 @@ module RufletStudio
   module Views
     def home_view(page)
       route = "/home"
-      view(
+      control(:view,
         route: route,
         bgcolor: color_bg(page),
         appbar: app_bar(

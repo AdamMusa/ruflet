@@ -17,19 +17,19 @@ class FeedbackSurfacesApp < Ruflet::App
             text(value: "Dialog, SnackBar and BottomSheet", style: { size: 22 }),
             status,
             button(
-              text: "Open dialog",
+              content: text(value: "Open dialog"),
               on_click: ->(_e) {
                 open_surface(page, dialog, status, "Dialog opened")
               }
             ),
             button(
-              text: "Open snackbar",
+              content: text(value: "Open snackbar"),
               on_click: ->(_e) {
                 open_surface(page, build_snack_bar(page, status), status, "SnackBar opened")
               }
             ),
             button(
-              text: "Open bottom sheet",
+              content: text(value: "Open bottom sheet"),
               on_click: ->(_e) {
                 open_surface(page, bottom_sheet, status, "BottomSheet opened")
               }
@@ -71,14 +71,14 @@ class FeedbackSurfacesApp < Ruflet::App
       content: text(value: "This demonstrates AlertDialog data shape."),
       actions: [
         text_button(
-          text: "Cancel",
+          content: text(value: "Cancel"),
           on_click: ->(_e) {
             page.update(dialog, open: false)
             set_status(page, status, "Dialog closed")
           }
         ),
         filled_button(
-          text: "Delete",
+          content: text(value: "Delete"),
           on_click: ->(_e) {
             page.update(dialog, open: false)
             set_status(page, status, "Delete action pressed")
@@ -107,7 +107,7 @@ class FeedbackSurfacesApp < Ruflet::App
             text(value: "This is shown using BottomSheet control."),
             text(value: "It is intentionally larger in this sample."),
             button(
-              text: "Close bottom sheet",
+              content: text(value: "Close bottom sheet"),
               on_click: ->(_e) {
                 page.update(bottom_sheet, open: false)
                 set_status(page, status, "BottomSheet closed")
