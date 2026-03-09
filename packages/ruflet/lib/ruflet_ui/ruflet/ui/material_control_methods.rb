@@ -136,6 +136,8 @@ module Ruflet
       def chartaxis(**props) = chart_axis(**props)
       def chart_axis_label(**props) = build_widget(:chartaxislabel, **props)
       def chartaxislabel(**props) = chart_axis_label(**props)
+      def web_view(**props) = build_widget(:webview, **props)
+      def webview(**props) = web_view(**props)
 
       def fab(content = nil, **props)
         mapped = props.dup

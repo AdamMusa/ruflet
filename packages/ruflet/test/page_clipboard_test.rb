@@ -35,7 +35,7 @@ class PageClipboardTest < Minitest::Test
     assert_equal({ "data" => "abc123" }, invoke_payload["args"])
   end
 
-  def test_launch_url_uses_page_invoke_signature
+  def test_launch_url_uses_url_launcher_service_signature
     sent = []
     page = Ruflet::Page.new(
       session_id: "s1",
@@ -46,9 +46,9 @@ class PageClipboardTest < Minitest::Test
     call_id = page.launch_url("https://flet.dev")
     refute_nil call_id
 
-    invoke_payload = sent.reverse.map(&:last).find { |payload| payload["name"] == "launchUrl" }
+    invoke_payload = sent.reverse.map(&:last).find { |payload| payload["name"] == "launch_url" }
     refute_nil invoke_payload
-    assert_equal 1, invoke_payload["control_id"]
+    refute_equal 1, invoke_payload["control_id"]
     assert_equal "https://flet.dev", invoke_payload.dig("args", "url")
   end
 end

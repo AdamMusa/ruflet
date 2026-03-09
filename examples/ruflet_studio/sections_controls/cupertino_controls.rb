@@ -18,9 +18,9 @@ module RufletStudio
         use_magnifier: true,
         item_extent: 32,
         children: [
-          text(value: "One", style: { color: "#111318" }),
-          text(value: "Two", style: { color: "#111318" }),
-          text(value: "Three", style: { color: "#111318" })
+          text(value: "One"),
+          text(value: "Two"),
+          text(value: "Three")
         ]
       )
 

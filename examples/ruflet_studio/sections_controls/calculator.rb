@@ -6,15 +6,16 @@ module RufletStudio
 
     def build_calculator(page, status)
       container(
-        expand: true,
+        width: 420,
         padding: 12,
+        border_radius: 12,
+        bgcolor: color_panel(page),
         content: column(
-          expand: true,
           spacing: 12,
           children: [
+            status,
             container(height: 24),
             row(alignment: "end", children: [calculator_display(status)]),
-            container(expand: true),
             container(height: 20),
             calculator_keypad_row(page, status, "BS", "AC", "%", "/"),
             calculator_keypad_row(page, status, "7", "8", "9", "x"),
@@ -34,29 +35,29 @@ module RufletStudio
       @calculator_display = text(
         value: calculator_state[:display],
         text_align: "right",
-        style: { size: 84, color: "#FFFFFF" }
+        style: { size: 84 }
       )
     end
 
     def calculator_keypad_row(page, status, *labels)
       row(
         alignment: "center",
-        spacing: 10,
+        spacing: 6,
         children: labels.map do |label|
           elevated_button(
             content: text(value: label),
-            expand: true,
+            width: 78,
             height: 65,
             color: "#FFFFFF",
-            bgcolor: calculator_key_bg(label),
+            bgcolor: calculator_key_bg(page, label),
             on_click: ->(e) { calculator_handle_input(label, e, page, status) }
           )
         end
       )
     end
 
-    def calculator_key_bg(label)
-      %w[/ x - + =].include?(label) ? "#FF9F0A" : "#2C2C2E"
+    def calculator_key_bg(page, label)
+      %w[/ x - + =].include?(label) ? color_accent(page) : color_surface(page)
     end
 
     def calculator_handle_input(label, event, page, status)

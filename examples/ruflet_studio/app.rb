@@ -24,7 +24,7 @@ module RufletStudio
     def view(page)
       page.title = "Gallery"
       page.scroll = "auto"
-      page.bgcolor = "#111318"
+      page.bgcolor = color_bg(page)
 
       page.on_route_change = ->(_e) { render(page) }
 
@@ -36,6 +36,7 @@ module RufletStudio
     def render(page)
       route = (page.route || "/gallery").split("?").first
       route = "/gallery" if route == "/"
+      page.bgcolor = color_bg(page)
 
       case route
       when "/home"
@@ -46,7 +47,8 @@ module RufletStudio
         page.views = [settings_view(page)]
       when "/counter"
         page.views = [detail_view(page, "Counter", build_counter(page, status_text(page)),
-                                  source_path: "examples/ruflet_studio/sections_controls/counter.rb")]
+                                  source_path: "examples/ruflet_studio/sections_controls
+                                  /counter.rb")]
       when "/todo"
         page.views = [detail_view(page, "To-do", build_todo(page, status_text(page)),
                                   source_path: "examples/ruflet_studio/sections_controls/todo.rb")]
@@ -80,6 +82,12 @@ module RufletStudio
       when "/video"
         page.views = [detail_view(page, "Video Player", build_video(page, status_text(page)),
                                   source_path: "examples/ruflet_studio/sections_media/video.rb")]
+      when "/webview"
+        page.views = [detail_view(page, "WebView", build_webview(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_media/webview.rb",
+                                  scroll: nil,
+                                  horizontal_alignment: "stretch",
+                                  padding: 0)]
       when "/flashlight"
         page.views = [detail_view(page, "Flashlight", build_flashlight(page, status_text(page)),
                                   source_path: "examples/ruflet_studio/sections_media/flashlight.rb")]

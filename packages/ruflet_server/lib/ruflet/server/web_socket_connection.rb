@@ -123,6 +123,8 @@ module Ruflet
       end
 
       chunk
+    rescue IOError, SystemCallError
+      nil
     end
   end
 end

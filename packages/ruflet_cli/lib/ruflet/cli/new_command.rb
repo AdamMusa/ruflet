@@ -7,22 +7,22 @@ module Ruflet
   module CLI
     module NewCommand
       CLIENT_EXTENSION_MAP = {
-        "ads" => { package: "flet_ads", alias: "flet_ads" },
-        "audio" => { package: "flet_audio", alias: "flet_audio" },
-        "audio_recorder" => { package: "flet_audio_recorder", alias: "flet_audio_recorder" },
-        "camera" => { package: "flet_camera", alias: "flet_camera" },
-        "charts" => { package: "flet_charts", alias: "flet_charts" },
-        "code_editor" => { package: "flet_code_editor", alias: "flet_code_editor" },
-        "color_pickers" => { package: "flet_color_pickers", alias: "flet_color_picker" },
-        "datatable2" => { package: "flet_datatable2", alias: "flet_datatable2" },
-        "flashlight" => { package: "flet_flashlight", alias: "flet_flashlight" },
-        "geolocator" => { package: "flet_geolocator", alias: "flet_geolocator" },
-        "lottie" => { package: "flet_lottie", alias: "flet_lottie" },
-        "map" => { package: "flet_map", alias: "flet_map" },
-        "permission_handler" => { package: "flet_permission_handler", alias: "flet_permission_handler" },
-        "secure_storage" => { package: "flet_secure_storage", alias: "flet_secure_storage" },
-        "video" => { package: "flet_video", alias: "flet_video" },
-        "webview" => { package: "flet_webview", alias: "flet_webview" }
+        "ads" => { package: "flet_ads", alias: "ruflet_ads" },
+        "audio" => { package: "flet_audio", alias: "ruflet_audio" },
+        "audio_recorder" => { package: "flet_audio_recorder", alias: "ruflet_audio_recorder" },
+        "camera" => { package: "flet_camera", alias: "ruflet_camera" },
+        "charts" => { package: "flet_charts", alias: "ruflet_charts" },
+        "code_editor" => { package: "flet_code_editor", alias: "ruflet_code_editor" },
+        "color_pickers" => { package: "flet_color_pickers", alias: "ruflet_color_picker" },
+        "datatable2" => { package: "flet_datatable2", alias: "ruflet_datatable2" },
+        "flashlight" => { package: "flet_flashlight", alias: "ruflet_flashlight" },
+        "geolocator" => { package: "flet_geolocator", alias: "ruflet_geolocator" },
+        "lottie" => { package: "flet_lottie", alias: "ruflet_lottie" },
+        "map" => { package: "flet_map", alias: "ruflet_map" },
+        "permission_handler" => { package: "flet_permission_handler", alias: "ruflet_permission_handler" },
+        "secure_storage" => { package: "flet_secure_storage", alias: "ruflet_secure_storage" },
+        "video" => { package: "flet_video", alias: "ruflet_video" },
+        "webview" => { package: "flet_webview", alias: "ruflet_webview" }
       }.freeze
 
       def command_new(args)
@@ -95,9 +95,9 @@ module Ruflet
         File.write(File.join(root, "ruflet.yaml"), <<~YAML)
           app:
             name: #{app_name}
-            # Optional production backend endpoint used by `ruflet build`.
+            # Optional production client endpoint used by `ruflet build`.
             # Example: https://api.example.com
-            backend_url: ""
+            ruflet_client_url: ""
 
           # Source of truth for Flutter client extensions/plugins.
           # Examples: camera, video, audio, flashlight, webview, map

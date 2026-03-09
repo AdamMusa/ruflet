@@ -1,32 +1,32 @@
 import 'dart:async';
 
 import 'package:flet/flet.dart';
-import 'package:flet_ads/flet_ads.dart' as flet_ads;
+import 'package:flet_ads/flet_ads.dart' as ruflet_ads;
 // --FAT_CLIENT_START--
-import 'package:flet_audio/flet_audio.dart' as flet_audio;
+import 'package:flet_audio/flet_audio.dart' as ruflet_audio;
 // --FAT_CLIENT_END--
 import 'package:flet_audio_recorder/flet_audio_recorder.dart'
-    as flet_audio_recorder;
-import 'package:flet_camera/flet_camera.dart' as flet_camera;
-import 'package:flet_charts/flet_charts.dart' as flet_charts;
-import 'package:flet_code_editor/flet_code_editor.dart' as flet_code_editor;
+    as ruflet_audio_recorder;
+import 'package:flet_camera/flet_camera.dart' as ruflet_camera;
+import 'package:flet_charts/flet_charts.dart' as ruflet_charts;
+import 'package:flet_code_editor/flet_code_editor.dart' as ruflet_code_editor;
 import 'package:flet_color_pickers/flet_color_pickers.dart'
-    as flet_color_picker;
-import 'package:flet_datatable2/flet_datatable2.dart' as flet_datatable2;
-import 'package:flet_flashlight/flet_flashlight.dart' as flet_flashlight;
-import 'package:flet_geolocator/flet_geolocator.dart' as flet_geolocator;
-import 'package:flet_lottie/flet_lottie.dart' as flet_lottie;
-import 'package:flet_map/flet_map.dart' as flet_map;
+    as ruflet_color_picker;
+import 'package:flet_datatable2/flet_datatable2.dart' as ruflet_datatable2;
+import 'package:flet_flashlight/flet_flashlight.dart' as ruflet_flashlight;
+import 'package:flet_geolocator/flet_geolocator.dart' as ruflet_geolocator;
+import 'package:flet_lottie/flet_lottie.dart' as ruflet_lottie;
+import 'package:flet_map/flet_map.dart' as ruflet_map;
 import 'package:flet_permission_handler/flet_permission_handler.dart'
-    as flet_permission_handler;
+    as ruflet_permission_handler;
 // --FAT_CLIENT_START--
 // --FAT_CLIENT_END--
 import 'package:flet_secure_storage/flet_secure_storage.dart'
-    as flet_secure_storage;
+    as ruflet_secure_storage;
 // --FAT_CLIENT_START--
-import 'package:flet_video/flet_video.dart' as flet_video;
+import 'package:flet_video/flet_video.dart' as ruflet_video;
 // --FAT_CLIENT_END--
-import 'package:flet_webview/flet_webview.dart' as flet_webview;
+import 'package:flet_webview/flet_webview.dart' as ruflet_webview;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
@@ -35,8 +35,8 @@ import 'connection_probe.dart';
 
 const bool isProduction = bool.fromEnvironment('dart.vm.product');
 const int kRufletPort = 8550;
-const String kConfiguredBackendUrl =
-    String.fromEnvironment('RUFLET_BACKEND_URL', defaultValue: '');
+const String kConfiguredClientUrl =
+    String.fromEnvironment('RUFLET_CLIENT_URL', defaultValue: '');
 Tester? tester;
 
 String normalizePageUrlForPlatform(String rawUrl) {
@@ -77,7 +77,7 @@ String fallbackBackendUrl() =>
     normalizePageUrlForPlatform('http://0.0.0.0:$kRufletPort');
 
 String resolveBackendUrl() {
-  final configured = parseBackendUrl(kConfiguredBackendUrl);
+  final configured = parseBackendUrl(kConfiguredClientUrl);
   if (configured != null) return configured;
   return fallbackBackendUrl();
 }
@@ -99,24 +99,24 @@ Future<void> main() async {
   }
 
   final extensions = <FletExtension>[
-    flet_ads.Extension(),
-    flet_audio_recorder.Extension(),
-    flet_camera.Extension(),
-    flet_charts.Extension(),
-    flet_code_editor.Extension(),
-    flet_color_picker.Extension(),
-    flet_datatable2.Extension(),
-    flet_flashlight.Extension(),
-    flet_geolocator.Extension(),
-    flet_lottie.Extension(),
-    flet_map.Extension(),
-    flet_permission_handler.Extension(),
-    flet_secure_storage.Extension(),
-    flet_webview.Extension(),
+    ruflet_ads.Extension(),
+    ruflet_audio_recorder.Extension(),
+    ruflet_camera.Extension(),
+    ruflet_charts.Extension(),
+    ruflet_code_editor.Extension(),
+    ruflet_color_picker.Extension(),
+    ruflet_datatable2.Extension(),
+    ruflet_flashlight.Extension(),
+    ruflet_geolocator.Extension(),
+    ruflet_lottie.Extension(),
+    ruflet_map.Extension(),
+    ruflet_permission_handler.Extension(),
+    ruflet_secure_storage.Extension(),
+    ruflet_webview.Extension(),
 
     // --FAT_CLIENT_START--
-    flet_audio.Extension(),
-    flet_video.Extension(),
+    ruflet_audio.Extension(),
+    ruflet_video.Extension(),
     // --FAT_CLIENT_END--
   ];
 

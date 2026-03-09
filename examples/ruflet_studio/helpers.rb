@@ -60,7 +60,10 @@ module RufletStudio
     end
 
     def set_theme(page, mode)
-      @theme_mode = %w[system light dark].include?(mode) ? mode : "system"
+      normalized = mode.to_s.strip.downcase
+      return unless %w[system light dark].include?(normalized)
+
+      @theme_mode = normalized
       page.go(page.route || "/settings")
     end
 
@@ -72,16 +75,22 @@ module RufletStudio
           text: "#1f2328",
           subtle: "#6c757d",
           icon: "#495057",
-          divider: "#dee2e6"
+          divider: "#dee2e6",
+          panel: "#f1f3f5",
+          nav_indicator: "#dbe4ff",
+          accent: "#4c6ef5"
         }
       else
         {
-          bg: "#111318",
-          surface: "#111318",
-          text: "#e7e9ec",
-          subtle: "#9aa0a6",
-          icon: "#cfd4da",
-          divider: "#2a2e36"
+          bg: "#e8edf3",
+          surface: "#f8fafc",
+          text: "#1f2328",
+          subtle: "#5c6773",
+          icon: "#3f4954",
+          divider: "#cfd6de",
+          panel: "#eef2f6",
+          nav_indicator: "#cfe0ff",
+          accent: "#3b5bdb"
         }
       end
     end
@@ -93,14 +102,18 @@ module RufletStudio
     def color_subtle(page) = theme_colors(page)[:subtle]
     def color_icon(page) = theme_colors(page)[:icon]
     def color_divider(page) = theme_colors(page)[:divider]
+    def color_panel(page) = theme_colors(page)[:panel]
+    def color_nav_indicator(page) = theme_colors(page)[:nav_indicator]
+    def color_accent(page) = theme_colors(page)[:accent]
 
     def read_number(data, key)
       return nil unless data
       return data if data.is_a?(Numeric)
       return data.to_f if data.is_a?(String) && data.match?(/\A-?\d+(\.\d+)?\z/)
-      return data[key] if data.is_a?(Hash) && data[key].is_a?(Numeric)
-      if data.is_a?(Hash) && data[key]
-        return data[key].to_f
+      if data.is_a?(Hash)
+        raw = data[key] || data[key.to_s] || data[key.to_sym]
+        return raw if raw.is_a?(Numeric)
+        return raw.to_f if raw
       end
       nil
     end
@@ -108,7 +121,10 @@ module RufletStudio
     def read_string(data, key)
       return nil unless data
       return data if data.is_a?(String)
-      return data[key] if data.is_a?(Hash) && data[key].is_a?(String)
+      if data.is_a?(Hash)
+        raw = data[key] || data[key.to_s] || data[key.to_sym]
+        return raw if raw.is_a?(String)
+      end
       nil
     end
 
