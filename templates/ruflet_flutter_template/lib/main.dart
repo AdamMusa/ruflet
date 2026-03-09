@@ -35,6 +35,8 @@ import 'connection_probe.dart';
 
 const bool isProduction = bool.fromEnvironment('dart.vm.product');
 const int kRufletPort = 8550;
+const String kConfiguredBackendUrl =
+    String.fromEnvironment('RUFLET_BACKEND_URL', defaultValue: '');
 Tester? tester;
 
 String normalizePageUrlForPlatform(String rawUrl) {
@@ -73,6 +75,12 @@ String normalizePageUrlForPlatform(String rawUrl) {
 
 String fallbackBackendUrl() =>
     normalizePageUrlForPlatform('http://0.0.0.0:$kRufletPort');
+
+String resolveBackendUrl() {
+  final configured = parseBackendUrl(kConfiguredBackendUrl);
+  if (configured != null) return configured;
+  return fallbackBackendUrl();
+}
 
 Future<void> main() async {
   if (isProduction) {
@@ -116,7 +124,7 @@ Future<void> main() async {
     extension.ensureInitialized();
   }
 
-  final pageUrl = fallbackBackendUrl();
+  final pageUrl = resolveBackendUrl();
 
   await waitForBackend(pageUrl);
 

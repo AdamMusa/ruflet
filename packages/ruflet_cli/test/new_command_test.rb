@@ -23,6 +23,7 @@ class RufletCliNewCommandTest < Minitest::Test
         assert File.exist?(File.join(dir, "demo_app", "main.rb"))
         assert File.exist?(File.join(dir, "demo_app", "Gemfile"))
         assert File.exist?(File.join(dir, "demo_app", "README.md"))
+        assert File.exist?(File.join(dir, "demo_app", "ruflet.yaml"))
         refute File.exist?(File.join(dir, "demo_app", ".bundle", "config"))
       ensure
         $stdout = original_stdout
@@ -34,6 +35,55 @@ class RufletCliNewCommandTest < Minitest::Test
           cli_singleton.send(:remove_method, :copy_ruflet_client_template)
         end
       end
+    end
+  end
+
+  def test_prune_client_manifest_keeps_only_selected_extensions
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "ruflet_client")
+      FileUtils.mkdir_p(File.join(client_dir, "lib"))
+
+      File.write(
+        File.join(client_dir, "pubspec.yaml"),
+        <<~YAML
+          dependencies:
+            flutter:
+              sdk: flutter
+            flet:
+              git:
+                url: https://github.com/flet-dev/flet.git
+            flet_camera:
+              git:
+                url: https://github.com/flet-dev/flet.git
+            flet_video:
+              git:
+                url: https://github.com/flet-dev/flet.git
+        YAML
+      )
+
+      File.write(
+        File.join(client_dir, "lib", "main.dart"),
+        <<~DART
+          import 'package:flet/flet.dart';
+          import 'package:flet_camera/flet_camera.dart' as flet_camera;
+          import 'package:flet_video/flet_video.dart' as flet_video;
+
+          final extensions = <FletExtension>[
+            flet_camera.Extension(),
+            flet_video.Extension(),
+          ];
+        DART
+      )
+
+      Ruflet::CLI.send(:apply_client_manifest!, client_dir, ["flet_camera"], ["flet_camera"])
+
+      pruned_pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
+      pruned_main = File.read(File.join(client_dir, "lib", "main.dart"))
+
+      assert_includes pruned_pubspec, "flet_camera:"
+      refute_includes pruned_pubspec, "flet_video:"
+      assert_includes pruned_main, "flet_camera.Extension()"
+      refute_includes pruned_main, "flet_video.Extension()"
     end
   end
 end
