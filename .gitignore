@@ -1,8 +1,11 @@
 vendor/*
 
-# Upstream mruby sources vendored from GitHub
-ruby_runtime/third_party/mruby/
+# Ruby Bundler local config
+.bundle/
+.vscode/
+
+# Third-party dependencies for ruby_runtime
+ruby_runtime/third_party/
 
 # Local demo app
 mruby_runtime_demo/
-.bundle/
