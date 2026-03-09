@@ -5,6 +5,7 @@ vendor/*
 .vscode/
 
 # Third-party dependencies for ruby_runtime
+ruby_runtime/
 ruby_runtime/third_party/
 
 # Local demo app
