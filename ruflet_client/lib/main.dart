@@ -169,6 +169,12 @@ void main([List<String>? args]) async {
     if (routeUrlStrategy == 'path') {
       usePathUrlStrategy();
     }
+    final queryUrl = Uri.base.queryParameters['url'];
+    if (queryUrl != null && queryUrl.trim().isNotEmpty) {
+      initialUrl = queryUrl;
+    } else if (!kDebugMode) {
+      initialUrl = 'http://localhost:8550';
+    }
   } else {
     if (args != null && args.isNotEmpty) {
       initialUrl = args[0];
@@ -180,15 +186,6 @@ void main([List<String>? args]) async {
         'In desktop mode Flet app URL must be provided as a first argument.',
       );
     }
-  }
-
-  final isDesktop =
-      !kIsWeb &&
-      (defaultTargetPlatform == TargetPlatform.windows ||
-          defaultTargetPlatform == TargetPlatform.macOS ||
-          defaultTargetPlatform == TargetPlatform.linux);
-  if (kIsWeb || isDesktop) {
-    initialUrl = 'http://localhost:8550';
   }
 
   initialUrl = normalizePageUrlForPlatform(initialUrl);

@@ -22,7 +22,6 @@ module Ruflet
       def text(value = nil, **props) = control_delegate.text(value, **props)
       def button(**props) = control_delegate.button(**props)
       def elevated_button(**props) = control_delegate.elevated_button(**props)
-      def elevatedbutton(**props) = control_delegate.elevatedbutton(**props)
       def text_button(**props) = control_delegate.text_button(**props)
       def textbutton(**props) = control_delegate.textbutton(**props)
       def filled_button(**props) = control_delegate.filled_button(**props)

@@ -2,9 +2,9 @@
 
 module Ruflet
   class App
-    def initialize(host: "0.0.0.0", port: 8550)
-      @host = host
-      @port = port
+    def initialize(host: nil, port: nil)
+      @host = (host || ENV["RUFLET_HOST"] || "0.0.0.0")
+      @port = normalize_port(port || ENV["RUFLET_PORT"] || 8550)
     end
 
     def run
@@ -15,6 +15,13 @@ module Ruflet
 
     def view(_page)
       raise NotImplementedError, "#{self.class} must implement #view(page)"
+    end
+
+    private
+
+    def normalize_port(value)
+      port = value.to_i
+      port > 0 ? port : 8550
     end
   end
 end

@@ -79,7 +79,7 @@ module Ruflet
   class << self
     include UI::SharedControlForwarders
 
-    def app(host: "0.0.0.0", port: 8550, &block)
+    def app(host: nil, port: nil, &block)
       DSL.app(host: host, port: port, &block)
     end
 

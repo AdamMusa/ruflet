@@ -16,15 +16,27 @@ module Ruflet
 
     module_function
 
+    def default_host
+      ENV["RUFLET_HOST"].to_s.strip.empty? ? "0.0.0.0" : ENV["RUFLET_HOST"].to_s
+    end
+
+    def default_port
+      raw = ENV["RUFLET_PORT"].to_s
+      value = raw.to_i
+      value > 0 ? value : 8550
+    end
+
     def _pending_app
-      @_pending_app ||= App.new(host: "0.0.0.0", port: 8550)
+      @_pending_app ||= App.new(host: default_host, port: default_port)
     end
 
     def _reset_pending_app!
-      @_pending_app = App.new(host: "0.0.0.0", port: 8550)
+      @_pending_app = App.new(host: default_host, port: default_port)
     end
 
-    def app(host: "0.0.0.0", port: 8550, &block)
+    def app(host: nil, port: nil, &block)
+      host ||= default_host
+      port ||= default_port
       return App.new(host: host, port: port).tap { |a| a.instance_eval(&block) } if block
 
       pending = _pending_app
@@ -52,7 +64,6 @@ module Ruflet
     def text(value = nil, **props) = _pending_app.text(value, **props)
     def button(**props) = _pending_app.button(**props)
     def elevated_button(**props) = _pending_app.elevated_button(**props)
-    def elevatedbutton(**props) = _pending_app.elevatedbutton(**props)
     def text_field(**props) = _pending_app.text_field(**props)
     def textfield(**props) = _pending_app.textfield(**props)
     def icon(**props) = _pending_app.icon(**props)

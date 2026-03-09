@@ -16,10 +16,11 @@ module Ruflet
   module CLI
     module RunCommand
       def command_run(args)
-        options = { target: "mobile" }
+        options = { target: "mobile", requested_port: 8550 }
         parser = OptionParser.new do |o|
           o.on("--web") { options[:target] = "web" }
           o.on("--desktop") { options[:target] = "desktop" }
+          o.on("--port PORT", Integer) { |v| options[:requested_port] = v }
         end
         parser.parse!(args)
 
@@ -31,7 +32,7 @@ module Ruflet
           return 1
         end
 
-        selected_port = resolve_backend_port(options[:target])
+        selected_port = resolve_backend_port(options[:target], requested_port: options[:requested_port])
         return 1 unless selected_port
         env = {
           "RUFLET_TARGET" => options[:target],
@@ -41,7 +42,7 @@ module Ruflet
         assets_dir = File.join(File.dirname(script_path), "assets")
         env["RUFLET_ASSETS_DIR"] = assets_dir if File.directory?(assets_dir)
 
-        print_run_banner(target: options[:target], port: selected_port)
+        print_run_banner(target: options[:target], requested_port: options[:requested_port], port: selected_port)
         print_mobile_qr_hint(port: selected_port) if options[:target] == "mobile"
 
         gemfile_path = find_nearest_gemfile(Dir.pwd)
@@ -126,12 +127,14 @@ module Ruflet
         end
       end
 
-      def print_run_banner(target:, port:)
-        if target == "mobile" && port != 8550
-          puts "Requested port 8550 is busy; bound to #{port}"
+      def print_run_banner(target:, requested_port:, port:)
+        if port != requested_port.to_i
+          puts "Requested port #{requested_port} is busy; bound to #{port}"
         end
         if target == "desktop"
           puts "Ruflet desktop URL: http://localhost:#{port}"
+        elsif target == "mobile"
+          puts "Ruflet target: #{target}"
         else
           puts "Ruflet target: #{target}"
           puts "Ruflet URL: http://localhost:#{port}"
@@ -162,9 +165,11 @@ module Ruflet
         web_pid = Process.spawn("python3", "-m", "http.server", web_port.to_s, "--bind", "127.0.0.1", chdir: web_dir, out: File::NULL, err: File::NULL)
         Process.detach(web_pid)
         wait_for_server_boot(web_port)
-        browser_pid = open_in_browser_app_mode("http://localhost:#{web_port}")
-        open_in_browser("http://localhost:#{web_port}") if browser_pid.nil?
-        puts "Ruflet web client: http://localhost:#{web_port}"
+        backend_url = "http://localhost:#{port}"
+        web_url = "http://localhost:#{web_port}/?#{URI.encode_www_form(url: backend_url)}"
+        browser_pid = open_in_browser_app_mode(web_url)
+        open_in_browser(web_url) if browser_pid.nil?
+        puts "Ruflet web client: #{web_url}"
         puts "Ruflet backend ws: ws://localhost:#{port}/ws"
         [web_pid, browser_pid].compact
       rescue Errno::ENOENT
@@ -532,8 +537,6 @@ module Ruflet
         puts
         puts "Ruflet mobile connect URL:"
         puts "  #{payload}"
-        puts "Ruflet server ws URL:"
-        puts "  ws://0.0.0.0:#{port}/ws"
         puts "Scan this QR from ruflet_client (Connect -> Scan QR):"
         print_ascii_qr(payload)
         puts
@@ -561,8 +564,10 @@ module Ruflet
         start_port
       end
 
-      def resolve_backend_port(target)
-        find_available_port(8550)
+      def resolve_backend_port(_target, requested_port: 8550)
+        base = requested_port.to_i
+        base = 8550 if base <= 0
+        find_available_port(base)
       end
 
       def port_available?(port)
