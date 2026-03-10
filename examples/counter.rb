@@ -12,7 +12,7 @@ Ruflet.run do |page|
         alignment: Ruflet::MainAxisAlignment::CENTER,
         horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
         children: [
-          text(value: "You have pushed the button this many time:"),
+          text(value: "You have pushed the button this many times:"),
           count_text
         ]
       )

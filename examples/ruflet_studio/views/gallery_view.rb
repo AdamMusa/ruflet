@@ -43,7 +43,12 @@ module RufletStudio
         tile(page, "animation", "Ruflet Animation", "/animation"),
         tile(page, "music_note", "Audio Player", "/audio"),
         tile(page, "video_library", "Video Player", "/video"),
+        tile(page, "battery_6_bar", "Battery", "/battery"),
+        tile(page, "content_paste", "Clipboard", "/clipboard"),
+        tile(page, "folder", "Storage Paths", "/storage-paths"),
+        tile(page, "share", "Share", "/share"),
         tile(page, "flash_on", "Flashlight", "/flashlight"),
+        tile(page, "wifi", "Connectivity", "/connectivity"),
         tile(page, "photo_camera", "Camera", "/camera"),
         tile(page, "attach_file", "File Picker", "/file-picker")
       ]

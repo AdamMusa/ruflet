@@ -28,16 +28,12 @@ module RufletStudio
       url = github_url_for(path)
       return unless url
 
-      # Ensure service is registered once, then use Page-level helper.
       url_launcher_service(page)
       page.launch_url(
         url,
-        mode: "external_application",
-        web_view_configuration: {
-          "enable_javascript" => true,
-          "enable_dom_storage" => true
-        },
-        web_only_window_name: "_blank"
+        on_result: lambda { |_result, error|
+          Kernel.warn("GitHub URL launch failed: #{error}") if error && !error.to_s.empty?
+        }
       )
     end
 
