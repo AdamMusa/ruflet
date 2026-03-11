@@ -11,10 +11,12 @@ module RufletStudio
 
       navigation_bar(
         bgcolor: color_surface(page),
-        indicator_color: effective_theme(page) == "light" ? "#dbe4ff" : "#2b3036",
+        indicator_color: color_nav_indicator(page),
         selected_index: selected,
         on_change: ->(e) {
           idx = read_number(e.data, "selected_index") || read_number(e.data, "selectedIndex")
+          next if idx.nil? || idx.to_i == selected
+
           case idx&.to_i
           when 0
             page.go("/home")

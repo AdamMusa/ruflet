@@ -54,7 +54,7 @@ module Ruflet
         Commands:
           ruflet create <appname>
           ruflet new <appname>
-          ruflet run [scriptname|path] [--web|--desktop]
+          ruflet run [scriptname|path] [--web|--desktop] [--port PORT]
           ruflet debug [scriptname|path]
           ruflet build <apk|ios|aab|web|macos|windows|linux>
           ruflet devices

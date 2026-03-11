@@ -36,7 +36,7 @@ module RufletStudio
               content: column(
                 spacing: 8,
                 children: [
-                  text(value: "TextField", style: { size: 14, weight: "w600", color: "#1f2328" }),
+                  text(value: "TextField", style: { size: 14, weight: "w600" }),
                   text_field(label: "Name", value: "Ruflet")
                 ]
               )
@@ -49,7 +49,7 @@ module RufletStudio
               content: column(
                 spacing: 8,
                 children: [
-                  text(value: "Buttons", style: { size: 14, weight: "w600", color: "#1f2328" }),
+                  text(value: "Buttons", style: { size: 14, weight: "w600" }),
                   row(
                     spacing: 8,
                     children: [
@@ -69,7 +69,7 @@ module RufletStudio
               content: column(
                 spacing: 8,
                 children: [
-                  text(value: "Selection", style: { size: 14, weight: "w600", color: "#1f2328" }),
+                  text(value: "Selection", style: { size: 14, weight: "w600" }),
                   control(:switch, label: "Wi-Fi", value: true),
                   control(:slider, min: 0, max: 100, divisions: 10, value: 35, label: "Value = {value}")
                 ]
@@ -83,7 +83,7 @@ module RufletStudio
               content: column(
                 spacing: 8,
                 children: [
-                  text(value: "Dialogs", style: { size: 14, weight: "w600", color: "#1f2328" }),
+                  text(value: "Dialogs", style: { size: 14, weight: "w600" }),
                   text_button(content: text(value: "Show dialog"), on_click: ->(_e) { page.show_dialog(material_dialog) })
                 ]
               )
@@ -96,7 +96,7 @@ module RufletStudio
               content: column(
                 spacing: 8,
                 children: [
-                  text(value: "Banners", style: { size: 14, weight: "w600", color: "#1f2328" }),
+                  text(value: "Banners", style: { size: 14, weight: "w600" }),
                   text_button(content: text(value: "Show banner"), on_click: ->(_e) {
                     page.show_dialog(build_banner.call)
                   })

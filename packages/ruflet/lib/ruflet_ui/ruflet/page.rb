@@ -284,9 +284,10 @@ module Ruflet
     end
 
     def launch_url(url, mode: "external_application", web_view_configuration: nil, browser_configuration: nil, web_only_window_name: nil, timeout: 10)
+      url_launcher = ensure_url_launcher_service
       invoke(
-        1,
-        "launchUrl",
+        url_launcher,
+        "launch_url",
         args: {
           "url" => url,
           "mode" => mode,
@@ -299,7 +300,8 @@ module Ruflet
     end
 
     def can_launch_url(url, timeout: 10)
-      invoke(1, "canLaunchUrl", args: { "url" => url }, timeout: timeout)
+      url_launcher = ensure_url_launcher_service
+      invoke(url_launcher, "can_launch_url", args: { "url" => url }, timeout: timeout)
     end
 
     def set_clipboard(value, timeout: 10)
@@ -374,6 +376,13 @@ module Ruflet
 
       control = resolve_control(control_or_id)
       return self unless control
+      wire_id = control.wire_id
+      if wire_id.nil?
+        # Events can race with navigation/disposal; never emit patch_control with nil id.
+        refresh_control_indexes!
+        wire_id = control.wire_id
+      end
+      return self if wire_id.nil?
 
       patch = normalize_props(props)
       if text_maps_to_content?(control, patch)
@@ -392,7 +401,7 @@ module Ruflet
       patch_ops = patch.map { |k, v| [0, 0, k, serialize_patch_value(v)] }
 
       send_message(Protocol::ACTIONS[:patch_control], {
-        "id" => control.wire_id,
+        "id" => wire_id,
         "patch" => [[0], *patch_ops]
       })
 
@@ -780,6 +789,15 @@ module Ruflet
       clipboard = build_widget(:clipboard)
       add_service(clipboard)
       clipboard
+    end
+
+    def ensure_url_launcher_service
+      url_launcher = services.find { |service| service.is_a?(Control) && %w[urllauncher url_launcher].include?(service.type) }
+      return url_launcher if url_launcher
+
+      url_launcher = build_widget(:url_launcher)
+      add_service(url_launcher)
+      url_launcher
     end
   end
 end

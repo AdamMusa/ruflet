@@ -43,8 +43,9 @@ module Ruflet
       end
 
       def button(**props) = build_widget(:button, **props)
-      def elevated_button(**props) = build_widget(:elevatedbutton, **props)
-      def elevatedbutton(**props) = elevated_button(**props)
+      # Ruflet currently uses a single Material button control schema.
+      # Keep elevated_button DSL available by routing to :button.
+      def elevated_button(**props) = build_widget(:button, **props)
       def text_button(**props) = build_widget(:textbutton, **props)
       def textbutton(**props) = text_button(**props)
       def filled_button(**props) = build_widget(:filledbutton, **props)
@@ -135,6 +136,8 @@ module Ruflet
       def chartaxis(**props) = chart_axis(**props)
       def chart_axis_label(**props) = build_widget(:chartaxislabel, **props)
       def chartaxislabel(**props) = chart_axis_label(**props)
+      def web_view(**props) = build_widget(:webview, **props)
+      def webview(**props) = web_view(**props)
 
       def fab(content = nil, **props)
         mapped = props.dup

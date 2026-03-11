@@ -47,9 +47,9 @@ module RufletStudio
       end
 
       mines_left = mine_count
-      mines_text = text(value: format("%03d", mines_left), style: { color: "#ff6b6b", size: 16, weight: "w600" })
+      mines_text = text(value: format("%03d", mines_left), style: { size: 16, weight: "w600" })
       face_text = text(value: "🙂", style: { size: 18 })
-      timer_text = text(value: "000", style: { color: "#ff6b6b", size: 16, weight: "w600" })
+      timer_text = text(value: "000", style: { size: 16, weight: "w600" })
 
       cell_texts = []
       cell_containers = []
@@ -68,7 +68,7 @@ module RufletStudio
           end
 
         label = sq[:flagged] ? "🚩" : ""
-        label_text = text(value: label, style: { size: 14, color: number_color })
+        label_text = text(value: label, style: { size: 14 })
         cell_texts[idx] = label_text
 
         cell_containers[idx] = container(
@@ -150,7 +150,7 @@ module RufletStudio
               }
             end
           })
-          safe_update.call(text, { value: label, style: { color: number_color } })
+          safe_update.call(text, { value: label })
         end
 
         safe_update.call(mines_text, { value: format("%03d", mines_left) })
@@ -375,8 +375,8 @@ module RufletStudio
             height: size,
             left: c * size,
             top: r * size,
-            bgcolor: r.even? == c.even? ? "#2a2e36" : "#23272f",
-            border: { width: 1, color: "#1c1f26" }
+            bgcolor: r.even? == c.even? ? "#e9ecef" : "#dee2e6",
+            border: { width: 1, color: "#ced4da" }
           )
         end
       end

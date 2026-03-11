@@ -25,10 +25,12 @@ require_relative "cupertinos/cupertinotextfield_control"
 require_relative "cupertinos/cupertinotimerpicker_control"
 require_relative "cupertinos/cupertinotintedbutton_control"
 require_relative "materials/alertdialog_control"
+require_relative "materials/audio_control"
 require_relative "materials/appbar_control"
 require_relative "materials/autocomplete_control"
 require_relative "materials/badge_control"
 require_relative "materials/banner_control"
+require_relative "materials/chart_controls"
 require_relative "materials/bottomappbar_control"
 require_relative "materials/bottomsheet_control"
 require_relative "materials/button_control"
@@ -94,6 +96,7 @@ require_relative "materials/textfield_control"
 require_relative "materials/timepicker_control"
 require_relative "materials/verticaldivider_control"
 require_relative "materials/video_control"
+require_relative "materials/webview_control"
 require_relative "shared/animatedswitcher_control"
 require_relative "shared/arc_control"
 require_relative "shared/autofillgroup_control"
@@ -155,6 +158,7 @@ module Ruflet
         CLASS_MAP = {
           "alert_dialog" => RufletComponents::AlertDialogControl,
           "alertdialog" => RufletComponents::AlertDialogControl,
+          "audio" => RufletComponents::AudioControl,
           "animated_switcher" => RufletComponents::AnimatedSwitcherControl,
           "animatedswitcher" => RufletComponents::AnimatedSwitcherControl,
           "app_bar" => RufletComponents::AppBarControl,
@@ -172,11 +176,27 @@ module Ruflet
           "bottom_sheet" => RufletComponents::BottomSheetControl,
           "bottomappbar" => RufletComponents::BottomAppBarControl,
           "bottomsheet" => RufletComponents::BottomSheetControl,
+          "bar_chart" => RufletComponents::BarChartControl,
+          "bar_chart_group" => RufletComponents::BarChartGroupControl,
+          "bar_chart_rod" => RufletComponents::BarChartRodControl,
+          "bar_chart_rod_stack_item" => RufletComponents::BarChartRodStackItemControl,
+          "barchart" => RufletComponents::BarChartControl,
+          "barchartgroup" => RufletComponents::BarChartGroupControl,
+          "barchartrod" => RufletComponents::BarChartRodControl,
+          "barchartrodstackitem" => RufletComponents::BarChartRodStackItemControl,
           "browser_context_menu" => RufletComponents::BrowserContextMenuControl,
           "browsercontextmenu" => RufletComponents::BrowserContextMenuControl,
           "button" => RufletComponents::ButtonControl,
           "canvas" => RufletComponents::CanvasControl,
           "card" => RufletComponents::CardControl,
+          "candlestick_chart" => RufletComponents::CandlestickChartControl,
+          "candlestick_chart_spot" => RufletComponents::CandlestickChartSpotControl,
+          "candlestickchart" => RufletComponents::CandlestickChartControl,
+          "candlestickchartspot" => RufletComponents::CandlestickChartSpotControl,
+          "chart_axis" => RufletComponents::ChartAxisControl,
+          "chart_axis_label" => RufletComponents::ChartAxisLabelControl,
+          "chartaxis" => RufletComponents::ChartAxisControl,
+          "chartaxislabel" => RufletComponents::ChartAxisLabelControl,
           "checkbox" => RufletComponents::CheckboxControl,
           "chip" => RufletComponents::ChipControl,
           "circle" => RufletComponents::CircleControl,
@@ -291,6 +311,12 @@ module Ruflet
           "keyboard_listener" => RufletComponents::KeyboardListenerControl,
           "keyboardlistener" => RufletComponents::KeyboardListenerControl,
           "line" => RufletComponents::LineControl,
+          "line_chart" => RufletComponents::LineChartControl,
+          "line_chart_data" => RufletComponents::LineChartDataControl,
+          "line_chart_data_point" => RufletComponents::LineChartDataPointControl,
+          "linechart" => RufletComponents::LineChartControl,
+          "linechartdata" => RufletComponents::LineChartDataControl,
+          "linechartdatapoint" => RufletComponents::LineChartDataPointControl,
           "list_tile" => RufletComponents::ListTileControl,
           "list_view" => RufletComponents::ListViewControl,
           "listtile" => RufletComponents::ListTileControl,
@@ -332,6 +358,10 @@ module Ruflet
           "popup_menu_item" => RufletComponents::PopupMenuItemControl,
           "popupmenubutton" => RufletComponents::PopupMenuButtonControl,
           "popupmenuitem" => RufletComponents::PopupMenuItemControl,
+          "pie_chart" => RufletComponents::PieChartControl,
+          "pie_chart_section" => RufletComponents::PieChartSectionControl,
+          "piechart" => RufletComponents::PieChartControl,
+          "piechartsection" => RufletComponents::PieChartSectionControl,
           "progress_bar" => RufletComponents::ProgressBarControl,
           "progress_ring" => RufletComponents::ProgressRingControl,
           "progressbar" => RufletComponents::ProgressBarControl,
@@ -339,6 +369,14 @@ module Ruflet
           "radio" => RufletComponents::RadioControl,
           "radio_group" => RufletComponents::RadioGroupControl,
           "radiogroup" => RufletComponents::RadioGroupControl,
+          "radar_chart" => RufletComponents::RadarChartControl,
+          "radar_chart_title" => RufletComponents::RadarChartTitleControl,
+          "radar_data_set" => RufletComponents::RadarDataSetControl,
+          "radar_data_set_entry" => RufletComponents::RadarDataSetEntryControl,
+          "radarchart" => RufletComponents::RadarChartControl,
+          "radarcharttitle" => RufletComponents::RadarChartTitleControl,
+          "radardataset" => RufletComponents::RadarDataSetControl,
+          "radardatasetentry" => RufletComponents::RadarDataSetEntryControl,
           "range_slider" => RufletComponents::RangeSliderControl,
           "rangeslider" => RufletComponents::RangeSliderControl,
           "rect" => RufletComponents::RectControl,
@@ -358,6 +396,10 @@ module Ruflet
           "segmentedbutton" => RufletComponents::SegmentedButtonControl,
           "selection_area" => RufletComponents::SelectionAreaControl,
           "selectionarea" => RufletComponents::SelectionAreaControl,
+          "scatter_chart" => RufletComponents::ScatterChartControl,
+          "scatter_chart_spot" => RufletComponents::ScatterChartSpotControl,
+          "scatterchart" => RufletComponents::ScatterChartControl,
+          "scatterchartspot" => RufletComponents::ScatterChartSpotControl,
           "semantics" => RufletComponents::SemanticsControl,
           "service_registry" => RufletComponents::ServiceRegistryControl,
           "serviceregistry" => RufletComponents::ServiceRegistryControl,
@@ -392,6 +434,8 @@ module Ruflet
           "vertical_divider" => RufletComponents::VerticalDividerControl,
           "verticaldivider" => RufletComponents::VerticalDividerControl,
           "video" => RufletComponents::VideoControl,
+          "web_view" => RufletComponents::WebViewControl,
+          "webview" => RufletComponents::WebViewControl,
           "view" => RufletComponents::ViewControl,
           "window" => RufletComponents::WindowControl,
           "window_drag_area" => RufletComponents::WindowDragAreaControl,

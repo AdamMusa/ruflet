@@ -8,7 +8,7 @@ module Ruflet
           TYPE = "camera".freeze
           WIRE = "Camera".freeze
 
-          def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, preview_enabled: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_size_change: nil, on_state_change: nil, on_stream_image: nil)
+          def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, preview_enabled: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_error: nil, on_size_change: nil, on_state_change: nil, on_stream_image: nil)
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -45,6 +45,7 @@ module Ruflet
             props[:visible] = visible unless visible.nil?
             props[:width] = width unless width.nil?
             props[:on_animation_end] = on_animation_end unless on_animation_end.nil?
+            props[:on_error] = on_error unless on_error.nil?
             props[:on_size_change] = on_size_change unless on_size_change.nil?
             props[:on_state_change] = on_state_change unless on_state_change.nil?
             props[:on_stream_image] = on_stream_image unless on_stream_image.nil?

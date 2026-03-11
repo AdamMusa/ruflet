@@ -2,12 +2,13 @@
 
 module RufletStudio
   module Views
-    def detail_view(page, title, content, source_path: nil)
+    def detail_view(page, title, content, source_path: nil, scroll: "auto", horizontal_alignment: "center", padding: 16)
       route = page.route
       control(:view,
         route: route,
         bgcolor: color_bg(page),
-        scroll: "auto",
+        scroll: scroll,
+        horizontal_alignment: horizontal_alignment,
         appbar: app_bar(
           bgcolor: color_surface(page),
           color: color_text(page),
@@ -22,7 +23,7 @@ module RufletStudio
           end
         ),
         navigation_bar: nav_bar(page, "/gallery"),
-        padding: 16,
+        padding: padding,
         children: [
           content
         ]
