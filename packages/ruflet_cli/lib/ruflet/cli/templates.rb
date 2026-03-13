@@ -7,8 +7,7 @@ module Ruflet
     Ruflet.run do |page|
       page.title = "Counter Demo"
       count = 0
-      count_text = nil
-      count_text ||= text(value: count.to_s, style: { size: 40 })
+      count_text = text(count.to_s, size: 40)
       page.add(
         container(
           expand: true,
@@ -17,13 +16,13 @@ module Ruflet
             alignment: Ruflet::MainAxisAlignment::CENTER,
             horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
             children: [
-              text(value: "You have pushed the button this many times:"),
+              text("You have pushed the button this many times:"),
               count_text
             ]
           )
         ),
         floating_action_button: fab(
-          icon(icon: Ruflet::MaterialIcons::ADD),
+          icon: Ruflet::MaterialIcons::ADD,
           on_click: ->(_e) do
             count += 1
             page.update(count_text, value: count.to_s)
@@ -37,7 +36,8 @@ module Ruflet
     GEMFILE_TEMPLATE = <<~GEMFILE
       source "https://rubygems.org"
 
-      gem "ruflet", ">= 0.0.8"
+      gem "ruflet_core", ">= 0.0.8"
+      gem "ruflet_server", ">= 0.0.8"
     GEMFILE
 
     README_TEMPLATE = <<~MD

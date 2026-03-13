@@ -61,8 +61,7 @@ ruflet build linux
 
 ## Notes
 
-- `ruflet new` generates app `Gemfile` with `gem "ruflet"`.
-- The `ruflet` package depends on matching `ruflet_core` and `ruflet_server` versions.
+- `ruflet new` generates app `Gemfile` with `gem "ruflet_core"` and `gem "ruflet_server"`.
 - App code can use `Ruflet.run do |page| ... end` or a class-based app.
 
 ## Default app structure

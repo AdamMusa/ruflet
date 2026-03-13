@@ -48,7 +48,10 @@ Monorepo folders:
 
 ## New Project Behavior
 
-`ruflet new <appname>` generates a `Gemfile` with just `gem "ruflet"`, and that package depends on the matching `ruflet_core` and `ruflet_server` versions.
+`ruflet new <appname>` generates a `Gemfile` with runtime dependencies:
+
+- `gem "ruflet_core"`
+- `gem "ruflet_server"`
 
 ## App Style (Required in docs/examples)
 
