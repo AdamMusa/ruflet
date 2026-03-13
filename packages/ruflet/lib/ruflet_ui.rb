@@ -3,7 +3,7 @@
 require "ruflet_protocol"
 require_relative "ruflet_ui/ruflet/colors"
 require_relative "ruflet_ui/ruflet/icon_data"
-require_relative "ruflet_ui/ruflet/icons/material_icons"
+require_relative "ruflet_ui/ruflet/icons/material/material_icons"
 require_relative "ruflet_ui/ruflet/icons/cupertino/cupertino_icons"
 require_relative "ruflet_ui/ruflet/types/text_style"
 require_relative "ruflet_ui/ruflet/types/geometry"

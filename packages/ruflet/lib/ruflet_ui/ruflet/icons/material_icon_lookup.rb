@@ -6,7 +6,7 @@ module Ruflet
   module MaterialIconLookup
     module_function
 
-    LOCAL_ICONS_JSON = File.expand_path("icons.json", __dir__)
+    LOCAL_ICONS_JSON = File.expand_path("material/icons.json", __dir__)
 
     def codepoint_for(value)
       return value if value.is_a?(Integer)
