@@ -4,8 +4,8 @@ require "fileutils"
 require "yaml"
 
 module Ruflet
-  module CLI
-    module NewCommand
+  module Rails
+    module InstallSupport
       CLIENT_EXTENSION_MAP = {
         "ads" => { package: "flet_ads", alias: "ruflet_ads" },
         "audio" => { package: "flet_audio", alias: "ruflet_audio" },
@@ -25,53 +25,85 @@ module Ruflet
         "webview" => { package: "flet_webview", alias: "ruflet_webview" }
       }.freeze
 
-      def command_new(args)
-        app_name = args.shift
-        if app_name.nil? || app_name.strip.empty?
-          warn "Usage: ruflet new <appname>"
-          return 1
-        end
+      module_function
 
-        root = File.expand_path(app_name, Dir.pwd)
-        if Dir.exist?(root)
-          warn "Directory already exists: #{root}"
-          return 1
-        end
+      def default_mobile_app_template(app_title:)
+        <<~RUBY
+          require "ruflet"
 
-        FileUtils.mkdir_p(root)
-        File.write(File.join(root, "main.rb"), format(Ruflet::CLI::MAIN_TEMPLATE, app_title: humanize_name(File.basename(root))))
-        File.write(File.join(root, "Gemfile"), Ruflet::CLI::GEMFILE_TEMPLATE)
-        File.write(File.join(root, "README.md"), format(Ruflet::CLI::README_TEMPLATE, app_name: File.basename(root)))
-        write_default_ruflet_config(root, File.basename(root))
-        copy_ruflet_client_template(root)
-        configure_ruflet_client(root)
+          Ruflet.run do |page|
+            page.title = #{app_title.inspect}
+            count = 0
+            count_text = text(count.to_s, size: 40)
 
-        project_name = File.basename(root)
-        puts "Run:"
-        puts "  cd #{project_name}"
-        puts "  bundle install"
-        puts "  bundle exec ruflet run main.rb"
-        puts
-        puts "Client template:"
-        puts "  cd ruflet_client"
-        puts "  flutter pub get"
-        puts "  flutter run"
-        0
+            page.add(
+              container(
+                expand: true,
+                alignment: Ruflet::MainAxisAlignment::CENTER,
+                content: column(
+                  alignment: Ruflet::MainAxisAlignment::CENTER,
+                  horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
+                  children: [
+                    text("You have pushed the button this many times:"),
+                    count_text
+                  ]
+                )
+              ),
+              floating_action_button: fab(
+                icon: Ruflet::MaterialIcons::ADD,
+                on_click: ->(_e) do
+                  count += 1
+                  page.update(count_text, value: count.to_s)
+                end
+              )
+            )
+          end
+        RUBY
       end
 
-      private
+      def default_ruflet_yaml(app_name:)
+        <<~YAML
+          app:
+            name: #{app_name}
+            ruflet_client_url: ""
+
+          services: []
+
+          assets:
+            splash_screen: assets/splash.png
+            icon_launcher: assets/icon.png
+        YAML
+      end
+
+      def route_snippet(entrypoint: "app/mobile/main.rb", mount_path: "/ws")
+        %(mount Ruflet::Rails.mobile(Rails.root.join("#{entrypoint}")), at: "#{mount_path}")
+      end
+
+      def client_template_root
+        env = ENV["RUFLET_CLIENT_TEMPLATE_DIR"].to_s.strip
+        return env if !env.empty? && Dir.exist?(env)
+
+        candidates = [
+          File.expand_path("../../../../../ruflet_client", __dir__),
+          File.expand_path("../../../../../templates/ruflet_flutter_template", __dir__)
+        ]
+        candidates.find { |path| Dir.exist?(path) }
+      end
 
       def copy_ruflet_client_template(root)
-        template_root = File.expand_path("../../../../../ruflet_client", __dir__)
-        return unless Dir.exist?(template_root)
+        template_root = client_template_root
+        return false unless template_root
 
         target = File.join(root, "ruflet_client")
+        return true if Dir.exist?(target)
+
         FileUtils.cp_r(template_root, target)
         prune_client_template(target)
+        true
       end
 
       def prune_client_template(target)
-        paths = %w[
+        %w[
           .dart_tool
           .idea
           build
@@ -83,38 +115,10 @@ module Ruflet
           android/.gradle
           android/.kotlin
           android/local.properties
-        ]
-        paths.each do |path|
+        ].each do |path|
           full = File.join(target, path)
           FileUtils.rm_rf(full) if File.exist?(full)
         end
-      end
-
-      def write_default_ruflet_config(root, app_name)
-        File.write(File.join(root, "ruflet.yaml"), <<~YAML)
-          app:
-            name: #{app_name}
-            # Optional production client endpoint used by `ruflet build`.
-            # Example: https://api.example.com
-            ruflet_client_url: ""
-
-          # Source of truth for Flutter client extensions/plugins.
-          # Examples: camera, video, audio, flashlight, webview, map
-          services: []
-
-          # Build assets configuration consumed by `ruflet build`.
-          # Paths are relative to this file unless absolute.
-          assets:
-            dir: assets
-            splash_screen: assets/splash.png
-            icon_launcher: assets/icon.png
-
-          build:
-            splash_color: "#FFFFFF"
-            splash_dark_color: "#0B0B0B"
-            icon_background: "#FFFFFF"
-            theme_color: "#FFFFFF"
-        YAML
       end
 
       def configure_ruflet_client(root)
@@ -122,23 +126,15 @@ module Ruflet
         return unless File.file?(config_path)
 
         config = YAML.safe_load(File.read(config_path), aliases: true) || {}
-        extension_keys = extract_extension_keys(config)
+        extension_keys = Array(config["services"]).map { |v| normalize_extension_key(v) }.compact.uniq
         extension_packages = extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:package) }.uniq
         extension_aliases = extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:alias) }.uniq
 
         client_dir = File.join(root, "ruflet_client")
-        apply_client_manifest!(client_dir, extension_packages, extension_aliases)
-      rescue StandardError => e
-        warn "Failed to configure ruflet_client from ruflet.yaml: #{e.class}: #{e.message}"
-      end
+        return unless Dir.exist?(client_dir)
 
-      def extract_extension_keys(config)
-        from_services = Array(config["services"])
-
-        from_services
-          .map { |v| normalize_extension_key(v) }
-          .compact
-          .uniq
+        prune_client_pubspec(File.join(client_dir, "pubspec.yaml"), extension_packages)
+        prune_client_main(File.join(client_dir, "lib", "main.dart"), extension_aliases)
       end
 
       def normalize_extension_key(value)
@@ -153,19 +149,11 @@ module Ruflet
         key
       end
 
-      def apply_client_manifest!(client_dir, extension_packages, extension_aliases)
-        return unless Dir.exist?(client_dir)
-
-        pubspec_path = File.join(client_dir, "pubspec.yaml")
-        main_path = File.join(client_dir, "lib", "main.dart")
-        prune_client_pubspec(pubspec_path, extension_packages) if File.file?(pubspec_path)
-        prune_client_main(main_path, extension_aliases) if File.file?(main_path)
-      end
-
       def prune_client_pubspec(path, selected_packages)
+        return unless File.file?(path)
+
         data = YAML.safe_load(File.read(path), aliases: true) || {}
         deps = (data["dependencies"] || {}).dup
-
         deps.keys.each do |name|
           next unless name.start_with?("flet_")
           next if name == "flet"
@@ -173,20 +161,19 @@ module Ruflet
 
           deps.delete(name)
         end
-
         data["dependencies"] = deps
         File.write(path, YAML.dump(data))
       end
 
       def prune_client_main(path, selected_aliases)
+        return unless File.file?(path)
+
         lines = File.readlines(path)
         alias_to_package = {}
 
         lines.each do |line|
           match = line.match(%r{\Aimport 'package:(flet_[^/]+)/\1\.dart' as ([a-zA-Z0-9_]+);})
-          next unless match
-
-          alias_to_package[match[2]] = match[1]
+          alias_to_package[match[2]] = match[1] if match
         end
 
         kept = lines.select do |line|
@@ -202,7 +189,7 @@ module Ruflet
           if extension_match
             extension_alias = extension_match[1]
             package_name = alias_to_package[extension_alias]
-            next true if package_name.nil? # non-Flet extension lines
+            next true if package_name.nil?
             next true if selected_aliases.include?(extension_alias)
             next false
           end
@@ -211,10 +198,6 @@ module Ruflet
         end
 
         File.write(path, kept.join)
-      end
-
-      def humanize_name(name)
-        name.to_s.gsub(/[_-]+/, " ").split.map(&:capitalize).join(" ")
       end
     end
   end

@@ -30,6 +30,8 @@ module RufletStudio
         width: 760,
         content: column(
           spacing: 10,
+          alignment: Ruflet::MainAxisAlignment::CENTER,
+          horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
           children: [
             status,
             text_field(

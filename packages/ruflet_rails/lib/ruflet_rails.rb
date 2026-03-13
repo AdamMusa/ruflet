@@ -7,6 +7,7 @@ end
 
 require "ruflet"
 require_relative "ruflet/rails/protocol"
+require_relative "ruflet/rails/install_support"
 require_relative "ruflet/rails"
 
 if defined?(::Rails::Railtie)

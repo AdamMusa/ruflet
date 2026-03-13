@@ -53,7 +53,43 @@ module Ruflet
   end
 
   module Icons
+    class IconGroup
+      def initialize(icon_module)
+        @icon_module = icon_module
+      end
+
+      def [](name)
+        @icon_module[name]
+      end
+
+      def names
+        @icon_module.names
+      end
+
+      def all
+        @icon_module.all
+      end
+
+      def random
+        @icon_module.random
+      end
+
+      def const_missing(name)
+        return @icon_module.const_get(name) if @icon_module.const_defined?(name, false)
+
+        super
+      end
+    end
+
     class << self
+      def material
+        @material ||= IconGroup.new(Ruflet::MaterialIcons)
+      end
+
+      def cupertino
+        @cupertino ||= IconGroup.new(Ruflet::CupertinoIcons)
+      end
+
       def const_missing(name)
         if Ruflet::MaterialIcons.const_defined?(name, false)
           return Ruflet::MaterialIcons.const_get(name)

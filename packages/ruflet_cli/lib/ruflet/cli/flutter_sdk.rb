@@ -6,6 +6,7 @@ require "net/http"
 require "rbconfig"
 require "tmpdir"
 require "uri"
+require "yaml"
 
 module Ruflet
   module CLI
@@ -13,8 +14,8 @@ module Ruflet
       RELEASES_BASE = "https://storage.googleapis.com/flutter_infra_release/releases".freeze
       DEFAULT_FLUTTER_CHANNEL = "stable".freeze
 
-      def ensure_flutter!(command_name, client_dir: nil)
-        tools = flutter_tools(client_dir: client_dir)
+      def ensure_flutter!(command_name, client_dir: nil, auto_install: true)
+        tools = flutter_tools(client_dir: client_dir, auto_install: auto_install)
         return tools if tools
 
         warn "Flutter is required for `ruflet #{command_name}` and FVM bootstrap failed."
@@ -24,22 +25,26 @@ module Ruflet
 
       private
 
-      def flutter_tools(client_dir: nil)
+      def flutter_tools(client_dir: nil, auto_install: true)
         # Always use FVM so Flutter/Dart match pinned SDK.
-        fvm_tools = flutter_tools_via_fvm(client_dir: client_dir)
+        fvm_tools = flutter_tools_via_fvm(client_dir: client_dir, auto_install: auto_install)
         return fvm_tools if fvm_tools
 
         nil
       end
 
-      def flutter_tools_via_fvm(client_dir: nil)
+      def flutter_tools_via_fvm(client_dir: nil, auto_install: true)
         version = desired_flutter_version(client_dir: client_dir)
         return nil if version.to_s.strip.empty?
 
         project_dir = fvm_project_dir(client_dir: client_dir)
+        flutter = existing_fvm_flutter_bin(project_dir)
+        return tools_from_flutter_bin(flutter) if flutter
+
+        return nil unless auto_install
+
         fvm = ensure_fvm_available(client_dir: client_dir)
         return nil unless fvm
-
         FileUtils.mkdir_p(project_dir)
         fvmrc_path = File.join(project_dir, ".fvmrc")
         unless File.file?(fvmrc_path)
@@ -130,27 +135,49 @@ module Ruflet
         manifest = fetch_releases_manifest(host)
         return nil unless manifest
 
-        version = desired_flutter_version(client_dir: client_dir)
-        release = pick_release(manifest, version: version)
+        desired = desired_flutter_spec(client_dir: client_dir)
+        release = pick_release(
+          manifest,
+          version: desired[:version],
+          revision: desired[:revision],
+          channel: desired[:channel]
+        )
         return nil unless release
 
         { release: release, host: host }
       end
 
       def desired_flutter_version(client_dir: nil)
+        desired_flutter_spec(client_dir: client_dir)[:version] || DEFAULT_FLUTTER_CHANNEL
+      end
+
+      def desired_flutter_spec(client_dir: nil)
         env = ENV["RUFLET_FLUTTER_VERSION"].to_s.strip
-        return env unless env.empty?
+        return { version: env, source: :env } unless env.empty?
 
         fvm = parse_fvmrc(find_fvmrc(client_dir))
-        return fvm if fvm
+        return { version: fvm, source: :fvmrc } if fvm
 
-        DEFAULT_FLUTTER_CHANNEL
+        metadata = parse_flutter_metadata(find_flutter_metadata(client_dir))
+        return metadata.merge(source: :metadata) if metadata
+
+        { channel: DEFAULT_FLUTTER_CHANNEL, version: DEFAULT_FLUTTER_CHANNEL, source: :default }
       end
 
       def fvm_project_dir(client_dir: nil)
         return client_dir if client_dir
 
+        cwd_fvmrc = find_fvmrc(nil)
+        return File.dirname(cwd_fvmrc) if cwd_fvmrc
+
         File.join(Dir.home, ".ruflet", "fvm_project")
+      end
+
+      def existing_fvm_flutter_bin(project_dir)
+        flutter = File.join(project_dir, ".fvm", "flutter_sdk", "bin", windows_host? ? "flutter.bat" : "flutter")
+        return flutter if File.executable?(flutter)
+
+        nil
       end
 
       def find_fvmrc(client_dir)
@@ -158,6 +185,16 @@ module Ruflet
         candidates << File.join(client_dir, ".fvmrc") if client_dir
         candidates << File.join(Dir.pwd, ".fvmrc")
         candidates.find { |p| File.file?(p) }
+      end
+
+      def find_flutter_metadata(client_dir)
+        candidates = []
+        candidates << File.join(client_dir, ".metadata") if client_dir
+        repo_client = File.expand_path("../../../../../ruflet_client/.metadata", __dir__)
+        template_client = File.expand_path("../../../../../templates/ruflet_flutter_template/.metadata", __dir__)
+        candidates << repo_client
+        candidates << template_client
+        candidates.find { |path| File.file?(path) }
       end
 
       def parse_fvmrc(path)
@@ -175,6 +212,25 @@ module Ruflet
         raw
       end
 
+      def parse_flutter_metadata(path)
+        return nil unless path && File.file?(path)
+
+        parsed = YAML.safe_load(File.read(path), aliases: true) || {}
+        version_info = parsed["version"]
+        return nil unless version_info.is_a?(Hash)
+
+        revision = version_info["revision"].to_s.strip
+        channel = version_info["channel"].to_s.strip
+        return nil if revision.empty?
+
+        {
+          revision: revision,
+          channel: channel.empty? ? DEFAULT_FLUTTER_CHANNEL : channel
+        }
+      rescue StandardError
+        nil
+      end
+
       def fetch_releases_manifest(host)
         url = "#{RELEASES_BASE}/releases_#{host}.json"
         uri = URI(url)
@@ -188,21 +244,28 @@ module Ruflet
         nil
       end
 
-      def pick_release(manifest, version: nil)
+      def pick_release(manifest, version: nil, revision: nil, channel: nil)
         releases = manifest.fetch("releases", [])
+        if revision
+          pinned = releases.find { |r| r["hash"] == revision }
+          return pinned if pinned
+          warn "Requested Flutter revision #{revision} not found for host #{flutter_host}; falling back."
+        end
+
         if version
           pinned = releases.find { |r| r["channel"] == "stable" && r["version"] == version }
           return pinned if pinned
           warn "Requested Flutter #{version} not found in stable releases; falling back to latest stable."
         end
 
-        current = manifest.fetch("current_release", {})["stable"]
+        current = manifest.fetch("current_release", {})[(channel || "stable")]
         if current
           by_hash = releases.find { |r| r["hash"] == current }
           return by_hash if by_hash
         end
 
-        releases.reverse.find { |r| r["channel"] == "stable" }
+        releases.reverse.find { |r| r["channel"] == (channel || "stable") } ||
+          releases.reverse.find { |r| r["channel"] == "stable" }
       end
 
       def flutter_host

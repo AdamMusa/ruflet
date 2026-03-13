@@ -32,6 +32,8 @@ const bool isProduction = bool.fromEnvironment('dart.vm.product');
 
 Tester? tester;
 
+String getRufletRouteUrlStrategy() => getFletRouteUrlStrategy();
+
 String normalizePageUrlForPlatform(String rawUrl) {
   final uri = Uri.tryParse(rawUrl);
   if (uri == null || uri.host.isEmpty) return rawUrl;
@@ -128,7 +130,7 @@ void main([List<String>? args]) async {
   await setupDesktop();
 
   WidgetsFlutterBinding.ensureInitialized();
-  final extensions = <FletExtension>[
+  final rufletExtensions = <FletExtension>[
     flet_ads.Extension(),
     flet_audio.Extension(),
     flet_camera.Extension(),
@@ -149,7 +151,7 @@ void main([List<String>? args]) async {
     // --FAT_CLIENT_END--
   ];
 
-  for (final extension in extensions) {
+  for (final extension in rufletExtensions) {
     extension.ensureInitialized();
   }
 
@@ -164,7 +166,7 @@ void main([List<String>? args]) async {
 
   if (kIsWeb) {
     debugPrint('Flet View is running in Web mode');
-    final routeUrlStrategy = getFletRouteUrlStrategy();
+    final routeUrlStrategy = getRufletRouteUrlStrategy();
     debugPrint('URL Strategy: $routeUrlStrategy');
     if (routeUrlStrategy == 'path') {
       usePathUrlStrategy();
@@ -194,7 +196,7 @@ void main([List<String>? args]) async {
   runApp(
     RufletBootstrapApp(
       initialUrl: initialUrl,
-      extensions: extensions,
+      extensions: rufletExtensions,
       assetsDir: '',
     ),
   );

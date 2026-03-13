@@ -75,23 +75,23 @@ jobs:
       - name: Build web
         if: matrix.target == 'web'
         working-directory: ruflet_client
-        run: flutter build web --release
+        run: flutter build web --release --no-tree-shake-icons
 
       - name: Build linux
         if: matrix.target == 'linux'
         working-directory: ruflet_client
-        run: flutter build linux --release
+        run: flutter build linux --release --no-tree-shake-icons
 
       - name: Build windows
         if: matrix.target == 'windows'
         working-directory: ruflet_client
         shell: pwsh
-        run: flutter build windows --release
+        run: flutter build windows --release --no-tree-shake-icons
 
       - name: Build macos
         if: matrix.target == 'macos'
         working-directory: ruflet_client
-        run: flutter build macos --release
+        run: flutter build macos --release --no-tree-shake-icons
 
       - name: Package web artifact
         if: matrix.target == 'web'
@@ -233,7 +233,7 @@ jobs:
 
       - name: Build signed IPA
         working-directory: ruflet_client
-        run: flutter build ipa --release
+        run: flutter build ipa --release --no-tree-shake-icons
 
       - name: Package iOS release artifact
         run: |
@@ -285,11 +285,11 @@ jobs:
 
       - name: Build Android APK
         working-directory: ruflet_client
-        run: flutter build apk --release
+        run: flutter build apk --release --no-tree-shake-icons
 
       - name: Build Android App Bundle
         working-directory: ruflet_client
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --no-tree-shake-icons
 
       - name: Package Android artifacts
         run: |

@@ -11,6 +11,7 @@ require "net/http"
 require "uri"
 require "thread"
 require "io/console"
+require "time"
 
 module Ruflet
   module CLI
@@ -337,11 +338,11 @@ module Ruflet
         nil
       end
 
-      def ensure_prebuilt_client(web: false, desktop: false)
-        platform = host_platform_name
+      def ensure_prebuilt_client(web: false, desktop: false, platform: nil, force: false)
+        platform ||= host_platform_name
         return nil if platform.nil?
 
-        cache_root = File.join(Dir.home, ".ruflet", "client", ruflet_version, platform)
+        cache_root = client_cache_root_for(platform)
         FileUtils.mkdir_p(cache_root)
 
         wanted_assets = []
@@ -351,13 +352,17 @@ module Ruflet
           return nil if desktop_asset.nil?
           wanted_assets << { kind: :desktop, name: desktop_asset, platform: platform }
         end
-        return cache_root if wanted_assets.empty? || prebuilt_assets_present?(cache_root, web: web, desktop: desktop)
+        if !force && (wanted_assets.empty? || prebuilt_assets_present?(cache_root, web: web, desktop: desktop, platform: platform))
+          ensure_client_manifest(cache_root, platform: platform)
+          return cache_root
+        end
 
         release = fetch_release_for_version
         return nil unless release
 
         assets = release.fetch("assets", [])
         asset_names = assets.map { |a| a["name"].to_s }
+        installed_assets = []
         Dir.mktmpdir("ruflet-prebuilt-") do |tmpdir|
           wanted_assets.each do |wanted|
             asset_name = wanted.fetch(:name)
@@ -374,15 +379,25 @@ module Ruflet
             download_file(asset.fetch("browser_download_url"), archive_path)
             subdir = wanted[:kind] == :web ? "web" : "desktop"
             target = File.join(cache_root, subdir)
+            FileUtils.rm_rf(target) if force && Dir.exist?(target)
             FileUtils.mkdir_p(target)
             unless extract_archive(archive_path, target)
               warn "Failed to extract asset: #{resolved_name}"
               return nil
             end
+            installed_assets << {
+              "kind" => wanted[:kind].to_s,
+              "platform" => wanted[:platform] || platform,
+              "asset_name" => resolved_name,
+              "download_url" => asset.fetch("browser_download_url")
+            }
           end
         end
 
-        return cache_root if prebuilt_assets_present?(cache_root, web: web, desktop: desktop)
+        if prebuilt_assets_present?(cache_root, web: web, desktop: desktop, platform: platform)
+          write_client_manifest(cache_root, platform: platform, release: release, assets: installed_assets)
+          return cache_root
+        end
 
         nil
       rescue StandardError => e
@@ -390,14 +405,14 @@ module Ruflet
         nil
       end
 
-      def prebuilt_assets_present?(root, web:, desktop:)
+      def prebuilt_assets_present?(root, web:, desktop:, platform: nil)
         ok_web = !web || File.file?(File.join(root, "web", "index.html"))
-        ok_desktop = !desktop || prebuilt_desktop_present?(root)
+        ok_desktop = !desktop || prebuilt_desktop_present?(root, platform: platform)
         ok_web && ok_desktop
       end
 
-      def prebuilt_desktop_present?(root)
-        platform = host_platform_name
+      def prebuilt_desktop_present?(root, platform: nil)
+        platform ||= host_platform_name
         return false if platform.nil?
 
         case platform
@@ -427,6 +442,10 @@ module Ruflet
         when "linux" then "ruflet_client-linux-x64.tar.gz"
         when "windows" then "ruflet_client-windows-x64.zip"
         end
+      end
+
+      def client_cache_root_for(platform)
+        File.join(Dir.home, ".ruflet", "client", ruflet_version, platform.to_s)
       end
 
       def fetch_release_for_version
@@ -528,6 +547,46 @@ module Ruflet
         end
 
         false
+      end
+
+      def client_manifest_path(root)
+        File.join(root, "manifest.json")
+      end
+
+      def read_client_manifest(root)
+        path = client_manifest_path(root)
+        return nil unless File.file?(path)
+
+        JSON.parse(File.read(path))
+      rescue StandardError
+        nil
+      end
+
+      def ensure_client_manifest(root, platform:)
+        return if read_client_manifest(root)
+
+        assets = []
+        assets << { "kind" => "web", "platform" => platform, "asset_name" => nil } if File.file?(File.join(root, "web", "index.html"))
+        if prebuilt_desktop_present?(root, platform: platform)
+          assets << { "kind" => "desktop", "platform" => platform, "asset_name" => nil }
+        end
+        return if assets.empty?
+
+        write_client_manifest(root, platform: platform, release: nil, assets: assets)
+      end
+
+      def write_client_manifest(root, platform:, release:, assets:)
+        FileUtils.mkdir_p(root)
+        payload = {
+          "schema" => 1,
+          "ruflet_version" => ruflet_version,
+          "platform" => platform,
+          "release_tag" => release && release["tag_name"],
+          "released_at" => release && release["published_at"],
+          "installed_at" => Time.now.utc.iso8601,
+          "targets" => assets
+        }
+        File.write(client_manifest_path(root), JSON.pretty_generate(payload))
       end
 
       def print_mobile_qr_hint(port: 8550)

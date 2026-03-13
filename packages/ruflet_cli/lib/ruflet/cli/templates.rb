@@ -37,8 +37,7 @@ module Ruflet
     GEMFILE_TEMPLATE = <<~GEMFILE
       source "https://rubygems.org"
 
-      gem "ruflet", ">= 0.0.7"
-      gem "ruflet_server", ">= 0.0.7"
+      gem "ruflet", ">= 0.0.8"
     GEMFILE
 
     README_TEMPLATE = <<~MD

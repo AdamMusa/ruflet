@@ -1,9 +1,9 @@
 # Creating a New Ruflet App
 
-## 1) Install CLI (one-time)
+## 1) Install Ruflet (one-time)
 
 ```bash
-gem install ruflet_cli
+gem install ruflet
 ```
 
 ## 2) Create app
@@ -11,12 +11,6 @@ gem install ruflet_cli
 ```bash
 ruflet new my_app
 cd my_app
-```
-
-CLI output after creation:
-
-```text
-Ruflet app created: my_app
 ```
 
 ## 3) Install dependencies
@@ -48,12 +42,11 @@ Then either:
 ## 6) Target modes
 
 ```bash
-ruflet run main.rb --mobile
 ruflet run main.rb --web
 ruflet run main.rb --desktop
 ```
 
-`--mobile` is default.
+Mobile is the default target, so `ruflet run main.rb` is enough.
 
 ## 7) Build binaries
 
@@ -64,44 +57,46 @@ ruflet build web
 ruflet build macos
 ruflet build windows
 ruflet build linux
-ruflet build zip
 ```
 
 ## Notes
 
-- `ruflet new` generates app `Gemfile` using RubyGems dependencies (`ruflet` and `ruflet_server`).
-- It does not include `ruflet_cli` in app dependencies.
-- App code should use class-based style (`class App < Ruflet::App`), not DSL style.
+- `ruflet new` generates app `Gemfile` with `gem "ruflet"`.
+- The `ruflet` umbrella gem installs the matching core runtime, server runtime, and CLI version.
+- App code can use `Ruflet.run do |page| ... end` or a class-based app.
 
-## Default app structure (class-based, scaffold-style)
+## Default app structure
 
 `main.rb`:
 
 ```ruby
 require "ruflet"
 
-class MyApp < Ruflet::App
-  def view(page)
-    app_name = "My App"
-    page.title = app_name
+Ruflet.run do |page|
+  page.title = "Counter Demo"
+  count = 0
+  count_text = text(count.to_s, size: 40)
 
-    body = column(
+  page.add(
+    container(
       expand: true,
       alignment: Ruflet::MainAxisAlignment::CENTER,
-      horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
-      spacing: 8
-    ) do
-      text value: "Hello Ruflet", size: 28
-      text value: "Edit main.rb and run again", size: 12
-    end
-
-    page.add(
-      body,
-      appbar: app_bar(title: text(value: app_name)),
-      floating_action_button: fab("+", on_click: ->(_e) {})
+      content: column(
+        alignment: Ruflet::MainAxisAlignment::CENTER,
+        horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
+        children: [
+          text("You have pushed the button this many times:"),
+          count_text
+        ]
+      )
+    ),
+    floating_action_button: fab(
+      icon: Ruflet::MaterialIcons::ADD,
+      on_click: ->(_e) do
+        count += 1
+        page.update(count_text, value: count.to_s)
+      end
     )
-  end
+  )
 end
-
-MyApp.new.run
 ```

@@ -4,7 +4,7 @@ require "digest/sha1"
 require "socket"
 require "thread"
 
-require "ruflet"
+require "ruflet_core"
 require_relative "server/wire_codec"
 require_relative "server/web_socket_connection"
 

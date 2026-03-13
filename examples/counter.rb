@@ -13,6 +13,7 @@ Ruflet.run do |page|
         horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
         children: [
           text(value: "You have pushed the button this many times:"),
+          icon(icon: Ruflet::MaterialIcons::ADD),
           count_text
         ]
       )

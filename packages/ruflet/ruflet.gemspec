@@ -9,10 +9,18 @@ Gem::Specification.new do |spec|
   spec.email = ["adammusa2222@gmail.com"]
 
   spec.summary = "Ruflet umbrella package."
-  spec.description = "Ruflet is a library that allows building web, desktop and mobile applications in Ruby without prior experience in frontend development."
+  spec.description = "Ruflet umbrella package that installs the core runtime, server runtime, and CLI."
   spec.homepage = "https://github.com/AdamMusa/Ruflet"
   spec.required_ruby_version = ">= 3.1"
 
-  spec.files = Dir.glob("lib/**/*.rb") + ["README.md"]
+  spec.files = [
+    "lib/ruflet.rb",
+    "lib/ruflet/version.rb",
+    "README.md"
+  ]
   spec.require_paths = ["lib"]
+
+  spec.add_dependency "ruflet_cli", "= #{Ruflet::VERSION}"
+  spec.add_dependency "ruflet_core", "= #{Ruflet::VERSION}"
+  spec.add_dependency "ruflet_server", "= #{Ruflet::VERSION}"
 end

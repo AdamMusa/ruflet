@@ -13,12 +13,26 @@ module Ruflet
 
       def command_doctor(args)
         verbose = args.delete("--verbose") || args.delete("-v")
+        fix = args.delete("--fix")
+        client_dir = detect_client_dir
         puts "Ruflet doctor"
         puts "  Ruby: #{RUBY_VERSION}"
-        tools = ensure_flutter!("doctor")
+        puts "  Flutter host target: #{flutter_host || 'unsupported'}"
+        if fix
+          tools = ensure_flutter!("doctor", client_dir: client_dir, auto_install: true)
+        else
+          tools = flutter_tools(client_dir: client_dir, auto_install: false)
+          unless tools
+            warn "  Flutter: missing"
+            warn "Run `ruflet doctor --fix` to install the host-platform Flutter SDK from .fvmrc."
+            return 1
+          end
+        end
         puts "  Flutter: #{tools[:flutter]}"
-        system(tools[:env], tools[:flutter], "doctor", *(verbose ? ["-v"] : []))
-        $?.exitstatus || 1
+        ok = system(tools[:env], tools[:flutter], "doctor", *(verbose ? ["-v"] : []))
+        status = $?.exitstatus if $?
+        status ||= ok ? 0 : 1
+        status
       end
 
       def command_devices(args)
