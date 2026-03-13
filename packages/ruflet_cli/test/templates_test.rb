@@ -11,5 +11,6 @@ class RufletCliTemplatesTest < Minitest::Test
   def test_gemfile_template_includes_runtime_dependencies
     assert_includes Ruflet::CLI::GEMFILE_TEMPLATE, 'gem "ruflet"'
     refute_includes Ruflet::CLI::GEMFILE_TEMPLATE, 'gem "ruflet_server"'
+    refute_includes Ruflet::CLI::GEMFILE_TEMPLATE, 'gem "ruflet_core"'
   end
 end

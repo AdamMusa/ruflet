@@ -62,7 +62,7 @@ ruflet build linux
 ## Notes
 
 - `ruflet new` generates app `Gemfile` with `gem "ruflet"`.
-- The `ruflet` umbrella gem installs the matching core runtime, server runtime, and CLI version.
+- The `ruflet` package depends on matching `ruflet_core` and `ruflet_server` versions.
 - App code can use `Ruflet.run do |page| ... end` or a class-based app.
 
 ## Default app structure

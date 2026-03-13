@@ -34,10 +34,9 @@ ruflet run main.rb
 
 Ruflet is split into packages:
 
-- `ruflet`: umbrella install (pulls in core runtime, server, and CLI)
+- `ruflet`: CLI/install package users install from RubyGems
 - `ruflet_core`: core runtime implementation (protocol + UI)
 - `ruflet_server`: WebSocket runtime (`Ruflet.run` backend)
-- `ruflet_cli`: CLI executable (`ruflet`)
 - `ruflet_rails`: Rails integration/protocol adapter
 
 Monorepo folders:
@@ -49,7 +48,7 @@ Monorepo folders:
 
 ## New Project Behavior
 
-`ruflet new <appname>` generates a `Gemfile` with just `gem "ruflet"`, and the umbrella gem pulls in the matching core runtime, server runtime, and CLI version.
+`ruflet new <appname>` generates a `Gemfile` with just `gem "ruflet"`, and that package depends on the matching `ruflet_core` and `ruflet_server` versions.
 
 ## App Style (Required in docs/examples)
 

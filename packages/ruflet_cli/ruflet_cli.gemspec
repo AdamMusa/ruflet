@@ -3,13 +3,13 @@
 require_relative "lib/ruflet/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "ruflet_cli"
+  spec.name = "ruflet"
   spec.version = Ruflet::VERSION
   spec.authors = ["AdamMusa"]
   spec.email = ["adammusa2222@gmail.com"]
 
-  spec.summary = "Ruflet CLI package."
-  spec.description = "Ruflet command line interface for creating and running Ruflet apps."
+  spec.summary = "Ruflet command line interface package."
+  spec.description = "Ruflet command line interface for creating, updating, building, and running Ruflet apps."
   spec.homepage = "https://github.com/AdamMusa/Ruflet"
   spec.required_ruby_version = ">= 3.1"
 
@@ -19,4 +19,6 @@ Gem::Specification.new do |spec|
   spec.executables = ["ruflet"]
 
   spec.add_dependency "rqrcode", "~> 2.2"
+  spec.add_dependency "ruflet_core", "= #{Ruflet::VERSION}"
+  spec.add_dependency "ruflet_server", "= #{Ruflet::VERSION}"
 end
