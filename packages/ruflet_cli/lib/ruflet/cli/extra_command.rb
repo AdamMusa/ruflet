@@ -28,7 +28,7 @@ module Ruflet
             return 1
           end
         end
-        puts "  Flutter: #{tools[:flutter]}"
+        puts "  Flutter: #{flutter_version_summary(tools)}"
         ok = system(tools[:env], tools[:flutter], "doctor", *(verbose ? ["-v"] : []))
         status = $?.exitstatus if $?
         status ||= ok ? 0 : 1

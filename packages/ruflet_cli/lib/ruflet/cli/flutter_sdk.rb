@@ -3,6 +3,7 @@
 require "fileutils"
 require "json"
 require "net/http"
+require "open3"
 require "rbconfig"
 require "tmpdir"
 require "uri"
@@ -21,6 +22,26 @@ module Ruflet
         warn "Flutter is required for `ruflet #{command_name}` and FVM bootstrap failed."
         warn "Set RUFLET_FLUTTER_VERSION or add .fvmrc to the project."
         exit 1
+      end
+
+      def flutter_version_summary(tools)
+        flutter_bin = tools[:flutter]
+        env = tools[:env] || {}
+
+        machine_output, status = Open3.capture2e(env, flutter_bin, "--version", "--machine")
+        if status.success?
+          parsed = JSON.parse(machine_output) rescue nil
+          version = parsed && parsed["frameworkVersion"].to_s.strip
+          channel = parsed && parsed["channel"].to_s.strip
+          return [version, channel].reject(&:empty?).join(" ") unless version.to_s.empty?
+        end
+
+        text_output, text_status = Open3.capture2e(env, flutter_bin, "--version")
+        return text_output.lines.first.to_s.strip if text_status.success?
+
+        File.basename(flutter_bin.to_s)
+      rescue StandardError
+        File.basename(flutter_bin.to_s)
       end
 
       private

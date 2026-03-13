@@ -39,6 +39,7 @@ class RufletCliExtraCommandTest < Minitest::Test
       calls << { command_name: command_name, client_dir: client_dir, auto_install: auto_install }
       { flutter: "/tmp/client/.fvm/flutter_sdk/bin/flutter", env: {} }
     end
+    runner.define_singleton_method(:flutter_version_summary) { |_tools| "3.41.4 stable" }
     runner.define_singleton_method(:system) { |_env, *_args| true }
 
     out = StringIO.new
@@ -50,6 +51,8 @@ class RufletCliExtraCommandTest < Minitest::Test
     assert_equal 0, code
     assert_equal [{ command_name: "doctor", client_dir: "/tmp/client", auto_install: true }], calls
     assert_includes out.string, "Flutter host target: macos_arm64"
+    assert_includes out.string, "Flutter: 3.41.4 stable"
+    refute_includes out.string, "/tmp/client/.fvm/flutter_sdk/bin/flutter"
   ensure
     $stdout = original_stdout
   end
