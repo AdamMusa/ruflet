@@ -4,8 +4,8 @@ require_relative "test_helper"
 
 class RufletRailsTest < Minitest::Test
   def test_loads_local_sibling_ruflet_first
-    loaded_ruflet = $LOADED_FEATURES.find { |path| path.end_with?("/ruflet/lib/ruflet.rb") }
-    expected = File.expand_path("../../ruflet/lib/ruflet.rb", __dir__)
+    loaded_ruflet = $LOADED_FEATURES.find { |path| path.end_with?("/ruflet/lib/ruflet_core.rb") }
+    expected = File.expand_path("../../ruflet/lib/ruflet_core.rb", __dir__)
 
     assert_equal expected, loaded_ruflet
   end

@@ -17,6 +17,5 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "rails", ">= 7.0"
-  spec.add_dependency "ruflet", ">= 0.0.8"
   spec.add_dependency "ruflet_core", ">= 0.0.8"
 end
