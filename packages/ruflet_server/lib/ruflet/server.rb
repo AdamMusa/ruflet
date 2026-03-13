@@ -170,6 +170,8 @@ module Ruflet
     rescue IOError, Errno::EBADF
       nil
     rescue StandardError => e
+      return nil unless @running && @server_socket
+
       warn "accept error: #{e.class}: #{e.message}"
       warn e.backtrace.join("\n") if e.backtrace
       nil
