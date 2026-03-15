@@ -47,7 +47,6 @@ module Ruflet
         configure_ruflet_client(root)
 
         project_name = File.basename(root)
-        puts "Ruflet app created: #{project_name}"
         puts "Run:"
         puts "  cd #{project_name}"
         puts "  bundle install"

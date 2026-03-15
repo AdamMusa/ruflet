@@ -1,6 +1,6 @@
-# Ruflet Widgets Guide (Class-Based)
+# Ruflet Widgets Guide
 
-This guide uses class-based apps only.
+This guide uses the current Ruflet API.
 All widget builders are free helpers (`text`, `row`, `column`, etc.), not `page.*`.
 
 ## 1) App structure
@@ -8,32 +8,32 @@ All widget builders are free helpers (`text`, `row`, `column`, etc.), not `page.
 ```ruby
 require "ruflet"
 
-class MyApp < Ruflet::App
-  def view(page)
-    app_name = "Hello"
-    page.title = app_name
+Ruflet.run do |page|
+  app_name = "Hello"
+  page.title = app_name
 
-    body = column(
-      expand: true,
-      alignment: Ruflet::MainAxisAlignment::CENTER,
-      horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
-      spacing: 8
-    ) do
-      text value: "Hello Ruflet", size: 28
-    end
+  body = column(
+    expand: true,
+    alignment: Ruflet::MainAxisAlignment::CENTER,
+    horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
+    spacing: 8,
+    children: [
+      text(value: "Hello Ruflet", size: 28)
+    ]
+  )
 
-    page.add(
-      body,
-      appbar: app_bar(title: text(value: app_name)),
-      floating_action_button: fab("+", on_click: ->(_e) {})
+  page.add(
+    body,
+    appbar: app_bar(title: text(value: app_name)),
+    floating_action_button: fab(
+      icon(icon: Ruflet::MaterialIcons::ADD),
+      on_click: ->(_e) {}
     )
-  end
+  )
 end
-
-MyApp.new.run
 ```
 
-This is the recommended scaffold-style pattern:
+This is the current scaffold-style pattern:
 - `appbar:` for top bar
 - `body` control(s) in `page.add(...)`
 - `floating_action_button:` for primary action
@@ -71,8 +71,8 @@ class LayoutApp < Ruflet::App
   def view(page)
     page.add(
       column(spacing: 12) do
-        text value: "Line 1"
-        text value: "Line 2"
+        text(value: "Line 1")
+        text(value: "Line 2")
       end
     )
   end
@@ -86,8 +86,8 @@ class RowApp < Ruflet::App
   def view(page)
     page.add(
       row(spacing: 8, alignment: "center") do
-        button text: "Cancel"
-        button text: "Save"
+        elevated_button(text: "Cancel")
+        elevated_button(text: "Save")
       end
     )
   end
@@ -101,7 +101,7 @@ class ContainerApp < Ruflet::App
   def view(page)
     page.add(
       container(width: 240, padding: 12, bgcolor: "#FFFFFF", border_radius: 10) do
-        text value: "Card content"
+        text(value: "Card content")
       end
     )
   end
@@ -114,9 +114,7 @@ end
 class CenterWidgetApp < Ruflet::App
   def view(page)
     page.add(
-      page.center do
-        text value: "Centered"
-      end
+      center(content: text(value: "Centered"))
     )
   end
 end
@@ -129,9 +127,9 @@ class ContentApp < Ruflet::App
   def view(page)
     page.add(
       column(spacing: 10) do
-        text value: "Title", size: 24, weight: "bold"
-        text_field label: "Name", width: 220
-        elevated_button text: "Primary"
+        text(value: "Title", size: 24, weight: "bold")
+        text_field(label: "Name", width: 220)
+        elevated_button(text: "Primary")
       end
     )
   end
@@ -152,7 +150,7 @@ class CounterApp < Ruflet::App
 
     page.add(
       column(horizontal_alignment: "center", spacing: 8) do
-        text value: "You clicked:"
+        text(value: "You clicked:")
         counter
       end,
       floating_action_button: fab("+", on_click: ->(e) {

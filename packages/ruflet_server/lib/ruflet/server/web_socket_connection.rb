@@ -2,6 +2,9 @@
 
 module Ruflet
   class WebSocketConnection
+    # Ruflet control messages are small; anything much larger is invalid or hostile.
+    MAX_FRAME_PAYLOAD_BYTES = 16 * 1024 * 1024
+
     def initialize(socket)
       @socket = socket
       @write_mutex = Mutex.new
@@ -70,10 +73,20 @@ module Ruflet
       masked = (b2 & 0x80) != 0
       payload_len = b2 & 0x7f
 
-      payload_len = read_exact(2).unpack1("n") if payload_len == 126
-      payload_len = read_exact(8).unpack1("Q>") if payload_len == 127
+      if payload_len == 126
+        ext = read_exact(2)
+        return nil if ext.nil?
+        payload_len = ext.unpack1("n")
+      elsif payload_len == 127
+        ext = read_exact(8)
+        return nil if ext.nil?
+        payload_len = ext.unpack1("Q>")
+      end
+
+      return nil if payload_len.negative? || payload_len > MAX_FRAME_PAYLOAD_BYTES
 
       masking_key = masked ? read_exact(4) : nil
+      return nil if masked && masking_key.nil?
       payload = payload_len.zero? ? "".b : read_exact(payload_len)
       return nil if payload.nil?
 
@@ -112,6 +125,9 @@ module Ruflet
     end
 
     def read_exact(length)
+      return nil unless length.is_a?(Integer)
+      return nil if length.negative? || length > MAX_FRAME_PAYLOAD_BYTES
+
       chunk = +""
       chunk.force_encoding(Encoding::BINARY)
 

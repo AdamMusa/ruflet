@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+$LOAD_PATH.unshift(File.expand_path("../../packages/ruflet/lib", __dir__))
 require "ruflet"
 
 require_relative "helpers"
@@ -82,6 +83,18 @@ module RufletStudio
       when "/video"
         page.views = [detail_view(page, "Video Player", build_video(page, status_text(page)),
                                   source_path: "examples/ruflet_studio/sections_media/video.rb")]
+      when "/battery"
+        page.views = [detail_view(page, "Battery", build_battery(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_media/battery.rb")]
+      when "/clipboard"
+        page.views = [detail_view(page, "Clipboard", build_clipboard(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_media/clipboard.rb")]
+      when "/storage-paths"
+        page.views = [detail_view(page, "Storage Paths", build_storage_paths(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_media/storage_paths.rb")]
+      when "/share"
+        page.views = [detail_view(page, "Share", build_share(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_media/share.rb")]
       when "/webview"
         page.views = [detail_view(page, "WebView", build_webview(page, status_text(page)),
                                   source_path: "examples/ruflet_studio/sections_media/webview.rb",
@@ -94,6 +107,9 @@ module RufletStudio
       when "/camera"
         page.views = [detail_view(page, "Camera", build_camera(page, status_text(page)),
                                   source_path: "examples/ruflet_studio/sections_media/camera.rb")]
+      when "/connectivity"
+        page.views = [detail_view(page, "Connectivity", build_connectivity(page, status_text(page)),
+                                  source_path: "examples/ruflet_studio/sections_media/connectivity.rb")]
       when "/file-picker"
         page.views = [detail_view(page, "File Picker", build_file_picker(page, status_text(page)),
                                   source_path: "examples/ruflet_studio/sections_media/file_picker.rb")]

@@ -155,6 +155,27 @@ module Ruflet
       self
     end
 
+    def remove_service(*value)
+      targets = value.flatten.compact
+      return self if targets.empty?
+
+      @services_container.props["_services"] = services.reject do |service|
+        targets.any? do |target|
+          case target
+          when Control
+            service.equal?(target) || (!target.id.nil? && service.id.to_s == target.id.to_s)
+          else
+            needle = target.to_s
+            service.id.to_s == needle || service.type.to_s.downcase == needle.downcase
+          end
+        end
+      end
+
+      refresh_services_container!
+      push_services_update!
+      self
+    end
+
     def service(type, **props)
       mapped_props = normalize_props(props || {})
       id = mapped_props.delete("id")
@@ -258,21 +279,24 @@ module Ruflet
       call_id = "call_#{Ruflet::Control.generate_id}"
       if on_result.respond_to?(:call)
         @invoke_waiters_mutex.synchronize { @invoke_callbacks[call_id] = on_result }
-        Thread.new(call_id, timeout.to_f) do |pending_call_id, invoke_timeout|
-          sleep([invoke_timeout, 0.0].max + 0.1)
-          callback = @invoke_waiters_mutex.synchronize { @invoke_callbacks.delete(pending_call_id) }
-          callback&.call(nil, "execution expired")
-        rescue StandardError => e
-          Kernel.warn("invoke timeout callback error: #{e.class}: #{e.message}")
+        unless timeout.nil?
+          Thread.new(call_id, timeout.to_f) do |pending_call_id, invoke_timeout|
+            sleep([invoke_timeout, 0.0].max + 0.1)
+            callback = @invoke_waiters_mutex.synchronize { @invoke_callbacks.delete(pending_call_id) }
+            callback&.call(nil, "execution expired")
+          rescue StandardError => e
+            Kernel.warn("invoke timeout callback error: #{e.class}: #{e.message}")
+          end
         end
       end
-      send_message(Protocol::ACTIONS[:invoke_control_method], {
+      payload = {
         "control_id" => control_id,
         "call_id" => call_id,
         "name" => method_name.to_s,
-        "args" => args,
-        "timeout" => timeout
-      })
+        "args" => args
+      }
+      payload["timeout"] = timeout unless timeout.nil?
+      send_message(Protocol::ACTIONS[:invoke_control_method], payload)
 
       call_id
     end
@@ -283,19 +307,19 @@ module Ruflet
       invoke_and_wait(control_or_id, method_name, args: args, timeout: timeout)
     end
 
-    def launch_url(url, mode: "external_application", web_view_configuration: nil, browser_configuration: nil, web_only_window_name: nil, timeout: 10)
+    def launch_url(url, mode: nil, web_view_configuration: nil, browser_configuration: nil, web_only_window_name: nil, timeout: 10, on_result: nil)
       url_launcher = ensure_url_launcher_service
+      args = { "url" => url }
+      args["mode"] = mode unless mode.nil?
+      args["web_view_configuration"] = web_view_configuration unless web_view_configuration.nil?
+      args["browser_configuration"] = browser_configuration unless browser_configuration.nil?
+      args["web_only_window_name"] = web_only_window_name unless web_only_window_name.nil?
       invoke(
         url_launcher,
         "launch_url",
-        args: {
-          "url" => url,
-          "mode" => mode,
-          "web_view_configuration" => web_view_configuration,
-          "browser_configuration" => browser_configuration,
-          "web_only_window_name" => web_only_window_name
-        }.compact,
-        timeout: timeout
+        args: args,
+        timeout: timeout,
+        on_result: on_result
       )
     end
 
@@ -304,34 +328,247 @@ module Ruflet
       invoke(url_launcher, "can_launch_url", args: { "url" => url }, timeout: timeout)
     end
 
-    def set_clipboard(value, timeout: 10)
-      clipboard = ensure_clipboard_service
-      invoke(clipboard, "set_data", args: { "data" => value.to_s }, timeout: timeout)
+    # File picker helpers: create an ephemeral service, invoke method, and dispose it.
+    def pick_files(
+      dialog_title: nil,
+      initial_directory: nil,
+      file_type: "any",
+      allowed_extensions: nil,
+      allow_multiple: false,
+      with_data: false,
+      timeout: nil,
+      on_result: nil
+    )
+      invoke_file_picker(
+        "pick_files",
+        {
+          "dialog_title" => dialog_title,
+          "initial_directory" => initial_directory,
+          "file_type" => file_type,
+          "allowed_extensions" => allowed_extensions,
+          "allow_multiple" => allow_multiple,
+          "with_data" => with_data
+        },
+        timeout: timeout,
+        on_result: on_result
+      )
     end
 
-    def get_clipboard(timeout: 10)
-      clipboard = ensure_clipboard_service
-      invoke(clipboard, "get_data", timeout: timeout)
+    def save_file(
+      dialog_title: nil,
+      file_name: nil,
+      initial_directory: nil,
+      file_type: "any",
+      allowed_extensions: nil,
+      src_bytes: nil,
+      timeout: nil,
+      on_result: nil
+    )
+      invoke_file_picker(
+        "save_file",
+        {
+          "dialog_title" => dialog_title,
+          "file_name" => file_name,
+          "initial_directory" => initial_directory,
+          "file_type" => file_type,
+          "allowed_extensions" => allowed_extensions,
+          "src_bytes" => src_bytes
+        },
+        timeout: timeout,
+        on_result: on_result
+      )
     end
 
-    def set_clipboard_files(files, timeout: 10)
-      clipboard = ensure_clipboard_service
-      invoke(clipboard, "set_files", args: { "files" => Array(files).map(&:to_s) }, timeout: timeout)
+    def get_directory_path(dialog_title: nil, initial_directory: nil, timeout: nil, on_result: nil)
+      invoke_file_picker(
+        "get_directory_path",
+        {
+          "dialog_title" => dialog_title,
+          "initial_directory" => initial_directory
+        },
+        timeout: timeout,
+        on_result: on_result
+      )
     end
 
-    def get_clipboard_files(timeout: 10)
-      clipboard = ensure_clipboard_service
-      invoke(clipboard, "get_files", timeout: timeout)
+    def set_clipboard(value, timeout: nil, on_result: nil)
+      invoke_clipboard_method(
+        "set_data",
+        args: { "data" => value.to_s },
+        timeout: timeout,
+        on_result: on_result
+      )
     end
 
-    def set_clipboard_image(value, timeout: 10)
-      clipboard = ensure_clipboard_service
-      invoke(clipboard, "set_image", args: { "data" => value }, timeout: timeout)
+    def get_clipboard(timeout: nil, on_result: nil)
+      invoke_clipboard_method("get_data", timeout: timeout, on_result: on_result)
     end
 
-    def get_clipboard_image(timeout: 10)
-      clipboard = ensure_clipboard_service
-      invoke(clipboard, "get_image", timeout: timeout)
+    def set_clipboard_files(files, timeout: nil, on_result: nil)
+      invoke_clipboard_method(
+        "set_files",
+        args: { "files" => Array(files).map(&:to_s) },
+        timeout: timeout,
+        on_result: on_result
+      )
+    end
+
+    def get_clipboard_files(timeout: nil, on_result: nil)
+      invoke_clipboard_method("get_files", timeout: timeout, on_result: on_result)
+    end
+
+    def set_clipboard_image(value, timeout: nil, on_result: nil)
+      invoke_clipboard_method(
+        "set_image",
+        args: { "data" => value },
+        timeout: timeout,
+        on_result: on_result
+      )
+    end
+
+    def get_clipboard_image(timeout: nil, on_result: nil)
+      invoke_clipboard_method("get_image", timeout: timeout, on_result: on_result)
+    end
+
+    def get_connectivity(timeout: nil, on_result: nil)
+      invoke_connectivity_method("get_connectivity", timeout: timeout, on_result: on_result)
+    end
+
+    def get_battery_level(timeout: nil, on_result: nil)
+      invoke_battery_method("get_battery_level", timeout: timeout, on_result: on_result)
+    end
+
+    def get_battery_state(timeout: nil, on_result: nil)
+      invoke_battery_method("get_battery_state", timeout: timeout, on_result: on_result)
+    end
+
+    def battery_save_mode?(timeout: nil, on_result: nil)
+      invoke_battery_method("is_in_battery_save_mode", timeout: timeout, on_result: on_result)
+    end
+
+    def get_application_cache_directory(timeout: nil, on_result: nil)
+      invoke_storage_paths("get_application_cache_directory", timeout: timeout, on_result: on_result)
+    end
+
+    def get_application_documents_directory(timeout: nil, on_result: nil)
+      invoke_storage_paths("get_application_documents_directory", timeout: timeout, on_result: on_result)
+    end
+
+    def get_application_support_directory(timeout: nil, on_result: nil)
+      invoke_storage_paths("get_application_support_directory", timeout: timeout, on_result: on_result)
+    end
+
+    def get_downloads_directory(timeout: nil, on_result: nil)
+      invoke_storage_paths("get_downloads_directory", timeout: timeout, on_result: on_result)
+    end
+
+    def get_external_cache_directories(timeout: nil, on_result: nil)
+      invoke_storage_paths("get_external_cache_directories", timeout: timeout, on_result: on_result)
+    end
+
+    def get_external_storage_directories(timeout: nil, on_result: nil)
+      invoke_storage_paths("get_external_storage_directories", timeout: timeout, on_result: on_result)
+    end
+
+    def get_library_directory(timeout: nil, on_result: nil)
+      invoke_storage_paths("get_library_directory", timeout: timeout, on_result: on_result)
+    end
+
+    def get_external_storage_directory(timeout: nil, on_result: nil)
+      invoke_storage_paths("get_external_storage_directory", timeout: timeout, on_result: on_result)
+    end
+
+    def get_temporary_directory(timeout: nil, on_result: nil)
+      invoke_storage_paths("get_temporary_directory", timeout: timeout, on_result: on_result)
+    end
+
+    def get_console_log_filename(timeout: nil, on_result: nil)
+      invoke_storage_paths("get_console_log_filename", timeout: timeout, on_result: on_result)
+    end
+
+    def share_text(
+      text:,
+      title: nil,
+      subject: nil,
+      preview_thumbnail: nil,
+      share_position_origin: nil,
+      download_fallback_enabled: true,
+      mail_to_fallback_enabled: true,
+      excluded_cupertino_activities: nil,
+      timeout: nil,
+      on_result: nil
+    )
+      share = ensure_share_service
+      invoke(
+        share,
+        "share_text",
+        args: {
+          "text" => text,
+          "title" => title,
+          "subject" => subject,
+          "preview_thumbnail" => preview_thumbnail,
+          "share_position_origin" => share_position_origin,
+          "download_fallback_enabled" => download_fallback_enabled,
+          "mail_to_fallback_enabled" => mail_to_fallback_enabled,
+          "excluded_cupertino_activities" => excluded_cupertino_activities
+        },
+        timeout: timeout,
+        on_result: on_result
+      )
+    end
+
+    def share_uri(
+      uri:,
+      share_position_origin: nil,
+      excluded_cupertino_activities: nil,
+      timeout: nil,
+      on_result: nil
+    )
+      share = ensure_share_service
+      invoke(
+        share,
+        "share_uri",
+        args: {
+          "uri" => uri,
+          "share_position_origin" => share_position_origin,
+          "excluded_cupertino_activities" => excluded_cupertino_activities
+        },
+        timeout: timeout,
+        on_result: on_result
+      )
+    end
+
+    def share_files(
+      files:,
+      text: nil,
+      title: nil,
+      subject: nil,
+      preview_thumbnail: nil,
+      share_position_origin: nil,
+      download_fallback_enabled: true,
+      mail_to_fallback_enabled: true,
+      excluded_cupertino_activities: nil,
+      timeout: nil,
+      on_result: nil
+    )
+      share = ensure_share_service
+      invoke(
+        share,
+        "share_files",
+        args: {
+          "files" => files,
+          "text" => text,
+          "title" => title,
+          "subject" => subject,
+          "preview_thumbnail" => preview_thumbnail,
+          "share_position_origin" => share_position_origin,
+          "download_fallback_enabled" => download_fallback_enabled,
+          "mail_to_fallback_enabled" => mail_to_fallback_enabled,
+          "excluded_cupertino_activities" => excluded_cupertino_activities
+        },
+        timeout: timeout,
+        on_result: on_result
+      )
     end
 
     def handle_invoke_method_result(payload)
@@ -771,7 +1008,15 @@ module Ruflet
     end
 
     def build_page_patch_ops
-      @page_props.map { |k, v| [0, 0, k, serialize_patch_value(v)] }
+      @page_props.filter_map do |k, v|
+        # Keep internal containers stable after initial mount.
+        # Re-sending them as full objects can replace Control instances with
+        # same IDs and detach service invoke listeners on the Flutter side.
+        next nil if k == "_overlay" && @overlay_container.wire_id
+        next nil if k == "_dialogs" && @dialogs_container.wire_id
+
+        [0, 0, k, serialize_patch_value(v)]
+      end
     end
 
     def resolve_icon_codepoint(value)
@@ -784,11 +1029,42 @@ module Ruflet
 
     def ensure_clipboard_service
       clipboard = services.find { |service| service.is_a?(Control) && service.type == "clipboard" }
-      return clipboard if clipboard
+      return [clipboard, false] if clipboard
 
       clipboard = build_widget(:clipboard)
       add_service(clipboard)
-      clipboard
+      [clipboard, true]
+    end
+
+    def invoke_clipboard_method(method_name, args: nil, timeout:, on_result:)
+      clipboard, created = ensure_clipboard_service
+      send_view_patch if created
+      sleep(0.05) if created
+      invoke(
+        clipboard,
+        method_name,
+        args: args,
+        timeout: timeout,
+        on_result: lambda { |result, error|
+          message = error.to_s
+          if message.include?("inexistent control")
+            remove_service(clipboard)
+            fresh_clipboard, = ensure_clipboard_service
+            sleep(0.08)
+            invoke(
+              fresh_clipboard,
+              method_name,
+              args: args,
+              timeout: timeout,
+              on_result: on_result
+            )
+          else
+            on_result&.call(result, error)
+          end
+        }
+      )
+    rescue StandardError => e
+      on_result&.call(nil, e.message)
     end
 
     def ensure_url_launcher_service
@@ -798,6 +1074,149 @@ module Ruflet
       url_launcher = build_widget(:url_launcher)
       add_service(url_launcher)
       url_launcher
+    end
+
+    def ensure_connectivity_service
+      connectivity = services.find { |service| service.is_a?(Control) && service.type == "connectivity" }
+      return [connectivity, false] if connectivity
+
+      connectivity = build_widget(:connectivity)
+      add_service(connectivity)
+      [connectivity, true]
+    end
+
+    def invoke_connectivity_method(method_name, timeout:, on_result:)
+      connectivity, created = ensure_connectivity_service
+      send_view_patch if created
+      sleep(0.05) if created
+      invoke(
+        connectivity,
+        method_name,
+        timeout: timeout,
+        on_result: lambda { |result, error|
+          message = error.to_s
+          if message.include?("inexistent control")
+            remove_service(connectivity)
+            fresh_connectivity, = ensure_connectivity_service
+            sleep(0.08)
+            invoke(
+              fresh_connectivity,
+              method_name,
+              timeout: timeout,
+              on_result: on_result
+            )
+          else
+            on_result&.call(result, error)
+          end
+        }
+      )
+    rescue StandardError => e
+      on_result&.call(nil, e.message)
+    end
+
+    def ensure_battery_service
+      battery = services.find { |service| service.is_a?(Control) && service.type == "battery" }
+      return [battery, false] if battery
+
+      battery = build_widget(:battery)
+      add_service(battery)
+      [battery, true]
+    end
+
+    def ensure_share_service
+      share = services.find { |service| service.is_a?(Control) && service.type == "share" }
+      return share if share
+
+      share = build_widget(:share)
+      add_service(share)
+      share
+    end
+
+    def invoke_battery_method(method_name, timeout:, on_result:)
+      battery, created = ensure_battery_service
+      send_view_patch if created
+      sleep(0.05) if created
+      invoke(
+        battery,
+        method_name,
+        timeout: timeout,
+        on_result: lambda { |result, error|
+          message = error.to_s
+          if message.include?("inexistent control")
+            remove_service(battery)
+            fresh_battery, = ensure_battery_service
+            sleep(0.08)
+            invoke(
+              fresh_battery,
+              method_name,
+              timeout: timeout,
+              on_result: on_result
+            )
+          else
+            on_result&.call(result, error)
+          end
+        }
+      )
+    rescue StandardError => e
+      on_result&.call(nil, e.message)
+    end
+
+    def ensure_storage_paths_service
+      storage_paths = services.find do |service|
+        service.is_a?(Control) && %w[storage_paths storagepaths].include?(service.type.to_s)
+      end
+      return [storage_paths, false] if storage_paths
+
+      storage_paths = build_widget(:storage_paths)
+      add_service(storage_paths)
+      [storage_paths, true]
+    end
+
+    def invoke_storage_paths(method_name, timeout:, on_result:)
+      storage_paths, created = ensure_storage_paths_service
+      send_view_patch if created
+      sleep(0.05) if created
+      invoke(
+        storage_paths,
+        method_name,
+        timeout: timeout,
+        on_result: lambda { |result, error|
+          message = error.to_s
+          if message.include?("inexistent control")
+            remove_service(storage_paths)
+            fresh_storage_paths, = ensure_storage_paths_service
+            sleep(0.08)
+            invoke(
+              fresh_storage_paths,
+              method_name,
+              timeout: timeout,
+              on_result: on_result
+            )
+          else
+            on_result&.call(result, error)
+          end
+        }
+      )
+    rescue StandardError => e
+      on_result&.call(nil, e.message)
+    end
+
+    def invoke_file_picker(method_name, args, timeout:, on_result:)
+      picker = build_widget(:file_picker)
+      add_service(picker)
+      invoke(
+        picker,
+        method_name,
+        args: args,
+        timeout: timeout,
+        on_result: lambda { |result, error|
+          remove_service(picker)
+          on_result&.call(result, error)
+        }
+      )
+    rescue StandardError => e
+      remove_service(picker) if picker
+      on_result&.call(nil, e.message)
     end
   end
 end

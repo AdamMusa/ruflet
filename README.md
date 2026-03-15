@@ -2,9 +2,8 @@
 
 Ruflet is a Ruby port of [Flet](https://flet.dev/) for building web, desktop, and mobile apps in Ruby.
 
-Class-based apps are the recommended and documented standard:
-- `class MyApp < Ruflet::App`
-- implement `def view(page)`
+Ruflet supports both class-based apps and `Ruflet.run do |page| ... end`.
+The generated scaffold uses `Ruflet.run`.
 
 ## Start Here
 
@@ -12,10 +11,10 @@ Class-based apps are the recommended and documented standard:
 - [Ruflet Releases](https://github.com/AdamMusa/Ruflet/releases)
 - Install latest Android APK or iOS build.
 
-2. Install Ruflet CLI from RubyGems:
+2. Install Ruflet from RubyGems:
 
 ```bash
-gem install ruflet_cli
+gem install ruflet
 ```
 
 3. Create and run your first app:
@@ -27,12 +26,6 @@ bundle install
 ruflet run main.rb
 ```
 
-CLI output after creation:
-
-```text
-Ruflet app created: my_app
-```
-
 4. Open Ruflet mobile client and connect:
 - Enter URL manually, or
 - Tap `Scan QR` and scan QR shown by `ruflet run ...`
@@ -41,9 +34,9 @@ Ruflet app created: my_app
 
 Ruflet is split into packages:
 
-- `ruflet`: core runtime (includes protocol + UI)
+- `ruflet`: CLI/install package users install from RubyGems
+- `ruflet_core`: core runtime implementation (protocol + UI)
 - `ruflet_server`: WebSocket runtime (`Ruflet.run` backend)
-- `ruflet_cli`: CLI executable (`ruflet`)
 - `ruflet_rails`: Rails integration/protocol adapter
 
 Monorepo folders:
@@ -55,32 +48,45 @@ Monorepo folders:
 
 ## New Project Behavior
 
-`ruflet new <appname>` generates a `Gemfile` using RubyGems dependencies:
+`ruflet new <appname>` generates a `Gemfile` with runtime dependencies:
 
-- `gem "ruflet", ">= 0.0.2"`
-- `gem "ruflet_server", ">= 0.0.2"`
-
-It does **not** add `ruflet_cli` to app dependencies.
-
-That keeps CLI global/tooling-level and app deps runtime-focused.
+- `gem "ruflet_core"`
+- `gem "ruflet_server"`
 
 ## App Style (Required in docs/examples)
 
-Use class-based apps:
+Use the current scaffold style:
 
 ```ruby
 require "ruflet"
 
-class MyApp < Ruflet::App
-  def view(page)
-    page.vertical_alignment = Ruflet::MainAxisAlignment::CENTER
-    page.horizontal_alignment = Ruflet::CrossAxisAlignment::CENTER
-    page.title = "Hello"
-    page.add(text(value: "Hello Ruflet"))
-  end
-end
+Ruflet.run do |page|
+  page.title = "Counter Demo"
+  count = 0
+  count_text = text(count.to_s, size: 40)
 
-MyApp.new.run
+  page.add(
+    container(
+      expand: true,
+      alignment: Ruflet::MainAxisAlignment::CENTER,
+      content: column(
+        alignment: Ruflet::MainAxisAlignment::CENTER,
+        horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
+        children: [
+          text("You have pushed the button this many times:"),
+          count_text
+        ]
+      )
+    ),
+    floating_action_button: fab(
+      icon: Ruflet::MaterialIcons::ADD,
+      on_click: ->(_e) do
+        count += 1
+        page.update(count_text, value: count.to_s)
+      end
+    )
+  )
+end
 ```
 
 Widget builders are global/free helpers (`text`, `row`, `column`, `container`, etc.).
@@ -90,8 +96,9 @@ Use `page` only for runtime/page operations (`add`, `update`, `go`, `show_dialog
 
 ```bash
 ruflet new <appname>
-ruflet run [scriptname|path] [--web|--mobile|--desktop]
-ruflet build <apk|ios|aab|web|macos|windows|linux|zip>
+ruflet run [scriptname|path] [--web|--desktop] [--port PORT]
+ruflet update [web|desktop|all] [--check] [--force] [--platform PLATFORM]
+ruflet build <apk|ios|aab|web|macos|windows|linux>
 ```
 
 For monorepo development (always uses local CLI source), run:

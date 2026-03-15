@@ -5,8 +5,9 @@ if File.directory?(local_ruflet_lib) && !$LOAD_PATH.include?(local_ruflet_lib)
   $LOAD_PATH.unshift(local_ruflet_lib)
 end
 
-require "ruflet"
+require "ruflet_core"
 require_relative "ruflet/rails/protocol"
+require_relative "ruflet/rails/install_support"
 require_relative "ruflet/rails"
 
 if defined?(::Rails::Railtie)

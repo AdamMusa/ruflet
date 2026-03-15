@@ -13,6 +13,7 @@ class RufletCliCommandTest < Minitest::Test
     refute_includes help, "ruflet pack"
     refute_includes help, "ruflet publish"
     assert_includes help, "ruflet build"
+    assert_includes help, "ruflet update"
   ensure
     $stdout = original_stdout
   end
@@ -30,6 +31,19 @@ class RufletCliCommandTest < Minitest::Test
     assert_includes err.string, "Unknown command: pack"
   ensure
     $stderr = original_stderr
+    $stdout = original_stdout
+  end
+
+  def test_version_command_prints_version
+    out = StringIO.new
+    original_stdout = $stdout
+    $stdout = out
+
+    code = Ruflet::CLI.run(["--version"])
+
+    assert_equal 0, code
+    assert_equal "ruflet #{Ruflet::VERSION}\n", out.string
+  ensure
     $stdout = original_stdout
   end
 end

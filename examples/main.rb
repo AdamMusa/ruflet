@@ -18,7 +18,6 @@ class MainApp < Ruflet::App
     if route == "/replace"
       page.views = [replace_view(page)]
     elsif route == "/go"
-      # Keep Home in stack so back navigation returns to Home.
       page.views = [home_view(page), go_view(page)]
     else
       page.views = [home_view(page)]
@@ -28,28 +27,27 @@ class MainApp < Ruflet::App
   end
 
   def handle_back(page)
-    # Replace flow keeps single-page stack; back always returns home.
     page.go("/")
   end
 
   def home_view(page)
-    control(:view,
+    view(
       route: "/",
       appbar: app_bar(
         bgcolor: "#d9d7db",
         color: "#232329",
-        title: text(value: "Home", style: { size: 18 })
+        title: text("Home", size: 18)
       ),
       padding: 16,
       children: [
-        text(value: "Home Screen", style: { size: 24 }),
-        text(value: "Tap to go to Replace screen using page.go()."),
+        text("Home Screen", size: 24),
+        text("Tap to go to Replace screen using page.go()."),
         button(
-          content: text(value: "Go to Go Screen (with back nav)"),
+          content: text("Go to Go Screen (with back nav)"),
           on_click: ->(_e) { page.go("/go", nav: "go") }
         ),
         button(
-          content: text(value: "Go to Replace"),
+          content: text("Go to Replace"),
           on_click: ->(_e) { page.go("/replace", nav: "go") }
         )
       ]
@@ -57,20 +55,20 @@ class MainApp < Ruflet::App
   end
 
   def replace_view(page)
-    control(:view,
+    view(
       route: "/replace",
       appbar: app_bar(
         bgcolor: "#d9d7db",
         color: "#232329",
-        title: text(value: "Replace", style: { size: 18 })
+        title: text("Replace", size: 18)
       ),
       padding: 16,
       children: [
-        text(value: "Replace Screen", style: { size: 24 }),
-        text(value: "Current route: #{page.route}"),
-        text(value: "Use replace below to return Home without back stack."),
+        text("Replace Screen", size: 24),
+        text("Current route: #{page.route}"),
+        text("Use replace below to return Home without back stack."),
         button(
-          content: text(value: "Replace with Home"),
+          content: text("Replace with Home"),
           on_click: ->(_e) { page.go("/", nav: "replace") }
         )
       ]
@@ -78,20 +76,20 @@ class MainApp < Ruflet::App
   end
 
   def go_view(page)
-    control(:view,
+    view(
       route: "/go",
       appbar: app_bar(
         bgcolor: "#d9d7db",
         color: "#232329",
-        title: text(value: "Go Screen", style: { size: 18 })
+        title: text("Go Screen", size: 18)
       ),
       padding: 16,
       children: [
-        text(value: "Go Screen", style: { size: 24 }),
-        text(value: "Opened via page.go('/go')."),
-        text(value: "Back navigation should return to Home."),
+        text("Go Screen", size: 24),
+        text("Opened via page.go('/go')."),
+        text("Back navigation should return to Home."),
         button(
-          content: text(value: "Go Back Home"),
+          content: text("Go Back Home"),
           on_click: ->(_e) { page.go("/", nav: "go") }
         )
       ]

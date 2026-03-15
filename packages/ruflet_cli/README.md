@@ -1,3 +1,3 @@
-# ruflet_cli
+# ruflet
 
 Part of Ruflet monorepo.

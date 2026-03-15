@@ -30,7 +30,7 @@ module Ruflet
       def command_build(args)
         platform = (args.shift || "").downcase
         if platform.empty?
-          warn "Usage: ruflet build <apk|ios|aab|web|macos|windows|linux>"
+          warn "Usage: ruflet build <apk|android|ios|aab|web|macos|windows|linux>"
           return 1
         end
 
@@ -139,8 +139,6 @@ module Ruflet
       end
 
       def apply_build_config(client_dir, config = {})
-        build = config["build"] || {}
-        assets = config["assets"] || {}
         config_path = ENV["RUFLET_CONFIG"] || (File.file?("ruflet.yaml") ? "ruflet.yaml" : "ruflet.yml")
         config_present = File.file?(config_path)
         build = config["build"] || {}
@@ -153,7 +151,12 @@ module Ruflet
         resolve_asset = lambda do |path|
           return nil if path.nil? || path.to_s.strip.empty?
           full = File.expand_path(path.to_s, config_dir)
-          File.file?(full) ? full : nil
+          return full if File.file?(full)
+
+          rails_full = File.expand_path(File.join("app", path.to_s), config_dir)
+          return rails_full if File.file?(rails_full)
+
+          nil
         end
 
         splash_defined = key_defined?(build, "splash_screen") || key_defined?(assets, "splash_screen") || key_defined?(config, "splash_screen")
