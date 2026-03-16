@@ -2,47 +2,60 @@
 
 module RufletStudio
   module Views
+    STUDIO_NAV_ITEMS = [
+      ["home", "Home", "/home"],
+      ["grid_view", "Gallery", "/gallery"],
+      ["settings", "Settings", "/settings"]
+    ].freeze
+
     def nav_bar(page, route)
-      selected = {
-        "/home" => 0,
-        "/gallery" => 1,
-        "/settings" => 2
-      }[route] || 1
-
-      navigation_bar(
-        bgcolor: color_surface(page),
-        indicator_color: color_nav_indicator(page),
-        selected_index: selected,
-        on_change: ->(e) {
-          idx = read_number(e.data, "selected_index") || read_number(e.data, "selectedIndex")
-          next if idx.nil? || idx.to_i == selected
-
-          case idx&.to_i
-          when 0
-            page.go("/home")
-          when 1
-            page.go("/gallery")
-          when 2
-            page.go("/settings")
+      selected = STUDIO_NAV_ITEMS.index { |_icon, _label, item_route| item_route == route } || 1
+      container(
+        bgcolor: color_panel(page),
+        border: { width: 1, color: color_divider(page) },
+        padding: { left: 12, right: 12, top: 10, bottom: 12 },
+        content: row(
+          spacing: 12,
+          children: STUDIO_NAV_ITEMS.each_with_index.map do |(icon_name, label, item_route), index|
+            nav_tab(page, index, selected, icon_name, label, item_route)
           end
-        },
-        destinations: [
-          navigation_bar_destination(
-            icon: "home",
-            selected_icon: "home",
-            label: "Home"
-          ),
-          navigation_bar_destination(
-            icon: "grid_view",
-            selected_icon: "grid_view",
-            label: "Gallery"
-          ),
-          navigation_bar_destination(
-            icon: "settings",
-            selected_icon: "settings",
-            label: "Settings"
-          )
-        ]
+        )
+      )
+    end
+
+    def nav_tab(page, index, selected, icon_name, label, route)
+      active = index == selected
+
+      container(
+        expand: true,
+        border_radius: 18,
+        bgcolor: color_panel(page),
+        padding: { top: 10, bottom: 8, left: 8, right: 8 },
+        on_click: ->(_e) { page.go(route) },
+        content: column(
+          horizontal_alignment: "center",
+          spacing: 6,
+          children: [
+            icon(
+              icon: icon_name,
+              color: active ? color_accent(page) : color_subtle(page)
+            ),
+            text(
+              value: label,
+              style: {
+                size: 13,
+                weight: active ? "w600" : "w500",
+                color: active ? color_accent(page) : color_subtle(page)
+              }
+            ),
+            container(
+              width: 36,
+              height: 3,
+              border_radius: 99,
+              bgcolor: active ? color_accent(page) : color_panel(page)
+            )
+          ]
+        )
       )
     end
   end
