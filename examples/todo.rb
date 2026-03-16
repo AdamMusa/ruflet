@@ -41,7 +41,7 @@ class TodoApp < Ruflet::App
       [
         container(
           padding: 16,
-          content: text("No tasks", color: Ruflet::Colors.ON_SURFACE_VARIANT)
+          content: text(value: "No tasks", style: { color: Ruflet::Colors.ON_SURFACE_VARIANT })
         )
       ]
     else
@@ -57,7 +57,7 @@ class TodoApp < Ruflet::App
         content: column(
           spacing: 14,
           children: [
-            text("Todo List", size: 28, weight: "w600", color: Ruflet::Colors.ON_SURFACE),
+            text(value: "Todo List", style: { size: 28, weight: "w600", color: Ruflet::Colors.ON_SURFACE }),
             add_row(page, input, compact),
             container(
               bgcolor: Ruflet::Colors.SURFACE_CONTAINER,
@@ -70,7 +70,7 @@ class TodoApp < Ruflet::App
         )
       ),
       appbar: app_bar(
-        title: text("Todo List", color: Ruflet::Colors.ON_PRIMARY),
+        title: text(value: "Todo List", style: { color: Ruflet::Colors.ON_PRIMARY }),
         bgcolor: Ruflet::Colors.PRIMARY
       ),
       floating_action_button: fab(
@@ -132,8 +132,8 @@ class TodoApp < Ruflet::App
   def footer(page, compact)
     active_count = @tasks.count { |task| !task[:done] }
     counter = text(
-      "#{active_count} item#{active_count == 1 ? "" : "s"} left",
-      color: Ruflet::Colors.ON_SURFACE_VARIANT
+      value: "#{active_count} item#{active_count == 1 ? "" : "s"} left",
+      style: { color: Ruflet::Colors.ON_SURFACE_VARIANT }
     )
     filter_controls = row(
       spacing: 6,
