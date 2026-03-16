@@ -75,6 +75,7 @@ class TodoApp < Ruflet::App
       ),
       floating_action_button: fab(
         icon: Ruflet::MaterialIcons::ADD,
+        content: text("Add"),
         on_click: ->(e) { add_task(e.page) }
       )
     )
