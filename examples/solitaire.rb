@@ -15,7 +15,7 @@ class Slot
     p = { left: left, top: top, width: width, height: height, border_radius: 12, bgcolor: "#cfccd2" }
     p[:border] = { width: 1, color: "#b9b6be" } if @border
     p[:on_click] = on_click if on_click
-    container(**p, content: text("", size: 1))
+    container(**p, content: text(value: "", style: { size: 1 }))
   end
 end
 class Card
@@ -201,8 +201,8 @@ class Solitaire
   end
   def render
     @page.title = "Solitaire"; @page.bgcolor = TABLE_BG; @page.vertical_alignment = "start"; @page.horizontal_alignment = "start"
-    appbar = app_bar(bgcolor: TABLE_BG, color: TITLE, title: text("Ruflet Solitaire", color: TITLE, size: 18))
-    @status_control = text(@status, size: 12, color: STATUS)
+    appbar = app_bar(bgcolor: TABLE_BG, color: TITLE, title: text(value: "Ruflet Solitaire", style: { color: TITLE, size: 18 }))
+    @status_control = text(value: @status, style: { size: 12, color: STATUS })
     controls = [@stock.view(@page, on_click: ->(_e) { stock_click }), @waste.view(@page)]
     controls.concat(@foundation.map { |s| s.view(@page) })
     controls.concat(@tableau.map { |s| s.view(@page) })

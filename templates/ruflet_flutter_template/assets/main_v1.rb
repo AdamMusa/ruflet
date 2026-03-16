@@ -48,7 +48,7 @@ class Module
   end
 end
 
-# -- packages/ruflet/lib/ruflet_protocol/ruflet/protocol.rb
+# -- packages/ruflet_core/lib/ruflet_protocol/ruflet/protocol.rb
 
 module Ruflet
   module Protocol
@@ -112,7 +112,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/colors.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/colors.rb
 
 module Ruflet
   module Colors
@@ -312,7 +312,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/icon_data.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/icon_data.rb
 
 
 module Ruflet
@@ -369,7 +369,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/icons/material_icons.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/icons/material_icons.rb
 
 
 module Ruflet
@@ -424,7 +424,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/icons/material_icon_lookup.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/icons/material_icon_lookup.rb
 
 module Ruflet
   module MaterialIconLookup
@@ -537,7 +537,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/icons/cupertino/cupertino_icons.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/icons/cupertino/cupertino_icons.rb
 
 
 module Ruflet
@@ -591,7 +591,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/icons/cupertino_icon_lookup.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/icons/cupertino_icon_lookup.rb
 
 module Ruflet
   module CupertinoIconLookup
@@ -704,7 +704,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/control.rb
 
 begin
 rescue LoadError
@@ -869,7 +869,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/event.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/event.rb
 
 
 module Ruflet
@@ -898,7 +898,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/cupertino/cupertino_action_sheet_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/cupertino/cupertino_action_sheet_control.rb
 
 module Ruflet
   module UI
@@ -913,7 +913,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/cupertino/cupertino_alert_dialog_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/cupertino/cupertino_alert_dialog_control.rb
 
 module Ruflet
   module UI
@@ -928,7 +928,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/cupertino/cupertino_button_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/cupertino/cupertino_button_control.rb
 
 module Ruflet
   module UI
@@ -943,7 +943,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/cupertino/cupertino_dialog_action_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/cupertino/cupertino_dialog_action_control.rb
 
 module Ruflet
   module UI
@@ -958,7 +958,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/cupertino/cupertino_filled_button_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/cupertino/cupertino_filled_button_control.rb
 
 module Ruflet
   module UI
@@ -973,7 +973,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/cupertino/cupertino_navigation_bar_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/cupertino/cupertino_navigation_bar_control.rb
 
 module Ruflet
   module UI
@@ -988,7 +988,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/cupertino/cupertino_slider_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/cupertino/cupertino_slider_control.rb
 
 module Ruflet
   module UI
@@ -1003,7 +1003,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/cupertino/cupertino_switch_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/cupertino/cupertino_switch_control.rb
 
 module Ruflet
   module UI
@@ -1018,7 +1018,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/cupertino/cupertino_text_field_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/cupertino/cupertino_text_field_control.rb
 
 module Ruflet
   module UI
@@ -1033,7 +1033,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/alert_dialog_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/alert_dialog_control.rb
 
 module Ruflet
   module UI
@@ -1048,7 +1048,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/app_bar_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/app_bar_control.rb
 
 module Ruflet
   module UI
@@ -1063,7 +1063,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/bottom_sheet_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/bottom_sheet_control.rb
 
 module Ruflet
   module UI
@@ -1078,7 +1078,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/button_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/button_control.rb
 
 module Ruflet
   module UI
@@ -1104,7 +1104,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/checkbox_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/checkbox_control.rb
 
 module Ruflet
   module UI
@@ -1119,7 +1119,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/column_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/column_control.rb
 
 module Ruflet
   module UI
@@ -1134,7 +1134,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/container_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/container_control.rb
 
 module Ruflet
   module UI
@@ -1149,7 +1149,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/drag_target_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/drag_target_control.rb
 
 module Ruflet
   module UI
@@ -1164,7 +1164,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/draggable_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/draggable_control.rb
 
 module Ruflet
   module UI
@@ -1179,7 +1179,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/elevated_button_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/elevated_button_control.rb
 
 module Ruflet
   module UI
@@ -1194,7 +1194,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/filled_button_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/filled_button_control.rb
 
 module Ruflet
   module UI
@@ -1209,7 +1209,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/floating_action_button_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/floating_action_button_control.rb
 
 module Ruflet
   module UI
@@ -1239,7 +1239,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/gesture_detector_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/gesture_detector_control.rb
 
 module Ruflet
   module UI
@@ -1254,7 +1254,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/icon_button_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/icon_button_control.rb
 
 module Ruflet
   module UI
@@ -1269,7 +1269,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/icon_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/icon_control.rb
 
 module Ruflet
   module UI
@@ -1295,7 +1295,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/image_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/image_control.rb
 
 module Ruflet
   module UI
@@ -1310,7 +1310,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/markdown_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/markdown_control.rb
 
 module Ruflet
   module UI
@@ -1325,7 +1325,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/navigation_bar_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/navigation_bar_control.rb
 
 module Ruflet
   module UI
@@ -1340,7 +1340,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/navigation_bar_destination_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/navigation_bar_destination_control.rb
 
 module Ruflet
   module UI
@@ -1355,7 +1355,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/radio_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/radio_control.rb
 
 module Ruflet
   module UI
@@ -1370,7 +1370,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/radio_group_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/radio_group_control.rb
 
 module Ruflet
   module UI
@@ -1385,7 +1385,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/row_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/row_control.rb
 
 module Ruflet
   module UI
@@ -1400,7 +1400,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/snack_bar_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/snack_bar_control.rb
 
 module Ruflet
   module UI
@@ -1415,7 +1415,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/stack_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/stack_control.rb
 
 module Ruflet
   module UI
@@ -1430,7 +1430,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/tab_bar_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/tab_bar_control.rb
 
 module Ruflet
   module UI
@@ -1445,7 +1445,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/tab_bar_view_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/tab_bar_view_control.rb
 
 module Ruflet
   module UI
@@ -1460,7 +1460,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/tab_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/tab_control.rb
 
 module Ruflet
   module UI
@@ -1475,7 +1475,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/tabs_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/tabs_control.rb
 
 
 module Ruflet
@@ -1536,7 +1536,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/text_button_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/text_button_control.rb
 
 module Ruflet
   module UI
@@ -1551,7 +1551,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/text_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/text_control.rb
 
 module Ruflet
   module UI
@@ -1566,7 +1566,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/text_field_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/text_field_control.rb
 
 module Ruflet
   module UI
@@ -1581,7 +1581,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/view_control.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/view_control.rb
 
 module Ruflet
   module UI
@@ -1596,7 +1596,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/control_registry.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/control_registry.rb
 
 module Ruflet
   module UI
@@ -1609,7 +1609,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/cupertino_control_registry.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/cupertino_control_registry.rb
 
 module Ruflet
   module UI
@@ -1646,7 +1646,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/material_control_registry.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/material_control_registry.rb
 
 module Ruflet
   module UI
@@ -1736,7 +1736,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/cupertino_control_factory.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/cupertino_control_factory.rb
 
 
 module Ruflet
@@ -1769,7 +1769,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/material_control_factory.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/material_control_factory.rb
 
 
 module Ruflet
@@ -1833,7 +1833,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/control_factory.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/control_factory.rb
 
 
 module Ruflet
@@ -1855,7 +1855,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/control_methods.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/control_methods.rb
 
 
 module Ruflet
@@ -1871,7 +1871,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/cupertino_control_methods.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/cupertino_control_methods.rb
 
 module Ruflet
   module UI
@@ -1899,7 +1899,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/material_control_methods.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/material_control_methods.rb
 
 module Ruflet
   module UI
@@ -2017,7 +2017,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/shared_control_forwarders.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/shared_control_forwarders.rb
 
 module Ruflet
   module UI
@@ -2104,7 +2104,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/ui/widget_builder.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/widget_builder.rb
 
 
 module Ruflet
@@ -2152,7 +2152,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/page.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/page.rb
 
 begin
 rescue LoadError
@@ -2724,7 +2724,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/app.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/app.rb
 
 module Ruflet
   class App
@@ -2746,7 +2746,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui/ruflet/dsl.rb
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/dsl.rb
 
 
 module Ruflet
@@ -2928,7 +2928,7 @@ module Ruflet
 end
 
 
-# -- packages/ruflet/lib/ruflet_ui.rb
+# -- packages/ruflet_core/lib/ruflet_ui.rb
 
 
 module Ruflet

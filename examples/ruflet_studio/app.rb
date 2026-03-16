@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-$LOAD_PATH.unshift(File.expand_path("../../packages/ruflet/lib", __dir__))
+$LOAD_PATH.unshift(File.expand_path("../../packages/ruflet_core/lib", __dir__))
 require "ruflet"
 
 require_relative "helpers"
