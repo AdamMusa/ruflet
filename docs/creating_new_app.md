@@ -6,6 +6,10 @@
 gem install ruflet
 ```
 
+Breaking change:
+- old install command: `gem install ruflet_cli`
+- new install command: `gem install ruflet`
+
 ## 2) Create app
 
 ```bash

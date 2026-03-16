@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-$LOAD_PATH.unshift(File.expand_path("../../packages/ruflet/lib", __dir__))
+$LOAD_PATH.unshift(File.expand_path("../../packages/ruflet_core/lib", __dir__))
 require "ruflet"
 
 require_relative "helpers"
@@ -26,8 +26,10 @@ module RufletStudio
       page.title = "Gallery"
       page.scroll = "auto"
       page.bgcolor = color_bg(page)
+      page.theme_mode = theme_mode
 
       page.on_route_change = ->(_e) { render(page) }
+      page.on_platform_brightness_change = ->(_e) { render(page) }
 
       render(page)
     end
@@ -38,6 +40,7 @@ module RufletStudio
       route = (page.route || "/gallery").split("?").first
       route = "/gallery" if route == "/"
       page.bgcolor = color_bg(page)
+      page.theme_mode = theme_mode
 
       case route
       when "/home"

@@ -3,6 +3,7 @@
 module RufletStudio
   module SectionsControls
     def build_material_controls(page, status)
+      material_dialog = nil
       material_dialog = alert_dialog(
         open: false,
         modal: true,

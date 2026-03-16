@@ -60,33 +60,34 @@ module RufletStudio
       return unless %w[system light dark].include?(normalized)
 
       @theme_mode = normalized
+      page.theme_mode = normalized
       page.go(page.route || "/settings")
     end
 
     def theme_colors(page)
       if effective_theme(page) == "light"
         {
-          bg: "#f4f5f7",
+          bg: "#edf3fb",
           surface: "#ffffff",
           text: "#1f2328",
-          subtle: "#6c757d",
-          icon: "#495057",
-          divider: "#dee2e6",
-          panel: "#f1f3f5",
-          nav_indicator: "#dbe4ff",
-          accent: "#4c6ef5"
+          subtle: "#475467",
+          icon: "#475467",
+          divider: "#cad5e5",
+          panel: "#dce6f5",
+          nav_indicator: "#bfd3ff",
+          accent: "#2563eb"
         }
       else
         {
-          bg: "#e8edf3",
-          surface: "#f8fafc",
-          text: "#1f2328",
-          subtle: "#5c6773",
-          icon: "#3f4954",
-          divider: "#cfd6de",
-          panel: "#eef2f6",
-          nav_indicator: "#cfe0ff",
-          accent: "#3b5bdb"
+          bg: "#0b1220",
+          surface: "#111827",
+          text: "#e5edf7",
+          subtle: "#94a3b8",
+          icon: "#cbd5e1",
+          divider: "#233044",
+          panel: "#172033",
+          nav_indicator: "#1d4ed8",
+          accent: "#60a5fa"
         }
       end
     end

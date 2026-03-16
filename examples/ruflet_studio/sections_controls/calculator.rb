@@ -5,6 +5,7 @@ module RufletStudio
     DIGITS = %w[0 1 2 3 4 5 6 7 8 9].freeze
 
     def build_calculator(page, status)
+      display = calculator_display(page)
       container(
         width: 420,
         padding: 12,
@@ -15,13 +16,13 @@ module RufletStudio
           children: [
             status,
             container(height: 24),
-            row(alignment: "end", children: [calculator_display(status)]),
+            row(alignment: "end", children: [display]),
             container(height: 20),
-            calculator_keypad_row(page, status, "BS", "AC", "%", "/"),
-            calculator_keypad_row(page, status, "7", "8", "9", "x"),
-            calculator_keypad_row(page, status, "4", "5", "6", "-"),
-            calculator_keypad_row(page, status, "1", "2", "3", "+"),
-            calculator_keypad_row(page, status, "+/-", "0", ".", "=")
+            calculator_keypad_row(page, display, status, "BS", "AC", "%", "/"),
+            calculator_keypad_row(page, display, status, "7", "8", "9", "x"),
+            calculator_keypad_row(page, display, status, "4", "5", "6", "-"),
+            calculator_keypad_row(page, display, status, "1", "2", "3", "+"),
+            calculator_keypad_row(page, display, status, "+/-", "0", ".", "=")
           ]
         )
       )
@@ -31,15 +32,15 @@ module RufletStudio
       @calculator_state ||= { display: "0", operand: nil, operator: nil, start_new_value: false }
     end
 
-    def calculator_display(_status)
+    def calculator_display(page)
       @calculator_display = text(
         value: calculator_state[:display],
         text_align: "right",
-        style: { size: 84 }
+        style: { size: 84, color: color_text(page) }
       )
     end
 
-    def calculator_keypad_row(page, status, *labels)
+    def calculator_keypad_row(page, display, status, *labels)
       row(
         alignment: "center",
         spacing: 6,
@@ -48,9 +49,9 @@ module RufletStudio
             content: text(value: label),
             width: 78,
             height: 65,
-            color: "#FFFFFF",
+            color: calculator_key_text_color(page, label),
             bgcolor: calculator_key_bg(page, label),
-            on_click: ->(e) { calculator_handle_input(label, e, page, status) }
+            on_click: ->(e) { calculator_handle_input(label, e, page, display, status) }
           )
         end
       )
@@ -60,7 +61,11 @@ module RufletStudio
       %w[/ x - + =].include?(label) ? color_accent(page) : color_surface(page)
     end
 
-    def calculator_handle_input(label, event, page, status)
+    def calculator_key_text_color(page, label)
+      %w[/ x - + =].include?(label) ? "#FFFFFF" : color_text(page)
+    end
+
+    def calculator_handle_input(label, event, page, display, status)
       if DIGITS.include?(label)
         calculator_on_digit(label)
       elsif label == "."
@@ -79,7 +84,7 @@ module RufletStudio
         calculator_on_backspace
       end
 
-      page.update(@calculator_display, value: calculator_state[:display])
+      page.update(display, value: calculator_state[:display])
       page.update(status, value: "Calculator result: #{calculator_state[:display]}") if label == "="
       event
     end
