@@ -2,8 +2,8 @@
 
 module RufletStudio
   module Views
-    def status_text(_page)
-      text(value: "", style: { size: 12 })
+    def status_text(page)
+      text(value: "", style: { size: 12, color: color_subtle(page) })
     end
   end
 end

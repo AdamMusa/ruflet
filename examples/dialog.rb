@@ -4,7 +4,7 @@ class FeedbackSurfacesApp < Ruflet::App
   def view(page)
     page.title = "Feedback Surfaces Demo"
 
-    status = text("Ready", size: 14)
+    status = text(value: "Ready", style: { size: 14 })
     dialog = build_dialog(page, status)
     bottom_sheet = build_bottom_sheet(page, status)
 
@@ -14,22 +14,22 @@ class FeedbackSurfacesApp < Ruflet::App
         content: column(
           spacing: 12,
           children: [
-            text("Dialog, SnackBar and BottomSheet", size: 22),
+            text(value: "Dialog, SnackBar and BottomSheet", style: { size: 22 }),
             status,
             button(
-              content: text("Open dialog"),
+              content: text(value: "Open dialog"),
               on_click: ->(_e) {
                 open_surface(page, dialog, status, "Dialog opened")
               }
             ),
             button(
-              content: text("Open snackbar"),
+              content: text(value: "Open snackbar"),
               on_click: ->(_e) {
                 open_surface(page, build_snack_bar(page, status), status, "SnackBar opened")
               }
             ),
             button(
-              content: text("Open bottom sheet"),
+              content: text(value: "Open bottom sheet"),
               on_click: ->(_e) {
                 open_surface(page, bottom_sheet, status, "BottomSheet opened")
               }
@@ -40,7 +40,7 @@ class FeedbackSurfacesApp < Ruflet::App
       appbar: app_bar(
         bgcolor: "#d9d7db",
         color: "#232329",
-        title: text("Feedback Surfaces", size: 18)
+        title: text(value: "Feedback Surfaces", style: { size: 18 })
       )
     )
   end
@@ -54,7 +54,7 @@ class FeedbackSurfacesApp < Ruflet::App
   def build_snack_bar(page, status)
     snack_bar(
       open: true,
-      content: text("Profile saved"),
+      content: text(value: "Profile saved"),
       action: "UNDO",
       duration: duration(seconds: 3),
       on_action: ->(_e) { set_status(page, status, "SnackBar action pressed") },
@@ -67,18 +67,18 @@ class FeedbackSurfacesApp < Ruflet::App
     dialog = alert_dialog(
       open: false,
       modal: true,
-      title: text("Delete item?"),
-      content: text("This demonstrates AlertDialog data shape."),
+      title: text(value: "Delete item?"),
+      content: text(value: "This demonstrates AlertDialog data shape."),
       actions: [
         text_button(
-          content: text("Cancel"),
+          content: text(value: "Cancel"),
           on_click: ->(_e) do
             page.update(dialog, open: false)
             set_status(page, status, "Dialog closed")
           end
         ),
         filled_button(
-          content: text("Delete"),
+          content: text(value: "Delete"),
           on_click: ->(_e) do
             page.update(dialog, open: false)
             set_status(page, status, "Delete action pressed")
@@ -91,7 +91,7 @@ class FeedbackSurfacesApp < Ruflet::App
 
   def build_bottom_sheet(page, status)
     bottom_sheet = nil
-    bottom_sheet_control = bottom_sheet(
+    bottom_sheet = bottom_sheet(
       open: false,
       scrollable: true,
       show_drag_handle: true,
@@ -103,21 +103,21 @@ class FeedbackSurfacesApp < Ruflet::App
         content: column(
           spacing: 10,
           children: [
-            text("Bottom Sheet", size: 24),
-            text("This is shown using BottomSheet control."),
-            text("It is intentionally larger in this sample."),
+            text(value: "Bottom Sheet", style: { size: 24 }),
+            text(value: "This is shown using BottomSheet control."),
+            text(value: "It is intentionally larger in this sample."),
             button(
-              content: text("Close bottom sheet"),
+              content: text(value: "Close bottom sheet"),
               on_click: ->(_e) do
                 page.update(bottom_sheet, open: false)
                 set_status(page, status, "BottomSheet closed")
               end
-            end
+            )
           ]
         )
       )
     )
-    bottom_sheet_control
+    bottom_sheet
   end
 
   def open_surface(page, control, status, message)

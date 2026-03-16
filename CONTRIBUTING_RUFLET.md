@@ -8,10 +8,10 @@ This guide explains how Ruflet works, how protocol patches flow, and how to add 
 3. **Client renders** those patches into Flutter widgets.
 
 Key Ruby files:
-- `packages/ruflet/lib/ruflet_ui/ruflet/page.rb` — patch generation, updates.
-- `packages/ruflet/lib/ruflet_ui/ruflet/control.rb` — control serialization.
-- `packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/` — control classes.
-- `packages/ruflet/lib/ruflet_ui/ruflet/ui/*_control_registry.rb` — mapping of control names.
+- `packages/ruflet_core/lib/ruflet_ui/ruflet/page.rb` — patch generation, updates.
+- `packages/ruflet_core/lib/ruflet_ui/ruflet/control.rb` — control serialization.
+- `packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/` — control classes.
+- `packages/ruflet_core/lib/ruflet_ui/ruflet/ui/*_control_registry.rb` — mapping of control names.
 - `examples/ruflet_studio/` — demo app.
 
 ## 2. Protocol in Practice
@@ -42,7 +42,7 @@ Ruflet sends a patch like:
 Let’s add a simple **"tag"** control that renders text in a styled container.
 
 ### Step 1 — Create a control class
-Create a new control class in `packages/ruflet/lib/ruflet_ui/ruflet/ui/controls/material/tag_control.rb`:
+Create a new control class in `packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/tag_control.rb`:
 
 ```ruby
 # frozen_string_literal: true
@@ -62,14 +62,14 @@ end
 
 ### Step 2 — Register the control
 Add a registry entry in:
-`packages/ruflet/lib/ruflet_ui/ruflet/ui/material_control_registry.rb`
+`packages/ruflet_core/lib/ruflet_ui/ruflet/ui/material_control_registry.rb`
 
 ```ruby
 "tag" => "Tag",
 ```
 
 ### Step 3 — Add a DSL helper (optional)
-In `packages/ruflet/lib/ruflet_ui/ruflet/ui/material_control_methods.rb`:
+In `packages/ruflet_core/lib/ruflet_ui/ruflet/ui/material_control_methods.rb`:
 
 ```ruby
 def tag(**props) = build_widget(:tag, **props)
@@ -121,9 +121,9 @@ Keep tests small and independent. Do not put an entire gem's coverage into one l
 
 ### Test Layout Rules
 - Add tests under each gem package:
-  - `packages/ruflet/test/`
+  - `packages/ruflet_core/test/`
   - `packages/ruflet_server/test/`
-  - `packages/ruflet_cli/test/`
+  - `packages/ruflet/test/`
 - Use one `test_helper.rb` per gem package.
 - Split by behavior:
   - `run_interceptor_test.rb`
@@ -134,7 +134,7 @@ Keep tests small and independent. Do not put an entire gem's coverage into one l
 Example: `Ruflet.run` should return interceptor result without requiring `ruflet_server`.
 
 ### Step 2 — Create (or reuse) test helper
-`packages/ruflet/test/test_helper.rb`
+`packages/ruflet_core/test/test_helper.rb`
 
 ```ruby
 # frozen_string_literal: true
@@ -145,7 +145,7 @@ require "ruflet"
 ```
 
 ### Step 3 — Write one focused test file
-`packages/ruflet/test/run_interceptor_test.rb`
+`packages/ruflet_core/test/run_interceptor_test.rb`
 
 ```ruby
 # frozen_string_literal: true
@@ -174,17 +174,17 @@ From the package directory:
 
 ### Step 5 — Add neighboring tests in separate files
 Examples:
-- `packages/ruflet/test/manifest_compiler_test.rb`
+- `packages/ruflet_core/test/manifest_compiler_test.rb`
 - `packages/ruflet_server/test/wire_codec_test.rb`
 - `packages/ruflet_server/test/server_bind_test.rb`
-- `packages/ruflet_cli/test/new_command_test.rb`
-- `packages/ruflet_cli/test/templates_test.rb`
+- `packages/ruflet/test/new_command_test.rb`
+- `packages/ruflet/test/templates_test.rb`
 
 ### Step 6 — Verify each gem independently
 Run tests per gem package, not as one global monolith.
 
 ```bash
-cd packages/ruflet
+cd packages/ruflet_core
 /opt/homebrew/opt/ruby/bin/ruby -Ilib -Itest test/run_interceptor_test.rb
 /opt/homebrew/opt/ruby/bin/ruby -Ilib -Itest test/manifest_compiler_test.rb
 
@@ -203,4 +203,3 @@ cd ../ruflet_cli
 - No hidden network dependency for unit tests.
 - Deterministic assertions (no timing-sensitive flakiness).
 - Tests runnable directly from each package.
-

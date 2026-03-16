@@ -4,7 +4,7 @@ module RufletStudio
   module SectionsMedia
     def build_webview(_page, _status)
       webview_control = web_view(
-        url: "https://rubyonrails.org/",
+        url: "https://ruflet.dev/",
         method: "get",
         expand: true
       )

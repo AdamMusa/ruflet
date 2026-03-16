@@ -7,22 +7,30 @@ module RufletStudio
       control(:view,
         route: route,
         bgcolor: color_bg(page),
-        scroll: "auto",
-        padding: 8,
+        padding: 0,
         appbar: app_bar(
           bgcolor: color_surface(page),
           color: color_text(page),
           title: text(value: "Gallery", style: { size: 20 }),
           actions: []
         ),
-        navigation_bar: nav_bar(page, route),
         children: [
-          container(
-            padding: { top: 12, left: 0, right: 0, bottom: 8 },
-            content: column(
-              spacing: 6,
-              children: gallery_items(page)
-            )
+          column(
+            expand: true,
+            spacing: 0,
+            children: [
+              container(
+                expand: true,
+                alignment: "center",
+                padding: 8,
+                content: column(
+                  scroll: "auto",
+                  spacing: 6,
+                  children: gallery_items(page)
+                )
+              ),
+              nav_bar(page, route)
+            ]
           )
         ]
       )
@@ -60,7 +68,7 @@ module RufletStudio
         bgcolor: color_surface(page),
         content_padding: { left: 12, right: 12, top: 8, bottom: 8 },
         leading: icon(icon: icon, color: color_icon(page)),
-        title: text(value: title, style: { size: 16 }),
+        title: text(value: title, style: { size: 16, color: color_text(page) }),
         trailing: icon(icon: "chevron_right", color: color_subtle(page)),
         on_click: ->(_e) { page.go(route) }
       )

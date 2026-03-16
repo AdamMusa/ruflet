@@ -42,13 +42,27 @@ Ruflet is split into packages:
 Monorepo folders:
 
 - `packages/ruflet`
+- `packages/ruflet_core`
 - `packages/ruflet_server`
-- `packages/ruflet_cli`
 - `packages/ruflet_rails`
 
 ## New Project Behavior
 
 `ruflet new <appname>` generates a `Gemfile` with runtime dependencies:
+
+- `gem "ruflet_core"`
+- `gem "ruflet_server"`
+
+## Breaking Change
+
+The CLI gem has been renamed:
+
+- old: `gem install ruflet_cli`
+- new: `gem install ruflet`
+
+`ruflet` now follows the old `ruflet_cli` dependency shape and only carries CLI dependencies.
+
+App projects should keep runtime gems in the app `Gemfile`:
 
 - `gem "ruflet_core"`
 - `gem "ruflet_server"`

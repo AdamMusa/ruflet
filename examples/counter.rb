@@ -1,10 +1,8 @@
 require "ruflet"
-
 Ruflet.run do |page|
   page.title = "Counter Demo"
   count = 0
-  count_text = text(count.to_s, size: 40)
-
+  count_text = text(count.to_s, style: {size: 40})
   page.add(
     container(
       expand: true,

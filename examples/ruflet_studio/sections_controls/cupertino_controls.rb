@@ -3,12 +3,17 @@
 module RufletStudio
   module SectionsControls
     def build_cupertino_controls(page, status)
-      cupertino_dialog = control(
-        :cupertino_alert_dialog,
+      cupertino_dialog = nil
+      cupertino_dialog = cupertino_alert_dialog(
+        open: false,
+        modal: true,
         title: text(value: "Cupertino"),
         content: text(value: "Hello from Cupertino"),
         actions: [
-          control(:cupertino_dialog_action, content: "OK", on_click: ->(_e) { page.pop_dialog })
+          cupertino_dialog_action(
+            content: text(value: "OK"),
+            on_click: ->(_e) { page.update(cupertino_dialog, open: false) }
+          )
         ]
       )
 

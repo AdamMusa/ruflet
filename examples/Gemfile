@@ -1,5 +1,5 @@
 source "https://rubygems.org"
 
-gem "ruflet", path: "../packages/ruflet_cli"
-gem "ruflet_core", path: "../packages/ruflet"
+gem "ruflet", path: "../packages/ruflet"
+gem "ruflet_core", path: "../packages/ruflet_core"
 gem "ruflet_server", path: "../packages/ruflet_server"

@@ -7,8 +7,9 @@ module RufletStudio
       control(:view,
         route: route,
         bgcolor: color_bg(page),
-        scroll: scroll,
+        scroll: nil,
         horizontal_alignment: horizontal_alignment,
+        padding: 0,
         appbar: app_bar(
           bgcolor: color_surface(page),
           color: color_text(page),
@@ -22,10 +23,25 @@ module RufletStudio
             action ? [action] : []
           end
         ),
-        navigation_bar: nav_bar(page, "/gallery"),
-        padding: padding,
         children: [
-          content
+          column(
+            expand: true,
+            spacing: 0,
+            children: [
+              container(
+                expand: true,
+                alignment: "center",
+                padding: padding,
+                content: column(
+                  expand: true,
+                  scroll: scroll,
+                  horizontal_alignment: horizontal_alignment,
+                  children: [content]
+                )
+              ),
+              nav_bar(page, "/gallery")
+            ]
+          )
         ]
       )
     end

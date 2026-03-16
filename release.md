@@ -2,7 +2,7 @@
 
 Ruflet is a Ruby framework inspired by Flet for building web, desktop, and mobile apps in Ruby.
 
-Current release in this repo: **0.0.3**
+Current release in this repo: **0.0.10**
 
 Class-based apps are the recommended and documented standard:
 - `class MyApp < Ruflet::App`
@@ -37,25 +37,48 @@ ruflet run main.rb
 
 Ruflet is split into packages:
 
-- `ruflet`: runtime umbrella package
+- `ruflet`: CLI/install package users install from RubyGems
+- `ruflet_core`: core runtime implementation (protocol + UI)
 - `ruflet_server`: WebSocket runtime
-- `ruflet_cli`: CLI executable (`ruflet`)
 - `ruflet_rails`: Rails integration
 
 Monorepo folders:
 
 - `packages/ruflet`
+- `packages/ruflet_core`
 - `packages/ruflet_server`
-- `packages/ruflet_cli`
 - `packages/ruflet_rails`
 
 ## New Project Behavior
 
-`ruflet new <appname>` generates a `Gemfile` that references `ruflet`.
+`ruflet new <appname>` generates a `Gemfile` with:
 
-It does **not** add `ruflet_cli` to app dependencies.
+- `gem "ruflet_core"`
+- `gem "ruflet_server"`
+
+It does **not** add the CLI gem to app dependencies.
+
+## Breaking Change
+
+The CLI gem name changed:
+
+- old: `gem install ruflet_cli`
+- new: `gem install ruflet`
+
+`ruflet` now keeps the old CLI dependency shape and does not bundle runtime gem dependencies.
 
 That keeps CLI global/tooling-level and app deps runtime-focused.
+
+## RubyGems Release Build
+
+Build the release gems from the monorepo root:
+
+```bash
+cd /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet
+/opt/homebrew/opt/ruby/bin/gem build packages/ruflet/ruflet.gemspec
+/opt/homebrew/opt/ruby/bin/gem build packages/ruflet_core/ruflet_core.gemspec
+/opt/homebrew/opt/ruby/bin/gem build packages/ruflet_server/ruflet_server.gemspec
+```
 
 ## App Style (Required in docs/examples)
 

@@ -2,6 +2,12 @@
 
 module RufletStudio
   module Views
+    SETTINGS_THEME_OPTIONS = [
+      ["contrast", "System", "Match device appearance", "system"],
+      ["light_mode", "Light", "Bright surfaces for daytime use", "light"],
+      ["dark_mode", "Dark", "Low-glare surfaces with higher contrast", "dark"]
+    ].freeze
+
     def settings_view(page)
       route = "/settings"
       gestures_shake = checkbox(value: false)
@@ -11,125 +17,134 @@ module RufletStudio
       control(:view,
         route: route,
         bgcolor: color_bg(page),
+        padding: 0,
         appbar: app_bar(
           bgcolor: color_surface(page),
           color: color_text(page),
           title: text(value: "Settings", style: { size: 20 }),
           actions: []
         ),
-        navigation_bar: nav_bar(page, route),
-        padding: 20,
-        scroll: "auto",
         children: [
           column(
-            spacing: 16,
+            expand: true,
+            spacing: 0,
             children: [
-              text(value: "Theme", style: { size: 14 }),
-              radio_group(
-                value: theme_mode,
-                on_change: ->(e) {
-                  value =
-                    read_string(e.data, "value") ||
-                    read_string(e.data, :value) ||
-                    read_string(e.data, "selected") ||
-                    read_string(e.data, :selected)
-                  next unless %w[system light dark].include?(value)
-
-                  set_theme(page, value)
-                },
+              container(
+                expand: true,
+                alignment: "center",
+                padding: 20,
                 content: column(
-                  spacing: 14,
+                  scroll: "auto",
+                  spacing: 16,
+                  horizontal_alignment: "center",
                   children: [
-                    row(
-                      alignment: "spaceBetween",
-                      children: [
-                        row(
-                          spacing: 12,
-                          children: [
-                            icon(icon: "contrast", color: color_icon(page)),
-                            text(value: "System")
-                          ]
-                        ),
-                        radio(value: "system")
-                      ]
+                    settings_section_title(page, "Theme"),
+                    settings_card(
+                      page,
+                      column(
+                        spacing: 10,
+                        children: SETTINGS_THEME_OPTIONS.map do |icon_name, title, subtitle, value|
+                          theme_option_row(page, icon_name, title, subtitle, value)
+                        end
+                      )
                     ),
-                    row(
-                      alignment: "spaceBetween",
-                      children: [
-                        row(
-                          spacing: 12,
-                          children: [
-                            icon(icon: "light_mode", color: color_icon(page)),
-                            text(value: "Light")
-                          ]
-                        ),
-                        radio(value: "light")
-                      ]
+                    container(height: 1, bgcolor: color_divider(page), margin: { top: 8, bottom: 8 }),
+                    settings_section_title(page, "Home gestures"),
+                    control(
+                      :list_tile,
+                      bgcolor: color_surface(page),
+                      leading: icon(icon: "vibration", color: color_icon(page)),
+                      title: text(value: "Shake device", style: { color: color_text(page) }),
+                      trailing: gestures_shake,
+                      on_click: ->(_e) {
+                        gestures_shake_state = !gestures_shake_state
+                        page.update(gestures_shake, value: gestures_shake_state)
+                      }
                     ),
-                    row(
-                      alignment: "spaceBetween",
-                      children: [
-                        row(
-                          spacing: 12,
-                          children: [
-                            icon(icon: "dark_mode", color: color_icon(page)),
-                            text(value: "Dark")
-                          ]
-                        ),
-                        radio(value: "dark")
-                      ]
-                    )
+                    control(
+                      :list_tile,
+                      bgcolor: color_surface(page),
+                      leading: icon(icon: "pan_tool_alt", color: color_icon(page)),
+                      title: text(value: "Long press with two fingers", style: { color: color_text(page) }),
+                      trailing: gestures_long_press,
+                      on_click: ->(_e) {
+                        gestures_long_press_state = !gestures_long_press_state
+                        page.update(gestures_long_press, value: gestures_long_press_state)
+                      }
+                    ),
+                    container(height: 1, bgcolor: color_divider(page), margin: { top: 8, bottom: 8 }),
+                    settings_section_title(page, "Application details"),
+                    settings_detail_row(page, "Client version:", Ruflet::VERSION),
+                    settings_detail_row(page, "Ruflet SDK version:", Ruflet::VERSION),
+                    settings_detail_row(page, "Ruby version:", RUBY_VERSION)
                   ]
                 )
               ),
-              container(height: 1, bgcolor: color_divider(page), margin: { top: 8, bottom: 8 }),
-              text(value: "Home gestures", style: { size: 14 }),
-              control(
-                :list_tile,
-                leading: icon(icon: "vibration", color: color_icon(page)),
-                title: text(value: "Shake device"),
-                trailing: gestures_shake,
-                on_click: ->(_e) {
-                  gestures_shake_state = !gestures_shake_state
-                  page.update(gestures_shake, value: gestures_shake_state)
-                }
-              ),
-              control(
-                :list_tile,
-                leading: icon(icon: "pan_tool_alt", color: color_icon(page)),
-                title: text(value: "Long press with two fingers"),
-                trailing: gestures_long_press,
-                on_click: ->(_e) {
-                  gestures_long_press_state = !gestures_long_press_state
-                  page.update(gestures_long_press, value: gestures_long_press_state)
-                }
-              ),
-              container(height: 1, bgcolor: color_divider(page), margin: { top: 8, bottom: 8 }),
-              text(value: "Application details", style: { size: 14 }),
-              row(
-                alignment: "spaceBetween",
-                children: [
-                  text(value: "Client version:"),
-                  text(value: "#{Ruflet::VERSION}")
-                ]
-              ),
-              row(
-                alignment: "spaceBetween",
-                children: [
-                  text(value: "Ruflet SDK version:"),
-                  text(value: "#{Ruflet::VERSION}")
-                ]
-              ),
-              row(
-                alignment: "spaceBetween",
-                children: [
-                  text(value: "Ruby version:"),
-                  text(value: "#{RUBY_VERSION}")
-                ]
-              )
+              nav_bar(page, route)
             ]
           )
         ]
+      )
+    end
+
+    def settings_section_title(page, title)
+      text(value: title, style: { size: 14, color: color_subtle(page) })
+    end
+
+    def settings_card(page, content)
+      container(
+        bgcolor: color_surface(page),
+        border_radius: 18,
+        padding: 16,
+        border: { width: 1, color: color_divider(page) },
+        content: content
+      )
+    end
+
+    def settings_detail_row(page, label, value)
+      row(
+        alignment: "spaceBetween",
+        children: [
+          text(value: label, style: { color: color_text(page) }),
+          text(value: value.to_s, style: { color: color_text(page) })
+        ]
+      )
+    end
+
+    def theme_option_row(page, icon_name, title, subtitle, value)
+      selected = theme_mode == value
+
+      container(
+        bgcolor: selected ? color_panel(page) : color_bg(page),
+        border_radius: 14,
+        border: { width: 1, color: selected ? color_accent(page) : color_divider(page) },
+        padding: { left: 12, right: 12, top: 12, bottom: 12 },
+        on_click: ->(_e) { set_theme(page, value) },
+        content: row(
+          alignment: "spaceBetween",
+          vertical_alignment: "center",
+          children: [
+            row(
+              expand: true,
+              spacing: 12,
+              children: [
+                icon(icon: icon_name, color: selected ? color_accent(page) : color_icon(page)),
+                column(
+                  expand: true,
+                  spacing: 2,
+                  children: [
+                    text(value: title, style: { color: color_text(page) }),
+                    text(value: subtitle, style: { size: 12, color: color_subtle(page) })
+                  ]
+                )
+              ]
+            ),
+            icon(
+              icon: selected ? "check_circle" : "radio_button_unchecked",
+              color: selected ? color_accent(page) : color_subtle(page)
+            )
+          ]
+        )
       )
     end
   end
