@@ -74,9 +74,7 @@ class TodoApp < Ruflet::App
         bgcolor: Ruflet::Colors.PRIMARY
       ),
       floating_action_button: fab(
-        content: text("+"),
-        bgcolor: Ruflet::Colors.PRIMARY,
-        color: "white74",
+        icon: Ruflet::MaterialIcons::ADD,
         on_click: ->(e) { add_task(e.page) }
       )
     )
@@ -166,8 +164,7 @@ class TodoApp < Ruflet::App
       )
     else
       text_button(
-        content: text(name.capitalize),
-        color: Ruflet::Colors.PRIMARY,
+        content: text(value: name.capitalize, style: { color: Ruflet::Colors.PRIMARY }),
         on_click: ->(e) { set_filter(name, e.page) }
       )
     end

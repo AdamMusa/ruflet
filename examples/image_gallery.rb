@@ -21,20 +21,17 @@ class ImageGalleryApp < Ruflet::App
                 image(
                   "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800",
                   width: 300,
-                  height: 170,
-                  fit: "cover"
+                  height: 170
                 ),
                 image(
                   "assets/splash.png",
                   width: 300,
-                  height: 170,
-                  fit: "cover"
+                  height: 170
                 ),
                 image(
                   "assets/icon.png",
                   width: 300,
-                  height: 170,
-                  fit: "cover"
+                  height: 170
                 )
               ]
             ),
@@ -48,20 +45,17 @@ class ImageGalleryApp < Ruflet::App
                   image(
                     "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400",
                     width: 220,
-                    height: 140,
-                    fit: "cover"
+                    height: 140
                   ),
                   image(
                     "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=400",
                     width: 220,
-                    height: 140,
-                    fit: "cover"
+                    height: 140
                   ),
                   image(
                     "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400",
                     width: 220,
-                    height: 140,
-                    fit: "cover"
+                    height: 140
                   )
                 ]
               )

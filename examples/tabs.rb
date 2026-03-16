@@ -8,18 +8,18 @@ class TabsDemoApp < Ruflet::App
     tabs_control = tabs(
       height: 320,
       selected_index: 0,
-      tabs: [
+      children: [
         tab(
           label: text("Home"),
-          content: container(padding: 16, content: text(value: "Home tab", style: { size: 24 }))
+          children: [container(padding: 16, content: text(value: "Home tab", style: { size: 24 }))]
         ),
         tab(
           label: text("Play"),
-          content: container(padding: 16, content: text(value: "Play tab", style: { size: 24 }))
+          children: [container(padding: 16, content: text(value: "Play tab", style: { size: 24 }))]
         ),
         tab(
           label: text("About"),
-          content: container(padding: 16, content: text(value: "About tab", style: { size: 24 }))
+          children: [container(padding: 16, content: text(value: "About tab", style: { size: 24 }))]
         )
       ]
     )
@@ -44,7 +44,7 @@ class TabsDemoApp < Ruflet::App
       floating_action_button: fab(
         icon: Ruflet::MaterialIcons::ADD,
         bgcolor: "#232329",
-        color: "#ffffff",
+        foreground_color: "#ffffff",
         on_click: ->(_e) {}
       ),
       navigation_bar: bottom_tabs

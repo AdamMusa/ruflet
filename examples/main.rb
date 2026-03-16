@@ -31,7 +31,8 @@ class MainApp < Ruflet::App
   end
 
   def home_view(page)
-    Ruflet::UI.view(
+    Ruflet::DSL.widget(
+      :view,
       route: "/",
       appbar: app_bar(
         bgcolor: "#d9d7db",
@@ -55,7 +56,8 @@ class MainApp < Ruflet::App
   end
 
   def replace_view(page)
-    Ruflet::UI.view(
+    Ruflet::DSL.widget(
+      :view,
       route: "/replace",
       appbar: app_bar(
         bgcolor: "#d9d7db",
@@ -76,7 +78,8 @@ class MainApp < Ruflet::App
   end
 
   def go_view(page)
-    Ruflet::UI.view(
+    Ruflet::DSL.widget(
+      :view,
       route: "/go",
       appbar: app_bar(
         bgcolor: "#d9d7db",

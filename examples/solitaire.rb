@@ -65,7 +65,7 @@ class Card
       on_pan_end: ->(_e) { @game.drop(self) },
       on_tap: ->(_e) { @game.card_tap(self) },
       on_double_tap: ->(_e) { @game.card_double_tap(self) },
-      content: image(image_url, width: @w, height: @h, fit: "fill")
+      content: image(image_url, width: @w, height: @h)
     )
   end
 end
