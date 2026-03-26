@@ -7,5 +7,4 @@ framework module pasteboard {
 
 module pasteboard.Swift {
   header "pasteboard-Swift.h"
-  requires objc
 }

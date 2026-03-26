@@ -7,5 +7,4 @@ framework module record_ios {
 
 module record_ios.Swift {
   header "record_ios-Swift.h"
-  requires objc
 }

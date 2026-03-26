@@ -7,5 +7,4 @@ framework module DKPhotoGallery {
 
 module DKPhotoGallery.Swift {
   header "DKPhotoGallery-Swift.h"
-  requires objc
 }

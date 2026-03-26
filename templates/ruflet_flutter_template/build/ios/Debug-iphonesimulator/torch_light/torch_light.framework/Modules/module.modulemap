@@ -7,5 +7,4 @@ framework module torch_light {
 
 module torch_light.Swift {
   header "torch_light-Swift.h"
-  requires objc
 }

@@ -14,7 +14,7 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		8OKeF8vlN9caIF4PG+oeztCz79w=
+		0YltAiEDnKOAjHDnU3fT0cvqScY=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
@@ -25,10 +25,6 @@
 	<dict>
 		<key>Headers/FlutterNativeSplashPlugin.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			yCjBktrcxjFCNZlKJDftMEHwkaU=
-			</data>
 			<key>hash2</key>
 			<data>
 			dabrWA1O9880Xd68d0xSdkH4gsNMbWHY+pcgM9jG+Q4=
@@ -36,10 +32,6 @@
 		</dict>
 		<key>Headers/flutter_native_splash-umbrella.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			LK/DjcyJW7LYpa9QUypOSUUP/Gw=
-			</data>
 			<key>hash2</key>
 			<data>
 			Tq0lPHOVr67cpv2ZvVamC5lS3yLYnfznlOKXWVxfyRA=
@@ -47,10 +39,6 @@
 		</dict>
 		<key>Modules/module.modulemap</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			QdhFnT1JCloabZLRuFu1SmW8ozk=
-			</data>
 			<key>hash2</key>
 			<data>
 			M/oynsrQ5rAVOh/AWPFKUWru71ONrtRhanP/k8Gzi8U=

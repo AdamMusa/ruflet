@@ -106,6 +106,11 @@ public final class GeneratedPluginRegistrant {
       Log.e(TAG, "Error registering plugin record_android, com.llfbandit.record.RecordPlugin", e);
     }
     try {
+      flutterEngine.getPlugins().add(new com.example.ruby_runtime.MrubyRuntimePlugin());
+    } catch (Exception e) {
+      Log.e(TAG, "Error registering plugin ruby_runtime, com.example.ruby_runtime.MrubyRuntimePlugin", e);
+    }
+    try {
       flutterEngine.getPlugins().add(new com.aaassseee.screen_brightness_android.ScreenBrightnessAndroidPlugin());
     } catch (Exception e) {
       Log.e(TAG, "Error registering plugin screen_brightness_android, com.aaassseee.screen_brightness_android.ScreenBrightnessAndroidPlugin", e);

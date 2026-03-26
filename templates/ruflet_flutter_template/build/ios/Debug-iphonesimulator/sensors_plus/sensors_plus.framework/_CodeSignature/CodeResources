@@ -6,7 +6,7 @@
 	<dict>
 		<key>Headers/sensors_plus-Swift.h</key>
 		<data>
-		L9yZCMwxWOS7IHlqzOJoG+Q3Zjw=
+		s8+GY7GvCTAE6diZ9HyE3z0n1Bw=
 		</data>
 		<key>Headers/sensors_plus-umbrella.h</key>
 		<data>
@@ -14,19 +14,19 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		vwdT53aPa2n2peWdZBlu5kA7904=
+		dA69F7+3xTU5m8877GOwPfNItrA=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
-		1NwzdPRee42znkWO/CGjSHScMHI=
+		YvLJzEsZfgPcT1uE8dV3hhn5buI=
 		</data>
 		<key>Modules/sensors_plus.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo</key>
 		<data>
-		UPQQG6Sn2b4ZaQr/SrZObzNo9vg=
+		kykxNqsro9Qf1H6Q6MGaFNt6Eew=
 		</data>
 		<key>Modules/sensors_plus.swiftmodule/Project/x86_64-apple-ios-simulator.swiftsourceinfo</key>
 		<data>
-		vAw0f0L5/DPk5jIH2G92HGlIjy0=
+		PLq5CtadDNYxqplO36y9hWHKME4=
 		</data>
 		<key>Modules/sensors_plus.swiftmodule/arm64-apple-ios-simulator.abi.json</key>
 		<data>
@@ -34,11 +34,11 @@
 		</data>
 		<key>Modules/sensors_plus.swiftmodule/arm64-apple-ios-simulator.swiftdoc</key>
 		<data>
-		gC568TcE9TTah5gWjy2vor94UZU=
+		WspvznRpOyrpIjg4JIdG4QpX4a8=
 		</data>
 		<key>Modules/sensors_plus.swiftmodule/arm64-apple-ios-simulator.swiftmodule</key>
 		<data>
-		lamOUbod8QGBbi5sKFmTJoytUSc=
+		lfGXkp7Mj3ZqCrN7IbsDPTFKmD4=
 		</data>
 		<key>Modules/sensors_plus.swiftmodule/x86_64-apple-ios-simulator.abi.json</key>
 		<data>
@@ -46,32 +46,24 @@
 		</data>
 		<key>Modules/sensors_plus.swiftmodule/x86_64-apple-ios-simulator.swiftdoc</key>
 		<data>
-		iS/Ja0neEzeRLPX7kUzeRvdzsYI=
+		ABQzFu/g5CiiQsE1E50o2hA4Jj0=
 		</data>
 		<key>Modules/sensors_plus.swiftmodule/x86_64-apple-ios-simulator.swiftmodule</key>
 		<data>
-		sR2KsF4N81NkiLtZeqjiWWgb+fw=
+		Cqcjs7AAVRQnJ2aUNTe2YhvO+YE=
 		</data>
 	</dict>
 	<key>files2</key>
 	<dict>
 		<key>Headers/sensors_plus-Swift.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			L9yZCMwxWOS7IHlqzOJoG+Q3Zjw=
-			</data>
 			<key>hash2</key>
 			<data>
-			7MA85r+hXZzCCPEpTQYNGAw3mvrpg108o6DVm4aBZfM=
+			uT9CiBSqOrIAsMcSTED0k9C7JjC+hzy3/AzYugaAmQE=
 			</data>
 		</dict>
 		<key>Headers/sensors_plus-umbrella.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			zZOHEU8J0ulhk39DYgMDRabRmdE=
-			</data>
 			<key>hash2</key>
 			<data>
 			2E3rXsoFAqz39GDEwt+hoA3e5OSwwegtbflPS5r48cQ=
@@ -79,43 +71,27 @@
 		</dict>
 		<key>Modules/module.modulemap</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			1NwzdPRee42znkWO/CGjSHScMHI=
-			</data>
 			<key>hash2</key>
 			<data>
-			zjvCRnGQSC+fFR/Ps1sy45l2ld4FQ3Y3PohPWLmmjiA=
+			BBN5A84pwz+uZc97LcO4fX5HBIRHJfPbFyGL7impNVQ=
 			</data>
 		</dict>
 		<key>Modules/sensors_plus.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			UPQQG6Sn2b4ZaQr/SrZObzNo9vg=
-			</data>
 			<key>hash2</key>
 			<data>
-			OdAUMblPyF2TGOS4b/TyMK9d564e+txHsWMq11/do68=
+			2encpJJKt3OeZQUX/7keidmn5ID4GDmKcbZGf99QVWI=
 			</data>
 		</dict>
 		<key>Modules/sensors_plus.swiftmodule/Project/x86_64-apple-ios-simulator.swiftsourceinfo</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			vAw0f0L5/DPk5jIH2G92HGlIjy0=
-			</data>
 			<key>hash2</key>
 			<data>
-			JExw0U9tUE5hhgzg8TP2Bij152cx/M+PHjMJtn084W4=
+			l0ObazCG/4se8/vLAEN83OvfZ19a/cvVmp9Tv3+kRiI=
 			</data>
 		</dict>
 		<key>Modules/sensors_plus.swiftmodule/arm64-apple-ios-simulator.abi.json</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			gcwBsH4BgyFY4sVtNt+/xOKS3vY=
-			</data>
 			<key>hash2</key>
 			<data>
 			Qnesa0n4URGWAopawg9bGx36dUwkYV00BoCJ8LFzlyg=
@@ -123,32 +99,20 @@
 		</dict>
 		<key>Modules/sensors_plus.swiftmodule/arm64-apple-ios-simulator.swiftdoc</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			gC568TcE9TTah5gWjy2vor94UZU=
-			</data>
 			<key>hash2</key>
 			<data>
-			LTcANSpDvV9LgXvfHX7wcczMlEYhhhbQKdM4eiTuQ5I=
+			0OL8Pt1Zr78EoG8+4aVuQzL7i4sLdwGZIgyfOghnZWU=
 			</data>
 		</dict>
 		<key>Modules/sensors_plus.swiftmodule/arm64-apple-ios-simulator.swiftmodule</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			lamOUbod8QGBbi5sKFmTJoytUSc=
-			</data>
 			<key>hash2</key>
 			<data>
-			4KjWdOTOHiL+9sWzypXMmS6S4CVQIwepQ31d8Alh9AM=
+			QMjUqzaFwV/NrRzJ8hn4vnUKmBDEzLq2ZGJbIkTgbb0=
 			</data>
 		</dict>
 		<key>Modules/sensors_plus.swiftmodule/x86_64-apple-ios-simulator.abi.json</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			gcwBsH4BgyFY4sVtNt+/xOKS3vY=
-			</data>
 			<key>hash2</key>
 			<data>
 			Qnesa0n4URGWAopawg9bGx36dUwkYV00BoCJ8LFzlyg=
@@ -156,24 +120,16 @@
 		</dict>
 		<key>Modules/sensors_plus.swiftmodule/x86_64-apple-ios-simulator.swiftdoc</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			iS/Ja0neEzeRLPX7kUzeRvdzsYI=
-			</data>
 			<key>hash2</key>
 			<data>
-			AmCHygnwVWhUkTIw41vmUbb5cJSzmmL2roJB3SPzqik=
+			4Zh2k4MB/8rr0DAt9WA4FzCqiB5maRSL+KRypRp/OqM=
 			</data>
 		</dict>
 		<key>Modules/sensors_plus.swiftmodule/x86_64-apple-ios-simulator.swiftmodule</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			sR2KsF4N81NkiLtZeqjiWWgb+fw=
-			</data>
 			<key>hash2</key>
 			<data>
-			W5eB4S0F8iXhzZggfgnhEXvtQijmZRBGJ0FtthMuhHY=
+			mY6CzH9llJzf977hmYBdUgVbAoh2SZfG67KHXw1ltx0=
 			</data>
 		</dict>
 	</dict>

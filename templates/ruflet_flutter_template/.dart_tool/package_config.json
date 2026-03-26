@@ -1004,6 +1004,12 @@
       "languageVersion": "3.5"
     },
     {
+      "name": "ruby_runtime",
+      "rootUri": "../../../ruby_runtime",
+      "packageUri": "lib/",
+      "languageVersion": "3.11"
+    },
+    {
       "name": "safe_local_storage",
       "rootUri": "file:///Users/macbookpro/.pub-cache/hosted/pub.dev/safe_local_storage-2.0.3",
       "packageUri": "lib/",

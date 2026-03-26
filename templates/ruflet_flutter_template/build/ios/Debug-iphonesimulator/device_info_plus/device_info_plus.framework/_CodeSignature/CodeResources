@@ -18,7 +18,7 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		6OcUOCIyNvS+T5xhdPLbZ5n0z+M=
+		8qN6e7lRgV/hx5jFIHmRCt8jsqw=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
@@ -29,10 +29,6 @@
 	<dict>
 		<key>Headers/DeviceIdentifiers.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			ArzKyFeM4EJkCwi6Bby3B3jXcRU=
-			</data>
 			<key>hash2</key>
 			<data>
 			qSGylfRDt9cwMiAVvy4Tl/bX2w3stxsa4BGStlMYDjo=
@@ -40,10 +36,6 @@
 		</dict>
 		<key>Headers/FPPDeviceInfoPlusPlugin.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			jK2eBNr3bLIjDaI4U4nnxjZLcsY=
-			</data>
 			<key>hash2</key>
 			<data>
 			4Pcm+PvvGkUNIC+muxNwlwDn24fmlZvG7kR+9sMdHhs=
@@ -51,10 +43,6 @@
 		</dict>
 		<key>Headers/device_info_plus-umbrella.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			vPxjbVlNEkVRCUsUyFg15NIeapM=
-			</data>
 			<key>hash2</key>
 			<data>
 			SpnxtUlg/k85XieTPw1L6DB5zNIwxoX0okXZK0XDSVE=
@@ -62,10 +50,6 @@
 		</dict>
 		<key>Modules/module.modulemap</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			FgvfDWSicujjjNMktmC7NHiARtQ=
-			</data>
 			<key>hash2</key>
 			<data>
 			nT9sjRCS7UxfpwNi9AnFhCxfwvEP2AsKDJH3D8Rmc5E=

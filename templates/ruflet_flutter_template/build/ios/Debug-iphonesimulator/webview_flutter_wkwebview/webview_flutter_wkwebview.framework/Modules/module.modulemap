@@ -7,5 +7,4 @@ framework module webview_flutter_wkwebview {
 
 module webview_flutter_wkwebview.Swift {
   header "webview_flutter_wkwebview-Swift.h"
-  requires objc
 }

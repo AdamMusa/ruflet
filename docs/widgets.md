@@ -18,7 +18,7 @@ Ruflet.run do |page|
     horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
     spacing: 8,
     children: [
-      text(value: "Hello Ruflet", size: 28)
+      text(value: "Hello Ruflet", style: { size: 28 })
     ]
   )
 
@@ -55,7 +55,7 @@ class CenteredApp < Ruflet::App
     page.title = "Centered"
     page.vertical_alignment = Ruflet::MainAxisAlignment::CENTER
     page.horizontal_alignment = Ruflet::CrossAxisAlignment::CENTER
-    page.add(text(value: "Hello World!", size: 32))
+    page.add(text(value: "Hello World!", style: { size: 32 } ))
   end
 end
 
@@ -127,7 +127,7 @@ class ContentApp < Ruflet::App
   def view(page)
     page.add(
       column(spacing: 10) do
-        text(value: "Title", size: 24, weight: "bold")
+        text(value: "Title", style: { size: 24 , weight: "bold"})
         text_field(label: "Name", width: 220)
         elevated_button(text: "Primary")
       end
@@ -176,7 +176,9 @@ class AppBarApp < Ruflet::App
         color: "#FFFFFF",
         title: text(value: "My App")
       ),
-      floating_action_button: fab("+", on_click: ->(_e) { puts "fab" })
+      floating_action_button: fab(
+        icon: icon(icon: Ruflet::MaterialIcons::ADD),
+        on_click: ->(_e) { puts "fab" })
     )
   end
 end
@@ -217,9 +219,9 @@ class TabsApp < Ruflet::App
     bottom_tabs = navigation_bar(
       selected_index: 0,
       destinations: [
-        navigation_bar_destination(icon: icon(icon: 0xe88a), label: "Home"),
-        navigation_bar_destination(icon: icon(icon: 0xea28), label: "Play"),
-        navigation_bar_destination(icon: icon(icon: 0xe8b8), label: "Settings")
+        navigation_bar_destination(icon: icon(icon: Ruflet::MaterialIcons::HOME ), label: "Home"),
+        navigation_bar_destination(icon: icon(icon: Ruflet::MaterialIcons::HOME ), label: "Play"),
+        navigation_bar_destination(icon: icon(icon: Ruflet::MaterialIcons::SETTINGS ), label: "Settings")
       ]
     )
 

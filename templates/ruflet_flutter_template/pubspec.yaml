@@ -120,6 +120,8 @@ dependencies:
       ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   archive: ^4.0.9
   path_provider: ^2.1.5
+  ruby_runtime:
+    path: ../../ruby_runtime
   flutter_native_splash: ^2.4.7
 dev_dependencies:
   flutter_launcher_icons: "^0.14.4"
@@ -169,6 +171,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/main.rb
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

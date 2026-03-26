@@ -10,7 +10,7 @@
 		</data>
 		<key>Headers/torch_light-Swift.h</key>
 		<data>
-		fSLM/2JXFJw6oXBKAL96soJ4RyI=
+		lHNqd/iOmJMUVGlf0x+VyRh/TE8=
 		</data>
 		<key>Headers/torch_light-umbrella.h</key>
 		<data>
@@ -18,19 +18,19 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		2xAkXXEaC20vc4vg39z/dQZYL38=
+		AeVPW3UxX/MdQiQFJAx7E7XMFWA=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
-		ybqsWRBC3fL/4BmBVbexwhToLQM=
+		u/wteaQn21HLIDRVxY+7hlWNX8U=
 		</data>
 		<key>Modules/torch_light.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo</key>
 		<data>
-		I2rQ4HZ1TaFUMoV01RDwRwmNyqE=
+		20YKCrrloprGITjfVzFGhFHEES4=
 		</data>
 		<key>Modules/torch_light.swiftmodule/Project/x86_64-apple-ios-simulator.swiftsourceinfo</key>
 		<data>
-		e3S2bm/AU/OjfGQw85uWROyw3gs=
+		40npiMBZNWdgBK9DCw4MXvVV6TQ=
 		</data>
 		<key>Modules/torch_light.swiftmodule/arm64-apple-ios-simulator.abi.json</key>
 		<data>
@@ -38,11 +38,11 @@
 		</data>
 		<key>Modules/torch_light.swiftmodule/arm64-apple-ios-simulator.swiftdoc</key>
 		<data>
-		ovlyY+NiYasa2FIjpbeIeRIlVlo=
+		Rs/38dIB3+9a/B+e3kyjD8EEwrw=
 		</data>
 		<key>Modules/torch_light.swiftmodule/arm64-apple-ios-simulator.swiftmodule</key>
 		<data>
-		JjBW2lWjHSzxr6m0WqNH64G8ows=
+		17lCC8xbHUrV9dIxksqVTbVmN6E=
 		</data>
 		<key>Modules/torch_light.swiftmodule/x86_64-apple-ios-simulator.abi.json</key>
 		<data>
@@ -50,21 +50,17 @@
 		</data>
 		<key>Modules/torch_light.swiftmodule/x86_64-apple-ios-simulator.swiftdoc</key>
 		<data>
-		WnUP8AltJrjGlIpYsy+ql0/cuQY=
+		qiukXm0pTljOEkFwELsGFBJN69k=
 		</data>
 		<key>Modules/torch_light.swiftmodule/x86_64-apple-ios-simulator.swiftmodule</key>
 		<data>
-		MAk12XrXa4vDijxhy2UxwD1QOwc=
+		nw5BjyKnnNDbhbMH64DXofndi5o=
 		</data>
 	</dict>
 	<key>files2</key>
 	<dict>
 		<key>Headers/TorchLightPlugin.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			LXIwCZ21TdL83LRqfWbypetAfEA=
-			</data>
 			<key>hash2</key>
 			<data>
 			I+KVK44huiC2TmZ620uQEdfvD2HTinR/rWRoM1LTk8U=
@@ -72,21 +68,13 @@
 		</dict>
 		<key>Headers/torch_light-Swift.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			fSLM/2JXFJw6oXBKAL96soJ4RyI=
-			</data>
 			<key>hash2</key>
 			<data>
-			in4xQoQhHpjd02UCwk2/DJ7I9D8S4zV2ZciQCY+cjas=
+			/8jLoMcx2He9rH+Iu4n3xhWnR3SH2iN6DDVYmE6RZ0E=
 			</data>
 		</dict>
 		<key>Headers/torch_light-umbrella.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			Xrcltm48IwnUcvEq4oTMM2oaI8s=
-			</data>
 			<key>hash2</key>
 			<data>
 			U5H/SXGzzbMzhoyHjJ6HHnMqHPJe5AFN6jnJOTARKIE=
@@ -94,43 +82,27 @@
 		</dict>
 		<key>Modules/module.modulemap</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			ybqsWRBC3fL/4BmBVbexwhToLQM=
-			</data>
 			<key>hash2</key>
 			<data>
-			in+VVTJIPmQhkdZP/aRUZRC3Y/YvKw62Ls8A96nBwxI=
+			n7wdHz/JnI26FRXiY+i1JAh7omRY9JSbZxMltG3pYgE=
 			</data>
 		</dict>
 		<key>Modules/torch_light.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			I2rQ4HZ1TaFUMoV01RDwRwmNyqE=
-			</data>
 			<key>hash2</key>
 			<data>
-			5AWsgXB7Z1mDv8lRFUngrMi5pZRbk8tIlz/Gs1z2U8I=
+			RtrV1yxYbBqGtG3ZyBQ6Kd3c9u8xwaszwF14vyPQDsE=
 			</data>
 		</dict>
 		<key>Modules/torch_light.swiftmodule/Project/x86_64-apple-ios-simulator.swiftsourceinfo</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			e3S2bm/AU/OjfGQw85uWROyw3gs=
-			</data>
 			<key>hash2</key>
 			<data>
-			UALTd1JbSOB21tThZLiZSm5YhQ2Ey6Q4vdymByUCAUA=
+			3n/sGGvmDawQX5UdvqIG+pwosd7DmhveqQuFL2SrTjY=
 			</data>
 		</dict>
 		<key>Modules/torch_light.swiftmodule/arm64-apple-ios-simulator.abi.json</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			gcwBsH4BgyFY4sVtNt+/xOKS3vY=
-			</data>
 			<key>hash2</key>
 			<data>
 			Qnesa0n4URGWAopawg9bGx36dUwkYV00BoCJ8LFzlyg=
@@ -138,32 +110,20 @@
 		</dict>
 		<key>Modules/torch_light.swiftmodule/arm64-apple-ios-simulator.swiftdoc</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			ovlyY+NiYasa2FIjpbeIeRIlVlo=
-			</data>
 			<key>hash2</key>
 			<data>
-			z83F0mu60WYu5d2S03r3WXghq7IO9qsTOJY9aVS7oFc=
+			rKeD+XLYBG4MWrRNsN+Ob8ytLKhR/fzKgRfOMl4xVzc=
 			</data>
 		</dict>
 		<key>Modules/torch_light.swiftmodule/arm64-apple-ios-simulator.swiftmodule</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			JjBW2lWjHSzxr6m0WqNH64G8ows=
-			</data>
 			<key>hash2</key>
 			<data>
-			vkqsZDL1+LxoUU4D+NMbp2vB5EBnIOFlk4AlqwwSgIc=
+			tNMRyA2OrLdljQdI7DdXRU0IazndEi8++N+hsdZR4CA=
 			</data>
 		</dict>
 		<key>Modules/torch_light.swiftmodule/x86_64-apple-ios-simulator.abi.json</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			gcwBsH4BgyFY4sVtNt+/xOKS3vY=
-			</data>
 			<key>hash2</key>
 			<data>
 			Qnesa0n4URGWAopawg9bGx36dUwkYV00BoCJ8LFzlyg=
@@ -171,24 +131,16 @@
 		</dict>
 		<key>Modules/torch_light.swiftmodule/x86_64-apple-ios-simulator.swiftdoc</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			WnUP8AltJrjGlIpYsy+ql0/cuQY=
-			</data>
 			<key>hash2</key>
 			<data>
-			+OlMCTroz+GJe6YfYcC8nUcsrUD+ZSHayb10M1ui4ZY=
+			IbHsRnQSCLPQIRR21nzZGB2Vd5Kr/4cMSCRN+U7yXmU=
 			</data>
 		</dict>
 		<key>Modules/torch_light.swiftmodule/x86_64-apple-ios-simulator.swiftmodule</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			MAk12XrXa4vDijxhy2UxwD1QOwc=
-			</data>
 			<key>hash2</key>
 			<data>
-			CvxROpwVzFW6v0JEE7Ofl+SZ3k5KKq0yt5C/qcgEIAg=
+			Gl483wT46s6bbSqnRlqDZYTdqvsW7Cg2i8soEDANvgg=
 			</data>
 		</dict>
 	</dict>

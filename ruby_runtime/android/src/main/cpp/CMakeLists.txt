@@ -38,6 +38,7 @@ add_library(
   SHARED
   ruby_runtime_jni.cpp
   ../../../../shared/mruby_gems_init.c
+  ../../../../shared/mruby_digest_gem.c
   ${MRUBY_CORE_SOURCES}
   ${MRUBY_COMPILER_SOURCES}
   ${MRUBY_GEM_SOURCES}
@@ -47,6 +48,7 @@ add_library(
 target_include_directories(
   ruby_runtime
   PRIVATE
+  "${MRUBY_BUILD_ROOT}/include"
   "${MRUBY_ROOT}/include"
   "${MRUBY_ROOT}/src"
   "${MRUBY_ROOT}/mrbgems/mruby-compiler/core"

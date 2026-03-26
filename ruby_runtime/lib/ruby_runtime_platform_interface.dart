@@ -39,4 +39,8 @@ abstract class RubyRuntimePlatform extends PlatformInterface {
   Future<bool> isFileServerRunning() {
     throw UnimplementedError('isFileServerRunning() has not been implemented.');
   }
+
+  Future<String> lastFileServerError() {
+    throw UnimplementedError('lastFileServerError() has not been implemented.');
+  }
 }

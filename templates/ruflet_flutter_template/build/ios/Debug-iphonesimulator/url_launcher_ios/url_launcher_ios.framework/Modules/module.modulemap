@@ -7,5 +7,4 @@ framework module url_launcher_ios {
 
 module url_launcher_ios.Swift {
   header "url_launcher_ios-Swift.h"
-  requires objc
 }

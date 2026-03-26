@@ -37,4 +37,8 @@ class RubyRuntime {
   static Future<bool> isFileServerRunning() {
     return RubyRuntimePlatform.instance.isFileServerRunning();
   }
+
+  static Future<String> lastFileServerError() {
+    return RubyRuntimePlatform.instance.lastFileServerError();
+  }
 }

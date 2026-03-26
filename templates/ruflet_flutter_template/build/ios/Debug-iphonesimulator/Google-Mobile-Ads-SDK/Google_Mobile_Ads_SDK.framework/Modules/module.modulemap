@@ -7,5 +7,4 @@ framework module Google_Mobile_Ads_SDK {
 
 module Google_Mobile_Ads_SDK.Swift {
   header "Google_Mobile_Ads_SDK-Swift.h"
-  requires objc
 }
