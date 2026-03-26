@@ -14,7 +14,7 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		z+Sh99/ChLlMF6Kxp6rptySFjNg=
+		EOIuhRA3pA2ujeZVmTSmR+okncU=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
@@ -25,10 +25,6 @@
 	<dict>
 		<key>Headers/FPPBatteryPlusPlugin.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			nm7BD0xbDKZX021ESIX7gJleTUM=
-			</data>
 			<key>hash2</key>
 			<data>
 			4HOqggGLeD/ht1b7HWOW6zXD4EMigfwr7jxKs5zDzlE=
@@ -36,10 +32,6 @@
 		</dict>
 		<key>Headers/battery_plus-umbrella.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			kOxAJKm88J25lh/2S/ZN5QvaVcc=
-			</data>
 			<key>hash2</key>
 			<data>
 			2q3kA66VRA3YteNV7FyuhsRRRxwvgaRLrnoX/tKZ4Cc=
@@ -47,10 +39,6 @@
 		</dict>
 		<key>Modules/module.modulemap</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			27nEJd++PEeOi4YcOqwr8g/JmQY=
-			</data>
 			<key>hash2</key>
 			<data>
 			ycJM9goWfLoSZBKirZmoJU/shVXEPiw1ElcziAgFjz8=

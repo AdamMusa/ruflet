@@ -4,6 +4,7 @@
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <cstdlib>
 
 extern "C" {
@@ -12,10 +13,16 @@ extern "C" {
 #include <mruby/string.h>
 }
 
+#include "../../../../../generated/embedded_ruflet_runtime.h"
+
 namespace {
 
 std::mutex g_mutex;
 mrb_state* g_mrb = nullptr;
+bool g_runtime_loaded = false;
+bool g_server_running = false;
+std::string g_stop_signal_path;
+std::string g_last_server_error;
 
 struct EvalResult {
   bool ok;
@@ -23,12 +30,40 @@ struct EvalResult {
 };
 
 EvalResult eval_locked(const std::string& code, const char* filename = nullptr);
+std::string exception_to_string(mrb_state* mrb);
 
 mrb_state* ensure_mrb() {
   if (g_mrb == nullptr) {
     g_mrb = mrb_open();
   }
   return g_mrb;
+}
+
+EvalResult preload_embedded_runtime_locked() {
+  if (g_runtime_loaded) {
+    return {true, ""};
+  }
+
+  mrb_state* mrb = ensure_mrb();
+  if (mrb == nullptr) {
+    return {false, "failed to initialize mruby runtime"};
+  }
+
+  mrbc_context* context = mrbc_context_new(mrb);
+  if (context == nullptr) {
+    return {false, "failed to create preload compile context"};
+  }
+
+  mrbc_filename(mrb, context, "/__ruflet__/embedded_runtime.rb");
+  mrb_load_string_cxt(mrb, kEmbeddedRufletRuntime, context);
+  mrbc_context_free(mrb, context);
+
+  if (mrb->exc != nullptr) {
+    return {false, exception_to_string(mrb)};
+  }
+
+  g_runtime_loaded = true;
+  return {true, ""};
 }
 
 std::string read_file(const std::string& path) {
@@ -47,6 +82,19 @@ EvalResult run_file_locked(const std::string& file_path) {
     return {false, "unable to read Ruby file: " + file_path};
   }
   return eval_locked(source, file_path.c_str());
+}
+
+std::string escape_single_quotes(const std::string& value) {
+  std::string escaped;
+  escaped.reserve(value.size());
+  for (char ch : value) {
+    if (ch == '\'') {
+      escaped += "\\'";
+    } else {
+      escaped += ch;
+    }
+  }
+  return escaped;
 }
 
 std::string exception_to_string(mrb_state* mrb) {
@@ -78,6 +126,11 @@ EvalResult eval_locked(const std::string& code, const char* filename) {
   mrb_state* mrb = ensure_mrb();
   if (mrb == nullptr) {
     return {false, "failed to initialize mruby runtime"};
+  }
+
+  EvalResult preload = preload_embedded_runtime_locked();
+  if (!preload.ok) {
+    return preload;
   }
 
   mrbc_context* context = mrbc_context_new(mrb);
@@ -114,6 +167,16 @@ void throw_runtime_error(JNIEnv* env, const std::string& message) {
   jclass exception_class = env->FindClass("java/lang/RuntimeException");
   if (exception_class != nullptr) {
     env->ThrowNew(exception_class, message.c_str());
+  }
+}
+
+void request_stop_server_locked() {
+  if (g_stop_signal_path.empty()) {
+    return;
+  }
+  std::ofstream out(g_stop_signal_path);
+  if (out) {
+    out << "stop";
   }
 }
 
@@ -182,10 +245,17 @@ Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeReset(
     JNIEnv* env,
     jobject /* this */) {
   std::lock_guard<std::mutex> lock(g_mutex);
+  if (g_server_running) {
+    request_stop_server_locked();
+    (void)env;
+    return;
+  }
   if (g_mrb != nullptr) {
     mrb_close(g_mrb);
     g_mrb = nullptr;
   }
+  g_runtime_loaded = false;
+  g_last_server_error.clear();
   (void)env;
 }
 
@@ -221,14 +291,74 @@ Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeStartFileServer(
   env->ReleaseStringUTFChars(path, path_chars);
   env->ReleaseStringUTFChars(stop_signal_path, stop_chars);
 
-  setenv("RUFLET_PROD_STOP_FILE", stop_path.c_str(), 1);
+  {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    if (g_server_running) {
+      return env->NewStringUTF("");
+    }
+    g_stop_signal_path = stop_path;
+    g_last_server_error.clear();
+    g_server_running = true;
+  }
 
-  std::lock_guard<std::mutex> lock(g_mutex);
-  EvalResult result = run_file_locked(file_path);
-  if (!result.ok) {
-    throw_runtime_error(env, result.value);
+  std::remove(stop_path.c_str());
+  std::string source = read_file(file_path);
+  if (source.empty()) {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    g_server_running = false;
+    g_last_server_error = "unable to read Ruby file: " + file_path;
+    throw_runtime_error(env, g_last_server_error);
     return nullptr;
   }
 
-  return env->NewStringUTF(result.value.c_str());
+  std::thread([file_path, stop_path, source]() {
+    setenv("RUFLET_PROD_STOP_FILE", stop_path.c_str(), 1);
+
+    std::lock_guard<std::mutex> lock(g_mutex);
+    EvalResult result = eval_locked(source, file_path.c_str());
+    if (result.ok && !result.value.empty() && result.value[0] == ':') {
+      const std::string safe_path = escape_single_quotes(file_path);
+      const std::string bootstrap =
+          "app_root = File.expand_path(File.dirname('" + safe_path + "')); "
+          "manifest_path = File.join(app_root, 'manifest.json'); "
+          "manifest = RufletProd::JsonParser.parse(File.read(manifest_path)); "
+          "RufletProd::Server.new(host: '0.0.0.0', port: 8550, manifest: manifest).start";
+      result = eval_locked(bootstrap, file_path.c_str());
+    }
+
+    if (!result.ok) {
+      g_last_server_error = result.value;
+    } else {
+      g_last_server_error = "server script exited: " + result.value;
+    }
+    g_server_running = false;
+  }).detach();
+
+  return env->NewStringUTF("");
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeStopFileServer(
+    JNIEnv* env,
+    jobject /* this */) {
+  std::lock_guard<std::mutex> lock(g_mutex);
+  request_stop_server_locked();
+  (void)env;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeIsFileServerRunning(
+    JNIEnv* env,
+    jobject /* this */) {
+  std::lock_guard<std::mutex> lock(g_mutex);
+  (void)env;
+  return g_server_running ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeLastFileServerError(
+    JNIEnv* env,
+    jobject /* this */) {
+  std::lock_guard<std::mutex> lock(g_mutex);
+  return env->NewStringUTF(g_last_server_error.c_str());
 }

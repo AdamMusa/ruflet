@@ -93,7 +93,7 @@ Not yet implemented in core:
 
 - [ ] Standardize service registration/invoke contract (request/response/event)
 - [ ] Add first high-impact services: `Clipboard`, `FilePicker`, `Connectivity`, `Share`, `SharedPreferences`
-- [ ] Add storage/services docs and examples in `examples/ruflet_studio`
+- [ ] Add storage/services docs and examples in `ruflet_studio`
 
 ### Phase 4: Advanced/Optional
 

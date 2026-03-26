@@ -28,7 +28,8 @@
         "flutter",
         "flutter_native_splash",
         "flutter_web_plugins",
-        "path_provider"
+        "path_provider",
+        "ruby_runtime"
       ],
       "devDependencies": [
         "flutter_launcher_icons",
@@ -89,6 +90,14 @@
         "universal_io",
         "xml",
         "yaml"
+      ]
+    },
+    {
+      "name": "ruby_runtime",
+      "version": "0.0.1",
+      "dependencies": [
+        "flutter",
+        "plugin_platform_interface"
       ]
     },
     {
@@ -500,6 +509,13 @@
       "dependencies": [
         "csslib",
         "source_span"
+      ]
+    },
+    {
+      "name": "plugin_platform_interface",
+      "version": "2.1.8",
+      "dependencies": [
+        "meta"
       ]
     },
     {
@@ -1214,13 +1230,6 @@
       "name": "ffi",
       "version": "2.2.0",
       "dependencies": []
-    },
-    {
-      "name": "plugin_platform_interface",
-      "version": "2.1.8",
-      "dependencies": [
-        "meta"
-      ]
     },
     {
       "name": "platform",

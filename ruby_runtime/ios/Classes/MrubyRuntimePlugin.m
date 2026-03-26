@@ -6,6 +6,8 @@
 #include <mruby/string.h>
 #include <stdlib.h>
 
+#include "../../../generated/embedded_ruflet_runtime.h"
+
 @interface MrubyRuntimePlugin : NSObject <FlutterPlugin>
 @end
 
@@ -14,6 +16,7 @@
 static mrb_state *g_mrb = NULL;
 static NSLock *g_lock = nil;
 static BOOL g_server_running = NO;
+static BOOL g_runtime_loaded = NO;
 static NSString *g_stop_signal_path = nil;
 static NSString *g_last_server_error = nil;
 
@@ -45,6 +48,47 @@ static mrb_state *ensure_mrb(void) {
   return g_mrb;
 }
 
+static BOOL preload_embedded_runtime(mrb_state *mrb, NSError **error) {
+  if (g_runtime_loaded) {
+    return YES;
+  }
+  if (mrb == NULL) {
+    if (error != NULL) {
+      *error = [NSError errorWithDomain:@"ruby_runtime"
+                                   code:10
+                               userInfo:@{NSLocalizedDescriptionKey: @"mruby runtime is not initialized"}];
+    }
+    return NO;
+  }
+
+  mrbc_context *context = mrbc_context_new(mrb);
+  if (context == NULL) {
+    if (error != NULL) {
+      *error = [NSError errorWithDomain:@"ruby_runtime"
+                                   code:11
+                               userInfo:@{NSLocalizedDescriptionKey: @"failed to create preload compile context"}];
+    }
+    return NO;
+  }
+
+  mrbc_filename(mrb, context, "/__ruflet__/embedded_runtime.rb");
+  mrb_load_string_cxt(mrb, kEmbeddedRufletRuntime, context);
+  mrbc_context_free(mrb, context);
+
+  if (mrb->exc != NULL) {
+    NSString *message = exception_to_string(mrb);
+    if (error != NULL) {
+      *error = [NSError errorWithDomain:@"ruby_runtime"
+                                   code:12
+                               userInfo:@{NSLocalizedDescriptionKey: message}];
+    }
+    return NO;
+  }
+
+  g_runtime_loaded = YES;
+  return YES;
+}
+
 static NSString *exception_to_string(mrb_state *mrb) {
   if (mrb == NULL || mrb->exc == NULL) {
     return @"unknown mruby error";
@@ -52,6 +96,21 @@ static NSString *exception_to_string(mrb_state *mrb) {
 
   mrb_value exc = mrb_obj_value(mrb->exc);
   const char *klass = mrb_obj_classname(mrb, exc);
+  NSString *backtraceText = nil;
+
+  mrb_value backtrace = mrb_funcall(mrb, exc, "backtrace", 0);
+  if (mrb->exc == NULL && !mrb_nil_p(backtrace)) {
+    mrb_value renderedBacktrace = mrb_inspect(mrb, backtrace);
+    if (mrb->exc == NULL) {
+      const char *backtraceCString = mrb_string_value_cstr(mrb, &renderedBacktrace);
+      if (backtraceCString != NULL) {
+        backtraceText = [NSString stringWithUTF8String:backtraceCString];
+      }
+    }
+  }
+  if (mrb->exc != NULL) {
+    mrb->exc = NULL;
+  }
 
   mrb_value text = mrb_funcall(mrb, exc, "to_s", 0);
   if (mrb->exc != NULL) {
@@ -65,6 +124,9 @@ static NSString *exception_to_string(mrb_state *mrb) {
 
   NSString *k = klass == NULL ? @"Exception" : [NSString stringWithUTF8String:klass];
   NSString *m = msg == NULL ? @"<empty>" : ([NSString stringWithUTF8String:msg] ?: @"<invalid utf8>");
+  if (backtraceText != nil && backtraceText.length > 0) {
+    return [NSString stringWithFormat:@"%@: %@\n%@", k, m, backtraceText];
+  }
   return [NSString stringWithFormat:@"%@: %@", k, m];
 }
 
@@ -76,6 +138,9 @@ static NSString *eval_source(NSString *source, NSString *filename, NSError **err
                                    code:1
                                userInfo:@{NSLocalizedDescriptionKey: @"failed to initialize mruby runtime"}];
     }
+    return nil;
+  }
+  if (!preload_embedded_runtime(mrb, error)) {
     return nil;
   }
 
@@ -204,6 +269,7 @@ static void request_stop_server(void) {
       mrb_close(g_mrb);
       g_mrb = NULL;
     }
+    g_runtime_loaded = NO;
     g_last_server_error = nil;
     [g_lock unlock];
     result(nil);

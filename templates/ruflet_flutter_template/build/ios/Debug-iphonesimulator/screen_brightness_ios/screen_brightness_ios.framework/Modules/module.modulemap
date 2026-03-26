@@ -7,5 +7,4 @@ framework module screen_brightness_ios {
 
 module screen_brightness_ios.Swift {
   header "screen_brightness_ios-Swift.h"
-  requires objc
 }

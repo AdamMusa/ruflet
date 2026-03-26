@@ -1,1 +1,1 @@
-{"version":2,"entries":[{"package":"ruflet_client","rootUri":"../","packageUri":"lib/"}]}
+{"version":2,"entries":[{"package":"ruby_runtime","rootUri":"../../../ruby_runtime/","packageUri":"lib/"},{"package":"ruflet_client","rootUri":"../","packageUri":"lib/"}]}

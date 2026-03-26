@@ -14,7 +14,7 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		z8IPw0w093nMwlktuGUTPcyF8tc=
+		KFIz4sEWUjpsCxhP2tjrTWxoMyM=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
@@ -25,10 +25,6 @@
 	<dict>
 		<key>Headers/MrubyRuntimePlugin.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			zV7OzieOh/isJ/XDX76wcPH4at4=
-			</data>
 			<key>hash2</key>
 			<data>
 			MD8aKHyD4/FaCEPEMwT/lFYiaHyzg32+L6aCaIeKWAc=
@@ -36,10 +32,6 @@
 		</dict>
 		<key>Headers/ruby_runtime-umbrella.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			timDdjNKiPIeGJWfSceLJ1UdzMw=
-			</data>
 			<key>hash2</key>
 			<data>
 			7/eIihWjd8+GycOtEktShtIcmPMpFIA5RgLY8VifTeE=
@@ -47,10 +39,6 @@
 		</dict>
 		<key>Modules/module.modulemap</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			vhtW9pNOidDOXucI5OoWkbKS/fQ=
-			</data>
 			<key>hash2</key>
 			<data>
 			m+HGts2aHG1RG+s92q7Cz1MTEyRR6CUuqop3SfWpuis=

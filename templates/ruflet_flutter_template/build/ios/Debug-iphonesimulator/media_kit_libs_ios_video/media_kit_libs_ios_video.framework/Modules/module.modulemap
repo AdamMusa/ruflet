@@ -7,5 +7,4 @@ framework module media_kit_libs_ios_video {
 
 module media_kit_libs_ios_video.Swift {
   header "media_kit_libs_ios_video-Swift.h"
-  requires objc
 }

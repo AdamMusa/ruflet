@@ -59,4 +59,10 @@ class MethodChannelRubyRuntime extends RubyRuntimePlatform {
     final value = await methodChannel.invokeMethod<bool>('isFileServerRunning');
     return value ?? false;
   }
+
+  @override
+  Future<String> lastFileServerError() async {
+    final value = await methodChannel.invokeMethod<String>('lastFileServerError');
+    return value ?? '';
+  }
 }

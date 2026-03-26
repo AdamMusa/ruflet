@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flet/flet.dart';
 import 'package:flet_ads/flet_ads.dart' as flet_ads;
 import 'package:flet_audio/flet_audio.dart' as flet_audio;
@@ -156,12 +158,12 @@ void main([List<String>? args]) async {
   }
 
   var initialUrl = Uri.base.toString();
+  final configuredDebugUrl = kDebugMode
+      ? const String.fromEnvironment('FLET_URL', defaultValue: '')
+      : '';
 
-  if (kDebugMode) {
-    initialUrl = const String.fromEnvironment(
-      'FLET_URL',
-      defaultValue: 'http://0.0.0.0:8550',
-    );
+  if (configuredDebugUrl.isNotEmpty) {
+    initialUrl = configuredDebugUrl;
   }
 
   if (kIsWeb) {
@@ -178,15 +180,11 @@ void main([List<String>? args]) async {
       initialUrl = 'http://localhost:8550';
     }
   } else {
-    if (args != null && args.isNotEmpty) {
+    final hasExplicitArgs = args != null && args.isNotEmpty;
+    if (hasExplicitArgs) {
       initialUrl = args[0];
-    } else if (!kDebugMode &&
-        (defaultTargetPlatform == TargetPlatform.windows ||
-            defaultTargetPlatform == TargetPlatform.macOS ||
-            defaultTargetPlatform == TargetPlatform.linux)) {
-      throw Exception(
-        'In desktop mode Flet app URL must be provided as a first argument.',
-      );
+    } else if (configuredDebugUrl.isEmpty) {
+      initialUrl = 'http://localhost:8550';
     }
   }
 
@@ -194,12 +192,34 @@ void main([List<String>? args]) async {
   debugPrint('Initial URL: $initialUrl');
 
   runApp(
-    RufletBootstrapApp(
+    RufletRootApp(
       initialUrl: initialUrl,
       extensions: rufletExtensions,
       assetsDir: '',
     ),
   );
+}
+
+class RufletRootApp extends StatelessWidget {
+  const RufletRootApp({
+    super.key,
+    required this.initialUrl,
+    required this.extensions,
+    required this.assetsDir,
+  });
+
+  final String initialUrl;
+  final List<FletExtension> extensions;
+  final String assetsDir;
+
+  @override
+  Widget build(BuildContext context) {
+    return RufletBootstrapApp(
+      initialUrl: initialUrl,
+      extensions: extensions,
+      assetsDir: assetsDir,
+    );
+  }
 }
 
 class RufletBootstrapApp extends StatefulWidget {

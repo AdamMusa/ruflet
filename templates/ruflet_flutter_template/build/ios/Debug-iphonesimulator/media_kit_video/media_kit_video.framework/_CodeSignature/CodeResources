@@ -10,7 +10,7 @@
 		</data>
 		<key>Headers/media_kit_video-Swift.h</key>
 		<data>
-		OHIQYM8h13fhpRyqX/ZJkGFsh4E=
+		UlPnEycwNf4bcAfkquWDfvDU5/M=
 		</data>
 		<key>Headers/media_kit_video-umbrella.h</key>
 		<data>
@@ -30,15 +30,15 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		wEXFYgzXF/g7K6vi+tEUJCsLDTU=
+		2Gxtet5MmG6CILPcgdi8OgmbPZc=
 		</data>
 		<key>Modules/media_kit_video.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo</key>
 		<data>
-		LJC7d58/D3o0Gig91j157XOiUBg=
+		piSQkmPr5KMtss+RHINalACTdQo=
 		</data>
 		<key>Modules/media_kit_video.swiftmodule/Project/x86_64-apple-ios-simulator.swiftsourceinfo</key>
 		<data>
-		uBF7iG+esa/n5J6H60LmsLwEAE0=
+		2g4k9Mjh0bSZuf7ojbFZ3PdgBtc=
 		</data>
 		<key>Modules/media_kit_video.swiftmodule/arm64-apple-ios-simulator.abi.json</key>
 		<data>
@@ -46,11 +46,11 @@
 		</data>
 		<key>Modules/media_kit_video.swiftmodule/arm64-apple-ios-simulator.swiftdoc</key>
 		<data>
-		aj2lPeXXATWfy1ucVLlGAEbV1hw=
+		15eO0F3H0qdO2Arg109/Xz7Xsac=
 		</data>
 		<key>Modules/media_kit_video.swiftmodule/arm64-apple-ios-simulator.swiftmodule</key>
 		<data>
-		wR1AzPT8i4gD3ZYuSOaKNGRhnoU=
+		k7B+2jAqbcWxEorhTn3kzxA1B4A=
 		</data>
 		<key>Modules/media_kit_video.swiftmodule/x86_64-apple-ios-simulator.abi.json</key>
 		<data>
@@ -58,25 +58,21 @@
 		</data>
 		<key>Modules/media_kit_video.swiftmodule/x86_64-apple-ios-simulator.swiftdoc</key>
 		<data>
-		469fvi1/vgddnXRWj2obFbun9Y4=
+		UyGPMj8IDozbRyEdFWAwMDfF1Q8=
 		</data>
 		<key>Modules/media_kit_video.swiftmodule/x86_64-apple-ios-simulator.swiftmodule</key>
 		<data>
-		eItvb2UKvhOX0tLOfdeW0YYwiQc=
+		dthx2coa/x+lWzYNHYoNpdvpgj0=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
-		XGVxKWgW6MNXgnkh7TX5e1JMueM=
+		wNskliCa4KL6JH8lo6pRCYitQFI=
 		</data>
 	</dict>
 	<key>files2</key>
 	<dict>
 		<key>Headers/client.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			wSBmo1qv8r0UUNwnaimbvTA/DVk=
-			</data>
 			<key>hash2</key>
 			<data>
 			KHGBAl3jaHd/ow9vY2wZFed8xVH/4TKZNSjwj/SmSuQ=
@@ -84,21 +80,13 @@
 		</dict>
 		<key>Headers/media_kit_video-Swift.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			OHIQYM8h13fhpRyqX/ZJkGFsh4E=
-			</data>
 			<key>hash2</key>
 			<data>
-			3CihyJAT2BMrUkoh+phSUMtnqjgzpIglgJZmRxn/MH4=
+			T4tanOpF2LVR6xcMW4Q9+yQkVSNk5a4rPXorYtICPso=
 			</data>
 		</dict>
 		<key>Headers/media_kit_video-umbrella.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			v0rf8ZnyJuhnHnSzq1MTmmJ+O2U=
-			</data>
 			<key>hash2</key>
 			<data>
 			sYOEtzllbRJhb7q0Q8NJh/IP2dSKIDHt7fUtWnUOBt4=
@@ -106,10 +94,6 @@
 		</dict>
 		<key>Headers/render.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			p/ilceOV3paAzx32fhQdern6GTQ=
-			</data>
 			<key>hash2</key>
 			<data>
 			CpOqOL05lPloYMHWitr+uofJexdEVtE+wLGKhVGAvRk=
@@ -117,10 +101,6 @@
 		</dict>
 		<key>Headers/render_gl.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			XUpKDy68qsZS+L1/tJDWNUkTH1o=
-			</data>
 			<key>hash2</key>
 			<data>
 			e7KLRkILfIUkesMWzsXiFGRpQY8D1MeNeyaL7uuYgvI=
@@ -128,10 +108,6 @@
 		</dict>
 		<key>Headers/stream_cb.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			R9ys2WYCby8s1R7p7NFO+jD/+yg=
-			</data>
 			<key>hash2</key>
 			<data>
 			XYNa7dN892wUt7/c+RdBvfX+BSYj0a4SU9jeCaf5vDQ=
@@ -139,32 +115,20 @@
 		</dict>
 		<key>Modules/media_kit_video.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			LJC7d58/D3o0Gig91j157XOiUBg=
-			</data>
 			<key>hash2</key>
 			<data>
-			16gKavlKtqElFRGxLhd/ciEjReH/FGIzd43CpSwXUMA=
+			p5thdTwlQ1icTFk650O7jMBUshCukTZOVi+znKmOocc=
 			</data>
 		</dict>
 		<key>Modules/media_kit_video.swiftmodule/Project/x86_64-apple-ios-simulator.swiftsourceinfo</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			uBF7iG+esa/n5J6H60LmsLwEAE0=
-			</data>
 			<key>hash2</key>
 			<data>
-			JYhpr4GIAifhZ3aNGPkTl0lmXqMGy/XpencaY7hR7oM=
+			zXtjDbSmDxYxTJfJDTFHu5AiAsn0urLxyHRLV+nNYqs=
 			</data>
 		</dict>
 		<key>Modules/media_kit_video.swiftmodule/arm64-apple-ios-simulator.abi.json</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			gcwBsH4BgyFY4sVtNt+/xOKS3vY=
-			</data>
 			<key>hash2</key>
 			<data>
 			Qnesa0n4URGWAopawg9bGx36dUwkYV00BoCJ8LFzlyg=
@@ -172,32 +136,20 @@
 		</dict>
 		<key>Modules/media_kit_video.swiftmodule/arm64-apple-ios-simulator.swiftdoc</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			aj2lPeXXATWfy1ucVLlGAEbV1hw=
-			</data>
 			<key>hash2</key>
 			<data>
-			y0iQC4IPtSJM4OehgNc18A3RB49JWsXcF1onXSfiiYc=
+			z+gW3U6jNp/5Mcs62m0X5Uwi8ooK/uYIp01gH0xAJcc=
 			</data>
 		</dict>
 		<key>Modules/media_kit_video.swiftmodule/arm64-apple-ios-simulator.swiftmodule</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			wR1AzPT8i4gD3ZYuSOaKNGRhnoU=
-			</data>
 			<key>hash2</key>
 			<data>
-			ziDUDS8xX/cmTnE9qILJPX7K4PBlt0Zz4t6bkvxHmqE=
+			GW9/fyVDhtef0r2wa5eHymEyhKF6Resf2Q9S5shojx8=
 			</data>
 		</dict>
 		<key>Modules/media_kit_video.swiftmodule/x86_64-apple-ios-simulator.abi.json</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			gcwBsH4BgyFY4sVtNt+/xOKS3vY=
-			</data>
 			<key>hash2</key>
 			<data>
 			Qnesa0n4URGWAopawg9bGx36dUwkYV00BoCJ8LFzlyg=
@@ -205,35 +157,23 @@
 		</dict>
 		<key>Modules/media_kit_video.swiftmodule/x86_64-apple-ios-simulator.swiftdoc</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			469fvi1/vgddnXRWj2obFbun9Y4=
-			</data>
 			<key>hash2</key>
 			<data>
-			K7bcQlvPL9eF7jRx58p8rVvXfPrnlPN4Ii+OMINHkAU=
+			4bRUTymcFwSeyadPEdr9iy9oDyhNvwjoQMbFymUcx/c=
 			</data>
 		</dict>
 		<key>Modules/media_kit_video.swiftmodule/x86_64-apple-ios-simulator.swiftmodule</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			eItvb2UKvhOX0tLOfdeW0YYwiQc=
-			</data>
 			<key>hash2</key>
 			<data>
-			XDwQEBM1xeWnbRTghYvu64HkOzkLZ73LtR1MbJfUTyg=
+			Mf2gGPFRhFWYkVGXyqNWC6mhr+Fu/cfKQJeBfbCZmxs=
 			</data>
 		</dict>
 		<key>Modules/module.modulemap</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			XGVxKWgW6MNXgnkh7TX5e1JMueM=
-			</data>
 			<key>hash2</key>
 			<data>
-			Jb4Ra+jg+ZdJVlqGKsfEUwjI28Pdb1dr4FVf2jopCyU=
+			If9FpKIownWfLMH07tc8IOrxTisT7sodDdL3TXGh9do=
 			</data>
 		</dict>
 	</dict>

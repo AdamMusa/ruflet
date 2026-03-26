@@ -14,7 +14,7 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		8Wy+EjoMcm60x6921HOwG1J3bdg=
+		HAMCgcpvluxCq9Bo7yswMtKHako=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
@@ -25,10 +25,6 @@
 	<dict>
 		<key>Headers/FPPPackageInfoPlusPlugin.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			TDgjwrW3MT/E6oBIQZm5Rf5hiGY=
-			</data>
 			<key>hash2</key>
 			<data>
 			+WFPcqsAmfwPEEeo6bRxfoLIQHlhGx3V6+j5osKtISo=
@@ -36,10 +32,6 @@
 		</dict>
 		<key>Headers/package_info_plus-umbrella.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			fFQUgSJsy+2G96LV/IyC3eyjqtY=
-			</data>
 			<key>hash2</key>
 			<data>
 			SorXThepFuMKhQ6KUvz89q09dVtsnzNG4S5ii7+e0JY=
@@ -47,10 +39,6 @@
 		</dict>
 		<key>Modules/module.modulemap</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			xYay+XiwCOFhHmPqIoR96MTag1Q=
-			</data>
 			<key>hash2</key>
 			<data>
 			LwR3Th8olBUOATz9esc0SvrHPR0pkHTDQArk/x29sT4=

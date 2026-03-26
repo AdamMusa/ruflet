@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flet/flet.dart';
 import 'package:flet_ads/flet_ads.dart' as ruflet_ads;
 // --FAT_CLIENT_START--
@@ -29,7 +28,9 @@ import 'package:flet_video/flet_video.dart' as ruflet_video;
 import 'package:flet_webview/flet_webview.dart' as ruflet_webview;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:ruby_runtime/ruby_runtime.dart';
 
 import 'connection_probe.dart';
 
@@ -37,6 +38,7 @@ const bool isProduction = bool.fromEnvironment('dart.vm.product');
 const int kRufletPort = 8550;
 const String kConfiguredClientUrl =
     String.fromEnvironment('RUFLET_CLIENT_URL', defaultValue: '');
+const String kEmbeddedRubyAsset = 'assets/main.rb';
 Tester? tester;
 
 String normalizePageUrlForPlatform(String rawUrl) {
@@ -124,24 +126,99 @@ Future<void> main() async {
     extension.ensureInitialized();
   }
 
-  final pageUrl = resolveBackendUrl();
+  EmbeddedRufletRuntime? embeddedRuntime;
+  var pageUrl = resolveBackendUrl();
+  if (!kIsWeb && kConfiguredClientUrl.trim().isEmpty) {
+    embeddedRuntime = await EmbeddedRufletRuntime.start();
+    pageUrl = embeddedRuntime.pageUrl;
+  }
 
-  await waitForBackend(pageUrl);
+  if (embeddedRuntime == null) {
+    await waitForBackend(pageUrl);
+  } else {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+  }
 
   runApp(
-    FletApp(
-      title: 'Ruflet',
+    TemplateApp(
       pageUrl: pageUrl,
+      embeddedRuntime: embeddedRuntime,
+      extensions: extensions,
+    ),
+  );
+}
+
+class TemplateApp extends StatefulWidget {
+  const TemplateApp({
+    super.key,
+    required this.pageUrl,
+    required this.extensions,
+    this.embeddedRuntime,
+  });
+
+  final String pageUrl;
+  final List<FletExtension> extensions;
+  final EmbeddedRufletRuntime? embeddedRuntime;
+
+  @override
+  State<TemplateApp> createState() => _TemplateAppState();
+}
+
+class _TemplateAppState extends State<TemplateApp> {
+  Timer? _serverErrorPoller;
+  String? _lastEmbeddedServerError;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.embeddedRuntime != null) {
+      _serverErrorPoller = Timer.periodic(const Duration(seconds: 1), (_) async {
+        final serverError = await RubyRuntime.lastFileServerError();
+        if (!mounted || serverError.isEmpty || serverError == _lastEmbeddedServerError) {
+          return;
+        }
+        _lastEmbeddedServerError = serverError;
+        debugPrint('Embedded server error: $serverError');
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _serverErrorPoller?.cancel();
+    unawaited(widget.embeddedRuntime?.dispose());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final error = widget.embeddedRuntime?.error;
+    if (error != null) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          appBar: AppBar(title: const Text('Ruflet')),
+          body: Padding(
+            padding: const EdgeInsets.all(16),
+            child: SelectableText(error),
+          ),
+        ),
+      );
+    }
+
+    return FletApp(
+      title: 'Ruflet',
+      pageUrl: widget.pageUrl,
       assetsDir: '',
       errorsHandler: FletAppErrorsHandler(),
       showAppStartupScreen: true,
       appStartupScreenMessage: 'Working...',
       appErrorMessage: 'The application encountered an error: {message}',
-      extensions: extensions,
+      extensions: widget.extensions,
       multiView: isMultiView(),
       tester: tester,
-    ),
-  );
+    );
+  }
 }
 
 Future<void> waitForBackend(String pageUrl) async {
@@ -170,4 +247,95 @@ String? parseBackendUrl(String value) {
   final match = RegExp(r'(https?:\/\/[^\s]+|wss?:\/\/[^\s]+)').firstMatch(raw);
   if (match == null) return null;
   return normalizePageUrlForPlatform(match.group(0)!);
+}
+
+class EmbeddedRufletRuntime {
+  EmbeddedRufletRuntime._({
+    required this.pageUrl,
+    required this.workDir,
+    this.error,
+  });
+
+  final String pageUrl;
+  final Directory workDir;
+  final String? error;
+
+  static Future<EmbeddedRufletRuntime> start() async {
+    await _deleteStaleTempWorkDirs();
+    final workDir = await Directory.systemTemp.createTemp('ruflet_template_');
+    final serverPath = '${workDir.path}/main.rb';
+    final stopPath = '${workDir.path}/server.stop';
+    const pageUrl = 'http://127.0.0.1:$kRufletPort';
+
+    try {
+      await RubyRuntime.initialize();
+      await RubyRuntime.eval("ENV['RUFLET_DEBUG'] ||= '1'; 'debug enabled'");
+      final digestLength = await RubyRuntime.eval(
+        "require 'digest/sha1'; Digest::SHA1.digest('abc').bytesize.to_s",
+      );
+      debugPrint('Embedded Digest::SHA1 bytesize: $digestLength');
+      final source = await rootBundle.loadString(kEmbeddedRubyAsset);
+      debugPrint(_describeEmbeddedAsset(source, serverPath));
+      await File(serverPath).writeAsString(source);
+      await RubyRuntime.startFileServer(serverPath, stopSignalPath: stopPath);
+      final startupDeadline = DateTime.now().add(const Duration(seconds: 5));
+      while (DateTime.now().isBefore(startupDeadline)) {
+        if (await RubyRuntime.isFileServerRunning()) {
+          return EmbeddedRufletRuntime._(pageUrl: pageUrl, workDir: workDir);
+        }
+        final serverError = await RubyRuntime.lastFileServerError();
+        if (serverError.isNotEmpty) {
+          throw Exception(serverError);
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      }
+      return EmbeddedRufletRuntime._(pageUrl: pageUrl, workDir: workDir);
+    } catch (error, stackTrace) {
+      return EmbeddedRufletRuntime._(
+        pageUrl: pageUrl,
+        workDir: workDir,
+        error: 'Failed to start embedded Ruflet.\n$error\n$stackTrace',
+      );
+    }
+  }
+
+  Future<void> dispose() async {
+    try {
+      await RubyRuntime.stopFileServer();
+    } catch (_) {}
+    try {
+      await RubyRuntime.reset();
+    } catch (_) {}
+    try {
+      if (await workDir.exists()) {
+        await workDir.delete(recursive: true);
+      }
+    } catch (_) {}
+  }
+
+  static Future<void> _deleteStaleTempWorkDirs() async {
+    try {
+      await for (final entity in Directory.systemTemp.list()) {
+        if (entity is! Directory) continue;
+        final name = entity.uri.pathSegments.isEmpty
+            ? ''
+            : entity.uri.pathSegments[entity.uri.pathSegments.length - 2];
+        if (!name.startsWith('ruflet_template_')) continue;
+        try {
+          await entity.delete(recursive: true);
+        } catch (_) {}
+      }
+    } catch (_) {}
+  }
+
+  static String _describeEmbeddedAsset(String source, String serverPath) {
+    final lines = source.split('\n');
+    final preview = lines
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .take(3)
+        .join(' | ');
+    return 'Embedded Ruby asset $kEmbeddedRubyAsset -> $serverPath '
+        '(${source.length} chars) preview: $preview';
+  }
 }

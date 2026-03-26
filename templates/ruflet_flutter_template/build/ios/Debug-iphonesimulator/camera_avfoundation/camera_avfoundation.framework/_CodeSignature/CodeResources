@@ -6,7 +6,7 @@
 	<dict>
 		<key>Headers/camera_avfoundation-Swift.h</key>
 		<data>
-		Ibx7ykyiVGNBM8rvgubqHk+M16E=
+		wo2Y2GCTz+bFzGW5XsV9kEp2oBA=
 		</data>
 		<key>Headers/camera_avfoundation-umbrella.h</key>
 		<data>
@@ -22,15 +22,15 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		x3HdM7jc4MExZp2pKvECnYjh+m4=
+		22kpiaH/U+ikrAKvAcrgUockueo=
 		</data>
 		<key>Modules/camera_avfoundation.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo</key>
 		<data>
-		dalYj5IU0peZ1/eygigbSt9w2xw=
+		Dd8kcYMpIWL3eu8FMAlaSSFeSUU=
 		</data>
 		<key>Modules/camera_avfoundation.swiftmodule/Project/x86_64-apple-ios-simulator.swiftsourceinfo</key>
 		<data>
-		JpcK+blZ3ZdSV6eE2RolYJMstu8=
+		o1Urcj41Ri33vVLDwPgYsbvtjI8=
 		</data>
 		<key>Modules/camera_avfoundation.swiftmodule/arm64-apple-ios-simulator.abi.json</key>
 		<data>
@@ -38,11 +38,11 @@
 		</data>
 		<key>Modules/camera_avfoundation.swiftmodule/arm64-apple-ios-simulator.swiftdoc</key>
 		<data>
-		d3cjJ2lJc7L7pezJ2Q2DDbP+uuc=
+		dGTZS2dBpLWD/S97FW8zPAzT5Ok=
 		</data>
 		<key>Modules/camera_avfoundation.swiftmodule/arm64-apple-ios-simulator.swiftmodule</key>
 		<data>
-		N8viuejrJZJEO9RhojPIhPYNWeQ=
+		bipyP/xMUg/c7G5MZGdupUHY/VU=
 		</data>
 		<key>Modules/camera_avfoundation.swiftmodule/x86_64-apple-ios-simulator.abi.json</key>
 		<data>
@@ -50,36 +50,28 @@
 		</data>
 		<key>Modules/camera_avfoundation.swiftmodule/x86_64-apple-ios-simulator.swiftdoc</key>
 		<data>
-		r5JBWebEGGb3TxBV5x4bg7ScXug=
+		8Qxp+0Hl5U/Gtxin5KAVkZ7DcaE=
 		</data>
 		<key>Modules/camera_avfoundation.swiftmodule/x86_64-apple-ios-simulator.swiftmodule</key>
 		<data>
-		RArjamGrk1mIj9jW+x0qL49I9Yo=
+		PVozb8raHDo4/3YhllSww9UPzf4=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
-		f/BCznk60PcIkJAOwjVyY+TPuJw=
+		NWWzNsIKox1Nd4VM+N5Lwxgu+4c=
 		</data>
 	</dict>
 	<key>files2</key>
 	<dict>
 		<key>Headers/camera_avfoundation-Swift.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			Ibx7ykyiVGNBM8rvgubqHk+M16E=
-			</data>
 			<key>hash2</key>
 			<data>
-			EpP1ouL5i80hGJd8+yjU5Nbkb2DB1L+OB43I7dT0MSY=
+			3BTBPfW7nBJYILJ6Y2Dlv+izCzErEeiS/mRqlEOcPDE=
 			</data>
 		</dict>
 		<key>Headers/camera_avfoundation-umbrella.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			46p1OvzP9w78kKLz1cA4sqtIwbE=
-			</data>
 			<key>hash2</key>
 			<data>
 			mCG2yYdpSuKlmoTSLZYX+jETINxWk/5H++0g5W1iAgw=
@@ -87,10 +79,6 @@
 		</dict>
 		<key>Headers/camera_avfoundation.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			z85bF0jVDlrqgCYzJSXxbkm1qFA=
-			</data>
 			<key>hash2</key>
 			<data>
 			JKiSAdUC1xkd8xqJXAShv/IV78ErYppbxvIht8499Yg=
@@ -98,10 +86,6 @@
 		</dict>
 		<key>Headers/messages.g.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			JrOx7WZLSIECZAlr27+LLZ/DEWc=
-			</data>
 			<key>hash2</key>
 			<data>
 			UWhPzSFqlYaXdiWu/XiKgSlTeHw86Ap8d4PSpQiLk9M=
@@ -109,32 +93,20 @@
 		</dict>
 		<key>Modules/camera_avfoundation.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			dalYj5IU0peZ1/eygigbSt9w2xw=
-			</data>
 			<key>hash2</key>
 			<data>
-			AW1HHULb9pPRa9U1RtlOzj0Ec9xXLZyaHpqkOag1+ts=
+			sza8q9nX9h3WRtwBIw5H0d7aJyczlztbk3dQlq0vRp4=
 			</data>
 		</dict>
 		<key>Modules/camera_avfoundation.swiftmodule/Project/x86_64-apple-ios-simulator.swiftsourceinfo</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			JpcK+blZ3ZdSV6eE2RolYJMstu8=
-			</data>
 			<key>hash2</key>
 			<data>
-			aWexlZrqgPRcatblEUq4mRDUqQxJ6wT7mtdNoaOTQiQ=
+			tZHVJ/dB7bHyw+mMQEphPg/gYxzJ56FcJNzEdX7D/MI=
 			</data>
 		</dict>
 		<key>Modules/camera_avfoundation.swiftmodule/arm64-apple-ios-simulator.abi.json</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			gcwBsH4BgyFY4sVtNt+/xOKS3vY=
-			</data>
 			<key>hash2</key>
 			<data>
 			Qnesa0n4URGWAopawg9bGx36dUwkYV00BoCJ8LFzlyg=
@@ -142,32 +114,20 @@
 		</dict>
 		<key>Modules/camera_avfoundation.swiftmodule/arm64-apple-ios-simulator.swiftdoc</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			d3cjJ2lJc7L7pezJ2Q2DDbP+uuc=
-			</data>
 			<key>hash2</key>
 			<data>
-			ZPVfupvq80YuCt+TjztNwvd997ZYO5gq99eKGlMgn9o=
+			wHln9gA/VEwWTWKukQCRZ1/GqZx0m7K5/1KGK9jVQr4=
 			</data>
 		</dict>
 		<key>Modules/camera_avfoundation.swiftmodule/arm64-apple-ios-simulator.swiftmodule</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			N8viuejrJZJEO9RhojPIhPYNWeQ=
-			</data>
 			<key>hash2</key>
 			<data>
-			9yf9cigPsxd2dM7eLPKsS6Js0YYZ89hL/0xl3T5BrMc=
+			GmtLiN+X1bA9POQKZk12iKHCGJDqASytuUs46D35lB4=
 			</data>
 		</dict>
 		<key>Modules/camera_avfoundation.swiftmodule/x86_64-apple-ios-simulator.abi.json</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			gcwBsH4BgyFY4sVtNt+/xOKS3vY=
-			</data>
 			<key>hash2</key>
 			<data>
 			Qnesa0n4URGWAopawg9bGx36dUwkYV00BoCJ8LFzlyg=
@@ -175,35 +135,23 @@
 		</dict>
 		<key>Modules/camera_avfoundation.swiftmodule/x86_64-apple-ios-simulator.swiftdoc</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			r5JBWebEGGb3TxBV5x4bg7ScXug=
-			</data>
 			<key>hash2</key>
 			<data>
-			cwu4otcnSPXfurGmQqpOGzo/P0vhsbD/cp1ACNT4kZY=
+			u6bzF6IwgGrPk2BAC0JKiQdMUbKwUcjUX/W3gLCQtco=
 			</data>
 		</dict>
 		<key>Modules/camera_avfoundation.swiftmodule/x86_64-apple-ios-simulator.swiftmodule</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			RArjamGrk1mIj9jW+x0qL49I9Yo=
-			</data>
 			<key>hash2</key>
 			<data>
-			H7K/tBi03mz9jYIxkbj9FbW6X4sVBePrqEdIQAMcJjo=
+			QpVqpPnj1m7UJt/65x8rUl0e9J2XTj0yvCzYfoxcrO0=
 			</data>
 		</dict>
 		<key>Modules/module.modulemap</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			f/BCznk60PcIkJAOwjVyY+TPuJw=
-			</data>
 			<key>hash2</key>
 			<data>
-			ir9GRZ1AgIucoltUYSA5O/j/RCDOXaswlrq1+GhW968=
+			5RAdwMuuaq+GAKgi645X/cRv5vQU0y2z24mCUE+FPVc=
 			</data>
 		</dict>
 	</dict>

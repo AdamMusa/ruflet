@@ -385,7 +385,7 @@ module Ruflet
       action, payload = decode_incoming(raw)
       payload ||= {}
 
-      warn "incoming action=#{action.inspect}" if ENV["FLET_DEBUG"] == "1"
+      warn "incoming action=#{action.inspect}" if ENV["RUFLET_DEBUG"] == "1"
 
       case action
       when Protocol::ACTIONS[:register_client], Protocol::ACTIONS[:register_web_client]

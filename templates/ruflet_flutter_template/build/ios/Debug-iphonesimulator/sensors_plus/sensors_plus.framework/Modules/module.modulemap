@@ -7,5 +7,4 @@ framework module sensors_plus {
 
 module sensors_plus.Swift {
   header "sensors_plus-Swift.h"
-  requires objc
 }

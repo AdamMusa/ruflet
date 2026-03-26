@@ -6,7 +6,7 @@
 	<dict>
 		<key>Headers/screen_brightness_ios-Swift.h</key>
 		<data>
-		GZHqNYySuxcI3ov50wXNYvOo4So=
+		Dp2+s0itfj7yDrIyhDvE755C3jQ=
 		</data>
 		<key>Headers/screen_brightness_ios-umbrella.h</key>
 		<data>
@@ -14,19 +14,19 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		t7F+3RavAvn19awExcRLMrFBLFk=
+		cJ0kB6WUx564fBoYdRo9tSIaXeI=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
-		0nmEn1S1DJdyf+IGbUDiru3aNX4=
+		HD6+YcdKN+vRDR5kHesjEhokOak=
 		</data>
 		<key>Modules/screen_brightness_ios.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo</key>
 		<data>
-		BcD7genMlXNyA/Z6J9Y4ePl6IDY=
+		1ve+mb/upReF3+zNddI6bQMNXvU=
 		</data>
 		<key>Modules/screen_brightness_ios.swiftmodule/Project/x86_64-apple-ios-simulator.swiftsourceinfo</key>
 		<data>
-		wSsKoMxn4ifnPoDsPHqwNoeUfpw=
+		cGkYJpCLGUbD4A9Mfi9AtMahWk4=
 		</data>
 		<key>Modules/screen_brightness_ios.swiftmodule/arm64-apple-ios-simulator.abi.json</key>
 		<data>
@@ -34,11 +34,11 @@
 		</data>
 		<key>Modules/screen_brightness_ios.swiftmodule/arm64-apple-ios-simulator.swiftdoc</key>
 		<data>
-		9719a3VPPnY3MfUHG+dFm5Go/AU=
+		Pyy+Q1JHreJpmC3s/G+Pr6/AdX4=
 		</data>
 		<key>Modules/screen_brightness_ios.swiftmodule/arm64-apple-ios-simulator.swiftmodule</key>
 		<data>
-		ADCLr8H61J1XWbzc/vHBHGnrbJc=
+		JTI61/jwAfOeEYccS/r7LKpe37M=
 		</data>
 		<key>Modules/screen_brightness_ios.swiftmodule/x86_64-apple-ios-simulator.abi.json</key>
 		<data>
@@ -46,32 +46,24 @@
 		</data>
 		<key>Modules/screen_brightness_ios.swiftmodule/x86_64-apple-ios-simulator.swiftdoc</key>
 		<data>
-		6+ev/w2IcqVZ71loumym5BJf4Ew=
+		Dp39TX4S0VRjRSmxxFeSBmC5lo0=
 		</data>
 		<key>Modules/screen_brightness_ios.swiftmodule/x86_64-apple-ios-simulator.swiftmodule</key>
 		<data>
-		yVGc6/gB7T7uHQSvXNVruRdMlzw=
+		UaDSWcr2Jva52RiLK9ICJNGmDdQ=
 		</data>
 	</dict>
 	<key>files2</key>
 	<dict>
 		<key>Headers/screen_brightness_ios-Swift.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			GZHqNYySuxcI3ov50wXNYvOo4So=
-			</data>
 			<key>hash2</key>
 			<data>
-			yQCl4VTZvz5j3yz4YSYXVdW55cwR3IC65tt5Bsjot/s=
+			rz6wXE2j0i/AxndSsEKETfPgUEDuNxHsukG15j1h8XU=
 			</data>
 		</dict>
 		<key>Headers/screen_brightness_ios-umbrella.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			iihk2YkD6HAqvMj1nPXz5QTP0As=
-			</data>
 			<key>hash2</key>
 			<data>
 			svHj6txM7LTGs+ywSgxM4ktJcVmx4lVJCJ2R6k+f7+Q=
@@ -79,43 +71,27 @@
 		</dict>
 		<key>Modules/module.modulemap</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			0nmEn1S1DJdyf+IGbUDiru3aNX4=
-			</data>
 			<key>hash2</key>
 			<data>
-			ntmLl+WRia0vQc6bnBXiC6bYFeKkUd3+/f1ggfkcV4s=
+			kVK2FuInNhs5VlFEncxJRDlEXJjJoTR6nDI+q5Va4lE=
 			</data>
 		</dict>
 		<key>Modules/screen_brightness_ios.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			BcD7genMlXNyA/Z6J9Y4ePl6IDY=
-			</data>
 			<key>hash2</key>
 			<data>
-			SSU5Js94dbP/7xP8HcZ1AbUD+whUcKxOm1OeKS3lMLw=
+			6PEcTwsTM67CCJz411xdP9DQsAg+RQhCK1ULy/J3qp8=
 			</data>
 		</dict>
 		<key>Modules/screen_brightness_ios.swiftmodule/Project/x86_64-apple-ios-simulator.swiftsourceinfo</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			wSsKoMxn4ifnPoDsPHqwNoeUfpw=
-			</data>
 			<key>hash2</key>
 			<data>
-			Se8yVRD3KlWIkY/9V1rMtThh+MJOMGUZb7kWFdyqGdY=
+			qpo0N4RywBhxju3AtFIztEJhbrUSgPWvXLt85yW9sFo=
 			</data>
 		</dict>
 		<key>Modules/screen_brightness_ios.swiftmodule/arm64-apple-ios-simulator.abi.json</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			gcwBsH4BgyFY4sVtNt+/xOKS3vY=
-			</data>
 			<key>hash2</key>
 			<data>
 			Qnesa0n4URGWAopawg9bGx36dUwkYV00BoCJ8LFzlyg=
@@ -123,32 +99,20 @@
 		</dict>
 		<key>Modules/screen_brightness_ios.swiftmodule/arm64-apple-ios-simulator.swiftdoc</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			9719a3VPPnY3MfUHG+dFm5Go/AU=
-			</data>
 			<key>hash2</key>
 			<data>
-			tXgUuo9rhhgv+IbnDd9mbC/4HaRJHa7qx9jRS5RIQrU=
+			5kMkx2Rq4f7jtsOlXNYCJooyw0oOdIwZsuLgD8Lt0IY=
 			</data>
 		</dict>
 		<key>Modules/screen_brightness_ios.swiftmodule/arm64-apple-ios-simulator.swiftmodule</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			ADCLr8H61J1XWbzc/vHBHGnrbJc=
-			</data>
 			<key>hash2</key>
 			<data>
-			BtgwDOxITKnkxCFvK9/ya8ZmacCHIe2mUB3JXz5xp40=
+			0TRp03B9rCP1OJsn/GTnJ/f2FthkjeJz28iVqNjcDRs=
 			</data>
 		</dict>
 		<key>Modules/screen_brightness_ios.swiftmodule/x86_64-apple-ios-simulator.abi.json</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			gcwBsH4BgyFY4sVtNt+/xOKS3vY=
-			</data>
 			<key>hash2</key>
 			<data>
 			Qnesa0n4URGWAopawg9bGx36dUwkYV00BoCJ8LFzlyg=
@@ -156,24 +120,16 @@
 		</dict>
 		<key>Modules/screen_brightness_ios.swiftmodule/x86_64-apple-ios-simulator.swiftdoc</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			6+ev/w2IcqVZ71loumym5BJf4Ew=
-			</data>
 			<key>hash2</key>
 			<data>
-			HBRRXeJ1rzRrynlGC4LUcWhCbkjXgRLHPAINBhyBrpk=
+			6BSLNB/HiDqJBeY0mV+8jHIHNJAvltuLFUlCbGCc5yU=
 			</data>
 		</dict>
 		<key>Modules/screen_brightness_ios.swiftmodule/x86_64-apple-ios-simulator.swiftmodule</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			yVGc6/gB7T7uHQSvXNVruRdMlzw=
-			</data>
 			<key>hash2</key>
 			<data>
-			8c4BoYUlu3OZtHViNhcH8yoAkTTTtzC8zat78RYxSxc=
+			rw8eJcpUMU6001fkYFMuC/tdN9/2WTjgyDMRD1+PIZA=
 			</data>
 		</dict>
 	</dict>

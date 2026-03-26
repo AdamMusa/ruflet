@@ -12,6 +12,7 @@ Embeds mruby in native macOS code and exposes eval/runFile/reset over a Flutter 
   s.source = { :path => '.' }
   s.source_files = [
     'Classes/**/*.{h,m,mm,c,cc,cpp}',
+    'Classes/mruby_digest_gem.c',
     'mruby_src/src/*.c',
     'mruby_src/mrbgems/mruby-compiler/core/codegen.c',
     'mruby_src/mrbgems/mruby-compiler/core/y.tab.c',

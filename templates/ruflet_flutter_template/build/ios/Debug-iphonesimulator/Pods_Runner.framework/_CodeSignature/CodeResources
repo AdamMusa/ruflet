@@ -10,7 +10,7 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		nt4bY4bRQozNn+fOGLqWjNTnrtA=
+		YAiSWxELgShA6tVkxdCIgTA31N8=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
@@ -21,10 +21,6 @@
 	<dict>
 		<key>Headers/Pods-Runner-umbrella.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			qwiYDWd9StHsFttCKLnCkouErV8=
-			</data>
 			<key>hash2</key>
 			<data>
 			h9Q8dOdlbfVmyAwN0d7ym11XjgSop1/nJGh4JH8yc2c=
@@ -32,10 +28,6 @@
 		</dict>
 		<key>Modules/module.modulemap</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			fTjMFx0S8KBV991TY3+5DAzl1R0=
-			</data>
 			<key>hash2</key>
 			<data>
 			wuAmO8HNOlsSiQE1FebYfxZqLzXImN1XYTTH47H5HUs=

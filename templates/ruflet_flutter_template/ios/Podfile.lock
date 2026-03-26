@@ -72,6 +72,8 @@ PODS:
     - Flutter
   - record_ios (1.2.0):
     - Flutter
+  - ruby_runtime (0.0.1):
+    - Flutter
   - screen_brightness_ios (0.1.0):
     - Flutter
   - SDWebImage (5.21.6):
@@ -113,6 +115,7 @@ DEPENDENCIES:
   - pasteboard (from `.symlinks/plugins/pasteboard/ios`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - record_ios (from `.symlinks/plugins/record_ios/ios`)
+  - ruby_runtime (from `.symlinks/plugins/ruby_runtime/ios`)
   - screen_brightness_ios (from `.symlinks/plugins/screen_brightness_ios/ios`)
   - sensors_plus (from `.symlinks/plugins/sensors_plus/ios`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
@@ -166,6 +169,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
   record_ios:
     :path: ".symlinks/plugins/record_ios/ios"
+  ruby_runtime:
+    :path: ".symlinks/plugins/ruby_runtime/ios"
   screen_brightness_ios:
     :path: ".symlinks/plugins/screen_brightness_ios/ios"
   sensors_plus:
@@ -205,6 +210,7 @@ SPEC CHECKSUMS:
   pasteboard: 49088aeb6119d51f976a421db60d8e1ab079b63c
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
   record_ios: 412daca2350b228e698fffcd08f1f94ceb1e3844
+  ruby_runtime: b670b575fff3f58b840a08a0c1091bc6da008bc5
   screen_brightness_ios: 9953fd7da5bd480f1a93990daeec2eb42d4f3b52
   SDWebImage: 1bb6a1b84b6fe87b972a102bdc77dd589df33477
   sensors_plus: 6a11ed0c2e1d0bd0b20b4029d3bad27d96e0c65b

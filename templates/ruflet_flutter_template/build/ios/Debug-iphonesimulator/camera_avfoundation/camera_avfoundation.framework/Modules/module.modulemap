@@ -7,5 +7,4 @@ framework module camera_avfoundation {
 
 module camera_avfoundation.Swift {
   header "camera_avfoundation-Swift.h"
-  requires objc
 }

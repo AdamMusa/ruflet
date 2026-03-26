@@ -102,6 +102,12 @@
 @import record_ios;
 #endif
 
+#if __has_include(<ruby_runtime/MrubyRuntimePlugin.h>)
+#import <ruby_runtime/MrubyRuntimePlugin.h>
+#else
+@import ruby_runtime;
+#endif
+
 #if __has_include(<screen_brightness_ios/ScreenBrightnessIosPlugin.h>)
 #import <screen_brightness_ios/ScreenBrightnessIosPlugin.h>
 #else
@@ -169,6 +175,7 @@
   [PasteboardPlugin registerWithRegistrar:[registry registrarForPlugin:@"PasteboardPlugin"]];
   [PermissionHandlerPlugin registerWithRegistrar:[registry registrarForPlugin:@"PermissionHandlerPlugin"]];
   [RecordIosPlugin registerWithRegistrar:[registry registrarForPlugin:@"RecordIosPlugin"]];
+  [MrubyRuntimePlugin registerWithRegistrar:[registry registrarForPlugin:@"MrubyRuntimePlugin"]];
   [ScreenBrightnessIosPlugin registerWithRegistrar:[registry registrarForPlugin:@"ScreenBrightnessIosPlugin"]];
   [FPPSensorsPlusPlugin registerWithRegistrar:[registry registrarForPlugin:@"FPPSensorsPlusPlugin"]];
   [FPPSharePlusPlugin registerWithRegistrar:[registry registrarForPlugin:@"FPPSharePlusPlugin"]];

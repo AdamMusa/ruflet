@@ -14,7 +14,7 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		Qd1HT/spYMvWL+5yfkr36nmnH18=
+		K+nAdnBXYM00uW0ufkDXUqHyEbI=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
@@ -25,10 +25,6 @@
 	<dict>
 		<key>Headers/FPPSharePlusPlugin.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			ib4KyXwSDVsaFGiT08uoa4h/RxA=
-			</data>
 			<key>hash2</key>
 			<data>
 			aHKDCOiZdgXJ28VG80oWXjEY72oJapPyhfztvFfCVH0=
@@ -36,10 +32,6 @@
 		</dict>
 		<key>Headers/share_plus-umbrella.h</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			/EK3HlFuqx47mflbnNOQmeSPC2E=
-			</data>
 			<key>hash2</key>
 			<data>
 			djWC1c4X6AHd40AOwZzQmmynmUMFf6w9gQHrWBHTrSo=
@@ -47,10 +39,6 @@
 		</dict>
 		<key>Modules/module.modulemap</key>
 		<dict>
-			<key>hash</key>
-			<data>
-			Uy4pX3plzTC2T2bCnFdgakT6VyY=
-			</data>
 			<key>hash2</key>
 			<data>
 			39JoytFZnbxsQE3Y7nERznrRSXkw3uvJzC/jUocPB2M=
