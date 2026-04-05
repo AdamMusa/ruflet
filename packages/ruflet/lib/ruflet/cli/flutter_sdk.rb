@@ -75,7 +75,7 @@ module Ruflet
         system(fvm_env, fvm, "install", version.to_s, chdir: project_dir, out: File::NULL, err: File::NULL)
         system(fvm_env, fvm, "use", "--force", version.to_s, chdir: project_dir, out: File::NULL, err: File::NULL)
 
-        flutter = File.join(project_dir, ".fvm", "flutter_sdk", "bin", windows_host? ? "flutter.bat" : "flutter")
+        flutter = flutter_bin_path(project_dir)
         return nil unless File.executable?(flutter)
 
         tools_from_flutter_bin(flutter)
@@ -91,28 +91,35 @@ module Ruflet
         dart = which_command("dart")
         unless dart
           sdk_root = ensure_flutter_sdk_downloaded(client_dir: client_dir)
-          dart = sdk_root ? File.join(sdk_root, "bin", windows_host? ? "dart.bat" : "dart") : nil
+          dart = sdk_root ? File.join(sdk_root, "bin", dart_executable_name) : nil
         end
         return nil unless dart && File.executable?(dart)
 
         system(dart, "pub", "global", "activate", "fvm", out: File::NULL, err: File::NULL)
+        installed_fvm = File.join(pub_cache_bin_dir, fvm_executable_name)
+        return installed_fvm if File.executable?(installed_fvm)
+
         which_command("fvm")
       end
 
       def fvm_env
-        pub_bin = File.join(Dir.home, ".pub-cache", "bin")
-        { "PATH" => "#{pub_bin}#{File::PATH_SEPARATOR}#{ENV.fetch('PATH', '')}" }
+        { "PATH" => "#{pub_cache_bin_dir}#{File::PATH_SEPARATOR}#{ENV.fetch('PATH', '')}" }
       end
 
       def tools_from_flutter_bin(flutter_bin)
         return nil unless File.executable?(flutter_bin)
 
         bin_dir = File.dirname(flutter_bin)
-        dart = File.join(bin_dir, windows_host? ? "dart.bat" : "dart")
+        sdk_root = File.expand_path("..", bin_dir)
+        dart = File.join(bin_dir, dart_executable_name)
         {
           flutter: flutter_bin,
           dart: (File.executable?(dart) ? dart : "dart"),
-          env: { "PATH" => "#{bin_dir}#{File::PATH_SEPARATOR}#{ENV.fetch('PATH', '')}" }
+          env: {
+            "PATH" => "#{bin_dir}#{File::PATH_SEPARATOR}#{pub_cache_bin_dir}#{File::PATH_SEPARATOR}#{ENV.fetch('PATH', '')}",
+            "FLUTTER_ROOT" => sdk_root,
+            "FVM_FLUTTER_SDK" => sdk_root
+          }
         }
       end
 
@@ -125,7 +132,7 @@ module Ruflet
         archive = release.fetch("archive")
         install_root = File.join(Dir.home, ".ruflet", "flutter", release.fetch("version"), host)
         sdk_root = File.join(install_root, "flutter")
-        flutter_bin = File.join(sdk_root, "bin", windows_host? ? "flutter.bat" : "flutter")
+        flutter_bin = File.join(sdk_root, "bin", flutter_executable_name)
         return sdk_root if File.executable?(flutter_bin)
 
         FileUtils.mkdir_p(install_root)
@@ -138,9 +145,9 @@ module Ruflet
         return sdk_root if File.executable?(flutter_bin)
 
         # Some archives may unpack into a different folder name.
-        guessed = Dir.glob(File.join(install_root, "**", windows_host? ? "flutter.bat" : "flutter"))
+        guessed = Dir.glob(File.join(install_root, "**", flutter_executable_name))
           .map { |p| File.expand_path("../..", p) }
-          .find { |root| File.executable?(File.join(root, "bin", windows_host? ? "flutter.bat" : "flutter")) }
+          .find { |root| File.executable?(File.join(root, "bin", flutter_executable_name)) }
         return guessed if guessed
 
         nil
@@ -195,10 +202,14 @@ module Ruflet
       end
 
       def existing_fvm_flutter_bin(project_dir)
-        flutter = File.join(project_dir, ".fvm", "flutter_sdk", "bin", windows_host? ? "flutter.bat" : "flutter")
+        flutter = flutter_bin_path(project_dir)
         return flutter if File.executable?(flutter)
 
         nil
+      end
+
+      def flutter_bin_path(project_dir)
+        File.join(project_dir, ".fvm", "flutter_sdk", "bin", flutter_executable_name)
       end
 
       def find_fvmrc(client_dir)
@@ -306,6 +317,22 @@ module Ruflet
 
       def windows_host?
         RbConfig::CONFIG["host_os"].match?(/mswin|mingw|cygwin/i)
+      end
+
+      def flutter_executable_name
+        windows_host? ? "flutter.bat" : "flutter"
+      end
+
+      def dart_executable_name
+        windows_host? ? "dart.bat" : "dart"
+      end
+
+      def fvm_executable_name
+        windows_host? ? "fvm.bat" : "fvm"
+      end
+
+      def pub_cache_bin_dir
+        File.join(Dir.home, ".pub-cache", "bin")
       end
 
       def which_command(name)
