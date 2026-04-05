@@ -78,6 +78,7 @@ module Ruflet
       end
 
       def prepare_flutter_client(client_dir, tools:, config:)
+        ensure_local_ruby_runtime_override(client_dir)
         apply_service_extension_config(client_dir, config)
         asset_flags = apply_build_config(client_dir, config)
         if asset_flags[:error]
@@ -245,6 +246,43 @@ module Ruflet
         main_path = File.join(client_dir, "lib", "main.dart")
         prune_client_pubspec(pubspec_path, extension_packages) if File.file?(pubspec_path)
         prune_client_main(main_path, extension_aliases) if File.file?(main_path)
+      end
+
+      def ensure_local_ruby_runtime_override(client_dir)
+        pubspec_path = File.join(client_dir, "pubspec.yaml")
+        return unless File.file?(pubspec_path)
+
+        pubspec = YAML.safe_load(File.read(pubspec_path), aliases: true) || {}
+        dependencies = pubspec["dependencies"] || {}
+        return unless dependencies.is_a?(Hash) && dependencies.key?("ruby_runtime")
+
+        override_path = discover_local_ruby_runtime_path(client_dir)
+        return unless override_path
+
+        overrides_path = File.join(client_dir, "pubspec_overrides.yaml")
+        content = <<~YAML
+          dependency_overrides:
+            ruby_runtime:
+              path: #{override_path}
+        YAML
+        File.write(overrides_path, content)
+      rescue StandardError => e
+        warn "Failed to prepare ruby_runtime override: #{e.class}: #{e.message}"
+      end
+
+      def discover_local_ruby_runtime_path(client_dir)
+        candidates = []
+
+        env_path = ENV["RUFLET_RUBY_RUNTIME_PATH"].to_s.strip
+        candidates << env_path unless env_path.empty?
+        candidates << File.expand_path("../ruby_runtime", client_dir)
+        candidates << File.expand_path("../../../../../ruby_runtime", __dir__)
+
+        candidates.find do |path|
+          next false if path.to_s.empty?
+
+          File.file?(File.join(path, "pubspec.yaml"))
+        end
       end
 
       def normalize_extension_key(value)

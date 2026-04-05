@@ -62,7 +62,10 @@ module Ruflet
       private
 
       def copy_ruflet_client_template(root)
-        template_root = File.expand_path("../../../../../ruflet_client", __dir__)
+        template_root = File.expand_path("../../../../../templates/ruflet_flutter_template", __dir__)
+        unless Dir.exist?(template_root)
+          template_root = File.expand_path("../../../../../ruflet_client", __dir__)
+        end
         return unless Dir.exist?(template_root)
 
         target = File.join(root, "ruflet_client")
@@ -83,6 +86,7 @@ module Ruflet
           android/.gradle
           android/.kotlin
           android/local.properties
+          pubspec_overrides.yaml
         ]
         paths.each do |path|
           full = File.join(target, path)

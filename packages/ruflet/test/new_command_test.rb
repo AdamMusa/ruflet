@@ -86,4 +86,18 @@ class RufletCliNewCommandTest < Minitest::Test
       refute_includes pruned_main, "ruflet_video.Extension()"
     end
   end
+
+  def test_copy_ruflet_client_template_prefers_flutter_template
+    Dir.mktmpdir do |dir|
+      target_root = File.join(dir, "demo")
+      FileUtils.mkdir_p(target_root)
+
+      Ruflet::CLI.send(:copy_ruflet_client_template, target_root)
+
+      client_dir = File.join(target_root, "ruflet_client")
+      assert File.directory?(client_dir)
+      assert File.file?(File.join(client_dir, "assets", "main.rb"))
+      assert File.file?(File.join(client_dir, "lib", "main.dart"))
+    end
+  end
 end
