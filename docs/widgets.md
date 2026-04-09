@@ -153,7 +153,7 @@ class CounterApp < Ruflet::App
         text(value: "You clicked:")
         counter
       end,
-      floating_action_button: fab("+", on_click: ->(e) {
+      floating_action_button: fab(Ruflet::MaterialIcons::ADD, on_click: ->(e) {
         @count += 1
         e.page.update(counter, value: @count.to_s)
       })

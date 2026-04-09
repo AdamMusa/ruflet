@@ -131,4 +131,51 @@ class PageUpdateSerializationTest < Minitest::Test
     assert_equal [:ok], clicked
   end
 
+  def test_page_add_serializes_floating_action_button_icon_for_dev_mode
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    count = 0
+    count_text = Ruflet.text(count.to_s, style: { size: 40 })
+
+    page.add(
+      Ruflet.container(
+        expand: true,
+        alignment: Ruflet::MainAxisAlignment::CENTER,
+        content: Ruflet.column(
+          alignment: Ruflet::MainAxisAlignment::CENTER,
+          horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
+          children: [
+            Ruflet.text("A self-contained ruflet app up and running!"),
+            count_text
+          ]
+        )
+      ),
+      appbar: Ruflet.app_bar(title: Ruflet.text("Ruflet demo", style: { size: 18 })),
+      floating_action_button: Ruflet.fab(
+        icon: Ruflet::MaterialIcons::ADD,
+        on_click: ->(_e) do
+          count += 1
+          page.update(count_text, value: count.to_s)
+        end
+      )
+    )
+
+    payload = sent.last[1]
+    views_patch = payload["patch"].find { |op| op[2] == "views" }
+    refute_nil views_patch
+
+    view = views_patch[3].first
+    fab = view["floating_action_button"]
+
+    refute_nil fab
+    assert_equal "FloatingActionButton", fab["_c"]
+    assert_equal Ruflet::MaterialIcons::ADD.value, fab["icon"]
+    assert_equal true, fab["on_click"]
+  end
+
 end

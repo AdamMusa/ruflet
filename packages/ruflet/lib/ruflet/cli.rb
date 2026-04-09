@@ -39,6 +39,8 @@ module Ruflet
         command_debug(argv)
       when "build"
         command_build(argv)
+      when "install"
+        command_install(argv)
       when "devices"
         command_devices(argv)
       when "emulators"
@@ -66,7 +68,8 @@ module Ruflet
           ruflet run [scriptname|path] [--web|--desktop] [--port PORT]
           ruflet update [web|desktop|all] [--check] [--force] [--platform PLATFORM]
           ruflet debug [scriptname|path]
-          ruflet build <apk|android|ios|aab|web|macos|windows|linux>
+          ruflet build <apk|android|ios|aab|web|macos|windows|linux> [--self] [--verbose]
+          ruflet install [--device DEVICE_ID] [--verbose]
           ruflet devices
           ruflet emulators
           ruflet doctor

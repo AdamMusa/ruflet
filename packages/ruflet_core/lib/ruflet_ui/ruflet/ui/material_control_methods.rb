@@ -140,12 +140,38 @@ module Ruflet
       def webview(**props) = web_view(**props)
 
       def fab(content = nil, **props)
-        mapped = props.dup
-        mapped[:content] = content unless content.nil?
+        mapped = normalize_fab_props(props.dup, content)
         build_widget(:floatingactionbutton, **mapped)
       end
 
       private
+
+      def normalize_fab_props(props, content)
+        mapped = props.dup
+
+        explicit_icon = mapped[:icon] || mapped["icon"]
+        if explicit_icon.is_a?(Ruflet::Control) && content.nil?
+          mapped.delete(:icon)
+          mapped.delete("icon")
+          content = explicit_icon
+        elsif !explicit_icon.nil? && !explicit_icon.is_a?(Ruflet::IconData)
+          raise ArgumentError, "fab icon must use Ruflet::MaterialIcons (or another Ruflet::IconData) or an icon(...) control"
+        end
+
+        unless content.nil?
+          mapped[:content] =
+            case content
+            when Ruflet::Control
+              content
+            when Ruflet::IconData
+              icon(icon: content)
+            else
+              raise ArgumentError, "fab content must be an icon(...) control or Ruflet::MaterialIcons value"
+            end
+        end
+
+        mapped
+      end
 
       def normalize_image_source(value)
         return value unless value.is_a?(Array)
