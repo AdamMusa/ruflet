@@ -17,7 +17,7 @@ Ruflet.run do |page|
       )
     ),
     appbar: app_bar(title: text("Ruflet demo", style: { size: 18 })),
-    floating_action_button: fab(
+    floating_action_button: FloatingActionButton(
       icon: Ruflet::MaterialIcons::ADD,
       on_click: ->(_e) do
         count += 1

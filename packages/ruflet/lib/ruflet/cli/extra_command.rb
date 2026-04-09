@@ -6,6 +6,7 @@ module Ruflet
   module CLI
     module ExtraCommand
       include FlutterSdk
+      include NewCommand
 
       def command_create(args)
         command_new(args)
@@ -15,9 +16,24 @@ module Ruflet
         verbose = args.delete("--verbose") || args.delete("-v")
         fix = args.delete("--fix")
         client_dir = detect_client_dir
+        template_root = resolve_ruflet_client_template_root
         puts "Ruflet doctor"
         puts "  Ruby: #{RUBY_VERSION}"
         puts "  Flutter host target: #{flutter_host || 'unsupported'}"
+        if template_root
+          puts "  Template: #{template_root}"
+        elsif fix
+          template_root = ensure_cached_ruflet_client_template!(verbose: !!verbose)
+          unless template_root
+            warn "  Template: missing"
+            warn "Failed to fetch the Ruflet Flutter template from GitHub."
+            return 1
+          end
+          puts "  Template: #{template_root}"
+        else
+          warn "  Template: missing"
+          warn "Run `ruflet doctor --fix` to fetch the Flutter template from GitHub."
+        end
         if fix
           tools = ensure_flutter!("doctor", client_dir: client_dir, auto_install: true)
         else
@@ -97,7 +113,7 @@ module Ruflet
         client_dir = detect_client_dir
         unless client_dir
           warn "Could not find Flutter client directory."
-          warn "Set RUFLET_CLIENT_DIR or place client at ./ruflet_client"
+          warn "Set RUFLET_CLIENT_DIR or let Ruflet manage the hidden client under ./build/.ruflet/client"
           warn "`ruflet debug` requires Flutter client source code."
           warn "For prebuilt clients, use: `ruflet run --web` or `ruflet run --desktop`."
           return 1
@@ -131,6 +147,9 @@ module Ruflet
       def detect_client_dir
         env_dir = ENV["RUFLET_CLIENT_DIR"]
         return env_dir if env_dir && Dir.exist?(env_dir)
+
+        hidden = File.expand_path(File.join("build", ".ruflet", "client"), Dir.pwd)
+        return hidden if Dir.exist?(hidden)
 
         local = File.expand_path("ruflet_client", Dir.pwd)
         return local if Dir.exist?(local)
