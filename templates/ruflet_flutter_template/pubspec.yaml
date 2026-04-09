@@ -118,7 +118,7 @@ dependencies:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-webview/src/flutter/flet_webview
       ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
-  ruby_runtime: ^0.0.1
+  ruby_runtime: ^0.0.2
   flutter_native_splash: ^2.4.7
 dev_dependencies:
   flutter_launcher_icons: "^0.14.4"

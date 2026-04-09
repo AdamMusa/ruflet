@@ -72,7 +72,7 @@ This is the model used by the Ruflet Flutter template.
 
 ```yaml
 dependencies:
-  ruby_runtime: ^0.0.1
+  ruby_runtime: ^0.0.2
 ```
 
 ### 2. Import the package
