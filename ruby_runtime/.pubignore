@@ -1,0 +1,13 @@
+.dart_tool/
+build/
+.metadata
+mruby_runtime_plugin.iml
+pubspec.lock
+
+# Local/native build leftovers
+**/.DS_Store
+android/.cxx/
+android/.gradle/
+android/build/
+ios/build/
+macos/build/
