@@ -2165,12 +2165,11 @@ module Ruflet
         value =
           if v.is_a?(Symbol)
             v.to_s
-          elsif v.is_a?(Ruflet::IconData)
-            v.value
           else
             v
           end
         value = normalize_icon_prop(mapped_key, value)
+        value = value.value if value.is_a?(Ruflet::IconData)
         value = normalize_color_prop(mapped_key, value)
 
         result[mapped_key] = value
@@ -2194,23 +2193,15 @@ module Ruflet
 
     def normalize_icon_prop(key, value)
       return value unless icon_prop_key?(key)
-      codepoint = resolve_icon_codepoint(value)
-      codepoint.nil? ? value : codepoint
+      return value if value.nil?
+      return value if value.is_a?(Integer)
+      return value if value.is_a?(Ruflet::IconData)
+
+      raise ArgumentError, "#{type} #{key} must use Ruflet::MaterialIcons (or another Ruflet::IconData), not #{value.inspect}"
     end
 
     def icon_prop_key?(key)
       key == "icon" || key.end_with?("_icon")
-    end
-
-    def resolve_icon_codepoint(value)
-      return nil unless value.is_a?(Integer) || value.is_a?(Symbol) || value.is_a?(String)
-
-      codepoint = Ruflet::MaterialIconLookup.codepoint_for(value)
-      if codepoint.nil? || (value.is_a?(Integer) && codepoint == value)
-        cupertino = Ruflet::CupertinoIconLookup.codepoint_for(value)
-        codepoint = cupertino unless cupertino.nil?
-      end
-      codepoint
     end
 
     def normalized_event_name(event_name)
@@ -18569,12 +18560,38 @@ module Ruflet
       def webview(**props) = web_view(**props)
 
       def fab(content = nil, **props)
-        mapped = props.dup
-        mapped[:content] = content unless content.nil?
+        mapped = normalize_fab_props(props.dup, content)
         build_widget(:floatingactionbutton, **mapped)
       end
 
       private
+
+      def normalize_fab_props(props, content)
+        mapped = props.dup
+
+        explicit_icon = mapped[:icon] || mapped["icon"]
+        if explicit_icon.is_a?(Ruflet::Control) && content.nil?
+          mapped.delete(:icon)
+          mapped.delete("icon")
+          content = explicit_icon
+        elsif !explicit_icon.nil? && !explicit_icon.is_a?(Ruflet::IconData)
+          raise ArgumentError, "fab icon must use Ruflet::MaterialIcons (or another Ruflet::IconData) or an icon(...) control"
+        end
+
+        unless content.nil?
+          mapped[:content] =
+            case content
+            when Ruflet::Control
+              content
+            when Ruflet::IconData
+              icon(icon: content)
+            else
+              raise ArgumentError, "fab content must be an icon(...) control or Ruflet::MaterialIcons value"
+            end
+        end
+
+        mapped
+      end
 
       def normalize_image_source(value)
         return value unless value.is_a?(Array)
@@ -20459,9 +20476,12 @@ module Ruflet
     end
 
     def normalize_value(key, value)
-      if icon_prop_key?(key) && (value.is_a?(String) || value.is_a?(Symbol) || value.is_a?(Integer))
-        codepoint = resolve_icon_codepoint(value)
-        return codepoint unless codepoint.nil?
+      if icon_prop_key?(key)
+        return value if value.is_a?(Integer)
+        return value.value if value.is_a?(Ruflet::IconData)
+        return value if value.nil?
+
+        raise ArgumentError, "page #{key} must use Ruflet::MaterialIcons (or another Ruflet::IconData), not #{value.inspect}"
       end
 
       return value.value if value.is_a?(Ruflet::IconData)
@@ -20611,14 +20631,6 @@ module Ruflet
 
         [0, 0, k, serialize_patch_value(v)]
       end
-    end
-
-    def resolve_icon_codepoint(value)
-      codepoint = Ruflet::MaterialIconLookup.codepoint_for(value)
-      if codepoint.nil? || codepoint == value
-        codepoint = Ruflet::CupertinoIconLookup.codepoint_for(value)
-      end
-      codepoint
     end
 
     def ensure_clipboard_service

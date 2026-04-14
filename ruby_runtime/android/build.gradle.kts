@@ -1,4 +1,4 @@
-group = "com.example.ruby_runtime"
+group = "com.izeesoft.ruby_runtime"
 version = "1.0-SNAPSHOT"
 
 buildscript {
@@ -27,7 +27,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.ruby_runtime"
+    namespace = "com.izeesoft.ruby_runtime"
 
     compileSdk = 36
 

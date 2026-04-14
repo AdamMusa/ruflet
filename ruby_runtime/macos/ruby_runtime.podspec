@@ -5,7 +5,7 @@ Pod::Spec.new do |s|
   s.description      = <<-DESC
 Embeds mruby in native macOS code and exposes eval/runFile/reset over a Flutter method channel.
                        DESC
-  s.homepage         = 'https://example.com/ruby_runtime'
+  s.homepage         = 'https://github.com/AdamMusa/ruflet'
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'Izeesoft' => 'dev@izeesoft.com' }
 

@@ -16,9 +16,15 @@ module Ruflet
 
       def build(type, id: nil, **props)
         normalized_type = type.to_s.downcase
+        if ENV["RUFLET_DEBUG"] == "1" && normalized_type == "floatingactionbutton"
+          Kernel.warn("[factory] type=#{normalized_type} id=#{id.inspect} props=#{props.inspect}")
+        end
         klass = CLASS_MAP[normalized_type]
         if klass
           normalized_props = normalize_constructor_props(klass, props)
+          if ENV["RUFLET_DEBUG"] == "1" && normalized_type == "floatingactionbutton"
+            Kernel.warn("[factory] normalized_props=#{normalized_props.inspect}")
+          end
           return klass.new(id: id, **normalized_props)
         end
 

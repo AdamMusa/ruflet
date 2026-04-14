@@ -111,13 +111,16 @@ Use `page` only for runtime/page operations (`add`, `update`, `go`, `show_dialog
 ruflet new <appname>
 ruflet run [scriptname|path] [--web|--desktop] [--port PORT]
 ruflet update [web|desktop|all] [--check] [--force] [--platform PLATFORM]
-ruflet build <apk|ios|aab|web|macos|windows|linux>
+ruflet build <apk|ios|aab|web|macos|windows|linux> [--self] [--verbose]
 ```
 
 For monorepo development (always uses local CLI source), run:
 
 By default `ruflet build ...` looks for Flutter client at `./ruflet_client`.
 Set `RUFLET_CLIENT_DIR` to override.
+
+- `ruflet build ... --self` uses the self-contained Flutter entrypoint with `ruby_runtime`.
+- `ruflet build ...` without `--self` builds the server-driven client entrypoint.
 
 ## Development (Monorepo)
 

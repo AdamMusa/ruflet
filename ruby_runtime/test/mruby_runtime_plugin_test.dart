@@ -24,6 +24,9 @@ class MockRubyRuntimePlatform
 
   @override
   Future<bool> isFileServerRunning() async => true;
+
+  @override
+  Future<String> lastFileServerError() async => '';
 }
 
 void main() {
@@ -40,6 +43,7 @@ void main() {
     expect(await RubyRuntime.runFile('/tmp/demo.rb'), 'file:/tmp/demo.rb');
     await RubyRuntime.startFileServer('/tmp/demo.rb');
     expect(await RubyRuntime.isFileServerRunning(), true);
+    expect(await RubyRuntime.lastFileServerError(), '');
     await RubyRuntime.stopFileServer();
     await RubyRuntime.reset();
   });
