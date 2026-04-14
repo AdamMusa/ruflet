@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "tmpdir"
 require "yaml"
 
 module Ruflet
@@ -43,31 +44,88 @@ module Ruflet
         File.write(File.join(root, "Gemfile"), Ruflet::CLI::GEMFILE_TEMPLATE)
         File.write(File.join(root, "README.md"), format(Ruflet::CLI::README_TEMPLATE, app_name: File.basename(root)))
         write_default_ruflet_config(root, File.basename(root))
-        copy_ruflet_client_template(root)
-        configure_ruflet_client(root)
-
         project_name = File.basename(root)
         puts "Run:"
         puts "  cd #{project_name}"
         puts "  bundle install"
         puts "  bundle exec ruflet run main.rb"
         puts
-        puts "Client template:"
-        puts "  cd ruflet_client"
-        puts "  flutter pub get"
-        puts "  flutter run"
+        puts "Build:"
+        puts "  bundle exec ruflet build android --self"
+        puts "  bundle exec ruflet build ios --self"
         0
       end
 
       private
 
       def copy_ruflet_client_template(root)
-        template_root = File.expand_path("../../../../../ruflet_client", __dir__)
+        template_root = resolve_ruflet_client_template_root
         return unless Dir.exist?(template_root)
 
-        target = File.join(root, "ruflet_client")
+        target = hidden_flutter_client_dir(root)
+        FileUtils.mkdir_p(File.dirname(target))
         FileUtils.cp_r(template_root, target)
         prune_client_template(target)
+      end
+
+      def hidden_flutter_client_dir(root = Dir.pwd)
+        File.join(root, "build", ".ruflet", "client")
+      end
+
+      def resolve_ruflet_client_template_root
+        repo_template = File.expand_path("../../../../../templates/ruflet_flutter_template", __dir__)
+        return repo_template if Dir.exist?(repo_template)
+
+        cached_template = cached_ruflet_client_template_root
+        return cached_template if Dir.exist?(cached_template)
+
+        fallback = File.expand_path("../../../../../ruflet_client", __dir__)
+        return fallback if Dir.exist?(fallback)
+
+        nil
+      end
+
+      def ensure_cached_ruflet_client_template!(verbose: false)
+        cached_template = cached_ruflet_client_template_root
+        return cached_template if Dir.exist?(cached_template)
+
+        download_ruflet_client_template(verbose: verbose)
+      end
+
+      def cached_ruflet_client_template_root
+        File.join(template_cache_root, "ruflet_flutter_template")
+      end
+
+      def template_cache_root
+        File.join(Dir.home, ".ruflet", "templates")
+      end
+
+      def download_ruflet_client_template(verbose: false)
+        target = cached_ruflet_client_template_root
+        FileUtils.mkdir_p(template_cache_root)
+
+        Dir.mktmpdir("ruflet-template") do |tmp|
+          repo_dir = File.join(tmp, "Ruflet")
+          clone_cmd = ["git", "clone", "--depth", "1", "--filter=blob:none", "--sparse", "https://github.com/AdamMusa/Ruflet.git", repo_dir]
+          return nil unless run_template_command(clone_cmd, verbose: verbose)
+          return nil unless run_template_command(["git", "-C", repo_dir, "sparse-checkout", "set", "templates/ruflet_flutter_template"], verbose: verbose)
+
+          source = File.join(repo_dir, "templates", "ruflet_flutter_template")
+          return nil unless Dir.exist?(source)
+
+          FileUtils.rm_rf(target)
+          FileUtils.cp_r(source, target)
+        end
+
+        target
+      rescue StandardError => e
+        warn "Failed to fetch Ruflet template: #{e.class}: #{e.message}"
+        nil
+      end
+
+      def run_template_command(cmd, verbose: false)
+        output = verbose ? $stdout : File::NULL
+        system(*cmd, out: output, err: verbose ? $stderr : File::NULL)
       end
 
       def prune_client_template(target)
@@ -83,6 +141,7 @@ module Ruflet
           android/.gradle
           android/.kotlin
           android/local.properties
+          pubspec_overrides.yaml
         ]
         paths.each do |path|
           full = File.join(target, path)
@@ -94,9 +153,14 @@ module Ruflet
         File.write(File.join(root, "ruflet.yaml"), <<~YAML)
           app:
             name: #{app_name}
-            # Optional production client endpoint used by `ruflet build`.
+            display_name: #{humanize_name(app_name)}
+            package_name: #{app_name.gsub(/[^a-zA-Z0-9_]+/, "_").downcase}
+            organization: com.example
+            version: 1.0.0+1
+            description: A new Ruflet app.
+            # Required for server-driven builds: `ruflet build ios`, `apk`, `web`, etc. without `--self`.
             # Example: https://api.example.com
-            ruflet_client_url: ""
+            backend_url: ""
 
           # Source of truth for Flutter client extensions/plugins.
           # Examples: camera, video, audio, flashlight, webview, map
@@ -115,102 +179,6 @@ module Ruflet
             icon_background: "#FFFFFF"
             theme_color: "#FFFFFF"
         YAML
-      end
-
-      def configure_ruflet_client(root)
-        config_path = File.join(root, "ruflet.yaml")
-        return unless File.file?(config_path)
-
-        config = YAML.safe_load(File.read(config_path), aliases: true) || {}
-        extension_keys = extract_extension_keys(config)
-        extension_packages = extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:package) }.uniq
-        extension_aliases = extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:alias) }.uniq
-
-        client_dir = File.join(root, "ruflet_client")
-        apply_client_manifest!(client_dir, extension_packages, extension_aliases)
-      rescue StandardError => e
-        warn "Failed to configure ruflet_client from ruflet.yaml: #{e.class}: #{e.message}"
-      end
-
-      def extract_extension_keys(config)
-        from_services = Array(config["services"])
-
-        from_services
-          .map { |v| normalize_extension_key(v) }
-          .compact
-          .uniq
-      end
-
-      def normalize_extension_key(value)
-        key = value.to_s.strip.downcase
-        return nil if key.empty?
-
-        key.tr!("-", "_")
-        key.gsub!(/\A(flet_)+/, "")
-        key.gsub!(/\Aservice_/, "")
-        key.gsub!(/\Acontrol_/, "")
-        key = "file_picker" if key == "filepicker"
-        key
-      end
-
-      def apply_client_manifest!(client_dir, extension_packages, extension_aliases)
-        return unless Dir.exist?(client_dir)
-
-        pubspec_path = File.join(client_dir, "pubspec.yaml")
-        main_path = File.join(client_dir, "lib", "main.dart")
-        prune_client_pubspec(pubspec_path, extension_packages) if File.file?(pubspec_path)
-        prune_client_main(main_path, extension_aliases) if File.file?(main_path)
-      end
-
-      def prune_client_pubspec(path, selected_packages)
-        data = YAML.safe_load(File.read(path), aliases: true) || {}
-        deps = (data["dependencies"] || {}).dup
-
-        deps.keys.each do |name|
-          next unless name.start_with?("flet_")
-          next if name == "flet"
-          next if selected_packages.include?(name)
-
-          deps.delete(name)
-        end
-
-        data["dependencies"] = deps
-        File.write(path, YAML.dump(data))
-      end
-
-      def prune_client_main(path, selected_aliases)
-        lines = File.readlines(path)
-        alias_to_package = {}
-
-        lines.each do |line|
-          match = line.match(%r{\Aimport 'package:(flet_[^/]+)/\1\.dart' as ([a-zA-Z0-9_]+);})
-          next unless match
-
-          alias_to_package[match[2]] = match[1]
-        end
-
-        kept = lines.select do |line|
-          import_match = line.match(%r{\Aimport 'package:(flet_[^/]+)/\1\.dart' as ([a-zA-Z0-9_]+);})
-          if import_match
-            package_name = import_match[1]
-            next true if package_name == "flet"
-            next true if selected_aliases.include?(import_match[2])
-            next false
-          end
-
-          extension_match = line.match(/\A\s*([a-zA-Z0-9_]+)\.Extension\(\),\s*\z/)
-          if extension_match
-            extension_alias = extension_match[1]
-            package_name = alias_to_package[extension_alias]
-            next true if package_name.nil? # non-Flet extension lines
-            next true if selected_aliases.include?(extension_alias)
-            next false
-          end
-
-          true
-        end
-
-        File.write(path, kept.join)
       end
 
       def humanize_name(name)

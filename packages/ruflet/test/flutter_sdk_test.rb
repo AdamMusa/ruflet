@@ -77,4 +77,68 @@ class RufletCliFlutterSdkTest < Minitest::Test
 
     assert_equal "3.32.5", release["version"]
   end
+
+  def test_ensure_fvm_available_returns_pub_cache_binary_after_activation
+    sdk = DummySdk.new
+
+    Dir.mktmpdir do |dir|
+      pub_cache_dir = File.join(dir, ".pub-cache", "bin")
+      FileUtils.mkdir_p(pub_cache_dir)
+      fvm_path = File.join(pub_cache_dir, "fvm")
+      File.write(fvm_path, "#!/bin/sh\n")
+      FileUtils.chmod("+x", fvm_path)
+
+      sdk.define_singleton_method(:which_command) do |name|
+        return nil if name == "fvm"
+        "/tmp/dart" if name == "dart"
+      end
+      sdk.define_singleton_method(:system) { |_dart, *_args, **_kwargs| true }
+
+      Dir.stub(:home, dir) do
+        assert_equal fvm_path, sdk.send(:ensure_fvm_available)
+      end
+    end
+  end
+
+  def test_tools_from_flutter_bin_exposes_fvm_sdk_environment
+    sdk = DummySdk.new
+
+    Dir.mktmpdir do |dir|
+      bin_dir = File.join(dir, "bin")
+      FileUtils.mkdir_p(bin_dir)
+      flutter = File.join(bin_dir, "flutter")
+      dart = File.join(bin_dir, "dart")
+      File.write(flutter, "#!/bin/sh\n")
+      File.write(dart, "#!/bin/sh\n")
+      FileUtils.chmod("+x", flutter)
+      FileUtils.chmod("+x", dart)
+
+      Dir.stub(:home, dir) do
+        tools = sdk.send(:tools_from_flutter_bin, flutter)
+
+        assert_equal flutter, tools[:flutter]
+        assert_equal dart, tools[:dart]
+        assert_equal dir, tools[:env]["FLUTTER_ROOT"]
+        assert_equal dir, tools[:env]["FVM_FLUTTER_SDK"]
+        assert_includes tools[:env]["PATH"], bin_dir
+        assert_includes tools[:env]["PATH"], File.join(dir, ".pub-cache", "bin")
+      end
+    end
+  end
+
+  def test_flutter_host_detects_linux
+    sdk = DummySdk.new
+
+    RbConfig::CONFIG.stub(:[], "linux-gnu") do
+      assert_equal "linux", sdk.send(:flutter_host)
+    end
+  end
+
+  def test_flutter_host_detects_windows
+    sdk = DummySdk.new
+
+    RbConfig::CONFIG.stub(:[], "mingw32") do
+      assert_equal "windows", sdk.send(:flutter_host)
+    end
+  end
 end

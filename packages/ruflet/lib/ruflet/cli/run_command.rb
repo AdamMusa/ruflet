@@ -40,6 +40,7 @@ module Ruflet
           "RUFLET_SUPPRESS_SERVER_BANNER" => "1",
           "RUFLET_PORT" => selected_port.to_s
         }
+        apply_local_ruflet_dev_overrides(env)
         assets_dir = File.join(File.dirname(script_path), "assets")
         env["RUFLET_ASSETS_DIR"] = assets_dir if File.directory?(assets_dir)
 
@@ -103,6 +104,24 @@ module Ruflet
         end
 
         [RbConfig.ruby, script_path]
+      end
+
+      def apply_local_ruflet_dev_overrides(env)
+        lib_paths = local_ruflet_dev_lib_paths
+        return if lib_paths.empty?
+
+        existing = env["RUBYLIB"].to_s
+        segments = lib_paths + existing.split(File::PATH_SEPARATOR).reject(&:empty?)
+        env["RUBYLIB"] = segments.uniq.join(File::PATH_SEPARATOR)
+        puts "Ruflet dev source: #{lib_paths.join(", ")}"
+      end
+
+      def local_ruflet_dev_lib_paths
+        repo_root = File.expand_path("../../../../../", __dir__)
+        package_roots = %w[ruflet_core ruflet_server].map { |name| File.join(repo_root, "packages", name, "lib") }
+        return [] unless package_roots.all? { |path| Dir.exist?(path) }
+
+        package_roots
       end
 
       def resolve_script(token)

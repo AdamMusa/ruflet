@@ -24,6 +24,8 @@ void main() {
               return null;
             case 'isFileServerRunning':
               return true;
+            case 'lastFileServerError':
+              return '';
             default:
               return null;
           }
@@ -57,5 +59,9 @@ void main() {
 
   test('stopFileServer', () async {
     await platform.stopFileServer();
+  });
+
+  test('lastFileServerError', () async {
+    expect(await platform.lastFileServerError(), '');
   });
 }

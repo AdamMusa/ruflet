@@ -10,13 +10,6 @@ class RufletCliNewCommandTest < Minitest::Test
         original_stdout = $stdout
         $stdout = out
 
-        cli_singleton = Ruflet::CLI.singleton_class
-        had_method = cli_singleton.private_method_defined?(:copy_ruflet_client_template) || cli_singleton.method_defined?(:copy_ruflet_client_template)
-        original_method = Ruflet::CLI.method(:copy_ruflet_client_template) if had_method
-
-        cli_singleton.send(:define_method, :copy_ruflet_client_template) { |_root| nil }
-        cli_singleton.send(:private, :copy_ruflet_client_template)
-
         result = Ruflet::CLI.command_new(["demo_app"])
 
         assert_equal 0, result
@@ -24,66 +17,56 @@ class RufletCliNewCommandTest < Minitest::Test
         assert File.exist?(File.join(dir, "demo_app", "Gemfile"))
         assert File.exist?(File.join(dir, "demo_app", "README.md"))
         assert File.exist?(File.join(dir, "demo_app", "ruflet.yaml"))
+        refute File.exist?(File.join(dir, "demo_app", "ruflet_client"))
         refute File.exist?(File.join(dir, "demo_app", ".bundle", "config"))
       ensure
         $stdout = original_stdout
-
-        if had_method
-          cli_singleton.send(:define_method, :copy_ruflet_client_template, original_method)
-          cli_singleton.send(:private, :copy_ruflet_client_template)
-        else
-          cli_singleton.send(:remove_method, :copy_ruflet_client_template)
-        end
       end
     end
   end
 
-  def test_prune_client_manifest_keeps_only_selected_extensions
+  def test_copy_ruflet_client_template_prefers_flutter_template
     Dir.mktmpdir do |dir|
-      client_dir = File.join(dir, "ruflet_client")
-      FileUtils.mkdir_p(File.join(client_dir, "lib"))
+      target_root = File.join(dir, "demo")
+      FileUtils.mkdir_p(target_root)
 
-      File.write(
-        File.join(client_dir, "pubspec.yaml"),
-        <<~YAML
-          dependencies:
-            flutter:
-              sdk: flutter
-            flet:
-              git:
-                url: https://github.com/flet-dev/flet.git
-            flet_camera:
-              git:
-                url: https://github.com/flet-dev/flet.git
-            flet_video:
-              git:
-                url: https://github.com/flet-dev/flet.git
-        YAML
-      )
+      Ruflet::CLI.send(:copy_ruflet_client_template, target_root)
 
-      File.write(
-        File.join(client_dir, "lib", "main.dart"),
-        <<~DART
-          import 'package:flet/flet.dart';
-          import 'package:flet_camera/flet_camera.dart' as ruflet_camera;
-          import 'package:flet_video/flet_video.dart' as ruflet_video;
+      client_dir = File.join(target_root, "build", ".ruflet", "client")
+      assert File.directory?(client_dir)
+      assert File.file?(File.join(client_dir, "assets", "main.rb"))
+      assert File.file?(File.join(client_dir, "lib", "main.dart"))
+      assert File.file?(File.join(client_dir, "lib", "main.self.dart"))
+      assert File.file?(File.join(client_dir, "lib", "main.server.dart"))
+    end
+  end
 
-          final extensions = <FletExtension>[
-            ruflet_camera.Extension(),
-            ruflet_video.Extension(),
-          ];
-        DART
-      )
+  def test_copy_ruflet_client_template_uses_cached_template_when_repo_template_missing
+    Dir.mktmpdir do |dir|
+      target_root = File.join(dir, "demo")
+      cached_template = File.join(dir, "cached_template")
+      FileUtils.mkdir_p(File.join(cached_template, "lib"))
+      FileUtils.mkdir_p(File.join(cached_template, "assets"))
+      File.write(File.join(cached_template, "assets", "main.rb"), "puts 'hi'\n")
+      File.write(File.join(cached_template, "lib", "main.dart"), "void main() {}\n")
+      File.write(File.join(cached_template, "lib", "main.self.dart"), "void main() {}\n")
+      File.write(File.join(cached_template, "lib", "main.server.dart"), "void main() {}\n")
+      FileUtils.mkdir_p(target_root)
 
-      Ruflet::CLI.send(:apply_client_manifest!, client_dir, ["flet_camera"], ["ruflet_camera"])
+      cli_singleton = Ruflet::CLI.singleton_class
+      original_method = Ruflet::CLI.method(:resolve_ruflet_client_template_root)
+      cli_singleton.send(:define_method, :resolve_ruflet_client_template_root) { cached_template }
+      cli_singleton.send(:private, :resolve_ruflet_client_template_root)
 
-      pruned_pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
-      pruned_main = File.read(File.join(client_dir, "lib", "main.dart"))
+      Ruflet::CLI.send(:copy_ruflet_client_template, target_root)
 
-      assert_includes pruned_pubspec, "flet_camera:"
-      refute_includes pruned_pubspec, "flet_video:"
-      assert_includes pruned_main, "ruflet_camera.Extension()"
-      refute_includes pruned_main, "ruflet_video.Extension()"
+      client_dir = File.join(target_root, "build", ".ruflet", "client")
+      assert File.directory?(client_dir)
+      assert File.file?(File.join(client_dir, "assets", "main.rb"))
+      assert File.file?(File.join(client_dir, "lib", "main.server.dart"))
+    ensure
+      cli_singleton.send(:define_method, :resolve_ruflet_client_template_root, original_method)
+      cli_singleton.send(:private, :resolve_ruflet_client_template_root)
     end
   end
 end

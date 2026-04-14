@@ -865,9 +865,12 @@ module Ruflet
     end
 
     def normalize_value(key, value)
-      if icon_prop_key?(key) && (value.is_a?(String) || value.is_a?(Symbol) || value.is_a?(Integer))
-        codepoint = resolve_icon_codepoint(value)
-        return codepoint unless codepoint.nil?
+      if icon_prop_key?(key)
+        return value if value.is_a?(Integer)
+        return value.value if value.is_a?(Ruflet::IconData)
+        return value if value.nil?
+
+        raise ArgumentError, "page #{key} must use Ruflet::MaterialIcons (or another Ruflet::IconData), not #{value.inspect}"
       end
 
       return value.value if value.is_a?(Ruflet::IconData)
@@ -1017,14 +1020,6 @@ module Ruflet
 
         [0, 0, k, serialize_patch_value(v)]
       end
-    end
-
-    def resolve_icon_codepoint(value)
-      codepoint = Ruflet::MaterialIconLookup.codepoint_for(value)
-      if codepoint.nil? || codepoint == value
-        codepoint = Ruflet::CupertinoIconLookup.codepoint_for(value)
-      end
-      codepoint
     end
 
     def ensure_clipboard_service

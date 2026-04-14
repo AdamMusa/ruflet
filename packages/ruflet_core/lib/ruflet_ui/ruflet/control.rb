@@ -66,6 +66,9 @@ module Ruflet
 
       props.each { |k, v| patch[k] = serialize_value(v) }
       patch["controls"] = children.map(&:to_patch) unless children.empty?
+      if ENV["RUFLET_DEBUG"] == "1" && type == "floatingactionbutton"
+        Kernel.warn("[to_patch] #{patch.inspect}")
+      end
       patch
     end
 
@@ -145,12 +148,11 @@ module Ruflet
         value =
           if v.is_a?(Symbol)
             v.to_s
-          elsif v.is_a?(Ruflet::IconData)
-            v.value
           else
             v
           end
         value = normalize_icon_prop(mapped_key, value)
+        value = value.value if value.is_a?(Ruflet::IconData)
         value = normalize_color_prop(mapped_key, value)
 
         result[mapped_key] = value
@@ -174,23 +176,15 @@ module Ruflet
 
     def normalize_icon_prop(key, value)
       return value unless icon_prop_key?(key)
-      codepoint = resolve_icon_codepoint(value)
-      codepoint.nil? ? value : codepoint
+      return value if value.nil?
+      return value if value.is_a?(Integer)
+      return value if value.is_a?(Ruflet::IconData)
+
+      raise ArgumentError, "#{type} #{key} must use Ruflet::MaterialIcons (or another Ruflet::IconData), not #{value.inspect}"
     end
 
     def icon_prop_key?(key)
       key == "icon" || key.end_with?("_icon")
-    end
-
-    def resolve_icon_codepoint(value)
-      return nil unless value.is_a?(Integer) || value.is_a?(Symbol) || value.is_a?(String)
-
-      codepoint = Ruflet::MaterialIconLookup.codepoint_for(value)
-      if codepoint.nil? || (value.is_a?(Integer) && codepoint == value)
-        cupertino = Ruflet::CupertinoIconLookup.codepoint_for(value)
-        codepoint = cupertino unless cupertino.nil?
-      end
-      codepoint
     end
 
     def normalized_event_name(event_name)

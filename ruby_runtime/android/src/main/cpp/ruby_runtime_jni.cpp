@@ -183,7 +183,7 @@ void request_stop_server_locked() {
 }  // namespace
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeEval(
+Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeEval(
     JNIEnv* env,
     jobject /* this */,
     jstring code) {
@@ -212,7 +212,7 @@ Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeEval(
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeRunFile(
+Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeRunFile(
     JNIEnv* env,
     jobject /* this */,
     jstring path) {
@@ -241,7 +241,7 @@ Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeRunFile(
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeReset(
+Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeReset(
     JNIEnv* env,
     jobject /* this */) {
   std::lock_guard<std::mutex> lock(g_mutex);
@@ -260,7 +260,7 @@ Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeReset(
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeStartFileServer(
+Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeStartFileServer(
     JNIEnv* env,
     jobject /* this */,
     jstring path,
@@ -338,7 +338,7 @@ Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeStartFileServer(
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeStopFileServer(
+Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeStopFileServer(
     JNIEnv* env,
     jobject /* this */) {
   std::lock_guard<std::mutex> lock(g_mutex);
@@ -347,7 +347,7 @@ Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeStopFileServer(
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeIsFileServerRunning(
+Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeIsFileServerRunning(
     JNIEnv* env,
     jobject /* this */) {
   std::lock_guard<std::mutex> lock(g_mutex);
@@ -356,7 +356,7 @@ Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeIsFileServerRunning(
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_example_ruby_1runtime_MrubyRuntimePlugin_nativeLastFileServerError(
+Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeLastFileServerError(
     JNIEnv* env,
     jobject /* this */) {
   std::lock_guard<std::mutex> lock(g_mutex);
