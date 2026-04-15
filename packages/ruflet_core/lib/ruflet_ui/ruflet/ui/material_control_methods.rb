@@ -150,12 +150,18 @@ module Ruflet
         mapped = props.dup
 
         explicit_icon = mapped[:icon] || mapped["icon"]
-        if explicit_icon.is_a?(Ruflet::Control) && content.nil?
-          mapped.delete(:icon)
-          mapped.delete("icon")
-          content = explicit_icon
-        elsif !explicit_icon.nil? && !explicit_icon.is_a?(Ruflet::IconData)
-          raise ArgumentError, "fab icon must use Ruflet::MaterialIcons (or another Ruflet::IconData) or an icon(...) control"
+        explicit_content =
+          if mapped.key?(:content)
+            mapped.delete(:content)
+          elsif mapped.key?("content")
+            mapped.delete("content")
+          end
+
+        content = explicit_content if content.nil?
+        content = nil if blank_fab_content?(content) && !explicit_icon.nil?
+
+        unless explicit_icon.nil? || explicit_icon.is_a?(Ruflet::IconData) || explicit_icon.is_a?(String) || explicit_icon.is_a?(Symbol) || explicit_icon.is_a?(Ruflet::Control)
+          raise ArgumentError, "fab icon must use an icon name string or an icon(...) control"
         end
 
         unless content.nil?
@@ -164,13 +170,23 @@ module Ruflet
             when Ruflet::Control
               content
             when Ruflet::IconData
-              icon(icon: content)
+              content.value
+            when String, Symbol
+              content.to_s
             else
-              raise ArgumentError, "fab content must be an icon(...) control or Ruflet::MaterialIcons value"
+              raise ArgumentError, "fab content must be a string or control"
             end
         end
 
+        if explicit_icon.nil? && blank_fab_content?(content)
+          raise ArgumentError, "fab requires icon or non-empty content"
+        end
+
         mapped
+      end
+
+      def blank_fab_content?(content)
+        content.respond_to?(:empty?) && content.empty?
       end
 
       def normalize_image_source(value)

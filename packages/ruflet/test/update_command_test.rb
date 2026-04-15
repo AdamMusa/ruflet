@@ -80,7 +80,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
           dependencies:
             flutter:
               sdk: flutter
-            ruby_runtime: ^0.0.1
+            ruby_runtime: ^0.0.2
         YAML
       )
 
@@ -121,7 +121,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
           dependencies:
             flutter:
               sdk: flutter
-            ruby_runtime: ^0.0.1
+            ruby_runtime: ^0.0.2
           flutter:
             assets:
               - assets/main.rb

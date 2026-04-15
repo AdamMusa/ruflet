@@ -13,6 +13,6 @@ Gem::Specification.new do |spec|
   spec.homepage = "https://github.com/AdamMusa/Ruflet"
   spec.required_ruby_version = ">= 3.1"
 
-  spec.files = Dir.glob("lib/**/*.rb") + ["README.md"]
+  spec.files = Dir.glob("lib/**/*.{rb,json}") + ["README.md"]
   spec.require_paths = ["lib"]
 end

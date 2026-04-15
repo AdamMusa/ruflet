@@ -52,9 +52,9 @@ module Ruflet
       raw = raw.strip if raw.respond_to?(:strip)
       return raw if raw.empty?
 
-      codepoint = Ruflet::MaterialIconLookup.codepoint_for(raw)
-      codepoint = Ruflet::CupertinoIconLookup.codepoint_for(raw) if codepoint.nil?
-      return codepoint unless codepoint.nil?
+      canonical = Ruflet::MaterialIconLookup.canonical_name_for(raw)
+      canonical = Ruflet::CupertinoIconLookup.canonical_name_for(raw) if canonical.nil?
+      return canonical unless canonical.nil?
 
       raw
     end

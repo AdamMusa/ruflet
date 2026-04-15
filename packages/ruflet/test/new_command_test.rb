@@ -17,6 +17,8 @@ class RufletCliNewCommandTest < Minitest::Test
         assert File.exist?(File.join(dir, "demo_app", "Gemfile"))
         assert File.exist?(File.join(dir, "demo_app", "README.md"))
         assert File.exist?(File.join(dir, "demo_app", "ruflet.yaml"))
+        assert File.file?(File.join(dir, "demo_app", "assets", "icon.png"))
+        assert File.file?(File.join(dir, "demo_app", "assets", "splash.png"))
         refute File.exist?(File.join(dir, "demo_app", "ruflet_client"))
         refute File.exist?(File.join(dir, "demo_app", ".bundle", "config"))
       ensure
@@ -67,6 +69,30 @@ class RufletCliNewCommandTest < Minitest::Test
     ensure
       cli_singleton.send(:define_method, :resolve_ruflet_client_template_root, original_method)
       cli_singleton.send(:private, :resolve_ruflet_client_template_root)
+    end
+  end
+
+  def test_copy_ruflet_client_template_ignores_missing_template
+    Dir.mktmpdir do |dir|
+      target_root = File.join(dir, "demo")
+      FileUtils.mkdir_p(target_root)
+
+      cli_singleton = Ruflet::CLI.singleton_class
+      original_method = Ruflet::CLI.method(:resolve_ruflet_client_template_root)
+      original_cache_method = Ruflet::CLI.method(:ensure_cached_ruflet_client_template!)
+      cli_singleton.send(:define_method, :resolve_ruflet_client_template_root) { nil }
+      cli_singleton.send(:define_method, :ensure_cached_ruflet_client_template!) { nil }
+      cli_singleton.send(:private, :resolve_ruflet_client_template_root)
+      cli_singleton.send(:private, :ensure_cached_ruflet_client_template!)
+
+      Ruflet::CLI.send(:copy_ruflet_client_template, target_root)
+
+      refute File.directory?(File.join(target_root, "build", ".ruflet", "client"))
+    ensure
+      cli_singleton.send(:define_method, :resolve_ruflet_client_template_root, original_method)
+      cli_singleton.send(:define_method, :ensure_cached_ruflet_client_template!, original_cache_method)
+      cli_singleton.send(:private, :resolve_ruflet_client_template_root)
+      cli_singleton.send(:private, :ensure_cached_ruflet_client_template!)
     end
   end
 end

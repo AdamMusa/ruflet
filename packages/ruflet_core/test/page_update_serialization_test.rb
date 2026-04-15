@@ -174,7 +174,7 @@ class PageUpdateSerializationTest < Minitest::Test
 
     refute_nil fab
     assert_equal "FloatingActionButton", fab["_c"]
-    assert_equal Ruflet::MaterialIcons::ADD.value, fab["icon"]
+    assert_equal 65604, fab["icon"]
     assert_equal true, fab["on_click"]
   end
 

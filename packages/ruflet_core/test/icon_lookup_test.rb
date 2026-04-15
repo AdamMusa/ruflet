@@ -6,11 +6,13 @@ class RufletIconLookupTest < Minitest::Test
   def test_material_icon_lookup_uses_local_json
     assert_equal 65604, Ruflet::MaterialIconLookup.codepoint_for("add")
     assert_equal 65604, Ruflet::MaterialIconLookup.codepoint_for(:add)
+    assert_equal "add", Ruflet::MaterialIconLookup.canonical_name_for(:add)
   end
 
   def test_cupertino_icon_lookup_uses_local_json
     refute_nil Ruflet::CupertinoIconLookup.codepoint_for("add")
     refute_nil Ruflet::CupertinoIconLookup.codepoint_for(:search)
+    assert_equal "add", Ruflet::CupertinoIconLookup.canonical_name_for(:add)
   end
 
   def test_icons_groups_expose_material_and_cupertino

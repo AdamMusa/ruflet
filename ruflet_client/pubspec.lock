@@ -1308,7 +1308,7 @@ packages:
       path: "../ruby_runtime"
       relative: true
     source: path
-    version: "0.0.1"
+    version: "0.0.2"
   safe_local_storage:
     dependency: transitive
     description:

@@ -29,14 +29,18 @@ module Ruflet
     ICONS.each do |const_name, icon_name|
       next if const_defined?(const_name, false)
 
-      const_set(const_name, Ruflet::IconData.new(icon_name))
+      const_set(const_name, icon_name.to_s.downcase)
     end
 
     def [](name)
       key = name.to_s.upcase.to_sym
       return const_get(key) if const_defined?(key, false)
 
-      Ruflet::IconData.new(name.to_s)
+      Ruflet::CupertinoIconLookup.canonical_name_for(name) || name.to_s
+    end
+
+    def constants(_inherit = true)
+      ICONS.keys
     end
 
     def all
@@ -44,7 +48,7 @@ module Ruflet
     end
 
     def random
-      all.sample || Ruflet::IconData.new(Ruflet::CupertinoIconLookup.fallback_codepoint)
+      all.sample || "question_circle"
     end
 
     def names

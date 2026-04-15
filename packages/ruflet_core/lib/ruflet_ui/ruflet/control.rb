@@ -177,10 +177,19 @@ module Ruflet
     def normalize_icon_prop(key, value)
       return value unless icon_prop_key?(key)
       return value if value.nil?
-      return value if value.is_a?(Integer)
-      return value if value.is_a?(Ruflet::IconData)
+      return value if value.is_a?(Ruflet::Control)
+      return normalize_icon_name(value.value) if value.is_a?(Ruflet::IconData)
+      return normalize_icon_name(value.to_s) if value.is_a?(String) || value.is_a?(Symbol)
 
-      raise ArgumentError, "#{type} #{key} must use Ruflet::MaterialIcons (or another Ruflet::IconData), not #{value.inspect}"
+      raise ArgumentError, "#{type} #{key} must use an icon name string, not #{value.inspect}"
+    end
+
+    def normalize_icon_name(value)
+      codepoint = Ruflet::MaterialIconLookup.codepoint_for(value)
+      codepoint = Ruflet::CupertinoIconLookup.codepoint_for(value) if codepoint.nil?
+      return codepoint unless codepoint.nil?
+
+      raise ArgumentError, "#{type} icon must use a known icon name, not #{value.inspect}"
     end
 
     def icon_prop_key?(key)

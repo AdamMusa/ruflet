@@ -43,8 +43,10 @@ const String kConfiguredClientUrl = String.fromEnvironment(
   'RUFLET_BACKEND_URL',
   defaultValue: String.fromEnvironment('RUFLET_CLIENT_URL', defaultValue: ''),
 );
-const String kEmbeddedRubyAsset = 'assets/main.rb';
-const String kEmbeddedProjectPrefix = 'assets/ruby_project/';
+const String kEmbeddedProjectName = String.fromEnvironment(
+  'RUFLET_EMBEDDED_PROJECT',
+  defaultValue: '',
+);
 Tester? tester;
 
 String normalizePageUrlForPlatform(String rawUrl) {
@@ -333,48 +335,63 @@ class EmbeddedRufletRuntime {
 
   static Future<String> _prepareProjectFiles(Directory workDir) async {
     final manifest = await _loadAssetManifest();
-    final projectAssets = manifest.where((asset) => asset.startsWith(kEmbeddedProjectPrefix)).toList();
+    final embeddedProjectPrefix = _embeddedProjectPrefix(
+      manifest,
+    );
+    final projectAssets = manifest.where((asset) => asset.startsWith(embeddedProjectPrefix)).toList();
 
-    if (projectAssets.isNotEmpty) {
-      for (final asset in projectAssets) {
-        final relative = asset.substring(kEmbeddedProjectPrefix.length);
-        if (relative.isEmpty) continue;
-        final destination = File('${workDir.path}/$relative');
-        await destination.parent.create(recursive: true);
-        final data = await rootBundle.load(asset);
-        await destination.writeAsBytes(
-          data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
-        );
-      }
-      return '${workDir.path}/main.rb';
+    if (projectAssets.isEmpty) {
+      throw StateError(
+        'No packaged Ruby project was found under $embeddedProjectPrefix. '
+        'Run `ruflet build --self` so Ruflet can package the real Ruby app.',
+      );
     }
 
-    final serverPath = '${workDir.path}/main.rb';
-    final source = await rootBundle.loadString(kEmbeddedRubyAsset);
-    debugPrint(_describeEmbeddedAsset(source, serverPath));
-    await File(serverPath).writeAsString(source);
-    return serverPath;
+    for (final asset in projectAssets) {
+      final relative = asset.substring(embeddedProjectPrefix.length);
+      if (relative.isEmpty) continue;
+      final destination = File('${workDir.path}/$relative');
+      await destination.parent.create(recursive: true);
+      final data = await rootBundle.load(asset);
+      await destination.writeAsBytes(
+        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+      );
+    }
+
+    return '${workDir.path}/main.rb';
+  }
+
+  static String _embeddedProjectPrefix(
+    List<String> manifest,
+  ) {
+    final name = kEmbeddedProjectName.trim();
+    if (name.isNotEmpty) {
+      return 'assets/$name/';
+    }
+
+    final discovered = manifest
+        .where((asset) => asset.startsWith('assets/') && asset.endsWith('/main.rb'))
+        .map((asset) => asset.substring(0, asset.length - 'main.rb'.length))
+        .where((prefix) => prefix != 'assets/')
+        .where((prefix) => prefix != 'assets/ruby_project/')
+        .where((prefix) => !prefix.startsWith('assets/icons/'))
+        .toList();
+
+    if (discovered.length == 1) {
+      return discovered.single;
+    }
+
+    throw StateError(
+      'Missing RUFLET_EMBEDDED_PROJECT dart define and could not infer the embedded project asset path. '
+      'Run `ruflet build --self` so Ruflet can package the real Ruby app.',
+    );
   }
 
   static Future<List<String>> _loadAssetManifest() async {
     try {
-      final raw = await rootBundle.loadString('AssetManifest.json');
-      final decoded = jsonDecode(raw);
-      if (decoded is Map<String, dynamic>) {
-        return decoded.keys.toList();
-      }
+      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+      return manifest.listAssets();
     } catch (_) {}
     return const [];
-  }
-
-  static String _describeEmbeddedAsset(String source, String serverPath) {
-    final lines = source.split('\n');
-    final preview = lines
-        .map((line) => line.trim())
-        .where((line) => line.isNotEmpty)
-        .take(3)
-        .join(' | ');
-    return 'Embedded Ruby asset $kEmbeddedRubyAsset -> $serverPath '
-        '(${source.length} chars) preview: $preview';
   }
 }

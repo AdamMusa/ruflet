@@ -44,6 +44,7 @@ module Ruflet
         File.write(File.join(root, "Gemfile"), Ruflet::CLI::GEMFILE_TEMPLATE)
         File.write(File.join(root, "README.md"), format(Ruflet::CLI::README_TEMPLATE, app_name: File.basename(root)))
         write_default_ruflet_config(root, File.basename(root))
+        copy_default_project_assets(root)
         project_name = File.basename(root)
         puts "Run:"
         puts "  cd #{project_name}"
@@ -59,8 +60,8 @@ module Ruflet
       private
 
       def copy_ruflet_client_template(root)
-        template_root = resolve_ruflet_client_template_root
-        return unless Dir.exist?(template_root)
+        template_root = resolve_ruflet_client_template_root || ensure_cached_ruflet_client_template!
+        return unless template_root && Dir.exist?(template_root)
 
         target = hidden_flutter_client_dir(root)
         FileUtils.mkdir_p(File.dirname(target))
@@ -179,6 +180,29 @@ module Ruflet
             icon_background: "#FFFFFF"
             theme_color: "#FFFFFF"
         YAML
+      end
+
+      def copy_default_project_assets(root)
+        assets_dir = File.join(root, "assets")
+        FileUtils.mkdir_p(assets_dir)
+
+        default_project_assets_root.each do |source_root|
+          next unless Dir.exist?(source_root)
+
+          %w[icon.png splash.png].each do |filename|
+            source = File.join(source_root, filename)
+            FileUtils.cp(source, File.join(assets_dir, filename)) if File.file?(source)
+          end
+          return if File.file?(File.join(assets_dir, "icon.png")) && File.file?(File.join(assets_dir, "splash.png"))
+        end
+      end
+
+      def default_project_assets_root
+        [
+          File.expand_path("../../../assets", __dir__),
+          File.expand_path("../../../../../templates/ruflet_flutter_template/assets", __dir__),
+          File.expand_path("../../../../../ruflet_client/assets", __dir__)
+        ]
       end
 
       def humanize_name(name)

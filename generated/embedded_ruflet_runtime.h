@@ -1620,6 +1620,10 @@ module Ruflet
       Ruflet::IconData.new(name.to_s)
     end
 
+    def constants(_inherit = true)
+      ICONS.keys
+    end
+
     def all
       ICONS.keys.map { |k| const_get(k) }
     end
@@ -1736,6 +1740,10 @@ module Ruflet
       return const_get(key) if const_defined?(key, false)
 
       Ruflet::IconData.new(name.to_s)
+    end
+
+    def constants(_inherit = true)
+      ICONS.keys
     end
 
     def all

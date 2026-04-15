@@ -866,15 +866,24 @@ module Ruflet
 
     def normalize_value(key, value)
       if icon_prop_key?(key)
-        return value if value.is_a?(Integer)
-        return value.value if value.is_a?(Ruflet::IconData)
+        return normalize_icon_name(value.value) if value.is_a?(Ruflet::IconData)
+        return normalize_icon_name(value.to_s) if value.is_a?(String) || value.is_a?(Symbol)
+        return value if value.is_a?(Ruflet::Control)
         return value if value.nil?
 
-        raise ArgumentError, "page #{key} must use Ruflet::MaterialIcons (or another Ruflet::IconData), not #{value.inspect}"
+        raise ArgumentError, "page #{key} must use an icon name string, not #{value.inspect}"
       end
 
       return value.value if value.is_a?(Ruflet::IconData)
       value.is_a?(Symbol) ? value.to_s : value
+    end
+
+    def normalize_icon_name(value)
+      codepoint = Ruflet::MaterialIconLookup.codepoint_for(value)
+      codepoint = Ruflet::CupertinoIconLookup.codepoint_for(value) if codepoint.nil?
+      return codepoint unless codepoint.nil?
+
+      raise ArgumentError, "page icon must use a known icon name, not #{value.inspect}"
     end
 
     def build_route(route, query_params = {})

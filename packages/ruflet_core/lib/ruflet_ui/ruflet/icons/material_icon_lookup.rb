@@ -31,6 +31,19 @@ module Ruflet
       icons["HELP_OUTLINE"] || icons["HELP"] || icons["QUESTION_MARK"] || 0
     end
 
+    def canonical_name_for(value)
+      return nil if value.is_a?(Integer)
+
+      icons = icon_map
+      return nil if icons.empty?
+
+      candidate_names(value).each do |name|
+        return name.downcase if icons.key?(name)
+      end
+
+      nil
+    end
+
     def icon_map
       @icon_map ||= load_icon_map
     end

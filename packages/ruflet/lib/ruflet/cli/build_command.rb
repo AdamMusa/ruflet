@@ -107,9 +107,13 @@ module Ruflet
 
         tools = ensure_flutter!("install", client_dir: client_dir)
         command_env = install_tool_env(tools[:env], client_dir)
-        unless sync_built_outputs_for_install(client_dir, verbose: !!verbose)
+        install_platform = install_platform_for_device(device_id)
+        unless sync_built_outputs_for_install(client_dir, platform: install_platform, verbose: !!verbose)
           warn "Could not find built app outputs under ./build"
           warn "Run `ruflet build ...` first, then `ruflet install`."
+          return 1
+        end
+        unless validate_install_artifacts(client_dir, platform: install_platform, device_id: device_id)
           return 1
         end
 
@@ -188,11 +192,18 @@ module Ruflet
         end
       end
 
-      def sync_built_outputs_for_install(client_dir, verbose: false)
+      def sync_built_outputs_for_install(client_dir, platform: nil, verbose: false)
         synced = false
 
-        %w[android ios macos windows linux web apk aab appbundle].each do |platform|
-          exports_for(platform).each do |relative_source, relative_target|
+        platforms =
+          if platform
+            install_sync_platforms(platform)
+          else
+            %w[android ios macos windows linux web apk aab appbundle]
+          end
+
+        platforms.each do |target_platform|
+          exports_for(target_platform).each do |relative_source, relative_target|
             source = File.join(user_build_root, relative_target)
             next unless File.exist?(source)
 
@@ -206,6 +217,59 @@ module Ruflet
         end
 
         synced
+      end
+
+      def install_sync_platforms(platform)
+        case platform
+        when "ios"
+          %w[ios]
+        when "android"
+          %w[android apk aab appbundle]
+        when "macos"
+          %w[macos]
+        when "windows"
+          %w[windows]
+        when "linux"
+          %w[linux]
+        when "web"
+          %w[web]
+        else
+          []
+        end
+      end
+
+      def install_platform_for_device(device_id)
+        return inferred_install_platform unless device_id
+
+        return "android" if device_id.include?("emulator-") || device_id.match?(/\A[a-z0-9._:-]+\z/i) && device_id != "macos" && device_id != "chrome" && !device_id.include?("-")
+        return "ios" if device_id.match?(/\A[0-9A-F-]{8,}\z/i)
+        return "macos" if device_id == "macos"
+        return "web" if device_id == "chrome"
+
+        inferred_install_platform
+      end
+
+      def validate_install_artifacts(client_dir, platform:, device_id:)
+        return true unless platform == "ios" && ios_simulator_device_id?(device_id)
+
+        simulator_app = File.join(client_dir, "build", "ios", "iphonesimulator", "Runner.app")
+        return true if Dir.exist?(simulator_app)
+
+        device_app = File.join(client_dir, "build", "ios", "iphoneos", "Runner.app")
+        if Dir.exist?(device_app)
+          warn "install config error: selected device is an iOS simulator, but the latest build is for iphoneos"
+          warn "Rebuild for the simulator with: ruflet build ios --self --simulator"
+        else
+          warn "install config error: no iOS simulator app bundle was found"
+          warn "Build the simulator target first with: ruflet build ios --self --simulator"
+        end
+        false
+      end
+
+      def ios_simulator_device_id?(device_id)
+        return false if device_id.to_s.strip.empty?
+
+        device_id.match?(/\A[0-9A-F-]{8,}\z/i)
       end
 
       def exports_for(platform)
@@ -265,6 +329,7 @@ module Ruflet
       end
 
       def prepare_flutter_client(client_dir, platform:, tools:, config:, self_contained: false, verbose: false)
+        refresh_managed_client_template_files(client_dir, verbose: verbose)
         sync_client_metadata(client_dir, config, verbose: verbose)
         configure_client_runtime_mode(client_dir, self_contained: self_contained, verbose: verbose)
         apply_service_extension_config(client_dir, config)
@@ -275,6 +340,7 @@ module Ruflet
         end
         announce_asset_configuration(asset_flags)
         clear_flutter_build_state(client_dir, verbose: verbose)
+        clear_stale_platform_outputs(client_dir, platform, verbose: verbose)
         build_log(verbose, "running flutter pub get")
         unless run_external_command(tools[:env], tools[:flutter], "pub", "get", chdir: client_dir, unbundled: true)
           warn "flutter pub get failed"
@@ -628,7 +694,7 @@ module Ruflet
         data["name"] = metadata[:package_name]
         data["description"] = metadata[:description]
         data["version"] = metadata[:version]
-        File.write(pubspec_path, YAML.dump(data))
+        write_pubspec_yaml(pubspec_path, data)
       end
 
       def apply_android_metadata(client_dir, metadata)
@@ -871,6 +937,23 @@ module Ruflet
         build_log(verbose, "cleared .dart_tool/flutter_build")
       end
 
+      def clear_stale_platform_outputs(client_dir, platform, verbose: false)
+        return unless platform == "ios"
+
+        stale_paths = %w[
+          build/ios/Debug-iphonesimulator
+          build/ios/iphonesimulator
+        ]
+
+        stale_paths.each do |relative_path|
+          path = File.join(client_dir, relative_path)
+          next unless Dir.exist?(path)
+
+          FileUtils.rm_rf(path)
+          build_log(verbose, "cleared stale #{relative_path}")
+        end
+      end
+
       def client_entrypoint_paths(client_dir)
         %w[main.dart main.self.dart main.server.dart].map do |name|
           File.join(client_dir, "lib", name)
@@ -901,25 +984,71 @@ module Ruflet
         assets = Array(flutter["assets"]).map(&:to_s)
 
         if self_contained
-          dependencies["ruby_runtime"] ||= "^0.0.1"
-          assets << "assets/main.rb" unless assets.include?("assets/main.rb")
-          assets << "assets/ruby_project/" unless assets.include?("assets/ruby_project/")
+          dependencies["ruby_runtime"] ||= "^0.0.2"
+          assets.delete("assets/main.rb")
+          assets.delete("assets/ruby_project/")
+          project_asset_path = "assets/#{self_contained_project_name}/"
+          assets << project_asset_path unless assets.include?(project_asset_path)
         else
           dependencies.delete("ruby_runtime")
           assets.delete("assets/main.rb")
           assets.delete("assets/ruby_project/")
+          assets.delete("assets/#{self_contained_project_name}/")
         end
 
         flutter["assets"] = assets unless assets.empty?
         flutter.delete("assets") if assets.empty?
-        File.write(pubspec_path, YAML.dump(data))
+        write_pubspec_yaml(pubspec_path, data)
+      end
+
+      def refresh_managed_client_template_files(client_dir, verbose: false)
+        template_root =
+          if Ruflet::CLI.respond_to?(:resolve_ruflet_client_template_root, true)
+            Ruflet::CLI.send(:resolve_ruflet_client_template_root)
+          end
+        return unless template_root && Dir.exist?(template_root)
+
+        managed_files = [
+          "lib/main.dart",
+          "lib/main.self.dart",
+          "lib/main.server.dart",
+          "lib/connection_probe.dart",
+          "lib/connection_probe_io.dart",
+          "lib/connection_probe_stub.dart"
+        ]
+
+        managed_files.each do |relative_path|
+          source = File.join(template_root, relative_path)
+          next unless File.file?(source)
+
+          destination = File.join(client_dir, relative_path)
+          FileUtils.mkdir_p(File.dirname(destination))
+          FileUtils.cp(source, destination)
+          build_log(verbose, "refreshed template file #{relative_path}")
+        end
+      end
+
+      def write_pubspec_yaml(path, data)
+        content = YAML.dump(data)
+        content = content.sub(/\A---\n/, "")
+
+        # Flutter pubspecs are easier to read and less error-prone when list
+        # entries are indented under their parent key.
+        content.gsub!(/^(\s+)(-\s.*)$/, '  \1\2')
+
+        File.write(path, content)
       end
 
       def sync_self_contained_project_assets(client_dir, verbose: false)
         project_root = Pathname.new(Dir.pwd)
-        destination_root = File.join(client_dir, "assets", "ruby_project")
+        assets_root = File.join(client_dir, "assets")
+        destination_root = File.join(assets_root, self_contained_project_name)
         FileUtils.rm_rf(destination_root)
+        FileUtils.rm_rf(File.join(assets_root, "ruby_project"))
         FileUtils.mkdir_p(destination_root)
+
+        legacy_entrypoint = File.join(client_dir, "assets", "main.rb")
+        FileUtils.rm_f(legacy_entrypoint)
 
         copied = 0
         project_asset_relative_paths.each do |relative_path|
@@ -932,15 +1061,28 @@ module Ruflet
           copied += 1
         end
 
-        build_log(verbose, "copied #{copied} project file#{copied == 1 ? '' : 's'} to assets/ruby_project")
+        build_log(verbose, "copied #{copied} project file#{copied == 1 ? '' : 's'} to assets/#{self_contained_project_name}")
       end
 
       def remove_self_contained_project_assets(client_dir, verbose: false)
-        destination_root = File.join(client_dir, "assets", "ruby_project")
-        return unless Dir.exist?(destination_root)
+        assets_root = File.join(client_dir, "assets")
+        legacy_entrypoint = File.join(client_dir, "assets", "main.rb")
+        FileUtils.rm_f(legacy_entrypoint)
+        removed = false
 
-        FileUtils.rm_rf(destination_root)
-        build_log(verbose, "removed assets/ruby_project")
+        project_root = File.join(assets_root, self_contained_project_name)
+        if Dir.exist?(project_root)
+          FileUtils.rm_rf(project_root)
+          removed = true
+        end
+
+        legacy_root = File.join(assets_root, "ruby_project")
+        if Dir.exist?(legacy_root)
+          FileUtils.rm_rf(legacy_root)
+          removed = true
+        end
+
+        build_log(verbose, "removed embedded self-contained project assets") if removed
       end
 
       def project_asset_relative_paths
@@ -968,6 +1110,12 @@ module Ruflet
         included.sort
       end
 
+      def self_contained_project_name
+        name = File.basename(Dir.pwd.to_s)
+        name = "app" if name.to_s.strip.empty?
+        name
+      end
+
       def skip_project_asset_directory?(relative)
         first = relative.split(File::SEPARATOR).first
         %w[
@@ -975,6 +1123,7 @@ module Ruflet
           .bundle
           .dart_tool
           .idea
+          .ruby-lsp
           .vscode
           build
           coverage

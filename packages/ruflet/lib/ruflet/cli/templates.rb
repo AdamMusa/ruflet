@@ -22,7 +22,7 @@ module Ruflet
           )
         ),
         floating_action_button: fab(
-          icon: Ruflet::MaterialIcons::ADD,
+          icon: "add",
           on_click: ->(_e) do
             count += 1
             page.update(count_text, value: count.to_s)
