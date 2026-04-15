@@ -6,7 +6,7 @@
 #include <mruby/string.h>
 #include <stdlib.h>
 
-#include "../../../generated/embedded_ruflet_runtime.h"
+#include "../../../shared/embedded_ruflet_runtime.h"
 
 @interface MrubyRuntimePlugin : NSObject <FlutterPlugin>
 @end

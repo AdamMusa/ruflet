@@ -13,7 +13,7 @@ extern "C" {
 #include <mruby/string.h>
 }
 
-#include "../../../../../generated/embedded_ruflet_runtime.h"
+#include "../../../../../shared/embedded_ruflet_runtime.h"
 
 namespace {
 
