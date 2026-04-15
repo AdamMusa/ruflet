@@ -1,3 +1,7 @@
+## 0.0.3
+
+- Fix native Android, iOS, and macOS includes to load the packaged embedded Ruflet runtime header from `shared/`.
+
 ## 0.0.2
 
 - Align Android plugin packaging and publish metadata for Ruflet self-contained builds.
