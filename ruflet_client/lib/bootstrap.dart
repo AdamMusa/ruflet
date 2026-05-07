@@ -1,5 +1,4 @@
 import 'package:flet/flet.dart' show FletExtension, setupDesktop;
-import 'package:flet_ads/flet_ads.dart' as flet_ads;
 import 'package:flet_audio/flet_audio.dart' as flet_audio;
 import 'package:flet_camera/flet_camera.dart' as flet_camera;
 import 'package:flet_charts/flet_charts.dart' as flet_charts;
@@ -31,7 +30,6 @@ Future<void> setupRufletDesktop() => setupDesktop();
 
 List<FletExtension> createDefaultRufletExtensions() {
   return <FletExtension>[
-    flet_ads.Extension(),
     flet_audio.Extension(),
     flet_camera.Extension(),
     flet_charts.Extension(),

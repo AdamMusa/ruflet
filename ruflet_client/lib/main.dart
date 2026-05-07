@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flet/flet.dart';
-import 'package:flet_ads/flet_ads.dart' as flet_ads;
 import 'package:flet_audio/flet_audio.dart' as flet_audio;
 // --FAT_CLIENT_START--
 // --FAT_CLIENT_END--
@@ -133,7 +132,6 @@ void main([List<String>? args]) async {
 
   WidgetsFlutterBinding.ensureInitialized();
   final rufletExtensions = <FletExtension>[
-    flet_ads.Extension(),
     flet_audio.Extension(),
     flet_camera.Extension(),
     flet_charts.Extension(),
@@ -159,7 +157,7 @@ void main([List<String>? args]) async {
 
   var initialUrl = Uri.base.toString();
   final configuredDebugUrl = kDebugMode
-      ? const String.fromEnvironment('FLET_URL', defaultValue: '')
+      ? const String.fromEnvironment('RUFLET_URL', defaultValue: '')
       : '';
 
   if (configuredDebugUrl.isNotEmpty) {
@@ -167,7 +165,7 @@ void main([List<String>? args]) async {
   }
 
   if (kIsWeb) {
-    debugPrint('Flet View is running in Web mode');
+    debugPrint('Ruflet Explorer is running in Web mode');
     final routeUrlStrategy = getRufletRouteUrlStrategy();
     debugPrint('URL Strategy: $routeUrlStrategy');
     if (routeUrlStrategy == 'path') {

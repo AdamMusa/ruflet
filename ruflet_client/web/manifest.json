@@ -1,11 +1,11 @@
 {
-    "name": "ruflet_client",
-    "short_name": "ruflet_client",
+    "name": "Ruflet Explorer",
+    "short_name": "Ruflet",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",
     "theme_color": "#FFFFFF",
-    "description": "A new Flutter project.",
+    "description": "Ruflet Explorer connection client.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
