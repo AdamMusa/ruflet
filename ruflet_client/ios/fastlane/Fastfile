@@ -1,0 +1,57 @@
+default_platform(:ios)
+
+platform :ios do
+  API_KEY_ID = ENV.fetch("APP_STORE_CONNECT_API_KEY_ID", "CFR495VFCS")
+  API_ISSUER_ID = ENV.fetch("APP_STORE_CONNECT_ISSUER_ID", "ded2014b-7fd6-4efb-a65b-d1d9114b3d38")
+  API_KEY_PATH = ENV.fetch("APP_STORE_CONNECT_API_KEY_PATH", "/Users/macbookpro/Downloads/AuthKey_CFR495VFCS.p8")
+
+  private_lane :app_store_auth do
+    UI.user_error!("Missing App Store Connect API key at #{API_KEY_PATH}") unless File.exist?(API_KEY_PATH)
+
+    app_store_connect_api_key(
+      key_id: API_KEY_ID,
+      issuer_id: API_ISSUER_ID,
+      key_filepath: API_KEY_PATH,
+      duration: 1200,
+      in_house: false
+    )
+  end
+
+  desc "Build and upload Ruflet Explorer to App Store Connect"
+  lane :deploy_appstore do
+    api_key = app_store_auth
+
+    update_code_signing_settings(
+      use_automatic_signing: true,
+      path: "Runner.xcodeproj",
+      team_id: "7Z35W53SMQ"
+    )
+
+    build_app(
+      workspace: "Runner.xcworkspace",
+      scheme: "Runner",
+      configuration: "Release",
+      export_method: "app-store",
+      xcargs: "-allowProvisioningUpdates",
+      export_xcargs: "-allowProvisioningUpdates",
+      export_options: {
+        signingStyle: "automatic",
+        teamID: "7Z35W53SMQ"
+      },
+      output_directory: "../build/ios/ipa",
+      output_name: "Ruflet Explorer.ipa"
+    )
+
+    upload_to_app_store(
+      api_key: api_key,
+      app_identifier: "com.izeesoft.rufletexplorer",
+      ipa: "../build/ios/ipa/Ruflet Explorer.ipa",
+      skip_metadata: true,
+      skip_screenshots: true,
+      submit_for_review: false,
+      automatic_release: false,
+      run_precheck_before_submit: false,
+      force: true
+    )
+  end
+end

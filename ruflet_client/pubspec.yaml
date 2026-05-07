@@ -1,5 +1,5 @@
 name: ruflet_client
-description: "A new Flutter project."
+description: "Ruflet Explorer connection client."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 1.0.0+5
 
 environment:
   sdk: ^3.9.2
@@ -37,11 +37,6 @@ dependencies:
     git:
       url: https://github.com/flet-dev/flet.git
       path: packages/flet
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
-  flet_ads:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-ads/src/flutter/flet_ads
       ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flet_audio:
     git:
@@ -136,6 +131,9 @@ dev_dependencies:
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 flutter_native_splash:
+  android_12:
+    color: "#FFFFFF"
+    image: assets/splash.png
   color: "#FFFFFF"
   image: assets/splash.png
   fullscreen: true
@@ -143,22 +141,24 @@ flutter_native_splash:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/splash.png"
+  image_path: "assets/icon.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/icon.png"
   background_color: "#FFFFFF"
   theme_color: "#FFFFFF"
   min_sdk_android: 21 # android min sdk min:16, default 21
   web:
     generate: true
-    image_path: "assets/splash.png"
+    image_path: "assets/icon.png"
     background_color: "#FFFFFF"
     theme_color: "#FFFFFF"
   windows:
     generate: true
-    image_path: "assets/splash.png"
+    image_path: "assets/icon.png"
     icon_size: 48 # min:48, max:256, default: 48
   macos:
     generate: true
-    image_path: "assets/splash.png"
+    image_path: "assets/icon.png"
 # The following section is specific to Flutter packages.
 flutter:
 
@@ -168,8 +168,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
+  assets:
+    - assets/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

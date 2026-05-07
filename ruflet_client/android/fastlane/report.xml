@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="fastlane.lanes">
+    
+    
+    
+      
+      <testcase classname="fastlane.lanes" name="0: default_platform" time="0.000175">
+        
+      </testcase>
+    
+      
+      <testcase classname="fastlane.lanes" name="1: Switch to android google_play_auth lane" time="0.000403">
+        
+      </testcase>
+    
+      
+      <testcase classname="fastlane.lanes" name="2: supply" time="64.467449">
+        
+      </testcase>
+    
+  </testsuite>
+</testsuites>

@@ -1,0 +1,39 @@
+require "json"
+
+default_platform(:android)
+
+platform :android do
+  PACKAGE_NAME = "com.izeesoft.rufletexplorer"
+  GOOGLE_PLAY_JSON_KEY_PATH = ENV.fetch("GOOGLE_PLAY_JSON_KEY_PATH", "/Users/macbookpro/Downloads/ruflet-explorer-b42bcd51705c.json")
+  GOOGLE_PLAY_SERVICE_ACCOUNT = "ruflet-explorer@ruflet-explorer.iam.gserviceaccount.com"
+
+  private_lane :google_play_auth do
+    next ENV["GOOGLE_PLAY_JSON_KEY_DATA"] if ENV["GOOGLE_PLAY_JSON_KEY_DATA"]
+
+    UI.user_error!("No Google Play JSON key found at #{GOOGLE_PLAY_JSON_KEY_PATH}") unless File.exist?(GOOGLE_PLAY_JSON_KEY_PATH)
+
+    json_key_data = File.read(GOOGLE_PLAY_JSON_KEY_PATH)
+    client_email = JSON.parse(json_key_data).fetch("client_email")
+    UI.user_error!("Google Play JSON key is for #{client_email}, expected #{GOOGLE_PLAY_SERVICE_ACCOUNT}") unless client_email == GOOGLE_PLAY_SERVICE_ACCOUNT
+
+    json_key_data
+  end
+
+  desc "Upload the release App Bundle to the Google Play internal track."
+  lane :beta do
+    aab_path = File.expand_path("../../build/app/outputs/bundle/release/app-release.aab", __dir__)
+    UI.user_error!("No Android App Bundle found at #{aab_path}. Run `flutter build appbundle --release` first.") unless File.exist?(aab_path)
+
+    supply(
+      package_name: PACKAGE_NAME,
+      json_key_data: google_play_auth,
+      aab: aab_path,
+      track: ENV.fetch("GOOGLE_PLAY_TRACK", "internal"),
+      release_status: ENV.fetch("GOOGLE_PLAY_RELEASE_STATUS", "draft"),
+      skip_upload_metadata: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+end

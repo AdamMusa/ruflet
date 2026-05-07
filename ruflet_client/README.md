@@ -1,13 +1,13 @@
-# ruflet_client
+# Ruflet Explorer
 
-Ruflet Flutter client template (mobile, desktop, web).
+Ruflet Explorer connection client for mobile, desktop, and web.
 
 ## What is included
 
-- Ruflet/Flet client bootstrap and QR/manual connect flow.
-- Flet client bootstrap and QR/manual connect flow.
+- QR scanning and manual URL connection flow.
+- Desktop and web local backend discovery for development.
 
-## Run client template
+## Run client
 
 ```bash
 cd ruflet_client
@@ -32,7 +32,7 @@ bundle install
 ruflet run main.rb
 ```
 
-2. Start this client template:
+2. Start Ruflet Explorer:
 
 ```bash
 cd ../ruflet_client
