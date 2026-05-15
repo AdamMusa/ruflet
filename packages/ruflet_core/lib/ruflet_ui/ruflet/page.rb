@@ -414,7 +414,7 @@ module Ruflet
 
     def set_clipboard(value, timeout: nil, on_result: nil)
       invoke_clipboard_method(
-        "set_data",
+        "set",
         args: { "data" => value.to_s },
         timeout: timeout,
         on_result: on_result
@@ -422,7 +422,7 @@ module Ruflet
     end
 
     def get_clipboard(timeout: nil, on_result: nil)
-      invoke_clipboard_method("get_data", timeout: timeout, on_result: on_result)
+      invoke_clipboard_method("get", timeout: timeout, on_result: on_result)
     end
 
     def set_clipboard_files(files, timeout: nil, on_result: nil)
