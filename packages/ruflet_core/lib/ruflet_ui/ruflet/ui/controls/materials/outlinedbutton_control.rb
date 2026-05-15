@@ -9,6 +9,11 @@ module Ruflet
           WIRE = "OutlinedButton".freeze
 
           def initialize(id: nil, adaptive: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, autofocus: nil, badge: nil, bottom: nil, clip_behavior: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, icon: nil, icon_color: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, style: nil, tooltip: nil, top: nil, url: nil, visible: nil, width: nil, on_animation_end: nil, on_blur: nil, on_click: nil, on_focus: nil, on_hover: nil, on_long_press: nil, on_size_change: nil)
+            raise ArgumentError, "outlined_button requires content or icon" if content.nil? && icon.nil?
+
+            autofocus = false if autofocus.nil?
+            clip_behavior = "none" if clip_behavior.nil?
+
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
