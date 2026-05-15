@@ -436,13 +436,17 @@ module Ruflet
       )
     end
 
-    def upload_files(files, timeout: nil, on_result: nil)
+    def upload(files, timeout: nil, on_result: nil)
       invoke_file_picker(
         "upload",
         { "files" => Array(files).map { |file| normalize_service_value(file) } },
         timeout: timeout,
         on_result: on_result
       )
+    end
+
+    def upload_files(files, timeout: nil, on_result: nil)
+      upload(files, timeout: timeout, on_result: on_result)
     end
 
     def heavy_impact(timeout: 10, on_result: nil)
@@ -516,8 +520,12 @@ module Ruflet
       invoke_battery_method("get_battery_state", timeout: timeout, on_result: on_result)
     end
 
-    def battery_save_mode?(timeout: nil, on_result: nil)
+    def is_in_battery_save_mode(timeout: nil, on_result: nil)
       invoke_battery_method("is_in_battery_save_mode", timeout: timeout, on_result: on_result)
+    end
+
+    def battery_save_mode?(timeout: nil, on_result: nil)
+      is_in_battery_save_mode(timeout: timeout, on_result: on_result)
     end
 
     def get_application_cache_directory(timeout: nil, on_result: nil)
