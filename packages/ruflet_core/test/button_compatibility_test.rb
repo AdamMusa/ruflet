@@ -8,7 +8,7 @@ class RufletButtonCompatibilityTest < Minitest::Test
     hovered = []
 
     button = Ruflet.button(
-      content: "Save",
+      "Save",
       icon: "add",
       icon_color: "#ABCDEF",
       color: "#FEDCBA",
@@ -18,8 +18,11 @@ class RufletButtonCompatibilityTest < Minitest::Test
       autofocus: true,
       clip_behavior: "anti_alias",
       url: "https://flet.dev",
+      on_blur: ->(_e) {},
       on_click: ->(_e) { clicked << :click },
-      on_hover: ->(_e) { hovered << :hover }
+      on_focus: ->(_e) {},
+      on_hover: ->(_e) { hovered << :hover },
+      on_long_press: ->(_e) {}
     )
 
     patch = button.to_patch
@@ -35,8 +38,11 @@ class RufletButtonCompatibilityTest < Minitest::Test
     assert_equal true, patch["autofocus"]
     assert_equal "anti_alias", patch["clip_behavior"]
     assert_equal "https://flet.dev", patch["url"]
+    assert_equal true, patch["on_blur"]
     assert_equal true, patch["on_click"]
+    assert_equal true, patch["on_focus"]
     assert_equal true, patch["on_hover"]
+    assert_equal true, patch["on_long_press"]
 
     button.emit("click", nil)
     button.emit("hover", nil)
@@ -52,5 +58,20 @@ class RufletButtonCompatibilityTest < Minitest::Test
 
     assert_includes error.message, "content"
     assert_includes error.message, "icon"
+  end
+
+  def test_button_omits_optional_flet_defaults
+    button = Ruflet.button("Save")
+
+    refute button.props.key?("autofocus")
+    refute button.props.key?("clip_behavior")
+  end
+
+  def test_elevated_button_accepts_positional_content
+    patch = Ruflet.elevated_button("Launch", icon: "rocket_launch").to_patch
+
+    assert_equal "Button", patch["_c"]
+    assert_equal "Launch", patch["content"]
+    assert_equal Ruflet::MaterialIconLookup.codepoint_for("rocket_launch"), patch["icon"]
   end
 end
