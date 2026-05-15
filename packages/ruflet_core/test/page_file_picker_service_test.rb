@@ -1,0 +1,89 @@
+# frozen_string_literal: true
+
+require_relative "test_helper"
+
+class PageFilePickerServiceTest < Minitest::Test
+  def test_pick_files_omits_nil_options_and_includes_flet_defaults
+    sent = []
+    page = build_page(sent)
+
+    call_id = page.pick_files(allow_multiple: true, with_data: true)
+    refute_nil call_id
+
+    invoke_payload = sent.reverse.map(&:last).find { |payload| payload["name"] == "pick_files" }
+    refute_nil invoke_payload
+    assert_equal(
+      {
+        "file_type" => "any",
+        "allow_multiple" => true,
+        "with_data" => true
+      },
+      invoke_payload["args"]
+    )
+  end
+
+  def test_save_file_omits_nil_options_and_serializes_src_bytes
+    sent = []
+    page = build_page(sent)
+
+    call_id = page.save_file(file_name: "notes.txt", src_bytes: "hello")
+    refute_nil call_id
+
+    invoke_payload = sent.reverse.map(&:last).find { |payload| payload["name"] == "save_file" }
+    refute_nil invoke_payload
+    assert_equal(
+      {
+        "file_name" => "notes.txt",
+        "file_type" => "any",
+        "src_bytes" => "hello"
+      },
+      invoke_payload["args"]
+    )
+  end
+
+  def test_get_directory_path_omits_nil_options
+    sent = []
+    page = build_page(sent)
+
+    call_id = page.get_directory_path
+    refute_nil call_id
+
+    invoke_payload = sent.reverse.map(&:last).find { |payload| payload["name"] == "get_directory_path" }
+    refute_nil invoke_payload
+    assert_equal({}, invoke_payload["args"])
+  end
+
+  def test_upload_uses_flet_file_picker_signature
+    sent = []
+    page = build_page(sent)
+
+    files = [{ name: "a.txt", upload_url: "/upload/a.txt", method: "PUT" }]
+    call_id = page.upload_files(files)
+    refute_nil call_id
+
+    invoke_payload = sent.reverse.map(&:last).find { |payload| payload["name"] == "upload" }
+    refute_nil invoke_payload
+    assert_equal(
+      {
+        "files" => [
+          {
+            "name" => "a.txt",
+            "upload_url" => "/upload/a.txt",
+            "method" => "PUT"
+          }
+        ]
+      },
+      invoke_payload["args"]
+    )
+  end
+
+  private
+
+  def build_page(sent)
+    Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+  end
+end
