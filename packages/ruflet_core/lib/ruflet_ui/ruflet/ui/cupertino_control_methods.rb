@@ -45,6 +45,8 @@ module Ruflet
       def cupertinoactionsheetaction(**props) = cupertino_action_sheet_action(**props)
       def cupertino_activity_indicator(**props) = build_widget(:cupertino_activity_indicator, **props)
       def cupertinoactivityindicator(**props) = cupertino_activity_indicator(**props)
+      def cupertino_app_bar(**props) = build_widget(:cupertino_app_bar, **props)
+      def cupertinoappbar(**props) = cupertino_app_bar(**props)
       def cupertino_bottom_sheet(content = nil, **props)
         mapped = props.dup
         mapped[:content] = content unless content.nil?

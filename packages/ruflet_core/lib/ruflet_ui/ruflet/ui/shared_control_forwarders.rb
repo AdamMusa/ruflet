@@ -226,6 +226,8 @@ module Ruflet
       def cupertinoactionsheetaction(**props) = control_delegate.cupertinoactionsheetaction(**props)
       def cupertino_activity_indicator(**props) = control_delegate.cupertino_activity_indicator(**props)
       def cupertinoactivityindicator(**props) = control_delegate.cupertinoactivityindicator(**props)
+      def cupertino_app_bar(**props) = control_delegate.cupertino_app_bar(**props)
+      def cupertinoappbar(**props) = control_delegate.cupertinoappbar(**props)
       def cupertino_bottom_sheet(content = nil, **props) = control_delegate.cupertino_bottom_sheet(content, **props)
       def cupertinobottomsheet(content = nil, **props) = control_delegate.cupertinobottomsheet(content, **props)
       def cupertino_date_picker(**props) = control_delegate.cupertino_date_picker(**props)
