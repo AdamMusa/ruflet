@@ -9,6 +9,17 @@ module Ruflet
           WIRE = "Chip".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, autofocus: nil, badge: nil, bgcolor: nil, border_side: nil, bottom: nil, check_color: nil, clip_behavior: nil, col: nil, color: nil, data: nil, delete_drawer_animation_style: nil, delete_icon: nil, delete_icon_color: nil, delete_icon_size_constraints: nil, delete_icon_tooltip: nil, disabled: nil, disabled_color: nil, elevation: nil, elevation_on_click: nil, enable_animation_style: nil, expand: nil, expand_loose: nil, height: nil, key: nil, label: nil, label_padding: nil, label_text_style: nil, leading: nil, leading_drawer_animation_style: nil, leading_size_constraints: nil, left: nil, margin: nil, offset: nil, opacity: nil, padding: nil, right: nil, rotate: nil, rtl: nil, scale: nil, select_animation_style: nil, selected: nil, selected_color: nil, selected_shadow_color: nil, shadow_color: nil, shape: nil, show_checkmark: nil, size_change_interval: nil, tooltip: nil, top: nil, visible: nil, visual_density: nil, width: nil, on_animation_end: nil, on_blur: nil, on_click: nil, on_delete: nil, on_focus: nil, on_select: nil, on_size_change: nil)
+            if !on_click.nil? && !on_select.nil?
+              raise ArgumentError, "chip on_click and on_select cannot both be specified"
+            end
+
+            {
+              elevation: elevation,
+              elevation_on_click: elevation_on_click
+            }.each do |name, value|
+              raise ArgumentError, "chip #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
+            end
+
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

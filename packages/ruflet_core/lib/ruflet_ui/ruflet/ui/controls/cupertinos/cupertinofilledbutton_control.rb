@@ -9,6 +9,15 @@ module Ruflet
           WIRE = "CupertinoFilledButton".freeze
 
           def initialize(id: nil, align: nil, alignment: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, autofocus: nil, badge: nil, bgcolor: nil, border_radius: nil, bottom: nil, col: nil, color: nil, content: nil, data: nil, disabled: nil, disabled_bgcolor: nil, expand: nil, expand_loose: nil, focus_color: nil, height: nil, icon: nil, icon_color: nil, key: nil, left: nil, margin: nil, min_size: nil, mouse_cursor: nil, offset: nil, opacity: nil, opacity_on_click: nil, padding: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size: nil, size_change_interval: nil, tooltip: nil, top: nil, url: nil, visible: nil, width: nil, on_animation_end: nil, on_blur: nil, on_click: nil, on_focus: nil, on_long_press: nil, on_size_change: nil)
+            alignment = "center" if alignment.nil?
+            autofocus = false if autofocus.nil?
+            border_radius = { "all" => 8.0 } if border_radius.nil?
+            opacity_on_click = 0.4 if opacity_on_click.nil?
+            size = "large" if size.nil?
+            unless opacity_on_click.respond_to?(:between?) && opacity_on_click.between?(0.0, 1.0)
+              raise ArgumentError, "cupertino_filled_button opacity_on_click must be between 0.0 and 1.0"
+            end
+
             props = {}
             props[:align] = align unless align.nil?
             props[:alignment] = alignment unless alignment.nil?

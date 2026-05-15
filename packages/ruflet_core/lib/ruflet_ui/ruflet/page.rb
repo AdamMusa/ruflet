@@ -14,7 +14,7 @@ require "timeout"
 
 module Ruflet
   class Page
-    PAGE_PROP_KEYS = %w[route title vertical_alignment horizontal_alignment scroll].freeze
+    PAGE_PROP_KEYS = %w[dark_theme fonts route rtl show_semantics_debugger theme theme_mode title vertical_alignment horizontal_alignment scroll].freeze
     DIALOG_PROP_KEYS = %w[dialog snack_bar bottom_sheet].freeze
     WIDGET_HELPER_METHODS = (
       Ruflet::UI::MaterialControlMethods.instance_methods(false) +
@@ -111,13 +111,14 @@ module Ruflet
       @view_props["bgcolor"] = normalize_value("bgcolor", value)
     end
 
-    def add(*controls, appbar: nil, floating_action_button: nil, navigation_bar: nil, dialog: nil, snack_bar: nil, bottom_sheet: nil)
+    def add(*controls, appbar: nil, bottom_appbar: nil, floating_action_button: nil, navigation_bar: nil, dialog: nil, snack_bar: nil, bottom_sheet: nil)
       controls = controls.flatten
       visited = Set.new
       controls.each { |c| register_control_tree(c, visited) }
       @root_controls = controls
 
       @view_props["appbar"] = appbar if appbar
+      @view_props["bottom_appbar"] = bottom_appbar if bottom_appbar
       @view_props["floating_action_button"] = floating_action_button if floating_action_button
       @view_props["navigation_bar"] = navigation_bar if navigation_bar
       @dialog = dialog if dialog
@@ -201,6 +202,18 @@ module Ruflet
       self
     end
 
+    def navigate(route, **query_params)
+      go(route, **query_params)
+    end
+
+    def push_route(route, **query_params)
+      go(route, **query_params)
+    end
+
+    def query
+      parse_query(route)
+    end
+
     def on_route_change=(handler)
       @page_event_handlers["route_change"] = handler
     end
@@ -222,6 +235,14 @@ module Ruflet
 
     def appbar=(value)
       @view_props["appbar"] = value
+    end
+
+    def bottom_appbar=(value)
+      @view_props["bottom_appbar"] = value
+    end
+
+    def bottomappbar=(value)
+      self.bottom_appbar = value
     end
 
     def floating_action_button=(value)
@@ -675,6 +696,7 @@ module Ruflet
       return unless control
 
       event = Event.new(name: name, target: target, raw_data: data, page: self, control: control)
+      apply_event_value_to_control(control, event) if %w[change select select_change].include?(name.to_s)
       control.emit(name, event)
 
       if name.to_s == "dismiss" && remove_dialog_tracking(control)
@@ -895,6 +917,15 @@ module Ruflet
       "#{base}#{separator}#{query}"
     end
 
+    def parse_query(route_value)
+      query_string = route_value.to_s.split("?", 2)[1].to_s
+      return {} if query_string.empty?
+
+      CGI.parse(query_string).each_with_object({}) do |(key, values), result|
+        result[key] = values.size == 1 ? values.first : values
+      end
+    end
+
     def extract_route(data)
       case data
       when String
@@ -914,6 +945,42 @@ module Ruflet
       handler.call(event)
     end
 
+    def apply_event_value_to_control(control, event)
+      return unless event.typed_data && event.typed_data.respond_to?(:value)
+
+      value = event.typed_data.value
+      if control.props.key?("start_value") && control.props.key?("end_value")
+        raw = event.typed_data.respond_to?(:raw) ? event.typed_data.raw : event.data
+        range_value = value.is_a?(Hash) ? value : raw
+        if range_value.is_a?(Hash)
+          start_value = range_value["start_value"] || range_value[:start_value]
+          end_value = range_value["end_value"] || range_value[:end_value]
+          control.props["start_value"] = start_value unless start_value.nil?
+          control.props["end_value"] = end_value unless end_value.nil?
+          return
+        end
+      end
+
+      return if value.nil?
+      return if control.type == "selectionarea"
+
+      prop_name =
+        if event.name == "select"
+          control.props.key?("value") ? "value" : "selected"
+        elsif event.name == "select_change" && control.props.key?("selected")
+          "selected"
+        elsif control.props.key?("expanded")
+          "expanded"
+        elsif control.props.key?("selected")
+          "selected"
+        elsif control.props.key?("selected_index")
+          "selected_index"
+        else
+          "value"
+        end
+      control.props[prop_name] = value
+    end
+
     def page_control_target?(control_or_id)
       control_or_id == 1 || control_or_id.to_s == "1" || control_or_id.to_s == "page"
     end
@@ -927,7 +994,7 @@ module Ruflet
       when Array
         value.map { |v| serialize_patch_value(v) }
       when Hash
-        value.transform_values { |v| serialize_patch_value(v) }
+        value.each_with_object({}) { |(k, v), result| result[k.to_s] = serialize_patch_value(v) }
       else
         value
       end

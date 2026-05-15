@@ -9,6 +9,10 @@ module Ruflet
           WIRE = "ListTile".freeze
 
           def initialize(id: nil, adaptive: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, autofocus: nil, badge: nil, bgcolor: nil, bottom: nil, col: nil, content_padding: nil, data: nil, dense: nil, disabled: nil, enable_feedback: nil, expand: nil, expand_loose: nil, height: nil, horizontal_spacing: nil, hover_color: nil, icon_color: nil, is_three_line: nil, key: nil, leading: nil, leading_and_trailing_text_style: nil, left: nil, margin: nil, min_height: nil, min_leading_width: nil, min_vertical_padding: nil, mouse_cursor: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, selected: nil, selected_color: nil, selected_tile_color: nil, shape: nil, size_change_interval: nil, splash_color: nil, style: nil, subtitle: nil, subtitle_text_style: nil, text_color: nil, title: nil, title_alignment: nil, title_text_style: nil, toggle_inputs: nil, tooltip: nil, top: nil, trailing: nil, url: nil, visible: nil, visual_density: nil, width: nil, on_animation_end: nil, on_click: nil, on_long_press: nil, on_size_change: nil)
+            if is_three_line == true && subtitle.nil?
+              raise ArgumentError, "list_tile subtitle is required when is_three_line is true"
+            end
+
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?

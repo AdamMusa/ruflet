@@ -9,6 +9,10 @@ module Ruflet
           WIRE = "PopupMenuButton".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bgcolor: nil, bottom: nil, clip_behavior: nil, col: nil, content: nil, data: nil, disabled: nil, elevation: nil, enable_feedback: nil, expand: nil, expand_loose: nil, height: nil, icon: nil, icon_color: nil, icon_size: nil, items: nil, key: nil, left: nil, margin: nil, menu_padding: nil, menu_position: nil, offset: nil, opacity: nil, padding: nil, popup_animation_style: nil, right: nil, rotate: nil, rtl: nil, scale: nil, shadow_color: nil, shape: nil, size_change_interval: nil, size_constraints: nil, splash_radius: nil, style: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_cancel: nil, on_open: nil, on_select: nil, on_size_change: nil)
+            { elevation: elevation, icon_size: icon_size, splash_radius: splash_radius }.each do |name, value|
+              raise ArgumentError, "popup_menu_button #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
+            end
+
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

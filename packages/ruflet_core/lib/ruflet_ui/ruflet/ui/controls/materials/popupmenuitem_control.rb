@@ -9,6 +9,12 @@ module Ruflet
           WIRE = "PopupMenuItem".freeze
 
           def initialize(id: nil, badge: nil, checked: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, icon: nil, key: nil, label_text_style: nil, mouse_cursor: nil, opacity: nil, padding: nil, rtl: nil, tooltip: nil, visible: nil, on_click: nil)
+            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
+              raise ArgumentError, "popup_menu_item requires visible content"
+            end
+
+            raise ArgumentError, "popup_menu_item height must be greater than or equal to 0" unless height.nil? || height >= 0
+
             props = {}
             props[:badge] = badge unless badge.nil?
             props[:checked] = checked unless checked.nil?

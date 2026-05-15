@@ -9,6 +9,8 @@ module Ruflet
           WIRE = "BottomAppBar".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bgcolor: nil, border_radius: nil, bottom: nil, clip_behavior: nil, col: nil, content: nil, data: nil, disabled: nil, elevation: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, notch_margin: nil, offset: nil, opacity: nil, padding: nil, right: nil, rotate: nil, rtl: nil, scale: nil, shadow_color: nil, shape: nil, size_change_interval: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_size_change: nil)
+            raise ArgumentError, "bottom_app_bar elevation must be greater than or equal to 0" if !elevation.nil? && elevation.negative?
+
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

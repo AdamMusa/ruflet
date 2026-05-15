@@ -9,6 +9,18 @@ module Ruflet
           WIRE = "CircleAvatar".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, background_image_src: nil, badge: nil, bgcolor: nil, bottom: nil, col: nil, color: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, foreground_image_src: nil, height: nil, key: nil, left: nil, margin: nil, max_radius: nil, min_radius: nil, offset: nil, opacity: nil, radius: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_image_error: nil, on_size_change: nil)
+            {
+              radius: radius,
+              min_radius: min_radius,
+              max_radius: max_radius
+            }.each do |name, value|
+              raise ArgumentError, "circle_avatar #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
+            end
+
+            if !radius.nil? && (!min_radius.nil? || !max_radius.nil?)
+              raise ArgumentError, "circle_avatar radius cannot be combined with min_radius or max_radius"
+            end
+
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

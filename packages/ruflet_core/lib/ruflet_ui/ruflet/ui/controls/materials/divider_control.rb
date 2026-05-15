@@ -9,6 +9,15 @@ module Ruflet
           WIRE = "Divider".freeze
 
           def initialize(id: nil, badge: nil, col: nil, color: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, key: nil, leading_indent: nil, opacity: nil, radius: nil, rtl: nil, thickness: nil, tooltip: nil, trailing_indent: nil, visible: nil)
+            {
+              height: height,
+              leading_indent: leading_indent,
+              thickness: thickness,
+              trailing_indent: trailing_indent
+            }.each do |name, value|
+              raise ArgumentError, "divider #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
+            end
+
             props = {}
             props[:badge] = badge unless badge.nil?
             props[:col] = col unless col.nil?

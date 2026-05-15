@@ -8,7 +8,16 @@ module Ruflet
           TYPE = "navigationdrawer".freeze
           WIRE = "NavigationDrawer".freeze
 
-          def initialize(id: nil, adaptive: nil, badge: nil, bgcolor: nil, col: nil, controls: nil, data: nil, disabled: nil, elevation: nil, expand: nil, expand_loose: nil, indicator_color: nil, indicator_shape: nil, key: nil, opacity: nil, rtl: nil, selected_index: nil, shadow_color: nil, tile_padding: nil, tooltip: nil, visible: nil, on_change: nil, on_dismiss: nil)
+          def initialize(id: nil, adaptive: nil, badge: nil, bgcolor: nil, col: nil, controls: nil, data: nil, disabled: nil, elevation: nil, expand: nil, expand_loose: nil, indicator_color: nil, indicator_shape: nil, key: nil, opacity: nil, rtl: nil, selected_index: nil, shadow_color: nil, surface_tint_color: nil, tile_padding: nil, tooltip: nil, visible: nil, width: nil, on_change: nil, on_dismiss: nil)
+            selected_index = 0 if selected_index.nil?
+
+            {
+              elevation: elevation,
+              width: width
+            }.each do |name, value|
+              raise ArgumentError, "navigation_drawer #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
+            end
+
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:badge] = badge unless badge.nil?
@@ -27,9 +36,11 @@ module Ruflet
             props[:rtl] = rtl unless rtl.nil?
             props[:selected_index] = selected_index unless selected_index.nil?
             props[:shadow_color] = shadow_color unless shadow_color.nil?
+            props[:surface_tint_color] = surface_tint_color unless surface_tint_color.nil?
             props[:tile_padding] = tile_padding unless tile_padding.nil?
             props[:tooltip] = tooltip unless tooltip.nil?
             props[:visible] = visible unless visible.nil?
+            props[:width] = width unless width.nil?
             props[:on_change] = on_change unless on_change.nil?
             props[:on_dismiss] = on_dismiss unless on_dismiss.nil?
             super(type: TYPE, id: id, **props)

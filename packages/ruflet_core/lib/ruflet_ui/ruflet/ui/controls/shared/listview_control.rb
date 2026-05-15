@@ -9,6 +9,23 @@ module Ruflet
           WIRE = "ListView".freeze
 
           def initialize(id: nil, adaptive: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, auto_scroll: nil, badge: nil, bottom: nil, build_controls_on_demand: nil, cache_extent: nil, clip_behavior: nil, col: nil, controls: nil, data: nil, disabled: nil, divider_thickness: nil, expand: nil, expand_loose: nil, first_item_prototype: nil, height: nil, horizontal: nil, item_extent: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, padding: nil, prototype_item: nil, reverse: nil, right: nil, rotate: nil, rtl: nil, scale: nil, scroll: nil, scroll_interval: nil, semantic_child_count: nil, size_change_interval: nil, spacing: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_scroll: nil, on_size_change: nil)
+            build_controls_on_demand = true if build_controls_on_demand.nil?
+            divider_thickness = 0 if divider_thickness.nil?
+            first_item_prototype = false if first_item_prototype.nil?
+            horizontal = false if horizontal.nil?
+            reverse = false if reverse.nil?
+            spacing = 0 if spacing.nil?
+
+            {
+              divider_thickness: divider_thickness,
+              item_extent: item_extent,
+              semantic_child_count: semantic_child_count,
+              spacing: spacing
+            }.each do |name, value|
+              next if value.nil?
+              raise ArgumentError, "list_view #{name} must be greater than or equal to 0" if value.negative?
+            end
+
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?

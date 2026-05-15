@@ -9,6 +9,15 @@ module Ruflet
           WIRE = "ProgressBar".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bar_height: nil, bgcolor: nil, border_radius: nil, bottom: nil, col: nil, color: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, semantics_label: nil, semantics_value: nil, size_change_interval: nil, stop_indicator_color: nil, stop_indicator_radius: nil, tooltip: nil, top: nil, track_gap: nil, value: nil, visible: nil, width: nil, year_2023: nil, on_animation_end: nil, on_size_change: nil)
+            {
+              bar_height: bar_height,
+              semantics_value: semantics_value,
+              stop_indicator_radius: stop_indicator_radius,
+              track_gap: track_gap
+            }.each do |name, numeric_value|
+              raise ArgumentError, "progress_bar #{name} must be greater than or equal to 0" unless numeric_value.nil? || numeric_value >= 0
+            end
+
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

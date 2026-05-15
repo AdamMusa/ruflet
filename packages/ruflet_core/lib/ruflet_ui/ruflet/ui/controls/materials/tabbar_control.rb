@@ -9,6 +9,10 @@ module Ruflet
           WIRE = "TabBar".freeze
 
           def initialize(id: nil, adaptive: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, col: nil, data: nil, disabled: nil, divider_color: nil, divider_height: nil, enable_feedback: nil, expand: nil, expand_loose: nil, height: nil, indicator: nil, indicator_animation: nil, indicator_color: nil, indicator_size: nil, indicator_thickness: nil, key: nil, label_color: nil, label_padding: nil, label_text_style: nil, left: nil, margin: nil, mouse_cursor: nil, offset: nil, opacity: nil, overlay_color: nil, padding: nil, right: nil, rotate: nil, rtl: nil, scale: nil, scrollable: nil, secondary: nil, size_change_interval: nil, splash_border_radius: nil, tab_alignment: nil, tabs: nil, tooltip: nil, top: nil, unselected_label_color: nil, unselected_label_text_style: nil, visible: nil, width: nil, on_animation_end: nil, on_click: nil, on_hover: nil, on_size_change: nil)
+            { divider_height: divider_height, indicator_thickness: indicator_thickness }.each do |name, value|
+              raise ArgumentError, "tab_bar #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
+            end
+
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?

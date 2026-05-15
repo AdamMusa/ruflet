@@ -9,6 +9,8 @@ module Ruflet
           WIRE = "CupertinoSegmentedButton".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, border_color: nil, bottom: nil, click_color: nil, col: nil, controls: nil, data: nil, disabled: nil, disabled_color: nil, disabled_text_color: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, padding: nil, right: nil, rotate: nil, rtl: nil, scale: nil, selected_color: nil, selected_index: nil, size_change_interval: nil, tooltip: nil, top: nil, unselected_color: nil, visible: nil, width: nil, on_animation_end: nil, on_change: nil, on_size_change: nil)
+            selected_index = 0 if selected_index.nil?
+
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

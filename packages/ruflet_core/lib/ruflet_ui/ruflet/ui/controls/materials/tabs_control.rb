@@ -9,6 +9,12 @@ module Ruflet
           WIRE = "Tabs".freeze
 
           def initialize(id: nil, adaptive: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, animation_duration: nil, aspect_ratio: nil, badge: nil, bottom: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, length: nil, margin: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, selected_index: nil, size_change_interval: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_change: nil, on_size_change: nil)
+            raise ArgumentError, "tabs length must be greater than or equal to 0" unless length.nil? || length >= 0
+
+            unless selected_index.nil? || length.nil? || (-length...length).cover?(selected_index)
+              raise IndexError, "tabs selected_index is out of range"
+            end
+
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?

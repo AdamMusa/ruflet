@@ -15,6 +15,16 @@ module Ruflet
         UI::Types::Offset.from_wire(pick(data, short, long))
       end
 
+      def self.offset_pair(data, x_key, y_key)
+        return nil unless data.is_a?(Hash)
+
+        x = data[x_key] || data[x_key.to_sym]
+        y = data[y_key] || data[y_key.to_sym]
+        return nil if x.nil? || y.nil?
+
+        UI::Types::Offset.new(x: x, y: y)
+      end
+
       def self.duration(data, short, long)
         UI::Types::Duration.from_wire(pick(data, short, long))
       end
@@ -38,7 +48,7 @@ module Ruflet
         raw = data.is_a?(Hash) ? stringify_keys(data) : data
         value =
           if raw.is_a?(Hash)
-            raw["value"] || raw["v"] || raw["data"] || raw["state"]
+            raw["value"] || raw["v"] || raw["data"] || raw["state"] || raw["route"]
           else
             raw
           end
@@ -53,12 +63,101 @@ module Ruflet
     class ClickEvent < GenericEvent; end
     class SubmitEvent < GenericEvent; end
     class SelectEvent < GenericEvent; end
-    class DismissEvent < GenericEvent; end
+    class DismissEvent < GenericEvent
+      attr_reader :direction
+
+      def initialize(raw:, value: nil, direction: nil)
+        super(raw: raw, value: value)
+        @direction = direction
+      end
+
+      def self.from_data(data)
+        raw = data.is_a?(Hash) ? stringify_keys(data) : {}
+        direction = raw["direction"] || raw["d"]
+        new(raw: raw, value: direction || raw["value"] || raw["v"], direction: direction)
+      end
+    end
     class VisibleEvent < GenericEvent; end
     class ResultEvent < GenericEvent; end
     class UploadEvent < GenericEvent; end
     class ErrorEvent < GenericEvent; end
     class ActionEvent < GenericEvent; end
+    class AutoCompleteSelectEvent < GenericEvent
+      attr_reader :selection
+
+      def initialize(raw:, value: nil, selection: nil)
+        super(raw: raw, value: value)
+        @selection = selection
+      end
+
+      def self.from_data(data)
+        raw = data.is_a?(Hash) ? stringify_keys(data) : {}
+        selection = raw["selection"]
+        selection = stringify_keys(selection) if selection.is_a?(Hash)
+        value = raw["value"] || raw["v"] || (selection.is_a?(Hash) ? selection["value"] : nil)
+        new(raw: raw, value: value, selection: selection)
+      end
+    end
+    class ReorderEvent < GenericEvent
+      attr_reader :old_index, :new_index
+
+      def initialize(raw:, old_index:, new_index:)
+        super(raw: raw, value: [old_index, new_index])
+        @old_index = old_index
+        @new_index = new_index
+      end
+
+      def self.from_data(data)
+        raw = data.is_a?(Hash) ? stringify_keys(data) : {}
+        new(
+          raw: raw,
+          old_index: raw["old_index"] || raw["old"],
+          new_index: raw["new_index"] || raw["new"]
+        )
+      end
+    end
+    class DismissibleUpdateEvent < GenericEvent
+      attr_reader :direction, :progress, :reached
+
+      def initialize(raw:, direction:, progress:, reached:)
+        super(raw: raw, value: progress)
+        @direction = direction
+        @progress = progress
+        @reached = reached
+      end
+
+      def self.from_data(data)
+        raw = data.is_a?(Hash) ? stringify_keys(data) : {}
+        new(
+          raw: raw,
+          direction: raw["direction"] || raw["d"],
+          progress: raw["progress"] || raw["p"] || raw["value"] || raw["v"],
+          reached: raw["reached"] || raw["r"]
+        )
+      end
+    end
+    class DragTargetEvent < GenericEvent
+      attr_reader :src_id, :accept, :x, :y
+
+      def initialize(raw:, src_id:, accept: nil, x: nil, y: nil)
+        super(raw: raw, value: src_id)
+        @src_id = src_id
+        @accept = accept
+        @x = x
+        @y = y
+      end
+
+      def self.from_data(data)
+        raw = data.is_a?(Hash) ? stringify_keys(data) : {}
+        new(
+          raw: raw,
+          src_id: raw["src_id"] || raw["src"] || raw["value"] || raw["v"],
+          accept: raw["accept"] || raw["a"],
+          x: raw["x"],
+          y: raw["y"]
+        )
+      end
+    end
     class StateChangeEvent < GenericEvent
       attr_reader :state
 
@@ -86,8 +185,8 @@ module Ruflet
       def self.from_data(data)
         new(
           kind: pick(data, "k", "kind"),
-          local_position: offset(data, "l", "local_position"),
-          global_position: offset(data, "g", "global_position")
+          local_position: offset(data, "l", "local_position") || offset_pair(data, "lx", "ly"),
+          global_position: offset(data, "g", "global_position") || offset_pair(data, "gx", "gy")
         )
       end
     end
@@ -445,13 +544,17 @@ module Ruflet
         "blur" => BlurEvent,
         "click" => ClickEvent,
         "submit" => SubmitEvent,
-        "select" => SelectEvent,
+        "select" => AutoCompleteSelectEvent,
+        "select_change" => GenericEvent,
         "dismiss" => DismissEvent,
         "visible" => VisibleEvent,
         "result" => ResultEvent,
         "upload" => UploadEvent,
         "error" => ErrorEvent,
         "action" => ActionEvent,
+        "reorder" => ReorderEvent,
+        "reorder_start" => ReorderEvent,
+        "reorder_end" => ReorderEvent,
         "state_change" => StateChangeEvent,
         "confirm_pop" => GenericEvent,
         "route_change" => GenericEvent,
@@ -464,11 +567,12 @@ module Ruflet
         "resize" => GenericEvent,
         "load" => GenericEvent,
         "loaded" => GenericEvent,
-        "accept" => GenericEvent,
-        "will_accept" => GenericEvent,
+        "update" => DismissibleUpdateEvent,
+        "accept" => DragTargetEvent,
+        "will_accept" => DragTargetEvent,
         "accept_with_details" => GenericEvent,
-        "move" => GenericEvent,
-        "leave" => GenericEvent,
+        "move" => DragTargetEvent,
+        "leave" => DragTargetEvent,
         "open" => GenericEvent,
         "close" => GenericEvent,
         "double_tap" => GenericEvent,

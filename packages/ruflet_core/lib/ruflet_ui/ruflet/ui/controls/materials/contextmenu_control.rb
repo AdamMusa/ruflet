@@ -9,6 +9,10 @@ module Ruflet
           WIRE = "ContextMenu".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, items: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, primary_items: nil, primary_trigger: nil, right: nil, rotate: nil, rtl: nil, scale: nil, secondary_items: nil, secondary_trigger: nil, size_change_interval: nil, tertiary_items: nil, tertiary_trigger: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_dismiss: nil, on_select: nil, on_size_change: nil)
+            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
+              raise ArgumentError, "context_menu requires visible content"
+            end
+
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -55,6 +59,21 @@ module Ruflet
             props[:on_select] = on_select unless on_select.nil?
             props[:on_size_change] = on_size_change unless on_size_change.nil?
             super(type: TYPE, id: id, **props)
+          end
+
+          def open(position: nil, timeout: 10, on_result: nil)
+            args = {}
+            args["position"] = stringify_hash_keys(position) unless position.nil?
+            runtime_page&.invoke(self, "open", args: args, timeout: timeout, on_result: on_result)
+          end
+
+          private
+
+          def stringify_hash_keys(value)
+            return value.map { |item| stringify_hash_keys(item) } if value.is_a?(Array)
+            return value.each_with_object({}) { |(key, child), result| result[key.to_s] = stringify_hash_keys(child) } if value.is_a?(Hash)
+
+            value
           end
         end
       end

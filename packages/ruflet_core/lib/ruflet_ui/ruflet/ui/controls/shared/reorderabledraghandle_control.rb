@@ -9,6 +9,10 @@ module Ruflet
           WIRE = "ReorderableDragHandle".freeze
 
           def initialize(id: nil, adaptive: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, mouse_cursor: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_size_change: nil)
+            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
+              raise ArgumentError, "reorderable_drag_handle requires visible content"
+            end
+
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?

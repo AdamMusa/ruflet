@@ -16,6 +16,7 @@ module Ruflet
           .each_with_object({}) do |schema, events|
             schema.instance_method(:initialize).parameters
               .select { |kind, name| (kind == :key || kind == :keyreq) && name.to_s.start_with?("on_") }
+              .reject { |_, name| name.to_s.end_with?("_hint_text") }
               .each do |_, name|
               event_name = name.to_s.sub(/\Aon_/, "")
               normalized = event_name.to_s.sub(/\Aon_/, "")

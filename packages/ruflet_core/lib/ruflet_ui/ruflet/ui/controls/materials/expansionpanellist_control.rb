@@ -9,6 +9,12 @@ module Ruflet
           WIRE = "ExpansionPanelList".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, col: nil, controls: nil, data: nil, disabled: nil, divider_color: nil, elevation: nil, expand: nil, expand_icon_color: nil, expand_loose: nil, expanded_header_padding: nil, height: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, spacing: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_change: nil, on_size_change: nil)
+            elevation = 2 if elevation.nil?
+
+            { elevation: elevation, spacing: spacing }.each do |name, value|
+              raise ArgumentError, "expansion_panel_list #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
+            end
+
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

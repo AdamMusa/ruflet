@@ -9,6 +9,11 @@ module Ruflet
           WIRE = "DropdownOption".freeze
 
           def initialize(id: nil, badge: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, key: nil, leading_icon: nil, opacity: nil, rtl: nil, style: nil, text: nil, tooltip: nil, trailing_icon: nil, visible: nil)
+            raise ArgumentError, "dropdown_option requires key or text" if key.nil? && text.nil?
+
+            key = text if key.nil?
+            text = key if text.nil?
+
             props = {}
             props[:badge] = badge unless badge.nil?
             props[:col] = col unless col.nil?

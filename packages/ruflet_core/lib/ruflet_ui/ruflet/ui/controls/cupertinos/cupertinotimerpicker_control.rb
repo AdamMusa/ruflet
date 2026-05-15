@@ -9,6 +9,24 @@ module Ruflet
           WIRE = "CupertinoTimerPicker".freeze
 
           def initialize(id: nil, align: nil, alignment: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bgcolor: nil, bottom: nil, col: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, item_extent: nil, key: nil, left: nil, margin: nil, minute_interval: nil, mode: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, second_interval: nil, size_change_interval: nil, tooltip: nil, top: nil, value: nil, visible: nil, width: nil, on_animation_end: nil, on_change: nil, on_size_change: nil)
+            alignment = "center" if alignment.nil?
+            item_extent = 32.0 if item_extent.nil?
+            minute_interval = 1 if minute_interval.nil?
+            mode = "hour_minute_seconds" if mode.nil?
+            second_interval = 1 if second_interval.nil?
+            value = 0 if value.nil?
+            raise ArgumentError, "cupertino_timer_picker item_extent must be greater than 0" unless item_extent.positive?
+            unless minute_interval.positive? && (60 % minute_interval).zero?
+              raise ArgumentError, "cupertino_timer_picker minute_interval must be a positive factor of 60"
+            end
+            unless second_interval.positive? && (60 % second_interval).zero?
+              raise ArgumentError, "cupertino_timer_picker second_interval must be a positive factor of 60"
+            end
+            raise ArgumentError, "cupertino_timer_picker value must be greater than or equal to 0" unless value >= 0
+            raise ArgumentError, "cupertino_timer_picker value must be less than 24 hours" unless value < 86_400
+            raise ArgumentError, "cupertino_timer_picker value must be a multiple of minute_interval" unless (value % minute_interval).zero?
+            raise ArgumentError, "cupertino_timer_picker value must be a multiple of second_interval" unless (value % second_interval).zero?
+
             props = {}
             props[:align] = align unless align.nil?
             props[:alignment] = alignment unless alignment.nil?

@@ -31,6 +31,8 @@ module Ruflet
         "gesture_detector" => "GestureDetector",
         "autocomplete" => "AutoComplete",
         "auto_complete" => "AutoComplete",
+        "autocompletesuggestion" => "AutoCompleteSuggestion",
+        "auto_complete_suggestion" => "AutoCompleteSuggestion",
         "draggable" => "Draggable",
         "dragtarget" => "DragTarget",
         "drag_target" => "DragTarget",

@@ -9,6 +9,8 @@ module Ruflet
           WIRE = "Semantics".freeze
 
           def initialize(id: nil, badge: nil, button: nil, checked: nil, col: nil, container: nil, content: nil, current_value_length: nil, data: nil, decreased_value: nil, disabled: nil, exclude_semantics: nil, expand: nil, expand_loose: nil, expanded: nil, focus: nil, focusable: nil, header: nil, heading_level: nil, hidden: nil, hint_text: nil, image: nil, increased_value: nil, key: nil, label: nil, link: nil, live_region: nil, max_value_length: nil, mixed: nil, multiline: nil, obscured: nil, opacity: nil, read_only: nil, rtl: nil, selected: nil, slider: nil, textfield: nil, toggled: nil, tooltip: nil, value: nil, visible: nil, on_copy: nil, on_cut: nil, on_decrease: nil, on_did_gain_accessibility_focus: nil, on_did_lose_accessibility_focus: nil, on_dismiss: nil, on_double_tap: nil, on_increase: nil, on_long_press: nil, on_long_press_hint_text: nil, on_move_cursor_backward_by_character: nil, on_move_cursor_forward_by_character: nil, on_paste: nil, on_scroll_down: nil, on_scroll_left: nil, on_scroll_right: nil, on_scroll_up: nil, on_set_text: nil, on_tap: nil, on_tap_hint_text: nil)
+            exclude_semantics = false if exclude_semantics.nil?
+
             props = {}
             props[:badge] = badge unless badge.nil?
             props[:button] = button unless button.nil?

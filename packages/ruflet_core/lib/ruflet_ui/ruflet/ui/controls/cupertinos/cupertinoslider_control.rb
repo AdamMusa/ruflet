@@ -9,6 +9,13 @@ module Ruflet
           WIRE = "CupertinoSlider".freeze
 
           def initialize(id: nil, active_color: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, col: nil, data: nil, disabled: nil, divisions: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, max: nil, min: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, thumb_color: nil, tooltip: nil, top: nil, value: nil, visible: nil, width: nil, on_animation_end: nil, on_blur: nil, on_change: nil, on_change_end: nil, on_change_start: nil, on_focus: nil, on_size_change: nil)
+            min = 0.0 if min.nil?
+            max = 1.0 if max.nil?
+            raise ArgumentError, "cupertino_slider min must be less than or equal to max" if min > max
+            raise ArgumentError, "cupertino_slider divisions must be greater than 0" unless divisions.nil? || divisions.positive?
+            raise ArgumentError, "cupertino_slider value must be greater than or equal to min" unless value.nil? || value >= min
+            raise ArgumentError, "cupertino_slider value must be less than or equal to max" unless value.nil? || value <= max
+
             props = {}
             props[:active_color] = active_color unless active_color.nil?
             props[:align] = align unless align.nil?

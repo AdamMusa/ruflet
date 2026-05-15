@@ -9,6 +9,14 @@ module Ruflet
           WIRE = "View".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, appbar: nil, aspect_ratio: nil, auto_scroll: nil, badge: nil, bgcolor: nil, bottom: nil, bottom_appbar: nil, can_pop: nil, col: nil, controls: nil, data: nil, decoration: nil, disabled: nil, drawer: nil, end_drawer: nil, expand: nil, expand_loose: nil, floating_action_button: nil, floating_action_button_location: nil, foreground_decoration: nil, fullscreen_dialog: nil, height: nil, horizontal_alignment: nil, key: nil, left: nil, margin: nil, navigation_bar: nil, offset: nil, opacity: nil, padding: nil, right: nil, rotate: nil, route: nil, rtl: nil, scale: nil, scroll: nil, scroll_interval: nil, services: nil, size_change_interval: nil, spacing: nil, tooltip: nil, top: nil, vertical_alignment: nil, visible: nil, width: nil, on_animation_end: nil, on_confirm_pop: nil, on_scroll: nil, on_size_change: nil)
+            can_pop = true if can_pop.nil?
+            fullscreen_dialog = false if fullscreen_dialog.nil?
+            horizontal_alignment = "start" if horizontal_alignment.nil?
+            padding = 10 if padding.nil?
+            route = "/" if route.nil?
+            spacing = 10 if spacing.nil?
+            vertical_alignment = "start" if vertical_alignment.nil?
+
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

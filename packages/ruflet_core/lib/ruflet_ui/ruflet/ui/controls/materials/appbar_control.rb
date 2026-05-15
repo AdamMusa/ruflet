@@ -9,6 +9,10 @@ module Ruflet
           WIRE = "AppBar".freeze
 
           def initialize(id: nil, actions: nil, actions_padding: nil, adaptive: nil, automatically_imply_leading: nil, badge: nil, bgcolor: nil, center_title: nil, clip_behavior: nil, col: nil, color: nil, data: nil, disabled: nil, elevation: nil, elevation_on_scroll: nil, exclude_header_semantics: nil, expand: nil, expand_loose: nil, force_material_transparency: nil, key: nil, leading: nil, leading_width: nil, opacity: nil, rtl: nil, secondary: nil, shadow_color: nil, shape: nil, title: nil, title_spacing: nil, title_text_style: nil, toolbar_height: nil, toolbar_opacity: nil, toolbar_text_style: nil, tooltip: nil, visible: nil)
+            unless toolbar_opacity.nil? || (0.0..1.0).cover?(toolbar_opacity)
+              raise ArgumentError, "app_bar toolbar_opacity must be between 0.0 and 1.0"
+            end
+
             props = {}
             props[:actions] = actions unless actions.nil?
             props[:actions_padding] = actions_padding unless actions_padding.nil?

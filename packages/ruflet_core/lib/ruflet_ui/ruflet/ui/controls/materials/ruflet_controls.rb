@@ -4,6 +4,7 @@ require_relative "alertdialog_control"
 require_relative "audio_control"
 require_relative "appbar_control"
 require_relative "autocomplete_control"
+require_relative "autocompletesuggestion_control"
 require_relative "badge_control"
 require_relative "banner_control"
 require_relative "chart_controls"
@@ -87,7 +88,9 @@ module Ruflet
             "app_bar" => RufletComponents::AppBarControl,
             "appbar" => RufletComponents::AppBarControl,
             "auto_complete" => RufletComponents::AutoCompleteControl,
+            "auto_complete_suggestion" => RufletComponents::AutoCompleteSuggestionControl,
             "autocomplete" => RufletComponents::AutoCompleteControl,
+            "autocompletesuggestion" => RufletComponents::AutoCompleteSuggestionControl,
             "badge" => RufletComponents::BadgeControl,
             "banner" => RufletComponents::BannerControl,
             "bottom_app_bar" => RufletComponents::BottomAppBarControl,
