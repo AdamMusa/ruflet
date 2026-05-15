@@ -14,6 +14,42 @@ require "timeout"
 
 module Ruflet
   class Page
+    class SharedPreferencesService
+      def initialize(page)
+        @page = page
+      end
+
+      def set(key, value, timeout: 10, on_result: nil)
+        invoke("set", { "key" => key, "value" => value }, timeout: timeout, on_result: on_result)
+      end
+
+      def get(key, timeout: 10, on_result: nil)
+        invoke("get", { "key" => key }, timeout: timeout, on_result: on_result)
+      end
+
+      def contains_key(key, timeout: 10, on_result: nil)
+        invoke("contains_key", { "key" => key }, timeout: timeout, on_result: on_result)
+      end
+
+      def get_keys(key_prefix, timeout: 10, on_result: nil)
+        invoke("get_keys", { "key_prefix" => key_prefix }, timeout: timeout, on_result: on_result)
+      end
+
+      def remove(key, timeout: 10, on_result: nil)
+        invoke("remove", { "key" => key }, timeout: timeout, on_result: on_result)
+      end
+
+      def clear(timeout: 10, on_result: nil)
+        invoke("clear", nil, timeout: timeout, on_result: on_result)
+      end
+
+      private
+
+      def invoke(method_name, args, timeout:, on_result:)
+        @page.__send__(:invoke_shared_preferences, method_name, args: args, timeout: timeout, on_result: on_result)
+      end
+    end
+
     PAGE_PROP_KEYS = %w[dark_theme fonts route rtl show_semantics_debugger theme theme_mode title vertical_alignment horizontal_alignment scroll].freeze
     DIALOG_PROP_KEYS = %w[dialog snack_bar bottom_sheet].freeze
     WIDGET_HELPER_METHODS = (
@@ -57,6 +93,7 @@ module Ruflet
       @invoke_waiters = {}
       @invoke_callbacks = {}
       @invoke_waiters_mutex = Mutex.new
+      @shared_preferences_proxy = SharedPreferencesService.new(self)
       refresh_overlay_container!
       refresh_services_container!
       refresh_dialogs_container!
@@ -147,6 +184,10 @@ module Ruflet
       refresh_services_container!
       push_services_update!
       self
+    end
+
+    def shared_preferences
+      @shared_preferences_proxy
     end
 
     def add_service(*value)
@@ -1293,6 +1334,20 @@ module Ruflet
       share = build_widget(:share)
       add_service(share)
       share
+    end
+
+    def ensure_shared_preferences_service
+      shared_preferences = services.find { |service| service.is_a?(Control) && %w[sharedpreferences shared_preferences].include?(service.type) }
+      return shared_preferences if shared_preferences
+
+      shared_preferences = build_widget(:shared_preferences)
+      add_service(shared_preferences)
+      shared_preferences
+    end
+
+    def invoke_shared_preferences(method_name, args: nil, timeout:, on_result:)
+      shared_preferences = ensure_shared_preferences_service
+      invoke(shared_preferences, method_name, args: args, timeout: timeout, on_result: on_result)
     end
 
     def invoke_battery_method(method_name, timeout:, on_result:)
