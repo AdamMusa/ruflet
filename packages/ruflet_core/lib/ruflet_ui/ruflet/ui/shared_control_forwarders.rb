@@ -113,6 +113,8 @@ module Ruflet
       def filledbutton(**props) = control_delegate.filledbutton(**props)
       def filled_tonal_button(content = nil, **props) = control_delegate.filled_tonal_button(content, **props)
       def filledtonalbutton(content = nil, **props) = control_delegate.filledtonalbutton(content, **props)
+      def filled_tonal_icon_button(icon = nil, **props) = control_delegate.filled_tonal_icon_button(icon, **props)
+      def filledtonaliconbutton(icon = nil, **props) = control_delegate.filledtonaliconbutton(icon, **props)
       def outlined_button(content = nil, **props) = control_delegate.outlined_button(content, **props)
       def outlinedbutton(content = nil, **props) = control_delegate.outlinedbutton(content, **props)
       def outlined_icon_button(icon = nil, **props) = control_delegate.outlined_icon_button(icon, **props)
