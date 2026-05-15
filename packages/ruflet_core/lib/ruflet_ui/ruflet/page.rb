@@ -349,6 +349,30 @@ module Ruflet
       invoke(url_launcher, "can_launch_url", args: { "url" => url }, timeout: timeout)
     end
 
+    def close_in_app_web_view(timeout: 10, on_result: nil)
+      url_launcher = ensure_url_launcher_service
+      invoke(url_launcher, "close_in_app_web_view", timeout: timeout, on_result: on_result)
+    end
+
+    def open_window(url, title: nil, width: nil, height: nil, timeout: 10, on_result: nil)
+      url_launcher = ensure_url_launcher_service
+      args = { "url" => url }
+      args["title"] = title unless title.nil?
+      args["width"] = width unless width.nil?
+      args["height"] = height unless height.nil?
+      invoke(url_launcher, "open_window", args: args, timeout: timeout, on_result: on_result)
+    end
+
+    def supports_launch_mode(mode, timeout: 10, on_result: nil)
+      url_launcher = ensure_url_launcher_service
+      invoke(url_launcher, "supports_launch_mode", args: { "mode" => mode }, timeout: timeout, on_result: on_result)
+    end
+
+    def supports_close_for_launch_mode(mode, timeout: 10, on_result: nil)
+      url_launcher = ensure_url_launcher_service
+      invoke(url_launcher, "supports_close_for_launch_mode", args: { "mode" => mode }, timeout: timeout, on_result: on_result)
+    end
+
     # File picker helpers: create an ephemeral service, invoke method, and dispose it.
     def pick_files(
       dialog_title: nil,
