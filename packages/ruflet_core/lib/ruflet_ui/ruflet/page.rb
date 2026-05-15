@@ -445,6 +445,26 @@ module Ruflet
       )
     end
 
+    def heavy_impact(timeout: 10, on_result: nil)
+      invoke_haptic_feedback("heavy_impact", timeout: timeout, on_result: on_result)
+    end
+
+    def medium_impact(timeout: 10, on_result: nil)
+      invoke_haptic_feedback("medium_impact", timeout: timeout, on_result: on_result)
+    end
+
+    def light_impact(timeout: 10, on_result: nil)
+      invoke_haptic_feedback("light_impact", timeout: timeout, on_result: on_result)
+    end
+
+    def selection_click(timeout: 10, on_result: nil)
+      invoke_haptic_feedback("selection_click", timeout: timeout, on_result: on_result)
+    end
+
+    def vibrate(timeout: 10, on_result: nil)
+      invoke_haptic_feedback("vibrate", timeout: timeout, on_result: on_result)
+    end
+
     def set_clipboard(value, timeout: nil, on_result: nil)
       invoke_clipboard_method(
         "set",
@@ -1195,6 +1215,20 @@ module Ruflet
       url_launcher = build_widget(:url_launcher)
       add_service(url_launcher)
       url_launcher
+    end
+
+    def ensure_haptic_feedback_service
+      haptic_feedback = services.find { |service| service.is_a?(Control) && %w[hapticfeedback haptic_feedback].include?(service.type) }
+      return haptic_feedback if haptic_feedback
+
+      haptic_feedback = build_widget(:haptic_feedback)
+      add_service(haptic_feedback)
+      haptic_feedback
+    end
+
+    def invoke_haptic_feedback(method_name, timeout:, on_result:)
+      haptic_feedback = ensure_haptic_feedback_service
+      invoke(haptic_feedback, method_name, timeout: timeout, on_result: on_result)
     end
 
     def ensure_connectivity_service
