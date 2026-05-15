@@ -386,14 +386,14 @@ module Ruflet
     )
       invoke_file_picker(
         "pick_files",
-        {
+        compact_service_args(
           "dialog_title" => dialog_title,
           "initial_directory" => initial_directory,
           "file_type" => file_type,
           "allowed_extensions" => allowed_extensions,
           "allow_multiple" => allow_multiple,
           "with_data" => with_data
-        },
+        ),
         timeout: timeout,
         on_result: on_result
       )
@@ -411,14 +411,14 @@ module Ruflet
     )
       invoke_file_picker(
         "save_file",
-        {
+        compact_service_args(
           "dialog_title" => dialog_title,
           "file_name" => file_name,
           "initial_directory" => initial_directory,
           "file_type" => file_type,
           "allowed_extensions" => allowed_extensions,
           "src_bytes" => src_bytes
-        },
+        ),
         timeout: timeout,
         on_result: on_result
       )
@@ -427,10 +427,19 @@ module Ruflet
     def get_directory_path(dialog_title: nil, initial_directory: nil, timeout: nil, on_result: nil)
       invoke_file_picker(
         "get_directory_path",
-        {
+        compact_service_args(
           "dialog_title" => dialog_title,
           "initial_directory" => initial_directory
-        },
+        ),
+        timeout: timeout,
+        on_result: on_result
+      )
+    end
+
+    def upload_files(files, timeout: nil, on_result: nil)
+      invoke_file_picker(
+        "upload",
+        { "files" => Array(files).map { |file| normalize_service_value(file) } },
         timeout: timeout,
         on_result: on_result
       )
@@ -799,6 +808,23 @@ module Ruflet
     end
 
     def build_widget(type, **props, &block) = WidgetBuilder.new.control(type, **props, &block)
+
+    def compact_service_args(hash)
+      hash.each_with_object({}) do |(key, value), result|
+        result[key] = normalize_service_value(value) unless value.nil?
+      end
+    end
+
+    def normalize_service_value(value)
+      case value
+      when Array
+        value.map { |item| normalize_service_value(item) }
+      when Hash
+        compact_service_args(value.transform_keys(&:to_s))
+      else
+        value
+      end
+    end
 
     def widget_helper_method?(name)
       WIDGET_HELPER_METHODS.include?(name.to_s)
