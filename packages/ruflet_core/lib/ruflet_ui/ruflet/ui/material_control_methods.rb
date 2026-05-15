@@ -317,6 +317,12 @@ module Ruflet
         build_widget(:filledtonalbutton, **mapped)
       end
       def filledtonalbutton(content = nil, **props) = filled_tonal_button(content, **props)
+      def filled_tonal_icon_button(icon = nil, **props)
+        mapped = props.dup
+        mapped[:icon] = icon unless icon.nil?
+        build_widget(:filledtonaliconbutton, **mapped)
+      end
+      def filledtonaliconbutton(icon = nil, **props) = filled_tonal_icon_button(icon, **props)
       def outlined_button(content = nil, **props)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
