@@ -3,7 +3,7 @@
 require_relative "test_helper"
 
 class PageClipboardTest < Minitest::Test
-  def test_set_clipboard_uses_flet_clipboard_set_data_signature
+  def test_set_clipboard_uses_flet_clipboard_set_signature
     sent = []
     page = Ruflet::Page.new(
       session_id: "s1",
@@ -14,9 +14,25 @@ class PageClipboardTest < Minitest::Test
     call_id = page.set_clipboard("hello")
     refute_nil call_id
 
-    invoke_payload = sent.reverse.map(&:last).find { |payload| payload["name"] == "set_data" }
+    invoke_payload = sent.reverse.map(&:last).find { |payload| payload["name"] == "set" }
     refute_nil invoke_payload
     assert_equal({ "data" => "hello" }, invoke_payload["args"])
+  end
+
+  def test_get_clipboard_uses_flet_clipboard_get_signature
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    call_id = page.get_clipboard
+    refute_nil call_id
+
+    invoke_payload = sent.reverse.map(&:last).find { |payload| payload["name"] == "get" }
+    refute_nil invoke_payload
+    assert_nil invoke_payload["args"]
   end
 
   def test_set_clipboard_image_uses_data_key
