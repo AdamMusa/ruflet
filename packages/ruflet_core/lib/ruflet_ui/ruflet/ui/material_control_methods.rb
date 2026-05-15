@@ -317,6 +317,12 @@ module Ruflet
         build_widget(:outlinedbutton, **mapped)
       end
       def outlinedbutton(content = nil, **props) = outlined_button(content, **props)
+      def outlined_icon_button(icon = nil, **props)
+        mapped = props.dup
+        mapped[:icon] = icon unless icon.nil?
+        build_widget(:outlinediconbutton, **mapped)
+      end
+      def outlinediconbutton(icon = nil, **props) = outlined_icon_button(icon, **props)
 
       def icon_button(icon = nil, **props)
         mapped = props.dup
