@@ -168,6 +168,8 @@ module Ruflet
     def filledbutton(**props) = _pending_app.filledbutton(**props)
     def outlined_button(content = nil, **props) = _pending_app.outlined_button(content, **props)
     def outlinedbutton(content = nil, **props) = _pending_app.outlinedbutton(content, **props)
+    def outlined_icon_button(icon = nil, **props) = _pending_app.outlined_icon_button(icon, **props)
+    def outlinediconbutton(icon = nil, **props) = _pending_app.outlinediconbutton(icon, **props)
     def checkbox(**props) = _pending_app.checkbox(**props)
     def switch(**props) = _pending_app.switch(**props)
     def slider(**props) = _pending_app.slider(**props)

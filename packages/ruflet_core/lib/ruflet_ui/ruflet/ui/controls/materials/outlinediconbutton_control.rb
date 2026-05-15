@@ -9,6 +9,14 @@ module Ruflet
           WIRE = "OutlinedIconButton".freeze
 
           def initialize(id: nil, adaptive: nil, align: nil, alignment: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, autofocus: nil, badge: nil, bgcolor: nil, bottom: nil, col: nil, data: nil, disabled: nil, disabled_color: nil, enable_feedback: nil, expand: nil, expand_loose: nil, focus_color: nil, height: nil, highlight_color: nil, hover_color: nil, icon: nil, icon_color: nil, icon_size: nil, key: nil, left: nil, margin: nil, mouse_cursor: nil, offset: nil, opacity: nil, padding: nil, right: nil, rotate: nil, rtl: nil, scale: nil, selected: nil, selected_icon: nil, selected_icon_color: nil, size_change_interval: nil, size_constraints: nil, splash_color: nil, splash_radius: nil, style: nil, tooltip: nil, top: nil, url: nil, visible: nil, visual_density: nil, width: nil, on_animation_end: nil, on_blur: nil, on_click: nil, on_focus: nil, on_hover: nil, on_long_press: nil, on_size_change: nil)
+            alignment = "center" if alignment.nil?
+            autofocus = false if autofocus.nil?
+            icon_size = 24 if icon_size.nil?
+            padding = { "all" => 8 } if padding.nil?
+            unless splash_radius.nil? || splash_radius.positive?
+              raise ArgumentError, "outlined_icon_button splash_radius must be greater than 0"
+            end
+
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
