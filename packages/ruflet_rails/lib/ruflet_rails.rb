@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
-local_ruflet_lib = File.expand_path("../../ruflet/lib", __dir__)
-if File.directory?(local_ruflet_lib) && !$LOAD_PATH.include?(local_ruflet_lib)
-  $LOAD_PATH.unshift(local_ruflet_lib)
+%w[ruflet_core ruflet].reverse_each do |package|
+  local_package_lib = File.expand_path("../../#{package}/lib", __dir__)
+  if File.directory?(local_package_lib) && !$LOAD_PATH.include?(local_package_lib)
+    $LOAD_PATH.unshift(local_package_lib)
+  end
 end
 
 require "ruflet_core"

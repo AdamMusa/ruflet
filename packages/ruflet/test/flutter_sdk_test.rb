@@ -9,6 +9,15 @@ class RufletCliFlutterSdkTest < Minitest::Test
     include Ruflet::CLI::FlutterSdk
   end
 
+  def with_singleton_method(receiver, method_name, implementation)
+    singleton = class << receiver; self; end
+    original = receiver.method(method_name)
+    singleton.send(:define_method, method_name, implementation)
+    yield
+  ensure
+    singleton.send(:define_method, method_name, original)
+  end
+
   def test_parse_fvmrc_json
     Dir.mktmpdir do |dir|
       path = File.join(dir, ".fvmrc")
@@ -87,14 +96,17 @@ class RufletCliFlutterSdkTest < Minitest::Test
       fvm_path = File.join(pub_cache_dir, "fvm")
       File.write(fvm_path, "#!/bin/sh\n")
       FileUtils.chmod("+x", fvm_path)
+      dart_path = File.join(dir, "dart")
+      File.write(dart_path, "#!/bin/sh\n")
+      FileUtils.chmod("+x", dart_path)
 
       sdk.define_singleton_method(:which_command) do |name|
         return nil if name == "fvm"
-        "/tmp/dart" if name == "dart"
+        dart_path if name == "dart"
       end
       sdk.define_singleton_method(:system) { |_dart, *_args, **_kwargs| true }
 
-      Dir.stub(:home, dir) do
+      with_singleton_method(Dir, :home, -> { dir }) do
         assert_equal fvm_path, sdk.send(:ensure_fvm_available)
       end
     end
@@ -113,7 +125,7 @@ class RufletCliFlutterSdkTest < Minitest::Test
       FileUtils.chmod("+x", flutter)
       FileUtils.chmod("+x", dart)
 
-      Dir.stub(:home, dir) do
+      with_singleton_method(Dir, :home, -> { dir }) do
         tools = sdk.send(:tools_from_flutter_bin, flutter)
 
         assert_equal flutter, tools[:flutter]
@@ -129,7 +141,7 @@ class RufletCliFlutterSdkTest < Minitest::Test
   def test_flutter_host_detects_linux
     sdk = DummySdk.new
 
-    RbConfig::CONFIG.stub(:[], "linux-gnu") do
+    with_singleton_method(RbConfig::CONFIG, :[], ->(key) { key == "host_os" ? "linux-gnu" : nil }) do
       assert_equal "linux", sdk.send(:flutter_host)
     end
   end
@@ -137,7 +149,7 @@ class RufletCliFlutterSdkTest < Minitest::Test
   def test_flutter_host_detects_windows
     sdk = DummySdk.new
 
-    RbConfig::CONFIG.stub(:[], "mingw32") do
+    with_singleton_method(RbConfig::CONFIG, :[], ->(key) { key == "host_os" ? "mingw32" : nil }) do
       assert_equal "windows", sdk.send(:flutter_host)
     end
   end
