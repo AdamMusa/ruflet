@@ -50,6 +50,30 @@ module Ruflet
       end
     end
 
+    class WakelockService
+      def initialize(page)
+        @page = page
+      end
+
+      def enable(timeout: 10, on_result: nil)
+        invoke("enable", timeout: timeout, on_result: on_result)
+      end
+
+      def disable(timeout: 10, on_result: nil)
+        invoke("disable", timeout: timeout, on_result: on_result)
+      end
+
+      def is_enabled(timeout: 10, on_result: nil)
+        invoke("is_enabled", timeout: timeout, on_result: on_result)
+      end
+
+      private
+
+      def invoke(method_name, timeout:, on_result:)
+        @page.__send__(:invoke_wakelock, method_name, timeout: timeout, on_result: on_result)
+      end
+    end
+
     PAGE_PROP_KEYS = %w[dark_theme fonts route rtl show_semantics_debugger theme theme_mode title vertical_alignment horizontal_alignment scroll].freeze
     DIALOG_PROP_KEYS = %w[dialog snack_bar bottom_sheet].freeze
     WIDGET_HELPER_METHODS = (
@@ -94,6 +118,7 @@ module Ruflet
       @invoke_callbacks = {}
       @invoke_waiters_mutex = Mutex.new
       @shared_preferences_proxy = SharedPreferencesService.new(self)
+      @wakelock_proxy = WakelockService.new(self)
       refresh_overlay_container!
       refresh_services_container!
       refresh_dialogs_container!
@@ -188,6 +213,10 @@ module Ruflet
 
     def shared_preferences
       @shared_preferences_proxy
+    end
+
+    def wakelock
+      @wakelock_proxy
     end
 
     def add_service(*value)
@@ -1348,6 +1377,20 @@ module Ruflet
     def invoke_shared_preferences(method_name, args: nil, timeout:, on_result:)
       shared_preferences = ensure_shared_preferences_service
       invoke(shared_preferences, method_name, args: args, timeout: timeout, on_result: on_result)
+    end
+
+    def ensure_wakelock_service
+      wakelock = services.find { |service| service.is_a?(Control) && service.type == "wakelock" }
+      return wakelock if wakelock
+
+      wakelock = build_widget(:wakelock)
+      add_service(wakelock)
+      wakelock
+    end
+
+    def invoke_wakelock(method_name, timeout:, on_result:)
+      wakelock = ensure_wakelock_service
+      invoke(wakelock, method_name, timeout: timeout, on_result: on_result)
     end
 
     def invoke_battery_method(method_name, timeout:, on_result:)
