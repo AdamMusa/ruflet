@@ -166,6 +166,8 @@ module Ruflet
     def textbutton(**props) = _pending_app.textbutton(**props)
     def filled_button(**props) = _pending_app.filled_button(**props)
     def filledbutton(**props) = _pending_app.filledbutton(**props)
+    def filled_icon_button(icon = nil, **props) = _pending_app.filled_icon_button(icon, **props)
+    def fillediconbutton(icon = nil, **props) = _pending_app.fillediconbutton(icon, **props)
     def filled_tonal_button(content = nil, **props) = _pending_app.filled_tonal_button(content, **props)
     def filledtonalbutton(content = nil, **props) = _pending_app.filledtonalbutton(content, **props)
     def filled_tonal_icon_button(icon = nil, **props) = _pending_app.filled_tonal_icon_button(icon, **props)

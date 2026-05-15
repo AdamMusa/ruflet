@@ -111,6 +111,8 @@ module Ruflet
       def textbutton(**props) = control_delegate.textbutton(**props)
       def filled_button(**props) = control_delegate.filled_button(**props)
       def filledbutton(**props) = control_delegate.filledbutton(**props)
+      def filled_icon_button(icon = nil, **props) = control_delegate.filled_icon_button(icon, **props)
+      def fillediconbutton(icon = nil, **props) = control_delegate.fillediconbutton(icon, **props)
       def filled_tonal_button(content = nil, **props) = control_delegate.filled_tonal_button(content, **props)
       def filledtonalbutton(content = nil, **props) = control_delegate.filledtonalbutton(content, **props)
       def filled_tonal_icon_button(icon = nil, **props) = control_delegate.filled_tonal_icon_button(icon, **props)
