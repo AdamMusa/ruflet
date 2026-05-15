@@ -58,7 +58,7 @@ class PageFilePickerServiceTest < Minitest::Test
     page = build_page(sent)
 
     files = [{ name: "a.txt", upload_url: "/upload/a.txt", method: "PUT" }]
-    call_id = page.upload_files(files)
+    call_id = page.upload(files)
     refute_nil call_id
 
     invoke_payload = sent.reverse.map(&:last).find { |payload| payload["name"] == "upload" }
@@ -75,6 +75,17 @@ class PageFilePickerServiceTest < Minitest::Test
       },
       invoke_payload["args"]
     )
+  end
+
+  def test_upload_files_alias_keeps_existing_ruflet_api
+    sent = []
+    page = build_page(sent)
+
+    call_id = page.upload_files([{ name: "a.txt" }])
+    refute_nil call_id
+
+    invoke_payload = sent.reverse.map(&:last).find { |payload| payload["name"] == "upload" }
+    refute_nil invoke_payload
   end
 
   private
