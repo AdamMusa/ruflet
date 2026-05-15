@@ -569,7 +569,7 @@ module Ruflet
     end
 
     def share_text(
-      text:,
+      text = nil,
       title: nil,
       subject: nil,
       preview_thumbnail: nil,
@@ -584,7 +584,7 @@ module Ruflet
       invoke(
         share,
         "share_text",
-        args: {
+        args: compact_service_args(
           "text" => text,
           "title" => title,
           "subject" => subject,
@@ -593,14 +593,14 @@ module Ruflet
           "download_fallback_enabled" => download_fallback_enabled,
           "mail_to_fallback_enabled" => mail_to_fallback_enabled,
           "excluded_cupertino_activities" => excluded_cupertino_activities
-        },
+        ),
         timeout: timeout,
         on_result: on_result
       )
     end
 
     def share_uri(
-      uri:,
+      uri = nil,
       share_position_origin: nil,
       excluded_cupertino_activities: nil,
       timeout: nil,
@@ -610,18 +610,18 @@ module Ruflet
       invoke(
         share,
         "share_uri",
-        args: {
+        args: compact_service_args(
           "uri" => uri,
           "share_position_origin" => share_position_origin,
           "excluded_cupertino_activities" => excluded_cupertino_activities
-        },
+        ),
         timeout: timeout,
         on_result: on_result
       )
     end
 
     def share_files(
-      files:,
+      files = nil,
       text: nil,
       title: nil,
       subject: nil,
@@ -637,7 +637,7 @@ module Ruflet
       invoke(
         share,
         "share_files",
-        args: {
+        args: compact_service_args(
           "files" => files,
           "text" => text,
           "title" => title,
@@ -647,7 +647,7 @@ module Ruflet
           "download_fallback_enabled" => download_fallback_enabled,
           "mail_to_fallback_enabled" => mail_to_fallback_enabled,
           "excluded_cupertino_activities" => excluded_cupertino_activities
-        },
+        ),
         timeout: timeout,
         on_result: on_result
       )
