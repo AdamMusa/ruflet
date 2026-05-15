@@ -268,6 +268,8 @@ module Ruflet
     def cupertinoactionsheetaction(**props) = _pending_app.cupertinoactionsheetaction(**props)
     def cupertino_activity_indicator(**props) = _pending_app.cupertino_activity_indicator(**props)
     def cupertinoactivityindicator(**props) = _pending_app.cupertinoactivityindicator(**props)
+    def cupertino_app_bar(**props) = _pending_app.cupertino_app_bar(**props)
+    def cupertinoappbar(**props) = _pending_app.cupertinoappbar(**props)
     def cupertino_bottom_sheet(content = nil, **props) = _pending_app.cupertino_bottom_sheet(content, **props)
     def cupertinobottomsheet(content = nil, **props) = _pending_app.cupertinobottomsheet(content, **props)
     def cupertino_date_picker(**props) = _pending_app.cupertino_date_picker(**props)

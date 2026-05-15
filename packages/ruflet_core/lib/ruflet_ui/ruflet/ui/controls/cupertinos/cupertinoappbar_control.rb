@@ -9,6 +9,9 @@ module Ruflet
           WIRE = "CupertinoAppBar".freeze
 
           def initialize(id: nil, automatic_background_visibility: nil, automatically_imply_leading: nil, automatically_imply_title: nil, badge: nil, bgcolor: nil, border: nil, brightness: nil, col: nil, data: nil, disabled: nil, enable_background_filter_blur: nil, expand: nil, expand_loose: nil, key: nil, large: nil, leading: nil, opacity: nil, padding: nil, previous_page_title: nil, rtl: nil, title: nil, tooltip: nil, trailing: nil, transition_between_routes: nil, visible: nil)
+            large = false if large.nil?
+            transition_between_routes = true if transition_between_routes.nil?
+
             props = {}
             props[:automatic_background_visibility] = automatic_background_visibility unless automatic_background_visibility.nil?
             props[:automatically_imply_leading] = automatically_imply_leading unless automatically_imply_leading.nil?
