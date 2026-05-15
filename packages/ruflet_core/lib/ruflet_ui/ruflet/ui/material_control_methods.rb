@@ -307,8 +307,12 @@ module Ruflet
       # Ruflet currently uses a single Material button control schema.
       # Keep elevated_button DSL available by routing to :button.
       def elevated_button(**props) = build_widget(:button, **props)
-      def text_button(**props) = build_widget(:textbutton, **props)
-      def textbutton(**props) = text_button(**props)
+      def text_button(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:textbutton, **mapped)
+      end
+      def textbutton(content = nil, **props) = text_button(content, **props)
       def filled_button(content = nil, **props)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
