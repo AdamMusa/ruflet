@@ -9,6 +9,25 @@ module Ruflet
           WIRE = "SegmentedButton".freeze
 
           def initialize(id: nil, align: nil, allow_empty_selection: nil, allow_multiple_selection: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, col: nil, data: nil, direction: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, padding: nil, right: nil, rotate: nil, rtl: nil, scale: nil, segments: nil, selected: nil, selected_icon: nil, show_selected_icon: nil, size_change_interval: nil, style: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_change: nil, on_size_change: nil)
+            visible_segments = Array(segments).reject { |segment| segment.respond_to?(:props) && segment.props["visible"] == false }
+            raise ArgumentError, "segmented_button requires at least one visible segment" if visible_segments.empty?
+
+            selected_values = selected.nil? ? [] : Array(selected)
+            if selected_values.empty? && allow_empty_selection != true
+              raise ArgumentError, "segmented_button selected cannot be empty unless allow_empty_selection is true"
+            end
+            if selected_values.size > 1 && allow_multiple_selection != true
+              raise ArgumentError, "segmented_button selected cannot contain multiple values unless allow_multiple_selection is true"
+            end
+
+            segment_values = visible_segments.filter_map do |segment|
+              segment.respond_to?(:props) ? segment.props["value"] : nil
+            end
+            missing_values = selected_values - segment_values
+            unless missing_values.empty?
+              raise ArgumentError, "segmented_button selected values must match segment values"
+            end
+
             props = {}
             props[:align] = align unless align.nil?
             props[:allow_empty_selection] = allow_empty_selection unless allow_empty_selection.nil?

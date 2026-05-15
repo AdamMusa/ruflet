@@ -9,6 +9,9 @@ module Ruflet
           WIRE = "Stack".freeze
 
           def initialize(id: nil, adaptive: nil, align: nil, alignment: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, clip_behavior: nil, col: nil, controls: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, fit: nil, height: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_size_change: nil)
+            clip_behavior = "hardEdge" if clip_behavior.nil?
+            fit = "loose" if fit.nil?
+
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?

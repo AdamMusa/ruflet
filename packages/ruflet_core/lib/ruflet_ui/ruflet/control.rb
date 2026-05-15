@@ -93,7 +93,7 @@ module Ruflet
       when Array
         value.map { |v| serialize_value(v) }
       when Hash
-        value.transform_values { |v| serialize_value(v) }
+        value.each_with_object({}) { |(k, v), result| result[k.to_s] = serialize_value(v) }
       else
         value.respond_to?(:to_h) ? serialize_value(value.to_h) : value
       end
@@ -107,6 +107,8 @@ module Ruflet
       output.keys.each do |key|
         key_string = key.to_s
         next unless key_string.start_with?("on_")
+        next if key_string.end_with?("_hint_text")
+        next if key_string == "on_label_color"
 
         event_name = normalized_event_name(key_string)
         if allowed_events.any? && !allowed_events_set.include?(event_name)
@@ -171,7 +173,7 @@ module Ruflet
     end
 
     def color_prop_key?(key)
-      key == "color" || key == "bgcolor" || key.end_with?("_color")
+      key == "color" || key.end_with?("bgcolor") || key.end_with?("_color")
     end
 
     def normalize_icon_prop(key, value)
@@ -179,6 +181,8 @@ module Ruflet
       return value if value.nil?
       return value if value.is_a?(Ruflet::Control)
       return normalize_icon_name(value.value) if value.is_a?(Ruflet::IconData)
+      return value.map { |item| normalize_icon_prop(key, item) } if value.is_a?(Array)
+      return value.each_with_object({}) { |(k, v), out| out[k] = normalize_icon_prop(key, v) } if value.is_a?(Hash)
       return normalize_icon_name(value.to_s) if value.is_a?(String) || value.is_a?(Symbol)
 
       raise ArgumentError, "#{type} #{key} must use an icon name string, not #{value.inspect}"
@@ -193,7 +197,9 @@ module Ruflet
     end
 
     def icon_prop_key?(key)
-      key == "icon" || key.end_with?("_icon")
+      return false if key.start_with?("show_")
+
+      key == "icon" || key.end_with?("_icon") || key == "leading" || key == "trailing"
     end
 
     def normalized_event_name(event_name)
@@ -213,13 +219,14 @@ module Ruflet
 
     def property_names
       constructor_keywords_for_schema_class
-        .reject { |name| name.to_s.start_with?("on_") }
+        .reject { |name| name.to_s.start_with?("on_") && name != :on_label_color }
         .map(&:to_s)
     end
 
     def event_names
       constructor_keywords_for_schema_class
         .select { |name| name.to_s.start_with?("on_") }
+        .reject { |name| name == :on_label_color }
         .map { |name| name.to_s.sub(/\Aon_/, "") }
     end
 

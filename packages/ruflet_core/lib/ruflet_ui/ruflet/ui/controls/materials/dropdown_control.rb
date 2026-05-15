@@ -9,6 +9,17 @@ module Ruflet
           WIRE = "Dropdown".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, autofocus: nil, badge: nil, bgcolor: nil, border: nil, border_color: nil, border_radius: nil, border_width: nil, bottom: nil, capitalization: nil, col: nil, color: nil, content_padding: nil, data: nil, dense: nil, disabled: nil, editable: nil, elevation: nil, enable_filter: nil, enable_search: nil, error_style: nil, error_text: nil, expand: nil, expand_loose: nil, expanded_insets: nil, fill_color: nil, filled: nil, focused_border_color: nil, focused_border_width: nil, height: nil, helper_style: nil, helper_text: nil, hint_style: nil, hint_text: nil, hover_color: nil, input_filter: nil, key: nil, label: nil, label_style: nil, leading_icon: nil, left: nil, margin: nil, menu_height: nil, menu_style: nil, menu_width: nil, offset: nil, opacity: nil, options: nil, right: nil, rotate: nil, rtl: nil, scale: nil, selected_suffix: nil, selected_trailing_icon: nil, size_change_interval: nil, text: nil, text_align: nil, text_size: nil, text_style: nil, tooltip: nil, top: nil, trailing_icon: nil, value: nil, visible: nil, width: nil, on_animation_end: nil, on_blur: nil, on_focus: nil, on_select: nil, on_size_change: nil, on_text_change: nil)
+            {
+              border_width: border_width,
+              elevation: elevation,
+              focused_border_width: focused_border_width,
+              menu_height: menu_height,
+              menu_width: menu_width,
+              text_size: text_size
+            }.each do |name, numeric_value|
+              raise ArgumentError, "dropdown #{name} must be greater than or equal to 0" unless numeric_value.nil? || numeric_value >= 0
+            end
+
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

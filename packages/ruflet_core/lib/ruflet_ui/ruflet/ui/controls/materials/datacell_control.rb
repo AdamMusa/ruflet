@@ -9,6 +9,10 @@ module Ruflet
           WIRE = "DataCell".freeze
 
           def initialize(id: nil, badge: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, key: nil, opacity: nil, placeholder: nil, rtl: nil, show_edit_icon: nil, tooltip: nil, visible: nil, on_double_tap: nil, on_long_press: nil, on_tap: nil, on_tap_cancel: nil, on_tap_down: nil)
+            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
+              raise ArgumentError, "data_cell requires visible content"
+            end
+
             props = {}
             props[:badge] = badge unless badge.nil?
             props[:col] = col unless col.nil?

@@ -9,6 +9,34 @@ module Ruflet
           WIRE = "DataTable".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bgcolor: nil, border: nil, border_radius: nil, bottom: nil, checkbox_horizontal_margin: nil, clip_behavior: nil, col: nil, column_spacing: nil, columns: nil, data: nil, data_row_color: nil, data_row_max_height: nil, data_row_min_height: nil, data_text_style: nil, disabled: nil, divider_thickness: nil, expand: nil, expand_loose: nil, gradient: nil, heading_row_color: nil, heading_row_height: nil, heading_text_style: nil, height: nil, horizontal_lines: nil, horizontal_margin: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rows: nil, rtl: nil, scale: nil, show_bottom_border: nil, show_checkbox_column: nil, size_change_interval: nil, sort_ascending: nil, sort_column_index: nil, tooltip: nil, top: nil, vertical_lines: nil, visible: nil, width: nil, on_animation_end: nil, on_select_all: nil, on_size_change: nil)
+            visible_columns = visible_controls(columns)
+            raise ArgumentError, "data_table requires at least one visible columns control" if visible_columns.empty?
+
+            visible_rows = visible_controls(rows)
+            visible_rows.each do |row|
+              next unless row.respond_to?(:props)
+
+              unless visible_controls(row.props["cells"]).length == visible_columns.length
+                raise ArgumentError, "data_table row cells must match visible columns"
+              end
+            end
+
+            {
+              checkbox_horizontal_margin: checkbox_horizontal_margin,
+              column_spacing: column_spacing,
+              data_row_max_height: data_row_max_height,
+              data_row_min_height: data_row_min_height,
+              divider_thickness: divider_thickness,
+              heading_row_height: heading_row_height,
+              horizontal_margin: horizontal_margin
+            }.each do |name, value|
+              raise ArgumentError, "data_table #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
+            end
+
+            unless data_row_min_height.nil? || data_row_max_height.nil? || data_row_min_height <= data_row_max_height
+              raise ArgumentError, "data_table data_row_min_height must be less than or equal to data_row_max_height"
+            end
+
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -70,6 +98,12 @@ module Ruflet
             props[:on_select_all] = on_select_all unless on_select_all.nil?
             props[:on_size_change] = on_size_change unless on_size_change.nil?
             super(type: TYPE, id: id, **props)
+          end
+
+          private
+
+          def visible_controls(value)
+            Array(value).select { |control| !control.respond_to?(:props) || control.props["visible"] != false }
           end
         end
       end

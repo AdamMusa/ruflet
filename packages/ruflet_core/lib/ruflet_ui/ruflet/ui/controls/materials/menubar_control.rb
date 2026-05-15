@@ -9,6 +9,8 @@ module Ruflet
           WIRE = "MenuBar".freeze
 
           def initialize(id: nil, badge: nil, clip_behavior: nil, col: nil, controls: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, key: nil, opacity: nil, rtl: nil, style: nil, tooltip: nil, visible: nil)
+            clip_behavior = "none" if clip_behavior.nil?
+
             props = {}
             props[:badge] = badge unless badge.nil?
             props[:clip_behavior] = clip_behavior unless clip_behavior.nil?

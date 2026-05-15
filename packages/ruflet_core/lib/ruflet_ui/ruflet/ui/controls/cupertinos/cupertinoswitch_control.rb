@@ -8,7 +8,13 @@ module Ruflet
           TYPE = "cupertinoswitch".freeze
           WIRE = "CupertinoSwitch".freeze
 
-          def initialize(id: nil, active_thumb_image_src: nil, active_track_color: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, autofocus: nil, badge: nil, bottom: nil, col: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, focus_color: nil, height: nil, inactive_thumb_color: nil, inactive_thumb_image_src: nil, inactive_track_color: nil, key: nil, label: nil, label_position: nil, left: nil, margin: nil, off_label_color: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, thumb_color: nil, thumb_icon: nil, tooltip: nil, top: nil, track_outline_color: nil, track_outline_width: nil, value: nil, visible: nil, width: nil, on_animation_end: nil, on_blur: nil, on_change: nil, on_focus: nil, on_image_error: nil, on_label_color: nil, on_size_change: nil)
+          def initialize(id: nil, active_thumb_image: nil, active_thumb_image_src: nil, active_track_color: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, autofocus: nil, badge: nil, bottom: nil, col: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, focus_color: nil, height: nil, inactive_thumb_color: nil, inactive_thumb_image: nil, inactive_thumb_image_src: nil, inactive_track_color: nil, key: nil, label: nil, label_position: nil, left: nil, margin: nil, off_label_color: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, thumb_color: nil, thumb_icon: nil, tooltip: nil, top: nil, track_outline_color: nil, track_outline_width: nil, value: nil, visible: nil, width: nil, on_animation_end: nil, on_blur: nil, on_change: nil, on_focus: nil, on_image_error: nil, on_label_color: nil, on_size_change: nil)
+            active_thumb_image_src = active_thumb_image if active_thumb_image_src.nil?
+            inactive_thumb_image_src = inactive_thumb_image if inactive_thumb_image_src.nil?
+            autofocus = false if autofocus.nil?
+            label_position = "right" if label_position.nil?
+            value = false if value.nil?
+
             props = {}
             props[:active_thumb_image_src] = active_thumb_image_src unless active_thumb_image_src.nil?
             props[:active_track_color] = active_track_color unless active_track_color.nil?

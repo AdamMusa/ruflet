@@ -9,6 +9,18 @@ module Ruflet
           WIRE = "Placeholder".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, col: nil, color: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, fallback_height: nil, fallback_width: nil, height: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, stroke_width: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_size_change: nil)
+            fallback_height = 400.0 if fallback_height.nil?
+            fallback_width = 400.0 if fallback_width.nil?
+            stroke_width = 2.0 if stroke_width.nil?
+
+            {
+              fallback_height: fallback_height,
+              fallback_width: fallback_width,
+              stroke_width: stroke_width
+            }.each do |name, value|
+              raise ArgumentError, "placeholder #{name} must be greater than or equal to 0" if value.negative?
+            end
+
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

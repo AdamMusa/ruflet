@@ -9,6 +9,18 @@ module Ruflet
           WIRE = "ResponsiveRow".freeze
 
           def initialize(id: nil, adaptive: nil, align: nil, alignment: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, breakpoints: nil, col: nil, columns: nil, controls: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, run_spacing: nil, scale: nil, size_change_interval: nil, spacing: nil, tooltip: nil, top: nil, vertical_alignment: nil, visible: nil, width: nil, on_animation_end: nil, on_size_change: nil)
+            alignment = "start" if alignment.nil?
+            breakpoints = { "xs" => 0, "sm" => 576, "md" => 768, "lg" => 992, "xl" => 1200, "xxl" => 1400 } if breakpoints.nil?
+            columns = 12 if columns.nil?
+            run_spacing = 10 if run_spacing.nil?
+            spacing = 10 if spacing.nil?
+            vertical_alignment = "start" if vertical_alignment.nil?
+
+            validate_non_negative(:columns, columns)
+            validate_non_negative(:run_spacing, run_spacing)
+            validate_non_negative(:spacing, spacing)
+            validate_non_negative(:breakpoints, breakpoints)
+
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
@@ -53,6 +65,16 @@ module Ruflet
             props[:on_animation_end] = on_animation_end unless on_animation_end.nil?
             props[:on_size_change] = on_size_change unless on_size_change.nil?
             super(type: TYPE, id: id, **props)
+          end
+
+          private
+
+          def validate_non_negative(name, value)
+            values = value.is_a?(Hash) ? value.values : [value]
+            values.each do |entry|
+              next if entry.nil?
+              raise ArgumentError, "responsive_row #{name} must be greater than or equal to 0" if entry.negative?
+            end
           end
         end
       end

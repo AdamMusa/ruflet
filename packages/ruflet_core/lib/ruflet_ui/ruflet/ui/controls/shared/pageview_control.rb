@@ -9,6 +9,19 @@ module Ruflet
           WIRE = "PageView".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, clip_behavior: nil, col: nil, controls: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, horizontal: nil, implicit_scrolling: nil, keep_page: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, pad_ends: nil, reverse: nil, right: nil, rotate: nil, rtl: nil, scale: nil, selected_index: nil, size_change_interval: nil, snap: nil, tooltip: nil, top: nil, viewport_fraction: nil, visible: nil, width: nil, on_animation_end: nil, on_change: nil, on_size_change: nil)
+            clip_behavior = "hardEdge" if clip_behavior.nil?
+            horizontal = true if horizontal.nil?
+            implicit_scrolling = false if implicit_scrolling.nil?
+            keep_page = true if keep_page.nil?
+            pad_ends = true if pad_ends.nil?
+            reverse = false if reverse.nil?
+            selected_index = 0 if selected_index.nil?
+            snap = true if snap.nil?
+            viewport_fraction = 1.0 if viewport_fraction.nil?
+
+            raise ArgumentError, "page_view selected_index must be greater than or equal to 0" if selected_index.negative?
+            raise ArgumentError, "page_view viewport_fraction must be greater than 0" unless viewport_fraction.positive?
+
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

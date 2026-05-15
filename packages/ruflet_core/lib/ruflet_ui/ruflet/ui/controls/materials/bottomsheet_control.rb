@@ -9,6 +9,11 @@ module Ruflet
           WIRE = "BottomSheet".freeze
 
           def initialize(id: nil, adaptive: nil, animation_style: nil, badge: nil, barrier_color: nil, bgcolor: nil, clip_behavior: nil, col: nil, content: nil, data: nil, disabled: nil, dismissible: nil, draggable: nil, elevation: nil, expand: nil, expand_loose: nil, fullscreen: nil, key: nil, maintain_bottom_view_insets_padding: nil, opacity: nil, open: nil, rtl: nil, scrollable: nil, shape: nil, show_drag_handle: nil, size_constraints: nil, tooltip: nil, use_safe_area: nil, visible: nil, on_dismiss: nil)
+            raise ArgumentError, "bottom_sheet requires content" if content.nil?
+            unless elevation.nil? || elevation >= 0
+              raise ArgumentError, "bottom_sheet elevation must be greater than or equal to 0"
+            end
+
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:animation_style] = animation_style unless animation_style.nil?

@@ -9,6 +9,17 @@ module Ruflet
           WIRE = "CupertinoNavigationBar".freeze
 
           def initialize(id: nil, active_color: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bgcolor: nil, border: nil, bottom: nil, col: nil, data: nil, destinations: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, icon_size: nil, inactive_color: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, selected_index: nil, size_change_interval: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_change: nil, on_size_change: nil)
+            icon_size = 30 if icon_size.nil?
+            selected_index = 0 if selected_index.nil?
+            visible_destinations = Array(destinations).reject { |destination| destination.respond_to?(:props) && destination.props["visible"] == false }
+            unless destinations.nil? || visible_destinations.length >= 2
+              raise ArgumentError, "cupertino_navigation_bar destinations must include at least two visible destinations"
+            end
+
+            unless destinations.nil? || (0...visible_destinations.length).cover?(selected_index)
+              raise IndexError, "cupertino_navigation_bar selected_index is out of range"
+            end
+
             props = {}
             props[:active_color] = active_color unless active_color.nil?
             props[:align] = align unless align.nil?

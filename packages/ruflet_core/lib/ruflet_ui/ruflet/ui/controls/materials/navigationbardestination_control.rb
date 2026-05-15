@@ -9,6 +9,8 @@ module Ruflet
           WIRE = "NavigationBarDestination".freeze
 
           def initialize(id: nil, adaptive: nil, badge: nil, bgcolor: nil, col: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, icon: nil, key: nil, label: nil, opacity: nil, rtl: nil, selected_icon: nil, tooltip: nil, visible: nil)
+            raise ArgumentError, "navigation_bar_destination requires icon" if icon.nil?
+
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:badge] = badge unless badge.nil?

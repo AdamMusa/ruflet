@@ -9,6 +9,26 @@ module Ruflet
           WIRE = "GridView".freeze
 
           def initialize(id: nil, adaptive: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, auto_scroll: nil, badge: nil, bottom: nil, build_controls_on_demand: nil, cache_extent: nil, child_aspect_ratio: nil, clip_behavior: nil, col: nil, controls: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, horizontal: nil, key: nil, left: nil, margin: nil, max_extent: nil, offset: nil, opacity: nil, padding: nil, reverse: nil, right: nil, rotate: nil, rtl: nil, run_spacing: nil, runs_count: nil, scale: nil, scroll: nil, scroll_interval: nil, semantic_child_count: nil, size_change_interval: nil, spacing: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_scroll: nil, on_size_change: nil)
+            build_controls_on_demand = true if build_controls_on_demand.nil?
+            child_aspect_ratio = 1.0 if child_aspect_ratio.nil?
+            horizontal = false if horizontal.nil?
+            reverse = false if reverse.nil?
+            run_spacing = 10 if run_spacing.nil?
+            runs_count = 1 if runs_count.nil?
+            spacing = 10 if spacing.nil?
+
+            {
+              child_aspect_ratio: child_aspect_ratio,
+              max_extent: max_extent,
+              run_spacing: run_spacing,
+              runs_count: runs_count,
+              semantic_child_count: semantic_child_count,
+              spacing: spacing
+            }.each do |name, value|
+              next if value.nil?
+              raise ArgumentError, "grid_view #{name} must be greater than or equal to 0" if value.negative?
+            end
+
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?

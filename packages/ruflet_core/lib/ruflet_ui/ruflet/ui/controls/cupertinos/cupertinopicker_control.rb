@@ -9,6 +9,24 @@ module Ruflet
           WIRE = "CupertinoPicker".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bgcolor: nil, bottom: nil, col: nil, controls: nil, data: nil, default_selection_overlay_bgcolor: nil, diameter_ratio: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, item_extent: nil, key: nil, left: nil, looping: nil, magnification: nil, margin: nil, off_axis_fraction: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, selected_index: nil, selection_overlay: nil, size_change_interval: nil, squeeze: nil, tooltip: nil, top: nil, use_magnifier: nil, visible: nil, width: nil, on_animation_end: nil, on_change: nil, on_size_change: nil)
+            diameter_ratio = 1.07 if diameter_ratio.nil?
+            item_extent = 32.0 if item_extent.nil?
+            looping = false if looping.nil?
+            magnification = 1.0 if magnification.nil?
+            off_axis_fraction = 0.0 if off_axis_fraction.nil?
+            selected_index = 0 if selected_index.nil?
+            squeeze = 1.45 if squeeze.nil?
+            use_magnifier = false if use_magnifier.nil?
+
+            {
+              item_extent: item_extent,
+              magnification: magnification,
+              squeeze: squeeze
+            }.each do |name, value|
+              raise ArgumentError, "cupertino_picker #{name} must be greater than 0" unless value.positive?
+            end
+            raise ArgumentError, "cupertino_picker selected_index must be greater than or equal to 0" if selected_index.negative?
+
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

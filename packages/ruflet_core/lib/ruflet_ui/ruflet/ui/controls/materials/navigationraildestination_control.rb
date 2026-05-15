@@ -9,6 +9,8 @@ module Ruflet
           WIRE = "NavigationRailDestination".freeze
 
           def initialize(id: nil, badge: nil, col: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, icon: nil, indicator_color: nil, indicator_shape: nil, key: nil, label: nil, opacity: nil, padding: nil, rtl: nil, selected_icon: nil, tooltip: nil, visible: nil)
+            raise ArgumentError, "navigation_rail_destination requires icon" if icon.nil?
+
             props = {}
             props[:badge] = badge unless badge.nil?
             props[:col] = col unless col.nil?

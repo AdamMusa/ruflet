@@ -9,6 +9,8 @@ module Ruflet
           WIRE = "DatePicker".freeze
 
           def initialize(id: nil, adaptive: nil, badge: nil, barrier_color: nil, cancel_text: nil, col: nil, confirm_text: nil, current_date: nil, data: nil, date_picker_mode: nil, disabled: nil, entry_mode: nil, error_format_text: nil, error_invalid_text: nil, expand: nil, expand_loose: nil, field_hint_text: nil, field_label_text: nil, first_date: nil, help_text: nil, inset_padding: nil, key: nil, keyboard_type: nil, last_date: nil, locale: nil, modal: nil, opacity: nil, open: nil, rtl: nil, switch_to_calendar_icon: nil, switch_to_input_icon: nil, tooltip: nil, value: nil, visible: nil, on_change: nil, on_dismiss: nil, on_entry_mode_change: nil)
+            validate_date_range!(first_date, last_date, value)
+
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:badge] = badge unless badge.nil?
@@ -47,6 +49,22 @@ module Ruflet
             props[:on_dismiss] = on_dismiss unless on_dismiss.nil?
             props[:on_entry_mode_change] = on_entry_mode_change unless on_entry_mode_change.nil?
             super(type: TYPE, id: id, **props)
+          end
+
+          private
+
+          def validate_date_range!(first_date, last_date, value)
+            first = first_date || "1900-01-01"
+            last = last_date || "2050-01-01"
+            raise ArgumentError, "date_picker first_date must be before or equal to last_date" if date_key(first) > date_key(last)
+            return if value.nil?
+
+            raise ArgumentError, "date_picker value must be on or after first_date" if date_key(value) < date_key(first)
+            raise ArgumentError, "date_picker value must be on or before last_date" if date_key(value) > date_key(last)
+          end
+
+          def date_key(value)
+            value.respond_to?(:iso8601) ? value.iso8601 : value.to_s
           end
         end
       end

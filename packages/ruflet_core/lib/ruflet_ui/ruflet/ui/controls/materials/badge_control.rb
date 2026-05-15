@@ -9,6 +9,13 @@ module Ruflet
           WIRE = "Badge".freeze
 
           def initialize(id: nil, alignment: nil, bgcolor: nil, data: nil, key: nil, label: nil, label_visible: nil, large_size: nil, offset: nil, padding: nil, small_size: nil, text_color: nil, text_style: nil)
+            {
+              large_size: large_size,
+              small_size: small_size
+            }.each do |name, value|
+              raise ArgumentError, "badge #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
+            end
+
             props = {}
             props[:alignment] = alignment unless alignment.nil?
             props[:bgcolor] = bgcolor unless bgcolor.nil?

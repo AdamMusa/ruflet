@@ -9,6 +9,14 @@ module Ruflet
           WIRE = "ProgressRing".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bgcolor: nil, bottom: nil, col: nil, color: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, padding: nil, right: nil, rotate: nil, rtl: nil, scale: nil, semantics_label: nil, semantics_value: nil, size_change_interval: nil, size_constraints: nil, stroke_align: nil, stroke_cap: nil, stroke_width: nil, tooltip: nil, top: nil, track_gap: nil, value: nil, visible: nil, width: nil, year_2023: nil, on_animation_end: nil, on_size_change: nil)
+            {
+              semantics_value: semantics_value,
+              stroke_width: stroke_width,
+              track_gap: track_gap
+            }.each do |name, numeric_value|
+              raise ArgumentError, "progress_ring #{name} must be greater than or equal to 0" unless numeric_value.nil? || numeric_value >= 0
+            end
+
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

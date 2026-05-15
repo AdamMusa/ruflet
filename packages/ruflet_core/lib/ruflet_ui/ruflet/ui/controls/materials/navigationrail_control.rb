@@ -9,6 +9,27 @@ module Ruflet
           WIRE = "NavigationRail".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bgcolor: nil, bottom: nil, col: nil, data: nil, destinations: nil, disabled: nil, elevation: nil, expand: nil, expand_loose: nil, extended: nil, group_alignment: nil, height: nil, indicator_color: nil, indicator_shape: nil, key: nil, label_type: nil, leading: nil, left: nil, margin: nil, min_extended_width: nil, min_width: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, selected_index: nil, selected_label_text_style: nil, size_change_interval: nil, tooltip: nil, top: nil, trailing: nil, unselected_label_text_style: nil, use_indicator: nil, visible: nil, width: nil, on_animation_end: nil, on_change: nil, on_size_change: nil)
+            visible_destinations = Array(destinations).reject { |destination| destination.respond_to?(:props) && destination.props["visible"] == false }
+            unless destinations.nil? || visible_destinations.length >= 2
+              raise ArgumentError, "navigation_rail destinations must include at least two visible destinations"
+            end
+
+            unless selected_index.nil? || destinations.nil? || (0...visible_destinations.length).cover?(selected_index)
+              raise IndexError, "navigation_rail selected_index is out of range"
+            end
+
+            unless group_alignment.nil? || (-1.0..1.0).cover?(group_alignment)
+              raise ArgumentError, "navigation_rail group_alignment must be between -1.0 and 1.0"
+            end
+
+            {
+              elevation: elevation,
+              min_extended_width: min_extended_width,
+              min_width: min_width
+            }.each do |name, value|
+              raise ArgumentError, "navigation_rail #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
+            end
+
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

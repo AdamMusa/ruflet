@@ -9,6 +9,19 @@ module Ruflet
           WIRE = "RangeSlider".freeze
 
           def initialize(id: nil, active_color: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, col: nil, data: nil, disabled: nil, divisions: nil, end_value: nil, expand: nil, expand_loose: nil, height: nil, inactive_color: nil, key: nil, label: nil, left: nil, margin: nil, max: nil, min: nil, mouse_cursor: nil, offset: nil, opacity: nil, overlay_color: nil, right: nil, rotate: nil, round: nil, rtl: nil, scale: nil, size_change_interval: nil, start_value: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_change: nil, on_change_end: nil, on_change_start: nil, on_size_change: nil)
+            min_value = min.nil? ? 0.0 : min
+            max_value = max.nil? ? 1.0 : max
+
+            raise ArgumentError, "range_slider min must be less than or equal to max" if min_value > max_value
+            raise ArgumentError, "range_slider divisions must be greater than 0" unless divisions.nil? || divisions > 0
+            raise ArgumentError, "range_slider round must be between 0 and 20" unless round.nil? || (0..20).cover?(round)
+            raise ArgumentError, "range_slider start_value must be greater than or equal to min" unless start_value.nil? || start_value >= min_value
+            raise ArgumentError, "range_slider end_value must be less than or equal to max" unless end_value.nil? || end_value <= max_value
+
+            unless start_value.nil? || end_value.nil? || start_value <= end_value
+              raise ArgumentError, "range_slider start_value must be less than or equal to end_value"
+            end
+
             props = {}
             props[:active_color] = active_color unless active_color.nil?
             props[:align] = align unless align.nil?

@@ -9,6 +9,20 @@ module Ruflet
           WIRE = "SearchBar".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, autofocus: nil, badge: nil, bar_bgcolor: nil, bar_border_side: nil, bar_elevation: nil, bar_hint_text: nil, bar_hint_text_style: nil, bar_leading: nil, bar_overlay_color: nil, bar_padding: nil, bar_scroll_padding: nil, bar_shadow_color: nil, bar_shape: nil, bar_size_constraints: nil, bar_text_style: nil, bar_trailing: nil, bottom: nil, capitalization: nil, col: nil, controls: nil, data: nil, disabled: nil, divider_color: nil, expand: nil, expand_loose: nil, full_screen: nil, height: nil, key: nil, keyboard_type: nil, left: nil, margin: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, shrink_wrap: nil, size_change_interval: nil, tooltip: nil, top: nil, value: nil, view_bar_padding: nil, view_bgcolor: nil, view_elevation: nil, view_header_height: nil, view_header_text_style: nil, view_hint_text: nil, view_hint_text_style: nil, view_leading: nil, view_padding: nil, view_shape: nil, view_side: nil, view_size_constraints: nil, view_trailing: nil, visible: nil, width: nil, on_animation_end: nil, on_blur: nil, on_change: nil, on_focus: nil, on_size_change: nil, on_submit: nil, on_tap: nil, on_tap_outside_bar: nil)
+            autofocus = false if autofocus.nil?
+            full_screen = false if full_screen.nil?
+            value = "" if value.nil?
+
+            {
+              bar_elevation: bar_elevation,
+              view_elevation: view_elevation,
+              view_header_height: view_header_height
+            }.each do |name, value|
+              next unless value.is_a?(Numeric)
+
+              raise ArgumentError, "search_bar #{name} must be greater than or equal to 0" if value.negative?
+            end
+
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -86,6 +100,20 @@ module Ruflet
             props[:on_tap] = on_tap unless on_tap.nil?
             props[:on_tap_outside_bar] = on_tap_outside_bar unless on_tap_outside_bar.nil?
             super(type: TYPE, id: id, **props)
+          end
+
+          def open_view(timeout: 10, on_result: nil)
+            runtime_page&.invoke(self, "open_view", timeout: timeout, on_result: on_result)
+          end
+
+          def close_view(text = nil, timeout: 10, on_result: nil)
+            args = {}
+            args["text"] = text unless text.nil?
+            runtime_page&.invoke(self, "close_view", args: args, timeout: timeout, on_result: on_result)
+          end
+
+          def focus(timeout: 10, on_result: nil)
+            runtime_page&.invoke(self, "focus", timeout: timeout, on_result: on_result)
           end
         end
       end

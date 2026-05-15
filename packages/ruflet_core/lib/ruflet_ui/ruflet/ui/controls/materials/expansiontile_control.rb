@@ -9,6 +9,12 @@ module Ruflet
           WIRE = "ExpansionTile".freeze
 
           def initialize(id: nil, adaptive: nil, affinity: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, animation_style: nil, aspect_ratio: nil, badge: nil, bgcolor: nil, bottom: nil, clip_behavior: nil, col: nil, collapsed_bgcolor: nil, collapsed_icon_color: nil, collapsed_shape: nil, collapsed_text_color: nil, controls: nil, controls_padding: nil, data: nil, dense: nil, disabled: nil, enable_feedback: nil, expand: nil, expand_loose: nil, expanded: nil, expanded_alignment: nil, expanded_cross_axis_alignment: nil, height: nil, icon_color: nil, key: nil, leading: nil, left: nil, maintain_state: nil, margin: nil, min_tile_height: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, shape: nil, show_trailing_icon: nil, size_change_interval: nil, subtitle: nil, text_color: nil, tile_padding: nil, title: nil, tooltip: nil, top: nil, trailing: nil, visible: nil, visual_density: nil, width: nil, on_animation_end: nil, on_change: nil, on_size_change: nil)
+            raise ArgumentError, "expansion_tile requires a visible title" if title.nil? || (title.respond_to?(:props) && title.props["visible"] == false)
+            raise ArgumentError, "expansion_tile min_tile_height must be greater than or equal to 0" unless min_tile_height.nil? || min_tile_height >= 0
+            expanded = false if expanded.nil?
+            maintain_state = false if maintain_state.nil?
+            show_trailing_icon = true if show_trailing_icon.nil?
+
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:affinity] = affinity unless affinity.nil?

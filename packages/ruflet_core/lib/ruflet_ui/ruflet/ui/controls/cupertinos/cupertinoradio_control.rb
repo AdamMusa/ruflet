@@ -9,6 +9,12 @@ module Ruflet
           WIRE = "CupertinoRadio".freeze
 
           def initialize(id: nil, active_color: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, autofocus: nil, badge: nil, bottom: nil, col: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, fill_color: nil, focus_color: nil, height: nil, inactive_color: nil, key: nil, label: nil, label_position: nil, left: nil, margin: nil, mouse_cursor: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, toggleable: nil, tooltip: nil, top: nil, use_checkmark_style: nil, value: nil, visible: nil, width: nil, on_animation_end: nil, on_blur: nil, on_focus: nil, on_size_change: nil)
+            autofocus = false if autofocus.nil?
+            label_position = "right" if label_position.nil?
+            toggleable = false if toggleable.nil?
+            use_checkmark_style = false if use_checkmark_style.nil?
+            value = "" if value.nil?
+
             props = {}
             props[:active_color] = active_color unless active_color.nil?
             props[:align] = align unless align.nil?

@@ -9,6 +9,10 @@ module Ruflet
           WIRE = "AlertDialog".freeze
 
           def initialize(id: nil, action_button_padding: nil, actions: nil, actions_alignment: nil, actions_overflow_button_spacing: nil, actions_padding: nil, adaptive: nil, alignment: nil, badge: nil, barrier_color: nil, bgcolor: nil, clip_behavior: nil, col: nil, content: nil, content_padding: nil, content_text_style: nil, data: nil, disabled: nil, elevation: nil, expand: nil, expand_loose: nil, icon: nil, icon_color: nil, icon_padding: nil, inset_padding: nil, key: nil, modal: nil, opacity: nil, open: nil, rtl: nil, scrollable: nil, semantics_label: nil, shadow_color: nil, shape: nil, title: nil, title_padding: nil, title_text_style: nil, tooltip: nil, visible: nil, on_dismiss: nil)
+            if title.nil? && content.nil? && (actions.nil? || actions.empty?)
+              raise ArgumentError, "alert_dialog requires title, content, or actions"
+            end
+
             props = {}
             props[:action_button_padding] = action_button_padding unless action_button_padding.nil?
             props[:actions] = actions unless actions.nil?

@@ -9,6 +9,10 @@ module Ruflet
           WIRE = "DataColumn".freeze
 
           def initialize(id: nil, badge: nil, col: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, heading_row_alignment: nil, key: nil, label: nil, numeric: nil, opacity: nil, rtl: nil, tooltip: nil, visible: nil, on_sort: nil)
+            if label.nil? || (label.respond_to?(:props) && label.props["visible"] == false)
+              raise ArgumentError, "data_column requires a visible label"
+            end
+
             props = {}
             props[:badge] = badge unless badge.nil?
             props[:col] = col unless col.nil?

@@ -9,6 +9,11 @@ module Ruflet
           WIRE = "SnackBar".freeze
 
           def initialize(id: nil, action: nil, action_overflow_threshold: nil, adaptive: nil, badge: nil, behavior: nil, bgcolor: nil, clip_behavior: nil, close_icon_color: nil, col: nil, content: nil, data: nil, disabled: nil, dismiss_direction: nil, duration: nil, elevation: nil, expand: nil, expand_loose: nil, key: nil, margin: nil, opacity: nil, open: nil, padding: nil, persist: nil, rtl: nil, shape: nil, show_close_icon: nil, tooltip: nil, visible: nil, width: nil, on_action: nil, on_dismiss: nil, on_visible: nil)
+            raise ArgumentError, "snack_bar requires content" if content.nil?
+            unless action_overflow_threshold.nil? || (0.0..1.0).cover?(action_overflow_threshold)
+              raise ArgumentError, "snack_bar action_overflow_threshold must be between 0.0 and 1.0"
+            end
+
             props = {}
             props[:action] = action unless action.nil?
             props[:action_overflow_threshold] = action_overflow_threshold unless action_overflow_threshold.nil?

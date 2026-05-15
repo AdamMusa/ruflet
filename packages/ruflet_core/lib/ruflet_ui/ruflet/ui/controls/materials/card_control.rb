@@ -9,6 +9,10 @@ module Ruflet
           WIRE = "Card".freeze
 
           def initialize(id: nil, adaptive: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bgcolor: nil, bottom: nil, clip_behavior: nil, col: nil, content: nil, data: nil, disabled: nil, elevation: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, semantic_container: nil, shadow_color: nil, shape: nil, show_border_on_foreground: nil, size_change_interval: nil, tooltip: nil, top: nil, variant: nil, visible: nil, width: nil, on_animation_end: nil, on_size_change: nil)
+            unless elevation.nil? || elevation >= 0
+              raise ArgumentError, "card elevation must be greater than or equal to 0"
+            end
+
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?

@@ -9,6 +9,10 @@ module Ruflet
           WIRE = "CupertinoActivityIndicator".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, animating: nil, aspect_ratio: nil, badge: nil, bottom: nil, col: nil, color: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, progress: nil, radius: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_size_change: nil)
+            animating = true if animating.nil?
+            radius = 10 if radius.nil?
+            raise ArgumentError, "cupertino_activity_indicator radius must be greater than 0" unless radius.positive?
+
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

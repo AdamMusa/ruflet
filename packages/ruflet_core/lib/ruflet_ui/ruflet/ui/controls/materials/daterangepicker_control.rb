@@ -9,6 +9,8 @@ module Ruflet
           WIRE = "DateRangePicker".freeze
 
           def initialize(id: nil, adaptive: nil, badge: nil, barrier_color: nil, cancel_text: nil, col: nil, confirm_text: nil, current_date: nil, data: nil, disabled: nil, end_value: nil, entry_mode: nil, error_format_text: nil, error_invalid_range_text: nil, error_invalid_text: nil, expand: nil, expand_loose: nil, field_end_hint_text: nil, field_end_label_text: nil, field_start_hint_text: nil, field_start_label_text: nil, first_date: nil, help_text: nil, key: nil, keyboard_type: nil, last_date: nil, locale: nil, modal: nil, opacity: nil, open: nil, rtl: nil, save_text: nil, start_value: nil, switch_to_calendar_icon: nil, switch_to_input_icon: nil, tooltip: nil, visible: nil, on_change: nil, on_dismiss: nil)
+            validate_date_range!(first_date, last_date, start_value, end_value)
+
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:badge] = badge unless badge.nil?
@@ -49,6 +51,24 @@ module Ruflet
             props[:on_change] = on_change unless on_change.nil?
             props[:on_dismiss] = on_dismiss unless on_dismiss.nil?
             super(type: TYPE, id: id, **props)
+          end
+
+          private
+
+          def validate_date_range!(first_date, last_date, start_value, end_value)
+            first = first_date || "1900-01-01"
+            last = last_date || "2050-01-01"
+            raise ArgumentError, "date_range_picker first_date must be before or equal to last_date" if date_key(first) > date_key(last)
+            raise ArgumentError, "date_range_picker start_value must be on or after first_date" if !start_value.nil? && date_key(start_value) < date_key(first)
+            raise ArgumentError, "date_range_picker end_value must be on or before last_date" if !end_value.nil? && date_key(end_value) > date_key(last)
+
+            unless start_value.nil? || end_value.nil? || date_key(start_value) <= date_key(end_value)
+              raise ArgumentError, "date_range_picker start_value must be before or equal to end_value"
+            end
+          end
+
+          def date_key(value)
+            value.respond_to?(:iso8601) ? value.iso8601 : value.to_s
           end
         end
       end

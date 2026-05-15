@@ -9,6 +9,14 @@ module Ruflet
           WIRE = "ExpansionPanel".freeze
 
           def initialize(id: nil, adaptive: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bgcolor: nil, bottom: nil, can_tap_header: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, expanded: nil, header: nil, height: nil, highlight_color: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, splash_color: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_size_change: nil)
+            if header.nil? || (header.respond_to?(:props) && header.props["visible"] == false)
+              raise ArgumentError, "expansion_panel requires a visible header"
+            end
+
+            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
+              raise ArgumentError, "expansion_panel requires visible content"
+            end
+
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?

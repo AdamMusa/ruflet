@@ -9,6 +9,12 @@ module Ruflet
           WIRE = "MenuItemButton".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, autofocus: nil, badge: nil, bottom: nil, clip_behavior: nil, close_on_click: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, focus_on_hover: nil, height: nil, key: nil, leading: nil, left: nil, margin: nil, offset: nil, opacity: nil, overflow_axis: nil, right: nil, rotate: nil, rtl: nil, scale: nil, semantic_label: nil, size_change_interval: nil, style: nil, tooltip: nil, top: nil, trailing: nil, visible: nil, width: nil, on_animation_end: nil, on_blur: nil, on_click: nil, on_focus: nil, on_hover: nil, on_size_change: nil)
+            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
+              raise ArgumentError, "menu_item_button requires visible content"
+            end
+
+            raise ArgumentError, "menu_item_button height must be greater than or equal to 0" unless height.nil? || height >= 0
+
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

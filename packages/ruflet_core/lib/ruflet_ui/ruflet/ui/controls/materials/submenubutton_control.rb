@@ -9,6 +9,14 @@ module Ruflet
           WIRE = "SubmenuButton".freeze
 
           def initialize(id: nil, align: nil, alignment_offset: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, clip_behavior: nil, col: nil, content: nil, controls: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, key: nil, leading: nil, left: nil, margin: nil, menu_style: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, style: nil, tooltip: nil, top: nil, trailing: nil, visible: nil, width: nil, on_animation_end: nil, on_blur: nil, on_close: nil, on_focus: nil, on_hover: nil, on_open: nil, on_size_change: nil)
+            clip_behavior = "none" if clip_behavior.nil?
+
+            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
+              raise ArgumentError, "submenu_button requires visible content"
+            end
+
+            raise ArgumentError, "submenu_button height must be greater than or equal to 0" unless height.nil? || height >= 0
+
             props = {}
             props[:align] = align unless align.nil?
             props[:alignment_offset] = alignment_offset unless alignment_offset.nil?

@@ -9,6 +9,11 @@ module Ruflet
           WIRE = "Segment".freeze
 
           def initialize(id: nil, badge: nil, col: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, icon: nil, key: nil, label: nil, opacity: nil, rtl: nil, tooltip: nil, value: nil, visible: nil)
+            raise ArgumentError, "segment requires value" if value.nil?
+
+            visible_label = label && (!label.respond_to?(:props) || label.props["visible"] != false)
+            raise ArgumentError, "segment requires visible label or icon" if !visible_label && icon.nil?
+
             props = {}
             props[:badge] = badge unless badge.nil?
             props[:col] = col unless col.nil?

@@ -9,6 +9,15 @@ module Ruflet
           WIRE = "Draggable".freeze
 
           def initialize(id: nil, affinity: nil, axis: nil, badge: nil, col: nil, content: nil, content_feedback: nil, content_when_dragging: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, group: nil, key: nil, max_simultaneous_drags: nil, opacity: nil, rtl: nil, tooltip: nil, visible: nil, on_drag_complete: nil, on_drag_start: nil)
+            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
+              raise ArgumentError, "draggable requires visible content"
+            end
+            if !max_simultaneous_drags.nil? && max_simultaneous_drags.negative?
+              raise ArgumentError, "draggable max_simultaneous_drags must be greater than or equal to 0"
+            end
+
+            group = "default" if group.nil?
+
             props = {}
             props[:affinity] = affinity unless affinity.nil?
             props[:axis] = axis unless axis.nil?
