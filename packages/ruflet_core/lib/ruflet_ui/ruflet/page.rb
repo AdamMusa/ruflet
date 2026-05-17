@@ -74,6 +74,30 @@ module Ruflet
       end
     end
 
+    class FlashlightService
+      def initialize(page)
+        @page = page
+      end
+
+      def on(timeout: 10, on_result: nil)
+        invoke("on", timeout: timeout, on_result: on_result)
+      end
+
+      def off(timeout: 10, on_result: nil)
+        invoke("off", timeout: timeout, on_result: on_result)
+      end
+
+      def is_available(timeout: 10, on_result: nil)
+        invoke("is_available", timeout: timeout, on_result: on_result)
+      end
+
+      private
+
+      def invoke(method_name, timeout:, on_result:)
+        @page.__send__(:invoke_flashlight, method_name, timeout: timeout, on_result: on_result)
+      end
+    end
+
     PAGE_PROP_KEYS = %w[dark_theme fonts route rtl show_semantics_debugger theme theme_mode title vertical_alignment horizontal_alignment scroll].freeze
     DIALOG_PROP_KEYS = %w[dialog snack_bar bottom_sheet].freeze
     WIDGET_HELPER_METHODS = (
@@ -119,6 +143,7 @@ module Ruflet
       @invoke_waiters_mutex = Mutex.new
       @shared_preferences_proxy = SharedPreferencesService.new(self)
       @wakelock_proxy = WakelockService.new(self)
+      @flashlight_proxy = FlashlightService.new(self)
       refresh_overlay_container!
       refresh_services_container!
       refresh_dialogs_container!
@@ -217,6 +242,10 @@ module Ruflet
 
     def wakelock
       @wakelock_proxy
+    end
+
+    def flashlight
+      @flashlight_proxy
     end
 
     def add_service(*value)
@@ -1391,6 +1420,20 @@ module Ruflet
     def invoke_wakelock(method_name, timeout:, on_result:)
       wakelock = ensure_wakelock_service
       invoke(wakelock, method_name, timeout: timeout, on_result: on_result)
+    end
+
+    def ensure_flashlight_service
+      flashlight = services.find { |service| service.is_a?(Control) && service.type == "flashlight" }
+      return flashlight if flashlight
+
+      flashlight = build_widget(:flashlight)
+      add_service(flashlight)
+      flashlight
+    end
+
+    def invoke_flashlight(method_name, timeout:, on_result:)
+      flashlight = ensure_flashlight_service
+      invoke(flashlight, method_name, timeout: timeout, on_result: on_result)
     end
 
     def invoke_battery_method(method_name, timeout:, on_result:)
