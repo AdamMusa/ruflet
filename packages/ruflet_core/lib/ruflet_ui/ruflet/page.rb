@@ -328,6 +328,7 @@ module Ruflet
       mapped_props = normalize_props(props || {})
       id = mapped_props.delete("id")
       normalized_type = type.to_s.downcase
+      compact_type = normalized_type.delete("_")
 
       if visual_service_type?(normalized_type)
         key = id ? "id:#{id}" : normalized_type
@@ -343,7 +344,9 @@ module Ruflet
         if id
           services.find { |s| s.is_a?(Control) && s.id.to_s == id.to_s }
         else
-          services.find { |s| s.is_a?(Control) && s.type.to_s.downcase == normalized_type }
+          services.find do |s|
+            s.is_a?(Control) && s.type.to_s.downcase.delete("_") == compact_type
+          end
         end
       return existing if existing
 
@@ -1592,20 +1595,15 @@ module Ruflet
     end
 
     def invoke_file_picker(method_name, args, timeout:, on_result:)
-      picker = build_widget(:file_picker)
-      add_service(picker)
+      picker = service(:file_picker)
       invoke(
         picker,
         method_name,
         args: args,
         timeout: timeout,
-        on_result: lambda { |result, error|
-          remove_service(picker)
-          on_result&.call(result, error)
-        }
+        on_result: on_result
       )
     rescue StandardError => e
-      remove_service(picker) if picker
       on_result&.call(nil, e.message)
     end
   end
