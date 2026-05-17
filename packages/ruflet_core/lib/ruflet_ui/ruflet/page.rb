@@ -994,10 +994,18 @@ module Ruflet
       when Array
         value.map { |item| normalize_service_value(item) }
       when Hash
-        compact_service_args(value.transform_keys(&:to_s))
+        value.transform_keys(&:to_s).each_with_object({}) do |(key, item), result|
+          next if item.nil?
+
+          result[key] = key == "data" && byte_array?(item) ? item.pack("C*").b : normalize_service_value(item)
+        end
       else
         value
       end
+    end
+
+    def byte_array?(value)
+      value.is_a?(Array) && value.all? { |item| item.is_a?(Integer) && item.between?(0, 255) }
     end
 
     def widget_helper_method?(name)

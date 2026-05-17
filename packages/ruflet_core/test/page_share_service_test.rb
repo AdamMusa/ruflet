@@ -56,6 +56,21 @@ class PageShareServiceTest < Minitest::Test
     )
   end
 
+  def test_share_files_converts_data_byte_arrays_to_binary_strings
+    sent = []
+    page = build_page(sent)
+
+    call_id = page.share_files([{ data: [0, 255], name: "sample.bin" }])
+    refute_nil call_id
+
+    invoke_payload = sent.reverse.map(&:last).find { |payload| payload["name"] == "share_files" }
+    refute_nil invoke_payload
+    data = invoke_payload.dig("args", "files", 0, "data")
+
+    assert_equal "\x00\xff".b, data
+    assert_equal Encoding::BINARY, data.encoding
+  end
+
   private
 
   def build_page(sent)
