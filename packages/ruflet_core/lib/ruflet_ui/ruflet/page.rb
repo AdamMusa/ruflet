@@ -117,19 +117,19 @@ module Ruflet
       end
 
       def set_animate(animate, timeout: 10, on_result: nil)
-        invoke("set_animate", { "animate" => animate }, timeout: timeout, on_result: on_result)
+        invoke("set_animate", { "value" => animate }, timeout: timeout, on_result: on_result)
       end
 
       def set_auto_reset(auto_reset, timeout: 10, on_result: nil)
-        invoke("set_auto_reset", { "auto_reset" => auto_reset }, timeout: timeout, on_result: on_result)
+        invoke("set_auto_reset", { "value" => auto_reset }, timeout: timeout, on_result: on_result)
       end
 
       def set_application_screen_brightness(brightness, timeout: 10, on_result: nil)
-        invoke("set_application_screen_brightness", { "brightness" => brightness }, timeout: timeout, on_result: on_result)
+        invoke("set_application_screen_brightness", { "value" => brightness }, timeout: timeout, on_result: on_result)
       end
 
       def set_system_screen_brightness(brightness, timeout: 10, on_result: nil)
-        invoke("set_system_screen_brightness", { "brightness" => brightness }, timeout: timeout, on_result: on_result)
+        invoke("set_system_screen_brightness", { "value" => brightness }, timeout: timeout, on_result: on_result)
       end
 
       private
