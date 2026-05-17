@@ -1367,62 +1367,43 @@ module Ruflet
       end
     end
 
-    def ensure_clipboard_service
-      clipboard = services.find { |service| service.is_a?(Control) && service.type == "clipboard" }
-      return [clipboard, false] if clipboard
+    def service_by_type(type)
+      compact_type = type.to_s.downcase.delete("_")
+      services.find do |service|
+        service.is_a?(Control) && service.type.to_s.downcase.delete("_") == compact_type
+      end
+    end
 
-      clipboard = build_widget(:clipboard)
-      add_service(clipboard)
-      [clipboard, true]
+    def service_with_created(type)
+      existing = service_by_type(type)
+      return [existing, false] if existing
+
+      [service(type), true]
+    end
+
+    def ensure_clipboard_service
+      service_with_created(:clipboard)
     end
 
     def invoke_clipboard_method(method_name, args: nil, timeout:, on_result:)
-      clipboard, created = ensure_clipboard_service
-      send_view_patch if created
-      sleep(0.05) if created
+      clipboard, = ensure_clipboard_service
       invoke(
         clipboard,
         method_name,
         args: args,
         timeout: timeout,
-        on_result: lambda { |result, error|
-          message = error.to_s
-          if message.include?("inexistent control")
-            remove_service(clipboard)
-            fresh_clipboard, = ensure_clipboard_service
-            sleep(0.08)
-            invoke(
-              fresh_clipboard,
-              method_name,
-              args: args,
-              timeout: timeout,
-              on_result: on_result
-            )
-          else
-            on_result&.call(result, error)
-          end
-        }
+        on_result: on_result
       )
     rescue StandardError => e
       on_result&.call(nil, e.message)
     end
 
     def ensure_url_launcher_service
-      url_launcher = services.find { |service| service.is_a?(Control) && %w[urllauncher url_launcher].include?(service.type) }
-      return url_launcher if url_launcher
-
-      url_launcher = build_widget(:url_launcher)
-      add_service(url_launcher)
-      url_launcher
+      service(:url_launcher)
     end
 
     def ensure_haptic_feedback_service
-      haptic_feedback = services.find { |service| service.is_a?(Control) && %w[hapticfeedback haptic_feedback].include?(service.type) }
-      return haptic_feedback if haptic_feedback
-
-      haptic_feedback = build_widget(:haptic_feedback)
-      add_service(haptic_feedback)
-      haptic_feedback
+      service(:haptic_feedback)
     end
 
     def invoke_haptic_feedback(method_name, timeout:, on_result:)
@@ -1431,68 +1412,31 @@ module Ruflet
     end
 
     def ensure_connectivity_service
-      connectivity = services.find { |service| service.is_a?(Control) && service.type == "connectivity" }
-      return [connectivity, false] if connectivity
-
-      connectivity = build_widget(:connectivity)
-      add_service(connectivity)
-      [connectivity, true]
+      service_with_created(:connectivity)
     end
 
     def invoke_connectivity_method(method_name, timeout:, on_result:)
-      connectivity, created = ensure_connectivity_service
-      send_view_patch if created
-      sleep(0.05) if created
+      connectivity, = ensure_connectivity_service
       invoke(
         connectivity,
         method_name,
         timeout: timeout,
-        on_result: lambda { |result, error|
-          message = error.to_s
-          if message.include?("inexistent control")
-            remove_service(connectivity)
-            fresh_connectivity, = ensure_connectivity_service
-            sleep(0.08)
-            invoke(
-              fresh_connectivity,
-              method_name,
-              timeout: timeout,
-              on_result: on_result
-            )
-          else
-            on_result&.call(result, error)
-          end
-        }
+        on_result: on_result
       )
     rescue StandardError => e
       on_result&.call(nil, e.message)
     end
 
     def ensure_battery_service
-      battery = services.find { |service| service.is_a?(Control) && service.type == "battery" }
-      return [battery, false] if battery
-
-      battery = build_widget(:battery)
-      add_service(battery)
-      [battery, true]
+      service_with_created(:battery)
     end
 
     def ensure_share_service
-      share = services.find { |service| service.is_a?(Control) && service.type == "share" }
-      return share if share
-
-      share = build_widget(:share)
-      add_service(share)
-      share
+      service(:share)
     end
 
     def ensure_shared_preferences_service
-      shared_preferences = services.find { |service| service.is_a?(Control) && %w[sharedpreferences shared_preferences].include?(service.type) }
-      return shared_preferences if shared_preferences
-
-      shared_preferences = build_widget(:shared_preferences)
-      add_service(shared_preferences)
-      shared_preferences
+      service(:shared_preferences)
     end
 
     def invoke_shared_preferences(method_name, args: nil, timeout:, on_result:)
@@ -1501,12 +1445,7 @@ module Ruflet
     end
 
     def ensure_wakelock_service
-      wakelock = services.find { |service| service.is_a?(Control) && service.type == "wakelock" }
-      return wakelock if wakelock
-
-      wakelock = build_widget(:wakelock)
-      add_service(wakelock)
-      wakelock
+      service(:wakelock)
     end
 
     def invoke_wakelock(method_name, timeout:, on_result:)
@@ -1515,12 +1454,7 @@ module Ruflet
     end
 
     def ensure_flashlight_service
-      flashlight = services.find { |service| service.is_a?(Control) && service.type == "flashlight" }
-      return flashlight if flashlight
-
-      flashlight = build_widget(:flashlight)
-      add_service(flashlight)
-      flashlight
+      service(:flashlight)
     end
 
     def invoke_flashlight(method_name, timeout:, on_result:)
@@ -1529,12 +1463,7 @@ module Ruflet
     end
 
     def ensure_screen_brightness_service
-      screen_brightness = services.find { |service| service.is_a?(Control) && %w[screenbrightness screen_brightness].include?(service.type) }
-      return screen_brightness if screen_brightness
-
-      screen_brightness = build_widget(:screen_brightness)
-      add_service(screen_brightness)
-      screen_brightness
+      service(:screen_brightness)
     end
 
     def invoke_screen_brightness(method_name, args: nil, timeout:, on_result:)
@@ -1543,69 +1472,28 @@ module Ruflet
     end
 
     def invoke_battery_method(method_name, timeout:, on_result:)
-      battery, created = ensure_battery_service
-      send_view_patch if created
-      sleep(0.05) if created
+      battery, = ensure_battery_service
       invoke(
         battery,
         method_name,
         timeout: timeout,
-        on_result: lambda { |result, error|
-          message = error.to_s
-          if message.include?("inexistent control")
-            remove_service(battery)
-            fresh_battery, = ensure_battery_service
-            sleep(0.08)
-            invoke(
-              fresh_battery,
-              method_name,
-              timeout: timeout,
-              on_result: on_result
-            )
-          else
-            on_result&.call(result, error)
-          end
-        }
+        on_result: on_result
       )
     rescue StandardError => e
       on_result&.call(nil, e.message)
     end
 
     def ensure_storage_paths_service
-      storage_paths = services.find do |service|
-        service.is_a?(Control) && %w[storage_paths storagepaths].include?(service.type.to_s)
-      end
-      return [storage_paths, false] if storage_paths
-
-      storage_paths = build_widget(:storage_paths)
-      add_service(storage_paths)
-      [storage_paths, true]
+      service_with_created(:storage_paths)
     end
 
     def invoke_storage_paths(method_name, timeout:, on_result:)
-      storage_paths, created = ensure_storage_paths_service
-      send_view_patch if created
-      sleep(0.05) if created
+      storage_paths, = ensure_storage_paths_service
       invoke(
         storage_paths,
         method_name,
         timeout: timeout,
-        on_result: lambda { |result, error|
-          message = error.to_s
-          if message.include?("inexistent control")
-            remove_service(storage_paths)
-            fresh_storage_paths, = ensure_storage_paths_service
-            sleep(0.08)
-            invoke(
-              fresh_storage_paths,
-              method_name,
-              timeout: timeout,
-              on_result: on_result
-            )
-          else
-            on_result&.call(result, error)
-          end
-        }
+        on_result: on_result
       )
     rescue StandardError => e
       on_result&.call(nil, e.message)
