@@ -798,11 +798,11 @@ module Ruflet
         share,
         "share_files",
         args: compact_service_args(
-          "files" => files,
+          "files" => normalize_share_files(files),
           "text" => text,
           "title" => title,
           "subject" => subject,
-          "preview_thumbnail" => preview_thumbnail,
+          "preview_thumbnail" => normalize_share_file(preview_thumbnail),
           "share_position_origin" => share_position_origin,
           "download_fallback_enabled" => download_fallback_enabled,
           "mail_to_fallback_enabled" => mail_to_fallback_enabled,
@@ -1015,6 +1015,23 @@ module Ruflet
         end
       else
         value
+      end
+    end
+
+    def normalize_share_files(files)
+      return nil if files.nil?
+
+      Array(files).map { |file| normalize_share_file(file) }
+    end
+
+    def normalize_share_file(file)
+      case file
+      when nil
+        nil
+      when String
+        { "path" => file }
+      else
+        normalize_service_value(file)
       end
     end
 

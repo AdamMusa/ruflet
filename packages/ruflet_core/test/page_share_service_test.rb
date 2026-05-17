@@ -56,6 +56,25 @@ class PageShareServiceTest < Minitest::Test
     )
   end
 
+  def test_share_files_normalizes_string_paths_to_flet_share_file_shape
+    sent = []
+    page = build_page(sent)
+
+    call_id = page.share_files(["/tmp/a.txt"])
+    refute_nil call_id
+
+    invoke_payload = sent.reverse.map(&:last).find { |payload| payload["name"] == "share_files" }
+    refute_nil invoke_payload
+    assert_equal(
+      {
+        "files" => [{ "path" => "/tmp/a.txt" }],
+        "download_fallback_enabled" => true,
+        "mail_to_fallback_enabled" => true
+      },
+      invoke_payload["args"]
+    )
+  end
+
   def test_share_files_converts_data_byte_arrays_to_binary_strings
     sent = []
     page = build_page(sent)
