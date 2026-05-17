@@ -98,6 +98,47 @@ module Ruflet
       end
     end
 
+    class ScreenBrightnessService
+      def initialize(page)
+        @page = page
+      end
+
+      %w[
+        can_change_system_screen_brightness
+        get_application_screen_brightness
+        get_system_screen_brightness
+        is_animate
+        is_auto_reset
+        reset_application_screen_brightness
+      ].each do |method_name|
+        define_method(method_name) do |timeout: 10, on_result: nil|
+          invoke(method_name, nil, timeout: timeout, on_result: on_result)
+        end
+      end
+
+      def set_animate(animate, timeout: 10, on_result: nil)
+        invoke("set_animate", { "animate" => animate }, timeout: timeout, on_result: on_result)
+      end
+
+      def set_auto_reset(auto_reset, timeout: 10, on_result: nil)
+        invoke("set_auto_reset", { "auto_reset" => auto_reset }, timeout: timeout, on_result: on_result)
+      end
+
+      def set_application_screen_brightness(brightness, timeout: 10, on_result: nil)
+        invoke("set_application_screen_brightness", { "brightness" => brightness }, timeout: timeout, on_result: on_result)
+      end
+
+      def set_system_screen_brightness(brightness, timeout: 10, on_result: nil)
+        invoke("set_system_screen_brightness", { "brightness" => brightness }, timeout: timeout, on_result: on_result)
+      end
+
+      private
+
+      def invoke(method_name, args, timeout:, on_result:)
+        @page.__send__(:invoke_screen_brightness, method_name, args: args, timeout: timeout, on_result: on_result)
+      end
+    end
+
     PAGE_PROP_KEYS = %w[dark_theme fonts route rtl show_semantics_debugger theme theme_mode title vertical_alignment horizontal_alignment scroll].freeze
     DIALOG_PROP_KEYS = %w[dialog snack_bar bottom_sheet].freeze
     WIDGET_HELPER_METHODS = (
@@ -144,6 +185,7 @@ module Ruflet
       @shared_preferences_proxy = SharedPreferencesService.new(self)
       @wakelock_proxy = WakelockService.new(self)
       @flashlight_proxy = FlashlightService.new(self)
+      @screen_brightness_proxy = ScreenBrightnessService.new(self)
       refresh_overlay_container!
       refresh_services_container!
       refresh_dialogs_container!
@@ -246,6 +288,10 @@ module Ruflet
 
     def flashlight
       @flashlight_proxy
+    end
+
+    def screen_brightness
+      @screen_brightness_proxy
     end
 
     def add_service(*value)
@@ -1434,6 +1480,20 @@ module Ruflet
     def invoke_flashlight(method_name, timeout:, on_result:)
       flashlight = ensure_flashlight_service
       invoke(flashlight, method_name, timeout: timeout, on_result: on_result)
+    end
+
+    def ensure_screen_brightness_service
+      screen_brightness = services.find { |service| service.is_a?(Control) && %w[screenbrightness screen_brightness].include?(service.type) }
+      return screen_brightness if screen_brightness
+
+      screen_brightness = build_widget(:screen_brightness)
+      add_service(screen_brightness)
+      screen_brightness
+    end
+
+    def invoke_screen_brightness(method_name, args: nil, timeout:, on_result:)
+      screen_brightness = ensure_screen_brightness_service
+      invoke(screen_brightness, method_name, args: args, timeout: timeout, on_result: on_result)
     end
 
     def invoke_battery_method(method_name, timeout:, on_result:)
