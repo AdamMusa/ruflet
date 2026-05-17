@@ -161,6 +161,7 @@ module Ruflet
       @views = []
       @dialogs = []
       @services_container_mounted = false
+      @visual_service_controls = {}
       @page_event_handlers = {}
       @view_props = {}
       @page_props = { "route" => (client_details["route"] || "/") }
@@ -327,6 +328,16 @@ module Ruflet
       mapped_props = normalize_props(props || {})
       id = mapped_props.delete("id")
       normalized_type = type.to_s.downcase
+
+      if visual_service_type?(normalized_type)
+        key = id ? "id:#{id}" : normalized_type
+        existing = @visual_service_controls[key]
+        return existing if existing
+
+        svc = Ruflet::UI::ControlFactory.build(type.to_s, id: id&.to_s, **mapped_props)
+        @visual_service_controls[key] = svc
+        return svc
+      end
 
       existing =
         if id
@@ -1010,6 +1021,10 @@ module Ruflet
 
     def widget_helper_method?(name)
       WIDGET_HELPER_METHODS.include?(name.to_s)
+    end
+
+    def visual_service_type?(type)
+      type.to_s.delete("_") == "camera"
     end
 
     def text_maps_to_content?(control, patch)
