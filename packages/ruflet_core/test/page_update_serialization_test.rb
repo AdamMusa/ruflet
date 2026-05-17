@@ -147,6 +147,28 @@ class PageUpdateSerializationTest < Minitest::Test
     assert_equal [:ok], clicked
   end
 
+  def test_camera_service_helper_returns_mountable_camera_control
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    camera = page.service(:camera, preview_enabled: true)
+    assert_same camera, page.service(:camera)
+    page.add(Ruflet.container(content: camera))
+
+    payload = sent.last[1]
+    services_patch = payload["patch"].find { |op| op[2] == "_services" }
+    assert_equal [], services_patch[3]["_services"]
+
+    views_patch = payload["patch"].find { |op| op[2] == "views" }
+    camera_patch = views_patch[3].first["controls"].first["content"]
+    assert_equal "Camera", camera_patch["_c"]
+    assert_equal true, camera_patch["preview_enabled"]
+  end
+
   def test_page_add_serializes_floating_action_button_icon_for_dev_mode
     sent = []
     page = Ruflet::Page.new(
