@@ -59,6 +59,22 @@ class PageUpdateSerializationTest < Minitest::Test
     refute_nil services_value["_internals"]["uid"]
   end
 
+  def test_service_registry_is_not_replaced_after_initial_mount
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    page.add(Ruflet.text(value: "x"))
+    page.title = "Updated title"
+    page.update
+
+    page_patch = sent.last[1]["patch"]
+    refute page_patch.any? { |op| op[2] == "_services" }
+  end
+
   def test_update_serializes_embedded_controls
     sent = []
     page = Ruflet::Page.new(
