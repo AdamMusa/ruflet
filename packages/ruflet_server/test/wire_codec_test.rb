@@ -30,4 +30,10 @@ class RufletServerWireCodecTest < Minitest::Test
 
     assert_equal "abc".b, decoded
   end
+
+  def test_pack_binary_string_uses_message_pack_bin_marker
+    encoded = Ruflet::WireCodec.pack("\xff\x00".b)
+
+    assert_equal 0xc4, encoded.getbyte(0)
+  end
 end

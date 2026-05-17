@@ -18,7 +18,7 @@ module Ruflet
             when Float
               "\xcb".b + [value].pack("G")
             when String
-              pack_string(value)
+              binary_string?(value) ? pack_binary(value) : pack_string(value)
             when Symbol
               pack_string(value.to_s)
             when Array
@@ -69,6 +69,23 @@ module Ruflet
             else
               "\xdb".b + [len].pack("N") + bytes
             end
+          end
+
+          def pack_binary(value)
+            bytes = value.to_s.b
+            len = bytes.bytesize
+
+            if len <= 0xff
+              "\xc4".b + [len].pack("C") + bytes
+            elsif len <= 0xffff
+              "\xc5".b + [len].pack("n") + bytes
+            else
+              "\xc6".b + [len].pack("N") + bytes
+            end
+          end
+
+          def binary_string?(value)
+            value.encoding == Encoding::BINARY || !value.valid_encoding?
           end
 
           def pack_array(value)
