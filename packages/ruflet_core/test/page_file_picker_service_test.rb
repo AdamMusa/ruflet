@@ -3,6 +3,28 @@
 require_relative "test_helper"
 
 class PageFilePickerServiceTest < Minitest::Test
+  def test_service_uses_snake_case_name_without_duplicate_compact_flet_type
+    sent = []
+    page = build_page(sent)
+
+    first = page.service(:file_picker)
+    second = page.service(:file_picker)
+
+    assert_same first, second
+    assert_equal ["filepicker"], page.services.map(&:type)
+  end
+
+  def test_pick_files_uses_existing_page_service
+    sent = []
+    page = build_page(sent)
+    picker = page.service(:file_picker)
+
+    page.pick_files
+
+    assert_same picker, page.service(:file_picker)
+    assert_equal [picker], page.services
+  end
+
   def test_pick_files_omits_nil_options_and_includes_flet_defaults
     sent = []
     page = build_page(sent)
