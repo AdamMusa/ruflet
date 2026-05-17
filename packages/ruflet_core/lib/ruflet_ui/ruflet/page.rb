@@ -688,6 +688,10 @@ module Ruflet
       is_in_battery_save_mode(timeout: timeout, on_result: on_result)
     end
 
+    def accelerometer(**props)
+      service(:accelerometer, **props)
+    end
+
     def get_application_cache_directory(timeout: nil, on_result: nil)
       invoke_storage_paths("get_application_cache_directory", timeout: timeout, on_result: on_result)
     end
