@@ -56,6 +56,7 @@ module Ruflet
         build_widget(:animatedswitcher, **mapped)
       end
       def animatedswitcher(content = nil, **props) = animated_switcher(content, **props)
+      def audio(**props) = build_widget(:audio, **props)
       def auto_complete(suggestions = nil, **props)
         mapped = props.dup
         mapped[:suggestions] = suggestions unless suggestions.nil?
