@@ -732,6 +732,10 @@ module Ruflet
       service(:clipboard, **props)
     end
 
+    def file_picker(**props)
+      service(:file_picker, **props)
+    end
+
     def get_application_cache_directory(timeout: nil, on_result: nil)
       invoke_storage_paths("get_application_cache_directory", timeout: timeout, on_result: on_result)
     end
