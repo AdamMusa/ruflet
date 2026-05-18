@@ -522,6 +522,7 @@ module Ruflet
       def chartaxislabel(**props) = chart_axis_label(**props)
       def web_view(**props) = build_widget(:webview, **props)
       def webview(**props) = web_view(**props)
+      def video(**props) = build_widget(:video, **props)
 
       def fab(content = nil, **props)
         mapped = normalize_fab_props(props.dup, content)

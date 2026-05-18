@@ -213,6 +213,7 @@ module Ruflet
       def chartaxislabel(**props) = control_delegate.chartaxislabel(**props)
       def web_view(**props) = control_delegate.web_view(**props)
       def webview(**props) = control_delegate.webview(**props)
+      def video(**props) = control_delegate.video(**props)
       def cupertino_button(content = nil, **props) = control_delegate.cupertino_button(content, **props)
       def cupertinobutton(content = nil, **props) = control_delegate.cupertinobutton(content, **props)
       def cupertino_filled_button(content = nil, **props) = control_delegate.cupertino_filled_button(content, **props)
