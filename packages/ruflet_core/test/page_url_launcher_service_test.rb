@@ -3,6 +3,19 @@
 require_relative "test_helper"
 
 class PageUrlLauncherServiceTest < Minitest::Test
+  def test_url_launcher_returns_page_service_with_flet_wire_name
+    sent = []
+    page = build_page(sent)
+
+    service = page.url_launcher(data: { "source" => "studio" }, key: "launcher")
+
+    assert_equal "urllauncher", service.type
+    assert_equal "UrlLauncher", service.to_patch["_c"]
+    assert_equal({ "source" => "studio" }, service.props["data"])
+    assert_equal "launcher", service.props["key"]
+    assert_same service, page.service(:url_launcher)
+  end
+
   def test_close_in_app_web_view_uses_flet_url_launcher_signature
     sent = []
     page = build_page(sent)
