@@ -304,6 +304,10 @@ module Ruflet
       @screen_brightness_proxy
     end
 
+    def audio(**props)
+      service(:audio, **props)
+    end
+
     def add_service(*value)
       @services_container.props["_services"] = services + value.flatten.compact
       refresh_services_container!

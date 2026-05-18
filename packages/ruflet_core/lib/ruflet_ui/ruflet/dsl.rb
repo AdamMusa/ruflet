@@ -58,6 +58,7 @@ module Ruflet
     def container(**props, &block) = _pending_app.container(**props, &block)
     def animated_switcher(content = nil, **props) = _pending_app.animated_switcher(content, **props)
     def animatedswitcher(content = nil, **props) = _pending_app.animatedswitcher(content, **props)
+    def audio(**props) = _pending_app.audio(**props)
     def auto_complete(suggestions = nil, **props) = _pending_app.auto_complete(suggestions, **props)
     def autocomplete(suggestions = nil, **props) = _pending_app.autocomplete(suggestions, **props)
     def auto_complete_suggestion(key = nil, **props) = _pending_app.auto_complete_suggestion(key, **props)
