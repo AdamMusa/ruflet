@@ -2,6 +2,7 @@
 
 require "optparse"
 
+require_relative "version"
 require_relative "cli/templates"
 require_relative "cli/new_command"
 require_relative "cli/flutter_sdk"
@@ -9,7 +10,6 @@ require_relative "cli/run_command"
 require_relative "cli/update_command"
 require_relative "cli/build_command"
 require_relative "cli/extra_command"
-require_relative "version"
 
 module Ruflet
   module CLI
@@ -22,6 +22,7 @@ module Ruflet
 
     def run(argv = ARGV)
       command = (argv.shift || "help").downcase
+      ensure_first_run_assets(command)
 
       case command
       when "version", "-v", "--version"
@@ -83,6 +84,17 @@ module Ruflet
 
     def version_string
       "ruflet #{Ruflet::VERSION}"
+    end
+
+    private
+
+    def ensure_first_run_assets(command)
+      return if %w[version -v --version help -h --help].include?(command)
+      return unless respond_to?(:download_ruflet_assets, true)
+
+      send(:download_ruflet_assets)
+    rescue StandardError
+      nil
     end
   end
 end

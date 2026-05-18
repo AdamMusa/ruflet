@@ -17,4 +17,20 @@ class RufletServerBindTest < Minitest::Test
       occupied.close
     end
   end
+
+  def test_strict_port_does_not_fall_back_when_busy
+    occupied = TCPServer.new("127.0.0.1", 0)
+    busy_port = occupied.addr[1]
+    server = Ruflet::Server.new(host: "127.0.0.1", port: busy_port) { |_page| nil }
+    previous = ENV["RUFLET_STRICT_PORT"]
+    ENV["RUFLET_STRICT_PORT"] = "1"
+
+    assert_raises(Errno::EADDRINUSE) do
+      server.bind_server_socket!(max_attempts: 2)
+    end
+  ensure
+    server&.stop
+    occupied&.close
+    ENV["RUFLET_STRICT_PORT"] = previous
+  end
 end

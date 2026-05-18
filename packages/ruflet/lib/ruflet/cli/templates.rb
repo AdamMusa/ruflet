@@ -36,8 +36,8 @@ module Ruflet
     GEMFILE_TEMPLATE = <<~GEMFILE
       source "https://rubygems.org"
 
-      gem "ruflet_core", ">= 0.0.10"
-      gem "ruflet_server", ">= 0.0.10"
+      gem "ruflet_core", ">= #{Ruflet::VERSION}"
+      gem "ruflet_server", ">= #{Ruflet::VERSION}"
     GEMFILE
 
     README_TEMPLATE = <<~MD

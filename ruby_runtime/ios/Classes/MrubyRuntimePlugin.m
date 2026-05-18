@@ -311,6 +311,7 @@ static void request_stop_server(void) {
     g_server_running = YES;
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
       setenv("RUFLET_PROD_STOP_FILE", stopPath.UTF8String, 1);
+      setenv("RUFLET_STRICT_PORT", "1", 1);
       [g_lock lock];
       NSError *error = nil;
       NSString *value = eval_source(source, path, &error);

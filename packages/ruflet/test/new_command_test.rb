@@ -34,7 +34,7 @@ class RufletCliNewCommandTest < Minitest::Test
 
       Ruflet::CLI.send(:copy_ruflet_client_template, target_root)
 
-      client_dir = File.join(target_root, "build", ".ruflet", "client")
+      client_dir = File.join(target_root, "build", "client")
       assert File.directory?(client_dir)
       assert File.file?(File.join(client_dir, "assets", "main.rb"))
       assert File.file?(File.join(client_dir, "lib", "main.dart"))
@@ -62,7 +62,7 @@ class RufletCliNewCommandTest < Minitest::Test
 
       Ruflet::CLI.send(:copy_ruflet_client_template, target_root)
 
-      client_dir = File.join(target_root, "build", ".ruflet", "client")
+      client_dir = File.join(target_root, "build", "client")
       assert File.directory?(client_dir)
       assert File.file?(File.join(client_dir, "assets", "main.rb"))
       assert File.file?(File.join(client_dir, "lib", "main.server.dart"))
@@ -87,7 +87,7 @@ class RufletCliNewCommandTest < Minitest::Test
 
       Ruflet::CLI.send(:copy_ruflet_client_template, target_root)
 
-      refute File.directory?(File.join(target_root, "build", ".ruflet", "client"))
+      refute File.directory?(File.join(target_root, "build", "client"))
     ensure
       cli_singleton.send(:define_method, :resolve_ruflet_client_template_root, original_method)
       cli_singleton.send(:define_method, :ensure_cached_ruflet_client_template!, original_cache_method)

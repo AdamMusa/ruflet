@@ -30,6 +30,16 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'connection_probe.dart';
 
 const bool isProduction = bool.fromEnvironment('dart.vm.product');
+const String configuredRufletUrl = String.fromEnvironment(
+  'RUFLET_URL',
+  defaultValue: '',
+);
+const String defaultProductionRufletUrl = String.fromEnvironment(
+  'RUFLET_DEFAULT_URL',
+  defaultValue: '',
+);
+const Duration _productionConnectTimeout = Duration(seconds: 6);
+const Duration _developmentConnectTimeout = Duration(milliseconds: 900);
 
 Tester? tester;
 
@@ -89,7 +99,13 @@ String normalizeUserUrl(String raw) {
     return normalizePageUrlForPlatform(input);
   }
 
-  return normalizePageUrlForPlatform('http://$input');
+  final host = input.split('/').first.split(':').first.toLowerCase();
+  final localInputHosts = {'0.0.0.0', '127.0.0.1', 'localhost', '::1', '[::1]'};
+  final isIpAddress = RegExp(r'^\d{1,3}(\.\d{1,3}){3}$').hasMatch(host);
+  final scheme = (localInputHosts.contains(host) || isIpAddress)
+      ? 'http'
+      : 'https';
+  return normalizePageUrlForPlatform('$scheme://$input');
 }
 
 String? parseUrlFromQrOrDeepLinkPayload(String payload) {
@@ -120,6 +136,39 @@ String? parseUrlFromQrOrDeepLinkPayload(String payload) {
   }
 
   return normalizeUserUrl(raw);
+}
+
+String resolveInitialRufletUrl({
+  required String baseUrl,
+  required List<String>? args,
+  required bool isWeb,
+  required bool isDebugMode,
+  required bool isMobilePlatform,
+  String configuredUrl = configuredRufletUrl,
+  String productionDefaultUrl = defaultProductionRufletUrl,
+}) {
+  if (isWeb) {
+    final queryUrl = Uri.tryParse(baseUrl)?.queryParameters['url'];
+    if (queryUrl != null && queryUrl.trim().isNotEmpty) {
+      return queryUrl;
+    }
+    if (configuredUrl.trim().isNotEmpty) {
+      return configuredUrl;
+    }
+    return isDebugMode ? baseUrl : productionDefaultUrl;
+  }
+
+  final hasExplicitArgs = args != null && args.isNotEmpty;
+  if (hasExplicitArgs) {
+    return args[0];
+  }
+  if (configuredUrl.trim().isNotEmpty) {
+    return configuredUrl;
+  }
+  if (isMobilePlatform) {
+    return productionDefaultUrl;
+  }
+  return isDebugMode ? 'http://localhost:8550' : productionDefaultUrl;
 }
 
 void main([List<String>? args]) async {
@@ -156,13 +205,6 @@ void main([List<String>? args]) async {
   }
 
   var initialUrl = Uri.base.toString();
-  final configuredDebugUrl = kDebugMode
-      ? const String.fromEnvironment('RUFLET_URL', defaultValue: '')
-      : '';
-
-  if (configuredDebugUrl.isNotEmpty) {
-    initialUrl = configuredDebugUrl;
-  }
 
   if (kIsWeb) {
     debugPrint('Ruflet Explorer is running in Web mode');
@@ -171,21 +213,18 @@ void main([List<String>? args]) async {
     if (routeUrlStrategy == 'path') {
       usePathUrlStrategy();
     }
-    final queryUrl = Uri.base.queryParameters['url'];
-    if (queryUrl != null && queryUrl.trim().isNotEmpty) {
-      initialUrl = queryUrl;
-    } else if (!kDebugMode) {
-      initialUrl = 'http://localhost:8550';
-    }
-  } else {
-    final hasExplicitArgs = args != null && args.isNotEmpty;
-    if (hasExplicitArgs) {
-      initialUrl = args[0];
-    } else if (configuredDebugUrl.isEmpty) {
-      initialUrl = 'http://localhost:8550';
-    }
   }
 
+  initialUrl = resolveInitialRufletUrl(
+    baseUrl: initialUrl,
+    args: args,
+    isWeb: kIsWeb,
+    isDebugMode: kDebugMode,
+    isMobilePlatform:
+        !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS),
+  );
   initialUrl = normalizePageUrlForPlatform(initialUrl);
   debugPrint('Initial URL: $initialUrl');
 
@@ -256,6 +295,10 @@ class _RufletBootstrapAppState extends State<RufletBootstrapApp> {
     super.initState();
     _errorsHandler = FletAppErrorsHandler();
     _urlController = TextEditingController(text: widget.initialUrl);
+    if (_isMobilePlatform && widget.initialUrl.trim().isEmpty) {
+      _connecting = false;
+      return;
+    }
     if (!_isMobilePlatform) {
       _activeUrl = normalizePageUrlForPlatform(widget.initialUrl);
       _connected = true;
@@ -295,7 +338,20 @@ class _RufletBootstrapAppState extends State<RufletBootstrapApp> {
       return;
     }
 
-    final ok = await canConnectToPageUrl(url);
+    final productionFallbackUrl = normalizeUserUrl(defaultProductionRufletUrl);
+    if (auto && url == productionFallbackUrl) {
+      setState(() {
+        _activeUrl = url;
+        _connected = true;
+        _connecting = false;
+      });
+      return;
+    }
+
+    final timeout = isProduction
+        ? _productionConnectTimeout
+        : _developmentConnectTimeout;
+    final ok = await canConnectToPageUrl(url, timeout: timeout);
     if (!mounted) return;
 
     if (ok) {
@@ -307,11 +363,30 @@ class _RufletBootstrapAppState extends State<RufletBootstrapApp> {
       return;
     }
 
+    if (auto && isProduction && url != productionFallbackUrl) {
+      final fallbackOk = await canConnectToPageUrl(
+        productionFallbackUrl,
+        timeout: timeout,
+      );
+      if (!mounted) return;
+      if (fallbackOk) {
+        _urlController.text = productionFallbackUrl;
+        setState(() {
+          _activeUrl = productionFallbackUrl;
+          _connected = true;
+          _connecting = false;
+        });
+        return;
+      }
+    }
+
     setState(() {
       _connecting = false;
       _error = auto
           ? (_isMobilePlatform
-                ? 'Unable to connect to $url. On Android emulator use 10.0.2.2 (not 127.0.0.1).'
+                ? (defaultTargetPlatform == TargetPlatform.android
+                      ? 'Unable to connect to $url. On Android emulator use 10.0.2.2 (not 127.0.0.1).'
+                      : 'Unable to connect to $url')
                 : 'Unable to connect to $url')
           : 'Unable to connect to $url';
     });

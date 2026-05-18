@@ -23,7 +23,7 @@ module Ruflet
         if template_root
           puts "  Template: #{template_root}"
         elsif fix
-          template_root = ensure_cached_ruflet_client_template!(verbose: !!verbose)
+          template_root = ensure_cached_ruflet_client_template!(force: true, verbose: !!verbose)
           unless template_root
             warn "  Template: missing"
             warn "Failed to fetch the Ruflet Flutter template from GitHub."
@@ -33,6 +33,21 @@ module Ruflet
         else
           warn "  Template: missing"
           warn "Run `ruflet doctor --fix` to fetch the Flutter template from GitHub."
+        end
+        runtime_root = resolve_ruby_runtime_root
+        if runtime_root
+          puts "  Ruby runtime: #{runtime_root}"
+        elsif fix
+          runtime_root = ensure_cached_ruby_runtime!(force: true, verbose: !!verbose)
+          unless runtime_root
+            warn "  Ruby runtime: missing"
+            warn "Failed to fetch the Ruflet ruby_runtime from GitHub."
+            return 1
+          end
+          puts "  Ruby runtime: #{runtime_root}"
+        else
+          warn "  Ruby runtime: missing"
+          warn "Run `ruflet doctor --fix` to fetch the Ruby runtime from GitHub."
         end
         if fix
           tools = ensure_flutter!("doctor", client_dir: client_dir, auto_install: true)
@@ -113,7 +128,7 @@ module Ruflet
         client_dir = detect_client_dir
         unless client_dir
           warn "Could not find Flutter client directory."
-          warn "Set RUFLET_CLIENT_DIR or let Ruflet manage the hidden client under ./build/.ruflet/client"
+          warn "Set RUFLET_CLIENT_DIR or let Ruflet manage the client under ./build/client"
           warn "`ruflet debug` requires Flutter client source code."
           warn "For prebuilt clients, use: `ruflet run --web` or `ruflet run --desktop`."
           return 1
@@ -144,11 +159,20 @@ module Ruflet
 
       private
 
+      def resolve_ruby_runtime_root
+        env_path = ENV["RUFLET_RUBY_RUNTIME_PATH"].to_s.strip
+        candidates = []
+        candidates << File.expand_path(env_path) unless env_path.empty?
+        candidates << File.expand_path("../../../../../ruby_runtime", __dir__)
+        candidates << cached_ruby_runtime_root
+        candidates.find { |path| File.file?(File.join(path, "pubspec.yaml")) }
+      end
+
       def detect_client_dir
         env_dir = ENV["RUFLET_CLIENT_DIR"]
         return env_dir if env_dir && Dir.exist?(env_dir)
 
-        hidden = File.expand_path(File.join("build", ".ruflet", "client"), Dir.pwd)
+        hidden = File.expand_path(File.join("build", "client"), Dir.pwd)
         return hidden if Dir.exist?(hidden)
 
         local = File.expand_path("ruflet_client", Dir.pwd)

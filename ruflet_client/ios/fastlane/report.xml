@@ -5,32 +5,32 @@
     
     
       
-      <testcase classname="fastlane.lanes" name="0: default_platform" time="0.000142">
+      <testcase classname="fastlane.lanes" name="0: default_platform" time="0.000158">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="1: Switch to ios app_store_auth lane" time="0.000123">
+      <testcase classname="fastlane.lanes" name="1: Switch to ios app_store_auth lane" time="6.9e-05">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="2: app_store_connect_api_key" time="0.002875">
+      <testcase classname="fastlane.lanes" name="2: app_store_connect_api_key" time="0.003455">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="3: update_code_signing_settings" time="0.032262">
+      <testcase classname="fastlane.lanes" name="3: update_code_signing_settings" time="0.032435">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="4: build_app" time="178.574587">
+      <testcase classname="fastlane.lanes" name="4: build_app" time="118.21665">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="5: upload_to_app_store" time="103.114268">
+      <testcase classname="fastlane.lanes" name="5: upload_to_app_store" time="111.541393">
         
       </testcase>
     

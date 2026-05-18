@@ -180,9 +180,13 @@ class _TemplateAppState extends State<TemplateApp> {
   void initState() {
     super.initState();
     if (widget.embeddedRuntime != null) {
-      _serverErrorPoller = Timer.periodic(const Duration(seconds: 1), (_) async {
+      _serverErrorPoller = Timer.periodic(const Duration(seconds: 1), (
+        _,
+      ) async {
         final serverError = await RubyRuntime.lastFileServerError();
-        if (!mounted || serverError.isEmpty || serverError == _lastEmbeddedServerError) {
+        if (!mounted ||
+            serverError.isEmpty ||
+            serverError == _lastEmbeddedServerError) {
           return;
         }
         _lastEmbeddedServerError = serverError;
@@ -276,7 +280,9 @@ class EmbeddedRufletRuntime {
 
     try {
       await RubyRuntime.initialize();
-      await RubyRuntime.eval("ENV['RUFLET_DEBUG'] ||= '1'; 'debug enabled'");
+      await RubyRuntime.eval(
+        "ENV['RUFLET_DEBUG'] ||= '1'; ENV['RUFLET_STRICT_PORT'] = '1'; 'embedded runtime configured'",
+      );
       final digestLength = await RubyRuntime.eval(
         "require 'digest/sha1'; Digest::SHA1.digest('abc').bytesize.to_s",
       );
@@ -285,7 +291,11 @@ class EmbeddedRufletRuntime {
       await RubyRuntime.startFileServer(serverPath, stopSignalPath: stopPath);
       final startupDeadline = DateTime.now().add(const Duration(seconds: 5));
       while (DateTime.now().isBefore(startupDeadline)) {
-        if (await RubyRuntime.isFileServerRunning()) {
+        if (await RubyRuntime.isFileServerRunning() &&
+            await canConnectToPageUrl(
+              pageUrl,
+              timeout: const Duration(milliseconds: 250),
+            )) {
           return EmbeddedRufletRuntime._(pageUrl: pageUrl, workDir: workDir);
         }
         final serverError = await RubyRuntime.lastFileServerError();
@@ -294,7 +304,9 @@ class EmbeddedRufletRuntime {
         }
         await Future<void>.delayed(const Duration(milliseconds: 100));
       }
-      return EmbeddedRufletRuntime._(pageUrl: pageUrl, workDir: workDir);
+      throw TimeoutException(
+        'Embedded Ruflet server did not become reachable at $pageUrl.',
+      );
     } catch (error, stackTrace) {
       return EmbeddedRufletRuntime._(
         pageUrl: pageUrl,
@@ -335,10 +347,10 @@ class EmbeddedRufletRuntime {
 
   static Future<String> _prepareProjectFiles(Directory workDir) async {
     final manifest = await _loadAssetManifest();
-    final embeddedProjectPrefix = _embeddedProjectPrefix(
-      manifest,
-    );
-    final projectAssets = manifest.where((asset) => asset.startsWith(embeddedProjectPrefix)).toList();
+    final embeddedProjectPrefix = _embeddedProjectPrefix(manifest);
+    final projectAssets = manifest
+        .where((asset) => asset.startsWith(embeddedProjectPrefix))
+        .toList();
 
     if (projectAssets.isEmpty) {
       throw StateError(
@@ -361,16 +373,16 @@ class EmbeddedRufletRuntime {
     return '${workDir.path}/main.rb';
   }
 
-  static String _embeddedProjectPrefix(
-    List<String> manifest,
-  ) {
+  static String _embeddedProjectPrefix(List<String> manifest) {
     final name = kEmbeddedProjectName.trim();
     if (name.isNotEmpty) {
       return 'assets/$name/';
     }
 
     final discovered = manifest
-        .where((asset) => asset.startsWith('assets/') && asset.endsWith('/main.rb'))
+        .where(
+          (asset) => asset.startsWith('assets/') && asset.endsWith('/main.rb'),
+        )
         .map((asset) => asset.substring(0, asset.length - 'main.rb'.length))
         .where((prefix) => prefix != 'assets/')
         .where((prefix) => prefix != 'assets/ruby_project/')

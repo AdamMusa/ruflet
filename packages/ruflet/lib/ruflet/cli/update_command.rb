@@ -61,6 +61,8 @@ module Ruflet
 
         return check_client_updates(targets, platform: platform) if options[:check]
 
+        ensure_cached_ruflet_assets_for_update(force: options[:force])
+
         targets.each do |target|
           root =
             if target == :web
@@ -82,6 +84,20 @@ module Ruflet
       end
 
       private
+
+      def ensure_cached_ruflet_assets_for_update(force: false)
+        if Ruflet::CLI.respond_to?(:download_ruflet_assets, true)
+          Ruflet::CLI.send(:download_ruflet_assets, force: force)
+          return
+        end
+
+        if Ruflet::CLI.respond_to?(:ensure_cached_ruflet_client_template!, true)
+          Ruflet::CLI.send(:ensure_cached_ruflet_client_template!, force: force)
+        end
+        if Ruflet::CLI.respond_to?(:ensure_cached_ruby_runtime!, true)
+          Ruflet::CLI.send(:ensure_cached_ruby_runtime!, force: force)
+        end
+      end
 
       def check_client_updates(targets, platform:)
         root = client_cache_root_for(platform)
