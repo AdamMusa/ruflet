@@ -75,6 +75,12 @@ module Ruflet
         build_widget(:contextmenu, **mapped)
       end
       def contextmenu(content = nil, **props) = context_menu(content, **props)
+      def keyboard_listener(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:keyboardlistener, **mapped)
+      end
+      def keyboardlistener(content = nil, **props) = keyboard_listener(content, **props)
       def gesture_detector(**props, &block) = build_widget(:gesturedetector, **props, &block)
       def gesturedetector(**props, &block) = gesture_detector(**props, &block)
       def draggable(content = nil, **props, &block)

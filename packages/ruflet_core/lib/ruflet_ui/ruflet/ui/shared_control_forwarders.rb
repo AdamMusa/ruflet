@@ -23,6 +23,8 @@ module Ruflet
       def autocompletesuggestion(key = nil, **props) = control_delegate.autocompletesuggestion(key, **props)
       def context_menu(content = nil, **props) = control_delegate.context_menu(content, **props)
       def contextmenu(content = nil, **props) = control_delegate.contextmenu(content, **props)
+      def keyboard_listener(content = nil, **props) = control_delegate.keyboard_listener(content, **props)
+      def keyboardlistener(content = nil, **props) = control_delegate.keyboardlistener(content, **props)
       def gesture_detector(**props, &block) = control_delegate.gesture_detector(**props, &block)
       def gesturedetector(**props, &block) = control_delegate.gesturedetector(**props, &block)
       def draggable(content = nil, **props, &block) = control_delegate.draggable(content, **props, &block)
