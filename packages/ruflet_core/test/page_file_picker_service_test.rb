@@ -3,6 +3,31 @@
 require_relative "test_helper"
 
 class PageFilePickerServiceTest < Minitest::Test
+  def test_file_picker_returns_page_service_with_flet_wire_name
+    sent = []
+    page = build_page(sent)
+
+    picker = page.file_picker(data: { "source" => "studio" }, key: "picker")
+
+    assert_equal "filepicker", picker.type
+    assert_equal "FilePicker", picker.to_patch["_c"]
+    assert_equal({ "source" => "studio" }, picker.props["data"])
+    assert_equal "picker", picker.props["key"]
+    assert_same picker, page.service(:file_picker)
+  end
+
+  def test_file_picker_keeps_event_handlers
+    sent = []
+    page = build_page(sent)
+
+    picker = page.file_picker(on_result: ->(_event) {}, on_upload: ->(_event) {})
+
+    assert picker.has_handler?(:result)
+    assert picker.has_handler?(:upload)
+    assert_equal true, picker.props["on_result"]
+    assert_equal true, picker.props["on_upload"]
+  end
+
   def test_service_uses_snake_case_name_without_duplicate_compact_flet_type
     sent = []
     page = build_page(sent)
