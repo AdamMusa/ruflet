@@ -65,6 +65,8 @@ module Ruflet
     def autocompletesuggestion(key = nil, **props) = _pending_app.autocompletesuggestion(key, **props)
     def context_menu(content = nil, **props) = _pending_app.context_menu(content, **props)
     def contextmenu(content = nil, **props) = _pending_app.contextmenu(content, **props)
+    def keyboard_listener(content = nil, **props) = _pending_app.keyboard_listener(content, **props)
+    def keyboardlistener(content = nil, **props) = _pending_app.keyboardlistener(content, **props)
     def gesture_detector(**props, &block) = _pending_app.gesture_detector(**props, &block)
     def gesturedetector(**props, &block) = _pending_app.gesturedetector(**props, &block)
     def draggable(content = nil, **props, &block) = _pending_app.draggable(content, **props, &block)
