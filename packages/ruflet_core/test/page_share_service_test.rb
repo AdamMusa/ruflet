@@ -3,6 +3,19 @@
 require_relative "test_helper"
 
 class PageShareServiceTest < Minitest::Test
+  def test_share_returns_page_service_with_flet_wire_name
+    sent = []
+    page = build_page(sent)
+
+    service = page.share(data: { "source" => "studio" }, key: "share")
+
+    assert_equal "share", service.type
+    assert_equal "Share", service.to_patch["_c"]
+    assert_equal({ "source" => "studio" }, service.props["data"])
+    assert_equal "share", service.props["key"]
+    assert_same service, page.service(:share)
+  end
+
   def test_share_text_accepts_positional_text_and_omits_nil_options
     sent = []
     page = build_page(sent)
