@@ -3,6 +3,19 @@
 require_relative "test_helper"
 
 class PageFlashlightServiceTest < Minitest::Test
+  def test_flashlight_with_props_returns_page_service_with_flet_wire_name
+    sent = []
+    page = build_page(sent)
+
+    service = page.flashlight(data: { "source" => "studio" }, key: "flashlight")
+
+    assert_equal "flashlight", service.type
+    assert_equal "Flashlight", service.to_patch["_c"]
+    assert_equal({ "source" => "studio" }, service.props["data"])
+    assert_equal "flashlight", service.props["key"]
+    assert_same service, page.service(:flashlight)
+  end
+
   def test_flashlight_methods_use_flet_payload_shape
     %w[on off is_available].each do |method_name|
       sent = []
