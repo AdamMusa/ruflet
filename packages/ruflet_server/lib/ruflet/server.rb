@@ -56,8 +56,9 @@ module Ruflet
     def bind_server_socket!(max_attempts: 100)
       requested = @port.to_i
       candidate = requested
+      attempts = ENV["RUFLET_STRICT_PORT"] == "1" ? 1 : max_attempts
 
-      max_attempts.times do
+      attempts.times do
         begin
           @server_socket = TCPServer.new(@host, candidate)
           @port = candidate
@@ -69,6 +70,8 @@ module Ruflet
           candidate += 1
         end
       end
+
+      raise Errno::EADDRINUSE, "Unable to bind port #{requested}" if attempts == 1
 
       raise Errno::EADDRINUSE, "Unable to bind starting at #{requested} after #{max_attempts} attempts"
     end

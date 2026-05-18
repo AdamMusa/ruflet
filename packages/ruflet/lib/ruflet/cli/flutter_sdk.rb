@@ -226,6 +226,9 @@ module Ruflet
         template_client = File.expand_path("../../../../../templates/ruflet_flutter_template/.metadata", __dir__)
         candidates << repo_client
         candidates << template_client
+        if Ruflet::CLI.respond_to?(:cached_ruflet_client_template_root, true)
+          candidates << File.join(Ruflet::CLI.send(:cached_ruflet_client_template_root), ".metadata")
+        end
         candidates.find { |path| File.file?(path) }
       end
 

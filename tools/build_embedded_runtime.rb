@@ -380,6 +380,22 @@ EXTRA_SHIMS = <<~'RUBY'
       end
     end
 
+    unless method_defined?(:delete_prefix)
+      def delete_prefix(prefix)
+        prefix = prefix.to_s
+        start_with?(prefix) ? self[prefix.length..-1].to_s : dup
+      end
+    end
+
+    unless method_defined?(:delete_suffix)
+      def delete_suffix(suffix)
+        suffix = suffix.to_s
+        return dup if suffix.empty?
+
+        end_with?(suffix) ? self[0, length - suffix.length].to_s : dup
+      end
+    end
+
     unless method_defined?(:b)
       def b
         self
@@ -1302,7 +1318,20 @@ def legacy_preamble
   raise "Unable to locate embedded runtime preamble marker" unless idx
 
   preamble = content[0...idx]
-  preamble.rstrip + "\n"
+  split_large_registered_sources(preamble).rstrip + "\n"
+end
+
+def split_large_registered_sources(source)
+  source.gsub(
+    /RufletEmbeddedRuntime\.register\(([^,\n]+), <<'RUFLET_SRC'\n(.*?)\nRUFLET_SRC\n\)/m
+  ) do
+    path_literal = Regexp.last_match(1)
+    embedded_source = Regexp.last_match(2)
+    next Regexp.last_match(0) if embedded_source.bytesize <= 16_000
+
+    chunks = embedded_source.scan(/.{1,12000}/m).map { |chunk| "  #{chunk.dump}" }
+    "RufletEmbeddedRuntime.register(#{path_literal}, [\n#{chunks.join(",\n")}\n].join)"
+  end
 end
 
 def resolve_require_relative(base_file, relative_path)

@@ -313,6 +313,7 @@ Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeStartFileServer(
 
   std::thread([file_path, stop_path, source]() {
     setenv("RUFLET_PROD_STOP_FILE", stop_path.c_str(), 1);
+    setenv("RUFLET_STRICT_PORT", "1", 1);
 
     std::lock_guard<std::mutex> lock(g_mutex);
     EvalResult result = eval_locked(source, file_path.c_str());

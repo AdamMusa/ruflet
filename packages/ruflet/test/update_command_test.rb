@@ -65,22 +65,25 @@ class RufletCliUpdateCommandTest < Minitest::Test
     $stdout = original_stdout
   end
 
-  def test_prepare_flutter_client_writes_local_ruby_runtime_override_before_pub_get
+  def test_new_app_gemfile_uses_current_runtime_package_versions
+    assert_includes Ruflet::CLI::GEMFILE_TEMPLATE, %(gem "ruflet_core", ">= #{Ruflet::VERSION}")
+    assert_includes Ruflet::CLI::GEMFILE_TEMPLATE, %(gem "ruflet_server", ">= #{Ruflet::VERSION}")
+    refute_includes Ruflet::CLI::GEMFILE_TEMPLATE, "0.0.10"
+  end
+
+  def test_prepare_flutter_client_uses_local_ruby_runtime_dependency_when_available
     builder = DummyBuilder.new
 
     Dir.mktmpdir do |dir|
       client_dir = File.join(dir, "ruflet_client")
-      runtime_dir = File.join(dir, "ruby_runtime")
       FileUtils.mkdir_p(client_dir)
-      FileUtils.mkdir_p(runtime_dir)
-      File.write(File.join(runtime_dir, "pubspec.yaml"), "name: ruby_runtime\n")
       File.write(
         File.join(client_dir, "pubspec.yaml"),
         <<~YAML
           dependencies:
             flutter:
               sdk: flutter
-            ruby_runtime: ^0.0.2
+            ruby_runtime: ^0.0.3
         YAML
       )
 
@@ -102,10 +105,164 @@ class RufletCliUpdateCommandTest < Minitest::Test
         verbose: false
       )
 
-      overrides = File.read(File.join(client_dir, "pubspec_overrides.yaml"))
-      assert_includes overrides, "ruby_runtime:"
-      assert_includes overrides, runtime_dir
+      refute_path_exists File.join(client_dir, "pubspec_overrides.yaml")
+      pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
+      ruby_runtime = YAML.safe_load(pubspec, aliases: true).dig("dependencies", "ruby_runtime")
+      assert_kind_of Hash, ruby_runtime
+      assert_path_exists File.join(ruby_runtime.fetch("path"), "pubspec.yaml")
       assert_includes calls, client_dir
+    end
+  end
+
+  def test_write_pubspec_yaml_indents_flutter_assets
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "pubspec.yaml")
+
+      builder.send(
+        :write_pubspec_yaml,
+        path,
+        {
+          "flutter" => {
+            "uses-material-design" => true,
+            "assets" => ["assets/ruflet_studio/"]
+          }
+        }
+      )
+
+      pubspec = File.read(path)
+      assert_includes pubspec, "  assets:\n    - assets/ruflet_studio/"
+      refute_includes pubspec, "  assets:\n- assets/ruflet_studio/"
+    end
+  end
+
+  def test_prune_client_pubspec_preserves_formatted_flutter_assets
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "pubspec.yaml")
+      File.write(
+        path,
+        <<~YAML
+          dependencies:
+            flutter:
+              sdk: flutter
+            flet: any
+            flet_audio: any
+          flutter:
+            assets:
+              - assets/demo/
+        YAML
+      )
+
+      builder.send(:prune_client_pubspec, path, [])
+
+      pubspec = File.read(path)
+      assert_includes pubspec, "  assets:\n    - assets/demo/"
+      refute_includes pubspec, "  assets:\n- assets/demo/"
+    end
+  end
+
+  def test_self_contained_service_extension_config_restores_full_client_extensions
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      template_dir = File.join(dir, "template")
+      client_dir = File.join(dir, "client")
+      FileUtils.mkdir_p(File.join(template_dir, "lib"))
+      FileUtils.mkdir_p(File.join(client_dir, "lib"))
+
+      File.write(
+        File.join(template_dir, "pubspec.yaml"),
+        <<~YAML
+          dependencies:
+            flutter:
+              sdk: flutter
+            flet: any
+            flet_webview:
+              git:
+                url: https://example.com/ruflet.git
+                path: webview
+        YAML
+      )
+      File.write(
+        File.join(template_dir, "lib", "main.self.dart"),
+        <<~DART
+          import 'package:flet/flet.dart';
+          import 'package:flet_webview/flet_webview.dart' as ruflet_webview;
+
+          void main() {
+            final extensions = <FletExtension>[
+              ruflet_webview.Extension(),
+            ];
+          }
+        DART
+      )
+      File.write(
+        File.join(client_dir, "pubspec.yaml"),
+        <<~YAML
+          dependencies:
+            flutter:
+              sdk: flutter
+            flet: any
+        YAML
+      )
+      File.write(
+        File.join(client_dir, "lib", "main.self.dart"),
+        <<~DART
+          import 'package:flet/flet.dart';
+
+          void main() {
+            final extensions = <FletExtension>[
+            ];
+          }
+        DART
+      )
+
+      original_method = Ruflet::CLI.method(:resolve_ruflet_client_template_root)
+      Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root) { template_dir }
+      Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
+
+      begin
+        builder.send(:apply_service_extension_config, client_dir, {}, self_contained: true)
+
+        pubspec = YAML.safe_load(File.read(File.join(client_dir, "pubspec.yaml")), aliases: true)
+        assert pubspec.dig("dependencies", "flet_webview")
+
+        main = File.read(File.join(client_dir, "lib", "main.self.dart"))
+        assert_includes main, "package:flet_webview/flet_webview.dart"
+        assert_includes main, "ruflet_webview.Extension(),"
+      ensure
+        Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root, original_method)
+        Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
+      end
+    end
+  end
+
+  def test_update_pubspec_value_preserves_formatted_flutter_assets
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "pubspec.yaml")
+      File.write(
+        path,
+        <<~YAML
+          flutter_launcher_icons:
+            image_path: "assets/icon.png"
+          flutter:
+            uses-material-design: true
+            assets:
+            - assets/demo/
+        YAML
+      )
+
+      builder.send(:update_pubspec_value, path, "flutter_launcher_icons", "theme_color", "\"#FFFFFF\"")
+
+      pubspec = File.read(path)
+      assert_includes pubspec, "  assets:\n    - assets/demo/"
+      refute_includes pubspec, "  assets:\n  - assets/demo/"
+      refute_includes pubspec, "  assets:\n- assets/demo/"
     end
   end
 
@@ -121,7 +278,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
           dependencies:
             flutter:
               sdk: flutter
-            ruby_runtime: ^0.0.2
+            ruby_runtime: ^0.0.3
           flutter:
             assets:
               - assets/main.rb
@@ -171,8 +328,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       builder.define_singleton_method(:ensure_flutter!) do |_command_name, client_dir: nil, auto_install: true|
         { flutter: "flutter", dart: "dart", env: { "PATH" => "/tmp/bin" } }
       end
-      builder.define_singleton_method(:prepare_flutter_client) do |_client_dir, tools:, config:, self_contained: false, verbose: false|
-        puts "[ruflet build] ruby_runtime override=/tmp/ruby_runtime" if verbose
+      builder.define_singleton_method(:prepare_flutter_client) do |_client_dir, platform: nil, tools:, config:, self_contained: false, verbose: false|
         puts "[ruflet build] running flutter pub get" if verbose
         true
       end
@@ -190,11 +346,10 @@ class RufletCliUpdateCommandTest < Minitest::Test
       code = builder.command_build(["apk", "--self", "--verbose"])
 
       assert_equal 0, code
-      assert_includes out.string, "[ruflet build] ruby_runtime override=/tmp/ruby_runtime"
       assert_includes out.string, "[ruflet build] running flutter pub get"
       assert_includes out.string, "[ruflet build] mode=self"
       assert_includes out.string, "[ruflet build] target=lib/main.self.dart"
-      assert_includes out.string, "[ruflet build] command=flutter build apk --target lib/main.self.dart -v"
+      assert_includes out.string, "[ruflet build] command=flutter build apk --target lib/main.self.dart --dart-define RUFLET_BACKEND_URL=https://api.example.com -v"
       assert_equal ["flutter", "build", "apk", "--target", "lib/main.self.dart", "--dart-define", "RUFLET_BACKEND_URL=https://api.example.com", "-v"], calls.first[:args]
       assert_equal client_dir, calls.first[:chdir]
     ensure
@@ -210,9 +365,10 @@ class RufletCliUpdateCommandTest < Minitest::Test
       Dir.chdir(dir)
 
       copied = []
+      original_copy_method = Ruflet::CLI.method(:copy_ruflet_client_template)
       Ruflet::CLI.define_singleton_method(:copy_ruflet_client_template) do |root|
         copied << root
-        client_dir = File.join(root, "build", ".ruflet", "client")
+        client_dir = File.join(root, "build", "client")
         FileUtils.mkdir_p(File.join(client_dir, "lib"))
         File.write(File.join(client_dir, "pubspec.yaml"), "name: ruflet_client\n")
         File.write(File.join(client_dir, "lib", "main.server.dart"), "void main() {}\n")
@@ -223,7 +379,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       builder.define_singleton_method(:ensure_flutter!) do |_command_name, client_dir: nil, auto_install: true|
         { flutter: "flutter", dart: "dart", env: {} }
       end
-      builder.define_singleton_method(:prepare_flutter_client) do |_client_dir, tools:, config:, self_contained: false, verbose: false|
+      builder.define_singleton_method(:prepare_flutter_client) do |_client_dir, platform: nil, tools:, config:, self_contained: false, verbose: false|
         true
       end
 
@@ -236,10 +392,12 @@ class RufletCliUpdateCommandTest < Minitest::Test
       code = builder.command_build(["ios"])
 
       assert_equal 0, code
-      assert_equal [dir], copied
-      assert_equal File.join(dir, "build", ".ruflet", "client"), calls.first[:chdir]
-      assert_equal ["flutter", "build", "ios", "--no-codesign", "--target", "lib/main.server.dart", "--dart-define", "RUFLET_BACKEND_URL=https://api.example.com"], calls.first[:args]
+      assert_equal [File.realpath(dir)], copied.map { |path| File.realpath(path) }
+      assert_equal File.realpath(File.join(dir, "build", "client")), File.realpath(calls.first[:chdir])
+      assert_equal ["flutter", "build", "ios", "--codesign", "--target", "lib/main.server.dart", "--dart-define", "RUFLET_BACKEND_URL=https://api.example.com"], calls.first[:args]
     ensure
+      Ruflet::CLI.define_singleton_method(:copy_ruflet_client_template, original_copy_method) if original_copy_method
+      Ruflet::CLI.singleton_class.send(:private, :copy_ruflet_client_template) if original_copy_method
       Dir.chdir(previous_dir)
     end
   end
@@ -251,7 +409,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       previous_dir = Dir.pwd
       Dir.chdir(dir)
 
-      client_dir = File.join(dir, "build", ".ruflet", "client")
+      client_dir = File.join(dir, "build", "client")
       source_dir = File.join(client_dir, "build", "app", "outputs", "flutter-apk")
       FileUtils.mkdir_p(source_dir)
       File.write(File.join(source_dir, "app-release.apk"), "apk")
@@ -277,7 +435,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       builder.define_singleton_method(:ensure_flutter!) do |_command_name, client_dir: nil, auto_install: true|
         { flutter: "flutter", dart: "dart", env: {} }
       end
-      builder.define_singleton_method(:prepare_flutter_client) { |_client_dir, tools:, config:, self_contained: false, verbose: false| true }
+      builder.define_singleton_method(:prepare_flutter_client) { |_client_dir, platform: nil, tools:, config:, self_contained: false, verbose: false| true }
       builder.define_singleton_method(:system) { |_env, *_args, chdir: nil| flunk("system should not be called without backend_url") }
 
       err = StringIO.new
@@ -315,12 +473,13 @@ class RufletCliUpdateCommandTest < Minitest::Test
           }
         }
       end
+      test = self
       builder.define_singleton_method(:prepare_flutter_client) do |_client_dir, platform:, tools:, config:, self_contained: false, verbose: false|
-        refute tools[:env].key?("BUNDLE_GEMFILE")
-        refute_includes tools[:env]["PATH"], "/Users/macbookpro/.gem/ruby/3.4.0/bin"
-        assert_includes tools[:env]["PATH"], File.join(client_dir, ".ruflet", "bin")
-        assert_nil tools[:env]["GEM_HOME"]
-        assert_nil tools[:env]["GEM_PATH"]
+        test.refute tools[:env].key?("BUNDLE_GEMFILE")
+        test.refute_includes tools[:env]["PATH"], "/Users/macbookpro/.gem/ruby/3.4.0/bin"
+        test.assert_includes tools[:env]["PATH"], File.join(client_dir, ".ruflet", "bin")
+        test.assert_nil tools[:env]["GEM_HOME"]
+        test.assert_nil tools[:env]["GEM_PATH"]
         true
       end
 
@@ -334,6 +493,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
 
       assert_equal 0, code
       refute calls.first[:env].key?("BUNDLE_GEMFILE")
+      assert_equal ["flutter", "build", "ios", "--codesign", "--target", "lib/main.self.dart"], calls.first[:args]
       refute_includes calls.first[:env]["PATH"], "/Users/macbookpro/.gem/ruby/3.4.0/bin"
       assert_includes calls.first[:env]["PATH"], File.join(client_dir, ".ruflet", "bin")
       assert File.executable?(File.join(client_dir, ".ruflet", "bin", "pod"))
@@ -348,7 +508,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
     Dir.mktmpdir do |dir|
       previous_dir = Dir.pwd
       Dir.chdir(dir)
-      client_dir = File.join(dir, "build", ".ruflet", "client")
+      client_dir = File.join(dir, "build", "client")
       FileUtils.mkdir_p(File.join(client_dir, "lib"))
       File.write(File.join(client_dir, "lib", "main.self.dart"), "void main() {}\n")
       apk_dir = File.join(dir, "build", "android", "flutter-apk")
@@ -385,7 +545,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
     Dir.mktmpdir do |dir|
       previous_dir = Dir.pwd
       Dir.chdir(dir)
-      client_dir = File.join(dir, "build", ".ruflet", "client")
+      client_dir = File.join(dir, "build", "client")
       FileUtils.mkdir_p(File.join(client_dir, "lib"))
       File.write(File.join(client_dir, "lib", "main.self.dart"), "void main() {}\n")
       ios_app_dir = File.join(dir, "build", "ios", "iphonesimulator", "Runner.app")
@@ -412,6 +572,48 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_equal client_dir, calls.first[:chdir]
       assert File.exist?(File.join(client_dir, "build", "ios", "iphonesimulator", "Runner.app", "Info.plist"))
     ensure
+      Dir.chdir(previous_dir)
+    end
+  end
+
+  def test_command_install_refuses_unsigned_ios_device_app
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      previous_dir = Dir.pwd
+      Dir.chdir(dir)
+      client_dir = File.join(dir, "build", "client")
+      FileUtils.mkdir_p(File.join(client_dir, "lib"))
+      File.write(File.join(client_dir, "lib", "main.self.dart"), "void main() {}\n")
+      ios_app_dir = File.join(dir, "build", "ios", "iphoneos", "Runner.app")
+      FileUtils.mkdir_p(ios_app_dir)
+      File.write(File.join(ios_app_dir, "Info.plist"), "plist")
+
+      builder.define_singleton_method(:detect_flutter_client_dir) { client_dir }
+      builder.define_singleton_method(:load_ruflet_config) { {} }
+      builder.define_singleton_method(:ensure_flutter!) do |_command_name, client_dir: nil, auto_install: true|
+        { flutter: "flutter", dart: "dart", env: {} }
+      end
+      builder.define_singleton_method(:prepare_flutter_client) { |_client_dir, **_kwargs| flunk("install should not run build preparation") }
+
+      calls = []
+      builder.define_singleton_method(:system) do |_env_or_command, *args, chdir: nil, **_kwargs|
+        calls << { command: _env_or_command, args: args, chdir: chdir }
+        false
+      end
+
+      err = StringIO.new
+      original_stderr = $stderr
+      $stderr = err
+
+      code = builder.command_install(["--device", "00008140-0019590E3C87001C"])
+
+      assert_equal 1, code
+      assert_equal "/usr/bin/codesign", calls.first[:command]
+      assert_includes err.string, "iOS device app bundle is not code signed"
+      refute calls.any? { |call| call[:args].include?("install") }
+    ensure
+      $stderr = original_stderr
       Dir.chdir(previous_dir)
     end
   end
@@ -826,4 +1028,5 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes content, "import 'package:flet/flet.dart';"
     end
   end
+
 end

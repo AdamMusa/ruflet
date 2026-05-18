@@ -49,10 +49,11 @@ module Ruflet
         client_dir = ensure_flutter_client_dir(verbose: !!verbose)
         unless client_dir
           warn "Could not find Flutter client directory."
-          warn "Set RUFLET_CLIENT_DIR or let Ruflet manage the hidden client under ./build/.ruflet/client"
+          warn "Set RUFLET_CLIENT_DIR or let Ruflet manage the client under ./build/client"
           return 1
         end
 
+        build_note("Preparing #{platform} build (#{self_contained ? 'self-contained' : 'server-driven'})")
         config = load_ruflet_config
         tools = ensure_flutter!("build", client_dir: client_dir)
         command_env = build_tool_env(tools[:env], platform, client_dir)
@@ -67,6 +68,7 @@ module Ruflet
         return 1 unless ok
 
         build_args = [*flutter_cmd, *args]
+        build_args << "--codesign" if ios_device_build_needs_codesign_flag?(platform, build_args)
         target_entrypoint = flutter_target_entrypoint(client_dir, self_contained: !!self_contained)
         build_args += ["--target", target_entrypoint] if target_entrypoint
         backend_url = configured_backend_url(config)
@@ -89,6 +91,7 @@ module Ruflet
         build_log(verbose, "target=#{target_entrypoint}") if target_entrypoint
         build_log(verbose, "command=#{([tools[:flutter]] + build_args).join(' ')}")
 
+        build_note("Running Flutter #{build_args.join(' ')}")
         ok = run_external_command(command_env, tools[:flutter], *build_args, chdir: client_dir, unbundled: true)
         export_platform_build_outputs(client_dir, platform, verbose: !!verbose) if ok
         ok ? 0 : 1
@@ -101,7 +104,7 @@ module Ruflet
         client_dir = ensure_flutter_client_dir(verbose: !!verbose)
         unless client_dir
           warn "Could not find Flutter client directory."
-          warn "Set RUFLET_CLIENT_DIR or let Ruflet manage the hidden client under ./build/.ruflet/client"
+          warn "Set RUFLET_CLIENT_DIR or let Ruflet manage the client under ./build/client"
           return 1
         end
 
@@ -250,8 +253,21 @@ module Ruflet
       end
 
       def validate_install_artifacts(client_dir, platform:, device_id:)
-        return true unless platform == "ios" && ios_simulator_device_id?(device_id)
+        return true unless platform == "ios"
 
+        return validate_ios_simulator_install_artifacts(client_dir) if ios_simulator_device_id?(device_id)
+
+        device_app = File.join(client_dir, "build", "ios", "iphoneos", "Runner.app")
+        return true unless Dir.exist?(device_app)
+        return true if ios_app_signed?(device_app)
+
+        warn "install config error: iOS device app bundle is not code signed"
+        warn "Rebuild for a device with: ruflet build ios --self"
+        warn "If you intentionally built without signing, install from Xcode or rebuild without --no-codesign."
+        false
+      end
+
+      def validate_ios_simulator_install_artifacts(client_dir)
         simulator_app = File.join(client_dir, "build", "ios", "iphonesimulator", "Runner.app")
         return true if Dir.exist?(simulator_app)
 
@@ -269,7 +285,11 @@ module Ruflet
       def ios_simulator_device_id?(device_id)
         return false if device_id.to_s.strip.empty?
 
-        device_id.match?(/\A[0-9A-F-]{8,}\z/i)
+        device_id.match?(/\A[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}\z/i)
+      end
+
+      def ios_app_signed?(app_path)
+        system("/usr/bin/codesign", "-vv", app_path, out: File::NULL, err: File::NULL)
       end
 
       def exports_for(platform)
@@ -321,7 +341,7 @@ module Ruflet
       end
 
       def hidden_flutter_client_dir(root = Dir.pwd)
-        File.join(root, "build", ".ruflet", "client")
+        File.join(root, "build", "client")
       end
 
       def user_build_root(root = Dir.pwd)
@@ -332,6 +352,7 @@ module Ruflet
         refresh_managed_client_template_files(client_dir, verbose: verbose)
         sync_client_metadata(client_dir, config, verbose: verbose)
         configure_client_runtime_mode(client_dir, self_contained: self_contained, verbose: verbose)
+        @ruflet_self_contained_build = self_contained
         apply_service_extension_config(client_dir, config)
         asset_flags = apply_build_config(client_dir, config)
         if asset_flags[:error]
@@ -341,6 +362,7 @@ module Ruflet
         announce_asset_configuration(asset_flags)
         clear_flutter_build_state(client_dir, verbose: verbose)
         clear_stale_platform_outputs(client_dir, platform, verbose: verbose)
+        build_note("Resolving Flutter packages")
         build_log(verbose, "running flutter pub get")
         unless run_external_command(tools[:env], tools[:flutter], "pub", "get", chdir: client_dir, unbundled: true)
           warn "flutter pub get failed"
@@ -409,15 +431,7 @@ module Ruflet
       end
 
       def unbundled_command_env(env)
-        sanitized_env = env.reject { |key, _value| key.start_with?("BUNDLE_") || key == "RUBYOPT" || key == "RUBYLIB" }
-        cleared_env = {}
-        ENV.each_key do |key|
-          next unless key.start_with?("BUNDLE_") || key == "RUBYOPT" || key == "RUBYLIB" || key.start_with?("GEM_")
-
-          cleared_env[key] = nil
-        end
-
-        cleared_env.merge(sanitized_env)
+        env.reject { |key, _value| key.start_with?("BUNDLE_") || key == "RUBYOPT" || key == "RUBYLIB" || key.start_with?("GEM_") }
       end
 
       def run_external_command(env, *cmd, chdir:, unbundled: false)
@@ -845,7 +859,7 @@ module Ruflet
         return unless File.file?(path)
 
         content = File.read(path)
-        updated = content.gsub(pattern, replacement)
+        updated = content.gsub(pattern) { replacement }
         File.write(path, updated) unless updated == content
       end
 
@@ -916,15 +930,24 @@ module Ruflet
         hash.is_a?(Hash) && (hash.key?(key) || hash.key?(key.to_sym))
       end
 
-      def apply_service_extension_config(client_dir, config = {})
+      def apply_service_extension_config(client_dir, config = {}, self_contained: @ruflet_self_contained_build)
         services = Array(config["services"])
-        extension_keys = services.map { |v| normalize_extension_key(v) }.compact.uniq
+        extension_keys =
+          if self_contained
+            CLIENT_EXTENSION_MAP.keys
+          else
+            services.map { |v| normalize_extension_key(v) }.compact.uniq
+          end
         extension_packages = extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:package) }.uniq
         extension_aliases = extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:alias) }.uniq
 
         pubspec_path = File.join(client_dir, "pubspec.yaml")
-        prune_client_pubspec(pubspec_path, extension_packages) if File.file?(pubspec_path)
+        if File.file?(pubspec_path)
+          sync_client_extension_dependencies(pubspec_path, extension_packages)
+          prune_client_pubspec(pubspec_path, extension_packages)
+        end
         client_entrypoint_paths(client_dir).each do |entrypoint|
+          sync_client_main_extensions(entrypoint, extension_aliases) if File.file?(entrypoint)
           prune_client_main(entrypoint, extension_aliases) if File.file?(entrypoint)
         end
       end
@@ -965,7 +988,7 @@ module Ruflet
         sync_client_pubspec_for_runtime_mode(client_dir, self_contained: self_contained)
         if self_contained
           sync_self_contained_project_assets(client_dir, verbose: verbose)
-          ensure_local_ruby_runtime_override(client_dir, verbose: verbose)
+          remove_local_ruby_runtime_override(client_dir, verbose: verbose)
         else
           remove_self_contained_project_assets(client_dir, verbose: verbose)
           remove_local_ruby_runtime_override(client_dir, verbose: verbose)
@@ -984,7 +1007,7 @@ module Ruflet
         assets = Array(flutter["assets"]).map(&:to_s)
 
         if self_contained
-          dependencies["ruby_runtime"] ||= "^0.0.2"
+          dependencies["ruby_runtime"] = ruby_runtime_dependency
           assets.delete("assets/main.rb")
           assets.delete("assets/ruby_project/")
           project_asset_path = "assets/#{self_contained_project_name}/"
@@ -999,6 +1022,33 @@ module Ruflet
         flutter["assets"] = assets unless assets.empty?
         flutter.delete("assets") if assets.empty?
         write_pubspec_yaml(pubspec_path, data)
+      end
+
+      def ruby_runtime_dependency
+        local_path = local_ruby_runtime_path
+        return { "path" => local_path } if local_path
+
+        raise "Ruflet ruby_runtime is missing. Run `ruflet doctor --fix` or rerun the command with network access."
+      end
+
+      def local_ruby_runtime_path
+        env_path = ENV["RUFLET_RUBY_RUNTIME_PATH"].to_s.strip
+        candidates = []
+        candidates << Pathname.new(env_path).expand_path unless env_path.empty?
+        candidates << Pathname.new(__dir__).join("../../../../../ruby_runtime").expand_path
+        if Ruflet::CLI.respond_to?(:cached_ruby_runtime_root, true)
+          candidates << Pathname.new(Ruflet::CLI.send(:cached_ruby_runtime_root)).expand_path
+        end
+
+        candidate = candidates.find { |path| path.join("pubspec.yaml").file? }
+        return candidate.to_s if candidate
+
+        if Ruflet::CLI.respond_to?(:ensure_cached_ruby_runtime!, true)
+          cached = Ruflet::CLI.send(:ensure_cached_ruby_runtime!)
+          return cached if cached && File.file?(File.join(cached, "pubspec.yaml"))
+        end
+
+        nil
       end
 
       def refresh_managed_client_template_files(client_dir, verbose: false)
@@ -1032,11 +1082,22 @@ module Ruflet
         content = YAML.dump(data)
         content = content.sub(/\A---\n/, "")
 
-        # Flutter pubspecs are easier to read and less error-prone when list
-        # entries are indented under their parent key.
-        content.gsub!(/^(\s+)(-\s.*)$/, '  \1\2')
+        content = indent_pubspec_sequences(content)
 
         File.write(path, content)
+      end
+
+      def indent_pubspec_sequences(content)
+        current_key_indent = nil
+        content.lines.map do |line|
+          if (match = line.match(/\A(\s*)[^#\s][^:]*:\s*(?:#.*)?\n?\z/))
+            current_key_indent = match[1].length
+          elsif (match = line.match(/\A(\s*)-\s/)) && current_key_indent && match[1].length <= current_key_indent
+            line = (" " * (current_key_indent + 2)) + line.lstrip
+          end
+
+          line
+        end.join
       end
 
       def sync_self_contained_project_assets(client_dir, verbose: false)
@@ -1161,29 +1222,6 @@ module Ruflet
         File.join("lib", File.basename(candidate))
       end
 
-      def ensure_local_ruby_runtime_override(client_dir, verbose: false)
-        pubspec_path = File.join(client_dir, "pubspec.yaml")
-        return unless File.file?(pubspec_path)
-
-        pubspec = YAML.safe_load(File.read(pubspec_path), aliases: true) || {}
-        dependencies = pubspec["dependencies"] || {}
-        return unless dependencies.is_a?(Hash) && dependencies.key?("ruby_runtime")
-
-        override_path = discover_local_ruby_runtime_path(client_dir)
-        return unless override_path
-
-        overrides_path = File.join(client_dir, "pubspec_overrides.yaml")
-        content = <<~YAML
-          dependency_overrides:
-            ruby_runtime:
-              path: #{override_path}
-        YAML
-        File.write(overrides_path, content)
-        build_log(verbose, "ruby_runtime override=#{override_path}")
-      rescue StandardError => e
-        warn "Failed to prepare ruby_runtime override: #{e.class}: #{e.message}"
-      end
-
       def remove_local_ruby_runtime_override(client_dir, verbose: false)
         overrides_path = File.join(client_dir, "pubspec_overrides.yaml")
         return unless File.file?(overrides_path)
@@ -1192,21 +1230,6 @@ module Ruflet
         build_log(verbose, "removed ruby_runtime override")
       rescue StandardError => e
         warn "Failed to remove ruby_runtime override: #{e.class}: #{e.message}"
-      end
-
-      def discover_local_ruby_runtime_path(client_dir)
-        candidates = []
-
-        env_path = ENV["RUFLET_RUBY_RUNTIME_PATH"].to_s.strip
-        candidates << env_path unless env_path.empty?
-        candidates << File.expand_path("../ruby_runtime", client_dir)
-        candidates << File.expand_path("../../../../../ruby_runtime", __dir__)
-
-        candidates.find do |path|
-          next false if path.to_s.empty?
-
-          File.file?(File.join(path, "pubspec.yaml"))
-        end
       end
 
       def normalize_extension_key(value)
@@ -1232,7 +1255,94 @@ module Ruflet
         end
 
         data["dependencies"] = deps
-        File.write(path, YAML.dump(data))
+        write_pubspec_yaml(path, data)
+      end
+
+      def sync_client_extension_dependencies(path, selected_packages)
+        return if selected_packages.empty?
+
+        template_deps = template_client_pubspec_dependencies
+        return if template_deps.empty?
+
+        data = YAML.safe_load(File.read(path), aliases: true) || {}
+        deps = (data["dependencies"] || {}).dup
+        selected_packages.each do |package_name|
+          deps[package_name] = template_deps[package_name] if template_deps.key?(package_name)
+        end
+
+        data["dependencies"] = deps
+        write_pubspec_yaml(path, data)
+      end
+
+      def template_client_pubspec_dependencies
+        template_root =
+          if Ruflet::CLI.respond_to?(:resolve_ruflet_client_template_root, true)
+            Ruflet::CLI.send(:resolve_ruflet_client_template_root)
+          end
+        return {} unless template_root
+
+        pubspec_path = File.join(template_root, "pubspec.yaml")
+        return {} unless File.file?(pubspec_path)
+
+        data = YAML.safe_load(File.read(pubspec_path), aliases: true) || {}
+        deps = data["dependencies"]
+        deps.is_a?(Hash) ? deps : {}
+      rescue StandardError
+        {}
+      end
+
+      def sync_client_main_extensions(path, selected_aliases)
+        return if selected_aliases.empty?
+
+        template_path = template_client_entrypoint_path(File.basename(path))
+        return unless template_path
+
+        content = File.read(path)
+        template = File.read(template_path)
+
+        selected_aliases.each do |extension_alias|
+          import_line = template.lines.find { |line| line.match?(/\sas #{Regexp.escape(extension_alias)};\s*\z/) }
+          extension_line = template.lines.find { |line| line.match?(/^\s*#{Regexp.escape(extension_alias)}\.Extension\(\),\s*$/) }
+
+          content = insert_missing_import(content, import_line) if import_line && !content.include?(import_line)
+          content = insert_missing_extension(content, extension_line) if extension_line && !content.include?(extension_line)
+        end
+
+        File.write(path, content)
+      end
+
+      def template_client_entrypoint_path(name)
+        template_root =
+          if Ruflet::CLI.respond_to?(:resolve_ruflet_client_template_root, true)
+            Ruflet::CLI.send(:resolve_ruflet_client_template_root)
+          end
+        return nil unless template_root
+
+        path = File.join(template_root, "lib", name)
+        File.file?(path) ? path : nil
+      end
+
+      def insert_missing_import(content, import_line)
+        lines = content.lines
+        last_import_index = lines.rindex { |line| line.start_with?("import ") }
+        if last_import_index
+          lines.insert(last_import_index + 1, import_line)
+        else
+          lines.unshift(import_line)
+        end
+        lines.join
+      end
+
+      def insert_missing_extension(content, extension_line)
+        lines = content.lines
+        marker_index = lines.index { |line| line.include?("// --FAT_CLIENT_START--") }
+        if marker_index
+          lines.insert(marker_index, extension_line)
+        else
+          list_index = lines.index { |line| line.include?("final extensions = <FletExtension>[") }
+          lines.insert(list_index ? list_index + 1 : lines.length, extension_line)
+        end
+        lines.join
       end
 
       def prune_client_main(path, selected_aliases)
@@ -1302,7 +1412,7 @@ module Ruflet
         if in_block && !replaced
           out << "#{block_indent}#{key}: #{value}"
         end
-        File.write(path, out.join("\n"))
+        File.write(path, indent_pubspec_sequences(out.join("\n")))
       end
 
       def flutter_build_command(platform)
@@ -1312,7 +1422,7 @@ module Ruflet
         when "aab", "appbundle"
           ["build", "appbundle"]
         when "ios"
-          ["build", "ios", "--no-codesign"]
+          ["build", "ios"]
         when "web"
           ["build", "web"]
         when "macos"
@@ -1324,6 +1434,15 @@ module Ruflet
         else
           nil
         end
+      end
+
+      def ios_device_build_needs_codesign_flag?(platform, build_args)
+        return false unless platform == "ios"
+        return false if build_args.include?("--simulator")
+        return false if build_args.include?("--no-codesign")
+        return false if build_args.include?("--codesign")
+
+        true
       end
 
       def build_log(verbose, message)

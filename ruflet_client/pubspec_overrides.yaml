@@ -1,3 +1,0 @@
-dependency_overrides:
-  ruby_runtime:
-    path: ../ruby_runtime

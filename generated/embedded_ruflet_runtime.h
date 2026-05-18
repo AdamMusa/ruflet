@@ -750,6 +750,22 @@ class String
     end
   end
 
+  unless method_defined?(:delete_prefix)
+    def delete_prefix(prefix)
+      prefix = prefix.to_s
+      start_with?(prefix) ? self[prefix.length..-1].to_s : dup
+    end
+  end
+
+  unless method_defined?(:delete_suffix)
+    def delete_suffix(suffix)
+      suffix = suffix.to_s
+      return dup if suffix.empty?
+
+      end_with?(suffix) ? self[0, length - suffix.length].to_s : dup
+    end
+  end
+
   unless method_defined?(:b)
     def b
       self
@@ -1508,9 +1524,9 @@ module Ruflet
       raw = raw.strip if raw.respond_to?(:strip)
       return raw if raw.empty?
 
-      codepoint = Ruflet::MaterialIconLookup.codepoint_for(raw)
-      codepoint = Ruflet::CupertinoIconLookup.codepoint_for(raw) if codepoint.nil?
-      return codepoint unless codepoint.nil?
+      canonical = Ruflet::MaterialIconLookup.canonical_name_for(raw)
+      canonical = Ruflet::CupertinoIconLookup.canonical_name_for(raw) if canonical.nil?
+      return canonical unless canonical.nil?
 
       raw
     end
@@ -1546,6 +1562,19 @@ module Ruflet
     def fallback_codepoint
       icons = icon_map
       icons["HELP_OUTLINE"] || icons["HELP"] || icons["QUESTION_MARK"] || 0
+    end
+
+    def canonical_name_for(value)
+      return nil if value.is_a?(Integer)
+
+      icons = icon_map
+      return nil if icons.empty?
+
+      candidate_names(value).each do |name|
+        return name.downcase if icons.key?(name)
+      end
+
+      nil
     end
 
     def icon_map
@@ -1610,14 +1639,14 @@ module Ruflet
     ICONS.each do |const_name, icon_name|
       next if const_defined?(const_name, false)
 
-      const_set(const_name, Ruflet::IconData.new(icon_name))
+      const_set(const_name, icon_name.to_s.downcase)
     end
 
     def [](name)
       key = name.to_s.upcase.to_sym
       return const_get(key) if const_defined?(key, false)
 
-      Ruflet::IconData.new(name.to_s)
+      Ruflet::MaterialIconLookup.canonical_name_for(name) || name.to_s
     end
 
     def constants(_inherit = true)
@@ -1629,7 +1658,7 @@ module Ruflet
     end
 
     def random
-      all.sample || Ruflet::IconData.new(Ruflet::MaterialIconLookup.fallback_codepoint)
+      all.sample || "help_outline"
     end
 
     def names
@@ -1668,6 +1697,19 @@ module Ruflet
     def fallback_codepoint
       icons = icon_map
       icons["QUESTION_CIRCLE"] || icons["QUESTION"] || 0
+    end
+
+    def canonical_name_for(value)
+      return nil if value.is_a?(Integer)
+
+      icons = icon_map
+      return nil if icons.empty?
+
+      candidate_names(value).each do |name|
+        return name.downcase if icons.key?(name)
+      end
+
+      nil
     end
 
     def icon_map
@@ -1732,14 +1774,14 @@ module Ruflet
     ICONS.each do |const_name, icon_name|
       next if const_defined?(const_name, false)
 
-      const_set(const_name, Ruflet::IconData.new(icon_name))
+      const_set(const_name, icon_name.to_s.downcase)
     end
 
     def [](name)
       key = name.to_s.upcase.to_sym
       return const_get(key) if const_defined?(key, false)
 
-      Ruflet::IconData.new(name.to_s)
+      Ruflet::CupertinoIconLookup.canonical_name_for(name) || name.to_s
     end
 
     def constants(_inherit = true)
@@ -1751,7 +1793,7 @@ module Ruflet
     end
 
     def random
-      all.sample || Ruflet::IconData.new(Ruflet::CupertinoIconLookup.fallback_codepoint)
+      all.sample || "question_circle"
     end
 
     def names
@@ -2094,6 +2136,9 @@ module Ruflet
 
       props.each { |k, v| patch[k] = serialize_value(v) }
       patch["controls"] = children.map(&:to_patch) unless children.empty?
+      if ENV["RUFLET_DEBUG"] == "1" && type == "floatingactionbutton"
+        Kernel.warn("[to_patch] #{patch.inspect}")
+      end
       patch
     end
 
@@ -2202,10 +2247,19 @@ module Ruflet
     def normalize_icon_prop(key, value)
       return value unless icon_prop_key?(key)
       return value if value.nil?
-      return value if value.is_a?(Integer)
-      return value if value.is_a?(Ruflet::IconData)
+      return value if value.is_a?(Ruflet::Control)
+      return normalize_icon_name(value.value) if value.is_a?(Ruflet::IconData)
+      return normalize_icon_name(value.to_s) if value.is_a?(String) || value.is_a?(Symbol)
 
-      raise ArgumentError, "#{type} #{key} must use Ruflet::MaterialIcons (or another Ruflet::IconData), not #{value.inspect}"
+      raise ArgumentError, "#{type} #{key} must use an icon name string, not #{value.inspect}"
+    end
+
+    def normalize_icon_name(value)
+      codepoint = Ruflet::MaterialIconLookup.codepoint_for(value)
+      codepoint = Ruflet::CupertinoIconLookup.codepoint_for(value) if codepoint.nil?
+      return codepoint unless codepoint.nil?
+
+      raise ArgumentError, "#{type} icon must use a known icon name, not #{value.inspect}"
     end
 
     def icon_prop_key?(key)
@@ -18430,7 +18484,7 @@ end
 module Ruflet
   module UI
     module MaterialControlMethods
-      EMBEDDED_INSTANCE_METHODS = ["view", "column", "center", "row", "stack", "grid_view", "gridview", "container", "gesture_detector", "gesturedetector", "draggable", "drag_target", "dragtarget", "text", "button", "elevated_button", "text_button", "textbutton", "filled_button", "filledbutton", "icon_button", "iconbutton", "text_field", "textfield", "checkbox", "radio", "radio_group", "radiogroup", "alert_dialog", "alertdialog", "snack_bar", "snackbar", "bottom_sheet", "bottomsheet", "markdown", "icon", "image", "app_bar", "appbar", "url_launcher", "clipboard", "floating_action_button", "floatingactionbutton", "tabs", "tab", "tab_bar", "tabbar", "tab_bar_view", "tabbarview", "navigation_bar", "navigationbar", "navigation_bar_destination", "navigationbardestination", "bar_chart", "barchart", "bar_chart_group", "barchartgroup", "bar_chart_rod", "barchartrod", "bar_chart_rod_stack_item", "barchartrodstackitem", "line_chart", "linechart", "line_chart_data", "linechartdata", "line_chart_data_point", "linechartdatapoint", "pie_chart", "piechart", "pie_chart_section", "piechartsection", "candlestick_chart", "candlestickchart", "candlestick_chart_spot", "candlestickchartspot", "radar_chart", "radarchart", "radar_chart_title", "radarcharttitle", "radar_data_set", "radardataset", "radar_data_set_entry", "radardatasetentry", "scatter_chart", "scatterchart", "scatter_chart_spot", "scatterchartspot", "chart_axis", "chartaxis", "chart_axis_label", "chartaxislabel", "web_view", "webview", "fab", "normalize_image_source", "normalize_container_props"].freeze
+      EMBEDDED_INSTANCE_METHODS = ["view", "column", "center", "row", "stack", "grid_view", "gridview", "container", "gesture_detector", "gesturedetector", "draggable", "drag_target", "dragtarget", "text", "button", "elevated_button", "text_button", "textbutton", "filled_button", "filledbutton", "icon_button", "iconbutton", "text_field", "textfield", "checkbox", "radio", "radio_group", "radiogroup", "alert_dialog", "alertdialog", "snack_bar", "snackbar", "bottom_sheet", "bottomsheet", "markdown", "icon", "image", "app_bar", "appbar", "url_launcher", "clipboard", "floating_action_button", "floatingactionbutton", "tabs", "tab", "tab_bar", "tabbar", "tab_bar_view", "tabbarview", "navigation_bar", "navigationbar", "navigation_bar_destination", "navigationbardestination", "bar_chart", "barchart", "bar_chart_group", "barchartgroup", "bar_chart_rod", "barchartrod", "bar_chart_rod_stack_item", "barchartrodstackitem", "line_chart", "linechart", "line_chart_data", "linechartdata", "line_chart_data_point", "linechartdatapoint", "pie_chart", "piechart", "pie_chart_section", "piechartsection", "candlestick_chart", "candlestickchart", "candlestick_chart_spot", "candlestickchartspot", "radar_chart", "radarchart", "radar_chart_title", "radarcharttitle", "radar_data_set", "radardataset", "radar_data_set_entry", "radardatasetentry", "scatter_chart", "scatterchart", "scatter_chart_spot", "scatterchartspot", "chart_axis", "chartaxis", "chart_axis_label", "chartaxislabel", "web_view", "webview", "fab", "normalize_fab_props", "blank_fab_content?", "normalize_image_source", "normalize_container_props"].freeze
       def view(**props, &block) = build_widget(:view, **props, &block)
       def column(**props, &block) = build_widget(:column, **props, &block)
 
@@ -18578,12 +18632,18 @@ module Ruflet
         mapped = props.dup
 
         explicit_icon = mapped[:icon] || mapped["icon"]
-        if explicit_icon.is_a?(Ruflet::Control) && content.nil?
-          mapped.delete(:icon)
-          mapped.delete("icon")
-          content = explicit_icon
-        elsif !explicit_icon.nil? && !explicit_icon.is_a?(Ruflet::IconData)
-          raise ArgumentError, "fab icon must use Ruflet::MaterialIcons (or another Ruflet::IconData) or an icon(...) control"
+        explicit_content =
+          if mapped.key?(:content)
+            mapped.delete(:content)
+          elsif mapped.key?("content")
+            mapped.delete("content")
+          end
+
+        content = explicit_content if content.nil?
+        content = nil if blank_fab_content?(content) && !explicit_icon.nil?
+
+        unless explicit_icon.nil? || explicit_icon.is_a?(Ruflet::IconData) || explicit_icon.is_a?(String) || explicit_icon.is_a?(Symbol) || explicit_icon.is_a?(Ruflet::Control)
+          raise ArgumentError, "fab icon must use an icon name string or an icon(...) control"
         end
 
         unless content.nil?
@@ -18592,13 +18652,23 @@ module Ruflet
             when Ruflet::Control
               content
             when Ruflet::IconData
-              icon(icon: content)
+              content.value
+            when String, Symbol
+              content.to_s
             else
-              raise ArgumentError, "fab content must be an icon(...) control or Ruflet::MaterialIcons value"
+              raise ArgumentError, "fab content must be a string or control"
             end
         end
 
+        if explicit_icon.nil? && blank_fab_content?(content)
+          raise ArgumentError, "fab requires icon or non-empty content"
+        end
+
         mapped
+      end
+
+      def blank_fab_content?(content)
+        content.respond_to?(:empty?) && content.empty?
       end
 
       def normalize_image_source(value)
@@ -18684,9 +18754,15 @@ module Ruflet
 
       def build(type, id: nil, **props)
         normalized_type = type.to_s.downcase
+        if ENV["RUFLET_DEBUG"] == "1" && normalized_type == "floatingactionbutton"
+          Kernel.warn("[factory] type=#{normalized_type} id=#{id.inspect} props=#{props.inspect}")
+        end
         klass = CLASS_MAP[normalized_type]
         if klass
           normalized_props = normalize_constructor_props(klass, props)
+          if ENV["RUFLET_DEBUG"] == "1" && normalized_type == "floatingactionbutton"
+            Kernel.warn("[factory] normalized_props=#{normalized_props.inspect}")
+          end
           return klass.new(id: id, **normalized_props)
         end
 
@@ -19621,7 +19697,7 @@ end
 
 
 module Ruflet
-  VERSION = "0.0.10" unless const_defined?(:VERSION)
+  VERSION = "0.0.12" unless const_defined?(:VERSION)
 end
 
 # -- packages/ruflet_core/lib/ruflet_ui/ruflet/page.rb
@@ -20485,15 +20561,24 @@ module Ruflet
 
     def normalize_value(key, value)
       if icon_prop_key?(key)
-        return value if value.is_a?(Integer)
-        return value.value if value.is_a?(Ruflet::IconData)
+        return normalize_icon_name(value.value) if value.is_a?(Ruflet::IconData)
+        return normalize_icon_name(value.to_s) if value.is_a?(String) || value.is_a?(Symbol)
+        return value if value.is_a?(Ruflet::Control)
         return value if value.nil?
 
-        raise ArgumentError, "page #{key} must use Ruflet::MaterialIcons (or another Ruflet::IconData), not #{value.inspect}"
+        raise ArgumentError, "page #{key} must use an icon name string, not #{value.inspect}"
       end
 
       return value.value if value.is_a?(Ruflet::IconData)
       value.is_a?(Symbol) ? value.to_s : value
+    end
+
+    def normalize_icon_name(value)
+      codepoint = Ruflet::MaterialIconLookup.codepoint_for(value)
+      codepoint = Ruflet::CupertinoIconLookup.codepoint_for(value) if codepoint.nil?
+      return codepoint unless codepoint.nil?
+
+      raise ArgumentError, "page icon must use a known icon name, not #{value.inspect}"
     end
 
     def build_route(route, query_params = {})
@@ -21799,8 +21884,9 @@ module Ruflet
     def bind_server_socket!(max_attempts: 100)
       requested = @port.to_i
       candidate = requested
+      attempts = ENV["RUFLET_STRICT_PORT"] == "1" ? 1 : max_attempts
 
-      max_attempts.times do
+      attempts.times do
         begin
           @server_socket = TCPServer.new(@host, candidate)
           @port = candidate
@@ -21812,6 +21898,8 @@ module Ruflet
           candidate += 1
         end
       end
+
+      raise Errno::EADDRINUSE, "Unable to bind port #{requested}" if attempts == 1
 
       raise Errno::EADDRINUSE, "Unable to bind starting at #{requested} after #{max_attempts} attempts"
     end

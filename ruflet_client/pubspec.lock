@@ -1285,13 +1285,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.7"
-  ruby_runtime:
-    dependency: "direct overridden"
-    description:
-      path: "../ruby_runtime"
-      relative: true
-    source: path
-    version: "0.0.3"
   safe_local_storage:
     dependency: transitive
     description:
