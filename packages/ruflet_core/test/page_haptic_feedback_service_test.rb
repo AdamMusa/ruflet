@@ -3,6 +3,19 @@
 require_relative "test_helper"
 
 class PageHapticFeedbackServiceTest < Minitest::Test
+  def test_haptic_feedback_returns_page_service_with_flet_wire_name
+    sent = []
+    page = build_page(sent)
+
+    service = page.haptic_feedback(data: { "source" => "studio" }, key: "haptic")
+
+    assert_equal "hapticfeedback", service.type
+    assert_equal "HapticFeedback", service.to_patch["_c"]
+    assert_equal({ "source" => "studio" }, service.props["data"])
+    assert_equal "haptic", service.props["key"]
+    assert_same service, page.service(:haptic_feedback)
+  end
+
   def test_haptic_feedback_methods_use_flet_method_names
     %w[heavy_impact medium_impact light_impact selection_click vibrate].each do |method_name|
       sent = []

@@ -280,19 +280,27 @@ module Ruflet
       self
     end
 
-    def shared_preferences
+    def shared_preferences(**props)
+      return service(:shared_preferences, **props) unless props.empty?
+
       @shared_preferences_proxy
     end
 
-    def wakelock
+    def wakelock(**props)
+      return service(:wakelock, **props) unless props.empty?
+
       @wakelock_proxy
     end
 
-    def flashlight
+    def flashlight(**props)
+      return service(:flashlight, **props) unless props.empty?
+
       @flashlight_proxy
     end
 
-    def screen_brightness
+    def screen_brightness(**props)
+      return service(:screen_brightness, **props) unless props.empty?
+
       @screen_brightness_proxy
     end
 
@@ -750,6 +758,10 @@ module Ruflet
 
     def camera(**props)
       service(:camera, **props)
+    end
+
+    def haptic_feedback(**props)
+      service(:haptic_feedback, **props)
     end
 
     def get_application_cache_directory(timeout: nil, on_result: nil)

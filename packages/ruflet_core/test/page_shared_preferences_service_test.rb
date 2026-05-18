@@ -3,6 +3,19 @@
 require_relative "test_helper"
 
 class PageSharedPreferencesServiceTest < Minitest::Test
+  def test_shared_preferences_with_props_returns_page_service_with_flet_wire_name
+    sent = []
+    page = build_page(sent)
+
+    service = page.shared_preferences(data: { "source" => "studio" }, key: "prefs")
+
+    assert_equal "sharedpreferences", service.type
+    assert_equal "SharedPreferences", service.to_patch["_c"]
+    assert_equal({ "source" => "studio" }, service.props["data"])
+    assert_equal "prefs", service.props["key"]
+    assert_same service, page.service(:shared_preferences)
+  end
+
   def test_shared_preferences_set_uses_flet_payload_shape
     sent = []
     page = build_page(sent)

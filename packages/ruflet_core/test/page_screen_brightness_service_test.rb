@@ -3,6 +3,19 @@
 require_relative "test_helper"
 
 class PageScreenBrightnessServiceTest < Minitest::Test
+  def test_screen_brightness_with_props_returns_page_service_with_flet_wire_name
+    sent = []
+    page = build_page(sent)
+
+    service = page.screen_brightness(data: { "source" => "studio" }, key: "brightness")
+
+    assert_equal "screenbrightness", service.type
+    assert_equal "ScreenBrightness", service.to_patch["_c"]
+    assert_equal({ "source" => "studio" }, service.props["data"])
+    assert_equal "brightness", service.props["key"]
+    assert_same service, page.service(:screen_brightness)
+  end
+
   def test_screen_brightness_no_arg_methods_use_flet_payload_shape
     methods = %w[
       can_change_system_screen_brightness
