@@ -372,6 +372,9 @@ module Ruflet
         announce_asset_configuration(asset_flags)
         clear_flutter_build_state(client_dir, verbose: verbose)
         clear_stale_platform_outputs(client_dir, platform, verbose: verbose)
+        unless ensure_flutter_platform_artifacts(client_dir, platform, tools[:env], tools[:flutter], verbose: verbose)
+          return false
+        end
         build_note("Resolving Flutter packages")
         build_log(verbose, "running flutter pub get")
         unless run_external_command(tools[:env], tools[:flutter], "pub", "get", chdir: client_dir, unbundled: true)
@@ -402,6 +405,38 @@ module Ruflet
         end
 
         true
+      end
+
+      def ensure_flutter_platform_artifacts(client_dir, platform, env, flutter, verbose: false)
+        precache_flags = flutter_precache_flags(platform)
+        return true if precache_flags.empty?
+
+        build_note("Preparing Flutter #{platform} platform artifacts")
+        build_log(verbose, "running flutter precache #{precache_flags.join(' ')}")
+        ok = run_external_command(env, flutter, "precache", *precache_flags, chdir: client_dir, unbundled: true)
+        return true if ok
+
+        warn "Flutter platform artifact setup failed for #{platform}"
+        false
+      end
+
+      def flutter_precache_flags(platform)
+        case platform
+        when "apk", "android", "aab", "appbundle"
+          ["--android"]
+        when "ios"
+          ["--ios"]
+        when "macos"
+          ["--macos"]
+        when "windows"
+          ["--windows"]
+        when "linux"
+          ["--linux"]
+        when "web"
+          ["--web"]
+        else
+          []
+        end
       end
 
       def ensure_native_build_dependencies(client_dir, platform, env, verbose: false)
