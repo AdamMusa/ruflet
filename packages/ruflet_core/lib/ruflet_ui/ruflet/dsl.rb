@@ -158,6 +158,8 @@ module Ruflet
     def image(src = nil, **props) = _pending_app.image(src, **props)
     def icon_button(icon = nil, **props) = _pending_app.icon_button(icon, **props)
     def iconbutton(icon = nil, **props) = _pending_app.iconbutton(icon, **props)
+    def interactive_viewer(content = nil, **props) = _pending_app.interactive_viewer(content, **props)
+    def interactiveviewer(content = nil, **props) = _pending_app.interactiveviewer(content, **props)
     def popup_menu_button(items = nil, **props) = _pending_app.popup_menu_button(items, **props)
     def popupmenubutton(items = nil, **props) = _pending_app.popupmenubutton(items, **props)
     def popup_menu_item(content = nil, **props) = _pending_app.popup_menu_item(content, **props)

@@ -367,6 +367,12 @@ module Ruflet
         build_widget(:iconbutton, **mapped)
       end
       def iconbutton(icon = nil, **props) = icon_button(icon, **props)
+      def interactive_viewer(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:interactiveviewer, **mapped)
+      end
+      def interactiveviewer(content = nil, **props) = interactive_viewer(content, **props)
       def popup_menu_button(items = nil, **props)
         mapped = props.dup
         mapped[:items] = items unless items.nil?
