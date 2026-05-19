@@ -38,8 +38,6 @@ class RufletCliExtraCommandTest < Minitest::Test
     runner.define_singleton_method(:detect_client_dir) { "/tmp/client" }
     runner.define_singleton_method(:resolve_ruflet_client_template_root) { nil }
     runner.define_singleton_method(:ensure_cached_ruflet_client_template!) { |force: false, verbose: false| "/tmp/ruflet_flutter_template" }
-    runner.define_singleton_method(:resolve_ruby_runtime_root) { nil }
-    runner.define_singleton_method(:ensure_cached_ruby_runtime!) { |force: false, verbose: false| "/tmp/ruby_runtime" }
     runner.define_singleton_method(:flutter_host) { "macos_arm64" }
     runner.define_singleton_method(:ensure_flutter!) do |command_name, client_dir: nil, auto_install: true|
       calls << { command_name: command_name, client_dir: client_dir, auto_install: auto_install }
@@ -58,7 +56,7 @@ class RufletCliExtraCommandTest < Minitest::Test
     assert_equal [{ command_name: "doctor", client_dir: "/tmp/client", auto_install: true }], calls
     assert_includes out.string, "Flutter host target: macos_arm64"
     assert_includes out.string, "Template: /tmp/ruflet_flutter_template"
-    assert_includes out.string, "Ruby runtime: /tmp/ruby_runtime"
+    assert_includes out.string, "Ruby runtime: pub.dev package"
     assert_includes out.string, "Flutter: 3.41.4 stable"
     refute_includes out.string, "/tmp/client/.fvm/flutter_sdk/bin/flutter"
   ensure

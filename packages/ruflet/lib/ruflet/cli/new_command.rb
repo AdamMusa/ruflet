@@ -100,16 +100,12 @@ module Ruflet
         cached_template = cached_ruflet_client_template_root
         return cached_template if !force && Dir.exist?(cached_template)
 
-        download_ruflet_assets(force: force, verbose: verbose)
+        download_ruflet_template(force: force, verbose: verbose)
         Dir.exist?(cached_template) ? cached_template : nil
       end
 
       def ensure_cached_ruby_runtime!(force: false, verbose: false)
-        cached_runtime = cached_ruby_runtime_root
-        return cached_runtime if !force && Dir.exist?(cached_runtime)
-
-        download_ruflet_assets(force: force, verbose: verbose)
-        Dir.exist?(cached_runtime) ? cached_runtime : nil
+        nil
       end
 
       def cached_ruflet_client_template_root
@@ -130,12 +126,9 @@ module Ruflet
 
       def download_ruflet_assets(force: false, verbose: false)
         template_target = cached_ruflet_client_template_root
-        runtime_target = cached_ruby_runtime_root
-        return true if !force && Dir.exist?(template_target) && Dir.exist?(runtime_target)
+        return true if !force && Dir.exist?(template_target)
 
-        template_ok = Dir.exist?(template_target) || download_ruflet_template(force: force, verbose: verbose)
-        runtime_ok = Dir.exist?(runtime_target) || download_ruflet_runtime(force: force, verbose: verbose)
-        template_ok || runtime_ok
+        Dir.exist?(template_target) || download_ruflet_template(force: force, verbose: verbose)
       end
 
       def download_ruflet_template(force: false, verbose: false)
@@ -160,31 +153,6 @@ module Ruflet
         target
       rescue StandardError => e
         warn "Failed to fetch Ruflet template: #{e.class}: #{e.message}"
-        nil
-      end
-
-      def download_ruflet_runtime(force: false, verbose: false)
-        target = cached_ruby_runtime_root
-        return target if !force && Dir.exist?(target)
-
-        FileUtils.mkdir_p(cache_root)
-
-        Dir.mktmpdir("ruflet-runtime") do |tmp|
-          repo_dir = File.join(tmp, "Ruflet")
-          clone_cmd = ["git", "clone", "--depth", "1", "--filter=blob:none", "--sparse", RUNTIME_REPO_URL, repo_dir]
-          return nil unless run_template_command(clone_cmd, verbose: verbose)
-          return nil unless run_template_command(["git", "-C", repo_dir, "sparse-checkout", "set", "ruby_runtime"], verbose: verbose)
-
-          source = File.join(repo_dir, "ruby_runtime")
-          return nil unless Dir.exist?(source)
-
-          FileUtils.rm_rf(target)
-          FileUtils.cp_r(source, target)
-        end
-
-        target
-      rescue StandardError => e
-        warn "Failed to fetch Ruflet runtime: #{e.class}: #{e.message}"
         nil
       end
 

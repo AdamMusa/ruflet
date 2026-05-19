@@ -71,7 +71,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
     refute_includes Ruflet::CLI::GEMFILE_TEMPLATE, "0.0.10"
   end
 
-  def test_prepare_flutter_client_uses_local_ruby_runtime_dependency_when_available
+  def test_prepare_flutter_client_uses_pub_ruby_runtime_dependency
     builder = DummyBuilder.new
 
     Dir.mktmpdir do |dir|
@@ -108,9 +108,52 @@ class RufletCliUpdateCommandTest < Minitest::Test
       refute_path_exists File.join(client_dir, "pubspec_overrides.yaml")
       pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
       ruby_runtime = YAML.safe_load(pubspec, aliases: true).dig("dependencies", "ruby_runtime")
-      assert_kind_of Hash, ruby_runtime
-      assert_path_exists File.join(ruby_runtime.fetch("path"), "pubspec.yaml")
+      assert_equal "^0.0.3", ruby_runtime
       assert_includes calls, client_dir
+    end
+  end
+
+  def test_prepare_flutter_client_uses_explicit_local_ruby_runtime_override
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "ruflet_client")
+      runtime_dir = File.join(dir, "ruby_runtime")
+      FileUtils.mkdir_p(client_dir)
+      FileUtils.mkdir_p(runtime_dir)
+      File.write(File.join(runtime_dir, "pubspec.yaml"), "name: ruby_runtime\n")
+      File.write(
+        File.join(client_dir, "pubspec.yaml"),
+        <<~YAML
+          dependencies:
+            flutter:
+              sdk: flutter
+            ruby_runtime: ^0.0.3
+        YAML
+      )
+
+      builder.define_singleton_method(:apply_service_extension_config) { |_client_dir, _config| nil }
+      builder.define_singleton_method(:apply_build_config) { |_client_dir, _config| { has_icon: false, has_splash: false, error: nil } }
+      builder.define_singleton_method(:system) { |_env, *_args, chdir: nil| true }
+
+      original_env = ENV["RUFLET_RUBY_RUNTIME_PATH"]
+      ENV["RUFLET_RUBY_RUNTIME_PATH"] = runtime_dir
+
+      builder.send(
+        :prepare_flutter_client,
+        client_dir,
+        platform: "apk",
+        tools: { env: {}, flutter: "flutter", dart: "dart" },
+        config: {},
+        self_contained: true,
+        verbose: false
+      )
+
+      pubspec = YAML.safe_load(File.read(File.join(client_dir, "pubspec.yaml")), aliases: true)
+      ruby_runtime = pubspec.dig("dependencies", "ruby_runtime")
+      assert_equal({ "path" => runtime_dir }, ruby_runtime)
+    ensure
+      ENV["RUFLET_RUBY_RUNTIME_PATH"] = original_env
     end
   end
 

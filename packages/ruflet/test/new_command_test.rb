@@ -72,6 +72,13 @@ class RufletCliNewCommandTest < Minitest::Test
     end
   end
 
+  def test_gemspec_keeps_runtime_bootstrap_out_of_gem
+    gem_root = File.expand_path("..", __dir__)
+    spec = Dir.chdir(gem_root) { Gem::Specification.load("ruflet.gemspec") }
+
+    refute_includes spec.files, "assets/bootstrap/ruby_runtime.tar.gz"
+  end
+
   def test_copy_ruflet_client_template_ignores_missing_template
     Dir.mktmpdir do |dir|
       target_root = File.join(dir, "demo")

@@ -95,9 +95,6 @@ module Ruflet
         if Ruflet::CLI.respond_to?(:ensure_cached_ruflet_client_template!, true)
           Ruflet::CLI.send(:ensure_cached_ruflet_client_template!, force: force)
         end
-        if Ruflet::CLI.respond_to?(:ensure_cached_ruby_runtime!, true)
-          Ruflet::CLI.send(:ensure_cached_ruby_runtime!, force: force)
-        end
       end
 
       def check_client_updates(targets, platform:)
