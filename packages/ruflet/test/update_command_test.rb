@@ -820,11 +820,87 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes out.string, "Launcher icons will use the default template asset"
       assert_includes out.string, "Generating splash screen with flutter_native_splash"
       assert_includes out.string, "Generating launcher icons with flutter_launcher_icons"
-      assert_equal ["flutter", "pub", "get"], calls[0][:args]
-      assert_equal ["dart", "run", "flutter_native_splash:create"], calls[1][:args]
-      assert_equal ["dart", "run", "flutter_launcher_icons"], calls[2][:args]
+      assert_equal ["flutter", "precache", "--android"], calls[0][:args]
+      assert_equal ["flutter", "pub", "get"], calls[1][:args]
+      assert_equal ["dart", "run", "flutter_native_splash:create"], calls[2][:args]
+      assert_equal ["dart", "run", "flutter_launcher_icons"], calls[3][:args]
     ensure
       $stdout = original_stdout
+    end
+  end
+
+  def test_prepare_flutter_client_precaches_android_platform_before_pub_get
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "ruflet_client")
+      FileUtils.mkdir_p(client_dir)
+
+      builder.define_singleton_method(:apply_service_extension_config) { |_client_dir, _config| nil }
+      builder.define_singleton_method(:configure_client_runtime_mode) { |_client_dir, self_contained:, verbose: false| nil }
+      builder.define_singleton_method(:sync_client_metadata) { |_client_dir, _config, verbose: false| nil }
+      builder.define_singleton_method(:apply_build_config) { |_client_dir, _config| { has_icon: false, has_splash: false, error: nil } }
+
+      calls = []
+      builder.define_singleton_method(:system) do |_env, *args, chdir: nil|
+        calls << { args: args, chdir: chdir }
+        true
+      end
+
+      result = builder.send(
+        :prepare_flutter_client,
+        client_dir,
+        platform: "apk",
+        tools: { env: {}, flutter: "flutter", dart: "dart" },
+        config: {},
+        self_contained: true,
+        verbose: false
+      )
+
+      assert_equal true, result
+      assert_equal ["flutter", "precache", "--android"], calls[0][:args]
+      assert_equal ["flutter", "pub", "get"], calls[1][:args]
+      assert_equal client_dir, calls[0][:chdir]
+    end
+  end
+
+  def test_prepare_flutter_client_stops_when_platform_precache_fails
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "ruflet_client")
+      FileUtils.mkdir_p(client_dir)
+
+      builder.define_singleton_method(:apply_service_extension_config) { |_client_dir, _config| nil }
+      builder.define_singleton_method(:configure_client_runtime_mode) { |_client_dir, self_contained:, verbose: false| nil }
+      builder.define_singleton_method(:sync_client_metadata) { |_client_dir, _config, verbose: false| nil }
+      builder.define_singleton_method(:apply_build_config) { |_client_dir, _config| { has_icon: false, has_splash: false, error: nil } }
+
+      calls = []
+      builder.define_singleton_method(:system) do |_env, *args, chdir: nil|
+        calls << { args: args, chdir: chdir }
+        args != ["flutter", "precache", "--android"]
+      end
+
+      err = StringIO.new
+      original_stderr = $stderr
+      $stderr = err
+
+      result = builder.send(
+        :prepare_flutter_client,
+        client_dir,
+        platform: "android",
+        tools: { env: {}, flutter: "flutter", dart: "dart" },
+        config: {},
+        self_contained: false,
+        verbose: false
+      )
+
+      assert_equal false, result
+      assert_equal [["flutter", "precache", "--android"]], calls.map { |call| call[:args] }
+      assert_includes err.string, "Flutter platform artifact setup failed for android"
+    ensure
+      $stderr = original_stderr
     end
   end
 
@@ -1023,12 +1099,13 @@ class RufletCliUpdateCommandTest < Minitest::Test
       )
 
       assert_equal true, result
-      assert_equal ["flutter", "pub", "get"], calls[0][:args]
+      assert_equal ["flutter", "precache", "--ios"], calls[0][:args]
+      assert_equal ["flutter", "pub", "get"], calls[1][:args]
       assert_equal client_dir, calls[0][:chdir]
-      assert_equal ["pod", "install"], calls[1][:args]
-      assert_equal ios_dir, calls[1][:chdir]
-      refute calls[1][:env].key?("BUNDLE_GEMFILE")
-      assert_equal "/tmp/bin", calls[1][:env]["PATH"]
+      assert_equal ["pod", "install"], calls[2][:args]
+      assert_equal ios_dir, calls[2][:chdir]
+      refute calls[2][:env].key?("BUNDLE_GEMFILE")
+      assert_equal "/tmp/bin", calls[2][:env]["PATH"]
     ensure
       ENV["BUNDLE_GEMFILE"] = original_bundle_gemfile
     end
@@ -1069,7 +1146,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       )
 
       assert_equal false, result
-      assert_equal ["pod", "install"], calls[1][:args]
+      assert_equal ["pod", "install"], calls[2][:args]
       assert_includes err.string, "CocoaPods install failed for ios"
     ensure
       $stderr = original_stderr
