@@ -34,21 +34,7 @@ module Ruflet
           warn "  Template: missing"
           warn "Run `ruflet doctor --fix` to fetch the Flutter template from GitHub."
         end
-        runtime_root = resolve_ruby_runtime_root
-        if runtime_root
-          puts "  Ruby runtime: #{runtime_root}"
-        elsif fix
-          runtime_root = ensure_cached_ruby_runtime!(force: true, verbose: !!verbose)
-          unless runtime_root
-            warn "  Ruby runtime: missing"
-            warn "Failed to fetch the Ruflet ruby_runtime from GitHub."
-            return 1
-          end
-          puts "  Ruby runtime: #{runtime_root}"
-        else
-          warn "  Ruby runtime: missing"
-          warn "Run `ruflet doctor --fix` to fetch the Ruby runtime from GitHub."
-        end
+        puts "  Ruby runtime: pub.dev package"
         if fix
           tools = ensure_flutter!("doctor", client_dir: client_dir, auto_install: true)
         else

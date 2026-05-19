@@ -1052,7 +1052,7 @@ module Ruflet
         assets = Array(flutter["assets"]).map(&:to_s)
 
         if self_contained
-          dependencies["ruby_runtime"] = ruby_runtime_dependency
+          dependencies["ruby_runtime"] = ruby_runtime_dependency(dependencies["ruby_runtime"])
           assets.delete("assets/main.rb")
           assets.delete("assets/ruby_project/")
           project_asset_path = "assets/#{self_contained_project_name}/"
@@ -1069,29 +1069,19 @@ module Ruflet
         write_pubspec_yaml(pubspec_path, data)
       end
 
-      def ruby_runtime_dependency
-        local_path = local_ruby_runtime_path
+      def ruby_runtime_dependency(current_dependency = nil)
+        local_path = explicit_local_ruby_runtime_path
         return { "path" => local_path } if local_path
 
-        raise "Ruflet ruby_runtime is missing. Run `ruflet doctor --fix` or rerun the command with network access."
+        current_dependency || "^0.0.3"
       end
 
-      def local_ruby_runtime_path
+      def explicit_local_ruby_runtime_path
         env_path = ENV["RUFLET_RUBY_RUNTIME_PATH"].to_s.strip
-        candidates = []
-        candidates << Pathname.new(env_path).expand_path unless env_path.empty?
-        candidates << Pathname.new(__dir__).join("../../../../../ruby_runtime").expand_path
-        if Ruflet::CLI.respond_to?(:cached_ruby_runtime_root, true)
-          candidates << Pathname.new(Ruflet::CLI.send(:cached_ruby_runtime_root)).expand_path
-        end
+        return nil if env_path.empty?
 
-        candidate = candidates.find { |path| path.join("pubspec.yaml").file? }
-        return candidate.to_s if candidate
-
-        if Ruflet::CLI.respond_to?(:ensure_cached_ruby_runtime!, true)
-          cached = Ruflet::CLI.send(:ensure_cached_ruby_runtime!)
-          return cached if cached && File.file?(File.join(cached, "pubspec.yaml"))
-        end
+        candidate = Pathname.new(env_path).expand_path
+        return candidate.to_s if candidate.join("pubspec.yaml").file?
 
         nil
       end
