@@ -62,6 +62,43 @@ module Ruflet
             props[:on_size_change] = on_size_change unless on_size_change.nil?
             super(type: TYPE, id: id, **props)
           end
+
+          def pan(dx, dy: 0, dz: 0, timeout: 10, on_result: nil)
+            runtime_page&.invoke(
+              self,
+              "pan",
+              args: { "dx" => dx, "dy" => dy, "dz" => dz },
+              timeout: timeout,
+              on_result: on_result
+            )
+          end
+
+          def reset(animation_duration: nil, timeout: 10, on_result: nil)
+            args = {}
+            args["animation_duration"] = stringify_hash_keys(animation_duration) unless animation_duration.nil?
+            runtime_page&.invoke(self, "reset", args: args.empty? ? nil : args, timeout: timeout, on_result: on_result)
+          end
+
+          def restore_state(timeout: 10, on_result: nil)
+            runtime_page&.invoke(self, "restore_state", timeout: timeout, on_result: on_result)
+          end
+
+          def save_state(timeout: 10, on_result: nil)
+            runtime_page&.invoke(self, "save_state", timeout: timeout, on_result: on_result)
+          end
+
+          def zoom(factor, timeout: 10, on_result: nil)
+            runtime_page&.invoke(self, "zoom", args: { "factor" => factor }, timeout: timeout, on_result: on_result)
+          end
+
+          private
+
+          def stringify_hash_keys(value)
+            return value.map { |item| stringify_hash_keys(item) } if value.is_a?(Array)
+            return value.each_with_object({}) { |(key, child), result| result[key.to_s] = stringify_hash_keys(child) } if value.is_a?(Hash)
+
+            value
+          end
         end
       end
     end

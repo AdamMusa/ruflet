@@ -150,6 +150,8 @@ module Ruflet
       def icon(icon = nil, **props) = control_delegate.icon(icon, **props)
       def image(src = nil, **props) = control_delegate.image(src, **props)
       def fab(content = nil, **props) = control_delegate.fab(content, **props)
+      def interactive_viewer(content = nil, **props) = control_delegate.interactive_viewer(content, **props)
+      def interactiveviewer(content = nil, **props) = control_delegate.interactiveviewer(content, **props)
       def app_bar(**props) = control_delegate.app_bar(**props)
       def appbar(**props) = control_delegate.appbar(**props)
       def clipboard(**props) = control_delegate.clipboard(**props)
