@@ -402,6 +402,90 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  def test_command_build_runs_full_first_time_setup_before_prepare
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      previous_dir = Dir.pwd
+      Dir.chdir(dir)
+
+      events = []
+      client_dir = File.join(dir, "build", "client")
+
+      builder.define_singleton_method(:download_ruflet_assets) do |force: false, verbose: false|
+        events << [:assets, force, verbose]
+        true
+      end
+      builder.define_singleton_method(:detect_flutter_client_dir) do
+        Dir.exist?(client_dir) ? client_dir : nil
+      end
+      builder.define_singleton_method(:bootstrap_flutter_client_template) do
+        events << [:template]
+        FileUtils.mkdir_p(File.join(client_dir, "lib"))
+        File.write(File.join(client_dir, "lib", "main.self.dart"), "void main() {}\n")
+        File.write(File.join(client_dir, "lib", "main.server.dart"), "void main() {}\n")
+        client_dir
+      end
+      builder.define_singleton_method(:load_ruflet_config) { {} }
+      builder.define_singleton_method(:ensure_flutter!) do |_command_name, client_dir: nil, auto_install: true|
+        events << [:flutter, File.realpath(client_dir), auto_install]
+        { flutter: "flutter", dart: "dart", env: {} }
+      end
+      builder.define_singleton_method(:prepare_flutter_client) do |_client_dir, platform:, tools:, config:, self_contained: false, verbose: false|
+        events << [:prepare, File.realpath(_client_dir), self_contained]
+        true
+      end
+      builder.define_singleton_method(:system) { |_env, *_args, chdir: nil| true }
+
+      code = builder.command_build(["apk", "--self"])
+
+      assert_equal 0, code
+      assert_equal [
+        [:assets, false, false],
+        [:template],
+        [:flutter, File.realpath(client_dir), true],
+        [:prepare, File.realpath(client_dir), true]
+      ], events
+    ensure
+      Dir.chdir(previous_dir)
+    end
+  end
+
+  def test_command_update_bootstraps_flutter_environment
+    updater = DummyUpdater.new
+    events = []
+
+    updater.define_singleton_method(:host_platform_name) { "linux" }
+    updater.define_singleton_method(:ensure_cached_ruflet_assets_for_update) do |force: false, verbose: false|
+      events << [:assets, force, verbose]
+      true
+    end
+    updater.define_singleton_method(:ensure_flutter!) do |_command_name, client_dir: nil, auto_install: true|
+      events << [:flutter, client_dir, auto_install]
+      { flutter: "flutter", dart: "dart", env: {} }
+    end
+    updater.define_singleton_method(:ensure_prebuilt_client) do |**kwargs|
+      events << [:prebuilt, kwargs]
+      "/tmp/ruflet-cache"
+    end
+    updater.define_singleton_method(:read_client_manifest) { |_root| { "release_tag" => "v0.0.8" } }
+
+    out = StringIO.new
+    original_stdout = $stdout
+    $stdout = out
+
+    code = updater.command_update(["web"])
+
+    assert_equal 0, code
+    assert_equal [
+      [:assets, false, false],
+      [:flutter, nil, true],
+      [:prebuilt, { web: true, platform: "linux", force: false }]
+    ], events
+  ensure
+    $stdout = original_stdout
+  end
+
   def test_export_platform_build_outputs_copies_hidden_android_outputs_to_user_build_dir
     builder = DummyBuilder.new
 
