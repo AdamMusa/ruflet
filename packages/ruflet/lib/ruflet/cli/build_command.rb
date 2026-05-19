@@ -46,6 +46,7 @@ module Ruflet
           return 1
         end
 
+        ensure_ruflet_build_assets(verbose: !!verbose)
         client_dir = ensure_flutter_client_dir(verbose: !!verbose)
         unless client_dir
           warn "Could not find Flutter client directory."
@@ -338,6 +339,15 @@ module Ruflet
         end
 
         Dir.exist?(target) ? target : nil
+      end
+
+      def ensure_ruflet_build_assets(force: false, verbose: false)
+        return true unless respond_to?(:download_ruflet_assets, true)
+
+        !!send(:download_ruflet_assets, force: force, verbose: verbose)
+      rescue StandardError => e
+        build_log(verbose, "ruflet asset bootstrap skipped: #{e.class}: #{e.message}")
+        false
       end
 
       def hidden_flutter_client_dir(root = Dir.pwd)

@@ -62,6 +62,7 @@ module Ruflet
         return check_client_updates(targets, platform: platform) if options[:check]
 
         ensure_cached_ruflet_assets_for_update(force: options[:force])
+        ensure_flutter!("update", client_dir: nil, auto_install: true) if respond_to?(:ensure_flutter!, true)
 
         targets.each do |target|
           root =

@@ -138,6 +138,33 @@ class RufletCliFlutterSdkTest < Minitest::Test
     end
   end
 
+  def test_flutter_tools_falls_back_to_managed_sdk_when_fvm_is_unavailable
+    sdk = DummySdk.new
+
+    Dir.mktmpdir do |dir|
+      sdk_root = File.join(dir, "flutter")
+      bin_dir = File.join(sdk_root, "bin")
+      FileUtils.mkdir_p(bin_dir)
+      flutter = File.join(bin_dir, "flutter")
+      dart = File.join(bin_dir, "dart")
+      File.write(flutter, "#!/bin/sh\n")
+      File.write(dart, "#!/bin/sh\n")
+      FileUtils.chmod("+x", flutter)
+      FileUtils.chmod("+x", dart)
+
+      sdk.define_singleton_method(:flutter_tools_via_fvm) { |client_dir: nil, auto_install: true| nil }
+      sdk.define_singleton_method(:ensure_flutter_sdk_downloaded) { |client_dir: nil| sdk_root }
+
+      with_singleton_method(Dir, :home, -> { dir }) do
+        tools = sdk.send(:flutter_tools, client_dir: nil, auto_install: true)
+
+        assert_equal flutter, tools[:flutter]
+        assert_equal dart, tools[:dart]
+        assert_equal sdk_root, tools[:env]["FLUTTER_ROOT"]
+      end
+    end
+  end
+
   def test_flutter_host_detects_linux
     sdk = DummySdk.new
 

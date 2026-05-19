@@ -47,11 +47,23 @@ module Ruflet
       private
 
       def flutter_tools(client_dir: nil, auto_install: true)
-        # Always use FVM so Flutter/Dart match pinned SDK.
+        # Prefer FVM when available so Flutter/Dart match a pinned SDK.
         fvm_tools = flutter_tools_via_fvm(client_dir: client_dir, auto_install: auto_install)
         return fvm_tools if fvm_tools
 
+        managed_tools = flutter_tools_via_managed_sdk(client_dir: client_dir, auto_install: auto_install)
+        return managed_tools if managed_tools
+
         nil
+      end
+
+      def flutter_tools_via_managed_sdk(client_dir: nil, auto_install: true)
+        return nil unless auto_install
+
+        sdk_root = ensure_flutter_sdk_downloaded(client_dir: client_dir)
+        return nil unless sdk_root
+
+        tools_from_flutter_bin(File.join(sdk_root, "bin", flutter_executable_name))
       end
 
       def flutter_tools_via_fvm(client_dir: nil, auto_install: true)
