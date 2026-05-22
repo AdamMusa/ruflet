@@ -48,6 +48,21 @@ module Ruflet
           ios_info: {
             "NSMotionUsageDescription" => "Motion access is required for barometer readings."
           }
+        },
+        "geolocator" => {
+          android_permissions: [
+            "android.permission.ACCESS_FINE_LOCATION",
+            "android.permission.ACCESS_COARSE_LOCATION"
+          ],
+          ios_info: {
+            "NSLocationWhenInUseUsageDescription" => "Location access is required for location-aware experiences."
+          },
+          macos_info: {
+            "NSLocationUsageDescription" => "Location access is required for location-aware experiences."
+          },
+          macos_entitlements: {
+            "com.apple.security.personal-information.location" => true
+          }
         }
       }.freeze
 

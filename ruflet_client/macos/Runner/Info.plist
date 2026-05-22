@@ -26,6 +26,8 @@
 	<string>$(PRODUCT_COPYRIGHT)</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Microphone access is required for audio recording.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>Location access may be requested by connected experiences that use location-aware components.</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>

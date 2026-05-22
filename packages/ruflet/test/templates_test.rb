@@ -64,6 +64,22 @@ class RufletCliTemplatesTest < Minitest::Test
     assert_includes File.read(File.join(client_root, "ios/Runner/Info.plist")), "NSMotionUsageDescription"
   end
 
+  def test_full_ruflet_client_declares_geolocator_permissions
+    client_root = File.expand_path("../../../ruflet_client", __dir__)
+
+    android_manifest = File.read(File.join(client_root, "android/app/src/main/AndroidManifest.xml"))
+    assert_includes android_manifest, "android.permission.ACCESS_FINE_LOCATION"
+    assert_includes android_manifest, "android.permission.ACCESS_COARSE_LOCATION"
+    assert_includes File.read(File.join(client_root, "ios/Runner/Info.plist")), "NSLocationWhenInUseUsageDescription"
+    assert_includes File.read(File.join(client_root, "macos/Runner/Info.plist")), "NSLocationUsageDescription"
+
+    %w[DebugProfile Release].each do |name|
+      entitlements = File.read(File.join(client_root, "macos/Runner/#{name}.entitlements"))
+
+      assert_includes entitlements, "com.apple.security.personal-information.location"
+    end
+  end
+
   def test_full_ruflet_client_declares_desktop_file_picker_entitlements
     client_root = File.expand_path("../../../ruflet_client", __dir__)
 

@@ -217,6 +217,24 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
+  def test_service_extension_config_applies_geolocator_native_permissions
+    runner = DummyRunner.new
+
+    Dir.mktmpdir do |dir|
+      make_client_native_files(dir)
+
+      runner.send(:apply_service_extension_config, dir, { "services" => ["geolocator"] })
+
+      android_manifest = File.read(File.join(dir, "android", "app", "src", "main", "AndroidManifest.xml"))
+      assert_includes android_manifest, "android.permission.ACCESS_FINE_LOCATION"
+      assert_includes android_manifest, "android.permission.ACCESS_COARSE_LOCATION"
+      assert_includes File.read(File.join(dir, "ios", "Runner", "Info.plist")), "NSLocationWhenInUseUsageDescription"
+      assert_includes File.read(File.join(dir, "macos", "Runner", "Info.plist")), "NSLocationUsageDescription"
+      assert_includes File.read(File.join(dir, "macos", "Runner", "DebugProfile.entitlements")), "com.apple.security.personal-information.location"
+      assert_includes File.read(File.join(dir, "macos", "Runner", "Release.entitlements")), "com.apple.security.personal-information.location"
+    end
+  end
+
   def test_service_extension_config_keeps_microphone_permission_out_without_audio_recorder
     runner = DummyRunner.new
 
