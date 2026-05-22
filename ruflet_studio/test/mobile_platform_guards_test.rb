@@ -19,6 +19,8 @@ class MobilePlatformGuardsTest < Minitest::Test
 
     assert_includes helpers, "def mobile_platform?(page)"
     assert_includes helpers, "%w[ios android].include?(client_platform(page))"
+    assert_includes helpers, "def permission_handler_platform?(page)"
+    assert_includes helpers, "%w[ios android windows web].include?(client_platform(page))"
   end
 
   def test_mobile_only_samples_check_platform_before_registering_services

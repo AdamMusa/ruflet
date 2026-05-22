@@ -59,6 +59,10 @@ module RufletStudio
       %w[ios android].include?(client_platform(page))
     end
 
+    def permission_handler_platform?(page)
+      %w[ios android windows web].include?(client_platform(page))
+    end
+
     def mobile_only_notice(page, feature)
       control(
         :safe_area,

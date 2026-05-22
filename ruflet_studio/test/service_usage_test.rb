@@ -6,9 +6,9 @@ class ServiceUsageTest < Minitest::Test
   def test_audio_recorder_sample_exercises_recording_lifecycle
     source = read_studio_file("sections_media/audio_recorder.rb")
 
-    assert_includes source, "page.permission_handler"
-    assert_includes source, "permissions.request(\"microphone\""
-    assert_includes source, "recording_path = \"ruflet_studio_recording.wav\""
+    assert_includes source, "page.get_application_documents_directory"
+    assert_includes source, "recording_path = File.join"
+    assert_includes source, "FileUtils.touch"
     assert_includes source, "recorder.has_permission"
     assert_includes source, "recorder.start_recording"
     assert_includes source, "recorder.stop_recording"
@@ -26,6 +26,7 @@ class ServiceUsageTest < Minitest::Test
   def test_permission_handler_sample_requests_real_permissions
     source = read_studio_file("sections_media/permission_handler.rb")
 
+    assert_includes source, "permission_handler_platform?(page)"
     assert_includes source, "permissions.request(\"microphone\""
     assert_includes source, "permissions.request(\"camera\""
     assert_includes source, "permissions.get_status(\"microphone\""

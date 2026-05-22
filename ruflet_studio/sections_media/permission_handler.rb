@@ -3,6 +3,8 @@
 module RufletStudio
   module SectionsMedia
     def build_permission_handler(page, status)
+      return permission_handler_platform_notice(page) unless permission_handler_platform?(page)
+
       permissions = page.permission_handler(key: "studio_permission_handler")
 
       column(
@@ -36,6 +38,20 @@ module RufletStudio
             ]
           )
         ]
+      )
+    end
+
+    def permission_handler_platform_notice(page)
+      control(
+        :safe_area,
+        content: column(
+          horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
+          spacing: 8,
+          children: [
+            text(value: "PermissionHandler is available on iOS, Android, Windows, and Web."),
+            text(value: "Current platform: #{client_platform(page).empty? ? "unknown" : client_platform(page)}", style: { size: 12 })
+          ]
+        )
       )
     end
   end
