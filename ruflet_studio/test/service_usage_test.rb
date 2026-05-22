@@ -15,6 +15,13 @@ class ServiceUsageTest < Minitest::Test
     assert_includes source, "recorder.cancel_recording"
   end
 
+  def test_audio_sample_reports_release_completion
+    source = read_studio_file("sections_media/audio.rb")
+
+    assert_includes source, 'Audio #{label} complete'
+    assert_includes source, "audio.release"
+  end
+
   def test_geolocator_sample_requests_permission_and_position
     source = read_studio_file("sections_media/geolocator.rb")
 

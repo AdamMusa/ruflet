@@ -55,6 +55,8 @@ module RufletStudio
             page.update(status, value: "Audio error: #{error}")
           elsif result
             page.update(status, value: "Audio #{label}: #{result}")
+          else
+            page.update(status, value: "Audio #{label} complete")
           end
         }
         case method_name
