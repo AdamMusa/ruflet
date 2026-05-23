@@ -78,7 +78,10 @@ module Ruflet
                             alignment: "spaceBetween",
                             vertical_alignment: "center",
                             controls: [
-                              text(#{title.inspect}, size: 24, weight: "bold", expand: true),
+                              container(
+                                expand: true,
+                                content: text(#{title.inspect}, size: 24, weight: "bold")
+                              ),
                               filled_button(
                                 content: text("New #{singular_title}"),
                                 on_click: ->(_e) { open_form_dialog(model_class.new, title: "New #{singular_title}") }
@@ -119,7 +122,10 @@ module Ruflet
                             alignment: "spaceBetween",
                             vertical_alignment: "center",
                             controls: [
-                              text("#{singular_title} ##\{record.id}", size: 24, weight: "bold", expand: true),
+                              container(
+                                expand: true,
+                                content: text("#{singular_title} ##\{record.id}", size: 24, weight: "bold")
+                              ),
                               action_buttons(record)
                             ]
                           ),
