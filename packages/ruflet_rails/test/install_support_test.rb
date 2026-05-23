@@ -204,6 +204,60 @@ class InstallSupportTest < Minitest::Test
     Object.send(:remove_const, :GeneratedCategory) if Object.const_defined?(:GeneratedCategory) && Object.const_get(:GeneratedCategory) == model_class
   end
 
+  def test_generated_scaffold_dialog_click_flows_through_rails_protocol
+    Dir.mktmpdir do |dir|
+      previous_views = Ruflet::Rails.view_classes.dup
+      Ruflet::Rails.view_classes.clear
+      view_dir = File.join(dir, "generated_categories")
+      FileUtils.mkdir_p(view_dir)
+      template = Ruflet::Rails::InstallSupport.scaffold_view_template(
+        model_name: "ProtocolGeneratedCategory",
+        attributes: ["name:string"]
+      )
+      File.write(File.join(view_dir, "generated_categories_view.rb"), template.sub(/^require "ruflet_rails"\n\n/, ""))
+      model_class = stub_scaffold_model("ProtocolGeneratedCategory")
+      registry = Ruflet::Rails::SessionRegistry.new
+      server = Ruflet::Rails::Protocol::LocalServer.new(session_registry: registry, view_root: dir) do |page|
+        Ruflet::Rails.render(page)
+      end
+      ws = ProtocolFakeWebSocket.new
+
+      server.send(
+        :handle_message,
+        ws,
+        Ruflet::Rails::Protocol::WireCodec.pack([
+          Ruflet::Protocol::ACTIONS[:register_client],
+          { "session_id" => "protocol-session", "page" => { "route" => "/generated_categories", "width" => 390 } }
+        ])
+      )
+      page_patch_message = ws.unpacked_messages.last
+      button = find_patch_control(page_patch_message[1]["patch"], "_c" => "FilledButton", "content" => { "value" => "New Protocol Generated Category" })
+
+      refute_nil button
+
+      ws.sent.clear
+      server.send(
+        :handle_message,
+        ws,
+        Ruflet::Rails::Protocol::WireCodec.pack([
+          Ruflet::Protocol::ACTIONS[:control_event],
+          { "target" => button["_i"], "name" => "click", "data" => nil }
+        ])
+      )
+      dialog_message = ws.unpacked_messages.last
+      dialog = dialog_message[1]["patch"][1][3].first
+
+      assert_equal Ruflet::Protocol::ACTIONS[:patch_control], dialog_message[0]
+      assert_equal "AlertDialog", dialog["_c"]
+      assert_equal true, dialog["open"]
+      assert_equal 326.0, dialog.dig("content", "width")
+    ensure
+      Object.send(:remove_const, :ProtocolGeneratedCategoryView) if Object.const_defined?(:ProtocolGeneratedCategoryView)
+      Object.send(:remove_const, :ProtocolGeneratedCategory) if Object.const_defined?(:ProtocolGeneratedCategory) && Object.const_get(:ProtocolGeneratedCategory) == model_class
+      Ruflet::Rails.view_classes.replace(previous_views) if previous_views
+    end
+  end
+
   def test_form_view_template_generates_only_reusable_form
     template = Ruflet::Rails::InstallSupport.form_view_template(
       model_name: "Event",
@@ -412,6 +466,26 @@ class InstallSupportTest < Minitest::Test
 
     def on_route_change=(handler)
       @route_change = handler
+    end
+  end
+
+  class ProtocolFakeWebSocket
+    attr_reader :sent
+
+    def initialize
+      @sent = []
+    end
+
+    def session_key
+      "protocol-fake-socket"
+    end
+
+    def send_binary(payload)
+      @sent << payload
+    end
+
+    def unpacked_messages
+      @sent.map { |payload| Ruflet::Rails::Protocol::WireCodec.unpack(payload) }
     end
   end
 end
