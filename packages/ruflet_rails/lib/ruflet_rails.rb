@@ -8,6 +8,7 @@
 end
 
 require "ruflet_core"
+require_relative "ruflet/rails/session_registry"
 require_relative "ruflet/rails/protocol"
 require_relative "ruflet/rails/install_support"
 require_relative "ruflet/rails"

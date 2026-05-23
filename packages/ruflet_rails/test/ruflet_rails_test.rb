@@ -10,7 +10,7 @@ class RufletRailsTest < Minitest::Test
     assert_equal expected, loaded_ruflet
   end
 
-  def test_mobile_loader_captures_entrypoint_without_ruflet_server
+  def test_app_loader_captures_entrypoint_without_ruflet_server
     app_file = nil
 
     Dir.mktmpdir do |dir|
@@ -34,5 +34,11 @@ class RufletRailsTest < Minitest::Test
     end
   ensure
     File.delete(app_file) if app_file && File.exist?(app_file)
+  end
+
+  def test_mobile_endpoint_builder_is_alias_for_app_endpoint_builder
+    runner = Ruflet::Rails::Protocol::Runner.new
+
+    assert_equal runner.method(:build_app_endpoint), runner.method(:build_mobile_endpoint)
   end
 end

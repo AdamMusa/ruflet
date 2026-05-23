@@ -4,10 +4,9 @@ module Ruflet
   module Rails
     module Protocol
       class LocalServer
-        def initialize(&app_block)
+        def initialize(session_registry: Ruflet::Rails.sessions, &app_block)
           @app_block = app_block
-          @sessions = {}
-          @sessions_mutex = Mutex.new
+          @session_registry = session_registry
         end
 
         def handle_upgraded_socket(io)
@@ -35,7 +34,7 @@ module Ruflet
         end
 
         def remove_session(ws)
-          @sessions_mutex.synchronize { @sessions.delete(ws.session_key) }
+          @session_registry.remove(ws.session_key)
         end
 
         def handle_message(ws, raw)
@@ -108,7 +107,11 @@ module Ruflet
           )
           page.title = "Ruflet App"
 
-          @sessions_mutex.synchronize { @sessions[ws.session_key] = page }
+          @session_registry.add(
+            key: ws.session_key,
+            page: page,
+            env: Context.current_env
+          )
 
           initial_response = [
             Ruflet::Protocol::ACTIONS[:register_client],
@@ -150,10 +153,10 @@ module Ruflet
         end
 
         def fetch_page(ws)
-          page = @sessions_mutex.synchronize { @sessions[ws.session_key] }
-          raise "Session not found" unless page
+          session = @session_registry[ws.session_key]
+          raise "Session not found" unless session
 
-          page
+          session.page
         end
 
         def normalize_event_data(value)

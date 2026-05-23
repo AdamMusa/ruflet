@@ -30,9 +30,7 @@ module Ruflet
           captured_env = env.dup
           Thread.new(io, captured_env) do |socket, ws_env|
             Thread.current.report_on_exception = false if Thread.current.respond_to?(:report_on_exception=)
-            Context.with_env(ws_env) do
-              @server.handle_upgraded_socket(socket)
-            end
+            rails_executor_wrap { handle_socket(socket, ws_env) }
           end
 
           [-1, {}, []]
@@ -41,6 +39,24 @@ module Ruflet
         end
 
         private
+
+        def handle_socket(socket, env)
+          Context.with_env(env) do
+            @server.handle_upgraded_socket(socket)
+          end
+        end
+
+        def rails_executor_wrap(&block)
+          executor = if defined?(::Rails) && ::Rails.respond_to?(:application) && ::Rails.application
+                       ::Rails.application.executor
+                     end
+
+          if executor.respond_to?(:wrap)
+            executor.wrap(&block)
+          else
+            yield
+          end
+        end
 
         def websocket_upgrade_request?(env)
           return false unless env["REQUEST_METHOD"] == "GET"

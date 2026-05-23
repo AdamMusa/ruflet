@@ -14,10 +14,11 @@ module Ruflet
           Endpoint.new(server: build_server(@entrypoint), path: path)
         end
 
-        def build_mobile_endpoint(file_path:, path: "/")
+        def build_app_endpoint(file_path:, path: "/")
           loaded = MobileLoader.new(file_path).load!
           Endpoint.new(server: build_server(loaded[:entrypoint]), path: path)
         end
+        alias build_mobile_endpoint build_app_endpoint
 
         private
 
