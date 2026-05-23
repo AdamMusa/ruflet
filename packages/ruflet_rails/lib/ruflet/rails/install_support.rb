@@ -214,7 +214,27 @@ module Ruflet
               end
 
               def open_delete_dialog(record)
-                delete_record(record)
+                dialog = nil
+                dialog = alert_dialog(
+                  modal: true,
+                  title: text("Delete #{singular_title}?"),
+                  content: text("Are you sure?"),
+                  actions: [
+                    text_button(
+                      content: text("Cancel"),
+                      on_click: ->(_e) { page.update(dialog, open: false) }
+                    ),
+                    text_button(
+                      content: text("Delete"),
+                      on_click: ->(_e) do
+                        page.update(dialog, open: false)
+                        delete_record(record)
+                      end
+                    )
+                  ],
+                  actions_alignment: "end"
+                )
+                page.show_dialog(dialog)
               end
 
               def save(record, fields, dialog = nil)
@@ -248,7 +268,7 @@ module Ruflet
                   end + [
                     data_cell(icon(icon: Ruflet::MaterialIcons::VISIBILITY, tooltip: "Show"), on_tap: ->(_e) { show(record) }),
                     data_cell(icon(icon: Ruflet::MaterialIcons::EDIT, tooltip: "Edit"), on_tap: ->(_e) { open_form_dialog(record, title: "Edit #{singular_title}") }),
-                    data_cell(icon(icon: Ruflet::MaterialIcons::DELETE, tooltip: "Delete"), on_tap: ->(_e) { delete_record(record) })
+                    data_cell(icon(icon: Ruflet::MaterialIcons::DELETE, tooltip: "Delete"), on_tap: ->(_e) { open_delete_dialog(record) })
                   ]
                 )
               end
@@ -270,7 +290,7 @@ module Ruflet
                     outlined_icon_button(
                       Ruflet::MaterialIcons::DELETE,
                       tooltip: "Delete",
-                      on_click: ->(_e) { delete_record(record) }
+                      on_click: ->(_e) { open_delete_dialog(record) }
                     )
                   ]
                 )

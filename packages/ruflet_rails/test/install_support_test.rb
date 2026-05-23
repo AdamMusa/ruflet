@@ -357,6 +357,19 @@ class InstallSupportTest < Minitest::Test
     sent.clear
     page.dispatch_event(target: delete_cell["_i"], name: "tap", data: nil)
 
+    refute record.destroyed
+    delete_dialog = sent.lazy.filter_map do |(_action, payload)|
+      find_patch_control(payload["patch"], "_c" => "AlertDialog", "title" => { "value" => "Delete Action Category?" })
+    end.first
+    refute_nil delete_dialog
+    assert_equal "Are you sure?", delete_dialog.dig("content", "value")
+
+    confirm = find_patch_control(delete_dialog, "_c" => "TextButton", "content" => { "value" => "Delete" })
+    refute_nil confirm
+
+    sent.clear
+    page.dispatch_event(target: confirm["_i"], name: "click", data: nil)
+
     assert_equal true, record.destroyed
     assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Action Category deleted" }) }
   ensure
