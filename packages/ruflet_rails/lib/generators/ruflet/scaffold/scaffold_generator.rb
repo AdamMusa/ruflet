@@ -56,7 +56,9 @@ module Ruflet
       end
 
       def legacy_entrypoint_load
-        Ruflet::Rails::InstallSupport.scaffold_entrypoint_require(model_name)
+        names = Ruflet::Rails::InstallSupport.scaffold_names(model_name)
+
+        %(load File.expand_path("#{names[:plural]}/#{names[:plural]}_view.rb", __dir__))
       end
     end
   end

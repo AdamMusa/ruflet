@@ -366,12 +366,6 @@ module Ruflet
         File.join("app", "views", app_target, names[:plural], "_form.rb")
       end
 
-      def scaffold_entrypoint_require(model_name)
-        names = scaffold_names(model_name)
-
-        %(load File.expand_path("#{names[:plural]}/#{names[:plural]}_view.rb", __dir__))
-      end
-
       def form_view_template(model_name:, attributes:)
         names = scaffold_names(model_name)
         attrs = normalized_form_attributes(attributes)

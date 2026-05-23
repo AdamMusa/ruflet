@@ -170,6 +170,40 @@ class InstallSupportTest < Minitest::Test
     assert_silent { RubyVM::InstructionSequence.compile(template) }
   end
 
+  def test_generated_scaffold_new_button_opens_alert_dialog_through_ruflet_events
+    template = Ruflet::Rails::InstallSupport.scaffold_view_template(
+      model_name: "GeneratedCategory",
+      attributes: ["name:string"]
+    )
+    model_class = stub_scaffold_model("GeneratedCategory")
+    Object.class_eval(template.sub(/^require "ruflet_rails"\n\n/, ""))
+
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "test-session",
+      client_details: { "route" => "/generated_categories", "width" => 390 },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    GeneratedCategoryView.render(page)
+    page.update
+    button = find_patch_control(sent.last[1]["patch"], "_c" => "FilledButton", "content" => { "value" => "New Generated Category" })
+
+    refute_nil button
+
+    sent.clear
+    page.dispatch_event(target: button["_i"], name: "click", data: nil)
+    dialog = sent.last[1]["patch"][1][3].first
+
+    assert_equal "AlertDialog", dialog["_c"]
+    assert_equal true, dialog["open"]
+    assert_equal 326.0, dialog.dig("content", "width")
+    assert_nil dialog.dig("content", "content", "controls", 0, "expand")
+  ensure
+    Object.send(:remove_const, :GeneratedCategoryView) if Object.const_defined?(:GeneratedCategoryView)
+    Object.send(:remove_const, :GeneratedCategory) if Object.const_defined?(:GeneratedCategory) && Object.const_get(:GeneratedCategory) == model_class
+  end
+
   def test_form_view_template_generates_only_reusable_form
     template = Ruflet::Rails::InstallSupport.form_view_template(
       model_name: "Event",
@@ -232,13 +266,6 @@ class InstallSupportTest < Minitest::Test
     assert_equal(
       "app/views/desktop/posts/posts_view.rb",
       Ruflet::Rails::InstallSupport.scaffold_view_path("Post", target: "desktop")
-    )
-  end
-
-  def test_scaffold_entrypoint_require_is_explicit_for_generated_view
-    assert_equal(
-      'load File.expand_path("posts/posts_view.rb", __dir__)',
-      Ruflet::Rails::InstallSupport.scaffold_entrypoint_require("Post")
     )
   end
 
@@ -308,6 +335,71 @@ class InstallSupportTest < Minitest::Test
     yield
   ensure
     Object.send(:remove_const, name) if Object.const_defined?(name) && Object.const_get(name) == value
+  end
+
+  def stub_scaffold_model(name)
+    model = Class.new do
+      def self.order(*)
+        self
+      end
+
+      def self.limit(*)
+        []
+      end
+
+      def self.first
+        nil
+      end
+
+      attr_reader :errors
+
+      def initialize
+        @attributes = {}
+        @errors = Struct.new(:full_messages).new([])
+      end
+
+      def persisted?
+        false
+      end
+
+      def update(attributes)
+        @attributes.merge!(attributes)
+        true
+      end
+
+      def public_send(name, *args)
+        return @attributes[name.to_s] if args.empty? && name.to_s == "name"
+
+        super
+      end
+    end
+    Object.const_set(name, model)
+  end
+
+  def find_patch_control(value, criteria)
+    case value
+    when Hash
+      return value if patch_control_matches?(value, criteria)
+
+      value.each_value do |child|
+        found = find_patch_control(child, criteria)
+        return found if found
+      end
+    when Array
+      value.each do |child|
+        found = find_patch_control(child, criteria)
+        return found if found
+      end
+    end
+
+    nil
+  end
+
+  def patch_control_matches?(control, criteria)
+    criteria.all? do |key, expected|
+      actual = control[key]
+      expected.is_a?(Hash) ? patch_control_matches?(actual || {}, expected) : actual == expected
+    end
   end
 
   class RouterPage
