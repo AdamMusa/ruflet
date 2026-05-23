@@ -142,9 +142,10 @@ class RufletAlertDialogCompatibilityTest < Minitest::Test
     assert_same dialog, popped
     assert_equal false, dialog.props["open"]
     assert_equal Ruflet::Protocol::ACTIONS[:patch_control], sent[-2][0]
-    closing_controls = sent[-2][1]["patch"].find { |op| op[2] == "controls" }[3]
+    closing_patch = sent[-2][1]["patch"].find { |op| op[2] == "open" }
     removed_controls = sent[-1][1]["patch"].find { |op| op[2] == "controls" }[3]
-    assert_equal false, closing_controls.first["open"]
+    assert_equal dialog.wire_id, sent[-2][1]["id"]
+    assert_equal false, closing_patch[3]
     assert_equal [], removed_controls
   end
 

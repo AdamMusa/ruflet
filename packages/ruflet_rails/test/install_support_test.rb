@@ -257,7 +257,7 @@ class InstallSupportTest < Minitest::Test
     sent.clear
     page.dispatch_event(target: cancel["_i"], name: "click", data: nil)
 
-    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "AlertDialog", "open" => false) }
+    assert sent.any? { |(_action, payload)| payload["id"] == dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
     controls_patch = sent.last[1]["patch"].find { |op| op[2] == "controls" }
     assert_equal [], controls_patch[3]
   ensure
@@ -293,7 +293,7 @@ class InstallSupportTest < Minitest::Test
     sent.clear
     page.dispatch_event(target: save["_i"], name: "click", data: nil)
 
-    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "AlertDialog", "open" => false) }
+    assert sent.any? { |(_action, payload)| payload["id"] == dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
     assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "Text", "value" => "Saving Categories") }
     assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Saving Category saved" }) }
   ensure

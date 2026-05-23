@@ -1147,8 +1147,7 @@ module Ruflet
       return nil unless dialog_control
 
       dialog_control.props["open"] = false
-      refresh_dialogs_container!
-      push_dialogs_update!
+      update(dialog_control, open: false)
       @dialogs.delete(dialog_control)
       refresh_dialogs_container!
       push_dialogs_update!
