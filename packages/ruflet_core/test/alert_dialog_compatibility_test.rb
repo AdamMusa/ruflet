@@ -124,6 +124,30 @@ class RufletAlertDialogCompatibilityTest < Minitest::Test
     assert_equal true, controls_patch[3].first["open"]
   end
 
+  def test_pop_dialog_closes_and_removes_latest_dialog_from_container
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    dialog = Ruflet.alert_dialog(title: Ruflet.text("Hello"))
+    page.add(Ruflet.text("Root"))
+    page.show_dialog(dialog)
+    sent.clear
+
+    popped = page.pop_dialog
+
+    assert_same dialog, popped
+    assert_equal false, dialog.props["open"]
+    assert_equal Ruflet::Protocol::ACTIONS[:patch_control], sent[-2][0]
+    closing_controls = sent[-2][1]["patch"].find { |op| op[2] == "controls" }[3]
+    removed_controls = sent[-1][1]["patch"].find { |op| op[2] == "controls" }[3]
+    assert_equal false, closing_controls.first["open"]
+    assert_equal [], removed_controls
+  end
+
   def test_initial_page_patch_mounts_dialogs_before_views_like_flet
     sent = []
     page = Ruflet::Page.new(
