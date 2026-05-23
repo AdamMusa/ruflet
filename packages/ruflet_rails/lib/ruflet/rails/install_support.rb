@@ -130,7 +130,10 @@ module Ruflet
                             controls: columns.map do |name|
                               row(
                                 controls: [
-                                  text(name.humanize, weight: "bold", width: 140),
+                                  container(
+                                    width: 140,
+                                    content: text(name.humanize, weight: "bold")
+                                  ),
                                   text(record.public_send(name).to_s)
                                 ]
                               )
@@ -211,28 +214,7 @@ module Ruflet
               end
 
               def open_delete_dialog(record)
-                dialog = nil
-                dialog = alert_dialog(
-                  modal: true,
-                  title: text("Delete #{singular_title}?"),
-                  content: text("This action cannot be undone."),
-                  actions: [
-                    text_button(
-                      content: text("Cancel"),
-                      on_click: ->(_e) { page.update(dialog, open: false) }
-                    ),
-                    text_button(
-                      content: text("Delete"),
-                      on_click: ->(_e) do
-                        record.destroy
-                        page.update(dialog, open: false)
-                        index
-                      end
-                    )
-                  ],
-                  actions_alignment: "end"
-                )
-                page.show_dialog(dialog)
+                delete_record(record)
               end
 
               def save(record, fields, dialog = nil)
@@ -243,6 +225,7 @@ module Ruflet
 
                 if record.update(attributes)
                   page.update(dialog, open: false) if dialog
+                  show_snackbar("#{singular_title} saved")
                   index
                 else
                   page.snack_bar = snack_bar(text(record.errors.full_messages.to_sentence))
@@ -251,7 +234,11 @@ module Ruflet
               end
 
               def table_columns
-                columns.map { |name| data_column(name.humanize) } + [data_column("Actions")]
+                columns.map { |name| data_column(name.humanize) } + [
+                  data_column(icon(icon: Ruflet::MaterialIcons::VISIBILITY, tooltip: "Show")),
+                  data_column(icon(icon: Ruflet::MaterialIcons::EDIT, tooltip: "Edit")),
+                  data_column(icon(icon: Ruflet::MaterialIcons::DELETE, tooltip: "Delete"))
+                ]
               end
 
               def table_row(record)
@@ -259,7 +246,9 @@ module Ruflet
                   columns.map do |name|
                     data_cell(record.public_send(name).to_s, on_tap: ->(_e) { show(record) })
                   end + [
-                    data_cell(action_buttons(record))
+                    data_cell(icon(icon: Ruflet::MaterialIcons::VISIBILITY, tooltip: "Show"), on_tap: ->(_e) { show(record) }),
+                    data_cell(icon(icon: Ruflet::MaterialIcons::EDIT, tooltip: "Edit"), on_tap: ->(_e) { open_form_dialog(record, title: "Edit #{singular_title}") }),
+                    data_cell(icon(icon: Ruflet::MaterialIcons::DELETE, tooltip: "Delete"), on_tap: ->(_e) { delete_record(record) })
                   ]
                 )
               end
@@ -268,20 +257,33 @@ module Ruflet
                 row(
                   spacing: 4,
                   controls: [
-                    outlined_button(
-                      content: text("Show"),
+                    outlined_icon_button(
+                      Ruflet::MaterialIcons::VISIBILITY,
+                      tooltip: "Show",
                       on_click: ->(_e) { show(record) }
                     ),
-                    outlined_button(
-                      content: text("Edit"),
+                    outlined_icon_button(
+                      Ruflet::MaterialIcons::EDIT,
+                      tooltip: "Edit",
                       on_click: ->(_e) { open_form_dialog(record, title: "Edit #{singular_title}") }
                     ),
-                    outlined_button(
-                      content: text("Delete"),
-                      on_click: ->(_e) { open_delete_dialog(record) }
+                    outlined_icon_button(
+                      Ruflet::MaterialIcons::DELETE,
+                      tooltip: "Delete",
+                      on_click: ->(_e) { delete_record(record) }
                     )
                   ]
                 )
+              end
+
+              def delete_record(record)
+                record.destroy
+                show_snackbar("#{singular_title} deleted")
+                index
+              end
+
+              def show_snackbar(message)
+                page.show_dialog(snack_bar(text(message), open: true))
               end
 
               def control_value(control, type)

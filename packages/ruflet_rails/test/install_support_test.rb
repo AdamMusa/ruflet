@@ -132,14 +132,22 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "width: dialog_width"
     assert_includes template, "def dialog_width"
     assert_includes template, "data_table("
-    assert_includes template, "data_column(\"Actions\")"
+    assert_includes template, "Ruflet::MaterialIcons::VISIBILITY"
+    assert_includes template, "Ruflet::MaterialIcons::EDIT"
+    assert_includes template, "Ruflet::MaterialIcons::DELETE"
+    assert_includes template, 'tooltip: "Edit"), on_tap:'
+    assert_includes template, 'tooltip: "Delete"), on_tap:'
     assert_includes template, "safe_area("
     assert_includes template, "padding: { left: 24, top: 16, right: 24, bottom: 24 }"
     refute_match(/text\([^\\n]*expand:/, template)
+    refute_match(/text\([^\\n]*width:/, template)
+    assert_includes template, "width: 140"
     assert_includes template, "content: text(\"New Post\")"
     assert_includes template, 'content: text("Save")'
     assert_includes template, "page.update(dialog, open: false)"
     refute_includes template, "page.pop_dialog"
+    assert_includes template, 'show_snackbar("Post saved")'
+    assert_includes template, 'show_snackbar("Post deleted")'
     assert_includes template, "record.destroy"
     assert_includes template, "page.show_dialog("
     assert_silent { RubyVM::InstructionSequence.compile(template) }
@@ -298,6 +306,64 @@ class InstallSupportTest < Minitest::Test
     end
   end
 
+  def test_generated_scaffold_table_actions_use_data_cell_taps
+    template = Ruflet::Rails::InstallSupport.scaffold_view_template(
+      model_name: "ActionCategory",
+      attributes: ["name:string"]
+    )
+    model_class = stub_scaffold_model("ActionCategory")
+    record = model_class.new("name" => "First")
+    model_class.records = [record]
+    Object.class_eval(template.sub(/^require "ruflet_rails"\n\n/, ""))
+
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "test-session",
+      client_details: { "route" => "/action_categories", "width" => 390 },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    ActionCategoryView.render(page)
+    patch = sent.last[1]["patch"]
+    show_cell = find_patch_control(patch, "_c" => "DataCell", "content" => { "_c" => "Icon", "tooltip" => "Show" })
+    edit_cell = find_patch_control(patch, "_c" => "DataCell", "content" => { "_c" => "Icon", "tooltip" => "Edit" })
+    delete_cell = find_patch_control(patch, "_c" => "DataCell", "content" => { "_c" => "Icon", "tooltip" => "Delete" })
+
+    refute_nil show_cell
+    refute_nil edit_cell
+    refute_nil delete_cell
+    assert_equal true, show_cell["on_tap"]
+    assert_equal true, edit_cell["on_tap"]
+    assert_equal true, delete_cell["on_tap"]
+
+    sent.clear
+    page.dispatch_event(target: show_cell["_i"], name: "tap", data: nil)
+
+    assert find_patch_control(sent.last[1]["patch"], "_c" => "Text", "value" => "Action Category #1")
+
+    ActionCategoryView.render(page)
+    patch = sent.last[1]["patch"]
+    edit_cell = find_patch_control(patch, "_c" => "DataCell", "content" => { "_c" => "Icon", "tooltip" => "Edit" })
+
+    sent.clear
+    page.dispatch_event(target: edit_cell["_i"], name: "tap", data: nil)
+
+    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "AlertDialog") }
+
+    ActionCategoryView.render(page)
+    patch = sent.last[1]["patch"]
+    delete_cell = find_patch_control(patch, "_c" => "DataCell", "content" => { "_c" => "Icon", "tooltip" => "Delete" })
+
+    sent.clear
+    page.dispatch_event(target: delete_cell["_i"], name: "tap", data: nil)
+
+    assert_equal true, record.destroyed
+    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Action Category deleted" }) }
+  ensure
+    Object.send(:remove_const, :ActionCategoryView) if Object.const_defined?(:ActionCategoryView)
+    Object.send(:remove_const, :ActionCategory) if Object.const_defined?(:ActionCategory) && Object.const_get(:ActionCategory) == model_class
+  end
+
   def test_form_view_template_generates_only_reusable_form
     template = Ruflet::Rails::InstallSupport.form_view_template(
       model_name: "Event",
@@ -433,27 +499,32 @@ class InstallSupportTest < Minitest::Test
 
   def stub_scaffold_model(name)
     model = Class.new do
+      class << self
+        attr_accessor :records
+      end
+
       def self.order(*)
         self
       end
 
       def self.limit(*)
-        []
+        records || []
       end
 
       def self.first
-        nil
+        (records || []).first
       end
 
-      attr_reader :errors
+      attr_reader :errors, :destroyed
 
-      def initialize
-        @attributes = {}
+      def initialize(attributes = {})
+        @attributes = { "id" => 1 }.merge(attributes)
         @errors = Struct.new(:full_messages).new([])
+        @destroyed = false
       end
 
       def persisted?
-        false
+        true
       end
 
       def update(attributes)
@@ -461,8 +532,16 @@ class InstallSupportTest < Minitest::Test
         true
       end
 
+      def id
+        @attributes["id"]
+      end
+
+      def destroy
+        @destroyed = true
+      end
+
       def public_send(name, *args)
-        return @attributes[name.to_s] if args.empty? && name.to_s == "name"
+        return @attributes[name.to_s] if args.empty?
 
         super
       end
