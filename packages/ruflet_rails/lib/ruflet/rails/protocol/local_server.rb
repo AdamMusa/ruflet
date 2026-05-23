@@ -4,9 +4,10 @@ module Ruflet
   module Rails
     module Protocol
       class LocalServer
-        def initialize(session_registry: Ruflet::Rails.sessions, &app_block)
+        def initialize(session_registry: Ruflet::Rails.sessions, view_root: nil, &app_block)
           @app_block = app_block
           @session_registry = session_registry
+          @view_root = view_root
         end
 
         def handle_upgraded_socket(io)
@@ -21,6 +22,7 @@ module Ruflet
             handle_message(ws, raw)
           end
         rescue StandardError => e
+          log_exception(e)
           send_message(ws, Ruflet::Protocol::ACTIONS[:session_crashed], { "message" => e.message.to_s.dup.force_encoding("UTF-8") })
         ensure
           close_connection(ws)
@@ -119,9 +121,11 @@ module Ruflet
           ]
           ws.send_binary(WireCodec.pack(initial_response))
 
+          Ruflet::Rails.load_views(@view_root) if @view_root
           @app_block.call(page)
           page.update
         rescue StandardError => e
+          log_exception(e)
           send_message(ws, Ruflet::Protocol::ACTIONS[:session_crashed], { "message" => e.message.to_s })
           raise
         end
@@ -186,6 +190,19 @@ module Ruflet
             (now >> 32) & 0xffff,
             (now >> 48) & 0xffff_ffff_ffff
           ]
+        end
+
+        def log_exception(error)
+          message = "#{error.class}: #{error.message}"
+          backtrace = Array(error.backtrace).first(20).join("\n")
+
+          if defined?(::Rails) && ::Rails.respond_to?(:logger) && ::Rails.logger
+            ::Rails.logger.error("[Ruflet::Rails] #{message}\n#{backtrace}")
+          else
+            warn "[Ruflet::Rails] #{message}\n#{backtrace}"
+          end
+        rescue StandardError
+          nil
         end
       end
     end

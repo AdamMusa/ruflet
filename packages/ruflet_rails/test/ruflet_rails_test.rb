@@ -41,4 +41,30 @@ class RufletRailsTest < Minitest::Test
 
     assert_equal runner.method(:build_app_endpoint), runner.method(:build_mobile_endpoint)
   end
+
+  def test_load_views_reloads_generated_view_files
+    Dir.mktmpdir do |dir|
+      view_dir = File.join(dir, "posts")
+      FileUtils.mkdir_p(view_dir)
+      view_file = File.join(view_dir, "posts_view.rb")
+
+      File.write(view_file, <<~RUBY)
+        class ReloadablePostView < RufletView
+          route "/old_posts"
+        end
+      RUBY
+      Ruflet::Rails.load_views(dir)
+      assert_equal "/old_posts", ReloadablePostView.route
+
+      File.write(view_file, <<~RUBY)
+        class ReloadablePostView < RufletView
+          route "/new_posts"
+        end
+      RUBY
+      Ruflet::Rails.load_views(dir)
+      assert_equal "/new_posts", ReloadablePostView.route
+    end
+  ensure
+    Object.send(:remove_const, :ReloadablePostView) if Object.const_defined?(:ReloadablePostView)
+  end
 end

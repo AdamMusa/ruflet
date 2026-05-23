@@ -24,19 +24,19 @@ module Ruflet
         )
       end
 
-      def add_entrypoint_require
+      def clean_legacy_entrypoint_requires
         target = File.join(destination_root, entrypoint_path)
         return unless File.file?(target)
 
-        require_line = Ruflet::Rails::InstallSupport.scaffold_entrypoint_require(model_name)
-        return if File.read(target).include?(require_line)
-
-        insert_into_file target, "#{require_line}\n", after: %(require "ruflet_rails"\n)
+        content = File.read(target)
+        [legacy_entrypoint_require, legacy_entrypoint_load].each do |line|
+          gsub_file target, "#{line}\n", "" if content.include?("#{line}\n")
+        end
       end
 
       def print_scaffold_status
         say "Ruflet scaffold generated at #{scaffold_view_path}"
-        say "The Ruflet entrypoint now explicitly requires this view."
+        say "The Rails mount loads Ruflet views from #{File.dirname(scaffold_view_path)}."
       end
 
       private
@@ -47,6 +47,16 @@ module Ruflet
 
       def entrypoint_path
         Ruflet::Rails::InstallSupport.default_entrypoint_path(target: options[:target])
+      end
+
+      def legacy_entrypoint_require
+        names = Ruflet::Rails::InstallSupport.scaffold_names(model_name)
+
+        %(require_relative "#{names[:plural]}/#{names[:plural]}_view")
+      end
+
+      def legacy_entrypoint_load
+        Ruflet::Rails::InstallSupport.scaffold_entrypoint_require(model_name)
       end
     end
   end

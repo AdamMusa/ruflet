@@ -111,7 +111,10 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "class PostView < RufletView"
     assert_includes template, 'route "/posts"'
     assert_includes template, "model_class.order(created_at: :desc).limit(50)"
-    assert_includes template, 'COLUMNS = ["title", "body"].freeze'
+    assert_includes template, "def columns"
+    assert_includes template, '["title", "body"]'
+    refute_includes template, "COLUMNS ="
+    refute_includes template, "FIELDS ="
     refute_includes template, "module RufletScaffolds"
     refute_includes template, "mobile"
   end
@@ -146,7 +149,8 @@ class InstallSupportTest < Minitest::Test
       attributes: ["name:string", "body:text", "active:boolean", "starts_on:date", "starts_at:time", "price:decimal", "category:references"]
     )
 
-    assert_includes template, 'FIELDS = [{ name: "name", type: "string" }'
+    assert_includes template, 'def form_fields'
+    assert_includes template, '{ name: "name", type: "string" }'
     assert_includes template, '{ name: "category_id", type: "association", class_name: "Category" }'
     assert_includes template, 'when "boolean"'
     assert_includes template, "checkbox(label: label"
@@ -233,7 +237,7 @@ class InstallSupportTest < Minitest::Test
 
   def test_scaffold_entrypoint_require_is_explicit_for_generated_view
     assert_equal(
-      'require_relative "posts/posts_view"',
+      'load File.expand_path("posts/posts_view.rb", __dir__)',
       Ruflet::Rails::InstallSupport.scaffold_entrypoint_require("Post")
     )
   end

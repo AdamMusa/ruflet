@@ -43,9 +43,6 @@ module Ruflet
           class #{model_class}View < RufletView
               route #{("/" + names[:plural]).inspect}
 
-              COLUMNS = [#{columns_literal}].freeze
-              FIELDS = [#{fields_literal}].freeze
-
               def render(action: :index, record: nil)
                 case action.to_sym
                 when :index
@@ -131,7 +128,7 @@ module Ruflet
                           ),
                           column(
                             spacing: 8,
-                            controls: COLUMNS.map do |name|
+                            controls: columns.map do |name|
                               row(
                                 controls: [
                                   text(name.humanize, weight: "bold", width: 140),
@@ -150,7 +147,7 @@ module Ruflet
               end
 
               def open_form_dialog(record, title:)
-                fields = FIELDS.to_h do |field|
+                fields = form_fields.to_h do |field|
                   [field[:name], field_control(field, record)]
                 end
 
@@ -242,7 +239,7 @@ module Ruflet
 
               def save(record, fields)
                 attributes = fields.to_h do |name, control|
-                  field = FIELDS.find { |candidate| candidate[:name] == name }
+                  field = form_fields.find { |candidate| candidate[:name] == name }
                   [name, control_value(control, field[:type])]
                 end
 
@@ -256,12 +253,12 @@ module Ruflet
               end
 
               def table_columns
-                COLUMNS.map { |name| data_column(name.humanize) } + [data_column("Actions")]
+                columns.map { |name| data_column(name.humanize) } + [data_column("Actions")]
               end
 
               def table_row(record)
                 data_row(
-                  COLUMNS.map do |name|
+                  columns.map do |name|
                     data_cell(record.public_send(name).to_s, on_tap: ->(_e) { show(record) })
                   end + [
                     data_cell(action_buttons(record))
@@ -326,6 +323,14 @@ module Ruflet
                 value.to_s
               end
 
+              def columns
+                [#{columns_literal}]
+              end
+
+              def form_fields
+                [#{fields_literal}]
+              end
+
               def model_class
                 #{model_class}
               end
@@ -364,7 +369,7 @@ module Ruflet
       def scaffold_entrypoint_require(model_name)
         names = scaffold_names(model_name)
 
-        %(require_relative "#{names[:plural]}/#{names[:plural]}_view")
+        %(load File.expand_path("#{names[:plural]}/#{names[:plural]}_view.rb", __dir__))
       end
 
       def form_view_template(model_name:, attributes:)

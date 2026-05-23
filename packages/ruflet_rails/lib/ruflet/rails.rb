@@ -17,6 +17,14 @@ module Ruflet
       ViewRouter.new(page, routes: routes, default: default).start
     end
 
+    def load_views(root)
+      return [] if root.to_s.empty?
+
+      Dir[File.join(root.to_s, "**", "*_view.rb")].sort.each do |file|
+        Kernel.load(file)
+      end
+    end
+
     def sessions
       @sessions ||= SessionRegistry.new
     end

@@ -15,21 +15,33 @@ module Ruflet
         end
 
         def build_app_endpoint(file_path:, path: "/")
-          loaded = MobileLoader.new(file_path).load!
-          Endpoint.new(server: build_server(loaded[:entrypoint]), path: path)
+          absolute = File.expand_path(file_path)
+          entrypoint = lambda do |page, env|
+            loaded = MobileLoader.new(absolute).load!
+            run_entrypoint(loaded[:entrypoint], page, env)
+          end
+
+          Endpoint.new(
+            server: build_server(entrypoint, view_root: File.dirname(absolute)),
+            path: path
+          )
         end
         alias build_mobile_endpoint build_app_endpoint
 
         private
 
-        def build_server(entrypoint)
-          LocalServer.new do |page|
+        def build_server(entrypoint, view_root: nil)
+          LocalServer.new(view_root: view_root) do |page|
             env = Context.current_env
-            if entrypoint.arity == 1
-              entrypoint.call(page)
-            else
-              entrypoint.call(page, env)
-            end
+            run_entrypoint(entrypoint, page, env)
+          end
+        end
+
+        def run_entrypoint(entrypoint, page, env)
+          if entrypoint.arity == 1
+            entrypoint.call(page)
+          else
+            entrypoint.call(page, env)
           end
         end
       end
