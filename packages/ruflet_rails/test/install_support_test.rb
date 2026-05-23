@@ -137,7 +137,11 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, 'icon("visibility", tooltip: "Show")'
     assert_includes template, 'icon("edit", tooltip: "Edit")'
     assert_includes template, 'icon("delete", tooltip: "Delete")'
-    assert_includes template, 'outlined_icon_button('
+    refute_includes template, 'outlined_icon_button('
+    assert_includes template, 'text_button('
+    assert_includes template, 'content: icon("visibility", tooltip: "Show")'
+    assert_includes template, 'content: icon("edit", tooltip: "Edit")'
+    assert_includes template, 'content: icon("delete", tooltip: "Delete")'
     assert_includes template, '"visibility"'
     assert_includes template, '"edit"'
     assert_includes template, '"delete"'
@@ -383,7 +387,15 @@ class InstallSupportTest < Minitest::Test
     sent.clear
     page.dispatch_event(target: show_cell["_i"], name: "tap", data: nil)
 
-    assert find_patch_control(sent.last[1]["patch"], "_c" => "Text", "value" => "Action Category #1")
+    show_patch = sent.last[1]["patch"]
+    assert find_patch_control(show_patch, "_c" => "Text", "value" => "Action Category #1")
+    refute find_patch_control(show_patch, "_c" => "OutlinedIconButton")
+    detail_edit = find_patch_control(show_patch, "_c" => "TextButton", "content" => { "_c" => "Icon", "tooltip" => "Edit" })
+    detail_delete = find_patch_control(show_patch, "_c" => "TextButton", "content" => { "_c" => "Icon", "tooltip" => "Delete" })
+    refute_nil detail_edit
+    refute_nil detail_delete
+    assert_kind_of Integer, detail_edit.dig("content", "icon")
+    assert_kind_of Integer, detail_delete.dig("content", "icon")
 
     ActionCategoryView.render(page)
     patch = sent.last[1]["patch"]

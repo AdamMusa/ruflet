@@ -277,19 +277,16 @@ module Ruflet
                 row(
                   spacing: 4,
                   controls: [
-                    outlined_icon_button(
-                      "visibility",
-                      tooltip: "Show",
+                    text_button(
+                      content: icon("visibility", tooltip: "Show"),
                       on_click: ->(_e) { show(record) }
                     ),
-                    outlined_icon_button(
-                      "edit",
-                      tooltip: "Edit",
+                    text_button(
+                      content: icon("edit", tooltip: "Edit"),
                       on_click: ->(_e) { open_form_dialog(record, title: "Edit #{singular_title}") }
                     ),
-                    outlined_icon_button(
-                      "delete",
-                      tooltip: "Delete",
+                    text_button(
+                      content: icon("delete", tooltip: "Delete"),
                       on_click: ->(_e) { open_delete_dialog(record) }
                     )
                   ]
