@@ -145,7 +145,7 @@ module Ruflet
                     ),
                     expand: true
                   ),
-                  appbar: app_bar()
+                  **show_view_options
                 )
               end
 
@@ -291,6 +291,24 @@ module Ruflet
                     )
                   ]
                 )
+              end
+
+              def show_view_options
+                return {} unless handheld_platform?
+
+                {
+                  appbar: app_bar(
+                    leading: icon_button(
+                      "arrow_back",
+                      tooltip: "Back",
+                      on_click: ->(_e) { index }
+                    )
+                  )
+                }
+              end
+
+              def handheld_platform?
+                %w[android ios].include?(page.client_details["platform"].to_s.downcase)
               end
 
               def delete_record(record)

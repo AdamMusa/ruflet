@@ -139,7 +139,10 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, 'icon("delete", tooltip: "Delete")'
     refute_includes template, 'outlined_icon_button('
     assert_includes template, 'icon_button('
-    assert_includes template, 'appbar: app_bar()'
+    assert_includes template, "def show_view_options"
+    assert_includes template, "def handheld_platform?"
+    assert_includes template, 'leading: icon_button('
+    assert_includes template, '"arrow_back"'
     assert_includes template, 'alignment: "end"'
     assert_includes template, '"visibility"'
     assert_includes template, '"edit"'
@@ -364,7 +367,7 @@ class InstallSupportTest < Minitest::Test
     sent = []
     page = Ruflet::Page.new(
       session_id: "test-session",
-      client_details: { "route" => "/action_categories", "width" => 390 },
+      client_details: { "route" => "/action_categories", "width" => 390, "platform" => "ios" },
       sender: ->(action, payload) { sent << [action, payload] }
     )
 
@@ -388,7 +391,11 @@ class InstallSupportTest < Minitest::Test
 
     show_patch = sent.last[1]["patch"]
     assert find_patch_control(show_patch, "_c" => "Text", "value" => "Action Category #1")
-    assert find_patch_control(show_patch, "_c" => "AppBar")
+    appbar = find_patch_control(show_patch, "_c" => "AppBar")
+    back_button = find_patch_control(appbar, "_c" => "IconButton", "tooltip" => "Back")
+    refute_nil appbar
+    refute_nil back_button
+    assert_equal true, back_button["on_click"]
     refute find_patch_control(show_patch, "_c" => "OutlinedIconButton")
     refute find_patch_control(show_patch, "_c" => "IconButton", "tooltip" => "Show")
     detail_edit = find_patch_control(show_patch, "_c" => "IconButton", "tooltip" => "Edit")
@@ -404,6 +411,11 @@ class InstallSupportTest < Minitest::Test
     page.dispatch_event(target: detail_edit["_i"], name: "click", data: nil)
 
     assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "AlertDialog") }
+
+    sent.clear
+    page.dispatch_event(target: back_button["_i"], name: "click", data: nil)
+
+    assert find_patch_control(sent.last[1]["patch"], "_c" => "Text", "value" => "Action Categories")
 
     ActionCategoryView.render(page)
     patch = sent.last[1]["patch"]
@@ -453,6 +465,33 @@ class InstallSupportTest < Minitest::Test
   ensure
     Object.send(:remove_const, :ActionCategoryView) if Object.const_defined?(:ActionCategoryView)
     Object.send(:remove_const, :ActionCategory) if Object.const_defined?(:ActionCategory) && Object.const_get(:ActionCategory) == model_class
+  end
+
+  def test_generated_scaffold_show_omits_mobile_appbar_on_web_and_desktop
+    template = Ruflet::Rails::InstallSupport.scaffold_view_template(
+      model_name: "WebCategory",
+      attributes: ["name:string"]
+    )
+    model_class = stub_scaffold_model("WebCategory")
+    record = model_class.new("name" => "First")
+    model_class.records = [record]
+    Object.class_eval(template.sub(/^require "ruflet_rails"\n\n/, ""))
+
+    %w[web macos windows linux].each do |platform|
+      sent = []
+      page = Ruflet::Page.new(
+        session_id: "test-session-#{platform}",
+        client_details: { "route" => "/web_categories", "width" => 1024, "platform" => platform },
+        sender: ->(action, payload) { sent << [action, payload] }
+      )
+
+      WebCategoryView.render(page, action: :show, record: record)
+
+      refute find_patch_control(sent.last[1]["patch"], "_c" => "AppBar"), "expected no mobile app bar for #{platform}"
+    end
+  ensure
+    Object.send(:remove_const, :WebCategoryView) if Object.const_defined?(:WebCategoryView)
+    Object.send(:remove_const, :WebCategory) if Object.const_defined?(:WebCategory) && Object.const_get(:WebCategory) == model_class
   end
 
   def test_form_view_template_generates_only_reusable_form
