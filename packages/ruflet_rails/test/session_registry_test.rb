@@ -62,10 +62,10 @@ class RufletRailsSessionRegistryTest < Minitest::Test
     env = { "PATH_INFO" => "/ws" }
 
     Ruflet::Rails::Protocol::Context.with_env(env) do
-      server.send(:on_register_client, ws, { "page" => { "route" => "/orders" } })
+      server.send(:on_register_client, ws, { "session_id" => "fake-session", "page" => { "route" => "/orders" } })
     end
 
-    session = registry[ws.session_key]
+    session = registry["fake-session"]
 
     refute_nil session
     assert_equal env, session.env
@@ -109,9 +109,19 @@ class RufletRailsSessionRegistryTest < Minitest::Test
       "fake-socket"
     end
 
+    def session_id
+      "fake-session"
+    end
+
     def send_binary(payload)
       @sent << payload
     end
+
+    def closed?
+      false
+    end
+
+    def close; end
   end
 
   class FakePage

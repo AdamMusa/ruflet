@@ -484,6 +484,12 @@ class InstallSupportTest < Minitest::Test
       @sent << payload
     end
 
+    def closed?
+      false
+    end
+
+    def close; end
+
     def unpacked_messages
       @sent.map { |payload| Ruflet::Rails::Protocol::WireCodec.unpack(payload) }
     end
