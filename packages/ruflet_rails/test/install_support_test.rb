@@ -126,6 +126,8 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "def show(record)"
     assert_includes template, "def open_form_dialog(record, title:)"
     assert_includes template, "def save(record, fields)"
+    assert_includes template, "width: dialog_width"
+    assert_includes template, "def dialog_width"
     assert_includes template, "data_table("
     assert_includes template, "data_column(\"Actions\")"
     assert_includes template, "safe_area("
@@ -159,6 +161,8 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, 'keyboard_type: "number"'
     assert_includes template, 'when "text"'
     assert_includes template, "multiline: true"
+    refute_match(/text_field\([^\\n]*expand:/, template)
+    refute_match(/dropdown\([^\\n]*expand:/, template)
     assert_silent { RubyVM::InstructionSequence.compile(template) }
   end
 

@@ -160,7 +160,7 @@ module Ruflet
                     scrollable: true,
                     title: text(title),
                     content: container(
-                      width: 520,
+                      width: dialog_width,
                       content: column(spacing: 8, controls: fields.values)
                     ),
                     actions: [
@@ -189,8 +189,7 @@ module Ruflet
                   dropdown(
                     association_options(field),
                     value: value.to_s,
-                    label: label,
-                    expand: true
+                    label: label
                   )
                 when "boolean"
                   checkbox(label: label, value: !!value)
@@ -201,12 +200,19 @@ module Ruflet
                 when "time"
                   time_picker(value: value.respond_to?(:strftime) ? value.strftime("%H:%M") : value.to_s, help_text: label)
                 when "integer", "float", "decimal"
-                  text_field(value: value.to_s, label: label, keyboard_type: "number", expand: true)
+                  text_field(value: value.to_s, label: label, keyboard_type: "number")
                 when "text"
-                  text_field(value: value.to_s, label: label, multiline: true, min_lines: 3, expand: true)
+                  text_field(value: value.to_s, label: label, multiline: true, min_lines: 3)
                 else
-                  text_field(value: value.to_s, label: label, expand: true)
+                  text_field(value: value.to_s, label: label)
                 end
+              end
+
+              def dialog_width
+                width = page.client_details["width"].to_f
+                return 520 if width <= 0
+
+                [[width - 64, 280].max, 520].min
               end
 
               def open_delete_dialog(record)
@@ -430,8 +436,7 @@ module Ruflet
                   dropdown(
                     association_options(field),
                     value: value.to_s,
-                    label: label,
-                    expand: true
+                    label: label
                   )
                 when "boolean"
                   checkbox(label: label, value: !!value)
@@ -442,11 +447,11 @@ module Ruflet
                 when "time"
                   time_picker(value: value.respond_to?(:strftime) ? value.strftime("%H:%M") : value.to_s, help_text: label)
                 when "integer", "float", "decimal"
-                  text_field(value: value.to_s, label: label, keyboard_type: "number", expand: true)
+                  text_field(value: value.to_s, label: label, keyboard_type: "number")
                 when "text"
-                  text_field(value: value.to_s, label: label, multiline: true, min_lines: 3, expand: true)
+                  text_field(value: value.to_s, label: label, multiline: true, min_lines: 3)
                 else
-                  text_field(value: value.to_s, label: label, expand: true)
+                  text_field(value: value.to_s, label: label)
                 end
               end
 
