@@ -63,6 +63,11 @@ module Ruflet
       end
 
       def render
+        if root_route_without_default?
+          render_route_index
+          return
+        end
+
         target = route_target(@page.route)
 
         if target.respond_to?(:render)
@@ -87,6 +92,10 @@ module Ruflet
       def route_target(route)
         path = route_path(route)
         @routes[path] || @routes[first_segment(path)] || @default || @routes.values.first
+      end
+
+      def root_route_without_default?
+        route_path(@page.route) == "/" && @default.nil? && @routes["/"].nil? && @routes.any?
       end
 
       def normalize_routes(routes)
@@ -119,6 +128,41 @@ module Ruflet
           )
         )
         @page.update
+      end
+
+      def render_route_index
+        @page.title = "Ruflet"
+        @page.add(
+          safe_area(
+            container(
+              expand: true,
+              padding: { left: 24, top: 16, right: 24, bottom: 24 },
+              content: column(
+                spacing: 12,
+                controls: [
+                  text("Ruflet", size: 24, weight: "bold"),
+                  *route_index_buttons
+                ]
+              )
+            ),
+            expand: true
+          )
+        )
+        @page.update
+      end
+
+      def route_index_buttons
+        @routes.keys.sort.map do |path|
+          filled_button(
+            content: text(route_label(path)),
+            on_click: ->(_event) { @page.go(path) }
+          )
+        end
+      end
+
+      def route_label(path)
+        label = path.to_s.delete_prefix("/").tr("_-", " ")
+        label.empty? ? "Home" : label.split.map(&:capitalize).join(" ")
       end
     end
   end

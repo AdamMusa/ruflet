@@ -42,6 +42,47 @@ class RufletRailsTest < Minitest::Test
     assert_equal runner.method(:build_app_endpoint), runner.method(:build_mobile_endpoint)
   end
 
+  def test_router_renders_route_index_at_root_when_multiple_views_are_registered
+    previous_views = Ruflet::Rails.view_classes.dup
+    Ruflet::Rails.view_classes.clear
+
+    posts_view = Class.new(RufletView) do
+      route "/posts"
+      def self.render(page)
+        page.add(Ruflet.text("Posts"))
+      end
+    end
+    categories_view = Class.new(RufletView) do
+      route "/categories"
+      def self.render(page)
+        page.add(Ruflet.text("Categories"))
+      end
+    end
+    Ruflet::Rails.register_view(posts_view)
+    Ruflet::Rails.register_view(categories_view)
+
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    Ruflet::Rails.render(page)
+
+    patch = sent.last[1]["patch"]
+    assert find_patch_control(patch, "_c" => "FilledButton", "content" => { "value" => "Categories" })
+    assert find_patch_control(patch, "_c" => "FilledButton", "content" => { "value" => "Posts" })
+
+    posts_button = find_patch_control(patch, "_c" => "FilledButton", "content" => { "value" => "Posts" })
+    sent.clear
+    page.dispatch_event(target: posts_button["_i"], name: "click", data: nil)
+
+    assert find_patch_control(sent.last[1]["patch"], "_c" => "Text", "value" => "Posts")
+  ensure
+    Ruflet::Rails.view_classes.replace(previous_views) if previous_views
+  end
+
   def test_load_views_reloads_generated_view_files
     Dir.mktmpdir do |dir|
       view_dir = File.join(dir, "posts")
@@ -66,5 +107,33 @@ class RufletRailsTest < Minitest::Test
     end
   ensure
     Object.send(:remove_const, :ReloadablePostView) if Object.const_defined?(:ReloadablePostView)
+  end
+
+  private
+
+  def find_patch_control(value, criteria)
+    case value
+    when Hash
+      return value if patch_control_matches?(value, criteria)
+
+      value.each_value do |child|
+        found = find_patch_control(child, criteria)
+        return found if found
+      end
+    when Array
+      value.each do |child|
+        found = find_patch_control(child, criteria)
+        return found if found
+      end
+    end
+
+    nil
+  end
+
+  def patch_control_matches?(control, criteria)
+    criteria.all? do |key, expected|
+      actual = control[key]
+      expected.is_a?(Hash) ? patch_control_matches?(actual || {}, expected) : actual == expected
+    end
   end
 end
