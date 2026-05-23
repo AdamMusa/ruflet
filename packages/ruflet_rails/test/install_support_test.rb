@@ -34,7 +34,8 @@ class InstallSupportTest < Minitest::Test
 
     assert_includes template, 'Ruflet.run do |page|'
     assert_includes template, 'page.title = "Demo"'
-    assert_includes template, "floating_action_button: fab("
+    assert_includes template, 'Dir[File.join(__dir__, "**", "*_view.rb")]'
+    assert_includes template, "Ruflet::Rails.render(page)"
   end
 
   def test_ruflet_view_base_renders_plain_view_classes
@@ -47,6 +48,42 @@ class InstallSupportTest < Minitest::Test
 
     assert_equal "ok", view_class.render(page, value: "ok")
     assert_equal({ value: "ok" }, page)
+  end
+
+  def test_ruflet_view_infers_plural_route_and_allows_override
+    view_class = Class.new(RufletView)
+    stub_const_name("AdminPostView", view_class) do
+      assert_equal "/admin_posts", view_class.route
+      view_class.route "/dashboard"
+      assert_equal "/dashboard", view_class.route
+    end
+  end
+
+  def test_rails_view_router_dispatches_by_route_and_first_segment
+    posts = Class.new(RufletView) do
+      route "/posts"
+
+      def render
+        page.rendered = :posts
+      end
+    end
+    categories = Class.new(RufletView) do
+      route "/categories"
+
+      def render
+        page.rendered = :categories
+      end
+    end
+    page = RouterPage.new("/categories/1?dialog=edit")
+
+    Ruflet::Rails.render(page, routes: { "/posts" => posts, "/categories" => categories }, default: posts)
+
+    assert_equal :categories, page.rendered
+
+    page.route = "/posts"
+    page.route_change.call(nil)
+
+    assert_equal :posts, page.rendered
   end
 
   def test_mobile_app_template_alias_stays_backward_compatible
@@ -72,6 +109,7 @@ class InstallSupportTest < Minitest::Test
     )
 
     assert_includes template, "class PostView < RufletView"
+    assert_includes template, 'route "/posts"'
     assert_includes template, "model_class.order(created_at: :desc).limit(50)"
     assert_includes template, 'COLUMNS = ["title", "body"].freeze'
     refute_includes template, "module RufletScaffolds"
@@ -242,6 +280,28 @@ class InstallSupportTest < Minitest::Test
       FileUtils.mkdir_p(source)
 
       refute Ruflet::Rails::InstallSupport.publish_web_client(dir, source: source)
+    end
+  end
+
+  private
+
+  def stub_const_name(name, value)
+    Object.const_set(name, value)
+    yield
+  ensure
+    Object.send(:remove_const, name) if Object.const_defined?(name) && Object.const_get(name) == value
+  end
+
+  class RouterPage
+    attr_accessor :route, :rendered
+    attr_reader :route_change
+
+    def initialize(route)
+      @route = route
+    end
+
+    def on_route_change=(handler)
+      @route_change = handler
     end
   end
 end

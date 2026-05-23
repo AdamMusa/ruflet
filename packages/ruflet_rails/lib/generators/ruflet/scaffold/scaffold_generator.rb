@@ -25,9 +25,8 @@ module Ruflet
       end
 
       def print_scaffold_status
-        names = Ruflet::Rails::InstallSupport.scaffold_names(model_name)
         say "Ruflet scaffold generated at #{scaffold_view_path}"
-        say "Require it from your Ruflet entrypoint and call #{names[:class_name]}View.render(page)."
+        say "The Ruflet entrypoint auto-loads *_view.rb files and routes to this view."
       end
 
       private

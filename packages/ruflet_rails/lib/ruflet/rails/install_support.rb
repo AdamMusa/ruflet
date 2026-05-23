@@ -12,33 +12,13 @@ module Ruflet
       def default_app_template(app_title:)
         template = <<~RUBY
           require "ruflet"
+          require "ruflet_rails"
+
+          Dir[File.join(__dir__, "**", "*_view.rb")].sort.each { |file| require file }
 
           Ruflet.run do |page|
             page.title = #{app_title.inspect}
-            count = 0
-            count_text = text(count.to_s, size: 40)
-
-            page.add(
-              container(
-                expand: true,
-                alignment: Ruflet::MainAxisAlignment::CENTER,
-                content: column(
-                  alignment: Ruflet::MainAxisAlignment::CENTER,
-                  horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
-                  children: [
-                    text("You have pushed the button this many times:"),
-                    count_text
-                  ]
-                )
-              ),
-              floating_action_button: fab(
-                icon: Ruflet::MaterialIcons::ADD,
-                on_click: ->(_e) do
-                  count += 1
-                  page.update(count_text, value: count.to_s)
-                end
-              )
-            )
+            Ruflet::Rails.render(page)
           end
         RUBY
         template.gsub(/^    /, "  ")
@@ -63,6 +43,7 @@ module Ruflet
           require "ruflet_rails"
 
           class #{model_class}View < RufletView
+              route #{("/" + names[:plural]).inspect}
 
               COLUMNS = [#{columns_literal}].freeze
               FIELDS = [#{fields_literal}].freeze
