@@ -166,7 +166,7 @@ module Ruflet
                   actions: [
                     text_button(
                       content: text("Cancel"),
-                      on_click: ->(_e) { page.update(dialog, open: false) }
+                      on_click: ->(_e) { page.pop_dialog }
                     ),
                     text_button(
                       content: text("Save"),
@@ -224,12 +224,12 @@ module Ruflet
                   actions: [
                     text_button(
                       content: text("Cancel"),
-                      on_click: ->(_e) { page.update(dialog, open: false) }
+                      on_click: ->(_e) { page.pop_dialog }
                     ),
                     text_button(
                       content: text("Delete"),
                       on_click: ->(_e) do
-                        page.update(dialog, open: false)
+                        page.pop_dialog
                         delete_record(record)
                       end
                     )
@@ -246,7 +246,7 @@ module Ruflet
                 end
 
                 if record.update(attributes)
-                  page.update(dialog, open: false) if dialog
+                  page.pop_dialog if dialog
                   index
                   show_snackbar("#{singular_title} saved")
                 else

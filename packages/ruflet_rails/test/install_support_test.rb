@@ -156,8 +156,8 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "width: 140"
     assert_includes template, "content: text(\"New Post\")"
     assert_includes template, 'content: text("Save")'
-    assert_includes template, "page.update(dialog, open: false)"
-    refute_includes template, "page.pop_dialog"
+    assert_includes template, "page.pop_dialog"
+    refute_includes template, "page.update(dialog, open: false)"
     assert_includes template, 'show_snackbar("Post saved")'
     assert_includes template, 'show_snackbar("Post deleted")'
     assert_includes template, "record.destroy"
@@ -228,7 +228,7 @@ class InstallSupportTest < Minitest::Test
     Object.send(:remove_const, :GeneratedCategory) if Object.const_defined?(:GeneratedCategory) && Object.const_get(:GeneratedCategory) == model_class
   end
 
-  def test_generated_scaffold_dialog_cancel_closes_with_dialog_update
+  def test_generated_scaffold_dialog_cancel_closes_through_dialog_container
     template = Ruflet::Rails::InstallSupport.scaffold_view_template(
       model_name: "DismissableCategory",
       attributes: ["name:string"]
@@ -257,8 +257,7 @@ class InstallSupportTest < Minitest::Test
     page.dispatch_event(target: cancel["_i"], name: "click", data: nil)
 
     assert_equal Ruflet::Protocol::ACTIONS[:patch_control], sent.last[0]
-    assert_equal dialog["_i"], sent.last[1]["id"]
-    assert_includes sent.last[1]["patch"], [0, 0, "open", false]
+    assert find_patch_control(sent.last[1]["patch"], "_c" => "AlertDialog", "open" => false)
   ensure
     Object.send(:remove_const, :DismissableCategoryView) if Object.const_defined?(:DismissableCategoryView)
     Object.send(:remove_const, :DismissableCategory) if Object.const_defined?(:DismissableCategory) && Object.const_get(:DismissableCategory) == model_class
@@ -292,7 +291,7 @@ class InstallSupportTest < Minitest::Test
     sent.clear
     page.dispatch_event(target: save["_i"], name: "click", data: nil)
 
-    assert sent.any? { |(_action, payload)| payload["id"] == dialog["_i"] && payload["patch"].include?([0, 0, "open", false]) }
+    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "AlertDialog", "open" => false) }
     assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "Text", "value" => "Saving Categories") }
     assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Saving Category saved" }) }
   ensure
