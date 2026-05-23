@@ -144,7 +144,8 @@ module Ruflet
                       )
                     ),
                     expand: true
-                  )
+                  ),
+                  appbar: app_bar()
                 )
               end
 
@@ -278,12 +279,14 @@ module Ruflet
                 row(
                   spacing: 4,
                   controls: [
-                    text_button(
-                      content: icon("edit", tooltip: "Edit"),
+                    icon_button(
+                      "edit",
+                      tooltip: "Edit",
                       on_click: ->(_e) { open_form_dialog(record, title: "Edit #{singular_title}") }
                     ),
-                    text_button(
-                      content: icon("delete", tooltip: "Delete"),
+                    icon_button(
+                      "delete",
+                      tooltip: "Delete",
                       on_click: ->(_e) { open_delete_dialog(record) }
                     )
                   ]

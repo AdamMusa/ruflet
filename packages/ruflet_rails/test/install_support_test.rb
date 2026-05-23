@@ -138,9 +138,8 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, 'icon("edit", tooltip: "Edit")'
     assert_includes template, 'icon("delete", tooltip: "Delete")'
     refute_includes template, 'outlined_icon_button('
-    assert_includes template, 'text_button('
-    assert_includes template, 'content: icon("edit", tooltip: "Edit")'
-    assert_includes template, 'content: icon("delete", tooltip: "Delete")'
+    assert_includes template, 'icon_button('
+    assert_includes template, 'appbar: app_bar()'
     assert_includes template, 'alignment: "end"'
     assert_includes template, '"visibility"'
     assert_includes template, '"edit"'
@@ -389,14 +388,36 @@ class InstallSupportTest < Minitest::Test
 
     show_patch = sent.last[1]["patch"]
     assert find_patch_control(show_patch, "_c" => "Text", "value" => "Action Category #1")
+    assert find_patch_control(show_patch, "_c" => "AppBar")
     refute find_patch_control(show_patch, "_c" => "OutlinedIconButton")
-    refute find_patch_control(show_patch, "_c" => "TextButton", "content" => { "_c" => "Icon", "tooltip" => "Show" })
-    detail_edit = find_patch_control(show_patch, "_c" => "TextButton", "content" => { "_c" => "Icon", "tooltip" => "Edit" })
-    detail_delete = find_patch_control(show_patch, "_c" => "TextButton", "content" => { "_c" => "Icon", "tooltip" => "Delete" })
+    refute find_patch_control(show_patch, "_c" => "IconButton", "tooltip" => "Show")
+    detail_edit = find_patch_control(show_patch, "_c" => "IconButton", "tooltip" => "Edit")
+    detail_delete = find_patch_control(show_patch, "_c" => "IconButton", "tooltip" => "Delete")
     refute_nil detail_edit
     refute_nil detail_delete
-    assert_kind_of Integer, detail_edit.dig("content", "icon")
-    assert_kind_of Integer, detail_delete.dig("content", "icon")
+    assert_equal true, detail_edit["on_click"]
+    assert_equal true, detail_delete["on_click"]
+    assert_kind_of Integer, detail_edit["icon"]
+    assert_kind_of Integer, detail_delete["icon"]
+
+    sent.clear
+    page.dispatch_event(target: detail_edit["_i"], name: "click", data: nil)
+
+    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "AlertDialog") }
+
+    ActionCategoryView.render(page)
+    patch = sent.last[1]["patch"]
+    show_cell = find_patch_control(patch, "_c" => "DataCell", "content" => { "_c" => "Icon", "tooltip" => "Show" })
+
+    sent.clear
+    page.dispatch_event(target: show_cell["_i"], name: "tap", data: nil)
+    show_patch = sent.last[1]["patch"]
+    detail_delete = find_patch_control(show_patch, "_c" => "IconButton", "tooltip" => "Delete")
+
+    sent.clear
+    page.dispatch_event(target: detail_delete["_i"], name: "click", data: nil)
+
+    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "AlertDialog", "title" => { "value" => "Delete Action Category?" }) }
 
     ActionCategoryView.render(page)
     patch = sent.last[1]["patch"]
