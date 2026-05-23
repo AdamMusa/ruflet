@@ -645,6 +645,34 @@ module Ruflet
         FileUtils.cp_r(source, target)
         true
       end
+
+      def install_next_steps(target:, entrypoint:, client:, web_published:, mount_path: "/ws")
+        normalized_target = normalize_scaffold_target(target)
+        web_path = default_web_public_path
+        lines = [
+          "Ruflet Rails #{normalized_target} installed.",
+          "Generated entrypoint: #{entrypoint}",
+          "Mounted websocket: #{mount_path}",
+          "Next steps:",
+          "  1. Start Rails: bin/rails server",
+          "  2. Open the Ruflet web client: /#{web_path}/"
+        ]
+
+        if web_published
+          lines << "Web client copied to public/#{web_path}."
+        elsif %w[frontend web].include?(normalized_target) || %w[web all].include?(client.to_s)
+          lines += [
+            "Web client was not copied because no built/prebuilt web index.html was found.",
+            "To download the prebuilt client from GitHub: bin/rails ruflet:update[web]",
+            "To build the WASM web client yourself, install the ruflet CLI globally first:",
+            "  gem install ruflet",
+            "Then build and copy build/web into public/#{web_path}:",
+            "  bin/rails ruflet:build[web]"
+          ]
+        end
+
+        lines
+      end
     end
   end
 end

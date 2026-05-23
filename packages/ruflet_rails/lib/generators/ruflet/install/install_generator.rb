@@ -6,6 +6,7 @@ require "ruflet/rails/install_support"
 module Ruflet
   module Generators
     class InstallGenerator < ::Rails::Generators::Base
+      class_option :frontend, type: :boolean, default: false, desc: "Install the Rails-hosted Ruflet frontend entrypoint and web client"
       class_option :target, type: :string, default: "frontend", desc: "App views folder for the Ruflet entrypoint: frontend, mobile, web, desktop, or a custom folder"
       class_option :client, type: :string, default: nil, desc: "Download prebuilt client from GitHub releases: web, desktop, all, or none"
 
@@ -37,7 +38,16 @@ module Ruflet
 
       def download_prebuilt_client
         client = requested_client
+        @web_client_published = false
         return if client == "none"
+
+        if %w[web all].include?(client)
+          @web_client_published = Ruflet::Rails::InstallSupport.publish_web_build(destination_root)
+          if @web_client_published
+            say "Ruflet web build copied from build/web to public/#{Ruflet::Rails::InstallSupport.default_web_public_path}"
+            return if client == "web"
+          end
+        end
 
         require "ruflet/cli"
         exit_code = Dir.chdir(destination_root) do
@@ -48,6 +58,7 @@ module Ruflet
         return unless %w[web all].include?(client)
 
         published = Ruflet::Rails::InstallSupport.publish_prebuilt_web_client(destination_root)
+        @web_client_published = published
         if published
           say "Ruflet web client published at /#{Ruflet::Rails::InstallSupport.default_web_public_path}/"
         else
@@ -56,7 +67,12 @@ module Ruflet
       end
 
       def print_install_status
-        say "ruflet.yaml generated"
+        Ruflet::Rails::InstallSupport.install_next_steps(
+          target: install_target,
+          entrypoint: entrypoint_path,
+          client: requested_client,
+          web_published: !!@web_client_published
+        ).each { |line| say line }
       end
 
       private
@@ -66,7 +82,7 @@ module Ruflet
       end
 
       def entrypoint_path
-        Ruflet::Rails::InstallSupport.default_entrypoint_path(target: options[:target])
+        Ruflet::Rails::InstallSupport.default_entrypoint_path(target: install_target)
       end
 
       def requested_client
@@ -77,11 +93,18 @@ module Ruflet
           return explicit
         end
 
-        target = options[:target].to_s.strip.downcase
+        target = install_target
+        return "web" if options[:frontend]
         return "web" if target == "web"
         return "desktop" if target == "desktop"
 
         "none"
+      end
+
+      def install_target
+        return "frontend" if options[:frontend]
+
+        options[:target].to_s.strip.downcase
       end
     end
   end

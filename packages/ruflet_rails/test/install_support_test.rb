@@ -488,6 +488,35 @@ class InstallSupportTest < Minitest::Test
     end
   end
 
+  def test_frontend_install_steps_explain_web_public_copy_and_wasm_build
+    steps = Ruflet::Rails::InstallSupport.install_next_steps(
+      target: "frontend",
+      entrypoint: "app/views/frontend/main.rb",
+      client: "web",
+      web_published: false
+    ).join("\n")
+
+    assert_includes steps, "Ruflet Rails frontend installed."
+    assert_includes steps, "Generated entrypoint: app/views/frontend/main.rb"
+    assert_includes steps, "Open the Ruflet web client: /ruflet/"
+    assert_includes steps, "bin/rails ruflet:update[web]"
+    assert_includes steps, "gem install ruflet"
+    assert_includes steps, "bin/rails ruflet:build[web]"
+    assert_includes steps, "public/ruflet"
+  end
+
+  def test_frontend_install_steps_confirm_published_web_client
+    steps = Ruflet::Rails::InstallSupport.install_next_steps(
+      target: "frontend",
+      entrypoint: "app/views/frontend/main.rb",
+      client: "web",
+      web_published: true
+    ).join("\n")
+
+    assert_includes steps, "Web client copied to public/ruflet."
+    refute_includes steps, "gem install ruflet"
+  end
+
   private
 
   def stub_const_name(name, value)
