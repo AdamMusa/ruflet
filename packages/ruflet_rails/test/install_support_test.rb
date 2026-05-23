@@ -132,9 +132,15 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "width: dialog_width"
     assert_includes template, "def dialog_width"
     assert_includes template, "data_table("
-    assert_includes template, "Ruflet::MaterialIcons::VISIBILITY"
-    assert_includes template, "Ruflet::MaterialIcons::EDIT"
-    assert_includes template, "Ruflet::MaterialIcons::DELETE"
+    assert_includes template, 'data_column("Actions")'
+    refute_includes template, "data_column(icon("
+    assert_includes template, 'icon("visibility", tooltip: "Show")'
+    assert_includes template, 'icon("edit", tooltip: "Edit")'
+    assert_includes template, 'icon("delete", tooltip: "Delete")'
+    assert_includes template, 'outlined_icon_button('
+    assert_includes template, '"visibility"'
+    assert_includes template, '"edit"'
+    assert_includes template, '"delete"'
     assert_includes template, 'tooltip: "Edit"), on_tap:'
     assert_includes template, 'tooltip: "Delete"), on_tap:'
     assert_includes template, "safe_area("
@@ -325,10 +331,12 @@ class InstallSupportTest < Minitest::Test
 
     ActionCategoryView.render(page)
     patch = sent.last[1]["patch"]
+    actions_column = find_patch_control(patch, "_c" => "DataColumn", "label" => "Actions")
     show_cell = find_patch_control(patch, "_c" => "DataCell", "content" => { "_c" => "Icon", "tooltip" => "Show" })
     edit_cell = find_patch_control(patch, "_c" => "DataCell", "content" => { "_c" => "Icon", "tooltip" => "Edit" })
     delete_cell = find_patch_control(patch, "_c" => "DataCell", "content" => { "_c" => "Icon", "tooltip" => "Delete" })
 
+    refute_nil actions_column
     refute_nil show_cell
     refute_nil edit_cell
     refute_nil delete_cell

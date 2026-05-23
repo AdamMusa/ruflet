@@ -255,9 +255,9 @@ module Ruflet
 
               def table_columns
                 columns.map { |name| data_column(name.humanize) } + [
-                  data_column(icon(icon: Ruflet::MaterialIcons::VISIBILITY, tooltip: "Show")),
-                  data_column(icon(icon: Ruflet::MaterialIcons::EDIT, tooltip: "Edit")),
-                  data_column(icon(icon: Ruflet::MaterialIcons::DELETE, tooltip: "Delete"))
+                  data_column("Actions"),
+                  data_column(""),
+                  data_column("")
                 ]
               end
 
@@ -266,9 +266,9 @@ module Ruflet
                   columns.map do |name|
                     data_cell(record.public_send(name).to_s, on_tap: ->(_e) { show(record) })
                   end + [
-                    data_cell(icon(icon: Ruflet::MaterialIcons::VISIBILITY, tooltip: "Show"), on_tap: ->(_e) { show(record) }),
-                    data_cell(icon(icon: Ruflet::MaterialIcons::EDIT, tooltip: "Edit"), on_tap: ->(_e) { open_form_dialog(record, title: "Edit #{singular_title}") }),
-                    data_cell(icon(icon: Ruflet::MaterialIcons::DELETE, tooltip: "Delete"), on_tap: ->(_e) { open_delete_dialog(record) })
+                    data_cell(icon("visibility", tooltip: "Show"), on_tap: ->(_e) { show(record) }),
+                    data_cell(icon("edit", tooltip: "Edit"), on_tap: ->(_e) { open_form_dialog(record, title: "Edit #{singular_title}") }),
+                    data_cell(icon("delete", tooltip: "Delete"), on_tap: ->(_e) { open_delete_dialog(record) })
                   ]
                 )
               end
@@ -278,17 +278,17 @@ module Ruflet
                   spacing: 4,
                   controls: [
                     outlined_icon_button(
-                      Ruflet::MaterialIcons::VISIBILITY,
+                      "visibility",
                       tooltip: "Show",
                       on_click: ->(_e) { show(record) }
                     ),
                     outlined_icon_button(
-                      Ruflet::MaterialIcons::EDIT,
+                      "edit",
                       tooltip: "Edit",
                       on_click: ->(_e) { open_form_dialog(record, title: "Edit #{singular_title}") }
                     ),
                     outlined_icon_button(
-                      Ruflet::MaterialIcons::DELETE,
+                      "delete",
                       tooltip: "Delete",
                       on_click: ->(_e) { open_delete_dialog(record) }
                     )
