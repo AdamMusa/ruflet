@@ -128,7 +128,7 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "def index"
     assert_includes template, "def show(record)"
     assert_includes template, "def open_form_dialog(record, title:)"
-    assert_includes template, "def save(record, fields)"
+    assert_includes template, "def save(record, fields, dialog = nil)"
     assert_includes template, "width: dialog_width"
     assert_includes template, "def dialog_width"
     assert_includes template, "data_table("
@@ -137,7 +137,9 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "padding: { left: 24, top: 16, right: 24, bottom: 24 }"
     refute_match(/text\([^\\n]*expand:/, template)
     assert_includes template, "content: text(\"New Post\")"
-    assert_includes template, "content: text(record.persisted? ? \"Update Post\" : \"Create Post\")"
+    assert_includes template, 'content: text("Save")'
+    assert_includes template, "page.update(dialog, open: false)"
+    refute_includes template, "page.pop_dialog"
     assert_includes template, "record.destroy"
     assert_includes template, "page.show_dialog("
     assert_silent { RubyVM::InstructionSequence.compile(template) }
@@ -199,9 +201,47 @@ class InstallSupportTest < Minitest::Test
     assert_equal true, dialog["open"]
     assert_equal 326.0, dialog.dig("content", "width")
     assert_nil dialog.dig("content", "content", "controls", 0, "expand")
+    assert_equal %w[TextButton TextButton], dialog["actions"].map { |action| action["_c"] }
+    assert_equal %w[Cancel Save], dialog["actions"].map { |action| action.dig("content", "value") }
   ensure
     Object.send(:remove_const, :GeneratedCategoryView) if Object.const_defined?(:GeneratedCategoryView)
     Object.send(:remove_const, :GeneratedCategory) if Object.const_defined?(:GeneratedCategory) && Object.const_get(:GeneratedCategory) == model_class
+  end
+
+  def test_generated_scaffold_dialog_cancel_closes_with_dialog_update
+    template = Ruflet::Rails::InstallSupport.scaffold_view_template(
+      model_name: "DismissableCategory",
+      attributes: ["name:string"]
+    )
+    model_class = stub_scaffold_model("DismissableCategory")
+    Object.class_eval(template.sub(/^require "ruflet_rails"\n\n/, ""))
+
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "test-session",
+      client_details: { "route" => "/dismissable_categories", "width" => 390 },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    DismissableCategoryView.render(page)
+    button = find_patch_control(sent.last[1]["patch"], "_c" => "FilledButton", "content" => { "value" => "New Dismissable Category" })
+
+    sent.clear
+    page.dispatch_event(target: button["_i"], name: "click", data: nil)
+    dialog = sent.last[1]["patch"][1][3].first
+    cancel = find_patch_control(dialog, "_c" => "TextButton", "content" => { "value" => "Cancel" })
+
+    refute_nil cancel
+
+    sent.clear
+    page.dispatch_event(target: cancel["_i"], name: "click", data: nil)
+
+    assert_equal Ruflet::Protocol::ACTIONS[:patch_control], sent.last[0]
+    assert_equal dialog["_i"], sent.last[1]["id"]
+    assert_includes sent.last[1]["patch"], [0, 0, "open", false]
+  ensure
+    Object.send(:remove_const, :DismissableCategoryView) if Object.const_defined?(:DismissableCategoryView)
+    Object.send(:remove_const, :DismissableCategory) if Object.const_defined?(:DismissableCategory) && Object.const_get(:DismissableCategory) == model_class
   end
 
   def test_generated_scaffold_dialog_click_flows_through_rails_protocol

@@ -149,28 +149,28 @@ module Ruflet
                   [field[:name], field_control(field, record)]
                 end
 
-                page.show_dialog(
-                  alert_dialog(
-                    modal: true,
-                    scrollable: true,
-                    title: text(title),
-                    content: container(
-                      width: dialog_width,
-                      content: column(spacing: 8, controls: fields.values)
+                dialog = nil
+                dialog = alert_dialog(
+                  modal: true,
+                  scrollable: true,
+                  title: text(title),
+                  content: container(
+                    width: dialog_width,
+                    content: column(spacing: 8, controls: fields.values)
+                  ),
+                  actions: [
+                    text_button(
+                      content: text("Cancel"),
+                      on_click: ->(_e) { page.update(dialog, open: false) }
                     ),
-                    actions: [
-                      outlined_button(
-                        content: text("Cancel"),
-                        on_click: ->(_e) { page.pop_dialog }
-                      ),
-                      filled_button(
-                        content: text(record.persisted? ? "Update #{singular_title}" : "Create #{singular_title}"),
-                        on_click: ->(_e) { save(record, fields) }
-                      )
-                    ],
-                    actions_alignment: "end"
-                  )
+                    text_button(
+                      content: text("Save"),
+                      on_click: ->(_e) { save(record, fields, dialog) }
+                    )
+                  ],
+                  actions_alignment: "end"
                 )
+                page.show_dialog(dialog)
               end
 
               def field_control(field, record)
@@ -211,38 +211,38 @@ module Ruflet
               end
 
               def open_delete_dialog(record)
-                page.show_dialog(
-                  alert_dialog(
-                    modal: true,
-                    title: text("Delete #{singular_title}?"),
-                    content: text("This action cannot be undone."),
-                    actions: [
-                      outlined_button(
-                        content: text("Cancel"),
-                        on_click: ->(_e) { page.pop_dialog }
-                      ),
-                      filled_button(
-                        content: text("Delete"),
-                        on_click: ->(_e) do
-                          record.destroy
-                          page.pop_dialog
-                          index
-                        end
-                      )
-                    ],
-                    actions_alignment: "end"
-                  )
+                dialog = nil
+                dialog = alert_dialog(
+                  modal: true,
+                  title: text("Delete #{singular_title}?"),
+                  content: text("This action cannot be undone."),
+                  actions: [
+                    text_button(
+                      content: text("Cancel"),
+                      on_click: ->(_e) { page.update(dialog, open: false) }
+                    ),
+                    text_button(
+                      content: text("Delete"),
+                      on_click: ->(_e) do
+                        record.destroy
+                        page.update(dialog, open: false)
+                        index
+                      end
+                    )
+                  ],
+                  actions_alignment: "end"
                 )
+                page.show_dialog(dialog)
               end
 
-              def save(record, fields)
+              def save(record, fields, dialog = nil)
                 attributes = fields.to_h do |name, control|
                   field = form_fields.find { |candidate| candidate[:name] == name }
                   [name, control_value(control, field[:type])]
                 end
 
                 if record.update(attributes)
-                  page.pop_dialog
+                  page.update(dialog, open: false) if dialog
                   index
                 else
                   page.snack_bar = snack_bar(text(record.errors.full_messages.to_sentence))
