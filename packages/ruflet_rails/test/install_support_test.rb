@@ -128,6 +128,8 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "def save(record, fields)"
     assert_includes template, "data_table("
     assert_includes template, "data_column(\"Actions\")"
+    assert_includes template, "safe_area("
+    assert_includes template, "padding: { left: 24, top: 16, right: 24, bottom: 24 }"
     assert_includes template, "content: text(\"New Post\")"
     assert_includes template, "content: text(record.persisted? ? \"Update Post\" : \"Create Post\")"
     assert_includes template, "record.destroy"

@@ -66,29 +66,36 @@ module Ruflet
 
                 page.title = #{title.inspect}
                 page.add(
-                  column(
-                    expand: true,
-                    spacing: 12,
-                    controls: [
-                      row(
-                        alignment: "spaceBetween",
-                        vertical_alignment: "center",
+                  safe_area(
+                    container(
+                      expand: true,
+                      padding: { left: 24, top: 16, right: 24, bottom: 24 },
+                      content: column(
+                        expand: true,
+                        spacing: 16,
                         controls: [
-                          text(#{title.inspect}, size: 24, weight: "bold"),
-                          filled_button(
-                            content: text("New #{singular_title}"),
-                            on_click: ->(_e) { open_form_dialog(model_class.new, title: "New #{singular_title}") }
+                          row(
+                            alignment: "spaceBetween",
+                            vertical_alignment: "center",
+                            controls: [
+                              text(#{title.inspect}, size: 24, weight: "bold", expand: true),
+                              filled_button(
+                                content: text("New #{singular_title}"),
+                                on_click: ->(_e) { open_form_dialog(model_class.new, title: "New #{singular_title}") }
+                              )
+                            ]
+                          ),
+                          data_table(
+                            table_columns,
+                            rows: records.map { |record| table_row(record) },
+                            column_spacing: 24,
+                            horizontal_margin: 12,
+                            show_bottom_border: true
                           )
                         ]
-                      ),
-                      data_table(
-                        table_columns,
-                        rows: records.map { |record| table_row(record) },
-                        column_spacing: 24,
-                        horizontal_margin: 12,
-                        show_bottom_border: true
                       )
-                    ]
+                    ),
+                    expand: true
                   )
                 )
                 page.update
@@ -100,30 +107,37 @@ module Ruflet
 
                 page.title = "#{singular_title} ##\{record.id}"
                 page.add(
-                  column(
-                    expand: true,
-                    spacing: 12,
-                    controls: [
-                      row(
-                        alignment: "spaceBetween",
-                        vertical_alignment: "center",
+                  safe_area(
+                    container(
+                      expand: true,
+                      padding: { left: 24, top: 16, right: 24, bottom: 24 },
+                      content: column(
+                        expand: true,
+                        spacing: 16,
                         controls: [
-                          text("#{singular_title} ##\{record.id}", size: 24, weight: "bold"),
-                          action_buttons(record)
-                        ]
-                      ),
-                      column(
-                        spacing: 8,
-                        controls: COLUMNS.map do |name|
                           row(
+                            alignment: "spaceBetween",
+                            vertical_alignment: "center",
                             controls: [
-                              text(name.humanize, weight: "bold", width: 140),
-                              text(record.public_send(name).to_s)
+                              text("#{singular_title} ##\{record.id}", size: 24, weight: "bold", expand: true),
+                              action_buttons(record)
                             ]
+                          ),
+                          column(
+                            spacing: 8,
+                            controls: COLUMNS.map do |name|
+                              row(
+                                controls: [
+                                  text(name.humanize, weight: "bold", width: 140),
+                                  text(record.public_send(name).to_s)
+                                ]
+                              )
+                            end
                           )
-                        end
+                        ]
                       )
-                    ]
+                    ),
+                    expand: true
                   )
                 )
                 page.update
