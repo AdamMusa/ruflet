@@ -34,7 +34,7 @@ class InstallSupportTest < Minitest::Test
 
     assert_includes template, 'Ruflet.run do |page|'
     assert_includes template, 'page.title = "Demo"'
-    assert_includes template, 'Dir[File.join(__dir__, "**", "*_view.rb")]'
+    refute_includes template, "Dir["
     assert_includes template, "Ruflet::Rails.render(page)"
   end
 
@@ -221,6 +221,13 @@ class InstallSupportTest < Minitest::Test
     assert_equal(
       "app/views/desktop/posts/posts_view.rb",
       Ruflet::Rails::InstallSupport.scaffold_view_path("Post", target: "desktop")
+    )
+  end
+
+  def test_scaffold_entrypoint_require_is_explicit_for_generated_view
+    assert_equal(
+      'require_relative "posts/posts_view"',
+      Ruflet::Rails::InstallSupport.scaffold_entrypoint_require("Post")
     )
   end
 

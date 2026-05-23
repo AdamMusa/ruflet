@@ -14,8 +14,6 @@ module Ruflet
           require "ruflet"
           require "ruflet_rails"
 
-          Dir[File.join(__dir__, "**", "*_view.rb")].sort.each { |file| require file }
-
           Ruflet.run do |page|
             page.title = #{app_title.inspect}
             Ruflet::Rails.render(page)
@@ -335,6 +333,12 @@ module Ruflet
         app_target = normalize_scaffold_target(target)
 
         File.join("app", "views", app_target, names[:plural], "_form.rb")
+      end
+
+      def scaffold_entrypoint_require(model_name)
+        names = scaffold_names(model_name)
+
+        %(require_relative "#{names[:plural]}/#{names[:plural]}_view")
       end
 
       def form_view_template(model_name:, attributes:)

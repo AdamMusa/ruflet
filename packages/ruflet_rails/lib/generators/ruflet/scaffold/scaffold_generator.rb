@@ -24,15 +24,29 @@ module Ruflet
         )
       end
 
+      def add_entrypoint_require
+        target = File.join(destination_root, entrypoint_path)
+        return unless File.file?(target)
+
+        require_line = Ruflet::Rails::InstallSupport.scaffold_entrypoint_require(model_name)
+        return if File.read(target).include?(require_line)
+
+        insert_into_file target, "#{require_line}\n", after: %(require "ruflet_rails"\n)
+      end
+
       def print_scaffold_status
         say "Ruflet scaffold generated at #{scaffold_view_path}"
-        say "The Ruflet entrypoint auto-loads *_view.rb files and routes to this view."
+        say "The Ruflet entrypoint now explicitly requires this view."
       end
 
       private
 
       def scaffold_view_path
         Ruflet::Rails::InstallSupport.scaffold_view_path(model_name, target: options[:target])
+      end
+
+      def entrypoint_path
+        Ruflet::Rails::InstallSupport.default_entrypoint_path(target: options[:target])
       end
     end
   end
