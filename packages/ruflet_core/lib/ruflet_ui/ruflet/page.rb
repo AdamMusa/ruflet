@@ -250,10 +250,10 @@ module Ruflet
       controls.each { |c| register_control_tree(c, visited) }
       @root_controls = controls
 
-      @view_props["appbar"] = appbar if appbar
-      @view_props["bottom_appbar"] = bottom_appbar if bottom_appbar
-      @view_props["floating_action_button"] = floating_action_button if floating_action_button
-      @view_props["navigation_bar"] = navigation_bar if navigation_bar
+      update_view_slot("appbar", appbar)
+      update_view_slot("bottom_appbar", bottom_appbar)
+      update_view_slot("floating_action_button", floating_action_button)
+      update_view_slot("navigation_bar", navigation_bar)
       @dialog = dialog if dialog
       @snack_bar = snack_bar if snack_bar
       @bottom_sheet = bottom_sheet if bottom_sheet
@@ -1369,6 +1369,14 @@ module Ruflet
 
     def send_message(action, payload)
       @sender.call(action, payload)
+    end
+
+    def update_view_slot(name, value)
+      if value.nil?
+        @view_props.delete(name)
+      else
+        @view_props[name] = value
+      end
     end
 
     def send_view_patch

@@ -216,4 +216,32 @@ class PageUpdateSerializationTest < Minitest::Test
     assert_equal true, fab["on_click"]
   end
 
+  def test_page_add_clears_view_slots_when_the_next_view_omits_them
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    page.add(
+      Ruflet.text("Detail"),
+      appbar: Ruflet.app_bar(
+        leading: Ruflet.icon_button("arrow_back", tooltip: "Back")
+      ),
+      floating_action_button: Ruflet.fab(icon: Ruflet::MaterialIcons::ADD)
+    )
+
+    first_view = sent.last[1]["patch"].find { |op| op[2] == "views" }[3].first
+    assert_equal "AppBar", first_view["appbar"]["_c"]
+    assert_equal "FloatingActionButton", first_view["floating_action_button"]["_c"]
+
+    page.add(Ruflet.text("Index"))
+
+    next_view = sent.last[1]["patch"].find { |op| op[2] == "views" }[3].first
+    assert_equal "Index", next_view["controls"].first["value"]
+    refute next_view.key?("appbar")
+    refute next_view.key?("floating_action_button")
+  end
+
 end
