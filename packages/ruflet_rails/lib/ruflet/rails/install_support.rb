@@ -114,15 +114,16 @@ module Ruflet
                         expand: true,
                         spacing: 16,
                         controls: [
-                          row(
-                            alignment: "spaceBetween",
-                            vertical_alignment: "center",
+                          column(
+                            spacing: 8,
                             controls: [
-                              container(
-                                expand: true,
-                                content: text("#{singular_title} ##\{record.id}", size: 24, weight: "bold")
+                              text("#{singular_title} ##\{record.id}", size: 24, weight: "bold"),
+                              row(
+                                alignment: "end",
+                                controls: [
+                                  action_buttons(record)
+                                ]
                               ),
-                              action_buttons(record)
                             ]
                           ),
                           column(
@@ -277,10 +278,6 @@ module Ruflet
                 row(
                   spacing: 4,
                   controls: [
-                    text_button(
-                      content: icon("visibility", tooltip: "Show"),
-                      on_click: ->(_e) { show(record) }
-                    ),
                     text_button(
                       content: icon("edit", tooltip: "Edit"),
                       on_click: ->(_e) { open_form_dialog(record, title: "Edit #{singular_title}") }

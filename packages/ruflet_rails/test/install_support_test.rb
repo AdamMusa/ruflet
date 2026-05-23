@@ -139,9 +139,9 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, 'icon("delete", tooltip: "Delete")'
     refute_includes template, 'outlined_icon_button('
     assert_includes template, 'text_button('
-    assert_includes template, 'content: icon("visibility", tooltip: "Show")'
     assert_includes template, 'content: icon("edit", tooltip: "Edit")'
     assert_includes template, 'content: icon("delete", tooltip: "Delete")'
+    assert_includes template, 'alignment: "end"'
     assert_includes template, '"visibility"'
     assert_includes template, '"edit"'
     assert_includes template, '"delete"'
@@ -390,6 +390,7 @@ class InstallSupportTest < Minitest::Test
     show_patch = sent.last[1]["patch"]
     assert find_patch_control(show_patch, "_c" => "Text", "value" => "Action Category #1")
     refute find_patch_control(show_patch, "_c" => "OutlinedIconButton")
+    refute find_patch_control(show_patch, "_c" => "TextButton", "content" => { "_c" => "Icon", "tooltip" => "Show" })
     detail_edit = find_patch_control(show_patch, "_c" => "TextButton", "content" => { "_c" => "Icon", "tooltip" => "Edit" })
     detail_delete = find_patch_control(show_patch, "_c" => "TextButton", "content" => { "_c" => "Icon", "tooltip" => "Delete" })
     refute_nil detail_edit
