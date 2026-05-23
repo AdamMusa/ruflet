@@ -98,7 +98,6 @@ module Ruflet
                     expand: true
                   )
                 )
-                page.update
               end
 
               def show(record)
@@ -143,7 +142,6 @@ module Ruflet
                     expand: true
                   )
                 )
-                page.update
               end
 
               def open_form_dialog(record, title:)
