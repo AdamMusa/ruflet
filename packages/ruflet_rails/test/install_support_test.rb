@@ -157,8 +157,8 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "width: 140"
     assert_includes template, "content: text(\"New Post\")"
     assert_includes template, 'content: text("Save")'
-    assert_includes template, "page.pop_dialog"
-    refute_includes template, "page.update(dialog, open: false)"
+    assert_includes template, "page.update(dialog, open: false)"
+    refute_includes template, "page.pop_dialog"
     assert_includes template, 'show_snackbar("Post saved")'
     assert_includes template, 'show_snackbar("Post deleted")'
     assert_includes template, "record.destroy"
@@ -229,7 +229,7 @@ class InstallSupportTest < Minitest::Test
     Object.send(:remove_const, :GeneratedCategory) if Object.const_defined?(:GeneratedCategory) && Object.const_get(:GeneratedCategory) == model_class
   end
 
-  def test_generated_scaffold_dialog_cancel_closes_through_dialog_container
+  def test_generated_scaffold_dialog_cancel_closes_with_dialog_update
     template = Ruflet::Rails::InstallSupport.scaffold_view_template(
       model_name: "DismissableCategory",
       attributes: ["name:string"]
@@ -258,8 +258,6 @@ class InstallSupportTest < Minitest::Test
     page.dispatch_event(target: cancel["_i"], name: "click", data: nil)
 
     assert sent.any? { |(_action, payload)| payload["id"] == dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
-    controls_patch = sent.last[1]["patch"].find { |op| op[2] == "controls" }
-    assert_equal [], controls_patch[3]
   ensure
     Object.send(:remove_const, :DismissableCategoryView) if Object.const_defined?(:DismissableCategoryView)
     Object.send(:remove_const, :DismissableCategory) if Object.const_defined?(:DismissableCategory) && Object.const_get(:DismissableCategory) == model_class
