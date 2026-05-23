@@ -245,8 +245,8 @@ module Ruflet
 
                 if record.update(attributes)
                   page.update(dialog, open: false) if dialog
-                  show_snackbar("#{singular_title} saved")
                   index
+                  show_snackbar("#{singular_title} saved")
                 else
                   page.snack_bar = snack_bar(text(record.errors.full_messages.to_sentence))
                   page.update
@@ -298,8 +298,8 @@ module Ruflet
 
               def delete_record(record)
                 record.destroy
-                show_snackbar("#{singular_title} deleted")
                 index
+                show_snackbar("#{singular_title} deleted")
               end
 
               def show_snackbar(message)

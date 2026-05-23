@@ -258,6 +258,42 @@ class InstallSupportTest < Minitest::Test
     Object.send(:remove_const, :DismissableCategory) if Object.const_defined?(:DismissableCategory) && Object.const_get(:DismissableCategory) == model_class
   end
 
+  def test_generated_scaffold_save_closes_dialog_refreshes_index_and_shows_snackbar
+    template = Ruflet::Rails::InstallSupport.scaffold_view_template(
+      model_name: "SavingCategory",
+      attributes: ["name:string"]
+    )
+    model_class = stub_scaffold_model("SavingCategory")
+    Object.class_eval(template.sub(/^require "ruflet_rails"\n\n/, ""))
+
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "test-session",
+      client_details: { "route" => "/saving_categories", "width" => 390 },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    SavingCategoryView.render(page)
+    button = find_patch_control(sent.last[1]["patch"], "_c" => "FilledButton", "content" => { "value" => "New Saving Category" })
+
+    sent.clear
+    page.dispatch_event(target: button["_i"], name: "click", data: nil)
+    dialog = sent.last[1]["patch"][1][3].first
+    save = find_patch_control(dialog, "_c" => "TextButton", "content" => { "value" => "Save" })
+
+    refute_nil save
+
+    sent.clear
+    page.dispatch_event(target: save["_i"], name: "click", data: nil)
+
+    assert sent.any? { |(_action, payload)| payload["id"] == dialog["_i"] && payload["patch"].include?([0, 0, "open", false]) }
+    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "Text", "value" => "Saving Categories") }
+    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Saving Category saved" }) }
+  ensure
+    Object.send(:remove_const, :SavingCategoryView) if Object.const_defined?(:SavingCategoryView)
+    Object.send(:remove_const, :SavingCategory) if Object.const_defined?(:SavingCategory) && Object.const_get(:SavingCategory) == model_class
+  end
+
   def test_generated_scaffold_dialog_click_flows_through_rails_protocol
     Dir.mktmpdir do |dir|
       previous_views = Ruflet::Rails.view_classes.dup
