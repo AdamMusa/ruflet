@@ -16,20 +16,27 @@ gem "ruflet_rails", ">= 0.0.5"
 
 ```bash
 bin/rails generate ruflet:install
+bin/rails generate ruflet:install --target=mobile
+bin/rails generate ruflet:install --target=web
+bin/rails generate ruflet:install --target=desktop
+bin/rails generate ruflet:install --client=web
+bin/rails generate ruflet:install --client=desktop
 ```
 
 This generator will:
-- create `app/mobile/main.rb`
+- create `app/views/frontend/main.rb` by default, or `app/views/mobile/main.rb`
+  with `--target=mobile`
 - create `ruflet.yaml`
 - add the Ruflet mount route to `config/routes.rb`
-- copy/configure `ruflet_client` when the template is available locally
+- download prebuilt clients from GitHub releases when `--target=web`,
+  `--target=desktop`, or `--client=web|desktop|all` is used
 
 Generated `ruflet.yaml`:
 
 ```yaml
 app:
   name: My App
-  ruflet_client_url: ""
+  backend_url: http://localhost:3000
 
 services: []
 
@@ -55,10 +62,101 @@ bundle exec rake ruflet:build[ios]
 bundle exec rake ruflet:build[aab]
 ```
 
+Rails web builds are published to `public/ruflet` and served by Rails at `/ruflet/`.
+
+`desktop` is also accepted as a host-platform alias:
+
+```bash
+bundle exec rake ruflet:build[desktop]
+```
+
+Rails desktop builds are server-driven. The built desktop app connects back to the
+Rails backend configured in `ruflet.yaml`; it does not package a self-contained
+Ruby runtime.
+
+## Update prebuilt clients
+
+Uses the same GitHub release assets as `ruflet update`:
+
+```bash
+bundle exec rake ruflet:update[web]
+bundle exec rake ruflet:update[desktop]
+bundle exec rake ruflet:update[all]
+```
+
+For web, the downloaded static client is published to `public/ruflet` and served
+by Rails at `/ruflet/`. The Rails app does not vendor Flutter source code.
+
+## Install mobile build
+
+Uses the same install pipeline as `ruflet install`:
+
+```bash
+bundle exec rake ruflet:install
+bundle exec rake ruflet:install[DEVICE_ID]
+```
+
+## Ruflet model scaffolds
+
+Generate a Ruflet UI view scaffold for a Rails model:
+
+```bash
+bin/rails generate ruflet:scaffold Post title:string body:text
+```
+
+This creates:
+
+```text
+app/views/frontend/posts/posts_view.rb
+```
+
+Use a specific app folder when your project has separate frontends:
+
+```bash
+bin/rails generate ruflet:scaffold Post title:string body:text --target=mobile
+bin/rails generate ruflet:scaffold Post title:string body:text --target=web
+bin/rails generate ruflet:scaffold Post title:string body:text --target=desktop
+```
+
+Or generate it alongside a normal Rails scaffold:
+
+```bash
+bin/rails generate scaffold Post title:string body:text --ruflet
+bin/rails generate scaffold Post title:string body:text --ruflet --ruflet-target=mobile
+```
+
+The `--ruflet` option delegates to `ruflet:scaffold`, so Rails scaffold and
+Ruflet scaffold generate the same Ruflet view file.
+
+The generated file is grouped by model under Rails views, for example
+`app/views/frontend/posts/posts_view.rb` or `app/views/mobile/posts/posts_view.rb`.
+
+## Ruflet model forms
+
+Generate only a reusable Ruflet form for an existing Rails model:
+
+```bash
+bin/rails generate ruflet:form Post
+bin/rails generate ruflet:form Post --target=mobile
+```
+
+When no fields are passed, the generator reads the model columns and skips `id`,
+`created_at`, and `updated_at`. You can also pass fields explicitly:
+
+```bash
+bin/rails generate ruflet:form Post title:string body:text published:boolean category:references
+```
+
+Foreign keys and references, such as `category:references` or `user_id`, render
+as Ruflet dropdowns populated from the associated Rails model.
+
+The generated form lives at `app/views/frontend/posts/_form.rb` by default, or
+`app/views/mobile/posts/_form.rb` with `--target=mobile`.
+
 ## Manual usage
 
 ```ruby
-# app/mobile/main.rb
+# app/views/frontend/main.rb
 require "ruflet"
 
 Ruflet.run do |page|
@@ -67,4 +165,10 @@ Ruflet.run do |page|
 end
 ```
 
-Connect mobile to Rails base URL, e.g. `http://10.0.2.2:3000`.
+Mount it in Rails:
+
+```ruby
+mount Ruflet::Rails.app(Rails.root.join("app/views/frontend/main.rb")), at: "/ws"
+```
+
+The same mounted Ruby entrypoint drives mobile, web, and desktop clients.
