@@ -85,12 +85,17 @@ module Ruflet
                               )
                             ]
                           ),
-                          data_table(
-                            table_columns,
-                            rows: records.map { |record| table_row(record) },
-                            column_spacing: 24,
-                            horizontal_margin: 12,
-                            show_bottom_border: true
+                          row(
+                            scroll: "auto",
+                            controls: [
+                              data_table(
+                                table_columns,
+                                rows: records.map { |record| table_row(record) },
+                                column_spacing: 24,
+                                horizontal_margin: 12,
+                                show_bottom_border: true
+                              )
+                            ]
                           )
                         ]
                       )

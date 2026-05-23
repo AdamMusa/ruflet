@@ -132,6 +132,7 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "width: dialog_width"
     assert_includes template, "def dialog_width"
     assert_includes template, "data_table("
+    assert_includes template, 'scroll: "auto"'
     assert_includes template, 'data_column("Actions")'
     refute_includes template, "data_column(icon("
     assert_includes template, 'icon("visibility", tooltip: "Show")'
