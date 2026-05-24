@@ -653,6 +653,8 @@ module Ruflet
         return JSON.parse(response.body) if response.is_a?(Net::HTTPSuccess)
 
         raise "GitHub API failed (#{response.code})"
+      rescue OpenSSL::SSL::SSLError
+        JSON.parse(curl_get(url, headers: ["Accept: application/vnd.github+json", "User-Agent: ruflet-cli"]))
       end
 
       def download_file(url, destination, limit: 5)
@@ -674,6 +676,31 @@ module Ruflet
             end
           end
         end
+      rescue OpenSSL::SSL::SSLError
+        curl_download(url, destination)
+      end
+
+      def curl_get(url, headers: [])
+        args = ["curl", "-fsSL"]
+        headers.each do |header|
+          args += ["-H", header]
+        end
+        args << url
+        output = IO.popen(args, err: File::NULL, &:read)
+        return output if $?.success?
+
+        raise "curl failed while requesting #{url}"
+      rescue Errno::ENOENT
+        raise "Ruby SSL verification failed and curl is not available"
+      end
+
+      def curl_download(url, destination)
+        ok = system("curl", "-fL", "--retry", "2", "--connect-timeout", "20", "-o", destination, url, out: File::NULL, err: File::NULL)
+        return destination if ok
+
+        raise "curl failed while downloading #{url}"
+      rescue Errno::ENOENT
+        raise "Ruby SSL verification failed and curl is not available"
       end
 
       def extract_archive(archive, destination)

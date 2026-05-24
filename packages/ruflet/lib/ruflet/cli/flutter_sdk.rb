@@ -289,6 +289,8 @@ module Ruflet
         return JSON.parse(response.body) if response.is_a?(Net::HTTPSuccess)
 
         nil
+      rescue OpenSSL::SSL::SSLError
+        JSON.parse(curl_get(url, headers: ["User-Agent: ruflet-cli"]))
       end
 
       def pick_release(manifest, version: nil, revision: nil, channel: nil)
@@ -380,6 +382,8 @@ module Ruflet
             end
           end
         end
+      rescue OpenSSL::SSL::SSLError
+        curl_download(url, destination)
       end
 
       def extract_archive(archive, destination)

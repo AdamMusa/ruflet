@@ -65,6 +65,42 @@ class RufletCliUpdateCommandTest < Minitest::Test
     $stdout = original_stdout
   end
 
+  def test_github_json_falls_back_to_curl_when_ruby_ssl_fails
+    updater = DummyUpdater.new
+    test_case = self
+    updater.define_singleton_method(:curl_get) do |url, headers: []|
+      test_case.assert_equal "https://example.test/release", url
+      test_case.assert_includes headers, "Accept: application/vnd.github+json"
+      { "tag_name" => "Alpha", "assets" => [] }.to_json
+    end
+
+    with_net_http_ssl_failure do
+      release = updater.send(:github_get_json, "https://example.test/release")
+
+      assert_equal "Alpha", release["tag_name"]
+    end
+  end
+
+  def test_download_file_falls_back_to_curl_when_ruby_ssl_fails
+    updater = DummyUpdater.new
+
+    Dir.mktmpdir do |dir|
+      destination = File.join(dir, "client.tar.gz")
+      test_case = self
+      updater.define_singleton_method(:curl_download) do |url, path|
+        test_case.assert_equal "https://example.test/client.tar.gz", url
+        File.write(path, "archive")
+        path
+      end
+
+      with_net_http_ssl_failure do
+        updater.send(:download_file, "https://example.test/client.tar.gz", destination)
+      end
+
+      assert_equal "archive", File.read(destination)
+    end
+  end
+
   def test_new_app_gemfile_uses_current_runtime_package_versions
     assert_includes Ruflet::CLI::GEMFILE_TEMPLATE, %(gem "ruflet_core", ">= #{Ruflet::VERSION}")
     assert_includes Ruflet::CLI::GEMFILE_TEMPLATE, %(gem "ruflet_server", ">= #{Ruflet::VERSION}")
@@ -1498,4 +1534,16 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  private
+
+  def with_net_http_ssl_failure
+    singleton = class << Net::HTTP; self; end
+    original = Net::HTTP.method(:start)
+    singleton.define_method(:start) do |*|
+      raise OpenSSL::SSL::SSLError, "certificate verify failed"
+    end
+    yield
+  ensure
+    singleton.define_method(:start, original) if original
+  end
 end
