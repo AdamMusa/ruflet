@@ -650,10 +650,10 @@ class InstallSupportTest < Minitest::Test
   def test_publish_web_build_copies_build_web_to_public_ruflet
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "build", "web"))
-      File.write(File.join(dir, "build", "web", "index.html"), "ok")
+      File.write(File.join(dir, "build", "web", "index.html"), '<html><head><base href="/"></head></html>')
 
       assert Ruflet::Rails::InstallSupport.publish_web_build(dir)
-      assert_equal "ok", File.read(File.join(dir, "public", "ruflet", "index.html"))
+      assert_includes File.read(File.join(dir, "public", "ruflet", "index.html")), '<base href="/ruflet/">'
     end
   end
 
@@ -661,12 +661,25 @@ class InstallSupportTest < Minitest::Test
     Dir.mktmpdir do |dir|
       source = File.join(dir, "cache", "web")
       FileUtils.mkdir_p(source)
-      File.write(File.join(source, "index.html"), "prebuilt")
+      File.write(File.join(source, "index.html"), '<html><head><base href="/"></head><body>prebuilt</body></html>')
       File.write(File.join(source, "main.dart.js"), "js")
 
       assert Ruflet::Rails::InstallSupport.publish_web_client(dir, source: source)
-      assert_equal "prebuilt", File.read(File.join(dir, "public", "ruflet", "index.html"))
+      index = File.read(File.join(dir, "public", "ruflet", "index.html"))
+      assert_includes index, "prebuilt"
+      assert_includes index, '<base href="/ruflet/">'
       assert_equal "js", File.read(File.join(dir, "public", "ruflet", "main.dart.js"))
+    end
+  end
+
+  def test_publish_web_client_inserts_base_href_when_missing
+    Dir.mktmpdir do |dir|
+      source = File.join(dir, "cache", "web")
+      FileUtils.mkdir_p(source)
+      File.write(File.join(source, "index.html"), "<html><head></head><body></body></html>")
+
+      assert Ruflet::Rails::InstallSupport.publish_web_client(dir, source: source, public_path: "apps/ruflet")
+      assert_includes File.read(File.join(dir, "public", "apps", "ruflet", "index.html")), '<base href="/apps/ruflet/">'
     end
   end
 

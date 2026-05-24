@@ -758,7 +758,23 @@ module Ruflet
         FileUtils.rm_rf(target)
         FileUtils.mkdir_p(File.dirname(target))
         FileUtils.cp_r(source, target)
+        rewrite_web_base_href(target, public_path: public_path)
         true
+      end
+
+      def rewrite_web_base_href(target, public_path:)
+        index_path = File.join(target, "index.html")
+        return unless File.file?(index_path)
+
+        content = File.read(index_path)
+        base_href = web_base_href(public_path)
+        updated =
+          if content.match?(%r{<base\s+href=["'][^"']*["']\s*/?>}i)
+            content.sub(%r{<base\s+href=["'][^"']*["']\s*/?>}i, %(<base href="#{base_href}">))
+          else
+            content.sub(%r{<head([^>]*)>}i, %(<head\\1>\n  <base href="#{base_href}">))
+          end
+        File.write(index_path, updated)
       end
 
       def install_next_steps(target:, entrypoint:, client:, web_published:, mount_path: "/ws")
