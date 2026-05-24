@@ -1148,9 +1148,6 @@ module Ruflet
 
       dialog_control.props["open"] = false
       update(dialog_control, open: false)
-      @dialogs.delete(dialog_control)
-      refresh_dialogs_container!
-      push_dialogs_update!
       dialog_control
     end
 
@@ -1197,6 +1194,10 @@ module Ruflet
         "id" => wire_id,
         "patch" => [[0], *patch_ops]
       })
+
+      if patch["open"] == false && remove_dialog_tracking(control)
+        push_dialogs_update!
+      end
 
       self
     end
