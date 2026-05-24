@@ -708,6 +708,19 @@ class InstallSupportTest < Minitest::Test
     refute_includes steps, "gem install ruflet"
   end
 
+  def test_ruflet_install_steps_explain_desktop_support
+    steps = Ruflet::Rails::InstallSupport.install_next_steps(
+      target: "ruflet",
+      entrypoint: "app/views/ruflet/main.rb",
+      client: "desktop",
+      web_published: false
+    ).join("\n")
+
+    assert_includes steps, "Desktop clients are server-driven and connect to this Rails app."
+    assert_includes steps, "bin/rails ruflet:update[desktop]"
+    assert_includes steps, "bin/rails ruflet:build[desktop]"
+  end
+
   private
 
   def stub_const_name(name, value)

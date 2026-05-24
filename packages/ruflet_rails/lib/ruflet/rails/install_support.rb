@@ -785,6 +785,14 @@ module Ruflet
           ]
         end
 
+        if %w[desktop all].include?(client.to_s)
+          lines += [
+            "Desktop clients are server-driven and connect to this Rails app.",
+            "To download the prebuilt desktop client: bin/rails ruflet:update[desktop]",
+            "To build the host desktop client: bin/rails ruflet:build[desktop]"
+          ]
+        end
+
         lines
       end
     end

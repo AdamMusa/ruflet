@@ -7,6 +7,8 @@ module Ruflet
   module Generators
     class InstallGenerator < ::Rails::Generators::Base
       class_option :frontend, type: :boolean, default: false, desc: "Install the Rails-hosted Ruflet web client"
+      class_option :web, type: :boolean, default: false, desc: "Install the Rails-hosted Ruflet web client"
+      class_option :desktop, type: :boolean, default: false, desc: "Download the server-driven desktop Ruflet client"
       class_option :client, type: :string, default: nil, desc: "Download prebuilt client from GitHub releases: web, desktop, all, or none"
 
       desc "Install Ruflet into a Rails app."
@@ -59,7 +61,11 @@ module Ruflet
         exit_code = Dir.chdir(destination_root) do
           Ruflet::CLI.command_update([client])
         end
-        raise Thor::Error, "ruflet client download failed" unless exit_code.to_i.zero?
+        unless exit_code.to_i.zero?
+          @client_download_failed = true
+          say_status(:warn, "Ruflet client download failed; install files were generated and build/update steps are printed below", :yellow)
+          return
+        end
 
         return unless %w[web all].include?(client)
 
@@ -70,6 +76,9 @@ module Ruflet
         else
           say_status(:warn, "Ruflet web client downloaded, but no prebuilt web index.html was found to publish", :yellow)
         end
+      rescue StandardError => e
+        @client_download_failed = true
+        say_status(:warn, "Ruflet client download failed: #{e.class}: #{e.message}", :yellow)
       end
 
       def print_install_status
@@ -99,7 +108,11 @@ module Ruflet
           return explicit
         end
 
-        return "web" if options[:frontend]
+        wants_web = options[:frontend] || options[:web]
+        wants_desktop = options[:desktop]
+        return "all" if wants_web && wants_desktop
+        return "web" if wants_web
+        return "desktop" if wants_desktop
 
         "none"
       end

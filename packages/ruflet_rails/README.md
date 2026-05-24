@@ -16,8 +16,9 @@ gem "ruflet_rails", ">= 0.0.5"
 
 ```bash
 bin/rails generate ruflet:install
-bin/rails generate ruflet:install --client=web
-bin/rails generate ruflet:install --client=desktop
+bin/rails generate ruflet:install --web
+bin/rails generate ruflet:install --desktop
+bin/rails generate ruflet:install --web --desktop
 ```
 
 This generator will:
@@ -25,7 +26,8 @@ This generator will:
 - create `app/views/ruflet/components/application_component.rb`
 - create `ruflet.yaml`
 - add the Ruflet mount route to `config/routes.rb`
-- download prebuilt clients from GitHub releases when `--client=web|desktop|all` is used
+- download prebuilt clients from GitHub releases when `--web`, `--desktop`, or
+  `--client=web|desktop|all` is used
 
 Generated `ruflet.yaml`:
 
