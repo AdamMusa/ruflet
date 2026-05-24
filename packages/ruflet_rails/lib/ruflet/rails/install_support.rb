@@ -199,7 +199,7 @@ module Ruflet
 
               def open_form_dialog(record, title:)
                 fields = form_fields.to_h do |field|
-                  [field[:name], field_control(field, record)]
+                  [field[:name], field_binding(field, record)]
                 end
 
                 dialog = nil
@@ -217,7 +217,7 @@ module Ruflet
                   title: text(title),
                   content: container(
                     width: dialog_width,
-                    content: column(spacing: 8, controls: fields.values)
+                    content: column(spacing: 8, controls: fields.values.map { |binding| binding[:control] })
                   ),
                   actions: [
                     text_button(
@@ -242,6 +242,14 @@ module Ruflet
                   actions_alignment: "end"
                 )
                 page.show_dialog(dialog)
+              end
+
+              def field_binding(field, record)
+                type = field[:type].to_s
+                return picker_field_binding(field, record) if %w[date datetime timestamp time].include?(type)
+
+                control = field_control(field, record)
+                { control: control, input: control }
               end
 
               def field_control(field, record)
@@ -272,6 +280,49 @@ module Ruflet
                 else
                   text_field(value: value.to_s, label: label)
                 end
+              end
+
+              def picker_field_binding(field, record)
+                name = field[:name]
+                type = field[:type].to_s
+                value = record.public_send(name)
+                label = name.humanize
+                picker = picker_control(type, value, label)
+                display = text(picker_display_text(label, picker.props["value"]))
+
+                picker.on(:change) do |event|
+                  page.update(display, value: picker_display_text(label, event.control.props["value"]))
+                end
+
+                {
+                  control: column(
+                    spacing: 6,
+                    controls: [
+                      display,
+                      outlined_button(
+                        content: text("Choose \#{label}"),
+                        on_click: ->(_e) { page.show_dialog(picker) }
+                      )
+                    ]
+                  ),
+                  input: picker
+                }
+              end
+
+              def picker_control(type, value, label)
+                case type
+                when "time"
+                  time_picker(value: value.respond_to?(:strftime) ? value.strftime("%H:%M") : value.to_s, help_text: label)
+                when "datetime", "timestamp"
+                  date_picker(value: date_value(value), help_text: label)
+                else
+                  date_picker(value: date_value(value), help_text: label)
+                end
+              end
+
+              def picker_display_text(label, value)
+                visible = value.to_s.empty? ? "Not selected" : value.to_s.split("T", 2).first
+                "\#{label}: \#{visible}"
               end
 
               def dialog_width
@@ -400,8 +451,9 @@ module Ruflet
               end
 
               def form_attributes(fields)
-                fields.to_h do |name, control|
+                fields.to_h do |name, binding|
                   field = form_fields.find { |candidate| candidate[:name] == name }
+                  control = binding[:input] || binding[:control] || binding
                   [name, control_value(control, field[:type])]
                 end
               end
@@ -421,8 +473,11 @@ module Ruflet
 
               def control_value(control, type)
                 value = control.props["value"]
+                return nil if value.to_s.empty?
                 return value if type.to_s == "boolean"
                 return value if %w[association references belongs_to].include?(type.to_s)
+                return value.to_s.split("T", 2).first if type.to_s == "date"
+                return value.to_s if %w[datetime timestamp time].include?(type.to_s)
 
                 value.to_s
               end
@@ -512,14 +567,14 @@ module Ruflet
           class #{model_class}Form < ApplicationComponent
               def render(record:, title: nil, on_save: nil, on_cancel: nil)
                 title ||= record.persisted? ? "Edit #{singular_title}" : "New #{singular_title}"
-                fields = form_fields.to_h { |field| [field[:name], field_control(field, record)] }
+                fields = form_fields.to_h { |field| [field[:name], field_binding(field, record)] }
 
                 column(
                   expand: true,
                   spacing: 12,
                   controls: [
                     text(title, size: 24, weight: "bold"),
-                    column(spacing: 8, controls: fields.values),
+                    column(spacing: 8, controls: fields.values.map { |binding| binding[:control] }),
                     row(
                       spacing: 8,
                       controls: [
@@ -544,6 +599,14 @@ module Ruflet
                   show_errors(record)
                   false
                 end
+              end
+
+              def field_binding(field, record)
+                type = field[:type].to_s
+                return picker_field_binding(field, record) if %w[date datetime timestamp time].include?(type)
+
+                control = field_control(field, record)
+                { control: control, input: control }
               end
 
               def field_control(field, record)
@@ -576,17 +639,59 @@ module Ruflet
                 end
               end
 
+              def picker_field_binding(field, record)
+                name = field[:name]
+                type = field[:type].to_s
+                value = record.public_send(name)
+                label = name.humanize
+                picker = picker_control(type, value, label)
+                display = text(picker_display_text(label, picker.props["value"]))
+
+                picker.on(:change) do |event|
+                  page.update(display, value: picker_display_text(label, event.control.props["value"]))
+                end
+
+                {
+                  control: column(
+                    spacing: 6,
+                    controls: [
+                      display,
+                      outlined_button(
+                        content: text("Choose \#{label}"),
+                        on_click: ->(_e) { page.show_dialog(picker) }
+                      )
+                    ]
+                  ),
+                  input: picker
+                }
+              end
+
+              def picker_control(type, value, label)
+                case type
+                when "time"
+                  time_picker(value: value.respond_to?(:strftime) ? value.strftime("%H:%M") : value.to_s, help_text: label)
+                when "datetime", "timestamp"
+                  date_picker(value: date_value(value), help_text: label)
+                else
+                  date_picker(value: date_value(value), help_text: label)
+                end
+              end
+
               def control_value(control, type)
                 value = control.props["value"]
+                return nil if value.to_s.empty?
                 return value if type.to_s == "boolean"
                 return value if %w[association references belongs_to].include?(type.to_s)
+                return value.to_s.split("T", 2).first if type.to_s == "date"
+                return value.to_s if %w[datetime timestamp time].include?(type.to_s)
 
                 value.to_s
               end
 
               def form_attributes(fields)
-                fields.to_h do |name, control|
+                fields.to_h do |name, binding|
                   field = form_fields.find { |candidate| candidate[:name] == name }
+                  control = binding[:input] || binding[:control] || binding
                   [name, control_value(control, field[:type])]
                 end
               end
@@ -631,6 +736,11 @@ module Ruflet
                 return value.to_date.iso8601 if value.respond_to?(:to_date)
 
                 value.to_s
+              end
+
+              def picker_display_text(label, value)
+                visible = value.to_s.empty? ? "Not selected" : value.to_s.split("T", 2).first
+                "\#{label}: \#{visible}"
               end
           end
         RUBY

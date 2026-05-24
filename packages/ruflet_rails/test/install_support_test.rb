@@ -174,6 +174,8 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "content: text(\"New Post\")"
     assert_includes template, 'content: text("Save")'
     assert_includes template, "def close_dialog(dialog)"
+    assert_includes template, "def field_binding(field, record)"
+    assert_includes template, "def picker_field_binding(field, record)"
     assert_includes template, "def form_attributes(fields)"
     assert_includes template, "def show_errors(record)"
     assert_includes template, "def error_message(record)"
@@ -754,6 +756,46 @@ class InstallSupportTest < Minitest::Test
   ensure
     Object.send(:remove_const, :ProfileForm) if Object.const_defined?(:ProfileForm)
     Object.send(:remove_const, :Profile) if Object.const_defined?(:Profile) && Object.const_get(:Profile) == model_class
+    Object.send(:remove_const, :ApplicationComponent) if Object.const_defined?(:ApplicationComponent)
+  end
+
+  def test_generated_form_component_saves_date_picker_values
+    template = Ruflet::Rails::InstallSupport.form_view_template(
+      model_name: "ScheduledPost",
+      attributes: ["title:string", "published_on:date"]
+    )
+    model_class = stub_scaffold_model("ScheduledPost")
+    Object.class_eval(Ruflet::Rails::InstallSupport.application_component_template)
+    Object.class_eval(template.sub(/^require "ruflet_rails"\n\n/, ""))
+
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "test-session",
+      client_details: { "route" => "/scheduled_posts", "width" => 390 },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    record = model_class.new("title" => "Draft")
+
+    form = ScheduledPostForm.render(page, record: record)
+    page.add(form)
+    choose_date = find_patch_control(sent.last[1]["patch"], "_c" => "OutlinedButton", "content" => { "_c" => "Text", "value" => "Choose Published on" })
+    save = find_patch_control(sent.last[1]["patch"], "_c" => "FilledButton")
+
+    refute_nil choose_date
+    refute_nil save
+
+    page.dispatch_event(target: choose_date["_i"], name: "click", data: nil)
+    picker = find_patch_control(sent.last[1]["patch"], "_c" => "DatePicker")
+    refute_nil picker
+    assert_equal true, picker["on_change"]
+
+    page.dispatch_event(target: picker["_i"], name: "change", data: { "value" => "2026-05-24T00:00:00+00:00" })
+    page.dispatch_event(target: save["_i"], name: "click", data: nil)
+
+    assert_equal "2026-05-24", record.public_send("published_on")
+  ensure
+    Object.send(:remove_const, :ScheduledPostForm) if Object.const_defined?(:ScheduledPostForm)
+    Object.send(:remove_const, :ScheduledPost) if Object.const_defined?(:ScheduledPost) && Object.const_get(:ScheduledPost) == model_class
     Object.send(:remove_const, :ApplicationComponent) if Object.const_defined?(:ApplicationComponent)
   end
 
