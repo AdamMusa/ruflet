@@ -8,6 +8,7 @@
 end
 
 require "ruflet_core"
+require "ruflet_server"
 require_relative "ruflet/rails/session_registry"
 require_relative "ruflet/rails/scaffold_hook"
 require_relative "ruflet/rails/view"

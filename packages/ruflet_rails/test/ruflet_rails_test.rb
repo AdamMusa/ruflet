@@ -10,7 +10,7 @@ class RufletRailsTest < Minitest::Test
     assert_equal expected, loaded_ruflet
   end
 
-  def test_app_loader_captures_entrypoint_without_ruflet_server
+  def test_app_loader_captures_ruflet_run_entrypoint_for_rails
     app_file = nil
 
     Dir.mktmpdir do |dir|
@@ -40,6 +40,11 @@ class RufletRailsTest < Minitest::Test
     runner = Ruflet::Rails::Protocol::Runner.new
 
     assert_equal runner.method(:build_app_endpoint), runner.method(:build_mobile_endpoint)
+  end
+
+  def test_rails_protocol_uses_shared_ruflet_server_runtime
+    assert_same Ruflet::WireCodec, Ruflet::Rails::Protocol::WireCodec
+    assert_same Ruflet::WebSocketConnection, Ruflet::Rails::Protocol::WebSocketConnection
   end
 
   def test_router_renders_route_index_at_root_when_multiple_views_are_registered

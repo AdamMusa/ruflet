@@ -29,6 +29,8 @@ class InstallSupportTest < Minitest::Test
   def test_app_template_uses_ruflet_run
     template = Ruflet::Rails::InstallSupport.default_app_template(app_title: "Demo")
 
+    assert_includes template, 'require "ruflet"'
+    assert_includes template, 'require "ruflet_rails"'
     assert_includes template, 'Ruflet.run do |page|'
     assert_includes template, 'page.title = "Demo"'
     refute_includes template, "Dir["
