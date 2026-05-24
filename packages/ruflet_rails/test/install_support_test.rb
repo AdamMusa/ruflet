@@ -35,6 +35,21 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "Ruflet::Rails.render(page)"
   end
 
+  def test_application_component_template_provides_shared_platform_helpers
+    template = Ruflet::Rails::InstallSupport.application_component_template
+
+    assert_equal(
+      "app/views/ruflet/components/application_component.rb",
+      Ruflet::Rails::InstallSupport.application_component_path
+    )
+    assert_includes template, "class ApplicationComponent"
+    assert_includes template, "def self.render(page, *args, **kwargs, &block)"
+    assert_includes template, "def desktop?"
+    assert_includes template, "def web?"
+    assert_includes template, "def mobile?"
+    assert_silent { RubyVM::InstructionSequence.compile(template) }
+  end
+
   def test_ruflet_view_base_renders_plain_view_classes
     view_class = Class.new(RufletView) do
       def render(value:)

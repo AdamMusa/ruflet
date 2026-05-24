@@ -20,7 +20,10 @@ module Ruflet
     def load_views(root)
       return [] if root.to_s.empty?
 
-      Dir[File.join(root.to_s, "**", "*_view.rb")].sort.each do |file|
+      files = Dir[File.join(root.to_s, "components", "**", "*.rb")].sort
+      files += Dir[File.join(root.to_s, "**", "*_view.rb")].sort
+
+      files.each do |file|
         Kernel.load(file)
       end
     end

@@ -21,6 +21,48 @@ module Ruflet
         RUBY
         template.gsub(/^    /, "  ")
       end
+
+      def application_component_template
+        template = <<~RUBY
+          # frozen_string_literal: true
+
+          class ApplicationComponent
+            attr_reader :page
+
+            def self.render(page, *args, **kwargs, &block)
+              new(page).render(*args, **kwargs, &block)
+            end
+
+            def initialize(page)
+              @page = page
+            end
+
+            private
+
+            def platform
+              page.client_details["platform"].to_s
+            end
+
+            def desktop?
+              %w[macos windows linux].include?(platform)
+            end
+
+            def web?
+              platform == "web"
+            end
+
+            def mobile?
+              !desktop? && !web?
+            end
+          end
+        RUBY
+        template.gsub(/^    /, "  ")
+      end
+
+      def application_component_path
+        File.join("app", "views", "ruflet", "components", "application_component.rb")
+      end
+
       def default_mobile_app_template(app_title:)
         default_app_template(app_title: app_title)
       end

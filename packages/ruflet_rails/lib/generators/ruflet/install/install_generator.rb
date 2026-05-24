@@ -18,6 +18,13 @@ module Ruflet
         create_file target, Ruflet::Rails::InstallSupport.default_app_template(app_title: app_name)
       end
 
+      def create_application_component
+        target = File.join(destination_root, Ruflet::Rails::InstallSupport.application_component_path)
+        return if File.exist?(target)
+
+        create_file target, Ruflet::Rails::InstallSupport.application_component_template
+      end
+
       def create_ruflet_yaml
         target = File.join(destination_root, "ruflet.yaml")
         return if File.exist?(target)

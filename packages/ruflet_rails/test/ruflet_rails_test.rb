@@ -109,6 +109,55 @@ class RufletRailsTest < Minitest::Test
     Object.send(:remove_const, :ReloadablePostView) if Object.const_defined?(:ReloadablePostView)
   end
 
+  def test_load_views_loads_components_before_view_files
+    previous_views = Ruflet::Rails.view_classes.dup
+    Ruflet::Rails.view_classes.clear
+
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "components"))
+      FileUtils.mkdir_p(File.join(dir, "posts"))
+      File.write(File.join(dir, "components", "application_component.rb"), <<~RUBY)
+        class ApplicationComponent
+          attr_reader :page
+
+          def self.render(page, *args, **kwargs)
+            new(page).render(*args, **kwargs)
+          end
+
+          def initialize(page)
+            @page = page
+          end
+        end
+      RUBY
+      File.write(File.join(dir, "components", "page_title_component.rb"), <<~RUBY)
+        class PageTitleComponent < ApplicationComponent
+          def render(value)
+            text(value)
+          end
+        end
+      RUBY
+      File.write(File.join(dir, "posts", "posts_view.rb"), <<~RUBY)
+        class ComponentBackedPostView < RufletView
+          route "/component_posts"
+
+          def render
+            page.add(PageTitleComponent.render(page, "Shared Posts"))
+          end
+        end
+      RUBY
+
+      Ruflet::Rails.load_views(dir)
+
+      assert_equal "/component_posts", ComponentBackedPostView.route
+      assert_includes Ruflet::Rails.view_classes, ComponentBackedPostView
+    end
+  ensure
+    Ruflet::Rails.view_classes.replace(previous_views) if previous_views
+    Object.send(:remove_const, :ApplicationComponent) if Object.const_defined?(:ApplicationComponent)
+    Object.send(:remove_const, :PageTitleComponent) if Object.const_defined?(:PageTitleComponent)
+    Object.send(:remove_const, :ComponentBackedPostView) if Object.const_defined?(:ComponentBackedPostView)
+  end
+
   private
 
   def find_patch_control(value, criteria)

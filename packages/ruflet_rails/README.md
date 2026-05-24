@@ -22,6 +22,7 @@ bin/rails generate ruflet:install --client=desktop
 
 This generator will:
 - create `app/views/ruflet/main.rb`
+- create `app/views/ruflet/components/application_component.rb`
 - create `ruflet.yaml`
 - add the Ruflet mount route to `config/routes.rb`
 - download prebuilt clients from GitHub releases when `--client=web|desktop|all` is used
@@ -136,6 +137,29 @@ Foreign keys and references, such as `category:references` or `user_id`, render
 as Ruflet dropdowns populated from the associated Rails model.
 
 The generated form lives at `app/views/ruflet/posts/_form.rb`.
+
+## Shared Ruflet components
+
+Put shared Ruflet UI components under `app/views/ruflet/components`. Component
+files are loaded before `*_view.rb` files, so views can call them directly:
+
+```ruby
+# app/views/ruflet/components/page_title_component.rb
+class PageTitleComponent < ApplicationComponent
+  def render(value)
+    text(value, size: desktop? || web? ? 28 : 24, weight: "bold")
+  end
+end
+```
+
+```ruby
+# app/views/ruflet/posts/posts_view.rb
+class PostsView < RufletView
+  def render
+    page.add(PageTitleComponent.render(page, "Posts"))
+  end
+end
+```
 
 ## Manual usage
 
