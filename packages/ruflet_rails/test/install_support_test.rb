@@ -655,7 +655,7 @@ class InstallSupportTest < Minitest::Test
     Object.send(:remove_const, :ActionCategory) if Object.const_defined?(:ActionCategory) && Object.const_get(:ActionCategory) == model_class
   end
 
-  def test_generated_scaffold_show_omits_mobile_appbar_on_web_and_desktop
+  def test_generated_scaffold_index_and_show_display_back_on_all_platforms
     template = Ruflet::Rails::InstallSupport.scaffold_view_template(
       model_name: "WebCategory",
       attributes: ["name:string"]
@@ -673,9 +673,19 @@ class InstallSupportTest < Minitest::Test
         sender: ->(action, payload) { sent << [action, payload] }
       )
 
-      WebCategoryView.render(page, action: :show, record: record)
+      WebCategoryView.render(page)
+      index_appbar = find_patch_control(sent.last[1]["patch"], "_c" => "AppBar")
+      index_back = find_patch_control(index_appbar, "_c" => "IconButton", "tooltip" => "Back")
 
-      refute find_patch_control(sent.last[1]["patch"], "_c" => "AppBar"), "expected no mobile app bar for #{platform}"
+      refute_nil index_appbar, "expected index appbar for #{platform}"
+      refute_nil index_back, "expected index back button for #{platform}"
+
+      WebCategoryView.render(page, action: :show, record: record)
+      show_appbar = find_patch_control(sent.last[1]["patch"], "_c" => "AppBar")
+      show_back = find_patch_control(show_appbar, "_c" => "IconButton", "tooltip" => "Back")
+
+      refute_nil show_appbar, "expected show appbar for #{platform}"
+      refute_nil show_back, "expected show back button for #{platform}"
     end
   ensure
     Object.send(:remove_const, :WebCategoryView) if Object.const_defined?(:WebCategoryView)

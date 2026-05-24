@@ -364,8 +364,6 @@ module Ruflet
               end
 
               def show_view_options
-                return {} unless handheld_platform?
-
                 {
                   appbar: app_bar(
                     leading: icon_button(
@@ -378,7 +376,6 @@ module Ruflet
               end
 
               def index_view_options
-                return {} unless handheld_platform?
                 return {} if page.route.to_s == "/"
 
                 {
