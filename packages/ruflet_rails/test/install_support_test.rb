@@ -602,16 +602,59 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "def render(record:, title: nil, on_save: nil, on_cancel: nil)"
     assert_includes template, "def save(record, fields, on_save: nil)"
     assert_includes template, "def form_attributes(fields)"
+    assert_includes template, "def form_fields"
     assert_includes template, "def show_errors(record)"
     assert_includes template, "def error_message(record)"
     assert_includes template, "date_picker("
     assert_includes template, "checkbox(label: label"
     assert_includes template, '{ name: "user_id", type: "association", class_name: "User" }'
     assert_includes template, "association_options(field)"
+    refute_includes template, "FIELDS ="
     refute_includes template, "data_table("
     refute_includes template, "record.destroy"
     refute_includes template, "page.snack_bar ="
     assert_silent { RubyVM::InstructionSequence.compile(template) }
+  end
+
+  def test_generated_form_component_saves_record_and_calls_callback
+    template = Ruflet::Rails::InstallSupport.form_view_template(
+      model_name: "Profile",
+      attributes: ["name:string", "active:boolean"]
+    )
+    model_class = stub_scaffold_model("Profile")
+    Object.class_eval(Ruflet::Rails::InstallSupport.application_component_template)
+    Object.class_eval(template.sub(/^require "ruflet_rails"\n\n/, ""))
+
+    sent = []
+    saved = []
+    page = Ruflet::Page.new(
+      session_id: "test-session",
+      client_details: { "route" => "/profiles", "width" => 390 },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    record = model_class.new("name" => "Ada", "active" => false)
+
+    form = ProfileForm.render(page, record: record, on_save: ->(_page, saved_record) { saved << saved_record })
+    page.add(form)
+    save = find_patch_control(sent.last[1]["patch"], "_c" => "FilledButton")
+    name_field = find_patch_control(sent.last[1]["patch"], "_c" => "TextField", "label" => "Name")
+    active_field = find_patch_control(sent.last[1]["patch"], "_c" => "Checkbox", "label" => "Active")
+
+    refute_nil save
+    refute_nil name_field
+    refute_nil active_field
+
+    page.apply_client_update(name_field["_i"], "value" => "Grace")
+    page.apply_client_update(active_field["_i"], "value" => true)
+    page.dispatch_event(target: save["_i"], name: "click", data: nil)
+
+    assert_equal ["Grace"], [record.public_send("name")]
+    assert_equal true, record.public_send("active")
+    assert_equal [record], saved
+  ensure
+    Object.send(:remove_const, :ProfileForm) if Object.const_defined?(:ProfileForm)
+    Object.send(:remove_const, :Profile) if Object.const_defined?(:Profile) && Object.const_get(:Profile) == model_class
+    Object.send(:remove_const, :ApplicationComponent) if Object.const_defined?(:ApplicationComponent)
   end
 
   def test_form_view_path_uses_rails_views_partial_shape

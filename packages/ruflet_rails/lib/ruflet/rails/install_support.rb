@@ -491,12 +491,9 @@ module Ruflet
           require "ruflet_rails"
 
           class #{model_class}Form < ApplicationComponent
-
-              FIELDS = [#{fields_literal}].freeze
-
               def render(record:, title: nil, on_save: nil, on_cancel: nil)
                 title ||= record.persisted? ? "Edit #{singular_title}" : "New #{singular_title}"
-                fields = FIELDS.to_h { |field| [field[:name], field_control(field, record)] }
+                fields = form_fields.to_h { |field| [field[:name], field_control(field, record)] }
 
                 column(
                   expand: true,
@@ -570,9 +567,13 @@ module Ruflet
 
               def form_attributes(fields)
                 fields.to_h do |name, control|
-                  field = FIELDS.find { |candidate| candidate[:name] == name }
+                  field = form_fields.find { |candidate| candidate[:name] == name }
                   [name, control_value(control, field[:type])]
                 end
+              end
+
+              def form_fields
+                [#{fields_literal}]
               end
 
               def show_errors(record)
