@@ -711,7 +711,7 @@ module Ruflet
       end
 
       def default_web_public_path
-        "ruflet"
+        "app"
       end
 
       def web_base_href(public_path = default_web_public_path)
@@ -793,6 +793,10 @@ module Ruflet
                 params.set("url", window.location.origin);
                 var query = params.toString();
                 window.history.replaceState(null, "", window.location.pathname + (query ? "?" + query : "") + window.location.hash);
+                var cleanUrl = window.location.pathname + window.location.hash;
+                window.addEventListener("flutter-first-frame", function () {
+                  window.history.replaceState(null, "", cleanUrl);
+                }, { once: true });
               }
               window.flet = window.flet || {};
               window.flet.webSocketEndpoint = window.flet.webSocketEndpoint || "ws";

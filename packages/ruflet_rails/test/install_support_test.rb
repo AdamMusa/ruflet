@@ -637,12 +637,12 @@ class InstallSupportTest < Minitest::Test
   def test_build_args_for_rails_web_are_server_driven_and_rails_hosted
     args = Ruflet::Rails::InstallSupport.build_args_for_platform("web")
 
-    assert_equal ["web", "--base-href", "/ruflet/"], args
+    assert_equal ["web", "--base-href", "/app/"], args
     refute_includes args, "--self"
   end
 
   def test_web_base_href_uses_rails_public_subpath
-    assert_equal "/ruflet/", Ruflet::Rails::InstallSupport.web_base_href
+    assert_equal "/app/", Ruflet::Rails::InstallSupport.web_base_href
     assert_equal "/apps/ruflet/", Ruflet::Rails::InstallSupport.web_base_href("/apps/ruflet/")
     assert_equal "/", Ruflet::Rails::InstallSupport.web_base_href("/")
   end
@@ -653,7 +653,7 @@ class InstallSupportTest < Minitest::Test
       File.write(File.join(dir, "build", "web", "index.html"), '<html><head><base href="/"></head></html>')
 
       assert Ruflet::Rails::InstallSupport.publish_web_build(dir)
-      assert_includes File.read(File.join(dir, "public", "ruflet", "index.html")), '<base href="/ruflet/">'
+      assert_includes File.read(File.join(dir, "public", "app", "index.html")), '<base href="/app/">'
     end
   end
 
@@ -665,13 +665,15 @@ class InstallSupportTest < Minitest::Test
       File.write(File.join(source, "main.dart.js"), "js")
 
       assert Ruflet::Rails::InstallSupport.publish_web_client(dir, source: source)
-      index = File.read(File.join(dir, "public", "ruflet", "index.html"))
+      index = File.read(File.join(dir, "public", "app", "index.html"))
       assert_includes index, "prebuilt"
-      assert_includes index, '<base href="/ruflet/">'
+      assert_includes index, '<base href="/app/">'
       assert_includes index, "data-ruflet-rails-bootstrap"
       assert_includes index, 'params.set("url", window.location.origin)'
+      assert_includes index, 'window.addEventListener("flutter-first-frame"'
+      assert_includes index, "cleanUrl"
       assert_includes index, 'window.flet.webSocketEndpoint = window.flet.webSocketEndpoint || "ws"'
-      assert_equal "js", File.read(File.join(dir, "public", "ruflet", "main.dart.js"))
+      assert_equal "js", File.read(File.join(dir, "public", "app", "main.dart.js"))
     end
   end
 
@@ -693,7 +695,7 @@ class InstallSupportTest < Minitest::Test
       File.write(File.join(source, "index.html"), "<html><head></head><body></body></html>")
 
       assert Ruflet::Rails::InstallSupport.publish_web_client(dir, source: source)
-      target = File.join(dir, "public", "ruflet")
+      target = File.join(dir, "public", "app")
       Ruflet::Rails::InstallSupport.inject_web_client_bootstrap(target)
 
       assert_equal 1, File.read(File.join(target, "index.html")).scan("data-ruflet-rails-bootstrap").length
@@ -719,11 +721,11 @@ class InstallSupportTest < Minitest::Test
 
     assert_includes steps, "Ruflet Rails installed."
     assert_includes steps, "Generated entrypoint: app/views/ruflet/main.rb"
-    assert_includes steps, "Open the Ruflet web client: /ruflet/"
+    assert_includes steps, "Open the Ruflet web client: /app/"
     assert_includes steps, "bin/rails ruflet:update[web]"
     assert_includes steps, "gem install ruflet"
     assert_includes steps, "bin/rails ruflet:build[web]"
-    assert_includes steps, "public/ruflet"
+    assert_includes steps, "public/app"
   end
 
   def test_ruflet_install_steps_confirm_published_web_client
@@ -734,7 +736,7 @@ class InstallSupportTest < Minitest::Test
       web_published: true
     ).join("\n")
 
-    assert_includes steps, "Web client copied to public/ruflet."
+    assert_includes steps, "Web client copied to public/app."
     refute_includes steps, "gem install ruflet"
   end
 
