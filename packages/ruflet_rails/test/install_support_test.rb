@@ -19,14 +19,11 @@ class InstallSupportTest < Minitest::Test
   def test_route_snippet_matches_target_agnostic_mount
     route = Ruflet::Rails::InstallSupport.route_snippet(mount_path: "/ws")
 
-    assert_equal 'mount Ruflet::Rails.app(Rails.root.join("app/views/frontend/main.rb")), at: "/ws"', route
+    assert_equal 'mount Ruflet::Rails.app(Rails.root.join("app/views/ruflet/main.rb")), at: "/ws"', route
   end
 
-  def test_default_entrypoint_path_can_target_mobile_web_or_desktop
-    assert_equal "app/views/frontend/main.rb", Ruflet::Rails::InstallSupport.default_entrypoint_path
-    assert_equal "app/views/mobile/main.rb", Ruflet::Rails::InstallSupport.default_entrypoint_path(target: "mobile")
-    assert_equal "app/views/web/main.rb", Ruflet::Rails::InstallSupport.default_entrypoint_path(target: "web")
-    assert_equal "app/views/desktop/main.rb", Ruflet::Rails::InstallSupport.default_entrypoint_path(target: "desktop")
+  def test_default_entrypoint_path_uses_ruflet_views_root
+    assert_equal "app/views/ruflet/main.rb", Ruflet::Rails::InstallSupport.default_entrypoint_path
   end
 
   def test_app_template_uses_ruflet_run
@@ -579,8 +576,8 @@ class InstallSupportTest < Minitest::Test
 
   def test_form_view_path_uses_rails_views_partial_shape
     assert_equal(
-      "app/views/mobile/posts/_form.rb",
-      Ruflet::Rails::InstallSupport.form_view_path("Post", target: "mobile")
+      "app/views/ruflet/posts/_form.rb",
+      Ruflet::Rails::InstallSupport.form_view_path("Post")
     )
   end
 
@@ -601,25 +598,10 @@ class InstallSupportTest < Minitest::Test
     assert_equal ["title:string", "starts_on:date"], Ruflet::Rails::InstallSupport.attributes_from_model(model)
   end
 
-  def test_scaffold_view_path_defaults_to_frontend_feature_folder
+  def test_scaffold_view_path_defaults_to_ruflet_feature_folder
     assert_equal(
-      "app/views/frontend/posts/posts_view.rb",
+      "app/views/ruflet/posts/posts_view.rb",
       Ruflet::Rails::InstallSupport.scaffold_view_path("Post")
-    )
-  end
-
-  def test_scaffold_view_path_can_target_mobile_web_or_desktop
-    assert_equal(
-      "app/views/mobile/posts/posts_view.rb",
-      Ruflet::Rails::InstallSupport.scaffold_view_path("Post", target: "mobile")
-    )
-    assert_equal(
-      "app/views/web/posts/posts_view.rb",
-      Ruflet::Rails::InstallSupport.scaffold_view_path("Post", target: "web")
-    )
-    assert_equal(
-      "app/views/desktop/posts/posts_view.rb",
-      Ruflet::Rails::InstallSupport.scaffold_view_path("Post", target: "desktop")
     )
   end
 
@@ -682,16 +664,16 @@ class InstallSupportTest < Minitest::Test
     end
   end
 
-  def test_frontend_install_steps_explain_web_public_copy_and_wasm_build
+  def test_ruflet_install_steps_explain_web_public_copy_and_wasm_build
     steps = Ruflet::Rails::InstallSupport.install_next_steps(
-      target: "frontend",
-      entrypoint: "app/views/frontend/main.rb",
+      target: "ruflet",
+      entrypoint: "app/views/ruflet/main.rb",
       client: "web",
       web_published: false
     ).join("\n")
 
-    assert_includes steps, "Ruflet Rails frontend installed."
-    assert_includes steps, "Generated entrypoint: app/views/frontend/main.rb"
+    assert_includes steps, "Ruflet Rails installed."
+    assert_includes steps, "Generated entrypoint: app/views/ruflet/main.rb"
     assert_includes steps, "Open the Ruflet web client: /ruflet/"
     assert_includes steps, "bin/rails ruflet:update[web]"
     assert_includes steps, "gem install ruflet"
@@ -699,10 +681,10 @@ class InstallSupportTest < Minitest::Test
     assert_includes steps, "public/ruflet"
   end
 
-  def test_frontend_install_steps_confirm_published_web_client
+  def test_ruflet_install_steps_confirm_published_web_client
     steps = Ruflet::Rails::InstallSupport.install_next_steps(
-      target: "frontend",
-      entrypoint: "app/views/frontend/main.rb",
+      target: "ruflet",
+      entrypoint: "app/views/ruflet/main.rb",
       client: "web",
       web_published: true
     ).join("\n")

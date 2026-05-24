@@ -17,7 +17,7 @@ class RufletRailsScaffoldHookTest < Minitest::Test
       attr_reader :invoked
 
       def options
-        { ruflet: true, ruflet_target: "mobile" }
+        { ruflet: true }
       end
 
       def name
@@ -41,11 +41,11 @@ class RufletRailsScaffoldHookTest < Minitest::Test
     instance.create_ruflet_scaffold_view
 
     assert_equal false, fake_generator.options[:ruflet][:default]
-    assert_equal "frontend", fake_generator.options[:ruflet_target][:default]
-    assert_equal ["ruflet:scaffold", ["Post", "title:string", "body:text"], { target: "mobile" }], instance.invoked
+    refute fake_generator.options.key?(:ruflet_target)
+    assert_equal ["ruflet:scaffold", ["Post", "title:string", "body:text"], {}], instance.invoked
   end
 
-  def test_rails_scaffold_ruflet_option_uses_frontend_target_by_default
+  def test_rails_scaffold_ruflet_option_uses_ruflet_target_by_default
     fake_generator = Class.new do
       class << self
         def class_option(_name, _config); end
@@ -54,7 +54,7 @@ class RufletRailsScaffoldHookTest < Minitest::Test
       attr_reader :invoked
 
       def options
-        { ruflet: true, ruflet_target: "frontend" }
+        { ruflet: true }
       end
 
       def name
@@ -74,6 +74,6 @@ class RufletRailsScaffoldHookTest < Minitest::Test
     instance = fake_generator.new
     instance.create_ruflet_scaffold_view
 
-    assert_equal ["ruflet:scaffold", ["Post", "title:string"], { target: "frontend" }], instance.invoked
+    assert_equal ["ruflet:scaffold", ["Post", "title:string"], {}], instance.invoked
   end
 end

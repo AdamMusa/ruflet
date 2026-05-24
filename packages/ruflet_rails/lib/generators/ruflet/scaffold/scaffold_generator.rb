@@ -8,7 +8,6 @@ module Ruflet
     class ScaffoldGenerator < ::Rails::Generators::Base
       argument :model_name, type: :string
       argument :attributes, type: :array, default: [], banner: "field:type field:type"
-      class_option :target, type: :string, default: "frontend", desc: "App folder for the generated view: frontend, mobile, web, desktop, or a custom folder"
 
       desc "Generate a Ruflet UI scaffold for a Rails model."
 
@@ -42,11 +41,11 @@ module Ruflet
       private
 
       def scaffold_view_path
-        Ruflet::Rails::InstallSupport.scaffold_view_path(model_name, target: options[:target])
+        Ruflet::Rails::InstallSupport.scaffold_view_path(model_name)
       end
 
       def entrypoint_path
-        Ruflet::Rails::InstallSupport.default_entrypoint_path(target: options[:target])
+        Ruflet::Rails::InstallSupport.default_entrypoint_path
       end
 
       def legacy_entrypoint_require

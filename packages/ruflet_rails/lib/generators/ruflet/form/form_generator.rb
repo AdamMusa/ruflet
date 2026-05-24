@@ -9,7 +9,6 @@ module Ruflet
     class FormGenerator < ::Rails::Generators::Base
       argument :model_name, type: :string
       argument :attributes, type: :array, default: [], banner: "field:type field:type"
-      class_option :target, type: :string, default: "frontend", desc: "App views folder for the generated form: frontend, mobile, web, desktop, or a custom folder"
 
       desc "Generate only a Ruflet form for an existing Rails model."
 
@@ -34,7 +33,7 @@ module Ruflet
       private
 
       def form_view_path
-        Ruflet::Rails::InstallSupport.form_view_path(model_name, target: options[:target])
+        Ruflet::Rails::InstallSupport.form_view_path(model_name)
       end
 
       def form_attributes

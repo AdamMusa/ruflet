@@ -16,13 +16,6 @@ module Ruflet
           default: false,
           desc: "Generate a server-driven Ruflet view for this scaffold"
         )
-        generator.class_option(
-          :ruflet_target,
-          type: :string,
-          default: "frontend",
-          desc: "App folder for the generated Ruflet view"
-        )
-
         generator.class_eval do
           def create_ruflet_scaffold_view
             return unless options[:ruflet]
@@ -32,7 +25,7 @@ module Ruflet
               "#{attribute.name}:#{type}"
             end
 
-            invoke "ruflet:scaffold", [name, *ruflet_attributes], target: options[:ruflet_target]
+            invoke "ruflet:scaffold", [name, *ruflet_attributes]
           end
         end
 

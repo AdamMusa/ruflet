@@ -422,18 +422,16 @@ module Ruflet
         }
       end
 
-      def scaffold_view_path(model_name, target: "frontend")
+      def scaffold_view_path(model_name)
         names = scaffold_names(model_name)
-        app_target = normalize_scaffold_target(target)
 
-        File.join("app", "views", app_target, names[:plural], "#{names[:plural]}_view.rb")
+        File.join("app", "views", "ruflet", names[:plural], "#{names[:plural]}_view.rb")
       end
 
-      def form_view_path(model_name, target: "frontend")
+      def form_view_path(model_name)
         names = scaffold_names(model_name)
-        app_target = normalize_scaffold_target(target)
 
-        File.join("app", "views", app_target, names[:plural], "_form.rb")
+        File.join("app", "views", "ruflet", names[:plural], "_form.rb")
       end
 
       def form_view_template(model_name:, attributes:)
@@ -596,11 +594,6 @@ module Ruflet
         "{ #{parts.join(', ')} }"
       end
 
-      def normalize_scaffold_target(target)
-        value = target.to_s.strip.downcase.gsub(/[^a-z0-9_]/, "")
-        value.empty? ? "frontend" : value
-      end
-
       def normalize_scaffold_attribute(value)
         raw = value.to_s.strip
         name, type = raw.split(":", 2)
@@ -667,8 +660,8 @@ module Ruflet
         args
       end
 
-      def default_entrypoint_path(target: "frontend")
-        File.join("app", "views", normalize_scaffold_target(target), "main.rb")
+      def default_entrypoint_path
+        File.join("app", "views", "ruflet", "main.rb")
       end
 
       def route_snippet(entrypoint: default_entrypoint_path, mount_path: "/ws", helper: "app")
@@ -727,10 +720,9 @@ module Ruflet
       end
 
       def install_next_steps(target:, entrypoint:, client:, web_published:, mount_path: "/ws")
-        normalized_target = normalize_scaffold_target(target)
         web_path = default_web_public_path
         lines = [
-          "Ruflet Rails #{normalized_target} installed.",
+          "Ruflet Rails installed.",
           "Generated entrypoint: #{entrypoint}",
           "Mounted websocket: #{mount_path}",
           "Next steps:",
@@ -740,7 +732,7 @@ module Ruflet
 
         if web_published
           lines << "Web client copied to public/#{web_path}."
-        elsif %w[frontend web].include?(normalized_target) || %w[web all].include?(client.to_s)
+        elsif target.to_s == "ruflet" || %w[web all].include?(client.to_s)
           lines += [
             "Web client was not copied because no built/prebuilt web index.html was found.",
             "To download the prebuilt client from GitHub: bin/rails ruflet:update[web]",

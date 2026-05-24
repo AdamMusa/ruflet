@@ -6,8 +6,7 @@ require "ruflet/rails/install_support"
 module Ruflet
   module Generators
     class InstallGenerator < ::Rails::Generators::Base
-      class_option :frontend, type: :boolean, default: false, desc: "Install the Rails-hosted Ruflet frontend entrypoint and web client"
-      class_option :target, type: :string, default: "frontend", desc: "App views folder for the Ruflet entrypoint: frontend, mobile, web, desktop, or a custom folder"
+      class_option :frontend, type: :boolean, default: false, desc: "Install the Rails-hosted Ruflet web client"
       class_option :client, type: :string, default: nil, desc: "Download prebuilt client from GitHub releases: web, desktop, all, or none"
 
       desc "Install Ruflet into a Rails app."
@@ -82,7 +81,7 @@ module Ruflet
       end
 
       def entrypoint_path
-        Ruflet::Rails::InstallSupport.default_entrypoint_path(target: install_target)
+        Ruflet::Rails::InstallSupport.default_entrypoint_path
       end
 
       def requested_client
@@ -93,18 +92,13 @@ module Ruflet
           return explicit
         end
 
-        target = install_target
         return "web" if options[:frontend]
-        return "web" if target == "web"
-        return "desktop" if target == "desktop"
 
         "none"
       end
 
       def install_target
-        return "frontend" if options[:frontend]
-
-        options[:target].to_s.strip.downcase
+        "ruflet"
       end
     end
   end

@@ -16,20 +16,15 @@ gem "ruflet_rails", ">= 0.0.5"
 
 ```bash
 bin/rails generate ruflet:install
-bin/rails generate ruflet:install --target=mobile
-bin/rails generate ruflet:install --target=web
-bin/rails generate ruflet:install --target=desktop
 bin/rails generate ruflet:install --client=web
 bin/rails generate ruflet:install --client=desktop
 ```
 
 This generator will:
-- create `app/views/frontend/main.rb` by default, or `app/views/mobile/main.rb`
-  with `--target=mobile`
+- create `app/views/ruflet/main.rb`
 - create `ruflet.yaml`
 - add the Ruflet mount route to `config/routes.rb`
-- download prebuilt clients from GitHub releases when `--target=web`,
-  `--target=desktop`, or `--client=web|desktop|all` is used
+- download prebuilt clients from GitHub releases when `--client=web|desktop|all` is used
 
 Generated `ruflet.yaml`:
 
@@ -107,29 +102,20 @@ bin/rails generate ruflet:scaffold Post title:string body:text
 This creates:
 
 ```text
-app/views/frontend/posts/posts_view.rb
-```
-
-Use a specific app folder when your project has separate frontends:
-
-```bash
-bin/rails generate ruflet:scaffold Post title:string body:text --target=mobile
-bin/rails generate ruflet:scaffold Post title:string body:text --target=web
-bin/rails generate ruflet:scaffold Post title:string body:text --target=desktop
+app/views/ruflet/posts/posts_view.rb
 ```
 
 Or generate it alongside a normal Rails scaffold:
 
 ```bash
 bin/rails generate scaffold Post title:string body:text --ruflet
-bin/rails generate scaffold Post title:string body:text --ruflet --ruflet-target=mobile
 ```
 
 The `--ruflet` option delegates to `ruflet:scaffold`, so Rails scaffold and
 Ruflet scaffold generate the same Ruflet view file.
 
 The generated file is grouped by model under Rails views, for example
-`app/views/frontend/posts/posts_view.rb` or `app/views/mobile/posts/posts_view.rb`.
+`app/views/ruflet/posts/posts_view.rb`.
 
 ## Ruflet model forms
 
@@ -137,7 +123,6 @@ Generate only a reusable Ruflet form for an existing Rails model:
 
 ```bash
 bin/rails generate ruflet:form Post
-bin/rails generate ruflet:form Post --target=mobile
 ```
 
 When no fields are passed, the generator reads the model columns and skips `id`,
@@ -150,13 +135,12 @@ bin/rails generate ruflet:form Post title:string body:text published:boolean cat
 Foreign keys and references, such as `category:references` or `user_id`, render
 as Ruflet dropdowns populated from the associated Rails model.
 
-The generated form lives at `app/views/frontend/posts/_form.rb` by default, or
-`app/views/mobile/posts/_form.rb` with `--target=mobile`.
+The generated form lives at `app/views/ruflet/posts/_form.rb`.
 
 ## Manual usage
 
 ```ruby
-# app/views/frontend/main.rb
+# app/views/ruflet/main.rb
 require "ruflet"
 
 Ruflet.run do |page|
@@ -168,7 +152,7 @@ end
 Mount it in Rails:
 
 ```ruby
-mount Ruflet::Rails.app(Rails.root.join("app/views/frontend/main.rb")), at: "/ws"
+mount Ruflet::Rails.app(Rails.root.join("app/views/ruflet/main.rb")), at: "/ws"
 ```
 
 The same mounted Ruby entrypoint drives mobile, web, and desktop clients.
