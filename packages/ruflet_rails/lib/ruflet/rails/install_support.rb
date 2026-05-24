@@ -204,6 +204,7 @@ module Ruflet
 
                 dialog = nil
                 after_close = nil
+                closing = false
                 dialog = alert_dialog(
                   open: false,
                   modal: true,
@@ -226,7 +227,10 @@ module Ruflet
                     text_button(
                       content: text("Save"),
                       on_click: ->(_e) do
+                        next if closing
+
                         save(record, fields, dialog) do
+                          closing = true
                           after_close = -> do
                             index
                             show_snackbar("#{singular_title} saved")
@@ -280,6 +284,7 @@ module Ruflet
               def open_delete_dialog(record)
                 dialog = nil
                 after_close = nil
+                closing = false
                 dialog = alert_dialog(
                   open: false,
                   modal: true,
@@ -298,6 +303,9 @@ module Ruflet
                     text_button(
                       content: text("Delete"),
                       on_click: ->(_e) do
+                        next if closing
+
+                        closing = true
                         after_close = -> { delete_record(record) }
                         close_dialog(dialog)
                       end

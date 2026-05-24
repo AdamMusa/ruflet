@@ -180,6 +180,8 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "def error_message(record)"
     assert_includes template, "on_dismiss: ->(_e) do"
     assert_includes template, "after_close = -> do"
+    assert_includes template, "closing = false"
+    assert_includes template, "next if closing"
     assert_includes template, "page.update(dialog, open: false)"
     refute_includes template, "page.pop_dialog"
     refute_includes template, "page.snack_bar ="
@@ -377,6 +379,45 @@ class InstallSupportTest < Minitest::Test
   ensure
     Object.send(:remove_const, :CategoryView) if Object.const_defined?(:CategoryView)
     Object.send(:remove_const, :Category) if Object.const_defined?(:Category) && Object.const_get(:Category) == model_class
+  end
+
+  def test_generated_scaffold_save_click_is_ignored_while_dialog_is_closing
+    template = Ruflet::Rails::InstallSupport.scaffold_view_template(
+      model_name: "DoubleSaveCategory",
+      attributes: ["name:string"]
+    )
+    model_class = stub_scaffold_model("DoubleSaveCategory")
+    update_count = 0
+    model_class.define_method(:update) do |attributes|
+      update_count += 1
+      @attributes.merge!(attributes)
+      true
+    end
+    Object.class_eval(template.sub(/^require "ruflet_rails"\n\n/, ""))
+
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "test-session",
+      client_details: { "route" => "/double_save_categories", "width" => 390, "platform" => "web" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    DoubleSaveCategoryView.render(page)
+    button = find_patch_control(sent.last[1]["patch"], "_c" => "FilledButton", "content" => { "value" => "New Double Save Category" })
+    sent.clear
+    page.dispatch_event(target: button["_i"], name: "click", data: nil)
+    dialog = sent.lazy.filter_map { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "AlertDialog") }.first
+    save = find_patch_control(dialog, "_c" => "TextButton", "content" => { "value" => "Save" })
+
+    sent.clear
+    page.dispatch_event(target: save["_i"], name: "click", data: nil)
+    page.dispatch_event(target: save["_i"], name: "click", data: nil)
+
+    assert_equal 1, update_count
+    assert_equal 1, sent.count { |(_action, payload)| payload["id"] == dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
+  ensure
+    Object.send(:remove_const, :DoubleSaveCategoryView) if Object.const_defined?(:DoubleSaveCategoryView)
+    Object.send(:remove_const, :DoubleSaveCategory) if Object.const_defined?(:DoubleSaveCategory) && Object.const_get(:DoubleSaveCategory) == model_class
   end
 
   def test_generated_scaffold_dialog_click_flows_through_rails_protocol
