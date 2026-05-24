@@ -172,7 +172,7 @@ module Ruflet
                   actions: [
                     text_button(
                       content: text("Cancel"),
-                      on_click: ->(_e) { page.update(dialog, open: false) }
+                      on_click: ->(_e) { close_dialog(dialog) }
                     ),
                     text_button(
                       content: text("Save"),
@@ -230,12 +230,12 @@ module Ruflet
                   actions: [
                     text_button(
                       content: text("Cancel"),
-                      on_click: ->(_e) { page.update(dialog, open: false) }
+                      on_click: ->(_e) { close_dialog(dialog) }
                     ),
                     text_button(
                       content: text("Delete"),
                       on_click: ->(_e) do
-                        page.update(dialog, open: false)
+                        close_dialog(dialog)
                         delete_record(record)
                       end
                     )
@@ -246,18 +246,12 @@ module Ruflet
               end
 
               def save(record, fields, dialog = nil)
-                attributes = fields.to_h do |name, control|
-                  field = form_fields.find { |candidate| candidate[:name] == name }
-                  [name, control_value(control, field[:type])]
-                end
-
-                if record.update(attributes)
-                  page.update(dialog, open: false) if dialog
+                if record.update(form_attributes(fields))
+                  close_dialog(dialog)
                   index
                   show_snackbar("#{singular_title} saved")
                 else
-                  page.snack_bar = snack_bar(text(record.errors.full_messages.to_sentence))
-                  page.update
+                  show_errors(record)
                 end
               end
 
@@ -338,8 +332,28 @@ module Ruflet
                 show_snackbar("#{singular_title} deleted")
               end
 
+              def close_dialog(dialog)
+                page.update(dialog, open: false) if dialog
+              end
+
+              def form_attributes(fields)
+                fields.to_h do |name, control|
+                  field = form_fields.find { |candidate| candidate[:name] == name }
+                  [name, control_value(control, field[:type])]
+                end
+              end
+
+              def show_errors(record)
+                show_snackbar(error_message(record))
+              end
+
               def show_snackbar(message)
                 page.show_dialog(snack_bar(text(message), open: true))
+              end
+
+              def error_message(record)
+                messages = record.errors.full_messages
+                messages.respond_to?(:to_sentence) ? messages.to_sentence : messages.join(", ")
               end
 
               def control_value(control, type)
@@ -466,16 +480,10 @@ module Ruflet
               end
 
               def save(record, fields, on_save: nil)
-                attributes = fields.to_h do |name, control|
-                  field = FIELDS.find { |candidate| candidate[:name] == name }
-                  [name, control_value(control, field[:type])]
-                end
-
-                if record.update(attributes)
+                if record.update(form_attributes(fields))
                   on_save ? on_save.call(page, record) : record
                 else
-                  page.snack_bar = snack_bar(text(record.errors.full_messages.to_sentence))
-                  page.update
+                  show_errors(record)
                   false
                 end
               end
@@ -516,6 +524,22 @@ module Ruflet
                 return value if %w[association references belongs_to].include?(type.to_s)
 
                 value.to_s
+              end
+
+              def form_attributes(fields)
+                fields.to_h do |name, control|
+                  field = FIELDS.find { |candidate| candidate[:name] == name }
+                  [name, control_value(control, field[:type])]
+                end
+              end
+
+              def show_errors(record)
+                page.show_dialog(snack_bar(text(error_message(record)), open: true))
+              end
+
+              def error_message(record)
+                messages = record.errors.full_messages
+                messages.respond_to?(:to_sentence) ? messages.to_sentence : messages.join(", ")
               end
 
               def association_options(field)

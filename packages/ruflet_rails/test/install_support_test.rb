@@ -159,8 +159,13 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "width: 140"
     assert_includes template, "content: text(\"New Post\")"
     assert_includes template, 'content: text("Save")'
+    assert_includes template, "def close_dialog(dialog)"
+    assert_includes template, "def form_attributes(fields)"
+    assert_includes template, "def show_errors(record)"
+    assert_includes template, "def error_message(record)"
     assert_includes template, "page.update(dialog, open: false)"
     refute_includes template, "page.pop_dialog"
+    refute_includes template, "page.snack_bar ="
     assert_includes template, 'show_snackbar("Post saved")'
     assert_includes template, 'show_snackbar("Post deleted")'
     assert_includes template, "record.destroy"
@@ -260,6 +265,7 @@ class InstallSupportTest < Minitest::Test
     page.dispatch_event(target: cancel["_i"], name: "click", data: nil)
 
     assert sent.any? { |(_action, payload)| payload["id"] == dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
+    assert dialog_untracked?(sent, dialog)
   ensure
     Object.send(:remove_const, :DismissableCategoryView) if Object.const_defined?(:DismissableCategoryView)
     Object.send(:remove_const, :DismissableCategory) if Object.const_defined?(:DismissableCategory) && Object.const_get(:DismissableCategory) == model_class
@@ -294,6 +300,7 @@ class InstallSupportTest < Minitest::Test
     page.dispatch_event(target: save["_i"], name: "click", data: nil)
 
     assert sent.any? { |(_action, payload)| payload["id"] == dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
+    assert dialog_untracked?(sent, dialog)
     assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "Text", "value" => "Saving Categories") }
     assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Saving Category saved" }) }
   ensure
@@ -355,6 +362,40 @@ class InstallSupportTest < Minitest::Test
     end
   end
 
+  def test_generated_scaffold_validation_errors_use_snackbar_without_closing_dialog
+    template = Ruflet::Rails::InstallSupport.scaffold_view_template(
+      model_name: "InvalidCategory",
+      attributes: ["name:string"]
+    )
+    model_class = stub_scaffold_model("InvalidCategory")
+    model_class.update_result = false
+    Object.class_eval(template.sub(/^require "ruflet_rails"\n\n/, ""))
+
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "test-session",
+      client_details: { "route" => "/invalid_categories", "width" => 390 },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    InvalidCategoryView.render(page)
+    button = find_patch_control(sent.last[1]["patch"], "_c" => "FilledButton", "content" => { "value" => "New Invalid Category" })
+
+    sent.clear
+    page.dispatch_event(target: button["_i"], name: "click", data: nil)
+    dialog = sent.last[1]["patch"][1][3].first
+    save = find_patch_control(dialog, "_c" => "TextButton", "content" => { "value" => "Save" })
+
+    sent.clear
+    page.dispatch_event(target: save["_i"], name: "click", data: nil)
+
+    refute sent.any? { |(_action, payload)| payload["id"] == dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
+    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "is invalid" }) }
+  ensure
+    Object.send(:remove_const, :InvalidCategoryView) if Object.const_defined?(:InvalidCategoryView)
+    Object.send(:remove_const, :InvalidCategory) if Object.const_defined?(:InvalidCategory) && Object.const_get(:InvalidCategory) == model_class
+  end
+
   def test_generated_scaffold_table_actions_use_data_cell_taps
     template = Ruflet::Rails::InstallSupport.scaffold_view_template(
       model_name: "ActionCategory",
@@ -411,12 +452,16 @@ class InstallSupportTest < Minitest::Test
     sent.clear
     page.dispatch_event(target: detail_edit["_i"], name: "click", data: nil)
 
-    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "AlertDialog") }
+    edit_dialog = sent.lazy.filter_map { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "AlertDialog") }.first
+    refute_nil edit_dialog
+    edit_save = find_patch_control(edit_dialog, "_c" => "TextButton", "content" => { "value" => "Save" })
+    refute_nil edit_save
 
     sent.clear
-    page.dispatch_event(target: back_button["_i"], name: "click", data: nil)
+    page.dispatch_event(target: edit_save["_i"], name: "click", data: nil)
 
-    assert find_patch_control(sent.last[1]["patch"], "_c" => "Text", "value" => "Action Categories")
+    assert sent.any? { |(_action, payload)| payload["id"] == edit_dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
+    assert dialog_untracked?(sent, edit_dialog)
 
     ActionCategoryView.render(page)
     patch = sent.last[1]["patch"]
@@ -430,7 +475,14 @@ class InstallSupportTest < Minitest::Test
     sent.clear
     page.dispatch_event(target: detail_delete["_i"], name: "click", data: nil)
 
-    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "AlertDialog", "title" => { "value" => "Delete Action Category?" }) }
+    detail_delete_dialog = sent.lazy.filter_map do |(_action, payload)|
+      find_patch_control(payload["patch"], "_c" => "AlertDialog", "title" => { "value" => "Delete Action Category?" })
+    end.first
+    refute_nil detail_delete_dialog
+    detail_delete_cancel = find_patch_control(detail_delete_dialog, "_c" => "TextButton", "content" => { "value" => "Cancel" })
+    sent.clear
+    page.dispatch_event(target: detail_delete_cancel["_i"], name: "click", data: nil)
+    assert dialog_untracked?(sent, detail_delete_dialog)
 
     ActionCategoryView.render(page)
     patch = sent.last[1]["patch"]
@@ -439,7 +491,12 @@ class InstallSupportTest < Minitest::Test
     sent.clear
     page.dispatch_event(target: edit_cell["_i"], name: "tap", data: nil)
 
-    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "AlertDialog") }
+    table_edit_dialog = sent.lazy.filter_map { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "AlertDialog") }.first
+    refute_nil table_edit_dialog
+    table_edit_cancel = find_patch_control(table_edit_dialog, "_c" => "TextButton", "content" => { "value" => "Cancel" })
+    sent.clear
+    page.dispatch_event(target: table_edit_cancel["_i"], name: "click", data: nil)
+    assert dialog_untracked?(sent, table_edit_dialog)
 
     ActionCategoryView.render(page)
     patch = sent.last[1]["patch"]
@@ -462,6 +519,8 @@ class InstallSupportTest < Minitest::Test
     page.dispatch_event(target: confirm["_i"], name: "click", data: nil)
 
     assert_equal true, record.destroyed
+    assert sent.any? { |(_action, payload)| payload["id"] == delete_dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
+    assert dialog_untracked?(sent, delete_dialog)
     assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Action Category deleted" }) }
   ensure
     Object.send(:remove_const, :ActionCategoryView) if Object.const_defined?(:ActionCategoryView)
@@ -505,12 +564,16 @@ class InstallSupportTest < Minitest::Test
     refute_includes template, "module RufletForms"
     assert_includes template, "def render(record:, title: nil, on_save: nil, on_cancel: nil)"
     assert_includes template, "def save(record, fields, on_save: nil)"
+    assert_includes template, "def form_attributes(fields)"
+    assert_includes template, "def show_errors(record)"
+    assert_includes template, "def error_message(record)"
     assert_includes template, "date_picker("
     assert_includes template, "checkbox(label: label"
     assert_includes template, '{ name: "user_id", type: "association", class_name: "User" }'
     assert_includes template, "association_options(field)"
     refute_includes template, "data_table("
     refute_includes template, "record.destroy"
+    refute_includes template, "page.snack_bar ="
     assert_silent { RubyVM::InstructionSequence.compile(template) }
   end
 
@@ -660,7 +723,7 @@ class InstallSupportTest < Minitest::Test
   def stub_scaffold_model(name)
     model = Class.new do
       class << self
-        attr_accessor :records
+        attr_accessor :records, :update_result
       end
 
       def self.order(*)
@@ -688,6 +751,11 @@ class InstallSupportTest < Minitest::Test
       end
 
       def update(attributes)
+        unless self.class.update_result.nil? || self.class.update_result
+          @errors = Struct.new(:full_messages).new(["is invalid"])
+          return false
+        end
+
         @attributes.merge!(attributes)
         true
       end
@@ -732,6 +800,14 @@ class InstallSupportTest < Minitest::Test
     criteria.all? do |key, expected|
       actual = control[key]
       expected.is_a?(Hash) ? patch_control_matches?(actual || {}, expected) : actual == expected
+    end
+  end
+
+  def dialog_untracked?(sent, dialog)
+    sent.any? do |(_action, payload)|
+      Array(payload["patch"]).any? do |op|
+        op[2] == "controls" && op[3].is_a?(Array) && find_patch_control(op[3], "_i" => dialog["_i"]).nil?
+      end
     end
   end
 
