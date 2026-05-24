@@ -1195,10 +1195,6 @@ module Ruflet
         "patch" => [[0], *patch_ops]
       })
 
-      if patch["open"] == false && remove_dialog_tracking(control)
-        push_dialogs_update!
-      end
-
       self
     end
 
@@ -1231,11 +1227,11 @@ module Ruflet
 
       event = Event.new(name: name, target: target, raw_data: data, page: self, control: control)
       apply_event_value_to_control(control, event) if %w[change select select_change].include?(name.to_s)
-      control.emit(name, event)
-
       if dialog_close_event?(control, name) && remove_dialog_tracking(control)
         push_dialogs_update!
       end
+
+      control.emit(name, event)
     end
 
     def method_missing(name, *args, &block)

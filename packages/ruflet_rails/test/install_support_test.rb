@@ -280,6 +280,10 @@ class InstallSupportTest < Minitest::Test
     page.dispatch_event(target: cancel["_i"], name: "click", data: nil)
 
     assert sent.any? { |(_action, payload)| payload["id"] == dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
+    refute dialog_untracked?(sent, dialog)
+
+    sent.clear
+    page.dispatch_event(target: dialog["_i"], name: "dismiss", data: nil)
     assert dialog_untracked?(sent, dialog)
   ensure
     Object.send(:remove_const, :DismissableCategoryView) if Object.const_defined?(:DismissableCategoryView)
@@ -315,9 +319,13 @@ class InstallSupportTest < Minitest::Test
     page.dispatch_event(target: save["_i"], name: "click", data: nil)
 
     assert sent.any? { |(_action, payload)| payload["id"] == dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
-    assert dialog_untracked?(sent, dialog)
+    refute dialog_untracked?(sent, dialog)
     assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "Text", "value" => "Saving Categories") }
     assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Saving Category saved" }) }
+
+    sent.clear
+    page.dispatch_event(target: dialog["_i"], name: "dismiss", data: nil)
+    assert dialog_untracked?(sent, dialog)
   ensure
     Object.send(:remove_const, :SavingCategoryView) if Object.const_defined?(:SavingCategoryView)
     Object.send(:remove_const, :SavingCategory) if Object.const_defined?(:SavingCategory) && Object.const_get(:SavingCategory) == model_class
@@ -476,6 +484,10 @@ class InstallSupportTest < Minitest::Test
     page.dispatch_event(target: edit_save["_i"], name: "click", data: nil)
 
     assert sent.any? { |(_action, payload)| payload["id"] == edit_dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
+    refute dialog_untracked?(sent, edit_dialog)
+
+    sent.clear
+    page.dispatch_event(target: edit_dialog["_i"], name: "dismiss", data: nil)
     assert dialog_untracked?(sent, edit_dialog)
 
     ActionCategoryView.render(page)
@@ -497,6 +509,9 @@ class InstallSupportTest < Minitest::Test
     detail_delete_cancel = find_patch_control(detail_delete_dialog, "_c" => "TextButton", "content" => { "value" => "Cancel" })
     sent.clear
     page.dispatch_event(target: detail_delete_cancel["_i"], name: "click", data: nil)
+    refute dialog_untracked?(sent, detail_delete_dialog)
+    sent.clear
+    page.dispatch_event(target: detail_delete_dialog["_i"], name: "dismiss", data: nil)
     assert dialog_untracked?(sent, detail_delete_dialog)
 
     ActionCategoryView.render(page)
@@ -511,6 +526,9 @@ class InstallSupportTest < Minitest::Test
     table_edit_cancel = find_patch_control(table_edit_dialog, "_c" => "TextButton", "content" => { "value" => "Cancel" })
     sent.clear
     page.dispatch_event(target: table_edit_cancel["_i"], name: "click", data: nil)
+    refute dialog_untracked?(sent, table_edit_dialog)
+    sent.clear
+    page.dispatch_event(target: table_edit_dialog["_i"], name: "dismiss", data: nil)
     assert dialog_untracked?(sent, table_edit_dialog)
 
     ActionCategoryView.render(page)
@@ -535,8 +553,12 @@ class InstallSupportTest < Minitest::Test
 
     assert_equal true, record.destroyed
     assert sent.any? { |(_action, payload)| payload["id"] == delete_dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
-    assert dialog_untracked?(sent, delete_dialog)
+    refute dialog_untracked?(sent, delete_dialog)
     assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Action Category deleted" }) }
+
+    sent.clear
+    page.dispatch_event(target: delete_dialog["_i"], name: "dismiss", data: nil)
+    assert dialog_untracked?(sent, delete_dialog)
   ensure
     Object.send(:remove_const, :ActionCategoryView) if Object.const_defined?(:ActionCategoryView)
     Object.send(:remove_const, :ActionCategory) if Object.const_defined?(:ActionCategory) && Object.const_get(:ActionCategory) == model_class

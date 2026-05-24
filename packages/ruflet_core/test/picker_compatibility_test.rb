@@ -269,8 +269,9 @@ class RufletPickerCompatibilityTest < Minitest::Test
     page.dispatch_event(target: picker.wire_id, name: "change", data: "10:15")
 
     assert_equal ["10:15"], changes
-    assert_equal Ruflet::Protocol::ACTIONS[:patch_control], sent.last[0]
-    controls_patch = sent.last[1]["patch"].find { |op| op[2] == "controls" }
+    dialog_message = sent.find { |(_action, payload)| payload["patch"].any? { |op| op[2] == "controls" } }
+    assert_equal Ruflet::Protocol::ACTIONS[:patch_control], dialog_message[0]
+    controls_patch = dialog_message[1]["patch"].find { |op| op[2] == "controls" }
     assert_equal [], controls_patch[3]
     assert_equal "Time: 10:15", result.props["value"]
 

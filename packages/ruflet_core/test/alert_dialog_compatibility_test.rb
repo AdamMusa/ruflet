@@ -93,7 +93,7 @@ class RufletAlertDialogCompatibilityTest < Minitest::Test
     assert_equal [], sent.last[1]["patch"][1][3]
   end
 
-  def test_page_update_close_untracks_dialog_like_flet_close
+  def test_page_update_close_waits_for_client_dismiss_before_untracking_dialog
     sent = []
     page = Ruflet::Page.new(
       session_id: "s1",
@@ -109,23 +109,24 @@ class RufletAlertDialogCompatibilityTest < Minitest::Test
     page.update(dialog, open: false)
 
     assert_equal false, dialog.props["open"]
-    assert_equal Ruflet::Protocol::ACTIONS[:patch_control], sent[-2][0]
-    assert_equal dialog.wire_id, sent[-2][1]["id"]
-    assert_includes sent[-2][1]["patch"], [0, 0, "open", false]
-    controls_patch = sent[-1][1]["patch"].find { |op| op[2] == "controls" }
-    assert_equal [], controls_patch[3]
+    assert_equal 1, sent.length
+    assert_equal Ruflet::Protocol::ACTIONS[:patch_control], sent.last[0]
+    assert_equal dialog.wire_id, sent.last[1]["id"]
+    assert_includes sent.last[1]["patch"], [0, 0, "open", false]
 
     sent.clear
     page.dispatch_event(target: dialog.wire_id, name: "dismiss", data: nil)
-    assert_empty sent
+    controls_patch = sent.last[1]["patch"].find { |op| op[2] == "controls" }
+    assert_equal [], controls_patch[3]
 
+    sent.clear
     page.show_dialog(dialog)
 
     controls_patch = sent.last[1]["patch"].find { |op| op[2] == "controls" }
     assert_equal true, controls_patch[3].first["open"]
   end
 
-  def test_pop_dialog_closes_and_removes_latest_dialog_from_container
+  def test_pop_dialog_closes_latest_dialog_and_waits_for_dismiss_to_remove
     sent = []
     page = Ruflet::Page.new(
       session_id: "s1",
@@ -142,11 +143,15 @@ class RufletAlertDialogCompatibilityTest < Minitest::Test
 
     assert_same dialog, popped
     assert_equal false, dialog.props["open"]
-    assert_equal Ruflet::Protocol::ACTIONS[:patch_control], sent[-2][0]
-    closing_patch = sent[-2][1]["patch"].find { |op| op[2] == "open" }
-    removed_controls = sent[-1][1]["patch"].find { |op| op[2] == "controls" }[3]
-    assert_equal dialog.wire_id, sent[-2][1]["id"]
+    assert_equal 1, sent.length
+    assert_equal Ruflet::Protocol::ACTIONS[:patch_control], sent.last[0]
+    closing_patch = sent.last[1]["patch"].find { |op| op[2] == "open" }
+    assert_equal dialog.wire_id, sent.last[1]["id"]
     assert_equal false, closing_patch[3]
+
+    sent.clear
+    page.dispatch_event(target: dialog.wire_id, name: "dismiss", data: nil)
+    removed_controls = sent.last[1]["patch"].find { |op| op[2] == "controls" }[3]
     assert_equal [], removed_controls
   end
 
