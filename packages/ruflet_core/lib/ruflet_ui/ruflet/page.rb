@@ -510,6 +510,7 @@ module Ruflet
       return self if dialog_open?(dialog_control)
 
       dialog_control.props["open"] = true
+      remove_existing_singleton_dialogs(dialog_control)
       @dialogs << dialog_control unless @dialogs.include?(dialog_control)
       refresh_dialogs_container!
       send_view_patch unless @dialogs_container.wire_id
@@ -1654,6 +1655,16 @@ module Ruflet
       @dialogs.delete(control)
       refresh_dialogs_container!
       true
+    end
+
+    def remove_existing_singleton_dialogs(control)
+      return unless singleton_dialog_control?(control)
+
+      @dialogs.delete_if { |dialog| dialog != control && singleton_dialog_control?(dialog) }
+    end
+
+    def singleton_dialog_control?(control)
+      control.type.to_s.tr("_", "").downcase == "snackbar"
     end
 
     def assign_split_prop(key, value)

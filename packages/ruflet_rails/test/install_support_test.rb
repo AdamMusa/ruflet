@@ -178,6 +178,8 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "def form_attributes(fields)"
     assert_includes template, "def show_errors(record)"
     assert_includes template, "def error_message(record)"
+    assert_includes template, "on_dismiss: ->(_e) do"
+    assert_includes template, "after_close = -> do"
     assert_includes template, "page.update(dialog, open: false)"
     refute_includes template, "page.pop_dialog"
     refute_includes template, "page.snack_bar ="
@@ -320,15 +322,61 @@ class InstallSupportTest < Minitest::Test
 
     assert sent.any? { |(_action, payload)| payload["id"] == dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
     refute dialog_untracked?(sent, dialog)
-    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "Text", "value" => "Saving Categories") }
-    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Saving Category saved" }) }
+    refute sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Saving Category saved" }) }
 
     sent.clear
     page.dispatch_event(target: dialog["_i"], name: "dismiss", data: nil)
     assert dialog_untracked?(sent, dialog)
+    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "Text", "value" => "Saving Categories") }
+    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Saving Category saved" }) }
   ensure
     Object.send(:remove_const, :SavingCategoryView) if Object.const_defined?(:SavingCategoryView)
     Object.send(:remove_const, :SavingCategory) if Object.const_defined?(:SavingCategory) && Object.const_get(:SavingCategory) == model_class
+  end
+
+  def test_generated_scaffold_two_category_saves_wait_for_dialog_dismiss_before_refreshing
+    template = Ruflet::Rails::InstallSupport.scaffold_view_template(
+      model_name: "Category",
+      attributes: ["name:string"]
+    )
+    model_class = stub_scaffold_model("Category")
+    Object.class_eval(template.sub(/^require "ruflet_rails"\n\n/, ""))
+
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "test-session",
+      client_details: { "route" => "/categories", "width" => 390, "platform" => "web" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    CategoryView.render(page)
+    view_patch = sent.last[1]["patch"]
+
+    2.times do
+      button = find_patch_control(view_patch, "_c" => "FilledButton", "content" => { "value" => "New Category" })
+      refute_nil button
+
+      sent.clear
+      page.dispatch_event(target: button["_i"], name: "click", data: nil)
+      dialog = sent.lazy.filter_map { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "AlertDialog") }.first
+      save = find_patch_control(dialog, "_c" => "TextButton", "content" => { "value" => "Save" })
+
+      sent.clear
+      page.dispatch_event(target: save["_i"], name: "click", data: nil)
+      assert sent.any? { |(_action, payload)| payload["id"] == dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
+      refute sent.any? { |(_action, payload)| payload["patch"].any? { |op| op[2] == "views" } }, "index must wait for Flutter dismiss"
+      refute sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Category saved" }) }
+
+      sent.clear
+      page.dispatch_event(target: dialog["_i"], name: "dismiss", data: nil)
+      assert dialog_untracked?(sent, dialog)
+      assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Category saved" }) }
+      view_message = sent.reverse.find { |(_action, payload)| payload["patch"].any? { |op| op[2] == "views" } }
+      view_patch = view_message[1]["patch"]
+    end
+  ensure
+    Object.send(:remove_const, :CategoryView) if Object.const_defined?(:CategoryView)
+    Object.send(:remove_const, :Category) if Object.const_defined?(:Category) && Object.const_get(:Category) == model_class
   end
 
   def test_generated_scaffold_dialog_click_flows_through_rails_protocol
@@ -551,14 +599,16 @@ class InstallSupportTest < Minitest::Test
     sent.clear
     page.dispatch_event(target: confirm["_i"], name: "click", data: nil)
 
-    assert_equal true, record.destroyed
     assert sent.any? { |(_action, payload)| payload["id"] == delete_dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
     refute dialog_untracked?(sent, delete_dialog)
-    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Action Category deleted" }) }
+    refute record.destroyed
+    refute sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Action Category deleted" }) }
 
     sent.clear
     page.dispatch_event(target: delete_dialog["_i"], name: "dismiss", data: nil)
+    assert_equal true, record.destroyed
     assert dialog_untracked?(sent, delete_dialog)
+    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Action Category deleted" }) }
   ensure
     Object.send(:remove_const, :ActionCategoryView) if Object.const_defined?(:ActionCategoryView)
     Object.send(:remove_const, :ActionCategory) if Object.const_defined?(:ActionCategory) && Object.const_get(:ActionCategory) == model_class

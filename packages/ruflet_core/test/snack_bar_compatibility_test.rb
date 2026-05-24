@@ -83,4 +83,23 @@ class RufletSnackBarCompatibilityTest < Minitest::Test
 
     assert_equal ["visible", "action"], events
   end
+
+  def test_show_dialog_replaces_existing_snack_bar_like_scaffold_messenger
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    first = Ruflet.snack_bar("First", open: true)
+    second = Ruflet.snack_bar("Second", open: true)
+
+    page.add(Ruflet.text("Root"))
+    page.show_dialog(first)
+    page.show_dialog(second)
+
+    controls_patch = sent.last[1]["patch"].find { |op| op[2] == "controls" }
+    assert_equal ["Second"], controls_patch[3].map { |control| control["content"] }
+  end
 end
