@@ -141,9 +141,11 @@ class InstallSupportTest < Minitest::Test
     refute_includes template, 'outlined_icon_button('
     assert_includes template, 'icon_button('
     assert_includes template, "def show_view_options"
+    assert_includes template, "def index_view_options"
     assert_includes template, "def handheld_platform?"
     assert_includes template, 'leading: icon_button('
     assert_includes template, '"arrow_back"'
+    assert_includes template, 'on_click: ->(_e) { page.go("/") }'
     assert_includes template, 'alignment: "end"'
     assert_includes template, '"visibility"'
     assert_includes template, '"edit"'

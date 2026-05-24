@@ -101,7 +101,8 @@ module Ruflet
                       )
                     ),
                     expand: true
-                  )
+                  ),
+                  **index_view_options
                 )
               end
 
@@ -307,6 +308,21 @@ module Ruflet
                       "arrow_back",
                       tooltip: "Back",
                       on_click: ->(_e) { index }
+                    )
+                  )
+                }
+              end
+
+              def index_view_options
+                return {} unless handheld_platform?
+                return {} if page.route.to_s == "/"
+
+                {
+                  appbar: app_bar(
+                    leading: icon_button(
+                      "arrow_back",
+                      tooltip: "Back",
+                      on_click: ->(_e) { page.go("/") }
                     )
                   )
                 }
