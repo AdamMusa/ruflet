@@ -759,6 +759,7 @@ module Ruflet
         FileUtils.mkdir_p(File.dirname(target))
         FileUtils.cp_r(source, target)
         rewrite_web_base_href(target, public_path: public_path)
+        inject_web_client_bootstrap(target)
         true
       end
 
@@ -774,6 +775,31 @@ module Ruflet
           else
             content.sub(%r{<head([^>]*)>}i, %(<head\\1>\n  <base href="#{base_href}">))
           end
+        File.write(index_path, updated)
+      end
+
+      def inject_web_client_bootstrap(target)
+        index_path = File.join(target, "index.html")
+        return unless File.file?(index_path)
+
+        content = File.read(index_path)
+        return if content.include?("data-ruflet-rails-bootstrap")
+
+        script = <<~HTML
+          <script data-ruflet-rails-bootstrap>
+            (function () {
+              var params = new URLSearchParams(window.location.search);
+              if (!params.has("url")) {
+                params.set("url", window.location.origin);
+                var query = params.toString();
+                window.history.replaceState(null, "", window.location.pathname + (query ? "?" + query : "") + window.location.hash);
+              }
+              window.flet = window.flet || {};
+              window.flet.webSocketEndpoint = window.flet.webSocketEndpoint || "ws";
+            })();
+          </script>
+        HTML
+        updated = content.sub(%r{</head>}i, "#{script}</head>")
         File.write(index_path, updated)
       end
 

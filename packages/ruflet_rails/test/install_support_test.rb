@@ -668,6 +668,9 @@ class InstallSupportTest < Minitest::Test
       index = File.read(File.join(dir, "public", "ruflet", "index.html"))
       assert_includes index, "prebuilt"
       assert_includes index, '<base href="/ruflet/">'
+      assert_includes index, "data-ruflet-rails-bootstrap"
+      assert_includes index, 'params.set("url", window.location.origin)'
+      assert_includes index, 'window.flet.webSocketEndpoint = window.flet.webSocketEndpoint || "ws"'
       assert_equal "js", File.read(File.join(dir, "public", "ruflet", "main.dart.js"))
     end
   end
@@ -680,6 +683,20 @@ class InstallSupportTest < Minitest::Test
 
       assert Ruflet::Rails::InstallSupport.publish_web_client(dir, source: source, public_path: "apps/ruflet")
       assert_includes File.read(File.join(dir, "public", "apps", "ruflet", "index.html")), '<base href="/apps/ruflet/">'
+    end
+  end
+
+  def test_publish_web_client_does_not_duplicate_rails_bootstrap
+    Dir.mktmpdir do |dir|
+      source = File.join(dir, "cache", "web")
+      FileUtils.mkdir_p(source)
+      File.write(File.join(source, "index.html"), "<html><head></head><body></body></html>")
+
+      assert Ruflet::Rails::InstallSupport.publish_web_client(dir, source: source)
+      target = File.join(dir, "public", "ruflet")
+      Ruflet::Rails::InstallSupport.inject_web_client_bootstrap(target)
+
+      assert_equal 1, File.read(File.join(target, "index.html")).scan("data-ruflet-rails-bootstrap").length
     end
   end
 
