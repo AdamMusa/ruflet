@@ -572,7 +572,7 @@ class InstallSupportTest < Minitest::Test
       attributes: ["name:string", "starts_on:date", "active:boolean", "user_id:integer"]
     )
 
-    assert_includes template, "class EventForm < RufletView"
+    assert_includes template, "class EventForm < ApplicationComponent"
     refute_includes template, "module RufletForms"
     assert_includes template, "def render(record:, title: nil, on_save: nil, on_cancel: nil)"
     assert_includes template, "def save(record, fields, on_save: nil)"
@@ -591,7 +591,7 @@ class InstallSupportTest < Minitest::Test
 
   def test_form_view_path_uses_rails_views_partial_shape
     assert_equal(
-      "app/views/ruflet/posts/_form.rb",
+      "app/views/ruflet/components/posts/post_form.rb",
       Ruflet::Rails::InstallSupport.form_view_path("Post")
     )
   end

@@ -12,6 +12,13 @@ module Ruflet
 
       desc "Generate only a Ruflet form for an existing Rails model."
 
+      def create_application_component
+        target = File.join(destination_root, Ruflet::Rails::InstallSupport.application_component_path)
+        return if File.exist?(target)
+
+        create_file target, Ruflet::Rails::InstallSupport.application_component_template
+      end
+
       def create_ruflet_form
         target = File.join(destination_root, form_view_path)
 
@@ -27,7 +34,7 @@ module Ruflet
       def print_form_status
         names = Ruflet::Rails::InstallSupport.scaffold_names(model_name)
         say "Ruflet form generated at #{form_view_path}"
-        say "Require it and call #{names[:class_name]}Form.render(page, record: #{names[:class_name]}.new)."
+        say "Call #{names[:class_name]}Form.render(page, record: #{names[:class_name]}.new) from any Ruflet view."
       end
 
       private

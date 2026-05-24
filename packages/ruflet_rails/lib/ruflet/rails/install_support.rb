@@ -473,7 +473,7 @@ module Ruflet
       def form_view_path(model_name)
         names = scaffold_names(model_name)
 
-        File.join("app", "views", "ruflet", names[:plural], "_form.rb")
+        File.join("app", "views", "ruflet", "components", names[:plural], "#{names[:singular]}_form.rb")
       end
 
       def form_view_template(model_name:, attributes:)
@@ -488,7 +488,7 @@ module Ruflet
 
           require "ruflet_rails"
 
-          class #{model_class}Form < RufletView
+          class #{model_class}Form < ApplicationComponent
 
               FIELDS = [#{fields_literal}].freeze
 

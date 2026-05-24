@@ -136,7 +136,8 @@ bin/rails generate ruflet:form Post title:string body:text published:boolean cat
 Foreign keys and references, such as `category:references` or `user_id`, render
 as Ruflet dropdowns populated from the associated Rails model.
 
-The generated form lives at `app/views/ruflet/posts/_form.rb`.
+The generated form lives at `app/views/ruflet/components/posts/post_form.rb`
+and subclasses `ApplicationComponent`, so it is auto-loaded before views.
 
 ## Shared Ruflet components
 
