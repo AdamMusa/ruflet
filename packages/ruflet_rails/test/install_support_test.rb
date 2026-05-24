@@ -141,6 +141,7 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "def show(record)"
     assert_includes template, "def open_form_dialog(record, title:)"
     assert_includes template, "def save(record, fields, dialog = nil)"
+    assert_operator template.scan("open: false").length, :>=, 2
     assert_includes template, "width: dialog_width"
     assert_includes template, "def dialog_width"
     assert_includes template, "data_table("

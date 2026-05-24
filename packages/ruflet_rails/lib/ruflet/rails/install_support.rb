@@ -204,6 +204,7 @@ module Ruflet
 
                 dialog = nil
                 dialog = alert_dialog(
+                  open: false,
                   modal: true,
                   scrollable: true,
                   title: text(title),
@@ -266,6 +267,7 @@ module Ruflet
               def open_delete_dialog(record)
                 dialog = nil
                 dialog = alert_dialog(
+                  open: false,
                   modal: true,
                   title: text("Delete #{singular_title}?"),
                   content: text("Are you sure?"),
