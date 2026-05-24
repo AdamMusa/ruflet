@@ -157,7 +157,6 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, 'icon_button('
     assert_includes template, "def show_view_options"
     assert_includes template, "def index_view_options"
-    assert_includes template, "def handheld_platform?"
     assert_includes template, 'leading: icon_button('
     assert_includes template, '"arrow_back"'
     assert_includes template, 'on_click: ->(_e) { page.go("/") }'

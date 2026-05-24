@@ -389,10 +389,6 @@ module Ruflet
                 }
               end
 
-              def handheld_platform?
-                %w[android ios].include?(page.client_details["platform"].to_s.downcase)
-              end
-
               def delete_record(record)
                 record.destroy
                 index
