@@ -83,6 +83,8 @@ module Ruflet
           require "ruflet_rails"
 
           class #{model_class}View < RufletView
+              include Ruflet::Rails::FormHelpers
+
               route #{("/" + names[:plural]).inspect}
 
               def render(action: :index, record: nil)
@@ -198,9 +200,7 @@ module Ruflet
               end
 
               def open_form_dialog(record, title:)
-                fields = form_fields.to_h do |field|
-                  [field[:name], field_binding(field, record)]
-                end
+                fields = ruflet_form_bindings(record, form_fields)
 
                 dialog = nil
                 after_close = nil
@@ -217,7 +217,7 @@ module Ruflet
                   title: text(title),
                   content: container(
                     width: dialog_width,
-                    content: column(spacing: 8, controls: fields.values.map { |binding| binding[:control] })
+                    content: column(spacing: 8, controls: ruflet_form_controls(fields))
                   ),
                   actions: [
                     text_button(
@@ -233,7 +233,7 @@ module Ruflet
                           closing = true
                           after_close = -> do
                             index
-                            show_snackbar("#{singular_title} saved")
+                            ruflet_show_snackbar("#{singular_title} saved")
                           end
                         end
                       end
@@ -242,87 +242,6 @@ module Ruflet
                   actions_alignment: "end"
                 )
                 page.show_dialog(dialog)
-              end
-
-              def field_binding(field, record)
-                type = field[:type].to_s
-                return picker_field_binding(field, record) if %w[date datetime timestamp time].include?(type)
-
-                control = field_control(field, record)
-                { control: control, input: control }
-              end
-
-              def field_control(field, record)
-                name = field[:name]
-                type = field[:type].to_s
-                value = record.public_send(name)
-                label = name.humanize
-
-                case type
-                when "association", "references", "belongs_to"
-                  dropdown(
-                    association_options(field),
-                    value: value.to_s,
-                    label: label
-                  )
-                when "boolean"
-                  checkbox(label: label, value: !!value)
-                when "date"
-                  date_picker(value: date_value(value), field_label_text: label)
-                when "datetime", "timestamp"
-                  date_picker(value: date_value(value), field_label_text: label, help_text: label)
-                when "time"
-                  time_picker(value: value.respond_to?(:strftime) ? value.strftime("%H:%M") : value.to_s, help_text: label)
-                when "integer", "float", "decimal"
-                  text_field(value: value.to_s, label: label, keyboard_type: "number")
-                when "text"
-                  text_field(value: value.to_s, label: label, multiline: true, min_lines: 3)
-                else
-                  text_field(value: value.to_s, label: label)
-                end
-              end
-
-              def picker_field_binding(field, record)
-                name = field[:name]
-                type = field[:type].to_s
-                value = record.public_send(name)
-                label = name.humanize
-                picker = picker_control(type, value, label)
-                display = text(picker_display_text(label, picker.props["value"]))
-
-                picker.on(:change) do |event|
-                  page.update(display, value: picker_display_text(label, event.control.props["value"]))
-                end
-
-                {
-                  control: column(
-                    spacing: 6,
-                    controls: [
-                      display,
-                      outlined_button(
-                        content: text("Choose \#{label}"),
-                        on_click: ->(_e) { page.show_dialog(picker) }
-                      )
-                    ]
-                  ),
-                  input: picker
-                }
-              end
-
-              def picker_control(type, value, label)
-                case type
-                when "time"
-                  time_picker(value: value.respond_to?(:strftime) ? value.strftime("%H:%M") : value.to_s, help_text: label)
-                when "datetime", "timestamp"
-                  date_picker(value: date_value(value), help_text: label)
-                else
-                  date_picker(value: date_value(value), help_text: label)
-                end
-              end
-
-              def picker_display_text(label, value)
-                visible = value.to_s.empty? ? "Not selected" : value.to_s.split("T", 2).first
-                "\#{label}: \#{visible}"
               end
 
               def dialog_width
@@ -368,11 +287,11 @@ module Ruflet
               end
 
               def save(record, fields, dialog = nil)
-                if record.update(form_attributes(fields))
+                if record.update(ruflet_form_attributes(fields, form_fields))
                   yield if block_given?
                   close_dialog(dialog)
                 else
-                  show_errors(record)
+                  ruflet_show_errors(record)
                 end
               end
 
@@ -443,72 +362,11 @@ module Ruflet
               def delete_record(record)
                 record.destroy
                 index
-                show_snackbar("#{singular_title} deleted")
+                ruflet_show_snackbar("#{singular_title} deleted")
               end
 
               def close_dialog(dialog)
                 page.update(dialog, open: false) if dialog
-              end
-
-              def form_attributes(fields)
-                fields.to_h do |name, binding|
-                  field = form_fields.find { |candidate| candidate[:name] == name }
-                  control = binding[:input] || binding[:control] || binding
-                  [name, control_value(control, field[:type])]
-                end
-              end
-
-              def show_errors(record)
-                show_snackbar(error_message(record))
-              end
-
-              def show_snackbar(message)
-                page.show_dialog(snack_bar(text(message), open: true))
-              end
-
-              def error_message(record)
-                messages = record.errors.full_messages
-                messages.respond_to?(:to_sentence) ? messages.to_sentence : messages.join(", ")
-              end
-
-              def control_value(control, type)
-                value = control.props["value"]
-                return nil if value.to_s.empty?
-                return value if type.to_s == "boolean"
-                return value if %w[association references belongs_to].include?(type.to_s)
-                return value.to_s.split("T", 2).first if type.to_s == "date"
-                return value.to_s if %w[datetime timestamp time].include?(type.to_s)
-
-                value.to_s
-              end
-
-              def association_options(field)
-                model = association_model(field)
-                return [] unless model.respond_to?(:all)
-
-                model.all.map do |record|
-                  dropdown_option(record.id.to_s, text: association_label(record))
-                end
-              end
-
-              def association_model(field)
-                class_name = field[:class_name] || field[:name].to_s.sub(/_id\\z/, "").camelize
-                class_name.safe_constantize if class_name.respond_to?(:safe_constantize)
-              end
-
-              def association_label(record)
-                return record.name.to_s if record.respond_to?(:name)
-                return record.title.to_s if record.respond_to?(:title)
-
-                record.to_s
-              end
-
-              def date_value(value)
-                return nil if value.nil?
-                return value.iso8601 if value.respond_to?(:iso8601)
-                return value.to_date.iso8601 if value.respond_to?(:to_date)
-
-                value.to_s
               end
 
               def columns
@@ -565,16 +423,18 @@ module Ruflet
           require "ruflet_rails"
 
           class #{model_class}Form < ApplicationComponent
+              include Ruflet::Rails::FormHelpers
+
               def render(record:, title: nil, on_save: nil, on_cancel: nil)
                 title ||= record.persisted? ? "Edit #{singular_title}" : "New #{singular_title}"
-                fields = form_fields.to_h { |field| [field[:name], field_binding(field, record)] }
+                fields = ruflet_form_bindings(record, form_fields)
 
                 column(
                   expand: true,
                   spacing: 12,
                   controls: [
                     text(title, size: 24, weight: "bold"),
-                    column(spacing: 8, controls: fields.values.map { |binding| binding[:control] }),
+                    column(spacing: 8, controls: ruflet_form_controls(fields)),
                     row(
                       spacing: 8,
                       controls: [
@@ -593,154 +453,16 @@ module Ruflet
               end
 
               def save(record, fields, on_save: nil)
-                if record.update(form_attributes(fields))
+                if record.update(ruflet_form_attributes(fields, form_fields))
                   on_save ? on_save.call(page, record) : record
                 else
-                  show_errors(record)
+                  ruflet_show_errors(record)
                   false
-                end
-              end
-
-              def field_binding(field, record)
-                type = field[:type].to_s
-                return picker_field_binding(field, record) if %w[date datetime timestamp time].include?(type)
-
-                control = field_control(field, record)
-                { control: control, input: control }
-              end
-
-              def field_control(field, record)
-                name = field[:name]
-                type = field[:type].to_s
-                value = record.public_send(name)
-                label = name.humanize
-
-                case type
-                when "association", "references", "belongs_to"
-                  dropdown(
-                    association_options(field),
-                    value: value.to_s,
-                    label: label
-                  )
-                when "boolean"
-                  checkbox(label: label, value: !!value)
-                when "date"
-                  date_picker(value: date_value(value), field_label_text: label)
-                when "datetime", "timestamp"
-                  date_picker(value: date_value(value), field_label_text: label, help_text: label)
-                when "time"
-                  time_picker(value: value.respond_to?(:strftime) ? value.strftime("%H:%M") : value.to_s, help_text: label)
-                when "integer", "float", "decimal"
-                  text_field(value: value.to_s, label: label, keyboard_type: "number")
-                when "text"
-                  text_field(value: value.to_s, label: label, multiline: true, min_lines: 3)
-                else
-                  text_field(value: value.to_s, label: label)
-                end
-              end
-
-              def picker_field_binding(field, record)
-                name = field[:name]
-                type = field[:type].to_s
-                value = record.public_send(name)
-                label = name.humanize
-                picker = picker_control(type, value, label)
-                display = text(picker_display_text(label, picker.props["value"]))
-
-                picker.on(:change) do |event|
-                  page.update(display, value: picker_display_text(label, event.control.props["value"]))
-                end
-
-                {
-                  control: column(
-                    spacing: 6,
-                    controls: [
-                      display,
-                      outlined_button(
-                        content: text("Choose \#{label}"),
-                        on_click: ->(_e) { page.show_dialog(picker) }
-                      )
-                    ]
-                  ),
-                  input: picker
-                }
-              end
-
-              def picker_control(type, value, label)
-                case type
-                when "time"
-                  time_picker(value: value.respond_to?(:strftime) ? value.strftime("%H:%M") : value.to_s, help_text: label)
-                when "datetime", "timestamp"
-                  date_picker(value: date_value(value), help_text: label)
-                else
-                  date_picker(value: date_value(value), help_text: label)
-                end
-              end
-
-              def control_value(control, type)
-                value = control.props["value"]
-                return nil if value.to_s.empty?
-                return value if type.to_s == "boolean"
-                return value if %w[association references belongs_to].include?(type.to_s)
-                return value.to_s.split("T", 2).first if type.to_s == "date"
-                return value.to_s if %w[datetime timestamp time].include?(type.to_s)
-
-                value.to_s
-              end
-
-              def form_attributes(fields)
-                fields.to_h do |name, binding|
-                  field = form_fields.find { |candidate| candidate[:name] == name }
-                  control = binding[:input] || binding[:control] || binding
-                  [name, control_value(control, field[:type])]
                 end
               end
 
               def form_fields
                 [#{fields_literal}]
-              end
-
-              def show_errors(record)
-                page.show_dialog(snack_bar(text(error_message(record)), open: true))
-              end
-
-              def error_message(record)
-                messages = record.errors.full_messages
-                messages.respond_to?(:to_sentence) ? messages.to_sentence : messages.join(", ")
-              end
-
-              def association_options(field)
-                model = association_model(field)
-                return [] unless model.respond_to?(:all)
-
-                model.all.map do |record|
-                  dropdown_option(record.id.to_s, text: association_label(record))
-                end
-              end
-
-              def association_model(field)
-                class_name = field[:class_name] || field[:name].to_s.sub(/_id\\z/, "").camelize
-                class_name.safe_constantize if class_name.respond_to?(:safe_constantize)
-              end
-
-              def association_label(record)
-                return record.name.to_s if record.respond_to?(:name)
-                return record.title.to_s if record.respond_to?(:title)
-
-                record.to_s
-              end
-
-              def date_value(value)
-                return nil if value.nil?
-                return value.iso8601 if value.respond_to?(:iso8601)
-                return value.to_date.iso8601 if value.respond_to?(:to_date)
-
-                value.to_s
-              end
-
-              def picker_display_text(label, value)
-                visible = value.to_s.empty? ? "Not selected" : value.to_s.split("T", 2).first
-                "\#{label}: \#{visible}"
               end
           end
         RUBY

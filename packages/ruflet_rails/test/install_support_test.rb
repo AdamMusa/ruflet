@@ -141,6 +141,7 @@ class InstallSupportTest < Minitest::Test
 
     assert_includes template, "def index"
     assert_includes template, "def show(record)"
+    assert_includes template, "include Ruflet::Rails::FormHelpers"
     assert_includes template, "def open_form_dialog(record, title:)"
     assert_includes template, "def save(record, fields, dialog = nil)"
     assert_operator template.scan("open: false").length, :>=, 2
@@ -174,20 +175,20 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "content: text(\"New Post\")"
     assert_includes template, 'content: text("Save")'
     assert_includes template, "def close_dialog(dialog)"
-    assert_includes template, "def field_binding(field, record)"
-    assert_includes template, "def picker_field_binding(field, record)"
-    assert_includes template, "def form_attributes(fields)"
-    assert_includes template, "def show_errors(record)"
-    assert_includes template, "def error_message(record)"
+    assert_includes template, "ruflet_form_bindings(record, form_fields)"
+    assert_includes template, "ruflet_form_controls(fields)"
+    assert_includes template, "ruflet_form_attributes(fields, form_fields)"
+    assert_includes template, "ruflet_show_errors(record)"
     assert_includes template, "on_dismiss: ->(_e) do"
     assert_includes template, "after_close = -> do"
     assert_includes template, "closing = false"
     assert_includes template, "next if closing"
     assert_includes template, "page.update(dialog, open: false)"
     refute_includes template, "page.pop_dialog"
-    refute_includes template, "page.snack_bar ="
-    assert_includes template, 'show_snackbar("Post saved")'
-    assert_includes template, 'show_snackbar("Post deleted")'
+    refute_includes template, "show_dialog(snack_bar"
+    refute_includes template, "def field_control"
+    assert_includes template, 'ruflet_show_snackbar("Post saved")'
+    assert_includes template, 'ruflet_show_snackbar("Post deleted")'
     assert_includes template, "record.destroy"
     assert_includes template, "page.show_dialog("
     assert_silent { RubyVM::InstructionSequence.compile(template) }
@@ -202,19 +203,16 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, 'def form_fields'
     assert_includes template, '{ name: "name", type: "string" }'
     assert_includes template, '{ name: "category_id", type: "association", class_name: "Category" }'
-    assert_includes template, 'when "boolean"'
-    assert_includes template, "checkbox(label: label"
-    assert_includes template, 'when "association", "references", "belongs_to"'
-    assert_includes template, "dropdown("
-    assert_includes template, "association_options(field)"
-    assert_includes template, 'when "date"'
-    assert_includes template, "date_picker("
-    assert_includes template, 'when "time"'
-    assert_includes template, "time_picker("
-    assert_includes template, 'when "integer", "float", "decimal"'
-    assert_includes template, 'keyboard_type: "number"'
-    assert_includes template, 'when "text"'
-    assert_includes template, "multiline: true"
+    assert_includes template, "include Ruflet::Rails::FormHelpers"
+    assert_includes template, "ruflet_form_bindings(record, form_fields)"
+    refute_includes template, 'when "boolean"'
+    refute_includes template, "checkbox(label: label"
+    refute_includes template, "association_options(field)"
+    refute_includes template, "date_picker("
+    refute_includes template, "time_picker("
+    refute_includes template, 'keyboard_type: "number"'
+    refute_includes template, 'when "text"'
+    refute_includes template, "multiline: true"
     refute_match(/text_field\([^\\n]*expand:/, template)
     refute_match(/dropdown\([^\\n]*expand:/, template)
     assert_silent { RubyVM::InstructionSequence.compile(template) }
@@ -700,21 +698,24 @@ class InstallSupportTest < Minitest::Test
     )
 
     assert_includes template, "class EventForm < ApplicationComponent"
+    assert_includes template, "include Ruflet::Rails::FormHelpers"
     refute_includes template, "module RufletForms"
     assert_includes template, "def render(record:, title: nil, on_save: nil, on_cancel: nil)"
     assert_includes template, "def save(record, fields, on_save: nil)"
-    assert_includes template, "def form_attributes(fields)"
+    assert_includes template, "ruflet_form_bindings(record, form_fields)"
+    assert_includes template, "ruflet_form_attributes(fields, form_fields)"
     assert_includes template, "def form_fields"
-    assert_includes template, "def show_errors(record)"
-    assert_includes template, "def error_message(record)"
-    assert_includes template, "date_picker("
-    assert_includes template, "checkbox(label: label"
+    assert_includes template, "ruflet_show_errors(record)"
+    refute_includes template, "def show_errors(record)"
+    refute_includes template, "def error_message(record)"
+    refute_includes template, "date_picker("
+    refute_includes template, "checkbox(label: label"
     assert_includes template, '{ name: "user_id", type: "association", class_name: "User" }'
-    assert_includes template, "association_options(field)"
+    refute_includes template, "association_options(field)"
     refute_includes template, "FIELDS ="
     refute_includes template, "data_table("
     refute_includes template, "record.destroy"
-    refute_includes template, "page.snack_bar ="
+    refute_includes template, "show_dialog(snack_bar"
     assert_silent { RubyVM::InstructionSequence.compile(template) }
   end
 
