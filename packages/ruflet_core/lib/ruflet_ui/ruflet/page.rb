@@ -1153,6 +1153,15 @@ module Ruflet
       dialog_control
     end
 
+    def close_dialog(dialog_control)
+      return self unless dialog_control
+
+      dialog_control.props["open"] = false
+      remove_dialog_tracking(dialog_control)
+      push_dialogs_update!
+      self
+    end
+
     def update(control_or_id = nil, **props)
       if control_or_id.nil? && props.empty?
         send_view_patch

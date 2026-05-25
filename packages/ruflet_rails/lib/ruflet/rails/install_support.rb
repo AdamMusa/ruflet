@@ -203,17 +203,11 @@ module Ruflet
                 fields = ruflet_form_bindings(record, form_fields)
 
                 dialog = nil
-                after_close = nil
                 closing = false
                 dialog = alert_dialog(
                   open: false,
                   modal: true,
                   scrollable: true,
-                  on_dismiss: ->(_e) do
-                    callback = after_close
-                    after_close = nil
-                    callback&.call
-                  end,
                   title: text(title),
                   content: container(
                     width: dialog_width,
@@ -229,12 +223,12 @@ module Ruflet
                       on_click: ->(_e) do
                         next if closing
 
-                        save(record, fields, dialog) do
-                          closing = true
-                          after_close = -> do
-                            index
-                            ruflet_show_snackbar("#{singular_title} saved")
-                          end
+                        closing = true
+                        if save(record, fields, dialog)
+                          index
+                          ruflet_show_snackbar("#{singular_title} saved")
+                        else
+                          closing = false
                         end
                       end
                     )
@@ -253,16 +247,10 @@ module Ruflet
 
               def open_delete_dialog(record)
                 dialog = nil
-                after_close = nil
                 closing = false
                 dialog = alert_dialog(
                   open: false,
                   modal: true,
-                  on_dismiss: ->(_e) do
-                    callback = after_close
-                    after_close = nil
-                    callback&.call
-                  end,
                   title: text("Delete #{singular_title}?"),
                   content: text("Are you sure?"),
                   actions: [
@@ -276,8 +264,8 @@ module Ruflet
                         next if closing
 
                         closing = true
-                        after_close = -> { delete_record(record) }
                         close_dialog(dialog)
+                        delete_record(record)
                       end
                     )
                   ],
@@ -288,10 +276,11 @@ module Ruflet
 
               def save(record, fields, dialog = nil)
                 if record.update(ruflet_form_attributes(fields, form_fields))
-                  yield if block_given?
                   close_dialog(dialog)
+                  true
                 else
                   ruflet_show_errors(record)
+                  false
                 end
               end
 
@@ -366,7 +355,7 @@ module Ruflet
               end
 
               def close_dialog(dialog)
-                page.update(dialog, open: false) if dialog
+                page.close_dialog(dialog) if dialog
               end
 
               def columns

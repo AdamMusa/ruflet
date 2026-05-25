@@ -179,11 +179,12 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "ruflet_form_controls(fields)"
     assert_includes template, "ruflet_form_attributes(fields, form_fields)"
     assert_includes template, "ruflet_show_errors(record)"
-    assert_includes template, "on_dismiss: ->(_e) do"
-    assert_includes template, "after_close = -> do"
     assert_includes template, "closing = false"
     assert_includes template, "next if closing"
-    assert_includes template, "page.update(dialog, open: false)"
+    assert_includes template, "page.close_dialog(dialog)"
+    refute_includes template, "on_dismiss: ->(_e) do"
+    refute_includes template, "after_close = -> do"
+    refute_includes template, "page.update(dialog, open: false)"
     refute_includes template, "page.pop_dialog"
     refute_includes template, "show_dialog(snack_bar"
     refute_includes template, "def field_control"
@@ -282,11 +283,6 @@ class InstallSupportTest < Minitest::Test
     sent.clear
     page.dispatch_event(target: cancel["_i"], name: "click", data: nil)
 
-    assert sent.any? { |(_action, payload)| payload["id"] == dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
-    refute dialog_untracked?(sent, dialog)
-
-    sent.clear
-    page.dispatch_event(target: dialog["_i"], name: "dismiss", data: nil)
     assert dialog_untracked?(sent, dialog)
   ensure
     Object.send(:remove_const, :DismissableCategoryView) if Object.const_defined?(:DismissableCategoryView)
@@ -321,12 +317,6 @@ class InstallSupportTest < Minitest::Test
     sent.clear
     page.dispatch_event(target: save["_i"], name: "click", data: nil)
 
-    assert sent.any? { |(_action, payload)| payload["id"] == dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
-    refute dialog_untracked?(sent, dialog)
-    refute sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Saving Category saved" }) }
-
-    sent.clear
-    page.dispatch_event(target: dialog["_i"], name: "dismiss", data: nil)
     assert dialog_untracked?(sent, dialog)
     assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "Text", "value" => "Saving Categories") }
     assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Saving Category saved" }) }
@@ -364,13 +354,8 @@ class InstallSupportTest < Minitest::Test
 
       sent.clear
       page.dispatch_event(target: save["_i"], name: "click", data: nil)
-      assert sent.any? { |(_action, payload)| payload["id"] == dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
-      refute sent.any? { |(_action, payload)| payload["patch"].any? { |op| op[2] == "views" } }, "index must wait for Flutter dismiss"
-      refute sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Category saved" }) }
-
-      sent.clear
-      page.dispatch_event(target: dialog["_i"], name: "dismiss", data: nil)
       assert dialog_untracked?(sent, dialog)
+      assert sent.any? { |(_action, payload)| payload["patch"].any? { |op| op[2] == "views" } }
       assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Category saved" }) }
       view_message = sent.reverse.find { |(_action, payload)| payload["patch"].any? { |op| op[2] == "views" } }
       view_patch = view_message[1]["patch"]
@@ -413,7 +398,7 @@ class InstallSupportTest < Minitest::Test
     page.dispatch_event(target: save["_i"], name: "click", data: nil)
 
     assert_equal 1, update_count
-    assert_equal 1, sent.count { |(_action, payload)| payload["id"] == dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
+    assert sent.any? { |message| dialog_untracked?([message], dialog) }
   ensure
     Object.send(:remove_const, :DoubleSaveCategoryView) if Object.const_defined?(:DoubleSaveCategoryView)
     Object.send(:remove_const, :DoubleSaveCategory) if Object.const_defined?(:DoubleSaveCategory) && Object.const_get(:DoubleSaveCategory) == model_class
@@ -571,11 +556,6 @@ class InstallSupportTest < Minitest::Test
     sent.clear
     page.dispatch_event(target: edit_save["_i"], name: "click", data: nil)
 
-    assert sent.any? { |(_action, payload)| payload["id"] == edit_dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
-    refute dialog_untracked?(sent, edit_dialog)
-
-    sent.clear
-    page.dispatch_event(target: edit_dialog["_i"], name: "dismiss", data: nil)
     assert dialog_untracked?(sent, edit_dialog)
 
     ActionCategoryView.render(page)
@@ -597,9 +577,6 @@ class InstallSupportTest < Minitest::Test
     detail_delete_cancel = find_patch_control(detail_delete_dialog, "_c" => "TextButton", "content" => { "value" => "Cancel" })
     sent.clear
     page.dispatch_event(target: detail_delete_cancel["_i"], name: "click", data: nil)
-    refute dialog_untracked?(sent, detail_delete_dialog)
-    sent.clear
-    page.dispatch_event(target: detail_delete_dialog["_i"], name: "dismiss", data: nil)
     assert dialog_untracked?(sent, detail_delete_dialog)
 
     ActionCategoryView.render(page)
@@ -614,9 +591,6 @@ class InstallSupportTest < Minitest::Test
     table_edit_cancel = find_patch_control(table_edit_dialog, "_c" => "TextButton", "content" => { "value" => "Cancel" })
     sent.clear
     page.dispatch_event(target: table_edit_cancel["_i"], name: "click", data: nil)
-    refute dialog_untracked?(sent, table_edit_dialog)
-    sent.clear
-    page.dispatch_event(target: table_edit_dialog["_i"], name: "dismiss", data: nil)
     assert dialog_untracked?(sent, table_edit_dialog)
 
     ActionCategoryView.render(page)
@@ -639,13 +613,6 @@ class InstallSupportTest < Minitest::Test
     sent.clear
     page.dispatch_event(target: confirm["_i"], name: "click", data: nil)
 
-    assert sent.any? { |(_action, payload)| payload["id"] == delete_dialog["_i"] && payload["patch"].any? { |op| op[2] == "open" && op[3] == false } }
-    refute dialog_untracked?(sent, delete_dialog)
-    refute record.destroyed
-    refute sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Action Category deleted" }) }
-
-    sent.clear
-    page.dispatch_event(target: delete_dialog["_i"], name: "dismiss", data: nil)
     assert_equal true, record.destroyed
     assert dialog_untracked?(sent, delete_dialog)
     assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Action Category deleted" }) }

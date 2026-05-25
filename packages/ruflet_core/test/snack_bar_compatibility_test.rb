@@ -119,4 +119,23 @@ class RufletSnackBarCompatibilityTest < Minitest::Test
     refute_nil controls_patch
     assert_equal ["Saved"], controls_patch[3].map { |control| control["content"] }
   end
+
+  def test_close_dialog_removes_dialog_from_dialogs_container
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    dialog = Ruflet.alert_dialog(open: false, title: Ruflet.text("Form"))
+
+    page.add(Ruflet.text("Root"))
+    page.show_dialog(dialog)
+    sent.clear
+    page.close_dialog(dialog)
+
+    controls_patch = sent.last[1]["patch"].find { |op| op[2] == "controls" }
+    refute_nil controls_patch
+    assert_empty controls_patch[3]
+  end
 end
