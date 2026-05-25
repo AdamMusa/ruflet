@@ -102,4 +102,21 @@ class RufletSnackBarCompatibilityTest < Minitest::Test
     controls_patch = sent.last[1]["patch"].find { |op| op[2] == "controls" }
     assert_equal ["Second"], controls_patch[3].map { |control| control["content"] }
   end
+
+  def test_snackbar_setter_pushes_dialog_container_update_after_mount
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    page.add(Ruflet.text("Root"))
+    sent.clear
+    page.snackbar = Ruflet.snackbar("Saved", open: true)
+
+    controls_patch = sent.last[1]["patch"].find { |op| op[2] == "controls" }
+    refute_nil controls_patch
+    assert_equal ["Saved"], controls_patch[3].map { |control| control["content"] }
+  end
 end

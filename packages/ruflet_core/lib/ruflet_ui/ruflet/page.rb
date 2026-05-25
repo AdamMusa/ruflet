@@ -489,6 +489,7 @@ module Ruflet
     def snack_bar=(value)
       @snack_bar = value
       refresh_dialogs_container!
+      push_dialogs_update! if @dialogs_container_mounted
     end
 
     def snackbar=(value)
