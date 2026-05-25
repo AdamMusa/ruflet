@@ -73,6 +73,7 @@ module Ruflet
 
         picker.on(:change) do |event|
           page.update(display, value: ruflet_picker_display_text(label, event.control.props["value"]))
+          page.close_dialog(event.control)
         end
 
         {

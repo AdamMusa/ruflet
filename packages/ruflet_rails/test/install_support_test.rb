@@ -758,6 +758,8 @@ class InstallSupportTest < Minitest::Test
     assert_equal true, picker["on_change"]
 
     page.dispatch_event(target: picker["_i"], name: "change", data: { "value" => "2026-05-24T00:00:00+00:00" })
+    assert dialog_untracked?(sent, picker)
+
     page.dispatch_event(target: save["_i"], name: "click", data: nil)
 
     assert_equal "2026-05-24", record.public_send("published_on")
@@ -765,6 +767,56 @@ class InstallSupportTest < Minitest::Test
     Object.send(:remove_const, :ScheduledPostForm) if Object.const_defined?(:ScheduledPostForm)
     Object.send(:remove_const, :ScheduledPost) if Object.const_defined?(:ScheduledPost) && Object.const_get(:ScheduledPost) == model_class
     Object.send(:remove_const, :ApplicationComponent) if Object.const_defined?(:ApplicationComponent)
+  end
+
+  def test_generated_scaffold_edit_saves_changed_date_and_closes_form
+    template = Ruflet::Rails::InstallSupport.scaffold_view_template(
+      model_name: "DatedPost",
+      attributes: ["title:string", "published_on:date"]
+    )
+    model_class = stub_scaffold_model("DatedPost")
+    record = model_class.new("title" => "Draft", "published_on" => "2026-05-24")
+    model_class.records = [record]
+    Object.class_eval(template.sub(/^require "ruflet_rails"\n\n/, ""))
+
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "test-session",
+      client_details: { "route" => "/dated_posts", "width" => 390 },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    DatedPostView.render(page)
+    edit_cell = find_patch_control(sent.last[1]["patch"], "_c" => "DataCell", "content" => { "_c" => "Icon", "tooltip" => "Edit" })
+    refute_nil edit_cell
+
+    sent.clear
+    page.dispatch_event(target: edit_cell["_i"], name: "tap", data: nil)
+    dialog = sent.lazy.filter_map { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "AlertDialog") }.first
+    refute_nil dialog
+
+    choose_date = find_patch_control(dialog, "_c" => "OutlinedButton", "content" => { "_c" => "Text", "value" => "Choose Published on" })
+    save = find_patch_control(dialog, "_c" => "TextButton", "content" => { "value" => "Save" })
+    refute_nil choose_date
+    refute_nil save
+
+    page.dispatch_event(target: choose_date["_i"], name: "click", data: nil)
+    picker = find_patch_control(sent.last[1]["patch"], "_c" => "DatePicker")
+    refute_nil picker
+
+    sent.clear
+    page.dispatch_event(target: picker["_i"], name: "change", data: { "value" => "2026-05-27T00:00:00+00:00" })
+    assert dialog_untracked?(sent, picker)
+
+    sent.clear
+    page.dispatch_event(target: save["_i"], name: "click", data: nil)
+
+    assert_equal "2026-05-27", record.public_send("published_on")
+    assert dialog_untracked?(sent, dialog)
+    assert sent.any? { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "SnackBar", "content" => { "value" => "Dated Post saved" }) }
+  ensure
+    Object.send(:remove_const, :DatedPostView) if Object.const_defined?(:DatedPostView)
+    Object.send(:remove_const, :DatedPost) if Object.const_defined?(:DatedPost) && Object.const_get(:DatedPost) == model_class
   end
 
   def test_form_view_path_uses_rails_views_partial_shape
