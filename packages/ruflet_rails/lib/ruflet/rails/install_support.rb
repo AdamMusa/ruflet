@@ -600,7 +600,7 @@ module Ruflet
             #{control} = dropdown(#{options}, value: record.public_send(#{name.inspect}).to_s, label: #{label.inspect}, width: dialog_width)
           RUBY
         when "boolean"
-          %(#{control} = checkbox(label: #{label.inspect}, value: !!record.public_send(#{name.inspect}), width: dialog_width))
+          %(#{control} = checkbox(label: #{label.inspect}, value: !!record.public_send(#{name.inspect})))
         when "integer", "float", "decimal"
           %(#{control} = text_field(value: record.public_send(#{name.inspect}).to_s, label: #{label.inspect}, keyboard_type: "number", width: dialog_width))
         when "text"
