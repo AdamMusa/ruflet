@@ -199,8 +199,8 @@ class InstallSupportTest < Minitest::Test
     refute_includes component, "ruflet_form_controls"
     refute_includes component, "ruflet_form_attributes"
     refute_includes component, "{ name:"
-    assert_includes component, 'title_control = text_field(value: record.public_send("title").to_s, label: "Title")'
-    assert_includes component, 'body_control = text_field(value: record.public_send("body").to_s, label: "Body", multiline: true, min_lines: 3)'
+    assert_includes component, 'title_control = text_field(value: record.public_send("title").to_s, label: "Title", width: dialog_width)'
+    assert_includes component, 'body_control = text_field(value: record.public_send("body").to_s, label: "Body", multiline: true, min_lines: 3, width: dialog_width)'
     assert_includes component, '"title" => title_control.props["value"].to_s'
     assert_includes component, '"body" => body_control.props["value"].to_s'
     assert_includes component, "scaffold_error_message(record)"
@@ -239,13 +239,15 @@ class InstallSupportTest < Minitest::Test
     refute_includes component, '{ name: "category_id", type: "association", class_name: "Category" }'
     refute_includes component, "include Ruflet::Rails::FormHelpers"
     refute_includes component, "ruflet_form_bindings"
-    assert_includes component, 'name_control = text_field(value: record.public_send("name").to_s, label: "Name")'
-    assert_includes component, 'body_control = text_field(value: record.public_send("body").to_s, label: "Body", multiline: true, min_lines: 3)'
-    assert_includes component, 'active_control = checkbox(label: "Active", value: !!record.public_send("active"))'
+    assert_includes component, 'name_control = text_field(value: record.public_send("name").to_s, label: "Name", width: dialog_width)'
+    assert_includes component, 'body_control = text_field(value: record.public_send("body").to_s, label: "Body", multiline: true, min_lines: 3, width: dialog_width)'
+    assert_includes component, 'active_control = checkbox(label: "Active", value: !!record.public_send("active"), width: dialog_width)'
     assert_includes component, 'starts_on_control = date_picker(value: scaffold_date_value(record.public_send("starts_on")), help_text: "Starts on", open: false)'
     assert_includes component, 'starts_at_control = time_picker(value: record.public_send("starts_at").respond_to?(:strftime) ? record.public_send("starts_at").strftime("%H:%M") : record.public_send("starts_at").to_s, help_text: "Starts at", open: false)'
-    assert_includes component, 'price_control = text_field(value: record.public_send("price").to_s, label: "Price", keyboard_type: "number")'
+    assert_includes component, 'price_control = text_field(value: record.public_send("price").to_s, label: "Price", keyboard_type: "number", width: dialog_width)'
     assert_includes component, 'category_id_control = dropdown'
+    assert_includes component, 'width: dialog_width'
+    assert_includes component, 'outlined_button('
     refute_includes template, 'when "boolean"'
     refute_includes template, "checkbox(label: label"
     refute_includes template, "association_options(field)"

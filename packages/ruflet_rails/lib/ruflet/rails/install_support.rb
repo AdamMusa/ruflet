@@ -597,14 +597,14 @@ module Ruflet
           <<~RUBY.chomp
             #{model} = #{class_name}.safe_constantize
             #{options} = #{model}&.respond_to?(:all) ? #{model}.all.map { |item| dropdown_option(item.id.to_s, text: scaffold_association_label(item)) } : []
-            #{control} = dropdown(#{options}, value: record.public_send(#{name.inspect}).to_s, label: #{label.inspect})
+            #{control} = dropdown(#{options}, value: record.public_send(#{name.inspect}).to_s, label: #{label.inspect}, width: dialog_width)
           RUBY
         when "boolean"
-          %(#{control} = checkbox(label: #{label.inspect}, value: !!record.public_send(#{name.inspect})))
+          %(#{control} = checkbox(label: #{label.inspect}, value: !!record.public_send(#{name.inspect}), width: dialog_width))
         when "integer", "float", "decimal"
-          %(#{control} = text_field(value: record.public_send(#{name.inspect}).to_s, label: #{label.inspect}, keyboard_type: "number"))
+          %(#{control} = text_field(value: record.public_send(#{name.inspect}).to_s, label: #{label.inspect}, keyboard_type: "number", width: dialog_width))
         when "text"
-          %(#{control} = text_field(value: record.public_send(#{name.inspect}).to_s, label: #{label.inspect}, multiline: true, min_lines: 3))
+          %(#{control} = text_field(value: record.public_send(#{name.inspect}).to_s, label: #{label.inspect}, multiline: true, min_lines: 3, width: dialog_width))
         when "date", "datetime", "timestamp", "time"
           picker = control
           display = "#{control}_display"
@@ -620,7 +620,7 @@ module Ruflet
             #{picker}.on(:dismiss) { |event| page.update(event.control, open: false) }
           RUBY
         else
-          %(#{control} = text_field(value: record.public_send(#{name.inspect}).to_s, label: #{label.inspect}))
+          %(#{control} = text_field(value: record.public_send(#{name.inspect}).to_s, label: #{label.inspect}, width: dialog_width))
         end
       end
 
@@ -634,10 +634,12 @@ module Ruflet
         <<~RUBY.chomp
           column(
             spacing: 6,
+            width: dialog_width,
             controls: [
               #{display},
               outlined_button(
                 content: text("Choose #{label}"),
+                width: dialog_width,
                 on_click: ->(_e) { page.update(#{control}, open: true) }
               ),
               #{control}
