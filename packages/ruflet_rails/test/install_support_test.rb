@@ -207,7 +207,7 @@ class InstallSupportTest < Minitest::Test
     assert_includes component, "closing = false"
     assert_includes component, "next if closing"
     assert_includes template, "page.close_dialog(dialog)"
-    refute_includes template, "page.update(dialog, open: false)"
+    assert_includes template, "page.update(dialog, open: false)"
     refute_includes template, "page.pop_dialog"
     assert_includes component, "controller.update(record, attributes.call, dialog)"
     assert_includes component, "controller.destroy(record, dialog)"
