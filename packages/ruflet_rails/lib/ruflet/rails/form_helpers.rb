@@ -72,9 +72,10 @@ module Ruflet
         display = text(ruflet_picker_display_text(label, picker.props["value"]))
 
         picker.on(:change) do |event|
+          page.update(event.control, open: false)
           page.update(display, value: ruflet_picker_display_text(label, event.control.props["value"]))
-          page.close_dialog(event.control)
         end
+        picker.on(:dismiss) { |event| page.update(event.control, open: false) }
 
         {
           control: column(
@@ -83,8 +84,9 @@ module Ruflet
               display,
               outlined_button(
                 content: text("Choose #{label}"),
-                on_click: ->(_e) { page.show_dialog(picker) }
-              )
+                on_click: ->(_e) { page.update(picker, open: true) }
+              ),
+              picker
             ]
           ),
           input: picker
@@ -94,11 +96,11 @@ module Ruflet
       def ruflet_picker_control(type, value, label)
         case type
         when "time"
-          time_picker(value: value.respond_to?(:strftime) ? value.strftime("%H:%M") : value.to_s, help_text: label)
+          time_picker(value: value.respond_to?(:strftime) ? value.strftime("%H:%M") : value.to_s, help_text: label, open: false)
         when "datetime", "timestamp"
-          date_picker(value: ruflet_date_value(value), help_text: label)
+          date_picker(value: ruflet_date_value(value), help_text: label, open: false)
         else
-          date_picker(value: ruflet_date_value(value), help_text: label)
+          date_picker(value: ruflet_date_value(value), help_text: label, open: false)
         end
       end
 

@@ -11,6 +11,25 @@ module Ruflet
 
       desc "Generate a Ruflet UI scaffold for a Rails model."
 
+      def create_application_component
+        target = File.join(destination_root, Ruflet::Rails::InstallSupport.application_component_path)
+        return if File.exist?(target)
+
+        create_file target, Ruflet::Rails::InstallSupport.application_component_template
+      end
+
+      def create_ruflet_component
+        target = File.join(destination_root, scaffold_component_path)
+
+        create_file(
+          target,
+          Ruflet::Rails::InstallSupport.scaffold_component_template(
+            model_name: model_name,
+            attributes: attributes
+          )
+        )
+      end
+
       def create_ruflet_scaffold_view
         target = File.join(destination_root, scaffold_view_path)
 
@@ -35,6 +54,7 @@ module Ruflet
 
       def print_scaffold_status
         say "Ruflet scaffold generated at #{scaffold_view_path}"
+        say "Ruflet component generated at #{scaffold_component_path}"
         say "The Rails mount loads Ruflet views from #{File.dirname(scaffold_view_path)}."
       end
 
@@ -42,6 +62,10 @@ module Ruflet
 
       def scaffold_view_path
         Ruflet::Rails::InstallSupport.scaffold_view_path(model_name)
+      end
+
+      def scaffold_component_path
+        Ruflet::Rails::InstallSupport.scaffold_component_path(model_name)
       end
 
       def entrypoint_path

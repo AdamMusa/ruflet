@@ -26,34 +26,59 @@ module Ruflet
         template = <<~RUBY
           # frozen_string_literal: true
 
+          # ApplicationComponent is the base class for all Ruflet UI components in
+          # this Rails app.  It explicitly includes Ruflet::UI::SharedControlForwarders
+          # so that every subclass has the full ruflet widget DSL available as
+          # instance methods (text, column, row, container, safe_area, filled_button,
+          # icon, data_table, alert_dialog, and every other ruflet widget).
+          # This is the same DSL that ruflet studio uses — explicit, no Kernel magic.
           class ApplicationComponent
-            attr_reader :page
+              include Ruflet::UI::SharedControlForwarders
 
-            def self.render(page, *args, **kwargs, &block)
-              new(page).render(*args, **kwargs, &block)
-            end
+              attr_reader :page
 
-            def initialize(page)
-              @page = page
-            end
+              def self.render(page, *args, **kwargs, &block)
+                new(page).render(*args, **kwargs, &block)
+              end
 
-            private
+              def initialize(page)
+                @page = page
+              end
 
-            def platform
-              page.client_details["platform"].to_s
-            end
+              private
 
-            def desktop?
-              %w[macos windows linux].include?(platform)
-            end
+              # Widget builder calls on this component delegate to Ruflet::DSL,
+              # the same target used by the ruflet studio App and by Kernel.
+              # Override in a subclass to scope builds to a local WidgetBuilder.
+              def control_delegate
+                Ruflet::DSL
+              end
 
-            def web?
-              platform == "web"
-            end
+              def platform
+                page.client_details["platform"].to_s
+              end
 
-            def mobile?
-              !desktop? && !web?
-            end
+              def desktop?
+                %w[macos windows linux].include?(platform)
+              end
+
+              def web?
+                platform == "web"
+              end
+
+              def mobile?
+                !desktop? && !web?
+              end
+
+              def screen_width
+                page.client_details["width"].to_f
+              end
+
+              # Returns true when the client is narrower than 600 logical pixels
+              # (phones and small tablets), enabling compact list layouts.
+              def compact?
+                screen_width > 0 && screen_width < 600
+              end
           end
         RUBY
         template.gsub(/^    /, "  ")
@@ -71,9 +96,124 @@ module Ruflet
         names = scaffold_names(model_name)
         attrs = Array(attributes).map { |field| normalize_scaffold_attribute(field) }.reject { |field| field[:name].empty? }
         attrs = [{ name: "name", type: "string" }] if attrs.empty?
-        columns_literal = attrs.map { |field| field[:name].inspect }.join(", ")
-        fields_literal = attrs.map { |field| scaffold_field_literal(field) }.join(", ")
         model_class = names[:class_name]
+        component_class = "#{model_class}Component"
+        title = names[:title]
+        singular_title = names[:singular].humanize.titleize
+
+        template = <<~RUBY
+          # frozen_string_literal: true
+
+          require "ostruct"
+          require "ruflet_rails"
+
+          # #{model_class}View is the Rails-backed Ruflet view for #{model_class}.
+          # It acts as a thin controller: it fetches ActiveRecord data and delegates
+          # all UI building to #{component_class}.  RufletView (and its included
+          # Ruflet::UI::SharedControlForwarders) gives every view instance the full
+          # ruflet widget DSL, matching the pattern used by ruflet studio.
+          class #{model_class}View < RufletView
+              route #{("/" + names[:plural]).inspect}
+
+              # Entry point called by the ViewRouter on every route render.
+              # Defaults to :index so the list is shown on first load.
+              def render(action: :index, record: nil)
+                public_send(action, record)
+              end
+
+              # ─── Actions ─────────────────────────────────────────────────────
+
+              def index(_record = nil)
+                records = model_class.order(created_at: :desc).limit(50)
+
+                page.title = #{title.inspect}
+                page.add(component.index(records: records), **component.index_view_options)
+              end
+
+              def show(record = nil)
+                record ||= model_class.first
+                return index unless record
+
+                page.title = "#{singular_title} ##\{record.id}"
+                page.add(component.show(record: record), **component.show_view_options)
+              end
+
+              def new(_record = nil)
+                component.open_form_dialog(model_class.new, title: "New #{singular_title}")
+              end
+
+              def edit(record = nil)
+                return index unless record
+
+                component.open_form_dialog(record, title: "Edit #{singular_title}")
+              end
+
+              # Called by the component's Save button.
+              # Returns true on success (dialog closes); false on validation failure
+              # (dialog stays open so the user can fix errors).
+              def update(record, fields, dialog)
+                if record.update(component.form_attributes(fields))
+                  close_dialog(dialog)
+                  index
+                  component.show_saved_message
+                  true
+                else
+                  component.show_errors(record)
+                  false
+                end
+              end
+
+              # Called by the component's Delete confirmation dialog.
+              def destroy(record, dialog)
+                record.destroy!
+                close_dialog(dialog)
+                index
+                component.show_deleted_message
+              rescue => e
+                component.show_errors(
+                  OpenStruct.new(errors: OpenStruct.new(full_messages: [e.message]))
+                )
+              end
+
+              def close_dialog(dialog)
+                page.update(dialog, open: false)
+              end
+
+              # ─── Model accessor ──────────────────────────────────────────────
+
+              def model_class
+                #{model_class}
+              end
+
+              private
+
+              # The component is memoised per page session.  It receives self as
+              # the controller so it can invoke index/show/edit/update/destroy.
+              def component
+                @component ||= #{component_class}.new(page, controller: self)
+              end
+          end
+        RUBY
+        template.gsub(/^    /, "  ")
+      end
+
+      def scaffold_component_template(model_name:, attributes:)
+        names = scaffold_names(model_name)
+        attrs = Array(attributes).map { |field| normalize_scaffold_attribute(field) }.reject { |field| field[:name].empty? }
+        attrs = [{ name: "name", type: "string" }] if attrs.empty?
+        fields_literal = attrs.map { |field| scaffold_field_literal(field) }.join(", ")
+        fields_array_literal = "[#{fields_literal}]"
+        show_field_rows = attrs.map do |field|
+          %(field_row(#{field[:name].humanize.inspect}, record.public_send(#{field[:name].inspect}).to_s))
+        end.join(",\n                  ")
+        table_column_controls = attrs.map { |field| %(data_column(#{field[:name].humanize.inspect})) }.join(",\n        ")
+        table_cells = attrs.map do |field|
+          %(data_cell(record.public_send(#{field[:name].inspect}).to_s, on_tap: ->(_e) { controller.show(record) }))
+        end.join(",\n          ")
+        primary_label = %(record.public_send(#{attrs.first[:name].inspect}).to_s)
+        secondary_label = attrs[1] ? %(record.public_send(#{attrs[1][:name].inspect}).to_s) : "nil"
+        model_class = names[:class_name]
+        component_class = "#{model_class}Component"
         title = names[:title]
         singular_title = names[:singular].humanize.titleize
 
@@ -82,125 +222,80 @@ module Ruflet
 
           require "ruflet_rails"
 
-          class #{model_class}View < RufletView
+          # #{component_class} owns all UI for #{model_class} CRUD screens.
+          # Every widget method (text, column, row, data_table, alert_dialog, …) is
+          # inherited from ApplicationComponent via Ruflet::UI::SharedControlForwarders —
+          # the exact same DSL ruflet studio uses.  No widget code is hardcoded here;
+          # all controls are built through the shared ruflet DSL.
+          class #{component_class} < ApplicationComponent
               include Ruflet::Rails::FormHelpers
 
-              route #{("/" + names[:plural]).inspect}
+              attr_reader :controller
 
-              def render(action: :index, record: nil)
-                case action.to_sym
-                when :index
-                  index
-                when :show
-                  show(record)
-                when :new
-                  open_form_dialog(model_class.new, title: "New #{singular_title}")
-                when :edit
-                  open_form_dialog(record, title: "Edit #{singular_title}")
-                else
-                  index
-                end
+              def initialize(page, controller:)
+                super(page)
+                @controller = controller
               end
 
-              def index
-                records = model_class.order(created_at: :desc).limit(50)
+              # ─── Index ───────────────────────────────────────────────────────
 
-                page.title = #{title.inspect}
-                page.add(
-                  safe_area(
-                    container(
+              def index(records:)
+                safe_area(
+                  container(
+                    expand: true,
+                    padding: { left: 24, top: 16, right: 24, bottom: 24 },
+                    content: column(
                       expand: true,
-                      padding: { left: 24, top: 16, right: 24, bottom: 24 },
-                      content: column(
-                        expand: true,
-                        spacing: 16,
-                        controls: [
-                          row(
-                            alignment: "spaceBetween",
-                            vertical_alignment: "center",
-                            controls: [
-                              container(
-                                expand: true,
-                                content: text(#{title.inspect}, size: 24, weight: "bold")
-                              ),
-                              filled_button(
-                                content: text("New #{singular_title}"),
-                                on_click: ->(_e) { open_form_dialog(model_class.new, title: "New #{singular_title}") }
-                              )
-                            ]
-                          ),
-                          row(
-                            scroll: "auto",
-                            controls: [
-                              data_table(
-                                table_columns,
-                                rows: records.map { |record| table_row(record) },
-                                column_spacing: 24,
-                                horizontal_margin: 12,
-                                show_bottom_border: true
-                              )
-                            ]
-                          )
-                        ]
-                      )
-                    ),
-                    expand: true
+                      spacing: 16,
+                      children: [
+                        index_header,
+                        compact? ? record_list(records) : record_table(records)
+                      ]
+                    )
                   ),
-                  **index_view_options
+                  expand: true
                 )
               end
 
-              def show(record)
-                record ||= model_class.first
-                return index unless record
+              # ─── Show ────────────────────────────────────────────────────────
 
-                page.title = "#{singular_title} ##\{record.id}"
-                page.add(
-                  safe_area(
-                    container(
+              def show(record:)
+                safe_area(
+                  container(
+                    expand: true,
+                    padding: { left: 24, top: 16, right: 24, bottom: 24 },
+                    content: column(
                       expand: true,
-                      padding: { left: 24, top: 16, right: 24, bottom: 24 },
-                      content: column(
-                        expand: true,
-                        spacing: 16,
-                        controls: [
-                          column(
-                            spacing: 8,
-                            controls: [
-                              text("#{singular_title} ##\{record.id}", size: 24, weight: "bold"),
-                              row(
-                                alignment: "end",
-                                controls: [
-                                  action_buttons(record)
-                                ]
-                              ),
-                            ]
-                          ),
-                          column(
-                            spacing: 8,
-                            controls: columns.map do |name|
-                              row(
-                                controls: [
-                                  container(
-                                    width: 140,
-                                    content: text(name.humanize, weight: "bold")
-                                  ),
-                                  text(record.public_send(name).to_s)
-                                ]
-                              )
-                            end
-                          )
-                        ]
-                      )
-                    ),
-                    expand: true
+                      spacing: 16,
+                      children: [
+                        column(
+                          spacing: 8,
+                          children: [
+                            text("#{singular_title} ##\{record.id}", size: 24, weight: "bold"),
+                            row(
+                              alignment: "end",
+                              children: [action_buttons(record)]
+                            )
+                          ]
+                        ),
+                        divider,
+                        column(
+                          spacing: 8,
+                          children: [
+                            #{show_field_rows}
+                          ]
+                        )
+                      ]
+                    )
                   ),
-                  **show_view_options
+                  expand: true
                 )
               end
+
+              # ─── Form dialog ─────────────────────────────────────────────────
 
               def open_form_dialog(record, title:)
-                fields = ruflet_form_bindings(record, form_fields)
+                fields = ruflet_form_bindings(record, #{fields_array_literal})
 
                 dialog = nil
                 closing = false
@@ -211,25 +306,20 @@ module Ruflet
                   title: text(title),
                   content: container(
                     width: dialog_width,
-                    content: column(spacing: 8, controls: ruflet_form_controls(fields))
+                    content: column(spacing: 8, children: ruflet_form_controls(fields))
                   ),
                   actions: [
                     text_button(
                       content: text("Cancel"),
-                      on_click: ->(_e) { close_dialog(dialog) }
+                      on_click: ->(_e) { controller.close_dialog(dialog) }
                     ),
-                    text_button(
+                    filled_button(
                       content: text("Save"),
                       on_click: ->(_e) do
                         next if closing
 
                         closing = true
-                        if save(record, fields, dialog)
-                          index
-                          ruflet_show_snackbar("#{singular_title} saved")
-                        else
-                          closing = false
-                        end
+                        closing = false unless controller.update(record, fields, dialog)
                       end
                     )
                   ],
@@ -238,12 +328,7 @@ module Ruflet
                 page.show_dialog(dialog)
               end
 
-              def dialog_width
-                width = page.client_details["width"].to_f
-                return 520 if width <= 0
-
-                [[width - 64, 280].max, 520].min
-              end
+              # ─── Delete dialog ───────────────────────────────────────────────
 
               def open_delete_dialog(record)
                 dialog = nil
@@ -252,20 +337,23 @@ module Ruflet
                   open: false,
                   modal: true,
                   title: text("Delete #{singular_title}?"),
-                  content: text("Are you sure?"),
+                  content: text(
+                    "Permanently remove #{singular_title} ##\{record.id}? " \
+                    "This cannot be undone.",
+                    no_wrap: false
+                  ),
                   actions: [
                     text_button(
                       content: text("Cancel"),
-                      on_click: ->(_e) { close_dialog(dialog) }
+                      on_click: ->(_e) { controller.close_dialog(dialog) }
                     ),
-                    text_button(
+                    filled_button(
                       content: text("Delete"),
                       on_click: ->(_e) do
                         next if closing
 
                         closing = true
-                        close_dialog(dialog)
-                        delete_record(record)
+                        controller.destroy(record, dialog)
                       end
                     )
                   ],
@@ -274,61 +362,33 @@ module Ruflet
                 page.show_dialog(dialog)
               end
 
-              def save(record, fields, dialog = nil)
-                if record.update(ruflet_form_attributes(fields, form_fields))
-                  close_dialog(dialog)
-                  true
-                else
-                  ruflet_show_errors(record)
-                  false
-                end
+              # ─── Delegation helpers ──────────────────────────────────────────
+
+              def form_attributes(fields)
+                ruflet_form_attributes(fields, #{fields_array_literal})
               end
 
-              def table_columns
-                columns.map { |name| data_column(name.humanize) } + [
-                  data_column("Actions"),
-                  data_column(""),
-                  data_column("")
-                ]
+              def show_errors(record)
+                ruflet_show_errors(record)
               end
 
-              def table_row(record)
-                data_row(
-                  columns.map do |name|
-                    data_cell(record.public_send(name).to_s, on_tap: ->(_e) { show(record) })
-                  end + [
-                    data_cell(icon("visibility", tooltip: "Show"), on_tap: ->(_e) { show(record) }),
-                    data_cell(icon("edit", tooltip: "Edit"), on_tap: ->(_e) { open_form_dialog(record, title: "Edit #{singular_title}") }),
-                    data_cell(icon("delete", tooltip: "Delete"), on_tap: ->(_e) { open_delete_dialog(record) })
-                  ]
-                )
+              def show_saved_message
+                ruflet_show_snackbar("#{singular_title} saved successfully")
               end
 
-              def action_buttons(record)
-                row(
-                  spacing: 4,
-                  controls: [
-                    icon_button(
-                      "edit",
-                      tooltip: "Edit",
-                      on_click: ->(_e) { open_form_dialog(record, title: "Edit #{singular_title}") }
-                    ),
-                    icon_button(
-                      "delete",
-                      tooltip: "Delete",
-                      on_click: ->(_e) { open_delete_dialog(record) }
-                    )
-                  ]
-                )
+              def show_deleted_message
+                ruflet_show_snackbar("#{singular_title} deleted")
               end
+
+              # ─── View options ────────────────────────────────────────────────
 
               def show_view_options
                 {
                   appbar: app_bar(
                     leading: icon_button(
                       "arrow_back",
-                      tooltip: "Back",
-                      on_click: ->(_e) { index }
+                      tooltip: "Back to #{title}",
+                      on_click: ->(_e) { controller.index }
                     )
                   )
                 }
@@ -348,26 +408,120 @@ module Ruflet
                 }
               end
 
-              def delete_record(record)
-                record.destroy
-                index
-                ruflet_show_snackbar("#{singular_title} deleted")
+              # ─── Private widget builders ─────────────────────────────────────
+
+              private
+
+              # Header row: title left, "New …" button right — studio pattern.
+              def index_header
+                row(
+                  alignment: "spaceBetween",
+                  vertical_alignment: "center",
+                  children: [
+                    container(
+                      expand: true,
+                      content: text(#{title.inspect}, size: 24, weight: "bold")
+                    ),
+                    filled_button(
+                      content: text("New #{singular_title}"),
+                      on_click: ->(_e) { controller.new }
+                    )
+                  ]
+                )
               end
 
-              def close_dialog(dialog)
-                page.close_dialog(dialog) if dialog
+              # Desktop: horizontally scrollable data table with action icon columns.
+              def record_table(records)
+                row(
+                  scroll: "auto",
+                  children: [
+                    data_table(
+                      table_columns,
+                      rows: records.map { |record| table_row(record) },
+                      column_spacing: 24,
+                      horizontal_margin: 12,
+                      show_bottom_border: true
+                    )
+                  ]
+                )
               end
 
-              def columns
-                [#{columns_literal}]
+              # Mobile / compact: list of tappable list_tile rows.
+              def record_list(records)
+                column(
+                  spacing: 4,
+                  children: records.map { |record| record_tile(record) }
+                )
               end
 
-              def form_fields
-                [#{fields_literal}]
+              # One list_tile for a record (compact screens).
+              def record_tile(record)
+                primary_label = #{primary_label}
+                secondary_label = #{secondary_label}
+
+                list_tile(
+                  title:    text(primary_label),
+                  subtitle: secondary_label ? text(secondary_label) : nil,
+                  trailing: row(
+                    spacing: 0,
+                    children: [
+                      icon_button("edit",   tooltip: "Edit",   on_click: ->(_e) { controller.edit(record) }),
+                      icon_button("delete", tooltip: "Delete", on_click: ->(_e) { open_delete_dialog(record) })
+                    ]
+                  ),
+                  on_click: ->(_e) { controller.show(record) }
+                )
               end
 
-              def model_class
-                #{model_class}
+              # Data table column headers (desktop).
+              def table_columns
+                [
+                  #{table_column_controls},
+                  data_column("Actions"),
+                  data_column(""),
+                  data_column("")
+                ]
+              end
+
+              # One data_row for a record (desktop).
+              def table_row(record)
+                data_row(
+                  [
+                    #{table_cells},
+                    data_cell(icon("visibility", tooltip: "Show"),   on_tap: ->(_e) { controller.show(record) }),
+                    data_cell(icon("edit",        tooltip: "Edit"),   on_tap: ->(_e) { controller.edit(record) }),
+                    data_cell(icon("delete",      tooltip: "Delete"), on_tap: ->(_e) { open_delete_dialog(record) })
+                  ]
+                )
+              end
+
+              # Edit / delete icon buttons for the show-view header.
+              def action_buttons(record)
+                row(
+                  spacing: 4,
+                  children: [
+                    icon_button("edit",   tooltip: "Edit #{singular_title}",   on_click: ->(_e) { controller.edit(record) }),
+                    icon_button("delete", tooltip: "Delete #{singular_title}", on_click: ->(_e) { open_delete_dialog(record) })
+                  ]
+                )
+              end
+
+              # Label + value row used in the show view body.
+              def field_row(label, value)
+                row(
+                  children: [
+                    container(width: 140, content: text(label, weight: "bold")),
+                    container(expand: true, content: text(value, no_wrap: false))
+                  ]
+                )
+              end
+
+              # Responsive dialog width: fills screen on mobile, capped at 520 on desktop.
+              def dialog_width
+                width = screen_width
+                return 520 if width <= 0
+
+                [[width - 64, 280].max, 520].min
               end
           end
         RUBY
@@ -397,6 +551,12 @@ module Ruflet
         names = scaffold_names(model_name)
 
         File.join("app", "views", "ruflet", "components", names[:plural], "#{names[:singular]}_form.rb")
+      end
+
+      def scaffold_component_path(model_name)
+        names = scaffold_names(model_name)
+
+        File.join("app", "views", "ruflet", "components", names[:plural], "#{names[:singular]}_component.rb")
       end
 
       def form_view_template(model_name:, attributes:)
