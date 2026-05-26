@@ -468,6 +468,7 @@ module Ruflet
                   title:    text(primary_label),
                   subtitle: secondary_label ? text(secondary_label) : nil,
                   trailing: row(
+                    tight: true,
                     spacing: 0,
                     children: [
                       icon_button("edit",   tooltip: "Edit",   on_click: ->(_e) { controller.edit(record) }),

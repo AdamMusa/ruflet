@@ -194,6 +194,8 @@ class InstallSupportTest < Minitest::Test
     assert_includes component, "content: text(value, no_wrap: false)"
     assert_includes component, "content: text(\"New Post\")"
     assert_includes component, 'content: text("Save")'
+    assert_includes component, "trailing: row("
+    assert_includes component, "tight: true"
     assert_includes template, "def close_dialog(dialog)"
     refute_includes component, "ruflet_form_bindings"
     refute_includes component, "ruflet_form_controls"
