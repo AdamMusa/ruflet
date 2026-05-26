@@ -964,9 +964,8 @@ class InstallSupportTest < Minitest::Test
       assert_includes index, "prebuilt"
       assert_includes index, '<base href="/app/">'
       assert_includes index, "data-ruflet-rails-bootstrap"
-      assert_includes index, 'params.set("url", window.location.origin)'
-      assert_includes index, 'window.addEventListener("flutter-first-frame"'
-      assert_includes index, "cleanUrl"
+      refute_includes index, 'params.set("url", window.location.origin)'
+      refute_includes index, 'URLSearchParams'
       assert_includes index, 'window.flet.webSocketEndpoint = window.flet.webSocketEndpoint || "ws"'
       assert_equal "js", File.read(File.join(dir, "public", "app", "main.dart.js"))
     end

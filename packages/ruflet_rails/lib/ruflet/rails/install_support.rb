@@ -942,16 +942,6 @@ module Ruflet
         script = <<~HTML
           <script data-ruflet-rails-bootstrap>
             (function () {
-              var params = new URLSearchParams(window.location.search);
-              if (!params.has("url")) {
-                params.set("url", window.location.origin);
-                var query = params.toString();
-                window.history.replaceState(null, "", window.location.pathname + (query ? "?" + query : "") + window.location.hash);
-                var cleanUrl = window.location.pathname + window.location.hash;
-                window.addEventListener("flutter-first-frame", function () {
-                  window.history.replaceState(null, "", cleanUrl);
-                }, { once: true });
-              }
               window.flet = window.flet || {};
               window.flet.webSocketEndpoint = window.flet.webSocketEndpoint || "ws";
             })();
