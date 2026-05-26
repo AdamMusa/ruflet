@@ -151,8 +151,8 @@ module Ruflet
               # Called by the component's Save button.
               # Returns true on success (dialog closes); false on validation failure
               # (dialog stays open so the user can fix errors).
-              def update(record, fields, dialog)
-                if record.update(component.form_attributes(fields))
+              def update(record, attributes, dialog)
+                if record.update(attributes)
                   close_dialog(dialog)
                   index
                   component.show_saved_message
@@ -201,8 +201,9 @@ module Ruflet
         names = scaffold_names(model_name)
         attrs = Array(attributes).map { |field| normalize_scaffold_attribute(field) }.reject { |field| field[:name].empty? }
         attrs = [{ name: "name", type: "string" }] if attrs.empty?
-        fields_literal = attrs.map { |field| scaffold_field_literal(field) }.join(", ")
-        fields_array_literal = "[#{fields_literal}]"
+        form_locals = scaffold_form_locals(attrs)
+        form_controls = scaffold_form_controls(attrs)
+        form_attributes = scaffold_form_attributes(attrs)
         show_field_rows = attrs.map do |field|
           %(field_row(#{field[:name].humanize.inspect}, record.public_send(#{field[:name].inspect}).to_s))
         end.join(",\n                  ")
@@ -228,8 +229,6 @@ module Ruflet
           # the exact same DSL ruflet studio uses.  No widget code is hardcoded here;
           # all controls are built through the shared ruflet DSL.
           class #{component_class} < ApplicationComponent
-              include Ruflet::Rails::FormHelpers
-
               attr_reader :controller
 
               def initialize(page, controller:)
@@ -295,7 +294,13 @@ module Ruflet
               # ─── Form dialog ─────────────────────────────────────────────────
 
               def open_form_dialog(record, title:)
-                fields = ruflet_form_bindings(record, #{fields_array_literal})
+                __FORM_LOCALS__
+
+                attributes = lambda do
+                  {
+                    __FORM_ATTRIBUTES__
+                  }
+                end
 
                 dialog = nil
                 closing = false
@@ -306,7 +311,12 @@ module Ruflet
                   title: text(title),
                   content: container(
                     width: dialog_width,
-                    content: column(spacing: 8, children: ruflet_form_controls(fields))
+                    content: column(
+                      spacing: 8,
+                      children: [
+                        __FORM_CONTROLS__
+                      ]
+                    )
                   ),
                   actions: [
                     text_button(
@@ -319,7 +329,7 @@ module Ruflet
                         next if closing
 
                         closing = true
-                        closing = false unless controller.update(record, fields, dialog)
+                        closing = false unless controller.update(record, attributes.call, dialog)
                       end
                     )
                   ],
@@ -362,22 +372,18 @@ module Ruflet
                 page.show_dialog(dialog)
               end
 
-              # ─── Delegation helpers ──────────────────────────────────────────
-
-              def form_attributes(fields)
-                ruflet_form_attributes(fields, #{fields_array_literal})
-              end
+              # ─── Feedback helpers ────────────────────────────────────────────
 
               def show_errors(record)
-                ruflet_show_errors(record)
+                page.snackbar = snackbar(text(scaffold_error_message(record)), open: true)
               end
 
               def show_saved_message
-                ruflet_show_snackbar("#{singular_title} saved successfully")
+                page.snackbar = snackbar(text("#{singular_title} saved successfully"), open: true)
               end
 
               def show_deleted_message
-                ruflet_show_snackbar("#{singular_title} deleted")
+                page.snackbar = snackbar(text("#{singular_title} deleted"), open: true)
               end
 
               # ─── View options ────────────────────────────────────────────────
@@ -523,9 +529,152 @@ module Ruflet
 
                 [[width - 64, 280].max, 520].min
               end
+
+              def scaffold_picker_attribute(control, type)
+                value = control.props["value"]
+                return nil if value.to_s.empty?
+                return value.to_s.split("T", 2).first if type == "date"
+
+                value.to_s
+              end
+
+              def scaffold_date_value(value)
+                return nil if value.nil?
+                return value.iso8601 if value.respond_to?(:iso8601)
+                return value.to_date.iso8601 if value.respond_to?(:to_date)
+
+                value.to_s
+              end
+
+              def scaffold_picker_display_text(label, value)
+                visible = value.to_s.empty? ? "Not selected" : value.to_s.split("T", 2).first
+                "\#{label}: \#{visible}"
+              end
+
+              def scaffold_error_message(record)
+                messages = record.errors.full_messages
+                messages.respond_to?(:to_sentence) ? messages.to_sentence : messages.join(", ")
+              end
+
+              def scaffold_association_label(record)
+                return record.name.to_s if record.respond_to?(:name)
+                return record.title.to_s if record.respond_to?(:title)
+
+                record.to_s
+              end
           end
         RUBY
-        template.gsub(/^    /, "  ")
+        template = template.gsub(/^    /, "  ")
+        template.gsub!(/^[ \t]*__FORM_LOCALS__$/, indent_lines(form_locals, 4))
+        template.gsub!(/^[ \t]*__FORM_ATTRIBUTES__$/, indent_lines(form_attributes, 8))
+        template.gsub!(/^[ \t]*__FORM_CONTROLS__$/, indent_lines(form_controls, 12))
+        template
+      end
+
+      def scaffold_form_locals(attrs)
+        attrs.map { |field| scaffold_form_local(field) }.join("\n\n")
+      end
+
+      def scaffold_form_controls(attrs)
+        attrs.map { |field| scaffold_form_control_expression(field) }.join(",\n")
+      end
+
+      def scaffold_form_attributes(attrs)
+        attrs.map { |field| scaffold_form_attribute_expression(field) }.join(",\n")
+      end
+
+      def scaffold_form_local(field)
+        name = field[:name]
+        type = field[:type].to_s
+        label = name.humanize
+        control = scaffold_form_control_name(field)
+
+        case type
+        when "association", "references", "belongs_to"
+          model = "#{control}_model"
+          options = "#{control}_options"
+          class_name = (field[:class_name] || name.sub(/_id\z/, "").camelize).inspect
+          <<~RUBY.chomp
+            #{model} = #{class_name}.safe_constantize
+            #{options} = #{model}&.respond_to?(:all) ? #{model}.all.map { |item| dropdown_option(item.id.to_s, text: scaffold_association_label(item)) } : []
+            #{control} = dropdown(#{options}, value: record.public_send(#{name.inspect}).to_s, label: #{label.inspect})
+          RUBY
+        when "boolean"
+          %(#{control} = checkbox(label: #{label.inspect}, value: !!record.public_send(#{name.inspect})))
+        when "integer", "float", "decimal"
+          %(#{control} = text_field(value: record.public_send(#{name.inspect}).to_s, label: #{label.inspect}, keyboard_type: "number"))
+        when "text"
+          %(#{control} = text_field(value: record.public_send(#{name.inspect}).to_s, label: #{label.inspect}, multiline: true, min_lines: 3))
+        when "date", "datetime", "timestamp", "time"
+          picker = control
+          display = "#{control}_display"
+          picker_value = type == "time" ? %(record.public_send(#{name.inspect}).respond_to?(:strftime) ? record.public_send(#{name.inspect}).strftime("%H:%M") : record.public_send(#{name.inspect}).to_s) : %(scaffold_date_value(record.public_send(#{name.inspect})))
+          picker_builder = type == "time" ? "time_picker" : "date_picker"
+          <<~RUBY.chomp
+            #{picker} = #{picker_builder}(value: #{picker_value}, help_text: #{label.inspect}, open: false)
+            #{display} = text(scaffold_picker_display_text(#{label.inspect}, #{picker}.props["value"]))
+            #{picker}.on(:change) do |event|
+              page.update(event.control, open: false)
+              page.update(#{display}, value: scaffold_picker_display_text(#{label.inspect}, event.control.props["value"]))
+            end
+            #{picker}.on(:dismiss) { |event| page.update(event.control, open: false) }
+          RUBY
+        else
+          %(#{control} = text_field(value: record.public_send(#{name.inspect}).to_s, label: #{label.inspect}))
+        end
+      end
+
+      def scaffold_form_control_expression(field)
+        control = scaffold_form_control_name(field)
+        type = field[:type].to_s
+        return control unless %w[date datetime timestamp time].include?(type)
+
+        label = field[:name].humanize
+        display = "#{control}_display"
+        <<~RUBY.chomp
+          column(
+            spacing: 6,
+            controls: [
+              #{display},
+              outlined_button(
+                content: text("Choose #{label}"),
+                on_click: ->(_e) { page.update(#{control}, open: true) }
+              ),
+              #{control}
+            ]
+          )
+        RUBY
+      end
+
+      def scaffold_form_attribute_expression(field)
+        name = field[:name]
+        type = field[:type].to_s
+        control = scaffold_form_control_name(field)
+
+        value =
+          case type
+          when "boolean"
+            "!!#{control}.props[\"value\"]"
+          when "date"
+            "scaffold_picker_attribute(#{control}, \"date\")"
+          when "datetime", "timestamp", "time"
+            "scaffold_picker_attribute(#{control}, #{type.inspect})"
+          when "association", "references", "belongs_to"
+            "#{control}.props[\"value\"].to_s.empty? ? nil : #{control}.props[\"value\"]"
+          else
+            "#{control}.props[\"value\"].to_s"
+          end
+
+        "#{name.inspect} => #{value}"
+      end
+
+      def scaffold_form_control_name(field)
+        "#{field[:name].gsub(/[^a-zA-Z0-9_]/, '_')}_control"
+      end
+
+      def indent_lines(text, spaces)
+        prefix = " " * spaces
+        text.lines(chomp: true).map { |line| line.empty? ? line : "#{prefix}#{line}" }.join("\n")
       end
 
       def scaffold_names(model_name)

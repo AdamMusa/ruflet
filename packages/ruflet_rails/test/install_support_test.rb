@@ -151,7 +151,7 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "def show(record = nil)"
     assert_includes template, "def new(_record = nil)"
     assert_includes template, "def edit(record = nil)"
-    assert_includes template, "def update(record, fields, dialog)"
+    assert_includes template, "def update(record, attributes, dialog)"
     refute_includes template, "include Ruflet::Rails::FormHelpers"
     refute_includes template, "def open_form_dialog(record, title:)"
 
@@ -161,7 +161,7 @@ class InstallSupportTest < Minitest::Test
     )
 
     assert_includes component, "class PostComponent < ApplicationComponent"
-    assert_includes component, "include Ruflet::Rails::FormHelpers"
+    refute_includes component, "include Ruflet::Rails::FormHelpers"
     assert_includes component, "def open_form_dialog(record, title:)"
     assert_operator component.scan("open: false").length, :>=, 2
     assert_includes component, "width: dialog_width"
@@ -195,24 +195,29 @@ class InstallSupportTest < Minitest::Test
     assert_includes component, "content: text(\"New Post\")"
     assert_includes component, 'content: text("Save")'
     assert_includes template, "def close_dialog(dialog)"
-    assert_includes component, 'ruflet_form_bindings(record, [{ name: "title", type: "string" }, { name: "body", type: "text" }])'
-    assert_includes component, "ruflet_form_controls(fields)"
-    assert_includes component, 'ruflet_form_attributes(fields, [{ name: "title", type: "string" }, { name: "body", type: "text" }])'
-    assert_includes component, "ruflet_show_errors(record)"
+    refute_includes component, "ruflet_form_bindings"
+    refute_includes component, "ruflet_form_controls"
+    refute_includes component, "ruflet_form_attributes"
+    refute_includes component, "{ name:"
+    assert_includes component, 'title_control = text_field(value: record.public_send("title").to_s, label: "Title")'
+    assert_includes component, 'body_control = text_field(value: record.public_send("body").to_s, label: "Body", multiline: true, min_lines: 3)'
+    assert_includes component, '"title" => title_control.props["value"].to_s'
+    assert_includes component, '"body" => body_control.props["value"].to_s'
+    assert_includes component, "scaffold_error_message(record)"
     assert_includes component, "closing = false"
     assert_includes component, "next if closing"
     assert_includes template, "page.update(dialog, open: false)"
     refute_includes template, "page.close_dialog(dialog)"
     refute_includes template, "page.pop_dialog"
-    assert_includes component, "controller.update(record, fields, dialog)"
+    assert_includes component, "controller.update(record, attributes.call, dialog)"
     assert_includes component, "controller.destroy(record, dialog)"
     refute_includes component, "on_dismiss:"
     refute_includes component, "after_close = -> do"
     refute_includes component, "page.pop_dialog"
     refute_includes component, "show_dialog(snack_bar"
     refute_includes component, "def field_control"
-    assert_includes component, 'ruflet_show_snackbar("Post saved successfully")'
-    assert_includes component, 'ruflet_show_snackbar("Post deleted")'
+    assert_includes component, 'page.snackbar = snackbar(text("Post saved successfully"), open: true)'
+    assert_includes component, 'page.snackbar = snackbar(text("Post deleted"), open: true)'
     assert_includes template, "record.destroy"
     assert_includes component, "page.show_dialog("
     assert_silent { RubyVM::InstructionSequence.compile(template) }
@@ -230,10 +235,17 @@ class InstallSupportTest < Minitest::Test
       attributes: ["name:string", "body:text", "active:boolean", "starts_on:date", "starts_at:time", "price:decimal", "category:references"]
     )
     refute_includes component, 'def form_fields'
-    assert_includes component, '{ name: "name", type: "string" }'
-    assert_includes component, '{ name: "category_id", type: "association", class_name: "Category" }'
-    assert_includes component, "include Ruflet::Rails::FormHelpers"
-    refute_includes component, "ruflet_form_bindings(record, form_fields)"
+    refute_includes component, '{ name: "name", type: "string" }'
+    refute_includes component, '{ name: "category_id", type: "association", class_name: "Category" }'
+    refute_includes component, "include Ruflet::Rails::FormHelpers"
+    refute_includes component, "ruflet_form_bindings"
+    assert_includes component, 'name_control = text_field(value: record.public_send("name").to_s, label: "Name")'
+    assert_includes component, 'body_control = text_field(value: record.public_send("body").to_s, label: "Body", multiline: true, min_lines: 3)'
+    assert_includes component, 'active_control = checkbox(label: "Active", value: !!record.public_send("active"))'
+    assert_includes component, 'starts_on_control = date_picker(value: scaffold_date_value(record.public_send("starts_on")), help_text: "Starts on", open: false)'
+    assert_includes component, 'starts_at_control = time_picker(value: record.public_send("starts_at").respond_to?(:strftime) ? record.public_send("starts_at").strftime("%H:%M") : record.public_send("starts_at").to_s, help_text: "Starts at", open: false)'
+    assert_includes component, 'price_control = text_field(value: record.public_send("price").to_s, label: "Price", keyboard_type: "number")'
+    assert_includes component, 'category_id_control = dropdown'
     refute_includes template, 'when "boolean"'
     refute_includes template, "checkbox(label: label"
     refute_includes template, "association_options(field)"
