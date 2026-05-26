@@ -206,8 +206,8 @@ class InstallSupportTest < Minitest::Test
     assert_includes component, "scaffold_error_message(record)"
     assert_includes component, "closing = false"
     assert_includes component, "next if closing"
-    assert_includes template, "page.update(dialog, open: false)"
-    refute_includes template, "page.close_dialog(dialog)"
+    assert_includes template, "page.close_dialog(dialog)"
+    refute_includes template, "page.update(dialog, open: false)"
     refute_includes template, "page.pop_dialog"
     assert_includes component, "controller.update(record, attributes.call, dialog)"
     assert_includes component, "controller.destroy(record, dialog)"
@@ -1169,7 +1169,7 @@ class InstallSupportTest < Minitest::Test
   end
 
   def dialog_closing?(sent, dialog)
-    sent.any? do |(_action, payload)|
+    dialog_untracked?(sent, dialog) || sent.any? do |(_action, payload)|
       payload["id"] == dialog["_i"] && Array(payload["patch"]).any? do |op|
         op[2] == "open" && op[3] == false
       end

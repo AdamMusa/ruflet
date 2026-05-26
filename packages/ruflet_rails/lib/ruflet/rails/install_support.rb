@@ -176,7 +176,7 @@ module Ruflet
               end
 
               def close_dialog(dialog)
-                page.update(dialog, open: false)
+                page.close_dialog(dialog)
               end
 
               # ─── Model accessor ──────────────────────────────────────────────
