@@ -252,6 +252,11 @@ class InstallSupportTest < Minitest::Test
     assert_includes component, 'active_control = checkbox(label: "Active", value: !!record.public_send("active"))'
     assert_includes component, 'starts_on_control = date_picker(value: scaffold_date_value(record.public_send("starts_on")), help_text: "Starts on", open: false)'
     assert_includes component, 'starts_at_control = time_picker(value: record.public_send("starts_at").respond_to?(:strftime) ? record.public_send("starts_at").strftime("%H:%M") : record.public_send("starts_at").to_s, help_text: "Starts at", open: false)'
+    assert_includes component, 'on_click: ->(_e) { page.show_dialog(starts_on_control) }'
+    assert_includes component, 'on_click: ->(_e) { page.show_dialog(starts_at_control) }'
+    assert_includes component, 'page.close_dialog(event.control)'
+    refute_includes component, 'on_click: ->(_e) { page.update(starts_on_control, open: true) }'
+    refute_includes component, 'on_click: ->(_e) { page.update(starts_at_control, open: true) }'
     assert_includes component, 'price_control = text_field(value: record.public_send("price").to_s, label: "Price", keyboard_type: "number", width: dialog_width)'
     assert_includes component, 'category_id_control = dropdown'
     assert_includes component, 'width: dialog_width'
@@ -866,20 +871,21 @@ class InstallSupportTest < Minitest::Test
 
     choose_date = find_patch_control(dialog, "_c" => "OutlinedButton", "content" => { "_c" => "Text", "value" => "Choose Published on" })
     save = find_patch_control(dialog, "_c" => "FilledButton", "content" => { "value" => "Save" })
-    picker = find_patch_control(dialog, "_c" => "DatePicker")
     refute_nil choose_date
     refute_nil save
-    refute_nil picker
+    assert_nil find_patch_control(dialog, "_c" => "DatePicker")
 
     sent.clear
     page.dispatch_event(target: choose_date["_i"], name: "click", data: nil)
-    assert picker_opening?(sent, picker)
+    picker = sent.lazy.filter_map { |(_action, payload)| find_patch_control(payload["patch"], "_c" => "DatePicker") }.first
+    refute_nil picker
+    assert_equal true, picker["open"]
+    assert_equal true, picker["on_change"]
 
     sent.clear
     page.apply_client_update(picker["_i"], "open" => false, "value" => "2026-05-27T00:00:00+00:00")
     page.dispatch_event(target: picker["_i"], name: "change", data: { "value" => "2026-05-27T00:00:00+00:00" })
-    assert picker_closing?(sent, picker)
-    refute sent.any? { |(_action, payload)| Array(payload["patch"]).any? { |op| op[2] == "controls" } }
+    assert dialog_closing?(sent, picker)
 
     sent.clear
     page.dispatch_event(target: save["_i"], name: "click", data: nil)

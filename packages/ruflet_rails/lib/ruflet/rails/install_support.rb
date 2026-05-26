@@ -615,9 +615,13 @@ module Ruflet
             #{display} = text(scaffold_picker_display_text(#{label.inspect}, #{picker}.props["value"]))
             #{picker}.on(:change) do |event|
               page.update(event.control, open: false)
+              page.close_dialog(event.control)
               page.update(#{display}, value: scaffold_picker_display_text(#{label.inspect}, event.control.props["value"]))
             end
-            #{picker}.on(:dismiss) { |event| page.update(event.control, open: false) }
+            #{picker}.on(:dismiss) do |event|
+              page.update(event.control, open: false)
+              page.close_dialog(event.control)
+            end
           RUBY
         else
           %(#{control} = text_field(value: record.public_send(#{name.inspect}).to_s, label: #{label.inspect}, width: dialog_width))
@@ -635,14 +639,13 @@ module Ruflet
           column(
             spacing: 6,
             width: dialog_width,
-            controls: [
+            children: [
               #{display},
               outlined_button(
                 content: text("Choose #{label}"),
                 width: dialog_width,
-                on_click: ->(_e) { page.update(#{control}, open: true) }
-              ),
-              #{control}
+                on_click: ->(_e) { page.show_dialog(#{control}) }
+              )
             ]
           )
         RUBY
@@ -732,12 +735,12 @@ module Ruflet
                 column(
                   expand: true,
                   spacing: 12,
-                  controls: [
+                  children: [
                     text(title, size: 24, weight: "bold"),
-                    column(spacing: 8, controls: ruflet_form_controls(fields)),
+                    column(spacing: 8, children: ruflet_form_controls(fields)),
                     row(
                       spacing: 8,
-                      controls: [
+                      children: [
                         outlined_button(
                           content: text("Cancel"),
                           on_click: ->(_e) { on_cancel ? on_cancel.call(page, record) : nil }
