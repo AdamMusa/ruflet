@@ -155,7 +155,7 @@ module Ruflet
                 if record.update(attributes)
                   close_dialog(dialog)
                   index
-                  component.show_saved_message
+                  component.show_message("#{singular_title} saved successfully")
                   true
                 else
                   component.show_errors(record)
@@ -168,7 +168,7 @@ module Ruflet
                 record.destroy!
                 close_dialog(dialog)
                 index
-                component.show_deleted_message
+                component.show_message("#{singular_title} deleted")
               rescue => e
                 component.show_errors(
                   OpenStruct.new(errors: OpenStruct.new(full_messages: [e.message]))
@@ -376,48 +376,46 @@ module Ruflet
               # ─── Feedback helpers ────────────────────────────────────────────
 
               def show_errors(record)
-                page.snackbar = snackbar(text(scaffold_error_message(record)), open: true)
+                show_message(scaffold_error_message(record))
               end
 
-              def show_saved_message
-                page.snackbar = snackbar(text("#{singular_title} saved successfully"), open: true)
-              end
-
-              def show_deleted_message
-                page.snackbar = snackbar(text("#{singular_title} deleted"), open: true)
+              def show_message(message)
+                page.snackbar = snackbar(text(message), open: true)
               end
 
               # ─── View options ────────────────────────────────────────────────
 
               def show_view_options
-                {
-                  appbar: app_bar(
-                    leading: icon_button(
-                      "arrow_back",
-                      tooltip: "Back to #{title}",
-                      on_click: ->(_e) { controller.index }
-                    )
-                  )
-                }
+                back_appbar_options(
+                  tooltip: "Back to #{title}",
+                  on_click: ->(_e) { controller.index }
+                )
               end
 
               def index_view_options
                 return {} if page.route.to_s == "/"
 
-                {
-                  appbar: app_bar(
-                    leading: icon_button(
-                      "arrow_back",
-                      tooltip: "Back",
-                      on_click: ->(_e) { page.go("/") }
-                    )
-                  )
-                }
+                back_appbar_options(
+                  tooltip: "Back",
+                  on_click: ->(_e) { page.go("/") }
+                )
               end
 
               # ─── Private widget builders ─────────────────────────────────────
 
               private
+
+              def back_appbar_options(tooltip:, on_click:)
+                {
+                  appbar: app_bar(
+                    leading: icon_button(
+                      "arrow_back",
+                      tooltip: tooltip,
+                      on_click: on_click
+                    )
+                  )
+                }
+              end
 
               # Header row: title left, "New …" button right — studio pattern.
               def index_header

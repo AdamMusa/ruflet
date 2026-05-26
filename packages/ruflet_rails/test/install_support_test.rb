@@ -216,8 +216,14 @@ class InstallSupportTest < Minitest::Test
     refute_includes component, "page.pop_dialog"
     refute_includes component, "show_dialog(snack_bar"
     refute_includes component, "def field_control"
-    assert_includes component, 'page.snackbar = snackbar(text("Post saved successfully"), open: true)'
-    assert_includes component, 'page.snackbar = snackbar(text("Post deleted"), open: true)'
+    assert_includes component, "def show_message(message)"
+    refute_includes component, "def show_saved_message"
+    refute_includes component, "def show_deleted_message"
+    assert_includes template, 'component.show_message("Post saved successfully")'
+    assert_includes template, 'component.show_message("Post deleted")'
+    assert_includes component, "def back_appbar_options(tooltip:, on_click:)"
+    assert_includes component, "show_view_options"
+    assert_includes component, "index_view_options"
     assert_includes template, "record.destroy"
     assert_includes component, "page.show_dialog("
     assert_silent { RubyVM::InstructionSequence.compile(template) }
