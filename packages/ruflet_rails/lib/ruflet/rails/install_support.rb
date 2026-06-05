@@ -827,13 +827,11 @@ module Ruflet
         value
       end
 
-      def build_args_for_platform(platform, public_path: default_web_public_path)
+      def build_args_for_platform(platform)
         normalized = normalize_build_platform(platform)
         return [] if normalized.to_s.empty?
 
-        args = [normalized]
-        args += ["--base-href", web_base_href(public_path)] if normalized == "web"
-        args
+        [normalized]
       end
 
       def default_entrypoint_path
@@ -844,143 +842,17 @@ module Ruflet
         %(match "#{mount_path}", to: Ruflet::Rails.#{helper}(Rails.root.join("#{entrypoint}")), via: :all)
       end
 
-      def web_route_snippet(web_path: default_web_public_path)
-        path = normalize_web_public_path(web_path)
-        raise ArgumentError, "web route path cannot be /" if path.empty?
-
-        %(get "/#{path}", to: redirect("/#{path}/"))
-      end
-
-      def default_web_public_path
-        normalize_web_public_path(ENV.fetch("RUFLET_RAILS_WEB_PATH", "app"))
-      end
-
-      def web_base_href(public_path = default_web_public_path)
-        normalized = normalize_web_public_path(public_path)
-        normalized.empty? ? "/" : "/#{normalized}/"
-      end
-
-      def normalize_web_public_path(path)
-        path.to_s.strip.gsub(%r{\A/+|/+\z}, "")
-      end
-
-      def publish_web_build(root, public_path: default_web_public_path)
-        publish_web_client(root, source: File.join(root, "build", "web"), public_path: public_path)
-      end
-
-      def publish_prebuilt_web_client(root, platform: host_desktop_platform, public_path: default_web_public_path)
-        source = prebuilt_web_client_path(platform: platform)
-        return false unless source
-
-        publish_web_client(root, source: source, public_path: public_path)
-      end
-
-      def prebuilt_web_client_path(platform: host_desktop_platform)
-        return nil if platform.to_s.empty?
-
-        source = File.join(prebuilt_client_cache_root(platform: platform), "web")
-        return nil unless Dir.exist?(source)
-        return nil unless File.file?(File.join(source, "index.html"))
-
-        source
-      end
-
-      def prebuilt_client_cache_root(platform: host_desktop_platform)
-        require "ruflet/cli"
-
-        if Ruflet::CLI.respond_to?(:client_cache_root_for, true)
-          Ruflet::CLI.send(:client_cache_root_for, platform)
-        else
-          File.join(Dir.home, ".ruflet", "client", Ruflet::VERSION, platform.to_s)
-        end
-      end
-
-      def publish_web_client(root, source:, public_path: default_web_public_path)
-        return false unless Dir.exist?(source)
-        return false unless File.file?(File.join(source, "index.html"))
-
-        normalized_public_path = normalize_web_public_path(public_path)
-        raise ArgumentError, "web public path cannot be / when publishing a Ruflet web client" if normalized_public_path.empty?
-
-        target = File.join(root, "public", normalized_public_path)
-        FileUtils.rm_rf(target)
-        FileUtils.mkdir_p(File.dirname(target))
-        FileUtils.cp_r(source, target)
-        rewrite_web_base_href(target, public_path: normalized_public_path)
-        inject_web_client_bootstrap(target)
-        true
-      end
-
-      def rewrite_web_base_href(target, public_path:)
-        index_path = File.join(target, "index.html")
-        return unless File.file?(index_path)
-
-        content = File.read(index_path)
-        base_href = web_base_href(public_path)
-        updated =
-          if content.match?(%r{<base\s+href=["'][^"']*["']\s*/?>}i)
-            content.sub(%r{<base\s+href=["'][^"']*["']\s*/?>}i, %(<base href="#{base_href}">))
-          else
-            content.sub(%r{<head([^>]*)>}i, %(<head\\1>\n  <base href="#{base_href}">))
-          end
-        File.write(index_path, updated)
-      end
-
-      def inject_web_client_bootstrap(target)
-        index_path = File.join(target, "index.html")
-        return unless File.file?(index_path)
-
-        content = File.read(index_path)
-        return if content.include?('id="ruflet-rails-bootstrap"')
-
-        script = <<~HTML
-          <script id="ruflet-rails-bootstrap">
-            if (window.location.search === "" && window.location.hash === "") {
-              const rufletServerUrl = window.location.origin + "/";
-              window.history.replaceState(
-                null,
-                document.title,
-                window.location.pathname + "?url=" + encodeURIComponent(rufletServerUrl)
-              );
-            }
-          </script>
-        HTML
-
-        updated =
-          if content.include?('<script src="flutter_bootstrap.js"')
-            content.sub(%r{<script src="flutter_bootstrap\.js"[^>]*></script>}i) { |match| "#{script}  #{match}" }
-          else
-            content.sub(%r{</body>}i, "#{script}</body>")
-          end
-        File.write(index_path, updated)
-      end
-
-      def install_next_steps(target:, entrypoint:, client:, web_published:, mount_path: "/ws", web_path: default_web_public_path)
-        web_path = normalize_web_public_path(web_path)
-        display_web_path = web_base_href(web_path)
+      def install_next_steps(target:, entrypoint:, client:, mount_path: "/ws")
         lines = [
           "Ruflet Rails installed.",
           "Generated entrypoint: #{entrypoint}",
           "Mounted websocket: #{mount_path}",
           "Next steps:",
           "  1. Start Rails: bin/rails server",
-          "  2. Open the Ruflet web client: #{display_web_path}"
+          "  2. Connect your Ruflet app to ws://localhost:3000#{mount_path}"
         ]
 
-        if web_published
-          lines << "Web client copied to public/#{web_path}."
-        elsif target.to_s == "ruflet" || %w[web all].include?(client.to_s)
-          lines += [
-            "Web client was not copied because no built/prebuilt web index.html was found.",
-            "To download the prebuilt client from GitHub: bin/rails ruflet:update[web]",
-            "To build the WASM web client yourself, install the ruflet CLI globally first:",
-            "  gem install ruflet",
-            "Then build and copy build/web into public/#{web_path}:",
-            "  bin/rails ruflet:build[web]"
-          ]
-        end
-
-        if %w[desktop all].include?(client.to_s)
+        if client.to_s == "desktop"
           lines += [
             "Desktop clients are server-driven and connect to this Rails app.",
             "Plain bin/dev, bin/rails server, and bin/rails s do not launch desktop.",

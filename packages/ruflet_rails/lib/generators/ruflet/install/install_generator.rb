@@ -6,10 +6,8 @@ require "ruflet/rails/install_support"
 module Ruflet
   module Generators
     class InstallGenerator < ::Rails::Generators::Base
-      class_option :frontend, type: :boolean, default: false, desc: "Install the Rails-hosted Ruflet web client"
-      class_option :web, type: :boolean, default: false, desc: "Install the Rails-hosted Ruflet web client"
       class_option :desktop, type: :boolean, default: false, desc: "Download the server-driven desktop Ruflet client"
-      class_option :client, type: :string, default: nil, desc: "Download prebuilt client from GitHub releases: web, desktop, all, or none"
+      class_option :client, type: :string, default: nil, desc: "Download prebuilt client from GitHub releases: desktop or none"
 
       desc "Install Ruflet into a Rails app."
 
@@ -31,14 +29,11 @@ module Ruflet
         target = File.join(destination_root, "config/routes.rb")
         return unless File.file?(target)
 
-        routes = [Ruflet::Rails::InstallSupport.route_snippet(entrypoint: entrypoint_path)]
-        routes << Ruflet::Rails::InstallSupport.web_route_snippet if web_requested?
-
+        route = Ruflet::Rails::InstallSupport.route_snippet(entrypoint: entrypoint_path)
         source = File.read(target)
-        routes.reject! { |route| source.include?(route) }
-        return if routes.empty?
+        return if source.include?(route)
 
-        insert_into_file target, routes.map { |route| "  #{route}\n" }.join, after: /Rails\.application\.routes\.draw do\s*\n/
+        insert_into_file target, "  #{route}\n", after: /Rails\.application\.routes\.draw do\s*\n/
       end
 
       def add_desktop_flag_to_binstubs
@@ -50,16 +45,7 @@ module Ruflet
 
       def download_prebuilt_client
         client = requested_client
-        @web_client_published = false
         return if client == "none"
-
-        if %w[web all].include?(client)
-          @web_client_published = Ruflet::Rails::InstallSupport.publish_web_build(destination_root)
-          if @web_client_published
-            say "Ruflet web build copied from build/web to public/#{Ruflet::Rails::InstallSupport.default_web_public_path}"
-            return if client == "web"
-          end
-        end
 
         require "ruflet/cli"
         exit_code = Dir.chdir(destination_root) do
@@ -68,17 +54,6 @@ module Ruflet
         unless exit_code.to_i.zero?
           @client_download_failed = true
           say_status(:warn, "Ruflet client download failed; install files were generated and build/update steps are printed below", :yellow)
-          return
-        end
-
-        return unless %w[web all].include?(client)
-
-        published = Ruflet::Rails::InstallSupport.publish_prebuilt_web_client(destination_root)
-        @web_client_published = published
-        if published
-          say "Ruflet web client published at #{Ruflet::Rails::InstallSupport.web_base_href}"
-        else
-          say_status(:warn, "Ruflet web client downloaded, but no prebuilt web index.html was found to publish", :yellow)
         end
       rescue StandardError => e
         @client_download_failed = true
@@ -89,8 +64,7 @@ module Ruflet
         Ruflet::Rails::InstallSupport.install_next_steps(
           target: install_target,
           entrypoint: entrypoint_path,
-          client: requested_client,
-          web_published: !!@web_client_published
+          client: requested_client
         ).each { |line| say line }
       end
 
@@ -107,26 +81,18 @@ module Ruflet
       def requested_client
         explicit = options[:client].to_s.strip.downcase
         unless explicit.empty?
-          raise Thor::Error, "--client must be web, desktop, all, or none" unless %w[web desktop all none].include?(explicit)
+          raise Thor::Error, "--client must be desktop or none" unless %w[desktop none].include?(explicit)
 
           return explicit
         end
 
-        wants_web = options[:frontend] || options[:web]
-        wants_desktop = options[:desktop]
-        return "all" if wants_web && wants_desktop
-        return "web" if wants_web
-        return "desktop" if wants_desktop
+        return "desktop" if options[:desktop]
 
         "none"
       end
 
       def desktop_requested?
-        %w[desktop all].include?(requested_client)
-      end
-
-      def web_requested?
-        %w[web all].include?(requested_client)
+        requested_client == "desktop"
       end
 
       def install_target

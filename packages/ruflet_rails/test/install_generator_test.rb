@@ -9,12 +9,6 @@ $LOAD_PATH.unshift(local_lib) unless $LOAD_PATH.include?(local_lib)
 require "generators/ruflet/install/install_generator"
 
 class RufletInstallGeneratorTest < Minitest::Test
-  def test_web_option_requests_web_client
-    generator = build_generator(web: true)
-
-    assert_equal "web", generator.send(:requested_client)
-  end
-
   def test_desktop_option_requests_desktop_client
     generator = build_generator(desktop: true)
 
@@ -22,20 +16,15 @@ class RufletInstallGeneratorTest < Minitest::Test
     assert generator.send(:desktop_requested?)
   end
 
-  def test_web_and_desktop_options_request_all_clients
-    generator = build_generator(web: true, desktop: true)
+  def test_no_options_requests_no_client
+    generator = build_generator({})
 
-    assert_equal "all", generator.send(:requested_client)
+    assert_equal "none", generator.send(:requested_client)
+    refute generator.send(:desktop_requested?)
   end
 
-  def test_client_option_remains_backward_compatible
-    generator = build_generator(client: "web")
-
-    assert_equal "web", generator.send(:requested_client)
-  end
-
-  def test_client_option_overrides_web_and_desktop_flags
-    generator = build_generator(web: true, desktop: true, client: "none")
+  def test_client_option_overrides_desktop_flag
+    generator = build_generator(desktop: true, client: "none")
 
     assert_equal "none", generator.send(:requested_client)
     refute generator.send(:desktop_requested?)
@@ -47,21 +36,7 @@ class RufletInstallGeneratorTest < Minitest::Test
     refute generator.respond_to?(:create_application_component)
   end
 
-  def test_web_install_adds_web_client_route
-    Dir.mktmpdir do |dir|
-      FileUtils.mkdir_p(File.join(dir, "config"))
-      File.write(File.join(dir, "config", "routes.rb"), "Rails.application.routes.draw do\nend\n")
-
-      generator = Ruflet::Generators::InstallGenerator.new([], { "web" => true }, destination_root: dir)
-      capture_io { generator.add_routes }
-
-      routes = File.read(File.join(dir, "config", "routes.rb"))
-      assert_includes routes, 'match "/ws", to: Ruflet::Rails.app'
-      assert_includes routes, 'get "/app", to: redirect("/app/")'
-    end
-  end
-
-  def test_non_web_install_adds_only_websocket_route
+  def test_install_adds_only_websocket_route
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "config"))
       File.write(File.join(dir, "config", "routes.rb"), "Rails.application.routes.draw do\nend\n")
@@ -71,7 +46,6 @@ class RufletInstallGeneratorTest < Minitest::Test
 
       routes = File.read(File.join(dir, "config", "routes.rb"))
       assert_includes routes, 'match "/ws", to: Ruflet::Rails.app'
-      refute_includes routes, 'get "/app", to: redirect("/app/")'
     end
   end
 
