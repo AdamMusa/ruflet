@@ -47,6 +47,19 @@ class RufletInstallGeneratorTest < Minitest::Test
     refute generator.respond_to?(:create_application_component)
   end
 
+  def test_web_path_option_normalizes_custom_public_path
+    generator = build_generator(web_path: "/showcase/")
+
+    assert_equal "showcase", generator.send(:web_public_path)
+  end
+
+  def test_web_path_option_rejects_root_public_path
+    generator = build_generator(web_path: "/")
+
+    error = assert_raises(Thor::Error) { generator.send(:web_public_path) }
+    assert_includes error.message, "--web-path cannot be /"
+  end
+
   def test_desktop_install_patches_ruby_rails_binstub_and_shell_dev_binstub
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "bin"))

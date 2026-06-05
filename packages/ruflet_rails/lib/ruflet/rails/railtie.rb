@@ -15,10 +15,12 @@ module Ruflet
 
       rake_tasks do
         namespace :ruflet do
-          desc "Build Ruflet client for this Rails app. Usage: rake ruflet:build[web]"
-          task :build, [:platform] do |_task, args|
+          desc "Build Ruflet client for this Rails app. Usage: rake ruflet:build[web,app]"
+          task :build, [:platform, :web_path] do |_task, args|
             requested_platform = args[:platform].to_s.strip.downcase
-            build_args = Ruflet::Rails::InstallSupport.build_args_for_platform(requested_platform)
+            web_path = args[:web_path].to_s.strip
+            public_path = web_path.empty? ? Ruflet::Rails::InstallSupport.default_web_public_path : web_path
+            build_args = Ruflet::Rails::InstallSupport.build_args_for_platform(requested_platform, public_path: public_path)
             platform = build_args.first
             if platform.to_s.empty?
               warn "Usage: rake ruflet:build[apk|android|ios|aab|web|desktop|macos|windows|linux]"
@@ -32,17 +34,17 @@ module Ruflet
             raise SystemExit, exit_code unless exit_code.to_i.zero?
 
             if platform == "web"
-              published = Ruflet::Rails::InstallSupport.publish_web_build(::Rails.root.to_s)
+              published = Ruflet::Rails::InstallSupport.publish_web_build(::Rails.root.to_s, public_path: public_path)
               if published
-                puts "Ruflet web client published at /#{Ruflet::Rails::InstallSupport.default_web_public_path}/"
+                puts "Ruflet web client published at #{Ruflet::Rails::InstallSupport.web_base_href(public_path)}"
               else
                 warn "Ruflet web build completed, but build/web was not found to publish."
               end
             end
           end
 
-          desc "Download/update prebuilt Ruflet clients from GitHub releases. Usage: rake ruflet:update[web|desktop|all]"
-          task :update, [:target] do |_task, args|
+          desc "Download/update prebuilt Ruflet clients from GitHub releases. Usage: rake ruflet:update[web,app]"
+          task :update, [:target, :web_path] do |_task, args|
             target = args[:target].to_s.strip
             if target.empty?
               warn "Usage: rake ruflet:update[web|desktop|all]"
@@ -50,6 +52,8 @@ module Ruflet
             end
             normalized_target = target.downcase
             platform = Ruflet::Rails::InstallSupport.host_desktop_platform
+            web_path = args[:web_path].to_s.strip
+            public_path = web_path.empty? ? Ruflet::Rails::InstallSupport.default_web_public_path : web_path
 
             require "ruflet/cli"
             exit_code = Dir.chdir(::Rails.root) do
@@ -60,10 +64,11 @@ module Ruflet
             if %w[web all].include?(normalized_target)
               published = Ruflet::Rails::InstallSupport.publish_prebuilt_web_client(
                 ::Rails.root.to_s,
-                platform: platform
+                platform: platform,
+                public_path: public_path
               )
               if published
-                puts "Ruflet web client published at /#{Ruflet::Rails::InstallSupport.default_web_public_path}/"
+                puts "Ruflet web client published at #{Ruflet::Rails::InstallSupport.web_base_href(public_path)}"
               else
                 warn "Ruflet web client downloaded, but no prebuilt web index.html was found to publish."
               end

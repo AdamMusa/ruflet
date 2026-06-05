@@ -10,6 +10,7 @@ module Ruflet
       class_option :web, type: :boolean, default: false, desc: "Install the Rails-hosted Ruflet web client"
       class_option :desktop, type: :boolean, default: false, desc: "Download the server-driven desktop Ruflet client"
       class_option :client, type: :string, default: nil, desc: "Download prebuilt client from GitHub releases: web, desktop, all, or none"
+      class_option :web_path, type: :string, default: nil, desc: "Rails public path for the web client, for example /app or /showcase"
 
       desc "Install Ruflet into a Rails app."
 
@@ -50,9 +51,9 @@ module Ruflet
         return if client == "none"
 
         if %w[web all].include?(client)
-          @web_client_published = Ruflet::Rails::InstallSupport.publish_web_build(destination_root)
+          @web_client_published = Ruflet::Rails::InstallSupport.publish_web_build(destination_root, public_path: web_public_path)
           if @web_client_published
-            say "Ruflet web build copied from build/web to public/#{Ruflet::Rails::InstallSupport.default_web_public_path}"
+            say "Ruflet web build copied from build/web to public/#{web_public_path}"
             return if client == "web"
           end
         end
@@ -69,10 +70,10 @@ module Ruflet
 
         return unless %w[web all].include?(client)
 
-        published = Ruflet::Rails::InstallSupport.publish_prebuilt_web_client(destination_root)
+        published = Ruflet::Rails::InstallSupport.publish_prebuilt_web_client(destination_root, public_path: web_public_path)
         @web_client_published = published
         if published
-          say "Ruflet web client published at /#{Ruflet::Rails::InstallSupport.default_web_public_path}/"
+          say "Ruflet web client published at #{Ruflet::Rails::InstallSupport.web_base_href(web_public_path)}"
         else
           say_status(:warn, "Ruflet web client downloaded, but no prebuilt web index.html was found to publish", :yellow)
         end
@@ -86,7 +87,8 @@ module Ruflet
           target: install_target,
           entrypoint: entrypoint_path,
           client: requested_client,
-          web_published: !!@web_client_published
+          web_published: !!@web_client_published,
+          web_path: web_public_path
         ).each { |line| say line }
       end
 
@@ -119,6 +121,16 @@ module Ruflet
 
       def desktop_requested?
         %w[desktop all].include?(requested_client)
+      end
+
+      def web_public_path
+        explicit = options[:web_path].to_s.strip
+        return Ruflet::Rails::InstallSupport.default_web_public_path if explicit.empty?
+
+        normalized = Ruflet::Rails::InstallSupport.normalize_web_public_path(explicit)
+        raise Thor::Error, "--web-path cannot be /" if normalized.empty?
+
+        normalized
       end
 
       def install_target

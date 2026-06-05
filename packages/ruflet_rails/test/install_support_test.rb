@@ -309,10 +309,25 @@ class InstallSupportTest < Minitest::Test
     refute_includes args, "--self"
   end
 
+  def test_build_args_for_rails_web_accept_custom_public_path
+    args = Ruflet::Rails::InstallSupport.build_args_for_platform("web", public_path: "/showcase")
+
+    assert_equal ["web", "--base-href", "/showcase/"], args
+  end
+
   def test_web_base_href_uses_rails_public_subpath
     assert_equal "/app/", Ruflet::Rails::InstallSupport.web_base_href
     assert_equal "/apps/ruflet/", Ruflet::Rails::InstallSupport.web_base_href("/apps/ruflet/")
     assert_equal "/", Ruflet::Rails::InstallSupport.web_base_href("/")
+  end
+
+  def test_default_web_public_path_can_come_from_environment
+    old_value = ENV["RUFLET_RAILS_WEB_PATH"]
+    ENV["RUFLET_RAILS_WEB_PATH"] = "/showcase/"
+
+    assert_equal "showcase", Ruflet::Rails::InstallSupport.default_web_public_path
+  ensure
+    ENV["RUFLET_RAILS_WEB_PATH"] = old_value
   end
 
   def test_publish_web_build_copies_build_web_to_public_ruflet
@@ -358,6 +373,19 @@ class InstallSupportTest < Minitest::Test
     end
   end
 
+  def test_publish_web_client_rejects_root_public_path
+    Dir.mktmpdir do |dir|
+      source = File.join(dir, "cache", "web")
+      FileUtils.mkdir_p(source)
+      File.write(File.join(source, "index.html"), "<html><head></head><body></body></html>")
+
+      error = assert_raises(ArgumentError) do
+        Ruflet::Rails::InstallSupport.publish_web_client(dir, source: source, public_path: "/")
+      end
+      assert_includes error.message, "web public path cannot be /"
+    end
+  end
+
   def test_publish_web_client_requires_static_index
     Dir.mktmpdir do |dir|
       source = File.join(dir, "cache", "web")
@@ -394,6 +422,19 @@ class InstallSupportTest < Minitest::Test
 
     assert_includes steps, "Web client copied to public/app."
     refute_includes steps, "gem install ruflet"
+  end
+
+  def test_ruflet_install_steps_accept_custom_web_path
+    steps = Ruflet::Rails::InstallSupport.install_next_steps(
+      target: "ruflet",
+      entrypoint: "app/views/ruflet/main.rb",
+      client: "web",
+      web_published: true,
+      web_path: "/showcase"
+    ).join("\n")
+
+    assert_includes steps, "Open the Ruflet web client: /showcase/"
+    assert_includes steps, "Web client copied to public/showcase."
   end
 
   def test_ruflet_install_steps_explain_desktop_support

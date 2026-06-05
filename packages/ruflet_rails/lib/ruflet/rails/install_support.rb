@@ -827,12 +827,12 @@ module Ruflet
         value
       end
 
-      def build_args_for_platform(platform)
+      def build_args_for_platform(platform, public_path: default_web_public_path)
         normalized = normalize_build_platform(platform)
         return [] if normalized.to_s.empty?
 
         args = [normalized]
-        args += ["--base-href", web_base_href] if normalized == "web"
+        args += ["--base-href", web_base_href(public_path)] if normalized == "web"
         args
       end
 
@@ -845,12 +845,16 @@ module Ruflet
       end
 
       def default_web_public_path
-        "app"
+        normalize_web_public_path(ENV.fetch("RUFLET_RAILS_WEB_PATH", "app"))
       end
 
       def web_base_href(public_path = default_web_public_path)
-        normalized = public_path.to_s.strip.gsub(%r{\A/+|/+\z}, "")
+        normalized = normalize_web_public_path(public_path)
         normalized.empty? ? "/" : "/#{normalized}/"
+      end
+
+      def normalize_web_public_path(path)
+        path.to_s.strip.gsub(%r{\A/+|/+\z}, "")
       end
 
       def publish_web_build(root, public_path: default_web_public_path)
@@ -888,11 +892,14 @@ module Ruflet
         return false unless Dir.exist?(source)
         return false unless File.file?(File.join(source, "index.html"))
 
-        target = File.join(root, "public", public_path.to_s.gsub(%r{\A/+|/+\z}, ""))
+        normalized_public_path = normalize_web_public_path(public_path)
+        raise ArgumentError, "web public path cannot be / when publishing a Ruflet web client" if normalized_public_path.empty?
+
+        target = File.join(root, "public", normalized_public_path)
         FileUtils.rm_rf(target)
         FileUtils.mkdir_p(File.dirname(target))
         FileUtils.cp_r(source, target)
-        rewrite_web_base_href(target, public_path: public_path)
+        rewrite_web_base_href(target, public_path: normalized_public_path)
         inject_web_client_bootstrap(target)
         true
       end
@@ -941,15 +948,16 @@ module Ruflet
         File.write(index_path, updated)
       end
 
-      def install_next_steps(target:, entrypoint:, client:, web_published:, mount_path: "/ws")
-        web_path = default_web_public_path
+      def install_next_steps(target:, entrypoint:, client:, web_published:, mount_path: "/ws", web_path: default_web_public_path)
+        web_path = normalize_web_public_path(web_path)
+        display_web_path = web_base_href(web_path)
         lines = [
           "Ruflet Rails installed.",
           "Generated entrypoint: #{entrypoint}",
           "Mounted websocket: #{mount_path}",
           "Next steps:",
           "  1. Start Rails: bin/rails server",
-          "  2. Open the Ruflet web client: /#{web_path}/"
+          "  2. Open the Ruflet web client: #{display_web_path}"
         ]
 
         if web_published
