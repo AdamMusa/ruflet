@@ -3,12 +3,12 @@
 require_relative "test_helper"
 
 class RufletRailsGemspecTest < Minitest::Test
-  def test_gemspec_tracks_current_ruflet_packages
+  def test_gemspec_uses_rails_release_version_and_current_ruflet_packages
     gem_root = File.expand_path("..", __dir__)
     spec = Dir.chdir(gem_root) { Gem::Specification.load("ruflet_rails.gemspec") }
     package_version = File.read(File.expand_path("../../ruflet_core/lib/ruflet/version.rb", __dir__)).match(/VERSION = "([^"]+)"/)[1]
 
-    assert_equal package_version, spec.version.to_s
+    assert_equal "0.0.8", spec.version.to_s
     assert_dependency spec, "ruflet_core", ">= #{package_version}"
     assert_dependency spec, "ruflet", ">= #{package_version}"
   end
