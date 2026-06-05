@@ -32,7 +32,7 @@ module Ruflet
       end
 
       def print_form_status
-        names = Ruflet::Rails::InstallSupport.scaffold_names(model_name)
+        names = Ruflet::Rails::InstallSupport.model_names(model_name)
         say "Ruflet form generated at #{form_view_path}"
         say "Call #{names[:class_name]}Form.render(page, record: #{names[:class_name]}.new) from any Ruflet view."
       end

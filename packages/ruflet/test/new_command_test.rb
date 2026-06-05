@@ -3,7 +3,7 @@
 require_relative "test_helper"
 
 class RufletCliNewCommandTest < Minitest::Test
-  def test_command_new_creates_project_scaffold
+  def test_command_new_creates_project_template
     Dir.mktmpdir do |dir|
       Dir.chdir(dir) do
         out = StringIO.new

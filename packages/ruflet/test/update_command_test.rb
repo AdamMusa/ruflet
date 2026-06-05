@@ -246,14 +246,14 @@ class RufletCliUpdateCommandTest < Minitest::Test
         {
           "flutter" => {
             "uses-material-design" => true,
-            "assets" => ["assets/ruflet_studio/"]
+            "assets" => ["assets/showcase/"]
           }
         }
       )
 
       pubspec = File.read(path)
-      assert_includes pubspec, "  assets:\n    - assets/ruflet_studio/"
-      refute_includes pubspec, "  assets:\n- assets/ruflet_studio/"
+      assert_includes pubspec, "  assets:\n    - assets/showcase/"
+      refute_includes pubspec, "  assets:\n- assets/showcase/"
     end
   end
 

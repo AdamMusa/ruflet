@@ -73,6 +73,66 @@ class RufletRailsSessionRegistryTest < Minitest::Test
     assert_equal 2, ws.sent.length
   end
 
+  def test_local_server_reattaches_existing_page_when_websocket_reconnects
+    registry = Ruflet::Rails::SessionRegistry.new
+    renders = 0
+    server = Ruflet::Rails::Protocol::LocalServer.new(session_registry: registry) do |page|
+      renders += 1
+      page.title = "Rendered"
+    end
+    first_ws = FakeWebSocket.new("socket-1")
+    second_ws = FakeWebSocket.new("socket-2")
+
+    server.send(:on_register_client, first_ws, { "session_id" => "same-session", "page" => { "route" => "/posts" } })
+    first_page = registry["same-session"].page
+    first_page.show_dialog(Ruflet.alert_dialog(title: Ruflet.text("Still open")))
+
+    server.send(:on_register_client, second_ws, { "session_id" => "same-session", "page" => { "route" => "/posts" } })
+    second_session = registry["same-session"]
+    second_messages = second_ws.sent.map { |payload| Ruflet::Rails::Protocol::WireCodec.unpack(payload) }
+    reattach_patch = second_messages.last[1]["patch"]
+
+    assert_same first_page, second_session.page
+    assert_equal "socket-2", second_session.connection_key
+    assert_equal 1, renders
+    assert reattach_patch.any? { |op| op[2] == "_dialogs" },
+           "reattached clients must receive the current dialog container ids"
+
+    server.send(:remove_session, first_ws)
+
+    assert_same first_page, registry["same-session"].page
+
+    server.send(:remove_session, second_ws)
+
+    assert_nil registry["same-session"]
+  end
+
+  def test_local_server_replies_to_the_socket_that_sent_an_event
+    registry = Ruflet::Rails::SessionRegistry.new
+    label = nil
+    button = nil
+    server = Ruflet::Rails::Protocol::LocalServer.new(session_registry: registry) do |page|
+      label = Ruflet.text("Before")
+      button = Ruflet.text_button("Change", on_click: ->(_event) { page.update(label, value: "After") })
+      page.add(label, button)
+    end
+    first_ws = FakeWebSocket.new("socket-1")
+    second_ws = FakeWebSocket.new("socket-2")
+
+    server.send(:on_register_client, first_ws, { "session_id" => "same-session", "page" => { "route" => "/posts" } })
+    server.send(:on_register_client, second_ws, { "session_id" => "same-session", "page" => { "route" => "/posts" } })
+    first_ws.sent.clear
+    second_ws.sent.clear
+
+    server.send(:on_control_event, first_ws, { "target" => button.wire_id, "name" => "click" })
+
+    first_messages = first_ws.sent.map { |payload| Ruflet::Rails::Protocol::WireCodec.unpack(payload) }
+
+    assert first_messages.any? { |(_action, payload)| payload["id"] == label.wire_id },
+           "event responses must be sent to the socket that emitted the event"
+    assert_empty second_ws.sent
+  end
+
   def test_endpoint_uses_rails_executor_when_available
     wrapped = false
     fake_rails = Class.new do
@@ -101,12 +161,13 @@ class RufletRailsSessionRegistryTest < Minitest::Test
   class FakeWebSocket
     attr_reader :sent
 
-    def initialize
+    def initialize(session_key = "fake-socket")
       @sent = []
+      @session_key = session_key
     end
 
     def session_key
-      "fake-socket"
+      @session_key
     end
 
     def session_id

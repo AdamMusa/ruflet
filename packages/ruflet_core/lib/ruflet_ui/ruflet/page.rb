@@ -484,6 +484,7 @@ module Ruflet
     def dialog=(value)
       @dialog = value
       refresh_dialogs_container!
+      push_dialogs_update! if @dialogs_container_mounted
     end
 
     def snack_bar=(value)
@@ -1156,9 +1157,12 @@ module Ruflet
     def close_dialog(dialog_control)
       return self unless dialog_control
 
+      before_dialog_count = @dialogs_container.props["controls"].length
       dialog_control.props["open"] = false
+      @dialog = nil if @dialog.equal?(dialog_control)
       remove_dialog_tracking(dialog_control)
-      push_dialogs_update!
+      refresh_dialogs_container!
+      push_dialogs_update!(force_view: @dialogs_container.props["controls"].length < before_dialog_count)
       self
     end
 
@@ -1238,8 +1242,9 @@ module Ruflet
 
       event = Event.new(name: name, target: target, raw_data: data, page: self, control: control)
       apply_event_value_to_control(control, event) if %w[change select select_change].include?(name.to_s)
+      before_dialog_count = @dialogs_container.props["controls"].length
       if dialog_close_event?(control, name) && remove_dialog_tracking(control)
-        push_dialogs_update!
+        push_dialogs_update!(force_view: @dialogs_container.props["controls"].length < before_dialog_count)
       end
 
       control.emit(name, event)
@@ -1603,7 +1608,7 @@ module Ruflet
     end
 
     def refresh_dialogs_container!
-      dialog_controls = (@dialogs + dialog_slots).uniq
+      dialog_controls = (dialog_slots + @dialogs).uniq
       @dialogs_container.props["controls"] = dialog_controls
       @page_props["_dialogs"] = @dialogs_container
     end
@@ -1629,8 +1634,14 @@ module Ruflet
       end
     end
 
-    def push_dialogs_update!
+    def push_dialogs_update!(force_view: false)
       refresh_control_indexes!
+
+      if force_view || @dialogs_container.props["controls"].empty?
+        @dialogs_container_mounted = false
+        send_view_patch
+        return
+      end
 
       if @dialogs_container.wire_id
         send_message(Protocol::ACTIONS[:patch_control], {

@@ -2,7 +2,13 @@
 
 require "active_support/core_ext/string/inflections"
 
+# RufletView is the base class for all server-driven Ruflet views in a Rails app.
+# It includes Ruflet::UI::SharedControlForwarders so that all widget builder
+# methods (text, column, row, container, safe_area, filled_button, …) are
+# available directly on the view instance — the same way showcase uses them.
 class RufletView
+  include Ruflet::UI::SharedControlForwarders
+
   attr_reader :page
 
   class << self
@@ -13,7 +19,7 @@ class RufletView
 
     def inherited(child)
       super
-      Ruflet::Rails.register_view(child) if defined?(Ruflet::Rails)
+      Ruflet::Rails.register_view(child) if defined?(Ruflet::Rails) && Ruflet::Rails.respond_to?(:register_view)
     end
 
     private
@@ -38,5 +44,14 @@ class RufletView
 
   def initialize(page)
     @page = page
+  end
+
+  private
+
+  # Delegates all widget builder calls (text, column, row, …) to Ruflet::DSL,
+  # matching the same delegate target that Kernel uses. Subclasses can override
+  # this to scope widget building to a local WidgetBuilder instance instead.
+  def control_delegate
+    Ruflet::DSL
   end
 end

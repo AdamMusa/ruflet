@@ -23,7 +23,6 @@ bin/rails generate ruflet:install --web --desktop
 
 This generator will:
 - create `app/views/ruflet/main.rb`
-- create `app/views/ruflet/components/application_component.rb`
 - create `ruflet.yaml`
 - add the Ruflet mount route to `config/routes.rb`
 - download prebuilt clients from GitHub releases when `--web`, `--desktop`, or
@@ -72,6 +71,15 @@ Rails desktop builds are server-driven. The built desktop app connects back to t
 Rails backend configured in `ruflet.yaml`; it does not package a self-contained
 Ruby runtime.
 
+Plain Rails dev server commands do not launch the desktop app. Request a desktop
+client explicitly with a flag:
+
+```bash
+bin/dev --desktop
+bin/rails server --desktop
+bin/rails s --desktop
+```
+
 ## Update prebuilt clients
 
 Uses the same GitHub release assets as `ruflet update`:
@@ -94,31 +102,54 @@ bundle exec rake ruflet:install
 bundle exec rake ruflet:install[DEVICE_ID]
 ```
 
-## Ruflet model scaffolds
+## Ruflet resource scaffolds
 
-Generate a Ruflet UI view scaffold for a Rails model:
-
-```bash
-bin/rails generate ruflet:scaffold Post title:string body:text
-```
-
-This creates:
-
-```text
-app/views/ruflet/posts/posts_view.rb
-```
-
-Or generate it alongside a normal Rails scaffold:
+Generate a Ruflet CRUD view for an existing Rails model:
 
 ```bash
-bin/rails generate scaffold Post title:string body:text --ruflet
+bin/rails generate ruflet:scaffold Post
 ```
 
-The `--ruflet` option delegates to `ruflet:scaffold`, so Rails scaffold and
-Ruflet scaffold generate the same Ruflet view file.
+The scaffold creates generated app code the Rails developer can own and edit:
 
-The generated file is grouped by model under Rails views, for example
-`app/views/ruflet/posts/posts_view.rb`.
+```ruby
+# app/views/ruflet/posts_view.rb
+require_relative "components/posts/post_component"
+
+class PostView < RufletView
+  include Ruflet::Rails::FormHelpers
+
+  route "/posts"
+
+  def render
+    page.title = resource_title
+    render_index
+  end
+
+  private
+
+  def records
+    # edit resource query logic here
+  end
+
+  def component
+    @component ||= PostComponent.new(page, controller: self)
+  end
+end
+
+# app/views/ruflet/components/posts/post_component.rb
+class PostComponent < Ruflet::Rails::ResourceComponent
+  def render
+    # edit the scaffold layout here
+  end
+end
+```
+
+The generated view contains the resource logic: query, model helpers, field
+introspection, save/delete, dialog close, and display formatting. The generated
+component contains the UI: tables, lists, and dialogs. `ruflet_rails` only
+provides the base classes and generic helpers. The generator does not dump field
+declarations like `title:string` or literal metadata tables into the app.
 
 ## Ruflet model forms
 
@@ -138,8 +169,9 @@ bin/rails generate ruflet:form Post title:string body:text published:boolean cat
 Foreign keys and references, such as `category:references` or `user_id`, render
 as Ruflet dropdowns populated from the associated Rails model.
 
-The generated form lives at `app/views/ruflet/components/posts/post_form.rb`
-and subclasses `ApplicationComponent`, so it is auto-loaded before views.
+The generated form lives at `app/views/ruflet/components/posts/post_form.rb`.
+The form generator creates `app/views/ruflet/components/application_component.rb`
+when that base component does not already exist.
 
 ## Shared Ruflet components
 
@@ -179,7 +211,7 @@ end
 Mount it in Rails:
 
 ```ruby
-mount Ruflet::Rails.app(Rails.root.join("app/views/ruflet/main.rb")), at: "/ws"
+match "/ws", to: Ruflet::Rails.app(Rails.root.join("app/views/ruflet/main.rb")), via: :all
 ```
 
 The same mounted Ruby entrypoint drives mobile, web, and desktop clients.

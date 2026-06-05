@@ -4,10 +4,9 @@ module Ruflet
   module Rails
     module Protocol
       class LocalServer
-        def initialize(session_registry: Ruflet::Rails.sessions, view_root: nil, &app_block)
+        def initialize(session_registry: Ruflet::Rails.sessions, &app_block)
           @app_block = app_block
           @session_registry = session_registry
-          @view_root = view_root
           @sessions = {}
           @sessions_mutex = Mutex.new
         end
@@ -24,6 +23,7 @@ module Ruflet
             handle_message(ws, raw)
           end
         rescue StandardError => e
+          Rails.logger.error("RUFLET CRASH: #{e.class}: #{e.message}\n#{e.backtrace.first(10).join("\n")}") if defined?(Rails)
           send_message(ws, Ruflet::Protocol::ACTIONS[:session_crashed], { "message" => e.message.to_s.dup.force_encoding("UTF-8") })
         ensure
           close_connection(ws)
@@ -38,7 +38,7 @@ module Ruflet
 
         def remove_session(ws)
           page = @sessions_mutex.synchronize { @sessions.delete(ws.session_key) }
-          @session_registry.remove(page.session_id) if page
+          @session_registry.remove(page.session_id, connection_key: ws.session_key) if page
         end
 
         def handle_message(ws, raw)
@@ -101,21 +101,28 @@ module Ruflet
         def on_register_client(ws, payload)
           normalized = Ruflet::Protocol.normalize_register_payload(payload)
           session_id = normalized["session_id"].to_s.empty? ? pseudo_uuid : normalized["session_id"]
+          existing_session = @session_registry[session_id]
+          page = existing_session&.page
+          first_registration = page.nil?
 
-          page = Ruflet::Page.new(
-            session_id: session_id,
-            client_details: normalized,
-            sender: lambda do |action, msg_payload|
-              send_message(ws, action, msg_payload)
-            end
-          )
-          page.title = "Ruflet App"
+          if page
+            attach_sender(page, ws)
+            reset_mount_state(page)
+          else
+            page = Ruflet::Page.new(
+              session_id: session_id,
+              client_details: normalized,
+              sender: sender_for(ws)
+            )
+            page.title = "Ruflet App"
+          end
 
           @sessions_mutex.synchronize { @sessions[ws.session_key] = page }
           @session_registry.add(
             key: page.session_id,
             page: page,
-            env: Context.current_env
+            env: Context.current_env,
+            connection_key: ws.session_key
           )
 
           initial_response = [
@@ -124,8 +131,7 @@ module Ruflet
           ]
           ws.send_binary(WireCodec.pack(initial_response))
 
-          Ruflet::Rails.load_views(@view_root) if @view_root
-          @app_block.call(page)
+          @app_block.call(page) if first_registration
           page.update
         rescue StandardError => e
           send_message(ws, Ruflet::Protocol::ACTIONS[:session_crashed], { "message" => e.message.to_s })
@@ -137,6 +143,8 @@ module Ruflet
           page = fetch_page(ws)
           return if event["target"].nil? || event["name"].to_s.empty?
 
+          attach_sender(page, ws)
+          debug_event(ws, event)
           page.dispatch_event(
             target: event["target"],
             name: event["name"],
@@ -149,11 +157,13 @@ module Ruflet
           page = fetch_page(ws)
           return if update["id"].nil?
 
+          attach_sender(page, ws)
           page.apply_client_update(update["id"], update["props"] || {})
         end
 
         def on_invoke_control_method(ws, payload)
           page = fetch_page(ws)
+          attach_sender(page, ws)
           page.handle_invoke_method_result(Ruflet::Protocol.normalize_invoke_method_result_payload(payload))
         end
 
@@ -179,6 +189,31 @@ module Ruflet
           ws.send_binary(WireCodec.pack([action, payload]))
         rescue StandardError
           nil
+        end
+
+        def sender_for(ws)
+          lambda do |action, msg_payload|
+            send_message(ws, action, msg_payload)
+          end
+        end
+
+        def attach_sender(page, ws)
+          page.instance_variable_set(:@sender, sender_for(ws))
+        end
+
+        def debug_event(ws, event)
+          return unless ENV["RUFLET_RAILS_DEBUG_EVENTS"] == "true"
+
+          warn(
+            "[ruflet_rails] event socket=#{ws.session_key} " \
+            "target=#{event["target"].inspect} name=#{event["name"].inspect} data=#{event["data"].inspect}"
+          )
+        end
+
+        def reset_mount_state(page)
+          page.instance_variable_set(:@overlay_container_mounted, false)
+          page.instance_variable_set(:@dialogs_container_mounted, false)
+          page.instance_variable_set(:@services_container_mounted, false)
         end
 
         def pseudo_uuid

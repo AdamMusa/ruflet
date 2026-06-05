@@ -14,6 +14,8 @@ module Ruflet
           require "ruflet"
           require "ruflet_rails"
 
+          Ruflet::Rails.load_views(__dir__)
+
           Ruflet.run do |page|
             page.title = #{app_title.inspect}
             Ruflet::Rails.render(page)
@@ -31,7 +33,7 @@ module Ruflet
           # so that every subclass has the full ruflet widget DSL available as
           # instance methods (text, column, row, container, safe_area, filled_button,
           # icon, data_table, alert_dialog, and every other ruflet widget).
-          # This is the same DSL that ruflet studio uses — explicit, no Kernel magic.
+          # This is the same DSL that showcase uses — explicit, no Kernel magic.
           class ApplicationComponent
               include Ruflet::UI::SharedControlForwarders
 
@@ -48,7 +50,7 @@ module Ruflet
               private
 
               # Widget builder calls on this component delegate to Ruflet::DSL,
-              # the same target used by the ruflet studio App and by Kernel.
+              # the same target used by the showcase App and by Kernel.
               # Override in a subclass to scope builds to a local WidgetBuilder.
               def control_delegate
                 Ruflet::DSL
@@ -92,597 +94,7 @@ module Ruflet
         default_app_template(app_title: app_title)
       end
 
-      def scaffold_view_template(model_name:, attributes:)
-        names = scaffold_names(model_name)
-        attrs = Array(attributes).map { |field| normalize_scaffold_attribute(field) }.reject { |field| field[:name].empty? }
-        attrs = [{ name: "name", type: "string" }] if attrs.empty?
-        model_class = names[:class_name]
-        component_class = "#{model_class}Component"
-        title = names[:title]
-        singular_title = names[:singular].humanize.titleize
-
-        template = <<~RUBY
-          # frozen_string_literal: true
-
-          require "ostruct"
-          require "ruflet_rails"
-
-          # #{model_class}View is the Rails-backed Ruflet view for #{model_class}.
-          # It acts as a thin controller: it fetches ActiveRecord data and delegates
-          # all UI building to #{component_class}.  RufletView (and its included
-          # Ruflet::UI::SharedControlForwarders) gives every view instance the full
-          # ruflet widget DSL, matching the pattern used by ruflet studio.
-          class #{model_class}View < RufletView
-              route #{("/" + names[:plural]).inspect}
-
-              # Entry point called by the ViewRouter on every route render.
-              # Defaults to :index so the list is shown on first load.
-              def render(action: :index, record: nil)
-                public_send(action, record)
-              end
-
-              # ─── Actions ─────────────────────────────────────────────────────
-
-              def index(_record = nil)
-                records = model_class.order(created_at: :desc).limit(50)
-
-                page.title = #{title.inspect}
-                page.add(component.index(records: records), **component.index_view_options)
-              end
-
-              def show(record = nil)
-                record ||= model_class.first
-                return index unless record
-
-                page.title = "#{singular_title} ##\{record.id}"
-                page.add(component.show(record: record), **component.show_view_options)
-              end
-
-              def new(_record = nil)
-                component.open_form_dialog(model_class.new, title: "New #{singular_title}")
-              end
-
-              def edit(record = nil)
-                return index unless record
-
-                component.open_form_dialog(record, title: "Edit #{singular_title}")
-              end
-
-              # Called by the component's Save button.
-              # Returns true on success (dialog closes); false on validation failure
-              # (dialog stays open so the user can fix errors).
-              def update(record, attributes, dialog)
-                if record.update(attributes)
-                  close_dialog(dialog)
-                  index
-                  component.show_message("#{singular_title} saved successfully")
-                  true
-                else
-                  component.show_errors(record)
-                  false
-                end
-              end
-
-              # Called by the component's Delete confirmation dialog.
-              def destroy(record, dialog)
-                record.destroy!
-                close_dialog(dialog)
-                index
-                component.show_message("#{singular_title} deleted")
-              rescue => e
-                component.show_errors(
-                  OpenStruct.new(errors: OpenStruct.new(full_messages: [e.message]))
-                )
-              end
-
-              def close_dialog(dialog)
-                page.update(dialog, open: false)
-                page.close_dialog(dialog)
-              end
-
-              # ─── Model accessor ──────────────────────────────────────────────
-
-              def model_class
-                #{model_class}
-              end
-
-              private
-
-              # The component is memoised per page session.  It receives self as
-              # the controller so it can invoke index/show/edit/update/destroy.
-              def component
-                @component ||= #{component_class}.new(page, controller: self)
-              end
-          end
-        RUBY
-        template.gsub(/^    /, "  ")
-      end
-
-      def scaffold_component_template(model_name:, attributes:)
-        names = scaffold_names(model_name)
-        attrs = Array(attributes).map { |field| normalize_scaffold_attribute(field) }.reject { |field| field[:name].empty? }
-        attrs = [{ name: "name", type: "string" }] if attrs.empty?
-        form_locals = scaffold_form_locals(attrs)
-        form_controls = scaffold_form_controls(attrs)
-        form_attributes = scaffold_form_attributes(attrs)
-        show_field_rows = attrs.map do |field|
-          %(field_row(#{field[:name].humanize.inspect}, record.public_send(#{field[:name].inspect}).to_s))
-        end.join(",\n                  ")
-        table_column_controls = attrs.map { |field| %(data_column(#{field[:name].humanize.inspect})) }.join(",\n        ")
-        table_cells = attrs.map do |field|
-          %(data_cell(record.public_send(#{field[:name].inspect}).to_s, on_tap: ->(_e) { controller.show(record) }))
-        end.join(",\n          ")
-        primary_label = %(record.public_send(#{attrs.first[:name].inspect}).to_s)
-        secondary_label = attrs[1] ? %(record.public_send(#{attrs[1][:name].inspect}).to_s) : "nil"
-        model_class = names[:class_name]
-        component_class = "#{model_class}Component"
-        title = names[:title]
-        singular_title = names[:singular].humanize.titleize
-
-        template = <<~RUBY
-          # frozen_string_literal: true
-
-          require "ruflet_rails"
-
-          # #{component_class} owns all UI for #{model_class} CRUD screens.
-          # Every widget method (text, column, row, data_table, alert_dialog, …) is
-          # inherited from ApplicationComponent via Ruflet::UI::SharedControlForwarders —
-          # the exact same DSL ruflet studio uses.  No widget code is hardcoded here;
-          # all controls are built through the shared ruflet DSL.
-          class #{component_class} < ApplicationComponent
-              attr_reader :controller
-
-              def initialize(page, controller:)
-                super(page)
-                @controller = controller
-              end
-
-              # ─── Index ───────────────────────────────────────────────────────
-
-              def index(records:)
-                safe_area(
-                  container(
-                    expand: true,
-                    padding: { left: 24, top: 16, right: 24, bottom: 24 },
-                    content: column(
-                      expand: true,
-                      spacing: 16,
-                      children: [
-                        index_header,
-                        compact? ? record_list(records) : record_table(records)
-                      ]
-                    )
-                  ),
-                  expand: true
-                )
-              end
-
-              # ─── Show ────────────────────────────────────────────────────────
-
-              def show(record:)
-                safe_area(
-                  container(
-                    expand: true,
-                    padding: { left: 24, top: 16, right: 24, bottom: 24 },
-                    content: column(
-                      expand: true,
-                      spacing: 16,
-                      children: [
-                        column(
-                          spacing: 8,
-                          children: [
-                            text("#{singular_title} ##\{record.id}", size: 24, weight: "bold"),
-                            row(
-                              alignment: "end",
-                              children: [action_buttons(record)]
-                            )
-                          ]
-                        ),
-                        divider,
-                        column(
-                          spacing: 8,
-                          children: [
-                            #{show_field_rows}
-                          ]
-                        )
-                      ]
-                    )
-                  ),
-                  expand: true
-                )
-              end
-
-              # ─── Form dialog ─────────────────────────────────────────────────
-
-              def open_form_dialog(record, title:)
-                __FORM_LOCALS__
-
-                attributes = lambda do
-                  {
-                    __FORM_ATTRIBUTES__
-                  }
-                end
-
-                dialog = nil
-                closing = false
-                dialog = alert_dialog(
-                  open: false,
-                  modal: true,
-                  scrollable: true,
-                  title: text(title),
-                  content: container(
-                    width: dialog_width,
-                    content: column(
-                      spacing: 8,
-                      children: [
-                        __FORM_CONTROLS__
-                      ]
-                    )
-                  ),
-                  actions: [
-                    text_button(
-                      content: text("Cancel"),
-                      on_click: ->(_e) { controller.close_dialog(dialog) }
-                    ),
-                    filled_button(
-                      content: text("Save"),
-                      on_click: ->(_e) do
-                        next if closing
-
-                        closing = true
-                        closing = false unless controller.update(record, attributes.call, dialog)
-                      end
-                    )
-                  ],
-                  actions_alignment: "end"
-                )
-                page.show_dialog(dialog)
-              end
-
-              # ─── Delete dialog ───────────────────────────────────────────────
-
-              def open_delete_dialog(record)
-                dialog = nil
-                closing = false
-                dialog = alert_dialog(
-                  open: false,
-                  modal: true,
-                  title: text("Delete #{singular_title}?"),
-                  content: text(
-                    "Permanently remove #{singular_title} ##\{record.id}? " \
-                    "This cannot be undone.",
-                    no_wrap: false
-                  ),
-                  actions: [
-                    text_button(
-                      content: text("Cancel"),
-                      on_click: ->(_e) { controller.close_dialog(dialog) }
-                    ),
-                    filled_button(
-                      content: text("Delete"),
-                      on_click: ->(_e) do
-                        next if closing
-
-                        closing = true
-                        controller.destroy(record, dialog)
-                      end
-                    )
-                  ],
-                  actions_alignment: "end"
-                )
-                page.show_dialog(dialog)
-              end
-
-              # ─── Feedback helpers ────────────────────────────────────────────
-
-              def show_errors(record)
-                show_message(scaffold_error_message(record))
-              end
-
-              def show_message(message)
-                page.snackbar = snackbar(text(message), open: true)
-              end
-
-              # ─── View options ────────────────────────────────────────────────
-
-              def show_view_options
-                back_appbar_options(
-                  tooltip: "Back to #{title}",
-                  on_click: ->(_e) { controller.index }
-                )
-              end
-
-              def index_view_options
-                return {} if page.route.to_s == "/"
-
-                back_appbar_options(
-                  tooltip: "Back",
-                  on_click: ->(_e) { page.go("/") }
-                )
-              end
-
-              # ─── Private widget builders ─────────────────────────────────────
-
-              private
-
-              def back_appbar_options(tooltip:, on_click:)
-                {
-                  appbar: app_bar(
-                    leading: icon_button(
-                      "arrow_back",
-                      tooltip: tooltip,
-                      on_click: on_click
-                    )
-                  )
-                }
-              end
-
-              # Header row: title left, "New …" button right — studio pattern.
-              def index_header
-                row(
-                  alignment: "spaceBetween",
-                  vertical_alignment: "center",
-                  children: [
-                    container(
-                      expand: true,
-                      content: text(#{title.inspect}, size: 24, weight: "bold")
-                    ),
-                    filled_button(
-                      content: text("New #{singular_title}"),
-                      on_click: ->(_e) { controller.new }
-                    )
-                  ]
-                )
-              end
-
-              # Desktop: horizontally scrollable data table with action icon columns.
-              def record_table(records)
-                row(
-                  scroll: "auto",
-                  children: [
-                    data_table(
-                      table_columns,
-                      rows: records.map { |record| table_row(record) },
-                      column_spacing: 24,
-                      horizontal_margin: 12,
-                      show_bottom_border: true
-                    )
-                  ]
-                )
-              end
-
-              # Mobile / compact: list of tappable list_tile rows.
-              def record_list(records)
-                column(
-                  spacing: 4,
-                  children: records.map { |record| record_tile(record) }
-                )
-              end
-
-              # One list_tile for a record (compact screens).
-              def record_tile(record)
-                primary_label = #{primary_label}
-                secondary_label = #{secondary_label}
-
-                list_tile(
-                  title:    text(primary_label),
-                  subtitle: secondary_label ? text(secondary_label) : nil,
-                  trailing: row(
-                    tight: true,
-                    spacing: 0,
-                    children: [
-                      icon_button("edit",   tooltip: "Edit",   on_click: ->(_e) { controller.edit(record) }),
-                      icon_button("delete", tooltip: "Delete", on_click: ->(_e) { open_delete_dialog(record) })
-                    ]
-                  ),
-                  on_click: ->(_e) { controller.show(record) }
-                )
-              end
-
-              # Data table column headers (desktop).
-              def table_columns
-                [
-                  #{table_column_controls},
-                  data_column("Actions"),
-                  data_column(""),
-                  data_column("")
-                ]
-              end
-
-              # One data_row for a record (desktop).
-              def table_row(record)
-                data_row(
-                  [
-                    #{table_cells},
-                    data_cell(icon("visibility", tooltip: "Show"),   on_tap: ->(_e) { controller.show(record) }),
-                    data_cell(icon("edit",        tooltip: "Edit"),   on_tap: ->(_e) { controller.edit(record) }),
-                    data_cell(icon("delete",      tooltip: "Delete"), on_tap: ->(_e) { open_delete_dialog(record) })
-                  ]
-                )
-              end
-
-              # Edit / delete icon buttons for the show-view header.
-              def action_buttons(record)
-                row(
-                  spacing: 4,
-                  children: [
-                    icon_button("edit",   tooltip: "Edit #{singular_title}",   on_click: ->(_e) { controller.edit(record) }),
-                    icon_button("delete", tooltip: "Delete #{singular_title}", on_click: ->(_e) { open_delete_dialog(record) })
-                  ]
-                )
-              end
-
-              # Label + value row used in the show view body.
-              def field_row(label, value)
-                row(
-                  children: [
-                    container(width: 140, content: text(label, weight: "bold")),
-                    container(expand: true, content: text(value, no_wrap: false))
-                  ]
-                )
-              end
-
-              # Responsive dialog width: fills screen on mobile, capped at 520 on desktop.
-              def dialog_width
-                width = screen_width
-                return 520 if width <= 0
-
-                [[width - 64, 280].max, 520].min
-              end
-
-              def scaffold_picker_attribute(control, type)
-                value = control.props["value"]
-                return nil if value.to_s.empty?
-                return value.to_s.split("T", 2).first if type == "date"
-
-                value.to_s
-              end
-
-              def scaffold_date_value(value)
-                return nil if value.nil?
-                return value.iso8601 if value.respond_to?(:iso8601)
-                return value.to_date.iso8601 if value.respond_to?(:to_date)
-
-                value.to_s
-              end
-
-              def scaffold_picker_display_text(label, value)
-                visible = value.to_s.empty? ? "Not selected" : value.to_s.split("T", 2).first
-                "\#{label}: \#{visible}"
-              end
-
-              def scaffold_error_message(record)
-                messages = record.errors.full_messages
-                messages.respond_to?(:to_sentence) ? messages.to_sentence : messages.join(", ")
-              end
-
-              def scaffold_association_label(record)
-                return record.name.to_s if record.respond_to?(:name)
-                return record.title.to_s if record.respond_to?(:title)
-
-                record.to_s
-              end
-          end
-        RUBY
-        template = template.gsub(/^    /, "  ")
-        template.gsub!(/^[ \t]*__FORM_LOCALS__$/, indent_lines(form_locals, 4))
-        template.gsub!(/^[ \t]*__FORM_ATTRIBUTES__$/, indent_lines(form_attributes, 8))
-        template.gsub!(/^[ \t]*__FORM_CONTROLS__$/, indent_lines(form_controls, 12))
-        template
-      end
-
-      def scaffold_form_locals(attrs)
-        attrs.map { |field| scaffold_form_local(field) }.join("\n\n")
-      end
-
-      def scaffold_form_controls(attrs)
-        attrs.map { |field| scaffold_form_control_expression(field) }.join(",\n")
-      end
-
-      def scaffold_form_attributes(attrs)
-        attrs.map { |field| scaffold_form_attribute_expression(field) }.join(",\n")
-      end
-
-      def scaffold_form_local(field)
-        name = field[:name]
-        type = field[:type].to_s
-        label = name.humanize
-        control = scaffold_form_control_name(field)
-
-        case type
-        when "association", "references", "belongs_to"
-          model = "#{control}_model"
-          options = "#{control}_options"
-          class_name = (field[:class_name] || name.sub(/_id\z/, "").camelize).inspect
-          <<~RUBY.chomp
-            #{model} = #{class_name}.safe_constantize
-            #{options} = #{model}&.respond_to?(:all) ? #{model}.all.map { |item| dropdown_option(item.id.to_s, text: scaffold_association_label(item)) } : []
-            #{control} = dropdown(#{options}, value: record.public_send(#{name.inspect}).to_s, label: #{label.inspect}, width: dialog_width)
-          RUBY
-        when "boolean"
-          %(#{control} = checkbox(label: #{label.inspect}, value: !!record.public_send(#{name.inspect})))
-        when "integer", "float", "decimal"
-          %(#{control} = text_field(value: record.public_send(#{name.inspect}).to_s, label: #{label.inspect}, keyboard_type: "number", width: dialog_width))
-        when "text"
-          %(#{control} = text_field(value: record.public_send(#{name.inspect}).to_s, label: #{label.inspect}, multiline: true, min_lines: 3, width: dialog_width))
-        when "date", "datetime", "timestamp", "time"
-          picker = control
-          display = "#{control}_display"
-          picker_value = type == "time" ? %(record.public_send(#{name.inspect}).respond_to?(:strftime) ? record.public_send(#{name.inspect}).strftime("%H:%M") : record.public_send(#{name.inspect}).to_s) : %(scaffold_date_value(record.public_send(#{name.inspect})))
-          picker_builder = type == "time" ? "time_picker" : "date_picker"
-          <<~RUBY.chomp
-            #{picker} = #{picker_builder}(value: #{picker_value}, help_text: #{label.inspect}, open: false)
-            #{display} = text(scaffold_picker_display_text(#{label.inspect}, #{picker}.props["value"]))
-            #{picker}.on(:change) do |event|
-              page.update(event.control, open: false)
-              page.close_dialog(event.control)
-              page.update(#{display}, value: scaffold_picker_display_text(#{label.inspect}, event.control.props["value"]))
-            end
-            #{picker}.on(:dismiss) do |event|
-              page.update(event.control, open: false)
-              page.close_dialog(event.control)
-            end
-          RUBY
-        else
-          %(#{control} = text_field(value: record.public_send(#{name.inspect}).to_s, label: #{label.inspect}, width: dialog_width))
-        end
-      end
-
-      def scaffold_form_control_expression(field)
-        control = scaffold_form_control_name(field)
-        type = field[:type].to_s
-        return control unless %w[date datetime timestamp time].include?(type)
-
-        label = field[:name].humanize
-        display = "#{control}_display"
-        <<~RUBY.chomp
-          column(
-            spacing: 6,
-            width: dialog_width,
-            children: [
-              #{display},
-              outlined_button(
-                content: text("Choose #{label}"),
-                width: dialog_width,
-                on_click: ->(_e) { page.show_dialog(#{control}) }
-              )
-            ]
-          )
-        RUBY
-      end
-
-      def scaffold_form_attribute_expression(field)
-        name = field[:name]
-        type = field[:type].to_s
-        control = scaffold_form_control_name(field)
-
-        value =
-          case type
-          when "boolean"
-            "!!#{control}.props[\"value\"]"
-          when "date"
-            "scaffold_picker_attribute(#{control}, \"date\")"
-          when "datetime", "timestamp", "time"
-            "scaffold_picker_attribute(#{control}, #{type.inspect})"
-          when "association", "references", "belongs_to"
-            "#{control}.props[\"value\"].to_s.empty? ? nil : #{control}.props[\"value\"]"
-          else
-            "#{control}.props[\"value\"].to_s"
-          end
-
-        "#{name.inspect} => #{value}"
-      end
-
-      def scaffold_form_control_name(field)
-        "#{field[:name].gsub(/[^a-zA-Z0-9_]/, '_')}_control"
-      end
-
-      def indent_lines(text, spaces)
-        prefix = " " * spaces
-        text.lines(chomp: true).map { |line| line.empty? ? line : "#{prefix}#{line}" }.join("\n")
-      end
-
-      def scaffold_names(model_name)
+      def model_names(model_name)
         raw = model_name.to_s.strip
         class_name = raw.camelize
         singular = raw.underscore.singularize
@@ -695,28 +107,527 @@ module Ruflet
         }
       end
 
-      def scaffold_view_path(model_name)
-        names = scaffold_names(model_name)
-
-        File.join("app", "views", "ruflet", names[:plural], "#{names[:plural]}_view.rb")
-      end
-
       def form_view_path(model_name)
-        names = scaffold_names(model_name)
+        names = model_names(model_name)
 
         File.join("app", "views", "ruflet", "components", names[:plural], "#{names[:singular]}_form.rb")
       end
 
+      def scaffold_view_path(model_name)
+        names = model_names(model_name)
+
+        File.join("app", "views", "ruflet", "#{names[:plural]}_view.rb")
+      end
+
       def scaffold_component_path(model_name)
-        names = scaffold_names(model_name)
+        names = model_names(model_name)
 
         File.join("app", "views", "ruflet", "components", names[:plural], "#{names[:singular]}_component.rb")
       end
 
-      def form_view_template(model_name:, attributes:)
-        names = scaffold_names(model_name)
+      def scaffold_view_template(model_name:, attributes: [])
+        names = model_names(model_name)
+        model_class = names[:class_name]
+        view_class = "#{model_class}View"
+        component_class = "#{model_class}Component"
+        title = names[:title]
         attrs = normalized_form_attributes(attributes)
-        fields_literal = attrs.map { |field| scaffold_field_literal(field) }.join(", ")
+        resource_fields = scaffold_resource_fields(attrs)
+        display_fields = scaffold_display_fields(attrs)
+        display_value_cases = scaffold_display_value_cases(attrs)
+
+        template = <<~RUBY
+          # frozen_string_literal: true
+
+          require "ruflet_rails"
+          require_relative "components/#{names[:plural]}/#{names[:singular]}_component"
+
+          class #{view_class} < Ruflet::Rails::ResourceView
+            route #{("/" + names[:plural]).inspect}
+
+            def render
+              page.title = resource_title
+              render_index
+            end
+
+            private
+
+            def model_class
+              #{model_class}
+            end
+
+            def resource_title
+              #{title.inspect}
+            end
+
+            def singular_title
+              model_class.model_name.human.titleize
+            end
+
+            def records
+              scope = model_class.respond_to?(:limit) ? model_class.limit(50) : model_class.all
+              scope.respond_to?(:limit) ? scope.limit(50) : scope.to_a.first(50)
+            end
+
+            def render_index
+              page.views = []
+              page.add(component.render)
+            end
+
+            def render_show(record)
+              page.views = []
+              page.add(component.show(record))
+              page.update
+            end
+
+            def component
+              @component ||= #{component_class}.new(page, controller: self)
+            end
+
+            def show_record(record)
+              render_show(record)
+            end
+
+            def save_record(record, attributes, dialog)
+              if record.update(attributes)
+                close_dialog(dialog)
+                render_index
+                show_snackbar("\#{singular_title} saved")
+              else
+                show_errors(record)
+              end
+            end
+
+            def destroy_record(record, dialog)
+              record.destroy!
+              close_dialog(dialog)
+              render_index
+              show_snackbar("\#{singular_title} deleted")
+            rescue StandardError => e
+              show_snackbar(e.message)
+            end
+
+            def resource_fields
+              #{resource_fields}
+            end
+
+            def display_fields
+              #{display_fields}
+            end
+
+            def display_value(record, field)
+              case field
+              __DISPLAY_VALUE_CASES__
+              else
+                record.public_send(field).to_s
+              end
+            end
+
+            def primary_label(record)
+              field = display_fields.first
+              field ? display_value(record, field) : "##\#{record_id(record)}"
+            end
+
+            def secondary_label(record)
+              field = display_fields[1]
+              field ? display_value(record, field) : nil
+            end
+
+          end
+        RUBY
+        template.gsub(/^[ \t]*__DISPLAY_VALUE_CASES__$/, display_value_cases)
+      end
+
+      def scaffold_component_template(model_name:, attributes: [])
+        names = model_names(model_name)
+        model_class = names[:class_name]
+        component_class = "#{model_class}Component"
+        attrs = normalized_form_attributes(attributes)
+        control_locals = scaffold_control_locals(attrs)
+        control_list = scaffold_control_list(attrs)
+        attributes_hash = scaffold_attributes_hash(attrs)
+
+        <<~RUBY
+          # frozen_string_literal: true
+
+          require "date"
+          require "ruflet_rails"
+
+          class #{component_class} < Ruflet::Rails::ResourceComponent
+            def render
+              safe_area(
+                container(
+                  expand: true,
+                  padding: { left: 24, top: 16, right: 24, bottom: 24 },
+                  content: column(
+                    expand: true,
+                    spacing: 16,
+                    children: [
+                      index_header,
+                      compact? ? record_list(records) : record_table(records)
+                    ]
+                  )
+                ),
+                expand: true
+              )
+            end
+
+            def show(record)
+              safe_area(
+                container(
+                  expand: true,
+                  padding: { left: 24, top: 16, right: 24, bottom: 24 },
+                  content: column(
+                    expand: true,
+                    spacing: 16,
+                    children: [
+                      show_header(record),
+                      column(
+                        spacing: 8,
+                        children: resource_fields.map { |field| field_row(field.humanize, display_value(record, field)) }
+                      )
+                    ]
+                  )
+                ),
+                expand: true
+              )
+            end
+
+            private
+
+            def show_header(record)
+              row(
+                alignment: "spaceBetween",
+                vertical_alignment: "center",
+                children: [
+                  container(expand: true, content: text("\#{singular_title} ##\#{record_id(record)}", size: 24, weight: "bold")),
+                  row(
+                    tight: true,
+                    spacing: 8,
+                    children: [
+                      outlined_button(content: text("Back"), on_click: ->(_event) { render_index }),
+                      filled_button(content: text("Edit"), on_click: ->(_event) { open_form(record) })
+                    ]
+                  )
+                ]
+              )
+            end
+
+            def index_header
+              row(
+                alignment: "spaceBetween",
+                vertical_alignment: "center",
+                children: [
+                  container(expand: true, content: text(resource_title, size: 24, weight: "bold")),
+                  filled_button(content: text("New \#{singular_title}"), on_click: ->(_event) { open_form(model_class.new) })
+                ]
+              )
+            end
+
+            def record_table(items)
+              row(
+                scroll: "auto",
+                children: [
+                  data_table(
+                    table_columns,
+                    rows: items.map { |record| table_row(record) },
+                    column_spacing: 24,
+                    horizontal_margin: 12,
+                    show_bottom_border: true
+                  )
+                ]
+              )
+            end
+
+            def table_columns
+              display_fields.map { |field| data_column(field.humanize) } + [
+                data_column("Actions"),
+                data_column(""),
+                data_column("")
+              ]
+            end
+
+            def table_row(record)
+              data_row(
+                display_fields.map { |field| data_cell(display_value(record, field), on_tap: ->(_event) { open_show(record) }) } +
+                  [
+                    data_cell(icon("visibility", tooltip: "Show"), on_tap: ->(_event) { open_show(record) }),
+                    data_cell(icon("edit", tooltip: "Edit"), on_tap: ->(_event) { open_form(record) }),
+                    data_cell(icon("delete", tooltip: "Delete"), on_tap: ->(_event) { open_delete(record) })
+                  ]
+              )
+            end
+
+            def record_list(items)
+              column(spacing: 4, children: items.map { |record| record_tile(record) })
+            end
+
+            def record_tile(record)
+              list_tile(
+                title: text(primary_label(record)),
+                subtitle: secondary_label(record) ? text(secondary_label(record)) : nil,
+                trailing: row(
+                  tight: true,
+                  spacing: 0,
+                  children: [
+                    icon_button("edit", tooltip: "Edit", on_click: ->(_event) { open_form(record) }),
+                    icon_button("delete", tooltip: "Delete", on_click: ->(_event) { open_delete(record) })
+                  ]
+                ),
+                on_click: ->(_event) { open_show(record) }
+              )
+            end
+
+            def open_show(record)
+              show_record(record)
+            end
+
+            def open_form(record)
+              #{control_locals}
+
+              attributes = lambda do
+                {
+                  #{attributes_hash}
+                }
+              end
+
+              dialog  = nil
+              dialog  = alert_dialog(
+                open: false,
+                modal: true,
+                scrollable: true,
+                title: text(record.persisted? ? "Edit \#{singular_title}" : "New \#{singular_title}"),
+                content: container(
+                  width: dialog_width,
+                  content: column(
+                    spacing: 8,
+                    children: [
+                      #{control_list}
+                    ]
+                  )
+                ),
+                actions: [
+                  text_button(content: text("Cancel"), on_click: ->(_event) { close_dialog(dialog) }),
+                  filled_button(content: text("Save"), on_click: ->(_event) {
+                    save_record(record, attributes.call, dialog)
+                  })
+                ],
+                actions_alignment: "end"
+              )
+              open_dialog(dialog)
+            end
+
+            def open_delete(record)
+              dialog = nil
+              dialog = alert_dialog(
+                open: false,
+                modal: true,
+                title: text("Delete \#{singular_title}?"),
+                content: text("Permanently remove \#{singular_title} #\#{record_id(record)}?", no_wrap: false),
+                actions: [
+                  text_button(content: text("Cancel"), on_click: ->(_event) { close_dialog(dialog) }),
+                  filled_button(content: text("Delete"), on_click: ->(_event) { destroy_record(record, dialog) })
+                ],
+                actions_alignment: "end"
+              )
+              open_dialog(dialog)
+            end
+
+            def field_row(label, value)
+              row(
+                children: [
+                  container(width: 140, content: text(label, weight: "bold")),
+                  container(expand: true, content: text(value, no_wrap: false))
+                ]
+              )
+            end
+          end
+        RUBY
+      end
+
+      def scaffold_control_locals(attrs)
+        attrs.map { |field| scaffold_control_local(field) }.join("\n    ")
+      end
+
+      def scaffold_resource_fields(attrs)
+        attrs.map { |field| field[:name] }.inspect
+      end
+
+      def scaffold_display_fields(attrs)
+        fields = attrs.reject { |field| field[:type].to_s == "text" }
+        fields = attrs if fields.empty?
+        fields.first(3).map { |field| field[:name] }.inspect
+      end
+
+      def scaffold_display_value_cases(attrs)
+        attrs.filter_map do |field|
+          next unless %w[date datetime timestamp time date_range daterange].include?(field[:type].to_s)
+
+          name = field[:name]
+          formatter =
+            case field[:type].to_s
+            when "time"
+              "value.respond_to?(:strftime) ? value.strftime(\"%H:%M\") : value.to_s"
+            when "date_range", "daterange"
+              "value.respond_to?(:begin) && value.respond_to?(:end) ? \"\#{value.begin} - \#{value.end}\" : value.to_s"
+            when "date"
+              "value.respond_to?(:to_date) ? value.to_date.iso8601 : value.to_s"
+            else
+              "value.respond_to?(:iso8601) ? value.iso8601 : value.to_s"
+            end
+          [
+            "    when #{name.inspect}",
+            "      value = record.public_send(#{name.inspect})",
+            "      #{formatter}"
+          ].join("\n")
+        end.join("\n")
+      end
+
+      def scaffold_control_list(attrs)
+        attrs.map { |field| scaffold_control_view_name(field) }.join(",\n            ")
+      end
+
+      def scaffold_attributes_hash(attrs)
+        attrs.map { |field| scaffold_attribute_pair(field) }.join(",\n        ")
+      end
+
+      def scaffold_control_local(field)
+        name = field[:name]
+        type = field[:type].to_s
+        control = scaffold_control_name(field)
+        label = name.humanize
+        value = "record.public_send(#{name.inspect})"
+
+        case type
+        when "boolean"
+          "#{control} = checkbox(label: #{label.inspect}, value: !!#{value})"
+        when "date", "datetime", "timestamp"
+          display_control = "#{control}_display"
+          picker_value_helper = type == "date" ? "date_picker_value" : "datetime_picker_value"
+          <<~RUBY.chomp
+            #{control}_value = #{picker_value_helper}(#{value})
+                #{display_control} = text(date_display_value(#{control}_value))
+                #{control} = date_picker(
+                  value: #{control}_value,
+                  help_text: #{label.inspect},
+                  on_change: ->(_event) do
+                    close_dialogs(#{control})
+                    page.update(#{display_control}, value: date_display_value(#{control}.props["value"]))
+                  end
+                )
+                #{control}_field = column(
+                  spacing: 6,
+                  children: [
+                    text(#{label.inspect}),
+                    row(
+                      spacing: 8,
+                      children: [
+                        container(expand: true, content: #{display_control}),
+                        outlined_button(content: text("Choose #{label}"), on_click: ->(_event) { open_dialog(#{control}) })
+                      ]
+                    )
+                  ]
+                )
+          RUBY
+        when "time"
+          display_control = "#{control}_display"
+          <<~RUBY.chomp
+            #{control}_value = time_picker_value(#{value})
+                #{display_control} = text(time_display_value(#{control}_value))
+                #{control} = time_picker(
+                  value: #{control}_value,
+                  help_text: #{label.inspect},
+                  on_change: ->(_event) do
+                    close_dialogs(#{control})
+                    page.update(#{display_control}, value: time_display_value(#{control}.props["value"]))
+                  end
+                )
+                #{control}_field = column(
+                  spacing: 6,
+                  children: [
+                    text(#{label.inspect}),
+                    row(
+                      spacing: 8,
+                      children: [
+                        container(expand: true, content: #{display_control}),
+                        outlined_button(content: text("Choose #{label}"), on_click: ->(_event) { open_dialog(#{control}) })
+                      ]
+                    )
+                  ]
+                )
+          RUBY
+        when "date_range", "daterange"
+          display_control = "#{control}_display"
+          <<~RUBY.chomp
+            #{control}_start_value, #{control}_end_value = date_range_picker_values(#{value})
+                #{display_control} = text(date_range_display_value(#{control}_start_value, #{control}_end_value))
+                #{control} = date_range_picker(
+                  start_value: #{control}_start_value,
+                  end_value: #{control}_end_value,
+                  help_text: #{label.inspect},
+                  on_change: ->(_event) do
+                    close_dialogs(#{control})
+                    page.update(
+                      #{display_control},
+                      value: date_range_display_value(#{control}.props["start_value"], #{control}.props["end_value"])
+                    )
+                  end
+                )
+                #{control}_field = column(
+                  spacing: 6,
+                  children: [
+                    text(#{label.inspect}),
+                    row(
+                      spacing: 8,
+                      children: [
+                        container(expand: true, content: #{display_control}),
+                        outlined_button(content: text("Choose #{label}"), on_click: ->(_event) { open_dialog(#{control}) })
+                      ]
+                    )
+                  ]
+                )
+          RUBY
+        when "text"
+          "#{control} = text_field(value: #{value}.to_s, label: #{label.inspect}, multiline: true, min_lines: 3)"
+        when "integer", "float", "decimal"
+          "#{control} = text_field(value: #{value}.to_s, label: #{label.inspect}, keyboard_type: \"number\")"
+        else
+          "#{control} = text_field(value: #{value}.to_s, label: #{label.inspect})"
+        end
+      end
+
+      def scaffold_attribute_pair(field)
+        name = field[:name]
+        type = field[:type].to_s
+        control = scaffold_control_name(field)
+        value =
+          case type
+          when "boolean"
+            "!!#{control}.props[\"value\"]"
+          when "date"
+            "#{control}.props[\"value\"].to_s.split(\"T\", 2).first"
+          when "date_range", "daterange"
+            "Range.new(Date.parse(#{control}.props[\"start_value\"].to_s), Date.parse(#{control}.props[\"end_value\"].to_s))"
+          else
+            "#{control}.props[\"value\"].to_s"
+          end
+
+        "#{name.inspect} => #{value}"
+      end
+
+      def scaffold_control_name(field)
+        "#{field[:name].gsub(/[^a-zA-Z0-9_]/, '_')}_control"
+      end
+
+      def scaffold_control_view_name(field)
+        control = scaffold_control_name(field)
+        %w[date datetime timestamp time date_range daterange].include?(field[:type].to_s) ? "#{control}_field" : control
+      end
+
+      def form_view_template(model_name:, attributes:)
+        names = model_names(model_name)
+        attrs = normalized_form_attributes(attributes)
+        fields_literal = attrs.map { |field| form_field_literal(field) }.join(", ")
         model_class = names[:class_name]
         singular_title = names[:singular].humanize.titleize
 
@@ -759,7 +670,7 @@ module Ruflet
                 if record.update(ruflet_form_attributes(fields, form_fields))
                   on_save ? on_save.call(page, record) : record
                 else
-                  ruflet_show_errors(record)
+                  show_errors(record)
                   false
                 end
               end
@@ -767,12 +678,25 @@ module Ruflet
               def form_fields
                 [#{fields_literal}]
               end
+
+              def show_errors(record)
+                show_snackbar(error_message(record))
+              end
+
+              def show_snackbar(message)
+                page.snackbar = snackbar(text(message), open: true)
+              end
+
+              def error_message(record)
+                messages = record.errors.full_messages
+                messages.respond_to?(:to_sentence) ? messages.to_sentence : messages.join(", ")
+              end
           end
         RUBY
       end
 
       def normalized_form_attributes(attributes)
-        attrs = Array(attributes).map { |field| normalize_scaffold_attribute(field) }.reject { |field| field[:name].empty? }
+        attrs = Array(attributes).map { |field| normalize_form_attribute(field) }.reject { |field| field[:name].empty? }
         attrs.empty? ? [{ name: "name", type: "string" }] : attrs
       end
 
@@ -784,7 +708,7 @@ module Ruflet
         }.map { |column| "#{column.name}:#{column.type}" }
       end
 
-      def scaffold_field_literal(field)
+      def form_field_literal(field)
         parts = [
           "name: #{field[:name].inspect}",
           "type: #{field[:type].inspect}"
@@ -793,7 +717,7 @@ module Ruflet
         "{ #{parts.join(', ')} }"
       end
 
-      def normalize_scaffold_attribute(value)
+      def normalize_form_attribute(value)
         raw = value.to_s.strip
         name, type = raw.split(":", 2)
         name = name.to_s.underscore.gsub(/[^a-z0-9_]/, "")
@@ -830,6 +754,59 @@ module Ruflet
         YAML
       end
 
+      def desktop_initializer_path
+        File.join("config", "initializers", "ruflet_desktop.rb")
+      end
+
+      def desktop_initializer_template
+        <<~RUBY
+          # frozen_string_literal: true
+
+          # Set this to true when you intentionally want the Rails server process to
+          # launch the server-driven Ruflet desktop client.
+          Rails.application.configure do
+            config.x.ruflet_rails.desktop = false
+          end
+        RUBY
+      end
+
+      def ruby_desktop_flag_bootstrap
+        <<~RUBY
+          # ruflet_rails desktop flag
+          ruflet_rails_desktop = ARGV.include?("--desktop")
+          ruflet_rails_command = ARGV.find { |value| !value.to_s.start_with?("-") }
+          if ruflet_rails_desktop && %w[server s].include?(ruflet_rails_command.to_s)
+            ENV["RUFLET_RAILS_DESKTOP"] = "true"
+            ENV["RUFLET_RAILS_DESKTOP_SERVER"] = "true"
+          end
+          ARGV.delete("--desktop")
+
+        RUBY
+      end
+
+      def ruby_dev_desktop_flag_bootstrap
+        <<~RUBY
+          # ruflet_rails desktop flag
+          if ARGV.delete("--desktop")
+            ENV["RUFLET_RAILS_DESKTOP"] = "true"
+            ENV["RUFLET_RAILS_DESKTOP_SERVER"] = "true"
+          end
+
+        RUBY
+      end
+
+      def shell_desktop_flag_bootstrap
+        <<~SH
+          # ruflet_rails desktop flag
+          if [ "$1" = "--desktop" ]; then
+            export RUFLET_RAILS_DESKTOP=true
+            export RUFLET_RAILS_DESKTOP_SERVER=true
+            shift
+          fi
+
+        SH
+      end
+
       def default_backend_url
         "http://localhost:3000"
       end
@@ -864,7 +841,7 @@ module Ruflet
       end
 
       def route_snippet(entrypoint: default_entrypoint_path, mount_path: "/ws", helper: "app")
-        %(mount Ruflet::Rails.#{helper}(Rails.root.join("#{entrypoint}")), at: "#{mount_path}")
+        %(match "#{mount_path}", to: Ruflet::Rails.#{helper}(Rails.root.join("#{entrypoint}")), via: :all)
       end
 
       def default_web_public_path
@@ -916,6 +893,7 @@ module Ruflet
         FileUtils.mkdir_p(File.dirname(target))
         FileUtils.cp_r(source, target)
         rewrite_web_base_href(target, public_path: public_path)
+        inject_web_client_bootstrap(target)
         true
       end
 
@@ -930,6 +908,35 @@ module Ruflet
             content.sub(%r{<base\s+href=["'][^"']*["']\s*/?>}i, %(<base href="#{base_href}">))
           else
             content.sub(%r{<head([^>]*)>}i, %(<head\\1>\n  <base href="#{base_href}">))
+          end
+        File.write(index_path, updated)
+      end
+
+      def inject_web_client_bootstrap(target)
+        index_path = File.join(target, "index.html")
+        return unless File.file?(index_path)
+
+        content = File.read(index_path)
+        return if content.include?('id="ruflet-rails-bootstrap"')
+
+        script = <<~HTML
+          <script id="ruflet-rails-bootstrap">
+            if (window.location.search === "" && window.location.hash === "") {
+              const rufletServerUrl = window.location.origin + "/";
+              window.history.replaceState(
+                null,
+                document.title,
+                window.location.pathname + "?url=" + encodeURIComponent(rufletServerUrl)
+              );
+            }
+          </script>
+        HTML
+
+        updated =
+          if content.include?('<script src="flutter_bootstrap.js"')
+            content.sub(%r{<script src="flutter_bootstrap\.js"[^>]*></script>}i) { |match| "#{script}  #{match}" }
+          else
+            content.sub(%r{</body>}i, "#{script}</body>")
           end
         File.write(index_path, updated)
       end
@@ -961,6 +968,8 @@ module Ruflet
         if %w[desktop all].include?(client.to_s)
           lines += [
             "Desktop clients are server-driven and connect to this Rails app.",
+            "Plain bin/dev, bin/rails server, and bin/rails s do not launch desktop.",
+            "To launch desktop for a dev server run: bin/rails s --desktop or bin/dev --desktop",
             "To download the prebuilt desktop client: bin/rails ruflet:update[desktop]",
             "To build the host desktop client: bin/rails ruflet:build[desktop]"
           ]

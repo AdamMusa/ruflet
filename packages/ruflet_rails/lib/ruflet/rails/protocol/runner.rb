@@ -8,13 +8,13 @@ module Ruflet
           @entrypoint = entrypoint
         end
 
-        def build_endpoint(path: "/")
+        def build_endpoint(path: nil)
           raise ArgumentError, "Ruflet::Rails::Protocol endpoint requires a block" unless @entrypoint.respond_to?(:call)
 
           Endpoint.new(server: build_server(@entrypoint), path: path)
         end
 
-        def build_app_endpoint(file_path:, path: "/")
+        def build_app_endpoint(file_path:, path: nil)
           absolute = File.expand_path(file_path)
           entrypoint = lambda do |page, env|
             loaded = MobileLoader.new(absolute).load!
@@ -22,7 +22,7 @@ module Ruflet
           end
 
           Endpoint.new(
-            server: build_server(entrypoint, view_root: File.dirname(absolute)),
+            server: build_server(entrypoint),
             path: path
           )
         end
@@ -30,8 +30,8 @@ module Ruflet
 
         private
 
-        def build_server(entrypoint, view_root: nil)
-          LocalServer.new(view_root: view_root) do |page|
+        def build_server(entrypoint)
+          LocalServer.new do |page|
             env = Context.current_env
             run_entrypoint(entrypoint, page, env)
           end

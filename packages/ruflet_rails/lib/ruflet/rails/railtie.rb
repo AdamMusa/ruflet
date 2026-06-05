@@ -7,8 +7,10 @@ module Ruflet
         app.middleware.use Ruflet::Rails::Protocol::Middleware
       end
 
-      generators do
-        Ruflet::Rails::ScaffoldHook.install!
+      initializer "ruflet_rails.desktop_launcher", after: :load_config_initializers do |_app|
+        next unless defined?(::Rails.root)
+
+        Ruflet::Rails::DesktopLauncher.launch_once(root: ::Rails.root)
       end
 
       rake_tasks do

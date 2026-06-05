@@ -71,22 +71,25 @@ module Ruflet
         picker = ruflet_picker_control(type, value, label)
         display = text(ruflet_picker_display_text(label, picker.props["value"]))
 
-        picker.on(:change) do |event|
-          page.update(event.control, open: false)
-          page.update(display, value: ruflet_picker_display_text(label, event.control.props["value"]))
+        picker.on(:change) do |_event|
+          page.update(picker, open: false)
+          page.close_dialog(picker)
+          page.update(display, value: ruflet_picker_display_text(label, picker.props["value"]))
         end
-        picker.on(:dismiss) { |event| page.update(event.control, open: false) }
+        picker.on(:dismiss) do |_event|
+          page.update(picker, open: false)
+          page.close_dialog(picker)
+        end
 
         {
           control: column(
             spacing: 6,
-            controls: [
+            children: [
               display,
               outlined_button(
                 content: text("Choose #{label}"),
-                on_click: ->(_e) { page.update(picker, open: true) }
-              ),
-              picker
+                on_click: ->(_e) { page.show_dialog(picker) }
+              )
             ]
           ),
           input: picker

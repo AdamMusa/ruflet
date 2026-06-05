@@ -8,13 +8,13 @@ module Ruflet
       class Endpoint
         WEBSOCKET_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
-        def initialize(server:, path: "/ws")
+        def initialize(server:, path: nil)
           @server = server
           @path = path
         end
 
         def call(env)
-          return not_found unless env["PATH_INFO"] == @path
+          return not_found if @path && env["PATH_INFO"] != @path
           return bad_request("Expected WebSocket upgrade") unless websocket_upgrade_request?(env)
 
           hijack = env["rack.hijack"]

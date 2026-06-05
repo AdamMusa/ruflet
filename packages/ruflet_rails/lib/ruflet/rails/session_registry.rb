@@ -5,13 +5,14 @@ require "thread"
 module Ruflet
   module Rails
     class Session
-      attr_reader :key, :page, :env, :connected_at
+      attr_reader :key, :page, :env, :connected_at, :connection_key
 
-      def initialize(key:, page:, env: nil, connected_at: Time.now)
+      def initialize(key:, page:, env: nil, connected_at: Time.now, connection_key: nil)
         @key = key
         @page = page
         @env = env
         @connected_at = connected_at
+        @connection_key = connection_key
       end
 
       def session_id
@@ -31,14 +32,19 @@ module Ruflet
         @mutex = Mutex.new
       end
 
-      def add(key:, page:, env: nil)
-        session = Session.new(key: key, page: page, env: env)
+      def add(key:, page:, env: nil, connection_key: nil)
+        session = Session.new(key: key, page: page, env: env, connection_key: connection_key)
         @mutex.synchronize { @sessions[key] = session }
         session
       end
 
-      def remove(key)
-        @mutex.synchronize { @sessions.delete(key) }
+      def remove(key, connection_key: nil)
+        @mutex.synchronize do
+          session = @sessions[key]
+          return nil if connection_key && session&.connection_key && session.connection_key != connection_key
+
+          @sessions.delete(key)
+        end
       end
 
       def [](key)

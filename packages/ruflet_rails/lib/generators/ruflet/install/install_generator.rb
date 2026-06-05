@@ -20,13 +20,6 @@ module Ruflet
         create_file target, Ruflet::Rails::InstallSupport.default_app_template(app_title: app_name)
       end
 
-      def create_application_component
-        target = File.join(destination_root, Ruflet::Rails::InstallSupport.application_component_path)
-        return if File.exist?(target)
-
-        create_file target, Ruflet::Rails::InstallSupport.application_component_template
-      end
-
       def create_ruflet_yaml
         target = File.join(destination_root, "ruflet.yaml")
         return if File.exist?(target)
@@ -42,6 +35,13 @@ module Ruflet
         return if File.read(target).include?(route)
 
         insert_into_file target, "  #{route}\n", after: /Rails\.application\.routes\.draw do\s*\n/
+      end
+
+      def add_desktop_flag_to_binstubs
+        return unless desktop_requested?
+
+        install_desktop_flag_bootstrap("bin/rails")
+        install_desktop_flag_bootstrap("bin/dev")
       end
 
       def download_prebuilt_client
@@ -117,8 +117,34 @@ module Ruflet
         "none"
       end
 
+      def desktop_requested?
+        %w[desktop all].include?(requested_client)
+      end
+
       def install_target
         "ruflet"
+      end
+
+      def install_desktop_flag_bootstrap(relative_path)
+        target = File.join(destination_root, relative_path)
+        return unless File.file?(target)
+
+        source = File.read(target)
+        return if source.include?("ruflet_rails desktop flag")
+
+        bootstrap =
+          if source.start_with?("#!/usr/bin/env ruby") || source.start_with?("#!/usr/bin/ruby")
+            if File.basename(relative_path) == "dev"
+              Ruflet::Rails::InstallSupport.ruby_dev_desktop_flag_bootstrap
+            else
+              Ruflet::Rails::InstallSupport.ruby_desktop_flag_bootstrap
+            end
+          elsif source.start_with?("#!/usr/bin/env sh") || source.start_with?("#!/bin/sh")
+            Ruflet::Rails::InstallSupport.shell_desktop_flag_bootstrap
+          end
+        return unless bootstrap
+
+        insert_into_file target, "#{bootstrap}\n", after: /\A#!.*\n/
       end
     end
   end

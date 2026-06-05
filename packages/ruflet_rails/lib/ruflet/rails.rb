@@ -53,7 +53,13 @@ module Ruflet
   end
 
   module Rails
+    # ViewRouter dispatches incoming page connections to the correct RufletView
+    # subclass based on the current route.  It includes SharedControlForwarders
+    # so that widget helpers (text, column, safe_area, …) can be called directly
+    # inside its own rendering helpers — the same pattern showcase uses.
     class ViewRouter
+      include Ruflet::UI::SharedControlForwarders
+
       def initialize(page, routes: nil, default: nil)
         @page = page
         @routes = normalize_routes(routes || self.class.discovered_routes)
@@ -92,9 +98,18 @@ module Ruflet
 
       private
 
+      # Widget builder calls delegate to the global DSL, same as Kernel does,
+      # keeping the showcase pattern consistent across all contexts.
+      def control_delegate
+        Ruflet::DSL
+      end
+
       def route_target(route)
         path = route_path(route)
-        @routes[path] || @routes[first_segment(path)] || @default || @routes.values.first
+        return @routes[path] if @routes.key?(path)
+        return @default if path == "/"
+
+        nil
       end
 
       def root_route_without_default?
@@ -107,11 +122,6 @@ module Ruflet
 
       def route_path(route)
         normalize_route(route.to_s.split("?", 2).first)
-      end
-
-      def first_segment(path)
-        parts = path.split("/").reject(&:empty?)
-        parts.empty? ? "/" : "/#{parts.first}"
       end
 
       def normalize_route(path)

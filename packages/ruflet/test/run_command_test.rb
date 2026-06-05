@@ -14,7 +14,7 @@ class RufletCliRunCommandTest < Minitest::Test
   def test_find_nearest_gemfile_walks_up_directories
     Dir.mktmpdir do |dir|
       root = File.join(dir, "repo")
-      nested = File.join(root, "examples", "ruflet_studio")
+      nested = File.join(root, "examples", "showcase")
       FileUtils.mkdir_p(nested)
       gemfile = File.join(root, "Gemfile")
       File.write(gemfile, "source \"https://rubygems.org\"\n")
