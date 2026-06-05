@@ -25,15 +25,11 @@ module Ruflet
         create_file target, Ruflet::Rails::InstallSupport.default_ruflet_yaml(app_name: app_name)
       end
 
-      def add_routes
-        target = File.join(destination_root, "config/routes.rb")
-        return unless File.file?(target)
+      def create_ruflet_initializer
+        target = File.join(destination_root, Ruflet::Rails::InstallSupport.initializer_path)
+        return if File.exist?(target)
 
-        route = Ruflet::Rails::InstallSupport.route_snippet(entrypoint: entrypoint_path)
-        source = File.read(target)
-        return if source.include?(route)
-
-        insert_into_file target, "  #{route}\n", after: /Rails\.application\.routes\.draw do\s*\n/
+        create_file target, Ruflet::Rails::InstallSupport.initializer_template(entrypoint: entrypoint_path)
       end
 
       def add_desktop_flag_to_binstubs

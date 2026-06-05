@@ -6,6 +6,21 @@ module Ruflet
   module Rails
     module_function
 
+    # Returns the global configuration object.
+    def config
+      @config ||= Configuration.new
+    end
+
+    # Yields the configuration object for block-style setup.
+    #
+    #   Ruflet::Rails.configure do |c|
+    #     c.app_file = Rails.root.join("app/views/ruflet/main.rb")
+    #     c.ws_path  = "/ws"
+    #   end
+    def configure
+      yield config
+    end
+
     def view_classes
       @view_classes ||= []
     end

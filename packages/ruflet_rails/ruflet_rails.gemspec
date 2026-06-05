@@ -5,11 +5,11 @@ version = File.read(File.expand_path("lib/ruflet/version.rb", __dir__)).match(/V
 Gem::Specification.new do |spec|
   spec.name = "ruflet_rails"
   spec.version = version
-  spec.authors = ["AdamMusa"]
-  spec.email = ["adammusa2222@gmail.com"]
+  spec.authors = ["Adam Moussa Ali"]
+  spec.email = ["adammusaaly@gmail.com"]
 
   spec.summary = "Rails integration for Ruflet."
-  spec.description = "Rails-first integration package for mounting Ruflet mobile apps in Rails routes."
+  spec.description = "Build cross-platform mobile and desktop apps with Ruby on Rails using Ruflet."
   spec.homepage = "https://github.com/AdamMusa/ruflet/tree/main/packages/ruflet_rails"
   spec.required_ruby_version = ">= 3.1"
 

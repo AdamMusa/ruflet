@@ -16,6 +16,7 @@ require_relative "ruflet/rails/resource_component"
 require_relative "ruflet/rails/resource_view"
 require_relative "ruflet/rails/desktop_launcher"
 require_relative "ruflet/rails/protocol"
+require_relative "ruflet/rails/configuration"
 require_relative "ruflet/rails/install_support"
 require_relative "ruflet/rails"
 

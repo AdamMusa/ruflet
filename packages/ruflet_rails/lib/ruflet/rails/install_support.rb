@@ -838,6 +838,26 @@ module Ruflet
         File.join("app", "views", "ruflet", "main.rb")
       end
 
+      def initializer_template(entrypoint: default_entrypoint_path, ws_path: "/ws")
+        <<~RUBY
+          # frozen_string_literal: true
+
+          Ruflet::Rails.configure do |config|
+            # The Ruflet app entry-point. The Railtie auto-mounts a WebSocket endpoint
+            # at ws_path using this file — no `mount` needed in config/routes.rb.
+            config.app_file = Rails.root.join(#{entrypoint.inspect})
+
+            # URL path the WebSocket endpoint listens on (default: "/ws").
+            config.ws_path = #{ws_path.inspect}
+          end
+        RUBY
+      end
+
+      def initializer_path
+        File.join("config", "initializers", "ruflet.rb")
+      end
+
+      # Kept for backward compatibility with apps that use manual mount.
       def route_snippet(entrypoint: default_entrypoint_path, mount_path: "/ws", helper: "app")
         %(match "#{mount_path}", to: Ruflet::Rails.#{helper}(Rails.root.join("#{entrypoint}")), via: :all)
       end
