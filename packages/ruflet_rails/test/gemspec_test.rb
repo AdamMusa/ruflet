@@ -10,6 +10,7 @@ class RufletRailsGemspecTest < Minitest::Test
 
     assert_equal "0.0.10", spec.version.to_s
     assert_dependency spec, "ruflet_core", ">= #{package_version}"
+    assert_dependency spec, "ruflet_server", ">= #{package_version}"
     assert_dependency spec, "ruflet", ">= #{package_version}"
   end
 
