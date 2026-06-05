@@ -844,6 +844,13 @@ module Ruflet
         %(match "#{mount_path}", to: Ruflet::Rails.#{helper}(Rails.root.join("#{entrypoint}")), via: :all)
       end
 
+      def web_route_snippet(web_path: default_web_public_path)
+        path = normalize_web_public_path(web_path)
+        raise ArgumentError, "web route path cannot be /" if path.empty?
+
+        %(get "/#{path}", to: redirect("/#{path}/"))
+      end
+
       def default_web_public_path
         normalize_web_public_path(ENV.fetch("RUFLET_RAILS_WEB_PATH", "app"))
       end

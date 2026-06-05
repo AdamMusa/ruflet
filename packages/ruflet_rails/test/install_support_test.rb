@@ -45,6 +45,20 @@ class InstallSupportTest < Minitest::Test
     assert_equal 'match "/ws", to: Ruflet::Rails.app(Rails.root.join("app/views/ruflet/main.rb")), via: :all', route
   end
 
+  def test_web_route_snippet_exposes_public_web_client_route
+    route = Ruflet::Rails::InstallSupport.web_route_snippet(web_path: "/showcase")
+
+    assert_equal 'get "/showcase", to: redirect("/showcase/")', route
+  end
+
+  def test_web_route_snippet_rejects_root_route
+    error = assert_raises(ArgumentError) do
+      Ruflet::Rails::InstallSupport.web_route_snippet(web_path: "/")
+    end
+
+    assert_includes error.message, "web route path cannot be /"
+  end
+
   def test_default_entrypoint_path_uses_ruflet_views_root
     assert_equal "app/views/ruflet/main.rb", Ruflet::Rails::InstallSupport.default_entrypoint_path
   end

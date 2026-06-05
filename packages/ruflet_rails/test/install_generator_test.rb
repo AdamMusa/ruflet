@@ -47,17 +47,32 @@ class RufletInstallGeneratorTest < Minitest::Test
     refute generator.respond_to?(:create_application_component)
   end
 
-  def test_web_path_option_normalizes_custom_public_path
-    generator = build_generator(web_path: "/showcase/")
+  def test_web_install_adds_web_client_route
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "config"))
+      File.write(File.join(dir, "config", "routes.rb"), "Rails.application.routes.draw do\nend\n")
 
-    assert_equal "showcase", generator.send(:web_public_path)
+      generator = Ruflet::Generators::InstallGenerator.new([], { "web" => true }, destination_root: dir)
+      capture_io { generator.add_routes }
+
+      routes = File.read(File.join(dir, "config", "routes.rb"))
+      assert_includes routes, 'match "/ws", to: Ruflet::Rails.app'
+      assert_includes routes, 'get "/app", to: redirect("/app/")'
+    end
   end
 
-  def test_web_path_option_rejects_root_public_path
-    generator = build_generator(web_path: "/")
+  def test_non_web_install_adds_only_websocket_route
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "config"))
+      File.write(File.join(dir, "config", "routes.rb"), "Rails.application.routes.draw do\nend\n")
 
-    error = assert_raises(Thor::Error) { generator.send(:web_public_path) }
-    assert_includes error.message, "--web-path cannot be /"
+      generator = Ruflet::Generators::InstallGenerator.new([], {}, destination_root: dir)
+      capture_io { generator.add_routes }
+
+      routes = File.read(File.join(dir, "config", "routes.rb"))
+      assert_includes routes, 'match "/ws", to: Ruflet::Rails.app'
+      refute_includes routes, 'get "/app", to: redirect("/app/")'
+    end
   end
 
   def test_desktop_install_patches_ruby_rails_binstub_and_shell_dev_binstub
