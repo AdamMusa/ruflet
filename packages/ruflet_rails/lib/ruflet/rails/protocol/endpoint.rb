@@ -6,6 +6,8 @@ module Ruflet
   module Rails
     module Protocol
       class Endpoint
+        include WebSocketDetection
+
         WEBSOCKET_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
         def initialize(server:, path: nil)
@@ -15,7 +17,7 @@ module Ruflet
 
         def call(env)
           return not_found if @path && env["PATH_INFO"] != @path
-          return bad_request("Expected WebSocket upgrade") unless websocket_upgrade_request?(env)
+          return bad_request("Expected WebSocket upgrade") unless websocket_upgrade?(env)
 
           hijack = env["rack.hijack"]
           return bad_request("Rack hijack is required by Ruflet::Rails::Protocol::Endpoint") unless hijack.respond_to?(:call)
@@ -56,16 +58,6 @@ module Ruflet
           else
             yield
           end
-        end
-
-        def websocket_upgrade_request?(env)
-          return false unless env["REQUEST_METHOD"] == "GET"
-
-          upgrade = env["HTTP_UPGRADE"].to_s.downcase
-          connection = env["HTTP_CONNECTION"].to_s.downcase
-          key = env["HTTP_SEC_WEBSOCKET_KEY"].to_s
-
-          upgrade == "websocket" && connection.include?("upgrade") && !key.empty?
         end
 
         def write_handshake(io, key)

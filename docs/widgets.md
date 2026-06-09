@@ -33,7 +33,7 @@ Ruflet.run do |page|
 end
 ```
 
-This is the current scaffold-style pattern:
+This is the current app pattern:
 - `appbar:` for top bar
 - `body` control(s) in `page.add(...)`
 - `floating_action_button:` for primary action

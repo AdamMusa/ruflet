@@ -63,6 +63,20 @@ module Ruflet
           macos_entitlements: {
             "com.apple.security.personal-information.location" => true
           }
+        },
+        "permission_handler" => {
+          android_permissions: [
+            "android.permission.CAMERA",
+            "android.permission.RECORD_AUDIO"
+          ],
+          ios_info: {
+            "NSCameraUsageDescription" => "Camera access may be requested by connected experiences.",
+            "NSMicrophoneUsageDescription" => "Microphone access may be requested by connected experiences."
+          },
+          ios_permission_definitions: %w[
+            PERMISSION_CAMERA=1
+            PERMISSION_MICROPHONE=1
+          ]
         }
       }.freeze
 
@@ -1046,6 +1060,10 @@ module Ruflet
         remove_service_native_requirements(client_dir, stale_keys)
 
         requirements = merge_service_native_requirements(extension_keys)
+        sync_ios_permission_definitions(
+          File.join(client_dir, "ios", "Podfile"),
+          Array(requirements[:ios_permission_definitions])
+        )
         return if requirements.empty?
 
         android_manifest = File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")
@@ -1101,11 +1119,37 @@ module Ruflet
 
           memo[:android_permissions] ||= []
           memo[:android_permissions] |= Array(requirements[:android_permissions])
+          memo[:ios_permission_definitions] ||= []
+          memo[:ios_permission_definitions] |= Array(requirements[:ios_permission_definitions])
           %i[ios_info macos_info macos_entitlements].each do |section|
             memo[section] ||= {}
             memo[section].merge!(requirements[section] || {})
           end
         end
+      end
+
+      def sync_ios_permission_definitions(path, definitions)
+        return unless File.file?(path)
+
+        content = File.read(path)
+        marker_pattern = %r{\n?\s*# BEGIN RUFLET PERMISSION DEFINITIONS.*?# END RUFLET PERMISSION DEFINITIONS\n?}m
+        updated = content.gsub(marker_pattern, "\n")
+        definitions = Array(definitions).map(&:to_s).reject(&:empty?).uniq.sort
+        if definitions.any?
+          block = <<~RUBY.chomp
+                # BEGIN RUFLET PERMISSION DEFINITIONS
+                target.build_configurations.each do |config|
+                  config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+                  config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] += #{definitions.inspect}
+                end
+                # END RUFLET PERMISSION DEFINITIONS
+          RUBY
+          updated = updated.sub(
+            /^(\s*)flutter_additional_ios_build_settings\(target\)\s*$/,
+            "\\0\n\n#{block}"
+          )
+        end
+        File.write(path, updated) unless updated == content
       end
 
       def ensure_android_permission(path, permission)

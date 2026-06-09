@@ -827,11 +827,13 @@ module Ruflet
         value
       end
 
-      def build_args_for_platform(platform)
+      def build_args_for_platform(platform, ruflet_url: nil)
         normalized = normalize_build_platform(platform)
         return [] if normalized.to_s.empty?
 
-        [normalized]
+        args = [normalized]
+        args += ["--dart-define", "RUFLET_URL=#{ruflet_url}"] if normalized == "web" && ruflet_url.to_s.strip != ""
+        args
       end
 
       def default_entrypoint_path
@@ -843,12 +845,15 @@ module Ruflet
           # frozen_string_literal: true
 
           Ruflet::Rails.configure do |config|
-            # The Ruflet app entry-point. The Railtie auto-mounts a WebSocket endpoint
-            # at ws_path using this file — no `mount` needed in config/routes.rb.
+            # Ruflet app entry-point. Auto-mounts a WebSocket endpoint at ws_path —
+            # no explicit route needed in config/routes.rb.
             config.app_file = Rails.root.join(#{entrypoint.inspect})
 
             # URL path the WebSocket endpoint listens on (default: "/ws").
             config.ws_path = #{ws_path.inspect}
+
+            # Set to the directory where `rake ruflet:build[web]` outputs the Flutter web build.
+            # config.web_build_dir = Rails.root.join("public/app")
           end
         RUBY
       end

@@ -67,6 +67,30 @@ module Ruflet
     def mobile(file_path)
       app(file_path)
     end
+
+    # Serves the pre-built Flutter web build's index.html at the given route.
+    # Static assets (JS, WASM, fonts) are served by ActionDispatch::Static.
+    #
+    # Usage in routes.rb:
+    #   get "/showcase", to: Ruflet::Rails.web(build: Rails.root.join("public/showcase"))
+    def web(build:)
+      Protocol::WebAppEndpoint.new(build_dir: build.to_s)
+    end
+
+    # Reads index.html from the web build dir, injects window.__RUFLET_URL__
+    # from config.backend_url so the Flutter client knows the WS backend
+    # without a rebuild. Falls back to the request base_url if not configured.
+    #
+    # Usage in a Rails controller:
+    #   render html: Ruflet::Rails.web_html(request), layout: false
+    def web_html(request)
+      build_dir = config.web_build_dir.to_s
+      html      = File.read(File.join(build_dir, "index.html"))
+      url       = config.backend_url.to_s.strip
+      url       = request.base_url if url.empty?
+      script    = "<script>window.__RUFLET_URL__=#{url.to_json};</script>"
+      html.include?("</head>") ? html.sub("</head>", "#{script}</head>") : "#{script}#{html}"
+    end
   end
 
   module Rails

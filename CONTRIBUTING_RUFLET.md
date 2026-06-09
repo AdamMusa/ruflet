@@ -12,7 +12,7 @@ Key Ruby files:
 - `packages/ruflet_core/lib/ruflet_ui/ruflet/control.rb` — control serialization.
 - `packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/` — control classes.
 - `packages/ruflet_core/lib/ruflet_ui/ruflet/ui/*_control_registry.rb` — mapping of control names.
-- `examples/ruflet_studio/` — demo app.
+- `showcase/` — demo app.
 
 ## 2. Protocol in Practice
 Ruflet controls serialize into patches like:
@@ -75,8 +75,8 @@ In `packages/ruflet_core/lib/ruflet_ui/ruflet/ui/material_control_methods.rb`:
 def tag(**props) = build_widget(:tag, **props)
 ```
 
-### Step 4 — Demo the control in Studio
-In `examples/ruflet_studio/sections_misc.rb` or a new section:
+### Step 4 — Demo the control in Showcase
+In `showcase/sections_misc.rb` or a new section:
 
 ```ruby
 page.column(
@@ -93,7 +93,7 @@ page.column(
 ```
 
 ### Step 5 — Test
-- Run Ruflet Studio
+- Run Showcase
 - Navigate to the demo section
 - Verify patch logs show `_c: "Tag"`
 

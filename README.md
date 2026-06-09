@@ -3,7 +3,6 @@
 Ruflet is a Ruby port of [Flet](https://flet.dev/) for building web, desktop, and mobile apps in Ruby.
 
 Ruflet supports both class-based apps and `Ruflet.run do |page| ... end`.
-The generated scaffold uses `Ruflet.run`.
 
 ## Start Here
 
@@ -69,7 +68,7 @@ App projects should keep runtime gems in the app `Gemfile`:
 
 ## App Style (Required in docs/examples)
 
-Use the current scaffold style:
+Use the current app style:
 
 ```ruby
 require "ruflet"

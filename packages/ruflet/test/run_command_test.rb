@@ -235,6 +235,37 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
+  def test_service_extension_config_enables_ios_permission_handler_camera_and_microphone
+    runner = DummyRunner.new
+
+    Dir.mktmpdir do |dir|
+      make_client_native_files(dir)
+
+      runner.send(:apply_service_extension_config, dir, { "services" => ["permission_handler"] })
+
+      podfile = File.read(File.join(dir, "ios", "Podfile"))
+      assert_includes podfile, "PERMISSION_CAMERA=1"
+      assert_includes podfile, "PERMISSION_MICROPHONE=1"
+      assert_includes File.read(File.join(dir, "ios", "Runner", "Info.plist")), "NSCameraUsageDescription"
+      assert_includes File.read(File.join(dir, "ios", "Runner", "Info.plist")), "NSMicrophoneUsageDescription"
+    end
+  end
+
+  def test_service_extension_config_removes_stale_ios_permission_handler_definitions
+    runner = DummyRunner.new
+
+    Dir.mktmpdir do |dir|
+      make_client_native_files(dir)
+      runner.send(:apply_service_extension_config, dir, { "services" => ["permission_handler"] })
+
+      runner.send(:apply_service_extension_config, dir, { "services" => [] })
+
+      podfile = File.read(File.join(dir, "ios", "Podfile"))
+      refute_includes podfile, "PERMISSION_CAMERA=1"
+      refute_includes podfile, "PERMISSION_MICROPHONE=1"
+    end
+  end
+
   def test_service_extension_config_keeps_microphone_permission_out_without_audio_recorder
     runner = DummyRunner.new
 
@@ -294,6 +325,13 @@ class RufletCliRunCommandTest < Minitest::Test
       </manifest>
     XML
     File.write(File.join(dir, "ios", "Runner", "Info.plist"), minimal_plist)
+    File.write(File.join(dir, "ios", "Podfile"), <<~RUBY)
+      post_install do |installer|
+        installer.pods_project.targets.each do |target|
+          flutter_additional_ios_build_settings(target)
+        end
+      end
+    RUBY
     File.write(File.join(dir, "macos", "Runner", "Info.plist"), minimal_plist)
     %w[DebugProfile Release].each do |name|
       File.write(File.join(dir, "macos", "Runner", "#{name}.entitlements"), minimal_plist)

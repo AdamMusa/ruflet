@@ -24,6 +24,8 @@
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>$(PRODUCT_COPYRIGHT)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access is required to scan Ruflet QR connection codes.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Microphone access is required for audio recording.</string>
 	<key>NSLocationUsageDescription</key>

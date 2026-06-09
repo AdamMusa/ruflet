@@ -17,7 +17,8 @@ bundle exec ruflet run solitaire
 bundle exec ruflet run todo
 bundle exec ruflet run dialog
 bundle exec ruflet run image_gallery
-bundle exec ruflet run studio_gallery
+cd ../showcase
+bundle exec ruflet run main
 ```
 
 ## Build

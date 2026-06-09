@@ -76,7 +76,7 @@ Not yet implemented in core:
 
 ### Phase 1: Stabilize Core Parity (near-term)
 
-- [ ] Add concrete classes for currently mapped-only controls used in studio demos:
+- [ ] Add concrete classes for currently mapped-only controls used in showcase demos:
   - `banner`, `card`, `switch`, `slider`, `dropdown`, `listtile`
 - [ ] Complete Cupertino controls already mapped:
   - `cupertino_bottom_sheet`, `cupertino_picker`, `cupertino_date_picker`, `cupertino_timer_picker`, `cupertino_checkbox`, `cupertino_radio`, `cupertino_tinted_button`
@@ -93,7 +93,7 @@ Not yet implemented in core:
 
 - [ ] Standardize service registration/invoke contract (request/response/event)
 - [ ] Add first high-impact services: `Clipboard`, `FilePicker`, `Connectivity`, `Share`, `SharedPreferences`
-- [ ] Add storage/services docs and examples in `ruflet_studio`
+- [ ] Add storage/services docs and examples in `showcase`
 
 ### Phase 4: Advanced/Optional
 
@@ -106,5 +106,5 @@ Not yet implemented in core:
 - [ ] Control has concrete class in `ControlFactory::CLASS_MAP`
 - [ ] Type is in registry mapping
 - [ ] Event prop mapping covered and tested
-- [ ] Studio example exists (or explicit reason not to)
+- [ ] Showcase example exists (or explicit reason not to)
 - [ ] Added to parity table in this file
