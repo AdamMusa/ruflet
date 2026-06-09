@@ -5,8 +5,8 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(MRUBY_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../../third_party/mruby")
-set(MRUBY_BUILD_ROOT "${MRUBY_ROOT}/build/host")
+set(MRUBY_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../../ios/mruby_src")
+set(MRUBY_BUILD_ROOT "${MRUBY_ROOT}/build_host")
 
 file(GLOB MRUBY_CORE_SOURCES "${MRUBY_ROOT}/src/*.c")
 set(MRUBY_COMPILER_SOURCES

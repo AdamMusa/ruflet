@@ -1,3 +1,7 @@
+## 0.0.4
+
+- Fix Android native builds to compile from the packaged mruby source tree.
+
 ## 0.0.3
 
 - Fix native Android, iOS, and macOS includes to load the packaged embedded Ruflet runtime header from `shared/`.
