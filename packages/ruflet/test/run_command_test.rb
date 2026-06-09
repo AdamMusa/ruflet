@@ -100,7 +100,7 @@ class RufletCliRunCommandTest < Minitest::Test
 
     Dir.mktmpdir do |dir|
       File.write(File.join(dir, "ruflet.yaml"), <<~YAML)
-        services:
+        extensions:
           - map
           - audio-recorder
       YAML
@@ -115,10 +115,23 @@ class RufletCliRunCommandTest < Minitest::Test
     runner = DummyRunner.new
 
     Dir.mktmpdir do |dir|
-      File.write(File.join(dir, "ruflet.yaml"), <<~YAML)
+      File.write(File.join(dir, "services.yaml"), <<~YAML)
         services:
           - unknown_service
       YAML
+
+      Dir.chdir(dir) do
+        refute runner.send(:project_run_requires_managed_client?)
+      end
+    end
+  end
+
+  def test_project_run_ignores_service_backed_extension_without_service
+    runner = DummyRunner.new
+
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "ruflet.yaml"), "extensions:\n  - camera\n")
+      File.write(File.join(dir, "services.yaml"), "services: []\n")
 
       Dir.chdir(dir) do
         refute runner.send(:project_run_requires_managed_client?)
@@ -133,7 +146,7 @@ class RufletCliRunCommandTest < Minitest::Test
       client_dir = File.join(dir, "build", "client")
       FileUtils.mkdir_p(client_dir)
       File.write(File.join(dir, "ruflet.yaml"), <<~YAML)
-        services:
+        extensions:
           - map
       YAML
 
@@ -166,7 +179,7 @@ class RufletCliRunCommandTest < Minitest::Test
 
         assert_equal [{ purpose: "run", client_dir: client_dir }], flutter_calls
         assert_equal 1, prepare_calls.length
-        assert_equal ["map"], prepare_calls.first[:config]["services"]
+        assert_equal ["map"], prepare_calls.first[:config]["extensions"]
         assert_equal false, prepare_calls.first[:self_contained]
         assert_equal false, prepare_calls.first[:verbose]
         assert_equal "macos", prepare_calls.first[:platform]
@@ -189,11 +202,12 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
-  def test_service_extension_config_applies_audio_recorder_native_permissions
+  def test_service_extension_config_applies_microphone_native_permissions
     runner = DummyRunner.new
 
     Dir.mktmpdir do |dir|
       make_client_native_files(dir)
+      write_services_file(dir, "microphone")
 
       runner.send(:apply_service_extension_config, dir, { "services" => ["audio_recorder"] })
 
@@ -205,11 +219,62 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
-  def test_service_extension_config_applies_barometer_motion_usage_description
+  def test_service_extension_config_reads_native_requirements_from_services_yaml
     runner = DummyRunner.new
 
     Dir.mktmpdir do |dir|
       make_client_native_files(dir)
+      File.write(File.join(dir, "services.yaml"), <<~YAML)
+        services:
+          - camera:
+              native:
+                android_permissions:
+                  - android.permission.CAMERA
+                ios_info:
+                  NSCameraUsageDescription: Custom camera reason.
+                ios_permission_definitions:
+                  - PERMISSION_CAMERA=1
+      YAML
+
+      runner.send(:apply_service_extension_config, dir, { "services" => ["camera"] })
+
+      assert_includes File.read(File.join(dir, "android", "app", "src", "main", "AndroidManifest.xml")), "android.permission.CAMERA"
+      assert_includes File.read(File.join(dir, "ios", "Runner", "Info.plist")), "Custom camera reason."
+      assert_includes File.read(File.join(dir, "ios", "Podfile")), "PERMISSION_CAMERA=1"
+      refute_includes File.read(File.join(dir, "android", "app", "src", "main", "AndroidManifest.xml")), "android.permission.RECORD_AUDIO"
+    end
+  end
+
+  def test_service_extension_config_removes_yaml_defined_stale_permissions
+    runner = DummyRunner.new
+
+    Dir.mktmpdir do |dir|
+      make_client_native_files(dir)
+      File.write(File.join(dir, "services.yaml"), <<~YAML)
+        services:
+          - camera:
+              native:
+                android_permissions:
+                  - android.permission.CAMERA
+                ios_info:
+                  NSCameraUsageDescription: Camera reason.
+      YAML
+
+      runner.send(:apply_service_extension_config, dir, { "services" => ["camera"] })
+      File.write(File.join(dir, "services.yaml"), "services: []\n")
+      runner.send(:apply_service_extension_config, dir, { "services" => [] })
+
+      refute_includes File.read(File.join(dir, "android", "app", "src", "main", "AndroidManifest.xml")), "android.permission.CAMERA"
+      refute_includes File.read(File.join(dir, "ios", "Runner", "Info.plist")), "NSCameraUsageDescription"
+    end
+  end
+
+  def test_service_extension_config_applies_motion_usage_description
+    runner = DummyRunner.new
+
+    Dir.mktmpdir do |dir|
+      make_client_native_files(dir)
+      write_services_file(dir, "motion")
 
       runner.send(:apply_service_extension_config, dir, { "services" => ["barometer"] })
 
@@ -217,11 +282,12 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
-  def test_service_extension_config_applies_geolocator_native_permissions
+  def test_service_extension_config_applies_location_native_permissions
     runner = DummyRunner.new
 
     Dir.mktmpdir do |dir|
       make_client_native_files(dir)
+      write_services_file(dir, "location")
 
       runner.send(:apply_service_extension_config, dir, { "services" => ["geolocator"] })
 
@@ -235,11 +301,12 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
-  def test_service_extension_config_enables_ios_permission_handler_camera_and_microphone
+  def test_service_extension_config_enables_camera_and_microphone_permissions
     runner = DummyRunner.new
 
     Dir.mktmpdir do |dir|
       make_client_native_files(dir)
+      write_services_file(dir, "camera", "microphone")
 
       runner.send(:apply_service_extension_config, dir, { "services" => ["permission_handler"] })
 
@@ -248,16 +315,22 @@ class RufletCliRunCommandTest < Minitest::Test
       assert_includes podfile, "PERMISSION_MICROPHONE=1"
       assert_includes File.read(File.join(dir, "ios", "Runner", "Info.plist")), "NSCameraUsageDescription"
       assert_includes File.read(File.join(dir, "ios", "Runner", "Info.plist")), "NSMicrophoneUsageDescription"
+      assert_includes File.read(File.join(dir, "macos", "Runner", "Info.plist")), "NSCameraUsageDescription"
+      assert_includes File.read(File.join(dir, "macos", "Runner", "Info.plist")), "NSMicrophoneUsageDescription"
+      assert_includes File.read(File.join(dir, "macos", "Runner", "DebugProfile.entitlements")), "com.apple.security.device.camera"
+      assert_includes File.read(File.join(dir, "macos", "Runner", "Release.entitlements")), "com.apple.security.device.audio-input"
     end
   end
 
-  def test_service_extension_config_removes_stale_ios_permission_handler_definitions
+  def test_service_extension_config_removes_stale_ios_permission_definitions
     runner = DummyRunner.new
 
     Dir.mktmpdir do |dir|
       make_client_native_files(dir)
+      write_services_file(dir, "camera", "microphone")
       runner.send(:apply_service_extension_config, dir, { "services" => ["permission_handler"] })
 
+      write_services_file(dir)
       runner.send(:apply_service_extension_config, dir, { "services" => [] })
 
       podfile = File.read(File.join(dir, "ios", "Podfile"))
@@ -266,11 +339,12 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
-  def test_service_extension_config_keeps_microphone_permission_out_without_audio_recorder
+  def test_service_extension_config_keeps_microphone_permission_out_when_not_requested
     runner = DummyRunner.new
 
     Dir.mktmpdir do |dir|
       make_client_native_files(dir)
+      write_services_file(dir, "camera")
 
       runner.send(:apply_service_extension_config, dir, { "services" => ["map"] })
 
@@ -282,13 +356,15 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
-  def test_service_extension_config_removes_stale_audio_recorder_native_permissions
+  def test_service_extension_config_removes_stale_microphone_native_permissions
     runner = DummyRunner.new
 
     Dir.mktmpdir do |dir|
       make_client_native_files(dir)
+      write_services_file(dir, "microphone")
       runner.send(:apply_service_extension_config, dir, { "services" => ["audio_recorder"] })
 
+      write_services_file(dir)
       runner.send(:apply_service_extension_config, dir, { "services" => [] })
 
       refute_includes File.read(File.join(dir, "android", "app", "src", "main", "AndroidManifest.xml")), "android.permission.RECORD_AUDIO"
@@ -299,13 +375,15 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
-  def test_service_extension_config_removes_stale_barometer_native_permissions
+  def test_service_extension_config_removes_stale_motion_native_permissions
     runner = DummyRunner.new
 
     Dir.mktmpdir do |dir|
       make_client_native_files(dir)
+      write_services_file(dir, "motion")
       runner.send(:apply_service_extension_config, dir, { "services" => ["barometer"] })
 
+      write_services_file(dir)
       runner.send(:apply_service_extension_config, dir, { "services" => [] })
 
       refute_includes File.read(File.join(dir, "ios", "Runner", "Info.plist")), "NSMotionUsageDescription"
@@ -336,6 +414,13 @@ class RufletCliRunCommandTest < Minitest::Test
     %w[DebugProfile Release].each do |name|
       File.write(File.join(dir, "macos", "Runner", "#{name}.entitlements"), minimal_plist)
     end
+  end
+
+  def write_services_file(dir, *services)
+    File.write(
+      File.join(dir, "services.yaml"),
+      YAML.dump("services" => services)
+    )
   end
 
   def minimal_plist

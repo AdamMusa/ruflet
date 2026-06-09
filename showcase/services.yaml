@@ -1,0 +1,10 @@
+# Protected device access required by Showcase.
+services:
+  - camera:
+      description: Allows Showcase to capture camera images and scan QR codes.
+  - microphone:
+      description: Allows Showcase to record audio.
+  - location:
+      description: Allows Showcase to read the device location.
+  - motion:
+      description: Allows Showcase to read motion and barometer sensors.

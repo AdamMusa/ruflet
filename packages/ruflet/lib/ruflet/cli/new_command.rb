@@ -195,12 +195,11 @@ module Ruflet
             # Example: https://api.example.com
             backend_url: ""
 
-          # Source of truth for Flutter client extensions/plugins.
-          # To test every extension, list all services:
-          # ads, audio, audio_recorder, camera, charts, code_editor, color_pickers,
-          # datatable2, flashlight, geolocator, lottie, map, permission_handler,
-          # secure_storage, video, webview
-          services: []
+          # Flutter extension packages included in the managed client.
+          # Permission-backed extensions such as camera, audio_recorder,
+          # geolocator, and permission_handler are activated by services.yaml
+          # and ignored here.
+          extensions: []
 
           # Build assets configuration consumed by `ruflet build`.
           # Paths are relative to this file unless absolute.
@@ -214,6 +213,11 @@ module Ruflet
             splash_dark_color: "#0B0B0B"
             icon_background: "#FFFFFF"
             theme_color: "#FFFFFF"
+        YAML
+
+        File.write(File.join(root, "services.yaml"), <<~YAML)
+          # Protected device access requested by this app.
+          services: []
         YAML
       end
 

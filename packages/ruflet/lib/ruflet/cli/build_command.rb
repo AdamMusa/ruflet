@@ -31,8 +31,30 @@ module Ruflet
         "webview" => { package: "flet_webview", alias: "ruflet_webview" }
       }.freeze
 
-      SERVICE_NATIVE_REQUIREMENTS = {
-        "audio_recorder" => {
+      SERVICE_EXTENSION_MAP = {
+        "camera" => %w[camera permission_handler],
+        "microphone" => %w[audio_recorder permission_handler],
+        "location" => %w[geolocator permission_handler],
+        "motion" => %w[permission_handler]
+      }.freeze
+
+      DEFAULT_SERVICE_NATIVE_REQUIREMENTS = {
+        "camera" => {
+          android_permissions: ["android.permission.CAMERA"],
+          ios_info: {
+            "NSCameraUsageDescription" => "Camera access is required for camera experiences."
+          },
+          macos_info: {
+            "NSCameraUsageDescription" => "Camera access is required for camera experiences."
+          },
+          macos_entitlements: {
+            "com.apple.security.device.camera" => true
+          },
+          ios_permission_definitions: %w[
+            PERMISSION_CAMERA=1
+          ]
+        },
+        "microphone" => {
           android_permissions: ["android.permission.RECORD_AUDIO"],
           ios_info: {
             "NSMicrophoneUsageDescription" => "Microphone access is required for audio recording."
@@ -42,14 +64,20 @@ module Ruflet
           },
           macos_entitlements: {
             "com.apple.security.device.audio-input" => true
-          }
+          },
+          ios_permission_definitions: %w[
+            PERMISSION_MICROPHONE=1
+          ]
         },
-        "barometer" => {
+        "motion" => {
           ios_info: {
-            "NSMotionUsageDescription" => "Motion access is required for barometer readings."
-          }
+            "NSMotionUsageDescription" => "Motion access is required for motion and sensor readings."
+          },
+          ios_permission_definitions: %w[
+            PERMISSION_SENSORS=1
+          ]
         },
-        "geolocator" => {
+        "location" => {
           android_permissions: [
             "android.permission.ACCESS_FINE_LOCATION",
             "android.permission.ACCESS_COARSE_LOCATION"
@@ -62,20 +90,9 @@ module Ruflet
           },
           macos_entitlements: {
             "com.apple.security.personal-information.location" => true
-          }
-        },
-        "permission_handler" => {
-          android_permissions: [
-            "android.permission.CAMERA",
-            "android.permission.RECORD_AUDIO"
-          ],
-          ios_info: {
-            "NSCameraUsageDescription" => "Camera access may be requested by connected experiences.",
-            "NSMicrophoneUsageDescription" => "Microphone access may be requested by connected experiences."
           },
           ios_permission_definitions: %w[
-            PERMISSION_CAMERA=1
-            PERMISSION_MICROPHONE=1
+            PERMISSION_LOCATION=1
           ]
         }
       }.freeze
@@ -1038,8 +1055,11 @@ module Ruflet
       end
 
       def apply_service_extension_config(client_dir, config = {}, self_contained: @ruflet_self_contained_build)
-        services = Array(config["services"])
-        extension_keys = services.map { |v| normalize_extension_key(v) }.compact.uniq
+        service_definitions = load_service_definitions(client_dir)
+        service_extension_keys = service_definitions.keys.flat_map { |key| Array(SERVICE_EXTENSION_MAP[key]) }.uniq
+        protected_extension_keys = SERVICE_EXTENSION_MAP.values.flatten.uniq
+        configured_extension_keys = Array(config["extensions"]).map { |value| normalize_extension_key(value) }.compact
+        extension_keys = ((configured_extension_keys - protected_extension_keys) | service_extension_keys).uniq
         extension_packages = extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:package) }.uniq
         extension_aliases = extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:alias) }.uniq
 
@@ -1052,14 +1072,15 @@ module Ruflet
           sync_client_main_extensions(entrypoint, extension_aliases) if File.file?(entrypoint)
           prune_client_main(entrypoint, extension_aliases) if File.file?(entrypoint)
         end
-        apply_service_native_requirements(client_dir, extension_keys)
+        apply_service_native_requirements(client_dir, service_definitions.keys, service_definitions)
       end
 
-      def apply_service_native_requirements(client_dir, extension_keys)
-        stale_keys = SERVICE_NATIVE_REQUIREMENTS.keys - extension_keys
-        remove_service_native_requirements(client_dir, stale_keys)
+      def apply_service_native_requirements(client_dir, extension_keys, service_definitions = load_service_definitions(client_dir))
+        service_requirements = service_native_requirements(service_definitions)
+        stale_keys = service_requirements.keys - extension_keys
+        remove_service_native_requirements(client_dir, stale_keys, service_requirements)
 
-        requirements = merge_service_native_requirements(extension_keys)
+        requirements = merge_service_native_requirements(extension_keys, service_requirements)
         sync_ios_permission_definitions(
           File.join(client_dir, "ios", "Podfile"),
           Array(requirements[:ios_permission_definitions])
@@ -1089,8 +1110,8 @@ module Ruflet
         end
       end
 
-      def remove_service_native_requirements(client_dir, extension_keys)
-        requirements = merge_service_native_requirements(extension_keys)
+      def remove_service_native_requirements(client_dir, extension_keys, service_requirements = service_native_requirements(load_service_definitions(client_dir)))
+        requirements = merge_service_native_requirements(extension_keys, service_requirements)
         return if requirements.empty?
 
         android_manifest = File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")
@@ -1112,9 +1133,9 @@ module Ruflet
         end
       end
 
-      def merge_service_native_requirements(extension_keys)
+      def merge_service_native_requirements(extension_keys, service_requirements = DEFAULT_SERVICE_NATIVE_REQUIREMENTS)
         extension_keys.each_with_object({}) do |key, memo|
-          requirements = SERVICE_NATIVE_REQUIREMENTS[key]
+          requirements = service_requirements[key]
           next unless requirements
 
           memo[:android_permissions] ||= []
@@ -1125,6 +1146,48 @@ module Ruflet
             memo[section] ||= {}
             memo[section].merge!(requirements[section] || {})
           end
+        end
+      end
+
+      def load_service_definitions(client_dir = nil)
+        path = services_config_path(client_dir)
+        return {} unless path
+
+        data = YAML.safe_load(File.read(path), aliases: true) || {}
+        Array(data["services"]).each_with_object({}) do |entry, memo|
+          name, metadata =
+            if entry.is_a?(Hash)
+              entry.first
+            else
+              [entry, {}]
+            end
+          key = normalize_extension_key(name)
+          memo[key] = metadata.is_a?(Hash) ? metadata : {} if key
+        end
+      rescue Psych::Exception => e
+        warn "Could not parse #{path}: #{e.message}"
+        {}
+      end
+
+      def services_config_path(client_dir = nil)
+        candidates = [ENV["RUFLET_SERVICES"], File.expand_path("services.yaml", Dir.pwd)]
+        candidates << File.join(client_dir, "services.yaml") if client_dir
+        candidates.compact.find { |path| File.file?(path) }
+      end
+
+      def service_native_requirements(service_definitions)
+        all_keys = (DEFAULT_SERVICE_NATIVE_REQUIREMENTS.keys | service_definitions.keys)
+        all_keys.each_with_object({}) do |key, memo|
+          defaults = DEFAULT_SERVICE_NATIVE_REQUIREMENTS[key] || {}
+          metadata = service_definitions[key] || {}
+          native = metadata["native"].is_a?(Hash) ? metadata["native"] : metadata
+          memo[key] = {
+            android_permissions: Array(native["android_permissions"] || defaults[:android_permissions]),
+            ios_permission_definitions: Array(native["ios_permission_definitions"] || defaults[:ios_permission_definitions]),
+            ios_info: native["ios_info"].is_a?(Hash) ? native["ios_info"] : (defaults[:ios_info] || {}),
+            macos_info: native["macos_info"].is_a?(Hash) ? native["macos_info"] : (defaults[:macos_info] || {}),
+            macos_entitlements: native["macos_entitlements"].is_a?(Hash) ? native["macos_entitlements"] : (defaults[:macos_entitlements] || {})
+          }
         end
       end
 
@@ -1274,7 +1337,7 @@ module Ruflet
         local_path = explicit_local_ruby_runtime_path
         return { "path" => local_path } if local_path
 
-        current_dependency || "^0.0.3"
+        current_dependency || "^0.0.4"
       end
 
       def explicit_local_ruby_runtime_path

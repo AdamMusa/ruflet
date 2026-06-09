@@ -1,0 +1,12 @@
+# Protected device access requested by this app.
+#
+# Example:
+# services:
+#   - camera:
+#       description: Allows the app to capture camera images.
+#       native:
+#         android_permissions:
+#           - android.permission.CAMERA
+#         ios_info:
+#           NSCameraUsageDescription: Camera access is required.
+services: []

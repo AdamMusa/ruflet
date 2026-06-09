@@ -119,7 +119,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
           dependencies:
             flutter:
               sdk: flutter
-            ruby_runtime: ^0.0.3
+            ruby_runtime: ^0.0.4
         YAML
       )
 
@@ -144,7 +144,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       refute_path_exists File.join(client_dir, "pubspec_overrides.yaml")
       pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
       ruby_runtime = YAML.safe_load(pubspec, aliases: true).dig("dependencies", "ruby_runtime")
-      assert_equal "^0.0.3", ruby_runtime
+      assert_equal "^0.0.4", ruby_runtime
       assert_includes calls, client_dir
     end
   end
@@ -205,7 +205,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
           dependencies:
             flutter:
               sdk: flutter
-            ruby_runtime: ^0.0.3
+            ruby_runtime: ^0.0.4
         YAML
       )
 
@@ -284,7 +284,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
-  def test_self_contained_service_extension_config_uses_configured_services_only
+  def test_configured_extensions_install_flutter_extensions
     builder = DummyBuilder.new
 
     Dir.mktmpdir do |dir|
@@ -339,13 +339,14 @@ class RufletCliUpdateCommandTest < Minitest::Test
           }
         DART
       )
+      File.write(File.join(client_dir, "services.yaml"), "services:\n  - webview\n")
 
       original_method = Ruflet::CLI.method(:resolve_ruflet_client_template_root)
       Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root) { template_dir }
       Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
 
       begin
-        builder.send(:apply_service_extension_config, client_dir, { "services" => ["webview"] }, self_contained: true)
+        builder.send(:apply_service_extension_config, client_dir, { "extensions" => ["webview"] }, self_contained: true)
 
         pubspec = YAML.safe_load(File.read(File.join(client_dir, "pubspec.yaml")), aliases: true)
         assert pubspec.dig("dependencies", "flet_webview")
@@ -453,6 +454,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
           }
         DART
       )
+      File.write(File.join(client_dir, "services.yaml"), "services: []\n")
 
       original_method = Ruflet::CLI.method(:resolve_ruflet_client_template_root)
       Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root) { template_dir }
@@ -474,7 +476,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
-  def test_self_contained_service_extension_config_can_enable_every_known_extension
+  def test_configured_extensions_and_services_can_enable_every_known_extension
     builder = DummyBuilder.new
     extension_map = Ruflet::CLI::BuildCommand::CLIENT_EXTENSION_MAP
 
@@ -532,13 +534,17 @@ class RufletCliUpdateCommandTest < Minitest::Test
           }
         DART
       )
+      File.write(
+        File.join(client_dir, "services.yaml"),
+        YAML.dump("services" => %w[camera microphone location])
+      )
 
       original_method = Ruflet::CLI.method(:resolve_ruflet_client_template_root)
       Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root) { template_dir }
       Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
 
       begin
-        builder.send(:apply_service_extension_config, client_dir, { "services" => extension_map.keys }, self_contained: true)
+        builder.send(:apply_service_extension_config, client_dir, { "extensions" => extension_map.keys }, self_contained: true)
 
         pubspec = YAML.safe_load(File.read(File.join(client_dir, "pubspec.yaml")), aliases: true)
         main = File.read(File.join(client_dir, "lib", "main.self.dart"))
@@ -547,6 +553,37 @@ class RufletCliUpdateCommandTest < Minitest::Test
           assert_includes main, "package:#{meta[:package]}/#{meta[:package]}.dart"
           assert_includes main, "#{meta[:alias]}.Extension(),"
         end
+      ensure
+        Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root, original_method)
+        Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
+      end
+    end
+  end
+
+  def test_service_backed_extension_declarations_are_ignored_without_services
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      template_dir = File.join(dir, "template")
+      client_dir = File.join(dir, "client")
+      FileUtils.mkdir_p(File.join(template_dir, "lib"))
+      FileUtils.mkdir_p(File.join(client_dir, "lib"))
+      File.write(File.join(template_dir, "pubspec.yaml"), "dependencies:\n  flutter:\n    sdk: flutter\n  flet: any\n  flet_camera: any\n")
+      File.write(File.join(template_dir, "lib", "main.self.dart"), "import 'package:flet_camera/flet_camera.dart' as ruflet_camera;\nfinal extensions = [ruflet_camera.Extension(),];\n")
+      File.write(File.join(client_dir, "pubspec.yaml"), "dependencies:\n  flutter:\n    sdk: flutter\n  flet: any\n")
+      File.write(File.join(client_dir, "lib", "main.self.dart"), "final extensions = [];\n")
+      File.write(File.join(client_dir, "services.yaml"), "services: []\n")
+
+      original_method = Ruflet::CLI.method(:resolve_ruflet_client_template_root)
+      Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root) { template_dir }
+      Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
+
+      begin
+        builder.send(:apply_service_extension_config, client_dir, { "extensions" => ["camera"] }, self_contained: true)
+
+        pubspec = YAML.safe_load(File.read(File.join(client_dir, "pubspec.yaml")), aliases: true)
+        refute pubspec.dig("dependencies", "flet_camera")
+        refute_includes File.read(File.join(client_dir, "lib", "main.self.dart")), "flet_camera"
       ensure
         Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root, original_method)
         Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)

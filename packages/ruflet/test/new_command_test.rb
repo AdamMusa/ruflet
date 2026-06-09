@@ -79,14 +79,15 @@ class RufletCliNewCommandTest < Minitest::Test
     refute_includes spec.files, "assets/bootstrap/ruby_runtime.tar.gz"
   end
 
-  def test_default_ruflet_config_documents_every_known_service_key
+  def test_default_project_keeps_services_out_of_ruflet_config
     Dir.mktmpdir do |dir|
       Ruflet::CLI.send(:write_default_ruflet_config, dir, "demo_app")
 
       config = File.read(File.join(dir, "ruflet.yaml"))
-      Ruflet::CLI::NewCommand::CLIENT_EXTENSION_MAP.keys.each do |service|
-        assert_includes config, service
-      end
+      services = YAML.safe_load(File.read(File.join(dir, "services.yaml")), aliases: true)
+      refute_includes config, "services:"
+      assert_includes config, "extensions: []"
+      assert_equal [], services["services"]
     end
   end
 

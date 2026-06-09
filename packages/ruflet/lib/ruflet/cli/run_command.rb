@@ -349,13 +349,30 @@ module Ruflet
       end
 
       def project_run_requires_managed_client?
-        return false unless defined?(Ruflet::CLI::BuildCommand::CLIENT_EXTENSION_MAP)
+        extensions = Array(project_run_config["extensions"]).map { |value| normalize_run_extension_key(value) }.compact
+        protected_extensions =
+          if defined?(Ruflet::CLI::BuildCommand::SERVICE_EXTENSION_MAP)
+            Ruflet::CLI::BuildCommand::SERVICE_EXTENSION_MAP.values.flatten
+          else
+            []
+          end
+        return true if (extensions - protected_extensions).any?
 
-        services = Array(project_run_config["services"]).map { |value| normalize_run_extension_key(value) }.compact
+        services =
+          if respond_to?(:load_service_definitions, true)
+            send(:load_service_definitions).keys
+          else
+            []
+          end
         return false if services.empty?
 
-        extension_keys = Ruflet::CLI::BuildCommand::CLIENT_EXTENSION_MAP.keys
-        (services & extension_keys).any?
+        known_services =
+          if defined?(Ruflet::CLI::BuildCommand::DEFAULT_SERVICE_NATIVE_REQUIREMENTS)
+            Ruflet::CLI::BuildCommand::DEFAULT_SERVICE_NATIVE_REQUIREMENTS.keys
+          else
+            []
+          end
+        (services & known_services).any?
       end
 
       def project_run_config
