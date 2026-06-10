@@ -27,5 +27,7 @@ module Ruflet
 
     @run_interceptors_mutex.synchronize { @run_interceptors.last }
   end
-  private_class_method :run_interceptor
+  class << self
+    private :run_interceptor
+  end
 end

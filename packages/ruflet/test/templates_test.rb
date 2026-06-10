@@ -108,6 +108,17 @@ class RufletCliTemplatesTest < Minitest::Test
     assert_includes runtime, "def dig(key, *keys)"
   end
 
+  def test_embedded_runtime_bundle_is_generated_from_current_ruflet_sources
+    root = File.expand_path("../../..", __dir__)
+    command = [
+      RbConfig.ruby,
+      File.join(root, "tools/build_embedded_runtime.rb"),
+      "--check"
+    ]
+
+    assert system(*command), "embedded runtime bundle is stale; run tools/build_embedded_runtime.rb"
+  end
+
   def test_embedded_runtime_avoids_fiber_backed_each_with_index_enumerator
     runtime = File.read(File.expand_path("../../../ruby_runtime/shared/embedded_ruflet_runtime.rb", __dir__))
 

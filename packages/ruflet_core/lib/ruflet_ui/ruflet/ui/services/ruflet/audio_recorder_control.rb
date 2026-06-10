@@ -8,7 +8,8 @@ module Ruflet
           TYPE = "audiorecorder".freeze
           WIRE = "AudioRecorder".freeze
 
-          def initialize(id: nil, configuration: {}, data: nil, key: nil, on_state_change: nil, on_stream: nil, on_upload: nil)
+          def initialize(id: nil, configuration: nil, data: nil, key: nil, on_state_change: nil, on_stream: nil, on_upload: nil)
+            configuration ||= {}
             props = {}
             props[:configuration] = configuration unless configuration.nil?
             props[:data] = data unless data.nil?
@@ -43,7 +44,8 @@ module Ruflet
             )
           end
 
-          def start_recording(output_path: nil, configuration: {}, upload: nil, timeout: 10, on_result: nil)
+          def start_recording(output_path: nil, configuration: nil, upload: nil, timeout: 10, on_result: nil)
+            configuration ||= {}
             invoke_audio_recorder(
               "start_recording",
               args: compact_args(

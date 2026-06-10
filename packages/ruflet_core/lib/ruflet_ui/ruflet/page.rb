@@ -533,7 +533,7 @@ module Ruflet
       call_id = "call_#{Ruflet::Control.generate_id}"
       if on_result.respond_to?(:call)
         @invoke_waiters_mutex.synchronize { @invoke_callbacks[call_id] = on_result }
-        unless timeout.nil?
+        if embedded_async_timeout_available? && !timeout.nil?
           Thread.new(call_id, timeout.to_f) do |pending_call_id, invoke_timeout|
             sleep([invoke_timeout, 0.0].max + 0.1)
             callback = @invoke_waiters_mutex.synchronize { @invoke_callbacks.delete(pending_call_id) }
@@ -1240,7 +1240,7 @@ module Ruflet
       control = @wire_index[target.to_i] || @control_index[target.to_s]
       return unless control
 
-      event = Event.new(name: name, target: target, raw_data: data, page: self, control: control)
+      event = Ruflet::Event.new(name: name, target: target, raw_data: data, page: self, control: control)
       apply_event_value_to_control(control, event) if %w[change select select_change].include?(name.to_s)
       before_dialog_count = @dialogs_container.props["controls"].length
       if dialog_close_event?(control, name) && remove_dialog_tracking(control)
@@ -1288,6 +1288,10 @@ module Ruflet
     end
 
     private
+
+    def embedded_async_timeout_available?
+      !Object.const_defined?(:RUFLET_EMBEDDED_FAKE_THREAD)
+    end
 
     def invoke_and_wait(control_or_id, method_name, args: nil, timeout: 10)
       control_id =
@@ -1821,7 +1825,7 @@ module Ruflet
       call_id = "call_#{Ruflet::Control.generate_id}"
       if on_result.respond_to?(:call)
         @invoke_waiters_mutex.synchronize { @invoke_callbacks[call_id] = on_result }
-        unless timeout.nil?
+        if embedded_async_timeout_available? && !timeout.nil?
           Thread.new(call_id, timeout.to_f) do |pending_call_id, invoke_timeout|
             sleep([invoke_timeout, 0.0].max + 0.1)
             callback = @invoke_waiters_mutex.synchronize { @invoke_callbacks.delete(pending_call_id) }

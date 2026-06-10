@@ -2,11 +2,16 @@
 # frozen_string_literal: true
 
 require "json"
+require "open3"
 require "pathname"
+require "tempfile"
 
 ROOT = Pathname(__dir__).join("..").expand_path
-GENERATED_RB = ROOT.join("generated/embedded_ruflet_runtime.rb")
-GENERATED_H = ROOT.join("generated/embedded_ruflet_runtime.h")
+GENERATED_RB = ROOT.join("ruby_runtime/shared/embedded_ruflet_runtime.rb")
+GENERATED_H = ROOT.join("ruby_runtime/shared/embedded_ruflet_runtime.h")
+CHECK_ONLY = ARGV.delete("--check")
+abort "Usage: #{File.basename($PROGRAM_NAME)} [--check]" unless ARGV.empty?
+MRBC = ROOT.join("ruby_runtime/third_party/mruby/build/host/bin/mrbc")
 
 BUNDLED_FEATURES = {
   "ruflet" => ROOT.join("packages/ruflet_core/lib/ruflet.rb"),
@@ -278,6 +283,21 @@ EXTRA_SHIMS = <<~'RUBY'
         out
       end
     end
+
+    unless method_defined?(:sample)
+      def sample(count = nil, random: nil)
+        source = random || Kernel
+        return nil if empty? && count.nil?
+        return self[source.rand(length)] if count.nil?
+
+        pool = dup
+        out = []
+        [count.to_i, pool.length].min.times do
+          out << pool.delete_at(source.rand(pool.length))
+        end
+        out
+      end
+    end
   end
 
   class Hash
@@ -301,10 +321,16 @@ EXTRA_SHIMS = <<~'RUBY'
     end
   end
 
-  class Integer
+  class Numeric
     unless method_defined?(:negative?)
       def negative?
         self < 0
+      end
+    end
+
+    unless method_defined?(:positive?)
+      def positive?
+        self > 0
       end
     end
 
@@ -414,6 +440,18 @@ EXTRA_SHIMS = <<~'RUBY'
       end
     end
 
+    unless method_defined?(:encoding)
+      def encoding
+        Encoding::UTF_8
+      end
+    end
+
+    unless method_defined?(:valid_encoding?)
+      def valid_encoding?
+        true
+      end
+    end
+
     unless method_defined?(:unpack1)
       def unpack1(format)
         unpack(format).first
@@ -512,6 +550,17 @@ EXTRA_SHIMS = <<~'RUBY'
     end
   end
 
+  unless Object.const_defined?(:Random)
+    class Random
+      def initialize(_seed = nil)
+      end
+
+      def rand(arg = nil)
+        Kernel.rand(arg)
+      end
+    end
+  end
+
   class Module
     unless method_defined?(:require_relative)
       def require_relative(_feature)
@@ -547,6 +596,43 @@ EXTRA_SHIMS = <<~'RUBY'
     ENV = {}
   end
 
+  unless Object.const_defined?(:FileUtils)
+    module FileUtils
+      def self.mkdir_p(path)
+        current = path.to_s.start_with?(File::SEPARATOR) ? File::SEPARATOR : ""
+        path.to_s.split(File::SEPARATOR).each do |part|
+          next if part.empty?
+
+          current = current.empty? ? part : File.join(current, part)
+          Dir.mkdir(current) unless File.directory?(current)
+        end
+        path
+      end
+
+      def self.touch(path)
+        File.open(path.to_s, "a") {}
+        path
+      end
+    end
+  end
+
+  class File
+    unless respond_to?(:write)
+      def self.write(path, content)
+        open(path.to_s, "w") { |file| file.write(content.to_s) }
+      end
+    end
+  end
+
+  class Dir
+    unless respond_to?(:tmpdir)
+      def self.tmpdir
+        ENV["TMPDIR"] || ENV["TMP"] || ENV["TEMP"] ||
+          (defined?($__ruflet_app_root) && $__ruflet_app_root) || "/tmp"
+      end
+    end
+  end
+
   unless Object.const_defined?(:Mutex)
     class Mutex
       def synchronize
@@ -560,7 +646,14 @@ EXTRA_SHIMS = <<~'RUBY'
     end
   end
 
+  unless Object.const_defined?(:LoadError)
+    class LoadError < StandardError
+    end
+  end
+
   unless Object.const_defined?(:Thread)
+    RUFLET_EMBEDDED_FAKE_THREAD = true unless Object.const_defined?(:RUFLET_EMBEDDED_FAKE_THREAD)
+
     class Thread
       def self.new(*args, &block)
         block.call(*args) if block
@@ -918,7 +1011,7 @@ POSTAMBLE = <<~RUBY
       handler = @page_event_handlers[normalized_name]
       return unless handler.respond_to?(:call)
 
-      event = Event.new(name: event_name, target: 1, raw_data: data, page: self, control: nil)
+      event = Ruflet::Event.new(name: event_name, target: 1, raw_data: data, page: self, control: nil)
       handler.call(event)
     end
   end
@@ -1301,7 +1394,9 @@ POSTAMBLE = <<~RUBY
         "socket" => true,
         "thread" => true,
         "digest/sha1" => true,
-        "securerandom" => true
+        "fileutils" => true,
+        "securerandom" => true,
+        "tmpdir" => true,
       }
       return true if bundled_features[feature.to_s]
       raise LoadError, "cannot load such file -- \#{feature}"
@@ -1503,7 +1598,9 @@ def transform_source(path, source)
       transformed << line
       next
     end
-    names = params.scan(/([a-zA-Z_]\w*):/).flatten.uniq
+    names = param_parts.filter_map do |part|
+      part[/\A([a-zA-Z_]\w*):/, 1]
+    end.uniq
     if names.empty?
       transformed << line
       next
@@ -1585,10 +1682,31 @@ runtime = runtime.gsub(
 )
 runtime = runtime.gsub('format("%08x", rand(0..0xffff_ffff))', 'RufletEmbeddedRuntime.random_hex(8)')
 
-GENERATED_RB.write(runtime)
+if MRBC.executable?
+  syntax_file = Tempfile.new(["embedded_ruflet_runtime", ".rb"])
+  syntax_file.write(runtime)
+  syntax_file.close
+  _stdout, stderr, status = Open3.capture3(MRBC.to_s, "-c", syntax_file.path)
+  syntax_file.unlink
+  abort "Embedded runtime is not valid mruby syntax:\n#{stderr}" unless status.success?
+else
+  warn "Skipping embedded runtime syntax check because #{MRBC.relative_path_from(ROOT)} is unavailable"
+end
 
 header = "#pragma once\n\nstatic const char* kEmbeddedRufletRuntime = R\"RUFLET_RUNTIME(\n#{runtime}\n)RUFLET_RUNTIME\";\n"
-GENERATED_H.write(header)
 
-puts "Wrote #{GENERATED_RB.relative_path_from(ROOT)}"
-puts "Wrote #{GENERATED_H.relative_path_from(ROOT)}"
+if CHECK_ONLY
+  stale = []
+  stale << GENERATED_RB unless GENERATED_RB.read == runtime
+  stale << GENERATED_H unless GENERATED_H.read == header
+  unless stale.empty?
+    abort "Embedded runtime is stale. Run tools/build_embedded_runtime.rb:\n#{stale.map { |path| "  #{path.relative_path_from(ROOT)}" }.join("\n")}"
+  end
+
+  puts "Embedded runtime is current"
+else
+  GENERATED_RB.write(runtime)
+  GENERATED_H.write(header)
+  puts "Wrote #{GENERATED_RB.relative_path_from(ROOT)}"
+  puts "Wrote #{GENERATED_H.relative_path_from(ROOT)}"
+end
