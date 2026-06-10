@@ -24,6 +24,7 @@ Embeds mruby in native iOS code and exposes eval/runFile/reset over a Flutter me
     'mruby_src/mrbgems/mruby-io/src/mruby_io_gem.c',
     'mruby_src/mrbgems/mruby-socket/src/socket.c',
     'mruby_src/mrbgems/mruby-pack/src/pack.c',
+    'mruby_src/mrbgems/mruby-metaprog/src/metaprog.c',
     'mruby_src/mrbgems/mruby-sprintf/src/sprintf.c',
     'mruby_src/mrbgems/hal-posix-io/src/io_hal.c',
     'mruby_src/mrbgems/hal-posix-socket/src/socket_hal.c',

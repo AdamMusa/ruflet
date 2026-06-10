@@ -117,18 +117,68 @@ class RufletCliTemplatesTest < Minitest::Test
     refute_includes runtime, "@receiver.send"
   end
 
+  def test_embedded_runtime_converts_generated_method_names_to_symbols
+    runtime = File.read(File.expand_path("../../../ruby_runtime/shared/embedded_ruflet_runtime.rb", __dir__))
+
+    assert_includes runtime, "EMBEDDED_INSTANCE_METHODS.map { |name| name.to_sym }"
+  end
+
+  def test_embedded_runtime_exposes_window_control_methods
+    runtime = File.read(File.expand_path("../../../ruby_runtime/shared/embedded_ruflet_runtime.rb", __dir__))
+
+    %w[wait_until_ready_to_show to_front center close destroy start_dragging start_resizing].each do |method_name|
+      assert_includes runtime, "def #{method_name}(", "missing WindowControl##{method_name}"
+    end
+  end
+
   def test_embedded_runtime_exposes_page_service_helpers
     runtime = File.read(File.expand_path("../../../ruby_runtime/shared/embedded_ruflet_runtime.rb", __dir__))
 
     %w[
       shared_preferences wakelock flashlight screen_brightness audio
+      audio_recorder browser_context_menu window tester
       accelerometer gyroscope user_accelerometer magnetometer barometer
       shake_detector semantics_service screenshot battery connectivity
       clipboard file_picker url_launcher storage_paths share camera
-      haptic_feedback
+      haptic_feedback geolocator permission_handler secure_storage
     ].each do |helper|
       assert_includes runtime, "def #{helper}(**props)", "missing page.#{helper}"
       assert_includes runtime, "service(:#{helper}, **props)"
+    end
+  end
+
+  def test_embedded_runtime_matches_all_page_service_helpers
+    root = File.expand_path("../../..", __dir__)
+    page_source = File.read(File.join(root, "packages/ruflet_core/lib/ruflet_ui/ruflet/page.rb"))
+    runtime = File.read(File.join(root, "ruby_runtime/shared/embedded_ruflet_runtime.rb"))
+
+    page_source.scan(/^    def (\w+)\(\*\*props\)\n(.*?)^    end/m).each do |helper, body|
+      next unless body.include?("service(:")
+
+      assert_includes runtime, "def #{helper}(**props)", "missing page.#{helper}"
+    end
+  end
+
+  def test_ruby_runtime_builds_and_initializes_mruby_metaprog
+    root = File.expand_path("../../..", __dir__)
+    metaprog_source = "mruby-metaprog/src/metaprog.c"
+
+    %w[ios macos].each do |platform|
+      assert_path_exists File.join(root, "ruby_runtime/#{platform}/mruby_src/mrbgems/#{metaprog_source}")
+    end
+
+    assert_includes File.read(File.join(root, "ruby_runtime/android/src/main/cpp/CMakeLists.txt")), metaprog_source
+    assert_includes File.read(File.join(root, "ruby_runtime/ios/ruby_runtime.podspec")), metaprog_source
+    assert_includes File.read(File.join(root, "ruby_runtime/macos/ruby_runtime.podspec")), metaprog_source
+
+    %w[
+      ruby_runtime/shared/mruby_gems_init.c
+      ruby_runtime/ios/Classes/mruby_gems_init.c
+      ruby_runtime/macos/Classes/mruby_gems_init.c
+    ].each do |path|
+      source = File.read(File.join(root, path))
+      assert_includes source, "void mrb_mruby_metaprog_gem_init(mrb_state *mrb);"
+      assert_includes source, "mrb_mruby_metaprog_gem_init(mrb);"
     end
   end
 

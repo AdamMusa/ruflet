@@ -50,10 +50,28 @@ module Ruflet
             super(type: TYPE, id: id, **props)
           end
 
-          %w[wait_until_ready_to_show to_front center close destroy start_dragging].each do |method_name|
-            define_method(method_name) do |timeout: 10, on_result: nil|
-              runtime_page&.invoke(self, method_name, timeout: timeout, on_result: on_result)
-            end
+          def wait_until_ready_to_show(timeout: 10, on_result: nil)
+            invoke_window_method("wait_until_ready_to_show", timeout: timeout, on_result: on_result)
+          end
+
+          def to_front(timeout: 10, on_result: nil)
+            invoke_window_method("to_front", timeout: timeout, on_result: on_result)
+          end
+
+          def center(timeout: 10, on_result: nil)
+            invoke_window_method("center", timeout: timeout, on_result: on_result)
+          end
+
+          def close(timeout: 10, on_result: nil)
+            invoke_window_method("close", timeout: timeout, on_result: on_result)
+          end
+
+          def destroy(timeout: 10, on_result: nil)
+            invoke_window_method("destroy", timeout: timeout, on_result: on_result)
+          end
+
+          def start_dragging(timeout: 10, on_result: nil)
+            invoke_window_method("start_dragging", timeout: timeout, on_result: on_result)
           end
 
           def start_resizing(edge, timeout: 10, on_result: nil)
@@ -64,6 +82,12 @@ module Ruflet
               timeout: timeout,
               on_result: on_result
             )
+          end
+
+          private
+
+          def invoke_window_method(method_name, timeout:, on_result:)
+            runtime_page&.invoke(self, method_name, timeout: timeout, on_result: on_result)
           end
         end
       end

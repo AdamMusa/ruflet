@@ -1457,7 +1457,7 @@ def transform_source(path, source)
   if path.basename.to_s == "ruflet_ui.rb"
     source = source.gsub(
       "Ruflet::UI::SharedControlForwarders.instance_methods(false)",
-      "Ruflet::UI::SharedControlForwarders::EMBEDDED_INSTANCE_METHODS"
+      "Ruflet::UI::SharedControlForwarders::EMBEDDED_INSTANCE_METHODS.map { |name| name.to_sym }"
     )
   end
 

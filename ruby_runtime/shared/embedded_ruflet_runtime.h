@@ -2523,6 +2523,7 @@ module Ruflet
             props[:on_size_change] = on_size_change unless on_size_change.nil?
             super(type: TYPE, id: id, **props)
           end
+
         end
       end
     end
@@ -17169,6 +17170,46 @@ module Ruflet
             props[:on_event] = on_event unless on_event.nil?
             super(type: TYPE, id: id, **props)
           end
+
+          def wait_until_ready_to_show(timeout: 10, on_result: nil)
+            invoke_window_method("wait_until_ready_to_show", timeout: timeout, on_result: on_result)
+          end
+
+          def to_front(timeout: 10, on_result: nil)
+            invoke_window_method("to_front", timeout: timeout, on_result: on_result)
+          end
+
+          def center(timeout: 10, on_result: nil)
+            invoke_window_method("center", timeout: timeout, on_result: on_result)
+          end
+
+          def close(timeout: 10, on_result: nil)
+            invoke_window_method("close", timeout: timeout, on_result: on_result)
+          end
+
+          def destroy(timeout: 10, on_result: nil)
+            invoke_window_method("destroy", timeout: timeout, on_result: on_result)
+          end
+
+          def start_dragging(timeout: 10, on_result: nil)
+            invoke_window_method("start_dragging", timeout: timeout, on_result: on_result)
+          end
+
+          def start_resizing(edge, timeout: 10, on_result: nil)
+            runtime_page&.invoke(
+              self,
+              "start_resizing",
+              args: { "edge" => edge },
+              timeout: timeout,
+              on_result: on_result
+            )
+          end
+
+          private
+
+          def invoke_window_method(method_name, timeout:, on_result:)
+            runtime_page&.invoke(self, method_name, timeout: timeout, on_result: on_result)
+          end
         end
       end
     end
@@ -20447,6 +20488,22 @@ module Ruflet
       service(:audio, **props)
     end
 
+    def audio_recorder(**props)
+      service(:audio_recorder, **props)
+    end
+
+    def browser_context_menu(**props)
+      service(:browser_context_menu, **props)
+    end
+
+    def window(**props)
+      service(:window, **props)
+    end
+
+    def tester(**props)
+      service(:tester, **props)
+    end
+
     def accelerometer(**props)
       service(:accelerometer, **props)
     end
@@ -20513,6 +20570,18 @@ module Ruflet
 
     def haptic_feedback(**props)
       service(:haptic_feedback, **props)
+    end
+
+    def geolocator(**props)
+      service(:geolocator, **props)
+    end
+
+    def permission_handler(**props)
+      service(:permission_handler, **props)
+    end
+
+    def secure_storage(**props)
+      service(:secure_storage, **props)
     end
 
     def go(route, **query_params)
@@ -22305,7 +22374,7 @@ module Kernel
   end
 
   if Ruflet::UI::SharedControlForwarders.respond_to?(:instance_methods)
-    private(*Ruflet::UI::SharedControlForwarders::EMBEDDED_INSTANCE_METHODS)
+    private(*Ruflet::UI::SharedControlForwarders::EMBEDDED_INSTANCE_METHODS.map { |name| name.to_sym })
   end
 end
 

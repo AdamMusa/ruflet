@@ -23,6 +23,7 @@ set(MRUBY_GEM_SOURCES
   "${MRUBY_ROOT}/mrbgems/mruby-socket/src/socket.c"
   "${MRUBY_ROOT}/mrbgems/mruby-sprintf/src/sprintf.c"
   "${MRUBY_ROOT}/mrbgems/mruby-pack/src/pack.c"
+  "${MRUBY_ROOT}/mrbgems/mruby-metaprog/src/metaprog.c"
   "${MRUBY_ROOT}/mrbgems/hal-posix-io/src/io_hal.c"
   "${MRUBY_ROOT}/mrbgems/hal-posix-socket/src/socket_hal.c"
 )
