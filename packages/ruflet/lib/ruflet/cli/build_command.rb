@@ -1337,6 +1337,9 @@ module Ruflet
         local_path = explicit_local_ruby_runtime_path
         return { "path" => local_path } if local_path
 
+        template_dependency = template_client_pubspec_dependencies["ruby_runtime"]
+        return template_dependency if template_dependency
+
         current_dependency || "^0.0.4"
       end
 
@@ -1378,6 +1381,27 @@ module Ruflet
           FileUtils.cp(source, destination)
           build_log(verbose, "refreshed template file #{relative_path}")
         end
+
+        repair_legacy_self_contained_bootstrap(client_dir, verbose: verbose)
+      end
+
+      def repair_legacy_self_contained_bootstrap(client_dir, verbose: false)
+        path = File.join(client_dir, "lib", "main.self.dart")
+        return unless File.file?(path)
+
+        content = File.read(path)
+        updated = content.gsub(
+          /^\s*await RubyRuntime\.eval\("ENV\['RUFLET_DEBUG'\].*?\n/,
+          ""
+        )
+        updated = updated.gsub(
+          /^\s*final digestLength = await RubyRuntime\.eval\(\n.*?^\s*\);\n\s*debugPrint\('Embedded Digest::SHA1 bytesize: \$digestLength'\);\n/m,
+          ""
+        )
+        return if updated == content
+
+        File.write(path, updated)
+        build_log(verbose, "removed legacy pre-server RubyRuntime.eval diagnostics")
       end
 
       def write_pubspec_yaml(path, data)

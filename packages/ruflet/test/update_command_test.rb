@@ -107,7 +107,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
     refute_includes Ruflet::CLI::GEMFILE_TEMPLATE, "0.0.10"
   end
 
-  def test_prepare_flutter_client_uses_pub_ruby_runtime_dependency
+  def test_prepare_flutter_client_uses_template_ruby_runtime_dependency
     builder = DummyBuilder.new
 
     Dir.mktmpdir do |dir|
@@ -144,8 +144,32 @@ class RufletCliUpdateCommandTest < Minitest::Test
       refute_path_exists File.join(client_dir, "pubspec_overrides.yaml")
       pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
       ruby_runtime = YAML.safe_load(pubspec, aliases: true).dig("dependencies", "ruby_runtime")
-      assert_equal "^0.0.4", ruby_runtime
+      assert_equal({ "path" => "../../../ruby_runtime" }, ruby_runtime)
       assert_includes calls, client_dir
+    end
+  end
+
+  def test_ruby_runtime_dependency_prefers_current_template_over_stale_client_dependency
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      template_dir = File.join(dir, "template")
+      FileUtils.mkdir_p(template_dir)
+      File.write(
+        File.join(template_dir, "pubspec.yaml"),
+        "dependencies:\n  ruby_runtime:\n    path: ../../../ruby_runtime\n"
+      )
+      original_method = Ruflet::CLI.method(:resolve_ruflet_client_template_root)
+      Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root) { template_dir }
+      Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
+
+      begin
+        dependency = builder.send(:ruby_runtime_dependency, "^0.0.3")
+        assert_equal({ "path" => "../../../ruby_runtime" }, dependency)
+      ensure
+        Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root, original_method)
+        Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
+      end
     end
   end
 
@@ -395,6 +419,48 @@ class RufletCliUpdateCommandTest < Minitest::Test
           "class RufletFilePickerExtension {}\n",
           File.read(File.join(client_dir, "lib", "ruflet_file_picker_service.dart"))
         )
+      ensure
+        Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root, original_method)
+        Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
+      end
+    end
+  end
+
+  def test_refresh_managed_client_template_files_repairs_legacy_self_contained_bootstrap
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      template_dir = File.join(dir, "template")
+      client_dir = File.join(dir, "client")
+      FileUtils.mkdir_p(File.join(template_dir, "lib"))
+      FileUtils.mkdir_p(File.join(client_dir, "lib"))
+      File.write(
+        File.join(template_dir, "lib", "main.self.dart"),
+        <<~DART
+          await RubyRuntime.initialize();
+          await RubyRuntime.eval("ENV['RUFLET_DEBUG'] ||= '1'; 'debug enabled'");
+          final digestLength = await RubyRuntime.eval(
+            "require 'digest/sha1'; Digest::SHA1.digest('abc').bytesize.to_s",
+          );
+          debugPrint('Embedded Digest::SHA1 bytesize: $digestLength');
+          await RubyRuntime.startFileServer(serverPath);
+        DART
+      )
+      File.write(
+        File.join(client_dir, "lib", "main.self.dart"),
+        "await RubyRuntime.initialize();\nawait RubyRuntime.eval(\"ENV['RUFLET_DEBUG'] ||= '1'\");\n"
+      )
+
+      original_method = Ruflet::CLI.method(:resolve_ruflet_client_template_root)
+      Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root) { template_dir }
+      Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
+
+      begin
+        builder.send(:refresh_managed_client_template_files, client_dir, verbose: false)
+
+        refreshed = File.read(File.join(client_dir, "lib", "main.self.dart"))
+        assert_includes refreshed, "RubyRuntime.startFileServer"
+        refute_includes refreshed, "RubyRuntime.eval"
       ensure
         Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root, original_method)
         Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
