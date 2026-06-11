@@ -77,6 +77,20 @@ module Ruflet
       Protocol::WebAppEndpoint.new(build_dir: build.to_s)
     end
 
+    # Self-contained web frontend, mountable under any route. Serves the
+    # Flutter web build (with <base href> rewritten to the mount point) and
+    # answers the Ruflet WebSocket on the same path, so one line in
+    # routes.rb is the whole integration:
+    #
+    #   mount Ruflet::Rails.web_app, at: "/myfrontend"
+    #
+    # Pass a block for an explicit entrypoint (defaults to the view router):
+    #
+    #   mount Ruflet::Rails.web_app { |page| CounterView.render(page) }, at: "/counter"
+    def web_app(build_dir: nil, &app_block)
+      Protocol::WebApp.new(build_dir: build_dir, &app_block)
+    end
+
     # Reads index.html from the web build dir, injects window.__RUFLET_URL__
     # from config.backend_url so the Flutter client knows the WS backend
     # without a rebuild. Falls back to the request base_url if not configured.
