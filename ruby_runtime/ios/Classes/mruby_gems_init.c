@@ -1,25 +1,93 @@
 #include <mruby.h>
 
+/* HAL gems (platform abstraction used by io/socket/dir) */
 void mrb_hal_posix_io_gem_init(mrb_state *mrb);
 void mrb_hal_posix_socket_gem_init(mrb_state *mrb);
+void mrb_hal_posix_dir_gem_init(mrb_state *mrb);
+
+/* C-only gems (no mrblib, init called directly) */
 void mrb_mruby_digest_gem_init(mrb_state *mrb);
 void mrb_mruby_sprintf_gem_init(mrb_state *mrb);
 void mrb_mruby_pack_gem_init(mrb_state *mrb);
 void mrb_mruby_metaprog_gem_init(mrb_state *mrb);
+void mrb_mruby_fiber_gem_init(mrb_state *mrb);
+void mrb_mruby_time_gem_init(mrb_state *mrb);
+void mrb_mruby_math_gem_init(mrb_state *mrb);
+void mrb_mruby_random_gem_init(mrb_state *mrb);
+void mrb_mruby_binding_gem_init(mrb_state *mrb);
+void mrb_mruby_eval_gem_init(mrb_state *mrb);
+void mrb_mruby_data_gem_init(mrb_state *mrb);
+void mrb_mruby_kernel_ext_gem_init(mrb_state *mrb);
+void mrb_mruby_class_ext_gem_init(mrb_state *mrb);
+
+/* Gems with compiled mrblib (generated init loads C init + bytecode) */
 void GENERATED_TMP_mrb_mruby_errno_gem_init(mrb_state *mrb);
 void GENERATED_TMP_mrb_mruby_io_gem_init(mrb_state *mrb);
 void GENERATED_TMP_mrb_mruby_socket_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_compar_ext_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_enum_ext_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_array_ext_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_string_ext_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_hash_ext_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_numeric_ext_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_object_ext_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_range_ext_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_symbol_ext_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_proc_ext_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_toplevel_ext_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_enumerator_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_enum_chain_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_enum_lazy_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_struct_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_set_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_catch_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_method_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_dir_gem_init(mrb_state *mrb);
 
 void
 mrb_init_mrbgems(mrb_state *mrb)
 {
+  /* HAL first: io/socket/dir gems depend on it */
   mrb_hal_posix_io_gem_init(mrb);
   mrb_hal_posix_socket_gem_init(mrb);
+  mrb_hal_posix_dir_gem_init(mrb);
+
+  /* C-only gems */
   mrb_mruby_digest_gem_init(mrb);
   mrb_mruby_sprintf_gem_init(mrb);
   mrb_mruby_pack_gem_init(mrb);
   mrb_mruby_metaprog_gem_init(mrb);
+  mrb_mruby_fiber_gem_init(mrb);
+  mrb_mruby_time_gem_init(mrb);
+  mrb_mruby_math_gem_init(mrb);
+  mrb_mruby_random_gem_init(mrb);
+  mrb_mruby_binding_gem_init(mrb);
+  mrb_mruby_eval_gem_init(mrb);
+  mrb_mruby_data_gem_init(mrb);
+  mrb_mruby_kernel_ext_gem_init(mrb);
+  mrb_mruby_class_ext_gem_init(mrb);
+
+  /* Gems with mrblib, in dependency order */
   GENERATED_TMP_mrb_mruby_errno_gem_init(mrb);
   GENERATED_TMP_mrb_mruby_io_gem_init(mrb);
   GENERATED_TMP_mrb_mruby_socket_gem_init(mrb);
+  GENERATED_TMP_mrb_mruby_compar_ext_gem_init(mrb);
+  GENERATED_TMP_mrb_mruby_enum_ext_gem_init(mrb);
+  GENERATED_TMP_mrb_mruby_array_ext_gem_init(mrb);
+  GENERATED_TMP_mrb_mruby_string_ext_gem_init(mrb);
+  GENERATED_TMP_mrb_mruby_hash_ext_gem_init(mrb);
+  GENERATED_TMP_mrb_mruby_numeric_ext_gem_init(mrb);
+  GENERATED_TMP_mrb_mruby_object_ext_gem_init(mrb);
+  GENERATED_TMP_mrb_mruby_range_ext_gem_init(mrb);
+  GENERATED_TMP_mrb_mruby_symbol_ext_gem_init(mrb);
+  GENERATED_TMP_mrb_mruby_proc_ext_gem_init(mrb);
+  GENERATED_TMP_mrb_mruby_toplevel_ext_gem_init(mrb);
+  GENERATED_TMP_mrb_mruby_enumerator_gem_init(mrb);  /* needs mruby-fiber */
+  GENERATED_TMP_mrb_mruby_enum_chain_gem_init(mrb);  /* needs enumerator */
+  GENERATED_TMP_mrb_mruby_enum_lazy_gem_init(mrb);   /* needs enumerator + enum-ext */
+  GENERATED_TMP_mrb_mruby_struct_gem_init(mrb);
+  GENERATED_TMP_mrb_mruby_set_gem_init(mrb);
+  GENERATED_TMP_mrb_mruby_catch_gem_init(mrb);
+  GENERATED_TMP_mrb_mruby_method_gem_init(mrb);      /* needs proc-ext */
+  GENERATED_TMP_mrb_mruby_dir_gem_init(mrb);         /* needs hal-posix-dir */
 }
