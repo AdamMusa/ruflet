@@ -7,6 +7,7 @@ module Ruflet
     module ExtraCommand
       include FlutterSdk
       include EnvironmentSetup
+      include AndroidSdk
       include NewCommand
 
       def command_create(args)
@@ -53,7 +54,8 @@ module Ruflet
           end
         end
         puts "  Flutter: #{flutter_version_summary(tools)}"
-        ok = system(tools[:env], tools[:flutter], "doctor", *(verbose ? ["-v"] : []))
+        environment_issues += android_environment_setup!(fix: !!fix, verbose: !!verbose)
+        ok = system(android_build_env(tools[:env]), tools[:flutter], "doctor", *(verbose ? ["-v"] : []))
         status = $?.exitstatus if $?
         status ||= ok ? 0 : 1
         if environment_issues.any?

@@ -12,6 +12,8 @@ module Ruflet
   module CLI
     module BuildCommand
       include FlutterSdk
+      include EnvironmentSetup
+      include AndroidSdk
       CLIENT_EXTENSION_MAP = {
         "ads" => { package: "flet_ads", alias: "ruflet_ads" },
         "audio" => { package: "flet_audio", alias: "ruflet_audio" },
@@ -251,6 +253,9 @@ module Ruflet
       end
 
       def build_tool_env(env, platform, client_dir = nil)
+        if %w[android apk aab appbundle].include?(platform)
+          return android_build_env(unbundled_command_env(env))
+        end
         return env unless %w[ios macos].include?(platform)
 
         apple_env = unbundled_command_env(env)
