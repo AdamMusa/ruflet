@@ -6,6 +6,7 @@ module Ruflet
   module CLI
     module ExtraCommand
       include FlutterSdk
+      include EnvironmentSetup
       include NewCommand
 
       def command_create(args)
@@ -20,6 +21,12 @@ module Ruflet
         puts "Ruflet doctor"
         puts "  Ruby: #{RUBY_VERSION}"
         puts "  Flutter host target: #{flutter_host || 'unsupported'}"
+
+        # System prerequisites first: Flutter cannot be installed (or even
+        # extracted) without them.
+        environment_issues = environment_setup!(fix: !!fix, verbose: !!verbose)
+        return 1 unless flutter_host
+
         if template_root
           puts "  Template: #{template_root}"
         elsif fix
@@ -49,6 +56,10 @@ module Ruflet
         ok = system(tools[:env], tools[:flutter], "doctor", *(verbose ? ["-v"] : []))
         status = $?.exitstatus if $?
         status ||= ok ? 0 : 1
+        if environment_issues.any?
+          warn "Unresolved environment issues: #{environment_issues.join('; ')}"
+          status = 1 if status.zero?
+        end
         status
       end
 

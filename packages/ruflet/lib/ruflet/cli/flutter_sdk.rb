@@ -322,7 +322,10 @@ module Ruflet
         if os.match?(/darwin/i)
           return machine_arch.include?("arm") ? "macos_arm64" : "macos"
         end
-        return "linux" if os.match?(/linux/i)
+        if os.match?(/linux/i)
+          # Flutter publishes Linux archives for x64 only.
+          return machine_arch.match?(/arm|aarch64/) ? nil : "linux"
+        end
         return "windows" if os.match?(/mswin|mingw|cygwin/i)
 
         nil
@@ -391,14 +394,25 @@ module Ruflet
           if windows_host?
             return system("powershell", "-NoProfile", "-Command", "Expand-Archive -Path '#{archive}' -DestinationPath '#{destination}' -Force")
           end
+
+          require_extract_tool!("unzip")
           return system("unzip", "-oq", archive, "-d", destination)
         end
 
         if archive.end_with?(".tar.xz") || archive.end_with?(".tar.gz") || archive.end_with?(".tgz")
+          require_extract_tool!("tar")
+          require_extract_tool!("xz") if archive.end_with?(".tar.xz") && !windows_host?
           return system("tar", "-xf", archive, "-C", destination)
         end
 
-        false
+        raise "Unsupported archive format: #{File.basename(archive)}"
+      end
+
+      def require_extract_tool!(name)
+        return if which_command(name)
+
+        raise "`#{name}` is required to extract the Flutter SDK but was not found. " \
+              "Run `ruflet doctor --fix` to install the missing system tools."
       end
     end
   end

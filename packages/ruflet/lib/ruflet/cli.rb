@@ -2,10 +2,15 @@
 
 require "optparse"
 
+# Project files (pbxproj, plists, embedded runtime sources) are UTF-8; never
+# depend on the caller's locale for reading them.
+Encoding.default_external = Encoding::UTF_8 if Encoding.default_external == Encoding::US_ASCII
+
 require_relative "version"
 require_relative "cli/templates"
 require_relative "cli/new_command"
 require_relative "cli/flutter_sdk"
+require_relative "cli/environment_setup"
 require_relative "cli/run_command"
 require_relative "cli/update_command"
 require_relative "cli/build_command"
