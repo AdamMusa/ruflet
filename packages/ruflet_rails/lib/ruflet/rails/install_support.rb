@@ -216,11 +216,7 @@ module Ruflet
             end
 
             def display_value(record, field)
-              case field
-              __DISPLAY_VALUE_CASES__
-              else
-                record.public_send(field).to_s
-              end
+              __DISPLAY_VALUE_BODY__
             end
 
             def primary_label(record)
@@ -235,7 +231,25 @@ module Ruflet
 
           end
         RUBY
-        template.gsub(/^[ \t]*__DISPLAY_VALUE_CASES__$/, display_value_cases)
+        template.sub(/^([ \t]*)__DISPLAY_VALUE_BODY__$/) do
+          indent = ::Regexp.last_match(1)
+          scaffold_display_value_body(display_value_cases, indent)
+        end
+      end
+
+      # A `case` with no `when` clause is a syntax error, so models without
+      # date/time attributes get the plain fallback body instead.
+      def scaffold_display_value_body(display_value_cases, indent)
+        return "#{indent}record.public_send(field).to_s" if display_value_cases.to_s.strip.empty?
+
+        reindented_cases = display_value_cases.gsub(/^    /, indent)
+        <<~RUBY.chomp.gsub(/^/, indent).gsub(/^#{Regexp.escape(indent)}__CASES__$/, reindented_cases)
+          case field
+          __CASES__
+          else
+            record.public_send(field).to_s
+          end
+        RUBY
       end
 
       def scaffold_component_template(model_name:, attributes: [])

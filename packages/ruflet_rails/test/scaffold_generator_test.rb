@@ -90,6 +90,24 @@ class RufletScaffoldGeneratorTest < Minitest::Test
     end
   end
 
+  def test_scaffold_without_date_attributes_generates_valid_ruby
+    view = Ruflet::Rails::InstallSupport.scaffold_view_template(
+      model_name: "Product",
+      attributes: ["name:string", "price:decimal", "description:text"]
+    )
+
+    # A case expression with no when clause is a syntax error.
+    refute_match(/case field\s*\n\s*else/, view)
+    assert_includes view, "def display_value(record, field)"
+    assert_silent_syntax view
+  end
+
+  def assert_silent_syntax(source)
+    RubyVM::InstructionSequence.compile(source)
+  rescue SyntaxError => e
+    flunk "generated code has a syntax error: #{e.message}"
+  end
+
   def test_scaffold_templates_keep_attribute_metadata_out_of_generated_files
     view_source = Ruflet::Rails::InstallSupport.scaffold_view_template(
       model_name: "NewsArticle",
