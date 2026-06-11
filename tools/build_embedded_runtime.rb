@@ -6,6 +6,10 @@ require "open3"
 require "pathname"
 require "tempfile"
 
+# The runtime sources contain UTF-8; never depend on the caller's locale.
+Encoding.default_external = Encoding::UTF_8
+Encoding.default_internal = nil
+
 ROOT = Pathname(__dir__).join("..").expand_path
 GENERATED_RB = ROOT.join("ruby_runtime/shared/embedded_ruflet_runtime.rb")
 GENERATED_H = ROOT.join("ruby_runtime/shared/embedded_ruflet_runtime.h")
@@ -344,26 +348,8 @@ EXTRA_SHIMS = <<~'RUBY'
   class String
     unless method_defined?(:%)
       def %(values)
-        queue = values.is_a?(::Array) ? values.dup : [values]
-        gsub(/%0?\d*[sdxX]/) do |token|
-          value = queue.shift
-          width = token[/\d+/].to_i
-          case token[-1]
-          when "s", "d"
-            text = value.to_s
-            width > 0 ? text.rjust(width, "0") : text
-          when "x", "X"
-            text = value.to_i.to_s(16)
-            text = text.upcase if token[-1] == "X"
-            if width > 0
-              pad = "0" * [width - text.length, 0].max
-              text = pad + text
-            end
-            text
-          else
-            value.to_s
-          end
-        end
+        args = values.is_a?(::Array) ? values : [values]
+        sprintf(self, *args)
       end
     end
 
@@ -493,26 +479,45 @@ EXTRA_SHIMS = <<~'RUBY'
         false
       end
 
+    has_instance_rand =
+      begin
+        method_defined?(:rand) || private_method_defined?(:rand)
+      rescue StandardError
+        false
+      end
+
     unless has_rand_singleton
-      @__ruflet_rand_state__ = 0x1234abcd
+      if has_instance_rand
+        # mruby-random provides Kernel#rand; expose it as Kernel.rand too.
+        # (Calling through a plain object avoids dispatching back into this
+        # singleton definition.)
+        @__ruflet_rand_proxy__ = Object.new
 
-      def self.rand(arg = nil)
-        @__ruflet_rand_state__ = ((@__ruflet_rand_state__ * 1_103_515_245) + 12_345) & 0x7fff_ffff
-        value = @__ruflet_rand_state__
-        return value if arg.nil?
+        def self.rand(arg = nil)
+          proxy = @__ruflet_rand_proxy__ ||= Object.new
+          arg.nil? ? proxy.__send__(:rand) : proxy.__send__(:rand, arg)
+        end
+      else
+        @__ruflet_rand_state__ = 0x1234abcd
 
-        if arg.is_a?(Range)
-          first = arg.begin.to_i
-          last = arg.end.to_i
-          span = last - first + (arg.exclude_end? ? 0 : 1)
-          return first if span <= 1
+        def self.rand(arg = nil)
+          @__ruflet_rand_state__ = ((@__ruflet_rand_state__ * 1_103_515_245) + 12_345) & 0x7fff_ffff
+          value = @__ruflet_rand_state__
+          return value if arg.nil?
 
-          first + (value % span)
-        else
-          limit = arg.to_i
-          return 0 if limit <= 0
+          if arg.is_a?(Range)
+            first = arg.begin.to_i
+            last = arg.end.to_i
+            span = last - first + (arg.exclude_end? ? 0 : 1)
+            return first if span <= 1
 
-          value % limit
+            first + (value % span)
+          else
+            limit = arg.to_i
+            return 0 if limit <= 0
+
+            value % limit
+          end
         end
       end
     end
@@ -584,10 +589,44 @@ EXTRA_SHIMS = <<~'RUBY'
 
   unless Object.const_defined?(:SecureRandom)
     module SecureRandom
-      module_function
+      extend self
+
+      def random_bytes(length = 16)
+        bytes = []
+        length.to_i.times { bytes << Kernel.rand(256) }
+        bytes.pack("C*")
+      end
 
       def hex(length = 16)
         RufletEmbeddedRuntime.random_hex(length.to_i * 2)
+      end
+
+      def uuid
+        bytes = random_bytes(16).bytes
+        bytes[6] = (bytes[6] & 0x0f) | 0x40
+        bytes[8] = (bytes[8] & 0x3f) | 0x80
+        hex32 = bytes.map { |byte| "%02x" % byte }.join
+        [hex32[0, 8], hex32[8, 4], hex32[12, 4], hex32[16, 4], hex32[20, 12]].join("-")
+      end
+
+      def base64(length = 16)
+        [random_bytes(length)].pack("m0")
+      end
+
+      def urlsafe_base64(length = 16, padding = false)
+        text = base64(length).tr("+/", "-_")
+        padding ? text : text.delete("=")
+      end
+
+      def alphanumeric(length = 16)
+        chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+        out = ""
+        length.to_i.times { out += chars[Kernel.rand(chars.length), 1] }
+        out
+      end
+
+      def random_number(limit = nil)
+        limit.nil? ? Kernel.rand : Kernel.rand(limit)
       end
     end
   end
@@ -613,6 +652,71 @@ EXTRA_SHIMS = <<~'RUBY'
         File.open(path.to_s, "a") {}
         path
       end
+
+      def self.rm_f(path)
+        Array(path).each do |entry|
+          begin
+            File.delete(entry.to_s)
+          rescue StandardError
+            nil
+          end
+        end
+        path
+      end
+
+      def self.rm_rf(path)
+        Array(path).each { |entry| __delete_tree(entry.to_s) }
+        path
+      end
+
+      def self.cp(source, destination)
+        target =
+          if File.directory?(destination.to_s)
+            File.join(destination.to_s, File.basename(source.to_s))
+          else
+            destination.to_s
+          end
+        File.open(source.to_s, "rb") do |from|
+          File.open(target, "wb") { |to| to.write(from.read) }
+        end
+        destination
+      end
+
+      def self.mv(source, destination)
+        target =
+          if File.directory?(destination.to_s)
+            File.join(destination.to_s, File.basename(source.to_s))
+          else
+            destination.to_s
+          end
+        File.rename(source.to_s, target)
+        destination
+      end
+
+      def self.mkdir(path)
+        Array(path).each { |entry| Dir.mkdir(entry.to_s) }
+        path
+      end
+
+      def self.rmdir(path)
+        Array(path).each { |entry| Dir.delete(entry.to_s) }
+        path
+      end
+
+      def self.__delete_tree(path)
+        if File.directory?(path)
+          Dir.entries(path).each do |entry|
+            next if entry == "." || entry == ".."
+
+            __delete_tree(File.join(path, entry))
+          end
+          Dir.delete(path)
+        elsif File.exist?(path)
+          File.delete(path)
+        end
+      rescue StandardError
+        nil
+      end
     end
   end
 
@@ -627,8 +731,7 @@ EXTRA_SHIMS = <<~'RUBY'
   class Dir
     unless respond_to?(:tmpdir)
       def self.tmpdir
-        ENV["TMPDIR"] || ENV["TMP"] || ENV["TEMP"] ||
-          (defined?($__ruflet_app_root) && $__ruflet_app_root) || "/tmp"
+        ENV["TMPDIR"] || ENV["TMP"] || ENV["TEMP"] || $__ruflet_app_root || "/tmp"
       end
     end
   end
@@ -685,12 +788,25 @@ EXTRA_SHIMS = <<~'RUBY'
   module Process
     CLOCK_REALTIME = :clock_realtime unless const_defined?(:CLOCK_REALTIME)
 
+    CLOCK_MONOTONIC = :clock_monotonic unless const_defined?(:CLOCK_MONOTONIC)
+
     unless respond_to?(:clock_gettime)
       def self.clock_gettime(_clock_id, unit = nil)
-        seed = Kernel.rand(0..0x7fff_ffff)
-        return seed unless unit == :nanosecond
+        if Object.const_defined?(:Time)
+          now = ::Time.now.to_f
+          case unit
+          when :nanosecond then (now * 1_000_000_000).to_i
+          when :microsecond then (now * 1_000_000).to_i
+          when :millisecond then (now * 1_000).to_i
+          when :second then now.to_i
+          else now
+          end
+        else
+          seed = Kernel.rand(0..0x7fff_ffff)
+          return seed unless unit == :nanosecond
 
-        (seed * 1_000_000).to_i + Kernel.rand(0..999_999)
+          (seed * 1_000_000).to_i + Kernel.rand(0..999_999)
+        end
       end
     end
   end
@@ -892,6 +1008,9 @@ EXTRA_SHIMS = <<~'RUBY'
     end
   end
 RUBY
+
+REGEXP_ENGINE = ROOT.join("tools/embedded_runtime_regexp.rb").read.freeze
+STDLIB_SUPPLEMENT = ROOT.join("tools/embedded_runtime_stdlib.rb").read.freeze
 
 def build_embedded_helper_forwarders
   source = ROOT.join("packages/ruflet_core/lib/ruflet_ui/ruflet/ui/shared_control_forwarders.rb").read
@@ -1394,9 +1513,17 @@ POSTAMBLE = <<~RUBY
         "socket" => true,
         "thread" => true,
         "digest/sha1" => true,
+        "digest" => true,
         "fileutils" => true,
         "securerandom" => true,
         "tmpdir" => true,
+        "time" => true,
+        "stringio" => true,
+        "ostruct" => true,
+        "forwardable" => true,
+        "base64" => true,
+        "pp" => true,
+        "English" => true,
       }
       return true if bundled_features[feature.to_s]
       raise LoadError, "cannot load such file -- \#{feature}"
@@ -1666,6 +1793,10 @@ process_file(BUNDLED_FEATURES.fetch("ruflet_server"), ordered_paths, seen)
 runtime = String.new
 runtime << legacy_preamble
 runtime << EXTRA_SHIMS
+runtime << "\n"
+runtime << REGEXP_ENGINE
+runtime << "\n"
+runtime << STDLIB_SUPPLEMENT
 runtime << "\n"
 
 ordered_paths.each do |path, source|

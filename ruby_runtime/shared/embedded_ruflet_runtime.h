@@ -26,15 +26,19 @@ class RufletSimpleEnumerator
 end
 
 class Array
-  def each_with_index
-    return RufletSimpleEnumerator.new(self) unless block_given?
+  # Fallback for builds without mruby-fiber/mruby-enumerator; when the real
+  # Enumerator is available the core implementation stays in charge.
+  unless Object.const_defined?(:Enumerator)
+    def each_with_index
+      return RufletSimpleEnumerator.new(self) unless block_given?
 
-    index = 0
-    each do |value|
-      yield(value, index)
-      index += 1
+      index = 0
+      each do |value|
+        yield(value, index)
+        index += 1
+      end
+      self
     end
-    self
   end
 
   unless method_defined?(:each_with_object)
@@ -183,8 +187,14 @@ module Kernel
   end
 
   unless method_defined?(:sleep)
-    def sleep(_seconds = nil)
-      0
+    def sleep(seconds = nil)
+      return 0 if seconds.nil?
+
+      duration = seconds.to_f
+      if duration > 0 && Object.const_defined?(:IO) && ::IO.respond_to?(:select)
+        ::IO.select(nil, nil, nil, duration)
+      end
+      duration.round
     end
 
     private :sleep
@@ -293,7 +303,15 @@ module RufletEmbeddedRuntime
     end
   end
 
+  HEX_DIGITS = "0123456789abcdef"
+
   def random_hex(length = 8)
+    if Object.const_defined?(:Random)
+      out = ""
+      length.to_i.times { out += HEX_DIGITS[Kernel.rand(16), 1] }
+      return out
+    end
+
     @random_hex_counter = (@random_hex_counter || 0) + 1
     text = @random_hex_counter.to_s(16)
     while text.length < length
@@ -761,26 +779,8 @@ end
 class String
   unless method_defined?(:%)
     def %(values)
-      queue = values.is_a?(::Array) ? values.dup : [values]
-      gsub(/%0?\d*[sdxX]/) do |token|
-        value = queue.shift
-        width = token[/\d+/].to_i
-        case token[-1]
-        when "s", "d"
-          text = value.to_s
-          width > 0 ? text.rjust(width, "0") : text
-        when "x", "X"
-          text = value.to_i.to_s(16)
-          text = text.upcase if token[-1] == "X"
-          if width > 0
-            pad = "0" * [width - text.length, 0].max
-            text = pad + text
-          end
-          text
-        else
-          value.to_s
-        end
-      end
+      args = values.is_a?(::Array) ? values : [values]
+      sprintf(self, *args)
     end
   end
 
@@ -910,26 +910,45 @@ module Kernel
       false
     end
 
+  has_instance_rand =
+    begin
+      method_defined?(:rand) || private_method_defined?(:rand)
+    rescue StandardError
+      false
+    end
+
   unless has_rand_singleton
-    @__ruflet_rand_state__ = 0x1234abcd
+    if has_instance_rand
+      # mruby-random provides Kernel#rand; expose it as Kernel.rand too.
+      # (Calling through a plain object avoids dispatching back into this
+      # singleton definition.)
+      @__ruflet_rand_proxy__ = Object.new
 
-    def self.rand(arg = nil)
-      @__ruflet_rand_state__ = ((@__ruflet_rand_state__ * 1_103_515_245) + 12_345) & 0x7fff_ffff
-      value = @__ruflet_rand_state__
-      return value if arg.nil?
+      def self.rand(arg = nil)
+        proxy = @__ruflet_rand_proxy__ ||= Object.new
+        arg.nil? ? proxy.__send__(:rand) : proxy.__send__(:rand, arg)
+      end
+    else
+      @__ruflet_rand_state__ = 0x1234abcd
 
-      if arg.is_a?(Range)
-        first = arg.begin.to_i
-        last = arg.end.to_i
-        span = last - first + (arg.exclude_end? ? 0 : 1)
-        return first if span <= 1
+      def self.rand(arg = nil)
+        @__ruflet_rand_state__ = ((@__ruflet_rand_state__ * 1_103_515_245) + 12_345) & 0x7fff_ffff
+        value = @__ruflet_rand_state__
+        return value if arg.nil?
 
-        first + (value % span)
-      else
-        limit = arg.to_i
-        return 0 if limit <= 0
+        if arg.is_a?(Range)
+          first = arg.begin.to_i
+          last = arg.end.to_i
+          span = last - first + (arg.exclude_end? ? 0 : 1)
+          return first if span <= 1
 
-        value % limit
+          first + (value % span)
+        else
+          limit = arg.to_i
+          return 0 if limit <= 0
+
+          value % limit
+        end
       end
     end
   end
@@ -1001,10 +1020,44 @@ end
 
 unless Object.const_defined?(:SecureRandom)
   module SecureRandom
-    module_function
+    extend self
+
+    def random_bytes(length = 16)
+      bytes = []
+      length.to_i.times { bytes << Kernel.rand(256) }
+      bytes.pack("C*")
+    end
 
     def hex(length = 16)
       RufletEmbeddedRuntime.random_hex(length.to_i * 2)
+    end
+
+    def uuid
+      bytes = random_bytes(16).bytes
+      bytes[6] = (bytes[6] & 0x0f) | 0x40
+      bytes[8] = (bytes[8] & 0x3f) | 0x80
+      hex32 = bytes.map { |byte| "%02x" % byte }.join
+      [hex32[0, 8], hex32[8, 4], hex32[12, 4], hex32[16, 4], hex32[20, 12]].join("-")
+    end
+
+    def base64(length = 16)
+      [random_bytes(length)].pack("m0")
+    end
+
+    def urlsafe_base64(length = 16, padding = false)
+      text = base64(length).tr("+/", "-_")
+      padding ? text : text.delete("=")
+    end
+
+    def alphanumeric(length = 16)
+      chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+      out = ""
+      length.to_i.times { out += chars[Kernel.rand(chars.length), 1] }
+      out
+    end
+
+    def random_number(limit = nil)
+      limit.nil? ? Kernel.rand : Kernel.rand(limit)
     end
   end
 end
@@ -1030,6 +1083,71 @@ unless Object.const_defined?(:FileUtils)
       File.open(path.to_s, "a") {}
       path
     end
+
+    def self.rm_f(path)
+      Array(path).each do |entry|
+        begin
+          File.delete(entry.to_s)
+        rescue StandardError
+          nil
+        end
+      end
+      path
+    end
+
+    def self.rm_rf(path)
+      Array(path).each { |entry| __delete_tree(entry.to_s) }
+      path
+    end
+
+    def self.cp(source, destination)
+      target =
+        if File.directory?(destination.to_s)
+          File.join(destination.to_s, File.basename(source.to_s))
+        else
+          destination.to_s
+        end
+      File.open(source.to_s, "rb") do |from|
+        File.open(target, "wb") { |to| to.write(from.read) }
+      end
+      destination
+    end
+
+    def self.mv(source, destination)
+      target =
+        if File.directory?(destination.to_s)
+          File.join(destination.to_s, File.basename(source.to_s))
+        else
+          destination.to_s
+        end
+      File.rename(source.to_s, target)
+      destination
+    end
+
+    def self.mkdir(path)
+      Array(path).each { |entry| Dir.mkdir(entry.to_s) }
+      path
+    end
+
+    def self.rmdir(path)
+      Array(path).each { |entry| Dir.delete(entry.to_s) }
+      path
+    end
+
+    def self.__delete_tree(path)
+      if File.directory?(path)
+        Dir.entries(path).each do |entry|
+          next if entry == "." || entry == ".."
+
+          __delete_tree(File.join(path, entry))
+        end
+        Dir.delete(path)
+      elsif File.exist?(path)
+        File.delete(path)
+      end
+    rescue StandardError
+      nil
+    end
   end
 end
 
@@ -1044,8 +1162,7 @@ end
 class Dir
   unless respond_to?(:tmpdir)
     def self.tmpdir
-      ENV["TMPDIR"] || ENV["TMP"] || ENV["TEMP"] ||
-        (defined?($__ruflet_app_root) && $__ruflet_app_root) || "/tmp"
+      ENV["TMPDIR"] || ENV["TMP"] || ENV["TEMP"] || $__ruflet_app_root || "/tmp"
     end
   end
 end
@@ -1102,12 +1219,25 @@ end
 module Process
   CLOCK_REALTIME = :clock_realtime unless const_defined?(:CLOCK_REALTIME)
 
+  CLOCK_MONOTONIC = :clock_monotonic unless const_defined?(:CLOCK_MONOTONIC)
+
   unless respond_to?(:clock_gettime)
     def self.clock_gettime(_clock_id, unit = nil)
-      seed = Kernel.rand(0..0x7fff_ffff)
-      return seed unless unit == :nanosecond
+      if Object.const_defined?(:Time)
+        now = ::Time.now.to_f
+        case unit
+        when :nanosecond then (now * 1_000_000_000).to_i
+        when :microsecond then (now * 1_000_000).to_i
+        when :millisecond then (now * 1_000).to_i
+        when :second then now.to_i
+        else now
+        end
+      else
+        seed = Kernel.rand(0..0x7fff_ffff)
+        return seed unless unit == :nanosecond
 
-      (seed * 1_000_000).to_i + Kernel.rand(0..999_999)
+        (seed * 1_000_000).to_i + Kernel.rand(0..999_999)
+      end
     end
   end
 end
@@ -1304,6 +1434,2117 @@ unless Object.const_defined?(:Digest) &&
 
       def digest(data)
         RufletEmbeddedRuntime.sha1_digest(data)
+      end
+    end
+  end
+end
+
+# -- Embedded Regexp engine (pure Ruby)
+#
+# mruby has no core regexp engine, but its compiler accepts regexp literal
+# syntax and emits `Regexp.compile(pattern, flags)` calls (see mruby/re.h and
+# codegen_regx in mruby-compiler). Defining Regexp here makes regex literals,
+# String#match/scan/gsub/split-with-regexp, and `case ... when /re/` work
+# out of the box.
+#
+# Supported syntax: literals, `.`, character classes (ranges, negation,
+# shorthands), `\d \D \w \W \s \S \h \H`, anchors `^ $ \A \z \Z \b \B`,
+# greedy/lazy quantifiers `* + ? {n} {n,} {n,m}`, groups (capturing,
+# `(?:...)`, named `(?<name>...)`), alternation, backreferences `\1`..`\9`,
+# lookahead `(?=...)` / `(?!...)`, and the `i m x` options. Byte-oriented:
+# case folding and shorthands are ASCII. Lookbehind and unicode property
+# classes are not supported and raise RegexpError.
+
+unless Object.const_defined?(:RegexpError)
+  class RegexpError < StandardError
+  end
+end
+
+unless Object.const_defined?(:Regexp)
+  class Regexp
+    IGNORECASE = 1
+    EXTENDED = 2
+    MULTILINE = 4
+
+    attr_reader :source, :options
+
+    class << self
+      def compile(source, options = nil, _encoding = nil)
+        new(source, options)
+      end
+
+      def escape(text)
+        out = ""
+        text.to_s.each_byte do |byte|
+          char = [byte].pack("C")
+          if SPECIALS_FOR_ESCAPE[char]
+            out += "\\" + char
+          elsif byte == 10
+            out += "\\n"
+          elsif byte == 13
+            out += "\\r"
+          elsif byte == 9
+            out += "\\t"
+          elsif byte == 12
+            out += "\\f"
+          elsif byte == 11
+            out += "\\v"
+          else
+            out += char
+          end
+        end
+        out
+      end
+      alias quote escape
+
+      def union(*patterns)
+        patterns = patterns[0] if patterns.length == 1 && patterns[0].is_a?(Array)
+        return new("(?!)") if patterns.empty?
+
+        sources = patterns.map do |pattern|
+          pattern.is_a?(Regexp) ? pattern.source : escape(pattern.to_s)
+        end
+        new(sources.join("|"))
+      end
+
+      def last_match(index = nil)
+        match = $~
+        return match if index.nil?
+        return nil if match.nil?
+
+        match[index]
+      end
+    end
+
+    SPECIALS_FOR_ESCAPE = {
+      "." => true, "*" => true, "+" => true, "?" => true, "^" => true,
+      "$" => true, "(" => true, ")" => true, "[" => true, "]" => true,
+      "{" => true, "}" => true, "|" => true, "\\" => true, "-" => true,
+      "/" => true, " " => true, "#" => true
+    }.freeze
+
+    def initialize(source, options = nil)
+      if source.is_a?(Regexp)
+        @source = source.source
+        @options = options.nil? ? source.options : normalize_options(options)
+      else
+        @source = source.to_s
+        @options = normalize_options(options)
+      end
+
+      parser = Parser.new(@source, @options)
+      @root = parser.parse
+      @group_count = parser.group_count
+      @group_names = parser.group_names
+    end
+
+    def casefold?
+      (@options & IGNORECASE) != 0
+    end
+
+    def names
+      @group_names.keys
+    end
+
+    def named_captures
+      out = {}
+      @group_names.each { |name, index| out[name] = [index] }
+      out
+    end
+
+    def match(text, pos = 0)
+      return ($~ = nil) if text.nil?
+
+      text = text.to_s
+      matcher = Matcher.new(@root, text, @options, @group_count)
+      index = pos
+      index += text.length if index < 0
+      return ($~ = nil) if index < 0 || index > text.length
+
+      while index <= text.length
+        caps = matcher.match_at(index)
+        if caps
+          match_data = MatchData.new(self, text, caps, @group_names)
+          $~ = match_data
+          return match_data
+        end
+        index += 1
+      end
+      $~ = nil
+    end
+
+    def match?(text, pos = 0)
+      return false if text.nil?
+
+      text = text.to_s
+      matcher = Matcher.new(@root, text, @options, @group_count)
+      index = pos
+      index += text.length if index < 0
+      return false if index < 0 || index > text.length
+
+      while index <= text.length
+        return true if matcher.match_at(index)
+
+        index += 1
+      end
+      false
+    end
+
+    def =~(text)
+      match_data = match(text)
+      match_data ? match_data.begin(0) : nil
+    end
+
+    def ===(text)
+      value =
+        if text.is_a?(String) || text.is_a?(Symbol)
+          text.to_s
+        elsif text.respond_to?(:to_str)
+          text.to_str
+        else
+          return false
+        end
+      !match(value).nil?
+    end
+
+    def ==(other)
+      other.is_a?(Regexp) && other.source == @source && other.options == @options
+    end
+    alias eql? ==
+
+    def hash
+      (@source.hash * 31) + @options
+    end
+
+    def to_s
+      flags_on = ""
+      flags_off = ""
+      flags_on += "m" if (@options & MULTILINE) != 0
+      flags_on += "i" if (@options & IGNORECASE) != 0
+      flags_on += "x" if (@options & EXTENDED) != 0
+      flags_off += "m" if (@options & MULTILINE) == 0
+      flags_off += "i" if (@options & IGNORECASE) == 0
+      flags_off += "x" if (@options & EXTENDED) == 0
+      body = flags_off.empty? ? flags_on : "#{flags_on}-#{flags_off}"
+      "(?#{body}:#{@source})"
+    end
+
+    def inspect
+      flags = ""
+      flags += "m" if (@options & MULTILINE) != 0
+      flags += "i" if (@options & IGNORECASE) != 0
+      flags += "x" if (@options & EXTENDED) != 0
+      "/#{@source}/#{flags}"
+    end
+
+    private
+
+    def normalize_options(options)
+      case options
+      when nil, false then 0
+      when true then IGNORECASE
+      when Integer then options
+      when String, Symbol
+        value = 0
+        options.to_s.each_char do |char|
+          case char
+          when "i" then value |= IGNORECASE
+          when "m" then value |= MULTILINE
+          when "x" then value |= EXTENDED
+          when "o", "u", "n", "e", "s" then nil # encoding/once flags: ignored
+          end
+        end
+        value
+      else
+        0
+      end
+    end
+
+    # ------------------------------------------------------------------
+    # Pattern parser: builds an AST of plain arrays.
+    #   [:char, byte]                     [:any]
+    #   [:class, negated, ranges, shorthands(neg inside)]
+    #   [:seq, children]                  [:alt, branches]
+    #   [:group, index_or_nil, child]     [:repeat, child, min, max, greedy]
+    #   [:anchor, kind]                   [:backref, index]
+    #   [:look, positive, child]
+    # ------------------------------------------------------------------
+    class Parser
+      attr_reader :group_count, :group_names
+
+      def initialize(source, options)
+        @src = source
+        @len = source.bytesize
+        @pos = 0
+        @options = options
+        @group_count = 0
+        @group_names = {}
+      end
+
+      def parse
+        node = parse_alternation
+        error("unmatched )") unless @pos >= @len
+        node
+      end
+
+      private
+
+      def extended?
+        (@options & EXTENDED) != 0
+      end
+
+      def error(message)
+        raise RegexpError, "#{message} in regexp: /#{@src}/"
+      end
+
+      def peek
+        @src.getbyte(@pos)
+      end
+
+      def advance
+        byte = @src.getbyte(@pos)
+        @pos += 1
+        byte
+      end
+
+      def parse_alternation
+        branches = [parse_sequence]
+        while peek == 124 # |
+          advance
+          branches << parse_sequence
+        end
+        branches.length == 1 ? branches[0] : [:alt, branches]
+      end
+
+      def parse_sequence
+        items = []
+        loop do
+          byte = peek
+          break if byte.nil? || byte == 124 || byte == 41 # | )
+
+          if extended?
+            if byte == 32 || byte == 9 || byte == 10 || byte == 13 || byte == 12
+              advance
+              next
+            end
+            if byte == 35 # '#' comment to end of line
+              advance while peek && peek != 10
+              next
+            end
+          end
+
+          atom = parse_atom
+          next if atom.nil?
+
+          atom = parse_quantifier(atom)
+          items << atom
+        end
+        items.length == 1 ? items[0] : [:seq, items]
+      end
+
+      def parse_quantifier(atom)
+        byte = peek
+        min = nil
+        max = nil
+
+        case byte
+        when 42 then advance; min = 0; max = nil   # *
+        when 43 then advance; min = 1; max = nil   # +
+        when 63 then advance; min = 0; max = 1     # ?
+        when 123 # {
+          saved = @pos
+          advance
+          digits1 = read_digits
+          if peek == 125 && digits1 # {n}
+            advance
+            min = digits1
+            max = digits1
+          elsif peek == 44 # ,
+            advance
+            digits2 = read_digits
+            if peek == 125
+              advance
+              min = digits1 || 0
+              max = digits2
+            else
+              @pos = saved
+              return atom
+            end
+          else
+            @pos = saved
+            return atom
+          end
+        else
+          return atom
+        end
+
+        greedy = true
+        if peek == 63 # lazy
+          advance
+          greedy = false
+        elsif peek == 43 # possessive: treat as greedy
+          advance
+        end
+
+        [:repeat, atom, min, max, greedy]
+      end
+
+      def read_digits
+        start = @pos
+        advance while peek && peek >= 48 && peek <= 57
+        return nil if @pos == start
+
+        @src.byteslice(start, @pos - start).to_i
+      end
+
+      def parse_atom
+        byte = advance
+        case byte
+        when 46 then [:any]                       # .
+        when 94 then [:anchor, :bol]              # ^
+        when 36 then [:anchor, :eol]              # $
+        when 40 then parse_group                  # (
+        when 91 then parse_class                  # [
+        when 92 then parse_escape(false)          # \
+        when 41 then error("unmatched )")
+        when 42, 43 then error("target of repeat operator is not specified")
+        else
+          [:char, fold(byte)]
+        end
+      end
+
+      def parse_group
+        if peek == 63 # ?
+          advance
+          byte = advance
+          case byte
+          when 58 # (?:
+            node = parse_alternation
+            expect_close
+            node
+          when 61 # (?=
+            node = parse_alternation
+            expect_close
+            [:look, true, node]
+          when 33 # (?!
+            node = parse_alternation
+            expect_close
+            [:look, false, node]
+          when 60 # (?<
+            if peek == 61 || peek == 33
+              error("lookbehind is not supported by the embedded Regexp engine")
+            end
+            name = read_group_name(62) # >
+            capture_group(name)
+          when 39 # (?'
+            name = read_group_name(39)
+            capture_group(name)
+          when 35 # (?# comment)
+            advance while peek && peek != 41
+            expect_close
+            nil
+          else
+            # inline options like (?i) / (?i:...)
+            parse_inline_options(byte)
+          end
+        else
+          capture_group(nil)
+        end
+      end
+
+      def parse_inline_options(first_byte)
+        on = 0
+        off = 0
+        negate = false
+        byte = first_byte
+        loop do
+          case byte
+          when 105 then negate ? off |= IGNORECASE : on |= IGNORECASE # i
+          when 109 then negate ? off |= MULTILINE : on |= MULTILINE   # m
+          when 120 then negate ? off |= EXTENDED : on |= EXTENDED     # x
+          when 45 then negate = true                                  # -
+          when 58, 41 then break                                      # : )
+          else error("unsupported group option")
+          end
+          byte = advance
+        end
+
+        previous = @options
+        @options = (@options | on) & ~off
+        if byte == 58 # scoped (?i:...)
+          node = parse_alternation
+          expect_close
+          @options = previous
+          node
+        else
+          # (?i) applies to the rest of the current group; keep it active.
+          nil
+        end
+      end
+
+      def read_group_name(terminator)
+        name = ""
+        while peek && peek != terminator
+          name += [advance].pack("C")
+        end
+        error("invalid group name") if name.empty? || peek.nil?
+        advance
+        name
+      end
+
+      def capture_group(name)
+        @group_count += 1
+        index = @group_count
+        @group_names[name] = index if name
+        node = parse_alternation
+        expect_close
+        [:group, index, node]
+      end
+
+      def expect_close
+        error("unmatched (") unless peek == 41
+        advance
+      end
+
+      def parse_class
+        negated = false
+        if peek == 94 # ^
+          advance
+          negated = true
+        end
+
+        ranges = []
+        shorthands = []
+        first = true
+        loop do
+          byte = peek
+          error("premature end of char-class") if byte.nil?
+          if byte == 93 && !first # ]
+            advance
+            break
+          end
+          first = false
+          advance
+
+          if byte == 92 # escape inside class
+            item = parse_escape(true)
+            case item[0]
+            when :char
+              add_class_member(ranges, item[1])
+            when :short
+              shorthands << item[1]
+            else
+              error("unsupported escape in char-class")
+            end
+            next
+          end
+
+          lo = byte
+          if peek == 45 && @src.getbyte(@pos + 1) && @src.getbyte(@pos + 1) != 93
+            advance # -
+            hi_byte = advance
+            if hi_byte == 92
+              hi_item = parse_escape(true)
+              error("invalid range in char-class") unless hi_item[0] == :char
+              hi_byte = hi_item[1]
+            end
+            error("empty range in char class") if hi_byte < lo
+            ranges << lo << hi_byte
+          else
+            add_class_member(ranges, lo)
+          end
+        end
+
+        [:class, negated, ranges, shorthands]
+      end
+
+      def add_class_member(ranges, byte)
+        ranges << byte << byte
+        if (@options & IGNORECASE) != 0
+          if byte >= 65 && byte <= 90
+            ranges << byte + 32 << byte + 32
+          elsif byte >= 97 && byte <= 122
+            ranges << byte - 32 << byte - 32
+          end
+        end
+      end
+
+      def parse_escape(in_class)
+        byte = advance
+        error("too short escape sequence") if byte.nil?
+
+        case byte
+        when 100 then in_class ? [:short, :d] : [:class, false, [], [:d]]   # \d
+        when 68 then in_class ? [:short, :D] : [:class, false, [], [:D]]    # \D
+        when 119 then in_class ? [:short, :w] : [:class, false, [], [:w]]   # \w
+        when 87 then in_class ? [:short, :W] : [:class, false, [], [:W]]    # \W
+        when 115 then in_class ? [:short, :s] : [:class, false, [], [:s]]   # \s
+        when 83 then in_class ? [:short, :S] : [:class, false, [], [:S]]    # \S
+        when 104 then in_class ? [:short, :h] : [:class, false, [], [:h]]   # \h
+        when 72 then in_class ? [:short, :H] : [:class, false, [], [:H]]    # \H
+        when 65 then in_class ? [:char, 65] : [:anchor, :bos]               # \A
+        when 122 then in_class ? [:char, 122] : [:anchor, :eos]             # \z
+        when 90 then in_class ? [:char, 90] : [:anchor, :eos_nl]            # \Z
+        when 98 then in_class ? [:char, 8] : [:anchor, :wb]                 # \b
+        when 66 then in_class ? [:char, 66] : [:anchor, :nwb]               # \B
+        when 71 then error("\\G is not supported")
+        when 110 then [:char, 10]   # \n
+        when 116 then [:char, 9]    # \t
+        when 114 then [:char, 13]   # \r
+        when 102 then [:char, 12]   # \f
+        when 118 then [:char, 11]   # \v
+        when 97 then [:char, 7]     # \a
+        when 101 then [:char, 27]   # \e
+        when 48 then [:char, 0]     # \0
+        when 120 # \xHH
+          value = 0
+          count = 0
+          while count < 2 && hex_digit?(peek)
+            value = (value * 16) + hex_value(advance)
+            count += 1
+          end
+          error("invalid hex escape") if count.zero?
+          [:char, value]
+        when 49, 50, 51, 52, 53, 54, 55, 56, 57 # \1..\9
+          if in_class
+            [:char, byte]
+          else
+            [:backref, byte - 48]
+          end
+        when 107 # \k<name>
+          if !in_class && (peek == 60 || peek == 39)
+            terminator = advance == 60 ? 62 : 39
+            name = ""
+            while peek && peek != terminator
+              name += [advance].pack("C")
+            end
+            advance
+            index = @group_names[name]
+            error("undefined group name #{name}") unless index
+            [:backref, index]
+          else
+            [:char, 107]
+          end
+        when 112, 80 # \p{...} unicode property
+          error("unicode property classes are not supported by the embedded Regexp engine")
+        else
+          [:char, fold(byte)]
+        end
+      end
+
+      def hex_digit?(byte)
+        return false if byte.nil?
+
+        (byte >= 48 && byte <= 57) || (byte >= 97 && byte <= 102) || (byte >= 65 && byte <= 70)
+      end
+
+      def hex_value(byte)
+        return byte - 48 if byte <= 57
+        return byte - 87 if byte >= 97
+
+        byte - 55
+      end
+
+      def fold(byte)
+        if (@options & IGNORECASE) != 0 && byte >= 65 && byte <= 90
+          byte + 32
+        else
+          byte
+        end
+      end
+    end
+
+    # ------------------------------------------------------------------
+    # Backtracking matcher (continuation passing).
+    # ------------------------------------------------------------------
+    class Matcher
+      def initialize(root, text, options, group_count)
+        @root = root
+        @text = text
+        @len = text.bytesize
+        @ignorecase = (options & IGNORECASE) != 0
+        @multiline = (options & MULTILINE) != 0
+        @group_count = group_count
+      end
+
+      # Returns the captures array [[start,stop], ...] or nil.
+      def match_at(start)
+        @caps = Array.new(@group_count + 1)
+        finish = walk(@root, start, IDENTITY)
+        return nil unless finish
+
+        @caps[0] = [start, finish]
+        @caps
+      end
+
+      IDENTITY = lambda { |pos| pos }
+
+      private
+
+      def byte_at(pos)
+        byte = @text.getbyte(pos)
+        return nil if byte.nil?
+
+        @ignorecase && byte >= 65 && byte <= 90 ? byte + 32 : byte
+      end
+
+      def raw_byte(pos)
+        @text.getbyte(pos)
+      end
+
+      def word_byte?(byte)
+        return false if byte.nil?
+
+        (byte >= 48 && byte <= 57) || (byte >= 65 && byte <= 90) ||
+          (byte >= 97 && byte <= 122) || byte == 95
+      end
+
+      def short_member?(kind, byte)
+        case kind
+        when :d then byte >= 48 && byte <= 57
+        when :D then !(byte >= 48 && byte <= 57)
+        when :w then word_byte?(byte)
+        when :W then !word_byte?(byte)
+        when :s then byte == 32 || (byte >= 9 && byte <= 13)
+        when :S then !(byte == 32 || (byte >= 9 && byte <= 13))
+        when :h then (byte >= 48 && byte <= 57) || (byte >= 97 && byte <= 102) || (byte >= 65 && byte <= 70)
+        when :H then !((byte >= 48 && byte <= 57) || (byte >= 97 && byte <= 102) || (byte >= 65 && byte <= 70))
+        else false
+        end
+      end
+
+      def class_member?(node, pos)
+        byte = raw_byte(pos)
+        return false if byte.nil?
+
+        negated = node[1]
+        ranges = node[2]
+        shorthands = node[3]
+
+        hit = false
+        index = 0
+        while index < ranges.length
+          if byte >= ranges[index] && byte <= ranges[index + 1]
+            hit = true
+            break
+          end
+          index += 2
+        end
+        unless hit
+          shorthands.each do |kind|
+            if short_member?(kind, byte)
+              hit = true
+              break
+            end
+          end
+        end
+        # case-insensitive: retry with swapped case against plain ranges
+        if !hit && @ignorecase
+          swapped =
+            if byte >= 65 && byte <= 90 then byte + 32
+            elsif byte >= 97 && byte <= 122 then byte - 32
+            end
+          if swapped
+            index = 0
+            while index < ranges.length
+              if swapped >= ranges[index] && swapped <= ranges[index + 1]
+                hit = true
+                break
+              end
+              index += 2
+            end
+          end
+        end
+
+        negated ? !hit : hit
+      end
+
+      # True when the node consumes exactly one byte and has no captures —
+      # eligible for the iterative repeat fast path.
+      def simple_node?(node)
+        node[0] == :char || node[0] == :any || node[0] == :class
+      end
+
+      def single_byte_match?(node, pos)
+        case node[0]
+        when :char
+          byte_at(pos) == node[1]
+        when :any
+          byte = raw_byte(pos)
+          !byte.nil? && (@multiline || byte != 10)
+        when :class
+          pos < @len && class_member?(node, pos)
+        else
+          false
+        end
+      end
+
+      def walk(node, pos, k)
+        case node[0]
+        when :char
+          byte_at(pos) == node[1] ? k.call(pos + 1) : nil
+        when :any
+          byte = raw_byte(pos)
+          !byte.nil? && (@multiline || byte != 10) ? k.call(pos + 1) : nil
+        when :class
+          pos < @len && class_member?(node, pos) ? k.call(pos + 1) : nil
+        when :seq
+          walk_seq(node[1], 0, pos, k)
+        when :alt
+          node[1].each do |branch|
+            result = walk(branch, pos, k)
+            return result if result
+          end
+          nil
+        when :group
+          index = node[1]
+          saved = @caps[index]
+          start = pos
+          result = walk(node[2], pos, lambda { |stop|
+            @caps[index] = [start, stop]
+            k.call(stop)
+          })
+          @caps[index] = saved unless result
+          result
+        when :repeat
+          walk_repeat(node, pos, k)
+        when :anchor
+          anchor_ok?(node[1], pos) ? k.call(pos) : nil
+        when :backref
+          cap = @caps[node[1]]
+          return nil if cap.nil?
+
+          length = cap[1] - cap[0]
+          return nil if pos + length > @len
+
+          captured = @text.byteslice(cap[0], length).to_s
+          actual = @text.byteslice(pos, length).to_s
+          if @ignorecase
+            captured = captured.downcase
+            actual = actual.downcase
+          end
+          captured == actual ? k.call(pos + length) : nil
+        when :look
+          positive = node[1]
+          found = walk(node[2], pos, IDENTITY)
+          (positive ? found : !found) ? k.call(pos) : nil
+        else
+          nil
+        end
+      end
+
+      def walk_seq(items, index, pos, k)
+        return k.call(pos) if index >= items.length
+        return walk(items[index], pos, k) if index == items.length - 1
+
+        walk(items[index], pos, lambda { |next_pos| walk_seq(items, index + 1, next_pos, k) })
+      end
+
+      def walk_repeat(node, pos, k)
+        inner = node[1]
+        min = node[2]
+        max = node[3]
+        greedy = node[4]
+
+        # Fast path: single-byte atoms backtrack with a loop, not recursion.
+        if simple_node?(inner)
+          count = 0
+          probe = pos
+          limit = max
+          while (limit.nil? || count < limit) && single_byte_match?(inner, probe)
+            probe += 1
+            count += 1
+          end
+          return nil if count < min
+
+          if greedy
+            while count >= min
+              result = k.call(pos + count)
+              return result if result
+
+              count -= 1
+            end
+            nil
+          else
+            attempt = min
+            while attempt <= count
+              result = k.call(pos + attempt)
+              return result if result
+
+              attempt += 1
+            end
+            nil
+          end
+        else
+          repeat_general(inner, min, max, greedy, 0, pos, k)
+        end
+      end
+
+      def repeat_general(inner, min, max, greedy, count, pos, k)
+        if greedy
+          if max.nil? || count < max
+            result = walk(inner, pos, lambda { |next_pos|
+              # zero-width progress guard
+              if next_pos == pos && count >= min
+                nil
+              else
+                repeat_general(inner, min, max, greedy, count + 1, next_pos, k)
+              end
+            })
+            return result if result
+          end
+          count >= min ? k.call(pos) : nil
+        else
+          if count >= min
+            result = k.call(pos)
+            return result if result
+          end
+          if max.nil? || count < max
+            walk(inner, pos, lambda { |next_pos|
+              next_pos == pos ? nil : repeat_general(inner, min, max, greedy, count + 1, next_pos, k)
+            })
+          end
+        end
+      end
+
+      def anchor_ok?(kind, pos)
+        case kind
+        when :bos then pos.zero?
+        when :eos then pos == @len
+        when :eos_nl then pos == @len || (pos == @len - 1 && raw_byte(pos) == 10)
+        when :bol then pos.zero? || raw_byte(pos - 1) == 10
+        when :eol then pos == @len || raw_byte(pos) == 10
+        when :wb then word_byte?(raw_byte(pos - 1)) != word_byte?(raw_byte(pos))
+        when :nwb then word_byte?(raw_byte(pos - 1)) == word_byte?(raw_byte(pos))
+        else false
+        end
+      end
+    end
+  end
+end
+
+unless Object.const_defined?(:MatchData)
+  class MatchData
+    def initialize(regexp, string, caps, names)
+      @regexp = regexp
+      @string = string
+      @caps = caps
+      @names = names
+    end
+
+    def regexp
+      @regexp
+    end
+
+    def string
+      @string
+    end
+
+    def size
+      @caps.length
+    end
+    alias length size
+
+    def names
+      @names.keys
+    end
+
+    def [](key, *rest)
+      unless rest.empty?
+        # [start, length] slice over the capture list
+        return to_a[key, rest[0]]
+      end
+
+      case key
+      when Integer
+        slice_for(key < 0 ? @caps.length + key : key)
+      when String, Symbol
+        index = @names[key.to_s]
+        raise IndexError, "undefined group name reference: #{key}" unless index
+
+        slice_for(index)
+      when Range
+        to_a[key]
+      end
+    end
+
+    def begin(index)
+      cap = cap_for(index)
+      cap && cap[0]
+    end
+
+    def end(index)
+      cap = cap_for(index)
+      cap && cap[1]
+    end
+
+    def offset(index)
+      cap = cap_for(index)
+      cap ? [cap[0], cap[1]] : [nil, nil]
+    end
+
+    def to_a
+      (0...@caps.length).map { |index| slice_for(index) }
+    end
+
+    def captures
+      (1...@caps.length).map { |index| slice_for(index) }
+    end
+
+    def named_captures
+      out = {}
+      @names.each { |name, index| out[name] = slice_for(index) }
+      out
+    end
+
+    def values_at(*indexes)
+      indexes.map { |index| self[index] }
+    end
+
+    def pre_match
+      @string.byteslice(0, @caps[0][0]).to_s
+    end
+
+    def post_match
+      @string.byteslice(@caps[0][1], @string.bytesize - @caps[0][1]).to_s
+    end
+
+    def to_s
+      slice_for(0)
+    end
+
+    def deconstruct
+      captures
+    end
+
+    def deconstruct_keys(keys)
+      out = named_captures
+      symbolized = {}
+      out.each { |name, value| symbolized[name.to_sym] = value }
+      return symbolized if keys.nil?
+
+      keys.each_with_object({}) do |key, acc|
+        acc[key] = symbolized[key] if symbolized.key?(key)
+      end
+    end
+
+    def inspect
+      parts = ["#<MatchData #{slice_for(0).inspect}"]
+      (1...@caps.length).each do |index|
+        name = @names.key(index) || index.to_s
+        parts << " #{name}:#{slice_for(index).inspect}"
+      end
+      parts.join + ">"
+    end
+
+    private
+
+    def cap_for(index)
+      if index.is_a?(String) || index.is_a?(Symbol)
+        index = @names[index.to_s]
+        return nil unless index
+      end
+      @caps[index]
+    end
+
+    def slice_for(index)
+      cap = @caps[index]
+      return nil if cap.nil?
+
+      @string.byteslice(cap[0], cap[1] - cap[0]).to_s
+    end
+  end
+end
+
+# ------------------------------------------------------------------
+# String integration: extend core methods to accept Regexp patterns.
+# ------------------------------------------------------------------
+class String
+  def __regexp_coerce(pattern)
+    pattern.is_a?(Regexp) ? pattern : Regexp.new(Regexp.escape(pattern.to_s))
+  end
+  private :__regexp_coerce
+
+  unless method_defined?(:=~)
+    def =~(pattern)
+      raise TypeError, "type mismatch: String given" if pattern.is_a?(String)
+
+      pattern =~ self if pattern.respond_to?(:=~)
+    end
+  end
+
+  unless method_defined?(:match)
+    def match(pattern, pos = 0)
+      pattern = Regexp.new(pattern.to_s) unless pattern.is_a?(Regexp)
+      pattern.match(self, pos)
+    end
+  end
+
+  unless method_defined?(:match?)
+    def match?(pattern, pos = 0)
+      pattern = Regexp.new(pattern.to_s) unless pattern.is_a?(Regexp)
+      pattern.match?(self, pos)
+    end
+  end
+
+  unless method_defined?(:scan)
+    def scan(pattern)
+      pattern = __regexp_coerce(pattern)
+      results = []
+      pos = 0
+      last_match = nil
+      while pos <= length
+        match = pattern.match(self, pos)
+        break unless match
+
+        last_match = match
+        value = match.captures.empty? ? match[0] : match.captures
+        if block_given?
+          yield value
+        else
+          results << value
+        end
+        stop = match.end(0)
+        pos = stop == match.begin(0) ? stop + 1 : stop
+      end
+      $~ = last_match
+      block_given? ? self : results
+    end
+  end
+
+  alias_method :__ruflet_string_gsub, :gsub unless method_defined?(:__ruflet_string_gsub)
+  def gsub(pattern, replacement = nil, &block)
+    unless pattern.is_a?(Regexp)
+      return __ruflet_string_gsub(pattern, replacement) unless replacement.nil?
+
+      return __ruflet_string_gsub(pattern, &block)
+    end
+
+    out = +""
+    pos = 0
+    scan_pos = 0
+    last_match = nil
+    while scan_pos <= length
+      match = pattern.match(self, scan_pos)
+      break unless match
+
+      last_match = match
+      out += byteslice(pos, match.begin(0) - pos).to_s
+      out += __regexp_replacement(match, replacement, &block)
+      stop = match.end(0)
+      if stop == match.begin(0)
+        out += byteslice(stop, 1).to_s if stop < length
+        scan_pos = stop + 1
+        pos = scan_pos
+      else
+        scan_pos = stop
+        pos = stop
+      end
+    end
+    out += byteslice(pos, length - pos).to_s if pos <= length
+    $~ = last_match
+    last_match.nil? ? dup : out
+  end
+
+  alias_method :__ruflet_string_sub, :sub unless method_defined?(:__ruflet_string_sub)
+  def sub(pattern, replacement = nil, &block)
+    unless pattern.is_a?(Regexp)
+      return __ruflet_string_sub(pattern, replacement) unless replacement.nil?
+
+      return __ruflet_string_sub(pattern, &block)
+    end
+
+    match = pattern.match(self)
+    $~ = match
+    return dup unless match
+
+    out = +""
+    out += byteslice(0, match.begin(0)).to_s
+    out += __regexp_replacement(match, replacement, &block)
+    out += byteslice(match.end(0), length - match.end(0)).to_s
+    out
+  end
+
+  unless method_defined?(:gsub!)
+    def gsub!(pattern, replacement = nil, &block)
+      result = replacement.nil? ? gsub(pattern, &block) : gsub(pattern, replacement)
+      return nil if result == self
+
+      replace(result)
+    end
+  end
+
+  unless method_defined?(:sub!)
+    def sub!(pattern, replacement = nil, &block)
+      result = replacement.nil? ? sub(pattern, &block) : sub(pattern, replacement)
+      return nil if result == self
+
+      replace(result)
+    end
+  end
+
+  def __regexp_replacement(match, replacement)
+    if replacement.nil?
+      return yield(match[0]).to_s if block_given?
+
+      return ""
+    end
+    if replacement.is_a?(Hash)
+      return replacement[match[0]].to_s
+    end
+
+    text = replacement.to_s
+    out = +""
+    index = 0
+    while index < text.bytesize
+      byte = text.getbyte(index)
+      if byte == 92 && index + 1 < text.bytesize # backslash
+        next_byte = text.getbyte(index + 1)
+        if next_byte >= 48 && next_byte <= 57 # \0..\9
+          group = next_byte - 48
+          out += match[group].to_s
+          index += 2
+          next
+        elsif next_byte == 38 # \&
+          out += match[0].to_s
+          index += 2
+          next
+        elsif next_byte == 92 # \\
+          out += "\\"
+          index += 2
+          next
+        elsif next_byte == 107 && text.getbyte(index + 2) == 60 # \k<name>
+          stop = index + 3
+          stop += 1 while stop < text.bytesize && text.getbyte(stop) != 62
+          name = text.byteslice(index + 3, stop - index - 3).to_s
+          out += match[name].to_s
+          index = stop + 1
+          next
+        end
+      end
+      out += [byte].pack("C")
+      index += 1
+    end
+    out
+  end
+  private :__regexp_replacement
+
+  alias_method :__ruflet_string_split, :split unless method_defined?(:__ruflet_string_split)
+  def split(pattern = nil, limit = nil)
+    unless pattern.is_a?(Regexp)
+      return limit.nil? ? __ruflet_string_split(*[pattern].compact) : __ruflet_string_split(pattern, limit)
+    end
+
+    parts = []
+    pos = 0
+    scan_pos = 0
+    while scan_pos <= length
+      break if !limit.nil? && limit > 0 && parts.length >= limit - 1
+
+      match = pattern.match(self, scan_pos)
+      break unless match
+
+      if match.end(0) == match.begin(0)
+        break if scan_pos >= length
+
+        parts << byteslice(pos, match.begin(0) + 1 - pos).to_s if match.begin(0) >= pos
+        scan_pos = match.begin(0) + 1
+        pos = scan_pos
+        next
+      end
+
+      parts << byteslice(pos, match.begin(0) - pos).to_s
+      match.captures.each { |capture| parts << capture unless capture.nil? }
+      scan_pos = match.end(0)
+      pos = scan_pos
+    end
+    parts << byteslice(pos, length - pos).to_s if pos <= length
+    if limit.nil? || limit.zero?
+      parts.pop while !parts.empty? && parts.last == ""
+    end
+    parts
+  end
+
+  alias_method :__ruflet_string_index, :index unless method_defined?(:__ruflet_string_index)
+  def index(pattern, start = 0)
+    return __ruflet_string_index(pattern, start) unless pattern.is_a?(Regexp)
+
+    match = pattern.match(self, start)
+    match && match.begin(0)
+  end
+
+  alias_method :__ruflet_string_slice_op, :[] unless method_defined?(:__ruflet_string_slice_op)
+  def [](first, second = (no_second = true))
+    if first.is_a?(Regexp)
+      match = first.match(self)
+      return nil unless match
+
+      return match[no_second ? 0 : second]
+    end
+    no_second ? __ruflet_string_slice_op(first) : __ruflet_string_slice_op(first, second)
+  end
+  alias_method :slice, :[]
+
+  alias_method :__ruflet_string_partition, :partition unless method_defined?(:__ruflet_string_partition)
+  def partition(pattern)
+    return __ruflet_string_partition(pattern) unless pattern.is_a?(Regexp)
+
+    match = pattern.match(self)
+    return [dup, "", ""] unless match
+
+    [match.pre_match, match[0], match.post_match]
+  end
+
+  alias_method :__ruflet_string_start_with_p, :start_with? unless method_defined?(:__ruflet_string_start_with_p)
+  def start_with?(*patterns)
+    patterns.each do |pattern|
+      if pattern.is_a?(Regexp)
+        match = pattern.match(self)
+        return true if match && match.begin(0).zero?
+      elsif __ruflet_string_start_with_p(pattern)
+        return true
+      end
+    end
+    false
+  end
+end
+
+class Symbol
+  unless method_defined?(:match)
+    def match(pattern, pos = 0)
+      to_s.match(pattern, pos)
+    end
+  end
+
+  unless method_defined?(:match?)
+    def match?(pattern, pos = 0)
+      to_s.match?(pattern, pos)
+    end
+  end
+
+  unless method_defined?(:=~)
+    def =~(pattern)
+      to_s =~ pattern
+    end
+  end
+end
+
+# -- Embedded stdlib supplement (pure Ruby)
+#
+# Loaded by tools/build_embedded_runtime.rb after the vendored mruby gems and
+# the legacy compatibility shims. Fills standard-library gaps that the gems do
+# not cover. Everything is guarded so a future gem upgrade automatically wins.
+# Must stay valid mruby syntax (no autoload, no refinements). Avoid regexps
+# here: this file is part of the runtime bootstrap itself.
+
+ARGV = [] unless Object.const_defined?(:ARGV)
+
+unless Object.const_defined?(:SystemExit)
+  class SystemExit < Exception
+    attr_reader :status
+
+    def initialize(status = 0, message = "exit")
+      @status = status
+      super(message)
+    end
+
+    def success?
+      @status == 0
+    end
+  end
+end
+
+module Kernel
+  unless method_defined?(:exit)
+    def exit(status = true)
+      code =
+        if status == true
+          0
+        elsif status == false
+          1
+        else
+          status.to_i
+        end
+      raise SystemExit.new(code)
+    end
+
+    private :exit
+  end
+
+  unless method_defined?(:abort)
+    def abort(message = nil)
+      warn(message) if message
+      raise SystemExit.new(1, message || "abort")
+    end
+
+    private :abort
+  end
+
+  unless method_defined?(:pp)
+    def pp(*objects)
+      objects.each { |object| puts object.inspect }
+      objects.length == 1 ? objects[0] : objects
+    end
+
+    private :pp
+  end
+end
+
+class Object
+  unless method_defined?(:display)
+    def display(port = $stdout)
+      if port.respond_to?(:write)
+        port.write(to_s)
+      else
+        print(to_s)
+      end
+      nil
+    end
+  end
+end
+
+module Enumerable
+  unless method_defined?(:slice_when)
+    def slice_when(&block)
+      chunk_while { |before, after| !block.call(before, after) }
+    end
+  end
+end
+
+class Integer
+  unless method_defined?(:[])
+    def [](bit)
+      (self >> bit) & 1
+    end
+  end
+
+  unless method_defined?(:ord)
+    def ord
+      self
+    end
+  end
+
+  unless method_defined?(:pred)
+    def pred
+      self - 1
+    end
+  end
+
+  unless method_defined?(:gcdlcm)
+    def gcdlcm(other)
+      [gcd(other), lcm(other)]
+    end
+  end
+
+  unless method_defined?(:coerce)
+    def coerce(other)
+      other.is_a?(Integer) ? [other, self] : [other.to_f, to_f]
+    end
+  end
+end
+
+class Float
+  unless method_defined?(:coerce)
+    def coerce(other)
+      [other.to_f, self]
+    end
+  end
+end
+
+class Numeric
+  unless method_defined?(:step)
+    def step(limit = nil, by = 1)
+      raise ArgumentError, "step can't be 0" if by == 0
+
+      unless block_given?
+        raise ArgumentError, "step without a block requires a limit" if limit.nil?
+
+        values = []
+        step(limit, by) { |value| values << value }
+        return values
+      end
+
+      value = self
+      if by > 0
+        while limit.nil? || value <= limit
+          yield value
+          value += by
+        end
+      else
+        while limit.nil? || value >= limit
+          yield value
+          value += by
+        end
+      end
+      self
+    end
+  end
+
+  unless method_defined?(:to_int)
+    def to_int
+      to_i
+    end
+  end
+end
+
+class Range
+  unless method_defined?(:step)
+    def step(by = 1)
+      raise ArgumentError, "step can't be 0" if by == 0
+
+      unless block_given?
+        values = []
+        step(by) { |value| values << value }
+        return values
+      end
+
+      value = first
+      if exclude_end?
+        while value < last
+          yield value
+          value += by
+        end
+      else
+        while value <= last
+          yield value
+          value += by
+        end
+      end
+      self
+    end
+  end
+
+  unless method_defined?(:%)
+    def %(by, &block)
+      step(by, &block)
+    end
+  end
+end
+
+class Symbol
+  unless method_defined?(:[])
+    def [](*args)
+      to_s[*args]
+    end
+  end
+
+  unless method_defined?(:slice)
+    def slice(*args)
+      to_s[*args]
+    end
+  end
+
+  unless method_defined?(:start_with?)
+    def start_with?(*prefixes)
+      to_s.start_with?(*prefixes)
+    end
+  end
+
+  unless method_defined?(:end_with?)
+    def end_with?(*suffixes)
+      to_s.end_with?(*suffixes)
+    end
+  end
+
+  unless method_defined?(:succ)
+    def succ
+      to_s.succ.to_sym
+    end
+  end
+
+  unless method_defined?(:next)
+    def next
+      to_s.succ.to_sym
+    end
+  end
+
+  unless method_defined?(:swapcase)
+    def swapcase
+      to_s.swapcase.to_sym
+    end
+  end
+end
+
+class Exception
+  unless method_defined?(:cause)
+    def cause
+      nil
+    end
+  end
+
+  unless method_defined?(:full_message)
+    def full_message(*)
+      lines = ["#{message} (#{self.class})"]
+      trace = backtrace
+      trace.each { |entry| lines << "\tfrom #{entry}" } if trace
+      lines.join("\n")
+    end
+  end
+end
+
+class String
+  unless method_defined?(:encode)
+    # Single-encoding VM: encoding conversion is the identity.
+    def encode(*)
+      dup
+    end
+  end
+
+  unless method_defined?(:scrub)
+    def scrub(*)
+      dup
+    end
+  end
+end
+
+class File
+  unless respond_to?(:mtime)
+    def self.mtime(path)
+      open(path.to_s, "r") { |file| file.mtime }
+    end
+  end
+
+  unless respond_to?(:atime)
+    def self.atime(path)
+      open(path.to_s, "r") { |file| file.atime }
+    end
+  end
+
+  unless respond_to?(:ctime)
+    def self.ctime(path)
+      open(path.to_s, "r") { |file| file.ctime }
+    end
+  end
+
+  unless respond_to?(:binread)
+    def self.binread(path, length = nil, offset = 0)
+      open(path.to_s, "rb") do |file|
+        file.seek(offset) if offset && offset > 0
+        length.nil? ? file.read : file.read(length)
+      end
+    end
+  end
+
+  unless respond_to?(:binwrite)
+    def self.binwrite(path, content)
+      open(path.to_s, "wb") { |file| file.write(content.to_s) }
+    end
+  end
+
+  unless respond_to?(:split)
+    def self.split(path)
+      [dirname(path.to_s), basename(path.to_s)]
+    end
+  end
+
+  unless respond_to?(:ftype)
+    def self.ftype(path)
+      text = path.to_s
+      if symlink?(text)
+        "link"
+      elsif directory?(text)
+        "directory"
+      elsif file?(text)
+        "file"
+      else
+        "unknown"
+      end
+    end
+  end
+end
+
+module JSON
+  unless respond_to?(:generate)
+    class << self
+      def generate(value)
+        __generate_value(value)
+      end
+
+      def dump(value)
+        generate(value)
+      end
+
+      def pretty_generate(value, indent = "  ")
+        __pretty_value(value, indent, 0)
+      end
+
+      def __generate_value(value)
+        case value
+        when nil then "null"
+        when true then "true"
+        when false then "false"
+        when Integer, Float then value.to_s
+        when String then __generate_string(value)
+        when Symbol then __generate_string(value.to_s)
+        when Hash
+          pairs = []
+          value.each do |key, item|
+            pairs << "#{__generate_string(__json_key(key))}:#{__generate_value(item)}"
+          end
+          "{#{pairs.join(",")}}"
+        when Array
+          "[#{value.map { |item| __generate_value(item) }.join(",")}]"
+        else
+          if value.respond_to?(:to_h)
+            __generate_value(value.to_h)
+          elsif value.respond_to?(:to_a)
+            __generate_value(value.to_a)
+          else
+            __generate_string(value.to_s)
+          end
+        end
+      end
+
+      def __pretty_value(value, indent, depth)
+        case value
+        when Hash
+          return "{}" if value.empty?
+
+          inner = indent * (depth + 1)
+          pairs = []
+          value.each do |key, item|
+            pairs << "#{inner}#{__generate_string(__json_key(key))}: #{__pretty_value(item, indent, depth + 1)}"
+          end
+          "{\n#{pairs.join(",\n")}\n#{indent * depth}}"
+        when Array
+          return "[]" if value.empty?
+
+          inner = indent * (depth + 1)
+          items = value.map { |item| "#{inner}#{__pretty_value(item, indent, depth + 1)}" }
+          "[\n#{items.join(",\n")}\n#{indent * depth}]"
+        else
+          __generate_value(value)
+        end
+      end
+
+      def __json_key(key)
+        key.is_a?(String) ? key : key.to_s
+      end
+
+      def __generate_string(text)
+        out = "\""
+        text.to_s.each_byte do |byte|
+          if byte == 34
+            out += "\\\""
+          elsif byte == 92
+            out += "\\\\"
+          elsif byte == 8
+            out += "\\b"
+          elsif byte == 12
+            out += "\\f"
+          elsif byte == 10
+            out += "\\n"
+          elsif byte == 13
+            out += "\\r"
+          elsif byte == 9
+            out += "\\t"
+          elsif byte < 32
+            out += "\\u" + ("%04x" % byte)
+          else
+            out += [byte].pack("C")
+          end
+        end
+        out + "\""
+      end
+    end
+  end
+end
+
+[Hash, Array, String, Integer, Float, Symbol, TrueClass, FalseClass, NilClass].each do |klass|
+  unless klass.method_defined?(:to_json)
+    klass.class_eval do
+      def to_json(*)
+        JSON.generate(self)
+      end
+    end
+  end
+end
+
+unless Object.const_defined?(:StringIO)
+  class StringIO
+    attr_reader :string
+    attr_accessor :sync
+
+    def initialize(string = "")
+      @string = string.to_s
+      @pos = 0
+      @closed = false
+      @sync = true
+    end
+
+    def self.open(string = "")
+      io = new(string)
+      return io unless block_given?
+
+      begin
+        yield(io)
+      ensure
+        io.close
+      end
+    end
+
+    def pos
+      @pos
+    end
+    alias tell pos
+
+    def pos=(value)
+      @pos = value.to_i
+    end
+
+    def seek(offset, whence = 0)
+      @pos =
+        case whence
+        when 1 then @pos + offset.to_i
+        when 2 then @string.length + offset.to_i
+        else offset.to_i
+        end
+      0
+    end
+
+    def rewind
+      @pos = 0
+      0
+    end
+
+    def eof?
+      @pos >= @string.length
+    end
+    alias eof eof?
+
+    def read(length = nil, out = nil)
+      if length.nil?
+        chunk = @string[@pos..-1].to_s
+        @pos = @string.length
+        result = chunk
+      else
+        return nil if eof?
+
+        chunk = @string[@pos, length].to_s
+        @pos += chunk.length
+        result = chunk
+      end
+      out ? out.replace(result) : result
+    end
+
+    def getc
+      return nil if eof?
+
+      char = @string[@pos, 1]
+      @pos += 1
+      char
+    end
+
+    def getbyte
+      return nil if eof?
+
+      byte = @string.getbyte(@pos)
+      @pos += 1
+      byte
+    end
+
+    def gets(separator = "\n")
+      return nil if eof?
+
+      index = @string.index(separator, @pos)
+      if index.nil?
+        read
+      else
+        line = @string[@pos, index - @pos + separator.length]
+        @pos = index + separator.length
+        line
+      end
+    end
+
+    def each_line(separator = "\n")
+      while (line = gets(separator))
+        yield line
+      end
+      self
+    end
+
+    def readlines(separator = "\n")
+      lines = []
+      each_line(separator) { |line| lines << line }
+      lines
+    end
+
+    def write(*chunks)
+      total = 0
+      chunks.each do |chunk|
+        text = chunk.to_s
+        if @pos >= @string.length
+          @string = @string + text
+        else
+          @string = @string[0, @pos].to_s + text + @string[@pos + text.length..-1].to_s
+        end
+        @pos += text.length
+        total += text.length
+      end
+      total
+    end
+
+    def <<(chunk)
+      write(chunk)
+      self
+    end
+
+    def print(*chunks)
+      chunks.each { |chunk| write(chunk) }
+      nil
+    end
+
+    def puts(*lines)
+      if lines.empty?
+        write("\n")
+      else
+        lines.each do |line|
+          if line.is_a?(Array)
+            puts(*line)
+          else
+            text = line.to_s
+            write(text)
+            write("\n") unless text.end_with?("\n")
+          end
+        end
+      end
+      nil
+    end
+
+    def printf(format, *args)
+      write(sprintf(format, *args))
+      nil
+    end
+
+    def truncate(length)
+      @string = @string[0, length].to_s
+      0
+    end
+
+    def size
+      @string.length
+    end
+    alias length size
+
+    def flush
+      self
+    end
+
+    def close
+      @closed = true
+      nil
+    end
+
+    def closed?
+      @closed
+    end
+  end
+end
+
+unless Object.const_defined?(:OpenStruct)
+  class OpenStruct
+    def initialize(hash = nil)
+      @table = {}
+      hash.each { |key, value| @table[key.to_sym] = value } if hash
+    end
+
+    def [](key)
+      @table[key.to_sym]
+    end
+
+    def []=(key, value)
+      @table[key.to_sym] = value
+    end
+
+    def to_h
+      out = {}
+      @table.each { |key, value| out[key] = value }
+      out
+    end
+
+    def each_pair(&block)
+      @table.each_pair(&block)
+      self
+    end
+
+    def dig(key, *rest)
+      value = @table[key.to_sym]
+      rest.empty? ? value : value&.dig(*rest)
+    end
+
+    def delete_field(key)
+      @table.delete(key.to_sym)
+    end
+
+    def respond_to_missing?(name, _include_private = false)
+      text = name.to_s
+      text.end_with?("=") || @table.key?(name.to_sym) || super
+    end
+
+    def method_missing(name, *args)
+      text = name.to_s
+      if text.end_with?("=")
+        @table[text[0, text.length - 1].to_sym] = args[0]
+      elsif args.empty?
+        @table[name]
+      else
+        super
+      end
+    end
+
+    def ==(other)
+      other.is_a?(OpenStruct) && to_h == other.to_h
+    end
+
+    def inspect
+      pairs = @table.map { |key, value| " #{key}=#{value.inspect}" }
+      "#<OpenStruct#{pairs.join(",")}>"
+    end
+    alias to_s inspect
+  end
+end
+
+unless Object.const_defined?(:Forwardable)
+  module Forwardable
+    def def_delegator(accessor, method, alias_name = method)
+      accessor = accessor.to_s
+      define_method(alias_name) do |*args, &block|
+        target =
+          if accessor.start_with?("@")
+            instance_variable_get(accessor)
+          else
+            __send__(accessor)
+          end
+        target.__send__(method, *args, &block)
+      end
+    end
+
+    def def_delegators(accessor, *methods)
+      methods.each { |method| def_delegator(accessor, method) }
+    end
+
+    alias def_instance_delegator def_delegator
+    alias def_instance_delegators def_delegators
+  end
+end
+
+unless Object.const_defined?(:Base64)
+  module Base64
+    extend self
+
+    def encode64(data)
+      [data].pack("m")
+    end
+
+    def decode64(data)
+      data.unpack1("m")
+    end
+
+    def strict_encode64(data)
+      [data].pack("m0")
+    end
+
+    def strict_decode64(data)
+      data.unpack1("m0")
+    end
+
+    def urlsafe_encode64(data, padding: true)
+      text = strict_encode64(data).tr("+/", "-_")
+      padding ? text : text.delete("=")
+    end
+
+    def urlsafe_decode64(data)
+      text = data.tr("-_", "+/")
+      text += "=" * ((4 - (text.length % 4)) % 4)
+      strict_decode64(text)
+    end
+  end
+end
+
+if Object.const_defined?(:Time)
+  class Time
+    unless method_defined?(:strftime)
+      STRFTIME_DAY_NAMES = %w[Sunday Monday Tuesday Wednesday Thursday Friday Saturday].freeze
+      STRFTIME_MONTH_NAMES = %w[
+        January February March April May June July
+        August September October November December
+      ].freeze
+
+      def strftime(format)
+        out = ""
+        index = 0
+        text = format.to_s
+        while index < text.length
+          char = text[index, 1]
+          if char != "%" || index == text.length - 1
+            out += char
+            index += 1
+            next
+          end
+
+          directive = text[index + 1, 1]
+          out += __strftime_directive(directive)
+          index += 2
+        end
+        out
+      end
+
+      def iso8601(fraction_digits = 0)
+        base = strftime("%Y-%m-%dT%H:%M:%S")
+        if fraction_digits > 0
+          fraction = (usec / 1_000_000.0).to_s[2, fraction_digits].to_s
+          fraction += "0" * (fraction_digits - fraction.length)
+          base += ".#{fraction}"
+        end
+        base + __strftime_zone(":")
+      end
+
+      private
+
+      def __strftime_directive(directive)
+        case directive
+        when "Y" then year.to_s
+        when "y" then "%02d" % (year % 100)
+        when "m" then "%02d" % mon
+        when "d" then "%02d" % mday
+        when "e" then "%2d" % mday
+        when "H" then "%02d" % hour
+        when "I" then "%02d" % (((hour + 11) % 12) + 1)
+        when "M" then "%02d" % min
+        when "S" then "%02d" % sec
+        when "L" then "%03d" % (usec / 1000)
+        when "N" then "%09d" % (usec * 1000)
+        when "p" then hour < 12 ? "AM" : "PM"
+        when "P" then hour < 12 ? "am" : "pm"
+        when "a" then STRFTIME_DAY_NAMES[wday][0, 3]
+        when "A" then STRFTIME_DAY_NAMES[wday]
+        when "b", "h" then STRFTIME_MONTH_NAMES[mon - 1][0, 3]
+        when "B" then STRFTIME_MONTH_NAMES[mon - 1]
+        when "j" then "%03d" % yday
+        when "u" then (wday == 0 ? 7 : wday).to_s
+        when "w" then wday.to_s
+        when "s" then to_i.to_s
+        when "z" then __strftime_zone("")
+        when "Z" then utc? ? "UTC" : zone.to_s
+        when "F" then strftime("%Y-%m-%d")
+        when "T", "X" then strftime("%H:%M:%S")
+        when "R" then strftime("%H:%M")
+        when "D", "x" then strftime("%m/%d/%y")
+        when "c" then strftime("%a %b %e %H:%M:%S %Y")
+        when "n" then "\n"
+        when "t" then "\t"
+        when "%" then "%"
+        else "%" + directive.to_s
+        end
+      end
+
+      def __strftime_zone(separator)
+        offset = utc_offset
+        sign = offset < 0 ? "-" : "+"
+        offset = -offset if offset < 0
+        hours = offset / 3600
+        minutes = (offset % 3600) / 60
+        "#{sign}#{"%02d" % hours}#{separator}#{"%02d" % minutes}"
       end
     end
   end
@@ -26210,6 +28451,7 @@ module Ruflet
           if @port != requested && ENV["RUFLET_SUPPRESS_SERVER_BANNER"] != "1"
             warn "Requested port #{requested} is busy; bound to #{@port}"
           end
+          publish_bound_port!
           return
         rescue Errno::EADDRINUSE
           candidate += 1
@@ -26225,6 +28467,7 @@ module Ruflet
       return unless @running || @server_socket
 
       @running = false
+      remove_port_file!
 
       server = @server_socket
       @server_socket = nil
@@ -26272,6 +28515,30 @@ module Ruflet
     end
 
     private
+
+    # Lets embedding hosts (e.g. the ruby_runtime Flutter plugins) discover
+    # which port the server actually bound when the requested one was busy.
+    def publish_bound_port!
+      path = ENV["RUFLET_PORT_FILE"].to_s
+      return if path.empty?
+
+      begin
+        File.write(path, @port.to_s)
+      rescue StandardError
+        nil
+      end
+    end
+
+    def remove_port_file!
+      path = ENV["RUFLET_PORT_FILE"].to_s
+      return if path.empty?
+
+      begin
+        File.delete(path)
+      rescue StandardError
+        nil
+      end
+    end
 
     def trap_stop_signals
       {
@@ -27228,9 +29495,17 @@ end
         "socket" => true,
         "thread" => true,
         "digest/sha1" => true,
+        "digest" => true,
         "fileutils" => true,
         "securerandom" => true,
         "tmpdir" => true,
+        "time" => true,
+        "stringio" => true,
+        "ostruct" => true,
+        "forwardable" => true,
+        "base64" => true,
+        "pp" => true,
+        "English" => true,
       }
       return true if bundled_features[feature.to_s]
       raise LoadError, "cannot load such file -- #{feature}"

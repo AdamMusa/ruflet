@@ -12,14 +12,36 @@ It is designed for self-contained Ruflet apps that ship a Ruby entry file with t
 
 ## What It Supports
 
-The embedded runtime includes the pieces Ruflet needs for local execution:
+The embedded runtime is a general-purpose mruby VM. It vendors the standard
+mruby extension gems, so app code written against everyday Ruby works out of
+the box:
 
-- Ruby script evaluation with mruby
+- Ruby script evaluation with mruby (`eval`, `instance_eval` with strings)
 - Running Ruby files from local storage
-- Basic file and IO support
-- Socket support
+- File, IO, `Dir`, and socket support
 - Ruflet's embedded HTTP and WebSocket server flow
-- JSON support
+- `Time` (with pure-Ruby `strftime`/`iso8601`), `Math`, `Random`/`srand`
+- `Struct`, `Data.define`, `Set`, `Comparable#clamp`
+- `Enumerator` (including external iteration and `lazy`), `Fiber`
+- The full `*-ext` method gems: `Array`, `Hash`, `String`, `Numeric`,
+  `Object`, `Kernel`, `Range`, `Symbol`, `Proc`, `Class` extensions
+- `Method`/`UnboundMethod` objects, `catch`/`throw`
+- JSON parse **and** generate (`JSON.generate`, `#to_json`)
+- `StringIO`, `OpenStruct`, `Forwardable`, `Base64`, `SecureRandom`
+  (including `uuid`), `FileUtils`, `Digest::SHA1`, real `Kernel#sleep`
+- `Regexp` and `MatchData` via a pure-Ruby engine: regex literals,
+  `String#match/match?/=~/scan/gsub/sub/split/[]/partition/index` with
+  regexps, named captures, lookahead, backreferences, `i m x` options,
+  `case ... when /re/`, `Regexp.escape/union/last_match`, `$~`
+
+A desktop test harness compiles the exact same sources the plugins ship, so
+the runtime can be exercised without booting Flutter:
+
+```sh
+tools/embedded_vm_harness/build.sh
+tools/embedded_vm_harness/build/embedded_mruby --preload \
+  tools/embedded_vm_harness/tests/compat_test.rb
+```
 
 In practice, this means Ruflet apps can:
 
@@ -34,6 +56,14 @@ This package uses `mruby`, not full CRuby.
 
 Do not assume the full Ruby standard library or arbitrary Ruby gems are available. In particular, you should not rely on things like:
 
+- advanced `Regexp` features: the embedded engine is byte-oriented (ASCII
+  case folding), and lookbehind, unicode property classes (`\p{...}`), and
+  the read-only `$1`..`$9` globals are not supported (use
+  `Regexp.last_match(1)` or `match[1]`)
+- `Date` / `DateTime` (use `Time`)
+- real threads — `Thread` and `Mutex` are cooperative fakes; the embedded
+  server is single-threaded
+- `URI`, `Rational`, `Complex`, `Marshal`, `ObjectSpace`
 - full `net/http`
 - `webrick`
 - `openssl`
@@ -53,6 +83,7 @@ If your app needs the broader CRuby ecosystem, use a separate backend instead of
 - `RubyRuntime.startFileServer(String path, {String? stopSignalPath})`
 - `RubyRuntime.stopFileServer()`
 - `RubyRuntime.isFileServerRunning()`
+- `RubyRuntime.serverPort()`
 - `RubyRuntime.lastFileServerError()`
 
 ## Recommended Ruflet Flow
@@ -131,6 +162,9 @@ final lastError = await RubyRuntime.lastFileServerError();
 Notes:
 
 - `startFileServer()` starts the embedded Ruflet runtime server in native code.
+  The server binds the first free port (starting at 8550) and reports the
+  actual port through `serverPort()`, which returns 0 until the server has
+  bound a port.
 - `lastFileServerError()` is the first place to check when local startup fails.
 - `reset()` is useful during development when you want a clean embedded runtime state.
 
