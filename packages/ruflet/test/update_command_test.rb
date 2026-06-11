@@ -144,12 +144,31 @@ class RufletCliUpdateCommandTest < Minitest::Test
       refute_path_exists File.join(client_dir, "pubspec_overrides.yaml")
       pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
       ruby_runtime = YAML.safe_load(pubspec, aliases: true).dig("dependencies", "ruby_runtime")
-      assert_equal({ "path" => "../../../ruby_runtime" }, ruby_runtime)
+      repo_plugin = File.expand_path("../../../ruby_runtime", __dir__)
+      assert_equal({ "path" => repo_plugin }, ruby_runtime,
+                   "repo checkouts should build against the local plugin")
       assert_includes calls, client_dir
     end
   end
 
-  def test_ruby_runtime_dependency_prefers_current_template_over_stale_client_dependency
+  def test_ruby_runtime_dependency_uses_hosted_template_requirement
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      template_dir = File.join(dir, "template")
+      FileUtils.mkdir_p(template_dir)
+      File.write(
+        File.join(template_dir, "pubspec.yaml"),
+        "dependencies:\n  ruby_runtime: ^0.0.5\n"
+      )
+      with_template_root(template_dir) do
+        dependency = builder.send(:ruby_runtime_dependency, "^0.0.3")
+        assert_equal "^0.0.5", dependency
+      end
+    end
+  end
+
+  def test_ruby_runtime_dependency_never_copies_relative_template_paths
     builder = DummyBuilder.new
 
     Dir.mktmpdir do |dir|
@@ -159,18 +178,39 @@ class RufletCliUpdateCommandTest < Minitest::Test
         File.join(template_dir, "pubspec.yaml"),
         "dependencies:\n  ruby_runtime:\n    path: ../../../ruby_runtime\n"
       )
-      original_method = Ruflet::CLI.method(:resolve_ruflet_client_template_root)
-      Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root) { template_dir }
-      Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
-
-      begin
-        dependency = builder.send(:ruby_runtime_dependency, "^0.0.3")
-        assert_equal({ "path" => "../../../ruby_runtime" }, dependency)
-      ensure
-        Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root, original_method)
-        Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
+      with_template_root(template_dir) do
+        dependency = builder.send(:ruby_runtime_dependency, nil)
+        assert_equal Ruflet::CLI::BuildCommand::RUBY_RUNTIME_FALLBACK_REQUIREMENT, dependency
       end
     end
+  end
+
+  def test_ruby_runtime_dependency_uses_local_plugin_in_repo_checkout
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      template_dir = File.join(dir, "templates", "ruflet_flutter_template")
+      FileUtils.mkdir_p(template_dir)
+      File.write(File.join(template_dir, "pubspec.yaml"), "dependencies:\n  ruby_runtime: ^0.0.5\n")
+      plugin_dir = File.join(dir, "ruby_runtime")
+      FileUtils.mkdir_p(plugin_dir)
+      File.write(File.join(plugin_dir, "pubspec.yaml"), "name: ruby_runtime\n")
+
+      with_template_root(template_dir) do
+        dependency = builder.send(:ruby_runtime_dependency, "^0.0.3")
+        assert_equal({ "path" => plugin_dir }, dependency)
+      end
+    end
+  end
+
+  def with_template_root(template_dir)
+    original_method = Ruflet::CLI.method(:resolve_ruflet_client_template_root)
+    Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root) { template_dir }
+    Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
+    yield
+  ensure
+    Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root, original_method)
+    Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
   end
 
   def test_sync_self_contained_project_assets_normalizes_endless_methods

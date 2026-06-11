@@ -1377,14 +1377,46 @@ module Ruflet
         write_pubspec_yaml(pubspec_path, data)
       end
 
+      RUBY_RUNTIME_FALLBACK_REQUIREMENT = "^0.0.5"
+
       def ruby_runtime_dependency(current_dependency = nil)
-        local_path = explicit_local_ruby_runtime_path
+        local_path = explicit_local_ruby_runtime_path || repo_checkout_ruby_runtime_path
         return { "path" => local_path } if local_path
 
         template_dependency = template_client_pubspec_dependencies["ruby_runtime"]
-        return template_dependency if template_dependency
+        return template_dependency if usable_ruby_runtime_dependency?(template_dependency)
 
-        current_dependency || "^0.0.4"
+        return current_dependency if usable_ruby_runtime_dependency?(current_dependency)
+
+        RUBY_RUNTIME_FALLBACK_REQUIREMENT
+      end
+
+      # In a ruflet repo checkout the plugin lives next to templates/; build
+      # against it so framework changes are exercised without publishing.
+      def repo_checkout_ruby_runtime_path
+        template_root =
+          if Ruflet::CLI.respond_to?(:resolve_ruflet_client_template_root, true)
+            Ruflet::CLI.send(:resolve_ruflet_client_template_root)
+          end
+        return nil unless template_root
+
+        candidate = File.expand_path(File.join(template_root, "..", "..", "ruby_runtime"))
+        File.file?(File.join(candidate, "pubspec.yaml")) ? candidate : nil
+      end
+
+      # Relative path dependencies only resolve from the directory the
+      # template was authored in — never copy them into a user's client.
+      def usable_ruby_runtime_dependency?(dependency)
+        case dependency
+        when nil then false
+        when Hash
+          path = dependency["path"] || dependency[:path]
+          return true if path.nil? # hosted/git table form
+
+          Pathname.new(path.to_s).absolute? && File.file?(File.join(path, "pubspec.yaml"))
+        else
+          !dependency.to_s.strip.empty?
+        end
       end
 
       def explicit_local_ruby_runtime_path
