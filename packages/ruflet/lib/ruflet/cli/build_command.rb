@@ -98,6 +98,32 @@ module Ruflet
       }.freeze
 
       def command_build(args)
+        with_project_build_lock { run_build_command(args) }
+      end
+
+      # Concurrent builds share build/client and corrupt each other's state
+      # (missing app.dill, Xcode build.db I/O errors). flock is released
+      # automatically when the process exits, so the lock cannot go stale.
+      def with_project_build_lock
+        lock_dir = File.join(Dir.pwd, "build")
+        FileUtils.mkdir_p(lock_dir)
+        lock_path = File.join(lock_dir, ".ruflet_build.lock")
+        File.open(lock_path, File::RDWR | File::CREAT, 0o644) do |file|
+          unless file.flock(File::LOCK_EX | File::LOCK_NB)
+            owner = file.read.to_s.strip
+            warn "Another ruflet build is already running for this project#{owner.empty? ? '' : " (#{owner})"}."
+            warn "Concurrent builds share the same build directory and corrupt each other."
+            warn "Wait for it to finish, then retry."
+            return 1
+          end
+          file.truncate(0)
+          file.write("pid=#{Process.pid} started=#{Time.now}")
+          file.flush
+          yield
+        end
+      end
+
+      def run_build_command(args)
         self_contained = args.delete("--self")
         verbose = args.delete("--verbose") || args.delete("-v")
         platform = (args.shift || "").downcase
@@ -542,7 +568,20 @@ module Ruflet
       end
 
       def unbundled_command_env(env)
-        env.reject { |key, _value| key.start_with?("BUNDLE_") || key == "RUBYOPT" || key == "RUBYLIB" || key.start_with?("GEM_") }
+        command_env = env.reject { |key, _value| key.start_with?("BUNDLE_") || key == "RUBYOPT" || key == "RUBYLIB" || key.start_with?("GEM_") }
+        ensure_utf8_locale(command_env)
+      end
+
+      # CocoaPods refuses to run in a non-UTF-8 terminal and Xcode project
+      # files contain UTF-8; guarantee a UTF-8 locale for child tools.
+      def ensure_utf8_locale(env)
+        locale = env["LC_ALL"].to_s
+        locale = env["LANG"].to_s if locale.empty?
+        return env if locale.downcase.include?("utf-8") || locale.downcase.include?("utf8")
+
+        env["LANG"] = "en_US.UTF-8"
+        env["LC_ALL"] = "en_US.UTF-8"
+        env
       end
 
       def run_external_command(env, *cmd, chdir:, unbundled: false)
