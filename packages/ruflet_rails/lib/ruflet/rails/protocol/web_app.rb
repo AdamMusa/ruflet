@@ -47,8 +47,9 @@ module Ruflet
           ".txt" => "text/plain"
         }.freeze
 
-        def initialize(build_dir: nil, &app_block)
+        def initialize(build_dir: nil, entrypoint: nil, &app_block)
           @explicit_build_dir = build_dir
+          @entrypoint_option = entrypoint
           @app_block = app_block
           @endpoint = nil
           @endpoint_mutex = Mutex.new
@@ -72,7 +73,7 @@ module Ruflet
         end
 
         def entrypoint
-          @app_block || lambda { |page| Ruflet::Rails.render(page) }
+          @entrypoint_option || @app_block || lambda { |page| Ruflet::Rails.render(page) }
         end
 
         def build_dir

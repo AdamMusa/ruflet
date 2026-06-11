@@ -79,16 +79,48 @@ module Ruflet
 
     # Self-contained web frontend, mountable under any route. Serves the
     # Flutter web build (with <base href> rewritten to the mount point) and
-    # answers the Ruflet WebSocket on the same path, so one line in
-    # routes.rb is the whole integration:
+    # answers the Ruflet WebSocket on the same path. Routes stay routing-only;
+    # UI code lives in app/views/ruflet:
     #
-    #   mount Ruflet::Rails.web_app, at: "/myfrontend"
+    #   # all registered RufletView subclasses behind the view router:
+    #   mount Ruflet::Rails.web_app, at: "/app"
     #
-    # Pass a block for an explicit entrypoint (defaults to the view router):
+    #   # a single view class (resolved lazily, so reloading works):
+    #   mount Ruflet::Rails.web_app(view: "CounterView"), at: "/myfrontend"
     #
-    #   mount Ruflet::Rails.web_app { |page| CounterView.render(page) }, at: "/counter"
-    def web_app(build_dir: nil, &app_block)
-      Protocol::WebApp.new(build_dir: build_dir, &app_block)
+    #   # a standalone Ruflet app file (MyApp.new.run), loaded per session:
+    #   mount Ruflet::Rails.web_app(app_file: "app/ruflet/showcase/main.rb"), at: "/showcase"
+    def web_app(view: nil, app_file: nil, build_dir: nil, &app_block)
+      sources = [view, app_file, app_block].compact
+      raise ArgumentError, "web_app accepts only one of view:, app_file:, or a block" if sources.length > 1
+
+      Protocol::WebApp.new(
+        build_dir: build_dir,
+        entrypoint: web_app_entrypoint(view: view, app_file: app_file),
+        &app_block
+      )
+    end
+
+    def web_app_entrypoint(view: nil, app_file: nil)
+      if view
+        lambda do |page|
+          view_class_for(view).render(page)
+        end
+      elsif app_file
+        absolute = app_file.to_s
+        lambda do |page, env|
+          loaded = Protocol::MobileLoader.new(File.expand_path(absolute)).load!
+          entry = loaded[:entrypoint]
+          entry.arity == 1 ? entry.call(page) : entry.call(page, env)
+        end
+      end
+    end
+
+    # Resolved lazily on each session so Rails code reloading picks up edits.
+    def view_class_for(view)
+      return view if view.is_a?(Class)
+
+      view.to_s.constantize
     end
 
     # Reads index.html from the web build dir, injects window.__RUFLET_URL__
