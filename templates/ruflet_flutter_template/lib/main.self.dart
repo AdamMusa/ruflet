@@ -278,7 +278,7 @@ class EmbeddedRufletRuntime {
     await _deleteStaleTempWorkDirs();
     final workDir = await Directory.systemTemp.createTemp('ruflet_template_');
     final stopPath = '${workDir.path}/server.stop';
-    const pageUrl = 'http://127.0.0.1:$kRufletPort';
+    var pageUrl = 'http://127.0.0.1:$kRufletPort';
 
     try {
       await RubyRuntime.initialize();
@@ -286,7 +286,17 @@ class EmbeddedRufletRuntime {
       await RubyRuntime.startFileServer(serverPath, stopSignalPath: stopPath);
       final startupDeadline = DateTime.now().add(const Duration(seconds: 5));
       while (DateTime.now().isBefore(startupDeadline)) {
-        if (await RubyRuntime.isFileServerRunning() &&
+        final discoveredPort = await _discoverServerPort();
+        if (discoveredPort != null && discoveredPort > 0) {
+          pageUrl = 'http://127.0.0.1:$discoveredPort';
+        }
+        // While the plugin reports bound ports, wait for the real port
+        // instead of probing the default one: another Ruflet server (e.g. a
+        // CRuby dev server) may already be answering on it and the client
+        // would silently attach to the wrong app.
+        final portKnown = discoveredPort == null || discoveredPort > 0;
+        if (portKnown &&
+            await RubyRuntime.isFileServerRunning() &&
             await canConnectToPageUrl(
               pageUrl,
               timeout: const Duration(milliseconds: 250),
@@ -308,6 +318,18 @@ class EmbeddedRufletRuntime {
         workDir: workDir,
         error: 'Failed to start embedded Ruflet.\n$error\n$stackTrace',
       );
+    }
+  }
+
+  /// Port the embedded server actually bound, reported by the ruby_runtime
+  /// plugin. Returns 0 until the server binds, or null on platforms whose
+  /// plugin predates port reporting — those keep polling the default
+  /// [kRufletPort].
+  static Future<int?> _discoverServerPort() async {
+    try {
+      return await RubyRuntime.serverPort();
+    } catch (_) {
+      return null;
     }
   }
 
@@ -350,6 +372,7 @@ class EmbeddedRufletRuntime {
     if (projectAssets.isEmpty) {
       throw StateError(
         'No packaged Ruby project was found under $embeddedProjectPrefix. '
+        '${_describeRubyAssets(manifest)} '
         'Run `ruflet build --self` so Ruflet can package the real Ruby app.',
       );
     }
@@ -368,6 +391,11 @@ class EmbeddedRufletRuntime {
     return '${workDir.path}/main.rb';
   }
 
+  /// Resolves where the packaged Ruby project lives in the asset bundle.
+  /// Accepts every layout Ruflet has shipped, so apps built by any CLI
+  /// version keep booting: the explicit dart-define, a discovered
+  /// `assets/<project>/main.rb`, the legacy `assets/ruby_project/` folder,
+  /// and the legacy flat `assets/main.rb`.
   static String _embeddedProjectPrefix(List<String> manifest) {
     final name = kEmbeddedProjectName.trim();
     if (name.isNotEmpty) {
@@ -380,18 +408,51 @@ class EmbeddedRufletRuntime {
         )
         .map((asset) => asset.substring(0, asset.length - 'main.rb'.length))
         .where((prefix) => prefix != 'assets/')
-        .where((prefix) => prefix != 'assets/ruby_project/')
         .where((prefix) => !prefix.startsWith('assets/icons/'))
+        .toSet()
         .toList();
 
     if (discovered.length == 1) {
       return discovered.single;
     }
+    if (discovered.length > 1) {
+      // assets/ruby_project/ is the legacy placeholder folder; a real
+      // packaged project alongside it always wins.
+      final real = discovered
+          .where((prefix) => prefix != 'assets/ruby_project/')
+          .toList();
+      if (real.length == 1) {
+        return real.single;
+      }
+      throw StateError(
+        'Multiple packaged Ruby projects found (${discovered.join(', ')}). '
+        'Set the RUFLET_EMBEDDED_PROJECT dart define to choose one.',
+      );
+    }
+
+    // Legacy flat layout: a single main.rb directly under assets/.
+    if (manifest.contains('assets/main.rb')) {
+      return 'assets/';
+    }
 
     throw StateError(
-      'Missing RUFLET_EMBEDDED_PROJECT dart define and could not infer the embedded project asset path. '
-      'Run `ruflet build --self` so Ruflet can package the real Ruby app.',
+      'Could not find a packaged Ruby project in the asset bundle. '
+      '${_describeRubyAssets(manifest)} '
+      'Run `ruflet build --self` so Ruflet can package the real Ruby app, '
+      'or set the RUFLET_EMBEDDED_PROJECT dart define.',
     );
+  }
+
+  static String _describeRubyAssets(List<String> manifest) {
+    if (manifest.isEmpty) {
+      return 'The asset manifest could not be read or is empty.';
+    }
+    final rubyAssets =
+        manifest.where((asset) => asset.endsWith('.rb')).take(8).toList();
+    if (rubyAssets.isEmpty) {
+      return 'The bundle contains no .rb assets at all.';
+    }
+    return 'Ruby assets present: ${rubyAssets.join(', ')}.';
   }
 
   static Future<List<String>> _loadAssetManifest() async {

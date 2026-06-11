@@ -27,6 +27,28 @@ class RufletCliTemplatesTest < Minitest::Test
     assert_includes template, "RubyRuntime.startFileServer"
   end
 
+  def test_self_contained_template_polls_discovered_server_port
+    template = File.read(File.expand_path("../../../templates/ruflet_flutter_template/lib/main.self.dart", __dir__))
+
+    assert_includes template, "RubyRuntime.serverPort()"
+    assert_includes template, "_discoverServerPort"
+  end
+
+  def test_ruby_runtime_plugins_report_bound_port_instead_of_strict_port
+    root = File.expand_path("../../..", __dir__)
+
+    %w[
+      ruby_runtime/macos/Classes/RubyRuntimeMacosPlugin.m
+      ruby_runtime/ios/Classes/MrubyRuntimePlugin.m
+      ruby_runtime/android/src/main/cpp/ruby_runtime_jni.cpp
+    ].each do |path|
+      source = File.read(File.join(root, path))
+
+      assert_includes source, "RUFLET_PORT_FILE", "#{path} should seed the port file path"
+      refute_includes source, "RUFLET_STRICT_PORT", "#{path} should no longer force strict port binding"
+    end
+  end
+
   def test_flutter_templates_register_ruflet_file_picker_service_override
     %w[main.self.dart main.server.dart].each do |name|
       template = File.read(File.expand_path("../../../templates/ruflet_flutter_template/lib/#{name}", __dir__))
@@ -214,7 +236,8 @@ class RufletCliTemplatesTest < Minitest::Test
   def test_embedded_runtime_has_sleep_shim_for_threaded_samples
     runtime = File.read(File.expand_path("../../../ruby_runtime/shared/embedded_ruflet_runtime.rb", __dir__))
 
-    assert_includes runtime, "def sleep(_seconds = nil)"
+    assert_includes runtime, "def sleep(seconds = nil)"
+    assert_includes runtime, "::IO.select(nil, nil, nil, duration)"
   end
 
   def test_embedded_runtime_does_not_start_timeout_thread_with_fake_thread
