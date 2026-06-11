@@ -26,6 +26,9 @@ class MockRubyRuntimePlatform
   Future<bool> isFileServerRunning() async => true;
 
   @override
+  Future<int> serverPort() async => 8551;
+
+  @override
   Future<String> lastFileServerError() async => '';
 }
 
@@ -43,6 +46,7 @@ void main() {
     expect(await RubyRuntime.runFile('/tmp/demo.rb'), 'file:/tmp/demo.rb');
     await RubyRuntime.startFileServer('/tmp/demo.rb');
     expect(await RubyRuntime.isFileServerRunning(), true);
+    expect(await RubyRuntime.serverPort(), 8551);
     expect(await RubyRuntime.lastFileServerError(), '');
     await RubyRuntime.stopFileServer();
     await RubyRuntime.reset();

@@ -15,6 +15,7 @@ class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
     external fun nativeStartFileServer(path: String, stopSignalPath: String): String
     external fun nativeStopFileServer()
     external fun nativeIsFileServerRunning(): Boolean
+    external fun nativeServerPort(): Int
     external fun nativeLastFileServerError(): String
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
@@ -67,6 +68,7 @@ class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
                     result.success(null)
                 }
                 "isFileServerRunning" -> result.success(nativeIsFileServerRunning())
+                "serverPort" -> result.success(nativeServerPort())
                 "lastFileServerError" -> result.success(nativeLastFileServerError())
                 else -> result.notImplemented()
             }

@@ -24,6 +24,8 @@ void main() {
               return null;
             case 'isFileServerRunning':
               return true;
+            case 'serverPort':
+              return 8551;
             case 'lastFileServerError':
               return '';
             default:
@@ -55,6 +57,10 @@ void main() {
 
   test('isFileServerRunning', () async {
     expect(await platform.isFileServerRunning(), true);
+  });
+
+  test('serverPort', () async {
+    expect(await platform.serverPort(), 8551);
   });
 
   test('stopFileServer', () async {

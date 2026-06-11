@@ -65,6 +65,7 @@ module Ruflet
           if @port != requested && ENV["RUFLET_SUPPRESS_SERVER_BANNER"] != "1"
             warn "Requested port #{requested} is busy; bound to #{@port}"
           end
+          publish_bound_port!
           return
         rescue Errno::EADDRINUSE
           candidate += 1
@@ -80,6 +81,7 @@ module Ruflet
       return unless @running || @server_socket
 
       @running = false
+      remove_port_file!
 
       server = @server_socket
       @server_socket = nil
@@ -127,6 +129,30 @@ module Ruflet
     end
 
     private
+
+    # Lets embedding hosts (e.g. the ruby_runtime Flutter plugins) discover
+    # which port the server actually bound when the requested one was busy.
+    def publish_bound_port!
+      path = ENV["RUFLET_PORT_FILE"].to_s
+      return if path.empty?
+
+      begin
+        File.write(path, @port.to_s)
+      rescue StandardError
+        nil
+      end
+    end
+
+    def remove_port_file!
+      path = ENV["RUFLET_PORT_FILE"].to_s
+      return if path.empty?
+
+      begin
+        File.delete(path)
+      rescue StandardError
+        nil
+      end
+    end
 
     def trap_stop_signals
       {

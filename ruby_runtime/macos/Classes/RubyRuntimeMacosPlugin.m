@@ -14,6 +14,7 @@ static NSLock *g_lock = nil;
 static BOOL g_server_running = NO;
 static BOOL g_runtime_loaded = NO;
 static NSString *g_stop_signal_path = nil;
+static NSString *g_port_file_path = nil;
 static NSString *g_last_server_error = nil;
 
 static NSString *escape_single_quotes(NSString *text) {
@@ -188,6 +189,27 @@ static NSString *eval_source(NSString *source, NSString *filename, NSError **err
   return [NSString stringWithUTF8String:value] ?: @"";
 }
 
+/* Returns the port the embedded server reported through RUFLET_PORT_FILE,
+   or 0 when the server has not bound a port yet. */
+static long read_server_port(void) {
+  NSString *portPath = g_port_file_path;
+  if (portPath == nil || portPath.length == 0) {
+    return 0;
+  }
+  NSString *contents = [NSString stringWithContentsOfFile:portPath
+                                                 encoding:NSUTF8StringEncoding
+                                                    error:nil];
+  if (contents == nil) {
+    return 0;
+  }
+  long port = [contents stringByTrimmingCharactersInSet:
+                   [NSCharacterSet whitespaceAndNewlineCharacterSet]].integerValue;
+  if (port <= 0 || port > 65535) {
+    return 0;
+  }
+  return port;
+}
+
 static void request_stop_server(void) {
   if (g_stop_signal_path == nil || g_stop_signal_path.length == 0) {
     return;
@@ -265,6 +287,7 @@ static void request_stop_server(void) {
     }
     g_runtime_loaded = NO;
     g_last_server_error = nil;
+    g_port_file_path = nil;
     [g_lock unlock];
     result(nil);
     return;
@@ -290,6 +313,11 @@ static void request_stop_server(void) {
     [[NSFileManager defaultManager] removeItemAtPath:stopPath error:nil];
     g_stop_signal_path = stopPath;
 
+    NSString *portFilePath =
+        [[path stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"server.port"];
+    [[NSFileManager defaultManager] removeItemAtPath:portFilePath error:nil];
+    g_port_file_path = portFilePath;
+
     NSError *readError = nil;
     NSString *source = [NSString stringWithContentsOfFile:path
                                                  encoding:NSUTF8StringEncoding
@@ -301,13 +329,21 @@ static void request_stop_server(void) {
       return;
     }
     NSString *safeAppRoot = escape_single_quotes([path stringByDeletingLastPathComponent]);
-    source = [NSString stringWithFormat:@"$__ruflet_app_root = '%@'\n%@", safeAppRoot, source];
+    /* The embedded VM's ENV is isolated from the process environment, so
+       configuration must be seeded through the Ruby prelude. The server binds
+       any free port and reports the bound port through RUFLET_PORT_FILE. */
+    source = [NSString stringWithFormat:
+      @"$__ruflet_app_root = '%@'\n"
+      @"ENV['RUFLET_PROD_STOP_FILE'] = '%@' if Object.const_defined?(:ENV)\n"
+      @"ENV['RUFLET_PORT_FILE'] = '%@' if Object.const_defined?(:ENV)\n"
+      @"%@",
+      safeAppRoot, escape_single_quotes(stopPath), escape_single_quotes(portFilePath), source];
 
     g_last_server_error = nil;
     g_server_running = YES;
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
       setenv("RUFLET_PROD_STOP_FILE", stopPath.UTF8String, 1);
-      setenv("RUFLET_STRICT_PORT", "1", 1);
+      setenv("RUFLET_PORT_FILE", portFilePath.UTF8String, 1);
       [g_lock lock];
       NSError *error = nil;
       NSString *value = eval_source(source, path, &error);
@@ -345,6 +381,11 @@ static void request_stop_server(void) {
 
   if ([call.method isEqualToString:@"isFileServerRunning"]) {
     result(@(g_server_running));
+    return;
+  }
+
+  if ([call.method isEqualToString:@"serverPort"]) {
+    result(@(read_server_port()));
     return;
   }
 

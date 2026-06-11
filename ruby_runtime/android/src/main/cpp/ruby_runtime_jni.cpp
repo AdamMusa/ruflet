@@ -22,6 +22,7 @@ mrb_state* g_mrb = nullptr;
 bool g_runtime_loaded = false;
 bool g_server_running = false;
 std::string g_stop_signal_path;
+std::string g_port_file_path;
 std::string g_last_server_error;
 
 struct EvalResult {
@@ -74,6 +75,23 @@ std::string read_file(const std::string& path) {
   std::ostringstream content;
   content << in.rdbuf();
   return content.str();
+}
+
+// Returns the port the embedded server reported through RUFLET_PORT_FILE,
+// or 0 when the server has not bound a port yet.
+long read_server_port_locked() {
+  if (g_port_file_path.empty()) {
+    return 0;
+  }
+  const std::string contents = read_file(g_port_file_path);
+  if (contents.empty()) {
+    return 0;
+  }
+  const long port = std::strtol(contents.c_str(), nullptr, 10);
+  if (port <= 0 || port > 65535) {
+    return 0;
+  }
+  return port;
 }
 
 EvalResult run_file_locked(const std::string& file_path) {
@@ -256,6 +274,7 @@ Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeReset(
   }
   g_runtime_loaded = false;
   g_last_server_error.clear();
+  g_port_file_path.clear();
   (void)env;
 }
 
@@ -291,17 +310,23 @@ Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeStartFileServer(
   env->ReleaseStringUTFChars(path, path_chars);
   env->ReleaseStringUTFChars(stop_signal_path, stop_chars);
 
+  const size_t slash = file_path.find_last_of('/');
+  const std::string app_root = slash == std::string::npos ? "." : file_path.substr(0, slash);
+  const std::string port_path = app_root + "/server.port";
+
   {
     std::lock_guard<std::mutex> lock(g_mutex);
     if (g_server_running) {
       return env->NewStringUTF("");
     }
     g_stop_signal_path = stop_path;
+    g_port_file_path = port_path;
     g_last_server_error.clear();
     g_server_running = true;
   }
 
   std::remove(stop_path.c_str());
+  std::remove(port_path.c_str());
   std::string source = read_file(file_path);
   if (source.empty()) {
     std::lock_guard<std::mutex> lock(g_mutex);
@@ -310,13 +335,19 @@ Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeStartFileServer(
     throw_runtime_error(env, g_last_server_error);
     return nullptr;
   }
-  const size_t slash = file_path.find_last_of('/');
-  const std::string app_root = slash == std::string::npos ? "." : file_path.substr(0, slash);
-  source = "$__ruflet_app_root = '" + escape_single_quotes(app_root) + "'\n" + source;
+  // The embedded VM's ENV is isolated from the process environment, so
+  // configuration must be seeded through the Ruby prelude. The server binds
+  // any free port and reports the bound port through RUFLET_PORT_FILE.
+  source = "$__ruflet_app_root = '" + escape_single_quotes(app_root) + "'\n" +
+           "ENV['RUFLET_PROD_STOP_FILE'] = '" + escape_single_quotes(stop_path) +
+           "' if Object.const_defined?(:ENV)\n" +
+           "ENV['RUFLET_PORT_FILE'] = '" + escape_single_quotes(port_path) +
+           "' if Object.const_defined?(:ENV)\n" +
+           source;
 
-  std::thread([file_path, stop_path, source]() {
+  std::thread([file_path, stop_path, port_path, source]() {
     setenv("RUFLET_PROD_STOP_FILE", stop_path.c_str(), 1);
-    setenv("RUFLET_STRICT_PORT", "1", 1);
+    setenv("RUFLET_PORT_FILE", port_path.c_str(), 1);
 
     std::lock_guard<std::mutex> lock(g_mutex);
     EvalResult result = eval_locked(source, file_path.c_str());
@@ -357,6 +388,15 @@ Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeIsFileServerRunning(
   std::lock_guard<std::mutex> lock(g_mutex);
   (void)env;
   return g_server_running ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeServerPort(
+    JNIEnv* env,
+    jobject /* this */) {
+  std::lock_guard<std::mutex> lock(g_mutex);
+  (void)env;
+  return static_cast<jint>(read_server_port_locked());
 }
 
 extern "C" JNIEXPORT jstring JNICALL

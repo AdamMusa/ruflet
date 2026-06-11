@@ -38,6 +38,13 @@ class RubyRuntime {
     return RubyRuntimePlatform.instance.isFileServerRunning();
   }
 
+  /// Port the embedded file server actually bound, or 0 when unknown
+  /// (server not started yet, or the platform plugin predates port
+  /// reporting).
+  static Future<int> serverPort() {
+    return RubyRuntimePlatform.instance.serverPort();
+  }
+
   static Future<String> lastFileServerError() {
     return RubyRuntimePlatform.instance.lastFileServerError();
   }
