@@ -113,128 +113,10 @@ module Ruflet
         File.join("app", "views", "ruflet", "components", names[:plural], "#{names[:singular]}_form.rb")
       end
 
-      def scaffold_view_path(model_name)
-        names = model_names(model_name)
-
-        File.join("app", "views", "ruflet", "#{names[:plural]}_view.rb")
-      end
-
       def scaffold_component_path(model_name)
         names = model_names(model_name)
 
         File.join("app", "views", "ruflet", "components", names[:plural], "#{names[:singular]}_component.rb")
-      end
-
-      def scaffold_view_template(model_name:, attributes: [])
-        names = model_names(model_name)
-        model_class = names[:class_name]
-        view_class = "#{model_class}View"
-        component_class = "#{model_class}Component"
-        title = names[:title]
-        attrs = normalized_form_attributes(attributes)
-        resource_fields = scaffold_resource_fields(attrs)
-        display_fields = scaffold_display_fields(attrs)
-        display_value_cases = scaffold_display_value_cases(attrs)
-
-        template = <<~RUBY
-          # frozen_string_literal: true
-
-          require "ruflet_rails"
-          require_relative "components/#{names[:plural]}/#{names[:singular]}_component"
-
-          class #{view_class} < Ruflet::Rails::ResourceView
-            route #{("/" + names[:plural]).inspect}
-
-            def render
-              page.title = resource_title
-              render_index
-            end
-
-            private
-
-            def model_class
-              #{model_class}
-            end
-
-            def resource_title
-              #{title.inspect}
-            end
-
-            def singular_title
-              model_class.model_name.human.titleize
-            end
-
-            def records
-              scope = model_class.respond_to?(:limit) ? model_class.limit(50) : model_class.all
-              scope.respond_to?(:limit) ? scope.limit(50) : scope.to_a.first(50)
-            end
-
-            def render_index
-              page.views = []
-              page.add(component.render)
-            end
-
-            def render_show(record)
-              page.views = []
-              page.add(component.show(record))
-              page.update
-            end
-
-            def component
-              @component ||= #{component_class}.new(page, controller: self)
-            end
-
-            def show_record(record)
-              render_show(record)
-            end
-
-            def save_record(record, attributes, dialog)
-              if record.update(attributes)
-                close_dialog(dialog)
-                render_index
-                show_snackbar("\#{singular_title} saved")
-              else
-                show_errors(record)
-              end
-            end
-
-            def destroy_record(record, dialog)
-              record.destroy!
-              close_dialog(dialog)
-              render_index
-              show_snackbar("\#{singular_title} deleted")
-            rescue StandardError => e
-              show_snackbar(e.message)
-            end
-
-            def resource_fields
-              #{resource_fields}
-            end
-
-            def display_fields
-              #{display_fields}
-            end
-
-            def display_value(record, field)
-              __DISPLAY_VALUE_BODY__
-            end
-
-            def primary_label(record)
-              field = display_fields.first
-              field ? display_value(record, field) : "##\#{record_id(record)}"
-            end
-
-            def secondary_label(record)
-              field = display_fields[1]
-              field ? display_value(record, field) : nil
-            end
-
-          end
-        RUBY
-        template.sub(/^([ \t]*)__DISPLAY_VALUE_BODY__$/) do
-          indent = ::Regexp.last_match(1)
-          scaffold_display_value_body(display_value_cases, indent)
-        end
       end
 
       # A `case` with no `when` clause is a syntax error, so models without
@@ -260,13 +142,21 @@ module Ruflet
         control_locals = scaffold_control_locals(attrs)
         control_list = scaffold_control_list(attrs)
         attributes_hash = scaffold_attributes_hash(attrs)
+        resource_fields = scaffold_resource_fields(attrs)
+        display_fields = scaffold_display_fields(attrs)
+        display_value_cases = scaffold_display_value_cases(attrs)
 
-        <<~RUBY
+        template = <<~RUBY
           # frozen_string_literal: true
 
           require "date"
           require "ruflet_rails"
 
+          # The route ("/#{names[:plural]}") and the model (#{model_class}) are wired up
+          # in config/routes.rb and inferred from the class name — everything
+          # generic (record loading, save/destroy, navigation, dialogs) lives in
+          # Ruflet::Rails::ResourceComponent. This file owns only the UI and the
+          # field configuration below.
           class #{component_class} < Ruflet::Rails::ResourceComponent
             def render
               safe_area(
@@ -305,6 +195,21 @@ module Ruflet
                 ),
                 expand: true
               )
+            end
+
+            # Fields rendered on the detail screen.
+            def resource_fields
+              #{resource_fields}
+            end
+
+            # Columns rendered in the index table / list tiles.
+            def display_fields
+              #{display_fields}
+            end
+
+            # Formats a single field for display.
+            def display_value(record, field)
+              __DISPLAY_VALUE_BODY__
             end
 
             private
@@ -458,6 +363,10 @@ module Ruflet
             end
           end
         RUBY
+        template.sub(/^([ \t]*)__DISPLAY_VALUE_BODY__$/) do
+          indent = ::Regexp.last_match(1)
+          scaffold_display_value_body(display_value_cases, indent)
+        end
       end
 
       def scaffold_control_locals(attrs)

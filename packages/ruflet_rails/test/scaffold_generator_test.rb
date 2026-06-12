@@ -11,7 +11,7 @@ require "generators/ruflet/scaffold/scaffold_generator"
 class RufletScaffoldGeneratorTest < Minitest::Test
   RailsGenerators = ::Rails::Generators
 
-  def test_rails_generator_creates_logic_host_and_ui_component
+  def test_rails_generator_creates_a_single_mountable_component
     Dir.mktmpdir do |dir|
       capture_io do
         RailsGenerators.invoke(
@@ -21,44 +21,14 @@ class RufletScaffoldGeneratorTest < Minitest::Test
         )
       end
 
-      view_path = File.join(dir, "app/views/ruflet/posts_view.rb")
-      component_path = File.join(dir, "app/views/ruflet/components/posts/post_component.rb")
-      view_source = File.read(view_path)
-      component_source = File.read(component_path)
+      # The generator emits ONE file: the resource component. No separate view
+      # host — routing, model resolution and persistence all live in the base
+      # class (Ruflet::Rails::ResourceComponent).
+      refute File.exist?(File.join(dir, "app/views/ruflet/posts_view.rb")),
+             "the scaffold must not generate a separate view file"
 
-      assert_includes view_source, 'require_relative "components/posts/post_component"'
-      assert_includes view_source, "class PostView < Ruflet::Rails::ResourceView"
-      assert_includes view_source, 'route "/posts"'
-      refute_includes view_source, "include Ruflet::Rails::FormHelpers"
-      assert_includes view_source, "def model_class"
-      assert_includes view_source, "Post"
-      assert_includes view_source, "def records"
-      assert_includes view_source, "def save_record"
-      assert_includes view_source, "page.views = []"
-      assert_includes view_source, "def render_show(record)"
-      assert_includes view_source, "def show_record(record)"
-      assert_includes view_source, "def resource_fields"
-      assert_includes view_source, '["title", "body"]'
-      assert_includes view_source, "def component"
-      assert_includes view_source, "PostComponent.new(page, controller: self)"
-      assert_includes view_source, "record.update(attributes)"
-      assert_includes view_source, "close_dialog(dialog)"
-      refute_includes view_source, "page.update(dialog, open: false)"
-      refute_includes view_source, "page.close_dialog(dialog)"
-      refute_includes view_source, "page.dialog = nil"
-      refute_includes view_source, "model_class.columns"
-      refute_includes view_source, "ignored_column?"
-      refute_includes view_source, "association_class_name_for_column"
-      refute_includes view_source, "data_table("
-      refute_includes view_source, "alert_dialog("
-      refute_includes view_source, "def record_table"
-      refute_includes view_source, "def open_form"
-      refute_includes view_source, "ruflet_form_bindings"
-      refute_includes view_source, "ruflet_form_attributes"
-      refute_includes view_source, "ruflet_show"
-      refute_includes view_source, "title:string"
-      refute_includes view_source, "body:text"
-      refute_includes view_source, "{ name:"
+      component_path = File.join(dir, "app/views/ruflet/components/posts/post_component.rb")
+      component_source = File.read(component_path)
 
       assert_includes component_source, "class PostComponent < Ruflet::Rails::ResourceComponent"
       assert_includes component_source, "def render"
@@ -68,7 +38,6 @@ class RufletScaffoldGeneratorTest < Minitest::Test
       assert_includes component_source, "show_record(record)"
       assert_includes component_source, "data_table("
       assert_includes component_source, "alert_dialog("
-      refute_includes component_source, "page.dialog = dialog"
       assert_includes component_source, "open: false"
       assert_includes component_source, "title_control = text_field"
       assert_includes component_source, "body_control = text_field"
@@ -77,12 +46,30 @@ class RufletScaffoldGeneratorTest < Minitest::Test
       assert_includes component_source, "save_record(record, attributes.call, dialog)"
       assert_includes component_source, "open_dialog(dialog)"
       assert_includes component_source, "close_dialog(dialog)"
+
+      # The app-specific field configuration lives in the component (the part a
+      # developer customizes) ...
+      assert_includes component_source, "def resource_fields"
+      assert_includes component_source, "def display_fields"
+      assert_includes component_source, "def display_value(record, field)"
+      assert_includes component_source, '["title", "body"]'
+
+      # ... but the generic plumbing does NOT — it is inherited.
+      refute_includes component_source, "class PostView"
+      refute_includes component_source, "Ruflet::Rails::ResourceView"
+      refute_includes component_source, 'route "/posts"'
+      refute_includes component_source, "def model_class"
+      refute_includes component_source, "def records"
+      refute_includes component_source, "def save_record"
+      refute_includes component_source, "def destroy_record"
+      refute_includes component_source, "def render_index"
+      refute_includes component_source, "def render_show"
+      refute_includes component_source, "def component"
+      refute_includes component_source, ".new(page, controller: self)"
+      refute_includes component_source, "page.dialog = dialog"
       refute_includes component_source, "page.update(dialog, open: false)"
       refute_includes component_source, "ruflet_form_bindings"
       refute_includes component_source, "ruflet_form_attributes"
-      refute_includes component_source, "def records"
-      refute_includes component_source, "def save_record"
-      refute_includes component_source, "def resource_fields"
       refute_includes component_source, "title:string"
       refute_includes component_source, "body:text"
       refute_includes component_source, "{ name:"
@@ -91,15 +78,15 @@ class RufletScaffoldGeneratorTest < Minitest::Test
   end
 
   def test_scaffold_without_date_attributes_generates_valid_ruby
-    view = Ruflet::Rails::InstallSupport.scaffold_view_template(
+    component = Ruflet::Rails::InstallSupport.scaffold_component_template(
       model_name: "Product",
       attributes: ["name:string", "price:decimal", "description:text"]
     )
 
     # A case expression with no when clause is a syntax error.
-    refute_match(/case field\s*\n\s*else/, view)
-    assert_includes view, "def display_value(record, field)"
-    assert_silent_syntax view
+    refute_match(/case field\s*\n\s*else/, component)
+    assert_includes component, "def display_value(record, field)"
+    assert_silent_syntax component
   end
 
   def assert_silent_syntax(source)
@@ -123,33 +110,11 @@ class RufletScaffoldGeneratorTest < Minitest::Test
     assert_silent_syntax component
   end
 
-  def test_scaffold_templates_keep_attribute_metadata_out_of_generated_files
-    view_source = Ruflet::Rails::InstallSupport.scaffold_view_template(
-      model_name: "NewsArticle",
-      attributes: ["headline:string", "published:boolean"]
-    )
+  def test_scaffold_component_keeps_attribute_metadata_out_of_generated_file
     component_source = Ruflet::Rails::InstallSupport.scaffold_component_template(
       model_name: "NewsArticle",
       attributes: ["headline:string", "published:boolean"]
     )
-
-    assert_includes view_source, "class NewsArticleView < Ruflet::Rails::ResourceView"
-    assert_includes view_source, 'route "/news_articles"'
-    refute_includes view_source, "include Ruflet::Rails::FormHelpers"
-    assert_includes view_source, "def model_class"
-    assert_includes view_source, "NewsArticle"
-      assert_includes view_source, "NewsArticleComponent.new(page, controller: self)"
-      assert_includes view_source, "def records"
-      assert_includes view_source, "def save_record"
-      assert_includes view_source, "def render_show(record)"
-      assert_includes view_source, "def show_record(record)"
-      assert_includes view_source, "def resource_fields"
-    assert_includes view_source, '["headline", "published"]'
-    refute_includes view_source, "model_class.columns"
-    refute_includes view_source, "ignored_column?"
-    refute_includes view_source, "association_class_name_for_column"
-    refute_includes view_source, "def record_table"
-    refute_includes view_source, "def open_form"
 
     assert_includes component_source, "class NewsArticleComponent < Ruflet::Rails::ResourceComponent"
     assert_includes component_source, "def render"
@@ -162,18 +127,26 @@ class RufletScaffoldGeneratorTest < Minitest::Test
     assert_includes component_source, "published_control = checkbox"
     assert_includes component_source, '"headline" => headline_control.value.to_s'
     assert_includes component_source, '"published" => !!published_control.value'
+    assert_includes component_source, "def resource_fields"
+    assert_includes component_source, '["headline", "published"]'
+
+    # Generic plumbing is inherited, not generated.
+    refute_includes component_source, "Ruflet::Rails::ResourceView"
+    refute_includes component_source, 'route "/news_articles"'
+    refute_includes component_source, "def model_class"
     refute_includes component_source, "def records"
     refute_includes component_source, "def save_record"
+    refute_includes component_source, "model_class.columns"
+    refute_includes component_source, "ignored_column?"
+    refute_includes component_source, "association_class_name_for_column"
 
-    [view_source, component_source].each do |source|
-      refute_includes source, "headline:string"
-      refute_includes source, "published:boolean"
-      refute_includes source, "title:string"
-      refute_includes source, "{ name:"
-      refute_includes source, "ruflet_form_bindings"
-      refute_includes source, "ruflet_form_attributes"
-      refute_includes source, "ruflet_show"
-    end
+    refute_includes component_source, "headline:string"
+    refute_includes component_source, "published:boolean"
+    refute_includes component_source, "title:string"
+    refute_includes component_source, "{ name:"
+    refute_includes component_source, "ruflet_form_bindings"
+    refute_includes component_source, "ruflet_form_attributes"
+    refute_includes component_source, "ruflet_show"
   end
 
   def test_scaffold_generates_date_picker_for_date_attributes
@@ -228,7 +201,7 @@ class RufletScaffoldGeneratorTest < Minitest::Test
         sender: ->(action, payload) { sent << [action, payload] }
       )
 
-      ScheduledPostView.render(page)
+      ScheduledPostComponent.render(page)
       new_button = find_patch_control(sent.last[1]["patch"], "_c" => "FilledButton", "content" => { "_c" => "Text", "value" => "New Scheduled Post" })
       refute_nil new_button
 
@@ -274,7 +247,7 @@ class RufletScaffoldGeneratorTest < Minitest::Test
         sender: ->(action, payload) { sent << [action, payload] }
       )
 
-      ScheduledPostView.render(page)
+      ScheduledPostComponent.render(page)
       edit = find_data_cell_by_icon_tooltip(sent.last[1]["patch"], "Edit")
       refute_nil edit
 
@@ -307,7 +280,7 @@ class RufletScaffoldGeneratorTest < Minitest::Test
         sender: ->(action, payload) { sent << [action, payload] }
       )
 
-      ScheduledPostView.render(page)
+      ScheduledPostComponent.render(page)
       edit = find_data_cell_by_icon_tooltip(sent.last[1]["patch"], "Edit")
 
       sent.clear
@@ -368,15 +341,11 @@ class RufletScaffoldGeneratorTest < Minitest::Test
 
   def install_generated_scaffold(model_name, attributes)
     model_class = stub_model(model_name)
-    view_source = Ruflet::Rails::InstallSupport.scaffold_view_template(model_name: model_name, attributes: attributes)
     component_source = Ruflet::Rails::InstallSupport.scaffold_component_template(model_name: model_name, attributes: attributes)
     Object.class_eval(component_source.sub(/^require.*\n/, "").sub(/^require.*\n/, ""))
-    Object.class_eval(view_source.sub(/^require.*\n/, "").sub(/^require_relative.*\n/, ""))
     yield model_class
   ensure
     component_name = "#{model_name}Component"
-    view_name = "#{model_name}View"
-    Object.send(:remove_const, view_name) if Object.const_defined?(view_name)
     Object.send(:remove_const, component_name) if Object.const_defined?(component_name)
     Object.send(:remove_const, model_name) if Object.const_defined?(model_name) && Object.const_get(model_name) == model_class
   end

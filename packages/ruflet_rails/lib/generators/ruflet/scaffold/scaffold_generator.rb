@@ -10,17 +10,7 @@ module Ruflet
       argument :model_name, type: :string
       argument :attributes, type: :array, default: [], banner: "field:type field:type"
 
-      desc "Generate a Rails-first Ruflet resource view for an existing model."
-
-      def create_ruflet_resource_view
-        create_file(
-          File.join(destination_root, scaffold_view_path),
-          Ruflet::Rails::InstallSupport.scaffold_view_template(
-            model_name: model_name,
-            attributes: scaffold_attributes
-          )
-        )
-      end
+      desc "Generate a Rails-first Ruflet resource component for an existing model."
 
       def create_ruflet_resource_component
         create_file(
@@ -33,15 +23,19 @@ module Ruflet
       end
 
       def print_scaffold_status
-        say "Ruflet scaffold generated at #{scaffold_view_path}"
-        say "Ruflet UI component generated at #{scaffold_component_path}"
-        say "The generated view owns the resource logic; the generated component owns the UI."
+        say "Ruflet resource component generated at #{scaffold_component_path}"
+        say "Mount it in config/routes.rb:"
+        say "  mount Ruflet::Rails.web_app(view: #{scaffold_component_class.inspect}), at: \"/#{scaffold_route_segment}\""
       end
 
       private
 
-      def scaffold_view_path
-        Ruflet::Rails::InstallSupport.scaffold_view_path(model_name)
+      def scaffold_component_class
+        "#{model_name.to_s.camelize}Component"
+      end
+
+      def scaffold_route_segment
+        model_name.to_s.underscore.pluralize
       end
 
       def scaffold_component_path

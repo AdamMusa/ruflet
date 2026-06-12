@@ -2,24 +2,207 @@
 
 require "date"
 require "time"
+require "active_model"
+require "active_support/core_ext/string/inflections"
 
 module Ruflet
   module Rails
+    # Base class for a Ruflet CRUD resource.
+    #
+    # A subclass holds only the app-specific surface — the UI (render/show) and
+    # the field configuration (resource_fields/display_fields/display_value) —
+    # while everything generic lives here: routing, model resolution, record
+    # loading, persistence (save/destroy), navigation, dialog management and the
+    # date/time picker helpers.
+    #
+    # It is mounted straight from config/routes.rb; the route path is declared
+    # there, never inside the component:
+    #
+    #   mount Ruflet::Rails.web_app(view: "ProductComponent"), at: "/products"
+    #
+    # web_app(view:) calls `.render(page)` on the class, which is why the class
+    # method below is the entrypoint. The model is inferred from the class name
+    # (ProductComponent -> Product); override `model_class` to customize.
     class ResourceComponent
       include Ruflet::UI::SharedControlForwarders
 
       attr_reader :page, :controller
 
-      def initialize(page, controller:)
+      class << self
+        # Entrypoint used by web_app(view: "...") on each new session.
+        def render(page, *_args)
+          new(page).render_index
+        end
+
+        # Declare or read the managed model: `model Product` or inferred from
+        # the component class name.
+        def model(value = nil)
+          @model_class = value if value
+          @model_class || inferred_model_class
+        end
+
+        # Declare or read the plural resource title shown on the index screen.
+        def title(value = nil)
+          @resource_title = value if value
+          @resource_title || (model_name ? model_name.plural.humanize.titleize : "Resources")
+        end
+
+        def singular_title
+          model_name ? model_name.human.titleize : "Record"
+        end
+
+        private
+
+        def inferred_model_class
+          base = name.to_s.split("::").last.to_s.sub(/Component\z/, "")
+          base.empty? ? nil : base.safe_constantize
+        end
+
+        def model_name
+          klass = model
+          klass.respond_to?(:model_name) ? klass.model_name : nil
+        rescue StandardError
+          nil
+        end
+      end
+
+      def initialize(page, controller: nil)
         @page = page
         @controller = controller
       end
 
+      # --- Resource configuration (override in the generated subclass) --------
+
+      def model_class
+        self.class.model
+      end
+
+      def resource_title
+        self.class.title
+      end
+
+      def singular_title
+        model_class.respond_to?(:model_name) ? model_class.model_name.human.titleize : self.class.singular_title
+      end
+
+      # Fields rendered on the detail (show) screen. The generated subclass
+      # overrides this with the scaffolded attributes; the default falls back to
+      # the model's own attribute names.
+      def resource_fields
+        default_resource_fields
+      end
+
+      # Columns rendered in the index table / list tiles.
+      def display_fields
+        resource_fields
+      end
+
+      # Formats a single field for display. Override for custom rendering.
+      def display_value(record, field)
+        record.public_send(field).to_s
+      end
+
+      # --- Record loading & persistence --------------------------------------
+
+      def records
+        scope = model_class.respond_to?(:limit) ? model_class.limit(50) : model_class.all
+        scope.respond_to?(:limit) ? scope.limit(50) : scope.to_a.first(50)
+      end
+
+      def render_index
+        page.title = resource_title
+        page.views = []
+        page.add(render)
+      end
+
+      def render_show(record)
+        page.views = []
+        page.add(show(record))
+        page.update
+      end
+
+      def show_record(record)
+        render_show(record)
+      end
+
+      def save_record(record, attributes, dialog)
+        if record.update(attributes)
+          close_dialog(dialog)
+          render_index
+          show_snackbar("#{singular_title} saved")
+        else
+          show_errors(record)
+        end
+      end
+
+      def destroy_record(record, dialog)
+        record.destroy!
+        close_dialog(dialog)
+        render_index
+        show_snackbar("#{singular_title} deleted")
+      rescue StandardError => e
+        show_snackbar(e.message)
+      end
+
+      # --- Index labels -------------------------------------------------------
+
+      def primary_label(record)
+        field = display_fields.first
+        field ? display_value(record, field) : "##{record_id(record)}"
+      end
+
+      def secondary_label(record)
+        field = display_fields[1]
+        field ? display_value(record, field) : nil
+      end
+
       private
+
+      def default_resource_fields
+        return [] unless model_class.respond_to?(:attribute_names)
+
+        ignored = %w[id created_at updated_at]
+        model_class.attribute_names.map(&:to_s) - ignored
+      rescue StandardError
+        []
+      end
 
       def control_delegate
         Ruflet::DSL
       end
+
+      # --- Layout helpers shared by every resource UI ------------------------
+
+      def compact?
+        width = page.client_details["width"].to_f
+        width > 0 && width < 600
+      end
+
+      def dialog_width
+        width = page.client_details["width"].to_f
+        return 520 if width <= 0
+
+        [[width - 64, 280].max, 520].min
+      end
+
+      def record_id(record)
+        record.respond_to?(:id) ? record.id : nil
+      end
+
+      def show_errors(record)
+        show_snackbar(error_message(record))
+      end
+
+      def show_snackbar(message)
+        page.snackbar = snackbar(text(message), open: true)
+      end
+
+      def error_message(record)
+        messages = record.errors.full_messages
+        messages.respond_to?(:to_sentence) ? messages.to_sentence : messages.join(", ")
+      end
+
+      # --- Dialog management --------------------------------------------------
 
       def open_dialog(dialog)
         prune_closed_dialogs
@@ -31,12 +214,13 @@ module Ruflet
       end
 
       def close_dialog(dialog)
+        close_open_dialogs_above(dialog)
         close_tracked_dialog(dialog)
       end
 
       def close_dialogs(*dialogs)
         dialogs.flatten.compact.each do |dialog|
-          remove_tracked_dialog(dialog)
+          close_tracked_dialog(dialog)
         end
       end
 
@@ -99,13 +283,17 @@ module Ruflet
         visible.empty? ? "Not selected" : visible
       end
 
-      def close_tracked_dialog(dialog)
-        return unless dialog
+      def close_open_dialogs_above(dialog)
+        return false unless page.respond_to?(:latest_open_dialog, true)
 
-        close_dialog_stack_entry(dialog)
+        while (latest = page.__send__(:latest_open_dialog)) && !latest.equal?(dialog)
+          close_tracked_dialog(latest)
+        end
+      rescue StandardError
+        false
       end
 
-      def remove_tracked_dialog(dialog)
+      def close_tracked_dialog(dialog)
         return unless dialog
 
         close_dialog_stack_entry(dialog)
@@ -177,14 +365,16 @@ module Ruflet
         end
       end
 
+      # Methods not found on the component fall back to an optional controller,
+      # kept for apps that still pair a component with a separate host object.
       def method_missing(name, *args, **kwargs, &block)
-        return controller.__send__(name, *args, **kwargs, &block) if controller.respond_to?(name, true)
+        return controller.__send__(name, *args, **kwargs, &block) if controller&.respond_to?(name, true)
 
         super
       end
 
       def respond_to_missing?(name, include_private = false)
-        controller.respond_to?(name, true) || super
+        (controller&.respond_to?(name, true) || false) || super
       end
     end
   end
