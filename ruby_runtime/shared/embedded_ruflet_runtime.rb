@@ -26292,12 +26292,15 @@ module Ruflet
     def close_dialog(dialog_control)
       return self unless dialog_control
 
-      before_dialog_count = @dialogs_container.props["controls"].length
       dialog_control.props["open"] = false
       @dialog = nil if @dialog.equal?(dialog_control)
       remove_dialog_tracking(dialog_control)
       refresh_dialogs_container!
-      push_dialogs_update!(force_view: @dialogs_container.props["controls"].length < before_dialog_count)
+      # Patch the dialogs container in place. Forcing a full view re-render
+      # here would remount the whole overlay — fatal while another dialog
+      # (e.g. the form behind a nested picker) is still open. The empty case
+      # is handled inside push_dialogs_update!.
+      push_dialogs_update!
       self
     end
 
@@ -26385,9 +26388,10 @@ module Ruflet
       # value is confirmed, but only send a value event — never a close. Mark
       # the dialog closed here so show_dialog can reopen it next time.
       mark_picker_dialog_closed(control, name)
-      before_dialog_count = @dialogs_container.props["controls"].length
       if dialog_close_event?(control, name) && remove_dialog_tracking(control)
-        push_dialogs_update!(force_view: @dialogs_container.props["controls"].length < before_dialog_count)
+        # Patch the container in place; never force a full view re-render that
+        # would remount a still-open parent dialog (the nested-picker case).
+        push_dialogs_update!
       end
 
       control.emit(name, event)

@@ -81,6 +81,38 @@ class RufletPickerDialogReopenTest < Minitest::Test
     assert_equal 1, page.instance_variable_get(:@dialogs_container).props["controls"].length
   end
 
+  def test_closing_a_nested_picker_does_not_remount_the_parent_dialog
+    page, sent = make_page
+
+    # A form dialog with a picker opened on top of it (nested).
+    form = Ruflet::UI::ControlFactory.build(:alertdialog, open: false, modal: true,
+                                            title: Ruflet::UI::ControlFactory.build(:text, value: "Form"))
+    page.show_dialog(form)
+    picker = Ruflet::UI::ControlFactory.build(:datepicker, value: "2026-05-01")
+    picker.on(:change) {}
+    page.show_dialog(picker)
+    container = page.instance_variable_get(:@dialogs_container)
+    page.instance_variable_set(:@dialogs_container_mounted, true)
+    sent.clear
+
+    # Confirming the picker closes it but the form remains.
+    page.dispatch_event(target: picker.wire_id, name: "change", data: "2026-06-10")
+
+    assert_includes page.instance_variable_get(:@dialogs), form, "form must stay tracked"
+    assert_equal true, form.props["open"], "form must stay open"
+    refute_includes page.instance_variable_get(:@dialogs), picker, "picker must be removed"
+
+    # The remaining dialog is patched in place, never via a full view re-render
+    # that would remount (and break) the still-open form on the client.
+    assert page.instance_variable_get(:@dialogs_container_mounted),
+           "closing a nested dialog must not unmount the dialogs container"
+    container_patch = sent.find do |(action, payload)|
+      action == Ruflet::Protocol::ACTIONS[:patch_control] &&
+        payload.is_a?(Hash) && payload["id"] == container.wire_id
+    end
+    refute_nil container_patch, "expected an in-place dialogs-container patch"
+  end
+
   def test_alert_dialog_stays_open_on_change
     # Non-picker dialogs must NOT auto-close on a change event (e.g. a form
     # field changing inside the dialog).
