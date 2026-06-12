@@ -34,6 +34,18 @@ module Ruflet
       ViewRouter.new(page, routes: routes, default: default).start
     end
 
+    # Flet-style routed navigation stack for complex multi-screen apps. Wires
+    # up on_route_change / on_view_pop and starts at the current route. See
+    # Ruflet::Rails::RouteStack.
+    #
+    #   Ruflet::Rails.routed(page) do |route, nav|
+    #     nav.push(home_view)
+    #     nav.push(store_view) if route == "/store"
+    #   end
+    def routed(page, &builder)
+      RouteStack.new(page, &builder).start
+    end
+
     def load_views(root)
       return [] if root.to_s.empty?
 
