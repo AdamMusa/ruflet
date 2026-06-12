@@ -105,6 +105,49 @@ class RufletWebAppTest < Minitest::Test
     assert_includes body.join, "rake ruflet:build[web]"
   end
 
+  def test_build_dir_under_public_is_rejected
+    with_rails_stub do |root|
+      public_app = File.join(root, "public", "app")
+      app = Ruflet::Rails.web_app(build_dir: public_app) { |page| page.title = "x" }
+
+      error = assert_raises(ArgumentError) do
+        app.call("PATH_INFO" => "/", "SCRIPT_NAME" => "/m", "REQUEST_METHOD" => "GET")
+      end
+      assert_includes error.message, "public/"
+    end
+  end
+
+  def test_default_build_dir_is_outside_public
+    with_rails_stub do |root|
+      FileUtils.mkdir_p(File.join(root, "build", "web"))
+      File.write(File.join(root, "build", "web", "index.html"), "<html><head></head><body></body></html>")
+
+      app = Ruflet::Rails.web_app { |page| page.title = "Default" }
+      status, _headers, body = app.call("PATH_INFO" => "/", "SCRIPT_NAME" => "/x", "REQUEST_METHOD" => "GET")
+
+      assert_equal 200, status
+      assert_includes body.join, "<base href=\"/x/\">"
+    end
+  end
+
+  def with_rails_stub
+    Dir.mktmpdir do |root|
+      stub = Module.new do
+        define_singleton_method(:root) { Pathname.new(root) }
+        define_singleton_method(:public_path) { Pathname.new(File.join(root, "public")) }
+      end
+      had_const = Object.const_defined?(:Rails)
+      previous = Object.const_get(:Rails) if had_const
+      Object.send(:remove_const, :Rails) if had_const
+      Object.const_set(:Rails, stub)
+      require "pathname"
+      yield root
+    ensure
+      Object.send(:remove_const, :Rails) if Object.const_defined?(:Rails)
+      Object.const_set(:Rails, previous) if had_const
+    end
+  end
+
   def test_websocket_upgrade_runs_the_ruflet_protocol_under_the_mount
     with_build_dir do |dir|
       server_io, client_io = UNIXSocket.pair

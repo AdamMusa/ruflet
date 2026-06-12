@@ -76,15 +76,42 @@ module Ruflet
           @entrypoint_option || @app_block || lambda { |page| Ruflet::Rails.render(page) }
         end
 
+        # The web build must NOT live under public/, or Rails' static
+        # middleware would serve it directly (e.g. /app/index.html) and bypass
+        # the mount — making it reachable at a path no route declares. The
+        # default is Rails.root/build/web, exactly where `rake ruflet:build[web]`
+        # exports, which Rails never serves statically. A configured
+        # web_build_dir or explicit build_dir: under public/ is rejected.
         def build_dir
+          dir = resolve_build_dir
+          reject_public_build_dir!(dir)
+          dir
+        end
+
+        def resolve_build_dir
           explicit = @explicit_build_dir.to_s
           return explicit unless explicit.empty?
 
           configured = Ruflet::Rails.config.web_build_dir.to_s
           return configured unless configured.empty?
 
-          default = defined?(::Rails.root) && ::Rails.root ? ::Rails.root.join("public", "app").to_s : nil
-          default.to_s
+          return ::Rails.root.join("build", "web").to_s if defined?(::Rails.root) && ::Rails.root
+
+          ""
+        end
+
+        def reject_public_build_dir!(dir)
+          return if dir.to_s.empty?
+          return unless defined?(::Rails.root) && ::Rails.root
+
+          public_root = File.expand_path(::Rails.public_path.to_s)
+          full = File.expand_path(dir.to_s)
+          return unless full == public_root || full.start_with?(public_root + File::SEPARATOR)
+
+          raise ArgumentError,
+                "Ruflet web build dir (#{dir}) is under public/, which Rails serves " \
+                "statically and would expose the app outside its mount. Build to a " \
+                "non-public directory such as #{::Rails.root.join('build', 'web')}."
         end
 
         def serve_index(env)

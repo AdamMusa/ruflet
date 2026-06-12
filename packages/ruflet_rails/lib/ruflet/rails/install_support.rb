@@ -866,8 +866,11 @@ module Ruflet
             # URL path the WebSocket endpoint listens on (default: "/ws").
             config.ws_path = #{ws_path.inspect}
 
-            # Set to the directory where `rake ruflet:build[web]` outputs the Flutter web build.
-            # config.web_build_dir = Rails.root.join("public/app")
+            # Directory the Flutter web build is served from. Defaults to
+            # Rails.root/build/web (where `rake ruflet:build[web]` outputs).
+            # Must stay OUTSIDE public/, or Rails would serve it statically and
+            # expose the app at a path no route declares.
+            # config.web_build_dir = Rails.root.join("build", "web")
           end
         RUBY
       end
