@@ -97,9 +97,90 @@ module Ruflet
         resource_fields
       end
 
-      # Formats a single field for display. Override for custom rendering.
+      # The form inputs, as a declarative spec: each entry is a field name and
+      # type. The default is inferred from the model's columns; the generated
+      # subclass overrides it. Types: :string, :text, :integer, :decimal,
+      # :float, :boolean, :date, :datetime, :time, :daterange.
+      def form_fields
+        default_form_fields
+      end
+
+      # Formats a single field for display. Dates and times render as ISO
+      # strings; override for custom rendering.
       def display_value(record, field)
-        record.public_send(field).to_s
+        value = record.public_send(field)
+        case value
+        when Date then value.iso8601
+        when Time, DateTime then value.iso8601
+        else value.to_s
+        end
+      rescue StandardError
+        ""
+      end
+
+      # --- Generic CRUD UI (override any of these to customize) ---------------
+
+      def render
+        safe_area(
+          container(
+            expand: true,
+            padding: { left: 24, top: 16, right: 24, bottom: 24 },
+            content: column(
+              expand: true,
+              spacing: 16,
+              children: [index_header, compact? ? record_list(records) : record_table(records)]
+            )
+          ),
+          expand: true
+        )
+      end
+
+      def show(record)
+        safe_area(
+          container(
+            expand: true,
+            padding: { left: 24, top: 16, right: 24, bottom: 24 },
+            content: column(
+              expand: true,
+              spacing: 16,
+              children: [
+                show_header(record),
+                column(
+                  spacing: 8,
+                  children: resource_fields.map { |field| field_row(field.humanize, display_value(record, field)) }
+                )
+              ]
+            )
+          ),
+          expand: true
+        )
+      end
+
+      # The create/edit dialog, rendered from `form_fields`.
+      def open_form(record)
+        inputs = form_fields.map { |spec| build_form_input(record, normalize_field_spec(spec)) }
+
+        attributes = lambda do
+          inputs.each_with_object({}) { |input, attrs| attrs[input.name] = input.value.call }
+        end
+
+        dialog = nil
+        dialog = alert_dialog(
+          open: false,
+          modal: true,
+          scrollable: true,
+          title: text(record.persisted? ? "Edit #{singular_title}" : "New #{singular_title}"),
+          content: container(
+            width: dialog_width,
+            content: column(spacing: 8, horizontal_alignment: "stretch", children: inputs.map(&:control))
+          ),
+          actions: [
+            text_button(content: text("Cancel"), on_click: ->(_event) { close_dialog(dialog) }),
+            filled_button(content: text("Save"), on_click: ->(_event) { save_record(record, attributes.call, dialog) })
+          ],
+          actions_alignment: "end"
+        )
+        open_dialog(dialog)
       end
 
       # --- Record loading & persistence --------------------------------------
@@ -158,6 +239,10 @@ module Ruflet
 
       private
 
+      # One built form input: the control to render, and a proc returning the
+      # value to persist for its attribute.
+      FormInput = Struct.new(:name, :control, :value, keyword_init: true)
+
       def default_resource_fields
         return [] unless model_class.respond_to?(:attribute_names)
 
@@ -165,6 +250,239 @@ module Ruflet
         model_class.attribute_names.map(&:to_s) - ignored
       rescue StandardError
         []
+      end
+
+      def default_form_fields
+        resource_fields.map { |field| { name: field.to_s, type: form_field_type(field) } }
+      end
+
+      def form_field_type(field)
+        return :string unless model_class.respond_to?(:columns_hash)
+
+        column = model_class.columns_hash[field.to_s]
+        case column&.type
+        when :text then :text
+        when :integer then :integer
+        when :decimal, :float then :decimal
+        when :boolean then :boolean
+        when :date then :date
+        when :datetime, :timestamp then :datetime
+        when :time then :time
+        else :string
+        end
+      rescue StandardError
+        :string
+      end
+
+      def normalize_field_spec(spec)
+        return { name: spec.to_s, type: :string } unless spec.is_a?(Hash)
+
+        { name: (spec[:name] || spec["name"]).to_s, type: (spec[:type] || spec["type"] || :string).to_sym }
+      end
+
+      # --- Generic CRUD UI internals -----------------------------------------
+
+      def index_header
+        row(
+          alignment: "spaceBetween",
+          vertical_alignment: "center",
+          children: [
+            container(expand: true, content: text(resource_title, size: 24, weight: "bold")),
+            filled_button(content: text("New #{singular_title}"), on_click: ->(_event) { open_form(model_class.new) })
+          ]
+        )
+      end
+
+      def show_header(record)
+        row(
+          alignment: "spaceBetween",
+          vertical_alignment: "center",
+          children: [
+            container(expand: true, content: text("#{singular_title} ##{record_id(record)}", size: 24, weight: "bold")),
+            row(
+              tight: true,
+              spacing: 8,
+              children: [
+                outlined_button(content: text("Back"), on_click: ->(_event) { render_index }),
+                filled_button(content: text("Edit"), on_click: ->(_event) { open_form(record) })
+              ]
+            )
+          ]
+        )
+      end
+
+      def record_table(items)
+        row(
+          scroll: "auto",
+          children: [
+            data_table(
+              table_columns,
+              rows: items.map { |record| table_row(record) },
+              column_spacing: 24,
+              horizontal_margin: 12,
+              show_bottom_border: true
+            )
+          ]
+        )
+      end
+
+      def table_columns
+        display_fields.map { |field| data_column(field.humanize) } +
+          [data_column("Actions"), data_column(""), data_column("")]
+      end
+
+      def table_row(record)
+        data_row(
+          display_fields.map { |field| data_cell(display_value(record, field), on_tap: ->(_event) { open_show(record) }) } +
+            [
+              data_cell(icon("visibility", tooltip: "Show"), on_tap: ->(_event) { open_show(record) }),
+              data_cell(icon("edit", tooltip: "Edit"), on_tap: ->(_event) { open_form(record) }),
+              data_cell(icon("delete", tooltip: "Delete"), on_tap: ->(_event) { open_delete(record) })
+            ]
+        )
+      end
+
+      def record_list(items)
+        column(spacing: 4, children: items.map { |record| record_tile(record) })
+      end
+
+      def record_tile(record)
+        list_tile(
+          title: text(primary_label(record)),
+          subtitle: secondary_label(record) ? text(secondary_label(record)) : nil,
+          trailing: row(
+            tight: true,
+            spacing: 0,
+            children: [
+              icon_button("edit", tooltip: "Edit", on_click: ->(_event) { open_form(record) }),
+              icon_button("delete", tooltip: "Delete", on_click: ->(_event) { open_delete(record) })
+            ]
+          ),
+          on_click: ->(_event) { open_show(record) }
+        )
+      end
+
+      def field_row(label, value)
+        row(
+          children: [
+            container(width: 140, content: text(label, weight: "bold")),
+            container(expand: true, content: text(value, no_wrap: false))
+          ]
+        )
+      end
+
+      def open_show(record)
+        show_record(record)
+      end
+
+      def open_delete(record)
+        dialog = nil
+        dialog = alert_dialog(
+          open: false,
+          modal: true,
+          title: text("Delete #{singular_title}?"),
+          content: text("Permanently remove #{singular_title} ##{record_id(record)}?", no_wrap: false),
+          actions: [
+            text_button(content: text("Cancel"), on_click: ->(_event) { close_dialog(dialog) }),
+            filled_button(content: text("Delete"), on_click: ->(_event) { destroy_record(record, dialog) })
+          ],
+          actions_alignment: "end"
+        )
+        open_dialog(dialog)
+      end
+
+      # --- Form input builders, one per field type ---------------------------
+
+      def build_form_input(record, spec)
+        name = spec[:name]
+        current = record.public_send(name)
+
+        case spec[:type]
+        when :boolean
+          control = checkbox(value: !!current, label: name.humanize)
+          FormInput.new(name: name, control: control, value: -> { !!control.value })
+        when :date
+          build_picker_input(name, date_picker_value(current), :date)
+        when :datetime, :time
+          build_picker_input(name, time_picker_value(current), :time)
+        when :daterange
+          build_range_input(name, current)
+        else
+          build_text_input(name, current, spec[:type])
+        end
+      end
+
+      def build_text_input(name, current, type)
+        props = { value: current.to_s, label: name.humanize }
+        if type == :text
+          props[:multiline] = true
+          props[:min_lines] = 3
+        elsif %i[integer decimal float].include?(type)
+          props[:keyboard_type] = "number"
+        end
+        control = text_field(**props)
+        FormInput.new(name: name, control: control, value: -> { control.value.to_s })
+      end
+
+      def build_picker_input(name, initial, kind)
+        display = text(kind == :date ? date_display_value(initial) : time_display_value(initial))
+        control =
+          if kind == :date
+            date_picker(value: initial, help_text: name.humanize, on_change: lambda do |_event|
+              close_dialogs(picker_for(name))
+              page.update(display, value: date_display_value(picker_for(name).value))
+            end)
+          else
+            time_picker(value: initial, help_text: name.humanize, on_change: lambda do |_event|
+              close_dialogs(picker_for(name))
+              page.update(display, value: time_display_value(picker_for(name).value))
+            end)
+          end
+        register_picker(name, control)
+        field = picker_field(name, display, control)
+        value = kind == :date ? -> { control.value.to_s.split("T", 2).first } : -> { control.value.to_s }
+        FormInput.new(name: name, control: field, value: value)
+      end
+
+      def build_range_input(name, current)
+        start_value, end_value = date_range_picker_values(current)
+        display = text(date_range_display_value(start_value, end_value))
+        control = date_range_picker(start_value: start_value, end_value: end_value, help_text: name.humanize,
+                                    on_change: lambda do |_event|
+                                      close_dialogs(picker_for(name))
+                                      ctrl = picker_for(name)
+                                      page.update(display, value: date_range_display_value(ctrl.start_value, ctrl.end_value))
+                                    end)
+        register_picker(name, control)
+        field = picker_field(name, display, control)
+        value = lambda do
+          Range.new(Date.parse(control.start_value.to_s), Date.parse(control.end_value.to_s))
+        end
+        FormInput.new(name: name, control: field, value: value)
+      end
+
+      def picker_field(name, display, control)
+        column(
+          spacing: 6,
+          children: [
+            text(name.humanize),
+            row(
+              spacing: 8,
+              children: [
+                container(expand: true, content: display),
+                outlined_button(content: text("Choose #{name.humanize}"), on_click: ->(_event) { open_dialog(control) })
+              ]
+            )
+          ]
+        )
+      end
+
+      def register_picker(name, control)
+        (@form_pickers ||= {})[name] = control
+      end
+
+      def picker_for(name)
+        (@form_pickers ||= {})[name]
       end
 
       def control_delegate
