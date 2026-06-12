@@ -53,12 +53,22 @@ module Ruflet
       sessions.broadcast(&block)
     end
 
-    # Mount inside Rails routes; route "at:" controls URL path.
+    # WebSocket endpoint for native mobile/desktop clients. With no block it
+    # defaults to the view router (dispatches by route to the RufletView
+    # subclasses under app/views/ruflet), so the common case is just:
+    #
+    #   match "/ws", to: Ruflet::Rails.endpoint, via: :all
+    #
+    # Pass a block only for a custom entrypoint.
     def endpoint(&block)
+      block ||= ->(page) { render(page) }
       Protocol::Runner.new(&block).build_endpoint
     end
 
-    # Load a Ruflet app file (MyApp.new.run) and mount it in Rails routes.
+    # WebSocket endpoint backed by a standalone Ruflet app file
+    # (MyApp.new.run), loaded per session:
+    #
+    #   match "/ws", to: Ruflet::Rails.app(Rails.root.join("app/ruflet/main.rb")), via: :all
     def app(file_path)
       Protocol::Runner.new.build_app_endpoint(file_path: file_path)
     end

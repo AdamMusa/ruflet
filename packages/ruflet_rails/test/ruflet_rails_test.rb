@@ -42,6 +42,27 @@ class RufletRailsTest < Minitest::Test
     assert_equal runner.method(:build_app_endpoint), runner.method(:build_mobile_endpoint)
   end
 
+  def test_endpoint_without_block_defaults_to_view_router
+    # `match "/ws", to: Ruflet::Rails.endpoint` should need no entrypoint
+    # block — it defaults to the view router (Ruflet::Rails.render).
+    endpoint = Ruflet::Rails.endpoint
+    assert_respond_to endpoint, :call
+
+    server = endpoint.instance_variable_get(:@server)
+    app_block = server.instance_variable_get(:@app_block)
+
+    rendered = nil
+    original = Ruflet::Rails.method(:render)
+    Ruflet::Rails.define_singleton_method(:render) { |page, **| rendered = page }
+    begin
+      page = Ruflet::Page.new(session_id: "s", client_details: {}, sender: ->(*) {})
+      app_block.call(page)
+      assert_same page, rendered, "default entrypoint must route through Ruflet::Rails.render"
+    ensure
+      Ruflet::Rails.define_singleton_method(:render, original)
+    end
+  end
+
   def test_rails_protocol_uses_shared_ruflet_server_runtime
     assert_same Ruflet::WireCodec, Ruflet::Rails::Protocol::WireCodec
     assert_same Ruflet::WebSocketConnection, Ruflet::Rails::Protocol::WebSocketConnection
