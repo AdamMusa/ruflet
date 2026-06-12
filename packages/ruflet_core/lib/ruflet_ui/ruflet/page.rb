@@ -1650,15 +1650,15 @@ module Ruflet
       end
     end
 
-    def push_dialogs_update!(force_view: false)
+    def push_dialogs_update!
       refresh_control_indexes!
 
-      if force_view || @dialogs_container.props["controls"].empty?
-        @dialogs_container_mounted = false
-        send_view_patch
-        return
-      end
-
+      # Once the dialogs container is mounted, every change — opening, closing,
+      # even down to no dialogs at all — is an in-place patch of its controls
+      # list. Re-sending the view (or the container as a whole object) would
+      # replace the live container instance on the Flutter side, detaching its
+      # listeners and breaking any other dialog still open. Only the very first
+      # dialog, before the container has a wire id, needs a view patch to mount.
       if @dialogs_container.wire_id
         send_message(Protocol::ACTIONS[:patch_control], {
           "id" => @dialogs_container.wire_id,

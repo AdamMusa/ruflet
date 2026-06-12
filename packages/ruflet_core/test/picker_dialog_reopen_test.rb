@@ -113,6 +113,27 @@ class RufletPickerDialogReopenTest < Minitest::Test
     refute_nil container_patch, "expected an in-place dialogs-container patch"
   end
 
+  def test_closing_the_last_dialog_patches_the_container_not_the_view
+    page, sent = make_page
+    dialog = Ruflet::UI::ControlFactory.build(:alertdialog, open: false, modal: true,
+                                              title: Ruflet::UI::ControlFactory.build(:text, value: "Only"))
+    page.show_dialog(dialog)
+    container = page.instance_variable_get(:@dialogs_container)
+    sent.clear
+
+    page.close_dialog(dialog)
+
+    # No full-view rebuild (id == 1) — the container is patched in place even
+    # when it becomes empty, so the live container instance is never replaced.
+    view_rebuild = sent.find { |(_a, payload)| payload.is_a?(Hash) && payload["id"] == 1 }
+    assert_nil view_rebuild, "closing the last dialog must not re-send the whole view"
+
+    container_patch = sent.find { |(_a, payload)| payload.is_a?(Hash) && payload["id"] == container.wire_id }
+    refute_nil container_patch, "closing the last dialog should patch the dialogs container"
+    assert page.instance_variable_get(:@dialogs_container_mounted),
+           "the dialogs container must stay mounted once shown"
+  end
+
   def test_alert_dialog_stays_open_on_change
     # Non-picker dialogs must NOT auto-close on a change event (e.g. a form
     # field changing inside the dialog).
