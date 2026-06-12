@@ -27918,7 +27918,7 @@ module Ruflet
       private
 
       def control_delegate
-        Ruflet::DSL
+        Ruflet::WidgetBuilder.new
       end
     end
   end
@@ -27932,8 +27932,12 @@ module Kernel
   def app(**opts, &block) = Ruflet::DSL.app(**opts, &block)
   def page(**props, &block) = Ruflet::DSL.page(**props, &block)
 
+  # Bare widget helpers (view, text, container, …) build real controls anywhere
+  # — top-level scripts and Ruflet.run blocks — with no builder to instantiate.
+  # The framework owns this plumbing so dev code stays free of it; a fresh
+  # builder per call keeps the helpers stateless.
   def control_delegate
-    Ruflet::DSL
+    Ruflet::WidgetBuilder.new
   end
 
   if Ruflet::UI::SharedControlForwarders.respond_to?(:instance_methods)
