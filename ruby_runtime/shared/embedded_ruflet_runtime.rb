@@ -25137,7 +25137,7 @@ end
 
 
 module Ruflet
-  VERSION = "0.0.14" unless const_defined?(:VERSION)
+  VERSION = "0.0.15" unless const_defined?(:VERSION)
 end
 
 # -- packages/ruflet_core/lib/ruflet_ui/ruflet/page.rb
@@ -26377,6 +26377,10 @@ module Ruflet
 
       event = Ruflet::Event.new(name: name, target: target, raw_data: data, page: self, control: control)
       apply_event_value_to_control(control, event) if %w[change select select_change].include?(name.to_s)
+      # Material/Cupertino pickers dismiss themselves on the client once a
+      # value is confirmed, but only send a value event — never a close. Mark
+      # the dialog closed here so show_dialog can reopen it next time.
+      mark_picker_dialog_closed(control, name)
       before_dialog_count = @dialogs_container.props["controls"].length
       if dialog_close_event?(control, name) && remove_dialog_tracking(control)
         push_dialogs_update!(force_view: @dialogs_container.props["controls"].length < before_dialog_count)
@@ -26807,6 +26811,25 @@ module Ruflet
     def dialog_close_event?(control, name)
       name = name.to_s
       name == "dismiss" || (%w[change select select_change].include?(name) && @dialogs.include?(control) && control.props["open"] == false)
+    end
+
+    # Picker dialogs that auto-dismiss on the client after a selection. Their
+    # confirm sends a value event (change/select), not a close, so the server
+    # must flip `open` to false or show_dialog's open-guard blocks reopening.
+    PICKER_DIALOG_TYPES = %w[
+      datepicker daterangepicker timepicker
+      cupertinodatepicker cupertinotimerpicker
+    ].freeze
+
+    def picker_dialog?(control)
+      PICKER_DIALOG_TYPES.include?(control.type.to_s.tr("_", "").downcase)
+    end
+
+    def mark_picker_dialog_closed(control, name)
+      return unless picker_dialog?(control)
+      return unless %w[change select select_change dismiss].include?(name.to_s)
+
+      control.props["open"] = false
     end
 
     def remove_dialog_tracking(control)
