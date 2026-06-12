@@ -2,6 +2,79 @@
 
 module Showcase
   module Helpers
+    # Platforms each native capability actually works on. A feature absent
+    # here is assumed available everywhere. Used to guard demos so the user
+    # never triggers a "not supported on web" exception — the section shows a
+    # clean notice instead.
+    FEATURE_PLATFORMS = {
+      "directory_picker" => %w[macos windows linux android ios], # not web
+      "battery" => %w[android ios],                              # not web/desktop
+      "accelerometer" => %w[android ios],
+      "gyroscope" => %w[android ios],
+      "magnetometer" => %w[android ios],
+      "barometer" => %w[android ios],
+      "user_accelerometer" => %w[android ios],
+      "shake_detector" => %w[android ios],
+      "flashlight" => %w[android ios],
+      "screen_brightness" => %w[android ios],
+      "camera" => %w[android ios],
+      "webview" => %w[macos windows linux android ios]           # not web (iframe)
+    }.freeze
+
+    def web_platform?(page)
+      client_platform(page).downcase == "web"
+    end
+
+    def feature_supported?(page, feature)
+      platforms = FEATURE_PLATFORMS[feature.to_s]
+      return true unless platforms
+
+      platform = client_platform(page).downcase
+      return true if platform.empty? # unknown host: don't hide anything
+
+      platforms.include?(platform)
+    end
+
+    # Clean placeholder shown in place of a control/section the current
+    # platform cannot run, instead of a raw service exception.
+    def unsupported_feature_panel(page, title, feature = nil)
+      supported = feature ? FEATURE_PLATFORMS[feature.to_s] : nil
+      platform = client_platform(page)
+      where = platform.to_s.strip.empty? ? "this platform" : platform
+      detail =
+        if supported
+          "Available on #{supported.join(', ')}. Current platform: #{where}."
+        else
+          "Not available on #{where}."
+        end
+      container(
+        padding: 16,
+        border_radius: 12,
+        bgcolor: color_panel(page),
+        content: column(
+          spacing: 6,
+          children: [
+            row(
+              spacing: 8,
+              children: [
+                icon(Ruflet::MaterialIcons[:info_outline], size: 18, color: color_subtle(page)),
+                text(value: title, style: { size: 15, weight: "w600" })
+              ]
+            ),
+            text(value: detail, style: { size: 13, color: color_subtle(page) })
+          ]
+        )
+      )
+    end
+
+    # Renders the section body only when the feature is supported here;
+    # otherwise a clean notice. Pass a block that builds the real content.
+    def with_feature_guard(page, feature, title)
+      return unsupported_feature_panel(page, title, feature) unless feature_supported?(page, feature)
+
+      yield
+    end
+
     def github_repo_base
       "https://github.com/AdamMusa/ruflet/blob/main/"
     end

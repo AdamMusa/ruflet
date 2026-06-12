@@ -3,6 +3,10 @@
 module Showcase
   module SectionsMedia
     def build_screen_brightness(page, _status)
+      unless feature_supported?(page, "screen_brightness")
+        return unsupported_feature_panel(page, "Screen brightness", "screen_brightness")
+      end
+
       page.screen_brightness(key: "studio_screen_brightness")
       screen_brightness = page.screen_brightness
       info_text = text(value: "Application brightness: -\nSystem brightness: -\nSystem change: -\nAnimate: -\nAuto reset: -")

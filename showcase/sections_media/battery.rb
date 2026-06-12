@@ -3,6 +3,8 @@
 module Showcase
   module SectionsMedia
     def build_battery(page, _status)
+      return unsupported_feature_panel(page, "Battery", "battery") unless feature_supported?(page, "battery")
+
       info_text = text(value: "Battery level: -\nBattery state: -\nBattery saver: -")
 
       refresh_info = lambda do
