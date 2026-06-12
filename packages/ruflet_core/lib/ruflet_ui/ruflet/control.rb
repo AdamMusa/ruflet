@@ -47,6 +47,37 @@ module Ruflet
       @handlers.key?(normalized_event_name(event_name))
     end
 
+    # Read a prop by name: control["value"] or control[:value].
+    def [](key)
+      @props[key.to_s]
+    end
+
+    # Write a prop by name: control["value"] = "x".
+    def []=(key, value)
+      @props[key.to_s] = value
+    end
+
+    # Convenience dot access to props, mirroring Flet-style controls:
+    #   control.value            # => @props["value"] (reads an existing prop)
+    #   control.value = "hello"  # => sets @props["value"]
+    # Reads only resolve props that exist, so typos still raise NoMethodError
+    # instead of silently returning nil. Defined methods (type, id, props,
+    # children, on, emit, to_patch, …) are never shadowed.
+    def method_missing(name, *args, &block)
+      key = name.to_s
+      if key.end_with?("=")
+        return @props[key[0..-2]] = args.first
+      end
+      return @props[key] if args.empty? && @props.key?(key)
+
+      super
+    end
+
+    def respond_to_missing?(name, include_private = false)
+      key = name.to_s
+      key.end_with?("=") || @props.key?(key) || super
+    end
+
     def to_patch
       wire_type = schema_wire_type_for_class
       if wire_type.nil?

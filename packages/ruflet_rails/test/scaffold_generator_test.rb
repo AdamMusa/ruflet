@@ -72,8 +72,8 @@ class RufletScaffoldGeneratorTest < Minitest::Test
       assert_includes component_source, "open: false"
       assert_includes component_source, "title_control = text_field"
       assert_includes component_source, "body_control = text_field"
-      assert_includes component_source, '"title" => title_control.props["value"].to_s'
-      assert_includes component_source, '"body" => body_control.props["value"].to_s'
+      assert_includes component_source, '"title" => title_control.value.to_s'
+      assert_includes component_source, '"body" => body_control.value.to_s'
       assert_includes component_source, "save_record(record, attributes.call, dialog)"
       assert_includes component_source, "open_dialog(dialog)"
       assert_includes component_source, "close_dialog(dialog)"
@@ -160,8 +160,8 @@ class RufletScaffoldGeneratorTest < Minitest::Test
     assert_includes component_source, "open_dialog(dialog)"
     assert_includes component_source, "headline_control = text_field"
     assert_includes component_source, "published_control = checkbox"
-    assert_includes component_source, '"headline" => headline_control.props["value"].to_s'
-    assert_includes component_source, '"published" => !!published_control.props["value"]'
+    assert_includes component_source, '"headline" => headline_control.value.to_s'
+    assert_includes component_source, '"published" => !!published_control.value'
     refute_includes component_source, "def records"
     refute_includes component_source, "def save_record"
 
@@ -191,7 +191,7 @@ class RufletScaffoldGeneratorTest < Minitest::Test
     assert_includes component_source, "close_dialog(dialog)"
     assert_includes component_source, "save_record(record, attributes.call, dialog)"
     assert_includes component_source, "publish_on_control_field"
-    assert_includes component_source, '"publish_on" => publish_on_control.props["value"].to_s.split("T", 2).first'
+    assert_includes component_source, '"publish_on" => publish_on_control.value.to_s.split("T", 2).first'
     refute_includes component_source, "page.update(dialog, open: false)"
     refute_includes component_source, 'publish_on_control = text_field'
     refute_includes component_source, "dropdown("
@@ -206,11 +206,11 @@ class RufletScaffoldGeneratorTest < Minitest::Test
     assert_includes component_source, "starts_at_control = time_picker("
     assert_includes component_source, "starts_at_control_value = time_picker_value(record.public_send(\"starts_at\"))"
     assert_includes component_source, "starts_at_control_display = text(time_display_value(starts_at_control_value))"
-    assert_includes component_source, '"starts_at" => starts_at_control.props["value"].to_s'
+    assert_includes component_source, '"starts_at" => starts_at_control.value.to_s'
     assert_includes component_source, "booking_window_control = date_range_picker("
     assert_includes component_source, "booking_window_control_start_value, booking_window_control_end_value = date_range_picker_values(record.public_send(\"booking_window\"))"
-    assert_includes component_source, "date_range_display_value(booking_window_control.props[\"start_value\"], booking_window_control.props[\"end_value\"])"
-    assert_includes component_source, '"booking_window" => Range.new(Date.parse(booking_window_control.props["start_value"].to_s), Date.parse(booking_window_control.props["end_value"].to_s))'
+    assert_includes component_source, "date_range_display_value(booking_window_control.start_value, booking_window_control.end_value)"
+    assert_includes component_source, '"booking_window" => Range.new(Date.parse(booking_window_control.start_value.to_s), Date.parse(booking_window_control.end_value.to_s))'
     assert_includes component_source, "close_dialogs(starts_at_control)"
     assert_includes component_source, "close_dialogs(booking_window_control)"
     refute_includes component_source, "event.control"

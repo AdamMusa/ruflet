@@ -527,7 +527,7 @@ module Ruflet
                   help_text: #{label.inspect},
                   on_change: ->(_event) do
                     close_dialogs(#{control})
-                    page.update(#{display_control}, value: date_display_value(#{control}.props["value"]))
+                    page.update(#{display_control}, value: date_display_value(#{control}.value))
                   end
                 )
                 #{control}_field = column(
@@ -554,7 +554,7 @@ module Ruflet
                   help_text: #{label.inspect},
                   on_change: ->(_event) do
                     close_dialogs(#{control})
-                    page.update(#{display_control}, value: time_display_value(#{control}.props["value"]))
+                    page.update(#{display_control}, value: time_display_value(#{control}.value))
                   end
                 )
                 #{control}_field = column(
@@ -584,7 +584,7 @@ module Ruflet
                     close_dialogs(#{control})
                     page.update(
                       #{display_control},
-                      value: date_range_display_value(#{control}.props["start_value"], #{control}.props["end_value"])
+                      value: date_range_display_value(#{control}.start_value, #{control}.end_value)
                     )
                   end
                 )
@@ -618,13 +618,13 @@ module Ruflet
         value =
           case type
           when "boolean"
-            "!!#{control}.props[\"value\"]"
+            "!!#{control}.value"
           when "date"
-            "#{control}.props[\"value\"].to_s.split(\"T\", 2).first"
+            "#{control}.value.to_s.split(\"T\", 2).first"
           when "date_range", "daterange"
-            "Range.new(Date.parse(#{control}.props[\"start_value\"].to_s), Date.parse(#{control}.props[\"end_value\"].to_s))"
+            "Range.new(Date.parse(#{control}.start_value.to_s), Date.parse(#{control}.end_value.to_s))"
           else
-            "#{control}.props[\"value\"].to_s"
+            "#{control}.value.to_s"
           end
 
         "#{name.inspect} => #{value}"
