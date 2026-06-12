@@ -49,6 +49,38 @@ class RufletPickerDialogReopenTest < Minitest::Test
     assert_reopens(picker, change_data: "10:45")
   end
 
+  def test_navigation_dismisses_an_open_picker_dialog
+    page, = make_page
+    picker = Ruflet::UI::ControlFactory.build(:datepicker, value: "2026-05-21")
+    picker.on(:change) {}
+    page.show_dialog(picker)
+    assert_equal 1, page.instance_variable_get(:@dialogs_container).props["controls"].length
+
+    # User navigates away without selecting — the dialog must not ghost onto
+    # the next view.
+    page.dispatch_event(target: 1, name: "route_change", data: "/home")
+
+    assert_empty page.instance_variable_get(:@dialogs), "navigation must untrack open dialogs"
+    assert_equal 0, page.instance_variable_get(:@dialogs_container).props["controls"].length
+    assert_equal false, picker.props["open"]
+  end
+
+  def test_picker_reopens_on_a_fresh_view_after_navigation
+    page, = make_page
+    first = Ruflet::UI::ControlFactory.build(:timepicker, value: "09:30")
+    first.on(:change) {}
+    page.show_dialog(first)
+    page.dispatch_event(target: 1, name: "route_change", data: "/elsewhere")
+
+    # A new picker built on the new view opens normally.
+    second = Ruflet::UI::ControlFactory.build(:timepicker, value: "10:00")
+    second.on(:change) {}
+    page.show_dialog(second)
+
+    assert_equal true, second.props["open"]
+    assert_equal 1, page.instance_variable_get(:@dialogs_container).props["controls"].length
+  end
+
   def test_alert_dialog_stays_open_on_change
     # Non-picker dialogs must NOT auto-close on a change event (e.g. a form
     # field changing inside the dialog).

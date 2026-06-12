@@ -26366,6 +26366,10 @@ module Ruflet
       if page_control_target?(target)
         if name.to_s == "route_change"
           route_from_event = extract_route(data)
+          # Dialogs (including pickers) belong to the view that opened them.
+          # Navigating away must dismiss them, or they ghost onto the next
+          # view — the picker that "reappears after going home".
+          dismiss_tracked_dialogs! if route_from_event && route_from_event != @page_props["route"]
           @page_props["route"] = route_from_event if route_from_event
         end
         dispatch_page_event(name: name, data: data)
@@ -26830,6 +26834,17 @@ module Ruflet
       return unless %w[change select select_change dismiss].include?(name.to_s)
 
       control.props["open"] = false
+    end
+
+    # Close and untrack every dialog currently shown. Called on navigation so
+    # a dialog opened in one view does not linger as an overlay on the next.
+    def dismiss_tracked_dialogs!
+      return if @dialogs.empty?
+
+      @dialogs.each { |dialog| dialog.props["open"] = false }
+      @dialogs.clear
+      refresh_dialogs_container!
+      push_dialogs_update! if @dialogs_container_mounted
     end
 
     def remove_dialog_tracking(control)
