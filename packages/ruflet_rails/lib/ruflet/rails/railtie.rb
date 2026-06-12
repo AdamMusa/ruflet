@@ -9,6 +9,12 @@ module Ruflet
         app.middleware.insert_before(ActionDispatch::Static, Ruflet::Rails::Protocol::Middleware)
       end
 
+      # Make ruflet_frame and friends available in every .erb template.
+      initializer "ruflet_rails.view_helpers" do
+        ActiveSupport.on_load(:action_view) do
+          include Ruflet::Rails::ViewHelpers
+        end
+      end
 
       initializer "ruflet_rails.desktop_launcher", after: :load_config_initializers do |_app|
         next unless defined?(::Rails.root)
