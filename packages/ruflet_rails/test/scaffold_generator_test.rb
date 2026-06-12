@@ -108,6 +108,21 @@ class RufletScaffoldGeneratorTest < Minitest::Test
     flunk "generated code has a syntax error: #{e.message}"
   end
 
+  def test_scaffold_form_inputs_stretch_to_the_dialog_width
+    component = Ruflet::Rails::InstallSupport.scaffold_component_template(
+      model_name: "Product",
+      attributes: ["name:string", "price:decimal", "description:text"]
+    )
+
+    # The form's content column must stretch its children so the inputs fill
+    # the dialog width instead of rendering at small/intrinsic width.
+    form_column = component[/content: container\(\s*width: dialog_width,.*?\n\s*\),\s*\n\s*actions:/m]
+    refute_nil form_column, "could not locate the form content container"
+    assert_includes form_column, 'horizontal_alignment: "stretch"',
+                    "form inputs should stretch to the dialog width"
+    assert_silent_syntax component
+  end
+
   def test_scaffold_templates_keep_attribute_metadata_out_of_generated_files
     view_source = Ruflet::Rails::InstallSupport.scaffold_view_template(
       model_name: "NewsArticle",

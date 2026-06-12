@@ -415,6 +415,7 @@ module Ruflet
                   width: dialog_width,
                   content: column(
                     spacing: 8,
+                    horizontal_alignment: "stretch",
                     children: [
                       #{control_list}
                     ]
@@ -662,7 +663,7 @@ module Ruflet
                   spacing: 12,
                   children: [
                     text(title, size: 24, weight: "bold"),
-                    column(spacing: 8, children: ruflet_form_controls(fields)),
+                    column(spacing: 8, horizontal_alignment: "stretch", children: ruflet_form_controls(fields)),
                     row(
                       spacing: 8,
                       children: [
