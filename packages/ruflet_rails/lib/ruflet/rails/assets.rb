@@ -23,6 +23,23 @@ module Ruflet
     # through untouched.
     module_function
 
+    # The base URL the Flutter client uses to reach this Rails app — the single
+    # source of truth for asset URLs, the build-time RUFLET_URL define and the
+    # desktop launcher. A Rails Ruflet app always needs one, so this always
+    # resolves to a usable value:
+    #
+    #   1. an explicit host: argument
+    #   2. Ruflet::Rails.config.backend_url (set it in config/initializers/ruflet.rb)
+    #   3. the host the client connected on (the live WebSocket request)
+    #
+    # Returns "" only when none of those are available (e.g. a build with no
+    # configured backend_url) — set config.backend_url to cover that case.
+    def backend_url(host: nil)
+      candidate = host || config.backend_url
+      candidate = request_base_url if candidate.to_s.strip.empty?
+      candidate.to_s.strip.sub(%r{/+\z}, "")
+    end
+
     def asset_url(source, host: nil)
       raw = source.to_s
       return raw if absolute_url?(raw)
@@ -30,7 +47,7 @@ module Ruflet
       path = asset_pipeline_path(raw)
       return path if absolute_url?(path)
 
-      base = asset_host_base(host)
+      base = backend_url(host: host)
       base.empty? ? path : "#{base}#{path}"
     end
 
@@ -45,12 +62,6 @@ module Ruflet
       source.start_with?("/") ? source : "/#{source}"
     end
     private_class_method :asset_pipeline_path
-
-    def asset_host_base(explicit)
-      candidate = explicit || config.backend_url || request_base_url
-      candidate.to_s.strip.sub(%r{/+\z}, "")
-    end
-    private_class_method :asset_host_base
 
     # Derive scheme://host from the live WebSocket request env so the URL points
     # back at the exact host the client reached — the one address guaranteed to

@@ -78,4 +78,24 @@ class RufletAssetsTest < Minitest::Test
     refute_respond_to Ruflet::Rails, :request_base_url
     refute_respond_to Ruflet::Rails, :asset_pipeline_path
   end
+
+  # --- backend_url: the always-resolving base URL --------------------------
+
+  def test_backend_url_uses_explicit_host_then_config_then_request
+    assert_equal "http://explicit:3100", Ruflet::Rails.backend_url(host: "http://explicit:3100/")
+
+    Ruflet::Rails.config.backend_url = "https://app.example.com/"
+    assert_equal "https://app.example.com", Ruflet::Rails.backend_url
+    Ruflet::Rails.config.backend_url = nil
+
+    env = { "HTTP_HOST" => "10.0.0.5:3100", "rack.url_scheme" => "http" }
+    resolved = Ruflet::Rails::Protocol::Context.with_env(env) { Ruflet::Rails.backend_url }
+    assert_equal "http://10.0.0.5:3100", resolved
+  end
+
+  def test_backend_url_is_blank_only_when_nothing_is_available
+    # No explicit host, no config, no request (e.g. a build) — caller must set
+    # config.backend_url to cover this.
+    assert_equal "", Ruflet::Rails.backend_url
+  end
 end
