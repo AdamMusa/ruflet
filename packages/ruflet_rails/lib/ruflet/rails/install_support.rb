@@ -139,59 +139,229 @@ module Ruflet
         model_class = names[:class_name]
         component_class = "#{model_class}Component"
         attrs = normalized_form_attributes(attributes)
-        resource_fields = scaffold_resource_fields(attrs)
-        display_fields = scaffold_display_fields(attrs)
-        form_fields = scaffold_form_fields(attrs)
+        control_locals = scaffold_control_locals(attrs)
+        control_list = scaffold_control_list(attrs)
+        attributes_hash = scaffold_attributes_hash(attrs)
 
-        <<~COMPONENT
+        <<~RUBY
           # frozen_string_literal: true
 
+          require "date"
           require "ruflet_rails"
 
-          # Mounted in config/routes.rb; the model (#{model_class}) is inferred
-          # from the class name. The whole CRUD UI (index table, detail screen,
-          # create/edit form) is inherited from Ruflet::Rails::ResourceComponent
-          # and rendered from the field configuration below. Override render,
-          # show or open_form here only to customize the generated UI.
+          # The model (#{model_class}) is inferred from the class name and the route
+          # ("/#{names[:plural]}") is declared in config/routes.rb. This file is YOURS:
+          # the whole CRUD UI (index table, detail screen, create/edit form) and the
+          # database calls (#{model_class}#update, #destroy!, .new) are explicit below
+          # so you can change the UI or logic however you like. The base class only
+          # provides reusable helpers: record loading, field inference, dialog
+          # open/close, the date/time picker value helpers, and refresh.
+          #
+          # The same component renders on web and on mobile/desktop.
           class #{component_class} < Ruflet::Rails::ResourceComponent
-            # Fields shown on the detail screen.
-            def resource_fields
-              #{resource_fields}
+            def render
+              safe_area(
+                container(
+                  expand: true,
+                  padding: { left: 24, top: 16, right: 24, bottom: 24 },
+                  content: column(
+                    expand: true,
+                    spacing: 16,
+                    children: [
+                      index_header,
+                      compact? ? record_list(records) : record_table(records)
+                    ]
+                  )
+                ),
+                expand: true
+              )
             end
 
-            # Columns shown in the index table and list tiles.
-            def display_fields
-              #{display_fields}
+            def show(record)
+              safe_area(
+                container(
+                  expand: true,
+                  padding: { left: 24, top: 16, right: 24, bottom: 24 },
+                  content: column(
+                    expand: true,
+                    spacing: 16,
+                    children: [
+                      show_header(record),
+                      column(
+                        spacing: 8,
+                        children: resource_fields.map { |field| field_row(field.humanize, display_value(record, field)) }
+                      )
+                    ]
+                  )
+                ),
+                expand: true
+              )
             end
 
-            # Inputs for the create/edit form. The type drives the widget
-            # (text field, checkbox, date/time picker, range picker).
-            def form_fields
-              #{form_fields}
+            private
+
+            def show_header(record)
+              row(
+                alignment: "spaceBetween",
+                vertical_alignment: "center",
+                children: [
+                  container(expand: true, content: text("\#{singular_title} ##\#{record_id(record)}", size: 24, weight: "bold")),
+                  row(
+                    tight: true,
+                    spacing: 8,
+                    children: [
+                      outlined_button(content: text("Back"), on_click: ->(_event) { render_index }),
+                      filled_button(content: text("Edit"), on_click: ->(_event) { open_form(record) })
+                    ]
+                  )
+                ]
+              )
+            end
+
+            def index_header
+              row(
+                alignment: "spaceBetween",
+                vertical_alignment: "center",
+                children: [
+                  container(expand: true, content: text(resource_title, size: 24, weight: "bold")),
+                  filled_button(content: text("New \#{singular_title}"), on_click: ->(_event) { open_form(model_class.new) })
+                ]
+              )
+            end
+
+            def record_table(items)
+              row(
+                scroll: "auto",
+                children: [
+                  data_table(
+                    table_columns,
+                    rows: items.map { |record| table_row(record) },
+                    column_spacing: 24,
+                    horizontal_margin: 12,
+                    show_bottom_border: true
+                  )
+                ]
+              )
+            end
+
+            def table_columns
+              display_fields.map { |field| data_column(field.humanize) } + [
+                data_column("Actions"),
+                data_column(""),
+                data_column("")
+              ]
+            end
+
+            def table_row(record)
+              data_row(
+                display_fields.map { |field| data_cell(display_value(record, field), on_tap: ->(_event) { open_show(record) }) } +
+                  [
+                    data_cell(icon("visibility", tooltip: "Show"), on_tap: ->(_event) { open_show(record) }),
+                    data_cell(icon("edit", tooltip: "Edit"), on_tap: ->(_event) { open_form(record) }),
+                    data_cell(icon("delete", tooltip: "Delete"), on_tap: ->(_event) { open_delete(record) })
+                  ]
+              )
+            end
+
+            def record_list(items)
+              column(spacing: 4, children: items.map { |record| record_tile(record) })
+            end
+
+            def record_tile(record)
+              list_tile(
+                title: text(primary_label(record)),
+                subtitle: secondary_label(record) ? text(secondary_label(record)) : nil,
+                trailing: row(
+                  tight: true,
+                  spacing: 0,
+                  children: [
+                    icon_button("edit", tooltip: "Edit", on_click: ->(_event) { open_form(record) }),
+                    icon_button("delete", tooltip: "Delete", on_click: ->(_event) { open_delete(record) })
+                  ]
+                ),
+                on_click: ->(_event) { open_show(record) }
+              )
+            end
+
+            def open_show(record)
+              show_record(record)
+            end
+
+            def open_form(record)
+              #{control_locals}
+
+              attributes = lambda do
+                {
+                  #{attributes_hash}
+                }
+              end
+
+              dialog  = nil
+              dialog  = alert_dialog(
+                open: false,
+                modal: true,
+                scrollable: true,
+                title: text(record.persisted? ? "Edit \#{singular_title}" : "New \#{singular_title}"),
+                content: container(
+                  width: dialog_width,
+                  content: column(
+                    spacing: 8,
+                    horizontal_alignment: "stretch",
+                    children: [
+                      #{control_list}
+                    ]
+                  )
+                ),
+                actions: [
+                  text_button(content: text("Cancel"), on_click: ->(_event) { close_dialog(dialog) }),
+                  filled_button(content: text("Save"), on_click: ->(_event) {
+                    # Persist with the model (this is your code — change it freely).
+                    if record.update(attributes.call)
+                      close_dialog(dialog)
+                      refresh
+                      show_snackbar("\#{singular_title} saved")
+                    else
+                      show_errors(record)
+                    end
+                  })
+                ],
+                actions_alignment: "end"
+              )
+              open_dialog(dialog)
+            end
+
+            def open_delete(record)
+              dialog = nil
+              dialog = alert_dialog(
+                open: false,
+                modal: true,
+                title: text("Delete \#{singular_title}?"),
+                content: text("Permanently remove \#{singular_title} #\#{record_id(record)}?", no_wrap: false),
+                actions: [
+                  text_button(content: text("Cancel"), on_click: ->(_event) { close_dialog(dialog) }),
+                  filled_button(content: text("Delete"), on_click: ->(_event) {
+                    # Destroy with the model (this is your code — change it freely).
+                    record.destroy!
+                    close_dialog(dialog)
+                    refresh
+                    show_snackbar("\#{singular_title} deleted")
+                  })
+                ],
+                actions_alignment: "end"
+              )
+              open_dialog(dialog)
+            end
+
+            def field_row(label, value)
+              row(
+                children: [
+                  container(width: 140, content: text(label, weight: "bold")),
+                  container(expand: true, content: text(value, no_wrap: false))
+                ]
+              )
             end
           end
-        COMPONENT
-      end
-
-      def scaffold_form_fields(attrs)
-        specs = attrs.map do |field|
-          "{ name: #{field[:name].inspect}, type: #{scaffold_field_type(field[:type]).inspect} }"
-        end
-        "[\n      #{specs.join(",\n      ")}\n    ]"
-      end
-
-      def scaffold_field_type(type)
-        case type.to_s
-        when "date_range", "daterange" then :daterange
-        when "timestamp", "datetime" then :datetime
-        when "text" then :text
-        when "integer" then :integer
-        when "decimal", "float" then :decimal
-        when "boolean" then :boolean
-        when "date" then :date
-        when "time" then :time
-        else :string
-        end
+        RUBY
       end
 
       def scaffold_control_locals(attrs)

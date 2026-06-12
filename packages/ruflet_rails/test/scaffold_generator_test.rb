@@ -11,111 +11,192 @@ require "generators/ruflet/scaffold/scaffold_generator"
 class RufletScaffoldGeneratorTest < Minitest::Test
   RailsGenerators = ::Rails::Generators
 
-def test_generates_one_pure_config_component
-  Dir.mktmpdir do |dir|
-    capture_io do
-      RailsGenerators.invoke("ruflet:scaffold", ["Post", "title:string", "body:text"], destination_root: dir)
+  def test_rails_generator_creates_a_single_mountable_component
+    Dir.mktmpdir do |dir|
+      capture_io do
+        RailsGenerators.invoke(
+          "ruflet:scaffold",
+          ["Post", "title:string", "body:text"],
+          destination_root: dir
+        )
+      end
+
+      # The generator emits ONE file: the resource component. No separate view
+      # host — routing, model resolution and persistence all live in the base
+      # class (Ruflet::Rails::ResourceComponent).
+      refute File.exist?(File.join(dir, "app/views/ruflet/posts_view.rb")),
+             "the scaffold must not generate a separate view file"
+
+      component_path = File.join(dir, "app/views/ruflet/components/posts/post_component.rb")
+      component_source = File.read(component_path)
+
+      assert_includes component_source, "class PostComponent < Ruflet::Rails::ResourceComponent"
+      assert_includes component_source, "def render"
+      assert_includes component_source, "def show(record)"
+      assert_includes component_source, "def record_table"
+      assert_includes component_source, "def open_form"
+      assert_includes component_source, "show_record(record)"
+      assert_includes component_source, "data_table("
+      assert_includes component_source, "alert_dialog("
+      assert_includes component_source, "open: false"
+      assert_includes component_source, "title_control = text_field"
+      assert_includes component_source, "body_control = text_field"
+      assert_includes component_source, '"title" => title_control.value.to_s'
+      assert_includes component_source, '"body" => body_control.value.to_s'
+      assert_includes component_source, "open_dialog(dialog)"
+      assert_includes component_source, "close_dialog(dialog)"
+
+      # The DB interaction is EXPLICIT in the developer's file (not a framework
+      # method) so it can be read and changed freely.
+      assert_includes component_source, "if record.update(attributes.call)"
+      assert_includes component_source, "record.destroy!"
+      assert_includes component_source, "open_form(model_class.new)"
+      assert_includes component_source, "refresh"
+      refute_includes component_source, "save_record(record"
+      refute_includes component_source, "destroy_record(record"
+
+      # The field configuration is INFERRED by the base, not declared here.
+      refute_includes component_source, "def resource_fields"
+      refute_includes component_source, "def display_fields"
+      refute_includes component_source, "def display_value"
+
+      # The generic plumbing is inherited too.
+      refute_includes component_source, "class PostView"
+      refute_includes component_source, "Ruflet::Rails::ResourceView"
+      refute_includes component_source, 'route "/posts"'
+      refute_includes component_source, "def model_class"
+      refute_includes component_source, "def records"
+      refute_includes component_source, "def save_record"
+      refute_includes component_source, "def destroy_record"
+      refute_includes component_source, "def render_index"
+      refute_includes component_source, "def render_show"
+      refute_includes component_source, "def component"
+      refute_includes component_source, ".new(page, controller: self)"
+      refute_includes component_source, "page.dialog = dialog"
+      refute_includes component_source, "page.update(dialog, open: false)"
+      refute_includes component_source, "ruflet_form_bindings"
+      refute_includes component_source, "ruflet_form_attributes"
+      refute_includes component_source, "title:string"
+      refute_includes component_source, "body:text"
+      refute_includes component_source, "{ name:"
+      refute File.exist?(File.join(dir, "app/views/ruflet/components/application_component.rb"))
     end
-
-    refute File.exist?(File.join(dir, "app/views/ruflet/posts_view.rb")),
-           "the scaffold must not generate a separate view file"
-
-    src = File.read(File.join(dir, "app/views/ruflet/components/posts/post_component.rb"))
-
-    assert_includes src, "class PostComponent < Ruflet::Rails::ResourceComponent"
-
-    # Pure config: the only methods are the field configuration.
-    assert_includes src, "def resource_fields"
-    assert_includes src, "def display_fields"
-    assert_includes src, "def form_fields"
-    assert_includes src, '["title", "body"]'
-    assert_includes src, '{ name: "title", type: :string }'
-    assert_includes src, '{ name: "body", type: :text }'
-
-    # The whole CRUD UI is inherited from the base, NOT generated.
-    refute_includes src, "def render"
-    refute_includes src, "def show"
-    refute_includes src, "def open_form"
-    refute_includes src, "def record_table"
-    refute_includes src, "def open_delete"
-    refute_includes src, "data_table("
-    refute_includes src, "alert_dialog("
-    refute_includes src, "text_field"
-    refute_includes src, "date_picker("
-    refute_includes src, "save_record"
-    refute_includes src, "def display_value"
-
-    # No legacy view / metadata leakage.
-    refute_includes src, "Ruflet::Rails::ResourceView"
-    refute_includes src, 'route "/posts"'
-    refute_includes src, "def model_class"
-    refute_includes src, "title:string"
-    refute_includes src, "body:text"
-    assert_silent_syntax src
-    refute File.exist?(File.join(dir, "app/views/ruflet/components/application_component.rb"))
   end
-end
 
-def assert_silent_syntax(source)
-  RubyVM::InstructionSequence.compile(source)
-rescue SyntaxError => e
-  flunk "generated code has a syntax error: #{e.message}"
-end
+  def test_scaffold_without_date_attributes_generates_valid_ruby
+    component = Ruflet::Rails::InstallSupport.scaffold_component_template(
+      model_name: "Product",
+      attributes: ["name:string", "price:decimal", "description:text"]
+    )
 
-def test_generated_component_is_valid_ruby_without_date_attributes
-  component = Ruflet::Rails::InstallSupport.scaffold_component_template(
-    model_name: "Product",
-    attributes: ["name:string", "price:decimal", "description:text"]
-  )
-  assert_includes component, "def form_fields"
-  refute_includes component, "case field"
-  assert_silent_syntax component
-end
-
-def test_form_fields_carry_attribute_types
-  component = Ruflet::Rails::InstallSupport.scaffold_component_template(
-    model_name: "Event",
-    attributes: ["title:string", "count:integer", "active:boolean", "starts_on:date",
-                 "starts_at:time", "window:daterange", "notes:text"]
-  )
-  assert_includes component, '{ name: "title", type: :string }'
-  assert_includes component, '{ name: "count", type: :integer }'
-  assert_includes component, '{ name: "active", type: :boolean }'
-  assert_includes component, '{ name: "starts_on", type: :date }'
-  assert_includes component, '{ name: "starts_at", type: :time }'
-  assert_includes component, '{ name: "window", type: :daterange }'
-  assert_includes component, '{ name: "notes", type: :text }'
-  assert_silent_syntax component
-end
-
-def test_no_attribute_metadata_or_ui_leaks_into_generated_file
-  src = Ruflet::Rails::InstallSupport.scaffold_component_template(
-    model_name: "NewsArticle",
-    attributes: ["headline:string", "published:boolean"]
-  )
-  assert_includes src, "class NewsArticleComponent < Ruflet::Rails::ResourceComponent"
-  assert_includes src, '{ name: "headline", type: :string }'
-  assert_includes src, '{ name: "published", type: :boolean }'
-  refute_includes src, "headline:string"
-  refute_includes src, "checkbox("
-  refute_includes src, "text_field"
-  refute_includes src, "Ruflet::Rails::ResourceView"
-end
-
-def test_base_form_stretches_inputs_to_the_dialog_width
-  install_generated_scaffold("Stretchy", ["title:string"]) do |model_class|
-    model_class.records = []
-    sent = []
-    page = Ruflet::Page.new(session_id: "s", client_details: { "route" => "/stretchies", "width" => 1280 },
-                            sender: ->(a, p) { sent << [a, p] })
-    StretchyComponent.render(page)
-    new_button = find_patch_control(sent.last[1]["patch"], "_c" => "FilledButton")
-    sent.clear
-    page.dispatch_event(target: new_button["_i"], name: "click", data: nil)
-    column = find_last_patch_control(sent, "_c" => "Column", "horizontal_alignment" => "stretch")
-    refute_nil column, "the form content column should stretch its inputs to the dialog width"
+    # Field display is inherited (no display_value generated), and the file
+    # is always valid Ruby regardless of attribute types.
+    refute_includes component, "def display_value"
+    assert_includes component, "if record.update(attributes.call)"
+    assert_silent_syntax component
   end
-end
+
+  def assert_silent_syntax(source)
+    RubyVM::InstructionSequence.compile(source)
+  rescue SyntaxError => e
+    flunk "generated code has a syntax error: #{e.message}"
+  end
+
+  def test_scaffold_form_inputs_stretch_to_the_dialog_width
+    component = Ruflet::Rails::InstallSupport.scaffold_component_template(
+      model_name: "Product",
+      attributes: ["name:string", "price:decimal", "description:text"]
+    )
+
+    # The form's content column must stretch its children so the inputs fill
+    # the dialog width instead of rendering at small/intrinsic width.
+    form_column = component[/content: container\(\s*width: dialog_width,.*?\n\s*\),\s*\n\s*actions:/m]
+    refute_nil form_column, "could not locate the form content container"
+    assert_includes form_column, 'horizontal_alignment: "stretch"',
+                    "form inputs should stretch to the dialog width"
+    assert_silent_syntax component
+  end
+
+  def test_scaffold_component_keeps_attribute_metadata_out_of_generated_file
+    component_source = Ruflet::Rails::InstallSupport.scaffold_component_template(
+      model_name: "NewsArticle",
+      attributes: ["headline:string", "published:boolean"]
+    )
+
+    assert_includes component_source, "class NewsArticleComponent < Ruflet::Rails::ResourceComponent"
+    assert_includes component_source, "def render"
+    assert_includes component_source, "def show(record)"
+    assert_includes component_source, "def record_table"
+    assert_includes component_source, "def open_form"
+    assert_includes component_source, "show_record(record)"
+    assert_includes component_source, "open_dialog(dialog)"
+    assert_includes component_source, "headline_control = text_field"
+    assert_includes component_source, "published_control = checkbox"
+    assert_includes component_source, '"headline" => headline_control.value.to_s'
+    assert_includes component_source, '"published" => !!published_control.value'
+    assert_includes component_source, "if record.update(attributes.call)"
+
+    # Field config is inferred by the base; generic plumbing is inherited.
+    refute_includes component_source, "def resource_fields"
+    refute_includes component_source, "Ruflet::Rails::ResourceView"
+    refute_includes component_source, 'route "/news_articles"'
+    refute_includes component_source, "def model_class"
+    refute_includes component_source, "def records"
+    refute_includes component_source, "save_record(record"
+    refute_includes component_source, "model_class.columns"
+    refute_includes component_source, "ignored_column?"
+    refute_includes component_source, "association_class_name_for_column"
+
+    refute_includes component_source, "headline:string"
+    refute_includes component_source, "published:boolean"
+    refute_includes component_source, "title:string"
+    refute_includes component_source, "{ name:"
+    refute_includes component_source, "ruflet_form_bindings"
+    refute_includes component_source, "ruflet_form_attributes"
+    refute_includes component_source, "ruflet_show"
+  end
+
+  def test_scaffold_generates_date_picker_for_date_attributes
+    component_source = Ruflet::Rails::InstallSupport.scaffold_component_template(
+      model_name: "Post",
+      attributes: ["title:string", "publish_on:date"]
+    )
+
+    assert_includes component_source, 'require "date"'
+    assert_includes component_source, "publish_on_control = date_picker("
+    assert_includes component_source, "publish_on_control_value = date_picker_value(record.public_send(\"publish_on\"))"
+    assert_includes component_source, "publish_on_control_display = text(date_display_value(publish_on_control_value))"
+    assert_includes component_source, "open_dialog(publish_on_control)"
+    assert_includes component_source, "close_dialogs(publish_on_control)"
+    assert_includes component_source, "close_dialog(dialog)"
+    assert_includes component_source, "if record.update(attributes.call)"
+    assert_includes component_source, "publish_on_control_field"
+    assert_includes component_source, '"publish_on" => publish_on_control.value.to_s.split("T", 2).first'
+    refute_includes component_source, "page.update(dialog, open: false)"
+    refute_includes component_source, 'publish_on_control = text_field'
+    refute_includes component_source, "dropdown("
+  end
+
+  def test_scaffold_generates_time_and_date_range_pickers
+    component_source = Ruflet::Rails::InstallSupport.scaffold_component_template(
+      model_name: "Event",
+      attributes: ["starts_at:time", "booking_window:daterange"]
+    )
+
+    assert_includes component_source, "starts_at_control = time_picker("
+    assert_includes component_source, "starts_at_control_value = time_picker_value(record.public_send(\"starts_at\"))"
+    assert_includes component_source, "starts_at_control_display = text(time_display_value(starts_at_control_value))"
+    assert_includes component_source, '"starts_at" => starts_at_control.value.to_s'
+    assert_includes component_source, "booking_window_control = date_range_picker("
+    assert_includes component_source, "booking_window_control_start_value, booking_window_control_end_value = date_range_picker_values(record.public_send(\"booking_window\"))"
+    assert_includes component_source, "date_range_display_value(booking_window_control.start_value, booking_window_control.end_value)"
+    assert_includes component_source, '"booking_window" => Range.new(Date.parse(booking_window_control.start_value.to_s), Date.parse(booking_window_control.end_value.to_s))'
+    assert_includes component_source, "close_dialogs(starts_at_control)"
+    assert_includes component_source, "close_dialogs(booking_window_control)"
+    refute_includes component_source, "event.control"
+    refute_includes component_source, "page.dialog ="
+    refute_includes component_source, "page.update(dialog, open: false)"
+  end
 
   def test_generated_scaffold_new_form_cancel_closes_after_date_picker_change
     install_generated_scaffold("ScheduledPost", ["title:string", "publish_on:date"]) do |model_class|
