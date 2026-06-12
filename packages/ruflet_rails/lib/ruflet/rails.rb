@@ -65,24 +65,45 @@ module Ruflet
       sessions.broadcast(&block)
     end
 
-    # WebSocket endpoint for native mobile/desktop clients. With no block it
-    # defaults to the view router (dispatches by route to the RufletView
-    # subclasses under app/views/ruflet), so the common case is just:
+    # WebSocket endpoint for native mobile/desktop clients. The developer
+    # declares the entry the same way they declare a web mount — so the screens
+    # the app shows live in dev code, not in framework auto-discovery:
     #
-    #   match "/ws", to: Ruflet::Rails.endpoint, via: :all
+    #   # a standalone Ruflet app file (Ruflet.run/MyApp.new.run), per session:
+    #   match "/ws", to: Ruflet::Rails.endpoint(app_file: Rails.root.join("app/ruflet/main.rb")), via: :all
     #
-    # Pass a block only for a custom entrypoint.
-    def endpoint(&block)
-      block ||= ->(page) { render(page) }
-      Protocol::Runner.new(&block).build_endpoint
+    #   # a single component/view class (resolved lazily, so reloading works):
+    #   match "/ws", to: Ruflet::Rails.endpoint(view: "ProductComponent"), via: :all
+    #
+    #   # a custom block:
+    #   match "/ws", to: Ruflet::Rails.endpoint { |page| MyHome.render(page) }, via: :all
+    #
+    # With nothing declared it falls back to the convenience view router, which
+    # auto-discovers RufletView subclasses and renders a route index. That index
+    # is a framework fallback for the zero-config case — declare an entry above
+    # to own the home screen in your code.
+    def endpoint(view: nil, app_file: nil, &block)
+      sources = [view, app_file, block].compact
+      raise ArgumentError, "endpoint accepts only one of view:, app_file:, or a block" if sources.length > 1
+
+      return Protocol::Runner.new.build_app_endpoint(file_path: app_file) if app_file
+
+      entry =
+        if block
+          block
+        elsif view
+          web_app_entrypoint(view: view)
+        else
+          ->(page) { render(page) }
+        end
+      Protocol::Runner.new(&entry).build_endpoint
     end
 
-    # WebSocket endpoint backed by a standalone Ruflet app file
-    # (MyApp.new.run), loaded per session:
+    # Backward-compatible shorthand for a standalone app-file mobile endpoint.
     #
     #   match "/ws", to: Ruflet::Rails.app(Rails.root.join("app/ruflet/main.rb")), via: :all
     def app(file_path)
-      Protocol::Runner.new.build_app_endpoint(file_path: file_path)
+      endpoint(app_file: file_path)
     end
 
     # Backward-compatible alias for older Rails installs.
