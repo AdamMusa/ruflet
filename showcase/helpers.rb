@@ -208,6 +208,17 @@ module Showcase
 
       return nil unless data.is_a?(Hash)
 
+      # Flutter/Flet's GestureDetector emits flat local coords as lx/ly
+      # (and global as gx/gy) on tap/tap_down/pan events. Prefer those.
+      lx = data["lx"] || data[:lx]
+      ly = data["ly"] || data[:ly]
+      return { x: lx.to_f, y: ly.to_f } if lx && ly
+
+      gx = data["gx"] || data[:gx]
+      gy = data["gy"] || data[:gy]
+      return { x: gx.to_f, y: gy.to_f } if gx && gy
+
+      # Fallback for nested {localPosition: {x, y}} style payloads.
       pos = data["localPosition"] || data["local_position"] || data[:localPosition] || data[:local_position] ||
         data["l"] || data[:l] || data["g"] || data[:g] || data
       return nil unless pos.is_a?(Hash)
