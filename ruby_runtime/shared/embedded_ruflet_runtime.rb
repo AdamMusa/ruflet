@@ -3589,6 +3589,12 @@ module Ruflet
         "height" => page["height"],
         "platform" => page["platform"],
         "platform_brightness" => page["platform_brightness"],
+        # The Flutter client reports the host OS in "platform" even inside a
+        # browser, so "web" is the only reliable way to tell a web client from a
+        # native one. (pwa/wasm passed through for completeness.)
+        "web" => page["web"],
+        "pwa" => page["pwa"],
+        "wasm" => page["wasm"],
         "media" => page["media"] || {}
       }
     end
