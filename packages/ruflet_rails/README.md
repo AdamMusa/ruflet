@@ -24,7 +24,8 @@ bin/rails generate ruflet:install --web --desktop
 This generator will:
 - create `app/views/ruflet/main.rb`
 - create `ruflet.yaml`
-- add the Ruflet mount route to `config/routes.rb`
+- add the Ruflet WebSocket route to `config/routes.rb`
+- add a `/ruflet` web mount when `--web` is used
 - download prebuilt clients from GitHub releases when `--web`, `--desktop`, or
   `--client=web|desktop|all` is used
 
@@ -44,12 +45,30 @@ assets:
 
 For Rails apps, those asset paths are resolved from `app/assets/` during build.
 
-## Build client from Rails
+## Web client
 
-Uses the same build pipeline as `ruflet build`:
+Rails installs the prebuilt web client into `frontend/`; it does not need
+Flutter source or a Flutter web build:
 
 ```bash
-bundle exec rake ruflet:build[web]
+bundle exec rake ruflet:web
+```
+
+Mount the installed client and a developer-owned Ruflet entrypoint:
+
+```ruby
+mount Ruflet::Rails.web_app(app_file: Rails.root.join("app/views/ruflet/main.rb")), at: "/app"
+```
+
+The install generator adds the same mount at `/ruflet` when `--web` is used.
+The mount serves the static client and its WebSocket endpoint together. The
+same `main.rb` also drives native clients through the generated `/ws` route.
+
+## Build native clients from Rails
+
+Uses the same native build pipeline as `ruflet build`:
+
+```bash
 bundle exec rake ruflet:build[macos]
 bundle exec rake ruflet:build[windows]
 bundle exec rake ruflet:build[linux]
@@ -58,8 +77,6 @@ bundle exec rake ruflet:build[android]
 bundle exec rake ruflet:build[ios]
 bundle exec rake ruflet:build[aab]
 ```
-
-Rails web builds are published to `public/ruflet` and served by Rails at `/ruflet/`.
 
 `desktop` is also accepted as a host-platform alias:
 
@@ -82,16 +99,14 @@ bin/rails s --desktop
 
 ## Update prebuilt clients
 
-Uses the same GitHub release assets as `ruflet update`:
+Reinstall web or update native desktop clients:
 
 ```bash
-bundle exec rake ruflet:update[web]
+bundle exec rake ruflet:web
 bundle exec rake ruflet:update[desktop]
-bundle exec rake ruflet:update[all]
 ```
 
-For web, the downloaded static client is published to `public/ruflet` and served
-by Rails at `/ruflet/`. The Rails app does not vendor Flutter source code.
+The Rails app does not vendor Flutter source code.
 
 ## Install mobile build
 
@@ -104,7 +119,7 @@ bundle exec rake ruflet:install[DEVICE_ID]
 
 ## Ruflet resource scaffolds
 
-Generate a Ruflet CRUD view for an existing Rails model:
+Generate a mountable Ruflet CRUD component for an existing Rails model:
 
 ```bash
 bin/rails generate ruflet:scaffold Post
@@ -113,30 +128,6 @@ bin/rails generate ruflet:scaffold Post
 The scaffold creates generated app code the Rails developer can own and edit:
 
 ```ruby
-# app/views/ruflet/posts_view.rb
-require_relative "components/posts/post_component"
-
-class PostView < RufletView
-  include Ruflet::Rails::FormHelpers
-
-  route "/posts"
-
-  def render
-    page.title = resource_title
-    render_index
-  end
-
-  private
-
-  def records
-    # edit resource query logic here
-  end
-
-  def component
-    @component ||= PostComponent.new(page, controller: self)
-  end
-end
-
 # app/views/ruflet/components/posts/post_component.rb
 class PostComponent < Ruflet::Rails::ResourceComponent
   def render
@@ -145,11 +136,16 @@ class PostComponent < Ruflet::Rails::ResourceComponent
 end
 ```
 
-The generated view contains the resource logic: query, model helpers, field
-introspection, save/delete, dialog close, and display formatting. The generated
-component contains the UI: tables, lists, and dialogs. `ruflet_rails` only
-provides the base classes and generic helpers. The generator does not dump field
-declarations like `title:string` or literal metadata tables into the app.
+Mount it explicitly in `config/routes.rb`:
+
+```ruby
+mount Ruflet::Rails.web_app(view: "PostComponent"), at: "/posts"
+```
+
+The generated component contains the developer-owned UI and persistence calls.
+`ruflet_rails` provides the reusable model, navigation, dialog, and formatting
+helpers. Component files under `app/views/ruflet/components` are loaded by the
+Railtie so both web mounts and `main.rb` can reference them.
 
 ## Ruflet model forms
 
@@ -175,8 +171,8 @@ when that base component does not already exist.
 
 ## Shared Ruflet components
 
-Put shared Ruflet UI components under `app/views/ruflet/components`. Component
-files are loaded before `*_view.rb` files, so views can call them directly:
+Put shared Ruflet UI components under `app/views/ruflet/components`. Those files
+are reloaded with Rails application code:
 
 ```ruby
 # app/views/ruflet/components/page_title_component.rb
@@ -188,11 +184,9 @@ end
 ```
 
 ```ruby
-# app/views/ruflet/posts/posts_view.rb
-class PostsView < RufletView
-  def render
-    page.add(PageTitleComponent.render(page, "Posts"))
-  end
+# app/views/ruflet/main.rb
+Ruflet.run do |page|
+  page.add(PageTitleComponent.render(page, "Posts"))
 end
 ```
 

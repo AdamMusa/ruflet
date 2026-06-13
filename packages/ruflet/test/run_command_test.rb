@@ -45,6 +45,17 @@ class RufletCliRunCommandTest < Minitest::Test
     refute runner.send(:release_asset_matches?, "ruflet_client-macos.tar.gz", :desktop, "macos")
   end
 
+  def test_web_server_proxies_same_origin_websocket_without_runtime_globals
+    runner = DummyRunner.new
+    command = runner.send(:web_server_command, 8551, 8550)
+
+    assert_equal ["python3", "-c"], command.first(2)
+    assert_includes command.last, 'self.path.split("?", 1)[0] == "/ws"'
+    assert_includes command.last, 'socket.create_connection(("127.0.0.1", 8550))'
+    refute_includes command.last, "__RUFLET_URL__"
+    assert_equal "http://localhost:8551/", runner.send(:web_client_url, 8551)
+  end
+
   def test_prebuilt_macos_desktop_presence_repairs_missing_file_picker_entitlement
     runner = DummyRunner.new
 

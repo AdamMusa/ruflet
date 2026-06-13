@@ -26,8 +26,6 @@ module Ruflet
             path: path
           )
         end
-        alias build_mobile_endpoint build_app_endpoint
-
         private
 
         def build_server(entrypoint)

@@ -4,8 +4,8 @@ require_relative "test_helper"
 
 # The mobile/desktop WebSocket endpoint (/ws) must be declared by the developer
 # the same way web mounts are — view:, app_file: or a block — so the screens the
-# app shows live in dev code. A bare endpoint still falls back to the framework's
-# auto-discovery view router for the zero-config case.
+# app shows live in dev code. There is no auto-discovery fallback: a bare
+# endpoint raises.
 class RufletEndpointDeclarationTest < Minitest::Test
   def rack_app?(obj)
     obj.respond_to?(:call)
@@ -27,9 +27,10 @@ class RufletEndpointDeclarationTest < Minitest::Test
     assert rack_app?(Ruflet::Rails.endpoint { |page| page.add(Ruflet::UI::ControlFactory.build(:text, value: "hi")) })
   end
 
-  def test_bare_endpoint_falls_back_to_the_view_router
-    # No declared entry — still usable (the framework's convenience fallback).
-    assert rack_app?(Ruflet::Rails.endpoint)
+  def test_bare_endpoint_raises
+    # No declared entry and no auto-discovery fallback — the developer must
+    # declare view:, app_file:, or a block.
+    assert_raises(ArgumentError) { Ruflet::Rails.endpoint }
   end
 
   def test_endpoint_rejects_more_than_one_source

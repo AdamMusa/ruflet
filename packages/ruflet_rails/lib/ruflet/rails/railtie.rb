@@ -3,12 +3,6 @@
 module Ruflet
   module Rails
     class Railtie < ::Rails::Railtie
-      # Must run before ActionDispatch::Static so the Middleware can serve
-      # web_path and block the build dir's index before Static can touch it.
-      initializer "ruflet_rails.middleware", before: "ActionDispatch::Static" do |app|
-        app.middleware.insert_before(ActionDispatch::Static, Ruflet::Rails::Protocol::Middleware)
-      end
-
       # Make ruflet_frame and friends available in every .erb template.
       initializer "ruflet_rails.view_helpers" do
         ActiveSupport.on_load(:action_view) do
@@ -16,17 +10,16 @@ module Ruflet
         end
       end
 
-      # Default the Ruflet entry-point to the conventional path so a Rails app
-      # auto-mounts /ws with no config/initializers/ruflet.rb at all. An explicit
-      # config.app_file (set in an initializer) still wins via the nil guard.
-      initializer "ruflet_rails.default_app_file", after: :load_config_initializers do |_app|
-        next unless defined?(::Rails.root)
+      # Ruflet components live under app/views so Rails will not discover them
+      # by default. Add that directory as a Zeitwerk root and collapse its
+      # organizational subdirectories, matching generated top-level constants
+      # such as components/products/product_component.rb -> ProductComponent.
+      initializer "ruflet_rails.components", before: :bootstrap_hook do |app|
+        components = app.root.join("app/views/ruflet/components")
+        next unless components.directory?
 
-        cfg = Ruflet::Rails.config
-        next if cfg.app_file
-
-        default = ::Rails.root.join("app/views/ruflet/main.rb")
-        cfg.app_file = default if File.file?(default)
+        app.autoloaders.main.push_dir(components)
+        app.autoloaders.main.collapse(components.join("**"))
       end
 
       initializer "ruflet_rails.desktop_launcher", after: :load_config_initializers do |_app|
@@ -40,22 +33,21 @@ module Ruflet
 
       rake_tasks do
         namespace :ruflet do
-          desc "Build Ruflet client for this Rails app. Usage: rake ruflet:build[platform]"
+          desc "Build Ruflet native client for this Rails app. Usage: rake ruflet:build[platform]"
           task :build, [:platform] do |_task, args|
             platform = args[:platform].to_s.strip.downcase
+
+            if platform == "web"
+              warn "ruflet_rails does not build the web client. Install the prebuilt web client with: rake ruflet:web"
+              next
+            end
 
             cfg        = Ruflet::Rails.config
             ruflet_url = cfg.backend_url.to_s.strip
             build_args = Ruflet::Rails::InstallSupport.build_args_for_platform(platform, ruflet_url: ruflet_url)
 
-            # Derive --base-href from config.web_build_dir so the built index.html
-            # uses the correct path for assets and Uri.base in the Dart client.
-            if platform == "web" && (dir = cfg.web_build_dir)
-              build_args += ["--base-href", "/#{File.basename(dir.to_s)}/"]
-            end
-
             if build_args.empty?
-              warn "Usage: rake ruflet:build[apk|android|ios|aab|web|desktop|macos|windows|linux]"
+              warn "Usage: rake ruflet:build[apk|android|ios|aab|desktop|macos|windows|linux]"
               next
             end
 
@@ -83,6 +75,12 @@ module Ruflet
               end
             end
             raise SystemExit, exit_code unless exit_code.to_i.zero?
+          end
+
+          desc "Install the prebuilt Ruflet web client into frontend/. Usage: rake ruflet:web"
+          task :web do
+            ok = Ruflet::Rails::WebInstaller.install!(root: ::Rails.root)
+            raise SystemExit, 1 unless ok
           end
 
           desc "Download/update prebuilt Ruflet clients from GitHub releases. Usage: rake ruflet:update[target]"

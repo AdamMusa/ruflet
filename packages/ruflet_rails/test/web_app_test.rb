@@ -18,6 +18,13 @@ class RufletWebAppTest < Minitest::Test
         </html>
       HTML
       File.write(File.join(dir, "flutter.js"), "// flutter loader")
+      File.write(File.join(dir, "flutter_bootstrap.js"), <<~JS)
+        _flutter.loader.load({
+          serviceWorkerSettings: {
+            serviceWorkerVersion: "123"
+          }
+        });
+      JS
       FileUtils.mkdir_p(File.join(dir, "assets"))
       File.write(File.join(dir, "assets", "data.json"), "{}")
       yield dir
@@ -41,7 +48,7 @@ class RufletWebAppTest < Minitest::Test
     end
   end
 
-  def test_index_pins_the_client_to_the_mount_via_url_param
+  def test_index_pins_the_client_to_the_mount_without_backend_url_injection
     with_build_dir do |dir|
       app = app_for(dir)
       _status, _headers, body = app.call("PATH_INFO" => "/", "SCRIPT_NAME" => "/myfrontend", "REQUEST_METHOD" => "GET")
@@ -51,6 +58,9 @@ class RufletWebAppTest < Minitest::Test
                       "index must steer the web client's WebSocket to the mount point"
       assert html.index("<base href=") < html.index("window.flet.webSocketEndpoint"),
              "bootstrap script must come after <base href> so baseURI is final"
+      refute_includes html, "searchParams.set"
+      refute_includes html, "history.replaceState"
+      assert_includes html, "ruflet-rails-service-worker-cleanup"
     end
   end
 
@@ -89,6 +99,39 @@ class RufletWebAppTest < Minitest::Test
     end
   end
 
+  def test_disables_flutter_service_worker_for_mounted_rails_app
+    with_build_dir do |dir|
+      app = app_for(dir)
+      status, headers, body = app.call(
+        "PATH_INFO" => "/flutter_bootstrap.js",
+        "SCRIPT_NAME" => "/myfrontend",
+        "REQUEST_METHOD" => "GET"
+      )
+
+      assert_equal 200, status
+      assert_equal "no-cache", headers["cache-control"]
+      refute_includes body.join, "serviceWorkerSettings"
+      assert_includes body.join, "_flutter.loader.load({"
+    end
+  end
+
+  def test_retires_a_service_worker_previously_installed_for_the_mount
+    with_build_dir do |dir|
+      app = app_for(dir)
+      status, headers, body = app.call(
+        "PATH_INFO" => "/flutter_service_worker.js",
+        "SCRIPT_NAME" => "/myfrontend",
+        "REQUEST_METHOD" => "GET"
+      )
+
+      assert_equal 200, status
+      assert_equal "no-store", headers["cache-control"]
+      assert_includes body.join, "self.registration.unregister()"
+      assert_includes body.join, "caches.delete"
+      assert_includes body.join, "client.navigate(client.url)"
+    end
+  end
+
   def test_blocks_path_traversal
     with_build_dir do |dir|
       app = app_for(dir)
@@ -102,7 +145,7 @@ class RufletWebAppTest < Minitest::Test
     status, _headers, body = app.call("PATH_INFO" => "/", "SCRIPT_NAME" => "/m", "REQUEST_METHOD" => "GET")
 
     assert_equal 404, status
-    assert_includes body.join, "rake ruflet:build[web]"
+    assert_includes body.join, "rake ruflet:web"
   end
 
   def test_build_dir_under_public_is_rejected
@@ -119,8 +162,8 @@ class RufletWebAppTest < Minitest::Test
 
   def test_default_build_dir_is_outside_public
     with_rails_stub do |root|
-      FileUtils.mkdir_p(File.join(root, "build", "web"))
-      File.write(File.join(root, "build", "web", "index.html"), "<html><head></head><body></body></html>")
+      FileUtils.mkdir_p(File.join(root, "frontend"))
+      File.write(File.join(root, "frontend", "index.html"), "<html><head></head><body></body></html>")
 
       app = Ruflet::Rails.web_app { |page| page.title = "Default" }
       status, _headers, body = app.call("PATH_INFO" => "/", "SCRIPT_NAME" => "/x", "REQUEST_METHOD" => "GET")

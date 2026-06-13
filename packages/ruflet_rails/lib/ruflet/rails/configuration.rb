@@ -4,19 +4,13 @@ module Ruflet
   module Rails
     # Central configuration for ruflet_rails.
     #
-    # An install needs no config/initializers/ruflet.rb: app_file defaults to
-    # the conventional app/views/ruflet/main.rb (set by the Railtie), ws_path
-    # defaults to "/ws", and build metadata is read from ruflet.yaml. Add an
-    # initializer only to override these — every setting below is optional:
+    # An install needs no config/initializers/ruflet.rb: routes mount
+    # app/views/ruflet/main.rb explicitly and build metadata is read from
+    # ruflet.yaml. Add an initializer only to override these settings:
     #
     #   Ruflet::Rails.configure do |config|
     #     # Runtime / server
-    #     config.app_file    = Rails.root.join("app/views/ruflet/main.rb")
-    #     config.ws_path     = "/ws"
     #     config.backend_url = Rails.env.production? ? "https://example.com" : "http://localhost:3000"
-    #
-    #     # Flutter web build output directory
-    #     config.web_build_dir = Rails.root.join("public/app")
     #
     #     # App metadata (ruflet.yaml → app:)
     #     config.app_name = "My App"
@@ -43,18 +37,9 @@ module Ruflet
     class Configuration
       # --- Runtime / server ---
 
-      # Absolute path to the Ruflet app entry-point.
-      attr_accessor :app_file
-
-      # URL path the WebSocket endpoint listens on. Defaults to "/ws".
-      attr_accessor :ws_path
-
       # Backend base URL. Used as --dart-define=RUFLET_URL at build time
       # and by the desktop launcher. Replaces ruflet.yaml → app.backend_url.
       attr_accessor :backend_url
-
-      # Absolute directory containing the Flutter web build (index.html + assets).
-      attr_accessor :web_build_dir
 
       # --- App metadata (ruflet.yaml → app:) ---
 
@@ -83,12 +68,9 @@ module Ruflet
       attr_accessor :theme_color
 
       def initialize
-        @ws_path      = "/ws"
-        @app_file     = nil
-        @backend_url  = nil
-        @web_build_dir = nil
-        @app_name     = nil
-        @services     = []
+        @backend_url = nil
+        @app_name = nil
+        @services = []
       end
 
       # Serialises config to the ruflet.yaml hash structure so the CLI can

@@ -116,14 +116,6 @@ String? parseUrlFromQrOrDeepLinkPayload(String payload) {
     return normalizeUserUrl(raw);
   }
 
-  final uri = Uri.tryParse(raw);
-  if (uri != null) {
-    final nested = uri.queryParameters['url'];
-    if (nested != null && nested.trim().isNotEmpty) {
-      return normalizeUserUrl(nested);
-    }
-  }
-
   final match = RegExp(
     r'(https?:\/\/[^\s]+|wss?:\/\/[^\s]+)',
     caseSensitive: false,
@@ -145,14 +137,10 @@ String resolveInitialRufletUrl({
   String productionDefaultUrl = defaultProductionRufletUrl,
 }) {
   if (isWeb) {
-    final queryUrl = Uri.tryParse(baseUrl)?.queryParameters['url'];
-    if (queryUrl != null && queryUrl.trim().isNotEmpty) {
-      return queryUrl;
-    }
     if (configuredUrl.trim().isNotEmpty) {
       return configuredUrl;
     }
-    return isDebugMode ? baseUrl : productionDefaultUrl;
+    return baseUrl;
   }
 
   final hasExplicitArgs = args != null && args.isNotEmpty;

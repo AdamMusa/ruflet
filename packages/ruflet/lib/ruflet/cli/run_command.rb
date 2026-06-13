@@ -183,11 +183,15 @@ module Ruflet
         end
 
         web_port = find_available_port(port + 1)
-        web_pid = Process.spawn("python3", "-m", "http.server", web_port.to_s, "--bind", "127.0.0.1", chdir: web_dir, out: File::NULL, err: File::NULL)
+        web_pid = Process.spawn(
+          *web_server_command(web_port, port),
+          chdir: web_dir,
+          out: File::NULL,
+          err: File::NULL
+        )
         Process.detach(web_pid)
         wait_for_server_boot(web_port)
-        backend_url = "http://localhost:#{port}"
-        web_url = "http://localhost:#{web_port}/?#{URI.encode_www_form(url: backend_url)}"
+        web_url = web_client_url(web_port)
         browser_pid = open_in_browser_app_mode(web_url)
         open_in_browser(web_url) if browser_pid.nil?
         puts "Ruflet web client: #{web_url}"
@@ -200,6 +204,50 @@ module Ruflet
       rescue StandardError => e
         warn "Failed to launch web client: #{e.class}: #{e.message}"
         []
+      end
+
+      # Hosts the generic release web client and proxies its same-origin /ws
+      # connection to the standalone Ruby backend.
+      def web_server_command(port, backend_port)
+        script = <<~PYTHON
+          import http.server
+          import select
+          import socket
+          import socketserver
+
+          class Handler(http.server.SimpleHTTPRequestHandler):
+              def do_GET(self):
+                  if self.path.split("?", 1)[0] == "/ws" and self.headers.get("Upgrade", "").lower() == "websocket":
+                      self.proxy_websocket()
+                      return
+                  super().do_GET()
+
+              def proxy_websocket(self):
+                  upstream = socket.create_connection(("127.0.0.1", #{backend_port.to_i}))
+                  request = "GET /ws HTTP/1.1\\r\\n"
+                  for name, value in self.headers.items():
+                      request += name + ": " + value + "\\r\\n"
+                  upstream.sendall((request + "\\r\\n").encode("latin-1"))
+
+                  while True:
+                      ready, _, _ = select.select([self.connection, upstream], [], [])
+                      for source in ready:
+                          data = source.recv(65536)
+                          if not data:
+                              upstream.close()
+                              return
+                          (upstream if source is self.connection else self.connection).sendall(data)
+
+          socketserver.TCPServer.allow_reuse_address = True
+          with socketserver.TCPServer(("127.0.0.1", #{port.to_i}), Handler) as server:
+              server.serve_forever()
+        PYTHON
+
+        ["python3", "-c", script]
+      end
+
+      def web_client_url(port)
+        "http://localhost:#{port}/"
       end
 
       def wait_for_server_boot(port, timeout_seconds: 10)

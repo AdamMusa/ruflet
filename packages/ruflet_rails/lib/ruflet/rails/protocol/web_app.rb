@@ -8,10 +8,10 @@ module Ruflet
       # the same mount point, so it mounts like any Rack app:
       #
       #   # config/routes.rb
-      #   mount Ruflet::Rails.web_app, at: "/myfrontend"
+      #   mount Ruflet::Rails.web_app(app_file: Rails.root.join("app/views/ruflet/main.rb")), at: "/myfrontend"
       #
       #   # or with an explicit entrypoint and build directory:
-      #   mount Ruflet::Rails.web_app(build_dir: Rails.root.join("public/app")) { |page|
+      #   mount Ruflet::Rails.web_app(build_dir: Rails.root.join("frontend")) { |page|
       #     CounterView.render(page)
       #   }, at: "/myfrontend"
       #
@@ -73,15 +73,16 @@ module Ruflet
         end
 
         def entrypoint
-          @entrypoint_option || @app_block || lambda { |page| Ruflet::Rails.render(page) }
+          @entrypoint_option || @app_block ||
+            raise(ArgumentError, "web_app requires one of view:, app_file:, or a block")
         end
 
         # The web build must NOT live under public/, or Rails' static
         # middleware would serve it directly (e.g. /app/index.html) and bypass
         # the mount — making it reachable at a path no route declares. The
-        # default is Rails.root/build/web, exactly where `rake ruflet:build[web]`
-        # exports, which Rails never serves statically. A configured
-        # web_build_dir or explicit build_dir: under public/ is rejected.
+        # default is Rails.root/frontend, exactly where `rake ruflet:web`
+        # installs the prebuilt web client, which Rails never serves statically.
+        # An explicit build_dir: under public/ is rejected.
         def build_dir
           dir = resolve_build_dir
           reject_public_build_dir!(dir)
@@ -92,10 +93,7 @@ module Ruflet
           explicit = @explicit_build_dir.to_s
           return explicit unless explicit.empty?
 
-          configured = Ruflet::Rails.config.web_build_dir.to_s
-          return configured unless configured.empty?
-
-          return ::Rails.root.join("build", "web").to_s if defined?(::Rails.root) && ::Rails.root
+          return ::Rails.root.join("frontend").to_s if defined?(::Rails.root) && ::Rails.root
 
           ""
         end
@@ -110,19 +108,20 @@ module Ruflet
 
           raise ArgumentError,
                 "Ruflet web build dir (#{dir}) is under public/, which Rails serves " \
-                "statically and would expose the app outside its mount. Build to a " \
-                "non-public directory such as #{::Rails.root.join('build', 'web')}."
+                "statically and would expose the app outside its mount. Use a " \
+                "non-public directory such as #{::Rails.root.join('frontend')}."
         end
 
         def serve_index(env)
           index_path = File.join(build_dir, "index.html")
           unless File.file?(index_path)
             return [404, { "content-type" => "text/plain" },
-                    ["Ruflet web build not found at #{index_path}. Run `rake ruflet:build[web]`."]]
+                    ["Ruflet web client not found at #{index_path}. Run `rake ruflet:web`."]]
           end
 
           html = rewrite_base_href(File.read(index_path), mount_base(env))
-          html = inject_mount_url_param(html)
+          html = inject_mount_websocket(html)
+          html = inject_service_worker_cleanup(html)
           [200,
            { "content-type" => "text/html; charset=utf-8",
              "cache-control" => "no-cache",
@@ -130,28 +129,47 @@ module Ruflet
            [html]]
         end
 
-        # The Flet web client builds its WebSocket URL as
-        # ws(s)://<page authority>/<window.flet.webSocketEndpoint || "ws">.
-        # Without help, every build connects to the origin's /ws and escapes
-        # the mount. Deriving the endpoint from document.baseURI (which
-        # follows the rewritten <base href>) pins any build to <mount>/ws —
-        # answered by this same Rack app.
-        MOUNT_URL_BOOTSTRAP = <<~HTML
-          <script>
-            (function () {
-              window.flet = window.flet || {};
-              if (!window.flet.webSocketEndpoint) {
-                var basePath = new URL(document.baseURI).pathname;
-                window.flet.webSocketEndpoint = (basePath + "ws").replace(/^\\/+/, "");
-              }
-            })();
-          </script>
-        HTML
-
-        def inject_mount_url_param(html)
+        def inject_mount_websocket(html)
           return html if html.include?("window.flet.webSocketEndpoint")
 
-          html.sub(%r{(<base\s+href="[^"]*"\s*/?>)}) { "#{::Regexp.last_match(1)}\n#{MOUNT_URL_BOOTSTRAP}" }
+          html.sub(%r{(<base\s+href="[^"]*"\s*/?>)}) { "#{::Regexp.last_match(1)}\n#{mount_websocket_bootstrap}" }
+        end
+
+        # Mounted Rails apps are server-driven and must always load the client
+        # shipped by the Rails app. Remove service workers previously installed
+        # for this mount so they cannot keep serving a stale connection client.
+        def inject_service_worker_cleanup(html)
+          return html if html.include?("ruflet-rails-service-worker-cleanup")
+
+          script = <<~HTML
+            <script id="ruflet-rails-service-worker-cleanup">
+              if ("serviceWorker" in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                  registrations.forEach(function (registration) {
+                    if (registration.scope.indexOf(document.baseURI) === 0) registration.unregister();
+                  });
+                });
+              }
+            </script>
+          HTML
+          html.include?("</head>") ? html.sub("</head>", "#{script}</head>") : "#{script}#{html}"
+        end
+
+        # Pins Flet-style clients to <mount>/ws (derived from the rewritten
+        # <base href>) instead of the origin's /ws. The Ruflet client itself
+        # uses the mounted page URL, so Rails needs no separate backend URL.
+        def mount_websocket_bootstrap
+          <<~HTML
+            <script>
+              (function () {
+                window.flet = window.flet || {};
+                if (!window.flet.webSocketEndpoint) {
+                  var basePath = new URL(document.baseURI).pathname;
+                  window.flet.webSocketEndpoint = (basePath + "ws").replace(/^\\/+/, "");
+                }
+              })();
+            </script>
+          HTML
         end
 
         # <base href> drives the Flutter client's asset and WebSocket URLs;
@@ -172,6 +190,8 @@ module Ruflet
         end
 
         def serve_static(path)
+          return retire_service_worker if path == "/flutter_service_worker.js"
+
           root = File.expand_path(build_dir)
           full = File.expand_path(File.join(root, path))
           unless full.start_with?(root + File::SEPARATOR) && File.file?(full)
@@ -179,8 +199,37 @@ module Ruflet
           end
 
           body = File.binread(full)
+          body = disable_service_worker(body) if path == "/flutter_bootstrap.js"
           [200,
            { "content-type" => content_type_for(full),
+             "cache-control" => "no-cache",
+             "content-length" => body.bytesize.to_s },
+           [body]]
+        end
+
+        def disable_service_worker(body)
+          body.sub(
+            /serviceWorkerSettings:\s*\{\s*serviceWorkerVersion:\s*[^}]+\}\s*,?/m,
+            ""
+          )
+        end
+
+        def retire_service_worker
+          body = <<~JS
+            self.addEventListener("install", function () { self.skipWaiting(); });
+            self.addEventListener("activate", function (event) {
+              event.waitUntil((async function () {
+                await self.registration.unregister();
+                for (const key of await caches.keys()) await caches.delete(key);
+                for (const client of await self.clients.matchAll({ type: "window" })) {
+                  client.navigate(client.url);
+                }
+              })());
+            });
+          JS
+          [200,
+           { "content-type" => "application/javascript",
+             "cache-control" => "no-store",
              "content-length" => body.bytesize.to_s },
            [body]]
         end

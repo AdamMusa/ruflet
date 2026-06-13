@@ -16,15 +16,6 @@ class InstallSupportTest < Minitest::Test
     refute_includes yaml, "dir: assets"
   end
 
-  def test_desktop_initializer_template_does_not_enable_autolaunch_by_default
-    template = Ruflet::Rails::InstallSupport.desktop_initializer_template
-
-    assert_equal "config/initializers/ruflet_desktop.rb", Ruflet::Rails::InstallSupport.desktop_initializer_path
-    assert_includes template, "intentionally want"
-    assert_includes template, "config.x.ruflet_rails.desktop = false"
-    assert_silent { RubyVM::InstructionSequence.compile(template) }
-  end
-
   def test_desktop_flag_bootstrap_templates
     ruby = Ruflet::Rails::InstallSupport.ruby_desktop_flag_bootstrap
     shell = Ruflet::Rails::InstallSupport.shell_desktop_flag_bootstrap
@@ -49,15 +40,26 @@ class InstallSupportTest < Minitest::Test
     assert_equal "app/views/ruflet/main.rb", Ruflet::Rails::InstallSupport.default_entrypoint_path
   end
 
+  def test_web_route_mounts_the_generated_entrypoint_at_ruflet
+    route = Ruflet::Rails::InstallSupport.web_route_snippet
+
+    assert_equal 'mount Ruflet::Rails.web_app(app_file: Rails.root.join("app/views/ruflet/main.rb")), at: "/ruflet"', route
+    refute_includes route, "/products"
+  end
+
   def test_app_template_uses_ruflet_run
     template = Ruflet::Rails::InstallSupport.default_app_template(app_title: "Demo")
 
-    assert_includes template, 'require "ruflet"'
-    assert_includes template, 'require "ruflet_rails"'
-    assert_includes template, "Ruflet::Rails.load_views(__dir__)"
-    assert_includes template, 'Ruflet.run do |page|'
+    assert_includes template, "Ruflet.run do |page|"
     assert_includes template, 'page.title = "Demo"'
-    assert_includes template, "Ruflet::Rails.render(page)"
+    assert_includes template, "page.add("
+    assert_includes template, "safe_area("
+    assert_includes template, "nothing is auto-discovered"
+    assert_includes template, "mounted explicitly"
+    refute_includes template, "Ruflet::Rails.load_views"
+    refute_includes template, "Ruflet::Rails.render"
+    refute_includes template, 'require "ruflet"'
+    assert_silent { RubyVM::InstructionSequence.compile(template) }
   end
 
   def test_application_component_template_provides_shared_platform_helpers
@@ -73,67 +75,6 @@ class InstallSupportTest < Minitest::Test
     assert_includes template, "def web?"
     assert_includes template, "def mobile?"
     assert_silent { RubyVM::InstructionSequence.compile(template) }
-  end
-
-  def test_ruflet_view_base_renders_plain_view_classes
-    view_class = Class.new(RufletView) do
-      def render(value:)
-        page[:value] = value
-      end
-    end
-    page = {}
-
-    assert_equal "ok", view_class.render(page, value: "ok")
-    assert_equal({ value: "ok" }, page)
-  end
-
-  def test_ruflet_view_infers_plural_route_and_allows_override
-    view_class = Class.new(RufletView)
-    stub_const_name("AdminPostView", view_class) do
-      assert_equal "/admin_posts", view_class.route
-      view_class.route "/dashboard"
-      assert_equal "/dashboard", view_class.route
-    end
-  end
-
-  def test_rails_view_router_dispatches_by_exact_route
-    posts = Class.new(RufletView) do
-      route "/posts"
-
-      def render
-        page.rendered = :posts
-      end
-    end
-    categories = Class.new(RufletView) do
-      route "/categories"
-
-      def render
-        page.rendered = :categories
-      end
-    end
-    page = RouterPage.new("/categories")
-
-    Ruflet::Rails.render(page, routes: { "/posts" => posts, "/categories" => categories }, default: posts)
-
-    assert_equal :categories, page.rendered
-
-    page.route = "/categories/1?dialog=edit"
-    page.route_change.call(nil)
-
-    assert_equal "Ruflet", page.title
-    assert_equal :empty, page.rendered
-
-    page.route = "/posts"
-    page.route_change.call(nil)
-
-    assert_equal :posts, page.rendered
-  end
-
-  def test_mobile_app_template_alias_stays_backward_compatible
-    assert_equal(
-      Ruflet::Rails::InstallSupport.default_app_template(app_title: "Demo"),
-      Ruflet::Rails::InstallSupport.default_mobile_app_template(app_title: "Demo")
-    )
   end
 
   def test_model_names_use_rails_inflections
@@ -302,11 +243,10 @@ class InstallSupportTest < Minitest::Test
     refute_includes args, "--self"
   end
 
-  def test_build_args_for_rails_web_are_server_driven_and_rails_hosted
-    args = Ruflet::Rails::InstallSupport.build_args_for_platform("web")
-
-    assert_equal ["web"], args
-    refute_includes args, "--self"
+  def test_build_args_for_web_are_empty_because_web_is_not_built
+    # ruflet_rails installs the prebuilt web client (rake ruflet:web); it does
+    # not compile web, so "web" yields no build args.
+    assert_empty Ruflet::Rails::InstallSupport.build_args_for_platform("web")
   end
 
   def test_ruflet_install_steps_include_essentials
@@ -337,13 +277,6 @@ class InstallSupportTest < Minitest::Test
   end
 
   private
-
-  def stub_const_name(name, value)
-    Object.const_set(name, value)
-    yield
-  ensure
-    Object.send(:remove_const, name) if Object.const_defined?(name) && Object.const_get(name) == value
-  end
 
   def stub_model(name)
     model = Class.new do
@@ -448,25 +381,6 @@ class InstallSupportTest < Minitest::Test
     end
   end
 
-  class RouterPage
-    attr_accessor :route, :rendered, :title
-    attr_reader :route_change
-
-    def initialize(route)
-      @route = route
-    end
-
-    def on_route_change=(handler)
-      @route_change = handler
-    end
-
-    def add(*)
-      @rendered = :empty
-    end
-
-    def update; end
-  end
-
   class ProtocolFakeWebSocket
     attr_reader :sent
 
@@ -489,7 +403,7 @@ class InstallSupportTest < Minitest::Test
     def close; end
 
     def unpacked_messages
-      @sent.map { |payload| Ruflet::Rails::Protocol::WireCodec.unpack(payload) }
+      @sent.map { |payload| Ruflet::WireCodec.unpack(payload) }
     end
   end
 end

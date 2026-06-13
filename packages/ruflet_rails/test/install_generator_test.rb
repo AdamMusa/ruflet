@@ -30,31 +30,89 @@ class RufletInstallGeneratorTest < Minitest::Test
     refute generator.send(:desktop_requested?)
   end
 
+  def test_web_and_desktop_options_request_all_clients
+    generator = build_generator(web: true, desktop: true)
+
+    assert_equal "all", generator.send(:requested_client)
+    assert generator.send(:desktop_requested?)
+    assert generator.send(:web_requested?)
+  end
+
+  def test_web_option_installs_web_client_into_the_rails_app
+    generator = build_generator(web: true)
+    installed_root = nil
+    original = Ruflet::Rails::WebInstaller.method(:install!)
+    Ruflet::Rails::WebInstaller.define_singleton_method(:install!) do |root:, **|
+      installed_root = root
+      true
+    end
+
+    capture_io { generator.download_prebuilt_client }
+
+    assert_equal Dir.pwd, installed_root
+  ensure
+    Ruflet::Rails::WebInstaller.define_singleton_method(:install!, original)
+  end
+
   def test_install_generator_does_not_create_component_glue
     generator = build_generator({})
 
     refute generator.respond_to?(:create_application_component)
   end
 
-  def test_install_does_not_touch_routes
+  def test_install_mounts_the_websocket_route_explicitly
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "config"))
-      original_routes = "Rails.application.routes.draw do\nend\n"
-      File.write(File.join(dir, "config", "routes.rb"), original_routes)
+      File.write(File.join(dir, "config", "routes.rb"), "Rails.application.routes.draw do\nend\n")
 
       generator = Ruflet::Generators::InstallGenerator.new([], {}, destination_root: dir)
-      refute generator.respond_to?(:add_routes), "routes are auto-mounted by the Railtie, not the generator"
       capture_io { generator.invoke_all }
 
-      assert_equal original_routes, File.read(File.join(dir, "config", "routes.rb"))
+      routes = File.read(File.join(dir, "config", "routes.rb"))
+      assert_includes routes,
+                      'match "/ws", to: Ruflet::Rails.app(Rails.root.join("app/views/ruflet/main.rb")), via: :all',
+                      "the generator should mount /ws explicitly — no Railtie auto-mount magic"
+    end
+  end
+
+  def test_install_does_not_duplicate_the_websocket_route
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "config"))
+      File.write(File.join(dir, "config", "routes.rb"), "Rails.application.routes.draw do\nend\n")
+
+      generator = Ruflet::Generators::InstallGenerator.new([], {}, destination_root: dir)
+      capture_io { generator.invoke_all }
+      generator2 = Ruflet::Generators::InstallGenerator.new([], {}, destination_root: dir)
+      capture_io { generator2.invoke_all }
+
+      assert_equal 1, File.read(File.join(dir, "config", "routes.rb")).scan("Ruflet::Rails.app(").length
+    end
+  end
+
+  def test_web_install_mounts_only_the_generated_app_at_ruflet
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "config"))
+      File.write(File.join(dir, "config", "routes.rb"), "Rails.application.routes.draw do\nend\n")
+
+      generator = Ruflet::Generators::InstallGenerator.new([], { "web" => true }, destination_root: dir)
+      capture_io { generator.mount_websocket }
+      capture_io { generator.mount_web_app }
+
+      routes = File.read(File.join(dir, "config", "routes.rb"))
+      assert_includes routes,
+                      'mount Ruflet::Rails.web_app(app_file: Rails.root.join("app/views/ruflet/main.rb")), at: "/ruflet"'
+      refute_includes routes, "/products"
     end
   end
 
   def test_install_does_not_create_an_initializer
     Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "config"))
+      File.write(File.join(dir, "config", "routes.rb"), "Rails.application.routes.draw do\nend\n")
+
       generator = Ruflet::Generators::InstallGenerator.new([], {}, destination_root: dir)
       refute generator.respond_to?(:create_ruflet_initializer),
-             "the initializer is outdated; app_file is defaulted by the Railtie"
+             "the initializer is outdated; the WebSocket is mounted explicitly in routes.rb"
       capture_io { generator.invoke_all }
 
       refute File.exist?(File.join(dir, "config", "initializers", "ruflet.rb"))

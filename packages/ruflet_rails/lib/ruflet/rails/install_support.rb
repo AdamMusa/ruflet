@@ -10,18 +10,33 @@ module Ruflet
       module_function
 
       def default_app_template(app_title:)
-        template = <<~RUBY
-          require "ruflet"
-          require "ruflet_rails"
+        <<~RUBY
+          # frozen_string_literal: true
 
-          Ruflet::Rails.load_views(__dir__)
-
+          # The home screen for this Ruflet app. You own this file — declare your
+          # screens here; nothing is auto-discovered. It is mounted explicitly in
+          # config/routes.rb (the install generator adds this line):
+          #   match "/ws", to: Ruflet::Rails.app(Rails.root.join("app/views/ruflet/main.rb")), via: :all
           Ruflet.run do |page|
             page.title = #{app_title.inspect}
-            Ruflet::Rails.render(page)
+            page.add(
+              safe_area(
+                container(
+                  expand: true,
+                  padding: 24,
+                  content: column(
+                    spacing: 12,
+                    controls: [
+                      text(#{app_title.inspect}, size: 24, weight: "bold"),
+                      text("Edit app/views/ruflet/main.rb to build your app.")
+                    ]
+                  )
+                ),
+                expand: true
+              )
+            )
           end
         RUBY
-        template.gsub(/^    /, "  ")
       end
 
       def application_component_template
@@ -88,10 +103,6 @@ module Ruflet
 
       def application_component_path
         File.join("app", "views", "ruflet", "components", "application_component.rb")
-      end
-
-      def default_mobile_app_template(app_title:)
-        default_app_template(app_title: app_title)
       end
 
       def model_names(model_name)
@@ -673,22 +684,6 @@ module Ruflet
         YAML
       end
 
-      def desktop_initializer_path
-        File.join("config", "initializers", "ruflet_desktop.rb")
-      end
-
-      def desktop_initializer_template
-        <<~RUBY
-          # frozen_string_literal: true
-
-          # Set this to true when you intentionally want the Rails server process to
-          # launch the server-driven Ruflet desktop client.
-          Rails.application.configure do
-            config.x.ruflet_rails.desktop = false
-          end
-        RUBY
-      end
-
       def ruby_desktop_flag_bootstrap
         <<~RUBY
           # ruflet_rails desktop flag
@@ -746,13 +741,15 @@ module Ruflet
         value
       end
 
+      # ruflet_rails builds only native clients. The web client is installed
+      # prebuilt (rake ruflet:web), never compiled, so "web" is not a build
+      # target here.
       def build_args_for_platform(platform, ruflet_url: nil)
         normalized = normalize_build_platform(platform)
         return [] if normalized.to_s.empty?
+        return [] if normalized == "web"
 
-        args = [normalized]
-        args += ["--dart-define", "RUFLET_URL=#{ruflet_url}"] if normalized == "web" && ruflet_url.to_s.strip != ""
-        args
+        [normalized]
       end
 
       def default_entrypoint_path
@@ -764,23 +761,34 @@ module Ruflet
         %(match "#{mount_path}", to: Ruflet::Rails.#{helper}(Rails.root.join("#{entrypoint}")), via: :all)
       end
 
+      def web_route_snippet(entrypoint: default_entrypoint_path, mount_path: "/ruflet")
+        %(mount Ruflet::Rails.web_app(app_file: Rails.root.join("#{entrypoint}")), at: "#{mount_path}")
+      end
+
       def install_next_steps(target:, entrypoint:, client:, mount_path: "/ws")
         lines = [
           "Ruflet Rails installed.",
           "Generated entrypoint: #{entrypoint}",
-          "Mounted websocket: #{mount_path}",
+          "Added WebSocket route #{mount_path} to config/routes.rb",
           "Next steps:",
           "  1. Start Rails: bin/rails server",
           "  2. Connect your Ruflet app to ws://localhost:3000#{mount_path}"
         ]
 
-        if client.to_s == "desktop"
+        if %w[desktop all].include?(client.to_s)
           lines += [
             "Desktop clients are server-driven and connect to this Rails app.",
             "Plain bin/dev, bin/rails server, and bin/rails s do not launch desktop.",
             "To launch desktop for a dev server run: bin/rails s --desktop or bin/dev --desktop",
             "To download the prebuilt desktop client: bin/rails ruflet:update[desktop]",
             "To build the host desktop client: bin/rails ruflet:build[desktop]"
+          ]
+        end
+
+        if %w[web all].include?(client.to_s)
+          lines += [
+            "Web client installed into frontend/.",
+            "Open the mounted Ruflet web app at http://localhost:3000/ruflet"
           ]
         end
 

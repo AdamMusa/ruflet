@@ -89,7 +89,7 @@ class RufletRailsSessionRegistryTest < Minitest::Test
 
     server.send(:on_register_client, second_ws, { "session_id" => "same-session", "page" => { "route" => "/posts" } })
     second_session = registry["same-session"]
-    second_messages = second_ws.sent.map { |payload| Ruflet::Rails::Protocol::WireCodec.unpack(payload) }
+    second_messages = second_ws.sent.map { |payload| Ruflet::WireCodec.unpack(payload) }
     reattach_patch = second_messages.last[1]["patch"]
 
     assert_same first_page, second_session.page
@@ -126,7 +126,7 @@ class RufletRailsSessionRegistryTest < Minitest::Test
 
     server.send(:on_control_event, first_ws, { "target" => button.wire_id, "name" => "click" })
 
-    first_messages = first_ws.sent.map { |payload| Ruflet::Rails::Protocol::WireCodec.unpack(payload) }
+    first_messages = first_ws.sent.map { |payload| Ruflet::WireCodec.unpack(payload) }
 
     assert first_messages.any? { |(_action, payload)| payload["id"] == label.wire_id },
            "event responses must be sent to the socket that emitted the event"
