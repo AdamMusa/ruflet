@@ -134,8 +134,16 @@ class RufletSnackBarCompatibilityTest < Minitest::Test
     sent.clear
     page.close_dialog(dialog)
 
-    controls_patch = sent.last[1]["patch"].find { |op| op[2] == "controls" }
-    refute_nil controls_patch
-    assert_empty controls_patch[3]
+    assert_empty dialog_controls_from_patch(sent.last[1]["patch"])
+  end
+
+  private
+
+  def dialog_controls_from_patch(patch)
+    controls_patch = patch.find { |op| op[2] == "controls" }
+    return controls_patch[3] if controls_patch
+
+    dialogs_patch = patch.find { |op| op[2] == "_dialogs" }
+    dialogs_patch[3]["controls"]
   end
 end

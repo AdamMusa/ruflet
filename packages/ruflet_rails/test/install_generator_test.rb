@@ -36,16 +36,17 @@ class RufletInstallGeneratorTest < Minitest::Test
     refute generator.respond_to?(:create_application_component)
   end
 
-  def test_install_adds_only_websocket_route
+  def test_install_does_not_touch_routes
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "config"))
-      File.write(File.join(dir, "config", "routes.rb"), "Rails.application.routes.draw do\nend\n")
+      original_routes = "Rails.application.routes.draw do\nend\n"
+      File.write(File.join(dir, "config", "routes.rb"), original_routes)
 
       generator = Ruflet::Generators::InstallGenerator.new([], {}, destination_root: dir)
-      capture_io { generator.add_routes }
+      refute generator.respond_to?(:add_routes), "routes are auto-mounted by the Railtie, not the generator"
+      capture_io { generator.invoke_all }
 
-      routes = File.read(File.join(dir, "config", "routes.rb"))
-      assert_includes routes, 'match "/ws", to: Ruflet::Rails.app'
+      assert_equal original_routes, File.read(File.join(dir, "config", "routes.rb"))
     end
   end
 

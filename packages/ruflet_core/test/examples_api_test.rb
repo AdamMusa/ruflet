@@ -7,7 +7,7 @@ class RufletExamplesApiTest < Minitest::Test
 
   def test_top_level_examples_match_supported_text_and_icon_api
     EXAMPLE_FILES.each do |file|
-      contents = File.read(file)
+      contents = File.read(file, encoding: "UTF-8")
 
       refute_match(/text\((?![^\)]*style:)[^\)]*,\s*(size|color|weight):/, contents, "#{File.basename(file)} should put text styling inside style: { ... }")
       refute_match(/icon\(icon:/, contents, "#{File.basename(file)} should not wrap icon(icon: ...)")

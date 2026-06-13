@@ -80,6 +80,16 @@ class RufletBottomSheetCompatibilityTest < Minitest::Test
     page.dispatch_event(target: sheet.wire_id, name: "dismiss", data: nil)
 
     assert_equal [["dismiss", true]], dismissed
-    assert_equal [], sent.last[1]["patch"][1][3]
+    assert_equal [], dialog_controls_from_patch(sent.last[1]["patch"])
+  end
+
+  private
+
+  def dialog_controls_from_patch(patch)
+    controls_patch = patch.find { |op| op[2] == "controls" }
+    return controls_patch[3] if controls_patch
+
+    dialogs_patch = patch.find { |op| op[2] == "_dialogs" }
+    dialogs_patch[3]["controls"]
   end
 end

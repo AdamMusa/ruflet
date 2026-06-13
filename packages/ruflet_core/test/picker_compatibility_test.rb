@@ -269,17 +269,16 @@ class RufletPickerCompatibilityTest < Minitest::Test
     page.dispatch_event(target: picker.wire_id, name: "change", data: "10:15")
 
     assert_equal ["10:15"], changes
-    dialog_message = sent.find { |(_action, payload)| payload["patch"].any? { |op| op[2] == "controls" } }
+    dialog_message = sent.find { |(_action, payload)| Array(payload["patch"]).any? { |op| %w[controls _dialogs].include?(op[2]) } }
+    refute_nil dialog_message
     assert_equal Ruflet::Protocol::ACTIONS[:patch_control], dialog_message[0]
-    controls_patch = dialog_message[1]["patch"].find { |op| op[2] == "controls" }
-    assert_equal [], controls_patch[3]
+    assert_equal [], dialog_controls_from_patch(dialog_message[1]["patch"])
     assert_equal "Time: 10:15", result.props["value"]
 
     sent.clear
     page.show_dialog(picker)
 
-    controls_patch = sent.last[1]["patch"].find { |op| op[2] == "controls" }
-    picker_patch = controls_patch[3].first
+    picker_patch = dialog_controls_from_patch(sent.last[1]["patch"]).first
     assert_equal "TimePicker", picker_patch["_c"]
     assert_equal true, picker_patch["open"]
   end
@@ -308,5 +307,15 @@ class RufletPickerCompatibilityTest < Minitest::Test
     page.dispatch_event(target: picker.wire_id, name: "change", data: "")
 
     assert_equal [["2026-05-03", "2026-05-24", nil]], events
+  end
+
+  private
+
+  def dialog_controls_from_patch(patch)
+    controls_patch = patch.find { |op| op[2] == "controls" }
+    return controls_patch[3] if controls_patch
+
+    dialogs_patch = patch.find { |op| op[2] == "_dialogs" }
+    dialogs_patch[3]["controls"]
   end
 end
