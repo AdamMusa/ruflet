@@ -4,10 +4,10 @@ module Ruflet
   module Rails
     # Central configuration for ruflet_rails.
     #
-    # Mirrors the full ruflet.yaml schema so a Rails app needs only
-    # config/initializers/ruflet.rb — no ruflet.yaml on disk.
-    #
-    # Set in config/initializers/ruflet.rb:
+    # An install needs no config/initializers/ruflet.rb: app_file defaults to
+    # the conventional app/views/ruflet/main.rb (set by the Railtie), ws_path
+    # defaults to "/ws", and build metadata is read from ruflet.yaml. Add an
+    # initializer only to override these — every setting below is optional:
     #
     #   Ruflet::Rails.configure do |config|
     #     # Runtime / server

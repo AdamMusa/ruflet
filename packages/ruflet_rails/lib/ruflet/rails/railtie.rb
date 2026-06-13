@@ -16,6 +16,19 @@ module Ruflet
         end
       end
 
+      # Default the Ruflet entry-point to the conventional path so a Rails app
+      # auto-mounts /ws with no config/initializers/ruflet.rb at all. An explicit
+      # config.app_file (set in an initializer) still wins via the nil guard.
+      initializer "ruflet_rails.default_app_file", after: :load_config_initializers do |_app|
+        next unless defined?(::Rails.root)
+
+        cfg = Ruflet::Rails.config
+        next if cfg.app_file
+
+        default = ::Rails.root.join("app/views/ruflet/main.rb")
+        cfg.app_file = default if File.file?(default)
+      end
+
       initializer "ruflet_rails.desktop_launcher", after: :load_config_initializers do |_app|
         next unless defined?(::Rails.root)
 

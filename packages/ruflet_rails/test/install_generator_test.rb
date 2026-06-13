@@ -50,6 +50,19 @@ class RufletInstallGeneratorTest < Minitest::Test
     end
   end
 
+  def test_install_does_not_create_an_initializer
+    Dir.mktmpdir do |dir|
+      generator = Ruflet::Generators::InstallGenerator.new([], {}, destination_root: dir)
+      refute generator.respond_to?(:create_ruflet_initializer),
+             "the initializer is outdated; app_file is defaulted by the Railtie"
+      capture_io { generator.invoke_all }
+
+      refute File.exist?(File.join(dir, "config", "initializers", "ruflet.rb"))
+      assert File.exist?(File.join(dir, "app", "views", "ruflet", "main.rb"))
+      assert File.exist?(File.join(dir, "ruflet.yaml"))
+    end
+  end
+
   def test_desktop_install_patches_ruby_rails_binstub_and_shell_dev_binstub
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "bin"))

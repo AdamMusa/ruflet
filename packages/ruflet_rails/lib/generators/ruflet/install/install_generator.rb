@@ -25,13 +25,6 @@ module Ruflet
         create_file target, Ruflet::Rails::InstallSupport.default_ruflet_yaml(app_name: app_name)
       end
 
-      def create_ruflet_initializer
-        target = File.join(destination_root, Ruflet::Rails::InstallSupport.initializer_path)
-        return if File.exist?(target)
-
-        create_file target, Ruflet::Rails::InstallSupport.initializer_template(entrypoint: entrypoint_path)
-      end
-
       def add_desktop_flag_to_binstubs
         return unless desktop_requested?
 

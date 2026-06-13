@@ -759,41 +759,6 @@ module Ruflet
         File.join("app", "views", "ruflet", "main.rb")
       end
 
-      def initializer_template(entrypoint: default_entrypoint_path, ws_path: "/ws")
-        <<~RUBY
-          # frozen_string_literal: true
-
-          Ruflet::Rails.configure do |config|
-            # Ruflet app entry-point. Auto-mounts a WebSocket endpoint at ws_path —
-            # no explicit route needed in config/routes.rb.
-            config.app_file = Rails.root.join(#{entrypoint.inspect})
-
-            # URL path the WebSocket endpoint listens on (default: "/ws").
-            config.ws_path = #{ws_path.inspect}
-
-            # Base URL the Flutter client uses to reach this Rails app. Always
-            # required: it backs asset URLs (Ruflet::Rails.asset_url), the
-            # build-time RUFLET_URL define, and the desktop launcher. At runtime
-            # it can fall back to the connecting host, but a build has no request,
-            # so set it here. Point it at a LAN IP (not localhost) to test on a
-            # real device.
-            config.backend_url = ENV.fetch("RUFLET_BACKEND_URL") do
-              Rails.env.production? ? "https://example.com" : "http://localhost:3000"
-            end
-
-            # Directory the Flutter web build is served from. Defaults to
-            # Rails.root/build/web (where `rake ruflet:build[web]` outputs).
-            # Must stay OUTSIDE public/, or Rails would serve it statically and
-            # expose the app at a path no route declares.
-            # config.web_build_dir = Rails.root.join("build", "web")
-          end
-        RUBY
-      end
-
-      def initializer_path
-        File.join("config", "initializers", "ruflet.rb")
-      end
-
       # Kept for backward compatibility with apps that use manual mount.
       def route_snippet(entrypoint: default_entrypoint_path, mount_path: "/ws", helper: "app")
         %(match "#{mount_path}", to: Ruflet::Rails.#{helper}(Rails.root.join("#{entrypoint}")), via: :all)
