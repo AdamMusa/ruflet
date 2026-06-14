@@ -1,48 +1,31 @@
-# ruflet_flutter_template
+# Ruflet Flutter Template
 
-Ruflet Flutter template for either a self-contained Ruby-driven app or a server-driven client.
+This template is used by the Ruflet build pipeline to produce self-contained or
+server-driven Flutter clients.
 
-## What is included
+## Entry Points
 
-- Ruflet/Flet client bootstrap with fixed local port auto-connect (`8550`).
-- Self-contained startup via `ruby_runtime` in `lib/main.self.dart`.
-- Server-driven startup in `lib/main.server.dart`.
-- Developer-editable Ruby entry file at:
-  - `assets/main.rb`
-- External backend override via:
-  - `--dart-define=RUFLET_BACKEND_URL=http://host:8550`
+- `lib/main.self.dart` starts the embedded Ruby runtime and bundled `assets/main.rb`.
+- `lib/main.server.dart` connects to an external Ruflet backend.
+- `RUFLET_BACKEND_URL` overrides the backend URL for a server-driven client.
 
-## Run client template
+Run the template directly while developing the build pipeline:
 
 ```bash
-cd ruflet_flutter_template
 flutter pub get
-flutter run
+flutter run -t lib/main.self.dart
+flutter run -t lib/main.server.dart \
+  --dart-define=RUFLET_BACKEND_URL=http://127.0.0.1:8550
 ```
 
-The default `flutter run` entrypoint uses `lib/main.self.dart`, so developers can replace `assets/main.rb` with their own Ruflet implementation.
-
-To connect to an external backend instead:
+Application developers normally build through the Ruflet CLI:
 
 ```bash
-flutter run --dart-define=RUFLET_BACKEND_URL=http://127.0.0.1:8550
+bundle exec ruflet build apk --self
+bundle exec ruflet build ios --self
+bundle exec ruflet build apk
+bundle exec ruflet build ios
 ```
 
-For Ruflet CLI builds:
-
-```bash
-ruflet build apk --self
-ruflet build ios --self
-ruflet build apk
-ruflet build ios
-```
-
-- `ruflet build ... --self` builds the self-contained client with `ruby_runtime`.
-- `ruflet build ...` without `--self` builds the server-driven client without `ruby_runtime`.
-
-For desktop or web testing:
-
-```bash
-flutter run -d macos
-flutter run -d chrome
-```
+`--self` packages the Ruby runtime and application with the native client.
+Without it, the client connects to a separately running Ruflet backend.

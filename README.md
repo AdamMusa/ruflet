@@ -1,135 +1,100 @@
 # Ruflet
 
-Ruflet is a Ruby port of [Flet](https://flet.dev/) for building web, desktop, and mobile apps in Ruby.
+Ruflet lets Ruby developers build web, desktop, and mobile interfaces with a
+single Ruby UI layer.
 
-Ruflet supports both class-based apps and `Ruflet.run do |page| ... end`.
+## Quick Start
 
-## Start Here
-
-1. Install mobile client app from releases:
-- [Ruflet Releases](https://github.com/AdamMusa/Ruflet/releases)
-- Install latest Android APK or iOS build.
-
-2. Install Ruflet from RubyGems:
+Install the CLI and create an app:
 
 ```bash
 gem install ruflet
-```
-
-3. Create and run your first app:
-
-```bash
 ruflet new my_app
 cd my_app
 bundle install
-ruflet run main.rb
+bundle exec ruflet run
 ```
 
-4. Open Ruflet mobile client and connect:
-- Enter URL manually, or
-- Tap `Scan QR` and scan QR shown by `ruflet run ...`
+`ruflet run` starts the Ruby backend and prints a QR code for a mobile client.
+Use `--web` to open the web client or `--desktop` to launch the desktop client:
 
-## Package Split
+```bash
+bundle exec ruflet run --web
+bundle exec ruflet run --desktop
+```
 
-Ruflet is split into packages:
+## Write An App
 
-- `ruflet`: CLI/install package users install from RubyGems
-- `ruflet_core`: core runtime implementation (protocol + UI)
-- `ruflet_server`: WebSocket runtime (`Ruflet.run` backend)
-- `ruflet_rails`: Rails integration/protocol adapter
-
-Monorepo folders:
-
-- `packages/ruflet`
-- `packages/ruflet_core`
-- `packages/ruflet_server`
-- `packages/ruflet_rails`
-
-## New Project Behavior
-
-`ruflet new <appname>` generates a `Gemfile` with runtime dependencies:
-
-- `gem "ruflet_core"`
-- `gem "ruflet_server"`
-
-## Breaking Change
-
-The CLI gem has been renamed:
-
-- old: `gem install ruflet_cli`
-- new: `gem install ruflet`
-
-`ruflet` now follows the old `ruflet_cli` dependency shape and only carries CLI dependencies.
-
-App projects should keep runtime gems in the app `Gemfile`:
-
-- `gem "ruflet_core"`
-- `gem "ruflet_server"`
-
-## App Style (Required in docs/examples)
-
-Use the current app style:
+The generated `main.rb` is the application entrypoint:
 
 ```ruby
 require "ruflet"
 
 Ruflet.run do |page|
-  page.title = "Counter Demo"
+  page.title = "Counter"
   count = 0
-  count_text = text(count.to_s, style: { size: 40 })
+  value = text("0", size: 40)
+
   page.add(
-    container(
-      expand: true,
-      alignment: Ruflet::MainAxisAlignment::CENTER,
-      content: column(
-        alignment: Ruflet::MainAxisAlignment::CENTER,
-        horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
-        children: [
-          text("You have pushed the button this many times:"),
-          count_text
-        ]
-      )
-    ),
-    floating_action_button: fab(
-      icon: Ruflet::MaterialIcons::ADD,
-      on_click: ->(_e) do
-        count += 1
-        page.update(count_text, value: count.to_s)
-      end
+    column(
+      children: [
+        value,
+        button(
+          "Add one",
+          on_click: ->(_event) do
+            count += 1
+            page.update(value, value: count.to_s)
+          end
+        )
+      ]
     )
   )
 end
 ```
 
-Widget builders are global/free helpers (`text`, `row`, `column`, `container`, etc.).
-Use `page` only for runtime/page operations (`add`, `update`, `go`, `show_dialog`, `pop_dialog`).
+Control builders such as `text`, `button`, `row`, and `column` create the UI.
+The `page` object manages application-level behavior including navigation,
+dialogs, services, and updates.
+
+## Project Files
+
+A generated Ruflet app includes:
+
+- `main.rb` - Ruby application entrypoint
+- `ruflet.yaml` - app metadata, assets, extensions, and build settings
+- `services.yaml` - protected device capabilities requested by the app
+- `Gemfile` - Ruflet runtime dependencies
+
+Declare camera, microphone, location, or motion access in `services.yaml`.
+Declare optional UI extensions, such as maps or webview, in `ruflet.yaml`.
 
 ## CLI
 
 ```bash
-ruflet new <appname>
-ruflet run [scriptname|path] [--web|--desktop] [--port PORT]
-ruflet update [web|desktop|all] [--check] [--force] [--platform PLATFORM]
-ruflet build <apk|ios|aab|web|macos|windows|linux> [--self] [--verbose]
+bundle exec ruflet run [scriptname|path] [--web|--desktop] [--port PORT]
+bundle exec ruflet debug [scriptname|path]
+bundle exec ruflet devices
+bundle exec ruflet emulators
+bundle exec ruflet doctor
+bundle exec ruflet update [web|desktop|all] [--check] [--force]
+bundle exec ruflet build <apk|android|ios|aab|web|macos|windows|linux>
+bundle exec ruflet install [--device DEVICE_ID]
 ```
 
-For monorepo development (always uses local CLI source), run:
+Add `--self` to a native build when the Ruby runtime and application should be
+packaged inside the client. Without `--self`, the built client connects to a
+separately running Ruflet backend.
 
-By default `ruflet build ...` looks for Flutter client at `./ruflet_client`.
-Set `RUFLET_CLIENT_DIR` to override.
+## Rails
 
-- `ruflet build ... --self` uses the self-contained Flutter entrypoint with `ruby_runtime`.
-- `ruflet build ...` without `--self` builds the server-driven client entrypoint.
+Use the `ruflet_rails` gem to mount Ruflet applications inside Rails, share
+Rails models, and generate Ruflet components from standard Rails scaffolds.
+See [`packages/ruflet_rails/README.md`](packages/ruflet_rails/README.md).
 
-## Development (Monorepo)
+## Packages
 
-```bash
-cd /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet
-/opt/homebrew/opt/ruby/bin/bundle install
-```
-
-## Documentation
-
-- [Creating New App](docs/creating_new_app.md)
-- [Widgets Guide](docs/widgets.md)
-- Example apps: [main.rb](examples/main.rb), [solitaire.rb](examples/solitaire.rb), [calculator.rb](examples/calculator.rb)
+- `ruflet` provides the project generator and command-line tools.
+- `ruflet_core` provides controls, page APIs, and the Ruby UI runtime.
+- `ruflet_server` runs server-driven Ruflet applications.
+- `ruflet_rails` integrates Ruflet with Rails.
+- `ruby_runtime` embeds Ruby for self-contained native applications.

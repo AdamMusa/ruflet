@@ -2,17 +2,18 @@
 
 `ruflet_rails` is the Rails-first integration package for Ruflet.
 
-Internal Rails transport/protocol code is bundled inside this gem as `Ruflet::Rails::Protocol`.
-No separate protocol gem is required.
+It mounts Ruby-driven Ruflet interfaces in a Rails application, makes Rails
+models available to Ruflet components, and connects web, mobile, and desktop
+clients to the same application entrypoint.
 
-## Usage
+## Add The Gem
 
 ```ruby
 # Gemfile
-gem "ruflet_rails", ">= 0.0.5"
+gem "ruflet_rails"
 ```
 
-## Install into Rails
+## Install Into Rails
 
 ```bash
 bin/rails generate ruflet:install
@@ -119,13 +120,16 @@ bundle exec rake ruflet:install[DEVICE_ID]
 
 ## Ruflet resource scaffolds
 
-Generate a mountable Ruflet CRUD component for an existing Rails model:
+The standard Rails scaffold command also generates a mountable Ruflet CRUD
+component:
 
 ```bash
-bin/rails generate ruflet:scaffold Post
+bin/rails generate scaffold Post title:string body:text published:boolean
 ```
 
-The scaffold creates generated app code the Rails developer can own and edit:
+The Rails model attributes are passed to the Ruflet component generator. The
+scaffold creates generated application code the Rails developer can own and
+edit:
 
 ```ruby
 # app/views/ruflet/components/posts/post_component.rb
@@ -146,6 +150,9 @@ The generated component contains the developer-owned UI and persistence calls.
 `ruflet_rails` provides the reusable model, navigation, dialog, and formatting
 helpers. Component files under `app/views/ruflet/components` are loaded by the
 Railtie so both web mounts and `main.rb` can reference them.
+
+Use `--skip-ruflet` when a Rails scaffold should not generate a Ruflet
+component.
 
 ## Ruflet model forms
 

@@ -93,7 +93,7 @@ For Ruflet apps, the normal embedded flow is:
 1. Bundle a Ruby file in Flutter assets, usually `assets/main.rb`.
 2. Copy that asset to a writable app directory at runtime.
 3. Start the embedded file server with `RubyRuntime.startFileServer(...)`.
-4. Point the Flutter Ruflet/Flet client to the local server URL.
+4. Point the Ruflet client to the local server URL.
 
 This is the model used by the Ruflet Flutter template.
 

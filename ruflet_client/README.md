@@ -1,45 +1,35 @@
-# Ruflet Explorer
+# Ruflet Client
 
-Ruflet Explorer connection client for mobile, desktop, and web.
+The Ruflet client renders server-driven Ruflet applications on mobile, desktop,
+and web.
 
-## What is included
-
-- QR scanning and manual URL connection flow.
-- Desktop and web local backend discovery for development.
-
-## Run client
+## Run The Client
 
 ```bash
-cd ruflet_client
 flutter pub get
 flutter run
 ```
 
-For desktop or web testing:
+Choose a desktop or web target when needed:
 
 ```bash
 flutter run -d macos
 flutter run -d chrome
 ```
 
-## Run with Ruflet demo app
+## Connect To An App
 
-1. Start a Ruflet backend demo app:
+Start a Ruflet application in another terminal:
 
 ```bash
-cd ../examples
+cd ../showcase
 bundle install
-ruflet run main.rb
+bundle exec ruflet run
 ```
 
-2. Start Ruflet Explorer:
+On mobile, scan the QR code printed by `ruflet run` or enter the backend URL.
+Desktop and web development clients connect to the local backend automatically.
 
-```bash
-cd ../ruflet_client
-flutter run
-```
-
-3. Connect from client:
-
-- Mobile: scan QR from `ruflet run ...` output or enter URL manually.
-- Desktop/Web: opens and targets local backend URL automatically.
+This package is the client implementation used by Ruflet builds. Application
+developers normally work in a generated Ruflet project and use the Ruflet CLI
+instead of editing this package.
