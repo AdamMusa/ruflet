@@ -34,6 +34,18 @@ class RufletBareWidgetHelpersTest < Minitest::Test
     assert_equal "b", b.props["value"]
   end
 
+  def test_shared_controls_have_crafted_helpers
+    content = text("content")
+
+    assert_equal "autofillgroup", autofill_group(content).type
+    assert_equal content, autofill_group(content).props["content"]
+    assert_equal "hero", hero(content, tag: "logo").type
+    assert_equal [content], overlay([content]).children
+    assert_equal "shadermask", shader_mask(content).type
+    assert_equal "shimmer", shimmer(content).type
+    assert_equal "Sample", text_span("Sample").props["text"]
+  end
+
   def test_ruflet_run_block_self_can_use_bare_helpers
     # A Ruflet.run-style block (self == top-level main) builds controls without
     # a builder. Capture the entrypoint instead of starting a server.

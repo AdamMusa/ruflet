@@ -81,6 +81,39 @@ module Ruflet
         build_widget(:contextmenu, **mapped)
       end
       def contextmenu(content = nil, **props) = context_menu(content, **props)
+      def autofill_group(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:autofillgroup, **mapped)
+      end
+      def autofillgroup(content = nil, **props) = autofill_group(content, **props)
+      def hero(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:hero, **mapped)
+      end
+      def overlay(children = nil, **props)
+        mapped = props.dup
+        mapped[:controls] = children unless children.nil?
+        build_widget(:overlay, **mapped)
+      end
+      def shader_mask(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:shadermask, **mapped)
+      end
+      def shadermask(content = nil, **props) = shader_mask(content, **props)
+      def shimmer(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:shimmer, **mapped)
+      end
+      def text_span(text = nil, **props)
+        mapped = props.dup
+        mapped[:text] = text unless text.nil?
+        build_widget(:textspan, **mapped)
+      end
+      def textspan(text = nil, **props) = text_span(text, **props)
       def keyboard_listener(content = nil, **props)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
