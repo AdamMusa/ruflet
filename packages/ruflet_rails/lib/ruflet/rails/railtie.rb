@@ -3,6 +3,11 @@
 module Ruflet
   module Rails
     class Railtie < ::Rails::Railtie
+      generators do
+        require "ruflet/rails/generator_hooks"
+        Ruflet::Rails::GeneratorHooks.install!
+      end
+
       # Make ruflet_frame and friends available in every .erb template.
       initializer "ruflet_rails.view_helpers" do
         ActiveSupport.on_load(:action_view) do

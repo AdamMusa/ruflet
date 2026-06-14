@@ -7,9 +7,48 @@ $LOAD_PATH.unshift(local_lib) unless $LOAD_PATH.include?(local_lib)
 
 require "rails/generators"
 require "generators/ruflet/scaffold/scaffold_generator"
+require "ruflet/rails/generator_hooks"
 
 class RufletScaffoldGeneratorTest < Minitest::Test
   RailsGenerators = ::Rails::Generators
+
+  def test_standard_rails_scaffold_generates_the_ruflet_component
+    Ruflet::Rails::GeneratorHooks.install!
+
+    Dir.mktmpdir do |dir|
+      capture_io do
+        RailsGenerators.invoke(
+          "scaffold",
+          ["Post", "title:string", "body:text", "--skip-scaffold-controller", "--skip-resource-route", "--skip-orm"],
+          destination_root: dir
+        )
+      end
+
+      component = File.read(File.join(dir, "app/views/ruflet/components/posts/post_component.rb"))
+
+      assert_includes component, "class PostComponent < Ruflet::Rails::ResourceComponent"
+      assert_includes component, "title_control = text_field"
+      assert_includes component, "body_control = text_field"
+      assert_includes component, '"title" => title_control.value.to_s'
+      assert_includes component, '"body" => body_control.value.to_s'
+    end
+  end
+
+  def test_standard_rails_scaffold_can_skip_the_ruflet_component
+    Ruflet::Rails::GeneratorHooks.install!
+
+    Dir.mktmpdir do |dir|
+      capture_io do
+        RailsGenerators.invoke(
+          "scaffold",
+          ["Post", "title:string", "--skip-scaffold-controller", "--skip-resource-route", "--skip-orm", "--skip-ruflet"],
+          destination_root: dir
+        )
+      end
+
+      refute File.exist?(File.join(dir, "app/views/ruflet/components/posts/post_component.rb"))
+    end
+  end
 
   def test_rails_generator_creates_a_single_mountable_component
     Dir.mktmpdir do |dir|
@@ -22,8 +61,8 @@ class RufletScaffoldGeneratorTest < Minitest::Test
       end
 
       # The generator emits ONE file: the resource component. No separate view
-      # host — routing, model resolution and persistence all live in the base
-      # class (Ruflet::Rails::ResourceComponent).
+      # host is generated. The component owns its UI and persistence calls,
+      # while ResourceComponent provides reusable model and rendering helpers.
       refute File.exist?(File.join(dir, "app/views/ruflet/posts_view.rb")),
              "the scaffold must not generate a separate view file"
 

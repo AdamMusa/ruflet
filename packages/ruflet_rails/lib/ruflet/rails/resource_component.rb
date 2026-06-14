@@ -12,7 +12,7 @@ module Ruflet
     # The generated subclass owns the explicit CRUD UI (render, show, the
     # create/edit form) AND the database calls (record.update, record.destroy!,
     # model_class.new) — so a developer can read and change anything. This base
-    # provides only reusable, non-DB helpers: model resolution, record loading,
+    # provides reusable helpers: model resolution, record loading,
     # field inference (resource_fields/display_fields/display_value), navigation
     # (render_index/render_show/refresh), dialog management, snackbars, and the
     # date/time picker value helpers.
@@ -88,9 +88,8 @@ module Ruflet
         model_class.respond_to?(:model_name) ? model_class.model_name.human.titleize : self.class.singular_title
       end
 
-      # Fields rendered on the detail (show) screen. The generated subclass
-      # overrides this with the scaffolded attributes; the default falls back to
-      # the model's own attribute names.
+      # Fields rendered on the detail (show) screen. The default uses the
+      # model's own attribute names; subclasses can override it.
       def resource_fields
         default_resource_fields
       end
@@ -105,7 +104,7 @@ module Ruflet
         record.public_send(field).to_s
       end
 
-      # --- Record loading & persistence --------------------------------------
+      # --- Record loading & navigation ---------------------------------------
 
       def records
         scope = model_class.respond_to?(:limit) ? model_class.limit(50) : model_class.all
