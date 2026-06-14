@@ -1,136 +1,82 @@
-# Ruflet
+# Releasing Ruflet
 
-Ruflet is a Ruby framework inspired by Flet for building web, desktop, and mobile apps in Ruby.
+Release packages only after their tests, generated-project workflow, and
+affected clients have been verified.
 
-Current Ruby gems release in this repo: **0.0.14** (`ruflet`, `ruflet_core`, `ruflet_server`)
-Current Rails integration release: **0.0.8**
-Current Flutter embedded Ruby runtime package: **ruby_runtime ^0.0.3** from pub.dev
+## Ruby Gems
 
-Class-based apps are the recommended and documented standard:
-- `class MyApp < Ruflet::App`
-- implement `def view(page)`
+Ruflet's Ruby packages are released independently:
 
-## Start Here
+- `ruflet_core`
+- `ruflet_server`
+- `ruflet`
+- `ruflet_rails`
 
-1. Install mobile client app from releases:
-- [Ruflet Releases](https://github.com/AdamMusa/Ruflet/releases)
-- Install the latest Android APK or iOS build.
+Update each package version in its own `lib/ruflet/version.rb`. When several
+packages are released together, publish dependencies before dependents:
 
-2. Install gems from RubyGems:
+1. `ruflet_core`
+2. `ruflet_server`
+3. `ruflet`
+4. `ruflet_rails`
 
-```bash
-gem install ruflet
-```
-
-3. Create and run your first app:
+Run the package tests before building:
 
 ```bash
-ruflet new my_app
-cd my_app
-bundle install
-ruflet run main.rb
+cd packages/ruflet_core
+bundle exec ruby -Itest -e 'Dir["test/**/*_test.rb"].sort.each { |file| require_relative file }'
+gem build ruflet_core.gemspec
 ```
 
-4. Open Ruflet mobile client and connect:
-- Enter URL manually, or
-- Tap `Scan QR` and scan QR shown by `ruflet run ...`
+Repeat from each package directory with its matching gemspec. Building from
+the package directory ensures the gem contains the intended files.
 
-## Package Split
-
-Ruflet is split into packages:
-
-- `ruflet`: CLI/install package users install from RubyGems
-- `ruflet_core`: core runtime implementation (protocol + UI)
-- `ruflet_server`: WebSocket runtime
-- `ruflet_rails`: Rails integration
-
-Monorepo folders:
-
-- `packages/ruflet`
-- `packages/ruflet_core`
-- `packages/ruflet_server`
-- `packages/ruflet_rails`
-
-## New Project Behavior
-
-`ruflet new <appname>` generates a `Gemfile` with:
-
-- `gem "ruflet_core"`
-- `gem "ruflet_server"`
-
-It does **not** add the CLI gem to app dependencies.
-
-## Breaking Change
-
-The CLI gem name changed:
-
-- old: `gem install ruflet_cli`
-- new: `gem install ruflet`
-
-`ruflet` now keeps the old CLI dependency shape and does not bundle runtime gem dependencies.
-
-That keeps CLI global/tooling-level and app deps runtime-focused.
-
-## RubyGems Release Build
-
-Build each release gem from its package directory. RubyGems validates files relative to the current package root, so do not build with a nested gemspec path from the monorepo root.
+Inspect and publish the resulting gem:
 
 ```bash
-cd /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet
-(cd packages/ruflet_core && /opt/homebrew/opt/ruby/bin/gem build ruflet_core.gemspec)
-(cd packages/ruflet && /opt/homebrew/opt/ruby/bin/gem build ruflet.gemspec)
-(cd packages/ruflet_server && /opt/homebrew/opt/ruby/bin/gem build ruflet_server.gemspec)
-(cd packages/ruflet_rails && /opt/homebrew/opt/ruby/bin/gem build ruflet_rails.gemspec)
+gem specification ruflet_core-VERSION.gem
+gem push ruflet_core-VERSION.gem
 ```
 
-Upload to RubyGems in dependency order:
+Replace `VERSION` with the version being released. Do not commit generated
+`.gem` files.
+
+## Ruflet Clients
+
+Client release archives are consumed by CLI and Rails update/install commands.
+Build and test every target included in a release, then attach archives using
+the filenames expected by the update pipeline.
+
+Verify at minimum:
 
 ```bash
-(cd packages/ruflet_core && /opt/homebrew/opt/ruby/bin/gem push ruflet_core-0.0.14.gem)
-(cd packages/ruflet && /opt/homebrew/opt/ruby/bin/gem push ruflet-0.0.14.gem)
-(cd packages/ruflet_server && /opt/homebrew/opt/ruby/bin/gem push ruflet_server-0.0.14.gem)
-(cd packages/ruflet_rails && /opt/homebrew/opt/ruby/bin/gem push ruflet_rails-0.0.8.gem)
+bundle exec ruflet update --check
+bundle exec ruflet run --web
+bundle exec ruflet run --desktop
 ```
 
-## App Style (Required in docs/examples)
+Also verify any affected native target on a real device or emulator.
 
-Use class-based apps:
+## Embedded Ruby Runtime
 
-```ruby
-require "ruflet"
-
-class MyApp < Ruflet::App
-  def view(page)
-    page.vertical_alignment = Ruflet::MainAxisAlignment::CENTER
-    page.horizontal_alignment = Ruflet::CrossAxisAlignment::CENTER
-    page.title = "Hello"
-    page.add(page.text(value: "Hello Ruflet"))
-  end
-end
-
-MyApp.new.run
-```
-
-## CLI
+For `ruby_runtime`, update its package version and changelog, run Flutter
+analysis/tests, and run the embedded VM compatibility harness:
 
 ```bash
-ruflet new <appname>
-ruflet run [scriptname|path] [--web|--mobile|--desktop]
-ruflet build <apk|ios|aab|web|macos|windows|linux|zip>
+cd ruby_runtime
+flutter analyze
+flutter test
+tools/embedded_vm_harness/build.sh
+tools/embedded_vm_harness/build/embedded_mruby --preload \
+  tools/embedded_vm_harness/tests/compat_test.rb
 ```
 
-By default `ruflet build ...` looks for Flutter client at `./ruflet_client`.
-Set `RUFLET_CLIENT_DIR` to override.
+## Release Checklist
 
-## Development (Monorepo)
-
-```bash
-cd /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet
-/opt/homebrew/opt/ruby/bin/bundle install
-```
-
-## Documentation
-
-- [Creating New App](docs/creating_new_app.md)
-- [Widgets Guide](docs/widgets.md)
-- Example apps: [main.rb](examples/main.rb), [solitaire.rb](examples/solitaire.rb), [calculator.rb](examples/calculator.rb)
+- Package versions and changelogs are updated.
+- Ruby package tests pass.
+- Flutter analysis and tests pass for affected clients/plugins.
+- A generated Ruflet project can run and build with released packages.
+- Rails install, web mount, and affected generators are verified.
+- Client archives are attached with expected filenames.
+- Generated build artifacts and `.gem` files remain untracked.
