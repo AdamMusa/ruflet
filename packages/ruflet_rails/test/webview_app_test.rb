@@ -46,6 +46,7 @@ class RufletWebviewAppTest < Minitest::Test
     body = body_of(view)
     assert_equal "webview", body.type
     assert_equal "https://example.com", body.props["url"]
+    assert_equal "get", body.props["method"]
     assert_equal true, body.props["expand"]
   end
 

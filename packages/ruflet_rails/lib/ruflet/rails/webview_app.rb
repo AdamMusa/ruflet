@@ -33,7 +33,7 @@ module Ruflet
     def webview_app(url:, appbar: nil, navigation_bar: nil, bottom_appbar: nil,
                     route: "/", prevent_links: nil, on_navigate: nil,
                     on_page_started: nil, on_page_ended: nil, **webview_props)
-      webview_args = { url: url, expand: true }
+      webview_args = { url: url, method: "get", expand: true }
       webview_args[:prevent_links] = prevent_links unless prevent_links.nil?
       webview_args[:on_url_change] = ->(event) { on_navigate.call(event.data) } if on_navigate
       webview_args[:on_page_started] = on_page_started if on_page_started

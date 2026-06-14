@@ -4,7 +4,7 @@ require "uri"
 
 module Ruflet
   module Rails
-    # Hotwire Native-style driver for ruflet_rails.
+    # Managed webview navigation driver for ruflet_rails.
     #
     # Your existing web app is the body, rendered in a WebView. Navigation works
     # out of the box: a tiny JS bridge injected into each page intercepts link
@@ -122,6 +122,7 @@ module Ruflet
         Ruflet::UI::ControlFactory.build(
           :webview,
           url: screen.url,
+          method: "get",
           expand: true,
           on_page_ended: ->(_event) { inject_bridge(screen) },
           on_console_message: ->(event) { handle_message(screen, message_of(event)) }
@@ -190,7 +191,7 @@ module Ruflet
       # --- Modal (bottom sheet of web content) -------------------------------
 
       def present_modal(url)
-        sheet_webview = Ruflet::UI::ControlFactory.build(:webview, url: url.to_s, expand: true)
+        sheet_webview = Ruflet::UI::ControlFactory.build(:webview, url: url.to_s, method: "get", expand: true)
         @modal_sheet = Ruflet::UI::ControlFactory.build(
           :bottomsheet,
           open: true,
@@ -245,7 +246,7 @@ module Ruflet
 
     module_function
 
-    # Start a Hotwire Native-style app. See NativeApp.
+    # Start a managed webview app. See NativeApp.
     def native_app(page, **opts)
       NativeApp.new(page, **opts).start
     end

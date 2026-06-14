@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-# Hotwire Native-style driver. A JS bridge (injected on each page load) turns
+# Managed webview navigation driver. A JS bridge injected on each page load turns
 # link clicks into "visit" console messages; native turns those into pushed
 # screens, bottom-sheet modals, or native screens — declaratively.
 class RufletNativeAppTest < Minitest::Test
@@ -57,6 +57,7 @@ class RufletNativeAppTest < Minitest::Test
     start
     assert_equal 1, stack.length
     assert_equal "https://myapp.com", top_webview.props["url"]
+    assert_equal "get", top_webview.props["method"]
     assert_equal "view", stack.first.type
     refute_nil find(stack.first, "appbar"), "screen has a native appbar"
   end
@@ -106,6 +107,7 @@ class RufletNativeAppTest < Minitest::Test
     refute_nil sheet, "a bottom sheet is presented"
     assert_equal "webview", find(sheet, "webview").type
     assert_equal "https://myapp.com/sign_in", find(sheet, "webview").props["url"]
+    assert_equal "get", find(sheet, "webview").props["method"]
   end
 
   def test_native_path_pushes_a_native_screen_with_match_data
