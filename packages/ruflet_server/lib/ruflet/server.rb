@@ -356,6 +356,12 @@ module Ruflet
       write_http_response(socket, 404, "text/plain", "not found")
     end
 
+    # A no-op service worker: it registers cleanly (so Flutter's loader, which
+    # awaits navigator.serviceWorker.ready, never hangs), wipes any caches a
+    # previous run left behind, claims the page, and installs NO fetch handler —
+    # so every request (including the app shell) goes straight to the network and
+    # the client always loads fresh and connects to the current origin/port.
+    # (Self-unregistering here can leave serviceWorker.ready unresolved.)
     def service_worker_reset_js
       <<~JS
         self.addEventListener('install', function (e) { self.skipWaiting(); });
@@ -363,7 +369,7 @@ module Ruflet
           e.waitUntil((async function () {
             var keys = await caches.keys();
             await Promise.all(keys.map(function (k) { return caches.delete(k); }));
-            await self.registration.unregister();
+            await self.clients.claim();
           })());
         });
       JS
@@ -396,6 +402,12 @@ module Ruflet
     def assets_root
       root = ENV["RUFLET_ASSETS_DIR"].to_s
       return root unless root.empty?
+
+      embedded_root = defined?($__ruflet_app_root) ? $__ruflet_app_root.to_s : ""
+      unless embedded_root.empty?
+        embedded_assets = File.join(embedded_root, "assets")
+        return embedded_assets if File.directory?(embedded_assets)
+      end
 
       default_root = File.join(Dir.pwd, "assets")
       File.directory?(default_root) ? default_root : nil
