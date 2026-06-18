@@ -130,6 +130,22 @@ class RufletCliTemplatesTest < Minitest::Test
     assert_includes runtime, "def dig(key, *keys)"
   end
 
+  def test_embedded_runtime_installs_missing_kernel_methods_with_metaprogramming
+    runtime = File.read(File.expand_path("../../../ruby_runtime/shared/embedded_ruflet_runtime.rb", __dir__))
+
+    assert_includes runtime, "ruflet_compatibility_methods = {"
+    assert_includes runtime, "__dir__: proc do"
+    assert_includes runtime, "define_method(name, &implementation) unless method_defined?(name)"
+  end
+
+  def test_embedded_runtime_installs_missing_cgi_query_methods_with_metaprogramming
+    runtime = File.read(File.expand_path("../../../ruby_runtime/shared/embedded_ruflet_runtime.rb", __dir__))
+
+    assert_includes runtime, "unescape: proc do |text|"
+    assert_includes runtime, "parse: proc do |query|"
+    assert_includes runtime, "define_method(name, &implementation) unless respond_to?(name)"
+  end
+
   def test_embedded_runtime_bundle_is_generated_from_current_ruflet_sources
     root = File.expand_path("../../..", __dir__)
     command = [

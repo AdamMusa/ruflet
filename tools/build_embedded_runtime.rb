@@ -530,21 +530,36 @@ EXTRA_SHIMS = <<~'RUBY'
       private :rand
     end
 
-    unless method_defined?(:Array)
-      def Array(value)
-        return [] if value.nil?
-        return value if value.is_a?(::Array)
-        return value.to_a if value.respond_to?(:to_a)
+  unless method_defined?(:Array)
+    def Array(value)
+      return [] if value.nil?
+      return value if value.is_a?(::Array)
+      return value.to_a if value.respond_to?(:to_a)
 
         [value]
       end
 
-      private :Array
-    end
+    private :Array
+  end
 
-    unless method_defined?(:require_relative)
-      def require_relative(_feature)
-        true
+  # Install narrowly scoped CRuby compatibility methods through
+  # metaprogramming. Add future missing APIs to this registry instead of
+  # swallowing arbitrary NoMethodError exceptions with method_missing.
+  ruflet_compatibility_methods = {
+    __dir__: proc do
+      frame = caller(1, 1).first.to_s
+      path = frame.split(":", 2).first.to_s
+      path.empty? ? "." : File.dirname(path)
+    end
+  }
+
+  ruflet_compatibility_methods.each do |name, implementation|
+    define_method(name, &implementation) unless method_defined?(name)
+  end
+
+  unless method_defined?(:require_relative)
+    def require_relative(_feature)
+      true
       end
     end
 
@@ -817,6 +832,42 @@ EXTRA_SHIMS = <<~'RUBY'
 
       def escape(text)
         RufletEmbeddedRuntime.percent_encode(text)
+      end
+    end
+  end
+
+  module CGI
+    class << self
+      ruflet_compatibility_methods = {
+        unescape: proc do |text|
+          bytes = []
+          source = text.to_s.tr("+", " ")
+          index = 0
+          while index < source.bytesize
+            if source.getbyte(index) == 37 && index + 2 < source.bytesize
+              hex = source[index + 1, 2]
+              if hex.match?(/\A[0-9a-fA-F]{2}\z/)
+                bytes << hex.to_i(16)
+                index += 3
+                next
+              end
+            end
+            bytes << source.getbyte(index)
+            index += 1
+          end
+          bytes.pack("C*")
+        end,
+        parse: proc do |query|
+          query.to_s.split(/[&;]/).each_with_object({}) do |pair, result|
+            key, value = pair.split("=", 2)
+            decoded_key = unescape(key.to_s)
+            (result[decoded_key] ||= []) << unescape(value.to_s)
+          end
+        end
+      }
+
+      ruflet_compatibility_methods.each do |name, implementation|
+        define_method(name, &implementation) unless respond_to?(name)
       end
     end
   end
@@ -1703,17 +1754,28 @@ def transform_source(path, source)
   lines = source.lines
   transformed = []
 
-  lines.each do |line|
-    match = line.match(/^(\s*)def initialize\((.*)\)\s*$/)
+  index = 0
+  while index < lines.length
+    signature_lines = [lines[index]]
+    if lines[index].match?(/^[ \t]*def initialize\(/)
+      until signature_lines.join.match?(/\)\s*\z/) || index + 1 >= lines.length
+        index += 1
+        signature_lines << lines[index]
+      end
+    end
+    index += 1
+
+    signature = signature_lines.join
+    match = signature.match(/\A([ \t]*)def initialize\((.*?)\)\s*\z/m)
     unless match
-      transformed << line
+      transformed.concat(signature_lines)
       next
     end
 
     indent = match[1]
     params = match[2]
     if params.include?("&")
-      transformed << line
+      transformed.concat(signature_lines)
       next
     end
     param_parts = params.split(",").map(&:strip).reject(&:empty?)
@@ -1722,14 +1784,14 @@ def transform_source(path, source)
         part.match?(/\A\*\*[a-zA-Z_]\w*\z/)
     end
     unless keyword_only
-      transformed << line
+      transformed.concat(signature_lines)
       next
     end
     names = param_parts.filter_map do |part|
       part[/\A([a-zA-Z_]\w*):/, 1]
     end.uniq
     if names.empty?
-      transformed << line
+      transformed.concat(signature_lines)
       next
     end
     keyword_rest = param_parts.find { |part| part.match?(/\A\*\*[a-zA-Z_]\w*\z/) }

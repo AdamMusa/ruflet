@@ -1,6 +1,6 @@
 name: ruby_runtime
-description: Embed Ruflet's mruby runtime in Flutter apps for Android, iOS, and macOS.
-version: 0.0.5
+description: Embed Ruflet's mruby runtime in Flutter apps for Android, iOS, macOS, and Linux.
+version: 0.0.6
 homepage: https://github.com/AdamMusa/ruflet
 repository: https://github.com/AdamMusa/ruflet
 issue_tracker: https://github.com/AdamMusa/ruflet/issues
@@ -36,3 +36,5 @@ flutter:
         pluginClass: MrubyRuntimePlugin
       macos:
         pluginClass: RubyRuntimeMacosPlugin
+      linux:
+        pluginClass: RubyRuntimeLinuxPlugin

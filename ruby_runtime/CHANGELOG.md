@@ -1,3 +1,13 @@
+## 0.0.6
+
+- Add Linux desktop support: a GTK plugin (`linux/`) embeds mruby exactly like
+  the macOS plugin and implements the full `ruby_runtime` method channel
+  (`eval`, `runFile`, `reset`, `startFileServer`, `stopFileServer`,
+  `isFileServerRunning`, `serverPort`, `lastFileServerError`). This removes the
+  `MissingPluginException(No implementation found for method reset on channel
+  ruby_runtime)` seen when running self-contained apps on Linux. mruby is
+  compiled from the shared `ios/mruby_src` sources (same set used by Android).
+
 ## 0.0.5
 
 - Bind any free port instead of failing on a busy one: the embedded server

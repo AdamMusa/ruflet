@@ -961,21 +961,36 @@ module Kernel
     private :rand
   end
 
-  unless method_defined?(:Array)
-    def Array(value)
-      return [] if value.nil?
-      return value if value.is_a?(::Array)
-      return value.to_a if value.respond_to?(:to_a)
+unless method_defined?(:Array)
+  def Array(value)
+    return [] if value.nil?
+    return value if value.is_a?(::Array)
+    return value.to_a if value.respond_to?(:to_a)
 
       [value]
     end
 
-    private :Array
-  end
+  private :Array
+end
 
-  unless method_defined?(:require_relative)
-    def require_relative(_feature)
-      true
+# Install narrowly scoped CRuby compatibility methods through
+# metaprogramming. Add future missing APIs to this registry instead of
+# swallowing arbitrary NoMethodError exceptions with method_missing.
+ruflet_compatibility_methods = {
+  __dir__: proc do
+    frame = caller(1, 1).first.to_s
+    path = frame.split(":", 2).first.to_s
+    path.empty? ? "." : File.dirname(path)
+  end
+}
+
+ruflet_compatibility_methods.each do |name, implementation|
+  define_method(name, &implementation) unless method_defined?(name)
+end
+
+unless method_defined?(:require_relative)
+  def require_relative(_feature)
+    true
     end
   end
 
@@ -1248,6 +1263,42 @@ unless Object.const_defined?(:CGI)
 
     def escape(text)
       RufletEmbeddedRuntime.percent_encode(text)
+    end
+  end
+end
+
+module CGI
+  class << self
+    ruflet_compatibility_methods = {
+      unescape: proc do |text|
+        bytes = []
+        source = text.to_s.tr("+", " ")
+        index = 0
+        while index < source.bytesize
+          if source.getbyte(index) == 37 && index + 2 < source.bytesize
+            hex = source[index + 1, 2]
+            if hex.match?(/\A[0-9a-fA-F]{2}\z/)
+              bytes << hex.to_i(16)
+              index += 3
+              next
+            end
+          end
+          bytes << source.getbyte(index)
+          index += 1
+        end
+        bytes.pack("C*")
+      end,
+      parse: proc do |query|
+        query.to_s.split(/[&;]/).each_with_object({}) do |pair, result|
+          key, value = pair.split("=", 2)
+          decoded_key = unescape(key.to_s)
+          (result[decoded_key] ||= []) << unescape(value.to_s)
+        end
+      end
+    }
+
+    ruflet_compatibility_methods.each do |name, implementation|
+      define_method(name, &implementation) unless respond_to?(name)
     end
   end
 end
@@ -4316,26 +4367,25 @@ module Ruflet
 
         attr_reader(*ATTRS)
 
-        def initialize(
-          size: nil,
-          height: nil,
-          weight: nil,
-          italic: false,
-          decoration: nil,
-          decoration_color: nil,
-          decoration_thickness: nil,
-          decoration_style: nil,
-          font_family: nil,
-          font_family_fallback: nil,
-          color: nil,
-          bgcolor: nil,
-          shadow: nil,
-          foreground: nil,
-          letter_spacing: nil,
-          word_spacing: nil,
-          overflow: nil,
-          baseline: nil
-        )
+        def initialize(**__args__)
+          size = __args__[:size]
+          height = __args__[:height]
+          weight = __args__[:weight]
+          italic = __args__[:italic]
+          decoration = __args__[:decoration]
+          decoration_color = __args__[:decoration_color]
+          decoration_thickness = __args__[:decoration_thickness]
+          decoration_style = __args__[:decoration_style]
+          font_family = __args__[:font_family]
+          font_family_fallback = __args__[:font_family_fallback]
+          color = __args__[:color]
+          bgcolor = __args__[:bgcolor]
+          shadow = __args__[:shadow]
+          foreground = __args__[:foreground]
+          letter_spacing = __args__[:letter_spacing]
+          word_spacing = __args__[:word_spacing]
+          overflow = __args__[:overflow]
+          baseline = __args__[:baseline]
           @size = size
           @height = height
           @weight = weight
@@ -4388,15 +4438,14 @@ module Ruflet
 
         attr_reader(*ATTRS)
 
-        def initialize(
-          size: nil,
-          height: nil,
-          weight: nil,
-          italic: false,
-          font_family: nil,
-          leading: nil,
-          force_strut_height: nil
-        )
+        def initialize(**__args__)
+          size = __args__[:size]
+          height = __args__[:height]
+          weight = __args__[:weight]
+          italic = __args__[:italic]
+          font_family = __args__[:font_family]
+          leading = __args__[:leading]
+          force_strut_height = __args__[:force_strut_height]
           @size = size
           @height = height
           @weight = weight
@@ -9521,6 +9570,126 @@ module Ruflet
   end
 end
 
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/materials/codeeditor_control.rb
+
+
+module Ruflet
+  module UI
+    module Controls
+      module RufletComponents
+        # CodeEditor control — parity with Flet's CodeEditor extension
+        # (https://flet.dev/docs/controls/codeeditor/).
+        #
+        # Properties: value, language, code_theme, text_style, padding, selection,
+        #   gutter_style, autocomplete, autocomplete_words, issues, read_only,
+        #   autofocus, plus the usual layout props.
+        # Events: on_change, on_selection_change, on_focus, on_blur.
+        # Methods (invoked over the wire on a mounted control): focus, fold_at,
+        #   fold_comment_at_line_zero, fold_imports.
+        #
+        # `language` accepts a highlight.js identifier (e.g. "python", "ruby",
+        # "javascript"); `code_theme` accepts a highlight.js theme name shared
+        # with Markdown (e.g. "atom-one-light", "atom-one-dark", "monokai-sublime").
+        class CodeEditorControl < Ruflet::Control
+          TYPE = "CodeEditor".freeze
+          WIRE = "CodeEditor".freeze
+
+          def initialize(**__args__)
+            id = __args__[:id]
+            adaptive = __args__[:adaptive]
+            autocomplete = __args__[:autocomplete]
+            autocomplete_words = __args__[:autocomplete_words]
+            autofocus = __args__[:autofocus]
+            badge = __args__[:badge]
+            code_theme = __args__[:code_theme]
+            col = __args__[:col]
+            data = __args__[:data]
+            disabled = __args__[:disabled]
+            expand = __args__[:expand]
+            expand_loose = __args__[:expand_loose]
+            gutter_style = __args__[:gutter_style]
+            height = __args__[:height]
+            issues = __args__[:issues]
+            key = __args__[:key]
+            language = __args__[:language]
+            opacity = __args__[:opacity]
+            padding = __args__[:padding]
+            read_only = __args__[:read_only]
+            rtl = __args__[:rtl]
+            selection = __args__[:selection]
+            text_style = __args__[:text_style]
+            tooltip = __args__[:tooltip]
+            value = __args__[:value]
+            visible = __args__[:visible]
+            width = __args__[:width]
+            on_blur = __args__[:on_blur]
+            on_change = __args__[:on_change]
+            on_focus = __args__[:on_focus]
+            on_selection_change = __args__[:on_selection_change]
+            props = {}
+            props[:adaptive] = adaptive unless adaptive.nil?
+            props[:autocomplete] = autocomplete unless autocomplete.nil?
+            props[:autocomplete_words] = autocomplete_words unless autocomplete_words.nil?
+            props[:autofocus] = autofocus unless autofocus.nil?
+            props[:badge] = badge unless badge.nil?
+            props[:code_theme] = code_theme unless code_theme.nil?
+            props[:col] = col unless col.nil?
+            props[:data] = data unless data.nil?
+            props[:disabled] = disabled unless disabled.nil?
+            props[:expand] = expand unless expand.nil?
+            props[:expand_loose] = expand_loose unless expand_loose.nil?
+            props[:gutter_style] = gutter_style unless gutter_style.nil?
+            props[:height] = height unless height.nil?
+            props[:issues] = issues unless issues.nil?
+            props[:key] = key unless key.nil?
+            props[:language] = language unless language.nil?
+            props[:opacity] = opacity unless opacity.nil?
+            props[:padding] = padding unless padding.nil?
+            props[:read_only] = read_only unless read_only.nil?
+            props[:rtl] = rtl unless rtl.nil?
+            props[:selection] = selection unless selection.nil?
+            props[:text_style] = text_style unless text_style.nil?
+            props[:tooltip] = tooltip unless tooltip.nil?
+            props[:value] = value unless value.nil?
+            props[:visible] = visible unless visible.nil?
+            props[:width] = width unless width.nil?
+            props[:on_blur] = on_blur unless on_blur.nil?
+            props[:on_change] = on_change unless on_change.nil?
+            props[:on_focus] = on_focus unless on_focus.nil?
+            props[:on_selection_change] = on_selection_change unless on_selection_change.nil?
+            super(type: TYPE, id: id, **props)
+          end
+
+          # Request focus for the editor.
+          def focus = invoke_editor_method("focus")
+
+          # Fold the code block that starts at the given line number.
+          def fold_at(line_number)
+            invoke_editor_method("fold_at", { "line_number" => line_number.to_i })
+          end
+
+          # Fold the comment block at line 0 (e.g. a license header).
+          def fold_comment_at_line_zero = invoke_editor_method("fold_comment_at_line_zero")
+
+          # Fold all import sections.
+          def fold_imports = invoke_editor_method("fold_imports")
+
+          private
+
+          def invoke_editor_method(name, args = nil, timeout: 10, on_result: nil)
+            page = runtime_page
+            unless page && wire_id
+              raise "CodeEditor ##{id} is not mounted yet — add it to the page before calling #{name}."
+            end
+
+            page.invoke(self, name, args: args, timeout: timeout, on_result: on_result)
+          end
+        end
+      end
+    end
+  end
+end
+
 # -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/materials/container_control.rb
 
 
@@ -14631,6 +14800,128 @@ module Ruflet
   end
 end
 
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/materials/rive_control.rb
+
+
+module Ruflet
+  module UI
+    module Controls
+      module RufletComponents
+        # Rive control — parity with Flet's Rive extension
+        # (https://flet.dev/docs/controls/rive/). Renders a Rive
+        # (https://rive.app) animation from a `.riv` file.
+        #
+        # Properties: src, placeholder, artboard, alignment, enable_antialiasing,
+        #   use_artboard_size, fit, speed_multiplier, animations, state_machines,
+        #   headers, clip_rect, plus the usual layout props.
+        # No events or methods — playback is driven by `animations` /
+        #   `state_machines` and `speed_multiplier`.
+        #
+        # `src` is required and may be a network URL (e.g.
+        # "https://cdn.rive.app/animations/vehicles.riv") or a bundled asset path.
+        #
+        # Note: the Flet API names the artboard property `artboard`, but the
+        # underlying renderer reads `art_board` / `use_art_board_size` on the wire.
+        # Both spellings are accepted here and normalized to the wire keys.
+        class RiveControl < Ruflet::Control
+          TYPE = "Rive".freeze
+          WIRE = "Rive".freeze
+
+          def initialize(**__args__)
+            id = __args__[:id]
+            adaptive = __args__[:adaptive]
+            alignment = __args__[:alignment]
+            animate_offset = __args__[:animate_offset]
+            animate_opacity = __args__[:animate_opacity]
+            animate_position = __args__[:animate_position]
+            animate_rotation = __args__[:animate_rotation]
+            animate_scale = __args__[:animate_scale]
+            animations = __args__[:animations]
+            art_board = __args__[:art_board]
+            artboard = __args__[:artboard]
+            aspect_ratio = __args__[:aspect_ratio]
+            badge = __args__[:badge]
+            bottom = __args__[:bottom]
+            clip_rect = __args__[:clip_rect]
+            col = __args__[:col]
+            data = __args__[:data]
+            disabled = __args__[:disabled]
+            enable_antialiasing = __args__[:enable_antialiasing]
+            expand = __args__[:expand]
+            expand_loose = __args__[:expand_loose]
+            fit = __args__[:fit]
+            headers = __args__[:headers]
+            height = __args__[:height]
+            key = __args__[:key]
+            left = __args__[:left]
+            offset = __args__[:offset]
+            opacity = __args__[:opacity]
+            placeholder = __args__[:placeholder]
+            right = __args__[:right]
+            rotate = __args__[:rotate]
+            rtl = __args__[:rtl]
+            scale = __args__[:scale]
+            speed_multiplier = __args__[:speed_multiplier]
+            src = __args__[:src]
+            state_machines = __args__[:state_machines]
+            tooltip = __args__[:tooltip]
+            top = __args__[:top]
+            use_art_board_size = __args__[:use_art_board_size]
+            use_artboard_size = __args__[:use_artboard_size]
+            visible = __args__[:visible]
+            width = __args__[:width]
+            # Accept both the Flet-style names and the wire keys.
+            art_board = artboard if art_board.nil?
+            use_art_board_size = use_artboard_size if use_art_board_size.nil?
+
+            props = {}
+            props[:adaptive] = adaptive unless adaptive.nil?
+            props[:alignment] = alignment unless alignment.nil?
+            props[:animate_offset] = animate_offset unless animate_offset.nil?
+            props[:animate_opacity] = animate_opacity unless animate_opacity.nil?
+            props[:animate_position] = animate_position unless animate_position.nil?
+            props[:animate_rotation] = animate_rotation unless animate_rotation.nil?
+            props[:animate_scale] = animate_scale unless animate_scale.nil?
+            props[:animations] = animations unless animations.nil?
+            props[:art_board] = art_board unless art_board.nil?
+            props[:aspect_ratio] = aspect_ratio unless aspect_ratio.nil?
+            props[:badge] = badge unless badge.nil?
+            props[:bottom] = bottom unless bottom.nil?
+            props[:clip_rect] = clip_rect unless clip_rect.nil?
+            props[:col] = col unless col.nil?
+            props[:data] = data unless data.nil?
+            props[:disabled] = disabled unless disabled.nil?
+            props[:enable_antialiasing] = enable_antialiasing unless enable_antialiasing.nil?
+            props[:expand] = expand unless expand.nil?
+            props[:expand_loose] = expand_loose unless expand_loose.nil?
+            props[:fit] = fit unless fit.nil?
+            props[:headers] = headers unless headers.nil?
+            props[:height] = height unless height.nil?
+            props[:key] = key unless key.nil?
+            props[:left] = left unless left.nil?
+            props[:offset] = offset unless offset.nil?
+            props[:opacity] = opacity unless opacity.nil?
+            props[:placeholder] = placeholder unless placeholder.nil?
+            props[:right] = right unless right.nil?
+            props[:rotate] = rotate unless rotate.nil?
+            props[:rtl] = rtl unless rtl.nil?
+            props[:scale] = scale unless scale.nil?
+            props[:speed_multiplier] = speed_multiplier unless speed_multiplier.nil?
+            props[:src] = src unless src.nil?
+            props[:state_machines] = state_machines unless state_machines.nil?
+            props[:tooltip] = tooltip unless tooltip.nil?
+            props[:top] = top unless top.nil?
+            props[:use_art_board_size] = use_art_board_size unless use_art_board_size.nil?
+            props[:visible] = visible unless visible.nil?
+            props[:width] = width unless width.nil?
+            super(type: TYPE, id: id, **props)
+          end
+        end
+      end
+    end
+  end
+end
+
 # -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/materials/searchbar_control.rb
 
 
@@ -16716,12 +17007,30 @@ module Ruflet
           TYPE = "WebView".freeze
           WIRE = "WebView".freeze
 
-          def initialize(id: nil, bgcolor: nil, data: nil, enable_javascript: nil, expand: nil,
-                         height: nil, key: nil, method: nil, opacity: nil, prevent_links: nil,
-                         rtl: nil, tooltip: nil, url: nil, visible: nil, width: nil,
-                         on_page_ended: nil, on_page_started: nil, on_web_resource_error: nil,
-                         on_progress: nil, on_url_change: nil, on_scroll: nil,
-                         on_console_message: nil, on_javascript_alert_dialog: nil)
+          def initialize(**__args__)
+            id = __args__[:id]
+            bgcolor = __args__[:bgcolor]
+            data = __args__[:data]
+            enable_javascript = __args__[:enable_javascript]
+            expand = __args__[:expand]
+            height = __args__[:height]
+            key = __args__[:key]
+            method = __args__[:method]
+            opacity = __args__[:opacity]
+            prevent_links = __args__[:prevent_links]
+            rtl = __args__[:rtl]
+            tooltip = __args__[:tooltip]
+            url = __args__[:url]
+            visible = __args__[:visible]
+            width = __args__[:width]
+            on_page_ended = __args__[:on_page_ended]
+            on_page_started = __args__[:on_page_started]
+            on_web_resource_error = __args__[:on_web_resource_error]
+            on_progress = __args__[:on_progress]
+            on_url_change = __args__[:on_url_change]
+            on_scroll = __args__[:on_scroll]
+            on_console_message = __args__[:on_console_message]
+            on_javascript_alert_dialog = __args__[:on_javascript_alert_dialog]
             props = {}
             props[:bgcolor] = bgcolor unless bgcolor.nil?
             props[:data] = data unless data.nil?
@@ -21413,6 +21722,8 @@ module Ruflet
           "circle" => RufletComponents::CircleControl,
           "circle_avatar" => RufletComponents::CircleAvatarControl,
           "circleavatar" => RufletComponents::CircleAvatarControl,
+          "code_editor" => RufletComponents::CodeEditorControl,
+          "codeeditor" => RufletComponents::CodeEditorControl,
           "color" => RufletComponents::ColorControl,
           "column" => RufletComponents::ColumnControl,
           "container" => RufletComponents::ContainerControl,
@@ -21615,6 +21926,7 @@ module Ruflet
           "reorderable_list_view" => RufletComponents::ReorderableListViewControl,
           "reorderabledraghandle" => RufletComponents::ReorderableDragHandleControl,
           "reorderablelistview" => RufletComponents::ReorderableListViewControl,
+          "rive" => RufletComponents::RiveControl,
           "responsive_row" => RufletComponents::ResponsiveRowControl,
           "responsiverow" => RufletComponents::ResponsiveRowControl,
           "row" => RufletComponents::RowControl,
@@ -23189,7 +23501,7 @@ end
 module Ruflet
   module UI
     module MaterialControlMethods
-      EMBEDDED_INSTANCE_METHODS = ["view", "column", "center", "row", "stack", "grid_view", "gridview", "container", "animated_switcher", "animatedswitcher", "animation", "animation_style", "audio", "auto_complete", "autocomplete", "auto_complete_suggestion", "autocomplete_suggestion", "autocompletesuggestion", "context_menu", "contextmenu", "keyboard_listener", "keyboardlistener", "gesture_detector", "gesturedetector", "canvas", "line", "circle", "arc", "color", "canvas_color", "fill", "oval", "points", "rect", "path", "shadow", "paint", "path_move_to", "path_line_to", "path_arc", "path_arc_to", "path_oval", "path_rect", "path_quadratic_to", "path_cubic_to", "path_sub_path", "path_close", "draggable", "dismissible", "drag_target", "dragtarget", "card", "list_tile", "listtile", "map", "tile_layer", "tilelayer", "marker_layer", "markerlayer", "marker", "circle_layer", "circlelayer", "circle_marker", "circlemarker", "polyline_layer", "polylinelayer", "polyline_marker", "polylinemarker", "polygon_layer", "polygonlayer", "polygon_marker", "polygonmarker", "simple_attribution", "simpleattribution", "list_view", "listview", "menu_bar", "menubar", "menu_item_button", "menuitembutton", "merge_semantics", "mergesemantics", "submenu_button", "submenubutton", "divider", "vertical_divider", "verticaldivider", "window_drag_area", "windowdragarea", "date_picker", "datepicker", "date_range_picker", "daterangepicker", "data_table", "datatable", "data_column", "datacolumn", "data_row", "datarow", "data_cell", "datacell", "expansion_tile", "expansiontile", "expansion_panel", "expansionpanel", "expansion_panel_list", "expansionpanellist", "dropdown", "dropdown_option", "dropdownoption", "dropdown_m2", "dropdownm2", "progress_bar", "progressbar", "placeholder", "page_view", "pageview", "progress_ring", "progressring", "range_slider", "rangeslider", "responsive_row", "responsiverow", "reorderable_drag_handle", "reorderabledraghandle", "reorderable_list_view", "reorderablelistview", "safe_area", "safearea", "segment", "segmented_button", "segmentedbutton", "selection_area", "selectionarea", "search_bar", "searchbar", "semantics", "time_picker", "timepicker", "badge", "chip", "circle_avatar", "circleavatar", "banner", "bottom_app_bar", "bottomappbar", "text", "button", "elevated_button", "text_button", "textbutton", "filled_button", "filledbutton", "filled_icon_button", "fillediconbutton", "filled_tonal_button", "filledtonalbutton", "filled_tonal_icon_button", "filledtonaliconbutton", "outlined_button", "outlinedbutton", "outlined_icon_button", "outlinediconbutton", "icon_button", "iconbutton", "interactive_viewer", "interactiveviewer", "popup_menu_button", "popupmenubutton", "popup_menu_item", "popupmenuitem", "text_field", "textfield", "checkbox", "switch", "slider", "transparent_pointer", "transparentpointer", "radio", "radio_group", "radiogroup", "alert_dialog", "alertdialog", "snack_bar", "snackbar", "bottom_sheet", "bottomsheet", "markdown", "icon", "image", "app_bar", "appbar", "url_launcher", "clipboard", "floating_action_button", "floatingactionbutton", "tabs", "tab", "tab_bar", "tabbar", "tab_bar_view", "tabbarview", "navigation_bar", "navigationbar", "navigation_bar_destination", "navigationbardestination", "navigation_rail", "navigationrail", "navigation_rail_destination", "navigationraildestination", "navigation_drawer", "navigationdrawer", "navigation_drawer_destination", "navigationdrawerdestination", "bar_chart", "barchart", "bar_chart_group", "barchartgroup", "bar_chart_rod", "barchartrod", "bar_chart_rod_stack_item", "barchartrodstackitem", "line_chart", "linechart", "line_chart_data", "linechartdata", "line_chart_data_point", "linechartdatapoint", "pie_chart", "piechart", "pie_chart_section", "piechartsection", "candlestick_chart", "candlestickchart", "candlestick_chart_spot", "candlestickchartspot", "radar_chart", "radarchart", "radar_chart_title", "radarcharttitle", "radar_data_set", "radardataset", "radar_data_set_entry", "radardatasetentry", "scatter_chart", "scatterchart", "scatter_chart_spot", "scatterchartspot", "chart_axis", "chartaxis", "chart_axis_label", "chartaxislabel", "web_view", "webview", "video", "fab", "drawing_payload", "path_point_payload", "normalize_fab_props", "blank_fab_content?", "normalize_image_source", "normalize_container_props"].freeze
+      EMBEDDED_INSTANCE_METHODS = ["view", "column", "center", "row", "stack", "grid_view", "gridview", "container", "animated_switcher", "animatedswitcher", "animation", "animation_style", "audio", "auto_complete", "autocomplete", "auto_complete_suggestion", "autocomplete_suggestion", "autocompletesuggestion", "context_menu", "contextmenu", "autofill_group", "autofillgroup", "hero", "overlay", "shader_mask", "shadermask", "shimmer", "text_span", "textspan", "keyboard_listener", "keyboardlistener", "gesture_detector", "gesturedetector", "canvas", "line", "circle", "arc", "color", "canvas_color", "fill", "oval", "points", "rect", "path", "shadow", "paint", "path_move_to", "path_line_to", "path_arc", "path_arc_to", "path_oval", "path_rect", "path_quadratic_to", "path_cubic_to", "path_sub_path", "path_close", "draggable", "dismissible", "drag_target", "dragtarget", "card", "list_tile", "listtile", "map", "tile_layer", "tilelayer", "marker_layer", "markerlayer", "marker", "circle_layer", "circlelayer", "circle_marker", "circlemarker", "polyline_layer", "polylinelayer", "polyline_marker", "polylinemarker", "polygon_layer", "polygonlayer", "polygon_marker", "polygonmarker", "simple_attribution", "simpleattribution", "list_view", "listview", "menu_bar", "menubar", "menu_item_button", "menuitembutton", "merge_semantics", "mergesemantics", "submenu_button", "submenubutton", "divider", "vertical_divider", "verticaldivider", "window_drag_area", "windowdragarea", "date_picker", "datepicker", "date_range_picker", "daterangepicker", "data_table", "datatable", "data_column", "datacolumn", "data_row", "datarow", "data_cell", "datacell", "expansion_tile", "expansiontile", "expansion_panel", "expansionpanel", "expansion_panel_list", "expansionpanellist", "dropdown", "dropdown_option", "dropdownoption", "dropdown_m2", "dropdownm2", "progress_bar", "progressbar", "placeholder", "page_view", "pageview", "progress_ring", "progressring", "range_slider", "rangeslider", "responsive_row", "responsiverow", "reorderable_drag_handle", "reorderabledraghandle", "reorderable_list_view", "reorderablelistview", "safe_area", "safearea", "segment", "segmented_button", "segmentedbutton", "selection_area", "selectionarea", "search_bar", "searchbar", "semantics", "time_picker", "timepicker", "badge", "chip", "circle_avatar", "circleavatar", "banner", "bottom_app_bar", "bottomappbar", "text", "button", "elevated_button", "text_button", "textbutton", "filled_button", "filledbutton", "filled_icon_button", "fillediconbutton", "filled_tonal_button", "filledtonalbutton", "filled_tonal_icon_button", "filledtonaliconbutton", "outlined_button", "outlinedbutton", "outlined_icon_button", "outlinediconbutton", "icon_button", "iconbutton", "interactive_viewer", "interactiveviewer", "popup_menu_button", "popupmenubutton", "popup_menu_item", "popupmenuitem", "text_field", "textfield", "checkbox", "switch", "slider", "transparent_pointer", "transparentpointer", "radio", "radio_group", "radiogroup", "alert_dialog", "alertdialog", "snack_bar", "snackbar", "bottom_sheet", "bottomsheet", "markdown", "icon", "image", "app_bar", "appbar", "url_launcher", "clipboard", "floating_action_button", "floatingactionbutton", "tabs", "tab", "tab_bar", "tabbar", "tab_bar_view", "tabbarview", "navigation_bar", "navigationbar", "navigation_bar_destination", "navigationbardestination", "navigation_rail", "navigationrail", "navigation_rail_destination", "navigationraildestination", "navigation_drawer", "navigationdrawer", "navigation_drawer_destination", "navigationdrawerdestination", "bar_chart", "barchart", "bar_chart_group", "barchartgroup", "bar_chart_rod", "barchartrod", "bar_chart_rod_stack_item", "barchartrodstackitem", "line_chart", "linechart", "line_chart_data", "linechartdata", "line_chart_data_point", "linechartdatapoint", "pie_chart", "piechart", "pie_chart_section", "piechartsection", "candlestick_chart", "candlestickchart", "candlestick_chart_spot", "candlestickchartspot", "radar_chart", "radarchart", "radar_chart_title", "radarcharttitle", "radar_data_set", "radardataset", "radar_data_set_entry", "radardatasetentry", "scatter_chart", "scatterchart", "scatter_chart_spot", "scatterchartspot", "chart_axis", "chartaxis", "chart_axis_label", "chartaxislabel", "web_view", "webview", "video", "code_editor", "codeeditor", "rive", "fab", "drawing_payload", "path_point_payload", "normalize_fab_props", "blank_fab_content?", "normalize_image_source", "normalize_container_props"].freeze
       def view(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
@@ -23268,6 +23580,39 @@ module Ruflet
         build_widget(:contextmenu, **mapped)
       end
       def contextmenu(content = nil, **props) = context_menu(content, **props)
+      def autofill_group(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:autofillgroup, **mapped)
+      end
+      def autofillgroup(content = nil, **props) = autofill_group(content, **props)
+      def hero(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:hero, **mapped)
+      end
+      def overlay(children = nil, **props)
+        mapped = props.dup
+        mapped[:controls] = children unless children.nil?
+        build_widget(:overlay, **mapped)
+      end
+      def shader_mask(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:shadermask, **mapped)
+      end
+      def shadermask(content = nil, **props) = shader_mask(content, **props)
+      def shimmer(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:shimmer, **mapped)
+      end
+      def text_span(text = nil, **props)
+        mapped = props.dup
+        mapped[:text] = text unless text.nil?
+        build_widget(:textspan, **mapped)
+      end
+      def textspan(text = nil, **props) = text_span(text, **props)
       def keyboard_listener(content = nil, **props)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
@@ -23793,6 +24138,19 @@ module Ruflet
       def webview(**props) = web_view(**props)
       def video(**props) = build_widget(:video, **props)
 
+      def code_editor(value = nil, **props)
+        mapped = props.dup
+        mapped[:value] = value unless value.nil?
+        build_widget(:codeeditor, **mapped)
+      end
+      def codeeditor(value = nil, **props) = code_editor(value, **props)
+
+      def rive(src = nil, **props)
+        mapped = props.dup
+        mapped[:src] = src unless src.nil?
+        build_widget(:rive, **mapped)
+      end
+
       def fab(content = nil, **props)
         mapped = normalize_fab_props(props.dup, content)
         build_widget(:floatingactionbutton, **mapped)
@@ -24128,7 +24486,7 @@ end
 module Ruflet
   module UI
     module SharedControlForwarders
-      EMBEDDED_INSTANCE_METHODS = ["control", "widget", "service", "view", "column", "center", "row", "stack", "grid_view", "gridview", "container", "animated_switcher", "animatedswitcher", "animation", "animation_style", "audio", "auto_complete", "autocomplete", "auto_complete_suggestion", "autocomplete_suggestion", "autocompletesuggestion", "context_menu", "contextmenu", "keyboard_listener", "keyboardlistener", "gesture_detector", "gesturedetector", "canvas", "line", "circle", "arc", "color", "canvas_color", "fill", "oval", "points", "rect", "path", "shadow", "paint", "path_move_to", "path_line_to", "path_arc", "path_arc_to", "path_oval", "path_rect", "path_quadratic_to", "path_cubic_to", "path_sub_path", "path_close", "draggable", "dismissible", "drag_target", "dragtarget", "card", "list_tile", "listtile", "map", "tile_layer", "tilelayer", "marker_layer", "markerlayer", "marker", "circle_layer", "circlelayer", "circle_marker", "circlemarker", "polyline_layer", "polylinelayer", "polyline_marker", "polylinemarker", "polygon_layer", "polygonlayer", "polygon_marker", "polygonmarker", "simple_attribution", "simpleattribution", "list_view", "listview", "menu_bar", "menubar", "menu_item_button", "menuitembutton", "merge_semantics", "mergesemantics", "submenu_button", "submenubutton", "divider", "vertical_divider", "verticaldivider", "window_drag_area", "windowdragarea", "date_picker", "datepicker", "date_range_picker", "daterangepicker", "data_table", "datatable", "data_column", "datacolumn", "data_row", "datarow", "data_cell", "datacell", "expansion_tile", "expansiontile", "expansion_panel", "expansionpanel", "expansion_panel_list", "expansionpanellist", "dropdown", "dropdown_option", "dropdownoption", "dropdown_m2", "dropdownm2", "progress_bar", "progressbar", "placeholder", "page_view", "pageview", "progress_ring", "progressring", "range_slider", "rangeslider", "responsive_row", "responsiverow", "reorderable_drag_handle", "reorderabledraghandle", "reorderable_list_view", "reorderablelistview", "safe_area", "safearea", "segment", "segmented_button", "segmentedbutton", "selection_area", "selectionarea", "search_bar", "searchbar", "semantics", "time_picker", "timepicker", "badge", "chip", "circle_avatar", "circleavatar", "banner", "bottom_app_bar", "bottomappbar", "text", "button", "elevated_button", "text_button", "textbutton", "filled_button", "filledbutton", "filled_icon_button", "fillediconbutton", "filled_tonal_button", "filledtonalbutton", "filled_tonal_icon_button", "filledtonaliconbutton", "outlined_button", "outlinedbutton", "outlined_icon_button", "outlinediconbutton", "icon_button", "iconbutton", "popup_menu_button", "popupmenubutton", "popup_menu_item", "popupmenuitem", "text_field", "textfield", "checkbox", "switch", "slider", "transparent_pointer", "transparentpointer", "radio", "radio_group", "radiogroup", "alert_dialog", "alertdialog", "snack_bar", "snackbar", "bottom_sheet", "bottomsheet", "markdown", "icon", "image", "fab", "interactive_viewer", "interactiveviewer", "app_bar", "appbar", "clipboard", "floating_action_button", "floatingactionbutton", "tabs", "tab", "tab_bar", "tabbar", "tab_bar_view", "tabbarview", "navigation_bar", "navigationbar", "navigation_bar_destination", "navigationbardestination", "navigation_rail", "navigationrail", "navigation_rail_destination", "navigationraildestination", "navigation_drawer", "navigationdrawer", "navigation_drawer_destination", "navigationdrawerdestination", "bar_chart", "barchart", "bar_chart_group", "barchartgroup", "bar_chart_rod", "barchartrod", "bar_chart_rod_stack_item", "barchartrodstackitem", "line_chart", "linechart", "line_chart_data", "linechartdata", "line_chart_data_point", "linechartdatapoint", "pie_chart", "piechart", "pie_chart_section", "piechartsection", "candlestick_chart", "candlestickchart", "candlestick_chart_spot", "candlestickchartspot", "radar_chart", "radarchart", "radar_chart_title", "radarcharttitle", "radar_data_set", "radardataset", "radar_data_set_entry", "radardatasetentry", "scatter_chart", "scatterchart", "scatter_chart_spot", "scatterchartspot", "chart_axis", "chartaxis", "chart_axis_label", "chartaxislabel", "web_view", "webview", "video", "cupertino_button", "cupertinobutton", "cupertino_filled_button", "cupertinofilledbutton", "cupertino_tinted_button", "cupertinotintedbutton", "cupertino_checkbox", "cupertinocheckbox", "cupertino_text_field", "cupertinotextfield", "cupertino_timer_picker", "cupertinotimerpicker", "cupertino_switch", "cupertinoswitch", "cupertino_slider", "cupertinoslider", "cupertino_radio", "cupertinoradio", "cupertino_alert_dialog", "cupertinoalertdialog", "cupertino_action_sheet", "cupertinoactionsheet", "cupertino_action_sheet_action", "cupertinoactionsheetaction", "cupertino_activity_indicator", "cupertinoactivityindicator", "cupertino_app_bar", "cupertinoappbar", "cupertino_bottom_sheet", "cupertinobottomsheet", "cupertino_date_picker", "cupertinodatepicker", "cupertino_dialog_action", "cupertinodialogaction", "cupertino_context_menu", "cupertinocontextmenu", "cupertino_context_menu_action", "cupertinocontextmenuaction", "cupertino_list_tile", "cupertinolisttile", "cupertino_navigation_bar", "cupertinonavigationbar", "cupertino_picker", "cupertinopicker", "cupertino_segmented_button", "cupertinosegmentedbutton", "cupertino_sliding_segmented_button", "cupertinoslidingsegmentedbutton", "duration", "control_delegate"].freeze
+      EMBEDDED_INSTANCE_METHODS = ["control", "widget", "service", "view", "column", "center", "row", "stack", "grid_view", "gridview", "container", "animated_switcher", "animatedswitcher", "animation", "animation_style", "audio", "auto_complete", "autocomplete", "auto_complete_suggestion", "autocomplete_suggestion", "autocompletesuggestion", "context_menu", "contextmenu", "autofill_group", "autofillgroup", "hero", "overlay", "shader_mask", "shadermask", "shimmer", "text_span", "textspan", "keyboard_listener", "keyboardlistener", "gesture_detector", "gesturedetector", "canvas", "line", "circle", "arc", "color", "canvas_color", "fill", "oval", "points", "rect", "path", "shadow", "paint", "path_move_to", "path_line_to", "path_arc", "path_arc_to", "path_oval", "path_rect", "path_quadratic_to", "path_cubic_to", "path_sub_path", "path_close", "draggable", "dismissible", "drag_target", "dragtarget", "card", "list_tile", "listtile", "map", "tile_layer", "tilelayer", "marker_layer", "markerlayer", "marker", "circle_layer", "circlelayer", "circle_marker", "circlemarker", "polyline_layer", "polylinelayer", "polyline_marker", "polylinemarker", "polygon_layer", "polygonlayer", "polygon_marker", "polygonmarker", "simple_attribution", "simpleattribution", "list_view", "listview", "menu_bar", "menubar", "menu_item_button", "menuitembutton", "merge_semantics", "mergesemantics", "submenu_button", "submenubutton", "divider", "vertical_divider", "verticaldivider", "window_drag_area", "windowdragarea", "date_picker", "datepicker", "date_range_picker", "daterangepicker", "data_table", "datatable", "data_column", "datacolumn", "data_row", "datarow", "data_cell", "datacell", "expansion_tile", "expansiontile", "expansion_panel", "expansionpanel", "expansion_panel_list", "expansionpanellist", "dropdown", "dropdown_option", "dropdownoption", "dropdown_m2", "dropdownm2", "progress_bar", "progressbar", "placeholder", "page_view", "pageview", "progress_ring", "progressring", "range_slider", "rangeslider", "responsive_row", "responsiverow", "reorderable_drag_handle", "reorderabledraghandle", "reorderable_list_view", "reorderablelistview", "safe_area", "safearea", "segment", "segmented_button", "segmentedbutton", "selection_area", "selectionarea", "search_bar", "searchbar", "semantics", "time_picker", "timepicker", "badge", "chip", "circle_avatar", "circleavatar", "banner", "bottom_app_bar", "bottomappbar", "text", "button", "elevated_button", "text_button", "textbutton", "filled_button", "filledbutton", "filled_icon_button", "fillediconbutton", "filled_tonal_button", "filledtonalbutton", "filled_tonal_icon_button", "filledtonaliconbutton", "outlined_button", "outlinedbutton", "outlined_icon_button", "outlinediconbutton", "icon_button", "iconbutton", "popup_menu_button", "popupmenubutton", "popup_menu_item", "popupmenuitem", "text_field", "textfield", "checkbox", "switch", "slider", "transparent_pointer", "transparentpointer", "radio", "radio_group", "radiogroup", "alert_dialog", "alertdialog", "snack_bar", "snackbar", "bottom_sheet", "bottomsheet", "markdown", "icon", "image", "fab", "interactive_viewer", "interactiveviewer", "app_bar", "appbar", "clipboard", "floating_action_button", "floatingactionbutton", "tabs", "tab", "tab_bar", "tabbar", "tab_bar_view", "tabbarview", "navigation_bar", "navigationbar", "navigation_bar_destination", "navigationbardestination", "navigation_rail", "navigationrail", "navigation_rail_destination", "navigationraildestination", "navigation_drawer", "navigationdrawer", "navigation_drawer_destination", "navigationdrawerdestination", "bar_chart", "barchart", "bar_chart_group", "barchartgroup", "bar_chart_rod", "barchartrod", "bar_chart_rod_stack_item", "barchartrodstackitem", "line_chart", "linechart", "line_chart_data", "linechartdata", "line_chart_data_point", "linechartdatapoint", "pie_chart", "piechart", "pie_chart_section", "piechartsection", "candlestick_chart", "candlestickchart", "candlestick_chart_spot", "candlestickchartspot", "radar_chart", "radarchart", "radar_chart_title", "radarcharttitle", "radar_data_set", "radardataset", "radar_data_set_entry", "radardatasetentry", "scatter_chart", "scatterchart", "scatter_chart_spot", "scatterchartspot", "chart_axis", "chartaxis", "chart_axis_label", "chartaxislabel", "web_view", "webview", "video", "code_editor", "codeeditor", "rive", "cupertino_button", "cupertinobutton", "cupertino_filled_button", "cupertinofilledbutton", "cupertino_tinted_button", "cupertinotintedbutton", "cupertino_checkbox", "cupertinocheckbox", "cupertino_text_field", "cupertinotextfield", "cupertino_timer_picker", "cupertinotimerpicker", "cupertino_switch", "cupertinoswitch", "cupertino_slider", "cupertinoslider", "cupertino_radio", "cupertinoradio", "cupertino_alert_dialog", "cupertinoalertdialog", "cupertino_action_sheet", "cupertinoactionsheet", "cupertino_action_sheet_action", "cupertinoactionsheetaction", "cupertino_activity_indicator", "cupertinoactivityindicator", "cupertino_app_bar", "cupertinoappbar", "cupertino_bottom_sheet", "cupertinobottomsheet", "cupertino_date_picker", "cupertinodatepicker", "cupertino_dialog_action", "cupertinodialogaction", "cupertino_context_menu", "cupertinocontextmenu", "cupertino_context_menu_action", "cupertinocontextmenuaction", "cupertino_list_tile", "cupertinolisttile", "cupertino_navigation_bar", "cupertinonavigationbar", "cupertino_picker", "cupertinopicker", "cupertino_segmented_button", "cupertinosegmentedbutton", "cupertino_sliding_segmented_button", "cupertinoslidingsegmentedbutton", "duration", "control_delegate"].freeze
       def control(type, **props, &block) = control_delegate.control(type, **props, &block)
       def widget(type, **props, &block) = control_delegate.widget(type, **props, &block)
       def service(type, **props, &block) = control_delegate.service(type, **props, &block)
@@ -24152,6 +24510,15 @@ module Ruflet
       def autocompletesuggestion(key = nil, **props) = control_delegate.autocompletesuggestion(key, **props)
       def context_menu(content = nil, **props) = control_delegate.context_menu(content, **props)
       def contextmenu(content = nil, **props) = control_delegate.contextmenu(content, **props)
+      def autofill_group(content = nil, **props) = control_delegate.autofill_group(content, **props)
+      def autofillgroup(content = nil, **props) = control_delegate.autofillgroup(content, **props)
+      def hero(content = nil, **props) = control_delegate.hero(content, **props)
+      def overlay(children = nil, **props) = control_delegate.overlay(children, **props)
+      def shader_mask(content = nil, **props) = control_delegate.shader_mask(content, **props)
+      def shadermask(content = nil, **props) = control_delegate.shadermask(content, **props)
+      def shimmer(content = nil, **props) = control_delegate.shimmer(content, **props)
+      def text_span(text = nil, **props) = control_delegate.text_span(text, **props)
+      def textspan(text = nil, **props) = control_delegate.textspan(text, **props)
       def keyboard_listener(content = nil, **props) = control_delegate.keyboard_listener(content, **props)
       def keyboardlistener(content = nil, **props) = control_delegate.keyboardlistener(content, **props)
       def gesture_detector(**props, &block) = control_delegate.gesture_detector(**props, &block)
@@ -24387,6 +24754,9 @@ module Ruflet
       def web_view(**props) = control_delegate.web_view(**props)
       def webview(**props) = control_delegate.webview(**props)
       def video(**props) = control_delegate.video(**props)
+      def code_editor(value = nil, **props) = control_delegate.code_editor(value, **props)
+      def codeeditor(value = nil, **props) = control_delegate.codeeditor(value, **props)
+      def rive(src = nil, **props) = control_delegate.rive(src, **props)
       def cupertino_button(content = nil, **props) = control_delegate.cupertino_button(content, **props)
       def cupertinobutton(content = nil, **props) = control_delegate.cupertinobutton(content, **props)
       def cupertino_filled_button(content = nil, **props) = control_delegate.cupertino_filled_button(content, **props)
@@ -25515,6 +25885,42 @@ module Ruflet
       @view_props["bgcolor"] = normalize_value("bgcolor", value)
     end
 
+    # Client-reported page properties. The Flutter client sends these in its
+    # register payload (see Protocol.normalize_register_payload), where they are
+    # stored in @client_details; expose them as readers so apps can do
+    # `page.width`, `page.platform`, etc. without reaching into client_details.
+    def width
+      client_reported_prop("width")
+    end
+
+    def height
+      client_reported_prop("height")
+    end
+
+    def platform
+      client_reported_prop("platform")
+    end
+
+    def platform_brightness
+      client_reported_prop("platform_brightness")
+    end
+
+    def web
+      client_reported_prop("web")
+    end
+
+    def pwa
+      client_reported_prop("pwa")
+    end
+
+    def wasm
+      client_reported_prop("wasm")
+    end
+
+    def media
+      client_reported_prop("media")
+    end
+
     def add(*controls, appbar: nil, bottom_appbar: nil, floating_action_button: nil, navigation_bar: nil, dialog: nil, snack_bar: nil, bottom_sheet: nil)
       controls = controls.flatten
       visited = Set.new
@@ -26572,6 +26978,12 @@ module Ruflet
 
     private
 
+    def client_reported_prop(name)
+      return @page_props[name] if @page_props.key?(name)
+
+      @client_details[name]
+    end
+
     def embedded_async_timeout_available?
       !Object.const_defined?(:RUFLET_EMBEDDED_FAKE_THREAD)
     end
@@ -27363,6 +27775,15 @@ module Ruflet
     def autocompletesuggestion(key = nil, **props) = _pending_app.autocompletesuggestion(key, **props)
     def context_menu(content = nil, **props) = _pending_app.context_menu(content, **props)
     def contextmenu(content = nil, **props) = _pending_app.contextmenu(content, **props)
+    def autofill_group(content = nil, **props) = _pending_app.autofill_group(content, **props)
+    def autofillgroup(content = nil, **props) = _pending_app.autofillgroup(content, **props)
+    def hero(content = nil, **props) = _pending_app.hero(content, **props)
+    def overlay(children = nil, **props) = _pending_app.overlay(children, **props)
+    def shader_mask(content = nil, **props) = _pending_app.shader_mask(content, **props)
+    def shadermask(content = nil, **props) = _pending_app.shadermask(content, **props)
+    def shimmer(content = nil, **props) = _pending_app.shimmer(content, **props)
+    def text_span(text = nil, **props) = _pending_app.text_span(text, **props)
+    def textspan(text = nil, **props) = _pending_app.textspan(text, **props)
     def keyboard_listener(content = nil, **props) = _pending_app.keyboard_listener(content, **props)
     def keyboardlistener(content = nil, **props) = _pending_app.keyboardlistener(content, **props)
     def gesture_detector(**props, &block) = _pending_app.gesture_detector(**props, &block)
@@ -27597,6 +28018,9 @@ module Ruflet
     def web_view(**props) = _pending_app.web_view(**props)
     def webview(**props) = _pending_app.webview(**props)
     def video(**props) = _pending_app.video(**props)
+    def code_editor(value = nil, **props) = _pending_app.code_editor(value, **props)
+    def codeeditor(value = nil, **props) = _pending_app.codeeditor(value, **props)
+    def rive(src = nil, **props) = _pending_app.rive(src, **props)
     def fab(content = nil, **props) = _pending_app.fab(content, **props)
     def cupertino_button(content = nil, **props) = _pending_app.cupertino_button(content, **props)
     def cupertinobutton(content = nil, **props) = _pending_app.cupertinobutton(content, **props)
@@ -28059,7 +28483,8 @@ module Ruflet
   @run_interceptors_mutex = ::Mutex.new
 
   extend self
-  def run(entrypoint = nil, host: "0.0.0.0", port: 8550, &block)
+  def run(entrypoint = nil, host: "0.0.0.0", port: nil, &block)
+    port = normalize_run_port(port || ENV["RUFLET_PORT"] || 8550)
     callback = entrypoint || block
     raise ArgumentError, "Ruflet.run requires a callable entrypoint or block" unless callback.respond_to?(:call)
 
@@ -28085,6 +28510,12 @@ module Ruflet
     yield
   ensure
     @run_interceptors_mutex.synchronize { @run_interceptors.delete(interceptor) }
+  end
+
+  def normalize_run_port(value)
+    Integer(value)
+  rescue ArgumentError, TypeError
+    8550
   end
 end
 
@@ -28914,7 +29345,7 @@ module Ruflet
           @server_socket = TCPServer.new(@host, candidate)
           @port = candidate
           if @port != requested && ENV["RUFLET_SUPPRESS_SERVER_BANNER"] != "1"
-            warn "Requested port #{requested} is busy; bound to #{@port}"
+            warn "Port #{requested} is busy; using #{@port}."
           end
           publish_bound_port!
           return
@@ -29084,8 +29515,22 @@ module Ruflet
         warn e.backtrace.join("\n") if e.backtrace
         send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => e.message.to_s.dup.force_encoding("UTF-8") }) if ws
       ensure
-        close_connection(ws)
+        if ws
+          close_connection(ws)
+        else
+          # Plain HTTP request: we answer with `Connection: close`, so we must
+          # actually close the socket. Leaving it open exhausts the browser's
+          # per-host connection pool and the later /ws upgrade never opens —
+          # the app then hangs on its "connecting" screen.
+          close_http_socket(socket)
+        end
       end
+    end
+
+    def close_http_socket(socket)
+      socket.close if socket && !socket.closed?
+    rescue StandardError
+      nil
     end
 
     def read_http_upgrade_request(socket)
@@ -29112,7 +29557,7 @@ module Ruflet
     end
 
     def websocket_upgrade_request?(path, headers)
-      return false unless path == "/ws"
+      return false unless path.to_s.split("?", 2).first == "/ws"
       return false unless headers["upgrade"]&.downcase == "websocket"
       return false unless headers["connection"]&.downcase&.include?("upgrade")
       return false if headers["sec-websocket-key"].to_s.empty?
@@ -29121,21 +29566,95 @@ module Ruflet
     end
 
     def handle_http_request(socket, path)
-      case path
-      when "/health"
-        write_http_response(socket, 200, "text/plain", "ok")
+      clean = path.to_s.split("?", 2).first.split("#", 2).first
+      return write_http_response(socket, 200, "text/plain", "ok") if clean == "/health"
+
+      # In web mode the standalone backend also serves the Flutter web client,
+      # so the browser loads the app and opens its websocket on this same
+      # origin/port — no separate static server or proxy is needed.
+      return serve_web_client(socket, clean) if web_client_root
+
+      case clean
       when "/"
         write_http_response(socket, 200, "text/plain", "ruflet server")
       else
-        if path.start_with?("/assets/")
-          serve_asset(socket, path)
+        if clean.start_with?("/assets/")
+          serve_asset(socket, clean)
         else
           write_http_response(socket, 404, "text/plain", "not found")
         end
       end
     rescue StandardError => e
+      # The browser routinely cancels in-flight asset requests (preloads,
+      # duplicate connections); writing to a reset socket raises EPIPE/ECONNRESET
+      # and is expected, not an error.
+      return if disconnect_error?(e)
+
       warn "http error: #{e.class}: #{e.message}"
-      write_http_response(socket, 500, "text/plain", "server error")
+      begin
+        write_http_response(socket, 500, "text/plain", "server error")
+      rescue StandardError
+        nil
+      end
+    end
+
+    def web_client_root
+      dir = ENV["RUFLET_WEB_CLIENT_DIR"].to_s
+      return nil if dir.empty?
+
+      full = File.expand_path(dir)
+      File.directory?(full) ? full : nil
+    end
+
+    def serve_web_client(socket, path)
+      root = web_client_root
+
+      # Neutralize the Flutter service worker: when this dev server hops between
+      # localhost ports a cached worker would otherwise keep a stale client
+      # alive that reconnects to the wrong backend. This unregisters it and
+      # clears caches so the browser always loads the current client.
+      if path == "/flutter_service_worker.js"
+        return write_http_response(socket, 200, "text/javascript", service_worker_reset_js, cache: false)
+      end
+
+      relative = path == "/" ? "index.html" : path.sub(%r{\A/}, "")
+      full = File.expand_path(File.join(root, relative))
+      if (full == root || full.start_with?(root + File::SEPARATOR)) && File.file?(full)
+        return write_http_response(socket, 200, content_type_for(full), File.binread(full), binary: true, cache: false)
+      end
+
+      # App runtime assets (images referenced by the app) fall back to the
+      # configured assets directory when not part of the client bundle.
+      if path.start_with?("/assets/") && (asset = resolve_asset_path(path))
+        return write_http_response(socket, 200, content_type_for(asset), File.binread(asset), binary: true, cache: false)
+      end
+
+      # SPA fallback: serve index.html for extension-less route paths.
+      index = File.join(root, "index.html")
+      if File.extname(path).empty? && File.file?(index)
+        return write_http_response(socket, 200, "text/html", File.binread(index), binary: true, cache: false)
+      end
+
+      write_http_response(socket, 404, "text/plain", "not found")
+    end
+
+    # A no-op service worker: it registers cleanly (so Flutter's loader, which
+    # awaits navigator.serviceWorker.ready, never hangs), wipes any caches a
+    # previous run left behind, claims the page, and installs NO fetch handler —
+    # so every request (including the app shell) goes straight to the network and
+    # the client always loads fresh and connects to the current origin/port.
+    # (Self-unregistering here can leave serviceWorker.ready unresolved.)
+    def service_worker_reset_js
+      <<~JS
+        self.addEventListener('install', function (e) { self.skipWaiting(); });
+        self.addEventListener('activate', function (e) {
+          e.waitUntil((async function () {
+            var keys = await caches.keys();
+            await Promise.all(keys.map(function (k) { return caches.delete(k); }));
+            await self.clients.claim();
+          })());
+        });
+      JS
     end
 
     def serve_asset(socket, path)
@@ -29166,28 +29685,39 @@ module Ruflet
       root = ENV["RUFLET_ASSETS_DIR"].to_s
       return root unless root.empty?
 
+      embedded_root = defined?($__ruflet_app_root) ? $__ruflet_app_root.to_s : ""
+      unless embedded_root.empty?
+        embedded_assets = File.join(embedded_root, "assets")
+        return embedded_assets if File.directory?(embedded_assets)
+      end
+
       default_root = File.join(Dir.pwd, "assets")
       File.directory?(default_root) ? default_root : nil
     end
 
     def content_type_for(path)
       case File.extname(path).downcase
-      when ".png"
-        "image/png"
-      when ".jpg", ".jpeg"
-        "image/jpeg"
-      when ".gif"
-        "image/gif"
-      when ".webp"
-        "image/webp"
-      when ".svg"
-        "image/svg+xml"
-      else
-        "application/octet-stream"
+      when ".html", ".htm" then "text/html; charset=utf-8"
+      when ".js", ".mjs" then "text/javascript; charset=utf-8"
+      when ".json", ".map" then "application/json; charset=utf-8"
+      when ".css" then "text/css; charset=utf-8"
+      when ".wasm" then "application/wasm"
+      when ".png" then "image/png"
+      when ".jpg", ".jpeg" then "image/jpeg"
+      when ".gif" then "image/gif"
+      when ".webp" then "image/webp"
+      when ".svg" then "image/svg+xml"
+      when ".ico" then "image/x-icon"
+      when ".ttf" then "font/ttf"
+      when ".otf" then "font/otf"
+      when ".woff" then "font/woff"
+      when ".woff2" then "font/woff2"
+      when ".txt" then "text/plain; charset=utf-8"
+      else "application/octet-stream"
       end
     end
 
-    def write_http_response(socket, status, content_type, body, binary: false)
+    def write_http_response(socket, status, content_type, body, binary: false, cache: true)
       reason = {
         200 => "OK",
         404 => "Not Found",
@@ -29200,6 +29730,10 @@ module Ruflet
       socket.write("HTTP/1.1 #{status} #{reason}\r\n")
       socket.write("Content-Type: #{content_type}\r\n")
       socket.write("Content-Length: #{length}\r\n")
+      unless cache
+        socket.write("Cache-Control: no-store, no-cache, must-revalidate, max-age=0\r\n")
+        socket.write("Pragma: no-cache\r\n")
+      end
       socket.write("Connection: close\r\n")
       socket.write("\r\n")
       socket.write(body_str)
@@ -29241,7 +29775,8 @@ end
 
 module Ruflet
   extend self
-  def run(entrypoint = nil, host: "0.0.0.0", port: 8550, &block)
+  def run(entrypoint = nil, host: "0.0.0.0", port: nil, &block)
+    port = normalize_run_port(port || ENV["RUFLET_PORT"] || 8550)
     callback = entrypoint || block
     raise ArgumentError, "Ruflet.run requires a callable entrypoint or block" unless callback.respond_to?(:call)
 
@@ -29262,8 +29797,14 @@ module Ruflet
 
     @run_interceptors_mutex.synchronize { @run_interceptors.last }
   end
+
+  def normalize_run_port(value)
+    Integer(value)
+  rescue ArgumentError, TypeError
+    8550
+  end
   class << self
-    private :run_interceptor
+    private :run_interceptor, :normalize_run_port
   end
 end
   class << Ruflet::UI::ControlFactory
