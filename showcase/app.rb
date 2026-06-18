@@ -66,6 +66,11 @@ module Showcase
       when "/calculator"
         page.views = [detail_view(page, "Calculator", build_calculator(page, status_text(page)),
                                   source_path: "showcase/sections_controls/calculator.rb")]
+      when "/code-editor"
+        page.views = [detail_view(page, "Code Editor", build_code_editor(page, status_text(page)),
+                                  source_path: "showcase/sections_controls/code_editor.rb",
+                                  scroll: nil,
+                                  horizontal_alignment: "stretch")]
       when "/components"
         page.views = [detail_view(page, "Components", build_components(page, status_text(page)),
                                   source_path: "showcase/sections_controls/components.rb")]
@@ -126,6 +131,12 @@ module Showcase
       when "/video"
         page.views = [detail_view(page, "Video Player", build_video(page, status_text(page)),
                                   source_path: "showcase/sections_media/video.rb")]
+      when "/rive"
+        page.views = [detail_view(page, "Rive", build_rive(page, status_text(page)),
+                                  source_path: "showcase/sections_media/rive.rb")]
+      when "/responsive-row"
+        page.views = [detail_view(page, "Responsive Row", build_responsive_row(page, status_text(page)),
+                                  source_path: "showcase/sections_controls/responsive_row.rb")]
       when "/battery"
         page.views = [detail_view(page, "Battery", build_battery(page, status_text(page)),
                                   source_path: "showcase/sections_media/battery.rb")]

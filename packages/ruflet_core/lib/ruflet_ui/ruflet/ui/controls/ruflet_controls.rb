@@ -39,6 +39,7 @@ require_relative "materials/card_control"
 require_relative "materials/checkbox_control"
 require_relative "materials/chip_control"
 require_relative "materials/circleavatar_control"
+require_relative "materials/codeeditor_control"
 require_relative "materials/container_control"
 require_relative "materials/contextmenu_control"
 require_relative "materials/datacell_control"
@@ -81,6 +82,7 @@ require_relative "materials/radio_control"
 require_relative "materials/radiogroup_control"
 require_relative "materials/rangeslider_control"
 require_relative "materials/reorderablelistview_control"
+require_relative "materials/rive_control"
 require_relative "materials/searchbar_control"
 require_relative "materials/segment_control"
 require_relative "materials/segmentedbutton_control"
@@ -206,6 +208,8 @@ module Ruflet
           "circle" => RufletComponents::CircleControl,
           "circle_avatar" => RufletComponents::CircleAvatarControl,
           "circleavatar" => RufletComponents::CircleAvatarControl,
+          "code_editor" => RufletComponents::CodeEditorControl,
+          "codeeditor" => RufletComponents::CodeEditorControl,
           "color" => RufletComponents::ColorControl,
           "column" => RufletComponents::ColumnControl,
           "container" => RufletComponents::ContainerControl,
@@ -408,6 +412,7 @@ module Ruflet
           "reorderable_list_view" => RufletComponents::ReorderableListViewControl,
           "reorderabledraghandle" => RufletComponents::ReorderableDragHandleControl,
           "reorderablelistview" => RufletComponents::ReorderableListViewControl,
+          "rive" => RufletComponents::RiveControl,
           "responsive_row" => RufletComponents::ResponsiveRowControl,
           "responsiverow" => RufletComponents::ResponsiveRowControl,
           "row" => RufletComponents::RowControl,

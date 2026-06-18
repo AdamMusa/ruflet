@@ -13,11 +13,44 @@ app:
 extensions:
   - audio
   - charts
+  - code_editor
   - flashlight
   - map
+  - rive
   - secure_storage
   - video
   - webview
+
+# Platform services used by Showcase (must list every service referenced in app code).
+services:
+  - accelerometer
+  - audio
+  - audio_recorder
+  - barometer
+  - battery
+  - browser_context_menu
+  - camera
+  - charts
+  - clipboard
+  - connectivity
+  - file_picker
+  - flashlight
+  - geolocator
+  - gyroscope
+  - magnetometer
+  - map
+  - permission_handler
+  - screen_brightness
+  - screenshot
+  - secure_storage
+  - semantics_service
+  - shake_detector
+  - share
+  - storage_paths
+  - user_accelerometer
+  - video
+  - webview
+  - window
 
 # Build assets configuration consumed by `ruflet build`.
 # Paths are relative to this file unless absolute.

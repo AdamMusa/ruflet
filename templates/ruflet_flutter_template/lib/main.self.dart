@@ -21,6 +21,7 @@ import 'package:flet_lottie/flet_lottie.dart' as ruflet_lottie;
 import 'package:flet_map/flet_map.dart' as ruflet_map;
 import 'package:flet_permission_handler/flet_permission_handler.dart'
     as ruflet_permission_handler;
+import 'package:flet_rive/flet_rive.dart' as ruflet_rive;
 // --FAT_CLIENT_START--
 // --FAT_CLIENT_END--
 import 'package:flet_secure_storage/flet_secure_storage.dart'
@@ -123,6 +124,7 @@ Future<void> main() async {
     ruflet_lottie.Extension(),
     ruflet_map.Extension(),
     ruflet_permission_handler.Extension(),
+    ruflet_rive.Extension(),
     ruflet_secure_storage.Extension(),
     ruflet_webview.Extension(),
 

@@ -1,18 +1,18 @@
 PATH
   remote: /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/packages/ruflet_core
   specs:
-    ruflet_core (0.0.14)
+    ruflet_core (0.0.15)
 
 PATH
   remote: /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/packages/ruflet_server
   specs:
-    ruflet_server (0.0.14)
-      ruflet_core (= 0.0.14)
+    ruflet_server (0.0.15)
+      ruflet_core (= 0.0.15)
 
 PATH
   remote: /Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/packages/ruflet
   specs:
-    ruflet (0.0.14)
+    ruflet (0.0.15)
       rqrcode (~> 2.2)
 
 GEM
@@ -37,9 +37,9 @@ CHECKSUMS
   chunky_png (1.4.0) sha256=89d5b31b55c0cf4da3cf89a2b4ebc3178d8abe8cbaf116a1dba95668502fdcfe
   rqrcode (2.2.0) sha256=23eea88bb44c7ee6d6cab9354d08c287f7ebcdc6112e1fe7bcc2d010d1ffefc1
   rqrcode_core (1.2.0) sha256=cf4989dc82d24e2877984738c4ee569308625fed2a810960f1b02d68d0308d1a
-  ruflet (0.0.14)
-  ruflet_core (0.0.14)
-  ruflet_server (0.0.14)
+  ruflet (0.0.15)
+  ruflet_core (0.0.15)
+  ruflet_server (0.0.15)
 
 BUNDLED WITH
   4.0.6

@@ -28,6 +28,7 @@ module Ruflet
         "lottie" => { package: "flet_lottie", alias: "ruflet_lottie" },
         "map" => { package: "flet_map", alias: "ruflet_map" },
         "permission_handler" => { package: "flet_permission_handler", alias: "ruflet_permission_handler" },
+        "rive" => { package: "flet_rive", alias: "ruflet_rive" },
         "secure_storage" => { package: "flet_secure_storage", alias: "ruflet_secure_storage" },
         "video" => { package: "flet_video", alias: "ruflet_video" },
         "webview" => { package: "flet_webview", alias: "ruflet_webview" }
@@ -998,6 +999,23 @@ module Ruflet
         cmake_path = File.join(client_dir, "linux", "CMakeLists.txt")
         replace_in_file(cmake_path, /^set\(BINARY_NAME ".*"\)$/, %(set(BINARY_NAME "#{metadata[:package_name]}")))
         replace_in_file(cmake_path, /^set\(APPLICATION_ID ".*"\)$/, %(set(APPLICATION_ID "#{metadata[:linux_application_id]}")))
+
+        # The GTK runner hardcodes the window title (header-bar and fallback
+        # paths). Without this it shows the package name (e.g. "ruflet_client")
+        # instead of the configured app name. Match the call, not the literal,
+        # so re-runs stay idempotent.
+        my_application_path = File.join(client_dir, "linux", "runner", "my_application.cc")
+        title = c_string_escape(metadata[:display_name])
+        replace_in_file(
+          my_application_path,
+          /gtk_header_bar_set_title\(header_bar, "[^"]*"\)/,
+          %(gtk_header_bar_set_title(header_bar, "#{title}"))
+        )
+        replace_in_file(
+          my_application_path,
+          /gtk_window_set_title\(window, "[^"]*"\)/,
+          %(gtk_window_set_title(window, "#{title}"))
+        )
       end
 
       def apply_dart_metadata(client_dir, metadata)
@@ -1088,6 +1106,13 @@ module Ruflet
 
       def windows_string_escape(value)
         value.to_s.gsub('"', '""')
+      end
+
+      # Escape a value for embedding inside a C string literal (used for the
+      # GTK runner window title in my_application.cc). Block form avoids
+      # backslash interpretation in the gsub replacement string.
+      def c_string_escape(value)
+        value.to_s.gsub(/[\\"]/) { |ch| "\\#{ch}" }
       end
 
       def dart_single_quote_escape(value)
@@ -1358,18 +1383,20 @@ module Ruflet
         flutter = data["flutter"]
         flutter = data["flutter"] = {} unless flutter.is_a?(Hash)
         assets = Array(flutter["assets"]).map(&:to_s)
+        project_asset_prefix = "assets/#{self_contained_project_name}/"
+        assets.reject! { |asset| asset.start_with?(project_asset_prefix) }
 
         if self_contained
           dependencies["ruby_runtime"] = ruby_runtime_dependency(dependencies["ruby_runtime"])
           assets.delete("assets/main.rb")
           assets.delete("assets/ruby_project/")
-          project_asset_path = "assets/#{self_contained_project_name}/"
-          assets << project_asset_path unless assets.include?(project_asset_path)
+          project_asset_relative_paths.each do |relative_path|
+            assets << "#{project_asset_prefix}#{relative_path}"
+          end
         else
           dependencies.delete("ruby_runtime")
           assets.delete("assets/main.rb")
           assets.delete("assets/ruby_project/")
-          assets.delete("assets/#{self_contained_project_name}/")
         end
 
         flutter["assets"] = assets unless assets.empty?
@@ -1377,7 +1404,7 @@ module Ruflet
         write_pubspec_yaml(pubspec_path, data)
       end
 
-      RUBY_RUNTIME_FALLBACK_REQUIREMENT = "^0.0.5"
+      RUBY_RUNTIME_FALLBACK_REQUIREMENT = "^0.0.6"
 
       def ruby_runtime_dependency(current_dependency = nil)
         local_path = explicit_local_ruby_runtime_path || repo_checkout_ruby_runtime_path
@@ -1755,6 +1782,10 @@ module Ruflet
 
         data = YAML.safe_load(File.read(path), aliases: true) || {}
         deps = (data["dependencies"] || {}).dup
+        if selected_packages.include?("flet_rive")
+          deps.delete("rive")
+          deps.delete("rive_native")
+        end
         selected_packages.each do |package_name|
           deps[package_name] = template_deps[package_name] if template_deps.key?(package_name)
         end

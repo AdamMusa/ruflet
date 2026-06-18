@@ -254,6 +254,48 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  def test_self_contained_pubspec_lists_nested_project_assets
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "ruflet_client")
+      FileUtils.mkdir_p(File.join(client_dir))
+      FileUtils.mkdir_p(File.join(dir, "standalone_apps", "counter"))
+      File.write(File.join(dir, "main.rb"), "Ruflet.run {}\n")
+      File.write(File.join(dir, "standalone_apps", "counter", "main.rb"), "Ruflet.run {}\n")
+      File.write(File.join(client_dir, "pubspec.yaml"), "dependencies: {}\nflutter: {}\n")
+
+      Dir.chdir(dir) do
+        builder.send(:sync_client_pubspec_for_runtime_mode, client_dir, self_contained: true)
+      end
+
+      assets = YAML.safe_load(File.read(File.join(client_dir, "pubspec.yaml"))).dig("flutter", "assets")
+      prefix = "assets/#{File.basename(dir)}/"
+      assert_includes assets, "#{prefix}main.rb"
+      assert_includes assets, "#{prefix}standalone_apps/counter/main.rb"
+      refute_includes assets, prefix
+    end
+  end
+
+  def test_rive_extension_uses_flet_flutter_extension
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      pubspec = File.join(dir, "pubspec.yaml")
+      File.write(pubspec, "dependencies:\n  rive: any\n  rive_native: any\n")
+      template_dir = File.expand_path("../../../templates/ruflet_flutter_template", __dir__)
+
+      with_template_root(template_dir) do
+        builder.send(:sync_client_extension_dependencies, pubspec, ["flet_rive"])
+      end
+
+      dependencies = YAML.safe_load(File.read(pubspec)).fetch("dependencies")
+      assert dependencies.key?("flet_rive")
+      refute dependencies.key?("rive")
+      refute dependencies.key?("rive_native")
+    end
+  end
+
   def test_prepare_flutter_client_uses_explicit_local_ruby_runtime_override
     builder = DummyBuilder.new
 

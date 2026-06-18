@@ -639,6 +639,19 @@ module Ruflet
       def webview(**props) = web_view(**props)
       def video(**props) = build_widget(:video, **props)
 
+      def code_editor(value = nil, **props)
+        mapped = props.dup
+        mapped[:value] = value unless value.nil?
+        build_widget(:codeeditor, **mapped)
+      end
+      def codeeditor(value = nil, **props) = code_editor(value, **props)
+
+      def rive(src = nil, **props)
+        mapped = props.dup
+        mapped[:src] = src unless src.nil?
+        build_widget(:rive, **mapped)
+      end
+
       def fab(content = nil, **props)
         mapped = normalize_fab_props(props.dup, content)
         build_widget(:floatingactionbutton, **mapped)

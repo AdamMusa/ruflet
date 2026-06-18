@@ -15,6 +15,7 @@ require_relative "card_control"
 require_relative "checkbox_control"
 require_relative "chip_control"
 require_relative "circleavatar_control"
+require_relative "codeeditor_control"
 require_relative "container_control"
 require_relative "contextmenu_control"
 require_relative "datacell_control"
@@ -57,6 +58,7 @@ require_relative "radio_control"
 require_relative "radiogroup_control"
 require_relative "rangeslider_control"
 require_relative "reorderablelistview_control"
+require_relative "rive_control"
 require_relative "searchbar_control"
 require_relative "segment_control"
 require_relative "segmentedbutton_control"
@@ -120,6 +122,8 @@ module Ruflet
             "chip" => RufletComponents::ChipControl,
             "circle_avatar" => RufletComponents::CircleAvatarControl,
             "circleavatar" => RufletComponents::CircleAvatarControl,
+            "code_editor" => RufletComponents::CodeEditorControl,
+            "codeeditor" => RufletComponents::CodeEditorControl,
             "container" => RufletComponents::ContainerControl,
             "context_menu" => RufletComponents::ContextMenuControl,
             "contextmenu" => RufletComponents::ContextMenuControl,
@@ -235,6 +239,7 @@ module Ruflet
             "rangeslider" => RufletComponents::RangeSliderControl,
             "reorderable_list_view" => RufletComponents::ReorderableListViewControl,
             "reorderablelistview" => RufletComponents::ReorderableListViewControl,
+            "rive" => RufletComponents::RiveControl,
             "search_bar" => RufletComponents::SearchBarControl,
             "searchbar" => RufletComponents::SearchBarControl,
             "segment" => RufletComponents::SegmentControl,

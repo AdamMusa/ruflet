@@ -42,6 +42,45 @@ class RufletPageCompatibilityTest < Minitest::Test
     refute view.key?("show_semantics_debugger")
   end
 
+  def test_page_exposes_client_reported_properties_as_readers
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: {
+        "route" => "/",
+        "width" => 1280,
+        "height" => 800,
+        "platform" => "macos",
+        "platform_brightness" => "light",
+        "web" => true,
+        "pwa" => false,
+        "wasm" => false,
+        "media" => { "padding" => {} }
+      },
+      sender: ->(_action, _payload) {}
+    )
+
+    assert_equal 1280, page.width
+    assert_equal 800, page.height
+    assert_equal "macos", page.platform
+    assert_equal "light", page.platform_brightness
+    assert_equal true, page.web
+    assert_equal false, page.pwa
+    assert_equal false, page.wasm
+    assert_equal({ "padding" => {} }, page.media)
+  end
+
+  def test_page_client_reported_readers_default_to_nil_without_client_data
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+
+    assert_nil page.width
+    assert_nil page.height
+    assert_nil page.platform
+  end
+
   def test_page_dispatches_route_change_and_updates_route_from_client_event
     page = Ruflet::Page.new(
       session_id: "s1",

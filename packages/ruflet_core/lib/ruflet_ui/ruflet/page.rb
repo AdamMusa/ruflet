@@ -244,6 +244,42 @@ module Ruflet
       @view_props["bgcolor"] = normalize_value("bgcolor", value)
     end
 
+    # Client-reported page properties. The Flutter client sends these in its
+    # register payload (see Protocol.normalize_register_payload), where they are
+    # stored in @client_details; expose them as readers so apps can do
+    # `page.width`, `page.platform`, etc. without reaching into client_details.
+    def width
+      client_reported_prop("width")
+    end
+
+    def height
+      client_reported_prop("height")
+    end
+
+    def platform
+      client_reported_prop("platform")
+    end
+
+    def platform_brightness
+      client_reported_prop("platform_brightness")
+    end
+
+    def web
+      client_reported_prop("web")
+    end
+
+    def pwa
+      client_reported_prop("pwa")
+    end
+
+    def wasm
+      client_reported_prop("wasm")
+    end
+
+    def media
+      client_reported_prop("media")
+    end
+
     def add(*controls, appbar: nil, bottom_appbar: nil, floating_action_button: nil, navigation_bar: nil, dialog: nil, snack_bar: nil, bottom_sheet: nil)
       controls = controls.flatten
       visited = Set.new
@@ -1300,6 +1336,12 @@ module Ruflet
     end
 
     private
+
+    def client_reported_prop(name)
+      return @page_props[name] if @page_props.key?(name)
+
+      @client_details[name]
+    end
 
     def embedded_async_timeout_available?
       !Object.const_defined?(:RUFLET_EMBEDDED_FAKE_THREAD)

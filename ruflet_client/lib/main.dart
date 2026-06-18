@@ -16,6 +16,7 @@ import 'package:flet_lottie/flet_lottie.dart' as flet_lottie;
 import 'package:flet_map/flet_map.dart' as flet_map;
 import 'package:flet_permission_handler/flet_permission_handler.dart'
     as flet_permission_handler;
+import 'package:flet_rive/flet_rive.dart' as flet_rive;
 import 'package:flet_secure_storage/flet_secure_storage.dart'
     as flet_secure_storage;
 import 'package:flet_video/flet_video.dart' as flet_video;
@@ -178,6 +179,7 @@ void main([List<String>? args]) async {
     flet_lottie.Extension(),
     flet_map.Extension(),
     flet_permission_handler.Extension(),
+    flet_rive.Extension(),
     flet_secure_storage.Extension(),
     flet_video.Extension(),
     flet_webview.Extension(),
