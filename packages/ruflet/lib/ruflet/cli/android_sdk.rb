@@ -246,8 +246,9 @@ module Ruflet
 
         puts "  Installing Android packages: #{missing.join(', ')}"
         env = sdkmanager_env(java)
-        output = verbose ? $stdout : File::NULL
-        system(env, sdkmanager, "--sdk_root=#{sdk_root}", *missing, out: output, err: $stderr)
+        # sdkmanager downloads sizeable platform/build-tool archives; stream so
+        # the install reports progress instead of appearing to hang.
+        system(env, sdkmanager, "--sdk_root=#{sdk_root}", *missing, out: $stdout, err: $stderr)
       end
 
       def android_package_installed?(sdk_root, package)

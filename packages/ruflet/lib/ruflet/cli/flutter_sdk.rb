@@ -84,8 +84,12 @@ module Ruflet
           File.write(fvmrc_path, "{\"flutter\":\"#{version}\"}\n")
         end
 
-        system(fvm_env, fvm, "install", version.to_s, chdir: project_dir, out: File::NULL, err: File::NULL)
-        system(fvm_env, fvm, "use", "--force", version.to_s, chdir: project_dir, out: File::NULL, err: File::NULL)
+        # Installing a Flutter SDK through FVM downloads/extracts hundreds of
+        # megabytes. Stream FVM's output so the run does not look frozen.
+        puts "  $ fvm install #{version}"
+        system(fvm_env, fvm, "install", version.to_s, chdir: project_dir, out: $stdout, err: $stderr)
+        puts "  $ fvm use --force #{version}"
+        system(fvm_env, fvm, "use", "--force", version.to_s, chdir: project_dir, out: $stdout, err: $stderr)
 
         flutter = flutter_bin_path(project_dir)
         return nil unless File.executable?(flutter)
@@ -107,7 +111,8 @@ module Ruflet
         end
         return nil unless dart && File.executable?(dart)
 
-        system(dart, "pub", "global", "activate", "fvm", out: File::NULL, err: File::NULL)
+        puts "  $ dart pub global activate fvm"
+        system(dart, "pub", "global", "activate", "fvm", out: $stdout, err: $stderr)
         installed_fvm = File.join(pub_cache_bin_dir, fvm_executable_name)
         return installed_fvm if File.executable?(installed_fvm)
 
@@ -148,10 +153,13 @@ module Ruflet
         return sdk_root if File.executable?(flutter_bin)
 
         FileUtils.mkdir_p(install_root)
+        puts "  Installing Flutter #{release.fetch('version')} (#{host}) into #{install_root}"
         Dir.mktmpdir("ruflet-flutter-sdk-") do |tmpdir|
           archive_path = File.join(tmpdir, File.basename(archive))
-          download_file("#{RELEASES_BASE}/#{archive}", archive_path)
+          download_file("#{RELEASES_BASE}/#{archive}", archive_path, label: "Flutter SDK")
+          puts "  Extracting #{File.basename(archive)} (this can take a minute)"
           extract_archive(archive_path, install_root)
+          puts "  Extracted Flutter SDK"
         end
 
         return sdk_root if File.executable?(flutter_bin)
@@ -366,7 +374,7 @@ module Ruflet
         nil
       end
 
-      def download_file(url, destination, limit: 5)
+      def download_file(url, destination, limit: 5, label: nil)
         raise "Too many redirects while downloading #{url}" if limit <= 0
 
         uri = URI(url)
@@ -376,10 +384,21 @@ module Ruflet
           http.request(req) do |res|
             case res
             when Net::HTTPSuccess
-              File.open(destination, "wb") { |f| res.read_body { |chunk| f.write(chunk) } }
+              name = label || File.basename(destination)
+              total = res["content-length"].to_i
+              downloaded = 0
+              marker = -1
+              File.open(destination, "wb") do |f|
+                res.read_body do |chunk|
+                  f.write(chunk)
+                  downloaded += chunk.bytesize
+                  marker = report_download_progress(name, downloaded, total, marker)
+                end
+              end
+              finish_download_progress(name, downloaded, total)
               return destination
             when Net::HTTPRedirection
-              return download_file(res["location"], destination, limit: limit - 1)
+              return download_file(res["location"], destination, limit: limit - 1, label: label)
             else
               raise "Download failed (#{res.code})"
             end
@@ -387,6 +406,51 @@ module Ruflet
         end
       rescue OpenSSL::SSL::SSLError
         curl_download(url, destination)
+      end
+
+      # Net::HTTP gives no progress for a multi-hundred-MB SDK download, which
+      # looks like a hang. Report percentage on a TTY (rewritten in place) and
+      # at coarse steps when piped, so logs stay readable either way.
+      def report_download_progress(name, downloaded, total, marker)
+        if total.positive?
+          percent = downloaded * 100 / total
+          return marker if percent <= marker
+
+          line = "  Downloading #{name}: #{percent}% (#{human_size(downloaded)} / #{human_size(total)})"
+          if $stdout.tty?
+            $stdout.print("\r#{line}")
+          elsif (percent % 10).zero?
+            puts line
+          end
+          percent
+        else
+          step = downloaded / (5 * 1024 * 1024)
+          return marker if step <= marker
+
+          line = "  Downloading #{name}: #{human_size(downloaded)}"
+          $stdout.tty? ? $stdout.print("\r#{line}") : puts(line)
+          step
+        end
+      end
+
+      def finish_download_progress(name, downloaded, total)
+        summary = total.positive? ? "#{human_size(downloaded)} / #{human_size(total)}" : human_size(downloaded)
+        if $stdout.tty?
+          $stdout.print("\r  Downloaded #{name}: #{summary}\n")
+        else
+          puts "  Downloaded #{name}: #{summary}"
+        end
+      end
+
+      def human_size(bytes)
+        units = %w[B KB MB GB TB]
+        size = bytes.to_f
+        unit = units.shift
+        while size >= 1024 && units.any?
+          size /= 1024
+          unit = units.shift
+        end
+        format("%.1f %s", size, unit)
       end
 
       def extract_archive(archive, destination)

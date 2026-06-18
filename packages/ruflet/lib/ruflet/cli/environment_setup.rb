@@ -212,8 +212,11 @@ module Ruflet
       def run_privileged_command(*command, verbose: false)
         full = sudo_prefix + command
         puts "  $ #{full.join(' ')}"
-        output = verbose ? $stdout : File::NULL
-        system(*full, out: output, err: $stderr)
+        # Package installs (apt/dnf/pacman...) routinely download hundreds of
+        # megabytes and take minutes. Always stream their output so the user
+        # can see progress instead of a frozen-looking prompt; `verbose` is
+        # left for callers that want to add their own detail elsewhere.
+        system(*full, out: $stdout, err: $stderr)
       end
 
       def sudo_prefix

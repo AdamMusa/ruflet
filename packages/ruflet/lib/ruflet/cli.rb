@@ -6,6 +6,13 @@ require "optparse"
 # depend on the caller's locale for reading them.
 Encoding.default_external = Encoding::UTF_8 if Encoding.default_external == Encoding::US_ASCII
 
+# Provisioning (downloads, package installs, SDK extraction) can run for
+# minutes. When stdout is not a TTY (CI logs, pipes, editor consoles) Ruby
+# buffers it, so progress notes would only appear once the whole run finishes.
+# Unbuffer both streams so the pipeline reports progress as it happens.
+$stdout.sync = true
+$stderr.sync = true
+
 require_relative "version"
 require_relative "cli/templates"
 require_relative "cli/new_command"

@@ -56,8 +56,7 @@ module Ruflet
         puts "  Flutter: #{flutter_version_summary(tools)}"
         environment_issues += android_environment_setup!(fix: !!fix, verbose: !!verbose)
         ok = system(android_build_env(tools[:env]), tools[:flutter], "doctor", *(verbose ? ["-v"] : []))
-        status = $?.exitstatus if $?
-        status ||= ok ? 0 : 1
+        status = ok ? 0 : ($?&.exitstatus || 1)
         if environment_issues.any?
           warn "Unresolved environment issues: #{environment_issues.join('; ')}"
           status = 1 if status.zero?
