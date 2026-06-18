@@ -17,12 +17,18 @@ require "yaml"
 module Ruflet
   module CLI
     module RunCommand
+      DEFAULT_BACKEND_PORTS = {
+        "web" => 8550,
+        "desktop" => 8560,
+        "mobile" => 8570
+      }.freeze
+
       def command_run(args)
-        options = { target: "mobile", requested_port: 8550 }
+        options = { target: "mobile", requested_port: nil }
         parser = OptionParser.new do |o|
           o.on("--web") { options[:target] = "web" }
           o.on("--desktop") { options[:target] = "desktop" }
-          o.on("--port PORT", Integer) { |v| options[:requested_port] = v }
+          o.on("--port PORT", Integer, "Backend port (defaults: web 8550, desktop 8560, mobile 8570)") { |v| options[:requested_port] = v }
         end
         parser.parse!(args)
 
@@ -34,18 +40,31 @@ module Ruflet
           return 1
         end
 
-        selected_port = resolve_backend_port(options[:target], requested_port: options[:requested_port])
+        requested_port = options[:requested_port] || default_backend_port(options[:target])
+        selected_port = resolve_backend_port(options[:target], requested_port: requested_port)
         return 1 unless selected_port
         env = {
           "RUFLET_TARGET" => options[:target],
           "RUFLET_SUPPRESS_SERVER_BANNER" => "1",
-          "RUFLET_PORT" => selected_port.to_s
+          "RUFLET_PORT" => selected_port.to_s,
+          "RUFLET_STRICT_PORT" => "1"
         }
         apply_local_ruflet_dev_overrides(env)
         assets_dir = File.join(File.dirname(script_path), "assets")
         env["RUFLET_ASSETS_DIR"] = assets_dir if File.directory?(assets_dir)
 
-        print_run_banner(target: options[:target], requested_port: options[:requested_port], port: selected_port)
+        # Web: the Ruby backend serves the Flutter web client itself (same
+        # origin/port as /ws), so no separate static server or proxy is needed.
+        if options[:target] == "web"
+          web_dir = detect_web_client_dir
+          if web_dir
+            env["RUFLET_WEB_CLIENT_DIR"] = web_dir
+          else
+            warn "Web client build not found and prebuilt download failed."
+          end
+        end
+
+        print_run_banner(target: options[:target], requested_port: requested_port, port: selected_port)
         print_mobile_qr_hint(port: selected_port) if options[:target] == "mobile"
 
         gemfile_path = find_nearest_gemfile(Dir.pwd)
@@ -150,16 +169,14 @@ module Ruflet
 
       def print_run_banner(target:, requested_port:, port:)
         if port != requested_port.to_i
-          puts "Requested port #{requested_port} is busy; bound to #{port}"
+          puts "Port #{requested_port} is busy; using #{port} for #{target}."
         end
         if target == "desktop"
           puts "Ruflet desktop URL: http://localhost:#{port}"
         elsif target == "mobile"
           puts "Ruflet target: #{target}"
-        else
-          puts "Ruflet target: #{target}"
-          puts "Ruflet URL: http://localhost:#{port}"
         end
+        # web: launch_web_client prints the single app URL after the server boots
       end
 
       def launch_target_client(target, port)
@@ -175,79 +192,20 @@ module Ruflet
         end
       end
 
+      # The Ruby backend (Ruflet::Server) serves the Flutter web client on its
+      # own port, so the client loads and opens its websocket on that same
+      # origin. We just open a browser at the backend URL — port reassignment
+      # works automatically because there is only one port.
       def launch_web_client(port)
-        web_dir = detect_web_client_dir
-        unless web_dir
-          warn "Web client build not found and prebuilt download failed."
-          return []
-        end
-
-        web_port = find_available_port(port + 1)
-        web_pid = Process.spawn(
-          *web_server_command(web_port, port),
-          chdir: web_dir,
-          out: File::NULL,
-          err: File::NULL
-        )
-        Process.detach(web_pid)
-        wait_for_server_boot(web_port)
-        web_url = web_client_url(web_port)
-        browser_pid = open_in_browser_app_mode(web_url)
-        open_in_browser(web_url) if browser_pid.nil?
-        puts "Ruflet web client: #{web_url}"
-        puts "Ruflet backend ws: ws://localhost:#{port}/ws"
-        [web_pid, browser_pid].compact
-      rescue Errno::ENOENT
-        warn "python3 is required to host web client locally."
-        warn "Install Python 3 and rerun."
-        []
+        url = "http://localhost:#{port}/"
+        browser_pid = open_in_browser_app_mode(url)
+        open_in_browser(url) if browser_pid.nil?
+        puts "Ruflet web app: #{url}"
+        [browser_pid].compact
       rescue StandardError => e
-        warn "Failed to launch web client: #{e.class}: #{e.message}"
+        warn "Failed to open web client: #{e.class}: #{e.message}"
+        warn "Open it manually: http://localhost:#{port}/"
         []
-      end
-
-      # Hosts the generic release web client and proxies its same-origin /ws
-      # connection to the standalone Ruby backend.
-      def web_server_command(port, backend_port)
-        script = <<~PYTHON
-          import http.server
-          import select
-          import socket
-          import socketserver
-
-          class Handler(http.server.SimpleHTTPRequestHandler):
-              def do_GET(self):
-                  if self.path.split("?", 1)[0] == "/ws" and self.headers.get("Upgrade", "").lower() == "websocket":
-                      self.proxy_websocket()
-                      return
-                  super().do_GET()
-
-              def proxy_websocket(self):
-                  upstream = socket.create_connection(("127.0.0.1", #{backend_port.to_i}))
-                  request = "GET /ws HTTP/1.1\\r\\n"
-                  for name, value in self.headers.items():
-                      request += name + ": " + value + "\\r\\n"
-                  upstream.sendall((request + "\\r\\n").encode("latin-1"))
-
-                  while True:
-                      ready, _, _ = select.select([self.connection, upstream], [], [])
-                      for source in ready:
-                          data = source.recv(65536)
-                          if not data:
-                              upstream.close()
-                              return
-                          (upstream if source is self.connection else self.connection).sendall(data)
-
-          socketserver.TCPServer.allow_reuse_address = True
-          with socketserver.TCPServer(("127.0.0.1", #{port.to_i}), Handler) as server:
-              server.serve_forever()
-        PYTHON
-
-        ["python3", "-c", script]
-      end
-
-      def web_client_url(port)
-        "http://localhost:#{port}/"
       end
 
       def wait_for_server_boot(port, timeout_seconds: 10)
@@ -334,7 +292,7 @@ module Ruflet
       end
 
       def launch_desktop_client(url)
-        cmd = detect_project_desktop_client_command(url) || detect_desktop_client_command(url)
+        cmd = detect_desktop_client_command(url)
         unless cmd
           warn "Desktop client executable not found."
           warn "Set RUFLET_CLIENT_DIR to your client path."
@@ -355,127 +313,32 @@ module Ruflet
         []
       end
 
-      def detect_project_desktop_client_command(url)
-        return nil unless project_run_requires_managed_client?
-        return nil unless respond_to?(:ensure_flutter_client_dir, true)
-        return nil unless respond_to?(:prepare_flutter_client, true)
-        return nil unless respond_to?(:ensure_flutter!, true)
-
-        platform = host_platform_name
-        return nil unless %w[macos windows linux].include?(platform)
-
-        ensure_ruflet_build_assets(verbose: false) if respond_to?(:ensure_ruflet_build_assets, true)
-        client_dir = ensure_flutter_client_dir(verbose: false)
-        return nil unless client_dir
-
-        config = project_run_config
-        tools = ensure_flutter!("run", client_dir: client_dir)
-        env = build_tool_env(tools[:env], platform, client_dir)
-        return nil unless prepare_flutter_client(
-          client_dir,
-          platform: platform,
-          tools: tools,
-          config: config,
-          self_contained: false,
-          verbose: false
-        )
-
-        [
-          env,
-          tools[:flutter],
-          "run",
-          "-d",
-          platform,
-          "--target",
-          "lib/main.server.dart",
-          "--dart-define",
-          "RUFLET_BACKEND_URL=#{url}"
-        ]
-      rescue StandardError => e
-        warn "Project desktop client setup failed: #{e.class}: #{e.message}"
-        nil
-      end
-
-      def project_run_requires_managed_client?
-        extensions = Array(project_run_config["extensions"]).map { |value| normalize_run_extension_key(value) }.compact
-        protected_extensions =
-          if defined?(Ruflet::CLI::BuildCommand::SERVICE_EXTENSION_MAP)
-            Ruflet::CLI::BuildCommand::SERVICE_EXTENSION_MAP.values.flatten
-          else
-            []
-          end
-        return true if (extensions - protected_extensions).any?
-
-        services =
-          if respond_to?(:load_service_definitions, true)
-            send(:load_service_definitions).keys
-          else
-            []
-          end
-        return false if services.empty?
-
-        known_services =
-          if defined?(Ruflet::CLI::BuildCommand::DEFAULT_SERVICE_NATIVE_REQUIREMENTS)
-            Ruflet::CLI::BuildCommand::DEFAULT_SERVICE_NATIVE_REQUIREMENTS.keys
-          else
-            []
-          end
-        (services & known_services).any?
-      end
-
-      def project_run_config
-        config_path = ENV["RUFLET_CONFIG"] || (File.file?("ruflet.yaml") ? "ruflet.yaml" : "ruflet.yml")
-        return {} unless File.file?(config_path)
-
-        YAML.safe_load(File.read(config_path), aliases: true) || {}
-      rescue StandardError
-        {}
-      end
-
-      def normalize_run_extension_key(value)
-        key = value.to_s.strip.downcase
-        return nil if key.empty?
-
-        key.tr!("-", "_")
-        key.gsub!(/\A(flet_)+/, "")
-        key.gsub!(/\Aservice_/, "")
-        key
-      end
-
       def detect_desktop_client_command(url)
         root = ENV["RUFLET_CLIENT_DIR"]
         root = File.expand_path("ruflet_client", Dir.pwd) if root.to_s.strip.empty?
         root = nil unless Dir.exist?(root)
-        root ||= ensure_prebuilt_client(desktop: true)
+
+        command = desktop_client_command_from_root(root, url)
+        return command if command
+
+        cached_root = ensure_prebuilt_client(desktop: true)
+        desktop_client_command_from_root(cached_root, url)
+      end
+
+      def desktop_client_command_from_root(root, url)
         return nil unless root && Dir.exist?(root)
 
         host_os = RbConfig::CONFIG["host_os"]
         if host_os.match?(/darwin/i)
-          app_path = [
-            File.join(root, "build", "macos", "Build", "Products", "Release", "ruflet_client.app"),
-            File.join(root, "build", "macos", "Build", "Products", "Debug", "ruflet_client.app"),
-            File.join(root, "desktop", "ruflet_client.app")
-          ].find do |candidate|
-            bin = File.join(candidate, "Contents", "MacOS", "ruflet_client")
-            File.file?(bin) && File.executable?(bin) && ensure_macos_file_picker_entitlement(candidate)
-          end
-          return [File.join(app_path, "Contents", "MacOS", "ruflet_client"), url] if app_path
+          app_path = File.join(root, "desktop", "ruflet_client.app")
+          bin = File.join(app_path, "Contents", "MacOS", "ruflet_client")
+          return [bin, url] if File.file?(bin) && File.executable?(bin) && ensure_macos_file_picker_entitlement(app_path)
         elsif host_os.match?(/mswin|mingw|cygwin/i)
-          exe = File.join(root, "build", "windows", "x64", "runner", "Release", "ruflet_client.exe")
-          prebuilt = File.join(root, "desktop", "ruflet_client.exe")
-          exe = prebuilt if !File.file?(exe) && File.file?(prebuilt)
+          exe = File.join(root, "desktop", "ruflet_client.exe")
           return [exe, url] if File.file?(exe)
         else
-          direct = File.join(root, "build", "linux", "x64", "release", "bundle", "ruflet_client")
-          prebuilt_direct = File.join(root, "desktop", "ruflet_client")
-          direct = prebuilt_direct if !File.file?(direct) && File.file?(prebuilt_direct)
+          direct = File.join(root, "desktop", "ruflet_client")
           return [direct, url] if File.file?(direct)
-          bundle_dir = File.join(root, "build", "linux", "x64", "release", "bundle")
-          if Dir.exist?(bundle_dir)
-            candidate = Dir.children(bundle_dir).map { |f| File.join(bundle_dir, f) }
-              .find { |path| File.file?(path) && File.executable?(path) }
-            return [candidate, url] if candidate
-          end
         end
 
         nil
@@ -857,9 +720,13 @@ module Ruflet
         start_port
       end
 
-      def resolve_backend_port(_target, requested_port: 8550)
+      def default_backend_port(target)
+        DEFAULT_BACKEND_PORTS.fetch(target.to_s, DEFAULT_BACKEND_PORTS.fetch("mobile"))
+      end
+
+      def resolve_backend_port(target, requested_port: nil)
         base = requested_port.to_i
-        base = 8550 if base <= 0
+        base = default_backend_port(target) if base <= 0
         find_available_port(base)
       end
 

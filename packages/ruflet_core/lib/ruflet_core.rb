@@ -10,7 +10,8 @@ module Ruflet
 
   module_function
 
-  def run(entrypoint = nil, host: "0.0.0.0", port: 8550, &block)
+  def run(entrypoint = nil, host: "0.0.0.0", port: nil, &block)
+    port = normalize_run_port(port || ENV["RUFLET_PORT"] || 8550)
     callback = entrypoint || block
     raise ArgumentError, "Ruflet.run requires a callable entrypoint or block" unless callback.respond_to?(:call)
 
@@ -36,5 +37,11 @@ module Ruflet
     yield
   ensure
     @run_interceptors_mutex.synchronize { @run_interceptors.delete(interceptor) }
+  end
+
+  def normalize_run_port(value)
+    Integer(value)
+  rescue ArgumentError, TypeError
+    8550
   end
 end

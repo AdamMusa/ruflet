@@ -45,15 +45,52 @@ class RufletCliRunCommandTest < Minitest::Test
     refute runner.send(:release_asset_matches?, "ruflet_client-macos.tar.gz", :desktop, "macos")
   end
 
-  def test_web_server_proxies_same_origin_websocket_without_runtime_globals
+  def test_web_client_opens_backend_url_without_python_proxy
     runner = DummyRunner.new
-    command = runner.send(:web_server_command, 8551, 8550)
+    opened = []
+    runner.define_singleton_method(:open_in_browser_app_mode) { |url| opened << [:app, url]; nil }
+    runner.define_singleton_method(:open_in_browser) { |url| opened << [:browser, url] }
 
-    assert_equal ["python3", "-c"], command.first(2)
-    assert_includes command.last, 'self.path.split("?", 1)[0] == "/ws"'
-    assert_includes command.last, 'socket.create_connection(("127.0.0.1", 8550))'
-    refute_includes command.last, "__RUFLET_URL__"
-    assert_equal "http://localhost:8551/", runner.send(:web_client_url, 8551)
+    pids = nil
+    out, = capture_io { pids = runner.send(:launch_web_client, 8551) }
+
+    # Browser is opened at the backend's own origin (no separate web port).
+    assert_equal [[:app, "http://localhost:8551/"], [:browser, "http://localhost:8551/"]], opened
+    assert_includes out, "http://localhost:8551/"
+    assert_equal [], pids
+    # The Python static-server/proxy is gone entirely.
+    refute runner.respond_to?(:web_server_command, true)
+    refute runner.respond_to?(:web_client_url, true)
+  end
+
+  def test_run_targets_have_separate_default_backend_ports
+    runner = DummyRunner.new
+
+    assert_equal 8550, runner.send(:default_backend_port, "web")
+    assert_equal 8560, runner.send(:default_backend_port, "desktop")
+    assert_equal 8570, runner.send(:default_backend_port, "mobile")
+    assert_equal 8570, runner.send(:default_backend_port, "unknown")
+  end
+
+  def test_resolve_backend_port_starts_from_target_default_without_explicit_port
+    runner = DummyRunner.new
+    starts = []
+    runner.define_singleton_method(:find_available_port) do |start_port, **_options|
+      starts << start_port
+      start_port
+    end
+
+    assert_equal 8550, runner.send(:resolve_backend_port, "web")
+    assert_equal 8560, runner.send(:resolve_backend_port, "desktop")
+    assert_equal 8570, runner.send(:resolve_backend_port, "mobile")
+    assert_equal [8550, 8560, 8570], starts
+  end
+
+  def test_resolve_backend_port_keeps_explicit_port_as_base
+    runner = DummyRunner.new
+    runner.define_singleton_method(:find_available_port) { |start_port, **_options| start_port }
+
+    assert_equal 9000, runner.send(:resolve_backend_port, "desktop", requested_port: 9000)
   end
 
   def test_prebuilt_macos_desktop_presence_repairs_missing_file_picker_entitlement
@@ -106,109 +143,105 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
-  def test_project_run_requires_managed_client_for_extension_services
+  def test_desktop_client_launch_never_builds_from_source
     runner = DummyRunner.new
+
+    refute runner.respond_to?(:detect_project_desktop_client_command, true),
+           "ruflet run must launch the prebuilt client, never compile one from source"
 
     Dir.mktmpdir do |dir|
       File.write(File.join(dir, "ruflet.yaml"), <<~YAML)
         extensions:
           - map
-          - audio-recorder
-      YAML
-
-      Dir.chdir(dir) do
-        assert runner.send(:project_run_requires_managed_client?)
-      end
-    end
-  end
-
-  def test_project_run_does_not_require_managed_client_without_extensions
-    runner = DummyRunner.new
-
-    Dir.mktmpdir do |dir|
-      File.write(File.join(dir, "services.yaml"), <<~YAML)
+          - code_editor
+          - rive
         services:
-          - unknown_service
+          - camera
+          - geolocator
       YAML
 
+      detect_calls = []
+      runner.define_singleton_method(:detect_desktop_client_command) do |url|
+        detect_calls << url
+        nil
+      end
+
       Dir.chdir(dir) do
-        refute runner.send(:project_run_requires_managed_client?)
+        runner.send(:launch_desktop_client, "http://localhost:8550")
+      end
+
+      assert_equal ["http://localhost:8550"], detect_calls
+    end
+  end
+
+  def test_macos_desktop_client_detection_ignores_local_flutter_build
+    skip "macOS-specific desktop bundle layout" unless RbConfig::CONFIG["host_os"].match?(/darwin/i)
+
+    runner = DummyRunner.new
+
+    Dir.mktmpdir do |dir|
+      release_bin = File.join(dir, "ruflet_client", "build", "macos", "Build", "Products", "Release", "ruflet_client.app", "Contents", "MacOS", "ruflet_client")
+      FileUtils.mkdir_p(File.dirname(release_bin))
+      File.write(release_bin, "#!/bin/sh\n")
+      FileUtils.chmod("+x", release_bin)
+
+      desktop_bin = File.join(dir, "ruflet_client", "desktop", "ruflet_client.app", "Contents", "MacOS", "ruflet_client")
+      FileUtils.mkdir_p(File.dirname(desktop_bin))
+      File.write(desktop_bin, "#!/bin/sh\n")
+      FileUtils.chmod("+x", desktop_bin)
+
+      runner.define_singleton_method(:ensure_macos_file_picker_entitlement) { |_app_path| true }
+
+      with_env("RUFLET_CLIENT_DIR" => File.join(dir, "ruflet_client")) do
+        command = runner.send(:detect_desktop_client_command, "http://localhost:8550")
+
+        assert_equal [desktop_bin, "http://localhost:8550"], command
       end
     end
   end
 
-  def test_project_run_ignores_service_backed_extension_without_service
+  def test_macos_desktop_client_detection_never_returns_build_artifact
+    skip "macOS-specific desktop bundle layout" unless RbConfig::CONFIG["host_os"].match?(/darwin/i)
+
     runner = DummyRunner.new
 
     Dir.mktmpdir do |dir|
-      File.write(File.join(dir, "ruflet.yaml"), "extensions:\n  - camera\n")
-      File.write(File.join(dir, "services.yaml"), "services: []\n")
+      release_bin = File.join(dir, "ruflet_client", "build", "macos", "Build", "Products", "Release", "ruflet_client.app", "Contents", "MacOS", "ruflet_client")
+      FileUtils.mkdir_p(File.dirname(release_bin))
+      File.write(release_bin, "#!/bin/sh\n")
+      FileUtils.chmod("+x", release_bin)
 
-      Dir.chdir(dir) do
-        refute runner.send(:project_run_requires_managed_client?)
+      runner.define_singleton_method(:ensure_prebuilt_client) { |**_options| nil }
+
+      with_env("RUFLET_CLIENT_DIR" => File.join(dir, "ruflet_client")) do
+        assert_nil runner.send(:detect_desktop_client_command, "http://localhost:8550")
       end
     end
   end
 
-  def test_project_desktop_client_command_prepares_extension_client
+  def test_macos_desktop_client_detection_falls_back_to_cached_desktop_app
+    skip "macOS-specific desktop bundle layout" unless RbConfig::CONFIG["host_os"].match?(/darwin/i)
+
     runner = DummyRunner.new
 
     Dir.mktmpdir do |dir|
-      client_dir = File.join(dir, "build", "client")
-      FileUtils.mkdir_p(client_dir)
-      File.write(File.join(dir, "ruflet.yaml"), <<~YAML)
-        extensions:
-          - map
-      YAML
+      local_build_bin = File.join(dir, "project", "ruflet_client", "build", "macos", "Build", "Products", "Release", "ruflet_client.app", "Contents", "MacOS", "ruflet_client")
+      FileUtils.mkdir_p(File.dirname(local_build_bin))
+      File.write(local_build_bin, "#!/bin/sh\n")
+      FileUtils.chmod("+x", local_build_bin)
 
-      prepare_calls = []
-      flutter_calls = []
-      runner.define_singleton_method(:host_platform_name) { "macos" }
-      runner.define_singleton_method(:ensure_ruflet_build_assets) { |verbose:| verbose == false }
-      runner.define_singleton_method(:ensure_flutter_client_dir) { |verbose:| verbose == false ? client_dir : nil }
-      runner.define_singleton_method(:ensure_flutter!) do |purpose, client_dir:|
-        flutter_calls << { purpose: purpose, client_dir: client_dir }
-        { env: { "PATH" => "/bin" }, flutter: "/fake/flutter" }
-      end
-      runner.define_singleton_method(:build_tool_env) do |env, platform, path|
-        env.merge("RUFLET_PLATFORM" => platform, "RUFLET_CLIENT_DIR" => path)
-      end
-      runner.define_singleton_method(:prepare_flutter_client) do |path, platform:, tools:, config:, self_contained:, verbose:|
-        prepare_calls << {
-          path: path,
-          platform: platform,
-          tools: tools,
-          config: config,
-          self_contained: self_contained,
-          verbose: verbose
-        }
-        true
-      end
+      cached_bin = File.join(dir, "cache", "desktop", "ruflet_client.app", "Contents", "MacOS", "ruflet_client")
+      FileUtils.mkdir_p(File.dirname(cached_bin))
+      File.write(cached_bin, "#!/bin/sh\n")
+      FileUtils.chmod("+x", cached_bin)
 
-      Dir.chdir(dir) do
-        cmd = runner.send(:detect_project_desktop_client_command, "http://localhost:8550")
+      runner.define_singleton_method(:ensure_macos_file_picker_entitlement) { |_app_path| true }
+      runner.define_singleton_method(:ensure_prebuilt_client) { |**_options| File.join(dir, "cache") }
 
-        assert_equal [{ purpose: "run", client_dir: client_dir }], flutter_calls
-        assert_equal 1, prepare_calls.length
-        assert_equal ["map"], prepare_calls.first[:config]["extensions"]
-        assert_equal false, prepare_calls.first[:self_contained]
-        assert_equal false, prepare_calls.first[:verbose]
-        assert_equal "macos", prepare_calls.first[:platform]
-        assert_equal client_dir, prepare_calls.first[:path]
-        assert_equal(
-          [
-            { "PATH" => "/bin", "RUFLET_PLATFORM" => "macos", "RUFLET_CLIENT_DIR" => client_dir },
-            "/fake/flutter",
-            "run",
-            "-d",
-            "macos",
-            "--target",
-            "lib/main.server.dart",
-            "--dart-define",
-            "RUFLET_BACKEND_URL=http://localhost:8550"
-          ],
-          cmd
-        )
+      Dir.chdir(File.join(dir, "project")) do
+        command = runner.send(:detect_desktop_client_command, "http://localhost:8550")
+
+        assert_equal [cached_bin, "http://localhost:8550"], command
       end
     end
   end
@@ -402,6 +435,23 @@ class RufletCliRunCommandTest < Minitest::Test
   end
 
   private
+
+  def with_env(values)
+    previous = values.transform_values { |_value| nil }
+    values.each do |key, value|
+      previous[key] = ENV[key]
+      ENV[key] = value
+    end
+    yield
+  ensure
+    previous&.each do |key, value|
+      if value.nil?
+        ENV.delete(key)
+      else
+        ENV[key] = value
+      end
+    end
+  end
 
   def make_client_native_files(dir)
     FileUtils.mkdir_p(File.join(dir, "android", "app", "src", "main"))
