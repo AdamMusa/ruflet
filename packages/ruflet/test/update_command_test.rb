@@ -431,7 +431,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
           dependencies:
             flutter:
               sdk: flutter
-            flet: any
+            flet:
+              path: flet_packages/flet
         YAML
       )
       File.write(
@@ -456,6 +457,10 @@ class RufletCliUpdateCommandTest < Minitest::Test
 
         pubspec = YAML.safe_load(File.read(File.join(client_dir, "pubspec.yaml")), aliases: true)
         assert pubspec.dig("dependencies", "flet_webview")
+        assert_equal(
+          { "path" => "flet_packages/flet" },
+          pubspec.dig("dependency_overrides", "flet")
+        )
 
         main = File.read(File.join(client_dir, "lib", "main.self.dart"))
         assert_includes main, "package:flet_webview/flet_webview.dart"
@@ -848,8 +853,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes out.string, "[ruflet build] running flutter pub get"
       assert_includes out.string, "[ruflet build] mode=self"
       assert_includes out.string, "[ruflet build] target=lib/main.self.dart"
-      assert_includes out.string, "[ruflet build] command=flutter build apk --target lib/main.self.dart --dart-define RUFLET_BACKEND_URL=https://api.example.com -v"
-      assert_equal ["flutter", "build", "apk", "--target", "lib/main.self.dart", "--dart-define", "RUFLET_BACKEND_URL=https://api.example.com", "-v"], calls.first[:args]
+      assert_includes out.string, "[ruflet build] command=flutter build apk --target lib/main.self.dart --dart-define RUFLET_BACKEND_URL=https://api.example.com --dart-define RUFLET_EMBEDDED_PROJECT=ruflet -v"
+      assert_equal ["flutter", "build", "apk", "--target", "lib/main.self.dart", "--dart-define", "RUFLET_BACKEND_URL=https://api.example.com", "--dart-define", "RUFLET_EMBEDDED_PROJECT=ruflet", "-v"], calls.first[:args]
       assert_equal client_dir, calls.first[:chdir]
     ensure
       $stdout = original_stdout
@@ -1076,7 +1081,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
 
       assert_equal 0, code
       refute calls.first[:env].key?("BUNDLE_GEMFILE")
-      assert_equal ["flutter", "build", "ios", "--codesign", "--target", "lib/main.self.dart"], calls.first[:args]
+      assert_equal ["flutter", "build", "ios", "--codesign", "--target", "lib/main.self.dart", "--dart-define", "RUFLET_EMBEDDED_PROJECT=ruflet"], calls.first[:args]
       refute_includes calls.first[:env]["PATH"], "/Users/macbookpro/.gem/ruby/3.4.0/bin"
       assert_includes calls.first[:env]["PATH"], File.join(client_dir, ".ruflet", "bin")
       assert File.executable?(File.join(client_dir, ".ruflet", "bin", "pod"))

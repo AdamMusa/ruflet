@@ -170,6 +170,10 @@ module Ruflet
         backend_url = configured_backend_url(config)
         if self_contained
           build_args += ["--dart-define", "RUFLET_BACKEND_URL=#{backend_url}"] if backend_url
+          # Pin the embedded entry project so the runtime doesn't have to guess.
+          # Apps that bundle nested projects (e.g. ruflet_studio's standalone_apps,
+          # each with their own main.rb) otherwise trip auto-discovery.
+          build_args += ["--dart-define", "RUFLET_EMBEDDED_PROJECT=#{self_contained_project_name}"]
         else
           unless backend_url
             warn "build config error: backend_url is required for server-driven builds"
@@ -1791,7 +1795,19 @@ module Ruflet
         end
 
         data["dependencies"] = deps
+        sync_local_flet_dependency_override(data, deps["flet"])
         write_pubspec_yaml(path, data)
+      end
+
+      # Git-backed Flet extensions declare their own Flet source. When Ruflet
+      # vendors the core engine locally, force every extension to resolve that
+      # same copy instead of letting Pub reject the mixed sources.
+      def sync_local_flet_dependency_override(data, flet_dependency)
+        return unless flet_dependency.is_a?(Hash) && key_defined?(flet_dependency, "path")
+
+        overrides = data["dependency_overrides"]
+        overrides = data["dependency_overrides"] = {} unless overrides.is_a?(Hash)
+        overrides["flet"] = flet_dependency
       end
 
       def template_client_pubspec_dependencies
