@@ -448,6 +448,10 @@ module Ruflet
       @page_event_handlers["view_pop"] = handler
     end
 
+    def on_resize=(handler)
+      @page_event_handlers["resize"] = handler
+    end
+
     def on(event_name, &block)
       @page_event_handlers[event_name.to_s.sub(/\Aon_/, "")] = block
       self
@@ -1275,6 +1279,12 @@ module Ruflet
           # view — the picker that "reappears after going home".
           dismiss_tracked_dialogs! if route_from_event && route_from_event != @page_props["route"]
           @page_props["route"] = route_from_event if route_from_event
+        elsif name.to_s == "resize"
+          # The client reports the live page size via the "resize" event. Store
+          # it so `page.width`/`page.height` reflect the real viewport — without
+          # this, responsive layouts collapse on clients (e.g. embedded/iOS)
+          # that don't know their size at the initial handshake.
+          store_reported_page_size(data)
         end
         dispatch_page_event(name: name, data: data)
         return
@@ -1596,6 +1606,15 @@ module Ruflet
       else
         nil
       end
+    end
+
+    def store_reported_page_size(data)
+      return unless data.is_a?(Hash)
+
+      width = data["width"] || data[:width]
+      height = data["height"] || data[:height]
+      @page_props["width"] = width unless width.nil?
+      @page_props["height"] = height unless height.nil?
     end
 
     def dispatch_page_event(name:, data:)
