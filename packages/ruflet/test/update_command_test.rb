@@ -486,6 +486,74 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  def test_generated_client_keeps_only_selected_local_flet_packages_and_restores_new_selections
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      template_dir = File.join(dir, "template")
+      client_dir = File.join(dir, "client")
+      package_names = %w[flet flet_camera flet_permission_handler flet_webview]
+      package_names.each do |package_name|
+        source = File.join(template_dir, "flet_packages", package_name)
+        target = File.join(client_dir, "flet_packages", package_name)
+        FileUtils.mkdir_p(source)
+        File.write(File.join(source, "pubspec.yaml"), "name: #{package_name}\n")
+        FileUtils.mkdir_p(target)
+        File.write(File.join(target, "pubspec.yaml"), "name: #{package_name}\n")
+      end
+
+      original_method = Ruflet::CLI.method(:resolve_ruflet_client_template_root)
+      Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root) { template_dir }
+      Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
+
+      begin
+        builder.send(:sync_client_flet_packages, client_dir, ["flet_webview"])
+
+        assert_path_exists File.join(client_dir, "flet_packages", "flet")
+        assert_path_exists File.join(client_dir, "flet_packages", "flet_webview")
+        refute_path_exists File.join(client_dir, "flet_packages", "flet_camera")
+        refute_path_exists File.join(client_dir, "flet_packages", "flet_permission_handler")
+
+        builder.send(:sync_client_flet_packages, client_dir, %w[flet_camera flet_permission_handler])
+
+        assert_path_exists File.join(client_dir, "flet_packages", "flet")
+        assert_path_exists File.join(client_dir, "flet_packages", "flet_camera")
+        assert_path_exists File.join(client_dir, "flet_packages", "flet_permission_handler")
+        refute_path_exists File.join(client_dir, "flet_packages", "flet_webview")
+      ensure
+        Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root, original_method)
+        Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
+      end
+    end
+  end
+
+  def test_standalone_ruflet_client_keeps_full_local_flet_package_catalog
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      template_dir = File.join(dir, "templates", "ruflet_flutter_template")
+      client_dir = File.join(dir, "ruflet_client")
+      %w[flet flet_camera flet_webview].each do |package_name|
+        FileUtils.mkdir_p(File.join(template_dir, "flet_packages", package_name))
+        FileUtils.mkdir_p(File.join(client_dir, "flet_packages", package_name))
+      end
+
+      original_method = Ruflet::CLI.method(:resolve_ruflet_client_template_root)
+      Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root) { template_dir }
+      Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
+
+      begin
+        builder.send(:sync_client_flet_packages, client_dir, [])
+
+        assert_path_exists File.join(client_dir, "flet_packages", "flet_camera")
+        assert_path_exists File.join(client_dir, "flet_packages", "flet_webview")
+      ensure
+        Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root, original_method)
+        Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
+      end
+    end
+  end
+
   def test_refresh_managed_client_template_files_refreshes_macos_entitlements
     builder = DummyBuilder.new
 

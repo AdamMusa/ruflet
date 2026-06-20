@@ -1199,6 +1199,7 @@ module Ruflet
         extension_packages = extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:package) }.uniq
         extension_aliases = extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:alias) }.uniq
 
+        sync_client_flet_packages(client_dir, extension_packages)
         pubspec_path = File.join(client_dir, "pubspec.yaml")
         if File.file?(pubspec_path)
           sync_client_extension_dependencies(pubspec_path, extension_packages)
@@ -1839,6 +1840,50 @@ module Ruflet
 
         data["dependencies"] = deps
         write_pubspec_yaml(path, data)
+      end
+
+      def sync_client_flet_packages(client_dir, selected_packages)
+        template_root =
+          if Ruflet::CLI.respond_to?(:resolve_ruflet_client_template_root, true)
+            Ruflet::CLI.send(:resolve_ruflet_client_template_root)
+          end
+        return unless template_root
+
+        source_root = File.join(template_root, "flet_packages")
+        target_root = File.join(client_dir, "flet_packages")
+        return unless Dir.exist?(source_root)
+        return if File.expand_path(source_root) == File.expand_path(target_root)
+
+        # The repository's standalone client intentionally carries the full
+        # local package catalog. Only generated/template-derived clients are
+        # conditioned for a particular Ruflet application.
+        return if standalone_ruflet_client_source?(client_dir, template_root)
+
+        known_packages = CLIENT_EXTENSION_MAP.values.map { |meta| meta.fetch(:package) }.uniq
+        required_packages = (["flet"] + selected_packages).uniq
+
+        FileUtils.mkdir_p(target_root)
+        required_packages.each do |package_name|
+          source = File.join(source_root, package_name)
+          target = File.join(target_root, package_name)
+          next unless Dir.exist?(source)
+          next if Dir.exist?(target)
+
+          FileUtils.cp_r(source, target)
+        end
+
+        (known_packages - selected_packages).each do |package_name|
+          FileUtils.rm_rf(File.join(target_root, package_name))
+        end
+      end
+
+      def standalone_ruflet_client_source?(client_dir, template_root)
+        client_root = File.expand_path(client_dir)
+        candidates = [
+          File.expand_path("../../ruflet_client", template_root),
+          File.expand_path("../../../../../ruflet_client", __dir__)
+        ]
+        candidates.any? { |candidate| File.expand_path(candidate) == client_root }
       end
 
       def sync_client_extension_dependencies(path, selected_packages)
