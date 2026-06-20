@@ -704,20 +704,12 @@ module Ruflet
         port = start_port.to_i
 
         max_attempts.times do
-          begin
-            begin
-              probe = TCPServer.new("0.0.0.0", port)
-            rescue Errno::EACCES, Errno::EPERM
-              probe = TCPServer.new("127.0.0.1", port)
-            end
-            probe.close
-            return port
-          rescue Errno::EADDRINUSE, Errno::EACCES, Errno::EPERM
-            port += 1
-          end
+          return port if port_available?(port)
+
+          port += 1
         end
 
-        start_port
+        nil
       end
 
       def default_backend_port(target)
@@ -727,7 +719,9 @@ module Ruflet
       def resolve_backend_port(target, requested_port: nil)
         base = requested_port.to_i
         base = default_backend_port(target) if base <= 0
-        find_available_port(base)
+        selected = find_available_port(base)
+        warn "No available Ruflet port found starting at #{base}." unless selected
+        selected
       end
 
       def port_available?(port)
@@ -739,7 +733,7 @@ module Ruflet
             probe = TCPServer.new("127.0.0.1", port)
           end
           true
-        rescue Errno::EADDRINUSE
+        rescue Errno::EADDRINUSE, Errno::EACCES, Errno::EPERM
           false
         ensure
           probe&.close

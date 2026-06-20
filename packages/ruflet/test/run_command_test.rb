@@ -93,6 +93,27 @@ class RufletCliRunCommandTest < Minitest::Test
     assert_equal 9000, runner.send(:resolve_backend_port, "desktop", requested_port: 9000)
   end
 
+  def test_resolve_backend_port_skips_port_used_by_another_run
+    runner = DummyRunner.new
+    busy_port = 9123
+    runner.define_singleton_method(:port_available?) { |port| port != busy_port }
+
+    selected = runner.send(:resolve_backend_port, "web", requested_port: busy_port)
+
+    assert_equal busy_port + 1, selected
+  end
+
+  def test_resolve_backend_port_fails_cleanly_when_range_is_exhausted
+    runner = DummyRunner.new
+    runner.define_singleton_method(:port_available?) { |_port| false }
+
+    _out, err = capture_io do
+      assert_nil runner.send(:resolve_backend_port, "mobile", requested_port: 9200)
+    end
+
+    assert_includes err, "No available Ruflet port found starting at 9200."
+  end
+
   def test_prebuilt_macos_desktop_presence_repairs_missing_file_picker_entitlement
     runner = DummyRunner.new
 
