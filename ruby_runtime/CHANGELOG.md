@@ -1,5 +1,7 @@
 ## 0.0.6
 
+- Update embedded Ruflet pages from client resize events so `page.width` and
+  `page.height` reflect the live viewport, and expose `page.on_resize`.
 - Add Linux desktop support: a GTK plugin (`linux/`) embeds mruby exactly like
   the macOS plugin and implements the full `ruby_runtime` method channel
   (`eval`, `runFile`, `reset`, `startFileServer`, `stopFileServer`,
