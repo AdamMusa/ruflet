@@ -296,6 +296,20 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  def test_rive_extension_does_not_require_native_linker_overrides
+    template_dir = File.expand_path("../../../templates/ruflet_flutter_template", __dir__)
+    podfile = File.read(File.join(template_dir, "ios", "Podfile"))
+    template_pubspec = YAML.safe_load(
+      File.read(File.join(template_dir, "pubspec.yaml")),
+      aliases: true
+    )
+
+    assert template_pubspec.dig("dependencies", "flet_rive")
+    refute template_pubspec.dig("dependencies", "rive_native")
+    refute_includes podfile, "rive_native"
+    refute_includes podfile, "force_load"
+  end
+
   def test_prepare_flutter_client_uses_explicit_local_ruby_runtime_override
     builder = DummyBuilder.new
 
