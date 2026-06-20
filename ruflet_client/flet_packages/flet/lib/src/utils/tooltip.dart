@@ -1,0 +1,78 @@
+import 'package:flutter/material.dart';
+import 'enums.dart';
+
+import '../models/control.dart';
+import 'box.dart';
+import 'colors.dart';
+import 'edge_insets.dart';
+import 'mouse.dart';
+import 'numbers.dart';
+import 'text.dart';
+import 'time.dart';
+
+TooltipTriggerMode? parseTooltipTriggerMode(String? value,
+    [TooltipTriggerMode? defaultValue]) {
+  return parseEnum(TooltipTriggerMode.values, value, defaultValue);
+}
+
+Tooltip? parseTooltip(dynamic value, BuildContext context, Widget widget) {
+  if (value == null) {
+    return null;
+  } else if (value is String) {
+    return Tooltip(
+        message: value,
+        waitDuration: const Duration(milliseconds: 800),
+        child: widget);
+  }
+
+  var theme = Theme.of(context);
+
+  /// The tooltip shape defaults to a rounded rectangle with a border radius of
+  /// 4.0. Tooltips will also default to an opacity of 90%
+  var defaultDecoration = BoxDecoration(
+      borderRadius: BorderRadius.circular(4.0),
+      color: parseColor(
+          value["bgcolor"],
+          theme,
+          theme.brightness == Brightness.light
+              ? Colors.grey[700]
+              : Colors.white));
+  var decoration = parseBoxDecoration(value["decoration"], context);
+  var finalDecoration = defaultDecoration.copyWith(
+    color: decoration?.color,
+    borderRadius: decoration?.borderRadius,
+    border: decoration?.border,
+    boxShadow: decoration?.boxShadow,
+    gradient: decoration?.gradient,
+    image: decoration?.image,
+    shape: decoration?.shape,
+    backgroundBlendMode: decoration?.backgroundBlendMode,
+  );
+  return Tooltip(
+    message: value["message"],
+    enableFeedback: parseBool(value["enable_feedback"]),
+    enableTapToDismiss: parseBool(value["tap_to_dismiss"], true)!,
+    excludeFromSemantics: parseBool(value["exclude_from_semantics"]),
+    constraints: parseBoxConstraints(value["size_constraints"]),
+    exitDuration: parseDuration(value["exit_duration"]),
+    preferBelow: parseBool(value["prefer_below"]),
+    padding: parseEdgeInsets(value["padding"]),
+    decoration: finalDecoration,
+    textStyle: parseTextStyle(value["text_style"], theme),
+    verticalOffset: parseDouble(value["vertical_offset"]),
+    margin: parseEdgeInsets(value["margin"]),
+    mouseCursor: parseMouseCursor(value["mouse_cursor"]),
+    textAlign: parseTextAlign(value["text_align"]),
+    showDuration: parseDuration(value["show_duration"]),
+    waitDuration: parseDuration(value["wait_duration"]),
+    triggerMode: parseTooltipTriggerMode(value["trigger_mode"]),
+    child: widget,
+  );
+}
+
+extension TooltipParsers on Control {
+  TooltipTriggerMode? getTooltipTriggerMode(String propertyName,
+      [TooltipTriggerMode? defaultValue]) {
+    return parseTooltipTriggerMode(get(propertyName), defaultValue);
+  }
+}

@@ -13,7 +13,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   pasteboard
   permission_handler_windows
   record_windows
-  rive_native
+  rive_common
   screen_brightness_windows
   screen_retriever_windows
   share_plus

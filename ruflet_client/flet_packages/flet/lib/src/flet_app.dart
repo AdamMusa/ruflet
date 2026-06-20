@@ -1,0 +1,88 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'controls/control_widget.dart';
+import 'flet_app_errors_handler.dart';
+import 'flet_backend.dart';
+import 'flet_extension.dart';
+import 'models/control.dart';
+import 'testing/tester.dart';
+
+/// FletApp - The top-level widget that initializes everything
+class FletApp extends StatefulWidget {
+  final String pageUrl;
+  final String assetsDir;
+  final bool? showAppStartupScreen;
+  final String? appStartupScreenMessage;
+  final String? appErrorMessage;
+  final int? controlId;
+  final String? title;
+  final FletAppErrorsHandler? errorsHandler;
+  final int? reconnectIntervalMs;
+  final int? reconnectTimeoutMs;
+  final List<FletExtension>? extensions;
+  final Map<String, dynamic>? args;
+  final bool? forcePyodide;
+  final Tester? tester;
+  final bool multiView;
+
+  const FletApp(
+      {super.key,
+      required this.pageUrl,
+      required this.assetsDir,
+      this.showAppStartupScreen,
+      this.appStartupScreenMessage,
+      this.appErrorMessage,
+      this.controlId,
+      this.title,
+      this.errorsHandler,
+      this.reconnectIntervalMs,
+      this.reconnectTimeoutMs,
+      this.extensions,
+      this.args,
+      this.forcePyodide,
+      this.tester,
+      this.multiView = false});
+
+  @override
+  State<FletApp> createState() => _FletAppState();
+}
+
+class _FletAppState extends State<FletApp> {
+  FletBackend? backend;
+
+  @override
+  void deactivate() {
+    backend?.dispose();
+    super.deactivate();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider<FletBackend>(
+      create: (context) {
+        return FletBackend(
+            showAppStartupScreen: widget.showAppStartupScreen,
+            appStartupScreenMessage: widget.appStartupScreenMessage,
+            appErrorMessage: widget.appErrorMessage,
+            controlId: widget.controlId,
+            reconnectIntervalMs: widget.reconnectIntervalMs,
+            reconnectTimeoutMs: widget.reconnectTimeoutMs,
+            pageUri: Uri.parse(widget.pageUrl),
+            assetsDir: widget.assetsDir,
+            errorsHandler: widget.errorsHandler,
+            extensions: widget.extensions ?? [],
+            args: widget.args,
+            forcePyodide: widget.forcePyodide,
+            tester: widget.tester,
+            multiView: widget.multiView,
+            parentFletBackend:
+                Provider.of<FletBackend?>(context, listen: false));
+      },
+      child: Selector<FletBackend, Control>(
+        selector: (_, backend) => backend.page,
+        builder: (_, page, __) => ControlWidget(control: page),
+      ),
+    );
+  }
+}

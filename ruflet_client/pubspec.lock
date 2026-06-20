@@ -356,155 +356,121 @@ packages:
   flet:
     dependency: "direct main"
     description:
-      path: "packages/flet"
-      ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      resolved-ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      url: "https://github.com/flet-dev/flet.git"
-    source: git
+      path: "flet_packages/flet"
+      relative: true
+    source: path
     version: "0.80.5"
   flet_audio:
     dependency: "direct main"
     description:
-      path: "sdk/python/packages/flet-audio/src/flutter/flet_audio"
-      ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      resolved-ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      url: "https://github.com/flet-dev/flet.git"
-    source: git
+      path: "flet_packages/flet_audio"
+      relative: true
+    source: path
     version: "0.1.0"
   flet_audio_recorder:
     dependency: "direct main"
     description:
-      path: "sdk/python/packages/flet-audio-recorder/src/flutter/flet_audio_recorder"
-      ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      resolved-ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      url: "https://github.com/flet-dev/flet.git"
-    source: git
+      path: "flet_packages/flet_audio_recorder"
+      relative: true
+    source: path
     version: "0.1.0"
   flet_camera:
     dependency: "direct main"
     description:
-      path: "sdk/python/packages/flet-camera/src/flutter/flet_camera"
-      ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      resolved-ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      url: "https://github.com/flet-dev/flet.git"
-    source: git
+      path: "flet_packages/flet_camera"
+      relative: true
+    source: path
     version: "0.1.0"
   flet_charts:
     dependency: "direct main"
     description:
-      path: "sdk/python/packages/flet-charts/src/flutter/flet_charts"
-      ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      resolved-ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      url: "https://github.com/flet-dev/flet.git"
-    source: git
+      path: "flet_packages/flet_charts"
+      relative: true
+    source: path
     version: "0.1.0"
   flet_code_editor:
     dependency: "direct main"
     description:
-      path: "sdk/python/packages/flet-code-editor/src/flutter/flet_code_editor"
-      ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      resolved-ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      url: "https://github.com/flet-dev/flet.git"
-    source: git
+      path: "flet_packages/flet_code_editor"
+      relative: true
+    source: path
     version: "0.1.0"
   flet_color_pickers:
     dependency: "direct main"
     description:
-      path: "sdk/python/packages/flet-color-pickers/src/flutter/flet_color_pickers"
-      ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      resolved-ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      url: "https://github.com/flet-dev/flet.git"
-    source: git
+      path: "flet_packages/flet_color_pickers"
+      relative: true
+    source: path
     version: "0.1.0"
   flet_datatable2:
     dependency: "direct main"
     description:
-      path: "sdk/python/packages/flet-datatable2/src/flutter/flet_datatable2"
-      ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      resolved-ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      url: "https://github.com/flet-dev/flet.git"
-    source: git
+      path: "flet_packages/flet_datatable2"
+      relative: true
+    source: path
     version: "0.1.0"
   flet_flashlight:
     dependency: "direct main"
     description:
-      path: "sdk/python/packages/flet-flashlight/src/flutter/flet_flashlight"
-      ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      resolved-ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      url: "https://github.com/flet-dev/flet.git"
-    source: git
+      path: "flet_packages/flet_flashlight"
+      relative: true
+    source: path
     version: "0.1.0"
   flet_geolocator:
     dependency: "direct main"
     description:
-      path: "sdk/python/packages/flet-geolocator/src/flutter/flet_geolocator"
-      ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      resolved-ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      url: "https://github.com/flet-dev/flet.git"
-    source: git
+      path: "flet_packages/flet_geolocator"
+      relative: true
+    source: path
     version: "0.1.0"
   flet_lottie:
     dependency: "direct main"
     description:
-      path: "sdk/python/packages/flet-lottie/src/flutter/flet_lottie"
-      ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      resolved-ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      url: "https://github.com/flet-dev/flet.git"
-    source: git
+      path: "flet_packages/flet_lottie"
+      relative: true
+    source: path
     version: "0.1.0"
   flet_map:
     dependency: "direct main"
     description:
-      path: "sdk/python/packages/flet-map/src/flutter/flet_map"
-      ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      resolved-ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      url: "https://github.com/flet-dev/flet.git"
-    source: git
+      path: "flet_packages/flet_map"
+      relative: true
+    source: path
     version: "0.1.0"
   flet_permission_handler:
     dependency: "direct main"
     description:
-      path: "sdk/python/packages/flet-permission-handler/src/flutter/flet_permission_handler"
-      ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      resolved-ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      url: "https://github.com/flet-dev/flet.git"
-    source: git
+      path: "flet_packages/flet_permission_handler"
+      relative: true
+    source: path
     version: "0.1.0"
   flet_rive:
     dependency: "direct main"
     description:
-      path: "sdk/python/packages/flet-rive/src/flutter/flet_rive"
-      ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      resolved-ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      url: "https://github.com/flet-dev/flet.git"
-    source: git
+      path: "flet_packages/flet_rive"
+      relative: true
+    source: path
     version: "0.1.0"
   flet_secure_storage:
     dependency: "direct main"
     description:
-      path: "sdk/python/packages/flet-secure-storage/src/flutter/flet_secure_storage"
-      ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      resolved-ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      url: "https://github.com/flet-dev/flet.git"
-    source: git
+      path: "flet_packages/flet_secure_storage"
+      relative: true
+    source: path
     version: "0.1.0"
   flet_video:
     dependency: "direct main"
     description:
-      path: "sdk/python/packages/flet-video/src/flutter/flet_video"
-      ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      resolved-ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      url: "https://github.com/flet-dev/flet.git"
-    source: git
+      path: "flet_packages/flet_video"
+      relative: true
+    source: path
     version: "0.1.0"
   flet_webview:
     dependency: "direct main"
     description:
-      path: "sdk/python/packages/flet-webview/src/flutter/flet_webview"
-      ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      resolved-ref: "67a9763da3bd2611bbb7626c3a1ec5e9d30fc965"
-      url: "https://github.com/flet-dev/flet.git"
-    source: git
+      path: "flet_packages/flet_webview"
+      relative: true
+    source: path
     version: "0.1.0"
   flutter:
     dependency: "direct main"
@@ -1306,18 +1272,18 @@ packages:
     dependency: transitive
     description:
       name: rive
-      sha256: "95733287b3b5bd6732dc1188f6e13c9eaf9c4320e84ef601b355fe9abbd0967d"
+      sha256: "2551a44fa766a7ed3f52aa2b94feda6d18d00edc25dee5f66e72e9b365bb6d6c"
       url: "https://pub.dev"
     source: hosted
-    version: "0.14.8"
-  rive_native:
+    version: "0.13.20"
+  rive_common:
     dependency: transitive
     description:
-      name: rive_native
-      sha256: aa8a1e4c2c3b3de8e9ba8d6e346ad58ee5b6cc4b07614c0bcd2cf5ef8c4a41e1
+      name: rive_common
+      sha256: "2ba42f80d37a4efd0696fb715787c4785f8a13361e8aea9227c50f1e78cf763a"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.8"
+    version: "0.4.15"
   safe_local_storage:
     dependency: transitive
     description:

@@ -12,15 +12,15 @@ gem install ruflet
 ruflet new my_app
 cd my_app
 bundle install
-bundle exec ruflet run
+ruflet run
 ```
 
 `ruflet run` starts the Ruby backend and prints a QR code for a mobile client.
 Use `--web` to open the web client or `--desktop` to launch the desktop client:
 
 ```bash
-bundle exec ruflet run --web
-bundle exec ruflet run --desktop
+ruflet run --web
+ruflet run --desktop
 ```
 
 ## Write An App
@@ -71,14 +71,14 @@ Declare optional UI extensions, such as maps or webview, in `ruflet.yaml`.
 ## CLI
 
 ```bash
-bundle exec ruflet run [scriptname|path] [--web|--desktop] [--port PORT]
-bundle exec ruflet debug [scriptname|path]
-bundle exec ruflet devices
-bundle exec ruflet emulators
-bundle exec ruflet doctor
-bundle exec ruflet update [web|desktop|all] [--check] [--force]
-bundle exec ruflet build <apk|android|ios|aab|web|macos|windows|linux>
-bundle exec ruflet install [--device DEVICE_ID]
+ruflet run [scriptname|path] [--web|--desktop] [--port PORT]
+ruflet debug [scriptname|path]
+ruflet devices
+ruflet emulators
+ruflet doctor
+ruflet update [web|desktop|all] [--check] [--force]
+ruflet build <apk|android|ios|aab|web|macos|windows|linux>
+ruflet install [--device DEVICE_ID]
 ```
 
 Run `ruflet install` without `--device` to choose from a numbered list of
