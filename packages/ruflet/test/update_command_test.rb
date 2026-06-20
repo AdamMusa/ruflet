@@ -1160,6 +1160,9 @@ class RufletCliUpdateCommandTest < Minitest::Test
         { flutter: "flutter", dart: "dart", env: {} }
       end
       builder.define_singleton_method(:prepare_flutter_client) { |_client_dir, **_kwargs| flunk("install should not run build preparation") }
+      builder.define_singleton_method(:select_install_device) do |**_kwargs|
+        "BE4BD1A5-E81C-4A73-AA4B-10ADFB63BF0A"
+      end
 
       calls = []
       builder.define_singleton_method(:system) do |_env, *_args, chdir: nil|
@@ -1170,7 +1173,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       code = builder.command_install([])
 
       assert_equal 0, code
-      assert_equal ["flutter", "install"], calls.first[:args]
+      assert_equal ["flutter", "install", "-d", "BE4BD1A5-E81C-4A73-AA4B-10ADFB63BF0A"], calls.first[:args]
       assert_equal client_dir, calls.first[:chdir]
       assert File.exist?(File.join(client_dir, "build", "ios", "iphonesimulator", "Runner.app", "Info.plist"))
     ensure
@@ -1234,6 +1237,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
         { flutter: "flutter", dart: "dart", env: {} }
       end
       builder.define_singleton_method(:prepare_flutter_client) { |_client_dir, **_kwargs| flunk("install should not run build preparation") }
+      builder.define_singleton_method(:select_install_device) { |**_kwargs| "macos" }
       builder.define_singleton_method(:system) { |_env, *_args, chdir: nil| flunk("install should not run without built outputs") }
 
       err = StringIO.new
@@ -1246,6 +1250,65 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes err.string, "Could not find built app outputs under ./build"
     ensure
       $stderr = original_stderr
+    end
+  end
+
+  def test_select_install_device_displays_numbered_choices_and_retries
+    builder = DummyBuilder.new
+    devices = [
+      {
+        "name" => "Pixel 9",
+        "id" => "emulator-5554",
+        "targetPlatform" => "android-arm64",
+        "emulator" => true,
+        "isSupported" => true
+      },
+      {
+        "name" => "Adam's iPhone",
+        "id" => "00008140-0019590E3C87001C",
+        "targetPlatform" => "ios",
+        "emulator" => false,
+        "isSupported" => true
+      }
+    ]
+    builder.define_singleton_method(:discover_install_devices) { |**_kwargs| devices }
+    input = StringIO.new("9\n2\n")
+    output = StringIO.new
+
+    selected = builder.send(
+      :select_install_device,
+      flutter: "flutter",
+      env: {},
+      client_dir: "/tmp/client",
+      input: input,
+      output: output
+    )
+
+    assert_equal "00008140-0019590E3C87001C", selected
+    assert_includes output.string, "1) Pixel 9 (android-arm64, emulator) [emulator-5554]"
+    assert_includes output.string, "2) Adam's iPhone (ios, physical) [00008140-0019590E3C87001C]"
+    assert_includes output.string, "Enter a number from 1 to 2."
+  end
+
+  def test_discover_install_devices_uses_flutter_machine_output
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      flutter = File.join(dir, "flutter")
+      File.write(flutter, <<~SH)
+        #!/bin/sh
+        printf '%s' '[{"name":"Phone","id":"phone-1","targetPlatform":"ios","isSupported":true},{"name":"Unsupported","id":"old-1","isSupported":false}]'
+      SH
+      FileUtils.chmod("+x", flutter)
+
+      devices = builder.send(
+        :discover_install_devices,
+        flutter: flutter,
+        env: {},
+        client_dir: dir
+      )
+
+      assert_equal ["phone-1"], devices.map { |device| device["id"] }
     end
   end
 

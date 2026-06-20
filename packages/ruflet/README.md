@@ -36,4 +36,7 @@ ruflet build <apk|android|ios|aab|web|macos|windows|linux> [--self]
 ruflet install [--device DEVICE_ID]
 ```
 
+Run `ruflet install` without `--device` to choose from a numbered list of
+connected devices. Pass `--device DEVICE_ID` to skip the prompt.
+
 Run `ruflet help <command>` for all options.

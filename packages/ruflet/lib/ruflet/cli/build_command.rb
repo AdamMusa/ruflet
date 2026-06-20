@@ -3,6 +3,7 @@
 require "fileutils"
 require "find"
 require "json"
+require "open3"
 require "pathname"
 require "rbconfig"
 require "uri"
@@ -209,8 +210,16 @@ module Ruflet
         end
 
         tools = ensure_flutter!("install", client_dir: client_dir)
-        command_env = install_tool_env(tools[:env], client_dir)
+        discovery_env = unbundled_command_env(tools[:env])
+        device_id ||= select_install_device(
+          flutter: tools[:flutter],
+          env: discovery_env,
+          client_dir: client_dir
+        )
+        return 1 unless device_id
+
         install_platform = install_platform_for_device(device_id)
+        command_env = install_tool_env(tools[:env], client_dir, platform: install_platform)
         unless sync_built_outputs_for_install(client_dir, platform: install_platform, verbose: !!verbose)
           warn "Could not find built app outputs under ./build"
           warn "Run `ruflet build ...` first, then `ruflet install`."
@@ -248,6 +257,59 @@ module Ruflet
         nil
       end
 
+      def select_install_device(flutter:, env:, client_dir:, input: $stdin, output: $stdout)
+        devices = discover_install_devices(flutter: flutter, env: env, client_dir: client_dir)
+        if devices.empty?
+          warn "No supported devices are connected."
+          warn "Run `ruflet devices` to check device availability."
+          return nil
+        end
+
+        output.puts "Available devices:"
+        devices.each_with_index do |device, index|
+          details = [device["targetPlatform"], device["emulator"] ? "emulator" : "physical"].compact
+          output.puts "  #{index + 1}) #{device.fetch("name", device["id"])} (#{details.join(", ")}) [#{device["id"]}]"
+        end
+
+        loop do
+          output.print "Choose a device [1-#{devices.length}]: "
+          output.flush
+          choice = input.gets
+          unless choice
+            warn "Device selection cancelled. Use `--device DEVICE_ID` for noninteractive installs."
+            return nil
+          end
+
+          index = Integer(choice.strip, exception: false)
+          return devices[index - 1]["id"] if index && index.between?(1, devices.length)
+
+          output.puts "Enter a number from 1 to #{devices.length}."
+        end
+      end
+
+      def discover_install_devices(flutter:, env:, client_dir:)
+        stdout, stderr, status = Open3.capture3(
+          env,
+          flutter,
+          "devices",
+          "--machine",
+          chdir: client_dir
+        )
+        unless status.success?
+          warn "Could not list Flutter devices."
+          warn stderr.strip unless stderr.to_s.strip.empty?
+          return []
+        end
+
+        devices = JSON.parse(stdout)
+        Array(devices).select do |device|
+          device.is_a?(Hash) && !device["id"].to_s.empty? && device["isSupported"] != false
+        end
+      rescue JSON::ParserError => e
+        warn "Could not parse Flutter device list: #{e.message}"
+        []
+      end
+
       def ensure_flutter_client_dir(verbose: false)
         client_dir = detect_flutter_client_dir
         return client_dir if client_dir
@@ -269,8 +331,9 @@ module Ruflet
         apple_env
       end
 
-      def install_tool_env(env, client_dir)
-        return build_tool_env(env, inferred_install_platform, client_dir) if inferred_install_platform
+      def install_tool_env(env, client_dir, platform: nil)
+        platform ||= inferred_install_platform
+        return build_tool_env(env, platform, client_dir) if platform
 
         command_env = unbundled_command_env(env)
         command_env["PATH"] = apple_build_path(command_env["PATH"])

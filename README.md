@@ -81,6 +81,9 @@ bundle exec ruflet build <apk|android|ios|aab|web|macos|windows|linux>
 bundle exec ruflet install [--device DEVICE_ID]
 ```
 
+Run `ruflet install` without `--device` to choose from a numbered list of
+connected devices. Pass `--device DEVICE_ID` to skip the prompt.
+
 Add `--self` to a native build when the Ruby runtime and application should be
 packaged inside the client. Without `--self`, the built client connects to a
 separately running Ruflet backend.
