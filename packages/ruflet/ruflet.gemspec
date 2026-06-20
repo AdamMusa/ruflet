@@ -11,6 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary = "Ruflet command line interface package."
   spec.description = "Ruflet command line interface for creating, updating, building, and running Ruflet apps."
   spec.homepage = "https://github.com/AdamMusa/Ruflet"
+  spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1"
 
   spec.files = Dir.glob("lib/**/*.rb") + Dir.glob("assets/*").select { |path| File.file?(path) && !File.basename(path).start_with?(".") } + ["README.md", "bin/ruflet"]

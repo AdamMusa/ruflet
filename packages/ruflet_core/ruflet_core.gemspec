@@ -11,6 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary = "Ruflet core runtime package."
   spec.description = "Ruflet core runtime with the Ruby DSL, controls, protocol, and page runtime."
   spec.homepage = "https://github.com/AdamMusa/Ruflet"
+  spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1"
 
   spec.files = Dir.glob("lib/**/*.{rb,json}") + ["README.md"]

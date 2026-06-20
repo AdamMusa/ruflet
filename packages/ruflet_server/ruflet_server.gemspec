@@ -11,6 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary = "Ruflet server package."
   spec.description = "Ruflet WebSocket server runtime compatible with Flet protocol."
   spec.homepage = "https://github.com/AdamMusa/Ruflet"
+  spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1"
 
   spec.files = Dir.glob("lib/**/*.rb") + ["README.md"]
