@@ -45,7 +45,7 @@ class RufletCliRunCommandTest < Minitest::Test
     refute runner.send(:release_asset_matches?, "ruflet_client-macos.tar.gz", :desktop, "macos")
   end
 
-  def test_web_client_opens_prebuilt_with_explicit_backend_url_without_python_proxy
+  def test_web_client_opens_clean_backend_origin_without_python_proxy
     runner = DummyRunner.new
     opened = []
     runner.define_singleton_method(:open_in_browser_app_mode) { |url| opened << [:app, url]; nil }
@@ -54,16 +54,65 @@ class RufletCliRunCommandTest < Minitest::Test
     pids = nil
     out, = capture_io { pids = runner.send(:launch_web_client, 8551) }
 
-    # The prebuilt client and backend share one origin. Production prebuilts
-    # still need the backend URL passed explicitly so they select WebSocket
-    # transport instead of falling through to the raw socket transport.
-    url = "http://localhost:8551/?url=http%3A%2F%2Flocalhost%3A8551"
+    # The prebuilt client derives its WebSocket backend from its own origin.
+    url = "http://localhost:8551/"
     assert_equal [[:app, url], [:browser, url]], opened
     assert_includes out, url
     assert_equal [], pids
     # The Python static-server/proxy is gone entirely.
     refute runner.respond_to?(:web_server_command, true)
     refute runner.respond_to?(:web_client_url, true)
+  end
+
+  def test_client_release_defaults_to_exact_version_tags
+    runner = DummyRunner.new
+
+    with_env("RUFLET_CLIENT_CHANNEL" => nil) do
+      assert_equal ["v#{Ruflet::VERSION}", Ruflet::VERSION], runner.send(:client_release_tags)
+    end
+  end
+
+  def test_client_release_channel_is_explicit
+    runner = DummyRunner.new
+
+    with_env("RUFLET_CLIENT_CHANNEL" => "prebuild-main") do
+      assert_equal ["prebuild-main"], runner.send(:client_release_tags)
+    end
+  end
+
+  def test_client_release_never_falls_back_to_latest
+    runner = DummyRunner.new
+    requested = []
+    runner.define_singleton_method(:release_by_tag) do |tag|
+      requested << tag
+      nil
+    end
+
+    with_env("RUFLET_CLIENT_CHANNEL" => nil) do
+      assert_nil runner.send(:fetch_release_for_version)
+    end
+    assert_equal ["v#{Ruflet::VERSION}", Ruflet::VERSION], requested
+  end
+
+  def test_client_cache_requires_matching_version_platform_and_release
+    runner = DummyRunner.new
+
+    Dir.mktmpdir do |dir|
+      manifest = {
+        "schema" => 1,
+        "ruflet_version" => Ruflet::VERSION,
+        "platform" => "macos",
+        "release_tag" => "v#{Ruflet::VERSION}"
+      }
+      File.write(File.join(dir, "manifest.json"), JSON.generate(manifest))
+
+      with_env("RUFLET_CLIENT_CHANNEL" => nil) do
+        assert runner.send(:compatible_client_cache?, dir, platform: "macos")
+        manifest["release_tag"] = "Beta"
+        File.write(File.join(dir, "manifest.json"), JSON.generate(manifest))
+        refute runner.send(:compatible_client_cache?, dir, platform: "macos")
+      end
+    end
   end
 
   def test_run_targets_have_separate_default_backend_ports

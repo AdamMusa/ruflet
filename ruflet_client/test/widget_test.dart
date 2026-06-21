@@ -76,4 +76,17 @@ void main() {
 
     expect(url, 'https://explorer.example/');
   });
+
+  test('production web keeps its clean dynamic localhost origin', () {
+    final url = resolveInitialRufletUrl(
+      baseUrl: 'http://localhost:9127/',
+      args: null,
+      isWeb: true,
+      isDebugMode: false,
+      isMobilePlatform: false,
+      productionDefaultUrl: '',
+    );
+
+    expect(url, 'http://localhost:9127/');
+  });
 }

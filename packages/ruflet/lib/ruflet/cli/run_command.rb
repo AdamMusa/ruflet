@@ -194,12 +194,10 @@ module Ruflet
 
       # The Ruby backend (Ruflet::Server) serves the Flutter web client on its
       # own port, so the client loads and opens its websocket on that same
-      # origin. Pass the backend explicitly because production prebuilt clients
-      # do not have a development default URL. Port reassignment still works
-      # automatically because both URLs use the selected backend port.
+      # origin. The prebuilt web client derives its backend from Uri.base, so
+      # the public URL stays clean and dynamic port selection works naturally.
       def launch_web_client(port)
-        backend_url = "http://localhost:#{port}"
-        url = "#{backend_url}/?url=#{URI.encode_www_form_component(backend_url)}"
+        url = "http://localhost:#{port}/"
         browser_pid = open_in_browser_app_mode(url)
         open_in_browser(url) if browser_pid.nil?
         puts "Ruflet web app: #{url}"
@@ -375,8 +373,8 @@ module Ruflet
           return nil if desktop_asset.nil?
           wanted_assets << { kind: :desktop, name: desktop_asset, platform: platform }
         end
-        if !force && (wanted_assets.empty? || prebuilt_assets_present?(cache_root, web: web, desktop: desktop, platform: platform))
-          ensure_client_manifest(cache_root, platform: platform)
+        cached = prebuilt_assets_present?(cache_root, web: web, desktop: desktop, platform: platform)
+        if !force && (wanted_assets.empty? || (cached && compatible_client_cache?(cache_root, platform: platform)))
           return cache_root
         end
 
@@ -474,11 +472,33 @@ module Ruflet
       end
 
       def fetch_release_for_version
-        release_by_tag("v#{ruflet_version}") ||
-          release_by_tag(ruflet_version) ||
-          release_by_tag("prebuild") ||
-          release_by_tag("prebuild-main") ||
-          release_latest
+        client_release_tags.each do |tag|
+          release = release_by_tag(tag)
+          return release if release
+        end
+
+        nil
+      end
+
+      def client_release_tags
+        channel = ENV["RUFLET_CLIENT_CHANNEL"].to_s.strip
+        unless channel.empty?
+          raise ArgumentError, "Invalid RUFLET_CLIENT_CHANNEL" unless channel.match?(/\A[A-Za-z0-9._-]+\z/)
+
+          return [channel]
+        end
+
+        ["v#{ruflet_version}", ruflet_version]
+      end
+
+      def compatible_client_cache?(root, platform:)
+        manifest = read_client_manifest(root)
+        return false unless manifest
+
+        manifest["schema"] == 1 &&
+          manifest["ruflet_version"] == ruflet_version &&
+          manifest["platform"] == platform &&
+          client_release_tags.include?(manifest["release_tag"])
       end
 
       def ruflet_version
@@ -486,10 +506,6 @@ module Ruflet
 
         require_relative "../version"
         Ruflet::VERSION
-      end
-
-      def release_latest
-        github_get_json("https://api.github.com/repos/AdamMusa/Ruflet/releases/latest")
       end
 
       def release_by_tag(tag)
@@ -659,19 +675,6 @@ module Ruflet
         JSON.parse(File.read(path))
       rescue StandardError
         nil
-      end
-
-      def ensure_client_manifest(root, platform:)
-        return if read_client_manifest(root)
-
-        assets = []
-        assets << { "kind" => "web", "platform" => platform, "asset_name" => nil } if File.file?(File.join(root, "web", "index.html"))
-        if prebuilt_desktop_present?(root, platform: platform)
-          assets << { "kind" => "desktop", "platform" => platform, "asset_name" => nil }
-        end
-        return if assets.empty?
-
-        write_client_manifest(root, platform: platform, release: nil, assets: assets)
       end
 
       def write_client_manifest(root, platform:, release:, assets:)

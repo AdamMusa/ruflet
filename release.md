@@ -47,6 +47,12 @@ Client release archives are consumed by CLI and Rails update/install commands.
 Build and test every target included in a release, then attach archives using
 the filenames expected by the update pipeline.
 
+Publish the versioned GitHub client release before publishing the matching
+`ruflet` gem. For Ruflet `VERSION`, the client release tag must be `vVERSION`
+or `VERSION`; stable CLI installs never fall back to `latest` or a prebuild
+channel. Development channels such as `prebuild-main` must be selected
+explicitly with `RUFLET_CLIENT_CHANNEL`.
+
 Verify at minimum:
 
 ```bash
@@ -79,4 +85,5 @@ tools/embedded_vm_harness/build/embedded_mruby --preload \
 - A generated Ruflet project can run and build with released packages.
 - Rails install, web mount, and affected generators are verified.
 - Client archives are attached with expected filenames.
+- The client release tag exactly matches the `ruflet` gem version.
 - Generated build artifacts and `.gem` files remain untracked.
