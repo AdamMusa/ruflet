@@ -1,4 +1,5 @@
 vendor/*
+/build/
 
 # Ruby Bundler local config
 .bundle/

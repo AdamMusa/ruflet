@@ -639,6 +639,18 @@ module Ruflet
       def webview(**props) = web_view(**props)
       def video(**props) = build_widget(:video, **props)
 
+      # spinkit(wave: { color: "red", size: 50 }) — one variant keyword whose
+      # value is the props hash. See https://flet.dev/docs/controls/spinkit/
+      def spinkit(**variant)
+        raise ArgumentError, "spinkit expects exactly one variant, e.g. spinkit(wave: { color: ... })" unless variant.size == 1
+
+        name, props = variant.first
+        props ||= {}
+        raise ArgumentError, "spinkit #{name} options must be a Hash" unless props.is_a?(Hash)
+
+        build_widget(:"spinkit_#{name}", **props)
+      end
+
       def code_editor(value = nil, **props)
         mapped = props.dup
         mapped[:value] = value unless value.nil?

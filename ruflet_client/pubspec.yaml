@@ -65,6 +65,8 @@ dependencies:
     path: flet_packages/flet_permission_handler
   flet_secure_storage:
     path: flet_packages/flet_secure_storage
+  flet_spinkit:
+    path: flet_packages/flet_spinkit
   flet_video:
     path: flet_packages/flet_video
   flet_webview:

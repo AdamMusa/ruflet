@@ -19,6 +19,7 @@ import 'package:flet_permission_handler/flet_permission_handler.dart'
 import 'package:flet_rive/flet_rive.dart' as flet_rive;
 import 'package:flet_secure_storage/flet_secure_storage.dart'
     as flet_secure_storage;
+import 'package:flet_spinkit/flet_spinkit.dart' as flet_spinkit;
 import 'package:flet_video/flet_video.dart' as flet_video;
 import 'package:flet_webview/flet_webview.dart' as flet_webview;
 import 'package:flutter/foundation.dart';
@@ -181,6 +182,7 @@ void main([List<String>? args]) async {
     flet_permission_handler.Extension(),
     flet_rive.Extension(),
     flet_secure_storage.Extension(),
+    flet_spinkit.Extension(),
     flet_video.Extension(),
     flet_webview.Extension(),
   ];

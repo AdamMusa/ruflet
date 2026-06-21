@@ -3869,11 +3869,25 @@ module Ruflet
     end
 
     def self.normalize_color(color)
-      return color.to_s if color.is_a?(Symbol)
-      return color if color.is_a?(String)
-      return color.to_s unless color.respond_to?(:to_s)
+      return canonicalize(color.to_s) if color.is_a?(Symbol)
+      return canonicalize(color) if color.is_a?(String)
+      return canonicalize(color.to_s) unless color.respond_to?(:to_s)
 
-      color.to_s
+      canonicalize(color.to_s)
+    end
+
+    # Canonicalizes a named color into flet's wire format. Flet color names are
+    # lowercase with no separators ("bluegrey", "deeporange", "red500"), so we
+    # strip underscores/whitespace and downcase. Hex values (#... / 0x...) and
+    # the optional ",opacity" suffix are preserved untouched.
+    def self.canonicalize(value)
+      return value unless value.is_a?(String)
+
+      color, separator, opacity = value.partition(",")
+      color = color.strip.downcase
+      color = color.delete("_ \t\n") unless color.start_with?("#") || color.start_with?("0x")
+
+      "#{color}#{separator}#{opacity}"
     end
 
     BASE_PREFIX = {
@@ -4748,7 +4762,7 @@ module Ruflet
 
     def normalize_color_prop(key, value)
       return value unless value.is_a?(String)
-      return value.downcase if color_prop_key?(key)
+      return Ruflet::Colors.canonicalize(value) if color_prop_key?(key)
 
       value
     end
@@ -12014,6 +12028,155 @@ module Ruflet
             super(type: TYPE, id: id, **props)
           end
         end
+      end
+    end
+  end
+end
+
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/materials/spinkit_controls.rb
+
+
+module Ruflet
+  module UI
+    module Controls
+      module RufletComponents
+        # Base for every flet_spinkit variant (https://flet.dev/docs/controls/spinkit/).
+        # Each concrete spinner is a LayoutControl with its own wire name
+        # ("SpinKitRotatingCircle", "SpinKitWave", ...). The Dart widget reads
+        # color/size/duration for all of them plus the optional line_width /
+        # border_width / item_count / wave_type used by a few variants, so those
+        # are accepted on every spinner (the client ignores the ones a variant
+        # doesn't use, matching the upstream implementation).
+        class SpinKitControl < Ruflet::Control
+          def initialize(**__args__)
+            id = __args__[:id]
+            align = __args__[:align]
+            animate_align = __args__[:animate_align]
+            animate_offset = __args__[:animate_offset]
+            animate_opacity = __args__[:animate_opacity]
+            animate_position = __args__[:animate_position]
+            animate_rotation = __args__[:animate_rotation]
+            animate_scale = __args__[:animate_scale]
+            animate_size = __args__[:animate_size]
+            aspect_ratio = __args__[:aspect_ratio]
+            badge = __args__[:badge]
+            border_width = __args__[:border_width]
+            bottom = __args__[:bottom]
+            col = __args__[:col]
+            color = __args__[:color]
+            data = __args__[:data]
+            disabled = __args__[:disabled]
+            duration = __args__[:duration]
+            expand = __args__[:expand]
+            expand_loose = __args__[:expand_loose]
+            height = __args__[:height]
+            item_count = __args__[:item_count]
+            key = __args__[:key]
+            left = __args__[:left]
+            line_width = __args__[:line_width]
+            offset = __args__[:offset]
+            opacity = __args__[:opacity]
+            right = __args__[:right]
+            rotate = __args__[:rotate]
+            rtl = __args__[:rtl]
+            scale = __args__[:scale]
+            size = __args__[:size]
+            tooltip = __args__[:tooltip]
+            top = __args__[:top]
+            visible = __args__[:visible]
+            wave_type = __args__[:wave_type]
+            width = __args__[:width]
+            on_animation_end = __args__[:on_animation_end]
+            raise ArgumentError, "spinkit size must be greater than or equal to 0" unless size.nil? || size >= 0
+
+            props = {}
+            props[:align] = align unless align.nil?
+            props[:animate_align] = animate_align unless animate_align.nil?
+            props[:animate_offset] = animate_offset unless animate_offset.nil?
+            props[:animate_opacity] = animate_opacity unless animate_opacity.nil?
+            props[:animate_position] = animate_position unless animate_position.nil?
+            props[:animate_rotation] = animate_rotation unless animate_rotation.nil?
+            props[:animate_scale] = animate_scale unless animate_scale.nil?
+            props[:animate_size] = animate_size unless animate_size.nil?
+            props[:aspect_ratio] = aspect_ratio unless aspect_ratio.nil?
+            props[:badge] = badge unless badge.nil?
+            props[:border_width] = border_width unless border_width.nil?
+            props[:bottom] = bottom unless bottom.nil?
+            props[:col] = col unless col.nil?
+            props[:color] = color unless color.nil?
+            props[:data] = data unless data.nil?
+            props[:disabled] = disabled unless disabled.nil?
+            props[:duration] = duration unless duration.nil?
+            props[:expand] = expand unless expand.nil?
+            props[:expand_loose] = expand_loose unless expand_loose.nil?
+            props[:height] = height unless height.nil?
+            props[:item_count] = item_count unless item_count.nil?
+            props[:key] = key unless key.nil?
+            props[:left] = left unless left.nil?
+            props[:line_width] = line_width unless line_width.nil?
+            props[:offset] = offset unless offset.nil?
+            props[:opacity] = opacity unless opacity.nil?
+            props[:right] = right unless right.nil?
+            props[:rotate] = rotate unless rotate.nil?
+            props[:rtl] = rtl unless rtl.nil?
+            props[:scale] = scale unless scale.nil?
+            props[:size] = size unless size.nil?
+            props[:tooltip] = tooltip unless tooltip.nil?
+            props[:top] = top unless top.nil?
+            props[:visible] = visible unless visible.nil?
+            props[:wave_type] = wave_type unless wave_type.nil?
+            props[:width] = width unless width.nil?
+            props[:on_animation_end] = on_animation_end unless on_animation_end.nil?
+            super(type: self.class::TYPE, id: id, **props)
+          end
+        end
+
+        # wire name ("_c") => ruflet type key. Mirrors flet_spinkit's 30 controls.
+        SPINKIT_WIRE_TO_TYPE = {
+          "SpinKitRotatingCircle" => "spinkit_rotating_circle",
+          "SpinKitRotatingPlain" => "spinkit_rotating_plain",
+          "SpinKitDoubleBounce" => "spinkit_double_bounce",
+          "SpinKitWave" => "spinkit_wave",
+          "SpinKitWanderingCubes" => "spinkit_wandering_cubes",
+          "SpinKitFadingFour" => "spinkit_fading_four",
+          "SpinKitFadingCube" => "spinkit_fading_cube",
+          "SpinKitPulse" => "spinkit_pulse",
+          "SpinKitChasingDots" => "spinkit_chasing_dots",
+          "SpinKitThreeBounce" => "spinkit_three_bounce",
+          "SpinKitCircle" => "spinkit_circle",
+          "SpinKitCubeGrid" => "spinkit_cube_grid",
+          "SpinKitFadingCircle" => "spinkit_fading_circle",
+          "SpinKitFoldingCube" => "spinkit_folding_cube",
+          "SpinKitPumpingHeart" => "spinkit_pumping_heart",
+          "SpinKitHourGlass" => "spinkit_hour_glass",
+          "SpinKitPouringHourGlass" => "spinkit_pouring_hour_glass",
+          "SpinKitPouringHourGlassRefined" => "spinkit_pouring_hour_glass_refined",
+          "SpinKitFadingGrid" => "spinkit_fading_grid",
+          "SpinKitRing" => "spinkit_ring",
+          "SpinKitRipple" => "spinkit_ripple",
+          "SpinKitDualRing" => "spinkit_dual_ring",
+          "SpinKitSpinningCircle" => "spinkit_spinning_circle",
+          "SpinKitSpinningLines" => "spinkit_spinning_lines",
+          "SpinKitSquareCircle" => "spinkit_square_circle",
+          "SpinKitThreeInOut" => "spinkit_three_in_out",
+          "SpinKitDancingSquare" => "spinkit_dancing_square",
+          "SpinKitPianoWave" => "spinkit_piano_wave",
+          "SpinKitPulsingGrid" => "spinkit_pulsing_grid",
+          "SpinKitWaveSpinner" => "spinkit_wave_spinner"
+        }.freeze
+
+        # type key => control class, e.g. "spinkit_wave" => SpinKitWaveControl.
+        SPINKIT_CONTROLS = {}
+
+        SPINKIT_WIRE_TO_TYPE.each do |wire, type_key|
+          klass = Class.new(SpinKitControl)
+          klass.const_set(:TYPE, type_key)
+          klass.const_set(:WIRE, wire)
+          const_set("#{wire}Control", klass)
+          SPINKIT_CONTROLS[type_key] = klass
+        end
+
+        SPINKIT_CONTROLS.freeze
       end
     end
   end
@@ -21980,7 +22143,7 @@ module Ruflet
           "window" => RufletComponents::WindowControl,
           "window_drag_area" => RufletComponents::WindowDragAreaControl,
           "windowdragarea" => RufletComponents::WindowDragAreaControl,
-        }.freeze
+        }.merge(RufletComponents::SPINKIT_CONTROLS).freeze
       end
     end
   end
@@ -23498,7 +23661,7 @@ end
 module Ruflet
   module UI
     module MaterialControlMethods
-      EMBEDDED_INSTANCE_METHODS = ["view", "column", "center", "row", "stack", "grid_view", "gridview", "container", "animated_switcher", "animatedswitcher", "animation", "animation_style", "audio", "auto_complete", "autocomplete", "auto_complete_suggestion", "autocomplete_suggestion", "autocompletesuggestion", "context_menu", "contextmenu", "autofill_group", "autofillgroup", "hero", "overlay", "shader_mask", "shadermask", "shimmer", "text_span", "textspan", "keyboard_listener", "keyboardlistener", "gesture_detector", "gesturedetector", "canvas", "line", "circle", "arc", "color", "canvas_color", "fill", "oval", "points", "rect", "path", "shadow", "paint", "path_move_to", "path_line_to", "path_arc", "path_arc_to", "path_oval", "path_rect", "path_quadratic_to", "path_cubic_to", "path_sub_path", "path_close", "draggable", "dismissible", "drag_target", "dragtarget", "card", "list_tile", "listtile", "map", "tile_layer", "tilelayer", "marker_layer", "markerlayer", "marker", "circle_layer", "circlelayer", "circle_marker", "circlemarker", "polyline_layer", "polylinelayer", "polyline_marker", "polylinemarker", "polygon_layer", "polygonlayer", "polygon_marker", "polygonmarker", "simple_attribution", "simpleattribution", "list_view", "listview", "menu_bar", "menubar", "menu_item_button", "menuitembutton", "merge_semantics", "mergesemantics", "submenu_button", "submenubutton", "divider", "vertical_divider", "verticaldivider", "window_drag_area", "windowdragarea", "date_picker", "datepicker", "date_range_picker", "daterangepicker", "data_table", "datatable", "data_column", "datacolumn", "data_row", "datarow", "data_cell", "datacell", "expansion_tile", "expansiontile", "expansion_panel", "expansionpanel", "expansion_panel_list", "expansionpanellist", "dropdown", "dropdown_option", "dropdownoption", "dropdown_m2", "dropdownm2", "progress_bar", "progressbar", "placeholder", "page_view", "pageview", "progress_ring", "progressring", "range_slider", "rangeslider", "responsive_row", "responsiverow", "reorderable_drag_handle", "reorderabledraghandle", "reorderable_list_view", "reorderablelistview", "safe_area", "safearea", "segment", "segmented_button", "segmentedbutton", "selection_area", "selectionarea", "search_bar", "searchbar", "semantics", "time_picker", "timepicker", "badge", "chip", "circle_avatar", "circleavatar", "banner", "bottom_app_bar", "bottomappbar", "text", "button", "elevated_button", "text_button", "textbutton", "filled_button", "filledbutton", "filled_icon_button", "fillediconbutton", "filled_tonal_button", "filledtonalbutton", "filled_tonal_icon_button", "filledtonaliconbutton", "outlined_button", "outlinedbutton", "outlined_icon_button", "outlinediconbutton", "icon_button", "iconbutton", "interactive_viewer", "interactiveviewer", "popup_menu_button", "popupmenubutton", "popup_menu_item", "popupmenuitem", "text_field", "textfield", "checkbox", "switch", "slider", "transparent_pointer", "transparentpointer", "radio", "radio_group", "radiogroup", "alert_dialog", "alertdialog", "snack_bar", "snackbar", "bottom_sheet", "bottomsheet", "markdown", "icon", "image", "app_bar", "appbar", "url_launcher", "clipboard", "floating_action_button", "floatingactionbutton", "tabs", "tab", "tab_bar", "tabbar", "tab_bar_view", "tabbarview", "navigation_bar", "navigationbar", "navigation_bar_destination", "navigationbardestination", "navigation_rail", "navigationrail", "navigation_rail_destination", "navigationraildestination", "navigation_drawer", "navigationdrawer", "navigation_drawer_destination", "navigationdrawerdestination", "bar_chart", "barchart", "bar_chart_group", "barchartgroup", "bar_chart_rod", "barchartrod", "bar_chart_rod_stack_item", "barchartrodstackitem", "line_chart", "linechart", "line_chart_data", "linechartdata", "line_chart_data_point", "linechartdatapoint", "pie_chart", "piechart", "pie_chart_section", "piechartsection", "candlestick_chart", "candlestickchart", "candlestick_chart_spot", "candlestickchartspot", "radar_chart", "radarchart", "radar_chart_title", "radarcharttitle", "radar_data_set", "radardataset", "radar_data_set_entry", "radardatasetentry", "scatter_chart", "scatterchart", "scatter_chart_spot", "scatterchartspot", "chart_axis", "chartaxis", "chart_axis_label", "chartaxislabel", "web_view", "webview", "video", "code_editor", "codeeditor", "rive", "fab", "drawing_payload", "path_point_payload", "normalize_fab_props", "blank_fab_content?", "normalize_image_source", "normalize_container_props"].freeze
+      EMBEDDED_INSTANCE_METHODS = ["view", "column", "center", "row", "stack", "grid_view", "gridview", "container", "animated_switcher", "animatedswitcher", "animation", "animation_style", "audio", "auto_complete", "autocomplete", "auto_complete_suggestion", "autocomplete_suggestion", "autocompletesuggestion", "context_menu", "contextmenu", "autofill_group", "autofillgroup", "hero", "overlay", "shader_mask", "shadermask", "shimmer", "text_span", "textspan", "keyboard_listener", "keyboardlistener", "gesture_detector", "gesturedetector", "canvas", "line", "circle", "arc", "color", "canvas_color", "fill", "oval", "points", "rect", "path", "shadow", "paint", "path_move_to", "path_line_to", "path_arc", "path_arc_to", "path_oval", "path_rect", "path_quadratic_to", "path_cubic_to", "path_sub_path", "path_close", "draggable", "dismissible", "drag_target", "dragtarget", "card", "list_tile", "listtile", "map", "tile_layer", "tilelayer", "marker_layer", "markerlayer", "marker", "circle_layer", "circlelayer", "circle_marker", "circlemarker", "polyline_layer", "polylinelayer", "polyline_marker", "polylinemarker", "polygon_layer", "polygonlayer", "polygon_marker", "polygonmarker", "simple_attribution", "simpleattribution", "list_view", "listview", "menu_bar", "menubar", "menu_item_button", "menuitembutton", "merge_semantics", "mergesemantics", "submenu_button", "submenubutton", "divider", "vertical_divider", "verticaldivider", "window_drag_area", "windowdragarea", "date_picker", "datepicker", "date_range_picker", "daterangepicker", "data_table", "datatable", "data_column", "datacolumn", "data_row", "datarow", "data_cell", "datacell", "expansion_tile", "expansiontile", "expansion_panel", "expansionpanel", "expansion_panel_list", "expansionpanellist", "dropdown", "dropdown_option", "dropdownoption", "dropdown_m2", "dropdownm2", "progress_bar", "progressbar", "placeholder", "page_view", "pageview", "progress_ring", "progressring", "range_slider", "rangeslider", "responsive_row", "responsiverow", "reorderable_drag_handle", "reorderabledraghandle", "reorderable_list_view", "reorderablelistview", "safe_area", "safearea", "segment", "segmented_button", "segmentedbutton", "selection_area", "selectionarea", "search_bar", "searchbar", "semantics", "time_picker", "timepicker", "badge", "chip", "circle_avatar", "circleavatar", "banner", "bottom_app_bar", "bottomappbar", "text", "button", "elevated_button", "text_button", "textbutton", "filled_button", "filledbutton", "filled_icon_button", "fillediconbutton", "filled_tonal_button", "filledtonalbutton", "filled_tonal_icon_button", "filledtonaliconbutton", "outlined_button", "outlinedbutton", "outlined_icon_button", "outlinediconbutton", "icon_button", "iconbutton", "interactive_viewer", "interactiveviewer", "popup_menu_button", "popupmenubutton", "popup_menu_item", "popupmenuitem", "text_field", "textfield", "checkbox", "switch", "slider", "transparent_pointer", "transparentpointer", "radio", "radio_group", "radiogroup", "alert_dialog", "alertdialog", "snack_bar", "snackbar", "bottom_sheet", "bottomsheet", "markdown", "icon", "image", "app_bar", "appbar", "url_launcher", "clipboard", "floating_action_button", "floatingactionbutton", "tabs", "tab", "tab_bar", "tabbar", "tab_bar_view", "tabbarview", "navigation_bar", "navigationbar", "navigation_bar_destination", "navigationbardestination", "navigation_rail", "navigationrail", "navigation_rail_destination", "navigationraildestination", "navigation_drawer", "navigationdrawer", "navigation_drawer_destination", "navigationdrawerdestination", "bar_chart", "barchart", "bar_chart_group", "barchartgroup", "bar_chart_rod", "barchartrod", "bar_chart_rod_stack_item", "barchartrodstackitem", "line_chart", "linechart", "line_chart_data", "linechartdata", "line_chart_data_point", "linechartdatapoint", "pie_chart", "piechart", "pie_chart_section", "piechartsection", "candlestick_chart", "candlestickchart", "candlestick_chart_spot", "candlestickchartspot", "radar_chart", "radarchart", "radar_chart_title", "radarcharttitle", "radar_data_set", "radardataset", "radar_data_set_entry", "radardatasetentry", "scatter_chart", "scatterchart", "scatter_chart_spot", "scatterchartspot", "chart_axis", "chartaxis", "chart_axis_label", "chartaxislabel", "web_view", "webview", "video", "spinkit", "code_editor", "codeeditor", "rive", "fab", "drawing_payload", "path_point_payload", "normalize_fab_props", "blank_fab_content?", "normalize_image_source", "normalize_container_props"].freeze
       def view(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
@@ -24135,6 +24298,18 @@ module Ruflet
       def webview(**props) = web_view(**props)
       def video(**props) = build_widget(:video, **props)
 
+      # spinkit(wave: { color: "red", size: 50 }) — one variant keyword whose
+      # value is the props hash. See https://flet.dev/docs/controls/spinkit/
+      def spinkit(**variant)
+        raise ArgumentError, "spinkit expects exactly one variant, e.g. spinkit(wave: { color: ... })" unless variant.size == 1
+
+        name, props = variant.first
+        props ||= {}
+        raise ArgumentError, "spinkit #{name} options must be a Hash" unless props.is_a?(Hash)
+
+        build_widget(:"spinkit_#{name}", **props)
+      end
+
       def code_editor(value = nil, **props)
         mapped = props.dup
         mapped[:value] = value unless value.nil?
@@ -24483,7 +24658,7 @@ end
 module Ruflet
   module UI
     module SharedControlForwarders
-      EMBEDDED_INSTANCE_METHODS = ["control", "widget", "service", "view", "column", "center", "row", "stack", "grid_view", "gridview", "container", "animated_switcher", "animatedswitcher", "animation", "animation_style", "audio", "auto_complete", "autocomplete", "auto_complete_suggestion", "autocomplete_suggestion", "autocompletesuggestion", "context_menu", "contextmenu", "autofill_group", "autofillgroup", "hero", "overlay", "shader_mask", "shadermask", "shimmer", "text_span", "textspan", "keyboard_listener", "keyboardlistener", "gesture_detector", "gesturedetector", "canvas", "line", "circle", "arc", "color", "canvas_color", "fill", "oval", "points", "rect", "path", "shadow", "paint", "path_move_to", "path_line_to", "path_arc", "path_arc_to", "path_oval", "path_rect", "path_quadratic_to", "path_cubic_to", "path_sub_path", "path_close", "draggable", "dismissible", "drag_target", "dragtarget", "card", "list_tile", "listtile", "map", "tile_layer", "tilelayer", "marker_layer", "markerlayer", "marker", "circle_layer", "circlelayer", "circle_marker", "circlemarker", "polyline_layer", "polylinelayer", "polyline_marker", "polylinemarker", "polygon_layer", "polygonlayer", "polygon_marker", "polygonmarker", "simple_attribution", "simpleattribution", "list_view", "listview", "menu_bar", "menubar", "menu_item_button", "menuitembutton", "merge_semantics", "mergesemantics", "submenu_button", "submenubutton", "divider", "vertical_divider", "verticaldivider", "window_drag_area", "windowdragarea", "date_picker", "datepicker", "date_range_picker", "daterangepicker", "data_table", "datatable", "data_column", "datacolumn", "data_row", "datarow", "data_cell", "datacell", "expansion_tile", "expansiontile", "expansion_panel", "expansionpanel", "expansion_panel_list", "expansionpanellist", "dropdown", "dropdown_option", "dropdownoption", "dropdown_m2", "dropdownm2", "progress_bar", "progressbar", "placeholder", "page_view", "pageview", "progress_ring", "progressring", "range_slider", "rangeslider", "responsive_row", "responsiverow", "reorderable_drag_handle", "reorderabledraghandle", "reorderable_list_view", "reorderablelistview", "safe_area", "safearea", "segment", "segmented_button", "segmentedbutton", "selection_area", "selectionarea", "search_bar", "searchbar", "semantics", "time_picker", "timepicker", "badge", "chip", "circle_avatar", "circleavatar", "banner", "bottom_app_bar", "bottomappbar", "text", "button", "elevated_button", "text_button", "textbutton", "filled_button", "filledbutton", "filled_icon_button", "fillediconbutton", "filled_tonal_button", "filledtonalbutton", "filled_tonal_icon_button", "filledtonaliconbutton", "outlined_button", "outlinedbutton", "outlined_icon_button", "outlinediconbutton", "icon_button", "iconbutton", "popup_menu_button", "popupmenubutton", "popup_menu_item", "popupmenuitem", "text_field", "textfield", "checkbox", "switch", "slider", "transparent_pointer", "transparentpointer", "radio", "radio_group", "radiogroup", "alert_dialog", "alertdialog", "snack_bar", "snackbar", "bottom_sheet", "bottomsheet", "markdown", "icon", "image", "fab", "interactive_viewer", "interactiveviewer", "app_bar", "appbar", "clipboard", "floating_action_button", "floatingactionbutton", "tabs", "tab", "tab_bar", "tabbar", "tab_bar_view", "tabbarview", "navigation_bar", "navigationbar", "navigation_bar_destination", "navigationbardestination", "navigation_rail", "navigationrail", "navigation_rail_destination", "navigationraildestination", "navigation_drawer", "navigationdrawer", "navigation_drawer_destination", "navigationdrawerdestination", "bar_chart", "barchart", "bar_chart_group", "barchartgroup", "bar_chart_rod", "barchartrod", "bar_chart_rod_stack_item", "barchartrodstackitem", "line_chart", "linechart", "line_chart_data", "linechartdata", "line_chart_data_point", "linechartdatapoint", "pie_chart", "piechart", "pie_chart_section", "piechartsection", "candlestick_chart", "candlestickchart", "candlestick_chart_spot", "candlestickchartspot", "radar_chart", "radarchart", "radar_chart_title", "radarcharttitle", "radar_data_set", "radardataset", "radar_data_set_entry", "radardatasetentry", "scatter_chart", "scatterchart", "scatter_chart_spot", "scatterchartspot", "chart_axis", "chartaxis", "chart_axis_label", "chartaxislabel", "web_view", "webview", "video", "code_editor", "codeeditor", "rive", "cupertino_button", "cupertinobutton", "cupertino_filled_button", "cupertinofilledbutton", "cupertino_tinted_button", "cupertinotintedbutton", "cupertino_checkbox", "cupertinocheckbox", "cupertino_text_field", "cupertinotextfield", "cupertino_timer_picker", "cupertinotimerpicker", "cupertino_switch", "cupertinoswitch", "cupertino_slider", "cupertinoslider", "cupertino_radio", "cupertinoradio", "cupertino_alert_dialog", "cupertinoalertdialog", "cupertino_action_sheet", "cupertinoactionsheet", "cupertino_action_sheet_action", "cupertinoactionsheetaction", "cupertino_activity_indicator", "cupertinoactivityindicator", "cupertino_app_bar", "cupertinoappbar", "cupertino_bottom_sheet", "cupertinobottomsheet", "cupertino_date_picker", "cupertinodatepicker", "cupertino_dialog_action", "cupertinodialogaction", "cupertino_context_menu", "cupertinocontextmenu", "cupertino_context_menu_action", "cupertinocontextmenuaction", "cupertino_list_tile", "cupertinolisttile", "cupertino_navigation_bar", "cupertinonavigationbar", "cupertino_picker", "cupertinopicker", "cupertino_segmented_button", "cupertinosegmentedbutton", "cupertino_sliding_segmented_button", "cupertinoslidingsegmentedbutton", "duration", "control_delegate"].freeze
+      EMBEDDED_INSTANCE_METHODS = ["control", "widget", "service", "view", "column", "center", "row", "stack", "grid_view", "gridview", "container", "animated_switcher", "animatedswitcher", "animation", "animation_style", "audio", "auto_complete", "autocomplete", "auto_complete_suggestion", "autocomplete_suggestion", "autocompletesuggestion", "context_menu", "contextmenu", "autofill_group", "autofillgroup", "hero", "overlay", "shader_mask", "shadermask", "shimmer", "text_span", "textspan", "keyboard_listener", "keyboardlistener", "gesture_detector", "gesturedetector", "canvas", "line", "circle", "arc", "color", "canvas_color", "fill", "oval", "points", "rect", "path", "shadow", "paint", "path_move_to", "path_line_to", "path_arc", "path_arc_to", "path_oval", "path_rect", "path_quadratic_to", "path_cubic_to", "path_sub_path", "path_close", "draggable", "dismissible", "drag_target", "dragtarget", "card", "list_tile", "listtile", "map", "tile_layer", "tilelayer", "marker_layer", "markerlayer", "marker", "circle_layer", "circlelayer", "circle_marker", "circlemarker", "polyline_layer", "polylinelayer", "polyline_marker", "polylinemarker", "polygon_layer", "polygonlayer", "polygon_marker", "polygonmarker", "simple_attribution", "simpleattribution", "list_view", "listview", "menu_bar", "menubar", "menu_item_button", "menuitembutton", "merge_semantics", "mergesemantics", "submenu_button", "submenubutton", "divider", "vertical_divider", "verticaldivider", "window_drag_area", "windowdragarea", "date_picker", "datepicker", "date_range_picker", "daterangepicker", "data_table", "datatable", "data_column", "datacolumn", "data_row", "datarow", "data_cell", "datacell", "expansion_tile", "expansiontile", "expansion_panel", "expansionpanel", "expansion_panel_list", "expansionpanellist", "dropdown", "dropdown_option", "dropdownoption", "dropdown_m2", "dropdownm2", "progress_bar", "progressbar", "placeholder", "page_view", "pageview", "progress_ring", "progressring", "range_slider", "rangeslider", "responsive_row", "responsiverow", "reorderable_drag_handle", "reorderabledraghandle", "reorderable_list_view", "reorderablelistview", "safe_area", "safearea", "segment", "segmented_button", "segmentedbutton", "selection_area", "selectionarea", "search_bar", "searchbar", "semantics", "time_picker", "timepicker", "badge", "chip", "circle_avatar", "circleavatar", "banner", "bottom_app_bar", "bottomappbar", "text", "button", "elevated_button", "text_button", "textbutton", "filled_button", "filledbutton", "filled_icon_button", "fillediconbutton", "filled_tonal_button", "filledtonalbutton", "filled_tonal_icon_button", "filledtonaliconbutton", "outlined_button", "outlinedbutton", "outlined_icon_button", "outlinediconbutton", "icon_button", "iconbutton", "popup_menu_button", "popupmenubutton", "popup_menu_item", "popupmenuitem", "text_field", "textfield", "checkbox", "switch", "slider", "transparent_pointer", "transparentpointer", "radio", "radio_group", "radiogroup", "alert_dialog", "alertdialog", "snack_bar", "snackbar", "bottom_sheet", "bottomsheet", "markdown", "icon", "image", "fab", "interactive_viewer", "interactiveviewer", "app_bar", "appbar", "clipboard", "floating_action_button", "floatingactionbutton", "tabs", "tab", "tab_bar", "tabbar", "tab_bar_view", "tabbarview", "navigation_bar", "navigationbar", "navigation_bar_destination", "navigationbardestination", "navigation_rail", "navigationrail", "navigation_rail_destination", "navigationraildestination", "navigation_drawer", "navigationdrawer", "navigation_drawer_destination", "navigationdrawerdestination", "bar_chart", "barchart", "bar_chart_group", "barchartgroup", "bar_chart_rod", "barchartrod", "bar_chart_rod_stack_item", "barchartrodstackitem", "line_chart", "linechart", "line_chart_data", "linechartdata", "line_chart_data_point", "linechartdatapoint", "pie_chart", "piechart", "pie_chart_section", "piechartsection", "candlestick_chart", "candlestickchart", "candlestick_chart_spot", "candlestickchartspot", "radar_chart", "radarchart", "radar_chart_title", "radarcharttitle", "radar_data_set", "radardataset", "radar_data_set_entry", "radardatasetentry", "scatter_chart", "scatterchart", "scatter_chart_spot", "scatterchartspot", "chart_axis", "chartaxis", "chart_axis_label", "chartaxislabel", "web_view", "webview", "video", "spinkit", "code_editor", "codeeditor", "rive", "cupertino_button", "cupertinobutton", "cupertino_filled_button", "cupertinofilledbutton", "cupertino_tinted_button", "cupertinotintedbutton", "cupertino_checkbox", "cupertinocheckbox", "cupertino_text_field", "cupertinotextfield", "cupertino_timer_picker", "cupertinotimerpicker", "cupertino_switch", "cupertinoswitch", "cupertino_slider", "cupertinoslider", "cupertino_radio", "cupertinoradio", "cupertino_alert_dialog", "cupertinoalertdialog", "cupertino_action_sheet", "cupertinoactionsheet", "cupertino_action_sheet_action", "cupertinoactionsheetaction", "cupertino_activity_indicator", "cupertinoactivityindicator", "cupertino_app_bar", "cupertinoappbar", "cupertino_bottom_sheet", "cupertinobottomsheet", "cupertino_date_picker", "cupertinodatepicker", "cupertino_dialog_action", "cupertinodialogaction", "cupertino_context_menu", "cupertinocontextmenu", "cupertino_context_menu_action", "cupertinocontextmenuaction", "cupertino_list_tile", "cupertinolisttile", "cupertino_navigation_bar", "cupertinonavigationbar", "cupertino_picker", "cupertinopicker", "cupertino_segmented_button", "cupertinosegmentedbutton", "cupertino_sliding_segmented_button", "cupertinoslidingsegmentedbutton", "duration", "control_delegate"].freeze
       def control(type, **props, &block) = control_delegate.control(type, **props, &block)
       def widget(type, **props, &block) = control_delegate.widget(type, **props, &block)
       def service(type, **props, &block) = control_delegate.service(type, **props, &block)
@@ -24751,6 +24926,7 @@ module Ruflet
       def web_view(**props) = control_delegate.web_view(**props)
       def webview(**props) = control_delegate.webview(**props)
       def video(**props) = control_delegate.video(**props)
+      def spinkit(**variant) = control_delegate.spinkit(**variant)
       def code_editor(value = nil, **props) = control_delegate.code_editor(value, **props)
       def codeeditor(value = nil, **props) = control_delegate.codeeditor(value, **props)
       def rive(src = nil, **props) = control_delegate.rive(src, **props)
@@ -28034,6 +28210,7 @@ module Ruflet
     def web_view(**props) = _pending_app.web_view(**props)
     def webview(**props) = _pending_app.webview(**props)
     def video(**props) = _pending_app.video(**props)
+    def spinkit(**variant) = _pending_app.spinkit(**variant)
     def code_editor(value = nil, **props) = _pending_app.code_editor(value, **props)
     def codeeditor(value = nil, **props) = _pending_app.codeeditor(value, **props)
     def rive(src = nil, **props) = _pending_app.rive(src, **props)

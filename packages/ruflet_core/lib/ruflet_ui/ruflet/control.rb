@@ -5,6 +5,7 @@ require "securerandom"
 rescue LoadError
   nil
 end
+require_relative "colors"
 require_relative "icon_data"
 require_relative "icons/material_icon_lookup"
 require_relative "icons/cupertino_icon_lookup"
@@ -198,7 +199,7 @@ module Ruflet
 
     def normalize_color_prop(key, value)
       return value unless value.is_a?(String)
-      return value.downcase if color_prop_key?(key)
+      return Ruflet::Colors.canonicalize(value) if color_prop_key?(key)
 
       value
     end

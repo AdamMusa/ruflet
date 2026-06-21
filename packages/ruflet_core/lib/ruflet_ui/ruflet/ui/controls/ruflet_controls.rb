@@ -59,6 +59,7 @@ require_relative "materials/filledbutton_control"
 require_relative "materials/fillediconbutton_control"
 require_relative "materials/filledtonalbutton_control"
 require_relative "materials/filledtonaliconbutton_control"
+require_relative "materials/spinkit_controls"
 require_relative "materials/floatingactionbutton_control"
 require_relative "materials/iconbutton_control"
 require_relative "materials/listtile_control"
@@ -469,7 +470,7 @@ module Ruflet
           "window" => RufletComponents::WindowControl,
           "window_drag_area" => RufletComponents::WindowDragAreaControl,
           "windowdragarea" => RufletComponents::WindowDragAreaControl,
-        }.freeze
+        }.merge(RufletComponents::SPINKIT_CONTROLS).freeze
       end
     end
   end

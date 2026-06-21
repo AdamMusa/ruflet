@@ -31,6 +31,7 @@ module Ruflet
         "permission_handler" => { package: "flet_permission_handler", alias: "ruflet_permission_handler" },
         "rive" => { package: "flet_rive", alias: "ruflet_rive" },
         "secure_storage" => { package: "flet_secure_storage", alias: "ruflet_secure_storage" },
+        "spinkit" => { package: "flet_spinkit", alias: "ruflet_spinkit" },
         "video" => { package: "flet_video", alias: "ruflet_video" },
         "webview" => { package: "flet_webview", alias: "ruflet_webview" }
       }.freeze

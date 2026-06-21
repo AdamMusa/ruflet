@@ -270,6 +270,7 @@ module Ruflet
       def web_view(**props) = control_delegate.web_view(**props)
       def webview(**props) = control_delegate.webview(**props)
       def video(**props) = control_delegate.video(**props)
+      def spinkit(**variant) = control_delegate.spinkit(**variant)
       def code_editor(value = nil, **props) = control_delegate.code_editor(value, **props)
       def codeeditor(value = nil, **props) = control_delegate.codeeditor(value, **props)
       def rive(src = nil, **props) = control_delegate.rive(src, **props)

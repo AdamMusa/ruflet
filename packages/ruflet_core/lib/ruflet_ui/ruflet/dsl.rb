@@ -311,6 +311,7 @@ module Ruflet
     def web_view(**props) = _pending_app.web_view(**props)
     def webview(**props) = _pending_app.webview(**props)
     def video(**props) = _pending_app.video(**props)
+    def spinkit(**variant) = _pending_app.spinkit(**variant)
     def code_editor(value = nil, **props) = _pending_app.code_editor(value, **props)
     def codeeditor(value = nil, **props) = _pending_app.codeeditor(value, **props)
     def rive(src = nil, **props) = _pending_app.rive(src, **props)

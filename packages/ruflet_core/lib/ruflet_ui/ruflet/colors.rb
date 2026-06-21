@@ -151,11 +151,25 @@ module Ruflet
     end
 
     def self.normalize_color(color)
-      return color.to_s if color.is_a?(Symbol)
-      return color if color.is_a?(String)
-      return color.to_s unless color.respond_to?(:to_s)
+      return canonicalize(color.to_s) if color.is_a?(Symbol)
+      return canonicalize(color) if color.is_a?(String)
+      return canonicalize(color.to_s) unless color.respond_to?(:to_s)
 
-      color.to_s
+      canonicalize(color.to_s)
+    end
+
+    # Canonicalizes a named color into flet's wire format. Flet color names are
+    # lowercase with no separators ("bluegrey", "deeporange", "red500"), so we
+    # strip underscores/whitespace and downcase. Hex values (#... / 0x...) and
+    # the optional ",opacity" suffix are preserved untouched.
+    def self.canonicalize(value)
+      return value unless value.is_a?(String)
+
+      color, separator, opacity = value.partition(",")
+      color = color.strip.downcase
+      color = color.delete("_ \t\n") unless color.start_with?("#") || color.start_with?("0x")
+
+      "#{color}#{separator}#{opacity}"
     end
 
     BASE_PREFIX = {
