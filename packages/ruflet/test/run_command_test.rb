@@ -64,6 +64,29 @@ class RufletCliRunCommandTest < Minitest::Test
     refute runner.respond_to?(:web_client_url, true)
   end
 
+  def test_web_run_does_not_start_backend_without_matching_client
+    runner = DummyRunner.new
+
+    Dir.mktmpdir do |dir|
+      script = File.join(dir, "main.rb")
+      File.write(script, "# test\n")
+      runtime_started = false
+      runner.define_singleton_method(:resolve_backend_port) { |_target, requested_port:| requested_port }
+      runner.define_singleton_method(:apply_local_ruflet_dev_overrides) { |_env| nil }
+      runner.define_singleton_method(:detect_web_client_dir) { nil }
+      runner.define_singleton_method(:build_runtime_command) do |*_args, **_kwargs|
+        runtime_started = true
+        [RbConfig.ruby, script]
+      end
+
+      _out, err = capture_io do
+        assert_equal 1, runner.send(:command_run, [script, "--web"])
+      end
+      refute runtime_started
+      assert_includes err, "Ruflet web client unavailable"
+    end
+  end
+
   def test_client_release_defaults_to_exact_version_tags
     runner = DummyRunner.new
 
@@ -112,6 +135,49 @@ class RufletCliRunCommandTest < Minitest::Test
         File.write(File.join(dir, "manifest.json"), JSON.generate(manifest))
         refute runner.send(:compatible_client_cache?, dir, platform: "macos")
       end
+    end
+  end
+
+  def test_incompatible_web_cache_is_replaced_before_release_extraction
+    runner = DummyRunner.new
+
+    Dir.mktmpdir do |dir|
+      cache_root = File.join(dir, "cache")
+      web_root = File.join(cache_root, "web")
+      FileUtils.mkdir_p(web_root)
+      File.write(File.join(web_root, "index.html"), "stale client")
+      File.write(File.join(web_root, "stale.txt"), "remove me")
+      File.write(
+        File.join(cache_root, "manifest.json"),
+        JSON.generate(
+          "schema" => 1,
+          "ruflet_version" => Ruflet::VERSION,
+          "platform" => "macos",
+          "release_tag" => "Beta"
+        )
+      )
+
+      runner.define_singleton_method(:client_cache_root_for) { |_platform| cache_root }
+      runner.define_singleton_method(:fetch_release_for_version) do
+        {
+          "tag_name" => "v#{Ruflet::VERSION}",
+          "assets" => [{
+            "name" => "ruflet_client-web.tar.gz",
+            "browser_download_url" => "https://example.test/ruflet_client-web.tar.gz"
+          }]
+        }
+      end
+      runner.define_singleton_method(:download_file) { |_url, path| File.write(path, "archive") }
+      runner.define_singleton_method(:extract_archive) do |_archive, target|
+        File.write(File.join(target, "index.html"), "release client")
+        true
+      end
+
+      with_env("RUFLET_CLIENT_CHANNEL" => nil) do
+        assert_equal cache_root, runner.send(:ensure_prebuilt_client, web: true, platform: "macos")
+      end
+      assert_equal "release client", File.read(File.join(web_root, "index.html"))
+      refute_path_exists File.join(web_root, "stale.txt")
     end
   end
 

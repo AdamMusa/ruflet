@@ -60,7 +60,9 @@ module Ruflet
           if web_dir
             env["RUFLET_WEB_CLIENT_DIR"] = web_dir
           else
-            warn "Web client build not found and prebuilt download failed."
+            warn "Ruflet web client unavailable for version #{ruflet_version}."
+            warn "Install the matching GitHub release client before running --web."
+            return 1
           end
         end
 
@@ -378,9 +380,11 @@ module Ruflet
           wanted_assets << { kind: :desktop, name: desktop_asset, platform: platform }
         end
         cached = prebuilt_assets_present?(cache_root, web: web, desktop: desktop, platform: platform)
-        if !force && (wanted_assets.empty? || (cached && compatible_client_cache?(cache_root, platform: platform)))
+        compatible_cache = cached && compatible_client_cache?(cache_root, platform: platform)
+        if !force && (wanted_assets.empty? || compatible_cache)
           return cache_root
         end
+        force = true if cached && !compatible_cache
 
         release = fetch_release_for_version
         return nil unless release
