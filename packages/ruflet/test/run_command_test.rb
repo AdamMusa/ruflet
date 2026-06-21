@@ -247,6 +247,33 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
+  def test_web_client_ignores_implicit_project_checkout_and_uses_release_cache
+    runner = DummyRunner.new
+
+    Dir.mktmpdir do |dir|
+      project_web = File.join(dir, "ruflet_client", "build", "web")
+      release_root = File.join(dir, "github-release-cache")
+      release_web = File.join(release_root, "web")
+      FileUtils.mkdir_p(project_web)
+      FileUtils.mkdir_p(release_web)
+      File.write(File.join(project_web, "index.html"), "project build")
+      File.write(File.join(release_web, "index.html"), "release prebuild")
+
+      calls = []
+      runner.define_singleton_method(:ensure_prebuilt_client) do |**options|
+        calls << options
+        release_root
+      end
+
+      with_env("RUFLET_CLIENT_DIR" => nil) do
+        Dir.chdir(dir) do
+          assert_equal release_web, runner.send(:detect_web_client_dir)
+        end
+      end
+      assert_equal [{ web: true }], calls
+    end
+  end
+
   def test_macos_desktop_client_detection_ignores_local_flutter_build
     skip "macOS-specific desktop bundle layout" unless RbConfig::CONFIG["host_os"].match?(/darwin/i)
 

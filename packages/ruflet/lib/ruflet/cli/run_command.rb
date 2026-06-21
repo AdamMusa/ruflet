@@ -314,9 +314,7 @@ module Ruflet
       end
 
       def detect_desktop_client_command(url)
-        root = ENV["RUFLET_CLIENT_DIR"]
-        root = File.expand_path("ruflet_client", Dir.pwd) if root.to_s.strip.empty?
-        root = nil unless Dir.exist?(root)
+        root = configured_client_root
 
         command = desktop_client_command_from_root(root, url)
         return command if command
@@ -345,9 +343,7 @@ module Ruflet
       end
 
       def detect_web_client_dir
-        root = ENV["RUFLET_CLIENT_DIR"]
-        root = File.expand_path("ruflet_client", Dir.pwd) if root.to_s.strip.empty?
-        root = nil unless Dir.exist?(root)
+        root = configured_client_root
         root ||= ensure_prebuilt_client(web: true)
         return nil unless root && Dir.exist?(root)
 
@@ -357,6 +353,14 @@ module Ruflet
         return prebuilt if Dir.exist?(prebuilt) && File.file?(File.join(prebuilt, "index.html"))
 
         nil
+      end
+
+      def configured_client_root
+        root = ENV["RUFLET_CLIENT_DIR"].to_s.strip
+        return nil if root.empty?
+
+        expanded = File.expand_path(root)
+        Dir.exist?(expanded) ? expanded : nil
       end
 
       def ensure_prebuilt_client(web: false, desktop: false, platform: nil, force: false)
