@@ -194,10 +194,12 @@ module Ruflet
 
       # The Ruby backend (Ruflet::Server) serves the Flutter web client on its
       # own port, so the client loads and opens its websocket on that same
-      # origin. We just open a browser at the backend URL — port reassignment
-      # works automatically because there is only one port.
+      # origin. Pass the backend explicitly because production prebuilt clients
+      # do not have a development default URL. Port reassignment still works
+      # automatically because both URLs use the selected backend port.
       def launch_web_client(port)
-        url = "http://localhost:#{port}/"
+        backend_url = "http://localhost:#{port}"
+        url = "#{backend_url}/?url=#{URI.encode_www_form_component(backend_url)}"
         browser_pid = open_in_browser_app_mode(url)
         open_in_browser(url) if browser_pid.nil?
         puts "Ruflet web app: #{url}"

@@ -45,7 +45,7 @@ class RufletCliRunCommandTest < Minitest::Test
     refute runner.send(:release_asset_matches?, "ruflet_client-macos.tar.gz", :desktop, "macos")
   end
 
-  def test_web_client_opens_backend_url_without_python_proxy
+  def test_web_client_opens_prebuilt_with_explicit_backend_url_without_python_proxy
     runner = DummyRunner.new
     opened = []
     runner.define_singleton_method(:open_in_browser_app_mode) { |url| opened << [:app, url]; nil }
@@ -54,9 +54,12 @@ class RufletCliRunCommandTest < Minitest::Test
     pids = nil
     out, = capture_io { pids = runner.send(:launch_web_client, 8551) }
 
-    # Browser is opened at the backend's own origin (no separate web port).
-    assert_equal [[:app, "http://localhost:8551/"], [:browser, "http://localhost:8551/"]], opened
-    assert_includes out, "http://localhost:8551/"
+    # The prebuilt client and backend share one origin. Production prebuilts
+    # still need the backend URL passed explicitly so they select WebSocket
+    # transport instead of falling through to the raw socket transport.
+    url = "http://localhost:8551/?url=http%3A%2F%2Flocalhost%3A8551"
+    assert_equal [[:app, url], [:browser, url]], opened
+    assert_includes out, url
     assert_equal [], pids
     # The Python static-server/proxy is gone entirely.
     refute runner.respond_to?(:web_server_command, true)
