@@ -107,6 +107,14 @@ class _WebviewMobileAndMacState extends State<WebviewMobileAndMac> {
       ),
     );
 
+    // JavaScript is disabled by default in webview_flutter, so JS-driven sites
+    // (SPAs like flet.dev) render blank. Honor `enable_javascript` (default on)
+    // before the first load.
+    controller.setJavaScriptMode(
+        widget.control.getBool("enable_javascript", true)!
+            ? JavaScriptMode.unrestricted
+            : JavaScriptMode.disabled);
+
     // request
     controller.loadRequest(
         Uri.parse(widget.control.getString("url", "https://flet.dev")!),

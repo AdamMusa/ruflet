@@ -1387,8 +1387,23 @@ module Ruflet
         return if content.include?("<key>#{key}</key>")
 
         entry = "\t<key>#{key}</key>\n\t#{value_xml}\n"
-        updated = content.sub(%r{</dict>}, "#{entry}</dict>")
-        File.write(path, updated == content ? "#{content}\n#{entry}" : updated)
+
+        # Insert into the ROOT <dict> (opened right after <plist ...>), never the
+        # first nested </dict>. Modern Flutter Info.plists nest a dict inside
+        # UIApplicationSceneManifest, so subbing the first </dict> would bury
+        # top-level keys (e.g. NS*UsageDescription) where iOS can't read them —
+        # which crashes the app the moment a permission is requested.
+        root_open = content.match(%r{<plist\b[^>]*>\s*<dict>}m)
+        updated =
+          if root_open
+            insert_at = root_open.end(0)
+            content[0...insert_at] + "\n#{entry}" + content[insert_at..]
+          elsif (last = content.rindex("</dict>"))
+            content[0...last] + entry + content[last..]
+          else
+            "#{content}\n#{entry}"
+          end
+        File.write(path, updated)
       end
 
       def remove_plist_entry(path, key)

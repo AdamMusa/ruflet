@@ -27655,6 +27655,7 @@ module Ruflet
       existing = service_by_type(type)
       return [existing, false] if existing
 
+      # `service` already syncs via add_service -> push_services_update!.
       [service(type), true]
     end
 
