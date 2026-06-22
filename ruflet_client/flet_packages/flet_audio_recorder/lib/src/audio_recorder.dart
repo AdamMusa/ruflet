@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flet/flet.dart';
 import 'package:flutter/widgets.dart';
@@ -41,26 +40,13 @@ class AudioRecorderService extends FletService {
       case "start_recording":
         final config = parseRecordConfig(args["configuration"]);
         if (config != null && await recorder!.hasPermission()) {
-          String recordPath;
-          final requested = (args["output_path"] ?? "").toString();
-          if (requested.isNotEmpty) {
-            final out = control.backend.getAssetSource(requested);
-            if (!isWebPlatform() && !out.isFile) {
-              // on non-web/IO platforms, the output path must be a valid file path
-              return false;
-            }
-            recordPath = out.path;
-          } else if (isWebPlatform()) {
-            recordPath = "";
-          } else {
-            // No path given: default to a writable temp file so callers don't
-            // need a storage-paths round-trip just to record.
-            final ext = config.encoder == AudioEncoder.wav ? "wav" : "m4a";
-            recordPath =
-                "${Directory.systemTemp.path}/recording_${DateTime.now().millisecondsSinceEpoch}.$ext";
+          final out = control.backend.getAssetSource(args["output_path"] ?? "");
+          if (!isWebPlatform() && !out.isFile) {
+            // on non-web/IO platforms, the output path must be a valid file path
+            return false;
           }
 
-          await recorder!.start(config, path: recordPath);
+          await recorder!.start(config, path: out.path);
           return true;
         }
         return false;
