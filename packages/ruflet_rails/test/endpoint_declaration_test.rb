@@ -3,16 +3,11 @@
 require_relative "test_helper"
 
 # The mobile/desktop WebSocket endpoint (/ws) must be declared by the developer
-# the same way web mounts are — view:, app_file: or a block — so the screens the
-# app shows live in dev code. There is no auto-discovery fallback: a bare
-# endpoint raises.
+# as an app file or a block. There is no auto-discovery fallback: a bare endpoint
+# raises.
 class RufletEndpointDeclarationTest < Minitest::Test
   def rack_app?(obj)
     obj.respond_to?(:call)
-  end
-
-  def test_endpoint_with_a_view_class_is_a_rack_endpoint
-    assert rack_app?(Ruflet::Rails.endpoint(view: "ProductComponent"))
   end
 
   def test_endpoint_with_an_app_file_is_a_rack_endpoint
@@ -29,13 +24,13 @@ class RufletEndpointDeclarationTest < Minitest::Test
 
   def test_bare_endpoint_raises
     # No declared entry and no auto-discovery fallback — the developer must
-    # declare view:, app_file:, or a block.
+    # declare app_file: or a block.
     assert_raises(ArgumentError) { Ruflet::Rails.endpoint }
   end
 
   def test_endpoint_rejects_more_than_one_source
     assert_raises(ArgumentError) do
-      Ruflet::Rails.endpoint(view: "ProductComponent", app_file: "x.rb")
+      Ruflet::Rails.endpoint(app_file: "x.rb") { |page| page }
     end
   end
 
@@ -47,23 +42,16 @@ class RufletEndpointDeclarationTest < Minitest::Test
     end
   end
 
-  # The declared entry drives what renders — a view: endpoint renders that
-  # component, never the auto-discovery route index.
-  def test_view_endpoint_entrypoint_renders_the_declared_component
-    rendered = []
-    fake = Class.new do
-      define_singleton_method(:render) { |page| page.instance_variable_set(:@rendered, true) }
+  def test_web_app_entrypoint_for_app_file_loads_the_ruflet_app
+    Dir.mktmpdir do |dir|
+      file = File.join(dir, "main.rb")
+      File.write(file, "Ruflet.run { |page| page.instance_variable_set(:@rendered, true) }\n")
+
+      page = Ruflet::Page.new(session_id: "e", client_details: { "route" => "/" },
+                              sender: ->(_a, _p) {})
+      Ruflet::Rails.web_app_entrypoint(app_file: file).call(page, {})
+
+      assert_equal true, page.instance_variable_get(:@rendered)
     end
-    Object.const_set(:DeclaredHomeComponent, fake)
-
-    sent = []
-    page = Ruflet::Page.new(session_id: "e", client_details: { "route" => "/" },
-                            sender: ->(a, p) { sent << [a, p] })
-    # web_app_entrypoint(view:) is what endpoint(view:) builds its entry from.
-    Ruflet::Rails.web_app_entrypoint(view: "DeclaredHomeComponent").call(page)
-
-    assert_equal true, page.instance_variable_get(:@rendered)
-  ensure
-    Object.send(:remove_const, :DeclaredHomeComponent) if Object.const_defined?(:DeclaredHomeComponent)
   end
 end

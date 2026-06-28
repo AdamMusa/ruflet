@@ -2,9 +2,9 @@
 
 require_relative "test_helper"
 
-# Managed webview navigation driver. A JS bridge injected on each page load turns
-# link clicks into "visit" console messages; native turns those into pushed
-# screens, bottom-sheet modals, or native screens — declaratively.
+# Managed webview navigation driver. A JS bridge injected on each page load
+# reports page metadata and turns explicit data-ruflet-* declarations into
+# native screens, bottom-sheet modals, dialogs, toasts, and chrome.
 class RufletNativeAppTest < Minitest::Test
   def setup
     @sent = []
@@ -26,8 +26,13 @@ class RufletNativeAppTest < Minitest::Test
     end
   end
 
-  def stack = @page.views
-  def top_webview = find(stack.last, "webview")
+  def stack
+    @page.views
+  end
+
+  def top_webview
+    find(stack.last, "webview")
+  end
 
   # Simulate the JS bridge posting a console message from the top screen.
   def post(message, webview: top_webview)
@@ -39,16 +44,35 @@ class RufletNativeAppTest < Minitest::Test
     Ruflet::Rails.native_app(@page, start_url: "https://myapp.com", **opts)
   end
 
+  def wait_for_async_invokes
+    sleep 0.08
+  end
+
   # --- bridge -------------------------------------------------------------
 
-  def test_bridge_js_intercepts_links_and_reports_title_and_visits
+  def test_bridge_js_reads_explicit_ruflet_attributes_and_reports_title
     js = Ruflet::Rails::NativeApp.bridge_js
     assert_includes js, "addEventListener"
     assert_includes js, "preventDefault"
-    assert_includes js, 'report("visit"'
+    assert_includes js, "data-ruflet-screen"
+    assert_includes js, "data-ruflet-action"
+    refute_includes js, 'report("visit"'
+    refute_includes js, "turbo:before-visit"
     assert_includes js, 'report("title"'
     assert_includes js, '"ruflet:"' # message channel prefix
-    assert_includes js, "location.origin" # only same-origin links are captured
+  end
+
+  def test_bridge_js_can_opt_in_external_links_as_native_screens
+    js = Ruflet::Rails::NativeApp.bridge_js(screen_links: [
+      { "host" => "app.example.test", "path" => "/session/new", "url" => "http://localhost:3000/session/new", "title" => "Sign in" }
+    ])
+
+    assert_includes js, "configuredScreenLinks"
+    assert_includes js, "app.example.test"
+    assert_includes js, "/session/new"
+    assert_includes js, "http://localhost:3000/session/new"
+    assert_includes js, "configuredScreenFor"
+    refute_includes js, "__RUFLET_SCREEN_LINKS__"
   end
 
   # --- out-of-the-box navigation -----------------------------------------
@@ -58,20 +82,137 @@ class RufletNativeAppTest < Minitest::Test
     assert_equal 1, stack.length
     assert_equal "https://myapp.com", top_webview.props["url"]
     assert_equal "get", top_webview.props["method"]
+    assert_equal true, top_webview.props["enable_javascript"], "JS on for the bridge + WebAuthn/passkeys"
     assert_equal "view", stack.first.type
-    refute_nil find(stack.first, "appbar"), "screen has a native appbar"
+    assert_nil find(stack.first, "appbar"), "no native chrome by default; the web page supplies its own header"
   end
 
-  def test_a_link_visit_pushes_a_native_webview_screen
+  def test_webview_screen_has_a_native_loading_shimmer
+    start
+    body = stack.first.props["controls"].first
+    assert_equal "stack", body.type
+    assert_same top_webview, find(body, "webview")
+
+    loading = find(body, "shimmer")
+    refute_nil loading
+    assert_equal true, body.props["controls"].last.props["visible"]
+  end
+
+  def test_loading_shimmer_is_only_inside_the_webview_body
+    start(title: "Demo")
+    post(%(ruflet:bottomnav:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "house", "url" => "/" },
+      { "label" => "Inbox", "icon" => "mail", "url" => "/inbox" }
+    ] })}))
+
+    body = stack.first.props["controls"].first
+    appbar = stack.first.props["appbar"]
+    navbar = stack.first.props["navigation_bar"]
+
+    assert_equal "stack", body.type
+    refute_nil find(body, "shimmer"), "body owns the loading shimmer"
+    refute_nil appbar, "native appbar stays outside the loading layer"
+    refute_nil navbar, "native bottom navigation stays outside the loading layer"
+    assert_nil find(appbar, "shimmer")
+    assert_nil find(navbar, "shimmer")
+  end
+
+  def test_page_ended_hides_the_loading_shimmer
+    start
+    loading = stack.first.props["controls"].first.props["controls"].last
+    assert_equal true, loading.props["visible"]
+
+    @page.dispatch_event(target: top_webview.wire_id, name: "page_ended", data: "https://myapp.com")
+    assert_equal false, loading.props["visible"]
+  end
+
+  def test_page_ended_before_loading_mount_still_hides_the_shimmer
+    start
+    loading = stack.first.props["controls"].first.props["controls"].last
+    loading.wire_id = nil
+    assert_equal true, loading.props["visible"]
+
+    @page.dispatch_event(target: top_webview.wire_id, name: "page_ended", data: "https://myapp.com")
+
+    assert_equal false, loading.props["visible"]
+  end
+
+  def test_flush_reconciles_hidden_loading_after_the_control_mounts
+    start
+    loading = stack.first.props["controls"].first.props["controls"].last
+    loading.wire_id = nil
+    @page.dispatch_event(target: top_webview.wire_id, name: "page_ended", data: "https://myapp.com")
+    assert_equal false, loading.props["visible"]
+
+    loading.wire_id = 42
+    @sent.clear
+    action("push", "/settings")
+
+    assert @sent.any? { |_action, payload| payload.inspect.include?('"visible" => false') },
+           "a hidden loading overlay must stay hidden once the client has mounted it"
+  end
+
+  def test_web_resource_error_hides_the_loading_shimmer
+    start
+    loading = stack.first.props["controls"].first.props["controls"].last
+    assert_equal true, loading.props["visible"]
+
+    @page.dispatch_event(target: top_webview.wire_id, name: "web_resource_error", data: "server unavailable")
+    assert_equal false, loading.props["visible"]
+  end
+
+  def test_loading_can_be_a_simple_text_overlay
+    start(loading: "Loading page")
+    body = stack.first.props["controls"].first
+
+    assert_equal "stack", body.type
+    loading = body.props["controls"].last
+    assert_equal "container", loading.type
+    assert_equal "Loading page", find(loading, "text").props["value"]
+  end
+
+  def test_loading_can_be_disabled
+    start(loading: false)
+
+    assert_same top_webview, stack.first.props["controls"].first
+    assert_nil find(stack.first, "shimmer")
+  end
+
+  def test_plain_ruflet_page_is_not_wrapped_in_a_webview_screen
+    plain = Ruflet::Page.new(session_id: "plain", client_details: {}, sender: ->(_a, _p) {})
+    plain.add(Ruflet::UI::ControlFactory.build(:text, value: "Normal Ruflet"))
+    root_controls = plain.instance_variable_get(:@root_controls)
+
+    assert_empty plain.views
+    assert_nil find(root_controls, "webview"), "only NativeApp creates the WebView shell"
+    assert find(root_controls, "text"), "ordinary Ruflet controls still render normally"
+  end
+
+  def test_appbar_is_rendered_when_a_title_is_given
+    start(title: "My App")
+    refute_nil find(stack.first, "appbar"), "passing a title opts into native chrome"
+  end
+
+  def test_page_started_switches_javascript_mode_to_unrestricted
+    start
+    @sent.clear
+    @page.dispatch_event(target: top_webview.wire_id, name: "page_started", data: "https://myapp.com")
+
+    enabled = @sent.any? do |_action, payload|
+      payload.to_s.include?("set_javascript_mode") && payload.to_s.include?("unrestricted")
+    end
+    assert enabled, "page_started must enable JS (the mobile client ignores the enable_javascript prop)"
+  end
+
+  def test_plain_link_visit_messages_are_ignored
     start
     post("ruflet:visit:https://myapp.com/about")
-    assert_equal 2, stack.length, "a proposed visit pushes a new screen"
-    assert_equal "https://myapp.com/about", top_webview.props["url"]
+    assert_equal 1, stack.length, "native navigation must be declared with data-ruflet-*"
   end
 
   def test_back_pops_the_pushed_screen
     start
-    post("ruflet:visit:https://myapp.com/about")
+    action("push", "https://myapp.com/about")
     assert_equal 2, stack.length
 
     @page.dispatch_event(target: 1, name: "view_pop", data: nil)
@@ -89,6 +230,14 @@ class RufletNativeAppTest < Minitest::Test
     assert_equal "Dashboard", title_text.props["value"], "appbar title tracks the page <title>"
   end
 
+  def test_duplicate_title_message_does_not_send_a_redundant_update
+    start(title: "Dashboard")
+    @sent.clear
+
+    post("ruflet:title:Dashboard")
+    assert_empty @sent, "same title should not repaint the app"
+  end
+
   def test_actions_lambda_is_resolved_into_the_appbar
     start(actions: -> { [Ruflet::UI::ControlFactory.build(:iconbutton, icon: "search")] })
     appbar = find(stack.first, "appbar")
@@ -96,52 +245,805 @@ class RufletNativeAppTest < Minitest::Test
     assert_equal "iconbutton", appbar.props["actions"].first.type
   end
 
-  # --- declarative path config -------------------------------------------
-
-  def test_modal_path_opens_a_bottom_sheet_not_a_screen
-    start(modal: ["/sign_in"])
-    post("ruflet:visit:https://myapp.com/sign_in")
-
-    assert_equal 1, stack.length, "modal paths do not push a screen"
-    sheet = @page.instance_variable_get(:@bottom_sheet)
-    refute_nil sheet, "a bottom sheet is presented"
-    assert_equal "webview", find(sheet, "webview").type
-    assert_equal "https://myapp.com/sign_in", find(sheet, "webview").props["url"]
-    assert_equal "get", find(sheet, "webview").props["method"]
-  end
-
-  def test_native_path_pushes_a_native_screen_with_match_data
-    captured = nil
-    start(native: {
-            %r{\A/products/(\d+)\z} => lambda do |ctx|
-              captured = ctx
-              Ruflet::UI::ControlFactory.build(:view, route: "/p",
-                                               controls: [Ruflet::UI::ControlFactory.build(:text, value: "Product #{ctx.match[1]}")])
-            end
-          })
-    post("ruflet:visit:https://myapp.com/products/42")
-
-    assert_equal 2, stack.length
-    assert_equal "42", captured.match[1]
-    refute find(stack.last, "webview"), "native screen has no webview"
-    assert find(stack.last, "text")
-  end
-
-  def test_native_takes_precedence_over_modal
-    hits = { native: 0 }
-    start(
-      modal: [%r{/x}],
-      native: { %r{/x} => ->(_ctx) { hits[:native] += 1; Ruflet::UI::ControlFactory.build(:view, route: "/x", controls: [Ruflet::UI::ControlFactory.build(:text, value: "x")]) } }
-    )
-    post("ruflet:visit:https://myapp.com/x")
-    assert_equal 1, hits[:native]
-    assert_equal 2, stack.length
-  end
-
   def test_unmatched_messages_are_ignored
     start
     post("some random console output")
     post("ruflet:visit:not a url ::::")
     assert_equal 1, stack.length
+  end
+
+  # --- explicit data-ruflet navigation -----------------------------------
+
+  def action(action, url = nil, component: "navigation", **payload)
+    post("ruflet:action:#{JSON.generate(payload.merge({ "component" => component, "action" => action, "url" => url }).compact)}")
+  end
+
+  def test_action_push_pushes_a_webview_screen
+    start
+    action("push", "https://myapp.com/a")
+    assert_equal 2, stack.length
+    assert_equal "https://myapp.com/a", top_webview.props["url"]
+  end
+
+  def test_action_push_without_declared_chrome_still_keeps_shimmer_in_body
+    start
+    action("push", "https://myapp.com/inbox")
+
+    appbar = find(stack.last, "appbar")
+    body = stack.last.props["controls"].first
+
+    refute_nil appbar, "pushed native screens mount appbar before the WebView body loads"
+    assert_equal "Inbox", find(appbar, "text").props["value"]
+    refute_nil appbar.props["leading"], "pushed native screens get an immediate back/close leading"
+    assert_equal "stack", body.type
+    refute_nil find(body, "shimmer"), "only the WebView body shows loading"
+    assert_nil find(appbar, "shimmer"), "native appbar never becomes part of the loading skeleton"
+  end
+
+  def test_action_push_resolves_relative_urls_against_the_current_screen
+    start
+    action("push", "/inbox")
+
+    assert_equal 2, stack.length
+    assert_equal "https://myapp.com/inbox", top_webview.props["url"]
+  end
+
+  def test_action_push_can_add_native_screen_chrome_with_close_leading
+    start
+    action("push", "https://myapp.com/signup/new", "title" => "Sign up", "leading" => { "icon" => "close", "action" => "back" })
+
+    appbar = find(stack.last, "appbar")
+    refute_nil appbar
+    assert_equal "Sign up", find(appbar, "text").props["value"]
+    leading = appbar.props["leading"]
+    assert_equal "iconbutton", leading.type
+    refute_nil leading.props["icon"]
+
+    leading.emit("click", Ruflet::Event.new(name: "click", target: leading.wire_id, raw_data: nil, page: @page, control: leading))
+    assert_equal 1, stack.length, "the close leading button pops the native screen"
+  end
+
+  def test_action_back_pops_the_top_screen
+    start
+    action("push", "https://myapp.com/a")
+    action("back")
+    assert_equal 1, stack.length
+  end
+
+  def test_action_root_resets_the_stack_to_a_single_root
+    start
+    action("push", "https://myapp.com/a")
+    action("push", "https://myapp.com/b")
+    assert_equal 3, stack.length
+
+    action("root", "https://myapp.com/home")
+    assert_equal 1, stack.length, "root collapses the stack to one root screen"
+    assert_equal "https://myapp.com/home", top_webview.props["url"]
+    assert_equal "/", stack.first.props["route"], "the surviving screen is the root view"
+  end
+
+  # Each view's route is its Navigator page key on the client. Two stacked
+  # webview screens must have distinct routes or Flutter trips
+  # `!keyReservation.contains(key)` and the app crashes (regression: a sign-in
+  # redirect hopping /landing -> /session/menu pushed two "/screen" routes).
+  def test_stacked_webview_screens_have_unique_routes
+    start
+    action("push", "https://myapp.com/a")
+    action("push", "https://myapp.com/b")
+    routes = stack.map { |view| view.props["route"] }
+    assert_equal "/", routes.first, "the root screen is /"
+    assert_equal routes.uniq, routes, "every stacked view has a unique route (page key)"
+  end
+
+  def test_action_replace_swaps_the_top_screen_without_growing_the_stack
+    start
+    action("push", "https://myapp.com/a")
+    assert_equal 2, stack.length
+
+    action("replace", "https://myapp.com/b")
+    assert_equal 2, stack.length, "replace swaps rather than pushes"
+    assert_equal "https://myapp.com/b", top_webview.props["url"]
+  end
+
+  def test_action_replace_from_root_keeps_a_single_root_screen
+    start
+    action("replace", "https://myapp.com/home")
+    assert_equal 1, stack.length
+    assert_equal "/", stack.first.props["route"]
+    assert_equal "https://myapp.com/home", top_webview.props["url"]
+  end
+
+  def test_action_sheet_opens_a_bottom_sheet
+    start
+    action("sheet", "https://myapp.com/quick")
+    assert_equal 1, stack.length, "an explicit sheet never pushes a screen"
+    sheet = @page.instance_variable_get(:@bottom_sheet)
+    refute_nil sheet
+    assert_equal true, sheet.props["show_drag_handle"], "the sheet has a modal drag handle"
+    assert_equal true, sheet.props["draggable"], "drag the handle down to dismiss"
+    assert_nil sheet.props["fullscreen"], "the sheet is not fullscreen (that looks like a push)"
+    assert_equal true, sheet.props["scrollable"], "scroll-controlled so it can grow tall"
+    assert_equal "https://myapp.com/quick", find(sheet, "webview").props["url"]
+  end
+
+  # --- HTML-promoted native chrome ---------------------------------------
+
+  def test_appbar_message_promotes_a_native_appbar_with_leading_and_actions
+    start # no title: full-bleed by default
+    assert_nil find(stack.first, "appbar")
+    action("push", "https://myapp.com/signup/new")
+    assert_equal 2, stack.length
+    view = stack.last
+    webview = top_webview
+
+    post(%(ruflet:appbar:#{JSON.generate({ "title" => "Sign up", "leading" => { "icon" => "close", "action" => "back" }, "actions" => [{ "icon" => "search", "url" => "https://myapp.com/search", "action" => "push" }] })}))
+    appbar = find(stack.last, "appbar")
+    refute_nil appbar, "ruflet-appbar promotes a native AppBar"
+    assert_same view, stack.last, "promoting appbar should patch the mounted view in place"
+    assert_same webview, top_webview, "promoting appbar should not recreate the WebView"
+    assert_equal "Sign up", find(appbar, "text").props["value"]
+    refute_nil appbar.props["leading"].props["icon"]
+    assert_equal 1, Array(appbar.props["actions"]).length
+    assert_equal "iconbutton", appbar.props["actions"].first.type
+
+    appbar.props["leading"].emit("click", Ruflet::Event.new(name: "click", target: appbar.props["leading"].wire_id, raw_data: nil, page: @page, control: appbar.props["leading"]))
+    assert_equal 1, stack.length, "appbar leading back action pops the native auth screen"
+  end
+
+  def test_document_title_does_not_override_declared_appbar_title
+    start(title: "Ruflet Rails Demo")
+    post(%(ruflet:appbar:#{JSON.generate({ "title" => "Demo" })}))
+    title = find(find(stack.first, "appbar"), "text")
+    assert_equal "Demo", title.props["value"]
+
+    post("ruflet:title:Ruflet Rails Demo")
+
+    assert_equal "Demo", title.props["value"], "data-ruflet-appbar title should not flicker back to document title"
+  end
+
+  def test_appbar_leading_can_open_the_native_drawer
+    start
+    post(%(ruflet:drawer:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/" }
+    ] })}))
+    post(%(ruflet:appbar:#{JSON.generate({ "title" => "Demo", "leading" => { "icon" => "menu", "action" => "drawer" } })}))
+    appbar = find(stack.first, "appbar")
+
+    assert_nil appbar.props["leading"], "drawer leading should use Flutter's native implied AppBar drawer button"
+    assert stack.first.props["drawer"], "the current native view owns a drawer for the implied leading"
+  end
+
+  def test_appbar_drawer_leading_waits_for_declared_drawer
+    start
+    post(%(ruflet:appbar:#{JSON.generate({ "title" => "Demo", "leading" => { "icon" => "menu", "action" => "drawer" } })}))
+    appbar = find(stack.first, "appbar")
+    assert_nil appbar.props["leading"]
+    assert_nil stack.first.props["drawer"]
+
+    post(%(ruflet:drawer:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/" }
+    ] })}))
+    assert stack.first.props["drawer"], "once the drawer arrives Flutter can show the implied AppBar drawer button"
+  end
+
+  def test_drawer_leading_opens_from_pushed_screen_and_after_back
+    start
+    post(%(ruflet:drawer:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/" },
+      { "label" => "Settings", "icon" => "settings", "url" => "/settings", "action" => "push" }
+    ] })}))
+    post(%(ruflet:appbar:#{JSON.generate({ "title" => "Demo", "leading" => { "icon" => "menu", "action" => "drawer" } })}))
+
+    action("push", "/settings", "title" => "Settings", "leading" => { "icon" => "menu", "action" => "drawer" })
+    pushed_appbar = find(stack.last, "appbar")
+
+    assert_nil pushed_appbar.props["leading"], "drawer leading is delegated to Flutter's implied AppBar drawer button"
+
+    @page.dispatch_event(target: 1, name: "view_pop", data: nil)
+    root_appbar = find(stack.last, "appbar")
+
+    assert_nil root_appbar.props["leading"]
+    assert stack.last.props["drawer"], "root drawer should still be attached after returning from a pushed settings screen"
+  end
+
+  def test_duplicate_appbar_message_does_not_rebuild_the_webview_screen
+    start
+    payload = { "title" => "Sign up", "leading" => { "icon" => "close", "action" => "back" } }
+
+    post("ruflet:appbar:#{JSON.generate(payload)}")
+    view = stack.last
+    webview = top_webview
+
+    post("ruflet:appbar:#{JSON.generate(payload)}")
+    assert_same view, stack.last, "same appbar payload should not recreate the view"
+    assert_same webview, top_webview, "same appbar payload should not recreate the WebView"
+  end
+
+  def test_bottomnav_message_sets_the_root_navigation_bar
+    start
+    view = stack.first
+    webview = top_webview
+    post(%(ruflet:bottomnav:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "house", "url" => "https://myapp.com/" },
+      { "label" => "Profile", "icon" => "person", "url" => "https://myapp.com/profile", "selected" => false }
+    ] })}))
+    navbar = find(stack.first, "navigationbar")
+    refute_nil navbar, "ruflet-bottomnav builds a native NavigationBar"
+    assert_same view, stack.first, "promoting bottomnav should patch the root view in place"
+    assert_same webview, top_webview, "promoting bottomnav should not recreate the root WebView"
+    assert_equal 2, Array(navbar.props["destinations"]).length
+  end
+
+  def test_bottomnav_selection_switches_to_the_destination_url
+    start
+    post(%(ruflet:bottomnav:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "house", "url" => "https://myapp.com/" },
+      { "label" => "Profile", "icon" => "person", "url" => "https://myapp.com/profile" }
+    ] })}))
+    navbar = find(stack.first, "navigationbar")
+    @page.dispatch_event(target: navbar.wire_id, name: "change", data: { "selected_index" => 1 })
+
+    assert_equal 1, stack.length, "selecting a tab switches root, not pushes"
+    assert_equal "https://myapp.com/profile", top_webview.props["url"]
+  end
+
+  def test_bottomnav_selection_to_current_url_does_not_reload_root
+    start
+    post(%(ruflet:bottomnav:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "house", "url" => "https://myapp.com", "selected" => true },
+      { "label" => "Profile", "icon" => "person", "url" => "https://myapp.com/profile" }
+    ] })}))
+    view = stack.first
+    webview = top_webview
+    navbar = find(stack.first, "navigationbar")
+
+    @page.dispatch_event(target: navbar.wire_id, name: "change", data: { "selected_index" => 0 })
+
+    assert_same view, stack.first, "tapping the already-selected root tab should not rebuild the native view"
+    assert_same webview, top_webview, "tapping Home on Home should not flash/reload the WebView body"
+  end
+
+  # Switching tabs must keep the native shell (AppBar + NavigationBar) mounted
+  # and only reload the body — otherwise the chrome flashes on every tab. The
+  # body is swapped via an in-place controls patch (a fresh WebView), never a
+  # load_request invoke (which the client drops after a push/pop) and never a
+  # full views resend (which re-mounts the shell).
+  def test_tab_switch_reuses_the_shell_and_only_reloads_the_body
+    start(title: "Demo")
+    post(%(ruflet:bottomnav:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "house", "url" => "https://myapp.com/", "selected" => true },
+      { "label" => "Inbox", "icon" => "mail", "url" => "https://myapp.com/inbox" }
+    ] })}))
+    view = stack.first
+    webview = top_webview
+    navbar = find(stack.first, "navigationbar")
+    appbar = find(stack.first, "appbar")
+    @sent.clear
+
+    @page.dispatch_event(target: navbar.wire_id, name: "change", data: { "selected_index" => 1 })
+
+    assert_equal 1, stack.length, "a tab switch stays a single root"
+    assert_same view, stack.first, "the root view (shell) is reused, not rebuilt"
+    assert_same navbar, find(stack.first, "navigationbar"), "the NavigationBar is not rebuilt on a tab switch"
+    assert_same appbar, find(stack.first, "appbar"), "the AppBar is not rebuilt on a tab switch"
+    refute_same webview, top_webview, "the body is a fresh WebView (so it mounts its own listeners)"
+    assert_equal "https://myapp.com/inbox", top_webview.props["url"]
+    assert_equal "Inbox", find(appbar, "text").props["value"],
+                 "the AppBar shows the destination tab immediately, not the previous route"
+
+    body_swap = @sent.find { |_action, payload| payload["id"] == view.wire_id && payload["patch"].to_s.include?("controls") }
+    refute_nil body_swap, "the body is swapped via an in-place controls patch on the view"
+    refute @sent.any? { |_action, payload| payload.to_s.include?("load_request") },
+           "no load_request invoke (its client listener is lost after a push/pop)"
+    refute @sent.any? { |_action, payload| payload["id"] == 1 && payload["patch"].to_s.include?("views") },
+           "a tab switch must not re-send the whole views list (that re-mounts the shell)"
+  end
+
+  # Regression: the bottom nav stopped working after navigating via the drawer.
+  # A drawer push + back re-sends the view stack, which on the client re-creates
+  # the WebView control and drops its load_request invoke listener. Because the
+  # tab switch now swaps the body with a control patch (not a load_request
+  # invoke), it keeps working regardless of how many push/pops happened.
+  def test_bottom_nav_works_after_a_push_and_pop
+    start(title: "Demo")
+    post(%(ruflet:bottomnav:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "house", "url" => "https://myapp.com/", "selected" => true },
+      { "label" => "Inbox", "icon" => "mail", "url" => "https://myapp.com/inbox" }
+    ] })}))
+    view = stack.first
+    navbar = find(stack.first, "navigationbar")
+
+    # Simulate a drawer-style push then a back — both flush the view stack.
+    action("push", "https://myapp.com/settings", "title" => "Settings", "leading" => { "icon" => "close", "action" => "back" })
+    @page.dispatch_event(target: 1, name: "view_pop", data: nil)
+    assert_equal 1, stack.length
+    navbar_after_back = find(stack.first, "navigationbar")
+    refute_same navbar, navbar_after_back,
+                "back refreshes the native bottom nav so its change callback is live"
+    @sent.clear
+
+    @page.dispatch_event(target: navbar_after_back.wire_id, name: "change", data: { "selected_index" => 1 })
+
+    assert_equal "https://myapp.com/inbox", top_webview.props["url"],
+                 "the bottom nav still navigates after a push/pop"
+    refute @sent.any? { |_action, payload| payload.to_s.include?("load_request") },
+           "navigation never relies on a load_request invoke"
+    assert @sent.any? { |_action, payload| payload["id"] == view.wire_id && payload["patch"].to_s.include?("controls") },
+           "the body is swapped with an in-place controls patch on the reused view"
+  end
+
+  # The drawer must track the route we're on, not the one we left.
+  def test_tab_switch_syncs_the_drawer_selection_to_the_new_route
+    start(title: "Demo")
+    post(%(ruflet:bottomnav:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "house", "url" => "https://myapp.com/", "selected" => true },
+      { "label" => "Inbox", "icon" => "mail", "url" => "https://myapp.com/inbox" }
+    ] })}))
+    post(%(ruflet:drawer:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "https://myapp.com/", "selected" => true },
+      { "label" => "Inbox", "icon" => "mail", "url" => "https://myapp.com/inbox" }
+    ] })}))
+    drawer = stack.first.props["drawer"]
+    navbar = find(stack.first, "navigationbar")
+    assert_equal 0, drawer.props["selected_index"]
+
+    @page.dispatch_event(target: navbar.wire_id, name: "change", data: { "selected_index" => 1 })
+
+    assert_equal 1, drawer.props["selected_index"],
+                 "after switching to Inbox the drawer highlights Inbox, not Home"
+  end
+
+  # Drawer links that point at tab destinations must behave as tab/root
+  # navigation even if the HTML payload says push. Inbox/Profile should keep the
+  # root shell: drawer leading, selected bottom nav item, no pushed close button.
+  def test_drawer_navigation_to_bottomnav_destination_selects_tab_not_push
+    start(title: "Demo")
+    post(%(ruflet:appbar:#{JSON.generate({ "title" => "Demo", "leading" => { "icon" => "menu", "action" => "drawer" } })}))
+    post(%(ruflet:bottomnav:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "house", "url" => "https://myapp.com/", "selected" => true },
+      { "label" => "Inbox", "icon" => "mail", "url" => "https://myapp.com/inbox" },
+      { "label" => "Profile", "icon" => "person", "url" => "https://myapp.com/profile" }
+    ] })}))
+    post(%(ruflet:drawer:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "https://myapp.com/", "selected" => true },
+      { "label" => "Inbox", "icon" => "mail", "url" => "https://myapp.com/inbox", "action" => "push" },
+      { "label" => "Profile", "icon" => "person", "url" => "https://myapp.com/profile", "action" => "push" }
+    ] })}))
+    drawer = stack.first.props["drawer"]
+    @sent.clear
+
+    @page.dispatch_event(target: drawer.wire_id, name: "change", data: { "value" => 1 })
+
+    assert @sent.any? { |_action, payload| payload.to_s.include?("close_drawer") },
+           "drawer navigation closes the native drawer before switching tabs"
+    assert_equal 1, stack.length, "tab destinations from the drawer reuse the root screen"
+    assert_equal "https://myapp.com/inbox", top_webview.props["url"]
+    assert_equal 1, find(stack.first, "navigationbar").props["selected_index"],
+                 "the matching bottom-nav destination becomes active"
+    post(%(ruflet:appbar:#{JSON.generate({ "title" => "Inbox", "leading" => { "icon" => "close", "action" => "back" } })}))
+    assert_nil find(stack.first, "appbar").props["leading"],
+               "Inbox keeps Flutter's implied drawer leading, not a close button"
+
+    @sent.clear
+    @page.dispatch_event(target: drawer.wire_id, name: "change", data: { "value" => 2 })
+
+    assert @sent.any? { |_action, payload| payload.to_s.include?("close_drawer") },
+           "drawer navigation closes the native drawer for profile too"
+    assert_equal 1, stack.length
+    assert_equal "https://myapp.com/profile", top_webview.props["url"]
+    assert_equal 2, find(stack.first, "navigationbar").props["selected_index"],
+                 "Profile becomes the active bottom-nav destination"
+    post(%(ruflet:appbar:#{JSON.generate({ "title" => "Profile", "leading" => { "icon" => "close", "action" => "back" } })}))
+    assert_nil find(stack.first, "appbar").props["leading"],
+               "Profile keeps Flutter's implied drawer leading, not a close button"
+  end
+
+  # mode: root collapses any pushed screens but reuses the root shell (view +
+  # AppBar + NavigationBar); only the body is swapped.
+  def test_root_navigation_collapses_pushed_screens_but_reuses_root_shell
+    start(title: "Demo")
+    root_view = stack.first
+    action("push", "https://myapp.com/a")
+    assert_equal 2, stack.length
+
+    action("root", "https://myapp.com/home")
+
+    assert_equal 1, stack.length, "root collapses back to a single screen"
+    assert_same root_view, stack.first, "the surviving screen is the original root view"
+    assert_equal "https://myapp.com/home", top_webview.props["url"]
+  end
+
+  # Tapping a push item in the drawer (e.g. Settings) must not leave that item
+  # highlighted next to the current tab — the drawer is single-selection and
+  # should mark only the route we're actually on.
+  def test_drawer_push_item_does_not_stay_selected
+    start
+    post(%(ruflet:drawer:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/", "selected" => true },
+      { "label" => "Settings", "icon" => "settings", "url" => "/settings", "action" => "push" }
+    ] })}))
+    drawer = stack.first.props["drawer"]
+    drawer.props["selected_index"] = 1 # client highlights the tapped Settings
+
+    @page.dispatch_event(target: drawer.wire_id, name: "change", data: { "value" => 1 })
+
+    assert_equal 2, stack.length, "the push item still navigates"
+    assert_equal 0, drawer.props["selected_index"],
+                 "the drawer keeps the current tab selected, not the tapped push item"
+  end
+
+  # A push opened from the drawer keeps its own declared chrome (back button),
+  # rather than being forced into a title-only AppBar by the tab title hint.
+  def test_drawer_push_keeps_declared_back_button
+    start
+    post(%(ruflet:drawer:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/", "selected" => true },
+      { "label" => "Settings", "icon" => "settings", "url" => "/settings", "action" => "push" }
+    ] })}))
+    drawer = stack.first.props["drawer"]
+
+    @page.dispatch_event(target: drawer.wire_id, name: "change", data: { "value" => 1 })
+    # The pushed settings screen reports its own appbar with a close/back leading.
+    post(%(ruflet:appbar:#{JSON.generate({ "title" => "Settings", "leading" => { "icon" => "close", "action" => "back" } })}))
+
+    appbar = find(stack.last, "appbar")
+    refute_nil appbar.props["leading"], "the pushed screen keeps its back/close button"
+  end
+
+  # A freshly pushed screen renders its AppBar immediately with the loading
+  # shimmer confined to the body — the same shape as a root/tab load.
+  def test_pushed_screen_renders_appbar_with_shimmer_only_in_body
+    start
+    action("push", "https://myapp.com/detail", "title" => "Detail", "leading" => { "icon" => "close", "action" => "back" })
+
+    appbar = find(stack.last, "appbar")
+    body = stack.last.props["controls"].first
+
+    refute_nil appbar, "the pushed screen's AppBar is rendered before the body loads"
+    assert_equal "stack", body.type
+    refute_nil find(body, "shimmer"), "the body owns the loading shimmer"
+    assert_nil find(appbar, "shimmer"), "the shimmer never covers the AppBar"
+    assert_equal true, body.props["controls"].last.props["visible"], "the shimmer is visible while the body loads"
+  end
+
+  # After a back navigation the drawer must reflect the screen returned to, not
+  # the destination tapped to leave it.
+  def test_drawer_selection_resets_after_navigating_back
+    start
+    post(%(ruflet:drawer:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/", "selected" => true },
+      { "label" => "Settings", "icon" => "settings", "url" => "/settings", "action" => "push" }
+    ] })}))
+    drawer = stack.first.props["drawer"]
+
+    # Select Settings: closes the drawer and pushes the settings screen. The
+    # client marks Settings (index 1) selected on the drawer.
+    @page.dispatch_event(target: drawer.wire_id, name: "change", data: { "value" => 1 })
+    assert_equal 2, stack.length
+    drawer.props["selected_index"] = 1
+
+    @page.dispatch_event(target: 1, name: "view_pop", data: nil)
+
+    assert_equal 1, stack.length
+    assert_equal 0, drawer.props["selected_index"],
+                 "returning to the root resets the drawer selection to the current screen"
+  end
+
+  def test_bottomnav_selection_resolves_relative_urls_before_loading_webview
+    start
+    post(%(ruflet:bottomnav:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "house", "url" => "/" },
+      { "label" => "Inbox", "icon" => "mail", "url" => "/inbox" }
+    ] })}))
+    navbar = find(stack.first, "navigationbar")
+    @page.dispatch_event(target: navbar.wire_id, name: "change", data: { "selected_index" => 1 })
+
+    assert_equal 1, stack.length
+    assert_equal "https://myapp.com/inbox", top_webview.props["url"]
+  end
+
+  def test_pushed_screen_does_not_inherit_root_bottom_navigation
+    start
+    post(%(ruflet:bottomnav:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "house", "url" => "/" },
+      { "label" => "Inbox", "icon" => "mail", "url" => "/inbox" }
+    ] })}))
+
+    action("push", "/settings", "title" => "Settings", "leading" => { "icon" => "close", "action" => "back" })
+
+    assert_nil stack.last.props["navigation_bar"], "pushed native screens should not display the root tab bar"
+    assert_nil stack.last.props["bottom_appbar"], "pushed native screens should not display root bottom app chrome"
+  end
+
+  def test_duplicate_bottomnav_message_does_not_rebuild_the_root_webview
+    start
+    payload = { "items" => [
+      { "label" => "Home", "icon" => "house", "url" => "https://myapp.com/" },
+      { "label" => "Profile", "icon" => "person", "url" => "https://myapp.com/profile" }
+    ] }
+
+    post("ruflet:bottomnav:#{JSON.generate(payload)}")
+    view = stack.first
+    webview = top_webview
+
+    post("ruflet:bottomnav:#{JSON.generate(payload)}")
+    assert_same view, stack.first, "same bottomnav payload should not recreate the root view"
+    assert_same webview, top_webview, "same bottomnav payload should not recreate the root WebView"
+  end
+
+  def test_bottomnav_with_fewer_than_two_items_is_ignored
+    start
+    post(%(ruflet:bottomnav:#{JSON.generate({ "items" => [{ "label" => "Home", "icon" => "house", "url" => "/" }] })}))
+    assert_nil find(stack.first, "navigationbar")
+  end
+
+  def test_drawer_message_sets_a_native_drawer_on_the_reporting_screen
+    start
+    view = stack.first
+    webview = top_webview
+    post(%(ruflet:drawer:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/", "selected" => true },
+      { "label" => "Settings", "icon" => "settings", "url" => "/settings", "action" => "push" }
+    ] })}))
+
+    drawer = find(stack.first.props["drawer"], "navigationdrawer")
+    refute_nil drawer, "ruflet-drawer builds a native NavigationDrawer"
+    assert_same view, stack.first, "promoting drawer should patch the mounted view in place so invokes stay attached"
+    assert_same webview, top_webview, "promoting drawer should not recreate the WebView"
+    assert_equal 2, Array(drawer.props["controls"]).length
+    assert_equal 0, drawer.props["selected_index"]
+  end
+
+  def test_drawer_selection_closes_drawer_and_navigates_with_item_mode
+    start
+    post(%(ruflet:drawer:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/" },
+      { "label" => "Settings", "icon" => "settings", "url" => "/settings", "action" => "push" }
+    ] })}))
+    drawer = stack.first.props["drawer"]
+    @sent.clear
+
+    @page.dispatch_event(target: drawer.wire_id, name: "change", data: { "value" => 1 })
+
+    assert @sent.any? { |_action, payload| payload.to_s.include?("close_drawer") },
+           "drawer selection closes the drawer before navigation"
+    assert_equal 2, stack.length
+    assert_equal "https://myapp.com/settings", top_webview.props["url"]
+  end
+
+  def test_duplicate_drawer_message_does_not_rebuild_the_webview_screen
+    start
+    payload = { "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/" },
+      { "label" => "Profile", "icon" => "person", "url" => "/profile" }
+    ] }
+
+    post("ruflet:drawer:#{JSON.generate(payload)}")
+    view = stack.first
+    webview = top_webview
+
+    post("ruflet:drawer:#{JSON.generate(payload)}")
+    assert_same view, stack.first, "same drawer payload should not recreate the view"
+    assert_same webview, top_webview, "same drawer payload should not recreate the WebView"
+  end
+
+  # The drawer is promoted onto the live root view via an in-place control patch
+  # (id == the view's wire id), exactly like the appbar/bottomnav/rail. A
+  # page-level `views` resend (id == 1) re-serializes every view as a full
+  # object, which on the client tears down and reloads the screen's WebView —
+  # the body flashes the shimmer twice and the WebView's console channel
+  # detaches, so bridge actions (share/copy/navigate) stop working after the
+  # first interaction.
+  def test_drawer_promotion_patches_the_view_in_place_not_a_full_views_resend
+    start(title: "Demo")
+    view = stack.first
+    @sent.clear
+
+    post(%(ruflet:drawer:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/" },
+      { "label" => "Profile", "icon" => "person", "url" => "/profile" }
+    ] })}))
+
+    patch_controls = @sent.select { |action, _payload| action == Ruflet::Protocol::ACTIONS[:patch_control] }
+    refute_empty patch_controls, "promoting a drawer must emit a control patch"
+
+    assert patch_controls.any? { |_action, payload| payload["id"] == view.wire_id },
+           "drawer should patch the mounted view in place (id == view wire id)"
+
+    views_resend = patch_controls.any? do |_action, payload|
+      payload["id"] == 1 && payload["patch"].to_s.include?("views")
+    end
+    refute views_resend, "drawer promotion must not re-send the whole views list (that reloads the WebView)"
+  end
+
+  def test_rail_message_wraps_the_current_body_for_desktop_navigation
+    start
+    view = stack.first
+    webview = top_webview
+    post(%(ruflet:rail:#{JSON.generate({ "extended" => true, "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/", "selected" => true },
+      { "label" => "Inbox", "icon" => "mail", "url" => "/inbox" }
+    ] })}))
+
+    row = stack.first.props["controls"].first
+    rail = find(row, "navigationrail")
+    refute_nil rail, "ruflet-rail builds a native NavigationRail"
+    assert_same view, stack.first, "promoting rail should patch the mounted view in place"
+    assert_same webview, top_webview, "promoting rail should not recreate the WebView"
+    assert_equal true, rail.props["extended"]
+    assert_equal 2, Array(rail.props["destinations"]).length
+    assert_equal "stack", row.props["controls"].last.type
+  end
+
+  def test_rail_selection_switches_to_the_destination_url
+    start
+    post(%(ruflet:rail:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/" },
+      { "label" => "Inbox", "icon" => "mail", "url" => "/inbox" }
+    ] })}))
+    rail = find(stack.first, "navigationrail")
+
+    @page.dispatch_event(target: rail.wire_id, name: "change", data: { "value" => 1 })
+
+    assert_equal 1, stack.length
+    assert_equal "https://myapp.com/inbox", top_webview.props["url"]
+  end
+
+  def test_duplicate_rail_message_does_not_rebuild_the_webview_screen
+    start
+    payload = { "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/" },
+      { "label" => "Profile", "icon" => "person", "url" => "/profile" }
+    ] }
+
+    post("ruflet:rail:#{JSON.generate(payload)}")
+    view = stack.first
+    webview = top_webview
+
+    post("ruflet:rail:#{JSON.generate(payload)}")
+    assert_same view, stack.first, "same rail payload should not recreate the view"
+    assert_same webview, top_webview, "same rail payload should not recreate the WebView"
+  end
+
+  # --- native dialog / toast ---------------------------------------------
+
+  def test_dialog_message_opens_a_native_alert_dialog
+    start
+    post(%(ruflet:action:#{JSON.generate({ "component" => "dialog", "title" => "Delete?", "content" => "This cannot be undone." })}))
+    dialog = @page.instance_variable_get(:@dialogs).last
+    refute_nil dialog
+    assert_equal "alertdialog", dialog.type
+    assert_equal true, dialog.props["adaptive"]
+    assert_equal "Delete?", find(dialog.props["title"], "text").props["value"]
+    assert_equal "This cannot be undone.", find(dialog.props["content"], "text").props["value"]
+  end
+
+  def test_dialog_ok_closes_the_visible_native_dialog
+    start
+    post(%(ruflet:action:#{JSON.generate({ "component" => "dialog", "title" => "Delete?", "content" => "This cannot be undone." })}))
+    dialog = @page.instance_variable_get(:@dialogs).last
+    ok = Array(dialog.props["actions"]).last
+    @sent.clear
+
+    ok.emit("click", Ruflet::Event.new(name: "click", target: ok.wire_id, raw_data: nil, page: @page, control: ok))
+
+    assert_equal false, dialog.props["open"]
+    assert @sent.any? { |_action, payload| payload.to_s.include?('"open"=>false') || payload.to_s.include?('"open", false') },
+           "OK must patch the dialog open=false so the client pops the visible route"
+
+    @page.dispatch_event(target: dialog.wire_id, name: "dismiss", data: nil)
+    assert_empty @page.instance_variable_get(:@dialogs)
+  end
+
+  def test_dialog_confirm_navigates_and_closes
+    start
+    post(%(ruflet:action:#{JSON.generate({ "component" => "dialog", "title" => "Open?", "confirm" => "Go", "url" => "https://myapp.com/next", "action" => "push" })}))
+    dialog = @page.instance_variable_get(:@dialogs).last
+    confirm = Array(dialog.props["actions"]).first
+    assert_equal "textbutton", confirm.type
+
+    confirm.emit("click", Ruflet::Event.new(name: "click", target: confirm.wire_id, raw_data: nil, page: @page, control: confirm))
+    assert_equal 2, stack.length, "confirm performs the navigation"
+    assert_equal "https://myapp.com/next", top_webview.props["url"]
+  end
+
+  def test_toast_message_sets_a_snackbar
+    start
+    post(%(ruflet:action:#{JSON.generate({ "component" => "toast", "message" => "Saved", "duration" => "2000" })}))
+    snackbar = @page.instance_variable_get(:@snack_bar)
+    refute_nil snackbar
+    assert_equal "snackbar", snackbar.type
+    assert_equal true, snackbar.props["adaptive"]
+    assert_equal "Saved", find(snackbar.props["content"], "text").props["value"]
+    assert_equal 2000, snackbar.props["duration"]
+  end
+
+  def test_bottom_sheet_is_adaptive
+    start
+    action("sheet", "https://myapp.com/quick")
+    sheet = @page.instance_variable_get(:@bottom_sheet)
+    assert_equal true, sheet.props["adaptive"]
+  end
+
+  def test_share_action_invokes_native_share_service
+    start
+    @sent.clear
+    post(%(ruflet:action:#{JSON.generate({ "component" => "share", "text" => "Hello", "title" => "Greeting" })}))
+
+    assert @sent.any? { |_action, payload| payload.to_s.include?("share_text") && payload.to_s.include?("Hello") }
+  end
+
+  def test_share_still_invokes_after_copy_action
+    start
+    @sent.clear
+
+    post(%(ruflet:action:#{JSON.generate({ "component" => "share", "text" => "Hello", "title" => "Greeting" })}))
+    post(%(ruflet:action:#{JSON.generate({ "component" => "clipboard", "text" => "Secret", "toast" => "Copied" })}))
+    post(%(ruflet:action:#{JSON.generate({ "component" => "share", "text" => "Hello", "title" => "Greeting" })}))
+
+    share_calls = @sent.count { |_action, payload| payload.to_s.include?("share_text") && payload.to_s.include?("Hello") }
+    assert_equal 2, share_calls
+  end
+
+  def test_share_hash_url_falls_back_to_current_screen_url
+    start
+    @sent.clear
+
+    post(%(ruflet:action:#{JSON.generate({ "component" => "share", "url" => "#" })}))
+
+    assert @sent.any? { |_action, payload| payload.to_s.include?("share_uri") && payload.to_s.include?("https://myapp.com") }
+  end
+
+  def test_clipboard_action_copies_and_toasts
+    start
+    @sent.clear
+    post(%(ruflet:action:#{JSON.generate({ "component" => "clipboard", "text" => "Secret", "toast" => "Copied" })}))
+
+    assert @sent.any? { |_action, payload| payload.to_s.include?("set") && payload.to_s.include?("Secret") }
+    snackbar = @page.instance_variable_get(:@snack_bar)
+    assert_equal "Copied", find(snackbar.props["content"], "text").props["value"]
+    assert_equal 900, snackbar.props["duration"]
+  end
+
+  def test_url_launcher_action_invokes_native_launcher
+    start
+    @sent.clear
+    post(%(ruflet:action:#{JSON.generate({ "component" => "url_launcher", "url" => "https://example.com" })}))
+
+    assert @sent.any? { |_action, payload| payload.to_s.include?("launch_url") && payload.to_s.include?("https://example.com") }
+  end
+
+  def test_haptic_action_invokes_haptic_service
+    start
+    @sent.clear
+    post(%(ruflet:action:#{JSON.generate({ "component" => "haptic", "style" => "light" })}))
+
+    assert @sent.any? { |_action, payload| payload.to_s.include?("light_impact") }
+  end
+
+  def test_toast_without_a_message_is_ignored
+    start
+    post(%(ruflet:action:#{JSON.generate({ "component" => "toast", "message" => "" })}))
+    assert_nil @page.instance_variable_get(:@snack_bar)
+  end
+
+  # --- bridge JS ----------------------------------------------------------
+
+  def test_bridge_js_handles_explicit_nav_actions_and_chrome_attributes
+    js = Ruflet::Rails::NativeApp.bridge_js
+    assert_includes js, "ruflet-screen"
+    assert_includes js, "ruflet-action"
+    assert_includes js, "ruflet-appbar"
+    assert_includes js, "ruflet-tabs"
+    assert_includes js, "ruflet-drawer"
+    assert_includes js, "ruflet-rail"
+    assert_includes js, "window.RufletNative"
+    assert_includes js, 'report("action"'
+    assert_includes js, 'report("appbar"'
+    assert_includes js, 'report("bottomnav"'
+    assert_includes js, 'report("drawer"'
+    assert_includes js, 'report("rail"'
+    assert_includes js, "if (!promotedAppBar) report(\"title\""
+    assert_includes js, "data-ruflet-" # view-facing attributes use the ruflet data namespace
   end
 end

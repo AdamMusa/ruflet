@@ -54,7 +54,7 @@ class RufletInstallGeneratorTest < Minitest::Test
     Ruflet::Rails::WebInstaller.define_singleton_method(:install!, original)
   end
 
-  def test_install_generator_does_not_create_component_glue
+  def test_install_generator_only_creates_the_ruflet_entrypoint
     generator = build_generator({})
 
     refute generator.respond_to?(:create_application_component)

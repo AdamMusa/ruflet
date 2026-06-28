@@ -38,9 +38,9 @@ class RufletRailsTest < Minitest::Test
 
   def test_endpoint_without_an_entry_raises
     # A bare endpoint has no auto-discovery fallback — the developer must
-    # declare an entry (view:, app_file:, or a block).
+    # declare an app file or a block.
     error = assert_raises(ArgumentError) { Ruflet::Rails.endpoint }
-    assert_match(/requires one of view:, app_file:, or a block/, error.message)
+    assert_match(/requires one of app_file: or a block/, error.message)
   end
 
 end

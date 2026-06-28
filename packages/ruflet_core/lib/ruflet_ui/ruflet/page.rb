@@ -183,6 +183,7 @@ module Ruflet
         id: "_dialogs",
         controls: []
       )
+      @mounted_services = []
       @invoke_waiters = {}
       @invoke_callbacks = {}
       @invoke_waiters_mutex = Mutex.new
@@ -540,6 +541,12 @@ module Ruflet
     def bottom_sheet=(value)
       @bottom_sheet = value
       refresh_dialogs_container!
+      # Mirror dialog= / snack_bar=: once the dialogs container is mounted, push
+      # the change as an in-place patch. Without this, opening a bottom sheet
+      # after the container is already mounted (e.g. a prior dialog/snackbar)
+      # never reaches the client, since send_view_patch skips _dialogs once
+      # mounted. This is what made NativeApp's modal: sheets fail to open.
+      push_dialogs_update! if @dialogs_container_mounted
     end
 
     def bottomsheet=(value)
@@ -1701,14 +1708,61 @@ module Ruflet
     def push_services_update!
       refresh_control_indexes!
 
-      if @services_container.wire_id
+      unless @services_container.wire_id
+        # First mount: the whole list ships inside the page/view patch.
+        send_view_patch
+        @mounted_services = Array(@services_container.props["_services"]).dup
+        return
+      end
+
+      current = Array(@services_container.props["_services"])
+      ops = services_patch_ops(@mounted_services, current)
+      unless ops.empty?
+        # Incrementally add/remove individual services. Re-sending the whole
+        # `_services` list as full objects (a single replace op) makes the
+        # client run Control.fromMap for EVERY service, replacing each Control
+        # instance while ServiceRegistry only binds ids it hasn't seen — so an
+        # already-mounted service (share, clipboard, haptic) keeps its old
+        # binding while controlsIndex points at the fresh, listener-less
+        # instance, and its next invoke hangs. That was the "after Copy, Share
+        # stops working" bug. Add/remove ops leave untouched services intact.
         send_message(Protocol::ACTIONS[:patch_control], {
           "id" => @services_container.wire_id,
-          "patch" => [[0], [0, 0, "_services", serialize_patch_value(@services_container.props["_services"])]]
+          "patch" => [[0, { "_services" => [1] }], *ops]
         })
-      else
-        send_view_patch
       end
+      @mounted_services = current.dup
+    end
+
+    # Diff the previously-mounted services list against the current one and emit
+    # add (1) / remove (2) ops against the `_services` list (patch node 1).
+    # Services are normally append-only; a moved entry is expressed as
+    # remove + add. Existing entries are never re-serialized, so their client
+    # Control instances (and invoke listeners) survive.
+    def services_patch_ops(previous, current)
+      ops = []
+      working = previous.dup
+
+      (working.length - 1).downto(0) do |index|
+        next if current.any? { |service| service.equal?(working[index]) }
+
+        ops << [2, 1, index]
+        working.delete_at(index)
+      end
+
+      current.each_with_index do |service, index|
+        next if working[index]&.equal?(service)
+
+        existing = working.index { |candidate| candidate.equal?(service) }
+        if existing
+          ops << [2, 1, existing]
+          working.delete_at(existing)
+        end
+        ops << [1, 1, index, serialize_patch_value(service)]
+        working.insert(index, service)
+      end
+
+      ops
     end
 
     def push_dialogs_update!

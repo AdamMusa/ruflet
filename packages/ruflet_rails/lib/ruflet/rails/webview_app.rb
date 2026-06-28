@@ -7,21 +7,14 @@ module Ruflet
     # The chrome stays native while the body shows your website.
     #
     #   Ruflet.run do |page|
-    #     Ruflet::Rails.routed(page) do |route, nav|
-    #       if route == "/"
-    #         nav.push(
-    #           Ruflet::Rails.webview_app(
-    #             url: "https://myapp.com",
-    #             appbar: app_bar(title: text("My App")),
-    #             navigation_bar: navigation_bar(destinations: [...]),
-    #             # Following a link inside the page opens a NATIVE view instead:
-    #             on_navigate: ->(url) { page.go("/details") if url.include?("/product/") }
-    #           )
-    #         )
-    #       elsif route == "/details"
-    #         nav.push(detail_view)   # native screen, pushed on top; back returns to the shell
-    #       end
-    #     end
+    #     page.views = [
+    #       Ruflet::Rails.webview_app(
+    #         url: "https://myapp.com",
+    #         appbar: app_bar(title: text("My App")),
+    #         navigation_bar: navigation_bar(destinations: [...]),
+    #         on_navigate: ->(url) { page.go("/details") if url.include?("/product/") }
+    #       )
+    #     ]
     #   end
     #
     # on_navigate fires from the webview's url change as the user navigates, with

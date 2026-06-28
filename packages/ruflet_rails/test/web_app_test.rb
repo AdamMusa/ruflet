@@ -232,45 +232,9 @@ class RufletWebAppTest < Minitest::Test
     end
   end
 
-  def test_web_app_accepts_view_option_resolved_lazily
-    with_build_dir do |dir|
-      app = Ruflet::Rails.web_app(view: "LazyDefinedCounterView", build_dir: dir)
-
-      # The class does not exist yet — resolution must happen per session.
-      Object.const_set(:LazyDefinedCounterView, Class.new do
-        def self.render(page)
-          page.title = "Lazy View"
-        end
-      end)
-
-      server_io, client_io = UNIXSocket.pair
-      status, = app.call(ws_env(server_io))
-      assert_equal(-1, status)
-      response = +""
-      response << client_io.readpartial(1024) until response.include?("\r\n\r\n")
-
-      send_client_frame(client_io, Ruflet::WireCodec.pack([
-        Ruflet::Protocol::ACTIONS[:register_client],
-        { "session_id" => "", "page_name" => "",
-          "page" => { "route" => "/", "width" => 10, "height" => 10,
-                      "platform" => "web", "platform_brightness" => "light", "media" => {} } }
-      ]))
-      read_server_frame(client_io) # ack
-      patch = Ruflet::WireCodec.unpack(read_server_frame(client_io))
-      assert_includes patch[1].inspect, "Lazy View"
-    ensure
-      Object.send(:remove_const, :LazyDefinedCounterView) if Object.const_defined?(:LazyDefinedCounterView)
-      client_io&.close rescue nil
-      server_io&.close rescue nil
-    end
-  end
-
   def test_web_app_rejects_multiple_entrypoint_sources
     assert_raises(ArgumentError) do
-      Ruflet::Rails.web_app(view: "A", app_file: "b.rb")
-    end
-    assert_raises(ArgumentError) do
-      Ruflet::Rails.web_app(view: "A") { |page| page }
+      Ruflet::Rails.web_app(app_file: "b.rb") { |page| page }
     end
   end
 

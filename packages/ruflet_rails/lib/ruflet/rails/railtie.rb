@@ -3,28 +3,11 @@
 module Ruflet
   module Rails
     class Railtie < ::Rails::Railtie
-      generators do
-        require "ruflet/rails/generator_hooks"
-        Ruflet::Rails::GeneratorHooks.install!
-      end
-
       # Make ruflet_frame and friends available in every .erb template.
       initializer "ruflet_rails.view_helpers" do
         ActiveSupport.on_load(:action_view) do
           include Ruflet::Rails::ViewHelpers
         end
-      end
-
-      # Ruflet components live under app/views so Rails will not discover them
-      # by default. Add that directory as a Zeitwerk root and collapse its
-      # organizational subdirectories, matching generated top-level constants
-      # such as components/products/product_component.rb -> ProductComponent.
-      initializer "ruflet_rails.components", before: :bootstrap_hook do |app|
-        components = app.root.join("app/views/ruflet/components")
-        next unless components.directory?
-
-        app.autoloaders.main.push_dir(components)
-        app.autoloaders.main.collapse(components.join("**"))
       end
 
       initializer "ruflet_rails.desktop_launcher", after: :load_config_initializers do |_app|

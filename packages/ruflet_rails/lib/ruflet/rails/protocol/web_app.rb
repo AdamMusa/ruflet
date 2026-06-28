@@ -74,7 +74,7 @@ module Ruflet
 
         def entrypoint
           @entrypoint_option || @app_block ||
-            raise(ArgumentError, "web_app requires one of view:, app_file:, or a block")
+            raise(ArgumentError, "web_app requires one of app_file: or a block")
         end
 
         # The web build must NOT live under public/, or Rails' static
