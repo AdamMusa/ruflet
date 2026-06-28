@@ -744,8 +744,27 @@ class RufletNativeAppTest < Minitest::Test
     @page.dispatch_event(target: 1, name: "view_pop", data: nil)
 
     assert_equal 1, stack.length
-    assert_equal 0, drawer.props["selected_index"],
+    assert_equal 0, stack.first.props["drawer"].props["selected_index"],
                  "returning to the root resets the drawer selection to the current screen"
+  end
+
+  def test_drawer_is_refreshed_and_closed_after_native_back
+    start
+    root = stack.first
+    post(%(ruflet:drawer:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/", "selected" => true },
+      { "label" => "Settings", "icon" => "settings", "url" => "/settings", "action" => "push" }
+    ] })}))
+    drawer = root.props["drawer"]
+    action("push", "/settings", "title" => "Settings", "leading" => { "icon" => "close", "action" => "back" })
+    @sent.clear
+
+    @page.dispatch_event(target: 1, name: "view_pop", data: nil)
+
+    refute_same drawer, root.props["drawer"],
+                "returning from a native screen refreshes the root drawer callback"
+    assert @sent.any? { |_action, payload| payload["control_id"] == root.wire_id && payload.to_s.include?("close_drawer") },
+           "returning to root closes any drawer state left open underneath the pushed screen"
   end
 
   def test_bottomnav_selection_resolves_relative_urls_before_loading_webview

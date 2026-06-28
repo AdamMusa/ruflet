@@ -291,6 +291,8 @@ module Ruflet
 
         @screens.pop
         flush
+        close_drawer(@screens.last, retry_close: true)
+        refresh_root_drawer
         sync_drawer_selection(@screens.last)
         refresh_root_navigation_bar
       end
@@ -1181,6 +1183,17 @@ module Ruflet
         # without reloading the WebView body or flashing the AppBar.
         @navigation_bar = build_bottomnav(@bottomnav_spec)
         update_root_navigation_bar
+      end
+
+      def refresh_root_drawer
+        root = @screens.first
+        return unless root && @drawer_spec
+
+        # A push/pop reserializes the root view under the pushed route. The
+        # drawer can remain visually mounted but lose its live change callback,
+        # so rebuild only the drawer control after returning to root.
+        root.drawer_signature = nil
+        apply_drawer(root, @drawer_spec)
       end
 
       def sync_root_navigation_bar_selection
