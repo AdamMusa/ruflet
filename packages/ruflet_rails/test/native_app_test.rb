@@ -830,6 +830,26 @@ class RufletNativeAppTest < Minitest::Test
     assert_equal "https://myapp.com/settings", top_webview.props["url"]
   end
 
+  def test_drawer_selection_closes_the_drawer_owning_view_when_another_screen_is_on_top
+    start
+    root = stack.first
+    post(%(ruflet:drawer:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/" },
+      { "label" => "Settings", "icon" => "settings", "url" => "/settings", "action" => "push" }
+    ] })}))
+    drawer = root.props["drawer"]
+    action("push", "/details", "title" => "Details", "leading" => { "icon" => "menu", "action" => "drawer" })
+    top = stack.last
+    @sent.clear
+
+    @page.dispatch_event(target: drawer.wire_id, name: "change", data: { "value" => 1 })
+
+    assert @sent.any? { |_action, payload| payload["control_id"] == root.wire_id && payload.to_s.include?("close_drawer") },
+           "a drawer event closes the view that owns the drawer"
+    assert @sent.any? { |_action, payload| payload["control_id"] == top.wire_id && payload.to_s.include?("close_drawer") },
+           "drawer close is also sent to the current native screen when it differs"
+  end
+
   def test_duplicate_drawer_message_does_not_rebuild_the_webview_screen
     start
     payload = { "items" => [

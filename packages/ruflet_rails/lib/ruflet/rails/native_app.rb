@@ -1002,7 +1002,7 @@ module Ruflet
           selected_index: items.index { |item| item["selected"] } || 0,
           on_change: lambda do |event|
             index = navigation_index(event)
-            close_drawer
+            close_drawer(screen, retry_close: true)
             target = urls[index].to_s
             next if target.empty?
 
@@ -1262,11 +1262,13 @@ module Ruflet
         nil
       end
 
-      def close_drawer
-        screen = @screens.last
-        return unless screen&.view&.wire_id
+      def close_drawer(screen = nil, retry_close: false)
+        @drawer_open_requested = false
+        targets = [screen, @screens.last].compact.uniq
+        return if targets.empty?
 
-        @page.invoke(screen.view, "close_drawer")
+        targets.each { |target| invoke_close_drawer(target) }
+        retry_close_drawer(targets) if retry_close
       rescue StandardError
         nil
       end
@@ -1299,6 +1301,25 @@ module Ruflet
         end
       rescue StandardError
         @page.invoke(screen.view, method_name)
+      end
+
+      def invoke_close_drawer(screen)
+        return unless screen&.view&.wire_id
+
+        @page.invoke(screen.view, "close_drawer")
+      end
+
+      def retry_close_drawer(screens)
+        Thread.new do
+          [0.05, 0.15].each do |delay|
+            sleep delay
+            screens.each { |screen| invoke_close_drawer(screen) }
+          end
+        rescue StandardError
+          nil
+        end
+      rescue StandardError
+        nil
       end
 
       # --- Native dialog / toast ---------------------------------------------
