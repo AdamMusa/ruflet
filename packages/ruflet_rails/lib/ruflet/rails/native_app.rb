@@ -1012,6 +1012,7 @@ module Ruflet
             # back button), so we must NOT force a title-only AppBar on it.
             spec = mode == "root" ? { "title" => items[index]["label"].to_s } : nil
             navigate_screen(target, mode, spec)
+            close_drawer(@screens.last, retry_close: true)
             # The drawer must mark the route we ended up on, never the item just
             # tapped. A push item (e.g. Settings) is a detail screen, not a tab,
             # so the current tab stays selected instead of leaving two

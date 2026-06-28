@@ -828,6 +828,8 @@ class RufletNativeAppTest < Minitest::Test
            "drawer selection closes the drawer before navigation"
     assert_equal 2, stack.length
     assert_equal "https://myapp.com/settings", top_webview.props["url"]
+    assert @sent.any? { |_action, payload| payload["control_id"] == stack.last.wire_id && payload.to_s.include?("close_drawer") },
+           "drawer selection closes the resulting native screen after navigation too"
   end
 
   def test_drawer_selection_closes_the_drawer_owning_view_when_another_screen_is_on_top
