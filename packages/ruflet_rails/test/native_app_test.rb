@@ -572,6 +572,25 @@ class RufletNativeAppTest < Minitest::Test
            "the body is swapped with an in-place controls patch on the reused view"
   end
 
+  def test_bottomnav_uses_declared_page_appbar_instead_of_tab_label
+    start(title: "Demo")
+    post(%(ruflet:bottomnav:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "house", "url" => "https://myapp.com/", "selected" => true },
+      { "label" => "Inbox", "icon" => "mail", "url" => "https://myapp.com/inbox" }
+    ] })}))
+    post(%(ruflet:appbar:#{JSON.generate({ "title" => "Demo", "leading" => { "icon" => "menu", "action" => "drawer" } })}))
+    navbar = find(stack.first, "navigationbar")
+
+    @page.dispatch_event(target: navbar.wire_id, name: "change", data: { "selected_index" => 1 })
+    @sent.clear
+    @page.dispatch_event(target: navbar.wire_id, name: "change", data: { "selected_index" => 0 })
+
+    assert_equal "https://myapp.com/", top_webview.props["url"]
+    assert_equal "Demo", find(find(stack.first, "appbar"), "text").props["value"]
+    refute @sent.any? { |_action, payload| payload.to_s.include?('"value"=>"Home"') || payload.to_s.include?('"value", "Home"') },
+           "Home tab should not temporarily replace the page-declared Demo appbar title"
+  end
+
   # The drawer must track the route we're on, not the one we left.
   def test_tab_switch_syncs_the_drawer_selection_to_the_new_route
     start(title: "Demo")

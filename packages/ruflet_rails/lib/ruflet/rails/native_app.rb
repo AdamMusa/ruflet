@@ -244,6 +244,7 @@ module Ruflet
         @screen_seq = 0
         @bottomnav_signature = nil
         @bottomnav_spec = nil
+        @appbar_specs_by_url = {}
         @drawer_spec = nil
         @drawer_open_requested = false
       end
@@ -946,6 +947,7 @@ module Ruflet
         return unless screen
 
         spec = bottomnav_appbar_spec(screen.url, spec) if screen.equal?(@screens.first) && bottomnav_destination?(screen.url)
+        remember_appbar_spec(screen.url, spec)
         signature = chrome_signature(spec)
         return if screen.appbar_signature == signature
 
@@ -1108,8 +1110,9 @@ module Ruflet
             next if target.empty? || same_url?(target, current_screen_url)
 
             # Carry the tab's label so the AppBar shows the destination's name
-            # immediately, instead of the route we're leaving.
-            go_webview(target, spec: { "title" => items[index]["label"].to_s })
+            # immediately, unless the destination page already declared a more
+            # specific native AppBar (e.g. Home tab label -> Demo app title).
+            go_webview(target, spec: bottomnav_appbar_spec(target, { "title" => items[index]["label"].to_s }))
           end
         )
       end
@@ -1129,15 +1132,43 @@ module Ruflet
       end
 
       def bottomnav_appbar_spec(url, spec)
+        declared = appbar_spec_for_url(url)
         label = bottomnav_label_for(url)
-        title = spec.is_a?(Hash) && !spec["title"].to_s.empty? ? spec["title"].to_s : label
-        actions = spec.is_a?(Hash) ? spec["actions"] : nil
+        title =
+          if declared && !declared["title"].to_s.empty?
+            declared["title"].to_s
+          elsif spec.is_a?(Hash) && !spec["title"].to_s.empty?
+            spec["title"].to_s
+          else
+            label
+          end
+        actions = declared ? declared["actions"] : (spec.is_a?(Hash) ? spec["actions"] : nil)
         { "title" => title, "leading" => { "action" => "drawer" }, "actions" => actions }.compact
       end
 
       def bottomnav_item_for(url)
         items = Array(@bottomnav_spec && @bottomnav_spec["items"])
         items.find { |item| same_url?(absolute_url(item["url"]), url) }
+      end
+
+      def remember_appbar_spec(url, spec)
+        return unless spec.is_a?(Hash)
+
+        key = appbar_spec_key(url)
+        @appbar_specs_by_url[key] = canonicalize(spec) if key
+      end
+
+      def appbar_spec_for_url(url)
+        key = appbar_spec_key(url)
+        key && @appbar_specs_by_url[key]
+      end
+
+      def appbar_spec_key(url)
+        uri = URI.parse(absolute_url(url))
+        path = uri.path.to_s.empty? ? "/" : uri.path.to_s
+        "#{uri.scheme}://#{uri.host}:#{uri.port}#{path}"
+      rescue URI::InvalidURIError
+        nil
       end
 
       def refresh_root_navigation_bar
