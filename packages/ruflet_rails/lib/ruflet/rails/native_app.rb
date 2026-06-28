@@ -984,7 +984,13 @@ module Ruflet
 
         @drawer_spec = spec
         items = Array(spec["items"])
-        destinations = items.filter_map { |item| build_drawer_destination(item) }
+        urls = items.map { |item| absolute_url(item["url"]) }
+        modes = items.map { |item| (item["action"] || item["mode"] || "root").to_s }
+        destinations = items.each_with_index.filter_map do |item, index|
+          build_drawer_destination(item, selected: default_drawer_item_selected?(item, screen), on_click: lambda do |_event|
+            select_drawer_item(screen, items, urls, modes, index)
+          end)
+        end
         return if destinations.empty?
 
         signature = chrome_signature(spec)
@@ -996,30 +1002,13 @@ module Ruflet
           return
         end
 
-        urls = items.map { |item| absolute_url(item["url"]) }
-        modes = items.map { |item| (item["action"] || item["mode"] || "root").to_s }
         drawer = Ruflet::UI::ControlFactory.build(
           :navigationdrawer,
           controls: destinations,
           selected_index: items.index { |item| item["selected"] } || 0,
           on_change: lambda do |event|
             index = navigation_index(event)
-            close_drawer(screen, retry_close: true)
-            target = urls[index].to_s
-            next if target.empty?
-
-            mode = modes[index]
-            # Only a tab (root) switch carries a title hint to repaint the AppBar
-            # title in place. A push keeps its own declared chrome (notably the
-            # back button), so we must NOT force a title-only AppBar on it.
-            spec = mode == "root" ? { "title" => items[index]["label"].to_s } : nil
-            navigate_screen(target, mode, spec)
-            close_drawer(@screens.last, retry_close: true)
-            # The drawer must mark the route we ended up on, never the item just
-            # tapped. A push item (e.g. Settings) is a detail screen, not a tab,
-            # so the current tab stays selected instead of leaving two
-            # destinations highlighted at once.
-            sync_drawer_selection(screen)
+            select_drawer_item(screen, items, urls, modes, index)
           end
         )
         screen.drawer_signature = signature
@@ -1206,13 +1195,45 @@ module Ruflet
         @page.update(@navigation_bar, selected_index: index)
       end
 
-      def build_drawer_destination(item)
+      def build_drawer_destination(item, selected: false, on_click: nil)
         icon = item["icon"].to_s
         return nil if icon.empty?
 
         Ruflet::UI::ControlFactory.build(
-          :navigation_drawer_destination, icon: icon, label: item["label"].to_s
+          :list_tile,
+          leading: Ruflet::UI::ControlFactory.build(:icon, icon: icon),
+          title: Ruflet::UI::ControlFactory.build(:text, value: item["label"].to_s),
+          selected: selected,
+          on_click: on_click
         )
+      end
+
+      def select_drawer_item(screen, items, urls, modes, index)
+        close_drawer(screen, retry_close: true)
+        target = urls[index].to_s
+        return if target.empty?
+
+        if same_url?(target, current_screen_url)
+          sync_drawer_selection(screen)
+          return
+        end
+
+        mode = modes[index]
+        # Only a tab (root) switch carries a title hint to repaint the AppBar
+        # title in place. A push keeps its own declared chrome (notably the
+        # back button), so we must NOT force a title-only AppBar on it.
+        spec = mode == "root" ? { "title" => items[index]["label"].to_s } : nil
+        navigate_screen(target, mode, spec)
+        close_drawer(@screens.last, retry_close: true)
+        # The drawer must mark the route we ended up on, never the item just
+        # tapped. A push item (e.g. Settings) is a detail screen, not a tab,
+        # so the current tab stays selected instead of leaving two
+        # destinations highlighted at once.
+        sync_drawer_selection(screen)
+      end
+
+      def default_drawer_item_selected?(item, screen)
+        same_url?(absolute_url(item["url"]), screen.url) || !!item["selected"]
       end
 
       def build_rail_destination(item)

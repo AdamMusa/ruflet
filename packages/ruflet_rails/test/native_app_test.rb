@@ -851,6 +851,41 @@ class RufletNativeAppTest < Minitest::Test
            "drawer selection closes the resulting native screen after navigation too"
   end
 
+  def test_drawer_item_click_closes_even_when_item_is_already_selected
+    start
+    post(%(ruflet:drawer:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/", "selected" => true },
+      { "label" => "Settings", "icon" => "settings", "url" => "/settings", "action" => "push" }
+    ] })}))
+    drawer = stack.first.props["drawer"]
+    home = drawer.props["controls"].first
+    @sent.clear
+
+    @page.dispatch_event(target: home.wire_id, name: "click", data: nil)
+
+    assert_equal 1, stack.length, "clicking the active drawer item does not reload the current body"
+    assert @sent.any? { |_action, payload| payload["control_id"] == stack.first.wire_id && payload.to_s.include?("close_drawer") },
+           "clicking the active drawer item still closes the drawer"
+  end
+
+  def test_refreshed_drawer_item_click_closes_after_native_back
+    start
+    post(%(ruflet:drawer:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/", "selected" => true },
+      { "label" => "Settings", "icon" => "settings", "url" => "/settings", "action" => "push" }
+    ] })}))
+    action("push", "/settings", "title" => "Settings", "leading" => { "icon" => "close", "action" => "back" })
+    @page.dispatch_event(target: 1, name: "view_pop", data: nil)
+    settings = stack.first.props["drawer"].props["controls"].last
+    @sent.clear
+
+    @page.dispatch_event(target: settings.wire_id, name: "click", data: nil)
+
+    assert @sent.any? { |_action, payload| payload["control_id"] == stack.first.wire_id && payload.to_s.include?("close_drawer") },
+           "clicking a refreshed drawer row closes after native back"
+    assert_equal "https://myapp.com/settings", top_webview.props["url"]
+  end
+
   def test_drawer_selection_closes_the_drawer_owning_view_when_another_screen_is_on_top
     start
     root = stack.first
