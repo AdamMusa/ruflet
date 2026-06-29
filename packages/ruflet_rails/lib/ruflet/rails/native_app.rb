@@ -1259,15 +1259,11 @@ module Ruflet
         spec = mode == "root" ? { "title" => items[index]["label"].to_s } : nil
         navigate_screen(target, mode, spec)
         close_drawer(@screens.last)
-        # The drawer must mark the route we ended up on, never the item just
-        # tapped. A push item (e.g. Settings) is a detail screen, not a tab,
-        # so the current tab stays selected instead of leaving two
-        # destinations highlighted at once.
         sync_drawer_selection(screen)
       end
 
-      def default_drawer_item_selected?(item, screen)
-        same_url?(absolute_url(item["url"]), screen.url) || !!item["selected"]
+      def default_drawer_item_selected?(item, _screen)
+        same_url?(absolute_url(item["url"]), current_screen_url) || !!item["selected"]
       end
 
       def build_rail_destination(item)
@@ -1320,7 +1316,7 @@ module Ruflet
         return 0 if items.empty?
 
         urls = items.map { |item| absolute_url(item["url"]) }
-        urls.index { |candidate| same_url?(candidate, screen.url) } ||
+        urls.index { |candidate| same_url?(candidate, current_screen_url) } ||
           items.index { |item| item["selected"] } || 0
       end
 

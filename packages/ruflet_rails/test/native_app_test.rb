@@ -769,10 +769,9 @@ class RufletNativeAppTest < Minitest::Test
     assert_equal "https://myapp.com/home", top_webview.props["url"]
   end
 
-  # Tapping a push item in the drawer (e.g. Settings) must not leave that item
-  # highlighted next to the current tab — the drawer is single-selection and
-  # should mark only the route we're actually on.
-  def test_drawer_push_item_does_not_stay_selected
+  # Tapping a drawer item selects it when its route is the active body URL, just
+  # like bottomnav does. A declared default remains only the fallback.
+  def test_drawer_push_item_selects_matching_active_route
     start
     post(%(ruflet:drawer:#{JSON.generate({ "items" => [
       { "label" => "Home", "icon" => "home", "url" => "/", "selected" => true },
@@ -785,8 +784,8 @@ class RufletNativeAppTest < Minitest::Test
 
     assert_equal 1, stack.length, "the push item navigates inside the stable shell"
     assert_equal "https://myapp.com/settings", top_webview.props["url"]
-    assert_equal 0, drawer.props["selected_index"],
-                 "the drawer keeps the current tab selected, not the tapped push item"
+    assert_equal 1, drawer.props["selected_index"],
+                 "the drawer highlights the item whose route matches the active body URL"
   end
 
   # A push opened from the drawer keeps its own declared chrome (back button),
