@@ -23,7 +23,7 @@ module Ruflet
         when "back"    then pop
         when "root"    then go_webview(url, spec: spec)
         when "replace" then replace_webview(url, spec: spec)
-        when "sheet"   then present_sheet(url)
+        when "sheet"   then present_sheet((spec || {}).merge("url" => url))
         else                push_webview(url, spec: spec)
         end
       end
@@ -63,14 +63,14 @@ module Ruflet
         new_spec = appbar_spec_from(spec)
         return unless new_spec
 
-        if new_spec[:leading].nil? && Array(new_spec[:actions]).empty?
+        if new_spec[:leading].nil? && Array(new_spec[:actions]).empty? && new_spec[:props].empty? && new_spec[:title_props].empty?
           update_screen_title(screen, new_spec[:title].to_s)
           return
         end
 
         screen.appbar_spec = new_spec
         screen.appbar_signature = nil
-        screen.title_text = text(title_for(screen))
+        screen.title_text = build_title_text(screen)
         update_screen_appbar(screen)
       end
 
@@ -112,11 +112,8 @@ module Ruflet
         signature = JSON.generate(canonicalize(spec))
         return if screen.appbar_signature == signature
 
-        title = spec["title"].to_s
-        screen.title_text = text(title)
-        leading = drawer_leading?(spec["leading"]) ? nil : build_chrome_button(spec["leading"])
-        actions = Array(spec["actions"]).filter_map { |action| build_chrome_button(action) }
-        screen.appbar_spec = { title: title, leading: leading, actions: actions }
+        screen.appbar_spec = appbar_spec_from(spec) || { title: spec["title"].to_s, leading: nil, actions: [], props: {}, title_props: {} }
+        screen.title_text = build_title_text(screen)
         screen.appbar_signature = signature
         update_screen_appbar(screen)
       end
@@ -176,6 +173,7 @@ module Ruflet
 
         drawer = navigation_drawer(
           destinations,
+          **ruflet_props_for(:navigation_drawer, spec),
           selected_index: selected_index,
           on_change: lambda do |event|
             index = navigation_index(event)
@@ -214,6 +212,7 @@ module Ruflet
         rail_args = {
           destinations: destinations,
           selected_index: items.index { |item| item["selected"] } || 0,
+          **ruflet_props_for(:navigation_rail, spec),
           label_type: spec["label_type"] || spec["labelType"] || "all",
           on_change: lambda do |event|
             index = navigation_index(event)
@@ -273,7 +272,8 @@ module Ruflet
         icon = item["icon"].to_s
         return nil if icon.empty?
 
-        navigation_bar_destination(icon: icon, label: item["label"].to_s)
+        navigation_bar_destination(icon: icon, label: item["label"].to_s,
+                                   **ruflet_props_for(:navigation_bar_destination, item))
       end
 
       def buildable_bottomnav?(spec)
@@ -286,6 +286,7 @@ module Ruflet
         urls = items.map { |item| absolute_url(item["url"]) }
 
         navigation_bar(
+          **ruflet_props_for(:navigation_bar, spec),
           destinations: destinations,
           selected_index: bottomnav_selected_index(items),
           on_change: lambda do |event|
@@ -362,8 +363,9 @@ module Ruflet
         return nil if icon.empty?
 
         list_tile(
-          leading: icon(icon),
-          title: text(item["label"].to_s),
+          **ruflet_props_for(:list_tile, item),
+          leading: icon(icon, **nested_ruflet_props(item, "icon_props", control: :icon)),
+          title: text(item["label"].to_s, **nested_ruflet_props(item, "label_props", "title_props", control: :text)),
           selected: selected,
           on_click: on_click
         )
@@ -393,7 +395,8 @@ module Ruflet
         icon = item["icon"].to_s
         return nil if icon.empty?
 
-        navigation_rail_destination(icon: icon, label: item["label"].to_s)
+        navigation_rail_destination(icon: icon, label: item["label"].to_s,
+                                    **ruflet_props_for(:navigation_rail_destination, item))
       end
 
       def navigation_index(event)

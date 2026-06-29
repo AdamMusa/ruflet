@@ -51,19 +51,18 @@ module Ruflet
             var nav = document.querySelector("[ruflet-tabs],[data-ruflet-tabs]");
             if (nav) {
               nav.style.display = "none";
+              var navSpec = readJSON(attr(nav, "ruflet-tabs"));
               var items = [];
               nav.querySelectorAll("a[href]").forEach(function (a) {
                 var icon = readJSON(attr(a, "ruflet-icon"));
-                items.push({
-                  label: icon.label || attr(a, "ruflet-label") || a.textContent.trim(),
-                  icon: icon.icon || attr(a, "ruflet-icon") || "circle",
-                  color: icon.color || "",
-                  size: icon.size || "",
-                  url: a.getAttribute("href"),
-                  selected: has(a, "ruflet-selected")
-                });
+                var entry = Object.assign({}, icon);
+                entry.label = icon.label || attr(a, "ruflet-label") || a.textContent.trim();
+                entry.icon = icon.icon || attr(a, "ruflet-icon") || "circle";
+                entry.url = a.getAttribute("href");
+                entry.selected = has(a, "ruflet-selected");
+                items.push(entry);
               });
-              if (items.length >= 2) report("bottomnav", JSON.stringify({ items: items }));
+              if (items.length >= 2) report("bottomnav", JSON.stringify(Object.assign({}, navSpec, { items: items })));
             }
             var drawer = document.querySelector("[ruflet-drawer],[data-ruflet-drawer]");
             if (drawer) {
@@ -72,17 +71,17 @@ module Ruflet
               var drawerItems = [];
               drawer.querySelectorAll("a[href]").forEach(function (a) {
                 var icon = readJSON(attr(a, "ruflet-icon"));
-                drawerItems.push({
-                  label: icon.label || attr(a, "ruflet-label") || a.textContent.trim(),
-                  icon: icon.icon || attr(a, "ruflet-icon") || "circle",
-                  url: a.getAttribute("href"),
-                  action: icon.action || attr(a, "ruflet-action") || drawerSpec.action || "root",
-                  selected: has(a, "ruflet-selected")
-                });
+                var entry = Object.assign({}, icon);
+                entry.label = icon.label || attr(a, "ruflet-label") || a.textContent.trim();
+                entry.icon = icon.icon || attr(a, "ruflet-icon") || "circle";
+                entry.url = a.getAttribute("href");
+                entry.action = icon.action || attr(a, "ruflet-action") || drawerSpec.action || "root";
+                entry.selected = has(a, "ruflet-selected");
+                drawerItems.push(entry);
               });
               if (drawerItems.length) report("drawer", JSON.stringify(Object.assign({}, drawerSpec, { items: drawerItems })));
             }
-              var rail = document.querySelector("[ruflet-rail],[data-ruflet-rail]");
+            var rail = document.querySelector("[ruflet-rail],[data-ruflet-rail]");
             if (rail) {
               rail.style.display = "none";
               var railSpec = readJSON(attr(rail, "ruflet-rail"));
@@ -90,13 +89,13 @@ module Ruflet
               var railItems = [];
               rail.querySelectorAll("a[href]").forEach(function (a) {
                 var icon = readJSON(attr(a, "ruflet-icon"));
-                railItems.push({
-                  label: icon.label || attr(a, "ruflet-label") || a.textContent.trim(),
-                  icon: icon.icon || attr(a, "ruflet-icon") || "circle",
-                  url: a.getAttribute("href"),
-                  action: icon.action || attr(a, "ruflet-action") || railSpec.action || "root",
-                  selected: has(a, "ruflet-selected")
-                });
+                var entry = Object.assign({}, icon);
+                entry.label = icon.label || attr(a, "ruflet-label") || a.textContent.trim();
+                entry.icon = icon.icon || attr(a, "ruflet-icon") || "circle";
+                entry.url = a.getAttribute("href");
+                entry.action = icon.action || attr(a, "ruflet-action") || railSpec.action || "root";
+                entry.selected = has(a, "ruflet-selected");
+                railItems.push(entry);
               });
               if (railItems.length >= 2) report("rail", JSON.stringify(Object.assign({}, railSpec, { items: railItems })));
             }

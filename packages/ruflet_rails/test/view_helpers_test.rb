@@ -75,6 +75,17 @@ class RufletViewHelpersTest < Minitest::Test
     assert_includes html, 'href="/profile"'
   end
 
+  def test_native_helpers_accept_custom_ruflet_payloads
+    html = helper.ruflet_bottom_nav(payload: { bgcolor: "#101010", indicator_color: "#eeeeee" }) do
+      helper.ruflet_nav_item("Home", "/", icon: "house", payload: { selected_icon: "home_filled", tooltip: "Go home" })
+    end.to_s
+
+    assert_includes html, "&quot;bgcolor&quot;:&quot;#101010&quot;"
+    assert_includes html, "&quot;indicator_color&quot;:&quot;#eeeeee&quot;"
+    assert_includes html, "&quot;selected_icon&quot;:&quot;home_filled&quot;"
+    assert_includes html, "&quot;tooltip&quot;:&quot;Go home&quot;"
+  end
+
   def test_ruflet_drawer_wraps_items
     html = helper.ruflet_drawer do
       helper.ruflet_drawer_item("Home", "/", icon: "home", selected: true) +
@@ -88,6 +99,20 @@ class RufletViewHelpersTest < Minitest::Test
     assert_includes html, '&quot;action&quot;:&quot;push&quot;'
     assert_includes html, "data-ruflet-selected"
     assert_includes html, 'href="/settings"'
+  end
+
+  def test_drawer_and_rail_helpers_accept_custom_ruflet_payloads
+    drawer = helper.ruflet_drawer(payload: { bgcolor: "#ffffff", width: 320 }) do
+      helper.ruflet_drawer_item("Home", "/", icon: "home", payload: { selected_tile_color: "#ddeeff" })
+    end.to_s
+    rail = helper.ruflet_navigation_rail(payload: { bgcolor: "#111111", min_width: 88 }) do
+      helper.ruflet_rail_item("Home", "/", icon: "home", payload: { indicator_color: "#444444" })
+    end.to_s
+
+    assert_includes drawer, "&quot;width&quot;:320"
+    assert_includes drawer, "&quot;selected_tile_color&quot;:&quot;#ddeeff&quot;"
+    assert_includes rail, "&quot;min_width&quot;:88"
+    assert_includes rail, "&quot;indicator_color&quot;:&quot;#444444&quot;"
   end
 
   def test_ruflet_navigation_rail_wraps_items

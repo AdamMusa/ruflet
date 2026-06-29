@@ -83,18 +83,21 @@ module Ruflet
       #     <%= ruflet_nav_item "Home", root_path, icon: "house", selected: true %>
       #     <%= ruflet_nav_item "Profile", profile_path, icon: "person" %>
       #   <% end %>
-      def ruflet_bottom_nav(name: "bottom-navigation", **attrs, &block)
+      def ruflet_bottom_nav(name: "bottom-navigation", payload: {}, **attrs, &block)
+        nav_payload = ruflet_stringify_keys(payload)
         ruflet_build_tag("nav", ruflet_capture(&block), {
-          "data-ruflet-tabs" => name,
+          "data-ruflet-tabs" => nav_payload.empty? ? name : ruflet_json(nav_payload),
           "hidden" => true
         }.merge(ruflet_dash_attrs(attrs)))
       end
 
       # A destination inside ruflet_bottom_nav.
-      def ruflet_nav_item(label, href, icon:, selected: false, color: nil, size: 24, **attrs)
+      def ruflet_nav_item(label, href, icon:, selected: false, color: nil, size: 24, payload: {}, **attrs)
+        item_payload = ruflet_stringify_keys(payload)
         data = {
           "href" => href,
-          "data-ruflet-icon" => ruflet_json(ruflet_compact_hash(icon: icon, label: label, color: color, size: size))
+          "data-ruflet-icon" => ruflet_json(ruflet_compact_hash(item_payload.merge(icon: icon, label: label,
+                                                                                   color: color, size: size)))
         }
         data["data-ruflet-selected"] = "true" if selected
         ruflet_build_tag("a", label, data.merge(ruflet_dash_attrs(attrs)))
@@ -107,18 +110,20 @@ module Ruflet
       #     <%= ruflet_drawer_item "Home", root_path, icon: "home" %>
       #     <%= ruflet_drawer_item "Settings", settings_path, icon: "settings", nav: :push %>
       #   <% end %>
-      def ruflet_drawer(action: :root, **attrs, &block)
+      def ruflet_drawer(action: :root, payload: {}, **attrs, &block)
         ruflet_build_tag("nav", ruflet_capture(&block), {
-          "data-ruflet-drawer" => ruflet_json(ruflet_compact_hash(action: action.to_s)),
+          "data-ruflet-drawer" => ruflet_json(ruflet_compact_hash(ruflet_stringify_keys(payload).merge(action: action.to_s))),
           "hidden" => true
         }.merge(ruflet_dash_attrs(attrs)))
       end
 
       # A destination inside ruflet_drawer.
-      def ruflet_drawer_item(label, href, icon:, selected: false, nav: nil, **attrs)
+      def ruflet_drawer_item(label, href, icon:, selected: false, nav: nil, payload: {}, **attrs)
+        item_payload = ruflet_stringify_keys(payload)
         data = {
           "href" => href,
-          "data-ruflet-icon" => ruflet_json(ruflet_compact_hash(icon: icon, label: label, action: nav&.to_s))
+          "data-ruflet-icon" => ruflet_json(ruflet_compact_hash(item_payload.merge(icon: icon, label: label,
+                                                                                   action: nav&.to_s)))
         }
         data["data-ruflet-selected"] = "true" if selected
         ruflet_build_tag("a", label, data.merge(ruflet_dash_attrs(attrs)))
@@ -131,9 +136,9 @@ module Ruflet
       #     <%= ruflet_rail_item "Home", root_path, icon: "home" %>
       #     <%= ruflet_rail_item "Inbox", inbox_path, icon: "mail" %>
       #   <% end %>
-      def ruflet_navigation_rail(action: :root, extended: nil, label_type: nil, breakpoint: nil, **attrs, &block)
-        payload = ruflet_compact_hash(action: action.to_s, extended: extended, label_type: label_type,
-                                      breakpoint: breakpoint)
+      def ruflet_navigation_rail(action: :root, extended: nil, label_type: nil, breakpoint: nil, payload: {}, **attrs, &block)
+        payload = ruflet_compact_hash(ruflet_stringify_keys(payload).merge(action: action.to_s, extended: extended,
+                                                                           label_type: label_type, breakpoint: breakpoint))
         ruflet_build_tag("nav", ruflet_capture(&block), {
           "data-ruflet-rail" => ruflet_json(payload),
           "hidden" => true
@@ -143,10 +148,12 @@ module Ruflet
       alias ruflet_rail ruflet_navigation_rail
 
       # A destination inside ruflet_navigation_rail.
-      def ruflet_rail_item(label, href, icon:, selected: false, nav: nil, **attrs)
+      def ruflet_rail_item(label, href, icon:, selected: false, nav: nil, payload: {}, **attrs)
+        item_payload = ruflet_stringify_keys(payload)
         data = {
           "href" => href,
-          "data-ruflet-icon" => ruflet_json(ruflet_compact_hash(icon: icon, label: label, action: nav&.to_s))
+          "data-ruflet-icon" => ruflet_json(ruflet_compact_hash(item_payload.merge(icon: icon, label: label,
+                                                                                   action: nav&.to_s)))
         }
         data["data-ruflet-selected"] = "true" if selected
         ruflet_build_tag("a", label, data.merge(ruflet_dash_attrs(attrs)))

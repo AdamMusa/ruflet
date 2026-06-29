@@ -348,6 +348,37 @@ class RufletNativeAppTest < Minitest::Test
     assert_equal "https://myapp.com/quick", find(sheet, "webview").props["url"]
   end
 
+  def test_native_overlays_and_loading_accept_ruflet_props
+    start(loading: {
+      type: "text",
+      text: "Loading body",
+      container_props: { bgcolor: "#010203" },
+      text_props: { color: "#ffffff", size: 18 }
+    })
+    loading = controls_of(body_of(stack.first)).last
+    assert_equal "#010203", loading.props["bgcolor"]
+    assert_equal "#ffffff", find(loading, "text").props["color"]
+    assert_equal 18, find(loading, "text").props["size"]
+
+    post(%(ruflet:action:#{JSON.generate({ "component" => "toast", "message" => "Saved", "bgcolor" => "#222222",
+                                           "content_props" => { "color" => "#eeeeee" } })}))
+    snackbar = @page.instance_variable_get(:@snack_bar)
+    assert_equal "#222222", snackbar.props["bgcolor"]
+    assert_equal "#eeeeee", find(snackbar, "text").props["color"]
+
+    post(%(ruflet:action:#{JSON.generate({ "component" => "dialog", "title" => "Confirm", "content" => "Continue?",
+                                           "bgcolor" => "#ffffff", "title_props" => { "color" => "#111111" } })}))
+    dialog = @page.instance_variable_get(:@dialogs).last
+    assert_equal "#ffffff", dialog.props["bgcolor"]
+    assert_equal "#111111", dialog.props["title"].props["color"]
+
+    post(%(ruflet:action:#{JSON.generate({ "component" => "sheet", "url" => "/quick", "bgcolor" => "#fafafa",
+                                           "card_props" => { "bgcolor" => "#eeeeee" } })}))
+    sheet = @page.instance_variable_get(:@bottom_sheet)
+    assert_equal "#fafafa", sheet.props["bgcolor"]
+    assert_equal "#eeeeee", sheet.props["content"].props["bgcolor"]
+  end
+
   # --- HTML-promoted native chrome ---------------------------------------
 
   def test_appbar_message_promotes_a_native_appbar_with_leading_and_actions
@@ -378,6 +409,53 @@ class RufletNativeAppTest < Minitest::Test
     title = find(find(stack.first, "appbar"), "text")
 
     assert_equal "Demo", title.props["value"]
+  end
+
+  def test_native_chrome_payloads_customize_ruflet_controls
+    start
+    post(%(ruflet:appbar:#{JSON.generate({
+      "title" => "Styled",
+      "bgcolor" => "#101827",
+      "color" => "#f8fafc",
+      "center_title" => true,
+      "title_props" => { "color" => "#ff00ff", "size" => 22 },
+      "actions" => [{ "icon" => "settings", "url" => "/settings", "icon_color" => "#00ff00", "tooltip" => "Settings" }]
+    })}))
+    post(%(ruflet:bottomnav:#{JSON.generate({
+      "bgcolor" => "#111111",
+      "indicator_color" => "#222222",
+      "items" => [
+        { "label" => "Home", "icon" => "home", "url" => "/", "selected_icon" => "home_filled", "tooltip" => "Home" },
+        { "label" => "Inbox", "icon" => "mail", "url" => "/inbox" }
+      ]
+    })}))
+    post(%(ruflet:drawer:#{JSON.generate({
+      "bgcolor" => "#ffffff",
+      "width" => 320,
+      "items" => [
+        { "label" => "Home", "icon" => "home", "url" => "/", "selected_tile_color" => "#ddeeff", "title_props" => { "color" => "#123456" } }
+      ]
+    })}))
+
+    appbar = find(stack.first, "appbar")
+    assert_equal "#101827", appbar.props["bgcolor"]
+    assert_equal "#f8fafc", appbar.props["color"]
+    assert_equal true, appbar.props["center_title"]
+    assert_equal "#ff00ff", find(appbar, "text").props["color"]
+    assert_equal 22, find(appbar, "text").props["size"]
+    assert_equal "#00ff00", appbar.props["actions"].first.props["icon_color"]
+
+    navbar = find(stack.first, "navigationbar")
+    assert_equal "#111111", navbar.props["bgcolor"]
+    assert_equal "#222222", navbar.props["indicator_color"]
+    assert_equal "Home", navbar.props["destinations"].first.props["tooltip"]
+
+    drawer = stack.first.props["drawer"]
+    assert_equal "#ffffff", drawer.props["bgcolor"]
+    assert_equal 320, drawer.props["width"]
+    first_tile = controls_of(drawer).first
+    assert_equal "#ddeeff", first_tile.props["selected_tile_color"]
+    assert_equal "#123456", find(first_tile, "text").props["color"]
   end
 
   def test_appbar_leading_can_open_the_native_drawer

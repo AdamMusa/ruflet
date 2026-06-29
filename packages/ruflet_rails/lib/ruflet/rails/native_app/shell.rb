@@ -14,7 +14,7 @@ module Ruflet
         screen = Screen.new(url: url)
         screen.appbar_spec = appbar_spec_from(spec)
         screen.appbar_spec ||= default_screen_appbar_spec(url) unless root
-        screen.title_text = text(title_for(screen))
+        screen.title_text = build_title_text(screen)
         screen.loading = build_loading_state
         screen.webview = build_webview(screen)
         screen.body = build_webview_body(screen)
@@ -110,13 +110,18 @@ module Ruflet
         has_title = spec ? true : !@title.to_s.strip.empty?
         return nil if !has_title && !leading && Array(actions).empty?
 
-        args = { title: screen.title_text }
+        args = spec ? spec[:props].dup : {}
+        args[:title] = screen.title_text
         if leading
           args[:leading] = leading
           args[:automatically_imply_leading] = false
         end
         args[:actions] = actions unless Array(actions).empty?
         appbar(**args)
+      end
+
+      def build_title_text(screen)
+        text(title_for(screen), **(screen.appbar_spec ? screen.appbar_spec[:title_props] : {}))
       end
 
       def title_for(screen)
@@ -130,16 +135,20 @@ module Ruflet
         title = spec["title"]
         leading = drawer_leading?(spec["leading"]) ? nil : build_chrome_button(spec["leading"])
         actions = Array(spec["actions"]).filter_map { |action| build_chrome_button(action) }
-        return nil if title.to_s.strip.empty? && leading.nil? && actions.empty?
+        props = ruflet_props_for(:appbar, spec)
+        title_props = nested_ruflet_props(spec, "title_props", "title_text_props", control: :text)
+        return nil if title.to_s.strip.empty? && leading.nil? && actions.empty? && props.empty?
 
-        { title: title.to_s, leading: leading, actions: actions }
+        { title: title.to_s, leading: leading, actions: actions, props: props, title_props: title_props }
       end
 
       def default_screen_appbar_spec(url)
         {
           title: title_from_url(url),
           leading: build_chrome_button({ "icon" => "close", "action" => "back" }),
-          actions: []
+          actions: [],
+          props: {},
+          title_props: {}
         }
       end
 
@@ -161,6 +170,7 @@ module Ruflet
         url = spec["url"].to_s
         icon_button(
           icon,
+          **ruflet_props_for(:icon_button, spec),
           on_click: lambda do |_event|
             if mode == "back"
               pop
@@ -252,6 +262,13 @@ module Ruflet
         return nil unless @loading
         return @loading if @loading.is_a?(Ruflet::Control)
 
+        loading_spec = @loading.is_a?(Hash) ? ruflet_stringify_nested(@loading) : {}
+        loading_type = (loading_spec["type"] || loading_spec["component"]).to_s
+        if loading_type == "text"
+          label = loading_spec["label"] || loading_spec["text"] || loading_spec["message"] || "Loading..."
+          return build_text_loading_state(label, loading_spec)
+        end
+
         if @loading.is_a?(String) || (@loading.respond_to?(:to_sym) && @loading.to_sym == :text)
           return build_text_loading_state(@loading.is_a?(String) ? @loading : "Loading...")
         end
@@ -264,11 +281,13 @@ module Ruflet
           bottom: 0,
           padding: 24,
           visible: true,
+          **nested_ruflet_props(loading_spec, "container_props", control: :container),
           content: shimmer(
             base_color: "#E5E7EB",
             highlight_color: "#F8FAFC",
+            **nested_ruflet_props(loading_spec, "shimmer_props", control: :shimmer),
             content: column(
-              loading_bars,
+              loading_bars(loading_spec),
               spacing: 18,
               expand: true
             )
@@ -276,7 +295,7 @@ module Ruflet
         )
       end
 
-      def build_text_loading_state(label)
+      def build_text_loading_state(label, spec = {})
         container(
           bgcolor: "#F7F8FB",
           left: 0,
@@ -285,28 +304,31 @@ module Ruflet
           bottom: 0,
           alignment: "center",
           visible: true,
-          content: text(label)
+          **nested_ruflet_props(spec, "container_props", control: :container),
+          content: text(label, **nested_ruflet_props(spec, "text_props", control: :text))
         )
       end
 
-      def loading_bars
+      def loading_bars(spec = {})
+        bar_props = nested_ruflet_props(spec, "bar_props", control: :container)
         [
-          loading_bar(width: 190, height: 28),
-          loading_bar(width: 320, height: 16),
-          loading_bar(width: 280, height: 16),
+          loading_bar(width: 190, height: 28, props: bar_props),
+          loading_bar(width: 320, height: 16, props: bar_props),
+          loading_bar(width: 280, height: 16, props: bar_props),
           loading_gap(14),
-          loading_bar(width: 340, height: 86),
-          loading_bar(width: 300, height: 86),
-          loading_bar(width: 330, height: 86)
+          loading_bar(width: 340, height: 86, props: bar_props),
+          loading_bar(width: 300, height: 86, props: bar_props),
+          loading_bar(width: 330, height: 86, props: bar_props)
         ]
       end
 
-      def loading_bar(width:, height:)
+      def loading_bar(width:, height:, props: {})
         container(
           width: width,
           height: height,
           bgcolor: "#E5E7EB",
-          border_radius: 10
+          border_radius: 10,
+          **props
         )
       end
 

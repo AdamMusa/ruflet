@@ -20,7 +20,7 @@ module Ruflet
         when "toast"
           show_toast(spec)
         when "sheet"
-          present_sheet(spec["url"])
+          present_sheet(spec)
         when "drawer"
           show_drawer
         when "share"
@@ -35,7 +35,7 @@ module Ruflet
           case action
           when "dialog" then show_native_dialog(spec)
           when "toast"  then show_toast(spec)
-          when "sheet"  then present_sheet(spec["url"])
+          when "sheet"  then present_sheet(spec)
           when "drawer" then show_drawer
           when "end_drawer" then show_end_drawer
           when "share" then share_content(spec)

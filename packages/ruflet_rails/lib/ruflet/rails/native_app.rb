@@ -39,6 +39,7 @@ module Ruflet
 end
 
 require_relative "native_app/html_adapter"
+require_relative "native_app/customization"
 require_relative "native_app/shell"
 require_relative "native_app/navigation"
 require_relative "native_app/actions"

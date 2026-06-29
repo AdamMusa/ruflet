@@ -28,9 +28,14 @@ module Ruflet
         end
         actions << text_button("OK", on_click: ->(_event) { close_dialog })
 
-        args = { actions: actions, open: true, adaptive: adaptive?(spec), on_dismiss: ->(_event) { @dialog = nil } }
-        args[:title] = text(title) unless title.empty?
-        args[:content] = text(content) unless content.empty?
+        args = ruflet_props_for(:alert_dialog, spec).merge(
+          actions: actions,
+          open: true,
+          adaptive: adaptive?(spec),
+          on_dismiss: ->(_event) { @dialog = nil }
+        )
+        args[:title] = text(title, **nested_ruflet_props(spec, "title_props", control: :text)) unless title.empty?
+        args[:content] = text(content, **nested_ruflet_props(spec, "content_props", control: :text)) unless content.empty?
         @dialog = alert_dialog(**args)
         @page.show_dialog(@dialog)
       end
@@ -47,8 +52,11 @@ module Ruflet
         message = spec["message"].to_s
         return if message.empty?
 
-        args = { content: text(message), open: true,
-                 adaptive: adaptive?(spec) }
+        args = ruflet_props_for(:snack_bar, spec).merge(
+          content: text(message, **nested_ruflet_props(spec, "content_props", "text_props", control: :text)),
+          open: true,
+          adaptive: adaptive?(spec)
+        )
         duration = spec["duration"].to_s
         args[:duration] = duration.to_i if duration =~ /\A\d+\z/
         @page.snackbar = snack_bar(**args)
@@ -65,8 +73,9 @@ module Ruflet
       # fullscreen container indistinguishable from a pushed page. The webview has
       # no intrinsic size, so the card is explicitly sized to leave that peek; the
       # uniform padding then insets the page (the top inset clears the handle).
-      def present_sheet(url)
-        url = absolute_url(url)
+      def present_sheet(source)
+        spec = source.is_a?(Hash) ? source : { "url" => source }
+        url = absolute_url(spec["url"])
         return if url.empty?
 
         sheet_webview = nil
@@ -78,17 +87,19 @@ module Ruflet
           content: sheet_webview,
           width: sheet_card_width,
           height: sheet_card_height,
-          padding: SHEET_PADDING
+          padding: SHEET_PADDING,
+          **nested_ruflet_props(spec, "card_props", "container_props", control: :container)
         )
         @sheet = bottomsheet(
           card,
+          **ruflet_props_for(:bottom_sheet, spec),
           open: true,
           adaptive: true,
-          dismissible: true,        # tap the peek above the sheet to dismiss
-          draggable: true,          # ...or drag the handle down to dismiss
-          scrollable: true,         # isScrollControlled: let the sheet grow tall
-          show_drag_handle: true,   # the grab handle that signals "modal"
-          use_safe_area: true,
+          dismissible: spec.key?("dismissible") ? spec["dismissible"] : true,
+          draggable: spec.key?("draggable") ? spec["draggable"] : true,
+          scrollable: spec.key?("scrollable") ? spec["scrollable"] : true,
+          show_drag_handle: spec.key?("show_drag_handle") ? spec["show_drag_handle"] : true,
+          use_safe_area: spec.key?("use_safe_area") ? spec["use_safe_area"] : true,
           on_dismiss: ->(_event) { @sheet = nil }
         )
         @page.bottom_sheet = @sheet
