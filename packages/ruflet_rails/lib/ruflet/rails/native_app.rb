@@ -277,7 +277,7 @@ module Ruflet
         screen.loading = build_loading_state
         screen.webview = build_webview(screen)
         screen.body = build_webview_body(screen)
-        screen.view = root ? build_view(screen, root: true) : @screens.first&.view
+        screen.view = root ? build_view(screen) : @screens.first&.view
         @screens.push(screen)
         root ? flush : apply_screen_to_shell(screen)
         screen
@@ -335,8 +335,8 @@ module Ruflet
         )
       end
 
-      def build_view(screen, root:)
-        args = { route: screen.route || (root ? "/" : "/screen"), controls: screen_controls(screen) }
+      def build_view(screen)
+        args = { route: screen.route || "/", controls: screen_controls(screen) }
         appbar = build_appbar(screen)
         args[:appbar] = appbar if appbar
         args[:drawer] = screen.drawer if screen.drawer
@@ -446,11 +446,11 @@ module Ruflet
         @actions.respond_to?(:call) ? @actions.call : @actions
       end
 
-      # Rebuild a screen's view in place (e.g. after its AppBar changed, or the
-      # root navigation bar was set) and repaint the stack.
+      # Rebuild the mounted shell if chrome arrives before the initial view has
+      # a client wire id; otherwise patch the existing shell in place.
       def rebuild_view(screen)
         if screen.equal?(@screens.first) && @screens.length == 1
-          screen.view = build_view(screen, root: true)
+          screen.view = build_view(screen)
           flush
         else
           apply_screen_to_shell(screen)
@@ -469,15 +469,6 @@ module Ruflet
         screen.end_drawer = end_drawer unless end_drawer.nil?
         return rebuild_view(screen) unless screen.view&.wire_id
 
-        # Patch the drawer onto the already-mounted View in place, exactly like
-        # update_screen_appbar / update_root_navigation_bar / update_screen_controls.
-        # The previous `flush` re-sent the whole `views` list as full objects,
-        # which made the client tear down and re-create the screen's WebView:
-        # the body reloaded ("home loads twice"), the shimmer + appbar flashed
-        # back in together, and the WebView's console channel detached so
-        # bridge actions (share, copy, navigation) silently stopped working
-        # after the first interaction. An in-place control patch keeps the
-        # WebView — and its console channel — alive.
         props = { drawer: drawer }
         props[:end_drawer] = end_drawer unless end_drawer.nil?
         @page.update(screen.view, **props)
@@ -524,7 +515,9 @@ module Ruflet
         return nil unless @loading
         return @loading if @loading.is_a?(Ruflet::Control)
 
-        return build_text_loading_state(@loading) if text_loading?
+        if @loading.is_a?(String) || (@loading.respond_to?(:to_sym) && @loading.to_sym == :text)
+          return build_text_loading_state(@loading.is_a?(String) ? @loading : "Loading...")
+        end
 
         Ruflet::UI::ControlFactory.build(
           :container,
@@ -549,17 +542,7 @@ module Ruflet
         )
       end
 
-      def text_loading?
-        @loading.is_a?(String) || @loading.to_sym == :text
-      rescue NoMethodError
-        false
-      end
-
-      def loading_label
-        @loading.is_a?(String) ? @loading : "Loading..."
-      end
-
-      def build_text_loading_state(value)
+      def build_text_loading_state(label)
         Ruflet::UI::ControlFactory.build(
           :container,
           bgcolor: "#F7F8FB",
@@ -569,7 +552,7 @@ module Ruflet
           bottom: 0,
           alignment: "center",
           visible: true,
-          content: Ruflet::UI::ControlFactory.build(:text, value: value.is_a?(String) ? value : loading_label)
+          content: Ruflet::UI::ControlFactory.build(:text, value: label)
         )
       end
 
@@ -786,13 +769,9 @@ module Ruflet
 
       def share_uri_for(spec)
         uri = spec["uri"] || spec["url"]
-        return current_screen_url if uri.to_s.empty? || uri.to_s == "#"
+        return current_url if uri.to_s.empty? || uri.to_s == "#"
 
         uri
-      end
-
-      def current_screen_url
-        @screens.last&.url || @start_url
       end
 
       def same_url?(left, right)
@@ -828,11 +807,11 @@ module Ruflet
       end
 
       # Screen navigation modes:
-      #   push    - push the URL as a new webview screen (default)
-      #   replace - swap the current top screen for the URL
-      #   root    - reset the stack to a single root screen at the URL (tab-like)
+      #   push    - add Ruby-side history, then patch the native shell body
+      #   replace - swap the current history entry for a new body URL
+      #   root    - reset history to the root shell body
       #   sheet   - present the URL as a bottom-sheet web modal
-      #   back    - pop the top screen
+      #   back    - restore the previous history entry
       def navigate_screen(url, mode, spec = nil)
         url = absolute_url(url)
         mode = mode.to_s
@@ -850,23 +829,15 @@ module Ruflet
         end
       end
 
-      # Reset to a single root screen (the root keeps the navigation bar / bottom
-      # app bar). Used by `mode: root` and bottom-nav tab switches.
-      #
-      # ruflet_rails renders everything over the WebSocket, so switching tabs
-      # must NOT tear down and re-create the native shell — that re-mounts the
-      # AppBar and NavigationBar and makes them flash on every tab. The shell
-      # (AppBar + tabs) is already there; only the body should change. So when a
-      # root WebView is already mounted we keep it and just navigate its body to
-      # the new URL (load_request). The page reports its own chrome on load and
-      # the AppBar title is patched in place — never rebuilt.
+      # Root navigation keeps the mounted Ruflet shell (AppBar / drawer / bottom
+      # chrome) alive and swaps only the WebView body.
       def go_webview(url, spec: nil)
         url = absolute_url(url)
         return if url.empty?
 
         root = @screens.first
         if root&.webview&.wire_id
-          collapse_to_root(root)
+          @screens = [root] if @screens.size > 1
           navigate_root_body(root, url, spec)
         else
           @screens.clear
@@ -874,29 +845,8 @@ module Ruflet
         end
       end
 
-      # Drop any screens pushed on top of the root without disturbing the root
-      # view (so its AppBar / NavigationBar stay mounted).
-      def collapse_to_root(root)
-        return if @screens.size <= 1
-
-        @screens = [root]
-      end
-
-      # Reload only the body of the mounted root screen, keeping the AppBar and
-      # NavigationBar in place.
-      #
-      # We build a BRAND-NEW WebView body and swap it into the existing view with
-      # an in-place control patch (update_screen_controls), rather than calling
-      # webview.load_request on the old WebView. load_request is delivered as a
-      # control *invoke*, and the client WebView's invoke listener is registered
-      # in its State.initState — so it is dropped whenever a push/pop re-sends the
-      # view stack and the WebView control is re-created. That is exactly why the
-      # bottom nav "did nothing" after a drawer navigation: the tap reached the
-      # server, go_webview ran, but load_request never landed on the client. A
-      # fresh WebView mounts with its own listeners and loads the URL itself, and
-      # a controls patch never touches the AppBar/NavigationBar (no flash, their
-      # listeners survive). The new body carries its own loading shimmer, so the
-      # body shows the skeleton while the page streams in.
+      # Swap only the mounted shell body. A fresh WebView gets fresh client-side
+      # listeners while the AppBar, drawer, and bottom chrome stay mounted.
       def navigate_root_body(screen, url, spec)
         screen.url = url
         screen.webview = build_webview(screen)
@@ -908,11 +858,8 @@ module Ruflet
         sync_root_navigation_bar_selection
       end
 
-      # Apply declared chrome onto the reused root view in place. A title-only
-      # hint (a tab switch carries the destination's label) just repaints the
-      # AppBar title — the instant you tap a tab the AppBar reads that tab's name
-      # instead of the route you left, with no AppBar rebuild/flash. A richer spec
-      # (explicit leading/actions) rebuilds the AppBar as before.
+      # Apply declared chrome onto the reused shell in place. A title-only hint
+      # just repaints the AppBar text; richer chrome replaces the AppBar control.
       def apply_spec_chrome(screen, spec)
         new_spec = appbar_spec_from(spec)
         return unless new_spec
@@ -963,7 +910,7 @@ module Ruflet
 
         spec = bottomnav_appbar_spec(screen.url, spec) if screen.equal?(@screens.first) && bottomnav_destination?(screen.url)
         remember_appbar_spec(screen.url, spec)
-        signature = chrome_signature(spec)
+        signature = JSON.generate(canonicalize(spec))
         return if screen.appbar_signature == signature
 
         title = spec["title"].to_s
@@ -1088,16 +1035,9 @@ module Ruflet
         update_screen_controls(screen)
       end
 
-      def chrome_signature(spec)
-        JSON.generate(canonicalize(spec))
-      end
-
       # Signature of a chrome spec's STRUCTURE, ignoring which item is currently
       # selected. Selection is client-owned state we patch via `selected_index`,
-      # so a navigation that only moves the highlight must NOT change the
-      # signature — otherwise the native control is rebuilt and replaced on every
-      # page load, which discards the drawer's open/close state and is exactly
-      # why closing it after navigation needed all the retry glue.
+      # so a navigation that only moves the highlight keeps the same controls.
       def structural_signature(spec)
         JSON.generate(canonicalize(strip_selection(spec)))
       end
@@ -1156,7 +1096,7 @@ module Ruflet
           on_change: lambda do |event|
             index = navigation_index(event)
             target = urls[index].to_s
-            next if target.empty? || same_url?(target, current_screen_url)
+            next if target.empty? || same_url?(target, current_url)
 
             # Carry the tab's label so the AppBar shows the destination's name
             # immediately, unless the destination page already declared a more
@@ -1168,7 +1108,7 @@ module Ruflet
 
       def bottomnav_selected_index(items)
         urls = items.map { |item| absolute_url(item["url"]) }
-        urls.index { |candidate| same_url?(candidate, current_screen_url) } ||
+        urls.index { |candidate| same_url?(candidate, current_url) } ||
           items.index { |item| item["selected"] } || 0
       end
 
@@ -1248,7 +1188,7 @@ module Ruflet
         target = urls[index].to_s
         return if target.empty?
 
-        if same_url?(target, current_screen_url)
+        if same_url?(target, current_url)
           sync_drawer_selection(screen)
           return
         end
@@ -1290,7 +1230,7 @@ module Ruflet
         drawer = screen&.drawer
         return unless drawer&.wire_id
 
-        index = default_drawer_index(screen)
+        index = drawer_selected_index(Array(@drawer_spec && @drawer_spec["items"]))
         if drawer.props["selected_index"] != index
           drawer.props["selected_index"] = index
           @page.update(drawer, selected_index: index)
@@ -1321,13 +1261,9 @@ module Ruflet
         @page.update(rail, selected_index: index)
       end
 
-      def default_drawer_index(screen)
-        drawer_selected_index(Array(@drawer_spec && @drawer_spec["items"]))
-      end
-
       def drawer_selected_index(items)
         urls = items.map { |item| absolute_url(item["url"]) }
-        urls.index { |candidate| same_url?(candidate, current_screen_url) } ||
+        urls.index { |candidate| same_url?(candidate, current_url) } ||
           items.index { |item| item["selected"] } || 0
       end
 
