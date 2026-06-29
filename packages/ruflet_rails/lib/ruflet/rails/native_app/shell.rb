@@ -51,14 +51,17 @@ module Ruflet
           # enable_javascript prop, so switch JS on as each page starts loading.
           # Without it the in-page adapter cannot read ERB data-ruflet
           # declarations, and WebAuthn/passkeys will not work.
-          on_page_started: lambda do |_event|
+          on_page_started: lambda do |event|
+            update_screen_url_from_event(screen, event)
             show_loading(screen)
             enable_js(screen.webview)
           end,
-          on_page_ended: lambda do |_event|
+          on_page_ended: lambda do |event|
+            update_screen_url_from_event(screen, event)
             inject_html_adapter(screen)
             hide_loading(screen)
           end,
+          on_url_change: ->(event) { update_screen_url_from_event(screen, event) },
           on_web_resource_error: ->(_event) { hide_loading(screen) },
           on_console_message: ->(event) { handle_message(screen, message_of(event)) }
         )
@@ -72,6 +75,24 @@ module Ruflet
           fit: "expand",
           expand: true
         )
+      end
+
+      def update_screen_url_from_event(screen, event)
+        url = webview_event_url(event)
+        return if url.empty?
+
+        screen.url = absolute_url(url)
+        screen.webview.props["url"] = screen.url if screen.webview
+      rescue StandardError
+        nil
+      end
+
+      def webview_event_url(event)
+        data = event.respond_to?(:data) ? event.data : event
+        return data if data.is_a?(String)
+        return "" unless data.is_a?(Hash)
+
+        (data["url"] || data[:url] || data["value"] || data[:value] || data["href"] || data[:href]).to_s
       end
 
       def build_view(screen)

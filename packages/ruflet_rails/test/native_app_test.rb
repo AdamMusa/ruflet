@@ -124,6 +124,33 @@ class RufletNativeAppTest < Minitest::Test
     assert_equal false, loading.props["visible"]
   end
 
+  def test_page_ended_updates_screen_url_before_chrome_sync
+    Ruflet::Rails.native_app(@page, start_url: "https://myapp.com/company/sign_in")
+    post(%(ruflet:appbar:#{JSON.generate({ "title" => "T4U", "actions" => [{ "icon" => "language" }] })}))
+    post(%(ruflet:bottomnav:#{JSON.generate({ "items" => [
+      { "label" => "Features", "icon" => "inventory_2", "url" => "/" },
+      { "label" => "Organization", "icon" => "business", "url" => "/company/sign_in", "selected" => true }
+    ] })}))
+
+    @page.dispatch_event(target: top_webview.wire_id, name: "page_ended", data: "https://myapp.com/company/dashboard")
+    post(%(ruflet:appbar:#{JSON.generate({ "title" => "Izeesoft LLC", "leading" => { "icon" => "menu", "action" => "drawer" } })}))
+    post(%(ruflet:drawer:#{JSON.generate({ "items" => [
+      { "label" => "Dashboard", "icon" => "dashboard", "url" => "/company/dashboard", "selected" => true }
+    ] })}))
+    post(%(ruflet:bottomnav:#{JSON.generate({ "items" => [
+      { "label" => "Dashboard", "icon" => "dashboard", "url" => "/company/dashboard", "selected" => true },
+      { "label" => "Campaigns", "icon" => "sms", "url" => "/company/sms_campaigns" }
+    ] })}))
+
+    appbar = find(stack.first, "appbar")
+    assert_equal "https://myapp.com/company/dashboard", top_webview.props["url"]
+    assert_equal "Izeesoft LLC", find(appbar, "text").props["value"],
+                 "redirected form loads must not keep the public T4U appbar"
+    assert_nil appbar.props["leading"], "company drawer should be attached for Flutter's implied drawer button"
+    assert stack.first.props["drawer"], "dashboard drawer is attached immediately after the redirected page reports it"
+    assert_equal 0, find(stack.first, "navigationbar").props["selected_index"]
+  end
+
   def test_page_ended_before_loading_mount_still_hides_the_shimmer
     start
     loading = controls_of(body_of(stack.first)).last
