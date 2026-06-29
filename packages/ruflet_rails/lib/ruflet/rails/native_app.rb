@@ -6,46 +6,6 @@ require "uri"
 module Ruflet
   module Rails
     # Managed webview driver for ruflet_rails.
-    #
-    # Your existing web app is the body, rendered in a WebView. A tiny JS bridge
-    # injected into each page reports the title and turns explicitly annotated
-    # elements into native screens, dialogs, toasts, tabs, or app bars. Plain
-    # links and Turbo visits stay inside the WebView. Native chrome is opt-in:
-    # pass a `title:` or
-    # `actions:` to get an AppBar (whose title tracks each page's <title>); with
-    # neither, screens are full-bleed webviews so the page's own header isn't
-    # duplicated.
-    #
-    #   Ruflet.run do |page|
-    #     Ruflet::Rails.native_app(
-    #       page,
-    #       start_url: "https://myapp.com",
-    #       title: "My App",                              # auto-updates from <title>
-    #       actions: -> { [icon_button("search", on_click: ->(_e) { ... })] },
-    #       navigation_bar: navigation_bar(destinations: [...])
-    #     )
-    #   end
-    #
-    # Native behavior is DECLARED in the page, not guessed by the framework.
-    # There is no implicit same-origin link interception. A developer annotates
-    # elements with Ruflet-owned `data-ruflet-*` attributes, or explicitly lists
-    # external links in `screen_links:` when the HTML lives outside the Rails
-    # app, and the bridge turns those declarations into native actions:
-    #
-    #   * `data-ruflet-screen='{"action":"push|replace|root|sheet|back"}'`
-    #     plus `href` / `url` — screen navigation or bottom-sheet web content.
-    #   * `data-ruflet-action='{"component":"dialog",...}'` — AlertDialog.
-    #   * `data-ruflet-action='{"component":"toast",...}'` — SnackBar.
-    #   * `data-ruflet-appbar` / `data-ruflet-tabs` / `data-ruflet-drawer` / `data-ruflet-rail`
-    #     (scanned on load) — hide the HTML header / nav and render native
-    #     AppBar / NavigationBar / NavigationDrawer / NavigationRail.
-    #
-    # App JS can trigger the same actions via the injected `RufletNative` object
-    # (`RufletNative.navigate("/x", "push")`, `.dialog({...})`, `.sheet("/x")`,
-    # `.toast("Saved")`, `.back()`). In ERB, keep using normal Rails helpers
-    # like `link_to` and add `data-ruflet-*` where native behavior should
-    # augment the web page. The page still renders normally in a plain browser.
-    #
     # The bridge talks to native over the webview's console channel
     # (on_console_message), which works on iOS/Android/macOS. On platforms
     # without a native webview the body degrades to a plain frame.
