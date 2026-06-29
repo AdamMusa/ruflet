@@ -62,6 +62,73 @@ module Ruflet
         @page.snackbar = snack_bar(**args)
       end
 
+      # `ruflet-action="menu"` or an AppBar action with `action: "menu"`:
+      # present a native list of actions. This keeps Rails ERB as the source of
+      # truth while avoiding DOM dropdowns inside the WebView chrome.
+      def show_native_menu(spec)
+        items = Array(spec["items"])
+        return if items.empty?
+
+        controls = []
+        title = spec["title"].to_s
+        unless title.empty?
+          controls << container(
+            padding: { left: 16, right: 16, top: 8, bottom: 8 },
+            content: text(title, weight: "bold", size: 16, color: "#0F172A")
+          )
+        end
+
+        items.each do |item|
+          controls << menu_tile(item)
+        end
+
+        @sheet = bottomsheet(
+          container(
+            padding: { left: 8, right: 8, bottom: 12 },
+            content: column(controls: controls, tight: true, spacing: 2)
+          ),
+          open: true,
+          adaptive: true,
+          dismissible: true,
+          draggable: true,
+          scrollable: true,
+          show_drag_handle: true,
+          use_safe_area: true,
+          on_dismiss: ->(_event) { @sheet = nil }
+        )
+        @page.bottom_sheet = @sheet
+        @page.update
+      end
+
+      def menu_tile(source)
+        item = source.is_a?(Hash) ? source : { "label" => source.to_s }
+        label = item["label"].to_s
+        icon_name = item["icon"].to_s
+        target = item["url"].to_s
+        mode = (item["action"] || item["mode"] || "root").to_s
+
+        list_tile(
+          leading: icon_name.empty? ? nil : icon(icon_name, **nested_ruflet_props(item, "icon_props", control: :icon)),
+          title: text(label, **nested_ruflet_props(item, "label_props", "title_props", control: :text)),
+          selected: item["selected"] == true,
+          selected_tile_color: item["selected_tile_color"] || "#ECFDF5",
+          on_click: lambda do |_event|
+            close_sheet
+            navigate_screen(target, mode, item) unless target.empty?
+          end,
+          **ruflet_props_for(:list_tile, item)
+        )
+      end
+
+      def close_sheet
+        return unless @sheet
+
+        @page.update(@sheet, open: false)
+        @sheet = nil
+      rescue StandardError
+        @sheet = nil
+      end
+
       # --- Bottom-sheet modal (web content) ----------------------------------
 
       SHEET_PADDING      = 20   # inset the page from the sheet edges (top clears the handle)

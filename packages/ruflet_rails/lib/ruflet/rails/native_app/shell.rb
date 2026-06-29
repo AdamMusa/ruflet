@@ -178,6 +178,8 @@ module Ruflet
               show_drawer
             elsif mode == "end_drawer"
               show_end_drawer
+            elsif mode == "menu"
+              show_native_menu(spec)
             elsif !url.empty?
               navigate_screen(url, mode, spec)
             end

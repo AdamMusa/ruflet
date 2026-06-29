@@ -150,6 +150,8 @@ module Ruflet
         items = Array(spec["items"])
         urls = items.map { |item| absolute_url(item["url"]) }
         modes = items.map { |item| (item["action"] || item["mode"] || "root").to_s }
+        static_controls = drawer_static_controls(spec)
+        item_offset = static_controls.length
         selected_index = drawer_selected_index(items)
         destinations = items.each_with_index.filter_map do |item, index|
           build_drawer_destination(item, selected: index == selected_index, on_click: lambda do |_event|
@@ -172,11 +174,13 @@ module Ruflet
         end
 
         drawer = navigation_drawer(
-          destinations,
+          static_controls + destinations,
           **ruflet_props_for(:navigation_drawer, spec),
-          selected_index: selected_index,
+          selected_index: item_offset + selected_index,
           on_change: lambda do |event|
-            index = navigation_index(event)
+            index = navigation_index(event) - item_offset
+            next if index.negative? || index >= items.length
+
             select_drawer_item(screen, items, urls, modes, index)
           end
         )
@@ -371,6 +375,42 @@ module Ruflet
         )
       end
 
+      def drawer_static_controls(spec)
+        header = spec["header"]
+        return [] unless header.is_a?(Hash)
+
+        title = header["title"].to_s
+        subtitle = header["subtitle"].to_s
+        avatar = header["avatar"].to_s
+        avatar = title[0].to_s.upcase if avatar.empty? && !title.empty?
+        [
+          container(
+            padding: { left: 18, right: 18, top: 24, bottom: 18 },
+            content: row(
+              controls: [
+                circle_avatar(
+                  text(avatar, color: "#047857", weight: "bold", size: 18),
+                  bgcolor: "#D1FAE5",
+                  radius: 28
+                ),
+                column(
+                  controls: [
+                    text(title, weight: "bold", color: "#0F172A", size: 16, max_lines: 1, no_wrap: true),
+                    text(subtitle, color: "#64748B", size: 12, max_lines: 1, no_wrap: true)
+                  ],
+                  spacing: 2,
+                  tight: true,
+                  expand: true
+                )
+              ],
+              spacing: 12,
+              vertical_alignment: "center"
+            )
+          ),
+          divider(height: 1, color: "#E2E8F0")
+        ]
+      end
+
       def select_drawer_item(screen, items, urls, modes, index)
         close_drawer(screen)
         target = urls[index].to_s
@@ -382,6 +422,11 @@ module Ruflet
         end
 
         mode = modes[index]
+        if %w[delete post patch put].include?(mode)
+          submit_webview_request(target, mode)
+          return
+        end
+
         # Only a tab (root) switch carries a title hint to repaint the AppBar
         # title in place. A push keeps its own declared chrome (notably the
         # back button), so we must NOT force a title-only AppBar on it.
@@ -418,18 +463,21 @@ module Ruflet
         return unless drawer&.wire_id
 
         index = drawer_selected_index(Array(@drawer_spec && @drawer_spec["items"]))
-        if drawer.props["selected_index"] != index
-          drawer.props["selected_index"] = index
-          @page.update(drawer, selected_index: index)
+        item_offset = drawer_static_controls(@drawer_spec || {}).length
+        selected_control_index = item_offset + index
+        if drawer.props["selected_index"] != selected_control_index
+          drawer.props["selected_index"] = selected_control_index
+          @page.update(drawer, selected_index: selected_control_index)
         end
-        sync_drawer_tile_selection(drawer, index)
+        sync_drawer_tile_selection(drawer, index, item_offset)
       end
 
-      def sync_drawer_tile_selection(drawer, selected_index)
-        drawer.children.each_with_index do |control, index|
+      def sync_drawer_tile_selection(drawer, selected_index, item_offset = 0)
+        drawer.children.each_with_index do |control, control_index|
+          next if control_index < item_offset
           next unless control.respond_to?(:props)
 
-          selected = index == selected_index
+          selected = (control_index - item_offset) == selected_index
           next if control.props["selected"] == selected
 
           control.props["selected"] = selected

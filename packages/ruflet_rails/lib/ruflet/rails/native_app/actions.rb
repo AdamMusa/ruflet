@@ -15,12 +15,16 @@ module Ruflet
         case component
         when "navigation", "navigate"
           navigate_screen(spec["url"], action, spec)
+        when "request", "form"
+          submit_webview_request(spec["url"], spec["method"] || action || "post")
         when "dialog"
           show_native_dialog(spec)
         when "toast"
           show_toast(spec)
         when "sheet"
           present_sheet(spec)
+        when "menu"
+          show_native_menu(spec)
         when "drawer"
           show_drawer
         when "share"
@@ -36,6 +40,7 @@ module Ruflet
           when "dialog" then show_native_dialog(spec)
           when "toast"  then show_toast(spec)
           when "sheet"  then present_sheet(spec)
+          when "menu"   then show_native_menu(spec)
           when "drawer" then show_drawer
           when "end_drawer" then show_end_drawer
           when "share" then share_content(spec)
@@ -43,6 +48,7 @@ module Ruflet
           when "launch", "url", "url_launcher" then launch_external_url(spec)
           when "haptic", "haptic_feedback" then haptic_feedback(spec)
           when "back"   then pop
+          when "delete", "post", "patch", "put" then submit_webview_request(spec["url"], action)
           when "navigate" then navigate_screen(spec["url"], spec["mode"] || "push", spec)
           when "push", "replace", "root" then navigate_screen(spec["url"], action, spec)
           end
@@ -106,6 +112,40 @@ module Ruflet
         return if url.to_s.empty?
 
         @page.launch_url(url.to_s, mode: spec["mode"])
+      rescue StandardError
+        nil
+      end
+
+      def submit_webview_request(url, method = "post")
+        target = absolute_url(url)
+        return if target.empty?
+
+        verb = method.to_s.downcase
+        verb = "post" if verb.empty?
+        js = <<~JS
+          (function () {
+            var token = document.querySelector("meta[name='csrf-token']");
+            var form = document.createElement("form");
+            form.method = "post";
+            form.action = #{target.to_json};
+            form.style.display = "none";
+            var methodInput = document.createElement("input");
+            methodInput.type = "hidden";
+            methodInput.name = "_method";
+            methodInput.value = #{verb.to_json};
+            form.appendChild(methodInput);
+            if (token && token.content) {
+              var csrf = document.createElement("input");
+              csrf.type = "hidden";
+              csrf.name = "authenticity_token";
+              csrf.value = token.content;
+              form.appendChild(csrf);
+            }
+            document.body.appendChild(form);
+            form.submit();
+          })();
+        JS
+        @screens.last&.webview&.run_javascript(js)
       rescue StandardError
         nil
       end
