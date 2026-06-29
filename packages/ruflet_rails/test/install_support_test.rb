@@ -14,6 +14,15 @@ class InstallSupportTest < Minitest::Test
     refute_includes yaml, "rails:"
   end
 
+  def test_default_initializer_contains_build_config
+    initializer = Ruflet::Rails::InstallSupport.default_initializer(app_name: "Demo")
+
+    assert_includes initializer, "Ruflet::Rails.configure"
+    assert_includes initializer, 'config.app_name = "Demo"'
+    assert_includes initializer, "config.backend_url"
+    assert_includes initializer, "config.icon_launcher"
+  end
+
   def test_desktop_flag_bootstrap_templates
     ruby = Ruflet::Rails::InstallSupport.ruby_desktop_flag_bootstrap
     shell = Ruflet::Rails::InstallSupport.shell_desktop_flag_bootstrap

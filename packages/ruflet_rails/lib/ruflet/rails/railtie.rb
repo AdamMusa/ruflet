@@ -44,10 +44,10 @@ module Ruflet
             require "tempfile"
 
             exit_code = Dir.chdir(::Rails.root) do
-              # If no ruflet.yaml on disk, generate one from Rails config so the
-              # CLI has access to assets, services, and build options.
+              # Rails build metadata lives in config/initializers/ruflet.rb.
+              # Serialize it to the CLI's yaml shape for this build invocation.
               yaml_hash = cfg.to_ruflet_yaml_hash
-              use_temp  = yaml_hash.any? && !File.file?("ruflet.yaml") && !File.file?("ruflet.yml")
+              use_temp  = yaml_hash.any?
 
               if use_temp
                 Tempfile.create(["ruflet", ".yaml"], ::Rails.root) do |f|

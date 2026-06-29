@@ -24,27 +24,29 @@ bin/rails generate ruflet:install --web --desktop
 
 This generator will:
 - create `app/views/ruflet/main.rb`
-- create `ruflet.yaml`
+- create `config/initializers/ruflet.rb`
 - add the Ruflet WebSocket route to `config/routes.rb`
 - add a `/ruflet` web mount when `--web` is used
 - download prebuilt clients from GitHub releases when `--web`, `--desktop`, or
   `--client=web|desktop|all` is used
 
-Generated `ruflet.yaml`:
+Generated `config/initializers/ruflet.rb`:
 
-```yaml
-app:
-  name: My App
-  backend_url: http://localhost:3000
+```ruby
+Ruflet::Rails.configure do |config|
+  config.app_name = "My App"
+  config.backend_url = ENV.fetch("RUFLET_BACKEND_URL", "http://localhost:3000")
 
-services: []
+  config.services = []
 
-assets:
-  splash_screen: assets/splash.png
-  icon_launcher: assets/icon.png
+  config.splash_screen = Rails.root.join("app/assets/images/splash.png")
+  config.icon_launcher = Rails.root.join("app/assets/images/icon.png")
+end
 ```
 
-For Rails apps, those asset paths are resolved from `app/assets/` during build.
+At build time `ruflet_rails` serializes this Rails config into the Ruflet CLI
+config shape, so the initializer remains the source of truth for app name,
+backend URL, services, assets, and build colors.
 
 ## Web client
 
@@ -86,7 +88,7 @@ bundle exec rake ruflet:build[desktop]
 ```
 
 Rails desktop builds are server-driven. The built desktop app connects back to the
-Rails backend configured in `ruflet.yaml`; it does not package a self-contained
+Rails backend configured in `config/initializers/ruflet.rb`; it does not package a self-contained
 Ruby runtime.
 
 Plain Rails dev server commands do not launch the desktop app. Request a desktop

@@ -19,11 +19,11 @@ module Ruflet
         create_file target, Ruflet::Rails::InstallSupport.default_app_template(app_title: app_name)
       end
 
-      def create_ruflet_yaml
-        target = File.join(destination_root, "ruflet.yaml")
+      def create_ruflet_initializer
+        target = File.join(destination_root, "config", "initializers", "ruflet.rb")
         return if File.exist?(target)
 
-        create_file target, Ruflet::Rails::InstallSupport.default_ruflet_yaml(app_name: app_name)
+        create_file target, Ruflet::Rails::InstallSupport.default_initializer(app_name: app_name)
       end
 
       # Mount the native WebSocket endpoint explicitly in config/routes.rb.

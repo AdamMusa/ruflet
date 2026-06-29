@@ -50,6 +50,23 @@ module Ruflet
         YAML
       end
 
+      def default_initializer(app_name:)
+        <<~RUBY
+          # frozen_string_literal: true
+
+          Ruflet::Rails.configure do |config|
+            config.app_name = #{app_name.inspect}
+            config.backend_url = ENV.fetch("RUFLET_BACKEND_URL", #{default_backend_url.inspect})
+
+            config.services = []
+
+            # Build assets. Replace these with your app artwork when ready.
+            config.splash_screen = Rails.root.join("app/assets/images/splash.png")
+            config.icon_launcher = Rails.root.join("app/assets/images/icon.png")
+          end
+        RUBY
+      end
+
       def ruby_desktop_flag_bootstrap
         <<~RUBY
           # ruflet_rails desktop flag

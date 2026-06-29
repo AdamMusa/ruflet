@@ -105,19 +105,20 @@ class RufletInstallGeneratorTest < Minitest::Test
     end
   end
 
-  def test_install_does_not_create_an_initializer
+  def test_install_creates_ruflet_initializer_for_build_config
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "config"))
       File.write(File.join(dir, "config", "routes.rb"), "Rails.application.routes.draw do\nend\n")
 
       generator = Ruflet::Generators::InstallGenerator.new([], {}, destination_root: dir)
-      refute generator.respond_to?(:create_ruflet_initializer),
-             "the initializer is outdated; the WebSocket is mounted explicitly in routes.rb"
       capture_io { generator.invoke_all }
 
-      refute File.exist?(File.join(dir, "config", "initializers", "ruflet.rb"))
+      initializer = File.join(dir, "config", "initializers", "ruflet.rb")
+      assert File.exist?(initializer)
+      assert_includes File.read(initializer), "Ruflet::Rails.configure"
+      assert_includes File.read(initializer), "config.backend_url"
       assert File.exist?(File.join(dir, "app", "views", "ruflet", "main.rb"))
-      assert File.exist?(File.join(dir, "ruflet.yaml"))
+      refute File.exist?(File.join(dir, "ruflet.yaml"))
     end
   end
 

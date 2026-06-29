@@ -4,9 +4,9 @@ module Ruflet
   module Rails
     # Central configuration for ruflet_rails.
     #
-    # An install needs no config/initializers/ruflet.rb: routes mount
-    # app/views/ruflet/main.rb explicitly and build metadata is read from
-    # ruflet.yaml. Add an initializer only to override these settings:
+    # Rails apps keep Ruflet build metadata in config/initializers/ruflet.rb.
+    # The build task serializes this object to the ruflet.yaml structure the
+    # Ruflet CLI consumes, so Rails remains the source of truth:
     #
     #   Ruflet::Rails.configure do |config|
     #     # Runtime / server
@@ -38,7 +38,7 @@ module Ruflet
       # --- Runtime / server ---
 
       # Backend base URL. Used as --dart-define=RUFLET_URL at build time
-      # and by the desktop launcher. Replaces ruflet.yaml → app.backend_url.
+      # and by the desktop launcher.
       attr_accessor :backend_url
 
       # --- App metadata (ruflet.yaml → app:) ---
