@@ -348,6 +348,19 @@ class RufletNativeAppTest < Minitest::Test
     assert_equal "https://myapp.com/quick", find(sheet, "webview").props["url"]
   end
 
+  def test_clicking_a_ruflet_item_inside_sheet_closes_sheet_before_action
+    start
+    action("sheet", "https://myapp.com/quick")
+    sheet = @page.instance_variable_get(:@bottom_sheet)
+    sheet_webview = find(sheet, "webview")
+
+    post("ruflet:action:#{JSON.generate({ "component" => "navigation", "action" => "root", "url" => "/dashboard" })}",
+         webview: sheet_webview)
+
+    assert_nil @page.instance_variable_get(:@bottom_sheet)
+    assert_equal "https://myapp.com/dashboard", top_webview.props["url"]
+  end
+
   def test_native_overlays_and_loading_accept_ruflet_props
     start(loading: {
       type: "text",

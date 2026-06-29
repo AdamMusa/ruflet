@@ -148,7 +148,9 @@ module Ruflet
         sheet_webview = nil
         sheet_webview = webview(
           url: url, method: "get", enable_javascript: true,
-          on_page_started: ->(_event) { enable_js(sheet_webview) }
+          on_page_started: ->(_event) { enable_js(sheet_webview) },
+          on_page_ended: ->(_event) { inject_html_adapter_for(sheet_webview) },
+          on_console_message: ->(event) { handle_sheet_message(message_of(event)) }
         )
         card = container(
           content: sheet_webview,

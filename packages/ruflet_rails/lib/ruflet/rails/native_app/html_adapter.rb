@@ -144,7 +144,13 @@ module Ruflet
       # --- HTML adapter ------------------------------------------------------
 
       def inject_html_adapter(screen)
-        screen.webview.run_javascript(self.class.html_adapter_js) if screen.webview.respond_to?(:run_javascript)
+        inject_html_adapter_for(screen.webview)
+      rescue StandardError
+        nil
+      end
+
+      def inject_html_adapter_for(webview)
+        webview.run_javascript(self.class.html_adapter_js) if webview.respond_to?(:run_javascript)
       rescue StandardError
         nil
       end
@@ -176,6 +182,23 @@ module Ruflet
         elsif message.start_with?(RAIL_PREFIX)
           spec = parse_json(message[RAIL_PREFIX.length..])
           apply_rail(screen, spec) if spec
+        end
+      end
+
+      def handle_sheet_message(message)
+        return if message.nil?
+
+        if message.start_with?(ACTION_PREFIX)
+          spec = parse_json(message[ACTION_PREFIX.length..])
+          if spec
+            close_sheet
+            dispatch_action(spec)
+          end
+        elsif message.start_with?(APPBAR_PREFIX) || message.start_with?(BOTTOMNAV_PREFIX) ||
+              message.start_with?(DRAWER_PREFIX) || message.start_with?(RAIL_PREFIX)
+          # Chrome declarations inside a modal sheet describe the sheet body,
+          # not the app shell. Ignore them; the host screen owns native chrome.
+          nil
         end
       end
 
