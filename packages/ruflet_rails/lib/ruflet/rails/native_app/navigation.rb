@@ -123,7 +123,7 @@ module Ruflet
       # the root view. Selecting a destination switches to that URL as a fresh
       # root (tab semantics).
       def apply_bottomnav(spec)
-        return clear_bottomnav if chrome_absent?(spec)
+        return if chrome_absent?(spec)
 
         @bottomnav_spec = spec
         return unless buildable_bottomnav?(spec)
@@ -257,13 +257,6 @@ module Ruflet
         screen.appbar_signature = nil
         screen.title_text = build_title_text(screen)
         update_screen_appbar(screen)
-      end
-
-      def clear_bottomnav
-        @bottomnav_spec = nil
-        @bottomnav_signature = nil
-        @navigation_bar = nil
-        update_root_navigation_bar
       end
 
       def clear_drawer(screen)

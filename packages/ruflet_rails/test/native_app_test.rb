@@ -472,7 +472,7 @@ class RufletNativeAppTest < Minitest::Test
     assert_equal "#123456", find(first_tile, "text").props["color"]
   end
 
-  def test_absent_chrome_payloads_clear_stale_native_shell
+  def test_absent_chrome_payloads_keep_persistent_bottomnav
     start
     post(%(ruflet:appbar:#{JSON.generate({ "title" => "Izeesoft LLC", "actions" => [{ "icon" => "language" }] })}))
     post(%(ruflet:bottomnav:#{JSON.generate({ "items" => [
@@ -498,7 +498,7 @@ class RufletNativeAppTest < Minitest::Test
     post(%(ruflet:rail:#{JSON.generate({ "absent" => true })}))
 
     assert_nil find(stack.first, "appbar"), "a page without ruflet_appbar removes the previous native AppBar"
-    assert_nil find(stack.first, "navigationbar"), "a page without ruflet_bottom_nav removes the previous native bottom nav"
+    refute_nil find(stack.first, "navigationbar"), "a page without ruflet_bottom_nav keeps the persistent native bottom nav"
     assert_nil stack.first.props["drawer"], "a page without ruflet_drawer removes the previous native drawer"
     assert_nil find(stack.first, "navigationrail"), "a page without ruflet_rail removes the previous native rail"
   end
