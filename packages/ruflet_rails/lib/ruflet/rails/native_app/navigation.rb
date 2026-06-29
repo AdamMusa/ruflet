@@ -190,6 +190,7 @@ module Ruflet
         )
         screen.drawer_signature = signature
         update_screen_drawer(screen, drawer: drawer)
+        update_screen_appbar(screen) if screen.appbar_spec
         if @drawer_open_requested
           @drawer_open_requested = false
           show_drawer
@@ -343,16 +344,26 @@ module Ruflet
 
       def bottomnav_appbar_spec(url, spec)
         declared = appbar_spec_for_url(url)
+        current = @screens.first&.appbar_spec
         label = bottomnav_item_for(url)&.fetch("label", nil).to_s
         title =
           if declared && !declared["title"].to_s.empty?
             declared["title"].to_s
+          elsif current && !current[:title].to_s.empty?
+            current[:title].to_s
           elsif spec.is_a?(Hash) && !spec["title"].to_s.empty?
             spec["title"].to_s
           else
             label
           end
-        actions = declared ? declared["actions"] : (spec.is_a?(Hash) ? spec["actions"] : nil)
+        actions =
+          if declared
+            declared["actions"]
+          elsif current
+            current[:actions]
+          else
+            spec.is_a?(Hash) ? spec["actions"] : nil
+          end
         { "title" => title, "leading" => { "action" => "drawer" }, "actions" => actions }.compact
       end
 

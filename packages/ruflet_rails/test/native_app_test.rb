@@ -522,9 +522,12 @@ class RufletNativeAppTest < Minitest::Test
     assert_nil appbar.props["leading"]
     assert_nil stack.first.props["drawer"]
 
+    @sent.clear
     post(%(ruflet:drawer:#{JSON.generate({ "items" => [
       { "label" => "Home", "icon" => "home", "url" => "/" }
     ] })}))
+    assert @sent.any? { |_action, payload| payload.to_s.include?("appbar") },
+           "attaching the drawer repatches the AppBar so Flutter can show the implied drawer button"
     assert stack.first.props["drawer"], "once the drawer arrives Flutter can show the implied AppBar drawer button"
   end
 
@@ -781,6 +784,8 @@ class RufletNativeAppTest < Minitest::Test
     navbar = find(stack.first, "navigationbar")
 
     @page.dispatch_event(target: navbar.wire_id, name: "change", data: { "selected_index" => 1 })
+    assert_equal "Demo", find(find(stack.first, "appbar"), "text").props["value"],
+                 "a page-declared AppBar should stay stable during tab navigation"
     @sent.clear
     @page.dispatch_event(target: navbar.wire_id, name: "change", data: { "selected_index" => 0 })
 
