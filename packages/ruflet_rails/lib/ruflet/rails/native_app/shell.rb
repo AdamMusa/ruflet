@@ -213,13 +213,13 @@ module Ruflet
         @page.update(screen.view, appbar: appbar)
       end
 
-      def update_screen_drawer(screen, drawer:, end_drawer: nil)
+      def update_screen_drawer(screen, drawer:, end_drawer: :__ruflet_rails_unchanged)
         screen.drawer = drawer
-        screen.end_drawer = end_drawer unless end_drawer.nil?
+        screen.end_drawer = end_drawer unless end_drawer == :__ruflet_rails_unchanged
         return rebuild_view(screen) unless screen.view&.wire_id
 
         props = { drawer: drawer }
-        props[:end_drawer] = end_drawer unless end_drawer.nil?
+        props[:end_drawer] = end_drawer unless end_drawer == :__ruflet_rails_unchanged
         @page.update(screen.view, **props)
       end
 

@@ -70,6 +70,7 @@ class RufletNativeAppTest < Minitest::Test
     refute_includes js, 'report("title"'
     refute_includes js, "ruflet:title"
     assert_includes js, '"ruflet:"' # message channel prefix
+    assert_includes js, "absent: true"
   end
 
   # --- out-of-the-box navigation -----------------------------------------
@@ -469,6 +470,37 @@ class RufletNativeAppTest < Minitest::Test
     first_tile = controls_of(drawer).first
     assert_equal "#ddeeff", first_tile.props["selected_tile_color"]
     assert_equal "#123456", find(first_tile, "text").props["color"]
+  end
+
+  def test_absent_chrome_payloads_clear_stale_native_shell
+    start
+    post(%(ruflet:appbar:#{JSON.generate({ "title" => "Izeesoft LLC", "actions" => [{ "icon" => "language" }] })}))
+    post(%(ruflet:bottomnav:#{JSON.generate({ "items" => [
+      { "label" => "Dashboard", "icon" => "dashboard", "url" => "/company" },
+      { "label" => "Settings", "icon" => "settings", "url" => "/company/profile" }
+    ] })}))
+    post(%(ruflet:drawer:#{JSON.generate({ "items" => [
+      { "label" => "Dashboard", "icon" => "dashboard", "url" => "/company" }
+    ] })}))
+    post(%(ruflet:rail:#{JSON.generate({ "items" => [
+      { "label" => "Dashboard", "icon" => "dashboard", "url" => "/company" },
+      { "label" => "Settings", "icon" => "settings", "url" => "/company/profile" }
+    ] })}))
+
+    refute_nil find(stack.first, "appbar")
+    refute_nil find(stack.first, "navigationbar")
+    refute_nil stack.first.props["drawer"]
+    refute_nil find(stack.first, "navigationrail")
+
+    post(%(ruflet:appbar:#{JSON.generate({ "absent" => true })}))
+    post(%(ruflet:bottomnav:#{JSON.generate({ "absent" => true })}))
+    post(%(ruflet:drawer:#{JSON.generate({ "absent" => true })}))
+    post(%(ruflet:rail:#{JSON.generate({ "absent" => true })}))
+
+    assert_nil find(stack.first, "appbar"), "a page without ruflet_appbar removes the previous native AppBar"
+    assert_nil find(stack.first, "navigationbar"), "a page without ruflet_bottom_nav removes the previous native bottom nav"
+    assert_nil stack.first.props["drawer"], "a page without ruflet_drawer removes the previous native drawer"
+    assert_nil find(stack.first, "navigationrail"), "a page without ruflet_rail removes the previous native rail"
   end
 
   def test_appbar_leading_can_open_the_native_drawer

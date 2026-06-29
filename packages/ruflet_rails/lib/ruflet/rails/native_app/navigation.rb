@@ -106,6 +106,7 @@ module Ruflet
       # AppBar with that title and any action buttons (each navigates on tap).
       def apply_appbar(screen, spec)
         return unless screen
+        return clear_appbar(screen) if chrome_absent?(spec)
 
         spec = bottomnav_appbar_spec(screen.url, spec) if screen.equal?(@screens.first) && bottomnav_item_for(screen.url)
         remember_appbar_spec(screen.url, spec)
@@ -122,6 +123,8 @@ module Ruflet
       # the root view. Selecting a destination switches to that URL as a fresh
       # root (tab semantics).
       def apply_bottomnav(spec)
+        return clear_bottomnav if chrome_absent?(spec)
+
         @bottomnav_spec = spec
         return unless buildable_bottomnav?(spec)
 
@@ -145,6 +148,7 @@ module Ruflet
       # then applies that item's requested navigation mode.
       def apply_drawer(screen, spec)
         return unless screen
+        return clear_drawer(screen) if chrome_absent?(spec)
 
         @drawer_spec = spec
         items = Array(spec["items"])
@@ -197,6 +201,7 @@ module Ruflet
       # body is wrapped in a Row with the rail on the left.
       def apply_rail(screen, spec)
         return unless screen
+        return clear_rail(screen) if chrome_absent?(spec)
 
         items = Array(spec["items"])
         destinations = items.filter_map { |item| build_rail_destination(item) }
@@ -241,6 +246,37 @@ module Ruflet
       # so a navigation that only moves the highlight keeps the same controls.
       def structural_signature(spec)
         JSON.generate(canonicalize(strip_selection(spec)))
+      end
+
+      def chrome_absent?(spec)
+        spec.is_a?(Hash) && spec["absent"] == true
+      end
+
+      def clear_appbar(screen)
+        screen.appbar_spec = nil
+        screen.appbar_signature = nil
+        screen.title_text = build_title_text(screen)
+        update_screen_appbar(screen)
+      end
+
+      def clear_bottomnav
+        @bottomnav_spec = nil
+        @bottomnav_signature = nil
+        @navigation_bar = nil
+        update_root_navigation_bar
+      end
+
+      def clear_drawer(screen)
+        @drawer_spec = nil
+        @drawer_open_requested = false
+        screen.drawer_signature = nil
+        update_screen_drawer(screen, drawer: nil, end_drawer: nil)
+      end
+
+      def clear_rail(screen)
+        screen.rail = nil
+        screen.rail_signature = nil
+        update_screen_controls(screen)
       end
 
       def strip_selection(value)

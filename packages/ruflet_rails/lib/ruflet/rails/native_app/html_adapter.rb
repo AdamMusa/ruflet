@@ -47,6 +47,8 @@ module Ruflet
               });
               if (appbar.actions && appbar.actions.length) actions = appbar.actions.concat(actions);
               report("appbar", JSON.stringify({ title: (title || "").trim(), leading: leading, actions: actions }));
+            } else {
+              report("appbar", JSON.stringify({ absent: true }));
             }
             var nav = document.querySelector("[ruflet-tabs],[data-ruflet-tabs]");
             if (nav) {
@@ -63,6 +65,8 @@ module Ruflet
                 items.push(entry);
               });
               if (items.length >= 2) report("bottomnav", JSON.stringify(Object.assign({}, navSpec, { items: items })));
+            } else {
+              report("bottomnav", JSON.stringify({ absent: true }));
             }
             var drawer = document.querySelector("[ruflet-drawer],[data-ruflet-drawer]");
             if (drawer) {
@@ -80,12 +84,17 @@ module Ruflet
                 drawerItems.push(entry);
               });
               if (drawerItems.length) report("drawer", JSON.stringify(Object.assign({}, drawerSpec, { items: drawerItems })));
+            } else {
+              report("drawer", JSON.stringify({ absent: true }));
             }
             var rail = document.querySelector("[ruflet-rail],[data-ruflet-rail]");
             if (rail) {
               rail.style.display = "none";
               var railSpec = readJSON(attr(rail, "ruflet-rail"));
-              if (railSpec.breakpoint && window.innerWidth < Number(railSpec.breakpoint)) return;
+              if (railSpec.breakpoint && window.innerWidth < Number(railSpec.breakpoint)) {
+                report("rail", JSON.stringify({ absent: true }));
+                return;
+              }
               var railItems = [];
               rail.querySelectorAll("a[href]").forEach(function (a) {
                 var icon = readJSON(attr(a, "ruflet-icon"));
@@ -98,6 +107,8 @@ module Ruflet
                 railItems.push(entry);
               });
               if (railItems.length >= 2) report("rail", JSON.stringify(Object.assign({}, railSpec, { items: railItems })));
+            } else {
+              report("rail", JSON.stringify({ absent: true }));
             }
           }
           syncChrome();
