@@ -446,6 +446,99 @@ class RufletNativeAppTest < Minitest::Test
     assert stack.last.props["drawer"], "root drawer should still be attached after returning from a pushed settings screen"
   end
 
+  # End-to-end with the demo's exact declared payload: the body is the real
+  # WebView and the AppBar / drawer / bottom nav / rail are a normal Ruflet app
+  # (real controls), all delivered over the protocol.
+  def test_declared_payload_builds_a_normal_ruflet_chrome_over_the_webview_body
+    start(title: "Demo")
+    # What the bridge reports from the home page's ruflet_appbar/drawer/bottom_nav/rail.
+    post(%(ruflet:appbar:#{JSON.generate({ "title" => "Demo", "leading" => { "icon" => "menu", "action" => "drawer" },
+                                           "actions" => [{ "icon" => "settings", "url" => "/settings", "action" => "push",
+                                                           "title" => "Settings", "leading" => { "icon" => "close", "action" => "back" } }] })}))
+    post(%(ruflet:drawer:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/", "selected" => true },
+      { "label" => "Inbox", "icon" => "mail", "url" => "/inbox", "action" => "root" },
+      { "label" => "Profile", "icon" => "person", "url" => "/profile", "action" => "root" },
+      { "label" => "Settings", "icon" => "settings", "url" => "/settings", "action" => "push" }
+    ] })}))
+    post(%(ruflet:bottomnav:#{JSON.generate({ "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/", "selected" => true },
+      { "label" => "Inbox", "icon" => "mail", "url" => "/inbox" },
+      { "label" => "Profile", "icon" => "person", "url" => "/profile" }
+    ] })}))
+    post(%(ruflet:rail:#{JSON.generate({ "extended" => true, "breakpoint" => 720, "items" => [
+      { "label" => "Home", "icon" => "home", "url" => "/", "selected" => true },
+      { "label" => "Inbox", "icon" => "mail", "url" => "/inbox" },
+      { "label" => "Settings", "icon" => "settings", "url" => "/settings", "action" => "push" }
+    ] })}))
+
+    # The body is the real WebView; the rest is real Ruflet UI.
+    refute_nil find(stack.first, "webview"), "the body stays the real WebView"
+    appbar = find(stack.first, "appbar")
+    assert_equal "Demo", find(appbar, "text").props["value"]
+    assert_nil appbar.props["leading"], "drawer leading uses Flutter's implied AppBar button"
+    assert_equal 1, Array(appbar.props["actions"]).length, "the settings AppBar action is a real Ruflet button"
+    assert_equal 4, Array(stack.first.props["drawer"].props["controls"]).length
+    assert_equal 3, Array(find(stack.first, "navigationbar").props["destinations"]).length
+    assert_equal 3, Array(find(stack.first, "navigationrail").props["destinations"]).length
+  end
+
+  # The action's declared payload (title/leading for the screen it opens) drives
+  # the pushed Ruflet screen — not a generic default.
+  def test_appbar_action_payload_drives_the_pushed_screen_chrome
+    start(title: "Demo")
+    post(%(ruflet:appbar:#{JSON.generate({ "title" => "Demo", "leading" => { "icon" => "menu", "action" => "drawer" },
+                                           "actions" => [{ "icon" => "settings", "url" => "https://myapp.com/settings", "action" => "push",
+                                                           "title" => "Settings", "leading" => { "icon" => "close", "action" => "back" } }] })}))
+    settings_action = find(stack.first, "appbar").props["actions"].first
+    settings_action.emit("click", Ruflet::Event.new(name: "click", target: settings_action.wire_id, raw_data: nil, page: @page, control: settings_action))
+
+    assert_equal 2, stack.length, "the action pushes the settings screen"
+    pushed = find(stack.last, "appbar")
+    assert_equal "Settings", find(pushed, "text").props["value"], "the declared title is honored"
+    refute_nil pushed.props["leading"], "the declared close/back leading is honored, not a generic default"
+  end
+
+  # The desync scenario, end to end: every page re-reports the same chrome with
+  # ITS OWN item marked selected. The chrome must pass through the page to ruflet
+  # as PERSISTENT controls — re-reporting only re-points the selection, it never
+  # rebuilds (and discards) the control. If it rebuilt, the drawer's open/close
+  # state and the highlighted tab would drift out of sync.
+  def test_chrome_passes_through_the_page_as_persistent_controls_without_desync
+    start(title: "Demo")
+    drawer_payload = lambda do |selected|
+      { "items" => %w[/ /inbox /profile].each_with_index.map do |url, i|
+        { "label" => url, "icon" => "home", "url" => url, "selected" => (i == selected) }
+      end }
+    end
+    nav_payload = lambda do |selected|
+      { "items" => %w[/ /inbox /profile].each_with_index.map do |url, i|
+        { "label" => url, "icon" => "home", "url" => url, "selected" => (i == selected) }
+      end }
+    end
+
+    # Home page reports its chrome (Home selected).
+    post(%(ruflet:drawer:#{JSON.generate(drawer_payload.call(0))}))
+    post(%(ruflet:bottomnav:#{JSON.generate(nav_payload.call(0))}))
+    drawer = stack.first.props["drawer"]
+    navbar = find(stack.first, "navigationbar")
+    assert_equal 0, drawer.props["selected_index"]
+
+    # Switch to the Inbox tab via the bottom nav.
+    @page.dispatch_event(target: navbar.wire_id, name: "change", data: { "selected_index" => 1 })
+    assert_equal "https://myapp.com/inbox", top_webview.props["url"]
+
+    # The Inbox page loads and re-reports the SAME chrome, now with Inbox marked
+    # selected. This is the moment that used to desync.
+    post(%(ruflet:drawer:#{JSON.generate(drawer_payload.call(1))}))
+    post(%(ruflet:bottomnav:#{JSON.generate(nav_payload.call(1))}))
+
+    assert_same drawer, stack.first.props["drawer"], "the drawer is the same persistent control, not rebuilt"
+    assert_same navbar, find(stack.first, "navigationbar"), "the bottom nav is the same persistent control, not rebuilt"
+    assert_equal 1, drawer.props["selected_index"], "the drawer highlight followed the route, in sync"
+    assert_equal 1, navbar.props["selected_index"], "the bottom nav highlight followed the route, in sync"
+  end
+
   def test_duplicate_appbar_message_does_not_rebuild_the_webview_screen
     start
     payload = { "title" => "Sign up", "leading" => { "icon" => "close", "action" => "back" } }

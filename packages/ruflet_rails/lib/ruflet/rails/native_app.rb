@@ -118,11 +118,14 @@ module Ruflet
               var actions = [];
               bar.querySelectorAll("[ruflet-icon],[data-ruflet-icon]").forEach(function (el) {
                 var icon = readJSON(attr(el, "ruflet-icon"));
-                actions.push({
-                  icon: icon.icon || attr(el, "ruflet-icon"),
-                  url: el.getAttribute("href") || icon.url || attr(el, "ruflet-url") || "",
-                  action: icon.action || attr(el, "ruflet-action") || "push"
-                });
+                // Carry the whole payload through (e.g. the title/leading the
+                // action declares for the screen it pushes), then normalize the
+                // icon/url/action the AppBar button itself needs.
+                var entry = Object.assign({}, icon);
+                entry.icon = icon.icon || attr(el, "ruflet-icon");
+                entry.url = el.getAttribute("href") || icon.url || attr(el, "ruflet-url") || "";
+                entry.action = icon.action || attr(el, "ruflet-action") || "push";
+                actions.push(entry);
               });
               if (appbar.actions && appbar.actions.length) actions = appbar.actions.concat(actions);
               report("appbar", JSON.stringify({ title: (title || "").trim(), leading: leading, actions: actions }));
@@ -291,7 +294,7 @@ module Ruflet
 
         @screens.pop
         flush
-        close_drawer(@screens.last, retry_close: true)
+        close_drawer(@screens.last)
         refresh_root_drawer
         sync_drawer_selection(@screens.last)
         refresh_root_navigation_bar
@@ -968,8 +971,16 @@ module Ruflet
       def apply_bottomnav(spec)
         @bottomnav_spec = spec
         return unless buildable_bottomnav?(spec)
-        signature = chrome_signature(spec)
-        return if @bottomnav_signature == signature
+
+        # Like the drawer, the bottom bar is a persistent client-owned control:
+        # the signature ignores selection, so re-reporting it on each page load
+        # only re-points the selected tab instead of rebuilding (and churning)
+        # the control.
+        signature = structural_signature(spec)
+        if @bottomnav_signature == signature
+          sync_root_navigation_bar_selection
+          return
+        end
 
         @navigation_bar = build_bottomnav(spec)
         @bottomnav_signature = signature
@@ -993,8 +1004,12 @@ module Ruflet
         end
         return if destinations.empty?
 
-        signature = chrome_signature(spec)
+        # The drawer is a persistent, client-owned control. Each page re-reports it
+        # on load; when the structure is unchanged we keep the same control and
+        # only re-point its selection, so its open/close state survives navigation.
+        signature = structural_signature(spec)
         if screen.drawer_signature == signature
+          sync_drawer_selection(screen)
           if @drawer_open_requested
             @drawer_open_requested = false
             show_drawer
@@ -1005,7 +1020,7 @@ module Ruflet
         drawer = Ruflet::UI::ControlFactory.build(
           :navigationdrawer,
           controls: destinations,
-          selected_index: items.index { |item| item["selected"] } || 0,
+          selected_index: default_drawer_index(screen),
           on_change: lambda do |event|
             index = navigation_index(event)
             select_drawer_item(screen, items, urls, modes, index)
@@ -1029,10 +1044,16 @@ module Ruflet
         destinations = items.filter_map { |item| build_rail_destination(item) }
         return if destinations.length < 2
 
-        signature = chrome_signature(spec)
-        return if screen.rail_signature == signature
-
         urls = items.map { |item| absolute_url(item["url"]) }
+
+        # Persistent client-owned control: same structure → only re-point the
+        # selection, never rebuild.
+        signature = structural_signature(spec)
+        if screen.rail_signature == signature
+          sync_rail_selection(screen, urls)
+          return
+        end
+
         modes = items.map { |item| (item["action"] || item["mode"] || "root").to_s }
         rail_args = {
           destinations: destinations,
@@ -1058,6 +1079,31 @@ module Ruflet
 
       def chrome_signature(spec)
         JSON.generate(canonicalize(spec))
+      end
+
+      # Signature of a chrome spec's STRUCTURE, ignoring which item is currently
+      # selected. Selection is client-owned state we patch via `selected_index`,
+      # so a navigation that only moves the highlight must NOT change the
+      # signature — otherwise the native control is rebuilt and replaced on every
+      # page load, which discards the drawer's open/close state and is exactly
+      # why closing it after navigation needed all the retry glue.
+      def structural_signature(spec)
+        JSON.generate(canonicalize(strip_selection(spec)))
+      end
+
+      def strip_selection(value)
+        case value
+        when Hash
+          value.each_with_object({}) do |(key, nested), out|
+            next if %w[selected selected_index].include?(key.to_s)
+
+            out[key] = strip_selection(nested)
+          end
+        when Array
+          value.map { |item| strip_selection(item) }
+        else
+          value
+        end
       end
 
       def canonicalize(value)
@@ -1209,7 +1255,7 @@ module Ruflet
       end
 
       def select_drawer_item(screen, items, urls, modes, index)
-        close_drawer(screen, retry_close: true)
+        close_drawer(screen)
         target = urls[index].to_s
         return if target.empty?
 
@@ -1224,7 +1270,7 @@ module Ruflet
         # back button), so we must NOT force a title-only AppBar on it.
         spec = mode == "root" ? { "title" => items[index]["label"].to_s } : nil
         navigate_screen(target, mode, spec)
-        close_drawer(@screens.last, retry_close: true)
+        close_drawer(@screens.last)
         # The drawer must mark the route we ended up on, never the item just
         # tapped. A push item (e.g. Settings) is a detail screen, not a tab,
         # so the current tab stays selected instead of leaving two
@@ -1270,6 +1316,17 @@ module Ruflet
         @page.update(drawer, selected_index: index)
       end
 
+      def sync_rail_selection(screen, urls)
+        rail = screen&.rail
+        return unless rail&.wire_id
+
+        index = urls.index { |candidate| same_url?(candidate, screen.url) } || 0
+        return if rail.props["selected_index"] == index
+
+        rail.props["selected_index"] = index
+        @page.update(rail, selected_index: index)
+      end
+
       def default_drawer_index(screen)
         items = Array(@drawer_spec && @drawer_spec["items"])
         return 0 if items.empty?
@@ -1297,13 +1354,13 @@ module Ruflet
         nil
       end
 
-      def close_drawer(screen = nil, retry_close: false)
+      # Close the native drawer on the view that owns it (and the current top
+      # screen, if different). The drawer is a persistent, client-owned control,
+      # so a single ordered invoke is enough — no rebuild races it anymore.
+      def close_drawer(screen = nil)
         @drawer_open_requested = false
         targets = [screen, @screens.last].compact.uniq
-        return if targets.empty?
-
         targets.each { |target| invoke_close_drawer(target) }
-        retry_close_drawer(targets) if retry_close
       rescue StandardError
         nil
       end
@@ -1317,24 +1374,13 @@ module Ruflet
         nil
       end
 
-      # Drawer chrome can be patched into an already-mounted View from an ERB
-      # report. Flutter rebuilds that Scaffold asynchronously, so invoking
-      # openDrawer in the same client frame can no-op against the previous
-      # Scaffold. Send the invoke on the next Ruby tick; if the current runtime
-      # cannot spawn, fall back to the direct invoke.
+      # The drawer is a persistent control mounted on the View well before the
+      # user can open it, so a single ordered invoke opens it. (The previous
+      # sleep/retry loop relied on real background threads; on the embedded
+      # runtime Thread runs inline, so it only blocked the UI without deferring.)
       def invoke_drawer_when_ready(screen, method_name)
-        Thread.new do
-          [0.05, 0.15, 0.3].each do |delay|
-            sleep delay
-            next unless screen&.view&.wire_id
+        return unless screen&.view&.wire_id
 
-            @page.invoke(screen.view, method_name)
-            @page.invoke_current_view(method_name, timeout: 10, on_result: nil) if @page.respond_to?(:invoke_current_view)
-          end
-        rescue StandardError
-          nil
-        end
-      rescue StandardError
         @page.invoke(screen.view, method_name)
       end
 
@@ -1342,19 +1388,6 @@ module Ruflet
         return unless screen&.view&.wire_id
 
         @page.invoke(screen.view, "close_drawer")
-      end
-
-      def retry_close_drawer(screens)
-        Thread.new do
-          [0.05, 0.15].each do |delay|
-            sleep delay
-            screens.each { |screen| invoke_close_drawer(screen) }
-          end
-        rescue StandardError
-          nil
-        end
-      rescue StandardError
-        nil
       end
 
       # --- Native dialog / toast ---------------------------------------------
