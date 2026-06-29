@@ -141,7 +141,7 @@ module Ruflet
       RAIL_PREFIX      = "ruflet:rail:"
 
       Screen = Struct.new(:url, :view, :webview, :loading, :body, :title_text, :appbar_spec, :appbar_signature,
-                          :drawer, :end_drawer, :drawer_signature, :rail, :rail_signature, :route, keyword_init: true)
+                          :drawer, :end_drawer, :drawer_signature, :rail, :rail_signature, keyword_init: true)
 
       def initialize(page, start_url:, title: nil, actions: nil, navigation_bar: nil, bottom_appbar: nil,
                      loading: :shimmer)
@@ -181,7 +181,6 @@ module Ruflet
         return if url.empty?
 
         screen = Screen.new(url: url)
-        screen.route = "/"
         screen.appbar_spec = appbar_spec_from(spec)
         screen.appbar_spec ||= default_screen_appbar_spec(url) unless root
         screen.title_text = text(title_for(screen))
@@ -245,7 +244,7 @@ module Ruflet
       end
 
       def build_view(screen)
-        args = { route: screen.route || "/" }
+        args = { route: "/" }
         appbar = build_appbar(screen)
         args[:appbar] = appbar if appbar
         args[:drawer] = screen.drawer if screen.drawer
@@ -684,7 +683,7 @@ module Ruflet
         url = absolute_url(url)
         mode = mode.to_s
         mode = "push" if mode.empty?
-        if bottomnav_destination?(url) && !%w[back sheet].include?(mode)
+        if bottomnav_item_for(url) && !%w[back sheet].include?(mode)
           mode = "root"
           spec = bottomnav_appbar_spec(url, spec)
         end
@@ -776,7 +775,7 @@ module Ruflet
       def apply_appbar(screen, spec)
         return unless screen
 
-        spec = bottomnav_appbar_spec(screen.url, spec) if screen.equal?(@screens.first) && bottomnav_destination?(screen.url)
+        spec = bottomnav_appbar_spec(screen.url, spec) if screen.equal?(@screens.first) && bottomnav_item_for(screen.url)
         remember_appbar_spec(screen.url, spec)
         signature = JSON.generate(canonicalize(spec))
         return if screen.appbar_signature == signature
@@ -976,17 +975,9 @@ module Ruflet
           items.index { |item| item["selected"] } || 0
       end
 
-      def bottomnav_destination?(url)
-        bottomnav_item_for(url) != nil
-      end
-
-      def bottomnav_label_for(url)
-        bottomnav_item_for(url)&.fetch("label", nil).to_s
-      end
-
       def bottomnav_appbar_spec(url, spec)
         declared = appbar_spec_for_url(url)
-        label = bottomnav_label_for(url)
+        label = bottomnav_item_for(url)&.fetch("label", nil).to_s
         title =
           if declared && !declared["title"].to_s.empty?
             declared["title"].to_s
