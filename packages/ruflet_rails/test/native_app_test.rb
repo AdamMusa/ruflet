@@ -148,7 +148,7 @@ class RufletNativeAppTest < Minitest::Test
     @sent.clear
     action("push", "/settings")
 
-    assert @sent.any? { |_action, payload| payload.inspect.include?('"visible" => false') },
+    assert @sent.any? { |_action, payload| payload.to_s.include?('"visible", false') || payload.inspect.include?('"visible"=>false') },
            "a hidden loading overlay must stay hidden once the client has mounted it"
   end
 
@@ -213,10 +213,12 @@ class RufletNativeAppTest < Minitest::Test
   def test_back_pops_the_pushed_screen
     start
     action("push", "https://myapp.com/about")
-    assert_equal 2, stack.length
+    assert_equal 1, stack.length
+    assert_equal "https://myapp.com/about", top_webview.props["url"]
 
     @page.dispatch_event(target: 1, name: "view_pop", data: nil)
     assert_equal 1, stack.length
+    assert_equal "https://myapp.com", top_webview.props["url"]
   end
 
   # --- dynamic appbar -----------------------------------------------------
@@ -261,7 +263,7 @@ class RufletNativeAppTest < Minitest::Test
   def test_action_push_pushes_a_webview_screen
     start
     action("push", "https://myapp.com/a")
-    assert_equal 2, stack.length
+    assert_equal 1, stack.length
     assert_equal "https://myapp.com/a", top_webview.props["url"]
   end
 
@@ -284,7 +286,7 @@ class RufletNativeAppTest < Minitest::Test
     start
     action("push", "/inbox")
 
-    assert_equal 2, stack.length
+    assert_equal 1, stack.length
     assert_equal "https://myapp.com/inbox", top_webview.props["url"]
   end
 
@@ -301,6 +303,7 @@ class RufletNativeAppTest < Minitest::Test
 
     leading.emit("click", Ruflet::Event.new(name: "click", target: leading.wire_id, raw_data: nil, page: @page, control: leading))
     assert_equal 1, stack.length, "the close leading button pops the native screen"
+    assert_equal "https://myapp.com", top_webview.props["url"]
   end
 
   def test_action_back_pops_the_top_screen
@@ -314,7 +317,8 @@ class RufletNativeAppTest < Minitest::Test
     start
     action("push", "https://myapp.com/a")
     action("push", "https://myapp.com/b")
-    assert_equal 3, stack.length
+    assert_equal 1, stack.length
+    assert_equal "https://myapp.com/b", top_webview.props["url"]
 
     action("root", "https://myapp.com/home")
     assert_equal 1, stack.length, "root collapses the stack to one root screen"
@@ -322,26 +326,24 @@ class RufletNativeAppTest < Minitest::Test
     assert_equal "/", stack.first.props["route"], "the surviving screen is the root view"
   end
 
-  # Each view's route is its Navigator page key on the client. Two stacked
-  # webview screens must have distinct routes or Flutter trips
-  # `!keyReservation.contains(key)` and the app crashes (regression: a sign-in
-  # redirect hopping /landing -> /session/menu pushed two "/screen" routes).
-  def test_stacked_webview_screens_have_unique_routes
+  # Rails native navigation is a normal Ruflet shell: push is Ruby-side history
+  # plus a body/appbar patch, not a client Navigator stack.
+  def test_pushed_webview_screens_reuse_the_single_shell_route
     start
     action("push", "https://myapp.com/a")
     action("push", "https://myapp.com/b")
     routes = stack.map { |view| view.props["route"] }
-    assert_equal "/", routes.first, "the root screen is /"
-    assert_equal routes.uniq, routes, "every stacked view has a unique route (page key)"
+    assert_equal ["/"], routes
+    assert_equal "https://myapp.com/b", top_webview.props["url"]
   end
 
   def test_action_replace_swaps_the_top_screen_without_growing_the_stack
     start
     action("push", "https://myapp.com/a")
-    assert_equal 2, stack.length
+    assert_equal 1, stack.length
 
     action("replace", "https://myapp.com/b")
-    assert_equal 2, stack.length, "replace swaps rather than pushes"
+    assert_equal 1, stack.length, "replace swaps inside the stable shell"
     assert_equal "https://myapp.com/b", top_webview.props["url"]
   end
 
@@ -372,7 +374,7 @@ class RufletNativeAppTest < Minitest::Test
     start # no title: full-bleed by default
     assert_nil find(stack.first, "appbar")
     action("push", "https://myapp.com/signup/new")
-    assert_equal 2, stack.length
+    assert_equal 1, stack.length
     view = stack.last
     webview = top_webview
 
@@ -483,8 +485,8 @@ class RufletNativeAppTest < Minitest::Test
     assert_equal 3, Array(find(stack.first, "navigationrail").props["destinations"]).length
   end
 
-  # The action's declared payload (title/leading for the screen it opens) drives
-  # the pushed Ruflet screen — not a generic default.
+  # The action's declared payload (title/leading for the body it opens) drives
+  # the Ruflet shell — not a generic default.
   def test_appbar_action_payload_drives_the_pushed_screen_chrome
     start(title: "Demo")
     post(%(ruflet:appbar:#{JSON.generate({ "title" => "Demo", "leading" => { "icon" => "menu", "action" => "drawer" },
@@ -493,7 +495,8 @@ class RufletNativeAppTest < Minitest::Test
     settings_action = find(stack.first, "appbar").props["actions"].first
     settings_action.emit("click", Ruflet::Event.new(name: "click", target: settings_action.wire_id, raw_data: nil, page: @page, control: settings_action))
 
-    assert_equal 2, stack.length, "the action pushes the settings screen"
+    assert_equal 1, stack.length, "the action navigates inside the stable shell"
+    assert_equal "https://myapp.com/settings", top_webview.props["url"]
     pushed = find(stack.last, "appbar")
     assert_equal "Settings", find(pushed, "text").props["value"], "the declared title is honored"
     refute_nil pushed.props["leading"], "the declared close/back leading is honored, not a generic default"
@@ -646,13 +649,14 @@ class RufletNativeAppTest < Minitest::Test
     view = stack.first
     navbar = find(stack.first, "navigationbar")
 
-    # Simulate a drawer-style push then a back — both flush the view stack.
+    # Simulate a drawer-style push then a back. The bottom nav remains the same
+    # mounted Ruflet control; only the body/appbar are patched.
     action("push", "https://myapp.com/settings", "title" => "Settings", "leading" => { "icon" => "close", "action" => "back" })
     @page.dispatch_event(target: 1, name: "view_pop", data: nil)
     assert_equal 1, stack.length
     navbar_after_back = find(stack.first, "navigationbar")
-    refute_same navbar, navbar_after_back,
-                "back refreshes the native bottom nav so its change callback is live"
+    assert_same navbar, navbar_after_back,
+                "back keeps the native bottom nav mounted with its callback intact"
     @sent.clear
 
     @page.dispatch_event(target: navbar_after_back.wire_id, name: "change", data: { "selected_index" => 1 })
@@ -756,7 +760,7 @@ class RufletNativeAppTest < Minitest::Test
     start(title: "Demo")
     root_view = stack.first
     action("push", "https://myapp.com/a")
-    assert_equal 2, stack.length
+    assert_equal 1, stack.length
 
     action("root", "https://myapp.com/home")
 
@@ -779,7 +783,8 @@ class RufletNativeAppTest < Minitest::Test
 
     @page.dispatch_event(target: drawer.wire_id, name: "change", data: { "value" => 1 })
 
-    assert_equal 2, stack.length, "the push item still navigates"
+    assert_equal 1, stack.length, "the push item navigates inside the stable shell"
+    assert_equal "https://myapp.com/settings", top_webview.props["url"]
     assert_equal 0, drawer.props["selected_index"],
                  "the drawer keeps the current tab selected, not the tapped push item"
   end
@@ -831,17 +836,19 @@ class RufletNativeAppTest < Minitest::Test
     # Select Settings: closes the drawer and pushes the settings screen. The
     # client marks Settings (index 1) selected on the drawer.
     @page.dispatch_event(target: drawer.wire_id, name: "change", data: { "value" => 1 })
-    assert_equal 2, stack.length
+    assert_equal 1, stack.length
+    assert_equal "https://myapp.com/settings", top_webview.props["url"]
     drawer.props["selected_index"] = 1
 
     @page.dispatch_event(target: 1, name: "view_pop", data: nil)
 
     assert_equal 1, stack.length
+    assert_equal "https://myapp.com", top_webview.props["url"]
     assert_equal 0, stack.first.props["drawer"].props["selected_index"],
                  "returning to the root resets the drawer selection to the current screen"
   end
 
-  def test_drawer_is_refreshed_and_closed_after_native_back
+  def test_drawer_stays_mounted_and_closes_after_native_back
     start
     root = stack.first
     post(%(ruflet:drawer:#{JSON.generate({ "items" => [
@@ -854,8 +861,8 @@ class RufletNativeAppTest < Minitest::Test
 
     @page.dispatch_event(target: 1, name: "view_pop", data: nil)
 
-    refute_same drawer, root.props["drawer"],
-                "returning from a native screen refreshes the root drawer callback"
+    assert_same drawer, root.props["drawer"],
+                "returning from a native screen keeps the root drawer mounted"
     assert @sent.any? { |_action, payload| payload["control_id"] == root.wire_id && payload.to_s.include?("close_drawer") },
            "returning to root closes any drawer state left open underneath the pushed screen"
   end
@@ -938,7 +945,7 @@ class RufletNativeAppTest < Minitest::Test
 
     assert @sent.any? { |_action, payload| payload.to_s.include?("close_drawer") },
            "drawer selection closes the drawer before navigation"
-    assert_equal 2, stack.length
+    assert_equal 1, stack.length
     assert_equal "https://myapp.com/settings", top_webview.props["url"]
     assert @sent.any? { |_action, payload| payload["control_id"] == stack.last.wire_id && payload.to_s.include?("close_drawer") },
            "drawer selection closes the resulting native screen after navigation too"
@@ -995,8 +1002,8 @@ class RufletNativeAppTest < Minitest::Test
 
     assert @sent.any? { |_action, payload| payload["control_id"] == root.wire_id && payload.to_s.include?("close_drawer") },
            "a drawer event closes the view that owns the drawer"
-    assert @sent.any? { |_action, payload| payload["control_id"] == top.wire_id && payload.to_s.include?("close_drawer") },
-           "drawer close is also sent to the current native screen when it differs"
+    assert_same root, top
+    assert_equal "https://myapp.com/settings", top_webview.props["url"]
   end
 
   def test_duplicate_drawer_message_does_not_rebuild_the_webview_screen
@@ -1131,7 +1138,7 @@ class RufletNativeAppTest < Minitest::Test
     assert_equal "textbutton", confirm.type
 
     confirm.emit("click", Ruflet::Event.new(name: "click", target: confirm.wire_id, raw_data: nil, page: @page, control: confirm))
-    assert_equal 2, stack.length, "confirm performs the navigation"
+    assert_equal 1, stack.length, "confirm performs the navigation inside the shell"
     assert_equal "https://myapp.com/next", top_webview.props["url"]
   end
 

@@ -244,7 +244,6 @@ module Ruflet
         @screens = []
         @sheet = nil
         @dialog = nil
-        @screen_seq = 0
         @bottomnav_signature = nil
         @bottomnav_spec = nil
         @appbar_specs_by_url = {}
@@ -271,21 +270,16 @@ module Ruflet
         return if url.empty?
 
         screen = Screen.new(url: url)
-        # Each view's route is its Navigator page key on the client
-        # (page.dart: ValueKey(view.route)). The root is "/"; every other screen
-        # gets a unique route so stacking two webview screens (e.g. a redirect
-        # hopping /landing -> /menu) never collides keys and trips Flutter's
-        # `!keyReservation.contains(key)` assertion.
-        screen.route = root ? "/" : "/screen/#{@screen_seq += 1}"
+        screen.route = "/"
         screen.appbar_spec = appbar_spec_from(spec)
         screen.appbar_spec ||= default_screen_appbar_spec(url) unless root
         screen.title_text = Ruflet::UI::ControlFactory.build(:text, value: title_for(screen))
         screen.loading = build_loading_state
         screen.webview = build_webview(screen)
         screen.body = build_webview_body(screen)
-        screen.view = build_view(screen, root: root)
+        screen.view = root ? build_view(screen, root: true) : @screens.first&.view
         @screens.push(screen)
-        flush
+        root ? flush : apply_screen_to_shell(screen)
         screen
       end
 
@@ -293,15 +287,13 @@ module Ruflet
         return if @screens.size <= 1
 
         @screens.pop
-        flush
+        apply_screen_to_shell(@screens.last)
         close_drawer(@screens.last)
-        refresh_root_drawer
         sync_drawer_selection(@screens.last)
-        refresh_root_navigation_bar
       end
 
       def flush
-        @page.views = @screens.map(&:view)
+        @page.views = [@screens.last&.view].compact
         @page.update
         reconcile_loading_visibility
       end
@@ -349,16 +341,8 @@ module Ruflet
         args[:appbar] = appbar if appbar
         args[:drawer] = screen.drawer if screen.drawer
         args[:end_drawer] = screen.end_drawer if screen.end_drawer
-        if root
-          args[:navigation_bar] = @navigation_bar unless @navigation_bar.nil?
-          args[:bottom_appbar] = @bottom_appbar unless @bottom_appbar.nil?
-        else
-          # The root shell can own tab/bottom chrome, but pushed native WebView
-          # screens should be standalone. Explicit nils prevent the client from
-          # visually carrying root Scaffold slots across stacked views.
-          args[:navigation_bar] = nil
-          args[:bottom_appbar] = nil
-        end
+        args[:navigation_bar] = @navigation_bar unless @navigation_bar.nil?
+        args[:bottom_appbar] = @bottom_appbar unless @bottom_appbar.nil?
         Ruflet::UI::ControlFactory.build(:view, **args)
       end
 
@@ -465,8 +449,12 @@ module Ruflet
       # Rebuild a screen's view in place (e.g. after its AppBar changed, or the
       # root navigation bar was set) and repaint the stack.
       def rebuild_view(screen)
-        screen.view = build_view(screen, root: screen.equal?(@screens.first))
-        flush
+        if screen.equal?(@screens.first) && @screens.length == 1
+          screen.view = build_view(screen, root: true)
+          flush
+        else
+          apply_screen_to_shell(screen)
+        end
       end
 
       def update_screen_appbar(screen)
@@ -499,6 +487,29 @@ module Ruflet
         return rebuild_view(screen) unless screen.view&.wire_id
 
         @page.update(screen.view, controls: screen_controls(screen))
+      end
+
+      def apply_screen_to_shell(screen)
+        shell = @screens.first
+        return unless screen && shell&.view
+
+        screen.view = shell.view
+        appbar = build_appbar(screen)
+        props = {
+          controls: screen_controls(screen),
+          appbar: appbar,
+          drawer: shell.drawer || screen.drawer,
+          end_drawer: shell.end_drawer || screen.end_drawer,
+          navigation_bar: screen.equal?(shell) ? @navigation_bar : nil,
+          bottom_appbar: screen.equal?(shell) ? @bottom_appbar : nil
+        }
+        if shell.view.wire_id
+          @page.update(shell.view, **props)
+        else
+          props.each { |key, value| shell.view.props[key.to_s] = value }
+          flush
+        end
+        reconcile_loading_visibility
       end
 
       def update_root_navigation_bar
@@ -869,7 +880,6 @@ module Ruflet
         return if @screens.size <= 1
 
         @screens = [root]
-        flush
       end
 
       # Reload only the body of the mounted root screen, keeping the AppBar and
@@ -1207,28 +1217,6 @@ module Ruflet
         "#{uri.scheme}://#{uri.host}:#{uri.port}#{path}"
       rescue URI::InvalidURIError
         nil
-      end
-
-      def refresh_root_navigation_bar
-        return unless @bottomnav_spec && buildable_bottomnav?(@bottomnav_spec)
-
-        # A drawer push/back can leave the native bottom bar visually mounted
-        # while its event channel is stale. Replacing only the NavigationBar
-        # control after the stack settles gives the client fresh callbacks
-        # without reloading the WebView body or flashing the AppBar.
-        @navigation_bar = build_bottomnav(@bottomnav_spec)
-        update_root_navigation_bar
-      end
-
-      def refresh_root_drawer
-        root = @screens.first
-        return unless root && @drawer_spec
-
-        # A push/pop reserializes the root view under the pushed route. The
-        # drawer can remain visually mounted but lose its live change callback,
-        # so rebuild only the drawer control after returning to root.
-        root.drawer_signature = nil
-        apply_drawer(root, @drawer_spec)
       end
 
       def sync_root_navigation_bar_selection
