@@ -122,9 +122,9 @@ bundle exec rake ruflet:install[DEVICE_ID]
 
 Beyond the server-driven UI, Ruflet can wrap an existing Rails HTML app in a
 managed native WebView. This is an opt-in shell: calling
-`Ruflet::Rails.native_app` wraps web pages in native Ruflet screens backed by
-WebViews. Plain `Ruflet.run { |page| ... }` remains a normal Ruflet app with no
-WebView wrapper or HTML bridge.
+`Ruflet::Rails.native_app` wraps web pages in a native Ruflet shell whose body is
+a WebView. Plain `Ruflet.run { |page| ... }` remains a normal Ruflet app with no
+WebView wrapper or HTML adapter.
 
 Native behavior is explicit from Rails views: ordinary links and Turbo visits
 stay inside the WebView, while links annotated with `data-ruflet-*` can push
@@ -145,11 +145,12 @@ end
 
 ### Crossing web and native from HTML
 
-A small JS bridge injected into each page reads `data-ruflet-*` attributes and
-turns them into native behavior. The page stays a normal page in a plain browser;
-the attributes only activate inside the native shell. Keep using normal Rails
-helpers like `link_to`; add Ruflet data attributes only where the native app
-should augment the web behavior.
+A tiny HTML adapter reads `data-ruflet-*` attributes from the rendered page and
+sends those payloads back to Ruby. Ruby then builds the native AppBar, drawer,
+tabs, dialogs, sheets, services, and navigation with normal Ruflet controls. The
+page stays a normal page in a plain browser; the attributes only activate inside
+the native shell. Keep using normal Rails helpers like `link_to`; add Ruflet data
+attributes only where the native app should augment the web behavior.
 
 **Navigation** — `action` is `push` (default), `root` (reset to a root screen,
 tab-style), `replace`, `sheet`, or `back`:
@@ -166,26 +167,6 @@ tab-style), `replace`, `sheet`, or `back`:
       data: { ruflet_screen: { action: "sheet" }.to_json } %>
 
 <a href="/dashboard" data-ruflet-screen='{"action":"root","title":"Dashboard"}'>Dashboard</a>
-```
-
-When the HTML is outside your Rails app and cannot emit `data-ruflet-*`, keep the
-decision in the Ruflet app with `screen_links:`. Matching links still open a
-WebView body, just with native screen chrome:
-
-```ruby
-Ruflet::Rails.native_app(
-  page,
-  start_url: "https://www.fizzy.do",
-  screen_links: [
-    {
-      host: "app.fizzy.do",
-      path: "/session/new",
-      url: "#{Ruflet::Rails.backend_url}/session/new",
-      title: "Sign in",
-      leading: { icon: "close", action: "back" }
-    }
-  ]
-)
 ```
 
 **Promote HTML chrome to native** — hide HTML header/nav elements and render
@@ -217,8 +198,7 @@ native AppBar, NavigationBar, NavigationDrawer, or desktop NavigationRail:
 <% end %>
 ```
 
-**Native dialogs and toasts** — from a link, or programmatically via the injected
-`RufletNative` JS object (`RufletNative.toast("Saved")`, `RufletNative.dialog({…})`).
+**Native dialogs and toasts** — from annotated Rails links and buttons.
 Dialogs, bottom sheets, and snackbars are adaptive by default, so the native shell
 can use platform-appropriate presentation instead of forcing the same Material
 look everywhere:

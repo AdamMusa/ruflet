@@ -5,18 +5,12 @@ require "uri"
 
 module Ruflet
   module Rails
-    # Managed webview driver for ruflet_rails.
-    # The bridge talks to native over the webview's console channel
-    # (on_console_message), which works on iOS/Android/macOS. On platforms
-    # without a native webview the body degrades to a plain frame.
+    # Managed native shell for a Rails WebView body.
     class NativeApp
-      # Injected into every page. It reports the title, packs any
-      # `data-ruflet-*` params into JSON on click, and on load promotes
-      # annotated `data-ruflet-appbar` / `data-ruflet-tabs` /
-      # `data-ruflet-drawer` / `data-ruflet-rail` chrome to native controls.
-      BRIDGE_JS = <<~JS
+      # Tiny WebView-side adapter: read ERB-rendered `data-ruflet-*`
+      # declarations and report them so Ruby can build normal Ruflet controls.
+      HTML_ADAPTER_JS = <<~JS
         (function () {
-          var configuredScreenLinks = __RUFLET_SCREEN_LINKS__;
           function report(kind, value) { console.log("ruflet:" + kind + ":" + value); }
           function attr(el, name) {
             var v = el.getAttribute(name);
@@ -32,42 +26,10 @@ module Ruflet
             if (!raw) return {};
             try { return JSON.parse(raw); } catch (_) { return {}; }
           }
-          function configuredScreenFor(a) {
-            if (!a || !a.href) return null;
-            var url;
-            try { url = new URL(a.href, location.href); } catch (_) { return null; }
-            for (var i = 0; i < configuredScreenLinks.length; i++) {
-              var rule = configuredScreenLinks[i] || {};
-              if (rule.href && url.href !== rule.href) continue;
-              if (rule.host && url.host !== rule.host) continue;
-              if (rule.path && url.pathname !== rule.path) continue;
-              var payload = Object.assign({ component: "navigation", action: "push" }, rule.payload || {}, rule);
-              delete payload.href;
-              delete payload.host;
-              delete payload.path;
-              delete payload.payload;
-              payload.url = payload.url || url.href;
-              return payload;
-            }
-            return null;
-          }
 
-          // Programmatic API for app code.
-          window.RufletNative = window.RufletNative || {
-            navigate: function (url, action) { report("action", JSON.stringify({ component: "navigation", url: url || "", action: action || "push" })); },
-            dialog: function (spec) { report("action", JSON.stringify(Object.assign({ component: "dialog" }, spec || {}))); },
-            sheet: function (url) { report("action", JSON.stringify({ component: "navigation", action: "sheet", url: url || "" })); },
-            toast: function (message, opts) { report("action", JSON.stringify(Object.assign({ component: "toast", message: message }, opts || {}))); },
-            back: function () { report("action", JSON.stringify({ component: "navigation", action: "back" })); }
-          };
-
-          // Promote annotated HTML chrome to native controls. Runs on every
-          // injection (each page load) so it re-syncs after navigation.
           function syncChrome() {
-            var promotedAppBar = false;
             var bar = document.querySelector("[ruflet-appbar],[data-ruflet-appbar]");
             if (bar) {
-              promotedAppBar = true;
               bar.style.display = "none";
               var appbar = readJSON(attr(bar, "ruflet-appbar"));
               var heading = bar.querySelector("h1,h2,.title");
@@ -142,13 +104,11 @@ module Ruflet
               });
               if (railItems.length >= 2) report("rail", JSON.stringify(Object.assign({}, railSpec, { items: railItems })));
             }
-            return promotedAppBar;
           }
-          var promotedAppBar = syncChrome();
-          if (!promotedAppBar) report("title", document.title || "");
+          syncChrome();
 
-          if (window.__rufletBridgeBound) return;
-          window.__rufletBridgeBound = true;
+          if (window.__rufletHtmlAdapterBound) return;
+          window.__rufletHtmlAdapterBound = true;
 
           document.addEventListener("click", function (e) {
             var t = e.target;
@@ -170,18 +130,10 @@ module Ruflet
               report("action", JSON.stringify(payload));
               return;
             }
-
-            var a = t && t.closest ? t.closest("a[href]") : null;
-            var configured = configuredScreenFor(a);
-            if (configured) {
-              e.preventDefault();
-              report("action", JSON.stringify(configured));
-            }
           }, true);
         })();
       JS
 
-      TITLE_PREFIX     = "ruflet:title:"
       ACTION_PREFIX    = "ruflet:action:"
       APPBAR_PREFIX    = "ruflet:appbar:"
       BOTTOMNAV_PREFIX = "ruflet:bottomnav:"
@@ -192,7 +144,7 @@ module Ruflet
                           :drawer, :end_drawer, :drawer_signature, :rail, :rail_signature, :route, keyword_init: true)
 
       def initialize(page, start_url:, title: nil, actions: nil, navigation_bar: nil, bottom_appbar: nil,
-                     screen_links: [], loading: :shimmer)
+                     loading: :shimmer)
         @page = page
         @start_url = start_url.to_s
         @title = title.to_s
@@ -200,7 +152,6 @@ module Ruflet
         @navigation_bar = navigation_bar
         @bottom_appbar = bottom_appbar
         @loading = loading
-        @screen_links = normalize_screen_links(screen_links)
         @screens = []
         @sheet = nil
         @dialog = nil
@@ -211,8 +162,8 @@ module Ruflet
         @drawer_open_requested = false
       end
 
-      def self.bridge_js(screen_links: [])
-        BRIDGE_JS.sub("__RUFLET_SCREEN_LINKS__", JSON.generate(screen_links))
+      def self.html_adapter_js
+        HTML_ADAPTER_JS
       end
 
       def start
@@ -233,7 +184,7 @@ module Ruflet
         screen.route = "/"
         screen.appbar_spec = appbar_spec_from(spec)
         screen.appbar_spec ||= default_screen_appbar_spec(url) unless root
-        screen.title_text = Ruflet::UI::ControlFactory.build(:text, value: title_for(screen))
+        screen.title_text = text(title_for(screen))
         screen.loading = build_loading_state
         screen.webview = build_webview(screen)
         screen.body = build_webview_body(screen)
@@ -261,22 +212,21 @@ module Ruflet
       # --- Webview screen + native chrome ------------------------------------
 
       def build_webview(screen)
-        Ruflet::UI::ControlFactory.build(
-          :webview,
+        webview(
           url: screen.url,
           method: "get",
           expand: true,
           enable_javascript: true,
           # The mobile client defaults JavaScriptMode to disabled and ignores the
           # enable_javascript prop, so switch JS on as each page starts loading.
-          # Without it the in-page bridge can't run (no link interception → no
-          # screen navigation) and WebAuthn/passkeys won't work.
+          # Without it the in-page adapter cannot read ERB data-ruflet
+          # declarations, and WebAuthn/passkeys will not work.
           on_page_started: lambda do |_event|
             show_loading(screen)
             enable_js(screen.webview)
           end,
           on_page_ended: lambda do |_event|
-            inject_bridge(screen)
+            inject_html_adapter(screen)
             hide_loading(screen)
           end,
           on_web_resource_error: ->(_event) { hide_loading(screen) },
@@ -287,23 +237,22 @@ module Ruflet
       def build_webview_body(screen)
         return screen.webview unless screen.loading
 
-        Ruflet::UI::ControlFactory.build(
-          :stack,
-          controls: [screen.webview, screen.loading],
+        stack(
+          [screen.webview, screen.loading],
           fit: "expand",
           expand: true
         )
       end
 
       def build_view(screen)
-        args = { route: screen.route || "/", controls: screen_controls(screen) }
+        args = { route: screen.route || "/" }
         appbar = build_appbar(screen)
         args[:appbar] = appbar if appbar
         args[:drawer] = screen.drawer if screen.drawer
         args[:end_drawer] = screen.end_drawer if screen.end_drawer
         args[:navigation_bar] = @navigation_bar unless @navigation_bar.nil?
         args[:bottom_appbar] = @bottom_appbar unless @bottom_appbar.nil?
-        Ruflet::UI::ControlFactory.build(:view, **args)
+        view(screen_controls(screen), **args)
       end
 
       def screen_controls(screen)
@@ -311,9 +260,8 @@ module Ruflet
         return [body] unless screen.rail
 
         [
-          Ruflet::UI::ControlFactory.build(
-            :row,
-            controls: [screen.rail, body],
+          row(
+            [screen.rail, body],
             expand: true,
             spacing: 0
           )
@@ -338,7 +286,7 @@ module Ruflet
           args[:automatically_imply_leading] = false
         end
         args[:actions] = actions unless Array(actions).empty?
-        Ruflet::UI::ControlFactory.build(:appbar, **args)
+        appbar(**args)
       end
 
       def title_for(screen)
@@ -381,9 +329,8 @@ module Ruflet
 
         mode = (spec["action"] || spec["mode"] || "push").to_s
         url = spec["url"].to_s
-        Ruflet::UI::ControlFactory.build(
-          :icon_button,
-          icon: icon,
+        icon_button(
+          icon,
           on_click: lambda do |_event|
             if mode == "back"
               pop
@@ -479,8 +426,7 @@ module Ruflet
           return build_text_loading_state(@loading.is_a?(String) ? @loading : "Loading...")
         end
 
-        Ruflet::UI::ControlFactory.build(
-          :container,
+        container(
           bgcolor: "#F7F8FB",
           left: 0,
           right: 0,
@@ -488,13 +434,11 @@ module Ruflet
           bottom: 0,
           padding: 24,
           visible: true,
-          content: Ruflet::UI::ControlFactory.build(
-            :shimmer,
+          content: shimmer(
             base_color: "#E5E7EB",
             highlight_color: "#F8FAFC",
-            content: Ruflet::UI::ControlFactory.build(
-              :column,
-              controls: loading_bars,
+            content: column(
+              loading_bars,
               spacing: 18,
               expand: true
             )
@@ -503,8 +447,7 @@ module Ruflet
       end
 
       def build_text_loading_state(label)
-        Ruflet::UI::ControlFactory.build(
-          :container,
+        container(
           bgcolor: "#F7F8FB",
           left: 0,
           right: 0,
@@ -512,7 +455,7 @@ module Ruflet
           bottom: 0,
           alignment: "center",
           visible: true,
-          content: Ruflet::UI::ControlFactory.build(:text, value: label)
+          content: text(label)
         )
       end
 
@@ -529,8 +472,7 @@ module Ruflet
       end
 
       def loading_bar(width:, height:)
-        Ruflet::UI::ControlFactory.build(
-          :container,
+        container(
           width: width,
           height: height,
           bgcolor: "#E5E7EB",
@@ -539,7 +481,7 @@ module Ruflet
       end
 
       def loading_gap(height)
-        Ruflet::UI::ControlFactory.build(:container, height: height)
+        container(height: height)
       end
 
       def show_loading(screen)
@@ -569,34 +511,12 @@ module Ruflet
         nil
       end
 
-      # --- Bridge ------------------------------------------------------------
+      # --- HTML adapter ------------------------------------------------------
 
-      def inject_bridge(screen)
-        screen.webview.run_javascript(self.class.bridge_js(screen_links: @screen_links)) if screen.webview.respond_to?(:run_javascript)
+      def inject_html_adapter(screen)
+        screen.webview.run_javascript(self.class.html_adapter_js) if screen.webview.respond_to?(:run_javascript)
       rescue StandardError
         nil
-      end
-
-      def normalize_screen_links(screen_links)
-        Array(screen_links).map do |entry|
-          if entry.is_a?(Array)
-            href, payload = entry
-            { "href" => href.to_s, "payload" => stringify_keys(payload || {}) }
-          elsif entry.is_a?(Hash)
-            stringify_keys(entry)
-          end
-        end.compact
-      end
-
-      def stringify_keys(value)
-        case value
-        when Hash
-          value.each_with_object({}) { |(key, nested), out| out[key.to_s] = stringify_keys(nested) }
-        when Array
-          value.map { |nested| stringify_keys(nested) }
-        else
-          value
-        end
       end
 
       # Force JavaScript on for a (mounted) webview. The mobile client only
@@ -611,9 +531,7 @@ module Ruflet
       def handle_message(screen, message)
         return if message.nil?
 
-        if message.start_with?(TITLE_PREFIX)
-          update_title(screen, message[TITLE_PREFIX.length..])
-        elsif message.start_with?(ACTION_PREFIX)
+        if message.start_with?(ACTION_PREFIX)
           spec = parse_json(message[ACTION_PREFIX.length..])
           dispatch_action(spec) if spec
         elsif message.start_with?(APPBAR_PREFIX)
@@ -638,19 +556,9 @@ module Ruflet
         nil
       end
 
-      def update_title(screen, value)
-        return unless screen.title_text&.wire_id
-        return if screen.appbar_spec
-
-        value = value.to_s
-        return if screen.title_text.props["value"] == value
-
-        @page.update(screen.title_text, value: value)
-      end
-
       # --- Declared actions --------------------------------------------------
 
-      # Route a `ruflet-action` element (or RufletNative call) to native.
+      # Route a `data-ruflet-action` element to native.
       def dispatch_action(spec)
         component = (spec["component"] || spec["type"]).to_s
         action = spec["action"].to_s
@@ -831,7 +739,7 @@ module Ruflet
 
         screen.appbar_spec = new_spec
         screen.appbar_signature = nil
-        screen.title_text = Ruflet::UI::ControlFactory.build(:text, value: title_for(screen))
+        screen.title_text = text(title_for(screen))
         update_screen_appbar(screen)
       end
 
@@ -874,7 +782,7 @@ module Ruflet
         return if screen.appbar_signature == signature
 
         title = spec["title"].to_s
-        screen.title_text = Ruflet::UI::ControlFactory.build(:text, value: title)
+        screen.title_text = text(title)
         leading = drawer_leading?(spec["leading"]) ? nil : build_chrome_button(spec["leading"])
         actions = Array(spec["actions"]).filter_map { |action| build_chrome_button(action) }
         screen.appbar_spec = { title: title, leading: leading, actions: actions }
@@ -935,9 +843,8 @@ module Ruflet
           return
         end
 
-        drawer = Ruflet::UI::ControlFactory.build(
-          :navigationdrawer,
-          controls: destinations,
+        drawer = navigation_drawer(
+          destinations,
           selected_index: selected_index,
           on_change: lambda do |event|
             index = navigation_index(event)
@@ -990,7 +897,7 @@ module Ruflet
         rail_args[:extended] = !!spec["extended"] unless spec["extended"].nil?
         rail_args[:min_width] = spec["min_width"].to_i if spec["min_width"]
         rail_args[:min_extended_width] = spec["min_extended_width"].to_i if spec["min_extended_width"]
-        screen.rail = Ruflet::UI::ControlFactory.build(:navigationrail, **rail_args)
+        screen.rail = navigation_rail(**rail_args)
         screen.rail_signature = signature
         update_screen_controls(screen)
       end
@@ -1035,9 +942,7 @@ module Ruflet
         icon = item["icon"].to_s
         return nil if icon.empty?
 
-        Ruflet::UI::ControlFactory.build(
-          :navigation_bar_destination, icon: icon, label: item["label"].to_s
-        )
+        navigation_bar_destination(icon: icon, label: item["label"].to_s)
       end
 
       def buildable_bottomnav?(spec)
@@ -1049,8 +954,7 @@ module Ruflet
         destinations = items.filter_map { |item| build_destination(item) }
         urls = items.map { |item| absolute_url(item["url"]) }
 
-        Ruflet::UI::ControlFactory.build(
-          :navigation_bar,
+        navigation_bar(
           destinations: destinations,
           selected_index: bottomnav_selected_index(items),
           on_change: lambda do |event|
@@ -1134,10 +1038,9 @@ module Ruflet
         icon = item["icon"].to_s
         return nil if icon.empty?
 
-        Ruflet::UI::ControlFactory.build(
-          :list_tile,
-          leading: Ruflet::UI::ControlFactory.build(:icon, icon: icon),
-          title: Ruflet::UI::ControlFactory.build(:text, value: item["label"].to_s),
+        list_tile(
+          leading: icon(icon),
+          title: text(item["label"].to_s),
           selected: selected,
           on_click: on_click
         )
@@ -1167,9 +1070,7 @@ module Ruflet
         icon = item["icon"].to_s
         return nil if icon.empty?
 
-        Ruflet::UI::ControlFactory.build(
-          :navigation_rail_destination, icon: icon, label: item["label"].to_s
-        )
+        navigation_rail_destination(icon: icon, label: item["label"].to_s)
       end
 
       def navigation_index(event)
@@ -1199,7 +1100,7 @@ module Ruflet
       end
 
       def sync_drawer_tile_selection(drawer, selected_index)
-        Array(drawer.props["controls"]).each_with_index do |control, index|
+        drawer.children.each_with_index do |control, index|
           next unless control.respond_to?(:props)
 
           selected = index == selected_index
@@ -1294,23 +1195,20 @@ module Ruflet
         unless confirm.empty?
           url = spec["url"].to_s
           mode = (spec["action"] || spec["mode"] || "push").to_s
-          actions << Ruflet::UI::ControlFactory.build(
-            :text_button,
-            content: confirm,
+          actions << text_button(
+            confirm,
             on_click: lambda do |_event|
               close_dialog
               navigate_screen(url, mode) unless url.empty?
             end
           )
         end
-        actions << Ruflet::UI::ControlFactory.build(
-          :text_button, content: "OK", on_click: ->(_event) { close_dialog }
-        )
+        actions << text_button("OK", on_click: ->(_event) { close_dialog })
 
         args = { actions: actions, open: true, adaptive: adaptive?(spec), on_dismiss: ->(_event) { @dialog = nil } }
-        args[:title] = Ruflet::UI::ControlFactory.build(:text, value: title) unless title.empty?
-        args[:content] = Ruflet::UI::ControlFactory.build(:text, value: content) unless content.empty?
-        @dialog = Ruflet::UI::ControlFactory.build(:alert_dialog, **args)
+        args[:title] = text(title) unless title.empty?
+        args[:content] = text(content) unless content.empty?
+        @dialog = alert_dialog(**args)
         @page.show_dialog(@dialog)
       end
 
@@ -1326,11 +1224,11 @@ module Ruflet
         message = spec["message"].to_s
         return if message.empty?
 
-        args = { content: Ruflet::UI::ControlFactory.build(:text, value: message), open: true,
+        args = { content: text(message), open: true,
                  adaptive: adaptive?(spec) }
         duration = spec["duration"].to_s
         args[:duration] = duration.to_i if duration =~ /\A\d+\z/
-        @page.snackbar = Ruflet::UI::ControlFactory.build(:snack_bar, **args)
+        @page.snackbar = snack_bar(**args)
       end
 
       # --- Bottom-sheet modal (web content) ----------------------------------
@@ -1349,19 +1247,18 @@ module Ruflet
         return if url.empty?
 
         sheet_webview = nil
-        sheet_webview = Ruflet::UI::ControlFactory.build(
-          :webview, url: url, method: "get", enable_javascript: true,
+        sheet_webview = webview(
+          url: url, method: "get", enable_javascript: true,
           on_page_started: ->(_event) { enable_js(sheet_webview) }
         )
-        card = Ruflet::UI::ControlFactory.build(
-          :container,
+        card = container(
           content: sheet_webview,
           width: sheet_card_width,
           height: sheet_card_height,
           padding: SHEET_PADDING
         )
-        @sheet = Ruflet::UI::ControlFactory.build(
-          :bottomsheet,
+        @sheet = bottomsheet(
+          card,
           open: true,
           adaptive: true,
           dismissible: true,        # tap the peek above the sheet to dismiss
@@ -1369,7 +1266,6 @@ module Ruflet
           scrollable: true,         # isScrollControlled: let the sheet grow tall
           show_drag_handle: true,   # the grab handle that signals "modal"
           use_safe_area: true,
-          content: card,
           on_dismiss: ->(_event) { @sheet = nil }
         )
         @page.bottom_sheet = @sheet

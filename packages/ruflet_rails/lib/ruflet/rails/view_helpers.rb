@@ -45,11 +45,11 @@ module Ruflet
         ruflet_html_safe(markup)
       end
 
-      # --- Native bridge annotations -----------------------------------------
+      # --- Native annotations ------------------------------------------------
       #
       # These emit plain HTML decorated with `ruflet-*` attributes. In a normal
       # browser they render and behave as ordinary HTML; inside the Ruflet
-      # native shell (Ruflet::Rails.native_app) the injected bridge reads the
+      # native shell (Ruflet::Rails.native_app) the HTML adapter reads the
       # attributes and drives native navigation/chrome instead. They degrade
       # gracefully — no JavaScript required for the web rendering.
 

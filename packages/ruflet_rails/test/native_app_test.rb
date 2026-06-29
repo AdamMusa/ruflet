@@ -2,9 +2,8 @@
 
 require_relative "test_helper"
 
-# Managed webview navigation driver. A JS bridge injected on each page load
-# reports page metadata and turns explicit data-ruflet-* declarations into
-# native screens, bottom-sheet modals, dialogs, toasts, and chrome.
+# Managed native shell. A tiny WebView-side adapter reads ERB-rendered
+# data-ruflet-* declarations and Ruby turns them into Ruflet controls.
 class RufletNativeAppTest < Minitest::Test
   def setup
     @sent = []
@@ -30,11 +29,19 @@ class RufletNativeAppTest < Minitest::Test
     @page.views
   end
 
+  def controls_of(control)
+    Array(control.children.empty? ? control.props["controls"] : control.children)
+  end
+
+  def body_of(view = stack.last)
+    controls_of(view).first
+  end
+
   def top_webview
     find(stack.last, "webview")
   end
 
-  # Simulate the JS bridge posting a console message from the top screen.
+  # Simulate the HTML adapter posting a console message from the top screen.
   def post(message, webview: top_webview)
     @page.dispatch_event(target: webview.wire_id, name: "console_message",
                          data: { "message" => message, "severity_level" => "log" })
@@ -48,31 +55,21 @@ class RufletNativeAppTest < Minitest::Test
     sleep 0.08
   end
 
-  # --- bridge -------------------------------------------------------------
+  # --- HTML adapter -------------------------------------------------------
 
-  def test_bridge_js_reads_explicit_ruflet_attributes_and_reports_title
-    js = Ruflet::Rails::NativeApp.bridge_js
+  def test_html_adapter_reads_explicit_ruflet_attributes
+    js = Ruflet::Rails::NativeApp.html_adapter_js
     assert_includes js, "addEventListener"
     assert_includes js, "preventDefault"
     assert_includes js, "data-ruflet-screen"
     assert_includes js, "data-ruflet-action"
     refute_includes js, 'report("visit"'
     refute_includes js, "turbo:before-visit"
-    assert_includes js, 'report("title"'
+    refute_includes js, "configuredScreenLinks"
+    refute_includes js, "window.RufletNative"
+    refute_includes js, 'report("title"'
+    refute_includes js, "ruflet:title"
     assert_includes js, '"ruflet:"' # message channel prefix
-  end
-
-  def test_bridge_js_can_opt_in_external_links_as_native_screens
-    js = Ruflet::Rails::NativeApp.bridge_js(screen_links: [
-      { "host" => "app.example.test", "path" => "/session/new", "url" => "http://localhost:3000/session/new", "title" => "Sign in" }
-    ])
-
-    assert_includes js, "configuredScreenLinks"
-    assert_includes js, "app.example.test"
-    assert_includes js, "/session/new"
-    assert_includes js, "http://localhost:3000/session/new"
-    assert_includes js, "configuredScreenFor"
-    refute_includes js, "__RUFLET_SCREEN_LINKS__"
   end
 
   # --- out-of-the-box navigation -----------------------------------------
@@ -82,20 +79,20 @@ class RufletNativeAppTest < Minitest::Test
     assert_equal 1, stack.length
     assert_equal "https://myapp.com", top_webview.props["url"]
     assert_equal "get", top_webview.props["method"]
-    assert_equal true, top_webview.props["enable_javascript"], "JS on for the bridge + WebAuthn/passkeys"
+    assert_equal true, top_webview.props["enable_javascript"], "JS on for the HTML adapter + WebAuthn/passkeys"
     assert_equal "view", stack.first.type
     assert_nil find(stack.first, "appbar"), "no native chrome by default; the web page supplies its own header"
   end
 
   def test_webview_screen_has_a_native_loading_shimmer
     start
-    body = stack.first.props["controls"].first
+    body = body_of(stack.first)
     assert_equal "stack", body.type
     assert_same top_webview, find(body, "webview")
 
     loading = find(body, "shimmer")
     refute_nil loading
-    assert_equal true, body.props["controls"].last.props["visible"]
+    assert_equal true, controls_of(body).last.props["visible"]
   end
 
   def test_loading_shimmer_is_only_inside_the_webview_body
@@ -105,7 +102,7 @@ class RufletNativeAppTest < Minitest::Test
       { "label" => "Inbox", "icon" => "mail", "url" => "/inbox" }
     ] })}))
 
-    body = stack.first.props["controls"].first
+    body = body_of(stack.first)
     appbar = stack.first.props["appbar"]
     navbar = stack.first.props["navigation_bar"]
 
@@ -119,7 +116,7 @@ class RufletNativeAppTest < Minitest::Test
 
   def test_page_ended_hides_the_loading_shimmer
     start
-    loading = stack.first.props["controls"].first.props["controls"].last
+    loading = controls_of(body_of(stack.first)).last
     assert_equal true, loading.props["visible"]
 
     @page.dispatch_event(target: top_webview.wire_id, name: "page_ended", data: "https://myapp.com")
@@ -128,7 +125,7 @@ class RufletNativeAppTest < Minitest::Test
 
   def test_page_ended_before_loading_mount_still_hides_the_shimmer
     start
-    loading = stack.first.props["controls"].first.props["controls"].last
+    loading = controls_of(body_of(stack.first)).last
     loading.wire_id = nil
     assert_equal true, loading.props["visible"]
 
@@ -139,7 +136,7 @@ class RufletNativeAppTest < Minitest::Test
 
   def test_flush_reconciles_hidden_loading_after_the_control_mounts
     start
-    loading = stack.first.props["controls"].first.props["controls"].last
+    loading = controls_of(body_of(stack.first)).last
     loading.wire_id = nil
     @page.dispatch_event(target: top_webview.wire_id, name: "page_ended", data: "https://myapp.com")
     assert_equal false, loading.props["visible"]
@@ -154,7 +151,7 @@ class RufletNativeAppTest < Minitest::Test
 
   def test_web_resource_error_hides_the_loading_shimmer
     start
-    loading = stack.first.props["controls"].first.props["controls"].last
+    loading = controls_of(body_of(stack.first)).last
     assert_equal true, loading.props["visible"]
 
     @page.dispatch_event(target: top_webview.wire_id, name: "web_resource_error", data: "server unavailable")
@@ -163,10 +160,10 @@ class RufletNativeAppTest < Minitest::Test
 
   def test_loading_can_be_a_simple_text_overlay
     start(loading: "Loading page")
-    body = stack.first.props["controls"].first
+    body = body_of(stack.first)
 
     assert_equal "stack", body.type
-    loading = body.props["controls"].last
+    loading = controls_of(body).last
     assert_equal "container", loading.type
     assert_equal "Loading page", find(loading, "text").props["value"]
   end
@@ -174,13 +171,13 @@ class RufletNativeAppTest < Minitest::Test
   def test_loading_can_be_disabled
     start(loading: false)
 
-    assert_same top_webview, stack.first.props["controls"].first
+    assert_same top_webview, body_of(stack.first)
     assert_nil find(stack.first, "shimmer")
   end
 
   def test_plain_ruflet_page_is_not_wrapped_in_a_webview_screen
     plain = Ruflet::Page.new(session_id: "plain", client_details: {}, sender: ->(_a, _p) {})
-    plain.add(Ruflet::UI::ControlFactory.build(:text, value: "Normal Ruflet"))
+    plain.add(text("Normal Ruflet"))
     root_controls = plain.instance_variable_get(:@root_controls)
 
     assert_empty plain.views
@@ -223,25 +220,8 @@ class RufletNativeAppTest < Minitest::Test
 
   # --- dynamic appbar -----------------------------------------------------
 
-  def test_title_message_updates_the_appbar_title
-    start(title: "My App")
-    title_text = find(stack.first, "text")
-    assert_equal "My App", title_text.props["value"]
-
-    post("ruflet:title:Dashboard")
-    assert_equal "Dashboard", title_text.props["value"], "appbar title tracks the page <title>"
-  end
-
-  def test_duplicate_title_message_does_not_send_a_redundant_update
-    start(title: "Dashboard")
-    @sent.clear
-
-    post("ruflet:title:Dashboard")
-    assert_empty @sent, "same title should not repaint the app"
-  end
-
   def test_actions_lambda_is_resolved_into_the_appbar
-    start(actions: -> { [Ruflet::UI::ControlFactory.build(:iconbutton, icon: "search")] })
+    start(actions: -> { [icon_button("search")] })
     appbar = find(stack.first, "appbar")
     assert_equal 1, Array(appbar.props["actions"]).length
     assert_equal "iconbutton", appbar.props["actions"].first.type
@@ -272,7 +252,7 @@ class RufletNativeAppTest < Minitest::Test
     action("push", "https://myapp.com/inbox")
 
     appbar = find(stack.last, "appbar")
-    body = stack.last.props["controls"].first
+    body = body_of(stack.last)
 
     refute_nil appbar, "pushed native screens mount appbar before the WebView body loads"
     assert_equal "Inbox", find(appbar, "text").props["value"]
@@ -392,15 +372,12 @@ class RufletNativeAppTest < Minitest::Test
     assert_equal 1, stack.length, "appbar leading back action pops the native auth screen"
   end
 
-  def test_document_title_does_not_override_declared_appbar_title
+  def test_declared_appbar_title_replaces_the_initial_title
     start(title: "Ruflet Rails Demo")
     post(%(ruflet:appbar:#{JSON.generate({ "title" => "Demo" })}))
     title = find(find(stack.first, "appbar"), "text")
+
     assert_equal "Demo", title.props["value"]
-
-    post("ruflet:title:Ruflet Rails Demo")
-
-    assert_equal "Demo", title.props["value"], "data-ruflet-appbar title should not flicker back to document title"
   end
 
   def test_appbar_leading_can_open_the_native_drawer
@@ -453,7 +430,7 @@ class RufletNativeAppTest < Minitest::Test
   # (real controls), all delivered over the protocol.
   def test_declared_payload_builds_a_normal_ruflet_chrome_over_the_webview_body
     start(title: "Demo")
-    # What the bridge reports from the home page's ruflet_appbar/drawer/bottom_nav/rail.
+    # What the HTML adapter reports from the home page's ruflet_appbar/drawer/bottom_nav/rail.
     post(%(ruflet:appbar:#{JSON.generate({ "title" => "Demo", "leading" => { "icon" => "menu", "action" => "drawer" },
                                            "actions" => [{ "icon" => "settings", "url" => "/settings", "action" => "push",
                                                            "title" => "Settings", "leading" => { "icon" => "close", "action" => "back" } }] })}))
@@ -480,7 +457,7 @@ class RufletNativeAppTest < Minitest::Test
     assert_equal "Demo", find(appbar, "text").props["value"]
     assert_nil appbar.props["leading"], "drawer leading uses Flutter's implied AppBar button"
     assert_equal 1, Array(appbar.props["actions"]).length, "the settings AppBar action is a real Ruflet button"
-    assert_equal 4, Array(stack.first.props["drawer"].props["controls"]).length
+    assert_equal 4, Array(controls_of(stack.first.props["drawer"])).length
     assert_equal 3, Array(find(stack.first, "navigationbar").props["destinations"]).length
     assert_equal 3, Array(find(stack.first, "navigationrail").props["destinations"]).length
   end
@@ -539,7 +516,7 @@ class RufletNativeAppTest < Minitest::Test
     assert_same drawer, stack.first.props["drawer"], "the drawer is the same persistent control, not rebuilt"
     assert_same navbar, find(stack.first, "navigationbar"), "the bottom nav is the same persistent control, not rebuilt"
     assert_equal 1, drawer.props["selected_index"], "the drawer highlight followed the route, in sync"
-    assert_equal [false, true, false], drawer.props["controls"].map { |row| row.props["selected"] },
+    assert_equal [false, true, false], controls_of(drawer).map { |row| row.props["selected"] },
                  "the visible drawer rows follow the active route too"
     assert_equal 1, navbar.props["selected_index"], "the bottom nav highlight followed the route, in sync"
   end
@@ -709,7 +686,7 @@ class RufletNativeAppTest < Minitest::Test
 
     assert_equal 1, drawer.props["selected_index"],
                  "after switching to Inbox the drawer highlights Inbox, not Home"
-    assert_equal [false, true], drawer.props["controls"].map { |row| row.props["selected"] },
+    assert_equal [false, true], controls_of(drawer).map { |row| row.props["selected"] },
                  "the visible drawer row selection follows the active route"
   end
 
@@ -790,7 +767,7 @@ class RufletNativeAppTest < Minitest::Test
     assert_equal "https://myapp.com/settings", top_webview.props["url"]
     assert_equal 1, drawer.props["selected_index"],
                  "the drawer highlights the item whose route matches the active body URL"
-    assert_equal [false, true], drawer.props["controls"].map { |row| row.props["selected"] },
+    assert_equal [false, true], controls_of(drawer).map { |row| row.props["selected"] },
                  "the matching drawer row is visibly selected"
   end
 
@@ -819,13 +796,13 @@ class RufletNativeAppTest < Minitest::Test
     action("push", "https://myapp.com/detail", "title" => "Detail", "leading" => { "icon" => "close", "action" => "back" })
 
     appbar = find(stack.last, "appbar")
-    body = stack.last.props["controls"].first
+    body = body_of(stack.last)
 
     refute_nil appbar, "the pushed screen's AppBar is rendered before the body loads"
     assert_equal "stack", body.type
     refute_nil find(body, "shimmer"), "the body owns the loading shimmer"
     assert_nil find(appbar, "shimmer"), "the shimmer never covers the AppBar"
-    assert_equal true, body.props["controls"].last.props["visible"], "the shimmer is visible while the body loads"
+    assert_equal true, controls_of(body).last.props["visible"], "the shimmer is visible while the body loads"
   end
 
   # After a back navigation the drawer must reflect the screen returned to, not
@@ -933,7 +910,7 @@ class RufletNativeAppTest < Minitest::Test
     refute_nil drawer, "ruflet-drawer builds a native NavigationDrawer"
     assert_same view, stack.first, "promoting drawer should patch the mounted view in place so invokes stay attached"
     assert_same webview, top_webview, "promoting drawer should not recreate the WebView"
-    assert_equal 2, Array(drawer.props["controls"]).length
+    assert_equal 2, Array(controls_of(drawer)).length
     assert_equal 0, drawer.props["selected_index"]
   end
 
@@ -963,7 +940,7 @@ class RufletNativeAppTest < Minitest::Test
       { "label" => "Settings", "icon" => "settings", "url" => "/settings", "action" => "push" }
     ] })}))
     drawer = stack.first.props["drawer"]
-    home = drawer.props["controls"].first
+    home = controls_of(drawer).first
     @sent.clear
 
     @page.dispatch_event(target: home.wire_id, name: "click", data: nil)
@@ -981,7 +958,7 @@ class RufletNativeAppTest < Minitest::Test
     ] })}))
     action("push", "/settings", "title" => "Settings", "leading" => { "icon" => "close", "action" => "back" })
     @page.dispatch_event(target: 1, name: "view_pop", data: nil)
-    settings = stack.first.props["drawer"].props["controls"].last
+    settings = controls_of(stack.first.props["drawer"]).last
     @sent.clear
 
     @page.dispatch_event(target: settings.wire_id, name: "click", data: nil)
@@ -1032,7 +1009,7 @@ class RufletNativeAppTest < Minitest::Test
   # page-level `views` resend (id == 1) re-serializes every view as a full
   # object, which on the client tears down and reloads the screen's WebView —
   # the body flashes the shimmer twice and the WebView's console channel
-  # detaches, so bridge actions (share/copy/navigate) stop working after the
+  # detaches, so adapter actions (share/copy/navigate) stop working after the
   # first interaction.
   def test_drawer_promotion_patches_the_view_in_place_not_a_full_views_resend
     start(title: "Demo")
@@ -1065,14 +1042,14 @@ class RufletNativeAppTest < Minitest::Test
       { "label" => "Inbox", "icon" => "mail", "url" => "/inbox" }
     ] })}))
 
-    row = stack.first.props["controls"].first
+    row = body_of(stack.first)
     rail = find(row, "navigationrail")
     refute_nil rail, "ruflet-rail builds a native NavigationRail"
     assert_same view, stack.first, "promoting rail should patch the mounted view in place"
     assert_same webview, top_webview, "promoting rail should not recreate the WebView"
     assert_equal true, rail.props["extended"]
     assert_equal 2, Array(rail.props["destinations"]).length
-    assert_equal "stack", row.props["controls"].last.type
+    assert_equal "stack", controls_of(row).last.type
   end
 
   def test_rail_selection_switches_to_the_destination_url
@@ -1227,23 +1204,25 @@ class RufletNativeAppTest < Minitest::Test
     assert_nil @page.instance_variable_get(:@snack_bar)
   end
 
-  # --- bridge JS ----------------------------------------------------------
+  # --- HTML adapter JS ----------------------------------------------------
 
-  def test_bridge_js_handles_explicit_nav_actions_and_chrome_attributes
-    js = Ruflet::Rails::NativeApp.bridge_js
+  def test_html_adapter_handles_explicit_nav_actions_and_chrome_attributes
+    js = Ruflet::Rails::NativeApp.html_adapter_js
     assert_includes js, "ruflet-screen"
     assert_includes js, "ruflet-action"
     assert_includes js, "ruflet-appbar"
     assert_includes js, "ruflet-tabs"
     assert_includes js, "ruflet-drawer"
     assert_includes js, "ruflet-rail"
-    assert_includes js, "window.RufletNative"
+    refute_includes js, "window.RufletNative"
+    refute_includes js, "configuredScreenFor"
     assert_includes js, 'report("action"'
     assert_includes js, 'report("appbar"'
     assert_includes js, 'report("bottomnav"'
     assert_includes js, 'report("drawer"'
     assert_includes js, 'report("rail"'
-    assert_includes js, "if (!promotedAppBar) report(\"title\""
+    refute_includes js, "promotedAppBar"
+    refute_includes js, 'report("title"'
     assert_includes js, "data-ruflet-" # view-facing attributes use the ruflet data namespace
   end
 end

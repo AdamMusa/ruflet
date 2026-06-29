@@ -46,7 +46,7 @@ class RufletViewHelpersTest < Minitest::Test
     assert_includes html, 'src="https://other.example/app"'
   end
 
-  # --- native bridge annotations -----------------------------------------
+  # --- native annotations ------------------------------------------------
 
   def test_ruflet_appbar_wraps_block_content_with_appbar_attributes
     html = helper.ruflet_appbar("Inbox", leading: { icon: "menu", action: "drawer" }) { helper.ruflet_appbar_action("search", "/search") }.to_s
