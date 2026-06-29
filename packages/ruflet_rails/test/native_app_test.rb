@@ -508,7 +508,11 @@ class RufletNativeAppTest < Minitest::Test
     post(%(ruflet:drawer:#{JSON.generate({ "items" => [
       { "label" => "Home", "icon" => "home", "url" => "/" }
     ] })}))
-    post(%(ruflet:appbar:#{JSON.generate({ "title" => "Demo", "leading" => { "icon" => "menu", "action" => "drawer" } })}))
+    post(%(ruflet:appbar:#{JSON.generate({
+      "title" => "Demo",
+      "leading" => { "icon" => "menu", "action" => "drawer" },
+      "actions" => [{ "icon" => "language", "action" => "menu", "items" => [{ "label" => "FR" }] }]
+    })}))
     appbar = find(stack.first, "appbar")
 
     assert_nil appbar.props["leading"], "drawer leading should use Flutter's native implied AppBar drawer button"

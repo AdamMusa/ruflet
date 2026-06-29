@@ -359,8 +359,6 @@ module Ruflet
         actions =
           if declared
             declared["actions"]
-          elsif current
-            current[:actions]
           else
             spec.is_a?(Hash) ? spec["actions"] : nil
           end
