@@ -1007,8 +1007,9 @@ module Ruflet
         items = Array(spec["items"])
         urls = items.map { |item| absolute_url(item["url"]) }
         modes = items.map { |item| (item["action"] || item["mode"] || "root").to_s }
+        selected_index = drawer_selected_index(items)
         destinations = items.each_with_index.filter_map do |item, index|
-          build_drawer_destination(item, selected: default_drawer_item_selected?(item, screen), on_click: lambda do |_event|
+          build_drawer_destination(item, selected: index == selected_index, on_click: lambda do |_event|
             select_drawer_item(screen, items, urls, modes, index)
           end)
         end
@@ -1030,7 +1031,7 @@ module Ruflet
         drawer = Ruflet::UI::ControlFactory.build(
           :navigationdrawer,
           controls: destinations,
-          selected_index: default_drawer_index(screen),
+          selected_index: selected_index,
           on_change: lambda do |event|
             index = navigation_index(event)
             select_drawer_item(screen, items, urls, modes, index)
@@ -1262,10 +1263,6 @@ module Ruflet
         sync_drawer_selection(screen)
       end
 
-      def default_drawer_item_selected?(item, _screen)
-        same_url?(absolute_url(item["url"]), current_screen_url) || !!item["selected"]
-      end
-
       def build_rail_destination(item)
         icon = item["icon"].to_s
         return nil if icon.empty?
@@ -1294,10 +1291,23 @@ module Ruflet
         return unless drawer&.wire_id
 
         index = default_drawer_index(screen)
-        return if drawer.props["selected_index"] == index
+        if drawer.props["selected_index"] != index
+          drawer.props["selected_index"] = index
+          @page.update(drawer, selected_index: index)
+        end
+        sync_drawer_tile_selection(drawer, index)
+      end
 
-        drawer.props["selected_index"] = index
-        @page.update(drawer, selected_index: index)
+      def sync_drawer_tile_selection(drawer, selected_index)
+        Array(drawer.props["controls"]).each_with_index do |control, index|
+          next unless control.respond_to?(:props)
+
+          selected = index == selected_index
+          next if control.props["selected"] == selected
+
+          control.props["selected"] = selected
+          @page.update(control, selected: selected) if control.wire_id
+        end
       end
 
       def sync_rail_selection(screen, urls)
@@ -1312,9 +1322,10 @@ module Ruflet
       end
 
       def default_drawer_index(screen)
-        items = Array(@drawer_spec && @drawer_spec["items"])
-        return 0 if items.empty?
+        drawer_selected_index(Array(@drawer_spec && @drawer_spec["items"]))
+      end
 
+      def drawer_selected_index(items)
         urls = items.map { |item| absolute_url(item["url"]) }
         urls.index { |candidate| same_url?(candidate, current_screen_url) } ||
           items.index { |item| item["selected"] } || 0

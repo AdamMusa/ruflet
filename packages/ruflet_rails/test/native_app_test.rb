@@ -539,6 +539,8 @@ class RufletNativeAppTest < Minitest::Test
     assert_same drawer, stack.first.props["drawer"], "the drawer is the same persistent control, not rebuilt"
     assert_same navbar, find(stack.first, "navigationbar"), "the bottom nav is the same persistent control, not rebuilt"
     assert_equal 1, drawer.props["selected_index"], "the drawer highlight followed the route, in sync"
+    assert_equal [false, true, false], drawer.props["controls"].map { |row| row.props["selected"] },
+                 "the visible drawer rows follow the active route too"
     assert_equal 1, navbar.props["selected_index"], "the bottom nav highlight followed the route, in sync"
   end
 
@@ -707,6 +709,8 @@ class RufletNativeAppTest < Minitest::Test
 
     assert_equal 1, drawer.props["selected_index"],
                  "after switching to Inbox the drawer highlights Inbox, not Home"
+    assert_equal [false, true], drawer.props["controls"].map { |row| row.props["selected"] },
+                 "the visible drawer row selection follows the active route"
   end
 
   # Drawer links that point at tab destinations must behave as tab/root
@@ -786,6 +790,8 @@ class RufletNativeAppTest < Minitest::Test
     assert_equal "https://myapp.com/settings", top_webview.props["url"]
     assert_equal 1, drawer.props["selected_index"],
                  "the drawer highlights the item whose route matches the active body URL"
+    assert_equal [false, true], drawer.props["controls"].map { |row| row.props["selected"] },
+                 "the matching drawer row is visibly selected"
   end
 
   # A push opened from the drawer keeps its own declared chrome (back button),
