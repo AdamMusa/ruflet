@@ -187,7 +187,7 @@ extension HexColor on Color {
     }
     var colorParts = colorString.split(",");
 
-    var colorValue = colorParts[0];
+    var colorValue = colorParts[0].trim();
     var colorOpacity = colorParts.length > 1 ? colorParts[1] : null;
 
     Color? color;
@@ -207,8 +207,9 @@ extension HexColor on Color {
   }
 
   static Color? _fromNamedColor(ThemeData? theme, String colorName) {
+    var normalizedColorName = _normalizeNamedColor(colorName);
     RegExp namedColor = RegExp(r'^([a-zA-Z]+)([0-9]*)$');
-    var matches = namedColor.allMatches(colorName);
+    var matches = namedColor.allMatches(normalizedColorName);
     if (matches.isEmpty) {
       return null;
     }
@@ -224,7 +225,7 @@ extension HexColor on Color {
     }
 
     // plain color
-    Color? color = _plainColors[colorName.toLowerCase()];
+    Color? color = _plainColors[normalizedColorName];
     if (color != null) {
       return color;
     }
@@ -251,6 +252,10 @@ extension HexColor on Color {
     }
 
     return null;
+  }
+
+  static String _normalizeNamedColor(String colorName) {
+    return colorName.trim().toLowerCase().replaceAll(RegExp(r'[_\-\s]+'), '');
   }
 
   /// String is in the format "aabbcc" or "ffaabbcc" with an optional leading "#".

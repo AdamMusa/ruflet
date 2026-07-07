@@ -17,6 +17,18 @@ class RufletColorNormalizationTest < Minitest::Test
     assert_equal "primarycontainer", patch["ink_color"]
   end
 
+  def test_named_colors_accept_hyphenated_and_spaced_names
+    patch = Ruflet.container(
+      bgcolor: "Deep Orange 500",
+      ink_color: "deep-orange-accent-400",
+      border: { color: "Surface Container Highest" }
+    ).to_patch
+
+    assert_equal "deeporange500", patch["bgcolor"]
+    assert_equal "deeporangeaccent400", patch["ink_color"]
+    assert_equal({ "color" => "surfacecontainerhighest" }, patch["border"])
+  end
+
   def test_nested_style_and_state_colors_are_canonicalized
     patch = Ruflet.text(
       "hello",

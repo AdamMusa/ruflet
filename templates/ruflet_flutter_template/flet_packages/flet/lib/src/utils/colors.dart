@@ -134,7 +134,7 @@ Map<String, Color> _plainColors = {
   "black54": Colors.black54,
   "black87": Colors.black87,
   "black": Colors.black,
-  "transparent": Colors.transparent
+  "transparent": Colors.transparent,
 };
 
 Map<String, MaterialColor> _materialColors = {
@@ -156,7 +156,7 @@ Map<String, MaterialColor> _materialColors = {
   "deeporange": Colors.deepOrange,
   "brown": Colors.brown,
   "bluegrey": Colors.blueGrey,
-  "grey": Colors.grey
+  "grey": Colors.grey,
 };
 
 Map<String, MaterialAccentColor> _materialAccentColors = {
@@ -180,14 +180,17 @@ Map<String, MaterialAccentColor> _materialAccentColors = {
 
 // https://stackoverflow.com/questions/50081213/how-do-i-use-hexadecimal-color-strings-in-flutter
 extension HexColor on Color {
-  static Color? fromString(ThemeData? theme, String? colorString,
-      [Color? defaultColor]) {
+  static Color? fromString(
+    ThemeData? theme,
+    String? colorString, [
+    Color? defaultColor,
+  ]) {
     if (colorString == null || colorString.isEmpty) {
       return defaultColor;
     }
     var colorParts = colorString.split(",");
 
-    var colorValue = colorParts[0];
+    var colorValue = colorParts[0].trim();
     var colorOpacity = colorParts.length > 1 ? colorParts[1] : null;
 
     Color? color;
@@ -207,8 +210,9 @@ extension HexColor on Color {
   }
 
   static Color? _fromNamedColor(ThemeData? theme, String colorName) {
+    var normalizedColorName = _normalizeNamedColor(colorName);
     RegExp namedColor = RegExp(r'^([a-zA-Z]+)([0-9]*)$');
-    var matches = namedColor.allMatches(colorName);
+    var matches = namedColor.allMatches(normalizedColorName);
     if (matches.isEmpty) {
       return null;
     }
@@ -224,7 +228,7 @@ extension HexColor on Color {
     }
 
     // plain color
-    Color? color = _plainColors[colorName.toLowerCase()];
+    Color? color = _plainColors[normalizedColorName];
     if (color != null) {
       return color;
     }
@@ -251,6 +255,10 @@ extension HexColor on Color {
     }
 
     return null;
+  }
+
+  static String _normalizeNamedColor(String colorName) {
+    return colorName.trim().toLowerCase().replaceAll(RegExp(r'[_\-\s]+'), '');
   }
 
   /// String is in the format "aabbcc" or "ffaabbcc" with an optional leading "#".
@@ -295,28 +303,47 @@ extension ColorExtension on Color {
 }
 
 WidgetStateProperty<Color?>? parseWidgetStateColor(
-    dynamic value, ThemeData theme,
-    {Color? defaultColor, WidgetStateProperty<Color?>? defaultValue}) {
+  dynamic value,
+  ThemeData theme, {
+  Color? defaultColor,
+  WidgetStateProperty<Color?>? defaultValue,
+}) {
   if (value == null) return defaultValue;
 
   return getWidgetStateProperty<Color?>(
-      value, (jv) => HexColor.fromString(theme, jv as String), defaultColor);
+    value,
+    (jv) => HexColor.fromString(theme, jv as String),
+    defaultColor,
+  );
 }
 
 Color? parseColor(String? value, ThemeData? theme, [Color? defaultColor]) =>
     HexColor.fromString(theme, value, defaultColor);
 
 extension ColorParsers on Control {
-  Color? getColor(String propertyName, BuildContext? context,
-      [Color? defaultValue]) {
-    return parseColor(getString(propertyName),
-        context != null ? Theme.of(context) : null, defaultValue);
+  Color? getColor(
+    String propertyName,
+    BuildContext? context, [
+    Color? defaultValue,
+  ]) {
+    return parseColor(
+      getString(propertyName),
+      context != null ? Theme.of(context) : null,
+      defaultValue,
+    );
   }
 
   WidgetStateProperty<Color?>? getWidgetStateColor(
-      String propertyName, ThemeData theme,
-      {Color? defaultColor, WidgetStateProperty<Color?>? defaultValue}) {
-    return parseWidgetStateColor(get(propertyName), theme,
-        defaultColor: defaultColor, defaultValue: defaultValue);
+    String propertyName,
+    ThemeData theme, {
+    Color? defaultColor,
+    WidgetStateProperty<Color?>? defaultValue,
+  }) {
+    return parseWidgetStateColor(
+      get(propertyName),
+      theme,
+      defaultColor: defaultColor,
+      defaultValue: defaultValue,
+    );
   }
 }

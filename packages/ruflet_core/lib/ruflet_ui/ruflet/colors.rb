@@ -191,15 +191,15 @@ module Ruflet
 
     # Canonicalizes a named color into flet's wire format. Flet color names are
     # lowercase with no separators ("bluegrey", "deeporange", "red500"), so we
-    # strip underscores/whitespace and downcase. Hex values (#... / 0x...) are
-    # downcased without separator stripping; the optional ",opacity" suffix is
-    # preserved untouched.
+    # strip underscores, hyphens, and whitespace before downcasing. Hex values
+    # (#... / 0x...) are downcased without separator stripping; the optional
+    # ",opacity" suffix is preserved untouched.
     def self.canonicalize(value)
       return value unless value.is_a?(String)
 
       color, separator, opacity = value.partition(",")
       color = color.strip.downcase
-      color = color.delete("_ \t\n") unless color.start_with?("#") || color.start_with?("0x")
+      color = color.gsub(/[_\-\s]+/, "") unless color.start_with?("#") || color.start_with?("0x")
 
       "#{color}#{separator}#{opacity}"
     end
