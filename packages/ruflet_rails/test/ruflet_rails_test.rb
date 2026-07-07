@@ -43,4 +43,20 @@ class RufletRailsTest < Minitest::Test
     assert_match(/requires one of app_file: or a block/, error.message)
   end
 
+  def test_configuration_serializes_declared_extensions
+    config = Ruflet::Rails::Configuration.new
+    config.extensions = %w[webview]
+
+    assert_equal %w[webview], config.to_ruflet_yaml_hash["extensions"]
+  end
+
+  def test_configuration_omits_empty_services_and_extensions
+    config = Ruflet::Rails::Configuration.new
+
+    yaml_hash = config.to_ruflet_yaml_hash
+
+    refute_includes yaml_hash, "services"
+    refute_includes yaml_hash, "extensions"
+  end
+
 end

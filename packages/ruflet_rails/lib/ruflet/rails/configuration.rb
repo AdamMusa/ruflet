@@ -15,8 +15,9 @@ module Ruflet
     #     # App metadata (ruflet.yaml → app:)
     #     config.app_name = "My App"
     #
-    #     # Services (ruflet.yaml → services:)
+    #     # Services / extensions (ruflet.yaml → services: / extensions:)
     #     config.services = []
+    #     config.extensions = %w[webview]
     #
     #     # Assets (ruflet.yaml → assets:)
     #     config.splash_screen = Rails.root.join("app/assets/images/splash.png")
@@ -45,9 +46,10 @@ module Ruflet
 
       attr_accessor :app_name
 
-      # --- Services (ruflet.yaml → services:) ---
+      # --- Services / extensions (ruflet.yaml → services: / extensions:) ---
 
       attr_accessor :services
+      attr_accessor :extensions
 
       # --- Assets (ruflet.yaml → assets:) ---
 
@@ -71,6 +73,7 @@ module Ruflet
         @backend_url = nil
         @app_name = nil
         @services = []
+        @extensions = []
       end
 
       # Serialises config to the ruflet.yaml hash structure so the CLI can
@@ -84,7 +87,10 @@ module Ruflet
         app["backend_url"] = @backend_url if @backend_url
         hash["app"] = app unless app.empty?
 
-        hash["services"] = Array(@services)
+        services = Array(@services)
+        extensions = Array(@extensions)
+        hash["services"] = services unless services.empty?
+        hash["extensions"] = extensions unless extensions.empty?
 
         assets = {}
         assets["splash_screen"] = @splash_screen.to_s if @splash_screen
