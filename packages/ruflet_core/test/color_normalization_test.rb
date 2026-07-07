@@ -4,10 +4,17 @@ require_relative "test_helper"
 
 class RufletColorNormalizationTest < Minitest::Test
   def test_named_colors_are_canonicalized_on_top_level_color_props
-    patch = Ruflet.container(bgcolor: :blue_grey, ink_color: "Deep Orange 500").to_patch
+    patch = Ruflet.container(bgcolor: :blue_grey, ink_color: "DeepOrange500").to_patch
 
     assert_equal "bluegrey", patch["bgcolor"]
     assert_equal "deeporange500", patch["ink_color"]
+  end
+
+  def test_named_colors_accept_ruby_style_names
+    patch = Ruflet.container(bgcolor: :deep_orange_500, ink_color: :primary_container).to_patch
+
+    assert_equal "deeporange500", patch["bgcolor"]
+    assert_equal "primarycontainer", patch["ink_color"]
   end
 
   def test_nested_style_and_state_colors_are_canonicalized
@@ -15,7 +22,7 @@ class RufletColorNormalizationTest < Minitest::Test
       "hello",
       style: {
         color: :primary_container,
-        decoration_color: "Light Blue 200",
+        decoration_color: "LightBlue200",
         shadow: { color: "#ABCDEF" }
       }
     ).to_patch
@@ -32,7 +39,7 @@ class RufletColorNormalizationTest < Minitest::Test
         Ruflet.navigation_bar_destination(icon: "person", label: "Profile")
       ],
       overlay_color: { pressed: :white_70, hovered: "#ABCDEF" },
-      indicator_color: "Green Accent 400"
+      indicator_color: :green_accent_400
     ).to_patch
 
     gradient = Ruflet.container(gradient: { colors: ["#ABCDEF", :deep_purple_500] }).to_patch["gradient"]
