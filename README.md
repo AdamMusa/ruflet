@@ -92,7 +92,10 @@ separately running Ruflet backend.
 
 Use the `ruflet_rails` gem to mount Ruflet applications inside Rails, share
 Rails models, and generate Ruflet components from standard Rails scaffolds.
-See [`packages/ruflet_rails/README.md`](packages/ruflet_rails/README.md).
+It can also wrap ordinary Rails views in a native WebView shell with AppBars,
+drawers, bottom navigation, sheets, menus, dialogs, and platform services
+declared from ERB. See
+[`packages/ruflet_rails/README.md`](packages/ruflet_rails/README.md).
 
 ## Packages
 

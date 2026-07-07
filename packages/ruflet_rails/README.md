@@ -214,6 +214,68 @@ look everywhere:
       data: { ruflet_action: { component: "toast", message: "Copied to clipboard" }.to_json } %>
 ```
 
+**Native menus and bottom sheets** — menus are regular Ruflet bottom sheets
+driven by Rails payload data. Item taps close the native sheet first, wait for
+the native dismiss event, then run the item callback or navigation. This keeps
+the overlay lifecycle stable on mobile and desktop.
+
+```erb
+<%= ruflet_appbar "T4U",
+      actions: [
+        {
+          icon: "language",
+          action: "menu",
+          title: "Language",
+          items: [
+            { label: "FR", icon: "check", url: url_for(locale: :fr), action: "root", selected: I18n.locale == :fr },
+            { label: "EN", icon: "translate", url: url_for(locale: :en), action: "root" },
+            { label: "AR", icon: "translate", url: url_for(locale: :ar), action: "root" }
+          ]
+        }
+      ] %>
+```
+
+Items close the sheet by default. Pass `close: false` only for an item that
+should run without dismissing the sheet:
+
+```erb
+<%= ruflet_appbar "Filters",
+      actions: [
+        {
+          icon: "tune",
+          action: "menu",
+          title: "Filters",
+          items: [
+            { label: "Toggle remote only", icon: "check", close: false }
+          ]
+        }
+      ] %>
+```
+
+Use `action: "sheet"` to present a Rails URL inside a native bottom sheet whose
+body is still a WebView:
+
+```erb
+<%= link_to "Choose language", languages_path,
+      data: { ruflet_action: { component: "sheet", url: languages_path }.to_json } %>
+```
+
+Inside a WebView sheet, plain Rails links are promoted to native actions so the
+sheet closes before navigation:
+
+```erb
+<!-- app/views/languages/index.html.erb, rendered inside the sheet -->
+<%= link_to "Français", url_for(locale: :fr) %>
+<%= link_to "English", url_for(locale: :en) %>
+<%= link_to "العربية", url_for(locale: :ar) %>
+```
+
+Add `data-ruflet-close="false"` when a sheet link should not dismiss:
+
+```erb
+<%= link_to "Preview", preview_path, data: { ruflet_close: "false" } %>
+```
+
 **Native services** — ERB can trigger safe platform services through the same
 `data-ruflet-action` channel:
 
