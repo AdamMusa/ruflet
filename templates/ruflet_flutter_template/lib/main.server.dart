@@ -33,7 +33,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
-import 'connection_probe.dart';
 import 'ruflet_file_picker_service.dart';
 
 const bool isProduction = bool.fromEnvironment('dart.vm.product');
@@ -133,7 +132,6 @@ Future<void> main() async {
   }
 
   final pageUrl = resolveBackendUrl();
-  await waitForBackend(pageUrl);
 
   runApp(TemplateApp(pageUrl: pageUrl, extensions: extensions));
 }
@@ -163,17 +161,6 @@ class TemplateApp extends StatelessWidget {
       tester: tester,
     );
   }
-}
-
-Future<void> waitForBackend(String pageUrl) async {
-  if (kIsWeb) return;
-
-  final deadline = DateTime.now().add(const Duration(seconds: 20));
-  while (DateTime.now().isBefore(deadline)) {
-    if (await canConnectToPageUrl(pageUrl)) return;
-    await Future<void>.delayed(const Duration(milliseconds: 300));
-  }
-  debugPrint('Backend not reachable yet at $pageUrl. Flet client will retry.');
 }
 
 String? parseBackendUrl(String value) {

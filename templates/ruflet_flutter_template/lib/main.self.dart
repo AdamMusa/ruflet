@@ -37,7 +37,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:ruby_runtime/ruby_runtime.dart';
 
-import 'connection_probe.dart';
 import 'ruflet_file_picker_service.dart';
 
 const bool isProduction = bool.fromEnvironment('dart.vm.product');
@@ -147,9 +146,7 @@ Future<void> main() async {
     pageUrl = embeddedRuntime.pageUrl;
   }
 
-  if (embeddedRuntime == null) {
-    await waitForBackend(pageUrl);
-  } else {
+  if (embeddedRuntime != null) {
     await Future<void>.delayed(const Duration(milliseconds: 250));
   }
 
@@ -239,17 +236,6 @@ class _TemplateAppState extends State<TemplateApp> {
   }
 }
 
-Future<void> waitForBackend(String pageUrl) async {
-  if (kIsWeb) return;
-
-  final deadline = DateTime.now().add(const Duration(seconds: 20));
-  while (DateTime.now().isBefore(deadline)) {
-    if (await canConnectToPageUrl(pageUrl)) return;
-    await Future<void>.delayed(const Duration(milliseconds: 300));
-  }
-  debugPrint('Backend not reachable yet at $pageUrl. Flet client will retry.');
-}
-
 String? parseBackendUrl(String value) {
   if (value.isEmpty) return null;
   final raw = value.trim();
@@ -299,12 +285,7 @@ class EmbeddedRufletRuntime {
         // CRuby dev server) may already be answering on it and the client
         // would silently attach to the wrong app.
         final portKnown = discoveredPort == null || discoveredPort > 0;
-        if (portKnown &&
-            await RubyRuntime.isFileServerRunning() &&
-            await canConnectToPageUrl(
-              pageUrl,
-              timeout: const Duration(milliseconds: 250),
-            )) {
+        if (portKnown && await RubyRuntime.isFileServerRunning()) {
           return EmbeddedRufletRuntime._(pageUrl: pageUrl, workDir: workDir);
         }
         final serverError = await RubyRuntime.lastFileServerError();

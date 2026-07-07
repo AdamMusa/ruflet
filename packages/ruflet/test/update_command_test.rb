@@ -607,6 +607,9 @@ class RufletCliUpdateCommandTest < Minitest::Test
         "<plist><dict></dict></plist>\n"
       )
       FileUtils.mkdir_p(File.join(client_dir, "lib"))
+      File.write(File.join(client_dir, "lib", "connection_probe.dart"), "stale\n")
+      File.write(File.join(client_dir, "lib", "connection_probe_io.dart"), "stale\n")
+      File.write(File.join(client_dir, "lib", "connection_probe_stub.dart"), "stale\n")
 
       original_method = Ruflet::CLI.method(:resolve_ruflet_client_template_root)
       Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root) { template_dir }
@@ -621,6 +624,9 @@ class RufletCliUpdateCommandTest < Minitest::Test
           "class RufletFilePickerExtension {}\n",
           File.read(File.join(client_dir, "lib", "ruflet_file_picker_service.dart"))
         )
+        refute File.exist?(File.join(client_dir, "lib", "connection_probe.dart"))
+        refute File.exist?(File.join(client_dir, "lib", "connection_probe_io.dart"))
+        refute File.exist?(File.join(client_dir, "lib", "connection_probe_stub.dart"))
       ensure
         Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root, original_method)
         Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)

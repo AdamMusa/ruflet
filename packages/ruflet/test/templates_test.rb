@@ -34,6 +34,16 @@ class RufletCliTemplatesTest < Minitest::Test
     assert_includes template, "_discoverServerPort"
   end
 
+  def test_flutter_templates_do_not_probe_backend_health
+    %w[main.self.dart main.server.dart].each do |name|
+      template = File.read(File.expand_path("../../../templates/ruflet_flutter_template/lib/#{name}", __dir__))
+
+      refute_includes template, "connection_probe"
+      refute_includes template, "canConnectToPageUrl"
+      refute_includes template, "/health"
+    end
+  end
+
   def test_ruby_runtime_plugins_report_bound_port_instead_of_strict_port
     root = File.expand_path("../../..", __dir__)
 
