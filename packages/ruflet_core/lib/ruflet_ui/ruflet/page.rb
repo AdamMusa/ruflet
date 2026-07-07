@@ -1600,8 +1600,14 @@ module Ruflet
       query_string = route_value.to_s.split("?", 2)[1].to_s
       return {} if query_string.empty?
 
-      CGI.parse(query_string).each_with_object({}) do |(key, values), result|
-        result[key] = values.size == 1 ? values.first : values
+      query_string.split("&").each_with_object({}) do |pair, result|
+        next if pair.empty?
+
+        key, value = pair.split("=", 2)
+        key = CGI.unescape(key.to_s.tr("+", " "))
+        value = CGI.unescape(value.to_s.tr("+", " "))
+        previous = result[key]
+        result[key] = previous.nil? ? value : Array(previous) << value
       end
     end
 

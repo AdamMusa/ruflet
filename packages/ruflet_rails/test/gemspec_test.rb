@@ -12,7 +12,7 @@ class RufletRailsGemspecTest < Minitest::Test
     assert_equal own_version, spec.version.to_s
 
     # Each ruflet_* dependency must be a concrete >= floor that includes the
-    # protocol-engine release (0.0.16) the adapter relies on.
+    # protocol-engine release (0.0.17) the adapter relies on.
     %w[ruflet ruflet_core ruflet_server].each do |name|
       dependency = spec.dependencies.find { |item| item.name == name }
       refute_nil dependency, "Expected #{name} dependency"
@@ -20,7 +20,7 @@ class RufletRailsGemspecTest < Minitest::Test
       requirement = dependency.requirement.to_s
       assert_match(/\A>= \d+\.\d+\.\d+\z/, requirement, "#{name} should pin a concrete >= floor")
       assert_operator Gem::Version.new(requirement.delete_prefix(">= ")),
-                      :>=, Gem::Version.new("0.0.16"),
+                      :>=, Gem::Version.new("0.0.17"),
                       "#{name} floor must include the protocol-engine release"
     end
   end

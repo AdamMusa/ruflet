@@ -19,6 +19,21 @@ module Ruflet
           mode = "root"
           spec = bottomnav_appbar_spec(url, spec)
         end
+
+        # A bottom sheet corrupts the shell Scaffold on the client: afterwards it
+        # silently drops BOTH targeted control patches (so a navigation's new
+        # WebView never mounts) AND method invokes (so the drawer won't
+        # open/close). Reusing that Scaffold never recovers. So when a sheet was
+        # active, rebuild a fresh root view — a brand-new Scaffold the client
+        # wires up from scratch, which restores navigation and the drawer.
+        resume_from_sheet = mode == "sheet" ? false : consume_pending_sheet
+        if resume_from_sheet && !%w[back sheet].include?(mode)
+          close_drawer
+          @screens.clear
+          push_webview(url, root: true, spec: spec)
+          return
+        end
+
         case mode
         when "back"    then pop
         when "root"    then go_webview(url, spec: spec)
@@ -26,6 +41,16 @@ module Ruflet
         when "sheet"   then present_sheet((spec || {}).merge("url" => url))
         else                push_webview(url, spec: spec)
         end
+      end
+
+      # Drop any open/lingering bottom sheet from both the native_app reference
+      # and the ruflet page overlay. Returns whether a sheet was present, so the
+      # caller can force a full re-render to recover the client view tree.
+      def consume_pending_sheet
+        active = !@sheet.nil? || !@page.instance_variable_get(:@bottom_sheet).nil?
+        @sheet = nil
+        @page.bottom_sheet = nil if active && @page.respond_to?(:bottom_sheet=)
+        active
       end
 
       # Root navigation keeps the mounted Ruflet shell (AppBar / drawer / bottom
@@ -328,10 +353,11 @@ module Ruflet
             target = urls[index].to_s
             next if target.empty? || same_url?(target, current_url)
 
-            # Carry the tab's label so the AppBar shows the destination's name
-            # immediately, unless the destination page already declared a more
-            # specific native AppBar (e.g. Home tab label -> Demo app title).
-            go_webview(target, spec: bottomnav_appbar_spec(target, { "title" => items[index]["label"].to_s }))
+            # Route through navigate_screen (not go_webview directly) so a sheet
+            # opened/closed before this tap is torn down and the view re-rendered
+            # in full. The tab label is carried so the AppBar shows the
+            # destination's name immediately.
+            navigate_screen(target, "root", { "title" => items[index]["label"].to_s })
           end
         )
       end

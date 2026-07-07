@@ -3876,16 +3876,48 @@ module Ruflet
       canonicalize(color.to_s)
     end
 
+    def self.normalize_property(key, value)
+      normalize_value(value, color_key?(key))
+    end
+
+    def self.color_key?(key)
+      name = key.to_s
+      name == "color" ||
+        name == "colors" ||
+        name.end_with?("bgcolor") ||
+        name.end_with?("_color") ||
+        name.end_with?("_colors") ||
+        name == "color_scheme_seed"
+    end
+
+    def self.normalize_value(value, color_context = false)
+      case value
+      when String
+        color_context ? canonicalize(value) : value
+      when Symbol
+        color_context ? canonicalize(value.to_s) : value
+      when Array
+        value.map { |nested| normalize_value(nested, color_context) }
+      when Hash
+        value.each_with_object({}) do |(nested_key, nested_value), result|
+          result[nested_key] = normalize_value(nested_value, color_context || color_key?(nested_key))
+        end
+      else
+        value
+      end
+    end
+
     # Canonicalizes a named color into flet's wire format. Flet color names are
     # lowercase with no separators ("bluegrey", "deeporange", "red500"), so we
-    # strip underscores/whitespace and downcase. Hex values (#... / 0x...) and
-    # the optional ",opacity" suffix are preserved untouched.
+    # strip underscores, hyphens, and whitespace before downcasing. Hex values
+    # (#... / 0x...) are downcased without separator stripping; the optional
+    # ",opacity" suffix is preserved untouched.
     def self.canonicalize(value)
       return value unless value.is_a?(String)
 
       color, separator, opacity = value.partition(",")
       color = color.strip.downcase
-      color = color.delete("_ \t\n") unless color.start_with?("#") || color.start_with?("0x")
+      color = color.gsub(/[_\-\s]+/, "") unless color.start_with?("#") || color.start_with?("0x")
 
       "#{color}#{separator}#{opacity}"
     end
@@ -4761,14 +4793,11 @@ module Ruflet
     end
 
     def normalize_color_prop(key, value)
-      return value unless value.is_a?(String)
-      return Ruflet::Colors.canonicalize(value) if color_prop_key?(key)
-
-      value
+      Ruflet::Colors.normalize_property(key, value)
     end
 
     def color_prop_key?(key)
-      key == "color" || key.end_with?("bgcolor") || key.end_with?("_color")
+      Ruflet::Colors.color_key?(key)
     end
 
     def normalize_icon_prop(key, value)
@@ -25816,7 +25845,7 @@ end
 
 
 module Ruflet
-  VERSION = "0.0.16" unless const_defined?(:VERSION)
+  VERSION = "0.0.17" unless const_defined?(:VERSION)
 end
 
 # -- packages/ruflet_core/lib/ruflet_ui/ruflet/page.rb
@@ -25997,6 +26026,7 @@ module Ruflet
         id: "_dialogs",
         controls: []
       )
+      @mounted_services = []
       @invoke_waiters = {}
       @invoke_callbacks = {}
       @invoke_waiters_mutex = ::Mutex.new
@@ -26354,6 +26384,12 @@ module Ruflet
     def bottom_sheet=(value)
       @bottom_sheet = value
       refresh_dialogs_container!
+      # Mirror dialog= / snack_bar=: once the dialogs container is mounted, push
+      # the change as an in-place patch. Without this, opening a bottom sheet
+      # after the container is already mounted (e.g. a prior dialog/snackbar)
+      # never reaches the client, since send_view_patch skips _dialogs once
+      # mounted. This is what made NativeApp's modal: sheets fail to open.
+      push_dialogs_update! if @dialogs_container_mounted
     end
 
     def bottomsheet=(value)
@@ -27381,6 +27417,7 @@ module Ruflet
         raise ArgumentError, "page #{key} must use an icon name string, not #{value.inspect}"
       end
 
+      value = Ruflet::Colors.normalize_property(key, value)
       return value.value if value.is_a?(Ruflet::IconData)
       value.is_a?(Symbol) ? value.to_s : value
     end
@@ -27406,8 +27443,14 @@ module Ruflet
       query_string = route_value.to_s.split("?", 2)[1].to_s
       return {} if query_string.empty?
 
-      CGI.parse(query_string).each_with_object({}) do |(key, values), result|
-        result[key] = values.size == 1 ? values.first : values
+      query_string.split("&").each_with_object({}) do |pair, result|
+        next if pair.empty?
+
+        key, value = pair.split("=", 2)
+        key = CGI.unescape(key.to_s.tr("+", " "))
+        value = CGI.unescape(value.to_s.tr("+", " "))
+        previous = result[key]
+        result[key] = previous.nil? ? value : Array(previous) << value
       end
     end
 
@@ -27515,14 +27558,61 @@ module Ruflet
     def push_services_update!
       refresh_control_indexes!
 
-      if @services_container.wire_id
+      unless @services_container.wire_id
+        # First mount: the whole list ships inside the page/view patch.
+        send_view_patch
+        @mounted_services = Array(@services_container.props["_services"]).dup
+        return
+      end
+
+      current = Array(@services_container.props["_services"])
+      ops = services_patch_ops(@mounted_services, current)
+      unless ops.empty?
+        # Incrementally add/remove individual services. Re-sending the whole
+        # `_services` list as full objects (a single replace op) makes the
+        # client run Control.fromMap for EVERY service, replacing each Control
+        # instance while ServiceRegistry only binds ids it hasn't seen — so an
+        # already-mounted service (share, clipboard, haptic) keeps its old
+        # binding while controlsIndex points at the fresh, listener-less
+        # instance, and its next invoke hangs. That was the "after Copy, Share
+        # stops working" bug. Add/remove ops leave untouched services intact.
         send_message(Protocol::ACTIONS[:patch_control], {
           "id" => @services_container.wire_id,
-          "patch" => [[0], [0, 0, "_services", serialize_patch_value(@services_container.props["_services"])]]
+          "patch" => [[0, { "_services" => [1] }], *ops]
         })
-      else
-        send_view_patch
       end
+      @mounted_services = current.dup
+    end
+
+    # Diff the previously-mounted services list against the current one and emit
+    # add (1) / remove (2) ops against the `_services` list (patch node 1).
+    # Services are normally append-only; a moved entry is expressed as
+    # remove + add. Existing entries are never re-serialized, so their client
+    # Control instances (and invoke listeners) survive.
+    def services_patch_ops(previous, current)
+      ops = []
+      working = previous.dup
+
+      (working.length - 1).downto(0) do |index|
+        next if current.any? { |service| service.equal?(working[index]) }
+
+        ops << [2, 1, index]
+        working.delete_at(index)
+      end
+
+      current.each_with_index do |service, index|
+        next if working[index]&.equal?(service)
+
+        existing = working.index { |candidate| candidate.equal?(service) }
+        if existing
+          ops << [2, 1, existing]
+          working.delete_at(existing)
+        end
+        ops << [1, 1, index, serialize_patch_value(service)]
+        working.insert(index, service)
+      end
+
+      ops
     end
 
     def push_dialogs_update!
