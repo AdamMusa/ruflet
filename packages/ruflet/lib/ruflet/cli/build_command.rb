@@ -736,12 +736,58 @@ module Ruflet
           alt = "ruflet.yml"
           config_path = alt if File.file?(alt)
         end
-        return {} unless File.file?(config_path)
+        return load_rails_ruflet_initializer_config unless File.file?(config_path)
 
         YAML.safe_load(File.read(config_path), aliases: true) || {}
       rescue StandardError => e
         warn "Failed to load ruflet config: #{e.class}: #{e.message}"
         {}
+      end
+
+      def load_rails_ruflet_initializer_config
+        initializer = File.join(Dir.pwd, "config", "initializers", "ruflet.rb")
+        return {} unless File.file?(initializer)
+
+        require "ruflet_rails"
+
+        with_minimal_rails_config_context do
+          load initializer
+          config = Ruflet::Rails.config
+          config.respond_to?(:to_ruflet_yaml_hash) ? config.to_ruflet_yaml_hash : {}
+        end
+      rescue LoadError => e
+        warn "Failed to load Rails Ruflet config: #{e.class}: #{e.message}"
+        {}
+      rescue StandardError => e
+        warn "Failed to load Rails Ruflet config: #{e.class}: #{e.message}"
+        {}
+      end
+
+      def with_minimal_rails_config_context
+        return yield if defined?(::Rails)
+
+        rails_module = Module.new
+        root = Pathname.new(Dir.pwd)
+        env = minimal_rails_env(ENV.fetch("RAILS_ENV", "development"))
+        rails_module.define_singleton_method(:root) { root }
+        rails_module.define_singleton_method(:env) { env }
+
+        Object.const_set(:Rails, rails_module)
+        yield
+      ensure
+        Object.send(:remove_const, :Rails) if defined?(rails_module) && Object.const_defined?(:Rails, false) && ::Rails.equal?(rails_module)
+      end
+
+      def minimal_rails_env(name)
+        value = name.to_s
+        Object.new.tap do |env|
+          env.define_singleton_method(:to_s) { value }
+          env.define_singleton_method(:to_str) { value }
+          env.define_singleton_method(:==) { |other| value == other.to_s }
+          env.define_singleton_method(:development?) { value == "development" }
+          env.define_singleton_method(:test?) { value == "test" }
+          env.define_singleton_method(:production?) { value == "production" }
+        end
       end
 
       def apply_build_config(client_dir, config = {})

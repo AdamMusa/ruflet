@@ -12,6 +12,39 @@ class RufletCliUpdateCommandTest < Minitest::Test
     include Ruflet::CLI::BuildCommand
   end
 
+  def test_load_ruflet_config_reads_rails_initializer_when_yaml_absent
+    builder = DummyBuilder.new
+    rails_lib = File.expand_path("../../ruflet_rails/lib", __dir__)
+    $LOAD_PATH.unshift(rails_lib) unless $LOAD_PATH.include?(rails_lib)
+
+    Dir.mktmpdir do |dir|
+      previous_dir = Dir.pwd
+      previous_backend = ENV.delete("RUFLET_BACKEND_URL")
+      Dir.chdir(dir)
+      FileUtils.mkdir_p(File.join(dir, "config", "initializers"))
+      FileUtils.mkdir_p(File.join(dir, "public"))
+      File.write(File.join(dir, "public", "icon.png"), "icon")
+      File.write(File.join(dir, "config", "initializers", "ruflet.rb"), <<~RUBY)
+        Ruflet::Rails.configure do |config|
+          config.app_name = "Rails Shell"
+          config.backend_url = ENV.fetch("RUFLET_BACKEND_URL", "http://localhost:4321")
+          config.services = %w[share clipboard]
+          config.icon_launcher = Rails.root.join("public/icon.png")
+        end
+      RUBY
+
+      config = builder.send(:load_ruflet_config)
+
+      assert_equal "Rails Shell", config.dig("app", "name")
+      assert_equal "http://localhost:4321", config.dig("app", "backend_url")
+      assert_equal %w[share clipboard], config["services"]
+      assert_equal File.realpath(File.join(dir, "public", "icon.png")), File.realpath(config.dig("assets", "icon_launcher"))
+    ensure
+      ENV["RUFLET_BACKEND_URL"] = previous_backend if previous_backend
+      Dir.chdir(previous_dir) if previous_dir
+    end
+  end
+
   def test_command_update_check_reports_manifest_status
     updater = DummyUpdater.new
     Dir.mktmpdir do |dir|
