@@ -95,6 +95,7 @@ class RufletNativeAppTest < Minitest::Test
     assert_includes sheet_js, "t.closest(\"a[href]\")"
     assert_includes sheet_js, "linkSpec.component = linkSpec.component || \"navigation\""
     assert_includes sheet_js, "linkSpec.action = linkSpec.action || attr(link, \"ruflet-mode\") || attr(link, \"ruflet-nav\") || \"root\""
+    assert_includes sheet_js, "ruflet-close"
   end
 
   # --- out-of-the-box navigation -----------------------------------------
@@ -409,6 +410,10 @@ class RufletNativeAppTest < Minitest::Test
     post("ruflet:action:#{JSON.generate({ "component" => "navigation", "action" => "root", "url" => "/dashboard" })}",
          webview: sheet_webview)
 
+    assert_equal false, sheet.props["open"]
+    assert_equal "https://myapp.com", top_webview.props["url"], "navigation waits until the sheet dismisses"
+
+    sheet.emit("dismiss", Ruflet::Event.new(name: "dismiss", target: sheet.wire_id, raw_data: nil, page: @page, control: sheet))
     assert_nil @page.instance_variable_get(:@bottom_sheet)
     assert_equal "https://myapp.com/dashboard", top_webview.props["url"]
   end
@@ -438,8 +443,30 @@ class RufletNativeAppTest < Minitest::Test
     en_tile = find_all(sheet, "listtile")[1]
     en_tile.emit("click", Ruflet::Event.new(name: "click", target: en_tile.wire_id, raw_data: nil, page: @page, control: en_tile))
 
+    assert_equal false, sheet.props["open"]
+    assert_equal "https://myapp.com", top_webview.props["url"], "native menu navigation waits for the close callback"
+
+    sheet.emit("dismiss", Ruflet::Event.new(name: "dismiss", target: sheet.wire_id, raw_data: nil, page: @page, control: sheet))
     assert_nil @page.instance_variable_get(:@bottom_sheet)
     assert_equal "https://myapp.com/en", top_webview.props["url"]
+  end
+
+  def test_native_menu_item_can_opt_out_of_closing_sheet
+    start
+    post(%(ruflet:action:#{JSON.generate({
+      "component" => "menu",
+      "items" => [
+        { "label" => "Keep open", "icon" => "translate", "close" => false }
+      ]
+    })}))
+
+    sheet = @page.instance_variable_get(:@bottom_sheet)
+    tile = find(sheet, "listtile")
+    tile.emit("click", Ruflet::Event.new(name: "click", target: tile.wire_id, raw_data: nil, page: @page, control: tile))
+
+    assert_same sheet, @page.instance_variable_get(:@bottom_sheet)
+    assert_equal true, sheet.props["open"]
+    assert_equal "https://myapp.com", top_webview.props["url"]
   end
 
   def test_native_overlays_and_loading_accept_ruflet_props

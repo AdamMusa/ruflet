@@ -94,7 +94,7 @@ module Ruflet
           scrollable: true,
           show_drag_handle: true,
           use_safe_area: true,
-          on_dismiss: ->(_event) { @sheet = nil }
+          on_dismiss: ->(_event) { sheet_dismissed }
         )
         @page.bottom_sheet = @sheet
         @page.update
@@ -113,23 +113,40 @@ module Ruflet
           selected: item["selected"] == true,
           selected_tile_color: item["selected_tile_color"] || "#ECFDF5",
           on_click: lambda do |_event|
-            close_sheet
-            navigate_screen(target, mode, item) unless target.empty?
+            action = lambda do
+              navigate_screen(target, mode, item) unless target.empty?
+            end
+            close_sheet_for?(item) ? close_sheet(&action) : action.call
           end,
           **ruflet_props_for(:list_tile, item)
         )
       end
 
-      def close_sheet
-        sheet = @sheet || @page.instance_variable_get(:@bottom_sheet)
-        return unless sheet
+      def close_sheet_for?(spec)
+        return true unless spec.is_a?(Hash) && spec.key?("close")
 
+        ![false, "false", "0", 0, "no", "off"].include?(spec["close"])
+      end
+
+      def close_sheet(&after_close)
+        sheet = @sheet || @page.instance_variable_get(:@bottom_sheet)
+        unless sheet
+          after_close.call if after_close
+          return
+        end
+
+        @after_sheet_close = after_close if after_close
         @page.update(sheet, open: false) if sheet.wire_id
-        @page.bottom_sheet = nil if @page.respond_to?(:bottom_sheet=)
-        @sheet = nil
       rescue StandardError
-        @page.bottom_sheet = nil if @page.respond_to?(:bottom_sheet=)
+        sheet_dismissed
+      end
+
+      def sheet_dismissed
+        after_close = @after_sheet_close
+        @after_sheet_close = nil
         @sheet = nil
+        @page.bottom_sheet = nil if @page.respond_to?(:bottom_sheet=)
+        after_close.call if after_close
       end
 
       # --- Bottom-sheet modal (web content) ----------------------------------
@@ -172,7 +189,7 @@ module Ruflet
           scrollable: spec.key?("scrollable") ? spec["scrollable"] : true,
           show_drag_handle: spec.key?("show_drag_handle") ? spec["show_drag_handle"] : true,
           use_safe_area: spec.key?("use_safe_area") ? spec["use_safe_area"] : true,
-          on_dismiss: ->(_event) { @sheet = nil }
+          on_dismiss: ->(_event) { sheet_dismissed }
         )
         @page.bottom_sheet = @sheet
         @page.update

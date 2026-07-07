@@ -151,6 +151,7 @@ module Ruflet
                   linkSpec.action = linkSpec.action || attr(link, "ruflet-mode") || attr(link, "ruflet-nav") || "root";
                   linkSpec.url = href;
                   linkSpec.label = linkSpec.label || link.textContent.trim();
+                  if (attr(link, "ruflet-close") != null) linkSpec.close = attr(link, "ruflet-close");
                   report("action", JSON.stringify(linkSpec));
                   return;
                 }
@@ -222,8 +223,11 @@ module Ruflet
         if message.start_with?(ACTION_PREFIX)
           spec = parse_json(message[ACTION_PREFIX.length..])
           if spec
-            close_sheet
-            dispatch_action(spec)
+            if close_sheet_for?(spec)
+              close_sheet { dispatch_action(spec) }
+            else
+              dispatch_action(spec)
+            end
           end
         elsif message.start_with?(APPBAR_PREFIX) || message.start_with?(BOTTOMNAV_PREFIX) ||
               message.start_with?(DRAWER_PREFIX) || message.start_with?(RAIL_PREFIX)
