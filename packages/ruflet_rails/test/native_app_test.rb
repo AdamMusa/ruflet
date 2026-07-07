@@ -61,6 +61,7 @@ class RufletNativeAppTest < Minitest::Test
     js = Ruflet::Rails::NativeApp.html_adapter_js
     assert_includes js, "addEventListener"
     assert_includes js, "preventDefault"
+    assert_includes js, "var rufletInsideSheet = false;"
     assert_includes js, "data-ruflet-screen"
     assert_includes js, "data-ruflet-action"
     refute_includes js, 'report("visit"'
@@ -71,6 +72,17 @@ class RufletNativeAppTest < Minitest::Test
     refute_includes js, "ruflet:title"
     assert_includes js, '"ruflet:"' # message channel prefix
     assert_includes js, "absent: true"
+  end
+
+  def test_html_adapter_only_promotes_plain_links_inside_sheets
+    page_js = Ruflet::Rails::NativeApp.html_adapter_js
+    sheet_js = Ruflet::Rails::NativeApp.html_adapter_js(sheet: true)
+
+    assert_includes page_js, "var rufletInsideSheet = false;"
+    assert_includes sheet_js, "var rufletInsideSheet = true;"
+    assert_includes sheet_js, "t.closest(\"a[href]\")"
+    assert_includes sheet_js, "linkSpec.component = linkSpec.component || \"navigation\""
+    assert_includes sheet_js, "linkSpec.action = linkSpec.action || attr(link, \"ruflet-mode\") || attr(link, \"ruflet-nav\") || \"root\""
   end
 
   # --- out-of-the-box navigation -----------------------------------------

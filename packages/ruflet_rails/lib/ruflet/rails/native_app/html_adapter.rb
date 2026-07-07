@@ -7,6 +7,8 @@ module Ruflet
       # declarations and report them so Ruby can build normal Ruflet controls.
       HTML_ADAPTER_JS = <<~JS
         (function () {
+          var rufletInsideSheet = __RUFLET_INSIDE_SHEET__;
+
           function report(kind, value) { console.log("ruflet:" + kind + ":" + value); }
           function attr(el, name) {
             var v = el.getAttribute(name);
@@ -136,6 +138,24 @@ module Ruflet
               report("action", JSON.stringify(payload));
               return;
             }
+
+            if (rufletInsideSheet) {
+              var link = t && t.closest ? t.closest("a[href]") : null;
+              if (link) {
+                var href = link.getAttribute("href") || "";
+                var target = link.getAttribute("target") || "";
+                if (href && href !== "#" && target !== "_blank" && !/^(mailto:|tel:|sms:|javascript:)/i.test(href)) {
+                  e.preventDefault();
+                  var linkSpec = readJSON(attr(link, "ruflet-link"));
+                  linkSpec.component = linkSpec.component || "navigation";
+                  linkSpec.action = linkSpec.action || attr(link, "ruflet-mode") || attr(link, "ruflet-nav") || "root";
+                  linkSpec.url = href;
+                  linkSpec.label = linkSpec.label || link.textContent.trim();
+                  report("action", JSON.stringify(linkSpec));
+                  return;
+                }
+              }
+            }
           }, true);
         })();
       JS
@@ -146,8 +166,8 @@ module Ruflet
       DRAWER_PREFIX    = "ruflet:drawer:"
       RAIL_PREFIX      = "ruflet:rail:"
 
-      def self.html_adapter_js
-        HTML_ADAPTER_JS
+      def self.html_adapter_js(sheet: false)
+        HTML_ADAPTER_JS.sub("__RUFLET_INSIDE_SHEET__", sheet ? "true" : "false")
       end
 
       private
@@ -160,8 +180,8 @@ module Ruflet
         nil
       end
 
-      def inject_html_adapter_for(webview)
-        webview.run_javascript(self.class.html_adapter_js) if webview.respond_to?(:run_javascript)
+      def inject_html_adapter_for(webview, sheet: false)
+        webview.run_javascript(self.class.html_adapter_js(sheet: sheet)) if webview.respond_to?(:run_javascript)
       rescue StandardError
         nil
       end
