@@ -25,6 +25,18 @@ class RufletNativeAppTest < Minitest::Test
     end
   end
 
+  def find_all(node, type, matches = [])
+    case node
+    when Ruflet::Control
+      matches << node if node.type == type
+      node.props.each_value { |value| find_all(value, type, matches) }
+      node.children.each { |child| find_all(child, type, matches) }
+    when Array
+      node.each { |value| find_all(value, type, matches) }
+    end
+    matches
+  end
+
   def stack
     @page.views
   end
@@ -399,6 +411,35 @@ class RufletNativeAppTest < Minitest::Test
 
     assert_nil @page.instance_variable_get(:@bottom_sheet)
     assert_equal "https://myapp.com/dashboard", top_webview.props["url"]
+  end
+
+  def test_clicking_native_menu_item_clears_bottom_sheet_before_navigation
+    start
+    post(%(ruflet:appbar:#{JSON.generate({
+      "title" => "T4U",
+      "actions" => [
+        {
+          "icon" => "language",
+          "action" => "menu",
+          "title" => "Language",
+          "items" => [
+            { "label" => "FR", "icon" => "check", "url" => "/fr", "action" => "root", "selected" => true },
+            { "label" => "EN", "icon" => "translate", "url" => "/en", "action" => "root" }
+          ]
+        }
+      ]
+    })}))
+
+    button = find(stack.first, "appbar").props["actions"].first
+    button.emit("click", Ruflet::Event.new(name: "click", target: button.wire_id, raw_data: nil, page: @page, control: button))
+    sheet = @page.instance_variable_get(:@bottom_sheet)
+    refute_nil sheet
+
+    en_tile = find_all(sheet, "listtile")[1]
+    en_tile.emit("click", Ruflet::Event.new(name: "click", target: en_tile.wire_id, raw_data: nil, page: @page, control: en_tile))
+
+    assert_nil @page.instance_variable_get(:@bottom_sheet)
+    assert_equal "https://myapp.com/en", top_webview.props["url"]
   end
 
   def test_native_overlays_and_loading_accept_ruflet_props

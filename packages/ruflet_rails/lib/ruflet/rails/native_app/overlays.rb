@@ -121,11 +121,14 @@ module Ruflet
       end
 
       def close_sheet
-        return unless @sheet
+        sheet = @sheet || @page.instance_variable_get(:@bottom_sheet)
+        return unless sheet
 
-        @page.update(@sheet, open: false)
+        @page.update(sheet, open: false) if sheet.wire_id
+        @page.bottom_sheet = nil if @page.respond_to?(:bottom_sheet=)
         @sheet = nil
       rescue StandardError
+        @page.bottom_sheet = nil if @page.respond_to?(:bottom_sheet=)
         @sheet = nil
       end
 
