@@ -84,7 +84,7 @@ class RufletDataTableCompatibilityTest < Minitest::Test
 
     row = patch["rows"].first
     assert_equal "DataRow", row["_c"]
-    assert_equal({ "selected" => "#ABCDEF" }, row["color"])
+    assert_equal({ "selected" => "#abcdef" }, row["color"])
     assert_equal true, row["selected"]
     assert_equal true, row["on_long_press"]
     assert_equal true, row["on_select_change"]

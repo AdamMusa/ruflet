@@ -198,14 +198,11 @@ module Ruflet
     end
 
     def normalize_color_prop(key, value)
-      return value unless value.is_a?(String)
-      return Ruflet::Colors.canonicalize(value) if color_prop_key?(key)
-
-      value
+      Ruflet::Colors.normalize_property(key, value)
     end
 
     def color_prop_key?(key)
-      key == "color" || key.end_with?("bgcolor") || key.end_with?("_color")
+      Ruflet::Colors.color_key?(key)
     end
 
     def normalize_icon_prop(key, value)

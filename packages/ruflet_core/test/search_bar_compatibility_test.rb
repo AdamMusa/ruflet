@@ -58,7 +58,7 @@ class RufletSearchBarCompatibilityTest < Minitest::Test
     assert_equal children, search_bar.children
     refute search_bar.props.key?("controls")
     assert_equal true, patch["autofocus"]
-    assert_equal({ "focused" => "#ABCDEF" }, patch["bar_bgcolor"])
+    assert_equal({ "focused" => "#abcdef" }, patch["bar_bgcolor"])
     assert_equal({ "color" => "#111111", "width" => 1 }, patch["bar_border_side"])
     assert_equal({ "hovered" => 3 }, patch["bar_elevation"])
     assert_equal "Search colors", patch["bar_hint_text"]

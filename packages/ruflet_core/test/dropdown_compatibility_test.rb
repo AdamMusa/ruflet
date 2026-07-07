@@ -57,7 +57,7 @@ class RufletDropdownCompatibilityTest < Minitest::Test
 
     assert_equal "Dropdown", patch["_c"]
     assert_equal true, patch["autofocus"]
-    assert_equal({ "focused" => "#ABCDEF" }, patch["bgcolor"])
+    assert_equal({ "focused" => "#abcdef" }, patch["bgcolor"])
     assert_equal "outline", patch["border"]
     assert_equal "#111111", patch["border_color"]
     assert_equal 8, patch["border_radius"]

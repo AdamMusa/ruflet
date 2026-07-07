@@ -26,7 +26,7 @@ class RufletPageCompatibilityTest < Minitest::Test
     patch = sent.last[1]["patch"]
 
     assert_equal "Demo", patch_value(patch, "title")
-    assert_equal({ "color_scheme_seed" => "#ABCDEF" }, patch_value(patch, "theme"))
+    assert_equal({ "color_scheme_seed" => "#abcdef" }, patch_value(patch, "theme"))
     assert_equal({ "color_scheme_seed" => "#000000" }, patch_value(patch, "dark_theme"))
     assert_equal "dark", patch_value(patch, "theme_mode")
     assert_equal({ "Inter" => "/fonts/inter.ttf" }, patch_value(patch, "fonts"))

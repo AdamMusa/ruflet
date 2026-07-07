@@ -30,7 +30,7 @@ class RufletSegmentedButtonCompatibilityTest < Minitest::Test
     assert_equal({ "left" => 4 }, patch["padding"])
     assert_equal Ruflet::MaterialIconLookup.codepoint_for("check"), patch["selected_icon"]
     assert_equal true, patch["show_selected_icon"]
-    assert_equal({ "side" => { "color" => "#ABCDEF" } }, patch["style"])
+    assert_equal({ "side" => { "color" => "#abcdef" } }, patch["style"])
     assert_equal true, patch["on_change"]
 
     first, second = patch["segments"]

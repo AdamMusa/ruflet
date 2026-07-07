@@ -116,7 +116,7 @@ class RufletMenuCompatibilityTest < Minitest::Test
     assert_equal "Icon", patch["leading"]["_c"]
     assert_equal "vertical", patch["overflow_axis"]
     assert_equal "Save file", patch["semantic_label"]
-    assert_equal({ "color" => "#ABCDEF" }, patch["style"])
+    assert_equal({ "color" => "#abcdef" }, patch["style"])
     assert_equal "Icon", patch["trailing"]["_c"]
     assert_equal true, patch["on_blur"]
     assert_equal true, patch["on_click"]

@@ -1574,6 +1574,7 @@ module Ruflet
         raise ArgumentError, "page #{key} must use an icon name string, not #{value.inspect}"
       end
 
+      value = Ruflet::Colors.normalize_property(key, value)
       return value.value if value.is_a?(Ruflet::IconData)
       value.is_a?(Symbol) ? value.to_s : value
     end
