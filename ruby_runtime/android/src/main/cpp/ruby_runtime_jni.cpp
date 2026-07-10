@@ -40,6 +40,20 @@ mrb_state* ensure_mrb() {
   return g_mrb;
 }
 
+// Kernel#__ruflet_eval(source): compile and run a Ruby string at top level.
+// The embedded VM omits the mruby-eval gem, so the runtime's require_relative
+// uses this to load app-tree files.
+mrb_value ruflet_eval_string(mrb_state* mrb, mrb_value self) {
+  const char* code = nullptr;
+  mrb_int len = 0;
+  mrb_get_args(mrb, "s", &code, &len);
+  mrbc_context* cxt = mrbc_context_new(mrb);
+  mrbc_filename(mrb, cxt, "(ruflet-require)");
+  mrb_value result = mrb_load_nstring_cxt(mrb, code, len, cxt);
+  mrbc_context_free(mrb, cxt);
+  return result;
+}
+
 EvalResult preload_embedded_runtime_locked() {
   if (g_runtime_loaded) {
     return {true, ""};
@@ -62,6 +76,8 @@ EvalResult preload_embedded_runtime_locked() {
   if (mrb->exc != nullptr) {
     return {false, exception_to_string(mrb)};
   }
+
+  mrb_define_method(mrb, mrb->kernel_module, "__ruflet_eval", ruflet_eval_string, MRB_ARGS_REQ(1));
 
   g_runtime_loaded = true;
   return {true, ""};
@@ -317,6 +333,13 @@ Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeStartFileServer(
     setenv("RUFLET_STRICT_PORT", "1", 1);
 
     std::lock_guard<std::mutex> lock(g_mutex);
+    // Expose the extracted project root to the embedded runtime (which has no
+    // working caller()) so __dir__ / require_relative resolve app-tree files.
+    const std::string::size_type slash = file_path.find_last_of('/');
+    const std::string app_root =
+        (slash == std::string::npos) ? std::string(".") : file_path.substr(0, slash);
+    eval_locked("$__ruflet_app_root = '" + escape_single_quotes(app_root) + "'",
+                file_path.c_str());
     EvalResult result = eval_locked(source, file_path.c_str());
     if (result.ok && !result.value.empty() && result.value[0] == ':') {
       const std::string safe_path = escape_single_quotes(file_path);

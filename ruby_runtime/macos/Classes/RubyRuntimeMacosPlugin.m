@@ -45,6 +45,20 @@ static mrb_state *ensure_mrb(void) {
   return g_mrb;
 }
 
+// Kernel#__ruflet_eval(source): compile and run a Ruby string at top level.
+// The embedded VM omits the mruby-eval gem, so the runtime's require_relative
+// uses this to load app-tree files.
+static mrb_value ruflet_eval_string(mrb_state *mrb, mrb_value self) {
+  const char *code = NULL;
+  mrb_int len = 0;
+  mrb_get_args(mrb, "s", &code, &len);
+  mrbc_context *cxt = mrbc_context_new(mrb);
+  mrbc_filename(mrb, cxt, "(ruflet-require)");
+  mrb_value result = mrb_load_nstring_cxt(mrb, code, len, cxt);
+  mrbc_context_free(mrb, cxt);
+  return result;
+}
+
 static BOOL preload_embedded_runtime(mrb_state *mrb, NSError **error) {
   if (g_runtime_loaded) {
     return YES;
@@ -81,6 +95,8 @@ static BOOL preload_embedded_runtime(mrb_state *mrb, NSError **error) {
     }
     return NO;
   }
+
+  mrb_define_method(mrb, mrb->kernel_module, "__ruflet_eval", ruflet_eval_string, MRB_ARGS_REQ(1));
 
   g_runtime_loaded = YES;
   return YES;
@@ -309,6 +325,11 @@ static void request_stop_server(void) {
       setenv("RUFLET_STRICT_PORT", "1", 1);
       [g_lock lock];
       NSError *error = nil;
+      // Expose the extracted project root to the embedded runtime (which has no
+      // working caller()) so __dir__ / require_relative resolve app-tree files.
+      eval_source([NSString stringWithFormat:@"$__ruflet_app_root = '%@'",
+                   escape_single_quotes([path stringByDeletingLastPathComponent])],
+                  path, &error);
       NSString *value = eval_source(source, path, &error);
       if (error == nil && value != nil && [value hasPrefix:@":"]) {
         NSString *safePath = escape_single_quotes(path);

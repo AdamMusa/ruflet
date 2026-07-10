@@ -781,6 +781,21 @@ class String
     end
   end
 
+  # mruby strings are byte strings with no encoding tag. The wire codec's
+  # binary_string? checks these; report UTF-8/valid so page values pack as
+  # msgpack str (the control tree is text), not bin.
+  unless method_defined?(:encoding)
+    def encoding
+      ::Encoding::UTF_8
+    end
+  end
+
+  unless method_defined?(:valid_encoding?)
+    def valid_encoding?
+      true
+    end
+  end
+
   unless method_defined?(:unpack1)
     def unpack1(format)
       unpack(format).first
@@ -866,8 +881,30 @@ module Kernel
     private :Array
   end
 
+  unless method_defined?(:__dir__)
+    def __dir__
+      base = $__ruflet_app_root.to_s
+      base.empty? ? "." : base
+    end
+  end
+
   unless method_defined?(:require_relative)
-    def require_relative(_feature)
+    # Load app-tree files relative to RUFLET_APP_ROOT (the extracted project
+    # root the native host exposes before running the app entrypoint).
+    def require_relative(feature)
+      base = $__ruflet_app_root.to_s
+      base = "." if base.empty?
+      target = ::File.expand_path(feature.to_s, base)
+      target += ".rb" unless target.end_with?(".rb")
+      # Framework-internal requires point at modules already compiled into the
+      # runtime (not on disk), so a missing target is a no-op, not an error.
+      return true unless ::File.file?(target)
+
+      loaded = ($__ruflet_loaded_features ||= {})
+      return false if loaded[target]
+
+      loaded[target] = true
+      __ruflet_eval(::File.read(target))
       true
     end
   end
@@ -880,8 +917,28 @@ module Kernel
 end
 
 class Module
+  unless method_defined?(:__dir__)
+    def __dir__
+      base = $__ruflet_app_root.to_s
+      base.empty? ? "." : base
+    end
+  end
+
   unless method_defined?(:require_relative)
-    def require_relative(_feature)
+    def require_relative(feature)
+      base = $__ruflet_app_root.to_s
+      base = "." if base.empty?
+      target = ::File.expand_path(feature.to_s, base)
+      target += ".rb" unless target.end_with?(".rb")
+      # Framework-internal requires point at modules already compiled into the
+      # runtime (not on disk), so a missing target is a no-op, not an error.
+      return true unless ::File.file?(target)
+
+      loaded = ($__ruflet_loaded_features ||= {})
+      return false if loaded[target]
+
+      loaded[target] = true
+      __ruflet_eval(::File.read(target))
       true
     end
   end
@@ -890,6 +947,11 @@ class Module
     def trap(_signal_name, handler = nil, &block)
       handler || block
     end
+  end
+end
+
+unless Object.const_defined?(:LoadError)
+  class LoadError < StandardError
   end
 end
 
@@ -12725,11 +12787,6 @@ module Ruflet
             visible = __args__[:visible]
             raise ArgumentError, "tab requires label or icon" if label.nil? && icon.nil?
 
-            min_height = icon.nil? || label.nil? ? 46.0 : 72.0
-            unless height.nil? || height >= min_height
-              raise ArgumentError, "tab height cannot be lower than #{min_height.to_i}"
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:badge] = badge unless badge.nil?
@@ -15207,18 +15264,6 @@ module Ruflet
             runs_count = 1 if runs_count.nil?
             spacing = 10 if spacing.nil?
 
-            {
-              child_aspect_ratio: child_aspect_ratio,
-              max_extent: max_extent,
-              run_spacing: run_spacing,
-              runs_count: runs_count,
-              semantic_child_count: semantic_child_count,
-              spacing: spacing
-            }.each do |name, value|
-              next if value.nil?
-              raise ArgumentError, "grid_view #{name} must be greater than or equal to 0" if value.negative?
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
@@ -15884,16 +15929,6 @@ module Ruflet
             horizontal = false if horizontal.nil?
             reverse = false if reverse.nil?
             spacing = 0 if spacing.nil?
-
-            {
-              divider_thickness: divider_thickness,
-              item_extent: item_extent,
-              semantic_child_count: semantic_child_count,
-              spacing: spacing
-            }.each do |name, value|
-              next if value.nil?
-              raise ArgumentError, "list_view #{name} must be greater than or equal to 0" if value.negative?
-            end
 
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
@@ -16933,11 +16968,6 @@ module Ruflet
             spacing = 10 if spacing.nil?
             vertical_alignment = "start" if vertical_alignment.nil?
 
-            validate_non_negative(:columns, columns)
-            validate_non_negative(:run_spacing, run_spacing)
-            validate_non_negative(:spacing, spacing)
-            validate_non_negative(:breakpoints, breakpoints)
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
@@ -16984,15 +17014,6 @@ module Ruflet
             super(type: TYPE, id: id, **props)
           end
 
-          private
-
-          def validate_non_negative(name, value)
-            values = value.is_a?(Hash) ? value.values : [value]
-            values.each do |entry|
-              next if entry.nil?
-              raise ArgumentError, "responsive_row #{name} must be greater than or equal to 0" if entry.negative?
-            end
-          end
         end
       end
     end
@@ -22839,7 +22860,8 @@ module Ruflet
       query_string = route_value.to_s.split("?", 2)[1].to_s
       return {} if query_string.empty?
 
-      CGI.parse(query_string).each_with_object({}) do |(key, values), result|
+      URI.decode_www_form(query_string).group_by(&:first).each_with_object({}) do |(key, pairs), result|
+        values = pairs.map(&:last)
         result[key] = values.size == 1 ? values.first : values
       end
     end
@@ -25303,7 +25325,17 @@ end
         "socket" => true,
         "thread" => true,
         "digest/sha1" => true,
-        "securerandom" => true
+        "securerandom" => true,
+        "fileutils" => true,
+        "tmpdir" => true,
+        "time" => true,
+        "stringio" => true,
+        "ostruct" => true,
+        "forwardable" => true,
+        "base64" => true,
+        "digest" => true,
+        "pp" => true,
+        "English" => true
       }
       return true if bundled_features[feature.to_s]
       raise LoadError, "cannot load such file -- #{feature}"

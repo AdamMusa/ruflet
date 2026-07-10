@@ -423,6 +423,21 @@ EXTRA_SHIMS = <<~'RUBY'
       end
     end
 
+    # mruby strings are byte strings with no encoding tag. The wire codec's
+    # binary_string? checks these; report UTF-8/valid so page values pack as
+    # msgpack str (the control tree is text), not bin.
+    unless method_defined?(:encoding)
+      def encoding
+        ::Encoding::UTF_8
+      end
+    end
+
+    unless method_defined?(:valid_encoding?)
+      def valid_encoding?
+        true
+      end
+    end
+
     unless method_defined?(:unpack1)
       def unpack1(format)
         unpack(format).first
@@ -508,8 +523,30 @@ EXTRA_SHIMS = <<~'RUBY'
       private :Array
     end
 
+    unless method_defined?(:__dir__)
+      def __dir__
+        base = $__ruflet_app_root.to_s
+        base.empty? ? "." : base
+      end
+    end
+
     unless method_defined?(:require_relative)
-      def require_relative(_feature)
+      # Load app-tree files relative to RUFLET_APP_ROOT (the extracted project
+      # root the native host exposes before running the app entrypoint).
+      def require_relative(feature)
+        base = $__ruflet_app_root.to_s
+        base = "." if base.empty?
+        target = ::File.expand_path(feature.to_s, base)
+        target += ".rb" unless target.end_with?(".rb")
+        # Framework-internal requires point at modules already compiled into the
+        # runtime (not on disk), so a missing target is a no-op, not an error.
+        return true unless ::File.file?(target)
+
+        loaded = ($__ruflet_loaded_features ||= {})
+        return false if loaded[target]
+
+        loaded[target] = true
+        __ruflet_eval(::File.read(target))
         true
       end
     end
@@ -522,8 +559,28 @@ EXTRA_SHIMS = <<~'RUBY'
   end
 
   class Module
+    unless method_defined?(:__dir__)
+      def __dir__
+        base = $__ruflet_app_root.to_s
+        base.empty? ? "." : base
+      end
+    end
+
     unless method_defined?(:require_relative)
-      def require_relative(_feature)
+      def require_relative(feature)
+        base = $__ruflet_app_root.to_s
+        base = "." if base.empty?
+        target = ::File.expand_path(feature.to_s, base)
+        target += ".rb" unless target.end_with?(".rb")
+        # Framework-internal requires point at modules already compiled into the
+        # runtime (not on disk), so a missing target is a no-op, not an error.
+        return true unless ::File.file?(target)
+
+        loaded = ($__ruflet_loaded_features ||= {})
+        return false if loaded[target]
+
+        loaded[target] = true
+        __ruflet_eval(::File.read(target))
         true
       end
     end
@@ -532,6 +589,11 @@ EXTRA_SHIMS = <<~'RUBY'
       def trap(_signal_name, handler = nil, &block)
         handler || block
       end
+    end
+  end
+
+  unless Object.const_defined?(:LoadError)
+    class LoadError < StandardError
     end
   end
 
@@ -1310,7 +1372,17 @@ POSTAMBLE = <<~RUBY
         "socket" => true,
         "thread" => true,
         "digest/sha1" => true,
-        "securerandom" => true
+        "securerandom" => true,
+        "fileutils" => true,
+        "tmpdir" => true,
+        "time" => true,
+        "stringio" => true,
+        "ostruct" => true,
+        "forwardable" => true,
+        "base64" => true,
+        "digest" => true,
+        "pp" => true,
+        "English" => true
       }
       return true if bundled_features[feature.to_s]
       raise LoadError, "cannot load such file -- \#{feature}"

@@ -75,6 +75,10 @@ module Ruflet
         backend_url = configured_backend_url(config)
         if self_contained
           build_args += ["--dart-define", "RUFLET_BACKEND_URL=#{backend_url}"] if backend_url
+          # Pin the embedded project so main.self.dart extracts assets/<name>/
+          # deterministically instead of inferring from a single main.rb — the
+          # app tree now ships many main.rb files (standalone_apps/*/main.rb).
+          build_args += ["--dart-define", "RUFLET_EMBEDDED_PROJECT=#{self_contained_project_name}"]
         else
           unless backend_url
             warn "build config error: backend_url is required for server-driven builds"
@@ -1055,13 +1059,18 @@ module Ruflet
           dependencies["ruby_runtime"] = ruby_runtime_dependency(dependencies["ruby_runtime"])
           assets.delete("assets/main.rb")
           assets.delete("assets/ruby_project/")
-          project_asset_path = "assets/#{self_contained_project_name}/"
-          assets << project_asset_path unless assets.include?(project_asset_path)
+          # Flutter does not recurse into asset directories, so every subdirectory
+          # of the embedded project (e.g. standalone_apps/<slug>/) must be listed
+          # explicitly or its files never reach the bundle/manifest on device.
+          self_contained_project_asset_dirs.each do |dir_entry|
+            assets << dir_entry unless assets.include?(dir_entry)
+          end
         else
           dependencies.delete("ruby_runtime")
           assets.delete("assets/main.rb")
           assets.delete("assets/ruby_project/")
-          assets.delete("assets/#{self_contained_project_name}/")
+          project_prefix = "assets/#{self_contained_project_name}/"
+          assets.reject! { |a| a.to_s == project_prefix || a.to_s.start_with?(project_prefix) }
         end
 
         flutter["assets"] = assets unless assets.empty?
@@ -1133,6 +1142,15 @@ module Ruflet
 
           line
         end.join
+      end
+
+      # Flutter asset directory entries for every folder of the embedded project
+      # that contains packaged files. Derived from the exact copy list so the
+      # pubspec asset dirs match what sync_self_contained_project_assets writes.
+      def self_contained_project_asset_dirs
+        prefix = "assets/#{self_contained_project_name}"
+        dirs = project_asset_relative_paths.map { |rel| File.dirname(rel) }.uniq
+        dirs.map { |dir| dir == "." ? "#{prefix}/" : "#{prefix}/#{dir}/" }.uniq.sort
       end
 
       def sync_self_contained_project_assets(client_dir, verbose: false)
