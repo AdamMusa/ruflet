@@ -310,7 +310,13 @@ EXTRA_SHIMS = <<~'RUBY'
     end
   end
 
-  class Integer
+  class Numeric
+    unless method_defined?(:positive?)
+      def positive?
+        self > 0
+      end
+    end
+
     unless method_defined?(:negative?)
       def negative?
         self < 0
@@ -446,6 +452,17 @@ EXTRA_SHIMS = <<~'RUBY'
   end
 
   module Enumerable
+    unless method_defined?(:group_by)
+      def group_by
+        result = {}
+        each do |item|
+          key = yield(item)
+          (result[key] ||= []) << item
+        end
+        result
+      end
+    end
+
     unless method_defined?(:count)
       def count(item = nil, &block)
         total = 0
@@ -594,6 +611,54 @@ EXTRA_SHIMS = <<~'RUBY'
 
   unless Object.const_defined?(:LoadError)
     class LoadError < StandardError
+    end
+  end
+
+  # The build omits mruby-dir. The server only needs Dir.pwd (to locate the
+  # assets root); in the embedded app that is the extracted project root.
+  unless Object.const_defined?(:Dir)
+    module Dir
+      def self.pwd
+        root = $__ruflet_app_root.to_s
+        root.empty? ? "." : root
+      end
+    end
+  end
+
+  # Page#parse_query uses URI.decode_www_form for route query strings. The
+  # build omits the uri lib (and Regexp), so implement it byte-wise here.
+  unless Object.const_defined?(:URI)
+    module URI
+      def self.decode_www_form_component(value)
+        s = value.to_s
+        out = +""
+        i = 0
+        len = s.length
+        while i < len
+          ch = s[i]
+          if ch == "+"
+            out << " "
+            i += 1
+          elsif ch == "%" && i + 2 < len
+            out << [s[i + 1, 2].to_i(16)].pack("C")
+            i += 3
+          else
+            out << ch
+            i += 1
+          end
+        end
+        out
+      end
+
+      def self.decode_www_form(str, _enc = nil)
+        s = str.to_s
+        return [] if s.empty?
+
+        s.split("&").reject(&:empty?).map do |pair|
+          key, value = pair.split("=", 2)
+          [decode_www_form_component(key.to_s), decode_www_form_component(value.to_s)]
+        end
+      end
     end
   end
 

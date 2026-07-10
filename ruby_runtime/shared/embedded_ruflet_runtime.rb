@@ -668,7 +668,13 @@ class Hash
   end
 end
 
-class Integer
+class Numeric
+  unless method_defined?(:positive?)
+    def positive?
+      self > 0
+    end
+  end
+
   unless method_defined?(:negative?)
     def negative?
       self < 0
@@ -804,6 +810,17 @@ class String
 end
 
 module Enumerable
+  unless method_defined?(:group_by)
+    def group_by
+      result = {}
+      each do |item|
+        key = yield(item)
+        (result[key] ||= []) << item
+      end
+      result
+    end
+  end
+
   unless method_defined?(:count)
     def count(item = nil, &block)
       total = 0
@@ -952,6 +969,54 @@ end
 
 unless Object.const_defined?(:LoadError)
   class LoadError < StandardError
+  end
+end
+
+# The build omits mruby-dir. The server only needs Dir.pwd (to locate the
+# assets root); in the embedded app that is the extracted project root.
+unless Object.const_defined?(:Dir)
+  module Dir
+    def self.pwd
+      root = $__ruflet_app_root.to_s
+      root.empty? ? "." : root
+    end
+  end
+end
+
+# Page#parse_query uses URI.decode_www_form for route query strings. The
+# build omits the uri lib (and Regexp), so implement it byte-wise here.
+unless Object.const_defined?(:URI)
+  module URI
+    def self.decode_www_form_component(value)
+      s = value.to_s
+      out = +""
+      i = 0
+      len = s.length
+      while i < len
+        ch = s[i]
+        if ch == "+"
+          out << " "
+          i += 1
+        elsif ch == "%" && i + 2 < len
+          out << [s[i + 1, 2].to_i(16)].pack("C")
+          i += 3
+        else
+          out << ch
+          i += 1
+        end
+      end
+      out
+    end
+
+    def self.decode_www_form(str, _enc = nil)
+      s = str.to_s
+      return [] if s.empty?
+
+      s.split("&").reject(&:empty?).map do |pair|
+        key, value = pair.split("=", 2)
+        [decode_www_form_component(key.to_s), decode_www_form_component(value.to_s)]
+      end
+    end
   end
 end
 
@@ -2470,11 +2535,6 @@ module Ruflet
             width = __args__[:width]
             on_animation_end = __args__[:on_animation_end]
             on_size_change = __args__[:on_size_change]
-            visible_actions = Array(actions).reject { |action| hidden_control?(action) }
-            if visible_actions.empty? && hidden_or_nil?(title) && hidden_or_nil?(message) && hidden_or_nil?(cancel)
-              raise ArgumentError, "cupertino_action_sheet requires actions, title, message, or cancel"
-            end
-
             props = {}
             props[:actions] = actions unless actions.nil?
             props[:align] = align unless align.nil?
@@ -2687,7 +2747,6 @@ module Ruflet
             on_size_change = __args__[:on_size_change]
             animating = true if animating.nil?
             radius = 10 if radius.nil?
-            raise ArgumentError, "cupertino_activity_indicator radius must be greater than 0" unless radius.positive?
 
             props = {}
             props[:align] = align unless align.nil?
@@ -2772,11 +2831,6 @@ module Ruflet
             actions = [] if actions.nil?
             inset_animation = { "duration" => 100, "curve" => "decelerate" } if inset_animation.nil?
             modal = false if modal.nil?
-
-            visible_actions = Array(actions).reject { |action| hidden_control?(action) }
-            if visible_actions.empty? && hidden_or_nil?(title) && hidden_or_nil?(content)
-              raise ArgumentError, "cupertino_alert_dialog requires title, content, or actions"
-            end
 
             props = {}
             props[:actions] = actions unless actions.nil?
@@ -3026,9 +3080,6 @@ module Ruflet
             border_radius = { "all" => 8.0 } if border_radius.nil?
             opacity_on_click = 0.4 if opacity_on_click.nil?
             size = "large" if size.nil?
-            unless opacity_on_click.respond_to?(:between?) && opacity_on_click.between?(0.0, 1.0)
-              raise ArgumentError, "cupertino_button opacity_on_click must be between 0.0 and 1.0"
-            end
 
             props = {}
             props[:align] = align unless align.nil?
@@ -3252,9 +3303,7 @@ module Ruflet
             tooltip = __args__[:tooltip]
             visible = __args__[:visible]
             enable_haptic_feedback = true if enable_haptic_feedback.nil?
-            visible_actions = Array(actions).reject { |action| hidden_control?(action) }
             raise ArgumentError, "cupertino_context_menu requires visible content" if content.nil? || hidden_control?(content)
-            raise ArgumentError, "cupertino_context_menu requires at least one visible action" if visible_actions.empty?
 
             props = {}
             props[:actions] = actions unless actions.nil?
@@ -3413,13 +3462,6 @@ module Ruflet
             minute_interval = 1 if minute_interval.nil?
             show_day_of_week = false if show_day_of_week.nil?
             use_24h_format = false if use_24h_format.nil?
-            raise ArgumentError, "cupertino_date_picker item_extent must be greater than 0" unless item_extent.positive?
-            unless minute_interval.positive? && (60 % minute_interval).zero?
-              raise ArgumentError, "cupertino_date_picker minute_interval must be a positive factor of 60"
-            end
-            if show_day_of_week && date_picker_mode != "date"
-              raise ArgumentError, "cupertino_date_picker show_day_of_week requires date_picker_mode: 'date'"
-            end
 
             props = {}
             props[:align] = align unless align.nil?
@@ -3608,9 +3650,6 @@ module Ruflet
             border_radius = { "all" => 8.0 } if border_radius.nil?
             opacity_on_click = 0.4 if opacity_on_click.nil?
             size = "large" if size.nil?
-            unless opacity_on_click.respond_to?(:between?) && opacity_on_click.between?(0.0, 1.0)
-              raise ArgumentError, "cupertino_filled_button opacity_on_click must be between 0.0 and 1.0"
-            end
 
             props = {}
             props[:align] = align unless align.nil?
@@ -3741,13 +3780,6 @@ module Ruflet
             leading_size = notched ? 30.0 : 28.0 if leading_size.nil?
             leading_to_title = notched ? 12.0 : 16.0 if leading_to_title.nil?
             toggle_inputs = false if toggle_inputs.nil?
-            {
-              leading_size: leading_size,
-              leading_to_title: leading_to_title
-            }.each do |name, value|
-              raise ArgumentError, "cupertino_list_tile #{name} must be greater than or equal to 0" if value.negative?
-            end
-
             props = {}
             props[:additional_info] = additional_info unless additional_info.nil?
             props[:align] = align unless align.nil?
@@ -3862,14 +3894,6 @@ module Ruflet
             on_size_change = __args__[:on_size_change]
             icon_size = 30 if icon_size.nil?
             selected_index = 0 if selected_index.nil?
-            visible_destinations = Array(destinations).reject { |destination| destination.respond_to?(:props) && destination.props["visible"] == false }
-            unless destinations.nil? || visible_destinations.length >= 2
-              raise ArgumentError, "cupertino_navigation_bar destinations must include at least two visible destinations"
-            end
-
-            unless destinations.nil? || (0...visible_destinations.length).cover?(selected_index)
-              raise IndexError, "cupertino_navigation_bar selected_index is out of range"
-            end
 
             props = {}
             props[:active_color] = active_color unless active_color.nil?
@@ -3990,15 +4014,6 @@ module Ruflet
             selected_index = 0 if selected_index.nil?
             squeeze = 1.45 if squeeze.nil?
             use_magnifier = false if use_magnifier.nil?
-
-            {
-              item_extent: item_extent,
-              magnification: magnification,
-              squeeze: squeeze
-            }.each do |name, value|
-              raise ArgumentError, "cupertino_picker #{name} must be greater than 0" unless value.positive?
-            end
-            raise ArgumentError, "cupertino_picker selected_index must be greater than or equal to 0" if selected_index.negative?
 
             props = {}
             props[:align] = align unless align.nil?
@@ -4350,10 +4365,6 @@ module Ruflet
             on_size_change = __args__[:on_size_change]
             min = 0.0 if min.nil?
             max = 1.0 if max.nil?
-            raise ArgumentError, "cupertino_slider min must be less than or equal to max" if min > max
-            raise ArgumentError, "cupertino_slider divisions must be greater than 0" unless divisions.nil? || divisions.positive?
-            raise ArgumentError, "cupertino_slider value must be greater than or equal to min" unless value.nil? || value >= min
-            raise ArgumentError, "cupertino_slider value must be less than or equal to max" unless value.nil? || value <= max
 
             props = {}
             props[:active_color] = active_color unless active_color.nil?
@@ -5024,17 +5035,6 @@ module Ruflet
             mode = "hour_minute_seconds" if mode.nil?
             second_interval = 1 if second_interval.nil?
             value = 0 if value.nil?
-            raise ArgumentError, "cupertino_timer_picker item_extent must be greater than 0" unless item_extent.positive?
-            unless minute_interval.positive? && (60 % minute_interval).zero?
-              raise ArgumentError, "cupertino_timer_picker minute_interval must be a positive factor of 60"
-            end
-            unless second_interval.positive? && (60 % second_interval).zero?
-              raise ArgumentError, "cupertino_timer_picker second_interval must be a positive factor of 60"
-            end
-            raise ArgumentError, "cupertino_timer_picker value must be greater than or equal to 0" unless value >= 0
-            raise ArgumentError, "cupertino_timer_picker value must be less than 24 hours" unless value < 86_400
-            raise ArgumentError, "cupertino_timer_picker value must be a multiple of minute_interval" unless (value % minute_interval).zero?
-            raise ArgumentError, "cupertino_timer_picker value must be a multiple of second_interval" unless (value % second_interval).zero?
 
             props = {}
             props[:align] = align unless align.nil?
@@ -5159,9 +5159,6 @@ module Ruflet
             border_radius = { "all" => 8.0 } if border_radius.nil?
             opacity_on_click = 0.4 if opacity_on_click.nil?
             size = "large" if size.nil?
-            unless opacity_on_click.respond_to?(:between?) && opacity_on_click.between?(0.0, 1.0)
-              raise ArgumentError, "cupertino_tinted_button opacity_on_click must be between 0.0 and 1.0"
-            end
 
             props = {}
             props[:align] = align unless align.nil?
@@ -5278,10 +5275,6 @@ module Ruflet
             tooltip = __args__[:tooltip]
             visible = __args__[:visible]
             on_dismiss = __args__[:on_dismiss]
-            if title.nil? && content.nil? && (actions.nil? || actions.empty?)
-              raise ArgumentError, "alert_dialog requires title, content, or actions"
-            end
-
             props = {}
             props[:action_button_padding] = action_button_padding unless action_button_padding.nil?
             props[:actions] = actions unless actions.nil?
@@ -5469,10 +5462,6 @@ module Ruflet
             toolbar_text_style = __args__[:toolbar_text_style]
             tooltip = __args__[:tooltip]
             visible = __args__[:visible]
-            unless toolbar_opacity.nil? || (0.0..1.0).cover?(toolbar_opacity)
-              raise ArgumentError, "app_bar toolbar_opacity must be between 0.0 and 1.0"
-            end
-
             props = {}
             props[:actions] = actions unless actions.nil?
             props[:actions_padding] = actions_padding unless actions_padding.nil?
@@ -5676,13 +5665,6 @@ module Ruflet
             small_size = __args__[:small_size]
             text_color = __args__[:text_color]
             text_style = __args__[:text_style]
-            {
-              large_size: large_size,
-              small_size: small_size
-            }.each do |name, value|
-              raise ArgumentError, "badge #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
-            end
-
             props = {}
             props[:alignment] = alignment unless alignment.nil?
             props[:bgcolor] = bgcolor unless bgcolor.nil?
@@ -5747,13 +5729,6 @@ module Ruflet
             on_dismiss = __args__[:on_dismiss]
             on_visible = __args__[:on_visible]
             raise ArgumentError, "banner requires content" if content.nil?
-            raise ArgumentError, "banner requires at least one actions control" if actions.nil? || actions.empty?
-            {
-              elevation: elevation,
-              min_action_bar_height: min_action_bar_height
-            }.each do |name, value|
-              raise ArgumentError, "banner #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
-            end
 
             props = {}
             props[:actions] = actions unless actions.nil?
@@ -6313,8 +6288,6 @@ module Ruflet
             width = __args__[:width]
             on_animation_end = __args__[:on_animation_end]
             on_size_change = __args__[:on_size_change]
-            raise ArgumentError, "bottom_app_bar elevation must be greater than or equal to 0" if !elevation.nil? && elevation.negative?
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -6410,9 +6383,6 @@ module Ruflet
             visible = __args__[:visible]
             on_dismiss = __args__[:on_dismiss]
             raise ArgumentError, "bottom_sheet requires content" if content.nil?
-            unless elevation.nil? || elevation >= 0
-              raise ArgumentError, "bottom_sheet elevation must be greater than or equal to 0"
-            end
 
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
@@ -6515,8 +6485,6 @@ module Ruflet
             on_hover = __args__[:on_hover]
             on_long_press = __args__[:on_long_press]
             on_size_change = __args__[:on_size_change]
-            raise ArgumentError, "button requires content or icon" if content.nil? && icon.nil?
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
@@ -6633,10 +6601,6 @@ module Ruflet
             width = __args__[:width]
             on_animation_end = __args__[:on_animation_end]
             on_size_change = __args__[:on_size_change]
-            unless elevation.nil? || elevation >= 0
-              raise ArgumentError, "card elevation must be greater than or equal to 0"
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
@@ -6912,13 +6876,6 @@ module Ruflet
               raise ArgumentError, "chip on_click and on_select cannot both be specified"
             end
 
-            {
-              elevation: elevation,
-              elevation_on_click: elevation_on_click
-            }.each do |name, value|
-              raise ArgumentError, "chip #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
-            end
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -7053,18 +7010,6 @@ module Ruflet
             on_animation_end = __args__[:on_animation_end]
             on_image_error = __args__[:on_image_error]
             on_size_change = __args__[:on_size_change]
-            {
-              radius: radius,
-              min_radius: min_radius,
-              max_radius: max_radius
-            }.each do |name, value|
-              raise ArgumentError, "circle_avatar #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
-            end
-
-            if !radius.nil? && (!min_radius.nil? || !max_radius.nil?)
-              raise ArgumentError, "circle_avatar radius cannot be combined with min_radius or max_radius"
-            end
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -7638,34 +7583,6 @@ module Ruflet
             on_animation_end = __args__[:on_animation_end]
             on_select_all = __args__[:on_select_all]
             on_size_change = __args__[:on_size_change]
-            visible_columns = visible_controls(columns)
-            raise ArgumentError, "data_table requires at least one visible columns control" if visible_columns.empty?
-
-            visible_rows = visible_controls(rows)
-            visible_rows.each do |row|
-              next unless row.respond_to?(:props)
-
-              unless visible_controls(row.props["cells"]).length == visible_columns.length
-                raise ArgumentError, "data_table row cells must match visible columns"
-              end
-            end
-
-            {
-              checkbox_horizontal_margin: checkbox_horizontal_margin,
-              column_spacing: column_spacing,
-              data_row_max_height: data_row_max_height,
-              data_row_min_height: data_row_min_height,
-              divider_thickness: divider_thickness,
-              heading_row_height: heading_row_height,
-              horizontal_margin: horizontal_margin
-            }.each do |name, value|
-              raise ArgumentError, "data_table #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
-            end
-
-            unless data_row_min_height.nil? || data_row_max_height.nil? || data_row_min_height <= data_row_max_height
-              raise ArgumentError, "data_table data_row_min_height must be less than or equal to data_row_max_height"
-            end
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -7789,8 +7706,6 @@ module Ruflet
             on_change = __args__[:on_change]
             on_dismiss = __args__[:on_dismiss]
             on_entry_mode_change = __args__[:on_entry_mode_change]
-            validate_date_range!(first_date, last_date, value)
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:badge] = badge unless badge.nil?
@@ -7831,21 +7746,6 @@ module Ruflet
             super(type: TYPE, id: id, **props)
           end
 
-          private
-
-          def validate_date_range!(first_date, last_date, value)
-            first = first_date || "1900-01-01"
-            last = last_date || "2050-01-01"
-            raise ArgumentError, "date_picker first_date must be before or equal to last_date" if date_key(first) > date_key(last)
-            return if value.nil?
-
-            raise ArgumentError, "date_picker value must be on or after first_date" if date_key(value) < date_key(first)
-            raise ArgumentError, "date_picker value must be on or before last_date" if date_key(value) > date_key(last)
-          end
-
-          def date_key(value)
-            value.respond_to?(:iso8601) ? value.iso8601 : value.to_s
-          end
         end
       end
     end
@@ -7903,8 +7803,6 @@ module Ruflet
             visible = __args__[:visible]
             on_change = __args__[:on_change]
             on_dismiss = __args__[:on_dismiss]
-            validate_date_range!(first_date, last_date, start_value, end_value)
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:badge] = badge unless badge.nil?
@@ -7947,23 +7845,6 @@ module Ruflet
             super(type: TYPE, id: id, **props)
           end
 
-          private
-
-          def validate_date_range!(first_date, last_date, start_value, end_value)
-            first = first_date || "1900-01-01"
-            last = last_date || "2050-01-01"
-            raise ArgumentError, "date_range_picker first_date must be before or equal to last_date" if date_key(first) > date_key(last)
-            raise ArgumentError, "date_range_picker start_value must be on or after first_date" if !start_value.nil? && date_key(start_value) < date_key(first)
-            raise ArgumentError, "date_range_picker end_value must be on or before last_date" if !end_value.nil? && date_key(end_value) > date_key(last)
-
-            unless start_value.nil? || end_value.nil? || date_key(start_value) <= date_key(end_value)
-              raise ArgumentError, "date_range_picker start_value must be before or equal to end_value"
-            end
-          end
-
-          def date_key(value)
-            value.respond_to?(:iso8601) ? value.iso8601 : value.to_s
-          end
         end
       end
     end
@@ -8000,15 +7881,6 @@ module Ruflet
             tooltip = __args__[:tooltip]
             trailing_indent = __args__[:trailing_indent]
             visible = __args__[:visible]
-            {
-              height: height,
-              leading_indent: leading_indent,
-              thickness: thickness,
-              trailing_indent: trailing_indent
-            }.each do |name, value|
-              raise ArgumentError, "divider #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
-            end
-
             props = {}
             props[:badge] = badge unless badge.nil?
             props[:col] = col unless col.nil?
@@ -8128,17 +8000,6 @@ module Ruflet
             on_select = __args__[:on_select]
             on_size_change = __args__[:on_size_change]
             on_text_change = __args__[:on_text_change]
-            {
-              border_width: border_width,
-              elevation: elevation,
-              focused_border_width: focused_border_width,
-              menu_height: menu_height,
-              menu_width: menu_width,
-              text_size: text_size
-            }.each do |name, numeric_value|
-              raise ArgumentError, "dropdown #{name} must be greater than or equal to 0" unless numeric_value.nil? || numeric_value >= 0
-            end
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -8479,8 +8340,6 @@ module Ruflet
             tooltip = __args__[:tooltip]
             trailing_icon = __args__[:trailing_icon]
             visible = __args__[:visible]
-            raise ArgumentError, "dropdown_option requires key or text" if key.nil? && text.nil?
-
             key = text if key.nil?
             text = key if text.nil?
 
@@ -8679,10 +8538,6 @@ module Ruflet
             on_size_change = __args__[:on_size_change]
             elevation = 2 if elevation.nil?
 
-            { elevation: elevation, spacing: spacing }.each do |name, value|
-              raise ArgumentError, "expansion_panel_list #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
-            end
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -8810,7 +8665,6 @@ module Ruflet
             on_change = __args__[:on_change]
             on_size_change = __args__[:on_size_change]
             raise ArgumentError, "expansion_tile requires a visible title" if title.nil? || (title.respond_to?(:props) && title.props["visible"] == false)
-            raise ArgumentError, "expansion_tile min_tile_height must be greater than or equal to 0" unless min_tile_height.nil? || min_tile_height >= 0
             expanded = false if expanded.nil?
             maintain_state = false if maintain_state.nil?
             show_trailing_icon = true if show_trailing_icon.nil?
@@ -8950,8 +8804,6 @@ module Ruflet
             on_hover = __args__[:on_hover]
             on_long_press = __args__[:on_long_press]
             on_size_change = __args__[:on_size_change]
-            raise ArgumentError, "filled_button requires content or icon" if content.nil? && icon.nil?
-
             autofocus = false if autofocus.nil?
             clip_behavior = "none" if clip_behavior.nil?
 
@@ -9093,10 +8945,6 @@ module Ruflet
             autofocus = false if autofocus.nil?
             icon_size = 24 if icon_size.nil?
             padding = { "all" => 8 } if padding.nil?
-            unless splash_radius.nil? || splash_radius.positive?
-              raise ArgumentError, "filled_icon_button splash_radius must be greater than 0"
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
@@ -9231,8 +9079,6 @@ module Ruflet
             on_hover = __args__[:on_hover]
             on_long_press = __args__[:on_long_press]
             on_size_change = __args__[:on_size_change]
-            raise ArgumentError, "filled_tonal_button requires content or icon" if content.nil? && icon.nil?
-
             autofocus = false if autofocus.nil?
             clip_behavior = "none" if clip_behavior.nil?
 
@@ -9374,10 +9220,6 @@ module Ruflet
             autofocus = false if autofocus.nil?
             icon_size = 24 if icon_size.nil?
             padding = { "all" => 8 } if padding.nil?
-            unless splash_radius.nil? || splash_radius.positive?
-              raise ArgumentError, "filled_tonal_icon_button splash_radius must be greater than 0"
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
@@ -9516,20 +9358,6 @@ module Ruflet
             on_animation_end = __args__[:on_animation_end]
             on_click = __args__[:on_click]
             on_size_change = __args__[:on_size_change]
-            if icon.nil? && blank_content?(content)
-              raise ArgumentError, "floating_action_button requires icon or non-empty content"
-            end
-
-            {
-              disabled_elevation: disabled_elevation,
-              elevation: elevation,
-              focus_elevation: focus_elevation,
-              highlight_elevation: highlight_elevation,
-              hover_elevation: hover_elevation
-            }.each do |name, value|
-              raise ArgumentError, "floating_action_button #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
-            end
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -9674,10 +9502,6 @@ module Ruflet
             on_hover = __args__[:on_hover]
             on_long_press = __args__[:on_long_press]
             on_size_change = __args__[:on_size_change]
-            unless splash_radius.nil? || splash_radius >= 0
-              raise ArgumentError, "icon_button splash_radius must be greater than or equal to 0"
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
@@ -10024,12 +9848,6 @@ module Ruflet
             on_focus = __args__[:on_focus]
             on_hover = __args__[:on_hover]
             on_size_change = __args__[:on_size_change]
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "menu_item_button requires visible content"
-            end
-
-            raise ArgumentError, "menu_item_button height must be greater than or equal to 0" unless height.nil? || height >= 0
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -10149,15 +9967,6 @@ module Ruflet
             on_animation_end = __args__[:on_animation_end]
             on_change = __args__[:on_change]
             on_size_change = __args__[:on_size_change]
-            visible_destinations = Array(destinations).reject { |destination| destination.respond_to?(:props) && destination.props["visible"] == false }
-            unless destinations.nil? || visible_destinations.length >= 2
-              raise ArgumentError, "navigation_bar destinations must include at least two visible destinations"
-            end
-
-            unless selected_index.nil? || destinations.nil? || (0...visible_destinations.length).cover?(selected_index)
-              raise IndexError, "navigation_bar selected_index is out of range"
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
@@ -10311,13 +10120,6 @@ module Ruflet
             on_dismiss = __args__[:on_dismiss]
             selected_index = 0 if selected_index.nil?
 
-            {
-              elevation: elevation,
-              width: width
-            }.each do |name, value|
-              raise ArgumentError, "navigation_drawer #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:badge] = badge unless badge.nil?
@@ -10469,27 +10271,6 @@ module Ruflet
             on_animation_end = __args__[:on_animation_end]
             on_change = __args__[:on_change]
             on_size_change = __args__[:on_size_change]
-            visible_destinations = Array(destinations).reject { |destination| destination.respond_to?(:props) && destination.props["visible"] == false }
-            unless destinations.nil? || visible_destinations.length >= 2
-              raise ArgumentError, "navigation_rail destinations must include at least two visible destinations"
-            end
-
-            unless selected_index.nil? || destinations.nil? || (0...visible_destinations.length).cover?(selected_index)
-              raise IndexError, "navigation_rail selected_index is out of range"
-            end
-
-            unless group_alignment.nil? || (-1.0..1.0).cover?(group_alignment)
-              raise ArgumentError, "navigation_rail group_alignment must be between -1.0 and 1.0"
-            end
-
-            {
-              elevation: elevation,
-              min_extended_width: min_extended_width,
-              min_width: min_width
-            }.each do |name, value|
-              raise ArgumentError, "navigation_rail #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
-            end
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -10722,8 +10503,6 @@ module Ruflet
             on_hover = __args__[:on_hover]
             on_long_press = __args__[:on_long_press]
             on_size_change = __args__[:on_size_change]
-            raise ArgumentError, "outlined_button requires content or icon" if content.nil? && icon.nil?
-
             autofocus = false if autofocus.nil?
             clip_behavior = "none" if clip_behavior.nil?
 
@@ -10862,10 +10641,6 @@ module Ruflet
             autofocus = false if autofocus.nil?
             icon_size = 24 if icon_size.nil?
             padding = { "all" => 8 } if padding.nil?
-            unless splash_radius.nil? || splash_radius.positive?
-              raise ArgumentError, "outlined_icon_button splash_radius must be greater than 0"
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
@@ -11005,10 +10780,6 @@ module Ruflet
             on_open = __args__[:on_open]
             on_select = __args__[:on_select]
             on_size_change = __args__[:on_size_change]
-            { elevation: elevation, icon_size: icon_size, splash_radius: splash_radius }.each do |name, value|
-              raise ArgumentError, "popup_menu_button #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
-            end
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -11105,12 +10876,6 @@ module Ruflet
             tooltip = __args__[:tooltip]
             visible = __args__[:visible]
             on_click = __args__[:on_click]
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "popup_menu_item requires visible content"
-            end
-
-            raise ArgumentError, "popup_menu_item height must be greater than or equal to 0" unless height.nil? || height >= 0
-
             props = {}
             props[:badge] = badge unless badge.nil?
             props[:checked] = checked unless checked.nil?
@@ -11197,15 +10962,6 @@ module Ruflet
             year_2023 = __args__[:year_2023]
             on_animation_end = __args__[:on_animation_end]
             on_size_change = __args__[:on_size_change]
-            {
-              bar_height: bar_height,
-              semantics_value: semantics_value,
-              stop_indicator_radius: stop_indicator_radius,
-              track_gap: track_gap
-            }.each do |name, numeric_value|
-              raise ArgumentError, "progress_bar #{name} must be greater than or equal to 0" unless numeric_value.nil? || numeric_value >= 0
-            end
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -11319,14 +11075,6 @@ module Ruflet
             year_2023 = __args__[:year_2023]
             on_animation_end = __args__[:on_animation_end]
             on_size_change = __args__[:on_size_change]
-            {
-              semantics_value: semantics_value,
-              stroke_width: stroke_width,
-              track_gap: track_gap
-            }.each do |name, numeric_value|
-              raise ArgumentError, "progress_ring #{name} must be greater than or equal to 0" unless numeric_value.nil? || numeric_value >= 0
-            end
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -11617,19 +11365,6 @@ module Ruflet
             on_change_end = __args__[:on_change_end]
             on_change_start = __args__[:on_change_start]
             on_size_change = __args__[:on_size_change]
-            min_value = min.nil? ? 0.0 : min
-            max_value = max.nil? ? 1.0 : max
-
-            raise ArgumentError, "range_slider min must be less than or equal to max" if min_value > max_value
-            raise ArgumentError, "range_slider divisions must be greater than 0" unless divisions.nil? || divisions > 0
-            raise ArgumentError, "range_slider round must be between 0 and 20" unless round.nil? || (0..20).cover?(round)
-            raise ArgumentError, "range_slider start_value must be greater than or equal to min" unless start_value.nil? || start_value >= min_value
-            raise ArgumentError, "range_slider end_value must be less than or equal to max" unless end_value.nil? || end_value <= max_value
-
-            unless start_value.nil? || end_value.nil? || start_value <= end_value
-              raise ArgumentError, "range_slider start_value must be less than or equal to end_value"
-            end
-
             props = {}
             props[:active_color] = active_color unless active_color.nil?
             props[:align] = align unless align.nil?
@@ -11923,16 +11658,6 @@ module Ruflet
             full_screen = false if full_screen.nil?
             value = "" if value.nil?
 
-            {
-              bar_elevation: bar_elevation,
-              view_elevation: view_elevation,
-              view_header_height: view_header_height
-            }.each do |name, value|
-              next unless value.is_a?(Numeric)
-
-              raise ArgumentError, "search_bar #{name} must be greater than or equal to 0" if value.negative?
-            end
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -12143,25 +11868,6 @@ module Ruflet
             on_animation_end = __args__[:on_animation_end]
             on_change = __args__[:on_change]
             on_size_change = __args__[:on_size_change]
-            visible_segments = Array(segments).reject { |segment| segment.respond_to?(:props) && segment.props["visible"] == false }
-            raise ArgumentError, "segmented_button requires at least one visible segment" if visible_segments.empty?
-
-            selected_values = selected.nil? ? [] : Array(selected)
-            if selected_values.empty? && allow_empty_selection != true
-              raise ArgumentError, "segmented_button selected cannot be empty unless allow_empty_selection is true"
-            end
-            if selected_values.size > 1 && allow_multiple_selection != true
-              raise ArgumentError, "segmented_button selected cannot contain multiple values unless allow_multiple_selection is true"
-            end
-
-            segment_values = visible_segments.filter_map do |segment|
-              segment.respond_to?(:props) ? segment.props["value"] : nil
-            end
-            missing_values = selected_values - segment_values
-            unless missing_values.empty?
-              raise ArgumentError, "segmented_button selected values must match segment values"
-            end
-
             props = {}
             props[:align] = align unless align.nil?
             props[:allow_empty_selection] = allow_empty_selection unless allow_empty_selection.nil?
@@ -12449,9 +12155,6 @@ module Ruflet
             on_dismiss = __args__[:on_dismiss]
             on_visible = __args__[:on_visible]
             raise ArgumentError, "snack_bar requires content" if content.nil?
-            unless action_overflow_threshold.nil? || (0.0..1.0).cover?(action_overflow_threshold)
-              raise ArgumentError, "snack_bar action_overflow_threshold must be between 0.0 and 1.0"
-            end
 
             props = {}
             props[:action] = action unless action.nil?
@@ -12555,12 +12258,6 @@ module Ruflet
             on_open = __args__[:on_open]
             on_size_change = __args__[:on_size_change]
             clip_behavior = "none" if clip_behavior.nil?
-
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "submenu_button requires visible content"
-            end
-
-            raise ArgumentError, "submenu_button height must be greater than or equal to 0" unless height.nil? || height >= 0
 
             props = {}
             props[:align] = align unless align.nil?
@@ -12785,8 +12482,6 @@ module Ruflet
             rtl = __args__[:rtl]
             tooltip = __args__[:tooltip]
             visible = __args__[:visible]
-            raise ArgumentError, "tab requires label or icon" if label.nil? && icon.nil?
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:badge] = badge unless badge.nil?
@@ -12883,10 +12578,6 @@ module Ruflet
             on_click = __args__[:on_click]
             on_hover = __args__[:on_hover]
             on_size_change = __args__[:on_size_change]
-            { divider_height: divider_height, indicator_thickness: indicator_thickness }.each do |name, value|
-              raise ArgumentError, "tab_bar #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
@@ -13007,10 +12698,6 @@ module Ruflet
             on_size_change = __args__[:on_size_change]
             clip_behavior = "hardEdge" if clip_behavior.nil?
             viewport_fraction = 1.0 if viewport_fraction.nil?
-
-            unless viewport_fraction.nil? || viewport_fraction > 0
-              raise ArgumentError, "tab_bar_view viewport_fraction must be greater than 0"
-            end
 
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
@@ -13227,8 +12914,6 @@ module Ruflet
             on_hover = __args__[:on_hover]
             on_long_press = __args__[:on_long_press]
             on_size_change = __args__[:on_size_change]
-            raise ArgumentError, "text_button requires content or icon" if content.nil? && icon.nil?
-
             autofocus = false if autofocus.nil?
             clip_behavior = "none" if clip_behavior.nil?
 
@@ -13682,15 +13367,6 @@ module Ruflet
             trailing_indent = __args__[:trailing_indent]
             visible = __args__[:visible]
             width = __args__[:width]
-            {
-              leading_indent: leading_indent,
-              thickness: thickness,
-              trailing_indent: trailing_indent,
-              width: width
-            }.each do |name, value|
-              raise ArgumentError, "vertical_divider #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
-            end
-
             props = {}
             props[:badge] = badge unless badge.nil?
             props[:col] = col unless col.nil?
@@ -14619,11 +14295,6 @@ module Ruflet
             movement_duration = 200 if movement_duration.nil?
             resize_duration = 300 if resize_duration.nil?
 
-            dismiss_thresholds.each_value do |threshold|
-              next if threshold.nil?
-              raise ArgumentError, "dismissible dismiss_thresholds values must be between 0.0 and 1.0" unless (0.0..1.0).cover?(threshold)
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
@@ -14716,10 +14387,6 @@ module Ruflet
             if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
               raise ArgumentError, "draggable requires visible content"
             end
-            if !max_simultaneous_drags.nil? && max_simultaneous_drags.negative?
-              raise ArgumentError, "draggable max_simultaneous_drags must be greater than or equal to 0"
-            end
-
             group = "default" if group.nil?
 
             props = {}
@@ -16537,9 +16204,6 @@ module Ruflet
             snap = true if snap.nil?
             viewport_fraction = 1.0 if viewport_fraction.nil?
 
-            raise ArgumentError, "page_view selected_index must be greater than or equal to 0" if selected_index.negative?
-            raise ArgumentError, "page_view viewport_fraction must be greater than 0" unless viewport_fraction.positive?
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -16679,14 +16343,6 @@ module Ruflet
             fallback_height = 400.0 if fallback_height.nil?
             fallback_width = 400.0 if fallback_width.nil?
             stroke_width = 2.0 if stroke_width.nil?
-
-            {
-              fallback_height: fallback_height,
-              fallback_width: fallback_width,
-              stroke_width: stroke_width
-            }.each do |name, value|
-              raise ArgumentError, "placeholder #{name} must be greater than or equal to 0" if value.negative?
-            end
 
             props = {}
             props[:align] = align unless align.nil?
@@ -22611,6 +22267,9 @@ module Ruflet
       if args.empty? && !block
         return @page_props[method_name] if @page_props.key?(method_name)
         return @view_props[method_name] if @view_props.key?(method_name)
+        # Client-reported page properties (width, height, platform,
+        # platform_brightness, media) arrive in the register payload.
+        return @client_details[method_name] if @client_details.respond_to?(:key?) && @client_details.key?(method_name)
         return instance_variable_get("@#{method_name}") if DIALOG_PROP_KEYS.include?(method_name)
       end
 
@@ -24660,6 +24319,13 @@ module Ruflet
       else
         raise "Unknown action: #{action.inspect}"
       end
+    rescue StandardError => e
+      # A per-message handler error (e.g. an event callback that renders a
+      # control the runtime does not implement) must not tear down the whole
+      # WebSocket connection — that would disconnect the client on every
+      # navigation. Log it and keep the session alive.
+      warn "[embedded server] handle_message error: #{e.class}: #{e.message}"
+      warn e.backtrace.join("\n") if e.backtrace && ENV["RUFLET_DEBUG"] == "1"
     end
 
     def decode_incoming(raw)

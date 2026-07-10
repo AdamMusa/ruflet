@@ -402,6 +402,13 @@ module Ruflet
       else
         raise "Unknown action: #{action.inspect}"
       end
+    rescue StandardError => e
+      # A per-message handler error (e.g. an event callback that renders a
+      # control the runtime does not implement) must not tear down the whole
+      # WebSocket connection — that would disconnect the client on every
+      # navigation. Log it and keep the session alive.
+      warn "[embedded server] handle_message error: #{e.class}: #{e.message}"
+      warn e.backtrace.join("\n") if e.backtrace && ENV["RUFLET_DEBUG"] == "1"
     end
 
     def decode_incoming(raw)
