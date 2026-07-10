@@ -72,9 +72,13 @@ class RufletPopupMenuCompatibilityTest < Minitest::Test
     assert_equal "PopupMenuItem", Ruflet.popupmenuitem("Edit").to_patch["_c"]
   end
 
-  def test_popup_menu_item_requires_visible_content_like_flet
-    assert_raises(ArgumentError) { Ruflet.popup_menu_item }
-    assert_raises(ArgumentError) { Ruflet.popup_menu_item(Ruflet.text("Hidden", visible: false)) }
+  def test_popup_menu_item_serializes_without_visible_content_like_flet
+    empty = Ruflet.popup_menu_item.to_patch
+    hidden = Ruflet.popup_menu_item(Ruflet.container(visible: false)).to_patch
+
+    assert_equal "PopupMenuItem", empty["_c"]
+    refute empty.key?("content")
+    assert_equal false, hidden["content"]["visible"]
   end
 
   def test_popup_menu_serializes_negative_numeric_values_like_flet

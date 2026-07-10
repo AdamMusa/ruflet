@@ -130,11 +130,18 @@ class RufletMenuCompatibilityTest < Minitest::Test
     assert_equal "SubmenuButton", Ruflet.submenubutton([], content: "File").to_patch["_c"]
   end
 
-  def test_menu_item_and_submenu_require_visible_content_like_flet
-    assert_raises(ArgumentError) { Ruflet.menu_item_button }
-    assert_raises(ArgumentError) { Ruflet.menu_item_button(Ruflet.text("Hidden", visible: false)) }
-    assert_raises(ArgumentError) { Ruflet.submenu_button([]) }
-    assert_raises(ArgumentError) { Ruflet.submenu_button([], content: Ruflet.text("Hidden", visible: false)) }
+  def test_menu_item_and_submenu_serialize_without_visible_content_like_flet
+    item = Ruflet.menu_item_button.to_patch
+    hidden_item = Ruflet.menu_item_button(Ruflet.container(visible: false)).to_patch
+    submenu = Ruflet.submenu_button([]).to_patch
+    hidden_submenu = Ruflet.submenu_button([], content: Ruflet.container(visible: false)).to_patch
+
+    assert_equal "MenuItemButton", item["_c"]
+    refute item.key?("content")
+    assert_equal false, hidden_item["content"]["visible"]
+    assert_equal "SubmenuButton", submenu["_c"]
+    refute submenu.key?("content")
+    assert_equal false, hidden_submenu["content"]["visible"]
   end
 
   def test_menu_controls_serialize_negative_height_like_flet

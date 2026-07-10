@@ -964,6 +964,27 @@
       "ruby_method": "alert_dialog",
       "props": {},
       "expected_wire": "AlertDialog"
+    },
+    {
+      "name": "popup_menu_item_permissive_empty",
+      "python_class": "PopupMenuItem",
+      "ruby_method": "popup_menu_item",
+      "props": {},
+      "expected_wire": "PopupMenuItem"
+    },
+    {
+      "name": "menu_item_button_permissive_empty",
+      "python_class": "MenuItemButton",
+      "ruby_method": "menu_item_button",
+      "props": {},
+      "expected_wire": "MenuItemButton"
+    },
+    {
+      "name": "submenu_button_permissive_empty",
+      "python_class": "SubmenuButton",
+      "ruby_method": "submenu_button",
+      "props": {},
+      "expected_wire": "SubmenuButton"
     }
   ]
 }
