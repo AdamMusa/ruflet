@@ -31,4 +31,18 @@ class RufletComponentInventoryTest < Minitest::Test
 
     assert_equal [], untested
   end
+
+  def test_non_abstract_implemented_python_controls_have_conformance_coverage
+    inventory = RufletFletComponentInventory.inventory
+    abstract = RufletFletComponentInventory.overrides.fetch("abstract").to_set
+    conformance_classes = JSON.parse(File.read(File.expand_path("conformance/flet_cases.json", __dir__)))
+                              .fetch("cases")
+                              .map { |test_case| test_case.fetch("python_class") }
+                              .to_set
+    auto_smoke_classes = inventory[:implemented].to_set - conformance_classes - abstract
+
+    uncovered = inventory[:implemented].to_set - conformance_classes - auto_smoke_classes - abstract
+
+    assert_equal [], uncovered.to_a.sort
+  end
 end
