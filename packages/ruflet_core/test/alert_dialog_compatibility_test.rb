@@ -65,10 +65,13 @@ class RufletAlertDialogCompatibilityTest < Minitest::Test
     assert_equal({ "weight" => "bold" }, patch["title_text_style"])
   end
 
-  def test_alert_dialog_requires_title_content_or_actions_like_flet
-    error = assert_raises(ArgumentError) { Ruflet.alert_dialog }
+  def test_alert_dialog_serializes_without_title_content_or_actions_like_flet
+    patch = Ruflet.alert_dialog.to_patch
 
-    assert_match(/title, content, or actions/, error.message)
+    assert_equal "AlertDialog", patch["_c"]
+    refute patch.key?("title")
+    refute patch.key?("content")
+    refute patch.key?("actions")
   end
 
   def test_alert_dialog_dismiss_event_closes_dialog_tracking_and_calls_handler

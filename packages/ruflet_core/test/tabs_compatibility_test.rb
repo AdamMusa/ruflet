@@ -56,10 +56,12 @@ class RufletTabsCompatibilityTest < Minitest::Test
     assert_equal(-1, Ruflet.tabs(length: 2, selected_index: -1).props["selected_index"])
   end
 
-  def test_tab_requires_label_or_icon_like_flet
-    error = assert_raises(ArgumentError) { Ruflet.tab }
+  def test_tab_serializes_without_label_or_icon_like_flet
+    patch = Ruflet.tab.to_patch
 
-    assert_match(/label|icon/, error.message)
+    assert_equal "Tab", patch["_c"]
+    refute patch.key?("label")
+    refute patch.key?("icon")
   end
 
   def test_tab_serializes_any_height_like_flet

@@ -52,10 +52,12 @@ class RufletFloatingActionButtonCompatibilityTest < Minitest::Test
     assert_equal true, patch["on_click"]
   end
 
-  def test_floating_action_button_requires_icon_or_content_like_flet
-    error = assert_raises(ArgumentError) { Ruflet.floating_action_button }
+  def test_floating_action_button_serializes_without_icon_or_content_like_flet
+    patch = Ruflet.floating_action_button.to_patch
 
-    assert_match(/icon or.*content/, error.message)
+    assert_equal "FloatingActionButton", patch["_c"]
+    refute patch.key?("content")
+    refute patch.key?("icon")
   end
 
   def test_floating_action_button_serializes_negative_elevations_like_flet

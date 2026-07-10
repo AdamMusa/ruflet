@@ -9,10 +9,6 @@ module Ruflet
           WIRE = "FloatingActionButton".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, autofocus: nil, badge: nil, bgcolor: nil, bottom: nil, clip_behavior: nil, col: nil, content: nil, data: nil, disabled: nil, disabled_elevation: nil, elevation: nil, enable_feedback: nil, expand: nil, expand_loose: nil, focus_color: nil, focus_elevation: nil, foreground_color: nil, height: nil, highlight_elevation: nil, hover_color: nil, hover_elevation: nil, icon: nil, key: nil, left: nil, margin: nil, mini: nil, mouse_cursor: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, shape: nil, size_change_interval: nil, splash_color: nil, tooltip: nil, top: nil, url: nil, visible: nil, width: nil, on_animation_end: nil, on_click: nil, on_size_change: nil)
-            if icon.nil? && blank_content?(content)
-              raise ArgumentError, "floating_action_button requires icon or non-empty content"
-            end
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

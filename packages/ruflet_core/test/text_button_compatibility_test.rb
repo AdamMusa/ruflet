@@ -41,8 +41,12 @@ class RufletTextButtonCompatibilityTest < Minitest::Test
     assert_equal "none", button.props["clip_behavior"]
   end
 
-  def test_text_button_requires_content_or_icon_like_flet
-    assert_raises(ArgumentError) { Ruflet.text_button }
+  def test_text_button_serializes_without_content_or_icon_like_flet
+    patch = Ruflet.text_button.to_patch
+
+    assert_equal "TextButton", patch["_c"]
+    refute patch.key?("content")
+    refute patch.key?("icon")
   end
 
   def test_compact_alias_uses_same_control

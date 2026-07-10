@@ -901,6 +901,69 @@
         "visible": true
       },
       "expected_wire": "CupertinoListTile"
+    },
+    {
+      "name": "button_permissive_empty",
+      "python_class": "Button",
+      "ruby_method": "button",
+      "props": {},
+      "expected_wire": "Button"
+    },
+    {
+      "name": "text_button_permissive_empty",
+      "python_class": "TextButton",
+      "ruby_method": "text_button",
+      "props": {},
+      "expected_wire": "TextButton"
+    },
+    {
+      "name": "filled_button_permissive_empty",
+      "python_class": "FilledButton",
+      "ruby_method": "filled_button",
+      "props": {},
+      "expected_wire": "FilledButton"
+    },
+    {
+      "name": "filled_tonal_button_permissive_empty",
+      "python_class": "FilledTonalButton",
+      "ruby_method": "filled_tonal_button",
+      "props": {},
+      "expected_wire": "FilledTonalButton"
+    },
+    {
+      "name": "outlined_button_permissive_empty",
+      "python_class": "OutlinedButton",
+      "ruby_method": "outlined_button",
+      "props": {},
+      "expected_wire": "OutlinedButton"
+    },
+    {
+      "name": "floating_action_button_permissive_empty",
+      "python_class": "FloatingActionButton",
+      "ruby_method": "floating_action_button",
+      "props": {},
+      "expected_wire": "FloatingActionButton"
+    },
+    {
+      "name": "dropdown_option_permissive_empty",
+      "python_class": "DropdownOption",
+      "ruby_method": "dropdown_option",
+      "props": {},
+      "expected_wire": "DropdownOption"
+    },
+    {
+      "name": "tab_permissive_empty",
+      "python_class": "Tab",
+      "ruby_method": "tab",
+      "props": {},
+      "expected_wire": "Tab"
+    },
+    {
+      "name": "alert_dialog_permissive_empty",
+      "python_class": "AlertDialog",
+      "ruby_method": "alert_dialog",
+      "props": {},
+      "expected_wire": "AlertDialog"
     }
   ]
 }

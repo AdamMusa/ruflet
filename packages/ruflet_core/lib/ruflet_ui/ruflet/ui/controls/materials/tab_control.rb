@@ -9,8 +9,6 @@ module Ruflet
           WIRE = "Tab".freeze
 
           def initialize(id: nil, adaptive: nil, badge: nil, col: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, icon: nil, icon_margin: nil, key: nil, label: nil, opacity: nil, rtl: nil, tooltip: nil, visible: nil)
-            raise ArgumentError, "tab requires label or icon" if label.nil? && icon.nil?
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:badge] = badge unless badge.nil?

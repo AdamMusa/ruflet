@@ -51,13 +51,12 @@ class RufletButtonCompatibilityTest < Minitest::Test
     assert_equal [:hover], hovered
   end
 
-  def test_button_requires_content_or_icon_like_flet
-    error = assert_raises(ArgumentError) do
-      Ruflet.button
-    end
+  def test_button_serializes_without_content_or_icon_like_flet
+    patch = Ruflet.button.to_patch
 
-    assert_includes error.message, "content"
-    assert_includes error.message, "icon"
+    assert_equal "Button", patch["_c"]
+    refute patch.key?("content")
+    refute patch.key?("icon")
   end
 
   def test_button_omits_optional_flet_defaults

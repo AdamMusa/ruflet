@@ -119,10 +119,12 @@ class RufletDropdownCompatibilityTest < Minitest::Test
     assert_equal "Blue", texted.props["text"]
   end
 
-  def test_dropdown_option_requires_key_or_text_like_flet
-    error = assert_raises(ArgumentError) { Ruflet.dropdown_option }
+  def test_dropdown_option_serializes_without_key_or_text_like_flet
+    patch = Ruflet.dropdown_option.to_patch
 
-    assert_match(/key|text/, error.message)
+    assert_equal "DropdownOption", patch["_c"]
+    refute patch.key?("key")
+    refute patch.key?("text")
   end
 
   def test_dropdown_serializes_negative_numeric_values_like_flet
