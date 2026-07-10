@@ -27,10 +27,11 @@ class RufletSelectionAreaCompatibilityTest < Minitest::Test
     assert_equal "SelectionArea", area.to_patch["_c"]
   end
 
-  def test_selection_area_requires_visible_content_like_flet
+  def test_selection_area_requires_content_and_serializes_hidden_content_like_flet
     assert_raises(ArgumentError) { Ruflet.selection_area }
-    assert_raises(ArgumentError) { Ruflet.selection_area(Ruflet.text("Hidden", visible: false)) }
+    hidden = Ruflet.selection_area(Ruflet.container(visible: false)).to_patch
 
+    assert_equal false, hidden["content"]["visible"]
     area = Ruflet.selection_area(Ruflet.text("Shown"))
     assert_equal "Shown", area.props["content"].props["value"]
   end

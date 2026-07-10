@@ -44,9 +44,11 @@ class RufletDismissibleCompatibilityTest < Minitest::Test
     assert_equal 300, control.props["resize_duration"]
   end
 
-  def test_dismissible_requires_visible_content_like_flet
+  def test_dismissible_requires_content_and_serializes_hidden_content_like_flet
     assert_raises(ArgumentError) { Ruflet.dismissible }
-    assert_raises(ArgumentError) { Ruflet.dismissible(Ruflet.text("Hidden", visible: false)) }
+    hidden = Ruflet.dismissible(Ruflet.container(visible: false)).to_patch
+
+    assert_equal false, hidden["content"]["visible"]
   end
 
   def test_secondary_background_serializes_without_visible_background_like_flet

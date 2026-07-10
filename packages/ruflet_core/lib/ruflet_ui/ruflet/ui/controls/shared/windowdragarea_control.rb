@@ -9,9 +9,7 @@ module Ruflet
           WIRE = "WindowDragArea".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, maximizable: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_double_tap: nil, on_drag_end: nil, on_drag_start: nil, on_size_change: nil)
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "window_drag_area requires visible content"
-            end
+            raise ArgumentError, "window_drag_area requires content" if content.nil?
 
             maximizable = true if maximizable.nil?
 

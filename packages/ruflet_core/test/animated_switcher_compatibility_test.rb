@@ -45,10 +45,11 @@ class RufletAnimatedSwitcherCompatibilityTest < Minitest::Test
     assert_equal "fade", switcher.props["transition"]
   end
 
-  def test_animated_switcher_requires_visible_content_like_flet
+  def test_animated_switcher_requires_content_and_serializes_hidden_content_like_flet
     assert_raises(ArgumentError) { Ruflet.animated_switcher }
-    assert_raises(ArgumentError) { Ruflet.animated_switcher(Ruflet.text("Hidden", visible: false)) }
+    hidden = Ruflet.animated_switcher(Ruflet.container(visible: false)).to_patch
 
+    assert_equal false, hidden["content"]["visible"]
     switcher = Ruflet.animated_switcher(Ruflet.text("Shown"))
     assert_equal "Shown", switcher.props["content"].props["value"]
   end

@@ -119,11 +119,14 @@ class RufletDataTableCompatibilityTest < Minitest::Test
     assert_equal 1, patch["rows"].first["cells"].length
   end
 
-  def test_data_column_and_cell_require_visible_content_like_flet
+  def test_data_column_and_cell_require_content_and_serialize_hidden_content_like_flet
     assert_raises(ArgumentError) { Ruflet.data_column }
-    assert_raises(ArgumentError) { Ruflet.data_column(Ruflet.text("Hidden", visible: false)) }
     assert_raises(ArgumentError) { Ruflet.data_cell }
-    assert_raises(ArgumentError) { Ruflet.data_cell(Ruflet.text("Hidden", visible: false)) }
+    column = Ruflet.data_column(Ruflet.container(visible: false)).to_patch
+    cell = Ruflet.data_cell(Ruflet.container(visible: false)).to_patch
+
+    assert_equal false, column["label"]["visible"]
+    assert_equal false, cell["content"]["visible"]
   end
 
   def test_data_table_serializes_negative_numeric_values_like_flet

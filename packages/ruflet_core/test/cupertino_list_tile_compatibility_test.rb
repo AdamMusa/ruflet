@@ -56,9 +56,11 @@ class RufletCupertinoListTileCompatibilityTest < Minitest::Test
     assert_equal 12.0, notched.props["leading_to_title"]
   end
 
-  def test_cupertino_list_tile_requires_visible_title_like_flet
+  def test_cupertino_list_tile_requires_title_and_serializes_hidden_title_like_flet
     assert_raises(ArgumentError) { Ruflet.cupertino_list_tile }
-    assert_raises(ArgumentError) { Ruflet.cupertino_list_tile(title: Ruflet.text("Hidden", visible: false)) }
+    hidden = Ruflet.cupertino_list_tile(title: Ruflet.container(visible: false)).to_patch
+
+    assert_equal false, hidden["title"]["visible"]
   end
 
   def test_cupertino_list_tile_serializes_negative_numeric_values_like_flet

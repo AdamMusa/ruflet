@@ -9,7 +9,7 @@ module Ruflet
           WIRE = "CupertinoListTile".freeze
 
           def initialize(id: nil, additional_info: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bgcolor: nil, bgcolor_activated: nil, bottom: nil, col: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, key: nil, leading: nil, leading_size: nil, leading_to_title: nil, left: nil, margin: nil, notched: nil, offset: nil, opacity: nil, padding: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, subtitle: nil, title: nil, toggle_inputs: nil, tooltip: nil, top: nil, trailing: nil, url: nil, visible: nil, width: nil, on_animation_end: nil, on_click: nil, on_size_change: nil)
-            raise ArgumentError, "cupertino_list_tile requires visible title" if title.nil? || (title.respond_to?(:props) && title.props["visible"] == false)
+            raise ArgumentError, "cupertino_list_tile requires title" if title.nil?
             notched = false if notched.nil?
             leading_size = notched ? 30.0 : 28.0 if leading_size.nil?
             leading_to_title = notched ? 12.0 : 16.0 if leading_to_title.nil?

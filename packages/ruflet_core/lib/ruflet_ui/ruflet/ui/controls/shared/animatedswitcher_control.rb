@@ -9,9 +9,7 @@ module Ruflet
           WIRE = "AnimatedSwitcher".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, col: nil, content: nil, data: nil, disabled: nil, duration: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, reverse_duration: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, switch_in_curve: nil, switch_out_curve: nil, tooltip: nil, top: nil, transition: nil, visible: nil, width: nil, on_animation_end: nil, on_size_change: nil)
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "animated_switcher requires visible content"
-            end
+            raise ArgumentError, "animated_switcher requires content" if content.nil?
 
             duration = 1000 if duration.nil?
             reverse_duration = 1000 if reverse_duration.nil?

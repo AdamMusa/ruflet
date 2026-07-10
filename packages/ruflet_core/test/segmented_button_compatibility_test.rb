@@ -50,10 +50,13 @@ class RufletSegmentedButtonCompatibilityTest < Minitest::Test
     assert_equal "SegmentedButton", Ruflet.segmentedbutton(segments, selected: ["daily"]).to_patch["_c"]
   end
 
-  def test_segment_requires_value_and_visible_label_or_icon_like_flet
+  def test_segment_requires_value_and_serializes_without_visible_label_or_icon_like_flet
     assert_raises(ArgumentError) { Ruflet.segment(label: "Daily") }
-    assert_raises(ArgumentError) { Ruflet.segment("daily") }
-    assert_raises(ArgumentError) { Ruflet.segment("daily", label: Ruflet.text("Hidden", visible: false)) }
+
+    value_only = Ruflet.segment("daily").to_patch
+    hidden_label = Ruflet.segment("daily", label: Ruflet.container(visible: false)).to_patch
+    assert_equal "daily", value_only["value"]
+    assert_equal false, hidden_label["label"]["visible"]
   end
 
   def test_segmented_button_serializes_empty_segments_and_invalid_selection_like_flet

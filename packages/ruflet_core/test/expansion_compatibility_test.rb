@@ -160,7 +160,9 @@ class RufletExpansionCompatibilityTest < Minitest::Test
 
   def test_expansion_controls_require_visible_required_content_like_flet
     assert_raises(ArgumentError) { Ruflet.expansion_tile }
-    assert_raises(ArgumentError) { Ruflet.expansion_tile(title: Ruflet.text("Hidden", visible: false)) }
+    hidden = Ruflet.expansion_tile(title: Ruflet.container(visible: false)).to_patch
+
+    assert_equal false, hidden["title"]["visible"]
   end
 
   def test_expansion_panel_serializes_without_required_content_like_flet

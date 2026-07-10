@@ -59,11 +59,14 @@ class RufletDragAndDropCompatibilityTest < Minitest::Test
     assert_equal "default", target.props["group"]
   end
 
-  def test_drag_and_drop_require_visible_content_like_flet
+  def test_drag_and_drop_require_content_and_serialize_hidden_content_like_flet
     assert_raises(ArgumentError) { Ruflet.draggable }
-    assert_raises(ArgumentError) { Ruflet.draggable(Ruflet.text("Hidden", visible: false)) }
     assert_raises(ArgumentError) { Ruflet.drag_target }
-    assert_raises(ArgumentError) { Ruflet.drag_target(Ruflet.text("Hidden", visible: false)) }
+
+    draggable = Ruflet.draggable(Ruflet.container(visible: false)).to_patch
+    target = Ruflet.drag_target(Ruflet.container(visible: false)).to_patch
+    assert_equal false, draggable["content"]["visible"]
+    assert_equal false, target["content"]["visible"]
   end
 
   def test_draggable_serializes_negative_max_simultaneous_drags_like_flet

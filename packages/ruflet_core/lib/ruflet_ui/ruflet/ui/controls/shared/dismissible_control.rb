@@ -9,9 +9,7 @@ module Ruflet
           WIRE = "Dismissible".freeze
 
           def initialize(id: nil, adaptive: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, background: nil, badge: nil, bottom: nil, col: nil, content: nil, cross_axis_end_offset: nil, data: nil, disabled: nil, dismiss_direction: nil, dismiss_thresholds: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, movement_duration: nil, offset: nil, opacity: nil, resize_duration: nil, right: nil, rotate: nil, rtl: nil, scale: nil, secondary_background: nil, size_change_interval: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_confirm_dismiss: nil, on_dismiss: nil, on_resize: nil, on_size_change: nil, on_update: nil)
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "dismissible requires visible content"
-            end
+            raise ArgumentError, "dismissible requires content" if content.nil?
 
             cross_axis_end_offset = 0.0 if cross_axis_end_offset.nil?
             dismiss_direction = "horizontal" if dismiss_direction.nil?

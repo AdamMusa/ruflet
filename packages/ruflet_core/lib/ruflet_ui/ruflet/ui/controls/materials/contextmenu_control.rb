@@ -9,9 +9,7 @@ module Ruflet
           WIRE = "ContextMenu".freeze
 
           def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, items: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, primary_items: nil, primary_trigger: nil, right: nil, rotate: nil, rtl: nil, scale: nil, secondary_items: nil, secondary_trigger: nil, size_change_interval: nil, tertiary_items: nil, tertiary_trigger: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_dismiss: nil, on_select: nil, on_size_change: nil)
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "context_menu requires visible content"
-            end
+            raise ArgumentError, "context_menu requires content" if content.nil?
 
             props = {}
             props[:align] = align unless align.nil?
