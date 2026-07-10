@@ -985,6 +985,17 @@
       "ruby_method": "submenu_button",
       "props": {},
       "expected_wire": "SubmenuButton"
+    },
+    {
+      "name": "segmented_button_permissive_empty_segments",
+      "python_class": "SegmentedButton",
+      "ruby_method": "segmented_button",
+      "props": {
+        "segments": [],
+        "visible": true
+      },
+      "expected_wire": "SegmentedButton",
+      "skip_props": ["segments"]
     }
   ]
 }

@@ -56,18 +56,20 @@ class RufletSegmentedButtonCompatibilityTest < Minitest::Test
     assert_raises(ArgumentError) { Ruflet.segment("daily", label: Ruflet.text("Hidden", visible: false)) }
   end
 
-  def test_segmented_button_requires_segments_and_valid_selection_like_flet
-    assert_raises(ArgumentError) { Ruflet.segmented_button([]) }
-
+  def test_segmented_button_serializes_empty_segments_and_invalid_selection_like_flet
     segments = [
       Ruflet.segment("daily", label: "Daily"),
       Ruflet.segment("weekly", label: "Weekly")
     ]
+    empty = Ruflet.segmented_button([]).to_patch
+    empty_selection = Ruflet.segmented_button(segments, selected: []).to_patch
+    multiple = Ruflet.segmented_button(segments, selected: ["daily", "weekly"]).to_patch
+    missing = Ruflet.segmented_button(segments, selected: ["missing"]).to_patch
 
-    assert_raises(ArgumentError) { Ruflet.segmented_button(segments, selected: []) }
-    assert_raises(ArgumentError) { Ruflet.segmented_button(segments, selected: ["daily", "weekly"]) }
-    assert_raises(ArgumentError) { Ruflet.segmented_button(segments, selected: ["missing"]) }
-
+    assert_equal [], empty["segments"]
+    assert_equal [], empty_selection["selected"]
+    assert_equal ["daily", "weekly"], multiple["selected"]
+    assert_equal ["missing"], missing["selected"]
     assert_equal [], Ruflet.segmented_button(segments, selected: [], allow_empty_selection: true).props["selected"]
     assert_equal ["daily", "weekly"], Ruflet.segmented_button(segments, selected: ["daily", "weekly"], allow_multiple_selection: true).props["selected"]
   end
