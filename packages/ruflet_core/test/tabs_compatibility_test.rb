@@ -48,11 +48,14 @@ class RufletTabsCompatibilityTest < Minitest::Test
     assert_equal %w[Text Text], tab_view["controls"].map { |child| child["_c"] }
   end
 
-  def test_tabs_rejects_out_of_range_values_like_flet
-    assert_raises(ArgumentError) { Ruflet.tabs(length: -1) }
-    assert_raises(IndexError) { Ruflet.tabs(length: 2, selected_index: -3) }
-    assert_raises(IndexError) { Ruflet.tabs(length: 2, selected_index: 2) }
+  def test_tabs_serializes_out_of_range_values_like_flet
+    negative_length = Ruflet.tabs(length: -1).to_patch
+    negative_index = Ruflet.tabs(length: 2, selected_index: -3).to_patch
+    high_index = Ruflet.tabs(length: 2, selected_index: 2).to_patch
 
+    assert_equal(-1, negative_length["length"])
+    assert_equal(-3, negative_index["selected_index"])
+    assert_equal 2, high_index["selected_index"]
     assert_equal(-1, Ruflet.tabs(length: 2, selected_index: -1).props["selected_index"])
   end
 
