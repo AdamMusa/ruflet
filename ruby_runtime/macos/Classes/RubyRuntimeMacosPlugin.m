@@ -2,6 +2,7 @@
 
 #include <mruby.h>
 #include <mruby/compile.h>
+#include <mruby/irep.h>
 #include <mruby/string.h>
 #include <stdlib.h>
 
@@ -68,7 +69,7 @@ static BOOL preload_embedded_runtime(mrb_state *mrb, NSError **error) {
   }
 
   mrbc_filename(mrb, context, "/__ruflet__/embedded_runtime.rb");
-  mrb_load_string_cxt(mrb, kEmbeddedRufletRuntime, context);
+  mrb_load_irep_cxt(mrb, kEmbeddedRufletRuntimeIrep, context);
   mrbc_context_free(mrb, context);
 
   if (mrb->exc != NULL) {

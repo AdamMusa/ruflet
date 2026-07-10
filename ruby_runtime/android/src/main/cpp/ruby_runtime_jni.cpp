@@ -10,6 +10,7 @@
 extern "C" {
 #include <mruby.h>
 #include <mruby/compile.h>
+#include <mruby/irep.h>
 #include <mruby/string.h>
 }
 
@@ -55,7 +56,7 @@ EvalResult preload_embedded_runtime_locked() {
   }
 
   mrbc_filename(mrb, context, "/__ruflet__/embedded_runtime.rb");
-  mrb_load_string_cxt(mrb, kEmbeddedRufletRuntime, context);
+  mrb_load_irep_cxt(mrb, kEmbeddedRufletRuntimeIrep, context);
   mrbc_context_free(mrb, context);
 
   if (mrb->exc != nullptr) {

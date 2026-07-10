@@ -3,10 +3,19 @@
 
 require "json"
 require "pathname"
+require "open3"
+require "tmpdir"
 
 ROOT = Pathname(__dir__).join("..").expand_path
 GENERATED_RB = ROOT.join("generated/embedded_ruflet_runtime.rb")
 GENERATED_H = ROOT.join("generated/embedded_ruflet_runtime.h")
+# The shipped copies the native plugins actually #include. Kept in sync here so a
+# single generator run refreshes both the build-output and the shipped artifact.
+SHARED_RB = ROOT.join("ruby_runtime/shared/embedded_ruflet_runtime.rb")
+SHARED_H = ROOT.join("ruby_runtime/shared/embedded_ruflet_runtime.h")
+# Vendored mruby compiler. Must match the mruby version + presym config the native
+# VMs are built with, so the emitted irep bytecode loads on device (RITE0400 = 3.4).
+MRBC = ROOT.join("ruby_runtime/third_party/mruby/build/host/bin/mrbc")
 
 BUNDLED_FEATURES = {
   "ruflet" => ROOT.join("packages/ruflet_core/lib/ruflet.rb"),
@@ -1586,9 +1595,27 @@ runtime = runtime.gsub(
 runtime = runtime.gsub('format("%08x", rand(0..0xffff_ffff))', 'RufletEmbeddedRuntime.random_hex(8)')
 
 GENERATED_RB.write(runtime)
+SHARED_RB.write(runtime)
 
-header = "#pragma once\n\nstatic const char* kEmbeddedRufletRuntime = R\"RUFLET_RUNTIME(\n#{runtime}\n)RUFLET_RUNTIME\";\n"
+# Ship the runtime as precompiled mruby bytecode (irep) instead of a C source
+# string. The native plugins load it with mrb_load_irep_cxt() at boot, so the VM
+# no longer parses+compiles ~23k lines of Ruby on every launch, and no framework
+# source is embedded in the app binary. The .rb above stays the source of record.
+raise "mrbc not found at #{MRBC.relative_path_from(ROOT)}; build the vendored mruby first" unless MRBC.executable?
+
+header = Dir.mktmpdir do |dir|
+  src = File.join(dir, "embedded_ruflet_runtime.rb")
+  out = File.join(dir, "embedded_ruflet_runtime.h")
+  File.write(src, runtime)
+
+  _stdout, stderr, status = Open3.capture3(MRBC.to_s, "-B", "kEmbeddedRufletRuntimeIrep", "-o", out, src)
+  raise "mrbc failed to compile the embedded runtime:\n#{stderr}" unless status.success?
+
+  "#pragma once\n\n#{File.read(out)}"
+end
+
 GENERATED_H.write(header)
+SHARED_H.write(header)
 
-puts "Wrote #{GENERATED_RB.relative_path_from(ROOT)}"
-puts "Wrote #{GENERATED_H.relative_path_from(ROOT)}"
+puts "Wrote #{GENERATED_RB.relative_path_from(ROOT)} + #{SHARED_RB.relative_path_from(ROOT)}"
+puts "Wrote #{GENERATED_H.relative_path_from(ROOT)} + #{SHARED_H.relative_path_from(ROOT)} (irep bytecode)"
