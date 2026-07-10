@@ -1067,6 +1067,26 @@
         "visible": true
       },
       "expected_wire": "RotatedBox"
+    },
+    {
+      "name": "screenshot_scalar_props",
+      "python_class": "Screenshot",
+      "ruby_method": "screenshot",
+      "props": {
+        "content": "Capture me",
+        "disabled": true,
+        "tooltip": "Capture area",
+        "visible": true
+      },
+      "expected_wire": "Screenshot"
+    },
+    {
+      "name": "screenshot_requires_content",
+      "python_class": "Screenshot",
+      "ruby_method": "screenshot",
+      "props": {},
+      "expected_wire": "Screenshot",
+      "expect_status": "error"
     }
   ]
 }

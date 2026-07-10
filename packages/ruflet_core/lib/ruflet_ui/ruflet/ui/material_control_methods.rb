@@ -406,6 +406,11 @@ module Ruflet
         build_widget(:rotatedbox, **mapped)
       end
       def rotatedbox(content = nil, **props) = rotated_box(content, **props)
+      def screenshot(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:screenshot, **mapped)
+      end
       def radio(**props) = build_widget(:radio, **props)
       def radio_group(content = nil, **props)
         mapped = props.dup

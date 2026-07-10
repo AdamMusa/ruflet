@@ -188,6 +188,7 @@ module Ruflet
     def transparentpointer(content = nil, **props) = _pending_app.transparentpointer(content, **props)
     def rotated_box(content = nil, **props) = _pending_app.rotated_box(content, **props)
     def rotatedbox(content = nil, **props) = _pending_app.rotatedbox(content, **props)
+    def screenshot(content = nil, **props) = _pending_app.screenshot(content, **props)
     def radio(**props) = _pending_app.radio(**props)
     def radio_group(content = nil, **props) = _pending_app.radio_group(content, **props)
     def radiogroup(content = nil, **props) = _pending_app.radiogroup(content, **props)

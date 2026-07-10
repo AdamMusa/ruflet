@@ -139,6 +139,7 @@ module Ruflet
       def transparentpointer(content = nil, **props) = control_delegate.transparentpointer(content, **props)
       def rotated_box(content = nil, **props) = control_delegate.rotated_box(content, **props)
       def rotatedbox(content = nil, **props) = control_delegate.rotatedbox(content, **props)
+      def screenshot(content = nil, **props) = control_delegate.screenshot(content, **props)
       def radio(**props) = control_delegate.radio(**props)
       def radio_group(content = nil, **props) = control_delegate.radio_group(content, **props)
       def radiogroup(content = nil, **props) = control_delegate.radiogroup(content, **props)

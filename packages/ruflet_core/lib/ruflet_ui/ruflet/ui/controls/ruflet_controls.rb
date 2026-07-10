@@ -139,6 +139,7 @@ require_relative "shared/responsiverow_control"
 require_relative "shared/row_control"
 require_relative "shared/rotatedbox_control"
 require_relative "shared/safearea_control"
+require_relative "shared/screenshot_control"
 require_relative "shared/semantics_control"
 require_relative "shared/serviceregistry_control"
 require_relative "shared/shadermask_control"
@@ -396,6 +397,7 @@ module Ruflet
           "rotatedbox" => RufletComponents::RotatedBoxControl,
           "safe_area" => RufletComponents::SafeAreaControl,
           "safearea" => RufletComponents::SafeAreaControl,
+          "screenshot" => RufletComponents::ScreenshotControl,
           "search_bar" => RufletComponents::SearchBarControl,
           "searchbar" => RufletComponents::SearchBarControl,
           "segment" => RufletComponents::SegmentControl,

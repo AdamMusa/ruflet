@@ -1,16 +1,16 @@
 # Python Flet Component Inventory
 
 - Python Flet controls: 162
-- Ruflet wire controls: 150
-- Implemented Python controls: 131
+- Ruflet wire controls: 151
+- Implemented Python controls: 132
 - Alias-covered controls: 1
 - Service/deferred controls: 18
-- Todo UI controls: 1
+- Todo UI controls: 0
 - Unclassified missing controls: 0
 
 ## Todo UI Controls
 
-- Screenshot
+None.
 
 ## Alias Covered
 

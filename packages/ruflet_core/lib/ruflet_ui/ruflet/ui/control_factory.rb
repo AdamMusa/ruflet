@@ -10,8 +10,8 @@ module Ruflet
       module_function
 
       CLASS_MAP =
-        Controls::RufletControls::CLASS_MAP
-          .merge(Services::RufletServices::CLASS_MAP)
+        Services::RufletServices::CLASS_MAP
+          .merge(Controls::RufletControls::CLASS_MAP)
           .freeze
 
       def build(type, id: nil, **props)

@@ -38,7 +38,5 @@
     "UserAccelerometer",
     "Wakelock"
   ],
-  "todo_controls": [
-    "Screenshot"
-  ]
+  "todo_controls": []
 }
