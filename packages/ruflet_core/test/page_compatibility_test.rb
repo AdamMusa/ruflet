@@ -101,10 +101,60 @@ class RufletPageCompatibilityTest < Minitest::Test
     assert_match(/accepts only controls/, error.message)
   end
 
+  def test_page_controls_insert_remove_remove_at_and_clean_match_flet_shape
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    one = Ruflet.text("One")
+    two = Ruflet.text("Two")
+    three = Ruflet.text("Three")
+
+    page.add(one)
+    assert_equal [one], page.controls
+    assert_equal ["One"], view_control_values(sent.last)
+
+    page.insert(1, two, three)
+    assert_equal [one, two, three], page.controls
+    assert_equal ["One", "Two", "Three"], view_control_values(sent.last)
+
+    page.remove(two)
+    assert_equal [one, three], page.controls
+    assert_equal ["One", "Three"], view_control_values(sent.last)
+
+    page.remove_at(0)
+    assert_equal [three], page.controls
+    assert_equal ["Three"], view_control_values(sent.last)
+
+    page.clean
+    assert_equal [], page.controls
+    assert_equal [], view_control_values(sent.last)
+  end
+
+  def test_page_controls_writer_replaces_root_controls
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    page.controls = [Ruflet.text("One"), Ruflet.text("Two")]
+
+    assert_equal ["One", "Two"], page.controls.map { |control| control.props["value"] }
+    assert_equal ["One", "Two"], view_control_values(sent.last)
+  end
+
   private
 
   def patch_value(patch, key)
     op = patch.find { |candidate| candidate[2] == key }
     op && op[3]
+  end
+
+  def view_control_values(sent_message)
+    patch_value(sent_message[1]["patch"], "views").first.fetch("controls").map { |control| control["value"] }
   end
 end

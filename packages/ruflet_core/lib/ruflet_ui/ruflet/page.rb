@@ -249,16 +249,39 @@ module Ruflet
         raise ArgumentError, "Page#add accepts only controls; assign page.appbar, page.floating_action_button, dialogs, or other page properties before calling add"
       end
 
-      controls = controls.flatten
-      visited = Set.new
-      controls.each { |c| register_control_tree(c, visited) }
-      @root_controls = controls
+      replace_root_controls(controls.flatten)
+      self
+    end
 
-      refresh_dialogs_container!
-      @view_props.each_value { |value| register_embedded_value(value, visited) }
+    def controls
+      @root_controls
+    end
 
+    def controls=(value)
+      replace_root_controls(Array(value).flatten.compact)
+      self
+    end
+
+    def insert(at, *controls)
+      @root_controls.insert(at.to_i, *controls.flatten.compact)
       send_view_patch
+      self
+    end
 
+    def remove(*controls)
+      controls.flatten.each { |control| @root_controls.delete(control) }
+      send_view_patch
+      self
+    end
+
+    def remove_at(index)
+      @root_controls.delete_at(index.to_i)
+      send_view_patch
+      self
+    end
+
+    def clean
+      replace_root_controls([])
       self
     end
 
@@ -1212,6 +1235,16 @@ module Ruflet
 
     def send_message(action, payload)
       @sender.call(action, payload)
+    end
+
+    def replace_root_controls(controls)
+      visited = Set.new
+      controls.each { |control| register_control_tree(control, visited) }
+      @root_controls = controls
+
+      refresh_dialogs_container!
+      @view_props.each_value { |value| register_embedded_value(value, visited) }
+      send_view_patch
     end
 
     def send_view_patch
