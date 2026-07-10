@@ -415,6 +415,12 @@ module Ruflet
         build_widget(:snackbar, **mapped)
       end
       def snackbar(content = nil, **props) = snack_bar(content, **props)
+      def snack_bar_action(label = nil, **props)
+        mapped = props.dup
+        mapped[:label] = label unless label.nil?
+        build_widget(:snackbaraction, **mapped)
+      end
+      def snackbaraction(label = nil, **props) = snack_bar_action(label, **props)
       def bottom_sheet(content = nil, **props)
         mapped = props.dup
         mapped[:content] = content unless content.nil?

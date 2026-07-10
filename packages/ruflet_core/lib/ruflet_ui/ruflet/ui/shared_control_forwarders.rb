@@ -144,6 +144,8 @@ module Ruflet
       def alertdialog(**props) = control_delegate.alertdialog(**props)
       def snack_bar(content = nil, **props) = control_delegate.snack_bar(content, **props)
       def snackbar(content = nil, **props) = control_delegate.snackbar(content, **props)
+      def snack_bar_action(label = nil, **props) = control_delegate.snack_bar_action(label, **props)
+      def snackbaraction(label = nil, **props) = control_delegate.snackbaraction(label, **props)
       def bottom_sheet(content = nil, **props) = control_delegate.bottom_sheet(content, **props)
       def bottomsheet(content = nil, **props) = control_delegate.bottomsheet(content, **props)
       def markdown(value = nil, **props) = control_delegate.markdown(value, **props)

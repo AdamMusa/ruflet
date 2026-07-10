@@ -57,6 +57,38 @@ class RufletSnackBarCompatibilityTest < Minitest::Test
     assert_match(/content/, error.message)
   end
 
+  def test_snack_bar_action_serializes_current_flet_props
+    action = Ruflet.snack_bar_action(
+      "Undo",
+      text_color: "#ABCDEF",
+      disabled_text_color: "#123456",
+      bgcolor: "#FEDCBA",
+      disabled_bgcolor: "#654321",
+      on_click: ->(_event) {}
+    )
+    patch = action.to_patch
+
+    assert_equal "SnackBarAction", patch["_c"]
+    assert_equal "Undo", patch["label"]
+    assert_equal "#abcdef", patch["text_color"]
+    assert_equal "#123456", patch["disabled_text_color"]
+    assert_equal "#fedcba", patch["bgcolor"]
+    assert_equal "#654321", patch["disabled_bgcolor"]
+    assert_equal true, patch["on_click"]
+    assert_equal "SnackBarAction", Ruflet.snackbaraction("Undo").to_patch["_c"]
+  end
+
+  def test_snack_bar_action_requires_label_like_flet
+    assert_raises(ArgumentError) { Ruflet.snack_bar_action }
+  end
+
+  def test_snack_bar_accepts_action_control_like_flet
+    patch = Ruflet.snack_bar("Saved", action: Ruflet.snack_bar_action("Undo")).to_patch
+
+    assert_equal "SnackBarAction", patch["action"]["_c"]
+    assert_equal "Undo", patch["action"]["label"]
+  end
+
   def test_snack_bar_serializes_action_overflow_threshold_outside_flet_range
     low = Ruflet.snack_bar("Saved", action_overflow_threshold: -0.1)
     high = Ruflet.snack_bar("Saved", action_overflow_threshold: 1.1)

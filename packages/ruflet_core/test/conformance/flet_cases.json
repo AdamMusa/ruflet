@@ -1039,6 +1039,20 @@
         "visible": true
       },
       "expected_wire": "ListTile"
+    },
+    {
+      "name": "snack_bar_action_scalar_props",
+      "python_class": "SnackBarAction",
+      "ruby_method": "snack_bar_action",
+      "props": {
+        "label": "Undo",
+        "text_color": "#ABCDEF",
+        "disabled_text_color": "#123456",
+        "bgcolor": "#FEDCBA",
+        "disabled_bgcolor": "#654321",
+        "visible": true
+      },
+      "expected_wire": "SnackBarAction"
     }
   ]
 }

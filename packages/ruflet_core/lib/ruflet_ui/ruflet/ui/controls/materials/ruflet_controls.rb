@@ -62,6 +62,7 @@ require_relative "segmentedbutton_control"
 require_relative "selectionarea_control"
 require_relative "slider_control"
 require_relative "snackbar_control"
+require_relative "snackbaraction_control"
 require_relative "submenubutton_control"
 require_relative "switch_control"
 require_relative "tab_control"
@@ -227,6 +228,8 @@ module Ruflet
             "scatterchartspot" => RufletComponents::ScatterChartSpotControl,
             "slider" => RufletComponents::SliderControl,
             "snack_bar" => RufletComponents::SnackBarControl,
+            "snack_bar_action" => RufletComponents::SnackBarActionControl,
+            "snackbaraction" => RufletComponents::SnackBarActionControl,
             "snackbar" => RufletComponents::SnackBarControl,
             "submenu_button" => RufletComponents::SubmenuButtonControl,
             "submenubutton" => RufletComponents::SubmenuButtonControl,

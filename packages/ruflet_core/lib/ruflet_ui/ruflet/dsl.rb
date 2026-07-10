@@ -193,6 +193,8 @@ module Ruflet
     def alertdialog(**props) = _pending_app.alertdialog(**props)
     def snack_bar(content = nil, **props) = _pending_app.snack_bar(content, **props)
     def snackbar(content = nil, **props) = _pending_app.snackbar(content, **props)
+    def snack_bar_action(label = nil, **props) = _pending_app.snack_bar_action(label, **props)
+    def snackbaraction(label = nil, **props) = _pending_app.snackbaraction(label, **props)
     def bottom_sheet(content = nil, **props) = _pending_app.bottom_sheet(content, **props)
     def bottomsheet(content = nil, **props) = _pending_app.bottomsheet(content, **props)
     def markdown(value = nil, **props) = _pending_app.markdown(value, **props)

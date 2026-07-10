@@ -86,6 +86,7 @@ require_relative "materials/segmentedbutton_control"
 require_relative "materials/selectionarea_control"
 require_relative "materials/slider_control"
 require_relative "materials/snackbar_control"
+require_relative "materials/snackbaraction_control"
 require_relative "materials/submenubutton_control"
 require_relative "materials/switch_control"
 require_relative "materials/tab_control"
@@ -412,6 +413,8 @@ module Ruflet
           "shimmer" => RufletComponents::ShimmerControl,
           "slider" => RufletComponents::SliderControl,
           "snack_bar" => RufletComponents::SnackBarControl,
+          "snack_bar_action" => RufletComponents::SnackBarActionControl,
+          "snackbaraction" => RufletComponents::SnackBarActionControl,
           "snackbar" => RufletComponents::SnackBarControl,
           "stack" => RufletComponents::StackControl,
           "submenu_button" => RufletComponents::SubmenuButtonControl,
