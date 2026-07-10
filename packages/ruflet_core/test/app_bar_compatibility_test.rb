@@ -71,7 +71,8 @@ class RufletAppBarCompatibilityTest < Minitest::Test
       sender: ->(action, payload) { sent << [action, payload] }
     )
 
-    page.add(Ruflet.text("Body"), appbar: Ruflet.app_bar(title: Ruflet.text("Home")))
+    page.appbar = Ruflet.app_bar(title: Ruflet.text("Home"))
+    page.add(Ruflet.text("Body"))
 
     view = sent.last[1]["patch"][1][3].first
     assert_equal "AppBar", view["appbar"]["_c"]

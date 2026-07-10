@@ -87,6 +87,20 @@ class RufletPageCompatibilityTest < Minitest::Test
     refute view.key?("fab")
   end
 
+  def test_page_add_rejects_old_keyword_chrome_arguments
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+
+    error = assert_raises(ArgumentError) do
+      page.add(Ruflet.text("Body"), appbar: Ruflet.app_bar(title: Ruflet.text("Home")))
+    end
+
+    assert_match(/accepts only controls/, error.message)
+  end
+
   private
 
   def patch_value(patch, key)

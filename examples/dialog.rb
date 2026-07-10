@@ -8,6 +8,11 @@ class FeedbackSurfacesApp < Ruflet::App
     dialog = build_dialog(page, status)
     bottom_sheet = build_bottom_sheet(page, status)
 
+    page.appbar = app_bar(
+      bgcolor: "#d9d7db",
+      color: "#232329",
+      title: text(value: "Feedback Surfaces", style: { size: 18 })
+    )
     page.add(
       container(
         padding: 16,
@@ -36,11 +41,6 @@ class FeedbackSurfacesApp < Ruflet::App
             )
           ]
         )
-      ),
-      appbar: app_bar(
-        bgcolor: "#d9d7db",
-        color: "#232329",
-        title: text(value: "Feedback Surfaces", style: { size: 18 })
       )
     )
   end

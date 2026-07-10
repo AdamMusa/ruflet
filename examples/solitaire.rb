@@ -209,7 +209,8 @@ class Solitaire
     controls.concat(@cards.map { |c| c.view(@page) }.compact)
     board = container(width: @board_w, height: @board_h, content: stack(children: controls))
     body = container(expand: true, bgcolor: TABLE_BG, padding: @outer, content: column(expand: true, spacing: 10, children: [@status_control, board]))
-    @page.add(body, appbar: appbar)
+    @page.appbar = appbar
+    @page.add(body)
   end
   def stock_click
     if @stock.pile.any?

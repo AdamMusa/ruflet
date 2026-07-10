@@ -180,6 +180,14 @@ class PageUpdateSerializationTest < Minitest::Test
     count = 0
     count_text = Ruflet.text(count.to_s, style: { size: 40 })
 
+    page.appbar = Ruflet.app_bar(title: Ruflet.text("Ruflet demo", style: { size: 18 }))
+    page.floating_action_button = Ruflet.fab(
+      icon: Ruflet::MaterialIcons::ADD,
+      on_click: ->(_e) do
+        count += 1
+        page.update(count_text, value: count.to_s)
+      end
+    )
     page.add(
       Ruflet.container(
         expand: true,
@@ -192,14 +200,6 @@ class PageUpdateSerializationTest < Minitest::Test
             count_text
           ]
         )
-      ),
-      appbar: Ruflet.app_bar(title: Ruflet.text("Ruflet demo", style: { size: 18 })),
-      floating_action_button: Ruflet.fab(
-        icon: Ruflet::MaterialIcons::ADD,
-        on_click: ->(_e) do
-          count += 1
-          page.update(count_text, value: count.to_s)
-        end
       )
     )
 

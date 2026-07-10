@@ -34,21 +34,19 @@ class TabsDemoApp < Ruflet::App
       ]
     )
 
-    page.add(
-      tabs_control,
-      appbar: app_bar(
-        bgcolor: "#d9d7db",
-        color: "#232329",
-        title: text(value: app_name, style: { size: 18 })
-      ),
-      floating_action_button: fab(
-        icon: Ruflet::MaterialIcons::ADD,
-        bgcolor: "#232329",
-        foreground_color: "#ffffff",
-        on_click: ->(_e) {}
-      ),
-      navigation_bar: bottom_tabs
+    page.appbar = app_bar(
+      bgcolor: "#d9d7db",
+      color: "#232329",
+      title: text(value: app_name, style: { size: 18 })
     )
+    page.floating_action_button = fab(
+      icon: Ruflet::MaterialIcons::ADD,
+      bgcolor: "#232329",
+      foreground_color: "#ffffff",
+      on_click: ->(_e) {}
+    )
+    page.navigation_bar = bottom_tabs
+    page.add(tabs_control)
   end
 end
 

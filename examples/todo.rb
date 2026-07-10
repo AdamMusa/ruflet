@@ -48,6 +48,15 @@ class TodoApp < Ruflet::App
       filtered_tasks.map { |task| task_row(page, task) }
     end
 
+    page.appbar = app_bar(
+      title: text(value: "Todo List", style: { color: Ruflet::Colors.ON_PRIMARY }),
+      bgcolor: Ruflet::Colors.PRIMARY
+    )
+    page.floating_action_button = fab(
+      icon: Ruflet::MaterialIcons::ADD,
+      content: text("Add"),
+      on_click: ->(e) { add_task(e.page) }
+    )
     page.add(
       container(
         width: content_width,
@@ -68,15 +77,6 @@ class TodoApp < Ruflet::App
             footer(page, compact)
           ]
         )
-      ),
-      appbar: app_bar(
-        title: text(value: "Todo List", style: { color: Ruflet::Colors.ON_PRIMARY }),
-        bgcolor: Ruflet::Colors.PRIMARY
-      ),
-      floating_action_button: fab(
-        icon: Ruflet::MaterialIcons::ADD,
-        content: text("Add"),
-        on_click: ->(e) { add_task(e.page) }
       )
     )
   end

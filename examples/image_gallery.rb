@@ -7,6 +7,7 @@ class ImageGalleryApp < Ruflet::App
     page.title = "Image Gallery"
     page.scroll = "auto"
 
+    page.appbar = app_bar(title: text(value: "Image Gallery"))
     page.add(
       container(
         padding: 16,
@@ -62,8 +63,7 @@ class ImageGalleryApp < Ruflet::App
             )
           ]
         )
-      ),
-      appbar: app_bar(title: text(value: "Image Gallery"))
+      )
     )
   end
 end

@@ -88,7 +88,8 @@ class RufletCupertinoNavigationBarCompatibilityTest < Minitest::Test
       selected_index: 0,
       on_change: ->(event) { observed << [event.value, event.control.props["selected_index"]] }
     )
-    page.add(Ruflet.text("Body"), navigation_bar: bar)
+    page.navigation_bar = bar
+    page.add(Ruflet.text("Body"))
 
     page.dispatch_event(target: bar.wire_id, name: "change", data: { "value" => 1 })
 

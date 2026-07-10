@@ -86,7 +86,8 @@ class RufletFloatingActionButtonCompatibilityTest < Minitest::Test
       sender: ->(action, payload) { sent << [action, payload] }
     )
 
-    page.add(Ruflet.text("Body"), floating_action_button: Ruflet.floating_action_button(icon: "add"))
+    page.floating_action_button = Ruflet.floating_action_button(icon: "add")
+    page.add(Ruflet.text("Body"))
 
     view = sent.last[1]["patch"][1][3].first
     assert_equal "FloatingActionButton", view["floating_action_button"]["_c"]

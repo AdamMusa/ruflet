@@ -27,6 +27,6 @@ class InstallSupportTest < Minitest::Test
 
     assert_includes template, 'Ruflet.run do |page|'
     assert_includes template, 'page.title = "Demo"'
-    assert_includes template, "floating_action_button: fab("
+    assert_includes template, "page.floating_action_button = fab("
   end
 end

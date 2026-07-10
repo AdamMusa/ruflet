@@ -142,6 +142,7 @@ module Ruflet
 
     PAGE_PROP_KEYS = %w[dark_theme fonts route rtl show_semantics_debugger theme theme_mode title vertical_alignment horizontal_alignment scroll].freeze
     DIALOG_PROP_KEYS = %w[dialog snack_bar bottom_sheet].freeze
+    PAGE_ADD_RESERVED_KEYS = %i[appbar bottom_appbar floating_action_button navigation_bar dialog snack_bar bottom_sheet].freeze
     WIDGET_HELPER_METHODS = (
       Ruflet::UI::MaterialControlMethods.instance_methods(false) +
       Ruflet::UI::CupertinoControlMethods.instance_methods(false) +
@@ -243,19 +244,15 @@ module Ruflet
       @view_props["bgcolor"] = normalize_value("bgcolor", value)
     end
 
-    def add(*controls, appbar: nil, bottom_appbar: nil, floating_action_button: nil, navigation_bar: nil, dialog: nil, snack_bar: nil, bottom_sheet: nil)
+    def add(*controls)
+      if controls.last.is_a?(Hash) && (controls.last.keys.map(&:to_sym) & PAGE_ADD_RESERVED_KEYS).any?
+        raise ArgumentError, "Page#add accepts only controls; assign page.appbar, page.floating_action_button, dialogs, or other page properties before calling add"
+      end
+
       controls = controls.flatten
       visited = Set.new
       controls.each { |c| register_control_tree(c, visited) }
       @root_controls = controls
-
-      @view_props["appbar"] = appbar if appbar
-      @view_props["bottom_appbar"] = bottom_appbar if bottom_appbar
-      @view_props["floating_action_button"] = floating_action_button if floating_action_button
-      @view_props["navigation_bar"] = navigation_bar if navigation_bar
-      @dialog = dialog if dialog
-      @snack_bar = snack_bar if snack_bar
-      @bottom_sheet = bottom_sheet if bottom_sheet
 
       refresh_dialogs_container!
       @view_props.each_value { |value| register_embedded_value(value, visited) }

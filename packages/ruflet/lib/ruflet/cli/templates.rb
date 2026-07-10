@@ -8,6 +8,13 @@ module Ruflet
       page.title = "Counter Demo"
       count = 0
       count_text = text(count.to_s, style: {size: 40})
+      page.floating_action_button = fab(
+        icon: "add",
+        on_click: ->(_e) do
+          count += 1
+          page.update(count_text, value: count.to_s)
+        end
+      )
       page.add(
         container(
           expand: true,
@@ -20,13 +27,6 @@ module Ruflet
               count_text
             ]
           )
-        ),
-        floating_action_button: fab(
-          icon: "add",
-          on_click: ->(_e) do
-            count += 1
-            page.update(count_text, value: count.to_s)
-          end
         )
       )
     end
