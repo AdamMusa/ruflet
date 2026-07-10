@@ -1608,7 +1608,10 @@ header = Dir.mktmpdir do |dir|
   out = File.join(dir, "embedded_ruflet_runtime.h")
   File.write(src, runtime)
 
-  _stdout, stderr, status = Open3.capture3(MRBC.to_s, "-B", "kEmbeddedRufletRuntimeIrep", "-o", out, src)
+  # -g keeps line/file debug info in the irep. The runtime relies on caller()
+  # for backtraces (and shims like __dir__), which collapse to "(unknown):0"
+  # without it — matching the fidelity the old source-string boot had.
+  _stdout, stderr, status = Open3.capture3(MRBC.to_s, "-g", "-B", "kEmbeddedRufletRuntimeIrep", "-o", out, src)
   raise "mrbc failed to compile the embedded runtime:\n#{stderr}" unless status.success?
 
   "#pragma once\n\n#{File.read(out)}"
