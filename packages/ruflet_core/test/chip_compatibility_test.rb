@@ -80,12 +80,11 @@ class RufletChipCompatibilityTest < Minitest::Test
     assert_equal true, patch["on_blur"]
   end
 
-  def test_chip_rejects_on_click_and_on_select_together_like_flet
-    error = assert_raises(ArgumentError) do
-      Ruflet.chip("Filter", on_click: ->(_event) {}, on_select: ->(_event) {})
-    end
+  def test_chip_serializes_on_click_and_on_select_together_like_flet
+    patch = Ruflet.chip("Filter", on_click: ->(_event) {}, on_select: ->(_event) {}).to_patch
 
-    assert_match(/on_click.*on_select|on_select.*on_click/, error.message)
+    assert_equal true, patch["on_click"]
+    assert_equal true, patch["on_select"]
   end
 
   def test_chip_serializes_negative_elevations_like_flet

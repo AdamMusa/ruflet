@@ -1021,6 +1021,24 @@
       },
       "expected_wire": "CupertinoContextMenu",
       "skip_props": ["actions"]
+    },
+    {
+      "name": "expansion_panel_permissive_empty",
+      "python_class": "ExpansionPanel",
+      "ruby_method": "expansion_panel",
+      "props": {},
+      "expected_wire": "ExpansionPanel"
+    },
+    {
+      "name": "list_tile_permissive_three_line_without_subtitle",
+      "python_class": "ListTile",
+      "ruby_method": "list_tile",
+      "props": {
+        "title": "Jane Doe",
+        "is_three_line": true,
+        "visible": true
+      },
+      "expected_wire": "ListTile"
     }
   ]
 }

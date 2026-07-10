@@ -13,10 +13,6 @@ module Ruflet
               raise ArgumentError, "dismissible requires visible content"
             end
 
-            if secondary_background && (background.nil? || (background.respond_to?(:props) && background.props["visible"] == false))
-              raise ArgumentError, "dismissible secondary_background requires visible background"
-            end
-
             cross_axis_end_offset = 0.0 if cross_axis_end_offset.nil?
             dismiss_direction = "horizontal" if dismiss_direction.nil?
             dismiss_thresholds = {} if dismiss_thresholds.nil?
