@@ -451,6 +451,10 @@ module Ruflet
       refresh_dialogs_container!
     end
 
+    def snack_bar
+      @snack_bar
+    end
+
     def snackbar=(value)
       self.snack_bar = value
     end
@@ -458,6 +462,10 @@ module Ruflet
     def bottom_sheet=(value)
       @bottom_sheet = value
       refresh_dialogs_container!
+    end
+
+    def bottom_sheet
+      @bottom_sheet
     end
 
     def bottomsheet=(value)
@@ -475,6 +483,14 @@ module Ruflet
       send_view_patch unless @dialogs_container.wire_id
       push_dialogs_update!
       self
+    end
+
+    def show_snack_bar(snack_bar_control)
+      show_dialog(snack_bar_control)
+    end
+
+    def show_bottom_sheet(bottom_sheet_control)
+      show_dialog(bottom_sheet_control)
     end
 
     def invoke(control_or_id, method_name, args: nil, timeout: 10, on_result: nil)

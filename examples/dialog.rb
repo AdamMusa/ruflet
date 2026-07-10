@@ -121,7 +121,14 @@ class FeedbackSurfacesApp < Ruflet::App
   end
 
   def open_surface(page, control, status, message)
-    page.show_dialog(control)
+    case control.to_patch["_c"]
+    when "SnackBar"
+      page.show_snack_bar(control)
+    when "BottomSheet"
+      page.show_bottom_sheet(control)
+    else
+      page.show_dialog(control)
+    end
     set_status(page, status, message)
   end
 end

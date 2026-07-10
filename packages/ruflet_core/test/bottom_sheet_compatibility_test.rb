@@ -74,7 +74,7 @@ class RufletBottomSheetCompatibilityTest < Minitest::Test
     )
 
     page.add(Ruflet.text("Root"))
-    page.show_dialog(sheet)
+    page.show_bottom_sheet(sheet)
     page.dispatch_event(target: sheet.wire_id, name: "dismiss", data: nil)
 
     assert_equal [["dismiss", true]], dismissed

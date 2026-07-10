@@ -112,7 +112,7 @@ class RufletSnackBarCompatibilityTest < Minitest::Test
     )
 
     page.add(Ruflet.text("Root"))
-    page.show_dialog(snack_bar)
+    page.show_snack_bar(snack_bar)
     page.dispatch_event(target: snack_bar.wire_id, name: "visible", data: nil)
     page.dispatch_event(target: snack_bar.wire_id, name: "action", data: nil)
 
