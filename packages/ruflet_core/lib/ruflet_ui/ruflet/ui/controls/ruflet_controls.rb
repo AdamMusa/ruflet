@@ -137,6 +137,7 @@ require_relative "shared/rect_control"
 require_relative "shared/reorderabledraghandle_control"
 require_relative "shared/responsiverow_control"
 require_relative "shared/row_control"
+require_relative "shared/rotatedbox_control"
 require_relative "shared/safearea_control"
 require_relative "shared/semantics_control"
 require_relative "shared/serviceregistry_control"
@@ -391,6 +392,8 @@ module Ruflet
           "responsive_row" => RufletComponents::ResponsiveRowControl,
           "responsiverow" => RufletComponents::ResponsiveRowControl,
           "row" => RufletComponents::RowControl,
+          "rotated_box" => RufletComponents::RotatedBoxControl,
+          "rotatedbox" => RufletComponents::RotatedBoxControl,
           "safe_area" => RufletComponents::SafeAreaControl,
           "safearea" => RufletComponents::SafeAreaControl,
           "search_bar" => RufletComponents::SearchBarControl,

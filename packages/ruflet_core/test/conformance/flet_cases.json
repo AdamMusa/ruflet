@@ -1053,6 +1053,20 @@
         "visible": true
       },
       "expected_wire": "SnackBarAction"
+    },
+    {
+      "name": "rotated_box_scalar_props",
+      "python_class": "RotatedBox",
+      "ruby_method": "rotated_box",
+      "props": {
+        "content": "Rotate me",
+        "quarter_turns": 1,
+        "expand": true,
+        "width": 200,
+        "height": 100,
+        "visible": true
+      },
+      "expected_wire": "RotatedBox"
     }
   ]
 }

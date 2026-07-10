@@ -400,6 +400,12 @@ module Ruflet
         build_widget(:transparentpointer, **mapped)
       end
       def transparentpointer(content = nil, **props) = transparent_pointer(content, **props)
+      def rotated_box(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:rotatedbox, **mapped)
+      end
+      def rotatedbox(content = nil, **props) = rotated_box(content, **props)
       def radio(**props) = build_widget(:radio, **props)
       def radio_group(content = nil, **props)
         mapped = props.dup
