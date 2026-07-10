@@ -13,16 +13,6 @@ module Ruflet
               raise ArgumentError, "floating_action_button requires icon or non-empty content"
             end
 
-            {
-              disabled_elevation: disabled_elevation,
-              elevation: elevation,
-              focus_elevation: focus_elevation,
-              highlight_elevation: highlight_elevation,
-              hover_elevation: hover_elevation
-            }.each do |name, value|
-              raise ArgumentError, "floating_action_button #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
-            end
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

@@ -54,22 +54,22 @@ class RufletCupertinoNavigationBarCompatibilityTest < Minitest::Test
     assert_equal 0, bar.props["selected_index"]
   end
 
-  def test_cupertino_navigation_bar_requires_at_least_two_visible_destinations_like_flet
-    error = assert_raises(ArgumentError) do
-      Ruflet.cupertino_navigation_bar(destinations: [Ruflet.navigation_bar_destination(icon: "home")])
-    end
+  def test_cupertino_navigation_bar_serializes_single_destination_like_flet
+    patch = Ruflet.cupertino_navigation_bar(destinations: [Ruflet.navigation_bar_destination(icon: "home")]).to_patch
 
-    assert_match(/destinations/, error.message)
+    assert_equal 1, patch["destinations"].length
   end
 
-  def test_cupertino_navigation_bar_rejects_selected_index_out_of_range_like_flet
+  def test_cupertino_navigation_bar_serializes_selected_index_out_of_range_like_flet
     destinations = [
       Ruflet.navigation_bar_destination(icon: "home"),
       Ruflet.navigation_bar_destination(icon: "search")
     ]
+    negative = Ruflet.cupertino_navigation_bar(destinations: destinations, selected_index: -1).to_patch
+    high = Ruflet.cupertino_navigation_bar(destinations: destinations, selected_index: 2).to_patch
 
-    assert_raises(IndexError) { Ruflet.cupertino_navigation_bar(destinations: destinations, selected_index: -1) }
-    assert_raises(IndexError) { Ruflet.cupertino_navigation_bar(destinations: destinations, selected_index: 2) }
+    assert_equal(-1, negative["selected_index"])
+    assert_equal 2, high["selected_index"]
   end
 
   def test_cupertino_navigation_bar_change_event_updates_selected_index_before_handler

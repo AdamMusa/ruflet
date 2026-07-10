@@ -16,11 +16,6 @@ module Ruflet
             spacing = 10 if spacing.nil?
             vertical_alignment = "start" if vertical_alignment.nil?
 
-            validate_non_negative(:columns, columns)
-            validate_non_negative(:run_spacing, run_spacing)
-            validate_non_negative(:spacing, spacing)
-            validate_non_negative(:breakpoints, breakpoints)
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
@@ -67,15 +62,6 @@ module Ruflet
             super(type: TYPE, id: id, **props)
           end
 
-          private
-
-          def validate_non_negative(name, value)
-            values = value.is_a?(Hash) ? value.values : [value]
-            values.each do |entry|
-              next if entry.nil?
-              raise ArgumentError, "responsive_row #{name} must be greater than or equal to 0" if entry.negative?
-            end
-          end
         end
       end
     end

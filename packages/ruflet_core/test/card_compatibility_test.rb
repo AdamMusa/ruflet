@@ -41,9 +41,7 @@ class RufletCardCompatibilityTest < Minitest::Test
     refute patch.key?("content")
   end
 
-  def test_card_rejects_negative_elevation_like_flet
-    error = assert_raises(ArgumentError) { Ruflet.card(elevation: -1) }
-
-    assert_match(/elevation/, error.message)
+  def test_card_serializes_negative_elevation_like_flet
+    assert_equal(-1, Ruflet.card(elevation: -1).to_patch["elevation"])
   end
 end

@@ -13,16 +13,6 @@ module Ruflet
             full_screen = false if full_screen.nil?
             value = "" if value.nil?
 
-            {
-              bar_elevation: bar_elevation,
-              view_elevation: view_elevation,
-              view_header_height: view_header_height
-            }.each do |name, value|
-              next unless value.is_a?(Numeric)
-
-              raise ArgumentError, "search_bar #{name} must be greater than or equal to 0" if value.negative?
-            end
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

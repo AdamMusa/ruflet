@@ -12,10 +12,6 @@ module Ruflet
             if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
               raise ArgumentError, "draggable requires visible content"
             end
-            if !max_simultaneous_drags.nil? && max_simultaneous_drags.negative?
-              raise ArgumentError, "draggable max_simultaneous_drags must be greater than or equal to 0"
-            end
-
             group = "default" if group.nil?
 
             props = {}

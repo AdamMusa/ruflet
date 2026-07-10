@@ -178,17 +178,28 @@ class RufletPickerCompatibilityTest < Minitest::Test
     assert_equal "TimePicker", Ruflet.timepicker.to_patch["_c"]
   end
 
-  def test_date_picker_rejects_out_of_range_values_like_flet
-    assert_raises(ArgumentError) { Ruflet.date_picker(first_date: "2026-12-31", last_date: "2026-01-01") }
-    assert_raises(ArgumentError) { Ruflet.date_picker(first_date: "2026-01-01", last_date: "2026-12-31", value: "2025-12-31") }
-    assert_raises(ArgumentError) { Ruflet.date_picker(first_date: "2026-01-01", last_date: "2026-12-31", value: "2027-01-01") }
+  def test_date_picker_serializes_out_of_range_values_like_flet
+    inverted = Ruflet.date_picker(first_date: "2026-12-31", last_date: "2026-01-01").to_patch
+    before = Ruflet.date_picker(first_date: "2026-01-01", last_date: "2026-12-31", value: "2025-12-31").to_patch
+    after = Ruflet.date_picker(first_date: "2026-01-01", last_date: "2026-12-31", value: "2027-01-01").to_patch
+
+    assert_equal "2026-12-31", inverted["first_date"]
+    assert_equal "2026-01-01", inverted["last_date"]
+    assert_equal "2025-12-31", before["value"]
+    assert_equal "2027-01-01", after["value"]
   end
 
-  def test_date_range_picker_rejects_invalid_ranges_like_flet
-    assert_raises(ArgumentError) { Ruflet.date_range_picker(first_date: "2026-12-31", last_date: "2026-01-01") }
-    assert_raises(ArgumentError) { Ruflet.date_range_picker(first_date: "2026-01-01", last_date: "2026-12-31", start_value: "2025-12-31") }
-    assert_raises(ArgumentError) { Ruflet.date_range_picker(first_date: "2026-01-01", last_date: "2026-12-31", end_value: "2027-01-01") }
-    assert_raises(ArgumentError) { Ruflet.date_range_picker(start_value: "2026-05-14", end_value: "2026-05-01") }
+  def test_date_range_picker_serializes_invalid_ranges_like_flet
+    inverted = Ruflet.date_range_picker(first_date: "2026-12-31", last_date: "2026-01-01").to_patch
+    outside = Ruflet.date_range_picker(first_date: "2026-01-01", last_date: "2026-12-31", start_value: "2025-12-31", end_value: "2027-01-01").to_patch
+    reversed = Ruflet.date_range_picker(start_value: "2026-05-14", end_value: "2026-05-01").to_patch
+
+    assert_equal "2026-12-31", inverted["first_date"]
+    assert_equal "2026-01-01", inverted["last_date"]
+    assert_equal "2025-12-31", outside["start_value"]
+    assert_equal "2027-01-01", outside["end_value"]
+    assert_equal "2026-05-14", reversed["start_value"]
+    assert_equal "2026-05-01", reversed["end_value"]
   end
 
   def test_picker_change_events_update_values_before_handler

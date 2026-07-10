@@ -14,9 +14,6 @@ module Ruflet
             border_radius = { "all" => 8.0 } if border_radius.nil?
             opacity_on_click = 0.4 if opacity_on_click.nil?
             size = "large" if size.nil?
-            unless opacity_on_click.respond_to?(:between?) && opacity_on_click.between?(0.0, 1.0)
-              raise ArgumentError, "cupertino_tinted_button opacity_on_click must be between 0.0 and 1.0"
-            end
 
             props = {}
             props[:align] = align unless align.nil?

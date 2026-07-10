@@ -58,9 +58,9 @@ class RufletAppBarCompatibilityTest < Minitest::Test
     assert_equal({ "weight" => "bold" }, patch["toolbar_text_style"])
   end
 
-  def test_app_bar_rejects_toolbar_opacity_outside_flet_range
-    assert_raises(ArgumentError) { Ruflet.app_bar(toolbar_opacity: -0.01) }
-    assert_raises(ArgumentError) { Ruflet.app_bar(toolbar_opacity: 1.01) }
+  def test_app_bar_serializes_toolbar_opacity_outside_flet_range
+    assert_equal(-0.01, Ruflet.app_bar(toolbar_opacity: -0.01).to_patch["toolbar_opacity"])
+    assert_equal 1.01, Ruflet.app_bar(toolbar_opacity: 1.01).to_patch["toolbar_opacity"]
   end
 
   def test_page_add_serializes_app_bar_as_view_appbar

@@ -15,13 +15,6 @@ module Ruflet
             minute_interval = 1 if minute_interval.nil?
             show_day_of_week = false if show_day_of_week.nil?
             use_24h_format = false if use_24h_format.nil?
-            raise ArgumentError, "cupertino_date_picker item_extent must be greater than 0" unless item_extent.positive?
-            unless minute_interval.positive? && (60 % minute_interval).zero?
-              raise ArgumentError, "cupertino_date_picker minute_interval must be a positive factor of 60"
-            end
-            if show_day_of_week && date_picker_mode != "date"
-              raise ArgumentError, "cupertino_date_picker show_day_of_week requires date_picker_mode: 'date'"
-            end
 
             props = {}
             props[:align] = align unless align.nil?

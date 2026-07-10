@@ -13,8 +13,6 @@ module Ruflet
               raise ArgumentError, "popup_menu_item requires visible content"
             end
 
-            raise ArgumentError, "popup_menu_item height must be greater than or equal to 0" unless height.nil? || height >= 0
-
             props = {}
             props[:badge] = badge unless badge.nil?
             props[:checked] = checked unless checked.nil?

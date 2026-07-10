@@ -15,17 +15,6 @@ module Ruflet
             mode = "hour_minute_seconds" if mode.nil?
             second_interval = 1 if second_interval.nil?
             value = 0 if value.nil?
-            raise ArgumentError, "cupertino_timer_picker item_extent must be greater than 0" unless item_extent.positive?
-            unless minute_interval.positive? && (60 % minute_interval).zero?
-              raise ArgumentError, "cupertino_timer_picker minute_interval must be a positive factor of 60"
-            end
-            unless second_interval.positive? && (60 % second_interval).zero?
-              raise ArgumentError, "cupertino_timer_picker second_interval must be a positive factor of 60"
-            end
-            raise ArgumentError, "cupertino_timer_picker value must be greater than or equal to 0" unless value >= 0
-            raise ArgumentError, "cupertino_timer_picker value must be less than 24 hours" unless value < 86_400
-            raise ArgumentError, "cupertino_timer_picker value must be a multiple of minute_interval" unless (value % minute_interval).zero?
-            raise ArgumentError, "cupertino_timer_picker value must be a multiple of second_interval" unless (value % second_interval).zero?
 
             props = {}
             props[:align] = align unless align.nil?

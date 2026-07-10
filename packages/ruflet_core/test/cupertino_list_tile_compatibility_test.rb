@@ -61,9 +61,11 @@ class RufletCupertinoListTileCompatibilityTest < Minitest::Test
     assert_raises(ArgumentError) { Ruflet.cupertino_list_tile(title: Ruflet.text("Hidden", visible: false)) }
   end
 
-  def test_cupertino_list_tile_rejects_negative_numeric_values_like_flet
-    assert_raises(ArgumentError) { Ruflet.cupertino_list_tile(title: "Title", leading_size: -1) }
-    assert_raises(ArgumentError) { Ruflet.cupertino_list_tile(title: "Title", leading_to_title: -1) }
+  def test_cupertino_list_tile_serializes_negative_numeric_values_like_flet
+    patch = Ruflet.cupertino_list_tile(title: "Title", leading_size: -1, leading_to_title: -2).to_patch
+
+    assert_equal(-1, patch["leading_size"])
+    assert_equal(-2, patch["leading_to_title"])
   end
 
   def test_cupertino_list_tile_click_event_dispatches

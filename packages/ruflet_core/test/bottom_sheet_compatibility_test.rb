@@ -53,12 +53,10 @@ class RufletBottomSheetCompatibilityTest < Minitest::Test
     assert_match(/content/, error.message)
   end
 
-  def test_bottom_sheet_rejects_negative_elevation_like_flet
-    error = assert_raises(ArgumentError) do
-      Ruflet.bottom_sheet(Ruflet.text("Sheet"), elevation: -1)
-    end
+  def test_bottom_sheet_serializes_negative_elevation_like_flet
+    patch = Ruflet.bottom_sheet(Ruflet.text("Sheet"), elevation: -1).to_patch
 
-    assert_match(/elevation/, error.message)
+    assert_equal(-1, patch["elevation"])
   end
 
   def test_bottom_sheet_dismiss_event_closes_dialog_tracking_and_calls_handler

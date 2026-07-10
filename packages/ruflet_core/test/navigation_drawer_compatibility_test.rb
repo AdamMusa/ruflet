@@ -89,17 +89,15 @@ class RufletNavigationDrawerCompatibilityTest < Minitest::Test
     assert_match(/icon/, error.message)
   end
 
-  def test_navigation_drawer_rejects_negative_elevation_and_width_like_flet
+  def test_navigation_drawer_serializes_negative_elevation_and_width_like_flet
     controls = [
       Ruflet.navigation_drawer_destination(icon: "home"),
       Ruflet.navigation_drawer_destination(icon: "search")
     ]
+    patch = Ruflet.navigation_drawer(controls, elevation: -1, width: -2).to_patch
 
-    %i[elevation width].each do |prop|
-      error = assert_raises(ArgumentError) { Ruflet.navigation_drawer(controls, prop => -1) }
-
-      assert_match(/#{prop}/, error.message)
-    end
+    assert_equal(-1, patch["elevation"])
+    assert_equal(-2, patch["width"])
   end
 
   def test_navigation_drawer_change_event_updates_selected_index_before_handler

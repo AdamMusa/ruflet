@@ -23,11 +23,6 @@ module Ruflet
             movement_duration = 200 if movement_duration.nil?
             resize_duration = 300 if resize_duration.nil?
 
-            dismiss_thresholds.each_value do |threshold|
-              next if threshold.nil?
-              raise ArgumentError, "dismissible dismiss_thresholds values must be between 0.0 and 1.0" unless (0.0..1.0).cover?(threshold)
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?

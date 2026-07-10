@@ -18,15 +18,6 @@ module Ruflet
             squeeze = 1.45 if squeeze.nil?
             use_magnifier = false if use_magnifier.nil?
 
-            {
-              item_extent: item_extent,
-              magnification: magnification,
-              squeeze: squeeze
-            }.each do |name, value|
-              raise ArgumentError, "cupertino_picker #{name} must be greater than 0" unless value.positive?
-            end
-            raise ArgumentError, "cupertino_picker selected_index must be greater than or equal to 0" if selected_index.negative?
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

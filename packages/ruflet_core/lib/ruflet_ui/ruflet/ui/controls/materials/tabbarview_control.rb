@@ -12,10 +12,6 @@ module Ruflet
             clip_behavior = "hardEdge" if clip_behavior.nil?
             viewport_fraction = 1.0 if viewport_fraction.nil?
 
-            unless viewport_fraction.nil? || viewport_fraction > 0
-              raise ArgumentError, "tab_bar_view viewport_fraction must be greater than 0"
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?

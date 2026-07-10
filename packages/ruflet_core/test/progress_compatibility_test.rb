@@ -74,19 +74,20 @@ class RufletProgressCompatibilityTest < Minitest::Test
     refute Ruflet.progress_ring.to_patch.key?("value")
   end
 
-  def test_progress_bar_rejects_negative_numeric_values_like_flet
-    %i[bar_height semantics_value stop_indicator_radius track_gap].each do |prop|
-      error = assert_raises(ArgumentError) { Ruflet.progress_bar(prop => -1) }
+  def test_progress_bar_serializes_negative_numeric_values_like_flet
+    patch = Ruflet.progress_bar(bar_height: -1, semantics_value: -2, stop_indicator_radius: -3, track_gap: -4).to_patch
 
-      assert_match(/#{prop}/, error.message)
-    end
+    assert_equal(-1, patch["bar_height"])
+    assert_equal(-2, patch["semantics_value"])
+    assert_equal(-3, patch["stop_indicator_radius"])
+    assert_equal(-4, patch["track_gap"])
   end
 
-  def test_progress_ring_rejects_negative_numeric_values_like_flet
-    %i[semantics_value stroke_width track_gap].each do |prop|
-      error = assert_raises(ArgumentError) { Ruflet.progress_ring(prop => -1) }
+  def test_progress_ring_serializes_negative_numeric_values_like_flet
+    patch = Ruflet.progress_ring(semantics_value: -1, stroke_width: -2, track_gap: -3).to_patch
 
-      assert_match(/#{prop}/, error.message)
-    end
+    assert_equal(-1, patch["semantics_value"])
+    assert_equal(-2, patch["stroke_width"])
+    assert_equal(-3, patch["track_gap"])
   end
 end

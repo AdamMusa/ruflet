@@ -17,18 +17,6 @@ module Ruflet
             runs_count = 1 if runs_count.nil?
             spacing = 10 if spacing.nil?
 
-            {
-              child_aspect_ratio: child_aspect_ratio,
-              max_extent: max_extent,
-              run_spacing: run_spacing,
-              runs_count: runs_count,
-              semantic_child_count: semantic_child_count,
-              spacing: spacing
-            }.each do |name, value|
-              next if value.nil?
-              raise ArgumentError, "grid_view #{name} must be greater than or equal to 0" if value.negative?
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?

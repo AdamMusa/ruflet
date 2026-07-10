@@ -88,12 +88,12 @@ class RufletChipCompatibilityTest < Minitest::Test
     assert_match(/on_click.*on_select|on_select.*on_click/, error.message)
   end
 
-  def test_chip_rejects_negative_elevations_like_flet
-    %i[elevation elevation_on_click].each do |prop|
-      error = assert_raises(ArgumentError) { Ruflet.chip("Filter", prop => -1) }
+  def test_chip_serializes_negative_elevations_like_flet
+    chip = Ruflet.chip("Filter", elevation: -1, elevation_on_click: -2)
+    patch = chip.to_patch
 
-      assert_match(/#{prop}/, error.message)
-    end
+    assert_equal(-1, patch["elevation"])
+    assert_equal(-2, patch["elevation_on_click"])
   end
 
   def test_chip_select_event_updates_selected_before_handler

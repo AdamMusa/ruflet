@@ -77,16 +77,16 @@ class RufletPopupMenuCompatibilityTest < Minitest::Test
     assert_raises(ArgumentError) { Ruflet.popup_menu_item(Ruflet.text("Hidden", visible: false)) }
   end
 
-  def test_popup_menu_rejects_negative_numeric_values_like_flet
-    assert_raises(ArgumentError) { Ruflet.popup_menu_item("Edit", height: -1) }
+  def test_popup_menu_serializes_negative_numeric_values_like_flet
+    item = Ruflet.popup_menu_item("Edit", height: -1)
+    button = Ruflet.popup_menu_button([Ruflet.popup_menu_item("Edit")], elevation: -1, icon_size: -2, splash_radius: -3)
 
-    %i[elevation icon_size splash_radius].each do |prop|
-      error = assert_raises(ArgumentError) do
-        Ruflet.popup_menu_button([Ruflet.popup_menu_item("Edit")], prop => -1)
-      end
+    assert_equal(-1, item.to_patch["height"])
 
-      assert_match(/#{prop}/, error.message)
-    end
+    patch = button.to_patch
+    assert_equal(-1, patch["elevation"])
+    assert_equal(-2, patch["icon_size"])
+    assert_equal(-3, patch["splash_radius"])
   end
 
   def test_popup_menu_select_event_exposes_selected_value

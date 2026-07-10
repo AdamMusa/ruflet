@@ -16,16 +16,6 @@ module Ruflet
             reverse = false if reverse.nil?
             spacing = 0 if spacing.nil?
 
-            {
-              divider_thickness: divider_thickness,
-              item_extent: item_extent,
-              semantic_child_count: semantic_child_count,
-              spacing: spacing
-            }.each do |name, value|
-              next if value.nil?
-              raise ArgumentError, "list_view #{name} must be greater than or equal to 0" if value.negative?
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?

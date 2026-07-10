@@ -9,6 +9,7 @@ require_relative "icons/material_icon_lookup"
 require_relative "icons/cupertino_icon_lookup"
 require "set"
 require "cgi"
+require "uri"
 require "thread"
 require "timeout"
 
@@ -1020,6 +1021,9 @@ module Ruflet
       if args.empty? && !block
         return @page_props[method_name] if @page_props.key?(method_name)
         return @view_props[method_name] if @view_props.key?(method_name)
+        # Client-reported page properties (width, height, platform,
+        # platform_brightness, media) arrive in the register payload.
+        return @client_details[method_name] if @client_details.respond_to?(:key?) && @client_details.key?(method_name)
         return instance_variable_get("@#{method_name}") if DIALOG_PROP_KEYS.include?(method_name)
       end
 
@@ -1269,7 +1273,8 @@ module Ruflet
       query_string = route_value.to_s.split("?", 2)[1].to_s
       return {} if query_string.empty?
 
-      CGI.parse(query_string).each_with_object({}) do |(key, values), result|
+      URI.decode_www_form(query_string).group_by(&:first).each_with_object({}) do |(key, pairs), result|
+        values = pairs.map(&:last)
         result[key] = values.size == 1 ? values.first : values
       end
     end

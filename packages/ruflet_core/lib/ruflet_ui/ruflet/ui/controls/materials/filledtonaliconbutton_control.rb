@@ -13,10 +13,6 @@ module Ruflet
             autofocus = false if autofocus.nil?
             icon_size = 24 if icon_size.nil?
             padding = { "all" => 8 } if padding.nil?
-            unless splash_radius.nil? || splash_radius.positive?
-              raise ArgumentError, "filled_tonal_icon_button splash_radius must be greater than 0"
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?

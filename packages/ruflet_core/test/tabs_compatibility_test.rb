@@ -62,22 +62,26 @@ class RufletTabsCompatibilityTest < Minitest::Test
     assert_match(/label|icon/, error.message)
   end
 
-  def test_tab_rejects_height_below_flet_defaults
-    assert_raises(ArgumentError) { Ruflet.tab(label: "Home", height: 45) }
-    assert_raises(ArgumentError) { Ruflet.tab(label: "Home", icon: "home", height: 71) }
+  def test_tab_serializes_any_height_like_flet
+    label_only = Ruflet.tab(label: "Home", height: 45)
+    label_and_icon = Ruflet.tab(label: "Home", icon: "home", height: 71)
+    negative = Ruflet.tab(label: "Home", height: -1)
+
+    assert_equal 45, label_only.to_patch["height"]
+    assert_equal 71, label_and_icon.to_patch["height"]
+    assert_equal(-1, negative.to_patch["height"])
   end
 
-  def test_tab_bar_rejects_negative_numeric_values_like_flet
-    %i[divider_height indicator_thickness].each do |prop|
-      error = assert_raises(ArgumentError) { Ruflet.tab_bar([Ruflet.tab(label: "Home")], prop => -1) }
+  def test_tab_bar_serializes_negative_numeric_values_like_flet
+    patch = Ruflet.tab_bar([Ruflet.tab(label: "Home")], divider_height: -1, indicator_thickness: -2).to_patch
 
-      assert_match(/#{prop}/, error.message)
-    end
+    assert_equal(-1, patch["divider_height"])
+    assert_equal(-2, patch["indicator_thickness"])
   end
 
-  def test_tab_bar_view_rejects_invalid_viewport_fraction_like_flet
-    assert_raises(ArgumentError) { Ruflet.tab_bar_view([Ruflet.text("Body")], viewport_fraction: 0) }
-    assert_raises(ArgumentError) { Ruflet.tab_bar_view([Ruflet.text("Body")], viewport_fraction: -1) }
+  def test_tab_bar_view_serializes_invalid_viewport_fraction_like_flet
+    assert_equal 0, Ruflet.tab_bar_view([Ruflet.text("Body")], viewport_fraction: 0).to_patch["viewport_fraction"]
+    assert_equal(-1, Ruflet.tab_bar_view([Ruflet.text("Body")], viewport_fraction: -1).to_patch["viewport_fraction"])
   end
 
   def test_tab_bar_view_uses_children_for_ruby_controls_collection

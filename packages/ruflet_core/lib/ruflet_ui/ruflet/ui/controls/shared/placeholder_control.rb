@@ -13,14 +13,6 @@ module Ruflet
             fallback_width = 400.0 if fallback_width.nil?
             stroke_width = 2.0 if stroke_width.nil?
 
-            {
-              fallback_height: fallback_height,
-              fallback_width: fallback_width,
-              stroke_width: stroke_width
-            }.each do |name, value|
-              raise ArgumentError, "placeholder #{name} must be greater than or equal to 0" if value.negative?
-            end
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

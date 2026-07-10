@@ -13,13 +13,6 @@ module Ruflet
               raise ArgumentError, "chip on_click and on_select cannot both be specified"
             end
 
-            {
-              elevation: elevation,
-              elevation_on_click: elevation_on_click
-            }.each do |name, value|
-              raise ArgumentError, "chip #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
-            end
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

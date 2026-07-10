@@ -1,0 +1,906 @@
+{
+  "cases": [
+    {
+      "name": "list_view_scalar_props",
+      "python_class": "ListView",
+      "ruby_method": "list_view",
+      "props": {
+        "horizontal": true,
+        "reverse": true,
+        "spacing": 4,
+        "item_extent": 32,
+        "first_item_prototype": true,
+        "divider_thickness": 2,
+        "padding": 8,
+        "clip_behavior": "antiAlias",
+        "semantic_child_count": 2,
+        "cache_extent": 120,
+        "build_controls_on_demand": false,
+        "auto_scroll": true,
+        "scroll_interval": 50,
+        "visible": true
+      },
+      "expected_wire": "ListView"
+    },
+    {
+      "name": "list_view_negative_layout_values",
+      "python_class": "ListView",
+      "ruby_method": "list_view",
+      "props": {
+        "divider_thickness": -1,
+        "item_extent": -2,
+        "semantic_child_count": -3,
+        "spacing": -4
+      },
+      "expected_wire": "ListView"
+    },
+    {
+      "name": "grid_view_scalar_props",
+      "python_class": "GridView",
+      "ruby_method": "grid_view",
+      "props": {
+        "horizontal": true,
+        "reverse": true,
+        "runs_count": 3,
+        "max_extent": 160,
+        "spacing": 4,
+        "run_spacing": 6,
+        "child_aspect_ratio": 1.5,
+        "padding": 8,
+        "clip_behavior": "antiAlias",
+        "semantic_child_count": 2,
+        "cache_extent": 120,
+        "build_controls_on_demand": false,
+        "auto_scroll": true,
+        "scroll_interval": 50,
+        "visible": true
+      },
+      "expected_wire": "GridView"
+    },
+    {
+      "name": "grid_view_negative_layout_values",
+      "python_class": "GridView",
+      "ruby_method": "grid_view",
+      "props": {
+        "child_aspect_ratio": -1,
+        "max_extent": -2,
+        "run_spacing": -3,
+        "runs_count": -4,
+        "semantic_child_count": -5,
+        "spacing": -6
+      },
+      "expected_wire": "GridView"
+    },
+    {
+      "name": "responsive_row_scalar_props",
+      "python_class": "ResponsiveRow",
+      "ruby_method": "responsive_row",
+      "props": {
+        "columns": 12,
+        "alignment": "center",
+        "vertical_alignment": "end",
+        "spacing": 4,
+        "run_spacing": 8,
+        "breakpoints": { "phone": 0, "tablet": 540 },
+        "visible": true
+      },
+      "expected_wire": "ResponsiveRow"
+    },
+    {
+      "name": "responsive_row_negative_layout_values",
+      "python_class": "ResponsiveRow",
+      "ruby_method": "responsive_row",
+      "props": {
+        "columns": -1,
+        "run_spacing": -2,
+        "spacing": -3,
+        "breakpoints": { "phone": -4 }
+      },
+      "expected_wire": "ResponsiveRow"
+    },
+    {
+      "name": "range_slider_scalar_props",
+      "python_class": "RangeSlider",
+      "ruby_method": "range_slider",
+      "props": {
+        "start_value": 0.2,
+        "end_value": 0.8,
+        "label": "Range",
+        "min": 0,
+        "max": 1,
+        "divisions": 4,
+        "round": 2,
+        "active_color": "#123456",
+        "inactive_color": "#ABCDEF",
+        "tooltip": "Pick range",
+        "visible": true
+      },
+      "expected_wire": "RangeSlider"
+    },
+    {
+      "name": "icon_button_scalar_props",
+      "python_class": "IconButton",
+      "ruby_method": "icon_button",
+      "props": {
+        "icon": "home",
+        "icon_color": "#123456",
+        "icon_size": 24,
+        "selected": true,
+        "selected_icon": "check",
+        "selected_icon_color": "#ABCDEF",
+        "bgcolor": "#111111",
+        "highlight_color": "#222222",
+        "autofocus": true,
+        "disabled_color": "#333333",
+        "hover_color": "#444444",
+        "focus_color": "#555555",
+        "splash_color": "#666666",
+        "splash_radius": 20,
+        "padding": 8,
+        "enable_feedback": true,
+        "url": "https://example.com",
+        "tooltip": "Home",
+        "visible": true
+      },
+      "expected_wire": "IconButton",
+      "skip_props": ["icon", "selected_icon"]
+    },
+    {
+      "name": "floating_action_button_scalar_props",
+      "python_class": "FloatingActionButton",
+      "ruby_method": "floating_action_button",
+      "props": {
+        "content": "Add",
+        "bgcolor": "#ABCDEF",
+        "autofocus": true,
+        "mini": true,
+        "foreground_color": "#111111",
+        "focus_color": "#222222",
+        "clip_behavior": "none",
+        "elevation": 2,
+        "disabled_elevation": 1,
+        "focus_elevation": 3,
+        "highlight_elevation": 4,
+        "hover_elevation": 5,
+        "hover_color": "#333333",
+        "splash_color": "#444444",
+        "enable_feedback": true,
+        "url": "https://example.com",
+        "tooltip": "Add",
+        "visible": true
+      },
+      "expected_wire": "FloatingActionButton"
+    },
+    {
+      "name": "badge_scalar_props",
+      "python_class": "Badge",
+      "ruby_method": "badge",
+      "props": {
+        "label": "3",
+        "bgcolor": "#ABCDEF",
+        "label_visible": true,
+        "large_size": 18,
+        "padding": 4,
+        "small_size": 8,
+        "text_color": "#111111"
+      },
+      "expected_wire": "Badge"
+    },
+    {
+      "name": "circle_avatar_scalar_props",
+      "python_class": "CircleAvatar",
+      "ruby_method": "circle_avatar",
+      "props": {
+        "content": "A",
+        "foreground_image_src": "https://example.com/a.png",
+        "background_image_src": "https://example.com/bg.png",
+        "color": "#111111",
+        "bgcolor": "#ABCDEF",
+        "radius": 20,
+        "tooltip": "Avatar",
+        "visible": true
+      },
+      "expected_wire": "CircleAvatar"
+    },
+    {
+      "name": "tab_scalar_props",
+      "python_class": "Tab",
+      "ruby_method": "tab",
+      "props": {
+        "label": "Home",
+        "icon": "home",
+        "height": 46,
+        "icon_margin": 4,
+        "tooltip": "Home",
+        "visible": true
+      },
+      "expected_wire": "Tab",
+      "skip_props": ["icon"]
+    },
+    {
+      "name": "slider_permissive_range_values",
+      "python_class": "Slider",
+      "ruby_method": "slider",
+      "props": {
+        "min": 10,
+        "max": 1,
+        "value": 5
+      },
+      "expected_wire": "Slider"
+    },
+    {
+      "name": "range_slider_permissive_range_values",
+      "python_class": "RangeSlider",
+      "ruby_method": "range_slider",
+      "props": {
+        "min": 10,
+        "max": 1,
+        "start_value": 2,
+        "end_value": 7
+      },
+      "expected_wire": "RangeSlider"
+    },
+    {
+      "name": "range_slider_permissive_divisions_and_round",
+      "python_class": "RangeSlider",
+      "ruby_method": "range_slider",
+      "props": {
+        "start_value": 1,
+        "end_value": 2,
+        "max": 3,
+        "divisions": 0,
+        "round": -1
+      },
+      "expected_wire": "RangeSlider"
+    },
+    {
+      "name": "icon_button_permissive_splash_radius",
+      "python_class": "IconButton",
+      "ruby_method": "icon_button",
+      "props": {
+        "icon": "home",
+        "splash_radius": 0
+      },
+      "expected_wire": "IconButton",
+      "skip_props": ["icon"]
+    },
+    {
+      "name": "floating_action_button_permissive_negative_elevation",
+      "python_class": "FloatingActionButton",
+      "ruby_method": "floating_action_button",
+      "props": {
+        "content": "Add",
+        "elevation": -1
+      },
+      "expected_wire": "FloatingActionButton"
+    },
+    {
+      "name": "snack_bar_permissive_action_overflow_threshold",
+      "python_class": "SnackBar",
+      "ruby_method": "snack_bar",
+      "props": {
+        "content": "Saved",
+        "action_overflow_threshold": 1.1
+      },
+      "expected_wire": "SnackBar"
+    },
+    {
+      "name": "cupertino_activity_indicator_scalar_props",
+      "python_class": "CupertinoActivityIndicator",
+      "ruby_method": "cupertino_activity_indicator",
+      "props": {
+        "radius": 12,
+        "color": "#123456",
+        "animating": true,
+        "progress": 0.4,
+        "tooltip": "Loading",
+        "visible": true
+      },
+      "expected_wire": "CupertinoActivityIndicator"
+    },
+    {
+      "name": "cupertino_checkbox_scalar_props",
+      "python_class": "CupertinoCheckbox",
+      "ruby_method": "cupertino_checkbox",
+      "props": {
+        "label": "Accept",
+        "label_position": "right",
+        "spacing": 10,
+        "value": true,
+        "tristate": true,
+        "autofocus": true,
+        "check_color": "#111111",
+        "active_color": "#123456",
+        "focus_color": "#222222",
+        "semantics_label": "Accept terms",
+        "tooltip": "Accept",
+        "visible": true
+      },
+      "expected_wire": "CupertinoCheckbox"
+    },
+    {
+      "name": "cupertino_switch_scalar_props",
+      "python_class": "CupertinoSwitch",
+      "ruby_method": "cupertino_switch",
+      "props": {
+        "label": "Enabled",
+        "value": true,
+        "label_position": "right",
+        "thumb_color": "#111111",
+        "focus_color": "#222222",
+        "autofocus": true,
+        "on_label_color": "#333333",
+        "off_label_color": "#444444",
+        "active_track_color": "#123456",
+        "inactive_thumb_color": "#555555",
+        "inactive_track_color": "#666666",
+        "tooltip": "Enabled",
+        "visible": true
+      },
+      "expected_wire": "CupertinoSwitch"
+    },
+    {
+      "name": "cupertino_slider_scalar_props",
+      "python_class": "CupertinoSlider",
+      "ruby_method": "cupertino_slider",
+      "props": {
+        "value": 0.25,
+        "min": 0,
+        "max": 1,
+        "divisions": 4,
+        "active_color": "#123456",
+        "thumb_color": "#ABCDEF",
+        "tooltip": "Slide",
+        "visible": true
+      },
+      "expected_wire": "CupertinoSlider"
+    },
+    {
+      "name": "cupertino_radio_scalar_props",
+      "python_class": "CupertinoRadio",
+      "ruby_method": "cupertino_radio",
+      "props": {
+        "label": "Red",
+        "value": "red",
+        "label_position": "right",
+        "fill_color": "#111111",
+        "active_color": "#123456",
+        "inactive_color": "#222222",
+        "autofocus": true,
+        "use_checkmark_style": true,
+        "toggleable": true,
+        "focus_color": "#333333",
+        "tooltip": "Red",
+        "visible": true
+      },
+      "expected_wire": "CupertinoRadio"
+    },
+    {
+      "name": "navigation_bar_permissive_selected_index",
+      "python_class": "NavigationBar",
+      "ruby_method": "navigation_bar",
+      "props": {
+        "selected_index": -1,
+        "bgcolor": "#ABCDEF",
+        "visible": true
+      },
+      "expected_wire": "NavigationBar"
+    },
+    {
+      "name": "navigation_rail_permissive_values",
+      "python_class": "NavigationRail",
+      "ruby_method": "navigation_rail",
+      "props": {
+        "selected_index": -1,
+        "elevation": -1,
+        "group_alignment": -1.1,
+        "min_extended_width": -2,
+        "min_width": -3,
+        "bgcolor": "#ABCDEF",
+        "visible": true
+      },
+      "expected_wire": "NavigationRail"
+    },
+    {
+      "name": "chip_permissive_negative_elevations",
+      "python_class": "Chip",
+      "ruby_method": "chip",
+      "props": {
+        "label": "Filter",
+        "elevation": -1,
+        "elevation_on_click": -2,
+        "visible": true
+      },
+      "expected_wire": "Chip"
+    },
+    {
+      "name": "popup_menu_item_permissive_negative_height",
+      "python_class": "PopupMenuItem",
+      "ruby_method": "popup_menu_item",
+      "props": {
+        "content": "Edit",
+        "height": -1,
+        "visible": true
+      },
+      "expected_wire": "PopupMenuItem"
+    },
+    {
+      "name": "popup_menu_button_permissive_negative_values",
+      "python_class": "PopupMenuButton",
+      "ruby_method": "popup_menu_button",
+      "props": {
+        "content": "Menu",
+        "elevation": -1,
+        "icon_size": -2,
+        "splash_radius": -3,
+        "visible": true
+      },
+      "expected_wire": "PopupMenuButton"
+    },
+    {
+      "name": "search_bar_permissive_negative_values",
+      "python_class": "SearchBar",
+      "ruby_method": "search_bar",
+      "props": {
+        "value": "query",
+        "bar_elevation": -1,
+        "view_elevation": -2,
+        "view_header_height": -3,
+        "visible": true
+      },
+      "expected_wire": "SearchBar"
+    },
+    {
+      "name": "alert_dialog_permissive_negative_elevation",
+      "python_class": "AlertDialog",
+      "ruby_method": "alert_dialog",
+      "props": {
+        "title": "Title",
+        "elevation": -1,
+        "visible": true
+      },
+      "expected_wire": "AlertDialog"
+    },
+    {
+      "name": "app_bar_permissive_negative_values",
+      "python_class": "AppBar",
+      "ruby_method": "app_bar",
+      "props": {
+        "title": "Title",
+        "elevation": -1,
+        "elevation_on_scroll": -2,
+        "toolbar_height": -3,
+        "visible": true
+      },
+      "expected_wire": "AppBar"
+    },
+    {
+      "name": "banner_permissive_empty_actions_and_negative_values",
+      "python_class": "Banner",
+      "ruby_method": "banner",
+      "props": {
+        "content": "Hello",
+        "actions": [],
+        "elevation": -1,
+        "min_action_bar_height": -2,
+        "visible": true
+      },
+      "expected_wire": "Banner"
+    },
+    {
+      "name": "bottom_app_bar_permissive_negative_values",
+      "python_class": "BottomAppBar",
+      "ruby_method": "bottom_app_bar",
+      "props": {
+        "elevation": -1,
+        "height": -2,
+        "visible": true
+      },
+      "expected_wire": "BottomAppBar"
+    },
+    {
+      "name": "card_permissive_negative_elevation",
+      "python_class": "Card",
+      "ruby_method": "card",
+      "props": {
+        "content": "Card",
+        "elevation": -1,
+        "visible": true
+      },
+      "expected_wire": "Card"
+    },
+    {
+      "name": "navigation_drawer_permissive_negative_values",
+      "python_class": "NavigationDrawer",
+      "ruby_method": "navigation_drawer",
+      "props": {
+        "controls": [],
+        "elevation": -1,
+        "width": -2,
+        "visible": true
+      },
+      "expected_wire": "NavigationDrawer",
+      "skip_props": ["controls"]
+    },
+    {
+      "name": "expansion_tile_permissive_negative_min_tile_height",
+      "python_class": "ExpansionTile",
+      "ruby_method": "expansion_tile",
+      "props": {
+        "title": "Title",
+        "min_tile_height": -1,
+        "visible": true
+      },
+      "expected_wire": "ExpansionTile"
+    },
+    {
+      "name": "expansion_panel_list_permissive_negative_values",
+      "python_class": "ExpansionPanelList",
+      "ruby_method": "expansion_panel_list",
+      "props": {
+        "controls": [],
+        "elevation": -1,
+        "spacing": -2,
+        "visible": true
+      },
+      "expected_wire": "ExpansionPanelList",
+      "skip_props": ["controls"]
+    },
+    {
+      "name": "page_view_permissive_negative_values",
+      "python_class": "PageView",
+      "ruby_method": "page_view",
+      "props": {
+        "selected_index": -1,
+        "viewport_fraction": -2,
+        "visible": true
+      },
+      "expected_wire": "PageView"
+    },
+    {
+      "name": "divider_permissive_negative_values",
+      "python_class": "Divider",
+      "ruby_method": "divider",
+      "props": {
+        "height": -1,
+        "leading_indent": -2,
+        "thickness": -3,
+        "trailing_indent": -4,
+        "visible": true
+      },
+      "expected_wire": "Divider"
+    },
+    {
+      "name": "vertical_divider_permissive_negative_values",
+      "python_class": "VerticalDivider",
+      "ruby_method": "vertical_divider",
+      "props": {
+        "width": -1,
+        "leading_indent": -2,
+        "thickness": -3,
+        "trailing_indent": -4,
+        "visible": true
+      },
+      "expected_wire": "VerticalDivider"
+    },
+    {
+      "name": "progress_bar_permissive_negative_values",
+      "python_class": "ProgressBar",
+      "ruby_method": "progress_bar",
+      "props": {
+        "bar_height": -1,
+        "semantics_value": -2,
+        "stop_indicator_radius": -3,
+        "track_gap": -4,
+        "visible": true
+      },
+      "expected_wire": "ProgressBar"
+    },
+    {
+      "name": "progress_ring_permissive_negative_values",
+      "python_class": "ProgressRing",
+      "ruby_method": "progress_ring",
+      "props": {
+        "stroke_width": -1,
+        "semantics_value": -2,
+        "track_gap": -3,
+        "visible": true
+      },
+      "expected_wire": "ProgressRing"
+    },
+    {
+      "name": "dropdown_permissive_negative_values",
+      "python_class": "Dropdown",
+      "ruby_method": "dropdown",
+      "props": {
+        "border_width": -1,
+        "elevation": -2,
+        "focused_border_width": -3,
+        "menu_height": -4,
+        "menu_width": -5,
+        "text_size": -6,
+        "visible": true
+      },
+      "expected_wire": "Dropdown"
+    },
+    {
+      "name": "placeholder_permissive_negative_values",
+      "python_class": "Placeholder",
+      "ruby_method": "placeholder",
+      "props": {
+        "fallback_height": -1,
+        "fallback_width": -2,
+        "stroke_width": -3,
+        "visible": true
+      },
+      "expected_wire": "Placeholder"
+    },
+    {
+      "name": "icon_button_permissive_negative_splash_radius",
+      "python_class": "IconButton",
+      "ruby_method": "icon_button",
+      "props": {
+        "icon": "favorite",
+        "splash_radius": -1,
+        "visible": true
+      },
+      "expected_wire": "IconButton",
+      "skip_props": ["icon"]
+    },
+    {
+      "name": "filled_icon_button_permissive_negative_splash_radius",
+      "python_class": "FilledIconButton",
+      "ruby_method": "filled_icon_button",
+      "props": {
+        "icon": "check",
+        "splash_radius": -1,
+        "visible": true
+      },
+      "expected_wire": "FilledIconButton",
+      "skip_props": ["icon"]
+    },
+    {
+      "name": "outlined_icon_button_permissive_negative_splash_radius",
+      "python_class": "OutlinedIconButton",
+      "ruby_method": "outlined_icon_button",
+      "props": {
+        "icon": "favorite",
+        "splash_radius": -1,
+        "visible": true
+      },
+      "expected_wire": "OutlinedIconButton",
+      "skip_props": ["icon"]
+    },
+    {
+      "name": "filled_tonal_icon_button_permissive_negative_splash_radius",
+      "python_class": "FilledTonalIconButton",
+      "ruby_method": "filled_tonal_icon_button",
+      "props": {
+        "icon": "check",
+        "splash_radius": -1,
+        "visible": true
+      },
+      "expected_wire": "FilledTonalIconButton",
+      "skip_props": ["icon"]
+    },
+    {
+      "name": "cupertino_activity_indicator_permissive_negative_radius",
+      "python_class": "CupertinoActivityIndicator",
+      "ruby_method": "cupertino_activity_indicator",
+      "props": {
+        "radius": -1,
+        "visible": true
+      },
+      "expected_wire": "CupertinoActivityIndicator"
+    },
+    {
+      "name": "cupertino_slider_permissive_invalid_values",
+      "python_class": "CupertinoSlider",
+      "ruby_method": "cupertino_slider",
+      "props": {
+        "value": 12,
+        "min": 10,
+        "max": 1,
+        "divisions": 0,
+        "visible": true
+      },
+      "expected_wire": "CupertinoSlider"
+    },
+    {
+      "name": "cupertino_button_permissive_opacity_on_click",
+      "python_class": "CupertinoButton",
+      "ruby_method": "cupertino_button",
+      "props": {
+        "content": "Tap",
+        "opacity_on_click": 2,
+        "visible": true
+      },
+      "expected_wire": "CupertinoButton"
+    },
+    {
+      "name": "cupertino_filled_button_permissive_opacity_on_click",
+      "python_class": "CupertinoFilledButton",
+      "ruby_method": "cupertino_filled_button",
+      "props": {
+        "content": "Fill",
+        "opacity_on_click": -1,
+        "visible": true
+      },
+      "expected_wire": "CupertinoFilledButton"
+    },
+    {
+      "name": "cupertino_tinted_button_permissive_opacity_on_click",
+      "python_class": "CupertinoTintedButton",
+      "ruby_method": "cupertino_tinted_button",
+      "props": {
+        "content": "Tint",
+        "opacity_on_click": 2,
+        "visible": true
+      },
+      "expected_wire": "CupertinoTintedButton"
+    },
+    {
+      "name": "cupertino_picker_permissive_invalid_values",
+      "python_class": "CupertinoPicker",
+      "ruby_method": "cupertino_picker",
+      "props": {
+        "controls": [],
+        "item_extent": -1,
+        "selected_index": -2,
+        "squeeze": -3,
+        "diameter_ratio": -4,
+        "magnification": -5,
+        "visible": true
+      },
+      "expected_wire": "CupertinoPicker",
+      "skip_props": ["controls"]
+    },
+    {
+      "name": "cupertino_timer_picker_permissive_invalid_values",
+      "python_class": "CupertinoTimerPicker",
+      "ruby_method": "cupertino_timer_picker",
+      "props": {
+        "item_extent": -1,
+        "minute_interval": 7,
+        "second_interval": 7,
+        "value": -1,
+        "visible": true
+      },
+      "expected_wire": "CupertinoTimerPicker"
+    },
+    {
+      "name": "cupertino_date_picker_permissive_invalid_values",
+      "python_class": "CupertinoDatePicker",
+      "ruby_method": "cupertino_date_picker",
+      "props": {
+        "item_extent": -1,
+        "minute_interval": 7,
+        "show_day_of_week": true,
+        "date_picker_mode": "time",
+        "visible": true
+      },
+      "expected_wire": "CupertinoDatePicker"
+    },
+    {
+      "name": "cupertino_navigation_bar_permissive_selected_index",
+      "python_class": "CupertinoNavigationBar",
+      "ruby_method": "cupertino_navigation_bar",
+      "props": {
+        "destinations": [],
+        "selected_index": -1,
+        "visible": true
+      },
+      "expected_wire": "CupertinoNavigationBar",
+      "skip_props": ["destinations"]
+    },
+    {
+      "name": "tab_bar_permissive_negative_values",
+      "python_class": "TabBar",
+      "ruby_method": "tab_bar",
+      "props": {
+        "tabs": [],
+        "divider_height": -1,
+        "indicator_thickness": -2,
+        "visible": true
+      },
+      "expected_wire": "TabBar",
+      "skip_props": ["tabs"]
+    },
+    {
+      "name": "tab_bar_view_permissive_viewport_fraction",
+      "python_class": "TabBarView",
+      "ruby_method": "tab_bar_view",
+      "props": {
+        "controls": [],
+        "viewport_fraction": -1,
+        "visible": true
+      },
+      "expected_wire": "TabBarView",
+      "skip_props": ["controls"]
+    },
+    {
+      "name": "date_picker_permissive_out_of_range_value",
+      "python_class": "DatePicker",
+      "ruby_method": "date_picker",
+      "props": {
+        "value": "2025-12-31",
+        "visible": true
+      },
+      "expected_wire": "DatePicker"
+    },
+    {
+      "name": "date_range_picker_permissive_reversed_values",
+      "python_class": "DateRangePicker",
+      "ruby_method": "date_range_picker",
+      "props": {
+        "start_value": "2026-05-14",
+        "end_value": "2026-05-01",
+        "visible": true
+      },
+      "expected_wire": "DateRangePicker"
+    },
+    {
+      "name": "badge_permissive_negative_sizes",
+      "python_class": "Badge",
+      "ruby_method": "badge",
+      "props": {
+        "label": "Count",
+        "large_size": -1,
+        "small_size": -2
+      },
+      "expected_wire": "Badge"
+    },
+    {
+      "name": "circle_avatar_permissive_negative_and_combined_radius",
+      "python_class": "CircleAvatar",
+      "ruby_method": "circle_avatar",
+      "props": {
+        "radius": -1,
+        "min_radius": -2,
+        "max_radius": -3,
+        "visible": true
+      },
+      "expected_wire": "CircleAvatar"
+    },
+    {
+      "name": "app_bar_permissive_toolbar_opacity",
+      "python_class": "AppBar",
+      "ruby_method": "app_bar",
+      "props": {
+        "toolbar_opacity": 2,
+        "visible": true
+      },
+      "expected_wire": "AppBar"
+    },
+    {
+      "name": "data_table_permissive_negative_values",
+      "python_class": "DataTable",
+      "ruby_method": "data_table",
+      "props": {
+        "columns": [],
+        "checkbox_horizontal_margin": -1,
+        "column_spacing": -2,
+        "data_row_max_height": -3,
+        "data_row_min_height": -4,
+        "divider_thickness": -5,
+        "heading_row_height": -6,
+        "horizontal_margin": -7,
+        "visible": true
+      },
+      "expected_wire": "DataTable",
+      "skip_props": ["columns"]
+    },
+    {
+      "name": "cupertino_list_tile_permissive_negative_values",
+      "python_class": "CupertinoListTile",
+      "ruby_method": "cupertino_list_tile",
+      "props": {
+        "title": "Title",
+        "leading_size": -1,
+        "leading_to_title": -2,
+        "visible": true
+      },
+      "expected_wire": "CupertinoListTile"
+    }
+  ]
+}

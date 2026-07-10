@@ -19,9 +19,6 @@ module Ruflet
             snap = true if snap.nil?
             viewport_fraction = 1.0 if viewport_fraction.nil?
 
-            raise ArgumentError, "page_view selected_index must be greater than or equal to 0" if selected_index.negative?
-            raise ArgumentError, "page_view viewport_fraction must be greater than 0" unless viewport_fraction.positive?
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

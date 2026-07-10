@@ -14,13 +14,6 @@ module Ruflet
             leading_size = notched ? 30.0 : 28.0 if leading_size.nil?
             leading_to_title = notched ? 12.0 : 16.0 if leading_to_title.nil?
             toggle_inputs = false if toggle_inputs.nil?
-            {
-              leading_size: leading_size,
-              leading_to_title: leading_to_title
-            }.each do |name, value|
-              raise ArgumentError, "cupertino_list_tile #{name} must be greater than or equal to 0" if value.negative?
-            end
-
             props = {}
             props[:additional_info] = additional_info unless additional_info.nil?
             props[:align] = align unless align.nil?

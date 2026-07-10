@@ -13,8 +13,6 @@ module Ruflet
               raise ArgumentError, "menu_item_button requires visible content"
             end
 
-            raise ArgumentError, "menu_item_button height must be greater than or equal to 0" unless height.nil? || height >= 0
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?

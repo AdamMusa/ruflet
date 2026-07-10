@@ -15,8 +15,6 @@ module Ruflet
               raise ArgumentError, "submenu_button requires visible content"
             end
 
-            raise ArgumentError, "submenu_button height must be greater than or equal to 0" unless height.nil? || height >= 0
-
             props = {}
             props[:align] = align unless align.nil?
             props[:alignment_offset] = alignment_offset unless alignment_offset.nil?

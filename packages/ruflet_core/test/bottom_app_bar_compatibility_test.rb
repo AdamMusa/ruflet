@@ -46,8 +46,8 @@ class RufletBottomAppBarCompatibilityTest < Minitest::Test
     assert_equal "#000000", bar.props["bgcolor"]
   end
 
-  def test_bottom_app_bar_rejects_negative_elevation_like_flet
-    assert_raises(ArgumentError) { Ruflet.bottom_app_bar(elevation: -1) }
+  def test_bottom_app_bar_serializes_negative_elevation_like_flet
+    assert_equal(-1, Ruflet.bottom_app_bar(elevation: -1).to_patch["elevation"])
   end
 
   def test_page_add_serializes_bottom_app_bar_as_view_slot

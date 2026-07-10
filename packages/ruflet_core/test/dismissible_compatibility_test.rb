@@ -63,9 +63,12 @@ class RufletDismissibleCompatibilityTest < Minitest::Test
     end
   end
 
-  def test_dismiss_thresholds_must_be_between_zero_and_one_like_flet
-    assert_raises(ArgumentError) { Ruflet.dismissible(Ruflet.text("Swipe"), dismiss_thresholds: { horizontal: -0.1 }) }
-    assert_raises(ArgumentError) { Ruflet.dismissible(Ruflet.text("Swipe"), dismiss_thresholds: { horizontal: 1.1 }) }
+  def test_dismiss_thresholds_serialize_outside_zero_and_one_like_flet
+    low = Ruflet.dismissible(Ruflet.text("Swipe"), dismiss_thresholds: { horizontal: -0.1 }).to_patch
+    high = Ruflet.dismissible(Ruflet.text("Swipe"), dismiss_thresholds: { horizontal: 1.1 }).to_patch
+
+    assert_equal({ "horizontal" => -0.1 }, low["dismiss_thresholds"])
+    assert_equal({ "horizontal" => 1.1 }, high["dismiss_thresholds"])
   end
 
   def test_dismiss_and_update_events_expose_direction_details

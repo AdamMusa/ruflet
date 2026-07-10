@@ -10,13 +10,6 @@ module Ruflet
 
           def initialize(id: nil, actions: nil, adaptive: nil, badge: nil, bgcolor: nil, col: nil, content: nil, content_padding: nil, content_text_style: nil, data: nil, disabled: nil, divider_color: nil, elevation: nil, expand: nil, expand_loose: nil, force_actions_below: nil, key: nil, leading: nil, leading_padding: nil, margin: nil, min_action_bar_height: nil, opacity: nil, open: nil, rtl: nil, shadow_color: nil, surface_tint_color: nil, tooltip: nil, visible: nil, on_dismiss: nil, on_visible: nil)
             raise ArgumentError, "banner requires content" if content.nil?
-            raise ArgumentError, "banner requires at least one actions control" if actions.nil? || actions.empty?
-            {
-              elevation: elevation,
-              min_action_bar_height: min_action_bar_height
-            }.each do |name, value|
-              raise ArgumentError, "banner #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
-            end
 
             props = {}
             props[:actions] = actions unless actions.nil?

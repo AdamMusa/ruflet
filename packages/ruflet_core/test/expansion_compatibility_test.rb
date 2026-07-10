@@ -167,10 +167,17 @@ class RufletExpansionCompatibilityTest < Minitest::Test
     assert_raises(ArgumentError) { Ruflet.expansion_panel(header: Ruflet.text("Header"), content: Ruflet.text("Hidden", visible: false)) }
   end
 
-  def test_expansion_controls_reject_negative_numeric_values_like_flet
-    assert_raises(ArgumentError) { Ruflet.expansion_tile(title: Ruflet.text("Title"), min_tile_height: -1) }
-    assert_raises(ArgumentError) { Ruflet.expansion_panel_list([Ruflet.expansion_panel(header: Ruflet.text("Header"), content: Ruflet.text("Body"))], elevation: -1) }
-    assert_raises(ArgumentError) { Ruflet.expansion_panel_list([Ruflet.expansion_panel(header: Ruflet.text("Header"), content: Ruflet.text("Body"))], spacing: -1) }
+  def test_expansion_controls_serialize_negative_numeric_values_like_flet
+    tile_patch = Ruflet.expansion_tile(title: Ruflet.text("Title"), min_tile_height: -1).to_patch
+    panel_list_patch = Ruflet.expansion_panel_list(
+      [Ruflet.expansion_panel(header: Ruflet.text("Header"), content: Ruflet.text("Body"))],
+      elevation: -1,
+      spacing: -2
+    ).to_patch
+
+    assert_equal(-1, tile_patch["min_tile_height"])
+    assert_equal(-1, panel_list_patch["elevation"])
+    assert_equal(-2, panel_list_patch["spacing"])
   end
 
   def test_expansion_tile_change_event_updates_expanded_before_handler

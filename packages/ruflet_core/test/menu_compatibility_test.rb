@@ -137,9 +137,9 @@ class RufletMenuCompatibilityTest < Minitest::Test
     assert_raises(ArgumentError) { Ruflet.submenu_button([], content: Ruflet.text("Hidden", visible: false)) }
   end
 
-  def test_menu_controls_reject_negative_height_like_flet
-    assert_raises(ArgumentError) { Ruflet.menu_item_button("Open", height: -1) }
-    assert_raises(ArgumentError) { Ruflet.submenu_button([], content: "File", height: -1) }
+  def test_menu_controls_serialize_negative_height_like_flet
+    assert_equal(-1, Ruflet.menu_item_button("Open", height: -1).to_patch["height"])
+    assert_equal(-1, Ruflet.submenu_button([], content: "File", height: -1).to_patch["height"])
   end
 
   def test_menu_item_click_event_dispatches

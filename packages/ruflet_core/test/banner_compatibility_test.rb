@@ -47,19 +47,16 @@ class RufletBannerCompatibilityTest < Minitest::Test
     assert_equal true, patch["on_visible"]
   end
 
-  def test_banner_requires_content_and_actions_like_flet
+  def test_banner_requires_content_like_flet
     assert_match(/content/, assert_raises(ArgumentError) { Ruflet.banner(actions: [Ruflet.text_button(content: "OK")]) }.message)
-    assert_match(/actions/, assert_raises(ArgumentError) { Ruflet.banner("Hello") }.message)
   end
 
-  def test_banner_rejects_negative_numeric_values_like_flet
-    %i[elevation min_action_bar_height].each do |prop|
-      error = assert_raises(ArgumentError) do
-        Ruflet.banner("Hello", actions: [Ruflet.text_button(content: "OK")], prop => -1)
-      end
+  def test_banner_serializes_empty_actions_and_negative_numeric_values_like_flet
+    patch = Ruflet.banner("Hello", actions: [], elevation: -1, min_action_bar_height: -2).to_patch
 
-      assert_match(/#{prop}/, error.message)
-    end
+    assert_equal [], patch["actions"]
+    assert_equal(-1, patch["elevation"])
+    assert_equal(-2, patch["min_action_bar_height"])
   end
 
   def test_banner_visible_and_dismiss_events_dispatch

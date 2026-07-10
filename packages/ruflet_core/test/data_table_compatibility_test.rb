@@ -105,20 +105,18 @@ class RufletDataTableCompatibilityTest < Minitest::Test
     assert_equal "DataCell", Ruflet.datacell("Alice").to_patch["_c"]
   end
 
-  def test_data_table_requires_visible_columns_like_flet
-    error = assert_raises(ArgumentError) { Ruflet.data_table([]) }
+  def test_data_table_serializes_empty_columns_like_flet
+    patch = Ruflet.data_table([]).to_patch
 
-    assert_match(/columns/, error.message)
+    assert_equal [], patch["columns"]
   end
 
-  def test_data_table_requires_row_cell_count_to_match_visible_columns_like_flet
+  def test_data_table_serializes_row_cell_count_mismatch_like_flet
     columns = [Ruflet.data_column("Name"), Ruflet.data_column("Age")]
+    patch = Ruflet.data_table(columns, rows: [Ruflet.data_row([Ruflet.data_cell("Alice")])]).to_patch
 
-    error = assert_raises(ArgumentError) do
-      Ruflet.data_table(columns, rows: [Ruflet.data_row([Ruflet.data_cell("Alice")])])
-    end
-
-    assert_match(/cells/, error.message)
+    assert_equal 2, patch["columns"].length
+    assert_equal 1, patch["rows"].first["cells"].length
   end
 
   def test_data_column_and_cell_require_visible_content_like_flet
@@ -128,22 +126,26 @@ class RufletDataTableCompatibilityTest < Minitest::Test
     assert_raises(ArgumentError) { Ruflet.data_cell(Ruflet.text("Hidden", visible: false)) }
   end
 
-  def test_data_table_rejects_negative_numeric_values_like_flet
+  def test_data_table_serializes_negative_numeric_values_like_flet
     columns = [Ruflet.data_column("Name")]
+    patch = Ruflet.data_table(
+      columns,
+      checkbox_horizontal_margin: -1,
+      column_spacing: -2,
+      data_row_max_height: -3,
+      data_row_min_height: -4,
+      divider_thickness: -5,
+      heading_row_height: -6,
+      horizontal_margin: -7
+    ).to_patch
 
-    %i[
-      checkbox_horizontal_margin
-      column_spacing
-      data_row_max_height
-      data_row_min_height
-      divider_thickness
-      heading_row_height
-      horizontal_margin
-    ].each do |prop|
-      error = assert_raises(ArgumentError) { Ruflet.data_table(columns, prop => -1) }
-
-      assert_match(/#{prop}/, error.message)
-    end
+    assert_equal(-1, patch["checkbox_horizontal_margin"])
+    assert_equal(-2, patch["column_spacing"])
+    assert_equal(-3, patch["data_row_max_height"])
+    assert_equal(-4, patch["data_row_min_height"])
+    assert_equal(-5, patch["divider_thickness"])
+    assert_equal(-6, patch["heading_row_height"])
+    assert_equal(-7, patch["horizontal_margin"])
   end
 
   def test_data_row_select_change_updates_selected_before_handler

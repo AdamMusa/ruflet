@@ -57,9 +57,12 @@ class RufletSnackBarCompatibilityTest < Minitest::Test
     assert_match(/content/, error.message)
   end
 
-  def test_snack_bar_rejects_action_overflow_threshold_outside_flet_range
-    assert_raises(ArgumentError) { Ruflet.snack_bar("Saved", action_overflow_threshold: -0.1) }
-    assert_raises(ArgumentError) { Ruflet.snack_bar("Saved", action_overflow_threshold: 1.1) }
+  def test_snack_bar_serializes_action_overflow_threshold_outside_flet_range
+    low = Ruflet.snack_bar("Saved", action_overflow_threshold: -0.1)
+    high = Ruflet.snack_bar("Saved", action_overflow_threshold: 1.1)
+
+    assert_equal(-0.1, low.to_patch["action_overflow_threshold"])
+    assert_equal 1.1, high.to_patch["action_overflow_threshold"]
   end
 
   def test_snack_bar_action_and_visible_events_dispatch

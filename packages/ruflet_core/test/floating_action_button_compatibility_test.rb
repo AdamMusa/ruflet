@@ -58,14 +58,22 @@ class RufletFloatingActionButtonCompatibilityTest < Minitest::Test
     assert_match(/icon or.*content/, error.message)
   end
 
-  def test_floating_action_button_rejects_negative_elevations_like_flet
-    %i[disabled_elevation elevation focus_elevation highlight_elevation hover_elevation].each do |prop|
-      error = assert_raises(ArgumentError) do
-        Ruflet.floating_action_button(icon: "add", prop => -1)
-      end
+  def test_floating_action_button_serializes_negative_elevations_like_flet
+    button = Ruflet.floating_action_button(
+      icon: "add",
+      disabled_elevation: -1,
+      elevation: -2,
+      focus_elevation: -3,
+      highlight_elevation: -4,
+      hover_elevation: -5
+    )
+    patch = button.to_patch
 
-      assert_match(/#{prop}/, error.message)
-    end
+    assert_equal(-1, patch["disabled_elevation"])
+    assert_equal(-2, patch["elevation"])
+    assert_equal(-3, patch["focus_elevation"])
+    assert_equal(-4, patch["highlight_elevation"])
+    assert_equal(-5, patch["hover_elevation"])
   end
 
   def test_page_add_serializes_floating_action_button_as_view_slot

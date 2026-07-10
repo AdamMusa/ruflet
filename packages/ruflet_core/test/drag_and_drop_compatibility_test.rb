@@ -66,8 +66,10 @@ class RufletDragAndDropCompatibilityTest < Minitest::Test
     assert_raises(ArgumentError) { Ruflet.drag_target(Ruflet.text("Hidden", visible: false)) }
   end
 
-  def test_draggable_rejects_negative_max_simultaneous_drags_like_flet
-    assert_raises(ArgumentError) { Ruflet.draggable(Ruflet.text("Drag"), max_simultaneous_drags: -1) }
+  def test_draggable_serializes_negative_max_simultaneous_drags_like_flet
+    patch = Ruflet.draggable(Ruflet.text("Drag"), max_simultaneous_drags: -1).to_patch
+
+    assert_equal(-1, patch["max_simultaneous_drags"])
   end
 
   def test_drag_target_events_expose_source_and_acceptance_details
