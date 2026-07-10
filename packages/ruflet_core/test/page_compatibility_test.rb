@@ -58,6 +58,35 @@ class RufletPageCompatibilityTest < Minitest::Test
     assert_equal ["/store"], routes
   end
 
+  def test_page_accepts_python_flet_style_chrome_assignments
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    app_bar = Ruflet.app_bar(title: Ruflet.text("Gallery"))
+    fab = Ruflet.fab(icon: "add")
+    navigation_bar = Ruflet.navigation_bar(destinations: [])
+
+    page.appbar = app_bar
+    page.floating_action_button = fab
+    page.navigation_bar = navigation_bar
+    page.add(Ruflet.text("Hello world"))
+
+    assert_same app_bar, page.appbar
+    assert_same fab, page.floating_action_button
+    assert_same navigation_bar, page.navigation_bar
+
+    view = patch_value(sent.last[1]["patch"], "views").first
+    assert_equal "AppBar", view["appbar"]["_c"]
+    assert_equal "FloatingActionButton", view["floating_action_button"]["_c"]
+    assert_equal "NavigationBar", view["navigation_bar"]["_c"]
+    refute view.key?("app_bar")
+    refute view.key?("fab")
+  end
+
   private
 
   def patch_value(patch, key)

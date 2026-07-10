@@ -406,8 +406,16 @@ module Ruflet
       add(*builder.children)
     end
 
+    def appbar
+      @view_props["appbar"]
+    end
+
     def appbar=(value)
       @view_props["appbar"] = value
+    end
+
+    def bottom_appbar
+      @view_props["bottom_appbar"]
     end
 
     def bottom_appbar=(value)
@@ -418,8 +426,20 @@ module Ruflet
       self.bottom_appbar = value
     end
 
+    def floating_action_button
+      @view_props["floating_action_button"]
+    end
+
     def floating_action_button=(value)
       @view_props["floating_action_button"] = value
+    end
+
+    def navigation_bar
+      @view_props["navigation_bar"]
+    end
+
+    def navigation_bar=(value)
+      @view_props["navigation_bar"] = value
     end
 
     def dialog = @dialog
