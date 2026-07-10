@@ -439,6 +439,22 @@ module Ruflet
       @view_props["navigation_bar"] = value
     end
 
+    def drawer
+      @view_props["drawer"]
+    end
+
+    def drawer=(value)
+      @view_props["drawer"] = value
+    end
+
+    def end_drawer
+      @view_props["end_drawer"]
+    end
+
+    def end_drawer=(value)
+      @view_props["end_drawer"] = value
+    end
+
     def dialog = @dialog
 
     def dialog=(value)
@@ -491,6 +507,26 @@ module Ruflet
 
     def show_bottom_sheet(bottom_sheet_control)
       show_dialog(bottom_sheet_control)
+    end
+
+    def show_drawer(timeout: 10, on_result: nil)
+      raise ArgumentError, "No drawer defined" unless drawer
+
+      invoke(:page, "show_drawer", timeout: timeout, on_result: on_result)
+    end
+
+    def close_drawer(timeout: 10, on_result: nil)
+      invoke(:page, "close_drawer", timeout: timeout, on_result: on_result)
+    end
+
+    def show_end_drawer(timeout: 10, on_result: nil)
+      raise ArgumentError, "No end_drawer defined" unless end_drawer
+
+      invoke(:page, "show_end_drawer", timeout: timeout, on_result: on_result)
+    end
+
+    def close_end_drawer(timeout: 10, on_result: nil)
+      invoke(:page, "close_end_drawer", timeout: timeout, on_result: on_result)
     end
 
     def invoke(control_or_id, method_name, args: nil, timeout: 10, on_result: nil)
