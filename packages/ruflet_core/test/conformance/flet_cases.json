@@ -996,6 +996,31 @@
       },
       "expected_wire": "SegmentedButton",
       "skip_props": ["segments"]
+    },
+    {
+      "name": "cupertino_action_sheet_permissive_empty",
+      "python_class": "CupertinoActionSheet",
+      "ruby_method": "cupertino_action_sheet",
+      "props": {},
+      "expected_wire": "CupertinoActionSheet"
+    },
+    {
+      "name": "cupertino_alert_dialog_permissive_empty",
+      "python_class": "CupertinoAlertDialog",
+      "ruby_method": "cupertino_alert_dialog",
+      "props": {},
+      "expected_wire": "CupertinoAlertDialog"
+    },
+    {
+      "name": "cupertino_context_menu_permissive_empty_actions",
+      "python_class": "CupertinoContextMenu",
+      "ruby_method": "cupertino_context_menu",
+      "props": {
+        "content": "Photo",
+        "actions": []
+      },
+      "expected_wire": "CupertinoContextMenu",
+      "skip_props": ["actions"]
     }
   ]
 }

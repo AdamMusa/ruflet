@@ -9,11 +9,6 @@ module Ruflet
           WIRE = "CupertinoActionSheet".freeze
 
           def initialize(id: nil, actions: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, cancel: nil, col: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, message: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, title: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_size_change: nil)
-            visible_actions = Array(actions).reject { |action| hidden_control?(action) }
-            if visible_actions.empty? && hidden_or_nil?(title) && hidden_or_nil?(message) && hidden_or_nil?(cancel)
-              raise ArgumentError, "cupertino_action_sheet requires actions, title, message, or cancel"
-            end
-
             props = {}
             props[:actions] = actions unless actions.nil?
             props[:align] = align unless align.nil?

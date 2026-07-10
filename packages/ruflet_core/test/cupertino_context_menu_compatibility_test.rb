@@ -38,13 +38,17 @@ class RufletCupertinoContextMenuCompatibilityTest < Minitest::Test
     assert_equal "CupertinoContextMenu", Ruflet.cupertinocontextmenu(content: Ruflet.text("Photo"), actions: [action]).to_patch["_c"]
   end
 
-  def test_context_menu_requires_visible_content_and_actions_like_flet
+  def test_context_menu_requires_visible_content_and_allows_empty_actions_like_flet
     action = Ruflet.cupertino_context_menu_action(content: "Copy")
 
     assert_raises(ArgumentError) { Ruflet.cupertino_context_menu(actions: [action]) }
-    assert_raises(ArgumentError) { Ruflet.cupertino_context_menu(content: Ruflet.text("Hidden", visible: false), actions: [action]) }
-    assert_raises(ArgumentError) { Ruflet.cupertino_context_menu(content: Ruflet.text("Photo")) }
-    assert_raises(ArgumentError) { Ruflet.cupertino_context_menu(content: Ruflet.text("Photo"), actions: [Ruflet.text("Hidden", visible: false)]) }
+    assert_raises(ArgumentError) { Ruflet.cupertino_context_menu(content: Ruflet.container(visible: false), actions: [action]) }
+
+    empty_actions = Ruflet.cupertino_context_menu(content: Ruflet.text("Photo"), actions: []).to_patch
+    hidden_actions = Ruflet.cupertino_context_menu(content: Ruflet.text("Photo"), actions: [Ruflet.container(visible: false)]).to_patch
+
+    assert_equal [], empty_actions["actions"]
+    assert_equal false, hidden_actions["actions"].first["visible"]
   end
 
   def test_context_menu_action_requires_visible_content_like_flet
