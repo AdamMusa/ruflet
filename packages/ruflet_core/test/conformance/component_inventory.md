@@ -2,9 +2,11 @@
 
 - Python Flet controls: 162
 - Ruflet wire controls: 151
+- Ruflet service controls: 21
 - Implemented Python controls: 132
 - Alias-covered controls: 1
-- Service/deferred controls: 18
+- Service-covered controls: 18
+- Service-deferred controls: 0
 - Todo UI controls: 0
 - Unclassified missing controls: 0
 
@@ -16,7 +18,7 @@ None.
 
 - ElevatedButton: Ruflet.elevated_button routes to Button
 
-## Service Or Deferred Controls
+## Service-Covered Controls
 
 - Accelerometer
 - Barometer
@@ -36,6 +38,10 @@ None.
 - UrlLauncher
 - UserAccelerometer
 - Wakelock
+
+## Service-Deferred Controls
+
+None.
 
 ## Unclassified Missing
 

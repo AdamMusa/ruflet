@@ -9,4 +9,10 @@ class RufletComponentInventoryTest < Minitest::Test
 
     assert_equal [], inventory[:unclassified_missing]
   end
+
+  def test_all_classified_services_have_ruflet_service_controls
+    inventory = RufletFletComponentInventory.inventory
+
+    assert_equal [], inventory[:service_deferred]
+  end
 end
