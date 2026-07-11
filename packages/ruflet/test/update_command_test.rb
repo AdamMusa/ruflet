@@ -180,6 +180,15 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  def test_project_asset_filter_packages_generic_project_files
+    builder = DummyBuilder.new
+
+    assert builder.send(:include_project_asset_file?, "templates/editor.html")
+    assert builder.send(:include_project_asset_file?, "data/sample.csv")
+    refute builder.send(:include_project_asset_file?, "Gemfile.lock")
+    refute builder.send(:include_project_asset_file?, "nested/pubspec.lock")
+  end
+
   def test_prune_client_pubspec_preserves_formatted_flutter_assets
     builder = DummyBuilder.new
 

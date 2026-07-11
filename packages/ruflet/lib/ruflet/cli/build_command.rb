@@ -1290,8 +1290,7 @@ module Ruflet
       end
 
       def skip_project_asset_directory?(relative)
-        first = relative.split(File::SEPARATOR).first
-        %w[
+        excluded_directories = %w[
           .git
           .bundle
           .dart_tool
@@ -1306,21 +1305,17 @@ module Ruflet
           ruflet_client
           tmp
           vendor
-        ].include?(first)
+        ]
+        relative.split(File::SEPARATOR).any? { |component| excluded_directories.include?(component) }
       end
 
       def include_project_asset_file?(relative)
         basename = File.basename(relative)
         return false if %w[Gemfile.lock pubspec.lock Podfile.lock package-lock.json yarn.lock pnpm-lock.yaml].include?(basename)
-        return true if %w[main.rb Gemfile ruflet.yaml ruflet.yml manifest.json].include?(basename)
-
-        ext = File.extname(relative).downcase
-        return true if %w[.rb .json .yml .yaml].include?(ext)
-
-        first = relative.split(File::SEPARATOR).first
-        return true if first == "assets"
-
-        false
+        # Flet-style self-contained builds ship the application tree, not only
+        # files recognized by the framework. Ruby apps commonly load templates,
+        # CSV/SQLite data, fonts, or custom files with File.read/require.
+        true
       end
 
       def flutter_target_entrypoint(client_dir, self_contained:)

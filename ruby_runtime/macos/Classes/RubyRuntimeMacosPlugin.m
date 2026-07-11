@@ -310,7 +310,9 @@ static void request_stop_server(void) {
 
     [g_lock lock];
     NSError *error = nil;
-    NSString *value = eval_source(source, path, &error);
+    NSString *value = bytecode
+      ? eval_irep(bytecodeData.bytes, bytecodeData.length, path, &error)
+      : eval_source(source, path, &error);
     [g_lock unlock];
 
     if (error != nil) {
@@ -360,12 +362,14 @@ static void request_stop_server(void) {
     [[NSFileManager defaultManager] removeItemAtPath:stopPath error:nil];
     g_stop_signal_path = stopPath;
 
+    BOOL bytecode = [path.pathExtension.lowercaseString isEqualToString:@"mrb"];
     NSError *readError = nil;
-    NSString *source = [NSString stringWithContentsOfFile:path
-                                                 encoding:NSUTF8StringEncoding
-                                                    error:&readError];
-    if (source == nil) {
-      NSString *message = readError.localizedDescription ?: @"unable to read Ruby file";
+    NSString *source = bytecode ? nil : [NSString stringWithContentsOfFile:path
+                                                                  encoding:NSUTF8StringEncoding
+                                                                     error:&readError];
+    NSData *bytecodeData = bytecode ? [NSData dataWithContentsOfFile:path options:0 error:&readError] : nil;
+    if ((!bytecode && source == nil) || (bytecode && bytecodeData == nil)) {
+      NSString *message = readError.localizedDescription ?: @"unable to read Ruby startup artifact";
       g_last_server_error = message;
       result([FlutterError errorWithCode:@"mruby_error" message:message details:nil]);
       return;
