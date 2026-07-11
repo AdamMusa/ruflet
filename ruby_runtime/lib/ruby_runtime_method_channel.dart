@@ -61,6 +61,12 @@ class MethodChannelRubyRuntime extends RubyRuntimePlatform {
   }
 
   @override
+  Future<int> serverPort() async {
+    final value = await methodChannel.invokeMethod<int>('serverPort');
+    return value ?? 0;
+  }
+
+  @override
   Future<String> lastFileServerError() async {
     final value = await methodChannel.invokeMethod<String>('lastFileServerError');
     return value ?? '';

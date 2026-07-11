@@ -374,6 +374,11 @@ static void request_stop_server(void) {
     return;
   }
 
+  if ([call.method isEqualToString:@"serverPort"]) {
+    result(@(8550));
+    return;
+  }
+
   if ([call.method isEqualToString:@"lastFileServerError"]) {
     result(g_last_server_error ?: @"");
     return;

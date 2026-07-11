@@ -25,12 +25,18 @@ Embeds mruby in native iOS code and exposes eval/runFile/reset over a Flutter me
     'mruby_src/mrbgems/mruby-socket/src/socket.c',
     'mruby_src/mrbgems/mruby-pack/src/pack.c',
     'mruby_src/mrbgems/mruby-sprintf/src/sprintf.c',
+    'mruby_src/mrbgems/mruby-fiber/src/fiber.c',
     'mruby_src/mrbgems/hal-posix-io/src/io_hal.c',
     'mruby_src/mrbgems/hal-posix-socket/src/socket_hal.c',
     'mruby_src/build_host/mrblib/mrblib.c',
     'mruby_src/build_host/mrbgems/mruby-errno/gem_init.c',
     'mruby_src/build_host/mrbgems/mruby-io/gem_init.c',
-    'mruby_src/build_host/mrbgems/mruby-socket/gem_init.c'
+    'mruby_src/build_host/mrbgems/mruby-socket/gem_init.c',
+    'build_host/mrbgems/mruby-fiber/gem_init.c',
+    'build_host/mrbgems/mruby-enumerator/gem_init.c',
+    'build_host/mrbgems/mruby-enum-ext/gem_init.c',
+    'build_host/mrbgems/mruby-enum-lazy/gem_init.c',
+    'build_host/mrbgems/mruby-enum-chain/gem_init.c'
   ]
 
   s.public_header_files = 'Classes/**/*.h'

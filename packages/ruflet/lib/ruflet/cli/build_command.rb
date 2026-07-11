@@ -1166,6 +1166,7 @@ module Ruflet
           "lib/main.dart",
           "lib/main.self.dart",
           "lib/main.server.dart",
+          "lib/ruflet_file_picker_service.dart",
           "lib/connection_probe.dart",
           "lib/connection_probe_io.dart",
           "lib/connection_probe_stub.dart"
@@ -1318,6 +1319,7 @@ module Ruflet
 
       def include_project_asset_file?(relative)
         basename = File.basename(relative)
+        return false if basename == ".DS_Store"
         return false if %w[Gemfile.lock pubspec.lock Podfile.lock package-lock.json yarn.lock pnpm-lock.yaml].include?(basename)
         # Flet-style self-contained builds ship the application tree, not only
         # files recognized by the framework. Ruby apps commonly load templates,

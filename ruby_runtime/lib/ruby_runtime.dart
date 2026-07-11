@@ -38,6 +38,10 @@ class RubyRuntime {
     return RubyRuntimePlatform.instance.isFileServerRunning();
   }
 
+  static Future<int> serverPort() {
+    return RubyRuntimePlatform.instance.serverPort();
+  }
+
   static Future<String> lastFileServerError() {
     return RubyRuntimePlatform.instance.lastFileServerError();
   }
