@@ -98,7 +98,7 @@ Future<void> main() async {
     debugPrint = (String? message, {int? wrapWidth}) => null;
   }
 
-  await setupDesktop();
+  await setupDesktop(hideWindowOnStart: true);
   WidgetsFlutterBinding.ensureInitialized();
 
   if (kIsWeb) {
@@ -151,6 +151,10 @@ Future<void> main() async {
       extensions: extensions,
     ),
   );
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(showWindow());
+    unawaited(focusWindow());
+  });
 }
 
 class TemplateApp extends StatefulWidget {
