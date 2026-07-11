@@ -19,6 +19,7 @@ set(MRUBY_GEM_SOURCES
   "${MRUBY_ROOT}/mrbgems/mruby-socket/src/socket.c"
   "${MRUBY_ROOT}/mrbgems/mruby-sprintf/src/sprintf.c"
   "${MRUBY_ROOT}/mrbgems/mruby-fiber/src/fiber.c"
+  "${MRUBY_ROOT}/mrbgems/mruby-numeric-ext/src/numeric_ext.c"
   "${MRUBY_ROOT}/mrbgems/mruby-pack/src/pack.c"
   "${MRUBY_ROOT}/mrbgems/hal-posix-io/src/io_hal.c"
   "${MRUBY_ROOT}/mrbgems/hal-posix-socket/src/socket_hal.c"
@@ -33,6 +34,7 @@ set(MRUBY_GENERATED_SOURCES
   "${MRUBY_BUILD_ROOT}/mrbgems/mruby-enum-ext/gem_init.c"
   "${MRUBY_BUILD_ROOT}/mrbgems/mruby-enum-lazy/gem_init.c"
   "${MRUBY_BUILD_ROOT}/mrbgems/mruby-enum-chain/gem_init.c"
+  "${MRUBY_BUILD_ROOT}/mrbgems/mruby-numeric-ext/gem_init.c"
 )
 
 add_library(
