@@ -9,6 +9,7 @@ module Ruflet
       update_control: 4,
       invoke_control_method: 5,
       session_crashed: 6,
+      python_output: 7,
 
       # Legacy JSON protocol aliases kept for compatibility.
       register_web_client: "registerWebClient",
@@ -55,7 +56,7 @@ module Ruflet
       {
         "session_id" => session_id,
         "page_patch" => {},
-        "error" => nil
+        "error" => ""
       }
     end
   end

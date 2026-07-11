@@ -399,6 +399,8 @@ module Ruflet
         on_update_control(ws, payload)
       when Protocol::ACTIONS[:invoke_control_method]
         on_invoke_control_method(ws, payload)
+      when Protocol::ACTIONS[:python_output]
+        nil
       else
         raise "Unknown action: #{action.inspect}"
       end
@@ -470,11 +472,7 @@ module Ruflet
 
       initial_response = [
         Protocol::ACTIONS[:register_client],
-        {
-          "session_id" => session_id,
-          "page_patch" => {},
-          "error" => nil
-        }
+        Protocol.register_response(session_id: session_id)
       ]
       ws.send_binary(Ruflet::WireCodec.pack(initial_response))
 

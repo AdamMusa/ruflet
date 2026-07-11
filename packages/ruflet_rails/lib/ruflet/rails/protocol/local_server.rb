@@ -51,6 +51,8 @@ module Ruflet
             on_update_control(ws, payload)
           when Ruflet::Protocol::ACTIONS[:invoke_control_method]
             nil
+          when Ruflet::Protocol::ACTIONS[:python_output]
+            nil
           else
             raise "Unknown action: #{action.inspect}"
           end

@@ -45,7 +45,27 @@ module Ruflet
       when 0xA
         read_message
       when 0x1, 0x2
-        payload
+        return payload if frame[:fin]
+
+        message = payload.dup
+        loop do
+          continuation = read_frame
+          return nil if continuation.nil?
+
+          case continuation[:opcode]
+          when 0x9
+            send_frame(0xA, continuation[:payload])
+            next
+          when 0xA
+            next
+          when 0x0
+            message << continuation[:payload]
+            return message if continuation[:fin]
+            return nil if message.bytesize > MAX_FRAME_PAYLOAD_BYTES
+          else
+            return nil
+          end
+        end
       else
         read_message
       end
@@ -70,6 +90,7 @@ module Ruflet
       b1 = header.getbyte(0)
       b2 = header.getbyte(1)
 
+      fin = (b1 & 0x80) != 0
       masked = (b2 & 0x80) != 0
       payload_len = b2 & 0x7f
 
@@ -92,7 +113,7 @@ module Ruflet
 
       payload = unmask(payload, masking_key) if masked
 
-      { opcode: b1 & 0x0f, payload: payload }
+      { fin: fin, opcode: b1 & 0x0f, payload: payload }
     end
 
     def send_frame(opcode, payload)
