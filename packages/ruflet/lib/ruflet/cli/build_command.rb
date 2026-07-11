@@ -1132,7 +1132,7 @@ module Ruflet
       end
 
       def ruby_runtime_dependency(current_dependency = nil)
-        local_path = explicit_local_ruby_runtime_path
+        local_path = explicit_local_ruby_runtime_path || source_checkout_ruby_runtime_path
         return { "path" => local_path } if local_path
 
         current_dependency || "^0.0.3"
@@ -1143,6 +1143,13 @@ module Ruflet
         return nil if env_path.empty?
 
         candidate = Pathname.new(env_path).expand_path
+        return candidate.to_s if candidate.join("pubspec.yaml").file?
+
+        nil
+      end
+
+      def source_checkout_ruby_runtime_path
+        candidate = Pathname.new(File.expand_path("../../../../../ruby_runtime", __dir__))
         return candidate.to_s if candidate.join("pubspec.yaml").file?
 
         nil

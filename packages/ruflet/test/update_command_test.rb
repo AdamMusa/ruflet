@@ -71,7 +71,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
     refute_includes Ruflet::CLI::GEMFILE_TEMPLATE, "0.0.10"
   end
 
-  def test_prepare_flutter_client_uses_pub_ruby_runtime_dependency
+  def test_prepare_flutter_client_uses_source_ruby_runtime_dependency
     builder = DummyBuilder.new
 
     Dir.mktmpdir do |dir|
@@ -108,7 +108,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       refute_path_exists File.join(client_dir, "pubspec_overrides.yaml")
       pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
       ruby_runtime = YAML.safe_load(pubspec, aliases: true).dig("dependencies", "ruby_runtime")
-      assert_equal "^0.0.3", ruby_runtime
+      assert_equal File.expand_path("../../../ruby_runtime", __dir__), ruby_runtime["path"]
       assert_includes calls, client_dir
     end
   end
