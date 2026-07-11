@@ -203,6 +203,42 @@ class RufletPageCompatibilityTest < Minitest::Test
     assert_equal 3, payload["timeout"]
   end
 
+  def test_page_overlay_matches_python_flet_list_property
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    first = Ruflet.text("Overlay")
+    second = Ruflet.text("Later")
+
+    page.overlay = [first]
+    page.add(Ruflet.text("Body"))
+    assert_equal [first], page.overlay
+    assert_equal ["Overlay"], overlay_control_values(sent.last)
+
+    page.overlay = [first, second]
+    assert_equal [first, second], page.overlay
+    assert_equal ["Overlay", "Later"], overlay_control_values(sent.last)
+  end
+
+  def test_page_get_control_and_schedule_update_match_python_flet
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    control = Ruflet.text("Body", id: "body")
+    page.add(control)
+
+    assert_same control, page.get_control(control.wire_id)
+    assert_same control, page.get_control("body")
+    assert_same page, page.schedule_update
+    assert_equal Ruflet::Protocol::ACTIONS[:patch_control], sent.last[0]
+  end
+
   private
 
   def patch_value(patch, key)
@@ -212,5 +248,12 @@ class RufletPageCompatibilityTest < Minitest::Test
 
   def view_control_values(sent_message)
     patch_value(sent_message[1]["patch"], "views").first.fetch("controls").map { |control| control["value"] }
+  end
+
+  def overlay_control_values(sent_message)
+    patch = sent_message[1]["patch"]
+    controls = patch_value(patch, "_overlay")&.fetch("controls")
+    controls ||= patch.find { |op| op[2] == "controls" }&.fetch(3)
+    controls.map { |control| control["value"] }
   end
 end

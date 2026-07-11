@@ -285,6 +285,21 @@ module Ruflet
       self
     end
 
+    def overlay
+      @overlay_container.children
+    end
+
+    def overlay=(value)
+      @overlay_container.children.replace(Array(value).flatten.compact)
+      push_overlay_update!
+      self
+    end
+
+    def get_control(id)
+      refresh_control_indexes!
+      resolve_control(id)
+    end
+
     def views=(value)
       @views = Array(value).compact
       self
@@ -1132,6 +1147,10 @@ module Ruflet
       self
     end
 
+    def schedule_update
+      update
+    end
+
     def patch_page(control_id, **props)
       update(control_id, **props)
     end
@@ -1541,6 +1560,19 @@ module Ruflet
       @page_props["_overlay"] = @overlay_container
     end
 
+    def push_overlay_update!
+      refresh_control_indexes!
+
+      if @overlay_container.wire_id
+        send_message(Protocol::ACTIONS[:patch_control], {
+          "id" => @overlay_container.wire_id,
+          "patch" => [[0], [0, 0, "controls", serialize_patch_value(@overlay_container.children)]]
+        })
+      else
+        send_view_patch
+      end
+    end
+
     def refresh_services_container!
       @page_props["_services"] = @services_container
     end
@@ -1618,7 +1650,7 @@ module Ruflet
         # Keep internal containers stable after initial mount.
         # Re-sending them as full objects can replace Control instances with
         # same IDs and detach service invoke listeners on the Flutter side.
-        next nil if k == "_overlay" && @overlay_container.wire_id
+        next nil if k == "_overlay" && @services_container_mounted
         next nil if k == "_dialogs" && @dialogs_container.wire_id
         next nil if k == "_services" && @services_container_mounted
 
