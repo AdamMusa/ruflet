@@ -139,21 +139,15 @@ Future<void> main() async {
     extension.ensureInitialized();
   }
 
-  EmbeddedRufletRuntime? embeddedRuntime;
   var pageUrl = resolveBackendUrl();
-  if (embeddedRuntimeFuture != null) {
-    embeddedRuntime = await embeddedRuntimeFuture;
-    pageUrl = embeddedRuntime.pageUrl;
-  }
-
-  if (embeddedRuntime == null) {
+  if (embeddedRuntimeFuture == null) {
     await waitForBackend(pageUrl);
   }
 
   runApp(
     TemplateApp(
       pageUrl: pageUrl,
-      embeddedRuntime: embeddedRuntime,
+      embeddedRuntimeFuture: embeddedRuntimeFuture,
       extensions: extensions,
     ),
   );
@@ -164,11 +158,13 @@ class TemplateApp extends StatefulWidget {
     super.key,
     required this.pageUrl,
     required this.extensions,
+    this.embeddedRuntimeFuture,
     this.embeddedRuntime,
   });
 
   final String pageUrl;
   final List<FletExtension> extensions;
+  final Future<EmbeddedRufletRuntime>? embeddedRuntimeFuture;
   final EmbeddedRufletRuntime? embeddedRuntime;
 
   @override
@@ -178,36 +174,47 @@ class TemplateApp extends StatefulWidget {
 class _TemplateAppState extends State<TemplateApp> {
   Timer? _serverErrorPoller;
   String? _lastEmbeddedServerError;
+  EmbeddedRufletRuntime? _embeddedRuntime;
 
   @override
   void initState() {
     super.initState();
-    if (widget.embeddedRuntime != null) {
-      _serverErrorPoller = Timer.periodic(const Duration(seconds: 1), (
-        _,
-      ) async {
-        final serverError = await RubyRuntime.lastFileServerError();
-        if (!mounted ||
-            serverError.isEmpty ||
-            serverError == _lastEmbeddedServerError) {
-          return;
-        }
-        _lastEmbeddedServerError = serverError;
-        debugPrint('Embedded server error: $serverError');
-      });
-    }
+    _embeddedRuntime = widget.embeddedRuntime;
+    _startServerErrorPoller();
+    widget.embeddedRuntimeFuture?.then((runtime) {
+      if (!mounted) {
+        unawaited(runtime.dispose());
+        return;
+      }
+      setState(() => _embeddedRuntime = runtime);
+      _startServerErrorPoller();
+    });
+  }
+
+  void _startServerErrorPoller() {
+    if (_embeddedRuntime == null || _serverErrorPoller != null) return;
+    _serverErrorPoller = Timer.periodic(const Duration(seconds: 1), (_) async {
+      final serverError = await RubyRuntime.lastFileServerError();
+      if (!mounted ||
+          serverError.isEmpty ||
+          serverError == _lastEmbeddedServerError) {
+        return;
+      }
+      _lastEmbeddedServerError = serverError;
+      debugPrint('Embedded server error: $serverError');
+    });
   }
 
   @override
   void dispose() {
     _serverErrorPoller?.cancel();
-    unawaited(widget.embeddedRuntime?.dispose());
+    unawaited(_embeddedRuntime?.dispose());
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final error = widget.embeddedRuntime?.error;
+    final error = _embeddedRuntime?.error;
     if (error != null) {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
