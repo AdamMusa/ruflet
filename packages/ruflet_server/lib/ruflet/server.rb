@@ -421,7 +421,7 @@ module Ruflet
 
       lines = ["#{context}: #{error.class}: #{error.message}"]
       lines.concat(error.backtrace) if error.backtrace
-      File.write(path, lines.join("\n"))
+      File.open(path, "w") { |file| file.write(lines.join("\n")) }
     rescue StandardError => report_error
       warn "runtime error reporting failed: #{report_error.class}: #{report_error.message}"
     end
