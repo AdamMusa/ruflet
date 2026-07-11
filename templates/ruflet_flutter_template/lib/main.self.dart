@@ -108,6 +108,11 @@ Future<void> main() async {
     }
   }
 
+  final embeddedRuntimeFuture =
+      !kIsWeb && kConfiguredClientUrl.trim().isEmpty
+          ? EmbeddedRufletRuntime.start()
+          : null;
+
   final extensions = <FletExtension>[
     ruflet_ads.Extension(),
     ruflet_audio_recorder.Extension(),
@@ -136,15 +141,13 @@ Future<void> main() async {
 
   EmbeddedRufletRuntime? embeddedRuntime;
   var pageUrl = resolveBackendUrl();
-  if (!kIsWeb && kConfiguredClientUrl.trim().isEmpty) {
-    embeddedRuntime = await EmbeddedRufletRuntime.start();
+  if (embeddedRuntimeFuture != null) {
+    embeddedRuntime = await embeddedRuntimeFuture;
     pageUrl = embeddedRuntime.pageUrl;
   }
 
   if (embeddedRuntime == null) {
     await waitForBackend(pageUrl);
-  } else {
-    await Future<void>.delayed(const Duration(milliseconds: 250));
   }
 
   runApp(
