@@ -9,17 +9,14 @@ import io.flutter.plugin.common.MethodChannel.Result
 class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
     private lateinit var channel: MethodChannel
 
-    external fun nativeEval(code: String): String
-    external fun nativeRunFile(path: String): String
-    external fun nativeReset()
-    external fun nativeStartFileServer(path: String, stopSignalPath: String): String
-    external fun nativeStopFileServer()
-    external fun nativeIsFileServerRunning(): Boolean
-    external fun nativeLastFileServerError(): String
+    external fun nativeStart(projectRoot: String, entrypoint: String, stopSignalPath: String)
+    external fun nativeStop()
+    external fun nativeIsRunning(): Boolean
+    external fun nativeLastError(): String
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         System.loadLibrary("ruby_runtime")
-        channel = MethodChannel(binding.binaryMessenger, "ruby_runtime")
+        channel = MethodChannel(binding.binaryMessenger, "ruflet_runtime")
         channel.setMethodCallHandler(this)
     }
 
@@ -27,51 +24,45 @@ class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
         channel.setMethodCallHandler(null)
     }
 
+    private fun status(): Map<String, Any> {
+        val running = nativeIsRunning()
+        return mapOf(
+            "running" to running,
+            "port" to if (running) 8550 else 0,
+            "error" to nativeLastError(),
+        )
+    }
+
     override fun onMethodCall(call: MethodCall, result: Result) {
         try {
             when (call.method) {
-                "eval" -> {
-                    val code = call.argument<String>("code")
-                    if (code.isNullOrEmpty()) {
-                        result.error("invalid_args", "Missing 'code' argument.", null)
-                    } else {
-                        result.success(nativeEval(code))
+                "start" -> {
+                    val projectRoot = call.argument<String>("projectRoot")
+                    val entrypoint = call.argument<String>("entrypoint")
+                    if (projectRoot.isNullOrBlank() || entrypoint.isNullOrBlank()) {
+                        result.error(
+                            "invalid_args",
+                            "Missing projectRoot or entrypoint.",
+                            null,
+                        )
+                        return
                     }
+                    val stopSignalPath =
+                        call.argument<String>("stopSignalPath")?.takeIf { it.isNotBlank() }
+                            ?: "$projectRoot/.ruflet-server.stop"
+                    nativeStart(projectRoot, entrypoint, stopSignalPath)
+                    result.success(status())
                 }
-                "runFile" -> {
-                    val path = call.argument<String>("path")
-                    if (path.isNullOrEmpty()) {
-                        result.error("invalid_args", "Missing 'path' argument.", null)
-                    } else {
-                        result.success(nativeRunFile(path))
-                    }
-                }
-                "reset" -> {
-                    nativeReset()
+                "status" -> result.success(status())
+                "stop" -> {
+                    nativeStop()
                     result.success(null)
                 }
-                "startFileServer" -> {
-                    val path = call.argument<String>("path")
-                    if (path.isNullOrEmpty()) {
-                        result.error("invalid_args", "Missing 'path' argument.", null)
-                    } else {
-                        val stopSignalPath =
-                            call.argument<String>("stopSignalPath")?.takeIf { it.isNotBlank() }
-                                ?: "$path.stop"
-                        nativeStartFileServer(path, stopSignalPath)
-                        result.success(null)
-                    }
-                }
-                "stopFileServer" -> {
-                    nativeStopFileServer()
-                    result.success(null)
-                }
-                "isFileServerRunning" -> result.success(nativeIsFileServerRunning())
-                "lastFileServerError" -> result.success(nativeLastFileServerError())
                 else -> result.notImplemented()
             }
         } catch (error: RuntimeException) {
-            result.error("mruby_error", error.message, null)
+            result.error("ruflet_runtime_error", error.message, null)
         }
     }
 }
+

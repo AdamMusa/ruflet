@@ -9,10 +9,6 @@ set(MRUBY_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../../third_party/mruby")
 set(MRUBY_BUILD_ROOT "${MRUBY_ROOT}/build/host")
 
 file(GLOB MRUBY_CORE_SOURCES "${MRUBY_ROOT}/src/*.c")
-set(MRUBY_COMPILER_SOURCES
-  "${MRUBY_ROOT}/mrbgems/mruby-compiler/core/codegen.c"
-  "${MRUBY_ROOT}/mrbgems/mruby-compiler/core/y.tab.c"
-)
 set(MRUBY_GEM_SOURCES
   "${MRUBY_ROOT}/mrbgems/mruby-error/src/exception.c"
   "${MRUBY_ROOT}/mrbgems/mruby-errno/src/errno.c"
@@ -46,7 +42,6 @@ add_library(
   ../../../../shared/mruby_gems_init.c
   ../../../../shared/mruby_digest_gem.c
   ${MRUBY_CORE_SOURCES}
-  ${MRUBY_COMPILER_SOURCES}
   ${MRUBY_GEM_SOURCES}
   ${MRUBY_GENERATED_SOURCES}
 )
@@ -57,7 +52,6 @@ target_include_directories(
   "${MRUBY_BUILD_ROOT}/include"
   "${MRUBY_ROOT}/include"
   "${MRUBY_ROOT}/src"
-  "${MRUBY_ROOT}/mrbgems/mruby-compiler/core"
   "${MRUBY_ROOT}/mrbgems/mruby-io/include"
   "${MRUBY_ROOT}/mrbgems/mruby-socket/include"
 )

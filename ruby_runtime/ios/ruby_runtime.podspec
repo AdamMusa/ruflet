@@ -14,8 +14,6 @@ Embeds mruby in native iOS code and exposes eval/runFile/reset over a Flutter me
     'Classes/**/*.{h,m,mm,c,cc,cpp}',
     'Classes/mruby_digest_gem.c',
     'mruby_src/src/*.c',
-    'mruby_src/mrbgems/mruby-compiler/core/codegen.c',
-    'mruby_src/mrbgems/mruby-compiler/core/y.tab.c',
     'mruby_src/mrbgems/mruby-error/src/exception.c',
     'mruby_src/mrbgems/mruby-errno/src/errno.c',
     'mruby_src/mrbgems/mruby-io/src/io.c',
@@ -48,7 +46,7 @@ Embeds mruby in native iOS code and exposes eval/runFile/reset over a Flutter me
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
-    'HEADER_SEARCH_PATHS' => '$(inherited) "$(PODS_TARGET_SRCROOT)/mruby_src/include" "$(PODS_TARGET_SRCROOT)/mruby_src/src" "$(PODS_TARGET_SRCROOT)/mruby_src/mrbgems/mruby-compiler/core" "$(PODS_TARGET_SRCROOT)/mruby_src/mrbgems/mruby-io/include" "$(PODS_TARGET_SRCROOT)/mruby_src/mrbgems/mruby-socket/include"',
+    'HEADER_SEARCH_PATHS' => '$(inherited) "$(PODS_TARGET_SRCROOT)/mruby_src/include" "$(PODS_TARGET_SRCROOT)/mruby_src/src" "$(PODS_TARGET_SRCROOT)/mruby_src/mrbgems/mruby-io/include" "$(PODS_TARGET_SRCROOT)/mruby_src/mrbgems/mruby-socket/include"',
     'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) MRB_NO_PRESYM=1'
   }
 end

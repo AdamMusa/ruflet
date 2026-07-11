@@ -1,184 +1,33 @@
 #include <jni.h>
 
+#include <cstdio>
+#include <cstdlib>
 #include <fstream>
+#include <iterator>
 #include <mutex>
-#include <sstream>
 #include <string>
 #include <thread>
-#include <cstdlib>
+#include <vector>
 
 extern "C" {
 #include <mruby.h>
-#include <mruby/compile.h>
 #include <mruby/irep.h>
 #include <mruby/string.h>
+#include <mruby/variable.h>
 }
 
 #include "../../../../../shared/embedded_ruflet_runtime.h"
 
 namespace {
 
-std::mutex g_mutex;
+constexpr int kRufletServerPort = 8550;
+
+std::mutex g_vm_mutex;
+std::mutex g_state_mutex;
 mrb_state* g_mrb = nullptr;
-bool g_runtime_loaded = false;
 bool g_server_running = false;
 std::string g_stop_signal_path;
 std::string g_last_server_error;
-
-struct EvalResult {
-  bool ok;
-  std::string value;
-};
-
-EvalResult eval_locked(const std::string& code, const char* filename = nullptr);
-std::string exception_to_string(mrb_state* mrb);
-
-mrb_state* ensure_mrb() {
-  if (g_mrb == nullptr) {
-    g_mrb = mrb_open();
-  }
-  return g_mrb;
-}
-
-// Kernel#__ruflet_eval(source): compile and run a Ruby string at top level.
-// The embedded VM omits the mruby-eval gem, so the runtime's require_relative
-// uses this to load app-tree files.
-mrb_value ruflet_eval_string(mrb_state* mrb, mrb_value self) {
-  const char* code = nullptr;
-  mrb_int len = 0;
-  mrb_get_args(mrb, "s", &code, &len);
-  mrbc_context* cxt = mrbc_context_new(mrb);
-  mrbc_filename(mrb, cxt, "(ruflet-require)");
-  mrb_value result = mrb_load_nstring_cxt(mrb, code, len, cxt);
-  mrbc_context_free(mrb, cxt);
-  return result;
-}
-
-EvalResult preload_embedded_runtime_locked() {
-  if (g_runtime_loaded) {
-    return {true, ""};
-  }
-
-  mrb_state* mrb = ensure_mrb();
-  if (mrb == nullptr) {
-    return {false, "failed to initialize mruby runtime"};
-  }
-
-  mrbc_context* context = mrbc_context_new(mrb);
-  if (context == nullptr) {
-    return {false, "failed to create preload compile context"};
-  }
-
-  mrbc_filename(mrb, context, "/__ruflet__/embedded_runtime.rb");
-  mrb_load_irep_cxt(mrb, kEmbeddedRufletRuntimeIrep, context);
-  mrbc_context_free(mrb, context);
-
-  if (mrb->exc != nullptr) {
-    return {false, exception_to_string(mrb)};
-  }
-
-  mrb_define_method(mrb, mrb->kernel_module, "__ruflet_eval", ruflet_eval_string, MRB_ARGS_REQ(1));
-
-  g_runtime_loaded = true;
-  return {true, ""};
-}
-
-std::string read_file(const std::string& path) {
-  std::ifstream in(path);
-  if (!in) {
-    return "";
-  }
-  std::ostringstream content;
-  content << in.rdbuf();
-  return content.str();
-}
-
-EvalResult run_file_locked(const std::string& file_path) {
-  std::string source = read_file(file_path);
-  if (source.empty()) {
-    return {false, "unable to read Ruby file: " + file_path};
-  }
-  return eval_locked(source, file_path.c_str());
-}
-
-std::string escape_single_quotes(const std::string& value) {
-  std::string escaped;
-  escaped.reserve(value.size());
-  for (char ch : value) {
-    if (ch == '\'') {
-      escaped += "\\'";
-    } else {
-      escaped += ch;
-    }
-  }
-  return escaped;
-}
-
-std::string exception_to_string(mrb_state* mrb) {
-  if (mrb == nullptr || mrb->exc == nullptr) {
-    return "unknown mruby error";
-  }
-
-  mrb_value exc = mrb_obj_value(mrb->exc);
-  const char* klass = mrb_obj_classname(mrb, exc);
-
-  mrb_value text = mrb_funcall(mrb, exc, "to_s", 0);
-  if (mrb->exc != nullptr) {
-    // Avoid recursive failures while formatting an exception.
-    mrb->exc = nullptr;
-    std::string fallback = klass == nullptr ? "Exception" : klass;
-    fallback += ": <failed to render exception message>";
-    return fallback;
-  }
-
-  const char* cstr = mrb_string_value_cstr(mrb, &text);
-  std::string message = klass == nullptr ? "Exception" : klass;
-  message += ": ";
-  message += (cstr == nullptr ? "<empty>" : cstr);
-  mrb->exc = nullptr;
-  return message;
-}
-
-EvalResult eval_locked(const std::string& code, const char* filename) {
-  mrb_state* mrb = ensure_mrb();
-  if (mrb == nullptr) {
-    return {false, "failed to initialize mruby runtime"};
-  }
-
-  EvalResult preload = preload_embedded_runtime_locked();
-  if (!preload.ok) {
-    return preload;
-  }
-
-  mrbc_context* context = mrbc_context_new(mrb);
-  if (context == nullptr) {
-    return {false, "failed to create mruby compile context"};
-  }
-
-  if (filename != nullptr && filename[0] != '\0') {
-    mrbc_filename(mrb, context, filename);
-  }
-
-  mrb_value result_value = mrb_load_string_cxt(mrb, code.c_str(), context);
-  mrbc_context_free(mrb, context);
-
-  if (mrb->exc != nullptr) {
-    return {false, exception_to_string(mrb)};
-  }
-
-  mrb_value display_value;
-  if (mrb_string_p(result_value)) {
-    display_value = result_value;
-  } else {
-    display_value = mrb_inspect(mrb, result_value);
-  }
-  if (mrb->exc != nullptr) {
-    return {false, exception_to_string(mrb)};
-  }
-
-  const char* result_cstr = mrb_string_value_cstr(mrb, &display_value);
-  return {true, result_cstr == nullptr ? "" : result_cstr};
-}
 
 void throw_runtime_error(JNIEnv* env, const std::string& message) {
   jclass exception_class = env->FindClass("java/lang/RuntimeException");
@@ -187,203 +36,187 @@ void throw_runtime_error(JNIEnv* env, const std::string& message) {
   }
 }
 
-void request_stop_server_locked() {
-  if (g_stop_signal_path.empty()) {
+std::string jstring_value(JNIEnv* env, jstring value, const char* name) {
+  if (value == nullptr) {
+    throw_runtime_error(env, std::string(name) + " argument is null");
+    return "";
+  }
+  const char* chars = env->GetStringUTFChars(value, nullptr);
+  if (chars == nullptr) {
+    throw_runtime_error(env, std::string("failed to access ") + name);
+    return "";
+  }
+  std::string result(chars);
+  env->ReleaseStringUTFChars(value, chars);
+  return result;
+}
+
+std::vector<uint8_t> read_bytecode(const std::string& path) {
+  std::ifstream input(path, std::ios::binary);
+  if (!input) {
+    return {};
+  }
+  return std::vector<uint8_t>(
+      std::istreambuf_iterator<char>(input),
+      std::istreambuf_iterator<char>());
+}
+
+std::string exception_to_string(mrb_state* mrb) {
+  if (mrb == nullptr || mrb->exc == nullptr) {
+    return "unknown mruby error";
+  }
+
+  mrb_value exception = mrb_obj_value(mrb->exc);
+  const char* class_name = mrb_obj_classname(mrb, exception);
+  mrb_value message = mrb_funcall(mrb, exception, "to_s", 0);
+  if (mrb->exc != nullptr) {
+    mrb->exc = nullptr;
+    return "failed to render mruby exception";
+  }
+
+  const char* text = mrb_string_value_cstr(mrb, &message);
+  std::string result = class_name == nullptr ? "Exception" : class_name;
+  result += ": ";
+  result += text == nullptr ? "<empty>" : text;
+  mrb->exc = nullptr;
+  return result;
+}
+
+bool valid_entrypoint(const std::string& project_root, const std::string& entrypoint) {
+  if (project_root.empty() || entrypoint.empty() ||
+      entrypoint.size() < 4 || entrypoint.substr(entrypoint.size() - 4) != ".mrb") {
+    return false;
+  }
+  std::string prefix = project_root;
+  if (prefix.back() != '/') {
+    prefix += '/';
+  }
+  return entrypoint.rfind(prefix, 0) == 0;
+}
+
+void set_runtime_error(const std::string& error) {
+  std::lock_guard<std::mutex> state_lock(g_state_mutex);
+  g_last_server_error = error;
+}
+
+void finish_runtime() {
+  std::lock_guard<std::mutex> state_lock(g_state_mutex);
+  g_server_running = false;
+}
+
+void request_stop() {
+  std::string stop_path;
+  {
+    std::lock_guard<std::mutex> state_lock(g_state_mutex);
+    stop_path = g_stop_signal_path;
+  }
+  if (stop_path.empty()) {
     return;
   }
-  std::ofstream out(g_stop_signal_path);
-  if (out) {
-    out << "stop";
+  std::ofstream output(stop_path);
+  if (output) {
+    output << "stop";
   }
 }
 
 }  // namespace
 
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeEval(
-    JNIEnv* env,
-    jobject /* this */,
-    jstring code) {
-  if (code == nullptr) {
-    throw_runtime_error(env, "code argument is null");
-    return nullptr;
-  }
-
-  const char* code_chars = env->GetStringUTFChars(code, nullptr);
-  if (code_chars == nullptr) {
-    throw_runtime_error(env, "failed to access code argument");
-    return nullptr;
-  }
-
-  std::string source(code_chars);
-  env->ReleaseStringUTFChars(code, code_chars);
-
-  std::lock_guard<std::mutex> lock(g_mutex);
-  EvalResult result = eval_locked(source, nullptr);
-  if (!result.ok) {
-    throw_runtime_error(env, result.value);
-    return nullptr;
-  }
-
-  return env->NewStringUTF(result.value.c_str());
-}
-
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeRunFile(
-    JNIEnv* env,
-    jobject /* this */,
-    jstring path) {
-  if (path == nullptr) {
-    throw_runtime_error(env, "path argument is null");
-    return nullptr;
-  }
-
-  const char* path_chars = env->GetStringUTFChars(path, nullptr);
-  if (path_chars == nullptr) {
-    throw_runtime_error(env, "failed to access path argument");
-    return nullptr;
-  }
-
-  std::string file_path(path_chars);
-  env->ReleaseStringUTFChars(path, path_chars);
-
-  std::lock_guard<std::mutex> lock(g_mutex);
-  EvalResult result = run_file_locked(file_path);
-  if (!result.ok) {
-    throw_runtime_error(env, result.value);
-    return nullptr;
-  }
-
-  return env->NewStringUTF(result.value.c_str());
-}
-
 extern "C" JNIEXPORT void JNICALL
-Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeReset(
+Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeStart(
     JNIEnv* env,
-    jobject /* this */) {
-  std::lock_guard<std::mutex> lock(g_mutex);
-  if (g_server_running) {
-    request_stop_server_locked();
-    (void)env;
+    jobject /* this */,
+    jstring project_root_value,
+    jstring entrypoint_value,
+    jstring stop_signal_path_value) {
+  std::string project_root = jstring_value(env, project_root_value, "projectRoot");
+  if (env->ExceptionCheck()) return;
+  std::string entrypoint = jstring_value(env, entrypoint_value, "entrypoint");
+  if (env->ExceptionCheck()) return;
+  std::string stop_path = jstring_value(env, stop_signal_path_value, "stopSignalPath");
+  if (env->ExceptionCheck()) return;
+
+  if (!valid_entrypoint(project_root, entrypoint)) {
+    throw_runtime_error(env, "Ruflet requires a .mrb entrypoint inside projectRoot.");
     return;
   }
-  if (g_mrb != nullptr) {
-    mrb_close(g_mrb);
-    g_mrb = nullptr;
-  }
-  g_runtime_loaded = false;
-  g_last_server_error.clear();
-  (void)env;
-}
 
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeStartFileServer(
-    JNIEnv* env,
-    jobject /* this */,
-    jstring path,
-    jstring stop_signal_path) {
-  if (path == nullptr) {
-    throw_runtime_error(env, "path argument is null");
-    return nullptr;
+  std::vector<uint8_t> bytecode = read_bytecode(entrypoint);
+  if (bytecode.empty()) {
+    throw_runtime_error(env, "Unable to read Ruflet entrypoint: " + entrypoint);
+    return;
   }
-  if (stop_signal_path == nullptr) {
-    throw_runtime_error(env, "stopSignalPath argument is null");
-    return nullptr;
-  }
-
-  const char* path_chars = env->GetStringUTFChars(path, nullptr);
-  if (path_chars == nullptr) {
-    throw_runtime_error(env, "failed to access path argument");
-    return nullptr;
-  }
-  const char* stop_chars = env->GetStringUTFChars(stop_signal_path, nullptr);
-  if (stop_chars == nullptr) {
-    env->ReleaseStringUTFChars(path, path_chars);
-    throw_runtime_error(env, "failed to access stopSignalPath argument");
-    return nullptr;
-  }
-
-  std::string file_path(path_chars);
-  std::string stop_path(stop_chars);
-  env->ReleaseStringUTFChars(path, path_chars);
-  env->ReleaseStringUTFChars(stop_signal_path, stop_chars);
 
   {
-    std::lock_guard<std::mutex> lock(g_mutex);
+    std::lock_guard<std::mutex> state_lock(g_state_mutex);
     if (g_server_running) {
-      return env->NewStringUTF("");
+      return;
     }
+    g_server_running = true;
     g_stop_signal_path = stop_path;
     g_last_server_error.clear();
-    g_server_running = true;
   }
-
   std::remove(stop_path.c_str());
-  std::string source = read_file(file_path);
-  if (source.empty()) {
-    std::lock_guard<std::mutex> lock(g_mutex);
-    g_server_running = false;
-    g_last_server_error = "unable to read Ruby file: " + file_path;
-    throw_runtime_error(env, g_last_server_error);
-    return nullptr;
-  }
 
-  std::thread([file_path, stop_path, source]() {
+  std::thread([project_root, stop_path, bytecode = std::move(bytecode)]() {
     setenv("RUFLET_PROD_STOP_FILE", stop_path.c_str(), 1);
     setenv("RUFLET_STRICT_PORT", "1", 1);
 
-    std::lock_guard<std::mutex> lock(g_mutex);
-    // Expose the extracted project root to the embedded runtime (which has no
-    // working caller()) so __dir__ / require_relative resolve app-tree files.
-    const std::string::size_type slash = file_path.find_last_of('/');
-    const std::string app_root =
-        (slash == std::string::npos) ? std::string(".") : file_path.substr(0, slash);
-    eval_locked("$__ruflet_app_root = '" + escape_single_quotes(app_root) + "'",
-                file_path.c_str());
-    EvalResult result = eval_locked(source, file_path.c_str());
-    if (result.ok && !result.value.empty() && result.value[0] == ':') {
-      const std::string safe_path = escape_single_quotes(file_path);
-      const std::string bootstrap =
-          "app_root = File.expand_path(File.dirname('" + safe_path + "')); "
-          "manifest_path = File.join(app_root, 'manifest.json'); "
-          "manifest = RufletProd::JsonParser.parse(File.read(manifest_path)); "
-          "RufletProd::Server.new(host: '0.0.0.0', port: 8550, manifest: manifest).start";
-      result = eval_locked(bootstrap, file_path.c_str());
+    std::lock_guard<std::mutex> vm_lock(g_vm_mutex);
+    if (g_mrb != nullptr) {
+      mrb_close(g_mrb);
+    }
+    g_mrb = mrb_open();
+
+    if (g_mrb == nullptr) {
+      set_runtime_error("Unable to initialize mruby.");
+      finish_runtime();
+      return;
     }
 
-    if (!result.ok) {
-      g_last_server_error = result.value;
+    mrb_load_irep(g_mrb, kEmbeddedRufletRuntimeIrep);
+    if (g_mrb->exc == nullptr) {
+      mrb_sym root_symbol = mrb_intern_lit(g_mrb, "$__ruflet_app_root");
+      mrb_gv_set(g_mrb, root_symbol, mrb_str_new_cstr(g_mrb, project_root.c_str()));
+      mrb_load_irep_buf(g_mrb, bytecode.data(), bytecode.size());
+    }
+
+    if (g_mrb->exc != nullptr) {
+      set_runtime_error(exception_to_string(g_mrb));
     } else {
-      g_last_server_error = "server script exited: " + result.value;
+      std::ifstream stop_file(stop_path);
+      if (!stop_file.good()) {
+        set_runtime_error("Ruflet server exited unexpectedly.");
+      }
     }
-    g_server_running = false;
-  }).detach();
 
-  return env->NewStringUTF("");
+    mrb_close(g_mrb);
+    g_mrb = nullptr;
+    finish_runtime();
+  }).detach();
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeStopFileServer(
+Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeStop(
     JNIEnv* env,
     jobject /* this */) {
-  std::lock_guard<std::mutex> lock(g_mutex);
-  request_stop_server_locked();
+  request_stop();
   (void)env;
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeIsFileServerRunning(
+Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeIsRunning(
     JNIEnv* env,
     jobject /* this */) {
-  std::lock_guard<std::mutex> lock(g_mutex);
+  std::lock_guard<std::mutex> state_lock(g_state_mutex);
   (void)env;
   return g_server_running ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeLastFileServerError(
+Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeLastError(
     JNIEnv* env,
     jobject /* this */) {
-  std::lock_guard<std::mutex> lock(g_mutex);
+  std::lock_guard<std::mutex> state_lock(g_state_mutex);
   return env->NewStringUTF(g_last_server_error.c_str());
 }
+

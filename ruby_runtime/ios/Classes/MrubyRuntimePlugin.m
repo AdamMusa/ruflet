@@ -2,9 +2,9 @@
 #import <Foundation/Foundation.h>
 
 #include <mruby.h>
-#include <mruby/compile.h>
 #include <mruby/irep.h>
 #include <mruby/string.h>
+#include <mruby/variable.h>
 #include <stdlib.h>
 
 #include "../../../shared/embedded_ruflet_runtime.h"
@@ -14,96 +14,28 @@
 
 @implementation MrubyRuntimePlugin
 
+static const int kRufletServerPort = 8550;
 static mrb_state *g_mrb = NULL;
-static NSLock *g_lock = nil;
+static NSLock *g_vm_lock = nil;
 static BOOL g_server_running = NO;
 static BOOL g_runtime_loaded = NO;
 static NSString *g_stop_signal_path = nil;
 static NSString *g_last_server_error = nil;
 
-static NSString *escape_single_quotes(NSString *text) {
-  return [text stringByReplacingOccurrencesOfString:@"'" withString:@"\\\\'"];
-}
-
-+ (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
-  FlutterMethodChannel *channel = [FlutterMethodChannel methodChannelWithName:@"ruby_runtime"
-                                                              binaryMessenger:[registrar messenger]];
++ (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar> *)registrar {
+  FlutterMethodChannel *channel =
+      [FlutterMethodChannel methodChannelWithName:@"ruflet_runtime"
+                                  binaryMessenger:[registrar messenger]];
   MrubyRuntimePlugin *instance = [[MrubyRuntimePlugin alloc] init];
   [registrar addMethodCallDelegate:instance channel:channel];
 }
 
 - (instancetype)init {
   self = [super init];
-  if (self) {
-    if (g_lock == nil) {
-      g_lock = [[NSLock alloc] init];
-    }
+  if (self != nil && g_vm_lock == nil) {
+    g_vm_lock = [[NSLock alloc] init];
   }
   return self;
-}
-
-static mrb_state *ensure_mrb(void) {
-  if (g_mrb == NULL) {
-    g_mrb = mrb_open();
-  }
-  return g_mrb;
-}
-
-// Kernel#__ruflet_eval(source): compile and run a Ruby string at top level.
-// The embedded VM omits the mruby-eval gem, so the runtime's require_relative
-// uses this to load app-tree files.
-static mrb_value ruflet_eval_string(mrb_state *mrb, mrb_value self) {
-  const char *code = NULL;
-  mrb_int len = 0;
-  mrb_get_args(mrb, "s", &code, &len);
-  mrbc_context *cxt = mrbc_context_new(mrb);
-  mrbc_filename(mrb, cxt, "(ruflet-require)");
-  mrb_value result = mrb_load_nstring_cxt(mrb, code, len, cxt);
-  mrbc_context_free(mrb, cxt);
-  return result;
-}
-
-static BOOL preload_embedded_runtime(mrb_state *mrb, NSError **error) {
-  if (g_runtime_loaded) {
-    return YES;
-  }
-  if (mrb == NULL) {
-    if (error != NULL) {
-      *error = [NSError errorWithDomain:@"ruby_runtime"
-                                   code:10
-                               userInfo:@{NSLocalizedDescriptionKey: @"mruby runtime is not initialized"}];
-    }
-    return NO;
-  }
-
-  mrbc_context *context = mrbc_context_new(mrb);
-  if (context == NULL) {
-    if (error != NULL) {
-      *error = [NSError errorWithDomain:@"ruby_runtime"
-                                   code:11
-                               userInfo:@{NSLocalizedDescriptionKey: @"failed to create preload compile context"}];
-    }
-    return NO;
-  }
-
-  mrbc_filename(mrb, context, "/__ruflet__/embedded_runtime.rb");
-  mrb_load_irep_cxt(mrb, kEmbeddedRufletRuntimeIrep, context);
-  mrbc_context_free(mrb, context);
-
-  if (mrb->exc != NULL) {
-    NSString *message = exception_to_string(mrb);
-    if (error != NULL) {
-      *error = [NSError errorWithDomain:@"ruby_runtime"
-                                   code:12
-                               userInfo:@{NSLocalizedDescriptionKey: message}];
-    }
-    return NO;
-  }
-
-  mrb_define_method(mrb, mrb->kernel_module, "__ruflet_eval", ruflet_eval_string, MRB_ARGS_REQ(1));
-
-  g_runtime_loaded = YES;
-  return YES;
 }
 
 static NSString *exception_to_string(mrb_state *mrb) {
@@ -111,108 +43,53 @@ static NSString *exception_to_string(mrb_state *mrb) {
     return @"unknown mruby error";
   }
 
-  mrb_value exc = mrb_obj_value(mrb->exc);
-  const char *klass = mrb_obj_classname(mrb, exc);
-  NSString *backtraceText = nil;
-
-  mrb_value backtrace = mrb_funcall(mrb, exc, "backtrace", 0);
-  if (mrb->exc == NULL && !mrb_nil_p(backtrace)) {
-    mrb_value renderedBacktrace = mrb_inspect(mrb, backtrace);
-    if (mrb->exc == NULL) {
-      const char *backtraceCString = mrb_string_value_cstr(mrb, &renderedBacktrace);
-      if (backtraceCString != NULL) {
-        backtraceText = [NSString stringWithUTF8String:backtraceCString];
-      }
-    }
-  }
+  mrb_value exception = mrb_obj_value(mrb->exc);
+  const char *class_name = mrb_obj_classname(mrb, exception);
+  mrb_value message = mrb_funcall(mrb, exception, "to_s", 0);
   if (mrb->exc != NULL) {
     mrb->exc = NULL;
+    return @"failed to render mruby exception";
   }
 
-  mrb_value text = mrb_funcall(mrb, exc, "to_s", 0);
-  if (mrb->exc != NULL) {
-    mrb->exc = NULL;
-    NSString *k = klass == NULL ? @"Exception" : [NSString stringWithUTF8String:klass];
-    return [NSString stringWithFormat:@"%@: <failed to render exception message>", k];
-  }
-
-  const char *msg = mrb_string_value_cstr(mrb, &text);
+  const char *text = mrb_string_value_cstr(mrb, &message);
+  NSString *klass = class_name == NULL
+      ? @"Exception"
+      : ([NSString stringWithUTF8String:class_name] ?: @"Exception");
+  NSString *detail =
+      text == NULL ? @"<empty>" : ([NSString stringWithUTF8String:text] ?: @"<invalid utf8>");
   mrb->exc = NULL;
-
-  NSString *k = klass == NULL ? @"Exception" : [NSString stringWithUTF8String:klass];
-  NSString *m = msg == NULL ? @"<empty>" : ([NSString stringWithUTF8String:msg] ?: @"<invalid utf8>");
-  if (backtraceText != nil && backtraceText.length > 0) {
-    return [NSString stringWithFormat:@"%@: %@\n%@", k, m, backtraceText];
-  }
-  return [NSString stringWithFormat:@"%@: %@", k, m];
+  return [NSString stringWithFormat:@"%@: %@", klass, detail];
 }
 
-static NSString *eval_source(NSString *source, NSString *filename, NSError **error) {
-  mrb_state *mrb = ensure_mrb();
-  if (mrb == NULL) {
+static BOOL preload_ruflet_runtime(mrb_state *mrb, NSError **error) {
+  if (g_runtime_loaded) {
+    return YES;
+  }
+
+  mrb_load_irep(mrb, kEmbeddedRufletRuntimeIrep);
+  if (mrb->exc != NULL) {
     if (error != NULL) {
-      *error = [NSError errorWithDomain:@"ruby_runtime"
+      *error = [NSError errorWithDomain:@"ruflet_runtime"
                                    code:1
-                               userInfo:@{NSLocalizedDescriptionKey: @"failed to initialize mruby runtime"}];
+                               userInfo:@{NSLocalizedDescriptionKey : exception_to_string(mrb)}];
     }
-    return nil;
-  }
-  if (!preload_embedded_runtime(mrb, error)) {
-    return nil;
+    return NO;
   }
 
-  mrbc_context *context = mrbc_context_new(mrb);
-  if (context == NULL) {
-    if (error != NULL) {
-      *error = [NSError errorWithDomain:@"ruby_runtime"
-                                   code:2
-                               userInfo:@{NSLocalizedDescriptionKey: @"failed to create mruby compile context"}];
-    }
-    return nil;
-  }
-
-  if (filename != nil && filename.length > 0) {
-    mrbc_filename(mrb, context, filename.UTF8String);
-  }
-
-  mrb_value result = mrb_load_string_cxt(mrb, source.UTF8String, context);
-  mrbc_context_free(mrb, context);
-
-  if (mrb->exc != NULL) {
-    NSString *message = exception_to_string(mrb);
-    if (error != NULL) {
-      *error = [NSError errorWithDomain:@"ruby_runtime"
-                                   code:3
-                               userInfo:@{NSLocalizedDescriptionKey: message}];
-    }
-    return nil;
-  }
-
-  mrb_value as_string;
-  if (mrb_string_p(result)) {
-    as_string = result;
-  } else {
-    as_string = mrb_inspect(mrb, result);
-  }
-  if (mrb->exc != NULL) {
-    NSString *message = exception_to_string(mrb);
-    if (error != NULL) {
-      *error = [NSError errorWithDomain:@"ruby_runtime"
-                                   code:4
-                               userInfo:@{NSLocalizedDescriptionKey: message}];
-    }
-    return nil;
-  }
-
-  const char *value = mrb_string_value_cstr(mrb, &as_string);
-  if (value == NULL) {
-    return @"";
-  }
-  return [NSString stringWithUTF8String:value] ?: @"";
+  g_runtime_loaded = YES;
+  return YES;
 }
 
-static void request_stop_server(void) {
-  if (g_stop_signal_path == nil || g_stop_signal_path.length == 0) {
+static NSDictionary<NSString *, id> *runtime_status(void) {
+  return @{
+    @"running" : @(g_server_running),
+    @"port" : @(g_server_running ? kRufletServerPort : 0),
+    @"error" : g_last_server_error ?: @""
+  };
+}
+
+static void request_stop(void) {
+  if (g_stop_signal_path.length == 0) {
     return;
   }
   [@"stop" writeToFile:g_stop_signal_path
@@ -221,166 +98,112 @@ static void request_stop_server(void) {
                  error:nil];
 }
 
-- (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
-  if ([call.method isEqualToString:@"eval"]) {
-    NSDictionary *args = (NSDictionary *)call.arguments;
-    NSString *code = args[@"code"];
-    if (![code isKindOfClass:[NSString class]] || code.length == 0) {
-      result([FlutterError errorWithCode:@"invalid_args" message:@"Missing 'code' argument." details:nil]);
-      return;
-    }
-
-    [g_lock lock];
-    NSError *error = nil;
-    NSString *value = eval_source(code, nil, &error);
-    [g_lock unlock];
-
-    if (error != nil) {
-      result([FlutterError errorWithCode:@"mruby_error" message:error.localizedDescription details:nil]);
-      return;
-    }
-    result(value);
-    return;
+static BOOL valid_entrypoint(NSString *project_root, NSString *entrypoint) {
+  if (project_root.length == 0 || entrypoint.length == 0) {
+    return NO;
   }
+  NSString *root = project_root.stringByStandardizingPath;
+  NSString *path = entrypoint.stringByStandardizingPath;
+  NSString *prefix = [root stringByAppendingString:@"/"];
+  return [path.pathExtension.lowercaseString isEqualToString:@"mrb"] &&
+         ([path isEqualToString:root] || [path hasPrefix:prefix]);
+}
 
-  if ([call.method isEqualToString:@"runFile"]) {
-    NSDictionary *args = (NSDictionary *)call.arguments;
-    NSString *path = args[@"path"];
-    if (![path isKindOfClass:[NSString class]] || path.length == 0) {
-      result([FlutterError errorWithCode:@"invalid_args" message:@"Missing 'path' argument." details:nil]);
+- (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
+  if ([call.method isEqualToString:@"start"]) {
+    NSDictionary *arguments = (NSDictionary *)call.arguments;
+    NSString *project_root = arguments[@"projectRoot"];
+    NSString *entrypoint = arguments[@"entrypoint"];
+    if (![project_root isKindOfClass:[NSString class]] ||
+        ![entrypoint isKindOfClass:[NSString class]] ||
+        !valid_entrypoint(project_root, entrypoint)) {
+      result([FlutterError errorWithCode:@"invalid_args"
+                                 message:@"Ruflet requires a .mrb entrypoint inside projectRoot."
+                                 details:nil]);
       return;
     }
 
-    NSError *readError = nil;
-    NSString *source = [NSString stringWithContentsOfFile:path
-                                                 encoding:NSUTF8StringEncoding
-                                                    error:&readError];
-    if (source == nil) {
-      NSString *message = readError.localizedDescription ?: @"unable to read Ruby file";
-      result([FlutterError errorWithCode:@"mruby_error" message:message details:nil]);
-      return;
-    }
-
-    [g_lock lock];
-    NSError *error = nil;
-    NSString *value = eval_source(source, path, &error);
-    [g_lock unlock];
-
-    if (error != nil) {
-      result([FlutterError errorWithCode:@"mruby_error" message:error.localizedDescription details:nil]);
-      return;
-    }
-    result(value);
-    return;
-  }
-
-  if ([call.method isEqualToString:@"reset"]) {
     if (g_server_running) {
-      request_stop_server();
-      result(nil);
+      result(runtime_status());
       return;
     }
 
-    [g_lock lock];
-    if (g_mrb != NULL) {
-      mrb_close(g_mrb);
-      g_mrb = NULL;
-    }
-    g_runtime_loaded = NO;
-    g_last_server_error = nil;
-    [g_lock unlock];
-    result(nil);
-    return;
-  }
-
-  if ([call.method isEqualToString:@"startFileServer"]) {
-    NSDictionary *args = (NSDictionary *)call.arguments;
-    NSString *path = args[@"path"];
-    if (![path isKindOfClass:[NSString class]] || path.length == 0) {
-      result([FlutterError errorWithCode:@"invalid_args" message:@"Missing 'path' argument." details:nil]);
-      return;
-    }
-    if (g_server_running) {
-      result(nil);
+    NSError *read_error = nil;
+    NSData *bytecode = [NSData dataWithContentsOfFile:entrypoint options:0 error:&read_error];
+    if (bytecode == nil || bytecode.length == 0) {
+      result([FlutterError errorWithCode:@"ruflet_start_error"
+                                 message:read_error.localizedDescription ?: @"Unable to read Ruflet entrypoint."
+                                 details:nil]);
       return;
     }
 
-    NSString *stopPath = args[@"stopSignalPath"];
-    if (![stopPath isKindOfClass:[NSString class]] || stopPath.length == 0) {
-      stopPath = [path stringByAppendingString:@".stop"];
+    NSString *stop_path = arguments[@"stopSignalPath"];
+    if (![stop_path isKindOfClass:[NSString class]] || stop_path.length == 0) {
+      stop_path = [project_root stringByAppendingPathComponent:@".ruflet-server.stop"];
     }
+    [[NSFileManager defaultManager] removeItemAtPath:stop_path error:nil];
 
-    [[NSFileManager defaultManager] removeItemAtPath:stopPath error:nil];
-    g_stop_signal_path = stopPath;
-
-    NSError *readError = nil;
-    NSString *source = [NSString stringWithContentsOfFile:path
-                                                 encoding:NSUTF8StringEncoding
-                                                    error:&readError];
-    if (source == nil) {
-      NSString *message = readError.localizedDescription ?: @"unable to read Ruby file";
-      g_last_server_error = message;
-      result([FlutterError errorWithCode:@"mruby_error" message:message details:nil]);
-      return;
-    }
-
+    g_stop_signal_path = stop_path;
     g_last_server_error = nil;
     g_server_running = YES;
+
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-      setenv("RUFLET_PROD_STOP_FILE", stopPath.UTF8String, 1);
+      setenv("RUFLET_PROD_STOP_FILE", stop_path.UTF8String, 1);
       setenv("RUFLET_STRICT_PORT", "1", 1);
-      [g_lock lock];
-      NSError *error = nil;
-      // Expose the extracted project root to the embedded runtime (which has no
-      // working caller()) so __dir__ / require_relative resolve app-tree files.
-      eval_source([NSString stringWithFormat:@"$__ruflet_app_root = '%@'",
-                   escape_single_quotes([path stringByDeletingLastPathComponent])],
-                  path, &error);
-      NSString *value = eval_source(source, path, &error);
-      if (error == nil && value != nil && [value hasPrefix:@":"]) {
-        NSString *safePath = escape_single_quotes(path);
-        NSString *bootstrap = [NSString stringWithFormat:
-          @"app_root = File.expand_path(File.dirname('%@')); "
-          "manifest_path = File.join(app_root, 'manifest.json'); "
-          "manifest = RufletProd::JsonParser.parse(File.read(manifest_path)); "
-          "RufletProd::Server.new(host: '0.0.0.0', port: 8550, manifest: manifest).start",
-          safePath];
-        value = eval_source(bootstrap, path, &error);
+
+      [g_vm_lock lock];
+      if (g_mrb != NULL) {
+        mrb_close(g_mrb);
       }
-      if (error != nil) {
-        g_last_server_error = error.localizedDescription;
-        NSLog(@"[ruby_runtime] startFileServer crash: %@", g_last_server_error);
-      } else {
-        NSString *resultValue = value ?: @"";
-        g_last_server_error = [NSString stringWithFormat:@"server script exited: %@", resultValue];
-        NSLog(@"[ruby_runtime] %@", g_last_server_error);
+      g_mrb = mrb_open();
+      g_runtime_loaded = NO;
+
+      NSError *runtime_error = nil;
+      if (g_mrb == NULL) {
+        runtime_error = [NSError errorWithDomain:@"ruflet_runtime"
+                                            code:2
+                                        userInfo:@{NSLocalizedDescriptionKey : @"Unable to initialize mruby."}];
+      } else if (preload_ruflet_runtime(g_mrb, &runtime_error)) {
+        mrb_sym root_symbol = mrb_intern_lit(g_mrb, "$__ruflet_app_root");
+        mrb_gv_set(g_mrb, root_symbol, mrb_str_new_cstr(g_mrb, project_root.UTF8String));
+        mrb_load_irep_buf(g_mrb, bytecode.bytes, bytecode.length);
+        if (g_mrb->exc != NULL) {
+          runtime_error = [NSError errorWithDomain:@"ruflet_runtime"
+                                              code:3
+                                          userInfo:@{NSLocalizedDescriptionKey : exception_to_string(g_mrb)}];
+        }
       }
-      [g_lock unlock];
+
+      BOOL stopped = [[NSFileManager defaultManager] fileExistsAtPath:stop_path];
+      if (runtime_error != nil) {
+        g_last_server_error = runtime_error.localizedDescription;
+        NSLog(@"[ruflet_runtime] %@", g_last_server_error);
+      } else if (!stopped) {
+        g_last_server_error = @"Ruflet server exited unexpectedly.";
+        NSLog(@"[ruflet_runtime] %@", g_last_server_error);
+      }
+
+      if (g_mrb != NULL) {
+        mrb_close(g_mrb);
+        g_mrb = NULL;
+      }
+      g_runtime_loaded = NO;
+      [g_vm_lock unlock];
       g_server_running = NO;
     });
 
+    result(runtime_status());
+    return;
+  }
+
+  if ([call.method isEqualToString:@"status"]) {
+    result(runtime_status());
+    return;
+  }
+
+  if ([call.method isEqualToString:@"stop"]) {
+    request_stop();
     result(nil);
-    return;
-  }
-
-  if ([call.method isEqualToString:@"stopFileServer"]) {
-    request_stop_server();
-    result(nil);
-    return;
-  }
-
-  if ([call.method isEqualToString:@"isFileServerRunning"]) {
-    result(@(g_server_running));
-    return;
-  }
-
-  if ([call.method isEqualToString:@"serverPort"]) {
-    result(@(8550));
-    return;
-  }
-
-  if ([call.method isEqualToString:@"lastFileServerError"]) {
-    result(g_last_server_error ?: @"");
     return;
   }
 
@@ -388,3 +211,4 @@ static void request_stop_server(void) {
 }
 
 @end
+
