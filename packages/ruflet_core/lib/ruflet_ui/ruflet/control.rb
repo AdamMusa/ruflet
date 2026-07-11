@@ -29,7 +29,13 @@ module Ruflet
     def on(event_name, &block)
       name = normalized_event_name(event_name)
       validate_event_name!(name)
-      @handlers[name] = block
+      attach_handler(name, block)
+      self
+    end
+
+    def attach_handler(event_name, handler)
+      name = normalized_event_name(event_name)
+      @handlers[name] = handler if handler.respond_to?(:call)
       @props["on_#{name}"] = true
       runtime_page&.update(self, "on_#{name}": true) if wire_id
       self
