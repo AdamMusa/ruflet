@@ -411,6 +411,18 @@ module Ruflet
       # navigation. Log it and keep the session alive.
       warn "[embedded server] handle_message error: #{e.class}: #{e.message}"
       warn e.backtrace.join("\n") if e.backtrace && ENV["RUFLET_DEBUG"] == "1"
+      report_runtime_error(e, "handle_message")
+    end
+
+    def report_runtime_error(error, context)
+      path = ENV["RUFLET_RUNTIME_ERROR_FILE"].to_s
+      return if path.empty?
+
+      lines = ["#{context}: #{error.class}: #{error.message}"]
+      lines.concat(error.backtrace) if error.backtrace
+      File.write(path, lines.join("\n"))
+    rescue StandardError => report_error
+      warn "runtime error reporting failed: #{report_error.class}: #{report_error.message}"
     end
 
     def decode_incoming(raw)

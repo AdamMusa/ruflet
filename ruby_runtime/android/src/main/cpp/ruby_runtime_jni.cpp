@@ -27,6 +27,7 @@ std::mutex g_state_mutex;
 mrb_state* g_mrb = nullptr;
 bool g_server_running = false;
 std::string g_stop_signal_path;
+std::string g_runtime_error_path;
 std::string g_last_server_error;
 
 void throw_runtime_error(JNIEnv* env, const std::string& message) {
@@ -153,13 +154,17 @@ Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeStart(
     }
     g_server_running = true;
     g_stop_signal_path = stop_path;
+    g_runtime_error_path = project_root + "/.ruflet-runtime.error";
     g_last_server_error.clear();
   }
   std::remove(stop_path.c_str());
+  std::remove((project_root + "/.ruflet-runtime.error").c_str());
 
   std::thread([project_root, stop_path, bytecode = std::move(bytecode)]() {
     setenv("RUFLET_PROD_STOP_FILE", stop_path.c_str(), 1);
     setenv("RUFLET_STRICT_PORT", "1", 1);
+    const std::string runtime_error_path = project_root + "/.ruflet-runtime.error";
+    setenv("RUFLET_RUNTIME_ERROR_FILE", runtime_error_path.c_str(), 1);
 
     std::lock_guard<std::mutex> vm_lock(g_vm_mutex);
     if (g_mrb != nullptr) {
@@ -217,6 +222,14 @@ Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeLastError(
     JNIEnv* env,
     jobject /* this */) {
   std::lock_guard<std::mutex> state_lock(g_state_mutex);
-  return env->NewStringUTF(g_last_server_error.c_str());
+  std::string error = g_last_server_error;
+  if (!g_runtime_error_path.empty()) {
+    std::ifstream input(g_runtime_error_path);
+    if (input) {
+      error.assign(
+          std::istreambuf_iterator<char>(input),
+          std::istreambuf_iterator<char>());
+    }
+  }
+  return env->NewStringUTF(error.c_str());
 }
-

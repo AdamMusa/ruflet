@@ -20,6 +20,7 @@ static NSLock *g_vm_lock = nil;
 static BOOL g_server_running = NO;
 static BOOL g_runtime_loaded = NO;
 static NSString *g_stop_signal_path = nil;
+static NSString *g_runtime_error_path = nil;
 static NSString *g_last_server_error = nil;
 
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar> *)registrar {
@@ -81,10 +82,15 @@ static BOOL preload_ruflet_runtime(mrb_state *mrb, NSError **error) {
 }
 
 static NSDictionary<NSString *, id> *runtime_status(void) {
+  NSString *reported_error = g_runtime_error_path.length == 0
+      ? nil
+      : [NSString stringWithContentsOfFile:g_runtime_error_path
+                                  encoding:NSUTF8StringEncoding
+                                     error:nil];
   return @{
     @"running" : @(g_server_running),
     @"port" : @(g_server_running ? kRufletServerPort : 0),
-    @"error" : g_last_server_error ?: @""
+    @"error" : reported_error ?: g_last_server_error ?: @""
   };
 }
 
@@ -142,14 +148,19 @@ static BOOL valid_entrypoint(NSString *project_root, NSString *entrypoint) {
       stop_path = [project_root stringByAppendingPathComponent:@".ruflet-server.stop"];
     }
     [[NSFileManager defaultManager] removeItemAtPath:stop_path error:nil];
+    NSString *runtime_error_path =
+        [project_root stringByAppendingPathComponent:@".ruflet-runtime.error"];
+    [[NSFileManager defaultManager] removeItemAtPath:runtime_error_path error:nil];
 
     g_stop_signal_path = stop_path;
+    g_runtime_error_path = runtime_error_path;
     g_last_server_error = nil;
     g_server_running = YES;
 
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
       setenv("RUFLET_PROD_STOP_FILE", stop_path.UTF8String, 1);
       setenv("RUFLET_STRICT_PORT", "1", 1);
+      setenv("RUFLET_RUNTIME_ERROR_FILE", runtime_error_path.UTF8String, 1);
 
       [g_vm_lock lock];
       if (g_mrb != NULL) {
@@ -211,4 +222,3 @@ static BOOL valid_entrypoint(NSString *project_root, NSString *entrypoint) {
 }
 
 @end
-
