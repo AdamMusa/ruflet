@@ -1306,6 +1306,7 @@ module Ruflet
       update_control: 4,
       invoke_control_method: 5,
       session_crashed: 6,
+      python_output: 7,
 
       # Legacy JSON protocol aliases kept for compatibility.
       register_web_client: "registerWebClient",
@@ -1351,7 +1352,7 @@ module Ruflet
       {
         "session_id" => session_id,
         "page_patch" => {},
-        "error" => nil
+        "error" => ""
       }
     end
   end
@@ -2223,7 +2224,13 @@ module Ruflet
     def on(event_name, &block)
       name = normalized_event_name(event_name)
       validate_event_name!(name)
-      @handlers[name] = block
+      attach_handler(name, block)
+      self
+    end
+
+    def attach_handler(event_name, handler)
+      name = normalized_event_name(event_name)
+      @handlers[name] = handler if handler.respond_to?(:call)
       @props["on_#{name}"] = true
       runtime_page&.update(self, "on_#{name}": true) if wire_id
       self
@@ -20219,6 +20226,26 @@ module Ruflet
           .merge(Controls::RufletControls::CLASS_MAP)
           .freeze
 
+      PYTHON_COMMON_ATTRIBUTES = %i[flip ref transform].freeze
+      PYTHON_ATTRIBUTE_OVERRIDES = {
+        "expansionpanellist" => %i[auto_scroll on_scroll scroll scroll_interval],
+        "fletapp" => %i[assets_dir on_python_output],
+        "image" => %i[
+          align animate_align animate_margin animate_offset animate_opacity animate_position
+          animate_rotation animate_scale animate_size aspect_ratio badge bottom col disabled
+          expand expand_loose left margin offset on_animation_end on_size_change opacity right
+          rotate rtl scale size_change_interval tooltip top visible
+        ],
+        "navigationrail" => %i[pin_leading_to_top pin_trailing_to_bottom scrollable],
+        "responsiverow" => %i[auto_scroll on_scroll scroll scroll_interval],
+        "text" => %i[
+          align animate_align animate_margin animate_offset animate_opacity animate_position
+          animate_rotation animate_scale animate_size aspect_ratio badge bottom col disabled
+          expand expand_loose height left margin offset on_animation_end on_size_change opacity
+          right rtl scale size_change_interval tooltip top visible width
+        ]
+      }.freeze
+
       def build(type, id: nil, **props)
         normalized_type = type.to_s.downcase
         if ENV["RUFLET_DEBUG"] == "1" && normalized_type == "floatingactionbutton"
@@ -20226,19 +20253,29 @@ module Ruflet
         end
         klass = CLASS_MAP[normalized_type]
         if klass
-          normalized_props = normalize_constructor_props(klass, props)
+          normalized_props, supplemental_props = normalize_constructor_props(klass, normalized_type, props)
           if ENV["RUFLET_DEBUG"] == "1" && normalized_type == "floatingactionbutton"
             Kernel.warn("[factory] normalized_props=#{normalized_props.inspect}")
           end
-          return klass.new(id: id, **normalized_props)
+          control = klass.new(id: id, **normalized_props)
+          supplemental_props.each do |key, value|
+            if key.to_s.start_with?("on_") && value.respond_to?(:call)
+              control.attach_handler(key.to_s.delete_prefix("on_"), value)
+              next
+            end
+            next if key == :ref
+
+            control.props[key.to_s] = normalize_common_value(value)
+          end
+          return control
         end
 
         raise ArgumentError, "Unknown control type: #{normalized_type}"
       end
 
-      def normalize_constructor_props(klass, props)
+      def normalize_constructor_props(klass, type, props)
         keywords = constructor_keywords(klass)
-        return props if keywords.empty?
+        return [props, {}] if keywords.empty? && PYTHON_ATTRIBUTE_OVERRIDES[type].nil?
 
         allowed = keywords.map(&:to_s)
         mapped = props.each_with_object({}) { |(k, v), out| out[k.to_sym] = v }
@@ -20248,7 +20285,9 @@ module Ruflet
         if mapped.key?(:value) && !allowed.include?("value") && allowed.include?("text") && !mapped.key?(:text)
           mapped[:text] = mapped.delete(:value)
         end
-        mapped
+        supplemental_names = PYTHON_COMMON_ATTRIBUTES + PYTHON_ATTRIBUTE_OVERRIDES.fetch(type, [])
+        supplemental = mapped.slice(*supplemental_names)
+        [mapped.reject { |key, _| supplemental_names.include?(key) }, supplemental]
       end
 
       def constructor_keywords(klass)
@@ -20258,6 +20297,21 @@ module Ruflet
              .reject { |name| name == :id }
       rescue StandardError
         []
+      end
+
+      def normalize_common_value(value)
+        case value
+        when Hash
+          value.each_with_object({}) do |(key, nested), result|
+            result[key.to_s] = normalize_common_value(nested)
+          end
+        when Array
+          value.map { |nested| normalize_common_value(nested) }
+        when Symbol
+          value.to_s
+        else
+          value
+        end
       end
     end
   end
@@ -21573,7 +21627,7 @@ module Ruflet
       end
     end
 
-    PAGE_PROP_KEYS = %w[dark_theme fonts route rtl show_semantics_debugger theme theme_mode title vertical_alignment horizontal_alignment scroll].freeze
+    PAGE_PROP_KEYS = %w[dark_theme fonts route rtl show_semantics_debugger theme theme_mode theme_animation_style title vertical_alignment horizontal_alignment scroll].freeze
     DIALOG_PROP_KEYS = %w[dialog snack_bar bottom_sheet].freeze
     PAGE_ADD_RESERVED_KEYS = %i[appbar bottom_appbar floating_action_button navigation_bar dialog snack_bar bottom_sheet].freeze
     WIDGET_HELPER_METHODS = (
@@ -21864,6 +21918,10 @@ module Ruflet
 
     def on_view_pop=(handler)
       @page_event_handlers["view_pop"] = handler
+    end
+
+    def on_views_pop_until=(handler)
+      @page_event_handlers["views_pop_until"] = handler
     end
 
     def on(event_name, &block)
@@ -24222,7 +24280,27 @@ module Ruflet
       when 0xA
         read_message
       when 0x1, 0x2
-        payload
+        return payload if frame[:fin]
+
+        message = payload.dup
+        loop do
+          continuation = read_frame
+          return nil if continuation.nil?
+
+          case continuation[:opcode]
+          when 0x9
+            send_frame(0xA, continuation[:payload])
+            next
+          when 0xA
+            next
+          when 0x0
+            message << continuation[:payload]
+            return message if continuation[:fin]
+            return nil if message.bytesize > MAX_FRAME_PAYLOAD_BYTES
+          else
+            return nil
+          end
+        end
       else
         read_message
       end
@@ -24247,6 +24325,7 @@ module Ruflet
       b1 = header.getbyte(0)
       b2 = header.getbyte(1)
 
+      fin = (b1 & 0x80) != 0
       masked = (b2 & 0x80) != 0
       payload_len = b2 & 0x7f
 
@@ -24269,7 +24348,7 @@ module Ruflet
 
       payload = unmask(payload, masking_key) if masked
 
-      { opcode: b1 & 0x0f, payload: payload }
+      { fin: fin, opcode: b1 & 0x0f, payload: payload }
     end
 
     def send_frame(opcode, payload)
@@ -24718,6 +24797,8 @@ module Ruflet
         on_update_control(ws, payload)
       when Protocol::ACTIONS[:invoke_control_method]
         on_invoke_control_method(ws, payload)
+      when Protocol::ACTIONS[:python_output]
+        nil
       else
         raise "Unknown action: #{action.inspect}"
       end
@@ -24789,11 +24870,7 @@ module Ruflet
 
       initial_response = [
         Protocol::ACTIONS[:register_client],
-        {
-          "session_id" => session_id,
-          "page_patch" => {},
-          "error" => nil
-        }
+        Protocol.register_response(session_id: session_id)
       ]
       ws.send_binary(Ruflet::WireCodec.pack(initial_response))
 

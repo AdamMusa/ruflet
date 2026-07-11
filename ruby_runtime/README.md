@@ -4,6 +4,8 @@
 
 It is designed for self-contained Ruflet apps that ship a Ruby entry file with the client and start the backend locally on the device, instead of requiring an external Ruby server.
 
+The Ruflet source build embeds the generated `embedded_ruflet_runtime.h` mruby irep artifact during `ruflet build --self`; no Ruby interpreter or `.gem` files are required on the device. Source checkouts rebuild that artifact automatically, while published `ruby_runtime` packages use their shipped artifact.
+
 ## Platforms
 
 - Android

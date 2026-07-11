@@ -3,6 +3,7 @@
 require "fileutils"
 require "find"
 require "json"
+require "open3"
 require "pathname"
 require "rbconfig"
 require "uri"
@@ -365,7 +366,8 @@ module Ruflet
       def prepare_flutter_client(client_dir, platform:, tools:, config:, self_contained: false, verbose: false)
         refresh_managed_client_template_files(client_dir, verbose: verbose)
         sync_client_metadata(client_dir, config, verbose: verbose)
-        configure_client_runtime_mode(client_dir, self_contained: self_contained, verbose: verbose)
+        configured = configure_client_runtime_mode(client_dir, self_contained: self_contained, verbose: verbose)
+        return false if configured == false
         @ruflet_self_contained_build = self_contained
         apply_service_extension_config(client_dir, config)
         asset_flags = apply_build_config(client_dir, config)
@@ -1034,6 +1036,8 @@ module Ruflet
 
       def configure_client_runtime_mode(client_dir, self_contained:, verbose: false)
         build_log(verbose, "configuring #{self_contained ? 'self-contained' : 'server-driven'} runtime")
+        return false unless ensure_embedded_mruby_runtime!(self_contained: self_contained, verbose: verbose)
+
         sync_client_pubspec_for_runtime_mode(client_dir, self_contained: self_contained)
         if self_contained
           sync_self_contained_project_assets(client_dir, verbose: verbose)
@@ -1042,6 +1046,30 @@ module Ruflet
           remove_self_contained_project_assets(client_dir, verbose: verbose)
           remove_local_ruby_runtime_override(client_dir, verbose: verbose)
         end
+        true
+      end
+
+      def ensure_embedded_mruby_runtime!(self_contained:, verbose: false)
+        return true unless self_contained
+        return true if ENV["RUFLET_EMBEDDED_RUNTIME_AUTOBUILD"] == "0"
+
+        script = File.expand_path("../../../../../tools/build_embedded_runtime.rb", __dir__)
+        unless File.file?(script)
+          build_log(verbose, "using shipped ruby_runtime mruby artifact")
+          return true
+        end
+
+        root = File.expand_path("../../../../../", __dir__)
+        build_log(verbose, "building embedded mruby runtime")
+        _stdout, stderr, status = Open3.capture3(RbConfig.ruby, script, chdir: root)
+        return true if status.success?
+
+        warn "embedded mruby runtime build failed"
+        warn stderr unless stderr.to_s.empty?
+        false
+      rescue StandardError => e
+        warn "embedded mruby runtime build failed: #{e.class}: #{e.message}"
+        false
       end
 
       def sync_client_pubspec_for_runtime_mode(client_dir, self_contained:)
