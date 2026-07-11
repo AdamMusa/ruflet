@@ -220,6 +220,17 @@ module Ruflet
       def pageview(children = nil, **props) = page_view(children, **props)
       def progress_ring(**props) = build_widget(:progressring, **props)
       def progressring(**props) = progress_ring(**props)
+      # The flet_spinkit extension is not bundled in the self-contained runtime.
+      # Fall back to a core progress ring so spinkit(...) still renders a spinner
+      # (using the variant hash's color/size) instead of raising.
+      def spinkit(**variants)
+        opts = variants.values.find { |value| value.is_a?(Hash) } || {}
+        props = {}
+        props[:color] = opts[:color] if opts[:color]
+        props[:width] = opts[:size] if opts[:size]
+        props[:height] = opts[:size] if opts[:size]
+        progress_ring(**props)
+      end
       def range_slider(**props) = build_widget(:rangeslider, **props)
       def rangeslider(**props) = range_slider(**props)
       def responsive_row(children = nil, **props, &block)

@@ -80,6 +80,7 @@ module Ruflet
       def pageview(children = nil, **props) = control_delegate.pageview(children, **props)
       def progress_ring(**props) = control_delegate.progress_ring(**props)
       def progressring(**props) = control_delegate.progressring(**props)
+      def spinkit(**props) = control_delegate.spinkit(**props)
       def range_slider(**props) = control_delegate.range_slider(**props)
       def rangeslider(**props) = control_delegate.rangeslider(**props)
       def responsive_row(children = nil, **props, &block) = control_delegate.responsive_row(children, **props, &block)

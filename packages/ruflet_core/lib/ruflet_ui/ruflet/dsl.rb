@@ -122,6 +122,7 @@ module Ruflet
     def pageview(children = nil, **props) = _pending_app.pageview(children, **props)
     def progress_ring(**props) = _pending_app.progress_ring(**props)
     def progressring(**props) = _pending_app.progressring(**props)
+    def spinkit(**props) = _pending_app.spinkit(**props)
     def range_slider(**props) = _pending_app.range_slider(**props)
     def rangeslider(**props) = _pending_app.rangeslider(**props)
     def responsive_row(children = nil, **props, &block) = _pending_app.responsive_row(children, **props, &block)

@@ -2642,7 +2642,7 @@ module Ruflet
             on_animation_end = __args__[:on_animation_end]
             on_click = __args__[:on_click]
             on_size_change = __args__[:on_size_change]
-            raise ArgumentError, "cupertino_action_sheet_action requires visible content" if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
+            raise ArgumentError, "cupertino_action_sheet_action requires content" if content.nil?
             default = false if default.nil?
             destructive = false if destructive.nil?
 
@@ -3303,7 +3303,7 @@ module Ruflet
             tooltip = __args__[:tooltip]
             visible = __args__[:visible]
             enable_haptic_feedback = true if enable_haptic_feedback.nil?
-            raise ArgumentError, "cupertino_context_menu requires visible content" if content.nil? || hidden_control?(content)
+            raise ArgumentError, "cupertino_context_menu requires content" if content.nil?
 
             props = {}
             props[:actions] = actions unless actions.nil?
@@ -3365,7 +3365,7 @@ module Ruflet
             trailing_icon = __args__[:trailing_icon]
             visible = __args__[:visible]
             on_click = __args__[:on_click]
-            raise ArgumentError, "cupertino_context_menu_action requires visible content" if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
+            raise ArgumentError, "cupertino_context_menu_action requires content" if content.nil?
             default = false if default.nil?
             destructive = false if destructive.nil?
 
@@ -3549,7 +3549,7 @@ module Ruflet
             tooltip = __args__[:tooltip]
             visible = __args__[:visible]
             on_click = __args__[:on_click]
-            raise ArgumentError, "cupertino_dialog_action requires visible content" if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
+            raise ArgumentError, "cupertino_dialog_action requires content" if content.nil?
             default = false if default.nil?
             destructive = false if destructive.nil?
 
@@ -3775,7 +3775,7 @@ module Ruflet
             on_animation_end = __args__[:on_animation_end]
             on_click = __args__[:on_click]
             on_size_change = __args__[:on_size_change]
-            raise ArgumentError, "cupertino_list_tile requires visible title" if title.nil? || (title.respond_to?(:props) && title.props["visible"] == false)
+            raise ArgumentError, "cupertino_list_tile requires title" if title.nil?
             notched = false if notched.nil?
             leading_size = notched ? 30.0 : 28.0 if leading_size.nil?
             leading_to_title = notched ? 12.0 : 16.0 if leading_to_title.nil?
@@ -6872,10 +6872,6 @@ module Ruflet
             on_focus = __args__[:on_focus]
             on_select = __args__[:on_select]
             on_size_change = __args__[:on_size_change]
-            if !on_click.nil? && !on_select.nil?
-              raise ArgumentError, "chip on_click and on_select cannot both be specified"
-            end
-
             props = {}
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -7265,9 +7261,7 @@ module Ruflet
             on_dismiss = __args__[:on_dismiss]
             on_select = __args__[:on_select]
             on_size_change = __args__[:on_size_change]
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "context_menu requires visible content"
-            end
+            raise ArgumentError, "context_menu requires content" if content.nil?
 
             props = {}
             props[:align] = align unless align.nil?
@@ -7369,9 +7363,7 @@ module Ruflet
             on_tap = __args__[:on_tap]
             on_tap_cancel = __args__[:on_tap_cancel]
             on_tap_down = __args__[:on_tap_down]
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "data_cell requires visible content"
-            end
+            raise ArgumentError, "data_cell requires content" if content.nil?
 
             props = {}
             props[:badge] = badge unless badge.nil?
@@ -7429,9 +7421,7 @@ module Ruflet
             tooltip = __args__[:tooltip]
             visible = __args__[:visible]
             on_sort = __args__[:on_sort]
-            if label.nil? || (label.respond_to?(:props) && label.props["visible"] == false)
-              raise ArgumentError, "data_column requires a visible label"
-            end
+            raise ArgumentError, "data_column requires label" if label.nil?
 
             props = {}
             props[:badge] = badge unless badge.nil?
@@ -8423,14 +8413,6 @@ module Ruflet
             width = __args__[:width]
             on_animation_end = __args__[:on_animation_end]
             on_size_change = __args__[:on_size_change]
-            if header.nil? || (header.respond_to?(:props) && header.props["visible"] == false)
-              raise ArgumentError, "expansion_panel requires a visible header"
-            end
-
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "expansion_panel requires visible content"
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
@@ -8664,7 +8646,7 @@ module Ruflet
             on_animation_end = __args__[:on_animation_end]
             on_change = __args__[:on_change]
             on_size_change = __args__[:on_size_change]
-            raise ArgumentError, "expansion_tile requires a visible title" if title.nil? || (title.respond_to?(:props) && title.props["visible"] == false)
+            raise ArgumentError, "expansion_tile requires title" if title.nil?
             expanded = false if expanded.nil?
             maintain_state = false if maintain_state.nil?
             show_trailing_icon = true if show_trailing_icon.nil?
@@ -9654,10 +9636,6 @@ module Ruflet
             on_click = __args__[:on_click]
             on_long_press = __args__[:on_long_press]
             on_size_change = __args__[:on_size_change]
-            if is_three_line == true && subtitle.nil?
-              raise ArgumentError, "list_tile subtitle is required when is_three_line is true"
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
@@ -11785,9 +11763,6 @@ module Ruflet
             visible = __args__[:visible]
             raise ArgumentError, "segment requires value" if value.nil?
 
-            visible_label = label && (!label.respond_to?(:props) || label.props["visible"] != false)
-            raise ArgumentError, "segment requires visible label or icon" if !visible_label && icon.nil?
-
             props = {}
             props[:badge] = badge unless badge.nil?
             props[:col] = col unless col.nil?
@@ -11947,9 +11922,7 @@ module Ruflet
             tooltip = __args__[:tooltip]
             visible = __args__[:visible]
             on_change = __args__[:on_change]
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "selection_area requires visible content"
-            end
+            raise ArgumentError, "selection_area requires content" if content.nil?
 
             props = {}
             props[:badge] = badge unless badge.nil?
@@ -12189,6 +12162,64 @@ module Ruflet
             props[:on_action] = on_action unless on_action.nil?
             props[:on_dismiss] = on_dismiss unless on_dismiss.nil?
             props[:on_visible] = on_visible unless on_visible.nil?
+            super(type: TYPE, id: id, **props)
+          end
+        end
+      end
+    end
+  end
+end
+
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/materials/snackbaraction_control.rb
+
+
+module Ruflet
+  module UI
+    module Controls
+      module RufletComponents
+        class SnackBarActionControl < Ruflet::Control
+          TYPE = "snackbaraction".freeze
+          WIRE = "SnackBarAction".freeze
+
+          def initialize(**__args__)
+            id = __args__[:id]
+            badge = __args__[:badge]
+            bgcolor = __args__[:bgcolor]
+            col = __args__[:col]
+            data = __args__[:data]
+            disabled = __args__[:disabled]
+            disabled_bgcolor = __args__[:disabled_bgcolor]
+            disabled_text_color = __args__[:disabled_text_color]
+            expand = __args__[:expand]
+            expand_loose = __args__[:expand_loose]
+            key = __args__[:key]
+            label = __args__[:label]
+            opacity = __args__[:opacity]
+            rtl = __args__[:rtl]
+            text_color = __args__[:text_color]
+            tooltip = __args__[:tooltip]
+            visible = __args__[:visible]
+            on_click = __args__[:on_click]
+            raise ArgumentError, "snack_bar_action requires label" if label.nil?
+
+            props = {}
+            props[:badge] = badge unless badge.nil?
+            props[:bgcolor] = bgcolor unless bgcolor.nil?
+            props[:col] = col unless col.nil?
+            props[:data] = data unless data.nil?
+            props[:disabled] = disabled unless disabled.nil?
+            props[:disabled_bgcolor] = disabled_bgcolor unless disabled_bgcolor.nil?
+            props[:disabled_text_color] = disabled_text_color unless disabled_text_color.nil?
+            props[:expand] = expand unless expand.nil?
+            props[:expand_loose] = expand_loose unless expand_loose.nil?
+            props[:key] = key unless key.nil?
+            props[:label] = label unless label.nil?
+            props[:opacity] = opacity unless opacity.nil?
+            props[:rtl] = rtl unless rtl.nil?
+            props[:text_color] = text_color unless text_color.nil?
+            props[:tooltip] = tooltip unless tooltip.nil?
+            props[:visible] = visible unless visible.nil?
+            props[:on_click] = on_click unless on_click.nil?
             super(type: TYPE, id: id, **props)
           end
         end
@@ -12799,12 +12830,6 @@ module Ruflet
             on_animation_end = __args__[:on_animation_end]
             on_change = __args__[:on_change]
             on_size_change = __args__[:on_size_change]
-            raise ArgumentError, "tabs length must be greater than or equal to 0" unless length.nil? || length >= 0
-
-            unless selected_index.nil? || length.nil? || (-length...length).cover?(selected_index)
-              raise IndexError, "tabs selected_index is out of range"
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
@@ -13666,9 +13691,7 @@ module Ruflet
             width = __args__[:width]
             on_animation_end = __args__[:on_animation_end]
             on_size_change = __args__[:on_size_change]
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "animated_switcher requires visible content"
-            end
+            raise ArgumentError, "animated_switcher requires content" if content.nil?
 
             duration = 1000 if duration.nil?
             reverse_duration = 1000 if reverse_duration.nil?
@@ -14281,13 +14304,7 @@ module Ruflet
             on_resize = __args__[:on_resize]
             on_size_change = __args__[:on_size_change]
             on_update = __args__[:on_update]
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "dismissible requires visible content"
-            end
-
-            if secondary_background && (background.nil? || (background.respond_to?(:props) && background.props["visible"] == false))
-              raise ArgumentError, "dismissible secondary_background requires visible background"
-            end
+            raise ArgumentError, "dismissible requires content" if content.nil?
 
             cross_axis_end_offset = 0.0 if cross_axis_end_offset.nil?
             dismiss_direction = "horizontal" if dismiss_direction.nil?
@@ -14384,9 +14401,7 @@ module Ruflet
             visible = __args__[:visible]
             on_drag_complete = __args__[:on_drag_complete]
             on_drag_start = __args__[:on_drag_start]
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "draggable requires visible content"
-            end
+            raise ArgumentError, "draggable requires content" if content.nil?
             group = "default" if group.nil?
 
             props = {}
@@ -14448,9 +14463,7 @@ module Ruflet
             on_leave = __args__[:on_leave]
             on_move = __args__[:on_move]
             on_will_accept = __args__[:on_will_accept]
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "drag_target requires visible content"
-            end
+            raise ArgumentError, "drag_target requires content" if content.nil?
 
             group = "default" if group.nil?
 
@@ -16512,9 +16525,7 @@ module Ruflet
             width = __args__[:width]
             on_animation_end = __args__[:on_animation_end]
             on_size_change = __args__[:on_size_change]
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "reorderable_drag_handle requires visible content"
-            end
+            raise ArgumentError, "reorderable_drag_handle requires content" if content.nil?
 
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
@@ -16794,6 +16805,102 @@ module Ruflet
   end
 end
 
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/shared/rotatedbox_control.rb
+
+
+module Ruflet
+  module UI
+    module Controls
+      module RufletComponents
+        class RotatedBoxControl < Ruflet::Control
+          TYPE = "rotatedbox".freeze
+          WIRE = "RotatedBox".freeze
+
+          def initialize(**__args__)
+            id = __args__[:id]
+            align = __args__[:align]
+            animate_align = __args__[:animate_align]
+            animate_margin = __args__[:animate_margin]
+            animate_offset = __args__[:animate_offset]
+            animate_opacity = __args__[:animate_opacity]
+            animate_position = __args__[:animate_position]
+            animate_rotation = __args__[:animate_rotation]
+            animate_scale = __args__[:animate_scale]
+            animate_size = __args__[:animate_size]
+            aspect_ratio = __args__[:aspect_ratio]
+            badge = __args__[:badge]
+            bottom = __args__[:bottom]
+            col = __args__[:col]
+            content = __args__[:content]
+            data = __args__[:data]
+            disabled = __args__[:disabled]
+            expand = __args__[:expand]
+            expand_loose = __args__[:expand_loose]
+            height = __args__[:height]
+            key = __args__[:key]
+            left = __args__[:left]
+            margin = __args__[:margin]
+            offset = __args__[:offset]
+            opacity = __args__[:opacity]
+            quarter_turns = __args__[:quarter_turns]
+            right = __args__[:right]
+            rotate = __args__[:rotate]
+            rtl = __args__[:rtl]
+            scale = __args__[:scale]
+            size_change_interval = __args__[:size_change_interval]
+            tooltip = __args__[:tooltip]
+            top = __args__[:top]
+            visible = __args__[:visible]
+            width = __args__[:width]
+            on_animation_end = __args__[:on_animation_end]
+            on_size_change = __args__[:on_size_change]
+            quarter_turns = 0 if quarter_turns.nil?
+
+            props = {}
+            props[:align] = align unless align.nil?
+            props[:animate_align] = animate_align unless animate_align.nil?
+            props[:animate_margin] = animate_margin unless animate_margin.nil?
+            props[:animate_offset] = animate_offset unless animate_offset.nil?
+            props[:animate_opacity] = animate_opacity unless animate_opacity.nil?
+            props[:animate_position] = animate_position unless animate_position.nil?
+            props[:animate_rotation] = animate_rotation unless animate_rotation.nil?
+            props[:animate_scale] = animate_scale unless animate_scale.nil?
+            props[:animate_size] = animate_size unless animate_size.nil?
+            props[:aspect_ratio] = aspect_ratio unless aspect_ratio.nil?
+            props[:badge] = badge unless badge.nil?
+            props[:bottom] = bottom unless bottom.nil?
+            props[:col] = col unless col.nil?
+            props[:content] = content unless content.nil?
+            props[:data] = data unless data.nil?
+            props[:disabled] = disabled unless disabled.nil?
+            props[:expand] = expand unless expand.nil?
+            props[:expand_loose] = expand_loose unless expand_loose.nil?
+            props[:height] = height unless height.nil?
+            props[:key] = key unless key.nil?
+            props[:left] = left unless left.nil?
+            props[:margin] = margin unless margin.nil?
+            props[:offset] = offset unless offset.nil?
+            props[:opacity] = opacity unless opacity.nil?
+            props[:quarter_turns] = quarter_turns unless quarter_turns.nil?
+            props[:right] = right unless right.nil?
+            props[:rotate] = rotate unless rotate.nil?
+            props[:rtl] = rtl unless rtl.nil?
+            props[:scale] = scale unless scale.nil?
+            props[:size_change_interval] = size_change_interval unless size_change_interval.nil?
+            props[:tooltip] = tooltip unless tooltip.nil?
+            props[:top] = top unless top.nil?
+            props[:visible] = visible unless visible.nil?
+            props[:width] = width unless width.nil?
+            props[:on_animation_end] = on_animation_end unless on_animation_end.nil?
+            props[:on_size_change] = on_size_change unless on_size_change.nil?
+            super(type: TYPE, id: id, **props)
+          end
+        end
+      end
+    end
+  end
+end
+
 # -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/shared/safearea_control.rb
 
 
@@ -16849,9 +16956,7 @@ module Ruflet
             width = __args__[:width]
             on_animation_end = __args__[:on_animation_end]
             on_size_change = __args__[:on_size_change]
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "safe_area requires visible content"
-            end
+            raise ArgumentError, "safe_area requires content" if content.nil?
 
             avoid_intrusions_bottom = true if avoid_intrusions_bottom.nil?
             avoid_intrusions_left = true if avoid_intrusions_left.nil?
@@ -16903,6 +17008,54 @@ module Ruflet
             props[:width] = width unless width.nil?
             props[:on_animation_end] = on_animation_end unless on_animation_end.nil?
             props[:on_size_change] = on_size_change unless on_size_change.nil?
+            super(type: TYPE, id: id, **props)
+          end
+        end
+      end
+    end
+  end
+end
+
+# -- packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/shared/screenshot_control.rb
+
+
+module Ruflet
+  module UI
+    module Controls
+      module RufletComponents
+        class ScreenshotControl < Ruflet::Control
+          TYPE = "screenshot".freeze
+          WIRE = "Screenshot".freeze
+
+          def initialize(**__args__)
+            id = __args__[:id]
+            badge = __args__[:badge]
+            col = __args__[:col]
+            content = __args__[:content]
+            data = __args__[:data]
+            disabled = __args__[:disabled]
+            expand = __args__[:expand]
+            expand_loose = __args__[:expand_loose]
+            key = __args__[:key]
+            opacity = __args__[:opacity]
+            rtl = __args__[:rtl]
+            tooltip = __args__[:tooltip]
+            visible = __args__[:visible]
+            raise ArgumentError, "missing keyword: :content" if content.nil?
+
+            props = {}
+            props[:badge] = badge unless badge.nil?
+            props[:col] = col unless col.nil?
+            props[:content] = content unless content.nil?
+            props[:data] = data unless data.nil?
+            props[:disabled] = disabled unless disabled.nil?
+            props[:expand] = expand unless expand.nil?
+            props[:expand_loose] = expand_loose unless expand_loose.nil?
+            props[:key] = key unless key.nil?
+            props[:opacity] = opacity unless opacity.nil?
+            props[:rtl] = rtl unless rtl.nil?
+            props[:tooltip] = tooltip unless tooltip.nil?
+            props[:visible] = visible unless visible.nil?
             super(type: TYPE, id: id, **props)
           end
         end
@@ -17954,9 +18107,7 @@ module Ruflet
             on_drag_end = __args__[:on_drag_end]
             on_drag_start = __args__[:on_drag_start]
             on_size_change = __args__[:on_size_change]
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "window_drag_area requires visible content"
-            end
+            raise ArgumentError, "window_drag_area requires content" if content.nil?
 
             maximizable = true if maximizable.nil?
 
@@ -18251,8 +18402,11 @@ module Ruflet
           "responsive_row" => RufletComponents::ResponsiveRowControl,
           "responsiverow" => RufletComponents::ResponsiveRowControl,
           "row" => RufletComponents::RowControl,
+          "rotated_box" => RufletComponents::RotatedBoxControl,
+          "rotatedbox" => RufletComponents::RotatedBoxControl,
           "safe_area" => RufletComponents::SafeAreaControl,
           "safearea" => RufletComponents::SafeAreaControl,
+          "screenshot" => RufletComponents::ScreenshotControl,
           "search_bar" => RufletComponents::SearchBarControl,
           "searchbar" => RufletComponents::SearchBarControl,
           "segment" => RufletComponents::SegmentControl,
@@ -18273,6 +18427,8 @@ module Ruflet
           "shimmer" => RufletComponents::ShimmerControl,
           "slider" => RufletComponents::SliderControl,
           "snack_bar" => RufletComponents::SnackBarControl,
+          "snack_bar_action" => RufletComponents::SnackBarActionControl,
+          "snackbaraction" => RufletComponents::SnackBarActionControl,
           "snackbar" => RufletComponents::SnackBarControl,
           "stack" => RufletComponents::StackControl,
           "submenu_button" => RufletComponents::SubmenuButtonControl,
@@ -19299,7 +19455,7 @@ end
 module Ruflet
   module UI
     module MaterialControlMethods
-      EMBEDDED_INSTANCE_METHODS = ["view", "column", "center", "row", "stack", "grid_view", "gridview", "container", "animated_switcher", "animatedswitcher", "audio", "auto_complete", "autocomplete", "auto_complete_suggestion", "autocomplete_suggestion", "autocompletesuggestion", "context_menu", "contextmenu", "keyboard_listener", "keyboardlistener", "gesture_detector", "gesturedetector", "draggable", "dismissible", "drag_target", "dragtarget", "card", "list_tile", "listtile", "list_view", "listview", "menu_bar", "menubar", "menu_item_button", "menuitembutton", "merge_semantics", "mergesemantics", "submenu_button", "submenubutton", "divider", "vertical_divider", "verticaldivider", "window_drag_area", "windowdragarea", "date_picker", "datepicker", "date_range_picker", "daterangepicker", "data_table", "datatable", "data_column", "datacolumn", "data_row", "datarow", "data_cell", "datacell", "expansion_tile", "expansiontile", "expansion_panel", "expansionpanel", "expansion_panel_list", "expansionpanellist", "dropdown", "dropdown_option", "dropdownoption", "dropdown_m2", "dropdownm2", "progress_bar", "progressbar", "placeholder", "page_view", "pageview", "progress_ring", "progressring", "range_slider", "rangeslider", "responsive_row", "responsiverow", "reorderable_drag_handle", "reorderabledraghandle", "reorderable_list_view", "reorderablelistview", "safe_area", "safearea", "segment", "segmented_button", "segmentedbutton", "selection_area", "selectionarea", "search_bar", "searchbar", "semantics", "time_picker", "timepicker", "badge", "chip", "circle_avatar", "circleavatar", "banner", "bottom_app_bar", "bottomappbar", "text", "button", "elevated_button", "text_button", "textbutton", "filled_button", "filledbutton", "filled_icon_button", "fillediconbutton", "filled_tonal_button", "filledtonalbutton", "filled_tonal_icon_button", "filledtonaliconbutton", "outlined_button", "outlinedbutton", "outlined_icon_button", "outlinediconbutton", "icon_button", "iconbutton", "interactive_viewer", "interactiveviewer", "popup_menu_button", "popupmenubutton", "popup_menu_item", "popupmenuitem", "text_field", "textfield", "checkbox", "switch", "slider", "transparent_pointer", "transparentpointer", "radio", "radio_group", "radiogroup", "alert_dialog", "alertdialog", "snack_bar", "snackbar", "bottom_sheet", "bottomsheet", "markdown", "icon", "image", "app_bar", "appbar", "url_launcher", "clipboard", "floating_action_button", "floatingactionbutton", "tabs", "tab", "tab_bar", "tabbar", "tab_bar_view", "tabbarview", "navigation_bar", "navigationbar", "navigation_bar_destination", "navigationbardestination", "navigation_rail", "navigationrail", "navigation_rail_destination", "navigationraildestination", "navigation_drawer", "navigationdrawer", "navigation_drawer_destination", "navigationdrawerdestination", "bar_chart", "barchart", "bar_chart_group", "barchartgroup", "bar_chart_rod", "barchartrod", "bar_chart_rod_stack_item", "barchartrodstackitem", "line_chart", "linechart", "line_chart_data", "linechartdata", "line_chart_data_point", "linechartdatapoint", "pie_chart", "piechart", "pie_chart_section", "piechartsection", "candlestick_chart", "candlestickchart", "candlestick_chart_spot", "candlestickchartspot", "radar_chart", "radarchart", "radar_chart_title", "radarcharttitle", "radar_data_set", "radardataset", "radar_data_set_entry", "radardatasetentry", "scatter_chart", "scatterchart", "scatter_chart_spot", "scatterchartspot", "chart_axis", "chartaxis", "chart_axis_label", "chartaxislabel", "web_view", "webview", "video", "fab", "normalize_fab_props", "blank_fab_content?", "normalize_image_source", "normalize_container_props"].freeze
+      EMBEDDED_INSTANCE_METHODS = ["view", "column", "center", "row", "stack", "grid_view", "gridview", "container", "animated_switcher", "animatedswitcher", "audio", "auto_complete", "autocomplete", "auto_complete_suggestion", "autocomplete_suggestion", "autocompletesuggestion", "context_menu", "contextmenu", "keyboard_listener", "keyboardlistener", "gesture_detector", "gesturedetector", "draggable", "dismissible", "drag_target", "dragtarget", "card", "list_tile", "listtile", "list_view", "listview", "menu_bar", "menubar", "menu_item_button", "menuitembutton", "merge_semantics", "mergesemantics", "submenu_button", "submenubutton", "divider", "vertical_divider", "verticaldivider", "window_drag_area", "windowdragarea", "date_picker", "datepicker", "date_range_picker", "daterangepicker", "data_table", "datatable", "data_column", "datacolumn", "data_row", "datarow", "data_cell", "datacell", "expansion_tile", "expansiontile", "expansion_panel", "expansionpanel", "expansion_panel_list", "expansionpanellist", "dropdown", "dropdown_option", "dropdownoption", "dropdown_m2", "dropdownm2", "progress_bar", "progressbar", "placeholder", "page_view", "pageview", "progress_ring", "progressring", "spinkit", "range_slider", "rangeslider", "responsive_row", "responsiverow", "reorderable_drag_handle", "reorderabledraghandle", "reorderable_list_view", "reorderablelistview", "safe_area", "safearea", "segment", "segmented_button", "segmentedbutton", "selection_area", "selectionarea", "search_bar", "searchbar", "semantics", "time_picker", "timepicker", "badge", "chip", "circle_avatar", "circleavatar", "banner", "bottom_app_bar", "bottomappbar", "text", "button", "elevated_button", "text_button", "textbutton", "filled_button", "filledbutton", "filled_icon_button", "fillediconbutton", "filled_tonal_button", "filledtonalbutton", "filled_tonal_icon_button", "filledtonaliconbutton", "outlined_button", "outlinedbutton", "outlined_icon_button", "outlinediconbutton", "icon_button", "iconbutton", "interactive_viewer", "interactiveviewer", "popup_menu_button", "popupmenubutton", "popup_menu_item", "popupmenuitem", "text_field", "textfield", "checkbox", "switch", "slider", "transparent_pointer", "transparentpointer", "rotated_box", "rotatedbox", "screenshot", "radio", "radio_group", "radiogroup", "alert_dialog", "alertdialog", "snack_bar", "snackbar", "snack_bar_action", "snackbaraction", "bottom_sheet", "bottomsheet", "markdown", "icon", "image", "app_bar", "appbar", "url_launcher", "clipboard", "floating_action_button", "floatingactionbutton", "tabs", "tab", "tab_bar", "tabbar", "tab_bar_view", "tabbarview", "navigation_bar", "navigationbar", "navigation_bar_destination", "navigationbardestination", "navigation_rail", "navigationrail", "navigation_rail_destination", "navigationraildestination", "navigation_drawer", "navigationdrawer", "navigation_drawer_destination", "navigationdrawerdestination", "bar_chart", "barchart", "bar_chart_group", "barchartgroup", "bar_chart_rod", "barchartrod", "bar_chart_rod_stack_item", "barchartrodstackitem", "line_chart", "linechart", "line_chart_data", "linechartdata", "line_chart_data_point", "linechartdatapoint", "pie_chart", "piechart", "pie_chart_section", "piechartsection", "candlestick_chart", "candlestickchart", "candlestick_chart_spot", "candlestickchartspot", "radar_chart", "radarchart", "radar_chart_title", "radarcharttitle", "radar_data_set", "radardataset", "radar_data_set_entry", "radardatasetentry", "scatter_chart", "scatterchart", "scatter_chart_spot", "scatterchartspot", "chart_axis", "chartaxis", "chart_axis_label", "chartaxislabel", "web_view", "webview", "video", "fab", "normalize_fab_props", "blank_fab_content?", "normalize_image_source", "normalize_container_props"].freeze
       def view(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
@@ -19517,6 +19673,17 @@ module Ruflet
       def pageview(children = nil, **props) = page_view(children, **props)
       def progress_ring(**props) = build_widget(:progressring, **props)
       def progressring(**props) = progress_ring(**props)
+      # The flet_spinkit extension is not bundled in the self-contained runtime.
+      # Fall back to a core progress ring so spinkit(...) still renders a spinner
+      # (using the variant hash's color/size) instead of raising.
+      def spinkit(**variants)
+        opts = variants.values.find { |value| value.is_a?(Hash) } || {}
+        props = {}
+        props[:color] = opts[:color] if opts[:color]
+        props[:width] = opts[:size] if opts[:size]
+        props[:height] = opts[:size] if opts[:size]
+        progress_ring(**props)
+      end
       def range_slider(**props) = build_widget(:rangeslider, **props)
       def rangeslider(**props) = range_slider(**props)
       def responsive_row(children = nil, **props, &block)
@@ -19697,6 +19864,17 @@ module Ruflet
         build_widget(:transparentpointer, **mapped)
       end
       def transparentpointer(content = nil, **props) = transparent_pointer(content, **props)
+      def rotated_box(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:rotatedbox, **mapped)
+      end
+      def rotatedbox(content = nil, **props) = rotated_box(content, **props)
+      def screenshot(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:screenshot, **mapped)
+      end
       def radio(**props) = build_widget(:radio, **props)
       def radio_group(content = nil, **props)
         mapped = props.dup
@@ -19712,6 +19890,12 @@ module Ruflet
         build_widget(:snackbar, **mapped)
       end
       def snackbar(content = nil, **props) = snack_bar(content, **props)
+      def snack_bar_action(label = nil, **props)
+        mapped = props.dup
+        mapped[:label] = label unless label.nil?
+        build_widget(:snackbaraction, **mapped)
+      end
+      def snackbaraction(label = nil, **props) = snack_bar_action(label, **props)
       def bottom_sheet(content = nil, **props)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
@@ -20031,8 +20215,8 @@ module Ruflet
     module ControlFactory
       extend self
       CLASS_MAP =
-        Controls::RufletControls::CLASS_MAP
-          .merge(Services::RufletServices::CLASS_MAP)
+        Services::RufletServices::CLASS_MAP
+          .merge(Controls::RufletControls::CLASS_MAP)
           .freeze
 
       def build(type, id: nil, **props)
@@ -20149,7 +20333,7 @@ end
 module Ruflet
   module UI
     module SharedControlForwarders
-      EMBEDDED_INSTANCE_METHODS = ["control", "widget", "service", "view", "column", "center", "row", "stack", "grid_view", "gridview", "container", "animated_switcher", "animatedswitcher", "audio", "auto_complete", "autocomplete", "auto_complete_suggestion", "autocomplete_suggestion", "autocompletesuggestion", "context_menu", "contextmenu", "keyboard_listener", "keyboardlistener", "gesture_detector", "gesturedetector", "draggable", "dismissible", "drag_target", "dragtarget", "card", "list_tile", "listtile", "list_view", "listview", "menu_bar", "menubar", "menu_item_button", "menuitembutton", "merge_semantics", "mergesemantics", "submenu_button", "submenubutton", "divider", "vertical_divider", "verticaldivider", "window_drag_area", "windowdragarea", "date_picker", "datepicker", "date_range_picker", "daterangepicker", "data_table", "datatable", "data_column", "datacolumn", "data_row", "datarow", "data_cell", "datacell", "expansion_tile", "expansiontile", "expansion_panel", "expansionpanel", "expansion_panel_list", "expansionpanellist", "dropdown", "dropdown_option", "dropdownoption", "dropdown_m2", "dropdownm2", "progress_bar", "progressbar", "placeholder", "page_view", "pageview", "progress_ring", "progressring", "range_slider", "rangeslider", "responsive_row", "responsiverow", "reorderable_drag_handle", "reorderabledraghandle", "reorderable_list_view", "reorderablelistview", "safe_area", "safearea", "segment", "segmented_button", "segmentedbutton", "selection_area", "selectionarea", "search_bar", "searchbar", "semantics", "time_picker", "timepicker", "badge", "chip", "circle_avatar", "circleavatar", "banner", "bottom_app_bar", "bottomappbar", "text", "button", "elevated_button", "text_button", "textbutton", "filled_button", "filledbutton", "filled_icon_button", "fillediconbutton", "filled_tonal_button", "filledtonalbutton", "filled_tonal_icon_button", "filledtonaliconbutton", "outlined_button", "outlinedbutton", "outlined_icon_button", "outlinediconbutton", "icon_button", "iconbutton", "popup_menu_button", "popupmenubutton", "popup_menu_item", "popupmenuitem", "text_field", "textfield", "checkbox", "switch", "slider", "transparent_pointer", "transparentpointer", "radio", "radio_group", "radiogroup", "alert_dialog", "alertdialog", "snack_bar", "snackbar", "bottom_sheet", "bottomsheet", "markdown", "icon", "image", "fab", "interactive_viewer", "interactiveviewer", "app_bar", "appbar", "clipboard", "floating_action_button", "floatingactionbutton", "tabs", "tab", "tab_bar", "tabbar", "tab_bar_view", "tabbarview", "navigation_bar", "navigationbar", "navigation_bar_destination", "navigationbardestination", "navigation_rail", "navigationrail", "navigation_rail_destination", "navigationraildestination", "navigation_drawer", "navigationdrawer", "navigation_drawer_destination", "navigationdrawerdestination", "bar_chart", "barchart", "bar_chart_group", "barchartgroup", "bar_chart_rod", "barchartrod", "bar_chart_rod_stack_item", "barchartrodstackitem", "line_chart", "linechart", "line_chart_data", "linechartdata", "line_chart_data_point", "linechartdatapoint", "pie_chart", "piechart", "pie_chart_section", "piechartsection", "candlestick_chart", "candlestickchart", "candlestick_chart_spot", "candlestickchartspot", "radar_chart", "radarchart", "radar_chart_title", "radarcharttitle", "radar_data_set", "radardataset", "radar_data_set_entry", "radardatasetentry", "scatter_chart", "scatterchart", "scatter_chart_spot", "scatterchartspot", "chart_axis", "chartaxis", "chart_axis_label", "chartaxislabel", "web_view", "webview", "video", "cupertino_button", "cupertinobutton", "cupertino_filled_button", "cupertinofilledbutton", "cupertino_tinted_button", "cupertinotintedbutton", "cupertino_checkbox", "cupertinocheckbox", "cupertino_text_field", "cupertinotextfield", "cupertino_timer_picker", "cupertinotimerpicker", "cupertino_switch", "cupertinoswitch", "cupertino_slider", "cupertinoslider", "cupertino_radio", "cupertinoradio", "cupertino_alert_dialog", "cupertinoalertdialog", "cupertino_action_sheet", "cupertinoactionsheet", "cupertino_action_sheet_action", "cupertinoactionsheetaction", "cupertino_activity_indicator", "cupertinoactivityindicator", "cupertino_app_bar", "cupertinoappbar", "cupertino_bottom_sheet", "cupertinobottomsheet", "cupertino_date_picker", "cupertinodatepicker", "cupertino_dialog_action", "cupertinodialogaction", "cupertino_context_menu", "cupertinocontextmenu", "cupertino_context_menu_action", "cupertinocontextmenuaction", "cupertino_list_tile", "cupertinolisttile", "cupertino_navigation_bar", "cupertinonavigationbar", "cupertino_picker", "cupertinopicker", "cupertino_segmented_button", "cupertinosegmentedbutton", "cupertino_sliding_segmented_button", "cupertinoslidingsegmentedbutton", "duration", "control_delegate"].freeze
+      EMBEDDED_INSTANCE_METHODS = ["control", "widget", "service", "view", "column", "center", "row", "stack", "grid_view", "gridview", "container", "animated_switcher", "animatedswitcher", "audio", "auto_complete", "autocomplete", "auto_complete_suggestion", "autocomplete_suggestion", "autocompletesuggestion", "context_menu", "contextmenu", "keyboard_listener", "keyboardlistener", "gesture_detector", "gesturedetector", "draggable", "dismissible", "drag_target", "dragtarget", "card", "list_tile", "listtile", "list_view", "listview", "menu_bar", "menubar", "menu_item_button", "menuitembutton", "merge_semantics", "mergesemantics", "submenu_button", "submenubutton", "divider", "vertical_divider", "verticaldivider", "window_drag_area", "windowdragarea", "date_picker", "datepicker", "date_range_picker", "daterangepicker", "data_table", "datatable", "data_column", "datacolumn", "data_row", "datarow", "data_cell", "datacell", "expansion_tile", "expansiontile", "expansion_panel", "expansionpanel", "expansion_panel_list", "expansionpanellist", "dropdown", "dropdown_option", "dropdownoption", "dropdown_m2", "dropdownm2", "progress_bar", "progressbar", "placeholder", "page_view", "pageview", "progress_ring", "progressring", "spinkit", "range_slider", "rangeslider", "responsive_row", "responsiverow", "reorderable_drag_handle", "reorderabledraghandle", "reorderable_list_view", "reorderablelistview", "safe_area", "safearea", "segment", "segmented_button", "segmentedbutton", "selection_area", "selectionarea", "search_bar", "searchbar", "semantics", "time_picker", "timepicker", "badge", "chip", "circle_avatar", "circleavatar", "banner", "bottom_app_bar", "bottomappbar", "text", "button", "elevated_button", "text_button", "textbutton", "filled_button", "filledbutton", "filled_icon_button", "fillediconbutton", "filled_tonal_button", "filledtonalbutton", "filled_tonal_icon_button", "filledtonaliconbutton", "outlined_button", "outlinedbutton", "outlined_icon_button", "outlinediconbutton", "icon_button", "iconbutton", "popup_menu_button", "popupmenubutton", "popup_menu_item", "popupmenuitem", "text_field", "textfield", "checkbox", "switch", "slider", "transparent_pointer", "transparentpointer", "rotated_box", "rotatedbox", "screenshot", "radio", "radio_group", "radiogroup", "alert_dialog", "alertdialog", "snack_bar", "snackbar", "snack_bar_action", "snackbaraction", "bottom_sheet", "bottomsheet", "markdown", "icon", "image", "fab", "interactive_viewer", "interactiveviewer", "app_bar", "appbar", "clipboard", "floating_action_button", "floatingactionbutton", "tabs", "tab", "tab_bar", "tabbar", "tab_bar_view", "tabbarview", "navigation_bar", "navigationbar", "navigation_bar_destination", "navigationbardestination", "navigation_rail", "navigationrail", "navigation_rail_destination", "navigationraildestination", "navigation_drawer", "navigationdrawer", "navigation_drawer_destination", "navigationdrawerdestination", "bar_chart", "barchart", "bar_chart_group", "barchartgroup", "bar_chart_rod", "barchartrod", "bar_chart_rod_stack_item", "barchartrodstackitem", "line_chart", "linechart", "line_chart_data", "linechartdata", "line_chart_data_point", "linechartdatapoint", "pie_chart", "piechart", "pie_chart_section", "piechartsection", "candlestick_chart", "candlestickchart", "candlestick_chart_spot", "candlestickchartspot", "radar_chart", "radarchart", "radar_chart_title", "radarcharttitle", "radar_data_set", "radardataset", "radar_data_set_entry", "radardatasetentry", "scatter_chart", "scatterchart", "scatter_chart_spot", "scatterchartspot", "chart_axis", "chartaxis", "chart_axis_label", "chartaxislabel", "web_view", "webview", "video", "cupertino_button", "cupertinobutton", "cupertino_filled_button", "cupertinofilledbutton", "cupertino_tinted_button", "cupertinotintedbutton", "cupertino_checkbox", "cupertinocheckbox", "cupertino_text_field", "cupertinotextfield", "cupertino_timer_picker", "cupertinotimerpicker", "cupertino_switch", "cupertinoswitch", "cupertino_slider", "cupertinoslider", "cupertino_radio", "cupertinoradio", "cupertino_alert_dialog", "cupertinoalertdialog", "cupertino_action_sheet", "cupertinoactionsheet", "cupertino_action_sheet_action", "cupertinoactionsheetaction", "cupertino_activity_indicator", "cupertinoactivityindicator", "cupertino_app_bar", "cupertinoappbar", "cupertino_bottom_sheet", "cupertinobottomsheet", "cupertino_date_picker", "cupertinodatepicker", "cupertino_dialog_action", "cupertinodialogaction", "cupertino_context_menu", "cupertinocontextmenu", "cupertino_context_menu_action", "cupertinocontextmenuaction", "cupertino_list_tile", "cupertinolisttile", "cupertino_navigation_bar", "cupertinonavigationbar", "cupertino_picker", "cupertinopicker", "cupertino_segmented_button", "cupertinosegmentedbutton", "cupertino_sliding_segmented_button", "cupertinoslidingsegmentedbutton", "duration", "control_delegate"].freeze
       def control(type, **props, &block) = control_delegate.control(type, **props, &block)
       def widget(type, **props, &block) = control_delegate.widget(type, **props, &block)
       def service(type, **props, &block) = control_delegate.service(type, **props, &block)
@@ -20227,6 +20411,7 @@ module Ruflet
       def pageview(children = nil, **props) = control_delegate.pageview(children, **props)
       def progress_ring(**props) = control_delegate.progress_ring(**props)
       def progressring(**props) = control_delegate.progressring(**props)
+      def spinkit(**props) = control_delegate.spinkit(**props)
       def range_slider(**props) = control_delegate.range_slider(**props)
       def rangeslider(**props) = control_delegate.rangeslider(**props)
       def responsive_row(children = nil, **props, &block) = control_delegate.responsive_row(children, **props, &block)
@@ -20284,6 +20469,9 @@ module Ruflet
       def slider(**props) = control_delegate.slider(**props)
       def transparent_pointer(content = nil, **props) = control_delegate.transparent_pointer(content, **props)
       def transparentpointer(content = nil, **props) = control_delegate.transparentpointer(content, **props)
+      def rotated_box(content = nil, **props) = control_delegate.rotated_box(content, **props)
+      def rotatedbox(content = nil, **props) = control_delegate.rotatedbox(content, **props)
+      def screenshot(content = nil, **props) = control_delegate.screenshot(content, **props)
       def radio(**props) = control_delegate.radio(**props)
       def radio_group(content = nil, **props) = control_delegate.radio_group(content, **props)
       def radiogroup(content = nil, **props) = control_delegate.radiogroup(content, **props)
@@ -20291,6 +20479,8 @@ module Ruflet
       def alertdialog(**props) = control_delegate.alertdialog(**props)
       def snack_bar(content = nil, **props) = control_delegate.snack_bar(content, **props)
       def snackbar(content = nil, **props) = control_delegate.snackbar(content, **props)
+      def snack_bar_action(label = nil, **props) = control_delegate.snack_bar_action(label, **props)
+      def snackbaraction(label = nil, **props) = control_delegate.snackbaraction(label, **props)
       def bottom_sheet(content = nil, **props) = control_delegate.bottom_sheet(content, **props)
       def bottomsheet(content = nil, **props) = control_delegate.bottomsheet(content, **props)
       def markdown(value = nil, **props) = control_delegate.markdown(value, **props)
@@ -21385,6 +21575,7 @@ module Ruflet
 
     PAGE_PROP_KEYS = %w[dark_theme fonts route rtl show_semantics_debugger theme theme_mode title vertical_alignment horizontal_alignment scroll].freeze
     DIALOG_PROP_KEYS = %w[dialog snack_bar bottom_sheet].freeze
+    PAGE_ADD_RESERVED_KEYS = %i[appbar bottom_appbar floating_action_button navigation_bar dialog snack_bar bottom_sheet].freeze
     WIDGET_HELPER_METHODS = (
       Ruflet::UI::MaterialControlMethods::EMBEDDED_INSTANCE_METHODS +
       Ruflet::UI::CupertinoControlMethods::EMBEDDED_INSTANCE_METHODS +
@@ -21489,26 +21680,60 @@ module Ruflet
       @view_props["bgcolor"] = normalize_value("bgcolor", value)
     end
 
-    def add(*controls, appbar: nil, bottom_appbar: nil, floating_action_button: nil, navigation_bar: nil, dialog: nil, snack_bar: nil, bottom_sheet: nil)
-      controls = controls.flatten
-      visited = Set.new
-      controls.each { |c| register_control_tree(c, visited) }
-      @root_controls = controls
+    def add(*controls)
+      if controls.last.is_a?(Hash) && (controls.last.keys.map(&:to_sym) & PAGE_ADD_RESERVED_KEYS).any?
+        raise ArgumentError, "Page#add accepts only controls; assign page.appbar, page.floating_action_button, dialogs, or other page properties before calling add"
+      end
 
-      @view_props["appbar"] = appbar if appbar
-      @view_props["bottom_appbar"] = bottom_appbar if bottom_appbar
-      @view_props["floating_action_button"] = floating_action_button if floating_action_button
-      @view_props["navigation_bar"] = navigation_bar if navigation_bar
-      @dialog = dialog if dialog
-      @snack_bar = snack_bar if snack_bar
-      @bottom_sheet = bottom_sheet if bottom_sheet
-
-      refresh_dialogs_container!
-      @view_props.each_value { |value| register_embedded_value(value, visited) }
-
-      send_view_patch
-
+      replace_root_controls(controls.flatten)
       self
+    end
+
+    def controls
+      @root_controls
+    end
+
+    def controls=(value)
+      replace_root_controls(Array(value).flatten.compact)
+      self
+    end
+
+    def insert(at, *controls)
+      @root_controls.insert(at.to_i, *controls.flatten.compact)
+      send_view_patch
+      self
+    end
+
+    def remove(*controls)
+      controls.flatten.each { |control| @root_controls.delete(control) }
+      send_view_patch
+      self
+    end
+
+    def remove_at(index)
+      @root_controls.delete_at(index.to_i)
+      send_view_patch
+      self
+    end
+
+    def clean
+      replace_root_controls([])
+      self
+    end
+
+    def overlay
+      @overlay_container.children
+    end
+
+    def overlay=(value)
+      @overlay_container.children.replace(Array(value).flatten.compact)
+      push_overlay_update!
+      self
+    end
+
+    def get_control(id)
+      refresh_control_indexes!
+      resolve_control(id)
     end
 
     def views=(value)
@@ -21652,8 +21877,16 @@ module Ruflet
       add(*builder.children)
     end
 
+    def appbar
+      @view_props["appbar"]
+    end
+
     def appbar=(value)
       @view_props["appbar"] = value
+    end
+
+    def bottom_appbar
+      @view_props["bottom_appbar"]
     end
 
     def bottom_appbar=(value)
@@ -21664,8 +21897,92 @@ module Ruflet
       self.bottom_appbar = value
     end
 
+    def floating_action_button
+      @view_props["floating_action_button"]
+    end
+
     def floating_action_button=(value)
       @view_props["floating_action_button"] = value
+    end
+
+    def navigation_bar
+      @view_props["navigation_bar"]
+    end
+
+    def navigation_bar=(value)
+      @view_props["navigation_bar"] = value
+    end
+
+    def auto_scroll
+      @view_props["auto_scroll"]
+    end
+
+    def auto_scroll=(value)
+      @view_props["auto_scroll"] = value
+    end
+
+    def browser_context_menu
+      @view_props["browser_context_menu"]
+    end
+
+    def browser_context_menu=(value)
+      @view_props["browser_context_menu"] = value
+    end
+
+    def decoration
+      @view_props["decoration"]
+    end
+
+    def decoration=(value)
+      @view_props["decoration"] = value
+    end
+
+    def floating_action_button_location
+      @view_props["floating_action_button_location"]
+    end
+
+    def floating_action_button_location=(value)
+      @view_props["floating_action_button_location"] = value
+    end
+
+    def foreground_decoration
+      @view_props["foreground_decoration"]
+    end
+
+    def foreground_decoration=(value)
+      @view_props["foreground_decoration"] = value
+    end
+
+    def padding
+      @view_props["padding"]
+    end
+
+    def padding=(value)
+      @view_props["padding"] = value
+    end
+
+    def spacing
+      @view_props["spacing"]
+    end
+
+    def spacing=(value)
+      @view_props["spacing"] = value
+    end
+
+    def drawer
+      @view_props["drawer"]
+    end
+
+    def drawer=(value)
+      @view_props["drawer"] = value
+    end
+
+    def end_drawer
+      @view_props["end_drawer"]
+    end
+
+    def end_drawer=(value)
+      @view_props["end_drawer"] = value
     end
 
     def dialog = @dialog
@@ -21680,6 +21997,10 @@ module Ruflet
       refresh_dialogs_container!
     end
 
+    def snack_bar
+      @snack_bar
+    end
+
     def snackbar=(value)
       self.snack_bar = value
     end
@@ -21687,6 +22008,10 @@ module Ruflet
     def bottom_sheet=(value)
       @bottom_sheet = value
       refresh_dialogs_container!
+    end
+
+    def bottom_sheet
+      @bottom_sheet
     end
 
     def bottomsheet=(value)
@@ -21704,6 +22029,50 @@ module Ruflet
       send_view_patch unless @dialogs_container.wire_id
       push_dialogs_update!
       self
+    end
+
+    def show_snack_bar(snack_bar_control)
+      show_dialog(snack_bar_control)
+    end
+
+    def show_bottom_sheet(bottom_sheet_control)
+      show_dialog(bottom_sheet_control)
+    end
+
+    def show_drawer(timeout: 10, on_result: nil)
+      raise ArgumentError, "No drawer defined" unless drawer
+
+      invoke(:page, "show_drawer", timeout: timeout, on_result: on_result)
+    end
+
+    def close_drawer(timeout: 10, on_result: nil)
+      invoke(:page, "close_drawer", timeout: timeout, on_result: on_result)
+    end
+
+    def show_end_drawer(timeout: 10, on_result: nil)
+      raise ArgumentError, "No end_drawer defined" unless end_drawer
+
+      invoke(:page, "show_end_drawer", timeout: timeout, on_result: on_result)
+    end
+
+    def close_end_drawer(timeout: 10, on_result: nil)
+      invoke(:page, "close_end_drawer", timeout: timeout, on_result: on_result)
+    end
+
+    def scroll_to(offset: nil, delta: nil, scroll_key: nil, duration: nil, curve: nil, timeout: 10, on_result: nil)
+      invoke(
+        :page,
+        "scroll_to",
+        args: {
+          "offset" => offset,
+          "delta" => delta,
+          "scroll_key" => scroll_key,
+          "duration" => duration,
+          "curve" => curve
+        },
+        timeout: timeout,
+        on_result: on_result
+      )
     end
 
     def invoke(control_or_id, method_name, args: nil, timeout: 10, on_result: nil)
@@ -22214,6 +22583,10 @@ module Ruflet
       self
     end
 
+    def schedule_update
+      update
+    end
+
     def patch_page(control_id, **props)
       update(control_id, **props)
     end
@@ -22389,6 +22762,16 @@ module Ruflet
 
     def send_message(action, payload)
       @sender.call(action, payload)
+    end
+
+    def replace_root_controls(controls)
+      visited = Set.new
+      controls.each { |control| register_control_tree(control, visited) }
+      @root_controls = controls
+
+      refresh_dialogs_container!
+      @view_props.each_value { |value| register_embedded_value(value, visited) }
+      send_view_patch
     end
 
     def send_view_patch
@@ -22613,6 +22996,19 @@ module Ruflet
       @page_props["_overlay"] = @overlay_container
     end
 
+    def push_overlay_update!
+      refresh_control_indexes!
+
+      if @overlay_container.wire_id
+        send_message(Protocol::ACTIONS[:patch_control], {
+          "id" => @overlay_container.wire_id,
+          "patch" => [[0], [0, 0, "controls", serialize_patch_value(@overlay_container.children)]]
+        })
+      else
+        send_view_patch
+      end
+    end
+
     def refresh_services_container!
       @page_props["_services"] = @services_container
     end
@@ -22690,7 +23086,7 @@ module Ruflet
         # Keep internal containers stable after initial mount.
         # Re-sending them as full objects can replace Control instances with
         # same IDs and detach service invoke listeners on the Flutter side.
-        next nil if k == "_overlay" && @overlay_container.wire_id
+        next nil if k == "_overlay" && @services_container_mounted
         next nil if k == "_dialogs" && @dialogs_container.wire_id
         next nil if k == "_services" && @services_container_mounted
 
@@ -22998,6 +23394,7 @@ module Ruflet
     def pageview(children = nil, **props) = _pending_app.pageview(children, **props)
     def progress_ring(**props) = _pending_app.progress_ring(**props)
     def progressring(**props) = _pending_app.progressring(**props)
+    def spinkit(**props) = _pending_app.spinkit(**props)
     def range_slider(**props) = _pending_app.range_slider(**props)
     def rangeslider(**props) = _pending_app.rangeslider(**props)
     def responsive_row(children = nil, **props, &block) = _pending_app.responsive_row(children, **props, &block)
@@ -23062,6 +23459,9 @@ module Ruflet
     def slider(**props) = _pending_app.slider(**props)
     def transparent_pointer(content = nil, **props) = _pending_app.transparent_pointer(content, **props)
     def transparentpointer(content = nil, **props) = _pending_app.transparentpointer(content, **props)
+    def rotated_box(content = nil, **props) = _pending_app.rotated_box(content, **props)
+    def rotatedbox(content = nil, **props) = _pending_app.rotatedbox(content, **props)
+    def screenshot(content = nil, **props) = _pending_app.screenshot(content, **props)
     def radio(**props) = _pending_app.radio(**props)
     def radio_group(content = nil, **props) = _pending_app.radio_group(content, **props)
     def radiogroup(content = nil, **props) = _pending_app.radiogroup(content, **props)
@@ -23069,6 +23469,8 @@ module Ruflet
     def alertdialog(**props) = _pending_app.alertdialog(**props)
     def snack_bar(content = nil, **props) = _pending_app.snack_bar(content, **props)
     def snackbar(content = nil, **props) = _pending_app.snackbar(content, **props)
+    def snack_bar_action(label = nil, **props) = _pending_app.snack_bar_action(label, **props)
+    def snackbaraction(label = nil, **props) = _pending_app.snackbaraction(label, **props)
     def bottom_sheet(content = nil, **props) = _pending_app.bottom_sheet(content, **props)
     def bottomsheet(content = nil, **props) = _pending_app.bottomsheet(content, **props)
     def markdown(value = nil, **props) = _pending_app.markdown(value, **props)
