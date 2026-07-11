@@ -36,7 +36,7 @@ class RufletCliNewCommandTest < Minitest::Test
 
       client_dir = File.join(target_root, "build", "client")
       assert File.directory?(client_dir)
-      assert File.file?(File.join(client_dir, "assets", "main.rb"))
+      refute File.exist?(File.join(client_dir, "assets", "main.rb"))
       assert File.file?(File.join(client_dir, "lib", "main.dart"))
       assert File.file?(File.join(client_dir, "lib", "main.self.dart"))
       assert File.file?(File.join(client_dir, "lib", "main.server.dart"))

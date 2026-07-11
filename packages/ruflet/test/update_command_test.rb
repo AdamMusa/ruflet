@@ -185,6 +185,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
 
     assert builder.send(:include_project_asset_file?, "templates/editor.html")
     assert builder.send(:include_project_asset_file?, "data/sample.csv")
+    refute builder.send(:include_project_asset_file?, "main.rb")
+    refute builder.send(:include_project_asset_file?, "lib/widgets.rb")
     refute builder.send(:include_project_asset_file?, "Gemfile.lock")
     refute builder.send(:include_project_asset_file?, "nested/pubspec.lock")
   end
@@ -333,7 +335,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
             ruby_runtime: ^0.0.3
           flutter:
             assets:
-              - assets/main.rb
+              - assets/ruflet/
         YAML
       )
       File.write(
@@ -361,7 +363,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
 
       pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
       refute_includes pubspec, "ruby_runtime"
-      refute_includes pubspec, "assets/main.rb"
+      refute_includes pubspec, "assets/ruflet/"
       refute File.exist?(File.join(client_dir, "pubspec_overrides.yaml"))
     end
   end

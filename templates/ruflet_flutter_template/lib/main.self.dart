@@ -35,7 +35,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
-import 'package:ruby_runtime/ruby_runtime.dart';
+import 'package:ruby_runtime/ruflet_runtime.dart';
 
 import 'ruflet_file_picker_service.dart';
 
@@ -146,10 +146,6 @@ Future<void> main() async {
     pageUrl = embeddedRuntime.pageUrl;
   }
 
-  if (embeddedRuntime != null) {
-    await Future<void>.delayed(const Duration(milliseconds: 250));
-  }
-
   runApp(
     TemplateApp(
       pageUrl: pageUrl,
@@ -186,7 +182,8 @@ class _TemplateAppState extends State<TemplateApp> {
       _serverErrorPoller = Timer.periodic(const Duration(seconds: 1), (
         _,
       ) async {
-        final serverError = await RubyRuntime.lastFileServerError();
+        final status = await RufletRuntime.status();
+        final serverError = status.error;
         if (!mounted ||
             serverError.isEmpty ||
             serverError == _lastEmbeddedServerError) {
@@ -271,32 +268,19 @@ class EmbeddedRufletRuntime {
     var pageUrl = 'http://127.0.0.1:$kRufletPort';
 
     try {
-      await RubyRuntime.initialize();
-      final serverPath = await _prepareProjectFiles(workDir);
-      await RubyRuntime.startFileServer(serverPath, stopSignalPath: stopPath);
-      final startupDeadline = DateTime.now().add(const Duration(seconds: 5));
-      while (DateTime.now().isBefore(startupDeadline)) {
-        final discoveredPort = await _discoverServerPort();
-        if (discoveredPort != null && discoveredPort > 0) {
-          pageUrl = 'http://127.0.0.1:$discoveredPort';
-        }
-        // While the plugin reports bound ports, wait for the real port
-        // instead of probing the default one: another Ruflet server (e.g. a
-        // CRuby dev server) may already be answering on it and the client
-        // would silently attach to the wrong app.
-        final portKnown = discoveredPort == null || discoveredPort > 0;
-        if (portKnown && await RubyRuntime.isFileServerRunning()) {
-          return EmbeddedRufletRuntime._(pageUrl: pageUrl, workDir: workDir);
-        }
-        final serverError = await RubyRuntime.lastFileServerError();
-        if (serverError.isNotEmpty) {
-          throw Exception(serverError);
-        }
-        await Future<void>.delayed(const Duration(milliseconds: 100));
-      }
-      throw TimeoutException(
-        'Embedded Ruflet server did not become reachable at $pageUrl.',
+      final entrypoint = await _prepareProjectFiles(workDir);
+      final status = await RufletRuntime.start(
+        projectRoot: workDir.path,
+        entrypoint: entrypoint,
+        stopSignalPath: stopPath,
       );
+      if (status.error.isNotEmpty) {
+        throw StateError(status.error);
+      }
+      if (status.port > 0) {
+        pageUrl = 'http://127.0.0.1:${status.port}';
+      }
+      return EmbeddedRufletRuntime._(pageUrl: pageUrl, workDir: workDir);
     } catch (error, stackTrace) {
       return EmbeddedRufletRuntime._(
         pageUrl: pageUrl,
@@ -306,24 +290,9 @@ class EmbeddedRufletRuntime {
     }
   }
 
-  /// Port the embedded server actually bound, reported by the ruby_runtime
-  /// plugin. Returns 0 until the server binds, or null on platforms whose
-  /// plugin predates port reporting — those keep polling the default
-  /// [kRufletPort].
-  static Future<int?> _discoverServerPort() async {
-    try {
-      return await RubyRuntime.serverPort();
-    } catch (_) {
-      return null;
-    }
-  }
-
   Future<void> dispose() async {
     try {
-      await RubyRuntime.stopFileServer();
-    } catch (_) {}
-    try {
-      await RubyRuntime.reset();
+      await RufletRuntime.stop();
     } catch (_) {}
     try {
       if (await workDir.exists()) {
@@ -357,7 +326,7 @@ class EmbeddedRufletRuntime {
     if (projectAssets.isEmpty) {
       throw StateError(
         'No packaged Ruby project was found under $embeddedProjectPrefix. '
-        '${_describeRubyAssets(manifest)} '
+        '${_describeRufletAssets(manifest)} '
         'Run `ruflet build --self` so Ruflet can package the real Ruby app.',
       );
     }
@@ -373,14 +342,16 @@ class EmbeddedRufletRuntime {
       );
     }
 
-    return '${workDir.path}/main.rb';
+    final entrypoint = File('${workDir.path}/main.mrb');
+    if (!await entrypoint.exists()) {
+      throw StateError(
+        'The packaged Ruflet project does not contain main.mrb. '
+        'Run `ruflet build --self` to compile the app entrypoint.',
+      );
+    }
+    return entrypoint.path;
   }
 
-  /// Resolves where the packaged Ruby project lives in the asset bundle.
-  /// Accepts every layout Ruflet has shipped, so apps built by any CLI
-  /// version keep booting: the explicit dart-define, a discovered
-  /// `assets/<project>/main.rb`, the legacy `assets/ruby_project/` folder,
-  /// and the legacy flat `assets/main.rb`.
   static String _embeddedProjectPrefix(List<String> manifest) {
     final name = kEmbeddedProjectName.trim();
     if (name.isNotEmpty) {
@@ -389,11 +360,9 @@ class EmbeddedRufletRuntime {
 
     final discovered = manifest
         .where(
-          (asset) => asset.startsWith('assets/') && asset.endsWith('/main.rb'),
+          (asset) => asset.startsWith('assets/') && asset.endsWith('/main.mrb'),
         )
-        .map((asset) => asset.substring(0, asset.length - 'main.rb'.length))
-        .where((prefix) => prefix != 'assets/')
-        .where((prefix) => !prefix.startsWith('assets/icons/'))
+        .map((asset) => asset.substring(0, asset.length - 'main.mrb'.length))
         .toSet()
         .toList();
 
@@ -401,43 +370,32 @@ class EmbeddedRufletRuntime {
       return discovered.single;
     }
     if (discovered.length > 1) {
-      // assets/ruby_project/ is the legacy placeholder folder; a real
-      // packaged project alongside it always wins.
-      final real = discovered
-          .where((prefix) => prefix != 'assets/ruby_project/')
-          .toList();
-      if (real.length == 1) {
-        return real.single;
-      }
       throw StateError(
-        'Multiple packaged Ruby projects found (${discovered.join(', ')}). '
+        'Multiple packaged Ruflet projects found (${discovered.join(', ')}). '
         'Set the RUFLET_EMBEDDED_PROJECT dart define to choose one.',
       );
     }
 
-    // Legacy flat layout: a single main.rb directly under assets/.
-    if (manifest.contains('assets/main.rb')) {
-      return 'assets/';
-    }
-
     throw StateError(
-      'Could not find a packaged Ruby project in the asset bundle. '
-      '${_describeRubyAssets(manifest)} '
-      'Run `ruflet build --self` so Ruflet can package the real Ruby app, '
+      'Could not find main.mrb in the asset bundle. '
+      '${_describeRufletAssets(manifest)} '
+      'Run `ruflet build --self` so Ruflet can package the app, '
       'or set the RUFLET_EMBEDDED_PROJECT dart define.',
     );
   }
 
-  static String _describeRubyAssets(List<String> manifest) {
+  static String _describeRufletAssets(List<String> manifest) {
     if (manifest.isEmpty) {
       return 'The asset manifest could not be read or is empty.';
     }
-    final rubyAssets =
-        manifest.where((asset) => asset.endsWith('.rb')).take(8).toList();
-    if (rubyAssets.isEmpty) {
-      return 'The bundle contains no .rb assets at all.';
+    final rufletAssets = manifest
+        .where((asset) => asset.endsWith('.mrb'))
+        .take(8)
+        .toList();
+    if (rufletAssets.isEmpty) {
+      return 'The bundle contains no Ruflet bytecode.';
     }
-    return 'Ruby assets present: ${rubyAssets.join(', ')}.';
+    return 'Ruflet bytecode present: ${rufletAssets.join(', ')}.';
   }
 
   static Future<List<String>> _loadAssetManifest() async {

@@ -1110,8 +1110,6 @@ module Ruflet
 
         if self_contained
           dependencies["ruby_runtime"] = ruby_runtime_dependency(dependencies["ruby_runtime"])
-          assets.delete("assets/main.rb")
-          assets.delete("assets/ruby_project/")
           # Flutter does not recurse into asset directories, so every subdirectory
           # of the embedded project (e.g. standalone_apps/<slug>/) must be listed
           # explicitly or its files never reach the bundle/manifest on device.
@@ -1120,8 +1118,6 @@ module Ruflet
           end
         else
           dependencies.delete("ruby_runtime")
-          assets.delete("assets/main.rb")
-          assets.delete("assets/ruby_project/")
           project_prefix = "assets/#{self_contained_project_name}/"
           assets.reject! { |a| a.to_s == project_prefix || a.to_s.start_with?(project_prefix) }
         end
@@ -1219,11 +1215,7 @@ module Ruflet
         assets_root = File.join(client_dir, "assets")
         destination_root = File.join(assets_root, self_contained_project_name)
         FileUtils.rm_rf(destination_root)
-        FileUtils.rm_rf(File.join(assets_root, "ruby_project"))
         FileUtils.mkdir_p(destination_root)
-
-        legacy_entrypoint = File.join(client_dir, "assets", "main.rb")
-        FileUtils.rm_f(legacy_entrypoint)
 
         copied = 0
         project_asset_relative_paths.each do |relative_path|
@@ -1247,19 +1239,11 @@ module Ruflet
 
       def remove_self_contained_project_assets(client_dir, verbose: false)
         assets_root = File.join(client_dir, "assets")
-        legacy_entrypoint = File.join(client_dir, "assets", "main.rb")
-        FileUtils.rm_f(legacy_entrypoint)
         removed = false
 
         project_root = File.join(assets_root, self_contained_project_name)
         if Dir.exist?(project_root)
           FileUtils.rm_rf(project_root)
-          removed = true
-        end
-
-        legacy_root = File.join(assets_root, "ruby_project")
-        if Dir.exist?(legacy_root)
-          FileUtils.rm_rf(legacy_root)
           removed = true
         end
 
@@ -1321,9 +1305,9 @@ module Ruflet
         basename = File.basename(relative)
         return false if basename == ".DS_Store"
         return false if %w[Gemfile.lock pubspec.lock Podfile.lock package-lock.json yarn.lock pnpm-lock.yaml].include?(basename)
-        # Flet-style self-contained builds ship the application tree, not only
-        # files recognized by the framework. Ruby apps commonly load templates,
-        # CSV/SQLite data, fonts, or custom files with File.read/require.
+        # Ruby sources are compiled into main.mrb. Other project files remain
+        # available to the app as data assets.
+        return false if File.extname(relative) == ".rb"
         true
       end
 

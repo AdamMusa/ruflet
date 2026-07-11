@@ -1,14 +1,13 @@
 # ruflet_flutter_template
 
-Ruflet Flutter template for either a self-contained Ruby-driven app or a server-driven client.
+Ruflet Flutter template for self-contained and server-driven clients.
 
 ## What is included
 
 - Ruflet/Flet client bootstrap with fixed local port auto-connect (`8550`).
 - Self-contained startup via `ruby_runtime` in `lib/main.self.dart`.
 - Server-driven startup in `lib/main.server.dart`.
-- Developer-editable Ruby entry file at:
-  - `assets/main.rb`
+- Compiler-free startup from the packaged `main.mrb` artifact.
 - External backend override via:
   - `--dart-define=RUFLET_BACKEND_URL=http://host:8550`
 
@@ -20,7 +19,7 @@ flutter pub get
 flutter run
 ```
 
-The default `flutter run` entrypoint uses `lib/main.self.dart`, so developers can replace `assets/main.rb` with their own Ruflet implementation.
+`ruflet build --self` compiles the project's `main.rb` and packages the resulting `main.mrb` automatically.
 
 To connect to an external backend instead:
 
