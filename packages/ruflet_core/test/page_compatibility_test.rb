@@ -147,6 +147,62 @@ class RufletPageCompatibilityTest < Minitest::Test
     assert_equal ["One", "Two"], view_control_values(sent.last)
   end
 
+  def test_page_exposes_python_flet_view_properties
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    values = {
+      auto_scroll: true,
+      browser_context_menu: false,
+      decoration: { bgcolor: "#FFFFFF" },
+      floating_action_button_location: "center_float",
+      foreground_decoration: { border_radius: 4 },
+      padding: 12,
+      spacing: 8
+    }
+
+    values.each { |name, value| page.public_send("#{name}=", value) }
+    page.add(Ruflet.text("Body"))
+
+    view = patch_value(sent.last[1]["patch"], "views").first
+    values.each do |name, value|
+      expected = value.is_a?(Hash) ? value.transform_keys(&:to_s) : value
+      assert_equal expected, view[name.to_s]
+      assert_equal value, page.public_send(name)
+    end
+  end
+
+  def test_page_scroll_to_invokes_the_root_view_method
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    call_id = page.scroll_to(offset: 100, duration: 500, curve: "ease_in", timeout: 3)
+
+    assert_match(/\Acall_/, call_id)
+    action, payload = sent.last
+    assert_equal Ruflet::Protocol::ACTIONS[:invoke_control_method], action
+    assert_equal 1, payload["control_id"]
+    assert_equal "scroll_to", payload["name"]
+    assert_equal(
+      {
+        "offset" => 100,
+        "delta" => nil,
+        "scroll_key" => nil,
+        "duration" => 500,
+        "curve" => "ease_in"
+      },
+      payload["args"]
+    )
+    assert_equal 3, payload["timeout"]
+  end
+
   private
 
   def patch_value(patch, key)

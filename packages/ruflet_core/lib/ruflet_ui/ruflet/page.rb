@@ -462,6 +462,62 @@ module Ruflet
       @view_props["navigation_bar"] = value
     end
 
+    def auto_scroll
+      @view_props["auto_scroll"]
+    end
+
+    def auto_scroll=(value)
+      @view_props["auto_scroll"] = value
+    end
+
+    def browser_context_menu
+      @view_props["browser_context_menu"]
+    end
+
+    def browser_context_menu=(value)
+      @view_props["browser_context_menu"] = value
+    end
+
+    def decoration
+      @view_props["decoration"]
+    end
+
+    def decoration=(value)
+      @view_props["decoration"] = value
+    end
+
+    def floating_action_button_location
+      @view_props["floating_action_button_location"]
+    end
+
+    def floating_action_button_location=(value)
+      @view_props["floating_action_button_location"] = value
+    end
+
+    def foreground_decoration
+      @view_props["foreground_decoration"]
+    end
+
+    def foreground_decoration=(value)
+      @view_props["foreground_decoration"] = value
+    end
+
+    def padding
+      @view_props["padding"]
+    end
+
+    def padding=(value)
+      @view_props["padding"] = value
+    end
+
+    def spacing
+      @view_props["spacing"]
+    end
+
+    def spacing=(value)
+      @view_props["spacing"] = value
+    end
+
     def drawer
       @view_props["drawer"]
     end
@@ -550,6 +606,22 @@ module Ruflet
 
     def close_end_drawer(timeout: 10, on_result: nil)
       invoke(:page, "close_end_drawer", timeout: timeout, on_result: on_result)
+    end
+
+    def scroll_to(offset: nil, delta: nil, scroll_key: nil, duration: nil, curve: nil, timeout: 10, on_result: nil)
+      invoke(
+        :page,
+        "scroll_to",
+        args: {
+          "offset" => offset,
+          "delta" => delta,
+          "scroll_key" => scroll_key,
+          "duration" => duration,
+          "curve" => curve
+        },
+        timeout: timeout,
+        on_result: on_result
+      )
     end
 
     def invoke(control_or_id, method_name, args: nil, timeout: 10, on_result: nil)
