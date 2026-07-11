@@ -58,6 +58,23 @@ class RufletPageCompatibilityTest < Minitest::Test
     assert_equal ["/store"], routes
   end
 
+  def test_page_supports_python_theme_animation_and_views_pop_until_api
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+    events = []
+    page.theme_animation_style = { duration: 300, curve: "ease_in" }
+    page.on_views_pop_until = ->(event) { events << event.name }
+
+    page.add(Ruflet.text("Body"))
+    page.dispatch_event(target: 1, name: "views_pop_until", data: { "route" => "/home" })
+
+    assert_equal({ duration: 300, curve: "ease_in" }, page.theme_animation_style)
+    assert_equal ["views_pop_until"], events
+  end
+
   def test_page_accepts_python_flet_style_chrome_assignments
     sent = []
     page = Ruflet::Page.new(

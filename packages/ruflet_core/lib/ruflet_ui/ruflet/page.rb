@@ -140,7 +140,7 @@ module Ruflet
       end
     end
 
-    PAGE_PROP_KEYS = %w[dark_theme fonts route rtl show_semantics_debugger theme theme_mode title vertical_alignment horizontal_alignment scroll].freeze
+    PAGE_PROP_KEYS = %w[dark_theme fonts route rtl show_semantics_debugger theme theme_mode theme_animation_style title vertical_alignment horizontal_alignment scroll].freeze
     DIALOG_PROP_KEYS = %w[dialog snack_bar bottom_sheet].freeze
     PAGE_ADD_RESERVED_KEYS = %i[appbar bottom_appbar floating_action_button navigation_bar dialog snack_bar bottom_sheet].freeze
     WIDGET_HELPER_METHODS = (
@@ -428,6 +428,10 @@ module Ruflet
 
     def on_view_pop=(handler)
       @page_event_handlers["view_pop"] = handler
+    end
+
+    def on_views_pop_until=(handler)
+      @page_event_handlers["views_pop_until"] = handler
     end
 
     def on(event_name, &block)
