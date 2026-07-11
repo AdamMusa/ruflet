@@ -182,6 +182,12 @@ Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeStart(
     if (g_mrb->exc == nullptr) {
       mrb_sym root_symbol = mrb_intern_lit(g_mrb, "$__ruflet_app_root");
       mrb_gv_set(g_mrb, root_symbol, mrb_str_new_cstr(g_mrb, project_root.c_str()));
+      mrb_sym error_path_symbol =
+          mrb_intern_lit(g_mrb, "$__ruflet_runtime_error_file");
+      mrb_gv_set(
+          g_mrb,
+          error_path_symbol,
+          mrb_str_new_cstr(g_mrb, runtime_error_path.c_str()));
       mrb_load_irep_buf(g_mrb, bytecode.data(), bytecode.size());
     }
 

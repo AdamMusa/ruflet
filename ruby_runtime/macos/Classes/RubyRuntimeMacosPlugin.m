@@ -173,6 +173,9 @@ static BOOL valid_entrypoint(NSString *project_root, NSString *entrypoint) {
       } else if (preload_ruflet_runtime(g_mrb, &runtime_error)) {
         mrb_sym root_symbol = mrb_intern_lit(g_mrb, "$__ruflet_app_root");
         mrb_gv_set(g_mrb, root_symbol, mrb_str_new_cstr(g_mrb, project_root.UTF8String));
+        mrb_sym error_path_symbol = mrb_intern_lit(g_mrb, "$__ruflet_runtime_error_file");
+        mrb_gv_set(g_mrb, error_path_symbol,
+                   mrb_str_new_cstr(g_mrb, runtime_error_path.UTF8String));
         mrb_load_irep_buf(g_mrb, bytecode.bytes, bytecode.length);
         if (g_mrb->exc != NULL) {
           runtime_error = [NSError errorWithDomain:@"ruflet_runtime"

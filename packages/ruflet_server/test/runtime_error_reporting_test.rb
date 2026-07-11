@@ -7,8 +7,8 @@ class RufletRuntimeErrorReportingTest < Minitest::Test
   def test_reports_callback_error_to_runtime_status_file
     Dir.mktmpdir do |directory|
       path = File.join(directory, ".ruflet-runtime.error")
-      previous_path = ENV["RUFLET_RUNTIME_ERROR_FILE"]
-      ENV["RUFLET_RUNTIME_ERROR_FILE"] = path
+      previous_path = $__ruflet_runtime_error_file
+      $__ruflet_runtime_error_file = path
       server = Ruflet::Server.new { |_page| nil }
 
       error = RuntimeError.new("callback failed")
@@ -19,7 +19,7 @@ class RufletRuntimeErrorReportingTest < Minitest::Test
       assert_includes report, "handle_message: RuntimeError: callback failed"
       assert_includes report, "main.rb:12:in `block in <main>'"
     ensure
-      ENV["RUFLET_RUNTIME_ERROR_FILE"] = previous_path
+      $__ruflet_runtime_error_file = previous_path
     end
   end
 end

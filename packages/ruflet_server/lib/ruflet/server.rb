@@ -415,7 +415,8 @@ module Ruflet
     end
 
     def report_runtime_error(error, context)
-      path = ENV["RUFLET_RUNTIME_ERROR_FILE"].to_s
+      path = $__ruflet_runtime_error_file.to_s
+      path = ENV["RUFLET_RUNTIME_ERROR_FILE"].to_s if path.empty?
       return if path.empty?
 
       lines = ["#{context}: #{error.class}: #{error.message}"]
