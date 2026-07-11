@@ -131,8 +131,8 @@ module Ruflet
         end
 
       @write_mutex.synchronize do
-        @socket.write(header)
-        @socket.write(bytes) unless bytes.empty?
+        @socket.write(header + bytes)
+        @socket.flush if @socket.respond_to?(:flush)
       end
     end
 

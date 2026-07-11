@@ -24366,8 +24366,8 @@ module Ruflet
         end
 
       @write_mutex.synchronize do
-        @socket.write(header)
-        @socket.write(bytes) unless bytes.empty?
+        @socket.write(header + bytes)
+        @socket.flush if @socket.respond_to?(:flush)
       end
     end
 
@@ -25226,7 +25226,7 @@ end
           {
             "session_id" => session_id,
             "page_patch" => {},
-            "error" => nil
+            "error" => ""
           }
         end
       end
@@ -25247,6 +25247,7 @@ end
 
         b1 = header.getbyte(0)
         b2 = header.getbyte(1)
+        fin = (b1 & 0x80) != 0
         masked = (b2 & 0x80) != 0
         payload_len = b2 & 0x7f
 
@@ -25271,7 +25272,7 @@ end
         payload = unmask(payload, masking_key) if masked
         prefix = payload.bytes.first(12).map { |byte| byte.to_i.to_s }.join(" ")
         warn "[embedded ws] payload bytes=#{payload.bytesize} prefix=#{prefix}" if ENV["RUFLET_DEBUG"] == "1"
-        { opcode: b1 & 0x0f, payload: payload }
+        { fin: fin, opcode: b1 & 0x0f, payload: payload }
       end
 
       private
@@ -25364,7 +25365,7 @@ end
           {
             "session_id" => session_id,
             "page_patch" => {},
-            "error" => nil
+            "error" => ""
           }
         ]
         ws.send_binary(Ruflet::WireCodec.pack(initial_response))
