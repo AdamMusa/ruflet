@@ -2,9 +2,9 @@
 # frozen_string_literal: true
 
 require "json"
+require "fileutils"
 require "pathname"
 require "open3"
-require "tmpdir"
 
 ROOT = Pathname(__dir__).join("..").expand_path
 GENERATED_RB = ROOT.join("generated/embedded_ruflet_runtime.rb")
@@ -1740,18 +1740,22 @@ SHARED_RB.write(runtime)
 # source is embedded in the app binary. The .rb above stays the source of record.
 raise "mrbc not found at #{MRBC.relative_path_from(ROOT)}; build the vendored mruby first" unless MRBC.executable?
 
-header = Dir.mktmpdir do |dir|
-  src = File.join(dir, "embedded_ruflet_runtime.rb")
-  out = File.join(dir, "embedded_ruflet_runtime.h")
-  File.write(src, runtime)
+compile_dir = ROOT.join("build/embedded_runtime")
+FileUtils.mkdir_p(compile_dir)
+header = begin
+  src = compile_dir.join("embedded_ruflet_runtime.rb")
+  out = compile_dir.join("embedded_ruflet_runtime.h")
+  src.write(runtime)
 
   # -g keeps line/file debug info in the irep. The runtime relies on caller()
   # for backtraces (and shims like __dir__), which collapse to "(unknown):0"
   # without it — matching the fidelity the old source-string boot had.
-  _stdout, stderr, status = Open3.capture3(MRBC.to_s, "-g", "-B", "kEmbeddedRufletRuntimeIrep", "-o", out, src)
+  _stdout, stderr, status = Open3.capture3(MRBC.to_s, "-g", "-B", "kEmbeddedRufletRuntimeIrep", "-o", out.to_s, src.to_s)
   raise "mrbc failed to compile the embedded runtime:\n#{stderr}" unless status.success?
 
-  "#pragma once\n\n#{File.read(out)}"
+  "#pragma once\n\n#{out.read}"
+ensure
+  FileUtils.rm_rf(compile_dir)
 end
 
 GENERATED_H.write(header)

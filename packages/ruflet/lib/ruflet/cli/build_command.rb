@@ -1037,6 +1037,7 @@ module Ruflet
       def configure_client_runtime_mode(client_dir, self_contained:, verbose: false)
         build_log(verbose, "configuring #{self_contained ? 'self-contained' : 'server-driven'} runtime")
         return false unless ensure_embedded_mruby_runtime!(self_contained: self_contained, verbose: verbose)
+        return false unless build_embedded_app_bytecode!(self_contained: self_contained, verbose: verbose)
 
         sync_client_pubspec_for_runtime_mode(client_dir, self_contained: self_contained)
         if self_contained
@@ -1069,6 +1070,30 @@ module Ruflet
         false
       rescue StandardError => e
         warn "embedded mruby runtime build failed: #{e.class}: #{e.message}"
+        false
+      end
+
+      def build_embedded_app_bytecode!(self_contained:, verbose: false)
+        return true unless self_contained
+        return true if ENV["RUFLET_EMBEDDED_APP_BYTECODE"] == "0"
+
+        script = File.expand_path("../../../../../tools/build_embedded_app.rb", __dir__)
+        entry = File.expand_path("main.rb", Dir.pwd)
+        unless File.file?(script) && File.file?(entry)
+          build_log(verbose, "using Ruby source startup; embedded app compiler is unavailable")
+          return true
+        end
+
+        output = File.expand_path("build/ruflet_embedded/main.mrb", Dir.pwd)
+        build_log(verbose, "compiling embedded app bytecode")
+        _stdout, stderr, status = Open3.capture3(RbConfig.ruby, script, entry, output, chdir: File.expand_path("../../../../../", __dir__))
+        return true if status.success?
+
+        warn "embedded app bytecode build failed"
+        warn stderr unless stderr.to_s.empty?
+        false
+      rescue StandardError => e
+        warn "embedded app bytecode build failed: #{e.class}: #{e.message}"
         false
       end
 
@@ -1200,6 +1225,12 @@ module Ruflet
           destination = File.join(destination_root, relative_path)
           FileUtils.mkdir_p(File.dirname(destination))
           FileUtils.cp(source.to_s, destination)
+          copied += 1
+        end
+
+        bytecode = File.join(Dir.pwd, "build", "ruflet_embedded", "main.mrb")
+        if File.file?(bytecode)
+          FileUtils.cp(bytecode, File.join(destination_root, "main.mrb"))
           copied += 1
         end
 

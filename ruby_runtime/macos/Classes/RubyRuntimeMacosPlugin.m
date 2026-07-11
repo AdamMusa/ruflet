@@ -205,6 +205,57 @@ static NSString *eval_source(NSString *source, NSString *filename, NSError **err
   return [NSString stringWithUTF8String:value] ?: @"";
 }
 
+static NSString *eval_irep(const void *bytes, size_t length, NSString *filename, NSError **error) {
+  mrb_state *mrb = ensure_mrb();
+  if (mrb == NULL) {
+    if (error != NULL) {
+      *error = [NSError errorWithDomain:@"ruby_runtime"
+                                   code:20
+                               userInfo:@{NSLocalizedDescriptionKey: @"failed to initialize mruby runtime"}];
+    }
+    return nil;
+  }
+  if (!preload_embedded_runtime(mrb, error)) {
+    return nil;
+  }
+
+  mrbc_context *context = mrbc_context_new(mrb);
+  if (context == NULL) {
+    if (error != NULL) {
+      *error = [NSError errorWithDomain:@"ruby_runtime"
+                                   code:21
+                               userInfo:@{NSLocalizedDescriptionKey: @"failed to create mruby bytecode context"}];
+    }
+    return nil;
+  }
+  if (filename != nil && filename.length > 0) {
+    mrbc_filename(mrb, context, filename.UTF8String);
+  }
+
+  mrb_value result = mrb_load_irep_buf_cxt(mrb, bytes, length, context);
+  mrbc_context_free(mrb, context);
+  if (mrb->exc != NULL) {
+    if (error != NULL) {
+      *error = [NSError errorWithDomain:@"ruby_runtime"
+                                   code:22
+                               userInfo:@{NSLocalizedDescriptionKey: exception_to_string(mrb)}];
+    }
+    return nil;
+  }
+
+  mrb_value display = mrb_string_p(result) ? result : mrb_inspect(mrb, result);
+  if (mrb->exc != NULL) {
+    if (error != NULL) {
+      *error = [NSError errorWithDomain:@"ruby_runtime"
+                                   code:23
+                               userInfo:@{NSLocalizedDescriptionKey: exception_to_string(mrb)}];
+    }
+    return nil;
+  }
+  const char *value = mrb_string_value_cstr(mrb, &display);
+  return value == NULL ? @"" : ([NSString stringWithUTF8String:value] ?: @"");
+}
+
 static void request_stop_server(void) {
   if (g_stop_signal_path == nil || g_stop_signal_path.length == 0) {
     return;
@@ -245,12 +296,14 @@ static void request_stop_server(void) {
       return;
     }
 
+    BOOL bytecode = [path.pathExtension.lowercaseString isEqualToString:@"mrb"];
     NSError *readError = nil;
-    NSString *source = [NSString stringWithContentsOfFile:path
-                                                 encoding:NSUTF8StringEncoding
-                                                    error:&readError];
-    if (source == nil) {
-      NSString *message = readError.localizedDescription ?: @"unable to read Ruby file";
+    NSString *source = bytecode ? nil : [NSString stringWithContentsOfFile:path
+                                                                  encoding:NSUTF8StringEncoding
+                                                                     error:&readError];
+    NSData *bytecodeData = bytecode ? [NSData dataWithContentsOfFile:path options:0 error:&readError] : nil;
+    if ((!bytecode && source == nil) || (bytecode && bytecodeData == nil)) {
+      NSString *message = readError.localizedDescription ?: @"unable to read Ruby startup artifact";
       result([FlutterError errorWithCode:@"mruby_error" message:message details:nil]);
       return;
     }
@@ -330,7 +383,9 @@ static void request_stop_server(void) {
       eval_source([NSString stringWithFormat:@"$__ruflet_app_root = '%@'",
                    escape_single_quotes([path stringByDeletingLastPathComponent])],
                   path, &error);
-      NSString *value = eval_source(source, path, &error);
+      NSString *value = bytecode
+        ? eval_irep(bytecodeData.bytes, bytecodeData.length, path, &error)
+        : eval_source(source, path, &error);
       if (error == nil && value != nil && [value hasPrefix:@":"]) {
         NSString *safePath = escape_single_quotes(path);
         NSString *bootstrap = [NSString stringWithFormat:

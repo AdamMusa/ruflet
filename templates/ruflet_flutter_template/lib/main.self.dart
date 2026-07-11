@@ -289,7 +289,10 @@ class EmbeddedRufletRuntime {
       debugPrint('Embedded Digest::SHA1 bytesize: $digestLength');
       final serverPath = await _prepareProjectFiles(workDir);
       await RubyRuntime.startFileServer(serverPath, stopSignalPath: stopPath);
-      final startupDeadline = DateTime.now().add(const Duration(seconds: 5));
+      // The embedded runtime compiles the app's Ruby sources at boot (including
+      // large files like gallery_sections.rb), so allow generous time for the
+      // server to bind before giving up — 5s races the compile and fails.
+      final startupDeadline = DateTime.now().add(const Duration(seconds: 90));
       while (DateTime.now().isBefore(startupDeadline)) {
         if (await RubyRuntime.isFileServerRunning() &&
             await canConnectToPageUrl(
@@ -359,6 +362,8 @@ class EmbeddedRufletRuntime {
       );
     }
 
+    String? bytecodePath;
+    final useBytecode = Platform.isMacOS;
     for (final asset in projectAssets) {
       final relative = asset.substring(embeddedProjectPrefix.length);
       if (relative.isEmpty) continue;
@@ -368,9 +373,10 @@ class EmbeddedRufletRuntime {
       await destination.writeAsBytes(
         data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
       );
+      if (useBytecode && relative == 'main.mrb') bytecodePath = destination.path;
     }
 
-    return '${workDir.path}/main.rb';
+    return bytecodePath ?? '${workDir.path}/main.rb';
   }
 
   static String _embeddedProjectPrefix(List<String> manifest) {
