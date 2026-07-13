@@ -23,7 +23,8 @@ packages only the developer's application code and assets.
 
 ## Platforms
 
-- Android
+- Android (prebuilt `armeabi-v7a`, `arm64-v8a`, `x86`, and `x86_64` VM
+  libraries are distributed in `android/src/main/jniLibs`)
 - iOS
 - macOS (the universal `arm64`/`x86_64` VM archive is distributed in
   `macos/Frameworks`; application builds compile only the Flutter bridge)
@@ -33,6 +34,10 @@ developer application build. Each artifact has a checked manifest beside it
 with its platform, architectures, contents, and SHA-256 digest. Updating
 mruby or a preloaded Ruflet gem creates a new runtime artifact and package
 version. It does not copy framework Ruby sources into an application.
+
+Android application builds link the packaged `libruby_runtime.so` for their
+target ABI. They never read mruby's local `build/host_vm` directory and never
+compile Ruflet gems while building the developer application.
 
 ## Dart API
 

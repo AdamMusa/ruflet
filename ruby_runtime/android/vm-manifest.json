@@ -1,0 +1,22 @@
+{
+  "format": 1,
+  "runtime": "ruflet-mruby",
+  "platform": "android",
+  "minimum_sdk": 24,
+  "library": "libruby_runtime.so",
+  "contains": ["mruby", "ruflet-framework", "onigmo", "native-gems"],
+  "artifacts": {
+    "arm64-v8a": {
+      "sha256": "5f52232ef20d9615d45a9b6f6e588d101048cdc6113b2a315426963694f160f2"
+    },
+    "armeabi-v7a": {
+      "sha256": "ee41dff564328a9bd6945c92c4c39a93b0c77ce1817ac2793508dbe9bfc62418"
+    },
+    "x86": {
+      "sha256": "fce7cce8155ee3e7112eb22a5a09dafd8605f9f4e7b6c4b30fae1f3615ebc938"
+    },
+    "x86_64": {
+      "sha256": "0541595399e45596b08788ba0a7c3a5396d8658f6c194549e982bda33829b1f9"
+    }
+  }
+}
