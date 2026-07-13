@@ -109,6 +109,7 @@ module Ruflet
     def extract_handlers(input)
       output = input.dup
       allowed_events = event_names
+      allowed_event_lookup = event_name_lookup
 
       output.keys.each do |key|
         key_string = key.to_s
@@ -117,7 +118,7 @@ module Ruflet
         next if key_string == "on_label_color"
 
         event_name = normalized_event_name(key_string)
-        if allowed_events.any? && !allowed_events.include?(event_name)
+        if allowed_events.any? && !allowed_event_lookup.key?(event_name)
           raise ArgumentError, "Unknown event `#{key_string}` for control type `#{type}`"
         end
 
@@ -131,6 +132,7 @@ module Ruflet
 
     def normalize_props(hash)
       allowed_props = property_names
+      allowed_prop_lookup = property_name_lookup
 
       hash.each_with_object({}) do |(k, v), result|
         key = k.to_s
@@ -138,7 +140,7 @@ module Ruflet
         if strict_schema_enforced?(allowed_props) &&
             !mapped_key.start_with?("_") &&
             !mapped_key.start_with?("on_") &&
-            !allowed_props.include?(mapped_key)
+            !allowed_prop_lookup.key?(mapped_key)
           raise ArgumentError, "Unknown attribute `#{mapped_key}` for control type `#{type}`"
         end
 
@@ -221,6 +223,14 @@ module Ruflet
       schema_metadata[1]
     end
 
+    def property_name_lookup
+      schema_metadata[2]
+    end
+
+    def event_name_lookup
+      schema_metadata[3]
+    end
+
     def schema_metadata
       cache_key = type
       cached = SCHEMA_METADATA_CACHE[cache_key]
@@ -236,7 +246,9 @@ module Ruflet
         .reject { |name| name == :on_label_color }
         .map { |name| name.to_s[3..-1] }
         .freeze
-      SCHEMA_METADATA_CACHE[cache_key] = [properties, events].freeze
+      property_lookup = properties.each_with_object({}) { |name, lookup| lookup[name] = true }.freeze
+      event_lookup = events.each_with_object({}) { |name, lookup| lookup[name] = true }.freeze
+      SCHEMA_METADATA_CACHE[cache_key] = [properties, events, property_lookup, event_lookup].freeze
     end
 
     def schema_wire_type_for_class

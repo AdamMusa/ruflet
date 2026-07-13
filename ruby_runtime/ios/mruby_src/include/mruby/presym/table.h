@@ -901,6 +901,7 @@ static const uint16_t presym_length_table[] = {
   6,	/* linger */
   6,	/* listen */
   6,	/* locale */
+  6,	/* lookup */
   6,	/* lstrip */
   6,	/* mapped */
   6,	/* margin */
@@ -2402,6 +2403,7 @@ static const uint16_t presym_length_table[] = {
   12,	/* dialog_slots */
   12,	/* dialog_title */
   12,	/* distance_max */
+  12,	/* event_lookup */
   12,	/* exclude_end? */
   12,	/* expand_loose */
   12,	/* fetch_values */
@@ -2980,6 +2982,7 @@ static const uint16_t presym_length_table[] = {
   15,	/* preview_enabled */
   15,	/* primary_trigger */
   15,	/* private_methods */
+  15,	/* property_lookup */
   15,	/* radarcharttitle */
   15,	/* register_client */
   15,	/* resize_duration */
@@ -3211,6 +3214,7 @@ static const uint16_t presym_length_table[] = {
   17,	/* divider_thickness */
   17,	/* enable_javascript */
   17,	/* error_format_text */
+  17,	/* event_name_lookup */
   17,	/* exclude_semantics */
   17,	/* expand_icon_color */
   17,	/* fade_in_animation */
@@ -3407,6 +3411,7 @@ static const uint16_t presym_length_table[] = {
   19,	/* WebSocketConnection */
   19,	/* __method_recursive? */
   19,	/* _reset_pending_app! */
+  19,	/* allowed_prop_lookup */
   19,	/* apply_client_update */
   19,	/* bar_hint_text_style */
   19,	/* bind_server_socket! */
@@ -3491,6 +3496,7 @@ static const uint16_t presym_length_table[] = {
   20,	/* SubmenuButtonControl */
   20,	/* WORD_BOUND_ALL_RANGE */
   20,	/* accept_client_socket */
+  20,	/* allowed_event_lookup */
   20,	/* avoid_intrusions_top */
   20,	/* background_image_src */
   20,	/* bar_size_constraints */
@@ -3541,6 +3547,7 @@ static const uint16_t presym_length_table[] = {
   20,	/* on_vertical_drag_end */
   20,	/* outlined_icon_button */
   20,	/* page_control_target? */
+  20,	/* property_name_lookup */
   20,	/* push_dialogs_update! */
   20,	/* push_overlay_update! */
   20,	/* radar_data_set_entry */
@@ -4922,6 +4929,7 @@ static const char * const presym_name_table[] = {
   "linger",
   "listen",
   "locale",
+  "lookup",
   "lstrip",
   "mapped",
   "margin",
@@ -6423,6 +6431,7 @@ static const char * const presym_name_table[] = {
   "dialog_slots",
   "dialog_title",
   "distance_max",
+  "event_lookup",
   "exclude_end?",
   "expand_loose",
   "fetch_values",
@@ -7001,6 +7010,7 @@ static const char * const presym_name_table[] = {
   "preview_enabled",
   "primary_trigger",
   "private_methods",
+  "property_lookup",
   "radarcharttitle",
   "register_client",
   "resize_duration",
@@ -7232,6 +7242,7 @@ static const char * const presym_name_table[] = {
   "divider_thickness",
   "enable_javascript",
   "error_format_text",
+  "event_name_lookup",
   "exclude_semantics",
   "expand_icon_color",
   "fade_in_animation",
@@ -7428,6 +7439,7 @@ static const char * const presym_name_table[] = {
   "WebSocketConnection",
   "__method_recursive?",
   "_reset_pending_app!",
+  "allowed_prop_lookup",
   "apply_client_update",
   "bar_hint_text_style",
   "bind_server_socket!",
@@ -7512,6 +7524,7 @@ static const char * const presym_name_table[] = {
   "SubmenuButtonControl",
   "WORD_BOUND_ALL_RANGE",
   "accept_client_socket",
+  "allowed_event_lookup",
   "avoid_intrusions_top",
   "background_image_src",
   "bar_size_constraints",
@@ -7562,6 +7575,7 @@ static const char * const presym_name_table[] = {
   "on_vertical_drag_end",
   "outlined_icon_button",
   "page_control_target?",
+  "property_name_lookup",
   "push_dialogs_update!",
   "push_overlay_update!",
   "radar_data_set_entry",
