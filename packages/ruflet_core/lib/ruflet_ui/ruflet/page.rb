@@ -15,6 +15,15 @@ require "timeout"
 
 module Ruflet
   class Page
+    # Older and embedded clients may omit this capability from registration.
+    # Ruflet applications should still be able to branch on `page.web` just as
+    # they do with a full desktop client.
+    def web
+      !!(@client_details && @client_details["web"])
+    end
+
+    alias web? web
+
     class SharedPreferencesService
       def initialize(page)
         @page = page

@@ -58,6 +58,7 @@ CORE_GEMS = %w[
   mruby-sprintf
   mruby-pack
   mruby-time
+  mruby-sleep
   mruby-catch
   mruby-encoding
   mruby-io

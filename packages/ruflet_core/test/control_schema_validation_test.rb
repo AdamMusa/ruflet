@@ -43,6 +43,16 @@ class ControlSchemaValidationTest < Minitest::Test
     refute control.props.key?("ref")
   end
 
+  def test_canvas_primitives_expose_complete_keyword_schemas
+    rect = Ruflet.control(:rect, x: 1, y: 2, width: 3, height: 4)
+    circle = Ruflet.control(:circle, x: 5, y: 6, radius: 7)
+    line = Ruflet.control(:line, x1: 1, y1: 2, x2: 3, y2: 4)
+
+    assert_equal 1, rect.props["x"]
+    assert_equal 6, circle.props["y"]
+    assert_equal 4, line.props["y2"]
+  end
+
   def test_python_common_attributes_are_supported_with_children
     child = Ruflet.text("Child")
     parent = Ruflet.column(

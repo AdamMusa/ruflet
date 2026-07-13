@@ -45,6 +45,7 @@ frameworks ship as plain gem file trees in app assets.
     'mruby_src/mrbgems/mruby-sprintf/src/*.c',
     'mruby_src/mrbgems/mruby-pack/src/*.c',
     'mruby_src/mrbgems/mruby-time/src/*.c',
+    'mruby_src/mrbgems/mruby-sleep/src/*.c',
     'mruby_src/mrbgems/mruby-catch/src/*.c',
     'mruby_src/mrbgems/mruby-encoding/src/*.c',
     'mruby_src/mrbgems/mruby-compiler/core/*.c',

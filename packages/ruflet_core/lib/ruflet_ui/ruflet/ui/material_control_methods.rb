@@ -56,6 +56,11 @@ module Ruflet
         build_widget(:animatedswitcher, **mapped)
       end
       def animatedswitcher(content = nil, **props) = animated_switcher(content, **props)
+      def animation(duration = nil, **props)
+        duration = props.delete(:duration) if duration.nil? && props.key?(:duration)
+        Ruflet::Animation.new(duration: duration, **props)
+      end
+      def animation_style(**props) = Ruflet::AnimationStyle.new(**props)
       def audio(**props) = build_widget(:audio, **props)
       def auto_complete(suggestions = nil, **props)
         mapped = props.dup
@@ -76,6 +81,39 @@ module Ruflet
         build_widget(:contextmenu, **mapped)
       end
       def contextmenu(content = nil, **props) = context_menu(content, **props)
+      def autofill_group(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:autofillgroup, **mapped)
+      end
+      def autofillgroup(content = nil, **props) = autofill_group(content, **props)
+      def hero(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:hero, **mapped)
+      end
+      def overlay(children = nil, **props)
+        mapped = props.dup
+        mapped[:controls] = children unless children.nil?
+        build_widget(:overlay, **mapped)
+      end
+      def shader_mask(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:shadermask, **mapped)
+      end
+      def shadermask(content = nil, **props) = shader_mask(content, **props)
+      def shimmer(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:shimmer, **mapped)
+      end
+      def text_span(text = nil, **props)
+        mapped = props.dup
+        mapped[:text] = text unless text.nil?
+        build_widget(:textspan, **mapped)
+      end
+      def textspan(text = nil, **props) = text_span(text, **props)
       def keyboard_listener(content = nil, **props)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
@@ -84,6 +122,33 @@ module Ruflet
       def keyboardlistener(content = nil, **props) = keyboard_listener(content, **props)
       def gesture_detector(**props, &block) = build_widget(:gesturedetector, **props, &block)
       def gesturedetector(**props, &block) = gesture_detector(**props, &block)
+      def canvas(shapes = nil, **props)
+        mapped = props.dup
+        mapped[:shapes] = shapes unless shapes.nil?
+        build_widget(:canvas, **mapped)
+      end
+      def line(**props) = build_widget(:line, **props)
+      def circle(**props) = build_widget(:circle, **props)
+      def arc(**props) = build_widget(:arc, **props)
+      def color(**props) = build_widget(:color, **props)
+      def canvas_color(**props) = color(**props)
+      def fill(**props) = build_widget(:fill, **props)
+      def oval(**props) = build_widget(:oval, **props)
+      def points(**props) = build_widget(:points, **props)
+      def rect(**props) = build_widget(:rect, **props)
+      def path(**props) = build_widget(:path, **props)
+      def shadow(**props) = build_widget(:shadow, **props)
+      def paint(**props) = drawing_payload(props)
+      def path_move_to(x = nil, y = nil, **props) = path_point_payload("MoveTo", x, y, props)
+      def path_line_to(x = nil, y = nil, **props) = path_point_payload("LineTo", x, y, props)
+      def path_arc(**props) = drawing_payload(props.merge(_type: "Arc"))
+      def path_arc_to(**props) = drawing_payload(props.merge(_type: "ArcTo"))
+      def path_oval(**props) = drawing_payload(props.merge(_type: "Oval"))
+      def path_rect(**props) = drawing_payload(props.merge(_type: "Rect"))
+      def path_quadratic_to(**props) = drawing_payload(props.merge(_type: "QuadraticTo"))
+      def path_cubic_to(**props) = drawing_payload(props.merge(_type: "CubicTo"))
+      def path_sub_path(**props) = drawing_payload(props.merge(_type: "SubPath"))
+      def path_close(**props) = drawing_payload(props.merge(_type: "Close"))
       def draggable(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
@@ -107,6 +172,50 @@ module Ruflet
       end
       def list_tile(**props) = build_widget(:listtile, **props)
       def listtile(**props) = list_tile(**props)
+      def map(layers = nil, **props)
+        mapped = props.dup
+        mapped[:layers] = layers unless layers.nil?
+        build_widget(:map, **mapped)
+      end
+      def tile_layer(**props) = build_widget(:tilelayer, **props)
+      def tilelayer(**props) = tile_layer(**props)
+      def marker_layer(markers = nil, **props)
+        mapped = props.dup
+        mapped[:markers] = markers unless markers.nil?
+        build_widget(:markerlayer, **mapped)
+      end
+      def markerlayer(markers = nil, **props) = marker_layer(markers, **props)
+      def marker(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:marker, **mapped)
+      end
+      def circle_layer(circles = nil, **props)
+        mapped = props.dup
+        mapped[:circles] = circles unless circles.nil?
+        build_widget(:circlelayer, **mapped)
+      end
+      def circlelayer(circles = nil, **props) = circle_layer(circles, **props)
+      def circle_marker(**props) = build_widget(:circlemarker, **props)
+      def circlemarker(**props) = circle_marker(**props)
+      def polyline_layer(polylines = nil, **props)
+        mapped = props.dup
+        mapped[:polylines] = polylines unless polylines.nil?
+        build_widget(:polylinelayer, **mapped)
+      end
+      def polylinelayer(polylines = nil, **props) = polyline_layer(polylines, **props)
+      def polyline_marker(**props) = build_widget(:polylinemarker, **props)
+      def polylinemarker(**props) = polyline_marker(**props)
+      def polygon_layer(polygons = nil, **props)
+        mapped = props.dup
+        mapped[:polygons] = polygons unless polygons.nil?
+        build_widget(:polygonlayer, **mapped)
+      end
+      def polygonlayer(polygons = nil, **props) = polygon_layer(polygons, **props)
+      def polygon_marker(**props) = build_widget(:polygonmarker, **props)
+      def polygonmarker(**props) = polygon_marker(**props)
+      def simple_attribution(**props) = build_widget(:simpleattribution, **props)
+      def simpleattribution(**props) = simple_attribution(**props)
       def list_view(children = nil, **props)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
@@ -557,6 +666,17 @@ module Ruflet
       def web_view(**props) = build_widget(:webview, **props)
       def webview(**props) = web_view(**props)
       def video(**props) = build_widget(:video, **props)
+      def code_editor(value = nil, **props)
+        mapped = props.dup
+        mapped[:value] = value unless value.nil?
+        build_widget(:codeeditor, **mapped)
+      end
+      def codeeditor(value = nil, **props) = code_editor(value, **props)
+      def rive(src = nil, **props)
+        mapped = props.dup
+        mapped[:src] = src unless src.nil?
+        build_widget(:rive, **mapped)
+      end
 
       def fab(content = nil, **props)
         mapped = normalize_fab_props(props.dup, content)
@@ -564,6 +684,19 @@ module Ruflet
       end
 
       private
+
+      def drawing_payload(props)
+        props.each_with_object({}) do |(key, value), output|
+          output[key] = value unless value.nil?
+        end
+      end
+
+      def path_point_payload(type, x, y, props)
+        mapped = props.dup
+        mapped[:x] = x unless x.nil?
+        mapped[:y] = y unless y.nil?
+        drawing_payload(mapped.merge(_type: type))
+      end
 
       def normalize_fab_props(props, content)
         mapped = props.dup

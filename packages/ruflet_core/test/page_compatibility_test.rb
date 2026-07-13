@@ -3,6 +3,24 @@
 require_relative "test_helper"
 
 class RufletPageCompatibilityTest < Minitest::Test
+  def test_web_capability_defaults_to_false_when_client_omits_it
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+
+    refute page.web
+    refute page.web?
+
+    web_page = Ruflet::Page.new(
+      session_id: "s2",
+      client_details: { "route" => "/", "web" => true },
+      sender: ->(_action, _payload) {}
+    )
+    assert web_page.web
+  end
+
   def test_page_serializes_flet_page_props_as_page_patch_ops
     sent = []
     page = Ruflet::Page.new(

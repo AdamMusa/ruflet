@@ -36,6 +36,7 @@ void GENERATED_TMP_mrb_mruby_random_gem_init(mrb_state *mrb);
 void GENERATED_TMP_mrb_mruby_sprintf_gem_init(mrb_state *mrb);
 void GENERATED_TMP_mrb_mruby_pack_gem_init(mrb_state *mrb);
 void GENERATED_TMP_mrb_mruby_time_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_mruby_sleep_gem_init(mrb_state *mrb);
 void GENERATED_TMP_mrb_mruby_catch_gem_init(mrb_state *mrb);
 void GENERATED_TMP_mrb_mruby_encoding_gem_init(mrb_state *mrb);
 void GENERATED_TMP_mrb_mruby_io_gem_init(mrb_state *mrb);
@@ -83,6 +84,7 @@ mrb_init_mrbgems(mrb_state *mrb)
   GENERATED_TMP_mrb_mruby_sprintf_gem_init(mrb);
   GENERATED_TMP_mrb_mruby_pack_gem_init(mrb);
   GENERATED_TMP_mrb_mruby_time_gem_init(mrb);
+  GENERATED_TMP_mrb_mruby_sleep_gem_init(mrb);
   GENERATED_TMP_mrb_mruby_catch_gem_init(mrb);
   GENERATED_TMP_mrb_mruby_encoding_gem_init(mrb);
   GENERATED_TMP_mrb_mruby_io_gem_init(mrb);

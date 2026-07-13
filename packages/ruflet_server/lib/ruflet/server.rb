@@ -13,6 +13,7 @@ module Ruflet
     attr_reader :port
 
     WEBSOCKET_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+    TASK_IO_POLL_INTERVAL = 0.01
 
     def initialize(host: "0.0.0.0", port: 8550, &app_block)
       @host = host
@@ -35,6 +36,13 @@ module Ruflet
     end
 
     def start
+      if Object.const_defined?(:Task) && Task.current.name == "main"
+        server = self
+        task = Task.new(name: "ruflet-server") { server.start }
+        Task.run
+        return task
+      end
+
       previous_signals = trap_stop_signals
       bind_server_socket!
       @running = true
@@ -178,23 +186,39 @@ module Ruflet
     end
 
     def accept_client_socket
-      accepted = @server_socket.accept
+      accepted = task_scheduler? ? @server_socket.accept_nonblock : @server_socket.accept
       accepted.is_a?(Array) ? accepted.first : accepted
     rescue IOError, Errno::EBADF
       nil
     rescue StandardError => e
       return nil unless @running && @server_socket
 
+      if task_scheduler? && would_block_error?(e)
+        sleep TASK_IO_POLL_INTERVAL
+        Thread.pass if Thread.respond_to?(:cooperative?)
+        retry
+      end
+
       warn "accept error: #{e.class}: #{e.message}"
       warn e.backtrace.join("\n") if e.backtrace
       nil
     end
 
+    def task_scheduler?
+      Object.const_defined?(:Task) || (Thread.respond_to?(:cooperative?) && Thread.cooperative?)
+    end
+
+    def would_block_error?(error)
+      %w[Errno::EAGAIN Errno::EWOULDBLOCK IO::EAGAINWaitReadable IO::WaitReadable].include?(error.class.to_s)
+    end
+
     def start_client_thread(socket)
-      Thread.new(socket) do |client|
+      thread = Thread.new(socket) do |client|
         Thread.current.report_on_exception = false if Thread.current.respond_to?(:report_on_exception=)
         handle_socket(client)
       end
+      Thread.pass if task_scheduler?
+      thread
     end
 
     def handle_socket(socket)
@@ -244,7 +268,7 @@ module Ruflet
     end
 
     def read_http_upgrade_request(socket)
-      request_line = socket.gets("\r\n")
+      request_line = read_http_line(socket)
       return [nil, {}] if request_line.nil?
       return [nil, {}] unless request_line.include?(" ")
 
@@ -254,7 +278,7 @@ module Ruflet
 
       headers = {}
       loop do
-        line = socket.gets("\r\n")
+        line = read_http_line(socket)
         break if line.nil? || line == "\r\n"
 
         key, value = line.split(":", 2)
@@ -264,6 +288,30 @@ module Ruflet
       end
 
       [path, headers]
+    ensure
+      @http_read_buffers&.delete(socket.object_id) if task_scheduler?
+    end
+
+    def read_http_line(socket)
+      return socket.gets("\r\n") unless task_scheduler? && socket.respond_to?(:recv_nonblock)
+
+      @http_read_buffers ||= {}
+      buffer = (@http_read_buffers[socket.object_id] ||= +"")
+      loop do
+        newline = buffer.index("\r\n")
+        return buffer.slice!(0, newline + 2) if newline
+
+        begin
+          part = socket.recv_nonblock(4096)
+          return nil if part.nil? || part.empty?
+
+          buffer << part
+        rescue StandardError => error
+          raise unless would_block_error?(error)
+
+          sleep TASK_IO_POLL_INTERVAL
+        end
+      end
     end
 
     def websocket_upgrade_request?(path, headers)

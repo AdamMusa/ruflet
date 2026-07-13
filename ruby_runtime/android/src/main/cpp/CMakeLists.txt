@@ -42,6 +42,7 @@ file(GLOB MRUBY_ADDITIONAL_GEM_SOURCES
   "${MRUBY_ROOT}/mrbgems/mruby-math/src/*.c"
   "${MRUBY_ROOT}/mrbgems/mruby-random/src/*.c"
   "${MRUBY_ROOT}/mrbgems/mruby-time/src/*.c"
+  "${MRUBY_ROOT}/mrbgems/mruby-sleep/src/*.c"
   "${MRUBY_ROOT}/mrbgems/mruby-catch/src/*.c"
   "${MRUBY_ROOT}/mrbgems/mruby-encoding/src/*.c"
   "${MRUBY_ROOT}/mrbgems/mruby-dir/src/*.c"
@@ -54,6 +55,8 @@ list(REMOVE_ITEM MRUBY_GEM_INIT_SOURCES
   "${MRUBY_BUILD_ROOT}/mrbgems/mruby-complex/gem_init.c"
   "${MRUBY_BUILD_ROOT}/mrbgems/mruby-rational/gem_init.c"
   "${MRUBY_BUILD_ROOT}/mrbgems/mruby-objectspace/gem_init.c"
+  "${MRUBY_BUILD_ROOT}/mrbgems/mruby-task/gem_init.c"
+  "${MRUBY_BUILD_ROOT}/mrbgems/hal-posix-task/gem_init.c"
 )
 set(MRUBY_GENERATED_SOURCES
   "${MRUBY_BUILD_ROOT}/mrblib/mrblib.c"
@@ -101,6 +104,11 @@ target_compile_definitions(
   MRB_USE_BIGINT=1
   MRB_UTF8_STRING=1
 )
+
+# The VM executes a large precompiled framework during startup. Keep the
+# native runtime optimized even when the surrounding Flutter app is a debug
+# build so device behavior matches a distribution build.
+target_compile_options(ruby_runtime PRIVATE -O2)
 
 target_link_libraries(
   ruby_runtime

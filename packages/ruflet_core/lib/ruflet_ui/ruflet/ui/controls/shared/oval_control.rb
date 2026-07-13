@@ -7,6 +7,7 @@ module Ruflet
         class OvalControl < Ruflet::Control
           TYPE = "oval".freeze
           WIRE = "Oval".freeze
+          KEYWORDS = [:data, :height, :key, :paint, :width, :x, :y].freeze
 
           def initialize(id: nil, data: nil, height: nil, key: nil, paint: nil, width: nil, x: nil, y: nil)
             props = {}

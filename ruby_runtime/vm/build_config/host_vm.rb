@@ -16,6 +16,7 @@ MRuby::Build.new("host_vm") do |conf|
 
   conf.gem core: "mruby-eval"
   conf.gem core: "mruby-encoding"
+  conf.gem core: "mruby-sleep"
 
   conf.gem File.join(VM_DIR, "mrbgems/mruby-digest")
   conf.gem File.join(VM_DIR, "mrbgems/mruby-onig-regexp")
