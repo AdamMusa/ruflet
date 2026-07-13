@@ -972,6 +972,9 @@ class RufletCliUpdateCommandTest < Minitest::Test
     Dir.mktmpdir do |dir|
       client_dir = File.join(dir, "ruflet_client")
       FileUtils.mkdir_p(File.join(client_dir, "android", "app", "src", "main"))
+      FileUtils.mkdir_p(
+        File.join(client_dir, "android", "app", "src", "main", "kotlin", "com", "example", "ruflet_client")
+      )
       FileUtils.mkdir_p(File.join(client_dir, "ios", "Runner"))
       FileUtils.mkdir_p(File.join(client_dir, "ios", "Runner.xcodeproj"))
       FileUtils.mkdir_p(File.join(client_dir, "macos", "Runner", "Configs"))
@@ -1003,6 +1006,12 @@ class RufletCliUpdateCommandTest < Minitest::Test
         <<~XML
           <application android:label="Ruflet Demo"></application>
         XML
+      )
+      File.write(
+        File.join(
+          client_dir, "android", "app", "src", "main", "kotlin", "com", "example", "ruflet_client", "MainActivity.kt"
+        ),
+        "package com.example.ruflet_client\n"
       )
       File.write(
         File.join(client_dir, "ios", "Runner", "Info.plist"),
@@ -1092,6 +1101,10 @@ class RufletCliUpdateCommandTest < Minitest::Test
       android_gradle = File.read(File.join(client_dir, "android", "app", "build.gradle.kts"))
       assert_includes android_gradle, 'namespace = "com.acme.test_app"'
       assert_includes android_gradle, 'applicationId = "com.acme.test_app"'
+      android_activity = Dir.glob(
+        File.join(client_dir, "android", "app", "src", "main", "kotlin", "**", "MainActivity.kt")
+      ).first
+      assert_includes File.read(android_activity), "package com.acme.test_app"
       assert_includes File.read(File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")), 'android:label="Test App"'
 
       ios_info = File.read(File.join(client_dir, "ios", "Runner", "Info.plist"))

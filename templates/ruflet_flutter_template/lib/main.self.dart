@@ -334,9 +334,11 @@ class EmbeddedRufletRuntime {
   static Future<String> _prepareProjectFiles(Directory workDir) async {
     final manifest = await _loadAssetManifest();
     final embeddedProjectPrefix = _embeddedProjectPrefix(manifest);
-    final projectAssets = manifest
-        .where((asset) => asset.startsWith(embeddedProjectPrefix))
-        .toList();
+    final projectAssets = manifest.where((asset) {
+      if (!asset.startsWith(embeddedProjectPrefix)) return false;
+      final relative = asset.substring(embeddedProjectPrefix.length);
+      return !relative.split('/').any((part) => part.startsWith('.'));
+    }).toList();
 
     if (projectAssets.isEmpty) {
       throw StateError(
@@ -385,12 +387,24 @@ class EmbeddedRufletRuntime {
         .toSet()
         .toList();
 
-    if (discovered.length == 1) {
-      return discovered.single;
+    // A Ruflet app may contain nested example/plugin applications. They are
+    // part of the top-level payload and must not be treated as competing
+    // embedded projects. Keep only roots that are not descendants of another
+    // discovered root.
+    final roots = discovered
+        .where(
+          (candidate) => !discovered.any(
+            (other) => other != candidate && candidate.startsWith(other),
+          ),
+        )
+        .toList();
+
+    if (roots.length == 1) {
+      return roots.single;
     }
-    if (discovered.length > 1) {
+    if (roots.length > 1) {
       throw StateError(
-        'Multiple packaged Ruflet projects found (${discovered.join(', ')}). '
+        'Multiple packaged Ruflet projects found (${roots.join(', ')}). '
         'Set the RUFLET_EMBEDDED_PROJECT dart define to choose one.',
       );
     }

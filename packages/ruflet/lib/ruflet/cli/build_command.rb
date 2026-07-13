@@ -775,6 +775,16 @@ module Ruflet
           %(        applicationId = "#{metadata[:android_application_id]}")
         )
 
+        Dir.glob(
+          File.join(client_dir, "android", "app", "src", "main", "kotlin", "**", "MainActivity.kt")
+        ).each do |activity_path|
+          replace_in_file(
+            activity_path,
+            /^package\s+[^\s]+$/,
+            "package #{metadata[:android_application_id]}"
+          )
+        end
+
         manifest_path = File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")
         replace_in_file(
           manifest_path,
