@@ -9,7 +9,15 @@ import io.flutter.plugin.common.MethodChannel.Result
 class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
     private lateinit var channel: MethodChannel
 
-    external fun nativeStart(projectRoot: String, entrypoint: String, stopSignalPath: String)
+    external fun nativeStart(
+        projectRoot: String,
+        entrypoint: String,
+        loadPaths: Array<String>,
+        environmentKeys: Array<String>,
+        environmentValues: Array<String>,
+        errorFilePath: String,
+        stopSignalPath: String,
+    )
     external fun nativeStop()
     external fun nativeIsRunning(): Boolean
     external fun nativeLastError(): String
@@ -28,7 +36,6 @@ class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
         val running = nativeIsRunning()
         return mapOf(
             "running" to running,
-            "port" to if (running) 8550 else 0,
             "error" to nativeLastError(),
         )
     }
@@ -47,10 +54,22 @@ class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
                         )
                         return
                     }
+                    val loadPaths = call.argument<List<String>>("loadPaths") ?: emptyList()
+                    val environment =
+                        call.argument<Map<String, String>>("environment") ?: emptyMap()
                     val stopSignalPath =
                         call.argument<String>("stopSignalPath")?.takeIf { it.isNotBlank() }
-                            ?: "$projectRoot/.ruflet-server.stop"
-                    nativeStart(projectRoot, entrypoint, stopSignalPath)
+                            ?: "$projectRoot/.runtime.stop"
+                    val errorFilePath = call.argument<String>("errorFilePath") ?: ""
+                    nativeStart(
+                        projectRoot,
+                        entrypoint,
+                        loadPaths.toTypedArray(),
+                        environment.keys.toTypedArray(),
+                        environment.values.toTypedArray(),
+                        errorFilePath,
+                        stopSignalPath,
+                    )
                     result.success(status())
                 }
                 "status" -> result.success(status())
@@ -65,4 +84,3 @@ class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
         }
     }
 }
-

@@ -415,8 +415,7 @@ module Ruflet
     end
 
     def report_runtime_error(error, context)
-      path = $__ruflet_runtime_error_file.to_s
-      path = ENV["RUFLET_RUNTIME_ERROR_FILE"].to_s if path.empty?
+      path = ENV["RUFLET_RUNTIME_ERROR_FILE"].to_s
       return if path.empty?
 
       lines = ["#{context}: #{error.class}: #{error.message}"]
@@ -493,7 +492,7 @@ module Ruflet
       page.update
     rescue StandardError => e
       send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => e.message })
-      raise
+      raise e
     end
 
     def on_invoke_control_method(ws, payload)
@@ -543,7 +542,8 @@ module Ruflet
       return if ws.nil? || ws.closed?
 
       message = [action, payload]
-      ws.send_binary(Ruflet::WireCodec.pack(message))
+      packed = Ruflet::WireCodec.pack(message)
+      ws.send_binary(packed)
     rescue StandardError => e
       unless disconnect_error?(e)
         warn "send error: #{e.class}: #{e.message}"
@@ -567,14 +567,13 @@ module Ruflet
     end
 
     def pseudo_uuid
-      now = Process.clock_gettime(Process::CLOCK_REALTIME, :nanosecond)
-      rnd = rand(0..0xffff_ffff)
+      rnd = (rand(0..0xffff) << 16) | rand(0..0xffff)
       "%08x-%04x-%04x-%04x-%012x" % [
         rnd,
-        now & 0xffff,
-        (now >> 16) & 0xffff,
-        (now >> 32) & 0xffff,
-        (now >> 48) & 0xffff_ffff_ffff
+        rand(0..0xffff),
+        rand(0..0xffff),
+        rand(0..0xffff),
+        (rand(0..0xffff) << 32) | (rand(0..0xffff) << 16) | rand(0..0xffff)
       ]
     end
   end

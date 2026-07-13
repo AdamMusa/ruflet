@@ -11,6 +11,9 @@ class MockRufletRuntimePlatform
   Future<RufletRuntimeStatus> start({
     required String projectRoot,
     required String entrypoint,
+    List<String> loadPaths = const [],
+    Map<String, String> environment = const {},
+    String? errorFilePath,
     String? stopSignalPath,
   }) async {
     return const RufletRuntimeStatus(running: true, port: 8550, error: '');

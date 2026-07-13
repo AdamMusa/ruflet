@@ -269,9 +269,16 @@ class EmbeddedRufletRuntime {
 
     try {
       final entrypoint = await _prepareProjectFiles(workDir);
+      final errorFile = '${workDir.path}/.runtime.error';
       final status = await RufletRuntime.start(
         projectRoot: workDir.path,
         entrypoint: entrypoint,
+        loadPaths: [workDir.path],
+        environment: {
+          'RUFLET_STRICT_PORT': '1',
+          'RUFLET_RUNTIME_ERROR_FILE': errorFile,
+        },
+        errorFilePath: errorFile,
         stopSignalPath: stopPath,
       );
       if (status.error.isNotEmpty) {
@@ -342,14 +349,16 @@ class EmbeddedRufletRuntime {
       );
     }
 
-    final entrypoint = File('${workDir.path}/main.mrb');
-    if (!await entrypoint.exists()) {
-      throw StateError(
-        'The packaged Ruflet project does not contain main.mrb. '
-        'Run `ruflet build --self` to compile the app entrypoint.',
-      );
+    for (final name in ['main.rb', 'main.mrb']) {
+      final entrypoint = File('${workDir.path}/$name');
+      if (await entrypoint.exists()) {
+        return entrypoint.path;
+      }
     }
-    return entrypoint.path;
+    throw StateError(
+      'The packaged Ruflet project does not contain main.rb. '
+      'Run `ruflet build --self` to package the app.',
+    );
   }
 
   static String _embeddedProjectPrefix(List<String> manifest) {
@@ -360,9 +369,11 @@ class EmbeddedRufletRuntime {
 
     final discovered = manifest
         .where(
-          (asset) => asset.startsWith('assets/') && asset.endsWith('/main.mrb'),
+          (asset) =>
+              asset.startsWith('assets/') &&
+              (asset.endsWith('/main.rb') || asset.endsWith('/main.mrb')),
         )
-        .map((asset) => asset.substring(0, asset.length - 'main.mrb'.length))
+        .map((asset) => asset.substring(0, asset.lastIndexOf('/') + 1))
         .toSet()
         .toList();
 
@@ -377,7 +388,7 @@ class EmbeddedRufletRuntime {
     }
 
     throw StateError(
-      'Could not find main.mrb in the asset bundle. '
+      'Could not find main.rb in the asset bundle. '
       '${_describeRufletAssets(manifest)} '
       'Run `ruflet build --self` so Ruflet can package the app, '
       'or set the RUFLET_EMBEDDED_PROJECT dart define.',
@@ -389,13 +400,13 @@ class EmbeddedRufletRuntime {
       return 'The asset manifest could not be read or is empty.';
     }
     final rufletAssets = manifest
-        .where((asset) => asset.endsWith('.mrb'))
+        .where((asset) => asset.endsWith('.rb') || asset.endsWith('.mrb'))
         .take(8)
         .toList();
     if (rufletAssets.isEmpty) {
-      return 'The bundle contains no Ruflet bytecode.';
+      return 'The bundle contains no Ruby sources.';
     }
-    return 'Ruflet bytecode present: ${rufletAssets.join(', ')}.';
+    return 'Ruby sources present: ${rufletAssets.join(', ')}.';
   }
 
   static Future<List<String>> _loadAssetManifest() async {

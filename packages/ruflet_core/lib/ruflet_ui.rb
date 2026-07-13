@@ -154,6 +154,16 @@ module Kernel
     Ruflet::DSL
   end
 
+  def method_missing(name, *args, **props, &block)
+    return super if name.to_s.end_with?("=") || (args.empty? && props.empty? && !block)
+
+    forwarded = props.dup
+    forwarded[:value] = args.shift unless args.empty?
+    return super unless args.empty?
+
+    Ruflet::DSL.control(name.to_s, **forwarded, &block)
+  end
+
   if Ruflet::UI::SharedControlForwarders.respond_to?(:instance_methods)
     private(*Ruflet::UI::SharedControlForwarders.instance_methods(false))
   end

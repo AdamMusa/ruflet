@@ -147,7 +147,7 @@ module Ruflet
       Ruflet::UI::MaterialControlMethods.instance_methods(false) +
       Ruflet::UI::CupertinoControlMethods.instance_methods(false) +
       %i[control widget]
-    ).map(&:to_s).to_set.freeze
+    ).map(&:to_s).uniq.freeze
 
     attr_reader :session_id, :client_details, :views
 
@@ -435,7 +435,9 @@ module Ruflet
     end
 
     def on(event_name, &block)
-      @page_event_handlers[event_name.to_s.sub(/\Aon_/, "")] = block
+      name = event_name.to_s
+      name = name[3..-1] if name.start_with?("on_")
+      @page_event_handlers[name] = block
       self
     end
 
@@ -1175,6 +1177,7 @@ module Ruflet
       if page_control_target?(target)
         if name.to_s == "route_change"
           route_from_event = extract_route(data)
+          return if route_from_event && route_from_event == @page_props["route"]
           @page_props["route"] = route_from_event if route_from_event
         end
         dispatch_page_event(name: name, data: data)
@@ -1488,7 +1491,9 @@ module Ruflet
     end
 
     def dispatch_page_event(name:, data:)
-      handler = @page_event_handlers[name.to_s.sub(/\Aon_/, "")]
+      event_name = name.to_s
+      event_name = event_name[3..-1] if event_name.start_with?("on_")
+      handler = @page_event_handlers[event_name]
       return unless handler.respond_to?(:call)
 
       event = Event.new(name: name.to_s, target: 1, raw_data: data, page: self, control: nil)

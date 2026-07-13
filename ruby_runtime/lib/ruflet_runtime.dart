@@ -26,11 +26,17 @@ class RufletRuntime {
   static Future<RufletRuntimeStatus> start({
     required String projectRoot,
     required String entrypoint,
+    List<String> loadPaths = const [],
+    Map<String, String> environment = const {},
+    String? errorFilePath,
     String? stopSignalPath,
   }) {
     return RufletRuntimePlatform.instance.start(
       projectRoot: projectRoot,
       entrypoint: entrypoint,
+      loadPaths: loadPaths,
+      environment: environment,
+      errorFilePath: errorFilePath,
       stopSignalPath: stopSignalPath,
     );
   }

@@ -56,6 +56,9 @@ class RufletPageCompatibilityTest < Minitest::Test
 
     assert_equal "/store", page.route
     assert_equal ["/store"], routes
+
+    page.dispatch_event(target: 1, name: "route_change", data: { "route" => "/store" })
+    assert_equal ["/store"], routes
   end
 
   def test_page_supports_python_theme_animation_and_views_pop_until_api

@@ -8,7 +8,65 @@ module Ruflet
           TYPE = "cupertinobutton".freeze
           WIRE = "CupertinoButton".freeze
 
-          def initialize(id: nil, align: nil, alignment: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, autofocus: nil, badge: nil, bgcolor: nil, border_radius: nil, bottom: nil, col: nil, color: nil, content: nil, data: nil, disabled: nil, disabled_bgcolor: nil, expand: nil, expand_loose: nil, focus_color: nil, height: nil, icon: nil, icon_color: nil, key: nil, left: nil, margin: nil, min_size: nil, mouse_cursor: nil, offset: nil, opacity: nil, opacity_on_click: nil, padding: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size: nil, size_change_interval: nil, tooltip: nil, top: nil, url: nil, visible: nil, width: nil, on_animation_end: nil, on_blur: nil, on_click: nil, on_focus: nil, on_long_press: nil, on_size_change: nil)
+          KEYWORDS = [:align, :alignment, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :autofocus, :badge, :bgcolor, :border_radius, :bottom, :col, :color, :content, :data, :disabled, :disabled_bgcolor, :expand, :expand_loose, :focus_color, :height, :icon, :icon_color, :key, :left, :margin, :min_size, :mouse_cursor, :offset, :opacity, :opacity_on_click, :padding, :right, :rotate, :rtl, :scale, :size, :size_change_interval, :tooltip, :top, :url, :visible, :width, :on_animation_end, :on_blur, :on_click, :on_focus, :on_long_press, :on_size_change].freeze
+
+          def initialize(id: nil, **props)
+            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
+            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
+            align = props[:align]
+            alignment = props[:alignment]
+            animate_align = props[:animate_align]
+            animate_margin = props[:animate_margin]
+            animate_offset = props[:animate_offset]
+            animate_opacity = props[:animate_opacity]
+            animate_position = props[:animate_position]
+            animate_rotation = props[:animate_rotation]
+            animate_scale = props[:animate_scale]
+            animate_size = props[:animate_size]
+            aspect_ratio = props[:aspect_ratio]
+            autofocus = props[:autofocus]
+            badge = props[:badge]
+            bgcolor = props[:bgcolor]
+            border_radius = props[:border_radius]
+            bottom = props[:bottom]
+            col = props[:col]
+            color = props[:color]
+            content = props[:content]
+            data = props[:data]
+            disabled = props[:disabled]
+            disabled_bgcolor = props[:disabled_bgcolor]
+            expand = props[:expand]
+            expand_loose = props[:expand_loose]
+            focus_color = props[:focus_color]
+            height = props[:height]
+            icon = props[:icon]
+            icon_color = props[:icon_color]
+            key = props[:key]
+            left = props[:left]
+            margin = props[:margin]
+            min_size = props[:min_size]
+            mouse_cursor = props[:mouse_cursor]
+            offset = props[:offset]
+            opacity = props[:opacity]
+            opacity_on_click = props[:opacity_on_click]
+            padding = props[:padding]
+            right = props[:right]
+            rotate = props[:rotate]
+            rtl = props[:rtl]
+            scale = props[:scale]
+            size = props[:size]
+            size_change_interval = props[:size_change_interval]
+            tooltip = props[:tooltip]
+            top = props[:top]
+            url = props[:url]
+            visible = props[:visible]
+            width = props[:width]
+            on_animation_end = props[:on_animation_end]
+            on_blur = props[:on_blur]
+            on_click = props[:on_click]
+            on_focus = props[:on_focus]
+            on_long_press = props[:on_long_press]
+            on_size_change = props[:on_size_change]
             alignment = "center" if alignment.nil?
             autofocus = false if autofocus.nil?
             border_radius = { "all" => 8.0 } if border_radius.nil?

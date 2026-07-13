@@ -1036,9 +1036,6 @@ module Ruflet
 
       def configure_client_runtime_mode(client_dir, self_contained:, verbose: false)
         build_log(verbose, "configuring #{self_contained ? 'self-contained' : 'server-driven'} runtime")
-        return false unless ensure_embedded_mruby_runtime!(self_contained: self_contained, verbose: verbose)
-        return false unless build_embedded_app_bytecode!(self_contained: self_contained, verbose: verbose)
-
         sync_client_pubspec_for_runtime_mode(client_dir, self_contained: self_contained)
         if self_contained
           sync_self_contained_project_assets(client_dir, verbose: verbose)
@@ -1048,53 +1045,6 @@ module Ruflet
           remove_local_ruby_runtime_override(client_dir, verbose: verbose)
         end
         true
-      end
-
-      def ensure_embedded_mruby_runtime!(self_contained:, verbose: false)
-        return true unless self_contained
-        return true if ENV["RUFLET_EMBEDDED_RUNTIME_AUTOBUILD"] == "0"
-
-        script = File.expand_path("../../../../../tools/build_embedded_runtime.rb", __dir__)
-        unless File.file?(script)
-          build_log(verbose, "using shipped ruby_runtime mruby artifact")
-          return true
-        end
-
-        root = File.expand_path("../../../../../", __dir__)
-        build_log(verbose, "building embedded mruby runtime")
-        _stdout, stderr, status = Open3.capture3(RbConfig.ruby, script, chdir: root)
-        return true if status.success?
-
-        warn "embedded mruby runtime build failed"
-        warn stderr unless stderr.to_s.empty?
-        false
-      rescue StandardError => e
-        warn "embedded mruby runtime build failed: #{e.class}: #{e.message}"
-        false
-      end
-
-      def build_embedded_app_bytecode!(self_contained:, verbose: false)
-        return true unless self_contained
-        return true if ENV["RUFLET_EMBEDDED_APP_BYTECODE"] == "0"
-
-        script = File.expand_path("../../../../../tools/build_embedded_app.rb", __dir__)
-        entry = File.expand_path("main.rb", Dir.pwd)
-        unless File.file?(script) && File.file?(entry)
-          build_log(verbose, "using Ruby source startup; embedded app compiler is unavailable")
-          return true
-        end
-
-        output = File.expand_path("build/ruflet_embedded/main.mrb", Dir.pwd)
-        build_log(verbose, "compiling embedded app bytecode")
-        _stdout, stderr, status = Open3.capture3(RbConfig.ruby, script, entry, output, chdir: File.expand_path("../../../../../", __dir__))
-        return true if status.success?
-
-        warn "embedded app bytecode build failed"
-        warn stderr unless stderr.to_s.empty?
-        false
-      rescue StandardError => e
-        warn "embedded app bytecode build failed: #{e.class}: #{e.message}"
-        false
       end
 
       def sync_client_pubspec_for_runtime_mode(client_dir, self_contained:)
@@ -1207,7 +1157,8 @@ module Ruflet
       def self_contained_project_asset_dirs
         prefix = "assets/#{self_contained_project_name}"
         dirs = project_asset_relative_paths.map { |rel| File.dirname(rel) }.uniq
-        dirs.map { |dir| dir == "." ? "#{prefix}/" : "#{prefix}/#{dir}/" }.uniq.sort
+        project_dirs = dirs.map { |dir| dir == "." ? "#{prefix}/" : "#{prefix}/#{dir}/" }
+        project_dirs.sort
       end
 
       def sync_self_contained_project_assets(client_dir, verbose: false)
@@ -1225,12 +1176,6 @@ module Ruflet
           destination = File.join(destination_root, relative_path)
           FileUtils.mkdir_p(File.dirname(destination))
           FileUtils.cp(source.to_s, destination)
-          copied += 1
-        end
-
-        bytecode = File.join(Dir.pwd, "build", "ruflet_embedded", "main.mrb")
-        if File.file?(bytecode)
-          FileUtils.cp(bytecode, File.join(destination_root, "main.mrb"))
           copied += 1
         end
 
@@ -1257,11 +1202,12 @@ module Ruflet
         Find.find(root.to_s) do |path|
           pathname = Pathname.new(path)
           relative = pathname.relative_path_from(root).to_s
-          next if relative.empty?
+          next if relative.empty? || relative == "."
 
           if pathname.directory?
             if skip_project_asset_directory?(relative)
               Find.prune
+              next
             else
               next
             end
@@ -1298,16 +1244,15 @@ module Ruflet
           tmp
           vendor
         ]
-        relative.split(File::SEPARATOR).any? { |component| excluded_directories.include?(component) }
+        relative.split(File::SEPARATOR).any? do |component|
+          component.start_with?(".") || excluded_directories.include?(component)
+        end
       end
 
       def include_project_asset_file?(relative)
         basename = File.basename(relative)
         return false if basename == ".DS_Store"
         return false if %w[Gemfile.lock pubspec.lock Podfile.lock package-lock.json yarn.lock pnpm-lock.yaml].include?(basename)
-        # Ruby sources are compiled into main.mrb. Other project files remain
-        # available to the app as data assets.
-        return false if File.extname(relative) == ".rb"
         true
       end
 

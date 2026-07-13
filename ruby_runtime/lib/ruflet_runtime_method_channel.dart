@@ -12,12 +12,19 @@ class MethodChannelRufletRuntime extends RufletRuntimePlatform {
   Future<RufletRuntimeStatus> start({
     required String projectRoot,
     required String entrypoint,
+    List<String> loadPaths = const [],
+    Map<String, String> environment = const {},
+    String? errorFilePath,
     String? stopSignalPath,
   }) async {
     final value = await methodChannel
         .invokeMapMethod<Object?, Object?>('start', {
           'projectRoot': projectRoot,
           'entrypoint': entrypoint,
+          'loadPaths': loadPaths,
+          'environment': environment,
+          if (errorFilePath != null && errorFilePath.isNotEmpty)
+            'errorFilePath': errorFilePath,
           if (stopSignalPath != null && stopSignalPath.isNotEmpty)
             'stopSignalPath': stopSignalPath,
         });

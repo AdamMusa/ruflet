@@ -120,7 +120,7 @@ By default `ruflet build ...` looks for Flutter client at `./ruflet_client`.
 Set `RUFLET_CLIENT_DIR` to override.
 
 - `ruflet build ... --self` uses the self-contained Flutter entrypoint with `ruby_runtime`.
-- Self-contained builds refresh the embedded Ruflet mruby bytecode automatically when the source checkout is available. Set `RUFLET_EMBEDDED_RUNTIME_AUTOBUILD=0` to use the shipped runtime artifact unchanged.
+- Self-contained builds use the shipped mruby runtime artifact. Application builds do not rebuild or modify the VM.
 - `ruflet build ...` without `--self` builds the server-driven client entrypoint.
 
 ## Development (Monorepo)

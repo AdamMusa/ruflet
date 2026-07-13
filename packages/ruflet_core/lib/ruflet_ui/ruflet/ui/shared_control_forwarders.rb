@@ -272,6 +272,20 @@ module Ruflet
       def cupertinoslidingsegmentedbutton(children = nil, **props) = control_delegate.cupertinoslidingsegmentedbutton(children, **props)
       def duration(**parts) = control_delegate.duration(**parts)
 
+      # Client extensions are open-ended and cannot all be generated into this
+      # module. Unknown widget-style helpers with properties are forwarded as
+      # generic controls, allowing locally installed extensions to participate
+      # in the same Ruby DSL without VM or application-specific methods.
+      def method_missing(name, *args, **props, &block)
+        return super if name.to_s.end_with?("=") || (args.empty? && props.empty? && !block)
+
+        forwarded = props.dup
+        forwarded[:value] = args.shift unless args.empty?
+        return super unless args.empty?
+
+        control_delegate.control(name.to_s, **forwarded, &block)
+      end
+
       private
 
       def control_delegate

@@ -28,6 +28,9 @@ void main() {
     final status = await platform.start(
       projectRoot: '/tmp/demo',
       entrypoint: '/tmp/demo/main.mrb',
+      loadPaths: const ['/tmp/demo/vendor/ruflet_core/lib'],
+      environment: const {'APP_ENV': 'embedded'},
+      errorFilePath: '/tmp/demo/runtime.error',
       stopSignalPath: '/tmp/demo/server.stop',
     );
 
@@ -37,6 +40,9 @@ void main() {
     expect(calls.single.arguments, {
       'projectRoot': '/tmp/demo',
       'entrypoint': '/tmp/demo/main.mrb',
+      'loadPaths': ['/tmp/demo/vendor/ruflet_core/lib'],
+      'environment': {'APP_ENV': 'embedded'},
+      'errorFilePath': '/tmp/demo/runtime.error',
       'stopSignalPath': '/tmp/demo/server.stop',
     });
   });

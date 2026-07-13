@@ -20,6 +20,9 @@ abstract class RufletRuntimePlatform extends PlatformInterface {
   Future<RufletRuntimeStatus> start({
     required String projectRoot,
     required String entrypoint,
+    List<String> loadPaths = const [],
+    Map<String, String> environment = const {},
+    String? errorFilePath,
     String? stopSignalPath,
   }) {
     throw UnimplementedError('start() has not been implemented.');

@@ -13,6 +13,7 @@ module Ruflet
         Services::RufletServices::CLASS_MAP
           .merge(Controls::RufletControls::CLASS_MAP)
           .freeze
+      CONSTRUCTOR_KEYWORDS_CACHE = {}
 
       PYTHON_COMMON_ATTRIBUTES = %i[flip ref transform].freeze
       PYTHON_ATTRIBUTE_OVERRIDES = {
@@ -58,7 +59,7 @@ module Ruflet
           return control
         end
 
-        raise ArgumentError, "Unknown control type: #{normalized_type}"
+        Control.new(type: normalized_type, id: id, **props)
       end
 
       def normalize_constructor_props(klass, type, props)
@@ -79,10 +80,18 @@ module Ruflet
       end
 
       def constructor_keywords(klass)
-        klass.instance_method(:initialize).parameters
-             .select { |kind, _| kind == :key || kind == :keyreq }
-             .map { |_, name| name }
-             .reject { |name| name == :id }
+        return CONSTRUCTOR_KEYWORDS_CACHE[klass] if CONSTRUCTOR_KEYWORDS_CACHE.key?(klass)
+
+        keywords = if klass.const_defined?(:KEYWORDS)
+          klass::KEYWORDS
+        else
+          klass.instance_method(:initialize).parameters
+               .select { |kind, _| kind == :key || kind == :keyreq }
+               .map { |_, name| name }
+               .reject { |name| name == :id }
+        end
+
+        CONSTRUCTOR_KEYWORDS_CACHE[klass] = keywords.freeze
       rescue StandardError
         []
       end

@@ -8,7 +8,58 @@ module Ruflet
           TYPE = "outlinedbutton".freeze
           WIRE = "OutlinedButton".freeze
 
-          def initialize(id: nil, adaptive: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, autofocus: nil, badge: nil, bottom: nil, clip_behavior: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, icon: nil, icon_color: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, style: nil, tooltip: nil, top: nil, url: nil, visible: nil, width: nil, on_animation_end: nil, on_blur: nil, on_click: nil, on_focus: nil, on_hover: nil, on_long_press: nil, on_size_change: nil)
+          KEYWORDS = [:adaptive, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :autofocus, :badge, :bottom, :clip_behavior, :col, :content, :data, :disabled, :expand, :expand_loose, :height, :icon, :icon_color, :key, :left, :margin, :offset, :opacity, :right, :rotate, :rtl, :scale, :size_change_interval, :style, :tooltip, :top, :url, :visible, :width, :on_animation_end, :on_blur, :on_click, :on_focus, :on_hover, :on_long_press, :on_size_change].freeze
+
+          def initialize(id: nil, **props)
+            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
+            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
+            adaptive = props[:adaptive]
+            align = props[:align]
+            animate_align = props[:animate_align]
+            animate_margin = props[:animate_margin]
+            animate_offset = props[:animate_offset]
+            animate_opacity = props[:animate_opacity]
+            animate_position = props[:animate_position]
+            animate_rotation = props[:animate_rotation]
+            animate_scale = props[:animate_scale]
+            animate_size = props[:animate_size]
+            aspect_ratio = props[:aspect_ratio]
+            autofocus = props[:autofocus]
+            badge = props[:badge]
+            bottom = props[:bottom]
+            clip_behavior = props[:clip_behavior]
+            col = props[:col]
+            content = props[:content]
+            data = props[:data]
+            disabled = props[:disabled]
+            expand = props[:expand]
+            expand_loose = props[:expand_loose]
+            height = props[:height]
+            icon = props[:icon]
+            icon_color = props[:icon_color]
+            key = props[:key]
+            left = props[:left]
+            margin = props[:margin]
+            offset = props[:offset]
+            opacity = props[:opacity]
+            right = props[:right]
+            rotate = props[:rotate]
+            rtl = props[:rtl]
+            scale = props[:scale]
+            size_change_interval = props[:size_change_interval]
+            style = props[:style]
+            tooltip = props[:tooltip]
+            top = props[:top]
+            url = props[:url]
+            visible = props[:visible]
+            width = props[:width]
+            on_animation_end = props[:on_animation_end]
+            on_blur = props[:on_blur]
+            on_click = props[:on_click]
+            on_focus = props[:on_focus]
+            on_hover = props[:on_hover]
+            on_long_press = props[:on_long_press]
+            on_size_change = props[:on_size_change]
             autofocus = false if autofocus.nil?
             clip_behavior = "none" if clip_behavior.nil?
 

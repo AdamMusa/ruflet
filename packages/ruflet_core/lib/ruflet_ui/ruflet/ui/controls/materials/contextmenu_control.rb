@@ -8,7 +8,55 @@ module Ruflet
           TYPE = "contextmenu".freeze
           WIRE = "ContextMenu".freeze
 
-          def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, items: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, primary_items: nil, primary_trigger: nil, right: nil, rotate: nil, rtl: nil, scale: nil, secondary_items: nil, secondary_trigger: nil, size_change_interval: nil, tertiary_items: nil, tertiary_trigger: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_dismiss: nil, on_select: nil, on_size_change: nil)
+          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bottom, :col, :content, :data, :disabled, :expand, :expand_loose, :height, :items, :key, :left, :margin, :offset, :opacity, :primary_items, :primary_trigger, :right, :rotate, :rtl, :scale, :secondary_items, :secondary_trigger, :size_change_interval, :tertiary_items, :tertiary_trigger, :tooltip, :top, :visible, :width, :on_animation_end, :on_dismiss, :on_select, :on_size_change].freeze
+
+          def initialize(id: nil, **props)
+            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
+            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
+            align = props[:align]
+            animate_align = props[:animate_align]
+            animate_margin = props[:animate_margin]
+            animate_offset = props[:animate_offset]
+            animate_opacity = props[:animate_opacity]
+            animate_position = props[:animate_position]
+            animate_rotation = props[:animate_rotation]
+            animate_scale = props[:animate_scale]
+            animate_size = props[:animate_size]
+            aspect_ratio = props[:aspect_ratio]
+            badge = props[:badge]
+            bottom = props[:bottom]
+            col = props[:col]
+            content = props[:content]
+            data = props[:data]
+            disabled = props[:disabled]
+            expand = props[:expand]
+            expand_loose = props[:expand_loose]
+            height = props[:height]
+            items = props[:items]
+            key = props[:key]
+            left = props[:left]
+            margin = props[:margin]
+            offset = props[:offset]
+            opacity = props[:opacity]
+            primary_items = props[:primary_items]
+            primary_trigger = props[:primary_trigger]
+            right = props[:right]
+            rotate = props[:rotate]
+            rtl = props[:rtl]
+            scale = props[:scale]
+            secondary_items = props[:secondary_items]
+            secondary_trigger = props[:secondary_trigger]
+            size_change_interval = props[:size_change_interval]
+            tertiary_items = props[:tertiary_items]
+            tertiary_trigger = props[:tertiary_trigger]
+            tooltip = props[:tooltip]
+            top = props[:top]
+            visible = props[:visible]
+            width = props[:width]
+            on_animation_end = props[:on_animation_end]
+            on_dismiss = props[:on_dismiss]
+            on_select = props[:on_select]
+            on_size_change = props[:on_size_change]
             raise ArgumentError, "context_menu requires content" if content.nil?
 
             props = {}

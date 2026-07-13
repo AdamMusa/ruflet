@@ -8,7 +8,51 @@ module Ruflet
           TYPE = "animatedswitcher".freeze
           WIRE = "AnimatedSwitcher".freeze
 
-          def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, col: nil, content: nil, data: nil, disabled: nil, duration: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, reverse_duration: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, switch_in_curve: nil, switch_out_curve: nil, tooltip: nil, top: nil, transition: nil, visible: nil, width: nil, on_animation_end: nil, on_size_change: nil)
+          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bottom, :col, :content, :data, :disabled, :duration, :expand, :expand_loose, :height, :key, :left, :margin, :offset, :opacity, :reverse_duration, :right, :rotate, :rtl, :scale, :size_change_interval, :switch_in_curve, :switch_out_curve, :tooltip, :top, :transition, :visible, :width, :on_animation_end, :on_size_change].freeze
+
+          def initialize(id: nil, **props)
+            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
+            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
+            align = props[:align]
+            animate_align = props[:animate_align]
+            animate_margin = props[:animate_margin]
+            animate_offset = props[:animate_offset]
+            animate_opacity = props[:animate_opacity]
+            animate_position = props[:animate_position]
+            animate_rotation = props[:animate_rotation]
+            animate_scale = props[:animate_scale]
+            animate_size = props[:animate_size]
+            aspect_ratio = props[:aspect_ratio]
+            badge = props[:badge]
+            bottom = props[:bottom]
+            col = props[:col]
+            content = props[:content]
+            data = props[:data]
+            disabled = props[:disabled]
+            duration = props[:duration]
+            expand = props[:expand]
+            expand_loose = props[:expand_loose]
+            height = props[:height]
+            key = props[:key]
+            left = props[:left]
+            margin = props[:margin]
+            offset = props[:offset]
+            opacity = props[:opacity]
+            reverse_duration = props[:reverse_duration]
+            right = props[:right]
+            rotate = props[:rotate]
+            rtl = props[:rtl]
+            scale = props[:scale]
+            size_change_interval = props[:size_change_interval]
+            switch_in_curve = props[:switch_in_curve]
+            switch_out_curve = props[:switch_out_curve]
+            tooltip = props[:tooltip]
+            top = props[:top]
+            transition = props[:transition]
+            visible = props[:visible]
+            width = props[:width]
+            on_animation_end = props[:on_animation_end]
+            on_size_change = props[:on_size_change]
             raise ArgumentError, "animated_switcher requires content" if content.nil?
 
             duration = 1000 if duration.nil?

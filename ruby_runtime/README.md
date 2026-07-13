@@ -5,17 +5,21 @@ apps. It is deliberately not a general-purpose Ruby plugin.
 
 ## Runtime Contract
 
-The build pipeline produces two bytecode artifacts:
+The runtime has three inputs:
 
-- `embedded_ruflet_runtime.h` contains Ruflet framework and server code.
-- `main.mrb` contains the application's bundled Ruby entrypoint.
+- `vm/bootstrap.rb` provides framework-neutral loading and compatibility support.
+- Ruflet framework and server gems are precompiled into the VM distribution.
+- `main.rb` (or a build-produced `main.mrb`) is the application's entrypoint.
 
-At startup the native plugin loads the Ruflet runtime, loads `main.mrb`, and
-runs the local HTTP/WebSocket server. The Flutter client connects to that
-server and renders Ruflet protocol messages.
+At startup the native plugin initializes mruby, installs the generic bootstrap,
+initializes the preloaded gems, and executes the entrypoint. The application
+loads Ruflet normally with `require`; Ruflet's gems own the
+HTTP/WebSocket server and all framework behavior. The Flutter client connects
+to that server and renders Ruflet protocol messages.
 
-The device runtime does not expose Ruby source evaluation, file execution, or
-compiler APIs. Ruby compilation happens during `ruflet build --self`.
+The device runtime can execute packaged Ruby source or mruby bytecode. It does
+not compile gems or resolve dependencies on-device; `ruflet build --self`
+packages only the developer's application code and assets.
 
 ## Platforms
 
@@ -30,15 +34,17 @@ import 'package:ruby_runtime/ruflet_runtime.dart';
 
 final status = await RufletRuntime.start(
   projectRoot: extractedProject.path,
-  entrypoint: '${extractedProject.path}/main.mrb',
+  entrypoint: '${extractedProject.path}/main.rb',
+  loadPaths: packagedGemLibDirectories,
 );
 
 final current = await RufletRuntime.status();
 await RufletRuntime.stop();
 ```
 
-`RufletRuntimeStatus` reports whether the server is running, its port, and the
-last startup or runtime error.
+`RufletRuntimeStatus` reports whether the VM is running and the last startup or
+runtime error. The application/framework configuration determines its server
+address.
 
 ## Build Flow
 

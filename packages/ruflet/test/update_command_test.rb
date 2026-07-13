@@ -185,10 +185,18 @@ class RufletCliUpdateCommandTest < Minitest::Test
 
     assert builder.send(:include_project_asset_file?, "templates/editor.html")
     assert builder.send(:include_project_asset_file?, "data/sample.csv")
-    refute builder.send(:include_project_asset_file?, "main.rb")
-    refute builder.send(:include_project_asset_file?, "lib/widgets.rb")
+    assert builder.send(:include_project_asset_file?, "main.rb")
+    assert builder.send(:include_project_asset_file?, "lib/widgets.rb")
     refute builder.send(:include_project_asset_file?, "Gemfile.lock")
     refute builder.send(:include_project_asset_file?, "nested/pubspec.lock")
+  end
+
+  def test_project_asset_filter_prunes_hidden_workspace_directories
+    builder = DummyBuilder.new
+
+    assert builder.send(:skip_project_asset_directory?, ".claude/worktrees/example")
+    assert builder.send(:skip_project_asset_directory?, "nested/.git")
+    refute builder.send(:skip_project_asset_directory?, "standalone_apps/example")
   end
 
   def test_prune_client_pubspec_preserves_formatted_flutter_assets

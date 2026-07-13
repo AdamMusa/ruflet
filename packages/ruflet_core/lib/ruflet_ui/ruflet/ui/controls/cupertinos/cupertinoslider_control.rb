@@ -8,7 +8,56 @@ module Ruflet
           TYPE = "cupertinoslider".freeze
           WIRE = "CupertinoSlider".freeze
 
-          def initialize(id: nil, active_color: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, col: nil, data: nil, disabled: nil, divisions: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, max: nil, min: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, thumb_color: nil, tooltip: nil, top: nil, value: nil, visible: nil, width: nil, on_animation_end: nil, on_blur: nil, on_change: nil, on_change_end: nil, on_change_start: nil, on_focus: nil, on_size_change: nil)
+          KEYWORDS = [:active_color, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bottom, :col, :data, :disabled, :divisions, :expand, :expand_loose, :height, :key, :left, :margin, :max, :min, :offset, :opacity, :right, :rotate, :rtl, :scale, :size_change_interval, :thumb_color, :tooltip, :top, :value, :visible, :width, :on_animation_end, :on_blur, :on_change, :on_change_end, :on_change_start, :on_focus, :on_size_change].freeze
+
+          def initialize(id: nil, **props)
+            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
+            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
+            active_color = props[:active_color]
+            align = props[:align]
+            animate_align = props[:animate_align]
+            animate_margin = props[:animate_margin]
+            animate_offset = props[:animate_offset]
+            animate_opacity = props[:animate_opacity]
+            animate_position = props[:animate_position]
+            animate_rotation = props[:animate_rotation]
+            animate_scale = props[:animate_scale]
+            animate_size = props[:animate_size]
+            aspect_ratio = props[:aspect_ratio]
+            badge = props[:badge]
+            bottom = props[:bottom]
+            col = props[:col]
+            data = props[:data]
+            disabled = props[:disabled]
+            divisions = props[:divisions]
+            expand = props[:expand]
+            expand_loose = props[:expand_loose]
+            height = props[:height]
+            key = props[:key]
+            left = props[:left]
+            margin = props[:margin]
+            max = props[:max]
+            min = props[:min]
+            offset = props[:offset]
+            opacity = props[:opacity]
+            right = props[:right]
+            rotate = props[:rotate]
+            rtl = props[:rtl]
+            scale = props[:scale]
+            size_change_interval = props[:size_change_interval]
+            thumb_color = props[:thumb_color]
+            tooltip = props[:tooltip]
+            top = props[:top]
+            value = props[:value]
+            visible = props[:visible]
+            width = props[:width]
+            on_animation_end = props[:on_animation_end]
+            on_blur = props[:on_blur]
+            on_change = props[:on_change]
+            on_change_end = props[:on_change_end]
+            on_change_start = props[:on_change_start]
+            on_focus = props[:on_focus]
+            on_size_change = props[:on_size_change]
             min = 0.0 if min.nil?
             max = 1.0 if max.nil?
 
