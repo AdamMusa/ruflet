@@ -25,7 +25,14 @@ packages only the developer's application code and assets.
 
 - Android
 - iOS
-- macOS
+- macOS (the universal `arm64`/`x86_64` VM archive is distributed in
+  `macos/Frameworks`; application builds compile only the Flutter bridge)
+
+Native VM artifacts are part of the `ruby_runtime` release, not part of the
+developer application build. Each artifact has a checked manifest beside it
+with its platform, architectures, contents, and SHA-256 digest. Updating
+mruby or a preloaded Ruflet gem creates a new runtime artifact and package
+version. It does not copy framework Ruby sources into an application.
 
 ## Dart API
 
