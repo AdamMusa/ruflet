@@ -21,6 +21,9 @@ set(MRUBY_GEM_SOURCES
   "${MRUBY_ROOT}/mrbgems/mruby-socket/src/socket.c"
   "${MRUBY_ROOT}/mrbgems/mruby-sprintf/src/sprintf.c"
   "${MRUBY_ROOT}/mrbgems/mruby-fiber/src/fiber.c"
+  "${MRUBY_ROOT}/mrbgems/mruby-binding/src/binding.c"
+  "${MRUBY_ROOT}/mrbgems/mruby-proc-binding/src/proc_binding.c"
+  "${MRUBY_ROOT}/mrbgems/mruby-eval/src/eval.c"
   "${MRUBY_ROOT}/mrbgems/mruby-numeric-ext/src/numeric_ext.c"
   "${MRUBY_ROOT}/mrbgems/mruby-metaprog/src/metaprog.c"
   "${MRUBY_ROOT}/mrbgems/mruby-pack/src/pack.c"
@@ -41,6 +44,9 @@ set(MRUBY_GENERATED_SOURCES
   "${MRUBY_BUILD_ROOT}/mrbgems/mruby-enum-chain/gem_init.c"
   "${MRUBY_BUILD_ROOT}/mrbgems/mruby-numeric-ext/gem_init.c"
   "${MRUBY_ROOT}/build/host_vm/mrbgems/mruby-onig-regexp/gem_init.c"
+  "${MRUBY_ROOT}/build/host_vm/mrbgems/mruby-binding/gem_init.c"
+  "${MRUBY_ROOT}/build/host_vm/mrbgems/mruby-proc-binding/gem_init.c"
+  "${MRUBY_ROOT}/build/host_vm/mrbgems/mruby-eval/gem_init.c"
   "${MRUBY_ROOT}/build/host_vm/mrbgems/ruflet-framework/gem_init.c"
 )
 

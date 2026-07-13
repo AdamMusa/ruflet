@@ -35,6 +35,9 @@ CORE_GEMS = %w[
   mruby-kernel-ext
   mruby-symbol-ext
   mruby-proc-ext
+  mruby-binding
+  mruby-proc-binding
+  mruby-eval
   mruby-class-ext
   mruby-compar-ext
   mruby-range-ext
