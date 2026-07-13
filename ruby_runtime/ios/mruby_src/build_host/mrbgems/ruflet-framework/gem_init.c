@@ -78094,7 +78094,7 @@ static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_225820 = {
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_225821, 1, (MRB_SYM(to_i), ), const);
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_225821[36] = {
-0x39,0x04,0x00,0x00,0x01,0x04,0x01,0x33,0x04,0x00,0x01,0x03,0x04,0x01,0x04,0x03,0x06,0x05,0x50,0x04,
+0x39,0x04,0x00,0x00,0x01,0x04,0x01,0x33,0x04,0x00,0x01,0x03,0x04,0x01,0x04,0x03,0x06,0x05,0x51,0x04,
 0x28,0x04,0x00,0x06,0x01,0x04,0x03,0x26,0x00,0x04,0x0e,0x04,0x21,0x66,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_225821, 3, (MRB_SYM(value), 0,MRB_SYM(port), ), const);
 static const char gem_mrblib_ruflet_framework_proc_debug_lines_225821[] = "\x00\xdd\x7f\x04\x01\x09\x01";
@@ -78182,32 +78182,33 @@ static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_226059 = {
 static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_226060[1] = {
 {IREP_TT_SSTR|(11<<2), {"\x52\x55\x46\x4c\x45\x54\x5f\x50\x4f\x52\x54"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_226060, 3, (MRB_SYM(ENV), MRB_SYM(to_s), MRB_SYM(to_i), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226060[50] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_226060, 5, (MRB_SYM(ENV), MRB_SYM(to_s), MRB_SYM(strip), MRB_SYM_Q(empty), MRB_SYM(to_i), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226060[69] = {
 0x39,0x00,0x00,0x00,0x1d,0x04,0x00,0x5c,0x05,0x00,0x23,0x04,0x33,0x04,0x01,0x01,0x02,0x04,0x01,0x04,
-0x02,0x33,0x04,0x02,0x01,0x03,0x04,0x01,0x04,0x03,0x06,0x05,0x50,0x04,0x28,0x04,0x00,0x06,0x01,0x04,
-0x03,0x26,0x00,0x04,0x0e,0x04,0x21,0x66,0x3d,0x04,};
+0x02,0x33,0x04,0x02,0x33,0x04,0x03,0x28,0x04,0x00,0x06,0x0e,0x04,0x21,0x66,0x3d,0x04,0x01,0x04,0x02,
+0x33,0x04,0x04,0x01,0x03,0x04,0x01,0x04,0x03,0x06,0x05,0x51,0x04,0x28,0x04,0x00,0x06,0x01,0x04,0x03,
+0x26,0x00,0x04,0x0e,0x04,0x21,0x66,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226060, 3, (0,MRB_SYM(raw), MRB_SYM(value), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226060[] = "\x00\xfc\x7f\x04\x01\x0e\x01\x09\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226060[] = "\x00\xfc\x7f\x04\x01\x0e\x01\x13\x02\x09\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226060 = {
-0, 324, 9, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226060}};
+0, 324, 11, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226060}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226060_ = &gem_mrblib_ruflet_framework_proc_debug_file_226060;
 static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_226060 = {
-50, 1, &gem_mrblib_ruflet_framework_proc_debug_file_226060_};
+69, 1, &gem_mrblib_ruflet_framework_proc_debug_file_226060_};
 static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_226060 = {
   4,7,0,
   MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_226060,
   gem_mrblib_ruflet_framework_proc_pool_226060,gem_mrblib_ruflet_framework_proc_syms_226060,NULL,
   gem_mrblib_ruflet_framework_proc_lv_226060,
   &gem_mrblib_ruflet_framework_proc_debug_226060,
-  50,1,3,0,0
+  69,1,5,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_226061, 7, (MRB_IVSYM(_pending_app), MRB_SYM(App), MRB_SYM(host), MRB_SYM(default_host), MRB_SYM(port), MRB_SYM(default_port), MRB_SYM(new), ), const);
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226061[35] = {
 0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x27,0x02,0x00,0x16,0x1d,0x02,0x01,0x10,0x03,0x02,0x30,0x04,0x03,
 0x10,0x05,0x04,0x30,0x06,0x05,0x32,0x02,0x06,0x20,0x1a,0x02,0x00,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226061, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226061[] = "\x00\x82\x80\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226061[] = "\x00\x84\x80\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226061 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226061}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226061_ = &gem_mrblib_ruflet_framework_proc_debug_file_226061;
@@ -78226,7 +78227,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226062[28] = {
 0x39,0x00,0x00,0x00,0x1d,0x02,0x00,0x10,0x03,0x01,0x30,0x04,0x02,0x10,0x05,0x03,0x30,0x06,0x04,0x32,
 0x02,0x05,0x20,0x1a,0x02,0x06,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226062, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226062[] = "\x00\x86\x80\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226062[] = "\x00\x88\x80\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226062 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226062}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226062_ = &gem_mrblib_ruflet_framework_proc_debug_file_226062;
@@ -78244,7 +78245,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_227439, 1, (MRB_SYM(in
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_227439[17] = {
 0x39,0x04,0x00,0x00,0x01,0x03,0x01,0x21,0x04,0x03,0x00,0x34,0x03,0x00,0x00,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_227439, 2, (MRB_SYM(a), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_227439[] = "\x00\x8d\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_227439[] = "\x00\x8f\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_227439 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_227439}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_227439_ = &gem_mrblib_ruflet_framework_proc_debug_file_227439;
@@ -78272,7 +78273,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226063[147] = {
 0x01,0x06,0x07,0x01,0x07,0x06,0x10,0x08,0x00,0x01,0x09,0x04,0x10,0x0a,0x01,0x01,0x0b,0x05,0x32,0x07,
 0x08,0x20,0x30,0x07,0x09,0x3d,0x06,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226063, 6, (MRB_OPSYM(pow), 0,MRB_SYM(block), MRB_SYM(host), MRB_SYM(port), MRB_SYM(pending), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226063[] = "\x00\x8a\x80\x01\x38\x01\x0d\x01\x0d\x01\x23\x02\x06\x01\x13\x01\x03\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226063[] = "\x00\x8c\x80\x01\x38\x01\x0d\x01\x0d\x01\x23\x02\x06\x01\x13\x01\x03\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226063 = {
 0, 324, 18, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226063}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226063_ = &gem_mrblib_ruflet_framework_proc_debug_file_226063;
@@ -78291,7 +78292,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226064[27] = {
 0x39,0x00,0x00,0x03,0x01,0x03,0x02,0x30,0x04,0x00,0x5e,0x05,0x00,0x01,0x06,0x01,0x60,0x05,0x01,0x06,
 0x03,0x34,0x04,0x01,0xf0,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226064, 3, (MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226064[] = "\x00\x95\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226064[] = "\x00\x97\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226064 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226064}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226064_ = &gem_mrblib_ruflet_framework_proc_debug_file_226064;
@@ -78310,7 +78311,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226065[30] = {
 0x39,0x04,0x00,0x03,0x01,0x04,0x03,0x30,0x05,0x00,0x01,0x06,0x01,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,
 0x07,0x01,0x08,0x04,0x34,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226065, 4, (MRB_SYM(type), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226065[] = "\x00\x96\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226065[] = "\x00\x98\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226065 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226065}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226065_ = &gem_mrblib_ruflet_framework_proc_debug_file_226065;
@@ -78329,7 +78330,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226066[30] = {
 0x39,0x04,0x00,0x03,0x01,0x04,0x03,0x30,0x05,0x00,0x01,0x06,0x01,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,
 0x07,0x01,0x08,0x04,0x34,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226066, 4, (MRB_SYM(type), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226066[] = "\x00\x97\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226066[] = "\x00\x99\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226066 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226066}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226066_ = &gem_mrblib_ruflet_framework_proc_debug_file_226066;
@@ -78348,7 +78349,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226067[30] = {
 0x39,0x04,0x00,0x03,0x01,0x04,0x03,0x30,0x05,0x00,0x01,0x06,0x01,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,
 0x07,0x01,0x08,0x04,0x34,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226067, 4, (MRB_SYM(type), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226067[] = "\x00\x98\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226067[] = "\x00\x9a\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226067 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226067}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226067_ = &gem_mrblib_ruflet_framework_proc_debug_file_226067;
@@ -78367,7 +78368,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226068[38] = {
 0x39,0x00,0x20,0x03,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x01,0x04,0x03,0x30,0x05,0x00,0x01,0x06,
 0x01,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,0x07,0x01,0x08,0x04,0x34,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226068, 4, (MRB_SYM(children), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226068[] = "\x00\x99\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226068[] = "\x00\x9b\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226068 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226068}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226068_ = &gem_mrblib_ruflet_framework_proc_debug_file_226068;
@@ -78386,7 +78387,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226069[27] = {
 0x39,0x00,0x00,0x03,0x01,0x03,0x02,0x30,0x04,0x00,0x5e,0x05,0x00,0x01,0x06,0x01,0x60,0x05,0x01,0x06,
 0x03,0x34,0x04,0x01,0xf0,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226069, 3, (MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226069[] = "\x00\x9a\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226069[] = "\x00\x9c\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226069 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226069}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226069_ = &gem_mrblib_ruflet_framework_proc_debug_file_226069;
@@ -78405,7 +78406,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226070[38] = {
 0x39,0x00,0x20,0x03,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x01,0x04,0x03,0x30,0x05,0x00,0x01,0x06,
 0x01,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,0x07,0x01,0x08,0x04,0x34,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226070, 4, (MRB_SYM(children), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226070[] = "\x00\x9b\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226070[] = "\x00\x9d\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226070 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226070}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226070_ = &gem_mrblib_ruflet_framework_proc_debug_file_226070;
@@ -78424,7 +78425,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226071[38] = {
 0x39,0x00,0x20,0x03,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x01,0x04,0x03,0x30,0x05,0x00,0x01,0x06,
 0x01,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,0x07,0x01,0x08,0x04,0x34,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226071, 4, (MRB_SYM(children), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226071[] = "\x00\x9c\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226071[] = "\x00\x9e\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226071 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226071}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226071_ = &gem_mrblib_ruflet_framework_proc_debug_file_226071;
@@ -78443,7 +78444,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226072[38] = {
 0x39,0x00,0x20,0x03,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x01,0x04,0x03,0x30,0x05,0x00,0x01,0x06,
 0x01,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,0x07,0x01,0x08,0x04,0x34,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226072, 4, (MRB_SYM(children), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226072[] = "\x00\x9d\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226072[] = "\x00\x9f\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226072 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226072}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226072_ = &gem_mrblib_ruflet_framework_proc_debug_file_226072;
@@ -78462,7 +78463,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226073[38] = {
 0x39,0x00,0x20,0x03,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x01,0x04,0x03,0x30,0x05,0x00,0x01,0x06,
 0x01,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,0x07,0x01,0x08,0x04,0x34,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226073, 4, (MRB_SYM(children), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226073[] = "\x00\x9e\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226073[] = "\x00\xa0\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226073 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226073}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226073_ = &gem_mrblib_ruflet_framework_proc_debug_file_226073;
@@ -78481,7 +78482,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226074[27] = {
 0x39,0x00,0x00,0x03,0x01,0x03,0x02,0x30,0x04,0x00,0x5e,0x05,0x00,0x01,0x06,0x01,0x60,0x05,0x01,0x06,
 0x03,0x34,0x04,0x01,0xf0,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226074, 3, (MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226074[] = "\x00\x9f\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226074[] = "\x00\xa1\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226074 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226074}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226074_ = &gem_mrblib_ruflet_framework_proc_debug_file_226074;
@@ -78500,7 +78501,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226075[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226075, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226075[] = "\x00\xa0\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226075[] = "\x00\xa2\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226075 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226075}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226075_ = &gem_mrblib_ruflet_framework_proc_debug_file_226075;
@@ -78519,7 +78520,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226076[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226076, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226076[] = "\x00\xa1\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226076[] = "\x00\xa3\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226076 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226076}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226076_ = &gem_mrblib_ruflet_framework_proc_debug_file_226076;
@@ -78538,7 +78539,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226077[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226077, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226077[] = "\x00\xa2\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226077[] = "\x00\xa4\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226077 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226077}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226077_ = &gem_mrblib_ruflet_framework_proc_debug_file_226077;
@@ -78557,7 +78558,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226078[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226078, 3, (MRB_SYM(suggestions), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226078[] = "\x00\xa3\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226078[] = "\x00\xa5\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226078 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226078}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226078_ = &gem_mrblib_ruflet_framework_proc_debug_file_226078;
@@ -78576,7 +78577,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226079[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226079, 3, (MRB_SYM(suggestions), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226079[] = "\x00\xa4\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226079[] = "\x00\xa6\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226079 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226079}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226079_ = &gem_mrblib_ruflet_framework_proc_debug_file_226079;
@@ -78595,7 +78596,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226080[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226080, 3, (MRB_SYM(key), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226080[] = "\x00\xa5\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226080[] = "\x00\xa7\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226080 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226080}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226080_ = &gem_mrblib_ruflet_framework_proc_debug_file_226080;
@@ -78614,7 +78615,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226081[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226081, 3, (MRB_SYM(key), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226081[] = "\x00\xa6\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226081[] = "\x00\xa8\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226081 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226081}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226081_ = &gem_mrblib_ruflet_framework_proc_debug_file_226081;
@@ -78633,7 +78634,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226082[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226082, 3, (MRB_SYM(key), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226082[] = "\x00\xa7\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226082[] = "\x00\xa9\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226082 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226082}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226082_ = &gem_mrblib_ruflet_framework_proc_debug_file_226082;
@@ -78652,7 +78653,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226083[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226083, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226083[] = "\x00\xa8\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226083[] = "\x00\xaa\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226083 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226083}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226083_ = &gem_mrblib_ruflet_framework_proc_debug_file_226083;
@@ -78671,7 +78672,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226084[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226084, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226084[] = "\x00\xa9\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226084[] = "\x00\xab\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226084 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226084}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226084_ = &gem_mrblib_ruflet_framework_proc_debug_file_226084;
@@ -78690,7 +78691,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226085[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226085, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226085[] = "\x00\xaa\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226085[] = "\x00\xac\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226085 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226085}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226085_ = &gem_mrblib_ruflet_framework_proc_debug_file_226085;
@@ -78709,7 +78710,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226086[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226086, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226086[] = "\x00\xab\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226086[] = "\x00\xad\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226086 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226086}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226086_ = &gem_mrblib_ruflet_framework_proc_debug_file_226086;
@@ -78728,7 +78729,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226087[27] = {
 0x39,0x00,0x00,0x03,0x01,0x03,0x02,0x30,0x04,0x00,0x5e,0x05,0x00,0x01,0x06,0x01,0x60,0x05,0x01,0x06,
 0x03,0x34,0x04,0x01,0xf0,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226087, 3, (MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226087[] = "\x00\xac\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226087[] = "\x00\xae\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226087 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226087}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226087_ = &gem_mrblib_ruflet_framework_proc_debug_file_226087;
@@ -78747,7 +78748,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226088[27] = {
 0x39,0x00,0x00,0x03,0x01,0x03,0x02,0x30,0x04,0x00,0x5e,0x05,0x00,0x01,0x06,0x01,0x60,0x05,0x01,0x06,
 0x03,0x34,0x04,0x01,0xf0,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226088, 3, (MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226088[] = "\x00\xad\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226088[] = "\x00\xaf\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226088 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226088}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226088_ = &gem_mrblib_ruflet_framework_proc_debug_file_226088;
@@ -78766,7 +78767,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226089[38] = {
 0x39,0x00,0x20,0x03,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x01,0x04,0x03,0x30,0x05,0x00,0x01,0x06,
 0x01,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,0x07,0x01,0x08,0x04,0x34,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226089, 4, (MRB_SYM(content), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226089[] = "\x00\xae\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226089[] = "\x00\xb0\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226089 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226089}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226089_ = &gem_mrblib_ruflet_framework_proc_debug_file_226089;
@@ -78785,7 +78786,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226090[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226090, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226090[] = "\x00\xaf\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226090[] = "\x00\xb1\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226090 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226090}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226090_ = &gem_mrblib_ruflet_framework_proc_debug_file_226090;
@@ -78804,7 +78805,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226091[38] = {
 0x39,0x00,0x20,0x03,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x01,0x04,0x03,0x30,0x05,0x00,0x01,0x06,
 0x01,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,0x07,0x01,0x08,0x04,0x34,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226091, 4, (MRB_SYM(content), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226091[] = "\x00\xb0\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226091[] = "\x00\xb2\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226091 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226091}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226091_ = &gem_mrblib_ruflet_framework_proc_debug_file_226091;
@@ -78823,7 +78824,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226092[38] = {
 0x39,0x00,0x20,0x03,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x01,0x04,0x03,0x30,0x05,0x00,0x01,0x06,
 0x01,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,0x07,0x01,0x08,0x04,0x34,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226092, 4, (MRB_SYM(content), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226092[] = "\x00\xb1\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226092[] = "\x00\xb3\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226092 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226092}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226092_ = &gem_mrblib_ruflet_framework_proc_debug_file_226092;
@@ -78842,7 +78843,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226093[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226093, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226093[] = "\x00\xb2\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226093[] = "\x00\xb4\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226093 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226093}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226093_ = &gem_mrblib_ruflet_framework_proc_debug_file_226093;
@@ -78861,7 +78862,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226094[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226094, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226094[] = "\x00\xb3\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226094[] = "\x00\xb5\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226094 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226094}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226094_ = &gem_mrblib_ruflet_framework_proc_debug_file_226094;
@@ -78880,7 +78881,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226095[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226095, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226095[] = "\x00\xb4\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226095[] = "\x00\xb6\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226095 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226095}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226095_ = &gem_mrblib_ruflet_framework_proc_debug_file_226095;
@@ -78899,7 +78900,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226096[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226096, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226096[] = "\x00\xb5\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226096[] = "\x00\xb7\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226096 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226096}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226096_ = &gem_mrblib_ruflet_framework_proc_debug_file_226096;
@@ -78918,7 +78919,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226097[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226097, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226097[] = "\x00\xb6\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226097[] = "\x00\xb8\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226097 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226097}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226097_ = &gem_mrblib_ruflet_framework_proc_debug_file_226097;
@@ -78937,7 +78938,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226098[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226098, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226098[] = "\x00\xb7\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226098[] = "\x00\xb9\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226098 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226098}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226098_ = &gem_mrblib_ruflet_framework_proc_debug_file_226098;
@@ -78956,7 +78957,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226099[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226099, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226099[] = "\x00\xb8\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226099[] = "\x00\xba\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226099 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226099}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226099_ = &gem_mrblib_ruflet_framework_proc_debug_file_226099;
@@ -78975,7 +78976,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226100[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226100, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226100[] = "\x00\xb9\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226100[] = "\x00\xbb\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226100 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226100}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226100_ = &gem_mrblib_ruflet_framework_proc_debug_file_226100;
@@ -78994,7 +78995,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226101[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226101, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226101[] = "\x00\xba\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226101[] = "\x00\xbc\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226101 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226101}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226101_ = &gem_mrblib_ruflet_framework_proc_debug_file_226101;
@@ -79013,7 +79014,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226102[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226102, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226102[] = "\x00\xbb\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226102[] = "\x00\xbd\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226102 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226102}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226102_ = &gem_mrblib_ruflet_framework_proc_debug_file_226102;
@@ -79032,7 +79033,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226103[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226103, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226103[] = "\x00\xbc\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226103[] = "\x00\xbe\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226103 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226103}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226103_ = &gem_mrblib_ruflet_framework_proc_debug_file_226103;
@@ -79051,7 +79052,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226104[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226104, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226104[] = "\x00\xbd\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226104[] = "\x00\xbf\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226104 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226104}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226104_ = &gem_mrblib_ruflet_framework_proc_debug_file_226104;
@@ -79070,7 +79071,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226105[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226105, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226105[] = "\x00\xbe\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226105[] = "\x00\xc0\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226105 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226105}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226105_ = &gem_mrblib_ruflet_framework_proc_debug_file_226105;
@@ -79089,7 +79090,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226106[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226106, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226106[] = "\x00\xbf\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226106[] = "\x00\xc1\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226106 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226106}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226106_ = &gem_mrblib_ruflet_framework_proc_debug_file_226106;
@@ -79108,7 +79109,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226107[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226107, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226107[] = "\x00\xc0\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226107[] = "\x00\xc2\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226107 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226107}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226107_ = &gem_mrblib_ruflet_framework_proc_debug_file_226107;
@@ -79127,7 +79128,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226108[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226108, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226108[] = "\x00\xc1\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226108[] = "\x00\xc3\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226108 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226108}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226108_ = &gem_mrblib_ruflet_framework_proc_debug_file_226108;
@@ -79146,7 +79147,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226109[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226109, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226109[] = "\x00\xc2\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226109[] = "\x00\xc4\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226109 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226109}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226109_ = &gem_mrblib_ruflet_framework_proc_debug_file_226109;
@@ -79165,7 +79166,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226110[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226110, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226110[] = "\x00\xc3\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226110[] = "\x00\xc5\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226110 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226110}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226110_ = &gem_mrblib_ruflet_framework_proc_debug_file_226110;
@@ -79184,7 +79185,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226111[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226111, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226111[] = "\x00\xc4\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226111[] = "\x00\xc6\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226111 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226111}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226111_ = &gem_mrblib_ruflet_framework_proc_debug_file_226111;
@@ -79203,7 +79204,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226112[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226112, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226112[] = "\x00\xc5\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226112[] = "\x00\xc7\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226112 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226112}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226112_ = &gem_mrblib_ruflet_framework_proc_debug_file_226112;
@@ -79222,7 +79223,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226113[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226113, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226113[] = "\x00\xc6\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226113[] = "\x00\xc8\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226113 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226113}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226113_ = &gem_mrblib_ruflet_framework_proc_debug_file_226113;
@@ -79241,7 +79242,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226114[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226114, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226114[] = "\x00\xc7\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226114[] = "\x00\xc9\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226114 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226114}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226114_ = &gem_mrblib_ruflet_framework_proc_debug_file_226114;
@@ -79260,7 +79261,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226115[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226115, 3, (MRB_SYM(columns), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226115[] = "\x00\xc8\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226115[] = "\x00\xca\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226115 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226115}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226115_ = &gem_mrblib_ruflet_framework_proc_debug_file_226115;
@@ -79279,7 +79280,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226116[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226116, 3, (MRB_SYM(columns), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226116[] = "\x00\xc9\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226116[] = "\x00\xcb\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226116 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226116}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226116_ = &gem_mrblib_ruflet_framework_proc_debug_file_226116;
@@ -79298,7 +79299,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226117[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226117, 3, (MRB_SYM(label), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226117[] = "\x00\xca\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226117[] = "\x00\xcc\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226117 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226117}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226117_ = &gem_mrblib_ruflet_framework_proc_debug_file_226117;
@@ -79317,7 +79318,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226118[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226118, 3, (MRB_SYM(label), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226118[] = "\x00\xcb\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226118[] = "\x00\xcd\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226118 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226118}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226118_ = &gem_mrblib_ruflet_framework_proc_debug_file_226118;
@@ -79336,7 +79337,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226119[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226119, 3, (MRB_SYM(cells), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226119[] = "\x00\xcc\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226119[] = "\x00\xce\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226119 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226119}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226119_ = &gem_mrblib_ruflet_framework_proc_debug_file_226119;
@@ -79355,7 +79356,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226120[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226120, 3, (MRB_SYM(cells), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226120[] = "\x00\xcd\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226120[] = "\x00\xcf\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226120 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226120}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226120_ = &gem_mrblib_ruflet_framework_proc_debug_file_226120;
@@ -79374,7 +79375,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226121[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226121, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226121[] = "\x00\xce\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226121[] = "\x00\xd0\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226121 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226121}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226121_ = &gem_mrblib_ruflet_framework_proc_debug_file_226121;
@@ -79393,7 +79394,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226122[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226122, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226122[] = "\x00\xcf\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226122[] = "\x00\xd1\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226122 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226122}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226122_ = &gem_mrblib_ruflet_framework_proc_debug_file_226122;
@@ -79412,7 +79413,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226123[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226123, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226123[] = "\x00\xd0\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226123[] = "\x00\xd2\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226123 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226123}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226123_ = &gem_mrblib_ruflet_framework_proc_debug_file_226123;
@@ -79431,7 +79432,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226124[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226124, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226124[] = "\x00\xd1\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226124[] = "\x00\xd3\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226124 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226124}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226124_ = &gem_mrblib_ruflet_framework_proc_debug_file_226124;
@@ -79450,7 +79451,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226125[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226125, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226125[] = "\x00\xd2\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226125[] = "\x00\xd4\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226125 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226125}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226125_ = &gem_mrblib_ruflet_framework_proc_debug_file_226125;
@@ -79469,7 +79470,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226126[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226126, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226126[] = "\x00\xd3\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226126[] = "\x00\xd5\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226126 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226126}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226126_ = &gem_mrblib_ruflet_framework_proc_debug_file_226126;
@@ -79488,7 +79489,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226127[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226127, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226127[] = "\x00\xd4\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226127[] = "\x00\xd6\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226127 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226127}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226127_ = &gem_mrblib_ruflet_framework_proc_debug_file_226127;
@@ -79507,7 +79508,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226128[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226128, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226128[] = "\x00\xd5\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226128[] = "\x00\xd7\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226128 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226128}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226128_ = &gem_mrblib_ruflet_framework_proc_debug_file_226128;
@@ -79526,7 +79527,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226129[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226129, 3, (MRB_SYM(options), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226129[] = "\x00\xd6\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226129[] = "\x00\xd8\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226129 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226129}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226129_ = &gem_mrblib_ruflet_framework_proc_debug_file_226129;
@@ -79545,7 +79546,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226130[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226130, 3, (MRB_SYM(key), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226130[] = "\x00\xd7\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226130[] = "\x00\xd9\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226130 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226130}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226130_ = &gem_mrblib_ruflet_framework_proc_debug_file_226130;
@@ -79564,7 +79565,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226131[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226131, 3, (MRB_SYM(key), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226131[] = "\x00\xd8\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226131[] = "\x00\xda\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226131 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226131}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226131_ = &gem_mrblib_ruflet_framework_proc_debug_file_226131;
@@ -79583,7 +79584,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226132[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226132, 3, (MRB_SYM(options), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226132[] = "\x00\xd9\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226132[] = "\x00\xdb\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226132 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226132}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226132_ = &gem_mrblib_ruflet_framework_proc_debug_file_226132;
@@ -79602,7 +79603,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226133[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226133, 3, (MRB_SYM(options), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226133[] = "\x00\xda\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226133[] = "\x00\xdc\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226133 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226133}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226133_ = &gem_mrblib_ruflet_framework_proc_debug_file_226133;
@@ -79621,7 +79622,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226134[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226134, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226134[] = "\x00\xdb\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226134[] = "\x00\xdd\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226134 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226134}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226134_ = &gem_mrblib_ruflet_framework_proc_debug_file_226134;
@@ -79640,7 +79641,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226135[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226135, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226135[] = "\x00\xdc\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226135[] = "\x00\xde\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226135 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226135}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226135_ = &gem_mrblib_ruflet_framework_proc_debug_file_226135;
@@ -79659,7 +79660,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226136[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226136, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226136[] = "\x00\xdd\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226136[] = "\x00\xdf\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226136 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226136}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226136_ = &gem_mrblib_ruflet_framework_proc_debug_file_226136;
@@ -79678,7 +79679,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226137[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226137, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226137[] = "\x00\xde\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226137[] = "\x00\xe0\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226137 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226137}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226137_ = &gem_mrblib_ruflet_framework_proc_debug_file_226137;
@@ -79697,7 +79698,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226138[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226138, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226138[] = "\x00\xdf\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226138[] = "\x00\xe1\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226138 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226138}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226138_ = &gem_mrblib_ruflet_framework_proc_debug_file_226138;
@@ -79716,7 +79717,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226139[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226139, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226139[] = "\x00\xe0\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226139[] = "\x00\xe2\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226139 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226139}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226139_ = &gem_mrblib_ruflet_framework_proc_debug_file_226139;
@@ -79735,7 +79736,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226140[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226140, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226140[] = "\x00\xe1\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226140[] = "\x00\xe3\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226140 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226140}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226140_ = &gem_mrblib_ruflet_framework_proc_debug_file_226140;
@@ -79754,7 +79755,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226141[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226141, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226141[] = "\x00\xe2\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226141[] = "\x00\xe4\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226141 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226141}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226141_ = &gem_mrblib_ruflet_framework_proc_debug_file_226141;
@@ -79773,7 +79774,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226142[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226142, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226142[] = "\x00\xe3\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226142[] = "\x00\xe5\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226142 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226142}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226142_ = &gem_mrblib_ruflet_framework_proc_debug_file_226142;
@@ -79792,7 +79793,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226143[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226143, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226143[] = "\x00\xe4\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226143[] = "\x00\xe6\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226143 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226143}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226143_ = &gem_mrblib_ruflet_framework_proc_debug_file_226143;
@@ -79811,7 +79812,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226144[38] = {
 0x39,0x00,0x20,0x03,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x01,0x04,0x03,0x30,0x05,0x00,0x01,0x06,
 0x01,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,0x07,0x01,0x08,0x04,0x34,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226144, 4, (MRB_SYM(children), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226144[] = "\x00\xe5\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226144[] = "\x00\xe7\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226144 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226144}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226144_ = &gem_mrblib_ruflet_framework_proc_debug_file_226144;
@@ -79830,7 +79831,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226145[38] = {
 0x39,0x00,0x20,0x03,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x01,0x04,0x03,0x30,0x05,0x00,0x01,0x06,
 0x01,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,0x07,0x01,0x08,0x04,0x34,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226145, 4, (MRB_SYM(children), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226145[] = "\x00\xe6\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226145[] = "\x00\xe8\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226145 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226145}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226145_ = &gem_mrblib_ruflet_framework_proc_debug_file_226145;
@@ -79849,7 +79850,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226146[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226146, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226146[] = "\x00\xe7\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226146[] = "\x00\xe9\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226146 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226146}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226146_ = &gem_mrblib_ruflet_framework_proc_debug_file_226146;
@@ -79868,7 +79869,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226147[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226147, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226147[] = "\x00\xe8\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226147[] = "\x00\xea\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226147 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226147}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226147_ = &gem_mrblib_ruflet_framework_proc_debug_file_226147;
@@ -79887,7 +79888,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226148[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226148, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226148[] = "\x00\xe9\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226148[] = "\x00\xeb\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226148 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226148}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226148_ = &gem_mrblib_ruflet_framework_proc_debug_file_226148;
@@ -79906,7 +79907,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226149[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226149, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226149[] = "\x00\xea\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226149[] = "\x00\xec\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226149 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226149}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226149_ = &gem_mrblib_ruflet_framework_proc_debug_file_226149;
@@ -79925,7 +79926,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226150[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226150, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226150[] = "\x00\xeb\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226150[] = "\x00\xed\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226150 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226150}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226150_ = &gem_mrblib_ruflet_framework_proc_debug_file_226150;
@@ -79944,7 +79945,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226151[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226151, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226151[] = "\x00\xec\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226151[] = "\x00\xee\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226151 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226151}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226151_ = &gem_mrblib_ruflet_framework_proc_debug_file_226151;
@@ -79963,7 +79964,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226152[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226152, 3, (MRB_SYM(value), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226152[] = "\x00\xed\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226152[] = "\x00\xef\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226152 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226152}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226152_ = &gem_mrblib_ruflet_framework_proc_debug_file_226152;
@@ -79982,7 +79983,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226153[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226153, 3, (MRB_SYM(segments), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226153[] = "\x00\xee\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226153[] = "\x00\xf0\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226153 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226153}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226153_ = &gem_mrblib_ruflet_framework_proc_debug_file_226153;
@@ -80001,7 +80002,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226154[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226154, 3, (MRB_SYM(segments), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226154[] = "\x00\xef\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226154[] = "\x00\xf1\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226154 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226154}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226154_ = &gem_mrblib_ruflet_framework_proc_debug_file_226154;
@@ -80020,7 +80021,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226155[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226155, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226155[] = "\x00\xf0\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226155[] = "\x00\xf2\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226155 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226155}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226155_ = &gem_mrblib_ruflet_framework_proc_debug_file_226155;
@@ -80039,7 +80040,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226156[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226156, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226156[] = "\x00\xf1\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226156[] = "\x00\xf3\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226156 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226156}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226156_ = &gem_mrblib_ruflet_framework_proc_debug_file_226156;
@@ -80058,7 +80059,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226157[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226157, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226157[] = "\x00\xf2\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226157[] = "\x00\xf4\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226157 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226157}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226157_ = &gem_mrblib_ruflet_framework_proc_debug_file_226157;
@@ -80077,7 +80078,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226158[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226158, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226158[] = "\x00\xf3\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226158[] = "\x00\xf5\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226158 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226158}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226158_ = &gem_mrblib_ruflet_framework_proc_debug_file_226158;
@@ -80096,7 +80097,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226159[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226159, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226159[] = "\x00\xf4\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226159[] = "\x00\xf6\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226159 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226159}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226159_ = &gem_mrblib_ruflet_framework_proc_debug_file_226159;
@@ -80115,7 +80116,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226160[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226160, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226160[] = "\x00\xf5\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226160[] = "\x00\xf7\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226160 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226160}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226160_ = &gem_mrblib_ruflet_framework_proc_debug_file_226160;
@@ -80134,7 +80135,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226161[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226161, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226161[] = "\x00\xf6\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226161[] = "\x00\xf8\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226161 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226161}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226161_ = &gem_mrblib_ruflet_framework_proc_debug_file_226161;
@@ -80153,7 +80154,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226162[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226162, 3, (MRB_SYM(label), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226162[] = "\x00\xf7\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226162[] = "\x00\xf9\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226162 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226162}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226162_ = &gem_mrblib_ruflet_framework_proc_debug_file_226162;
@@ -80172,7 +80173,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226163[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226163, 3, (MRB_SYM(label), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226163[] = "\x00\xf8\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226163[] = "\x00\xfa\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226163 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226163}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226163_ = &gem_mrblib_ruflet_framework_proc_debug_file_226163;
@@ -80191,7 +80192,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226164[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226164, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226164[] = "\x00\xf9\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226164[] = "\x00\xfb\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226164 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226164}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226164_ = &gem_mrblib_ruflet_framework_proc_debug_file_226164;
@@ -80210,7 +80211,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226165[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226165, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226165[] = "\x00\xfa\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226165[] = "\x00\xfc\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226165 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226165}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226165_ = &gem_mrblib_ruflet_framework_proc_debug_file_226165;
@@ -80229,7 +80230,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226166[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226166, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226166[] = "\x00\xfb\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226166[] = "\x00\xfd\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226166 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226166}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226166_ = &gem_mrblib_ruflet_framework_proc_debug_file_226166;
@@ -80248,7 +80249,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226167[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226167, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226167[] = "\x00\xfc\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226167[] = "\x00\xfe\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226167 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226167}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226167_ = &gem_mrblib_ruflet_framework_proc_debug_file_226167;
@@ -80267,7 +80268,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226168[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226168, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226168[] = "\x00\xfd\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226168[] = "\x00\xff\x80\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226168 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226168}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226168_ = &gem_mrblib_ruflet_framework_proc_debug_file_226168;
@@ -80286,7 +80287,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226169[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226169, 3, (MRB_SYM(value), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226169[] = "\x00\xfe\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226169[] = "\x00\x80\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226169 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226169}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226169_ = &gem_mrblib_ruflet_framework_proc_debug_file_226169;
@@ -80305,7 +80306,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226170[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226170, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226170[] = "\x00\xff\x80\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226170[] = "\x00\x81\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226170 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226170}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226170_ = &gem_mrblib_ruflet_framework_proc_debug_file_226170;
@@ -80324,7 +80325,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226171[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226171, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226171[] = "\x00\x80\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226171[] = "\x00\x82\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226171 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226171}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226171_ = &gem_mrblib_ruflet_framework_proc_debug_file_226171;
@@ -80343,7 +80344,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226172[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226172, 3, (MRB_SYM(value), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226172[] = "\x00\x81\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226172[] = "\x00\x83\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226172 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226172}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226172_ = &gem_mrblib_ruflet_framework_proc_debug_file_226172;
@@ -80362,7 +80363,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226173[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226173, 3, (MRB_SYM(value), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226173[] = "\x00\x82\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226173[] = "\x00\x84\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226173 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226173}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226173_ = &gem_mrblib_ruflet_framework_proc_debug_file_226173;
@@ -80381,7 +80382,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226174[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226174, 3, (MRB_SYM(icon), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226174[] = "\x00\x83\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226174[] = "\x00\x85\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226174 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226174}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226174_ = &gem_mrblib_ruflet_framework_proc_debug_file_226174;
@@ -80400,7 +80401,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226175[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226175, 3, (MRB_SYM(src), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226175[] = "\x00\x84\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226175[] = "\x00\x86\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226175 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226175}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226175_ = &gem_mrblib_ruflet_framework_proc_debug_file_226175;
@@ -80419,7 +80420,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226176[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226176, 3, (MRB_SYM(icon), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226176[] = "\x00\x85\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226176[] = "\x00\x87\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226176 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226176}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226176_ = &gem_mrblib_ruflet_framework_proc_debug_file_226176;
@@ -80438,7 +80439,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226177[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226177, 3, (MRB_SYM(icon), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226177[] = "\x00\x86\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226177[] = "\x00\x88\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226177 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226177}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226177_ = &gem_mrblib_ruflet_framework_proc_debug_file_226177;
@@ -80457,7 +80458,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226178[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226178, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226178[] = "\x00\x87\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226178[] = "\x00\x89\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226178 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226178}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226178_ = &gem_mrblib_ruflet_framework_proc_debug_file_226178;
@@ -80476,7 +80477,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226179[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226179, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226179[] = "\x00\x88\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226179[] = "\x00\x8a\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226179 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226179}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226179_ = &gem_mrblib_ruflet_framework_proc_debug_file_226179;
@@ -80495,7 +80496,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226180[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226180, 3, (MRB_SYM(items), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226180[] = "\x00\x89\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226180[] = "\x00\x8b\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226180 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226180}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226180_ = &gem_mrblib_ruflet_framework_proc_debug_file_226180;
@@ -80514,7 +80515,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226181[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226181, 3, (MRB_SYM(items), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226181[] = "\x00\x8a\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226181[] = "\x00\x8c\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226181 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226181}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226181_ = &gem_mrblib_ruflet_framework_proc_debug_file_226181;
@@ -80533,7 +80534,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226182[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226182, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226182[] = "\x00\x8b\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226182[] = "\x00\x8d\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226182 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226182}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226182_ = &gem_mrblib_ruflet_framework_proc_debug_file_226182;
@@ -80552,7 +80553,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226183[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226183, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226183[] = "\x00\x8c\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226183[] = "\x00\x8e\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226183 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226183}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226183_ = &gem_mrblib_ruflet_framework_proc_debug_file_226183;
@@ -80571,7 +80572,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226184[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226184, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226184[] = "\x00\x8d\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226184[] = "\x00\x8f\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226184 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226184}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226184_ = &gem_mrblib_ruflet_framework_proc_debug_file_226184;
@@ -80590,7 +80591,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226185[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226185, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226185[] = "\x00\x8e\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226185[] = "\x00\x90\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226185 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226185}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226185_ = &gem_mrblib_ruflet_framework_proc_debug_file_226185;
@@ -80609,7 +80610,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226186[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226186, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226186[] = "\x00\x8f\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226186[] = "\x00\x91\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226186 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226186}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226186_ = &gem_mrblib_ruflet_framework_proc_debug_file_226186;
@@ -80628,7 +80629,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226187[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226187, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226187[] = "\x00\x90\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226187[] = "\x00\x92\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226187 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226187}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226187_ = &gem_mrblib_ruflet_framework_proc_debug_file_226187;
@@ -80647,7 +80648,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226188[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226188, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226188[] = "\x00\x91\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226188[] = "\x00\x93\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226188 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226188}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226188_ = &gem_mrblib_ruflet_framework_proc_debug_file_226188;
@@ -80666,7 +80667,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226189[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226189, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226189[] = "\x00\x92\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226189[] = "\x00\x94\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226189 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226189}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226189_ = &gem_mrblib_ruflet_framework_proc_debug_file_226189;
@@ -80685,7 +80686,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226190[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226190, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226190[] = "\x00\x93\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226190[] = "\x00\x95\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226190 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226190}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226190_ = &gem_mrblib_ruflet_framework_proc_debug_file_226190;
@@ -80704,7 +80705,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226191[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226191, 3, (MRB_SYM(icon), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226191[] = "\x00\x94\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226191[] = "\x00\x96\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226191 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226191}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226191_ = &gem_mrblib_ruflet_framework_proc_debug_file_226191;
@@ -80723,7 +80724,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226192[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226192, 3, (MRB_SYM(icon), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226192[] = "\x00\x95\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226192[] = "\x00\x97\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226192 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226192}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226192_ = &gem_mrblib_ruflet_framework_proc_debug_file_226192;
@@ -80742,7 +80743,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226193[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226193, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226193[] = "\x00\x96\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226193[] = "\x00\x98\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226193 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226193}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226193_ = &gem_mrblib_ruflet_framework_proc_debug_file_226193;
@@ -80761,7 +80762,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226194[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226194, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226194[] = "\x00\x97\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226194[] = "\x00\x99\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226194 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226194}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226194_ = &gem_mrblib_ruflet_framework_proc_debug_file_226194;
@@ -80780,7 +80781,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226195[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226195, 3, (MRB_SYM(icon), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226195[] = "\x00\x98\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226195[] = "\x00\x9a\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226195 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226195}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226195_ = &gem_mrblib_ruflet_framework_proc_debug_file_226195;
@@ -80799,7 +80800,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226196[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226196, 3, (MRB_SYM(icon), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226196[] = "\x00\x99\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226196[] = "\x00\x9b\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226196 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226196}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226196_ = &gem_mrblib_ruflet_framework_proc_debug_file_226196;
@@ -80818,7 +80819,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226197[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226197, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226197[] = "\x00\x9a\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226197[] = "\x00\x9c\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226197 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226197}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226197_ = &gem_mrblib_ruflet_framework_proc_debug_file_226197;
@@ -80837,7 +80838,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226198[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226198, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226198[] = "\x00\x9b\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226198[] = "\x00\x9d\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226198 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226198}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226198_ = &gem_mrblib_ruflet_framework_proc_debug_file_226198;
@@ -80856,7 +80857,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226199[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226199, 3, (MRB_SYM(icon), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226199[] = "\x00\x9c\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226199[] = "\x00\x9e\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226199 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226199}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226199_ = &gem_mrblib_ruflet_framework_proc_debug_file_226199;
@@ -80875,7 +80876,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226200[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226200, 3, (MRB_SYM(icon), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226200[] = "\x00\x9d\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226200[] = "\x00\x9f\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226200 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226200}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226200_ = &gem_mrblib_ruflet_framework_proc_debug_file_226200;
@@ -80894,7 +80895,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226201[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226201, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226201[] = "\x00\x9e\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226201[] = "\x00\xa0\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226201 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226201}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226201_ = &gem_mrblib_ruflet_framework_proc_debug_file_226201;
@@ -80913,7 +80914,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226202[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226202, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226202[] = "\x00\x9f\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226202[] = "\x00\xa1\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226202 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226202}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226202_ = &gem_mrblib_ruflet_framework_proc_debug_file_226202;
@@ -80932,7 +80933,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226203[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226203, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226203[] = "\x00\xa0\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226203[] = "\x00\xa2\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226203 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226203}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226203_ = &gem_mrblib_ruflet_framework_proc_debug_file_226203;
@@ -80951,7 +80952,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226204[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226204, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226204[] = "\x00\xa1\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226204[] = "\x00\xa3\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226204 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226204}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226204_ = &gem_mrblib_ruflet_framework_proc_debug_file_226204;
@@ -80970,7 +80971,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226205[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226205, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226205[] = "\x00\xa2\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226205[] = "\x00\xa4\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226205 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226205}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226205_ = &gem_mrblib_ruflet_framework_proc_debug_file_226205;
@@ -80989,7 +80990,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226206[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226206, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226206[] = "\x00\xa3\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226206[] = "\x00\xa5\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226206 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226206}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226206_ = &gem_mrblib_ruflet_framework_proc_debug_file_226206;
@@ -81008,7 +81009,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226207[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226207, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226207[] = "\x00\xa4\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226207[] = "\x00\xa6\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226207 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226207}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226207_ = &gem_mrblib_ruflet_framework_proc_debug_file_226207;
@@ -81027,7 +81028,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226208[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226208, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226208[] = "\x00\xa5\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226208[] = "\x00\xa7\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226208 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226208}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226208_ = &gem_mrblib_ruflet_framework_proc_debug_file_226208;
@@ -81046,7 +81047,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226209[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226209, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226209[] = "\x00\xa6\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226209[] = "\x00\xa8\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226209 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226209}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226209_ = &gem_mrblib_ruflet_framework_proc_debug_file_226209;
@@ -81065,7 +81066,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226210[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226210, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226210[] = "\x00\xa7\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226210[] = "\x00\xa9\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226210 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226210}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226210_ = &gem_mrblib_ruflet_framework_proc_debug_file_226210;
@@ -81084,7 +81085,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226211[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226211, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226211[] = "\x00\xa8\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226211[] = "\x00\xaa\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226211 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226211}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226211_ = &gem_mrblib_ruflet_framework_proc_debug_file_226211;
@@ -81103,7 +81104,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226212[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226212, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226212[] = "\x00\xa9\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226212[] = "\x00\xab\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226212 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226212}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226212_ = &gem_mrblib_ruflet_framework_proc_debug_file_226212;
@@ -81122,7 +81123,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226213[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226213, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226213[] = "\x00\xaa\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226213[] = "\x00\xac\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226213 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226213}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226213_ = &gem_mrblib_ruflet_framework_proc_debug_file_226213;
@@ -81141,7 +81142,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226214[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226214, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226214[] = "\x00\xab\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226214[] = "\x00\xad\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226214 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226214}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226214_ = &gem_mrblib_ruflet_framework_proc_debug_file_226214;
@@ -81160,7 +81161,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226215[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226215, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226215[] = "\x00\xac\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226215[] = "\x00\xae\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226215 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226215}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226215_ = &gem_mrblib_ruflet_framework_proc_debug_file_226215;
@@ -81179,7 +81180,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226216[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226216, 3, (MRB_SYM(label), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226216[] = "\x00\xad\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226216[] = "\x00\xaf\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226216 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226216}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226216_ = &gem_mrblib_ruflet_framework_proc_debug_file_226216;
@@ -81198,7 +81199,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226217[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226217, 3, (MRB_SYM(label), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226217[] = "\x00\xae\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226217[] = "\x00\xb0\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226217 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226217}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226217_ = &gem_mrblib_ruflet_framework_proc_debug_file_226217;
@@ -81217,7 +81218,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226218[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226218, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226218[] = "\x00\xaf\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226218[] = "\x00\xb1\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226218 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226218}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226218_ = &gem_mrblib_ruflet_framework_proc_debug_file_226218;
@@ -81236,7 +81237,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226219[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226219, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226219[] = "\x00\xb0\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226219[] = "\x00\xb2\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226219 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226219}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226219_ = &gem_mrblib_ruflet_framework_proc_debug_file_226219;
@@ -81255,7 +81256,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226220[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226220, 3, (MRB_SYM(value), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226220[] = "\x00\xb1\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226220[] = "\x00\xb3\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226220 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226220}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226220_ = &gem_mrblib_ruflet_framework_proc_debug_file_226220;
@@ -81274,7 +81275,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226221[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226221, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226221[] = "\x00\xb2\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226221[] = "\x00\xb4\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226221 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226221}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226221_ = &gem_mrblib_ruflet_framework_proc_debug_file_226221;
@@ -81293,7 +81294,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226222[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226222, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226222[] = "\x00\xb3\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226222[] = "\x00\xb5\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226222 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226222}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226222_ = &gem_mrblib_ruflet_framework_proc_debug_file_226222;
@@ -81312,7 +81313,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226223[38] = {
 0x39,0x00,0x20,0x03,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x01,0x04,0x03,0x30,0x05,0x00,0x01,0x06,
 0x01,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,0x07,0x01,0x08,0x04,0x34,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226223, 4, (MRB_SYM(content), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226223[] = "\x00\xb4\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226223[] = "\x00\xb6\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226223 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226223}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226223_ = &gem_mrblib_ruflet_framework_proc_debug_file_226223;
@@ -81331,7 +81332,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226224[38] = {
 0x39,0x00,0x20,0x03,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x01,0x04,0x03,0x30,0x05,0x00,0x01,0x06,
 0x01,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,0x07,0x01,0x08,0x04,0x34,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226224, 4, (MRB_SYM(label), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226224[] = "\x00\xb5\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226224[] = "\x00\xb7\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226224 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226224}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226224_ = &gem_mrblib_ruflet_framework_proc_debug_file_226224;
@@ -81350,7 +81351,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226225[38] = {
 0x39,0x00,0x20,0x03,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x01,0x04,0x03,0x30,0x05,0x00,0x01,0x06,
 0x01,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,0x07,0x01,0x08,0x04,0x34,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226225, 4, (MRB_SYM(tabs), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226225[] = "\x00\xb6\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226225[] = "\x00\xb8\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226225 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226225}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226225_ = &gem_mrblib_ruflet_framework_proc_debug_file_226225;
@@ -81369,7 +81370,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226226[38] = {
 0x39,0x00,0x20,0x03,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x01,0x04,0x03,0x30,0x05,0x00,0x01,0x06,
 0x01,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,0x07,0x01,0x08,0x04,0x34,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226226, 4, (MRB_SYM(tabs), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226226[] = "\x00\xb7\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226226[] = "\x00\xb9\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226226 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226226}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226226_ = &gem_mrblib_ruflet_framework_proc_debug_file_226226;
@@ -81388,7 +81389,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226227[38] = {
 0x39,0x00,0x20,0x03,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x01,0x04,0x03,0x30,0x05,0x00,0x01,0x06,
 0x01,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,0x07,0x01,0x08,0x04,0x34,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226227, 4, (MRB_SYM(children), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226227[] = "\x00\xb8\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226227[] = "\x00\xba\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226227 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226227}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226227_ = &gem_mrblib_ruflet_framework_proc_debug_file_226227;
@@ -81407,7 +81408,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226228[38] = {
 0x39,0x00,0x20,0x03,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x01,0x04,0x03,0x30,0x05,0x00,0x01,0x06,
 0x01,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,0x07,0x01,0x08,0x04,0x34,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226228, 4, (MRB_SYM(children), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226228[] = "\x00\xb9\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226228[] = "\x00\xbb\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226228 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226228}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226228_ = &gem_mrblib_ruflet_framework_proc_debug_file_226228;
@@ -81426,7 +81427,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226229[27] = {
 0x39,0x00,0x00,0x03,0x01,0x03,0x02,0x30,0x04,0x00,0x5e,0x05,0x00,0x01,0x06,0x01,0x60,0x05,0x01,0x06,
 0x03,0x34,0x04,0x01,0xf0,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226229, 3, (MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226229[] = "\x00\xba\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226229[] = "\x00\xbc\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226229 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226229}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226229_ = &gem_mrblib_ruflet_framework_proc_debug_file_226229;
@@ -81445,7 +81446,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226230[27] = {
 0x39,0x00,0x00,0x03,0x01,0x03,0x02,0x30,0x04,0x00,0x5e,0x05,0x00,0x01,0x06,0x01,0x60,0x05,0x01,0x06,
 0x03,0x34,0x04,0x01,0xf0,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226230, 3, (MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226230[] = "\x00\xbb\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226230[] = "\x00\xbd\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226230 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226230}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226230_ = &gem_mrblib_ruflet_framework_proc_debug_file_226230;
@@ -81464,7 +81465,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226231[27] = {
 0x39,0x00,0x00,0x03,0x01,0x03,0x02,0x30,0x04,0x00,0x5e,0x05,0x00,0x01,0x06,0x01,0x60,0x05,0x01,0x06,
 0x03,0x34,0x04,0x01,0xf0,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226231, 3, (MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226231[] = "\x00\xbc\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226231[] = "\x00\xbe\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226231 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226231}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226231_ = &gem_mrblib_ruflet_framework_proc_debug_file_226231;
@@ -81483,7 +81484,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226232[27] = {
 0x39,0x00,0x00,0x03,0x01,0x03,0x02,0x30,0x04,0x00,0x5e,0x05,0x00,0x01,0x06,0x01,0x60,0x05,0x01,0x06,
 0x03,0x34,0x04,0x01,0xf0,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226232, 3, (MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226232[] = "\x00\xbd\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226232[] = "\x00\xbf\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226232 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226232}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226232_ = &gem_mrblib_ruflet_framework_proc_debug_file_226232;
@@ -81502,7 +81503,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226233[27] = {
 0x39,0x00,0x00,0x03,0x01,0x03,0x02,0x30,0x04,0x00,0x5e,0x05,0x00,0x01,0x06,0x01,0x60,0x05,0x01,0x06,
 0x03,0x34,0x04,0x01,0xf0,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226233, 3, (MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226233[] = "\x00\xbe\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226233[] = "\x00\xc0\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226233 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226233}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226233_ = &gem_mrblib_ruflet_framework_proc_debug_file_226233;
@@ -81521,7 +81522,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226234[27] = {
 0x39,0x00,0x00,0x03,0x01,0x03,0x02,0x30,0x04,0x00,0x5e,0x05,0x00,0x01,0x06,0x01,0x60,0x05,0x01,0x06,
 0x03,0x34,0x04,0x01,0xf0,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226234, 3, (MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226234[] = "\x00\xbf\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226234[] = "\x00\xc1\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226234 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226234}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226234_ = &gem_mrblib_ruflet_framework_proc_debug_file_226234;
@@ -81540,7 +81541,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226235[27] = {
 0x39,0x00,0x00,0x03,0x01,0x03,0x02,0x30,0x04,0x00,0x5e,0x05,0x00,0x01,0x06,0x01,0x60,0x05,0x01,0x06,
 0x03,0x34,0x04,0x01,0xf0,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226235, 3, (MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226235[] = "\x00\xc0\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226235[] = "\x00\xc2\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226235 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226235}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226235_ = &gem_mrblib_ruflet_framework_proc_debug_file_226235;
@@ -81559,7 +81560,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226236[27] = {
 0x39,0x00,0x00,0x03,0x01,0x03,0x02,0x30,0x04,0x00,0x5e,0x05,0x00,0x01,0x06,0x01,0x60,0x05,0x01,0x06,
 0x03,0x34,0x04,0x01,0xf0,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226236, 3, (MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226236[] = "\x00\xc1\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226236[] = "\x00\xc3\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226236 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226236}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226236_ = &gem_mrblib_ruflet_framework_proc_debug_file_226236;
@@ -81578,7 +81579,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226237[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226237, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226237[] = "\x00\xc2\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226237[] = "\x00\xc4\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226237 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226237}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226237_ = &gem_mrblib_ruflet_framework_proc_debug_file_226237;
@@ -81597,7 +81598,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226238[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226238, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226238[] = "\x00\xc3\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226238[] = "\x00\xc5\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226238 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226238}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226238_ = &gem_mrblib_ruflet_framework_proc_debug_file_226238;
@@ -81616,7 +81617,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226239[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226239, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226239[] = "\x00\xc4\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226239[] = "\x00\xc6\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226239 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226239}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226239_ = &gem_mrblib_ruflet_framework_proc_debug_file_226239;
@@ -81635,7 +81636,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226240[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226240, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226240[] = "\x00\xc5\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226240[] = "\x00\xc7\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226240 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226240}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226240_ = &gem_mrblib_ruflet_framework_proc_debug_file_226240;
@@ -81654,7 +81655,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226241[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226241, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226241[] = "\x00\xc6\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226241[] = "\x00\xc8\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226241 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226241}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226241_ = &gem_mrblib_ruflet_framework_proc_debug_file_226241;
@@ -81673,7 +81674,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226242[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226242, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226242[] = "\x00\xc7\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226242[] = "\x00\xc9\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226242 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226242}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226242_ = &gem_mrblib_ruflet_framework_proc_debug_file_226242;
@@ -81692,7 +81693,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226243[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226243, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226243[] = "\x00\xc8\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226243[] = "\x00\xca\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226243 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226243}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226243_ = &gem_mrblib_ruflet_framework_proc_debug_file_226243;
@@ -81711,7 +81712,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226244[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226244, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226244[] = "\x00\xc9\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226244[] = "\x00\xcb\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226244 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226244}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226244_ = &gem_mrblib_ruflet_framework_proc_debug_file_226244;
@@ -81730,7 +81731,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226245[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226245, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226245[] = "\x00\xca\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226245[] = "\x00\xcc\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226245 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226245}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226245_ = &gem_mrblib_ruflet_framework_proc_debug_file_226245;
@@ -81749,7 +81750,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226246[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226246, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226246[] = "\x00\xcb\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226246[] = "\x00\xcd\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226246 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226246}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226246_ = &gem_mrblib_ruflet_framework_proc_debug_file_226246;
@@ -81768,7 +81769,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226247[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226247, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226247[] = "\x00\xcc\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226247[] = "\x00\xce\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226247 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226247}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226247_ = &gem_mrblib_ruflet_framework_proc_debug_file_226247;
@@ -81787,7 +81788,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226248[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226248, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226248[] = "\x00\xcd\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226248[] = "\x00\xcf\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226248 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226248}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226248_ = &gem_mrblib_ruflet_framework_proc_debug_file_226248;
@@ -81806,7 +81807,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226249[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226249, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226249[] = "\x00\xce\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226249[] = "\x00\xd0\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226249 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226249}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226249_ = &gem_mrblib_ruflet_framework_proc_debug_file_226249;
@@ -81825,7 +81826,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226250[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226250, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226250[] = "\x00\xcf\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226250[] = "\x00\xd1\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226250 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226250}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226250_ = &gem_mrblib_ruflet_framework_proc_debug_file_226250;
@@ -81844,7 +81845,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226251[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226251, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226251[] = "\x00\xd0\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226251[] = "\x00\xd2\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226251 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226251}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226251_ = &gem_mrblib_ruflet_framework_proc_debug_file_226251;
@@ -81863,7 +81864,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226252[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226252, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226252[] = "\x00\xd1\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226252[] = "\x00\xd3\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226252 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226252}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226252_ = &gem_mrblib_ruflet_framework_proc_debug_file_226252;
@@ -81882,7 +81883,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226253[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226253, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226253[] = "\x00\xd2\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226253[] = "\x00\xd4\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226253 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226253}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226253_ = &gem_mrblib_ruflet_framework_proc_debug_file_226253;
@@ -81901,7 +81902,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226254[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226254, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226254[] = "\x00\xd3\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226254[] = "\x00\xd5\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226254 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226254}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226254_ = &gem_mrblib_ruflet_framework_proc_debug_file_226254;
@@ -81920,7 +81921,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226255[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226255, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226255[] = "\x00\xd4\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226255[] = "\x00\xd6\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226255 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226255}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226255_ = &gem_mrblib_ruflet_framework_proc_debug_file_226255;
@@ -81939,7 +81940,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226256[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226256, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226256[] = "\x00\xd5\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226256[] = "\x00\xd7\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226256 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226256}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226256_ = &gem_mrblib_ruflet_framework_proc_debug_file_226256;
@@ -81958,7 +81959,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226257[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226257, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226257[] = "\x00\xd6\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226257[] = "\x00\xd8\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226257 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226257}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226257_ = &gem_mrblib_ruflet_framework_proc_debug_file_226257;
@@ -81977,7 +81978,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226258[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226258, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226258[] = "\x00\xd7\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226258[] = "\x00\xd9\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226258 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226258}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226258_ = &gem_mrblib_ruflet_framework_proc_debug_file_226258;
@@ -81996,7 +81997,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226259[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226259, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226259[] = "\x00\xd8\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226259[] = "\x00\xda\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226259 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226259}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226259_ = &gem_mrblib_ruflet_framework_proc_debug_file_226259;
@@ -82015,7 +82016,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226260[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226260, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226260[] = "\x00\xd9\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226260[] = "\x00\xdb\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226260 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226260}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226260_ = &gem_mrblib_ruflet_framework_proc_debug_file_226260;
@@ -82034,7 +82035,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226261[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226261, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226261[] = "\x00\xda\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226261[] = "\x00\xdc\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226261 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226261}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226261_ = &gem_mrblib_ruflet_framework_proc_debug_file_226261;
@@ -82053,7 +82054,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226262[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226262, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226262[] = "\x00\xdb\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226262[] = "\x00\xdd\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226262 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226262}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226262_ = &gem_mrblib_ruflet_framework_proc_debug_file_226262;
@@ -82072,7 +82073,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226263[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226263, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226263[] = "\x00\xdc\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226263[] = "\x00\xde\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226263 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226263}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226263_ = &gem_mrblib_ruflet_framework_proc_debug_file_226263;
@@ -82091,7 +82092,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226264[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226264, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226264[] = "\x00\xdd\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226264[] = "\x00\xdf\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226264 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226264}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226264_ = &gem_mrblib_ruflet_framework_proc_debug_file_226264;
@@ -82110,7 +82111,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226265[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226265, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226265[] = "\x00\xde\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226265[] = "\x00\xe0\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226265 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226265}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226265_ = &gem_mrblib_ruflet_framework_proc_debug_file_226265;
@@ -82129,7 +82130,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226266[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226266, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226266[] = "\x00\xdf\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226266[] = "\x00\xe1\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226266 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226266}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226266_ = &gem_mrblib_ruflet_framework_proc_debug_file_226266;
@@ -82148,7 +82149,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226267[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226267, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226267[] = "\x00\xe0\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226267[] = "\x00\xe2\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226267 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226267}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226267_ = &gem_mrblib_ruflet_framework_proc_debug_file_226267;
@@ -82167,7 +82168,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226268[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226268, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226268[] = "\x00\xe1\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226268[] = "\x00\xe3\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226268 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226268}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226268_ = &gem_mrblib_ruflet_framework_proc_debug_file_226268;
@@ -82186,7 +82187,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226269[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226269, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226269[] = "\x00\xe2\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226269[] = "\x00\xe4\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226269 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226269}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226269_ = &gem_mrblib_ruflet_framework_proc_debug_file_226269;
@@ -82205,7 +82206,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226270[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226270, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226270[] = "\x00\xe3\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226270[] = "\x00\xe5\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226270 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226270}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226270_ = &gem_mrblib_ruflet_framework_proc_debug_file_226270;
@@ -82224,7 +82225,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226271[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226271, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226271[] = "\x00\xe4\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226271[] = "\x00\xe6\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226271 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226271}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226271_ = &gem_mrblib_ruflet_framework_proc_debug_file_226271;
@@ -82243,7 +82244,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226272[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226272, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226272[] = "\x00\xe5\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226272[] = "\x00\xe7\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226272 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226272}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226272_ = &gem_mrblib_ruflet_framework_proc_debug_file_226272;
@@ -82262,7 +82263,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226273[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226273, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226273[] = "\x00\xe6\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226273[] = "\x00\xe8\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226273 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226273}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226273_ = &gem_mrblib_ruflet_framework_proc_debug_file_226273;
@@ -82281,7 +82282,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226274[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226274, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226274[] = "\x00\xe7\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226274[] = "\x00\xe9\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226274 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226274}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226274_ = &gem_mrblib_ruflet_framework_proc_debug_file_226274;
@@ -82300,7 +82301,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226275[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226275, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226275[] = "\x00\xe8\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226275[] = "\x00\xea\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226275 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226275}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226275_ = &gem_mrblib_ruflet_framework_proc_debug_file_226275;
@@ -82319,7 +82320,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226276[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226276, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226276[] = "\x00\xe9\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226276[] = "\x00\xeb\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226276 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226276}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226276_ = &gem_mrblib_ruflet_framework_proc_debug_file_226276;
@@ -82338,7 +82339,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226277[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226277, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226277[] = "\x00\xea\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226277[] = "\x00\xec\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226277 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226277}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226277_ = &gem_mrblib_ruflet_framework_proc_debug_file_226277;
@@ -82357,7 +82358,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226278[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226278, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226278[] = "\x00\xeb\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226278[] = "\x00\xed\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226278 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226278}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226278_ = &gem_mrblib_ruflet_framework_proc_debug_file_226278;
@@ -82376,7 +82377,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226279[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226279, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226279[] = "\x00\xec\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226279[] = "\x00\xee\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226279 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226279}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226279_ = &gem_mrblib_ruflet_framework_proc_debug_file_226279;
@@ -82395,7 +82396,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226280[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226280, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226280[] = "\x00\xed\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226280[] = "\x00\xef\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226280 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226280}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226280_ = &gem_mrblib_ruflet_framework_proc_debug_file_226280;
@@ -82414,7 +82415,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226281[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226281, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226281[] = "\x00\xee\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226281[] = "\x00\xf0\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226281 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226281}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226281_ = &gem_mrblib_ruflet_framework_proc_debug_file_226281;
@@ -82433,7 +82434,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226282[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226282, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226282[] = "\x00\xef\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226282[] = "\x00\xf1\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226282 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226282}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226282_ = &gem_mrblib_ruflet_framework_proc_debug_file_226282;
@@ -82452,7 +82453,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226283[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226283, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226283[] = "\x00\xf0\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226283[] = "\x00\xf2\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226283 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226283}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226283_ = &gem_mrblib_ruflet_framework_proc_debug_file_226283;
@@ -82471,7 +82472,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226284[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226284, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226284[] = "\x00\xf1\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226284[] = "\x00\xf3\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226284 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226284}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226284_ = &gem_mrblib_ruflet_framework_proc_debug_file_226284;
@@ -82490,7 +82491,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226285[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226285, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226285[] = "\x00\xf2\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226285[] = "\x00\xf4\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226285 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226285}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226285_ = &gem_mrblib_ruflet_framework_proc_debug_file_226285;
@@ -82509,7 +82510,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226286[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226286, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226286[] = "\x00\xf3\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226286[] = "\x00\xf5\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226286 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226286}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226286_ = &gem_mrblib_ruflet_framework_proc_debug_file_226286;
@@ -82528,7 +82529,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226287[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226287, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226287[] = "\x00\xf4\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226287[] = "\x00\xf6\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226287 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226287}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226287_ = &gem_mrblib_ruflet_framework_proc_debug_file_226287;
@@ -82547,7 +82548,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226288[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226288, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226288[] = "\x00\xf5\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226288[] = "\x00\xf7\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226288 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226288}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226288_ = &gem_mrblib_ruflet_framework_proc_debug_file_226288;
@@ -82566,7 +82567,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226289[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226289, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226289[] = "\x00\xf6\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226289[] = "\x00\xf8\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226289 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226289}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226289_ = &gem_mrblib_ruflet_framework_proc_debug_file_226289;
@@ -82585,7 +82586,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226290[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226290, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226290[] = "\x00\xf7\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226290[] = "\x00\xf9\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226290 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226290}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226290_ = &gem_mrblib_ruflet_framework_proc_debug_file_226290;
@@ -82604,7 +82605,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226291[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226291, 3, (MRB_SYM(value), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226291[] = "\x00\xf8\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226291[] = "\x00\xfa\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226291 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226291}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226291_ = &gem_mrblib_ruflet_framework_proc_debug_file_226291;
@@ -82623,7 +82624,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226292[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226292, 3, (MRB_SYM(value), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226292[] = "\x00\xf9\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226292[] = "\x00\xfb\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226292 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226292}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226292_ = &gem_mrblib_ruflet_framework_proc_debug_file_226292;
@@ -82642,7 +82643,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226293[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226293, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226293[] = "\x00\xfa\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226293[] = "\x00\xfc\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226293 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226293}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226293_ = &gem_mrblib_ruflet_framework_proc_debug_file_226293;
@@ -82661,7 +82662,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226294[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226294, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226294[] = "\x00\xfb\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226294[] = "\x00\xfd\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226294 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226294}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226294_ = &gem_mrblib_ruflet_framework_proc_debug_file_226294;
@@ -82680,7 +82681,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226295[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226295, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226295[] = "\x00\xfc\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226295[] = "\x00\xfe\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226295 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226295}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226295_ = &gem_mrblib_ruflet_framework_proc_debug_file_226295;
@@ -82699,7 +82700,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226296[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226296, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226296[] = "\x00\xfd\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226296[] = "\x00\xff\x81\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226296 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226296}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226296_ = &gem_mrblib_ruflet_framework_proc_debug_file_226296;
@@ -82718,7 +82719,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226297[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226297, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226297[] = "\x00\xfe\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226297[] = "\x00\x80\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226297 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226297}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226297_ = &gem_mrblib_ruflet_framework_proc_debug_file_226297;
@@ -82737,7 +82738,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226298[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226298, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226298[] = "\x00\xff\x81\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226298[] = "\x00\x81\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226298 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226298}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226298_ = &gem_mrblib_ruflet_framework_proc_debug_file_226298;
@@ -82756,7 +82757,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226299[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226299, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226299[] = "\x00\x80\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226299[] = "\x00\x82\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226299 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226299}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226299_ = &gem_mrblib_ruflet_framework_proc_debug_file_226299;
@@ -82775,7 +82776,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226300[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226300, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226300[] = "\x00\x81\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226300[] = "\x00\x83\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226300 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226300}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226300_ = &gem_mrblib_ruflet_framework_proc_debug_file_226300;
@@ -82794,7 +82795,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226301[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226301, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226301[] = "\x00\x82\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226301[] = "\x00\x84\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226301 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226301}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226301_ = &gem_mrblib_ruflet_framework_proc_debug_file_226301;
@@ -82813,7 +82814,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226302[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226302, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226302[] = "\x00\x83\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226302[] = "\x00\x85\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226302 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226302}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226302_ = &gem_mrblib_ruflet_framework_proc_debug_file_226302;
@@ -82832,7 +82833,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226303[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226303, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226303[] = "\x00\x84\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226303[] = "\x00\x86\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226303 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226303}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226303_ = &gem_mrblib_ruflet_framework_proc_debug_file_226303;
@@ -82851,7 +82852,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226304[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226304, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226304[] = "\x00\x85\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226304[] = "\x00\x87\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226304 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226304}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226304_ = &gem_mrblib_ruflet_framework_proc_debug_file_226304;
@@ -82870,7 +82871,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226305[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226305, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226305[] = "\x00\x86\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226305[] = "\x00\x88\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226305 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226305}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226305_ = &gem_mrblib_ruflet_framework_proc_debug_file_226305;
@@ -82889,7 +82890,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226306[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226306, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226306[] = "\x00\x87\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226306[] = "\x00\x89\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226306 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226306}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226306_ = &gem_mrblib_ruflet_framework_proc_debug_file_226306;
@@ -82908,7 +82909,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226307[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226307, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226307[] = "\x00\x88\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226307[] = "\x00\x8a\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226307 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226307}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226307_ = &gem_mrblib_ruflet_framework_proc_debug_file_226307;
@@ -82927,7 +82928,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226308[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226308, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226308[] = "\x00\x89\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226308[] = "\x00\x8b\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226308 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226308}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226308_ = &gem_mrblib_ruflet_framework_proc_debug_file_226308;
@@ -82946,7 +82947,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226309[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226309, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226309[] = "\x00\x8a\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226309[] = "\x00\x8c\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226309 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226309}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226309_ = &gem_mrblib_ruflet_framework_proc_debug_file_226309;
@@ -82965,7 +82966,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226310[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226310, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226310[] = "\x00\x8b\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226310[] = "\x00\x8d\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226310 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226310}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226310_ = &gem_mrblib_ruflet_framework_proc_debug_file_226310;
@@ -82984,7 +82985,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226311[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226311, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226311[] = "\x00\x8c\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226311[] = "\x00\x8e\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226311 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226311}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226311_ = &gem_mrblib_ruflet_framework_proc_debug_file_226311;
@@ -83003,7 +83004,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226312[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226312, 3, (MRB_SYM(content), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226312[] = "\x00\x8d\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226312[] = "\x00\x8f\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226312 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226312}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226312_ = &gem_mrblib_ruflet_framework_proc_debug_file_226312;
@@ -83022,7 +83023,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226313[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226313, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226313[] = "\x00\x8e\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226313[] = "\x00\x90\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226313 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226313}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226313_ = &gem_mrblib_ruflet_framework_proc_debug_file_226313;
@@ -83041,7 +83042,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226314[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226314, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226314[] = "\x00\x8f\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226314[] = "\x00\x91\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226314 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226314}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226314_ = &gem_mrblib_ruflet_framework_proc_debug_file_226314;
@@ -83060,7 +83061,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226315[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226315, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226315[] = "\x00\x90\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226315[] = "\x00\x92\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226315 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226315}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226315_ = &gem_mrblib_ruflet_framework_proc_debug_file_226315;
@@ -83079,7 +83080,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226316[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226316, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226316[] = "\x00\x91\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226316[] = "\x00\x93\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226316 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226316}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226316_ = &gem_mrblib_ruflet_framework_proc_debug_file_226316;
@@ -83098,7 +83099,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226317[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226317, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226317[] = "\x00\x92\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226317[] = "\x00\x94\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226317 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226317}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226317_ = &gem_mrblib_ruflet_framework_proc_debug_file_226317;
@@ -83117,7 +83118,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226318[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226318, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226318[] = "\x00\x93\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226318[] = "\x00\x95\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226318 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226318}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226318_ = &gem_mrblib_ruflet_framework_proc_debug_file_226318;
@@ -83136,7 +83137,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226319[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226319, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226319[] = "\x00\x94\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226319[] = "\x00\x96\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226319 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226319}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226319_ = &gem_mrblib_ruflet_framework_proc_debug_file_226319;
@@ -83155,7 +83156,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226320[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226320, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226320[] = "\x00\x95\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226320[] = "\x00\x97\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226320 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226320}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226320_ = &gem_mrblib_ruflet_framework_proc_debug_file_226320;
@@ -83174,7 +83175,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226321[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226321, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226321[] = "\x00\x96\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226321[] = "\x00\x98\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226321 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226321}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226321_ = &gem_mrblib_ruflet_framework_proc_debug_file_226321;
@@ -83193,7 +83194,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226322[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226322, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226322[] = "\x00\x97\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226322[] = "\x00\x99\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226322 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226322}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226322_ = &gem_mrblib_ruflet_framework_proc_debug_file_226322;
@@ -83212,7 +83213,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226323[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226323, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226323[] = "\x00\x98\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226323[] = "\x00\x9a\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226323 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226323}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226323_ = &gem_mrblib_ruflet_framework_proc_debug_file_226323;
@@ -83231,7 +83232,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226324[21] = {
 0x39,0x00,0x00,0x02,0x30,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226324, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226324[] = "\x00\x99\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226324[] = "\x00\x9b\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226324 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226324}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226324_ = &gem_mrblib_ruflet_framework_proc_debug_file_226324;
@@ -83250,7 +83251,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226325[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226325, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226325[] = "\x00\x9a\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226325[] = "\x00\x9c\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226325 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226325}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226325_ = &gem_mrblib_ruflet_framework_proc_debug_file_226325;
@@ -83269,7 +83270,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226326[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226326, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226326[] = "\x00\x9b\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226326[] = "\x00\x9d\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226326 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226326}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226326_ = &gem_mrblib_ruflet_framework_proc_debug_file_226326;
@@ -83288,7 +83289,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226327[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226327, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226327[] = "\x00\x9c\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226327[] = "\x00\x9e\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226327 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226327}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226327_ = &gem_mrblib_ruflet_framework_proc_debug_file_226327;
@@ -83307,7 +83308,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226328[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226328, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226328[] = "\x00\x9d\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226328[] = "\x00\x9f\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226328 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226328}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226328_ = &gem_mrblib_ruflet_framework_proc_debug_file_226328;
@@ -83326,7 +83327,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226329[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226329, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226329[] = "\x00\x9e\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226329[] = "\x00\xa0\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226329 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226329}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226329_ = &gem_mrblib_ruflet_framework_proc_debug_file_226329;
@@ -83345,7 +83346,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226330[32] = {
 0x39,0x00,0x20,0x02,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x30,0x04,0x00,0x01,0x05,0x01,0x5e,0x06,
 0x00,0x01,0x07,0x02,0x60,0x06,0x32,0x04,0x01,0xf1,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226330, 3, (MRB_SYM(children), MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226330[] = "\x00\x9f\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226330[] = "\x00\xa1\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226330 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226330}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226330_ = &gem_mrblib_ruflet_framework_proc_debug_file_226330;
@@ -83363,7 +83364,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_226331, 1, (MRB_SYM(du
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226331[13] = {
 0x39,0x00,0x00,0x02,0x01,0x04,0x01,0x2f,0x03,0x00,0x01,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226331, 2, (MRB_SYM(parts), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226331[] = "\x00\xa0\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226331[] = "\x00\xa2\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226331 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226331}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226331_ = &gem_mrblib_ruflet_framework_proc_debug_file_226331;
@@ -83388,7 +83389,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_301684[72] = {
 0x04,0x52,0x05,0x00,0x1a,0x05,0x05,0x52,0x05,0x00,0x1a,0x05,0x06,0x5c,0x05,0x00,0x5c,0x06,0x01,0x5e,
 0x05,0x01,0x1a,0x05,0x07,0x06,0x05,0x1a,0x05,0x08,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_301684, 4, (MRB_OPSYM(pow), 0,MRB_SYM(host), MRB_SYM(port), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_301684[] = "\x00\xa7\x82\x01\x1d\x01\x03\x01\x03\x01\x06\x01\x06\x01\x06\x01\x0c\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_301684[] = "\x00\xa9\x82\x01\x1d\x01\x03\x01\x03\x01\x06\x01\x06\x01\x06\x01\x0c\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_301684 = {
 0, 324, 18, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_301684}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_301684_ = &gem_mrblib_ruflet_framework_proc_debug_file_301684;
@@ -83407,7 +83408,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_301685[40] = {
 0x39,0x00,0x00,0x08,0x3c,0x03,0x00,0x3c,0x04,0x01,0x3b,0x10,0x05,0x00,0x01,0x06,0x03,0x10,0x07,0x01,
 0x01,0x08,0x04,0x5e,0x05,0x02,0x01,0x01,0x05,0x1a,0x03,0x02,0x01,0x05,0x04,0x1a,0x05,0x03,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_301685, 4, (MRB_OPSYM(pow), 0,MRB_SYM(host), MRB_SYM(port), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_301685[] = "\x00\xb1\x82\x01\x1d\x01\x03\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_301685[] = "\x00\xb3\x82\x01\x1d\x01\x03\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_301685 = {
 0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_301685}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_301685_ = &gem_mrblib_ruflet_framework_proc_debug_file_301685;
@@ -83426,7 +83427,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_301686[36] = {
 0x39,0x00,0x00,0x03,0x01,0x03,0x02,0x19,0x04,0x00,0x01,0x06,0x01,0x2f,0x05,0x01,0x01,0x32,0x04,0x02,
 0x01,0x01,0x04,0x03,0x28,0x04,0x00,0x07,0x01,0x05,0x03,0x31,0x04,0x03,0x00,0x3f,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_301686, 3, (MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_301686[] = "\x00\xb6\x82\x01\x07\x01\x0e\x01\x0e\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_301686[] = "\x00\xb8\x82\x01\x07\x01\x0e\x01\x0e\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_301686 = {
 0, 324, 10, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_301686}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_301686_ = &gem_mrblib_ruflet_framework_proc_debug_file_301686;
@@ -83445,7 +83446,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_301687[30] = {
 0x39,0x04,0x00,0x03,0x01,0x04,0x03,0x01,0x06,0x01,0x33,0x06,0x00,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,
 0x07,0x01,0x08,0x04,0x31,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_301687, 4, (MRB_SYM(type), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_301687[] = "\x00\xbc\x82\x01\x07\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_301687[] = "\x00\xbe\x82\x01\x07\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_301687 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_301687}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_301687_ = &gem_mrblib_ruflet_framework_proc_debug_file_301687;
@@ -83465,7 +83466,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_301759[42] = {
 0x11,0x21,0x03,0x08,0x00,0x33,0x03,0x03,0x01,0x04,0x01,0x32,0x03,0x04,0x01,0x26,0x00,0x02,0x11,0x03,
 0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_301759, 2, (MRB_SYM(child), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_301759[] = "\x00\xcf\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_301759[] = "\x00\xd1\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_301759 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_301759}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_301759_ = &gem_mrblib_ruflet_framework_proc_debug_file_301759;
@@ -83493,7 +83494,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_301688[160] = {
 0x32,0x09,0x0d,0x01,0x01,0x0a,0x04,0x31,0x09,0x0e,0x00,0x19,0x09,0x0c,0x33,0x09,0x0f,0x01,0x09,0x06,
 0x28,0x09,0x00,0x0e,0x01,0x0a,0x06,0x2f,0x09,0x10,0x01,0x62,0x0a,0x00,0x34,0x09,0x11,0x00,0x3d,0x08,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_301688, 8, (MRB_SYM(type), MRB_SYM(props), 0,MRB_SYM(block), MRB_SYM(mapped_props), MRB_SYM(prop_children), MRB_SYM(id), MRB_SYM(c), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_301688[] = "\x00\xc0\x82\x01\x07\x01\x09\x01\x0a\x02\x22\x01\x28\x01\x07\x02\x05\x03\x02\xfe\xff\xff\xff\x0f\x0a\x01\x07\x01\x06\x03\x05\x01\x10\x03";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_301688[] = "\x00\xc2\x82\x01\x07\x01\x09\x01\x0a\x02\x22\x01\x28\x01\x07\x02\x05\x03\x02\xfe\xff\xff\xff\x0f\x0a\x01\x07\x01\x06\x03\x05\x01\x10\x03";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_301688 = {
 0, 324, 34, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_301688}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_301688_ = &gem_mrblib_ruflet_framework_proc_debug_file_301688;
@@ -83516,7 +83517,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_301689[116] = {
 0x01,0x60,0x0a,0x32,0x08,0x09,0xf1,0x01,0x07,0x08,0x19,0x08,0x0a,0x01,0x09,0x07,0x32,0x08,0x0b,0x01,
 0x27,0x08,0x00,0x0a,0x19,0x08,0x0a,0x01,0x09,0x07,0x32,0x08,0x0c,0x01,0x3d,0x07,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_301689, 7, (MRB_SYM(type), MRB_SYM(props), 0,MRB_SYM(block), MRB_SYM(mapped_props), MRB_SYM(id), MRB_SYM(svc), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_301689[] = "\x00\xd5\x82\x01\x07\x01\x09\x01\x22\x01\x28\x01\x18\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_301689[] = "\x00\xd7\x82\x01\x07\x01\x09\x01\x22\x01\x28\x01\x18\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_301689 = {
 0, 324, 14, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_301689}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_301689_ = &gem_mrblib_ruflet_framework_proc_debug_file_301689;
@@ -83535,7 +83536,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_301690[21] = {
 0x39,0x00,0x00,0x02,0x1d,0x03,0x00,0x5e,0x04,0x00,0x01,0x05,0x01,0x60,0x04,0x32,0x03,0x01,0xf0,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_301690, 2, (MRB_SYM(parts), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_301690[] = "\x00\xdd\x82\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_301690[] = "\x00\xdf\x82\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_301690 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_301690}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_301690_ = &gem_mrblib_ruflet_framework_proc_debug_file_301690;
@@ -83555,7 +83556,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_301805[58] = {
 0x03,0x01,0x28,0x03,0x00,0x0f,0x01,0x03,0x01,0x11,0x04,0x21,0x05,0x03,0x00,0x54,0x04,0x32,0x03,0x02,
 0x0f,0x01,0x03,0x01,0x11,0x04,0x21,0x05,0x02,0x00,0x54,0x04,0x32,0x03,0x03,0x0f,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_301805, 2, (MRB_SYM(runtime_page), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_301805[] = "\x00\xe6\x82\x01\x04\x01\x0b\x01\x1a\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_301805[] = "\x00\xe8\x82\x01\x04\x01\x0b\x01\x1a\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_301805 = {
 0, 324, 10, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_301805}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_301805_ = &gem_mrblib_ruflet_framework_proc_debug_file_301805;
@@ -83578,7 +83579,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_301691[49] = {
 0x05,0x05,0x1f,0x05,0x04,0x10,0x06,0x06,0x30,0x07,0x06,0x10,0x08,0x07,0x30,0x09,0x07,0x62,0x0a,0x00,
 0x34,0x05,0x08,0x20,0x33,0x05,0x09,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_301691, 4, (0,MRB_SYM(app_roots), MRB_SYM(app_services), MRB_SYM(page_props), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_301691[] = "\x00\xe1\x82\x01\x04\x01\x03\x01\x03\x01\x09\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_301691[] = "\x00\xe3\x82\x01\x04\x01\x03\x01\x03\x01\x09\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_301691 = {
 0, 324, 12, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_301691}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_301691_ = &gem_mrblib_ruflet_framework_proc_debug_file_301691;
@@ -83597,7 +83598,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_301692[30] = {
 0x39,0x04,0x00,0x03,0x01,0x04,0x03,0x01,0x06,0x01,0x33,0x06,0x00,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,
 0x07,0x01,0x08,0x04,0x31,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_301692, 4, (MRB_SYM(type), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_301692[] = "\x00\xef\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_301692[] = "\x00\xf1\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_301692 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_301692}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_301692_ = &gem_mrblib_ruflet_framework_proc_debug_file_301692;
@@ -83616,7 +83617,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_301693[30] = {
 0x39,0x04,0x00,0x03,0x01,0x04,0x03,0x01,0x06,0x01,0x33,0x06,0x00,0x5e,0x07,0x00,0x01,0x08,0x02,0x60,
 0x07,0x01,0x08,0x04,0x31,0x05,0x01,0xf1,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_301693, 4, (MRB_SYM(type), MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_301693[] = "\x00\xf0\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_301693[] = "\x00\xf2\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_301693 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_301693}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_301693_ = &gem_mrblib_ruflet_framework_proc_debug_file_301693;
@@ -83636,7 +83637,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_301694[45] = {
 0x32,0x03,0x03,0x01,0x26,0x00,0x10,0x19,0x03,0x00,0x33,0x03,0x04,0x33,0x03,0x05,0x01,0x04,0x01,0x32,
 0x03,0x03,0x01,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_301694, 2, (MRB_SYM(control), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_301694[] = "\x00\xf2\x82\x01\x04\x01\x08\x01\x0d\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_301694[] = "\x00\xf4\x82\x01\x04\x01\x08\x01\x0d\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_301694 = {
 0, 324, 10, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_301694}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_301694_ = &gem_mrblib_ruflet_framework_proc_debug_file_301694;
@@ -83655,7 +83656,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_301866[32] = {
 0x39,0x04,0x00,0x00,0x01,0x03,0x01,0x1d,0x04,0x00,0x32,0x03,0x01,0x01,0x28,0x03,0x00,0x09,0x01,0x03,
 0x01,0x33,0x03,0x02,0x26,0x00,0x03,0x01,0x03,0x01,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_301866, 2, (MRB_SYM(v), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_301866[] = "\x00\xfb\x82\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_301866[] = "\x00\xfd\x82\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_301866 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_301866}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_301866_ = &gem_mrblib_ruflet_framework_proc_debug_file_301866;
@@ -83677,7 +83678,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_301695[23] = {
 0x39,0x04,0x00,0x00,0x01,0x03,0x01,0x10,0x04,0x00,0x34,0x03,0x01,0x00,0x62,0x04,0x00,0x34,0x03,0x02,
 0x00,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_301695, 2, (MRB_SYM(hash), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_301695[] = "\x00\xfa\x82\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_301695[] = "\x00\xfc\x82\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_301695 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_301695}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_301695_ = &gem_mrblib_ruflet_framework_proc_debug_file_301695;
@@ -83701,7 +83702,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_301696[58] = {
 0x01,0x5c,0x04,0x00,0x32,0x03,0x01,0x01,0x27,0x03,0x00,0x0a,0x01,0x03,0x01,0x10,0x04,0x02,0x32,0x03,
 0x01,0x01,0x27,0x03,0x00,0x0a,0x01,0x03,0x01,0x5c,0x04,0x01,0x32,0x03,0x01,0x01,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_301696, 2, (MRB_SYM(props), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_301696[] = "\x00\xfe\x82\x01\x04\x01\x0c\x01\x0e\x01\x0e\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_301696[] = "\x00\x80\x83\x01\x04\x01\x0c\x01\x0e\x01\x0e\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_301696 = {
 0, 324, 12, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_301696}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_301696_ = &gem_mrblib_ruflet_framework_proc_debug_file_301696;
@@ -83724,7 +83725,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_301697[38] = {
 0x39,0x04,0x00,0x00,0x19,0x03,0x00,0x46,0x03,0x01,0x1a,0x03,0x00,0x5c,0x03,0x00,0x01,0x04,0x01,0x5d,
 0x03,0x5c,0x04,0x01,0x5d,0x03,0x19,0x04,0x00,0x5d,0x03,0x5c,0x04,0x00,0x5d,0x03,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_301697, 2, (MRB_SYM(type), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_301697[] = "\x00\x85\x83\x01\x04\x01\x09\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_301697[] = "\x00\x87\x83\x01\x04\x01\x09\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_301697 = {
 0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_301697}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_301697_ = &gem_mrblib_ruflet_framework_proc_debug_file_301697;
@@ -83742,7 +83743,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_301698, 3, (MRB_SYM(DS
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_301698[19] = {
 0x39,0x04,0x00,0x00,0x1d,0x03,0x00,0x10,0x04,0x01,0x01,0x05,0x01,0x32,0x03,0x02,0x02,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_301698, 2, (MRB_SYM(parts), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_301698[] = "\x00\x8a\x83\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_301698[] = "\x00\x8c\x83\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_301698 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_301698}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_301698_ = &gem_mrblib_ruflet_framework_proc_debug_file_301698;
@@ -83780,7 +83781,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226332[88] = {
 0x01,0x0b,0x04,0x6b,0x01,0x0c,0x05,0x6b,0x01,0x0d,0x06,0x6b,0x01,0x0e,0x07,0x30,0x01,0x0f,0x6b,0x01,
 0x10,0x08,0x6b,0x01,0x11,0x09,0x6b,0x01,0x12,0x0a,0x6b,0x01,0x13,0x0b,0x6b,0x01,0x14,0x0c,0x6b,0x01,
 0x15,0x0d,0x6b,0x01,0x16,0x0e,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226332[] = "\x00\xa3\x82\x01\x0a\x02\x0d\x02\x04\x0a\x04\x05\x04\x06\x04\x04\x04\x15\x04\x08\x04\x04\x04\x0c\x03\x02\x04\x01\x04\x02\x04\x08\x04\x04\x04\x07\x04\x05";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226332[] = "\x00\xa5\x82\x01\x0a\x02\x0d\x02\x04\x0a\x04\x05\x04\x06\x04\x04\x04\x15\x04\x08\x04\x04\x04\x0c\x03\x02\x04\x01\x04\x02\x04\x08\x04\x04\x04\x07\x04\x05";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226332 = {
 0, 324, 38, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226332}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226332_ = &gem_mrblib_ruflet_framework_proc_debug_file_226332;
@@ -83799,7 +83800,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302188[35] = {
 0x39,0x08,0x00,0x00,0x57,0x04,0x02,0x00,0x57,0x05,0x02,0x01,0x01,0x06,0x01,0x21,0x08,0x01,0x00,0x01,
 0x09,0x04,0x2f,0x07,0x00,0x02,0x01,0x08,0x05,0x4b,0x07,0x45,0x06,0x3d,0x06,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_302188, 5, (MRB_SYM(sum), 0,0,MRB_SYM(key), MRB_SYM(factor), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302188[] = "\x00\x93\x83\x01\x0c\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302188[] = "\x00\x95\x83\x01\x0c\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302188 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302188}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302188_ = &gem_mrblib_ruflet_framework_proc_debug_file_302188;
@@ -83825,7 +83826,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226333[46] = {
 0x28,0x03,0x00,0x04,0x06,0x03,0x3d,0x03,0x1d,0x03,0x02,0x02,0x04,0x00,0x62,0x05,0x00,0x34,0x03,0x03,
 0x01,0x33,0x03,0x04,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226333, 2, (MRB_SYM(parts), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226333[] = "\x00\x90\x83\x01\x04\x01\x18\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226333[] = "\x00\x92\x83\x01\x04\x01\x18\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226333 = {
 0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226333}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226333_ = &gem_mrblib_ruflet_framework_proc_debug_file_226333;
@@ -83852,7 +83853,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226334[117] = {
 0x13,0x01,0x05,0x04,0x66,0x06,0x1f,0x06,0x05,0x5c,0x07,0x01,0x32,0x06,0x06,0x01,0x32,0x05,0x07,0x01,
 0x28,0x05,0x00,0x08,0x01,0x05,0x04,0x33,0x05,0x03,0x3d,0x05,0x02,0x05,0x00,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_226334, 4, (MRB_SYM(parts), MRB_SYM(key), 0,MRB_SYM(raw), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226334[] = "\x00\x98\x83\x01\x04\x01\x1a\x01\x0f\x01\x16\x01\x2d\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226334[] = "\x00\x9a\x83\x01\x04\x01\x1a\x01\x0f\x01\x16\x01\x2d\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226334 = {
 0, 324, 14, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226334}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226334_ = &gem_mrblib_ruflet_framework_proc_debug_file_226334;
@@ -84221,7 +84222,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_226058[1334] = {
 0x01,0x18,0x70,0x01,0x74,0x63,0x02,0x01,0x10,0x74,0x6a,0x01,0x01,0x19,0x11,0x01,0x11,0x02,0x74,0x67,
 0x01,0x01,0x1a,0x74,0x69,0x01,0x01,0x11,0x70,0x01,0x74,0x63,0x02,0x01,0x12,0x74,0x6a,0x01,0x01,0x1b,
 0x70,0x01,0x74,0x63,0x02,0x01,0x13,0x74,0x6a,0x01,0x01,0x1c,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_226058[] = "\x00\xee\x7f\x06\x01\x06\x01\x06\x01\x06\x01\x06\x01\x0f\x03\x03\x02\x04\x04\x04\x06\x04\x04\x04\x04\x04\x0b\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x06\x01\x06\x01\x06\x01\x06\x01\x06\x01\x06\x01\x06\x01\x06\x01\x06\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x02\x0e\x6e\x0c\x08";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_226058[] = "\x00\xee\x7f\x06\x01\x06\x01\x06\x01\x06\x01\x06\x01\x0f\x03\x03\x02\x04\x04\x04\x08\x04\x04\x04\x04\x04\x0b\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x04\x01\x06\x01\x06\x01\x06\x01\x06\x01\x06\x01\x06\x01\x06\x01\x06\x01\x06\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x02\x0e\x6e\x0c\x08";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_226058 = {
 0, 324, 567, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_226058}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_226058_ = &gem_mrblib_ruflet_framework_proc_debug_file_226058;
@@ -84267,7 +84268,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_302688, 6, (MRB_SYM(CE
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302688[38] = {
 0x5c,0x01,0x00,0x1e,0x01,0x00,0x5c,0x01,0x01,0x1e,0x01,0x01,0x5c,0x01,0x02,0x1e,0x01,0x02,0x5c,0x01,
 0x03,0x1e,0x01,0x03,0x5c,0x01,0x04,0x1e,0x01,0x04,0x5c,0x01,0x05,0x1e,0x01,0x05,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302688[] = "\x00\xc3\x83\x01\x06\x01\x06\x01\x06\x01\x06\x01\x06\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302688[] = "\x00\xc5\x83\x01\x06\x01\x06\x01\x06\x01\x06\x01\x06\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302688 = {
 0, 324, 14, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302688}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302688_ = &gem_mrblib_ruflet_framework_proc_debug_file_302688;
@@ -84291,7 +84292,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_302689, 4, (MRB_SYM(CE
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302689[26] = {
 0x5c,0x01,0x00,0x1e,0x01,0x00,0x5c,0x01,0x01,0x1e,0x01,0x01,0x5c,0x01,0x02,0x1e,0x01,0x02,0x5c,0x01,
 0x03,0x1e,0x01,0x03,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302689[] = "\x00\xcc\x83\x01\x06\x01\x06\x01\x06\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302689[] = "\x00\xce\x83\x01\x06\x01\x06\x01\x06\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302689 = {
 0, 324, 10, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302689}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302689_ = &gem_mrblib_ruflet_framework_proc_debug_file_302689;
@@ -84317,7 +84318,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_302690, 6, (MRB_SYM(LE
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302690[38] = {
 0x5c,0x01,0x00,0x1e,0x01,0x00,0x5c,0x01,0x01,0x1e,0x01,0x01,0x5c,0x01,0x02,0x1e,0x01,0x02,0x5c,0x01,
 0x03,0x1e,0x01,0x03,0x5c,0x01,0x04,0x1e,0x01,0x04,0x5c,0x01,0x05,0x1e,0x01,0x05,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302690[] = "\x00\xd3\x83\x01\x06\x01\x06\x01\x06\x01\x06\x01\x06\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302690[] = "\x00\xd5\x83\x01\x06\x01\x06\x01\x06\x01\x06\x01\x06\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302690 = {
 0, 324, 14, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302690}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302690_ = &gem_mrblib_ruflet_framework_proc_debug_file_302690;
@@ -84335,7 +84336,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_302714, 1, (MRB_IVSYM(
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302714[12] = {
 0x39,0x04,0x00,0x00,0x01,0x03,0x01,0x1a,0x03,0x00,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_302714, 2, (MRB_SYM(icon_module), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302714[] = "\x00\xdd\x83\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302714[] = "\x00\xdf\x83\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302714 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302714}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302714_ = &gem_mrblib_ruflet_framework_proc_debug_file_302714;
@@ -84353,7 +84354,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_302715, 1, (MRB_IVSYM(
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302715[14] = {
 0x39,0x04,0x00,0x00,0x19,0x03,0x00,0x01,0x04,0x01,0x23,0x03,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_302715, 2, (MRB_SYM(name), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302715[] = "\x00\xe1\x83\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302715[] = "\x00\xe3\x83\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302715 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302715}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302715_ = &gem_mrblib_ruflet_framework_proc_debug_file_302715;
@@ -84371,7 +84372,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_302716, 2, (MRB_IVSYM(
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302716[12] = {
 0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x33,0x02,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_302716, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302716[] = "\x00\xe5\x83\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302716[] = "\x00\xe7\x83\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302716 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302716}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302716_ = &gem_mrblib_ruflet_framework_proc_debug_file_302716;
@@ -84389,7 +84390,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_302717, 2, (MRB_IVSYM(
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302717[12] = {
 0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x33,0x02,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_302717, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302717[] = "\x00\xe9\x83\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302717[] = "\x00\xeb\x83\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302717 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302717}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302717_ = &gem_mrblib_ruflet_framework_proc_debug_file_302717;
@@ -84407,7 +84408,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_302718, 2, (MRB_IVSYM(
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302718[12] = {
 0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x33,0x02,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_302718, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302718[] = "\x00\xed\x83\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302718[] = "\x00\xef\x83\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302718 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302718}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302718_ = &gem_mrblib_ruflet_framework_proc_debug_file_302718;
@@ -84427,7 +84428,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302719[41] = {
 0x19,0x03,0x00,0x01,0x04,0x01,0x32,0x03,0x02,0x01,0x3d,0x03,0x38,0x04,0x08,0x00,0x37,0x03,0x0f,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_302719, 2, (MRB_SYM(name), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302719[] = "\x00\xf1\x83\x01\x04\x01\x1c\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302719[] = "\x00\xf3\x83\x01\x04\x01\x1c\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302719 = {
 0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302719}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302719_ = &gem_mrblib_ruflet_framework_proc_debug_file_302719;
@@ -84453,7 +84454,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_302712, 6, (MRB_SYM(in
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302712[26] = {
 0x6b,0x01,0x00,0x00,0x6b,0x01,0x01,0x01,0x6b,0x01,0x02,0x02,0x6b,0x01,0x03,0x03,0x6b,0x01,0x04,0x04,
 0x6b,0x01,0x05,0x05,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302712[] = "\x00\xdd\x83\x01\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302712[] = "\x00\xdf\x83\x01\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302712 = {
 0, 324, 14, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302712}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302712_ = &gem_mrblib_ruflet_framework_proc_debug_file_302712;
@@ -84472,7 +84473,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302752[29] = {
 0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x27,0x02,0x00,0x10,0x1d,0x02,0x01,0x1d,0x03,0x03,0x1f,0x03,0x02,
 0x32,0x02,0x04,0x01,0x1a,0x02,0x00,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_302752, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302752[] = "\x00\xf9\x83\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302752[] = "\x00\xfb\x83\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302752 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302752}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302752_ = &gem_mrblib_ruflet_framework_proc_debug_file_302752;
@@ -84491,7 +84492,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302753[29] = {
 0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x27,0x02,0x00,0x10,0x1d,0x02,0x01,0x1d,0x03,0x03,0x1f,0x03,0x02,
 0x32,0x02,0x04,0x01,0x1a,0x02,0x00,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_302753, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302753[] = "\x00\xfd\x83\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302753[] = "\x00\xff\x83\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302753 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302753}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302753_ = &gem_mrblib_ruflet_framework_proc_debug_file_302753;
@@ -84513,7 +84514,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302754[81] = {
 0x1f,0x03,0x04,0x01,0x04,0x01,0x32,0x03,0x03,0x01,0x3d,0x03,0x38,0x04,0x08,0x00,0x37,0x03,0x0f,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_302754, 2, (MRB_SYM(name), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302754[] = "\x00\x81\x84\x01\x04\x01\x11\x01\x11\x03\x11\x01\x11\x03";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302754[] = "\x00\x83\x84\x01\x04\x01\x11\x01\x11\x03\x11\x01\x11\x03";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302754 = {
 0, 324, 14, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302754}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302754_ = &gem_mrblib_ruflet_framework_proc_debug_file_302754;
@@ -84536,7 +84537,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302755[105] = {
 0x03,0x32,0x04,0x06,0x01,0x3d,0x04,0x1d,0x04,0x04,0x1f,0x04,0x08,0x01,0x05,0x01,0x33,0x05,0x00,0x32,
 0x04,0x09,0x01,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_302755, 3, (MRB_SYM(name), 0,MRB_SYM(key), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302755[] = "\x00\x8d\x84\x01\x04\x01\x0f\x01\x22\x01\x22\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302755[] = "\x00\x8f\x84\x01\x04\x01\x0f\x01\x22\x01\x22\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302755 = {
 0, 324, 12, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302755}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302755_ = &gem_mrblib_ruflet_framework_proc_debug_file_302755;
@@ -84559,7 +84560,7 @@ static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_302713[4] = {
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_302713, 4, (MRB_SYM(material), MRB_SYM(cupertino), MRB_SYM(const_missing), MRB_OPSYM(aref), ), const);
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302713[18] = {
 0x6b,0x01,0x00,0x00,0x6b,0x01,0x01,0x01,0x6b,0x01,0x02,0x02,0x6b,0x01,0x03,0x03,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302713[] = "\x00\xf9\x83\x01\x04\x04\x04\x04\x04\x0c";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302713[] = "\x00\xfb\x83\x01\x04\x04\x04\x04\x04\x0c";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302713 = {
 0, 324, 10, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302713}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302713_ = &gem_mrblib_ruflet_framework_proc_debug_file_302713;
@@ -84580,7 +84581,7 @@ static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_302691[2] = {
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_302691, 1, (MRB_SYM(IconGroup), ), const);
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302691[19] = {
 0x11,0x01,0x11,0x02,0x67,0x01,0x00,0x69,0x01,0x00,0x12,0x01,0x6f,0x01,0x69,0x01,0x01,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302691[] = "\x00\xdc\x83\x01\x0a\x1c";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302691[] = "\x00\xde\x83\x01\x0a\x1c";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302691 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302691}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302691_ = &gem_mrblib_ruflet_framework_proc_debug_file_302691;
@@ -84601,7 +84602,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302774[80] = {
 0x04,0x10,0x08,0x01,0x01,0x09,0x05,0x5e,0x06,0x02,0x01,0x01,0x06,0x01,0x03,0x02,0x1d,0x06,0x02,0x10,
 0x07,0x00,0x01,0x08,0x04,0x10,0x09,0x01,0x01,0x0a,0x05,0x01,0x0b,0x03,0x34,0x06,0x03,0x20,0x3d,0x06,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_302774, 5, (MRB_OPSYM(pow), 0,MRB_SYM(block), MRB_SYM(host), MRB_SYM(port), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302774[] = "\x00\x9a\x84\x01\x38\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302774[] = "\x00\x9c\x84\x01\x38\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302774 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302774}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302774_ = &gem_mrblib_ruflet_framework_proc_debug_file_302774;
@@ -84619,7 +84620,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_302775, 2, (MRB_SYM(Wi
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302775[12] = {
 0x39,0x00,0x00,0x00,0x1d,0x02,0x00,0x33,0x02,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_302775, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302775[] = "\x00\xa0\x84\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302775[] = "\x00\xa2\x84\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302775 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302775}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302775_ = &gem_mrblib_ruflet_framework_proc_debug_file_302775;
@@ -84641,7 +84642,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_302692, 6, (MRB_SYM(Sh
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302692[23] = {
 0x1d,0x02,0x01,0x1f,0x02,0x00,0x2f,0x01,0x02,0x01,0x6b,0x01,0x03,0x00,0x30,0x01,0x04,0x6b,0x01,0x05,
 0x01,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302692[] = "\x00\x98\x84\x01\x0a\x02\x04\x04\x03\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302692[] = "\x00\x9a\x84\x01\x0a\x02\x04\x04\x03\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302692 = {
 0, 324, 10, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302692}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302692_ = &gem_mrblib_ruflet_framework_proc_debug_file_302692;
@@ -84660,7 +84661,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302785[27] = {
 0x39,0x00,0x00,0x03,0x01,0x03,0x02,0x1d,0x04,0x00,0x5e,0x05,0x00,0x01,0x06,0x01,0x60,0x05,0x01,0x06,
 0x03,0x34,0x04,0x01,0xf0,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_302785, 3, (MRB_SYM(opts), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302785[] = "\x00\xa9\x84\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302785[] = "\x00\xab\x84\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302785 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302785}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302785_ = &gem_mrblib_ruflet_framework_proc_debug_file_302785;
@@ -84679,7 +84680,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302786[30] = {
 0x39,0x00,0x00,0x03,0x01,0x03,0x02,0x1d,0x04,0x01,0x1f,0x04,0x00,0x5e,0x05,0x00,0x01,0x06,0x01,0x60,
 0x05,0x01,0x06,0x03,0x34,0x04,0x02,0xf0,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_302786, 3, (MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302786[] = "\x00\xaa\x84\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302786[] = "\x00\xac\x84\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302786 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302786}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302786_ = &gem_mrblib_ruflet_framework_proc_debug_file_302786;
@@ -84697,7 +84698,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_302787, 2, (MRB_SYM(DS
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302787[12] = {
 0x39,0x00,0x00,0x00,0x1d,0x02,0x01,0x1f,0x02,0x00,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_302787, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302787[] = "\x00\xae\x84\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302787[] = "\x00\xb0\x84\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302787 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302787}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302787_ = &gem_mrblib_ruflet_framework_proc_debug_file_302787;
@@ -84720,7 +84721,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_302784, 6, (MRB_SYM(Sh
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302784[24] = {
 0x1d,0x02,0x00,0x2f,0x01,0x01,0x01,0x6b,0x01,0x02,0x00,0x6b,0x01,0x03,0x01,0x30,0x01,0x04,0x6b,0x01,
 0x05,0x02,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302784[] = "\x00\xa7\x84\x01\x07\x02\x04\x01\x04\x02\x03\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302784[] = "\x00\xa9\x84\x01\x07\x02\x04\x01\x04\x02\x03\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302784 = {
 0, 324, 12, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302784}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302784_ = &gem_mrblib_ruflet_framework_proc_debug_file_302784;
@@ -84739,7 +84740,7 @@ static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_302693[1] = {
 };
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_302693[9] = {
 0x12,0x01,0x6f,0x01,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_302693[] = "\x00\xa6\x84\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_302693[] = "\x00\xa8\x84\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_302693 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_302693}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_302693_ = &gem_mrblib_ruflet_framework_proc_debug_file_302693;
@@ -84771,7 +84772,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_211[157] = {
 0x01,0x01,0x1f,0x01,0x0a,0x1e,0x01,0x0a,0x11,0x01,0x68,0x01,0x0b,0x69,0x01,0x00,0x11,0x01,0x68,0x01,
 0x0c,0x69,0x01,0x01,0x11,0x01,0x68,0x01,0x0d,0x69,0x01,0x02,0x11,0x01,0x68,0x01,0x0e,0x69,0x01,0x03,
 0x12,0x01,0x6f,0x01,0x69,0x01,0x04,0x11,0x01,0x68,0x01,0x02,0x69,0x01,0x05,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_211[] = "\x00\xb8\x83\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x02\x08\x09\x08\x07\x08\x09\x08\x3c\x07\x0e";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_211[] = "\x00\xba\x83\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x01\x0c\x02\x08\x09\x08\x07\x08\x09\x08\x3c\x07\x0e";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_211 = {
 0, 324, 32, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_211}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_211_ = &gem_mrblib_ruflet_framework_proc_debug_file_211;
@@ -84790,7 +84791,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303017[30] = {
 0x39,0x00,0x00,0x03,0x01,0x03,0x02,0x1d,0x04,0x01,0x1f,0x04,0x00,0x5e,0x05,0x00,0x01,0x06,0x01,0x60,
 0x05,0x01,0x06,0x03,0x34,0x04,0x02,0xf0,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303017, 3, (MRB_SYM(opts), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303017[] = "\x00\xba\x84\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303017[] = "\x00\xbc\x84\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303017 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303017}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303017_ = &gem_mrblib_ruflet_framework_proc_debug_file_303017;
@@ -84809,7 +84810,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303018[30] = {
 0x39,0x00,0x00,0x03,0x01,0x03,0x02,0x1d,0x04,0x01,0x1f,0x04,0x00,0x5e,0x05,0x00,0x01,0x06,0x01,0x60,
 0x05,0x01,0x06,0x03,0x34,0x04,0x02,0xf0,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303018, 3, (MRB_SYM(props), 0,MRB_SYM(block), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303018[] = "\x00\xbb\x84\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303018[] = "\x00\xbd\x84\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303018 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303018}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303018_ = &gem_mrblib_ruflet_framework_proc_debug_file_303018;
@@ -84827,7 +84828,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_303019, 2, (MRB_SYM(DS
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303019[12] = {
 0x39,0x00,0x00,0x00,0x1d,0x02,0x01,0x1f,0x02,0x00,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303019, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303019[] = "\x00\xbd\x84\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303019[] = "\x00\xbf\x84\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303019 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303019}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303019_ = &gem_mrblib_ruflet_framework_proc_debug_file_303019;
@@ -84855,7 +84856,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303020[144] = {
 0x07,0x01,0x08,0x01,0x33,0x08,0x00,0x5e,0x09,0x00,0x01,0x0a,0x06,0x60,0x09,0x01,0x0a,0x05,0x34,0x07,
 0x09,0xf1,0x3d,0x07,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303020, 6, (MRB_SYM(name), MRB_SYM(args), MRB_SYM(props), 0,MRB_SYM(block), MRB_SYM(forwarded), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303020[] = "\x00\xc1\x84\x01\x07\x01\x38\x02\x09\x01\x18\x01\x13\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303020[] = "\x00\xc3\x84\x01\x07\x01\x38\x02\x09\x01\x18\x01\x13\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303020 = {
 0, 324, 14, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303020}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303020_ = &gem_mrblib_ruflet_framework_proc_debug_file_303020;
@@ -84881,7 +84882,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_212[77] = {
 0x6b,0x01,0x06,0x01,0x6b,0x01,0x07,0x02,0x6b,0x01,0x08,0x03,0x1d,0x01,0x02,0x1f,0x01,0x01,0x1f,0x01,
 0x00,0x10,0x02,0x09,0x32,0x01,0x0a,0x01,0x28,0x01,0x00,0x17,0x11,0x02,0x1d,0x03,0x02,0x1f,0x03,0x01,
 0x1f,0x03,0x00,0x14,0x04,0x32,0x03,0x09,0x01,0x54,0x02,0x2f,0x01,0x04,0x0f,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_212[] = "\x00\xb6\x84\x01\x0d\x02\x03\x02\x04\x01\x04\x02\x04\x04\x04\x0a\x12\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_212[] = "\x00\xb8\x84\x01\x0d\x02\x03\x02\x04\x01\x04\x02\x04\x04\x04\x0a\x12\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_212 = {
 0, 324, 18, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_212}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_212_ = &gem_mrblib_ruflet_framework_proc_debug_file_212;
@@ -84919,7 +84920,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303259[273] = {
 0x32,0x04,0x01,0x01,0x28,0x04,0x00,0x0a,0x01,0x05,0x01,0x2f,0x04,0x12,0x01,0x26,0x00,0x0d,0x01,0x05,
 0x01,0x33,0x05,0x0e,0x2f,0x04,0x0c,0x01,0x26,0x00,0x00,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303259, 2, (MRB_SYM(value), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303259[] = "\x00\xd7\x84\x01\x04\x01\x03\x01\x0c\x01\x09\x12\x02\xef\xff\xff\xff\x0f\x0c\x01\x09\x10\x02\xf1\xff\xff\xff\x0f\x0c\x01\x09\x0e\x02\xf3\xff\xff\xff\x0f\x0c\x01\x0a\x0c\x02\xf5\xff\xff\xff\x0f\x0c\x01\x18\x0a\x02\xf7\xff\xff\xff\x0f\x0c\x01\x1f\x08\x02\xf9\xff\xff\xff\x0f\x0c\x01\x0d\x06\x02\xfb\xff\xff\xff\x0f\x0c\x01\x0a\x04\x02\xfd\xff\xff\xff\x0f\x0c\x01\x0a\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303259[] = "\x00\xd9\x84\x01\x04\x01\x03\x01\x0c\x01\x09\x12\x02\xef\xff\xff\xff\x0f\x0c\x01\x09\x10\x02\xf1\xff\xff\xff\x0f\x0c\x01\x09\x0e\x02\xf3\xff\xff\xff\x0f\x0c\x01\x0a\x0c\x02\xf5\xff\xff\xff\x0f\x0c\x01\x18\x0a\x02\xf7\xff\xff\xff\x0f\x0c\x01\x1f\x08\x02\xf9\xff\xff\xff\x0f\x0c\x01\x0d\x06\x02\xfb\xff\xff\xff\x0f\x0c\x01\x0a\x04\x02\xfd\xff\xff\xff\x0f\x0c\x01\x0a\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303259 = {
 0, 324, 92, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303259}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303259_ = &gem_mrblib_ruflet_framework_proc_debug_file_303259;
@@ -84938,7 +84939,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303260[26] = {
 0x39,0x04,0x00,0x00,0x1d,0x04,0x00,0x01,0x05,0x01,0x32,0x04,0x01,0x01,0x01,0x03,0x04,0x01,0x05,0x03,
 0x2f,0x04,0x02,0x01,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303260, 3, (MRB_SYM(bytes), 0,MRB_SYM(reader), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303260[] = "\x00\xf0\x84\x01\x04\x01\x0d\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303260[] = "\x00\xf2\x84\x01\x04\x01\x0d\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303260 = {
 0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303260}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303260_ = &gem_mrblib_ruflet_framework_proc_debug_file_303260;
@@ -84992,7 +84993,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303261[337] = {
 0x52,0x04,0x01,0x5c,0x05,0x0f,0x32,0x04,0x00,0x01,0x45,0x03,0x3d,0x03,0x5c,0x03,0x10,0x33,0x03,0x01,
 0x01,0x04,0x01,0x52,0x04,0x01,0x5c,0x05,0x11,0x32,0x04,0x00,0x01,0x45,0x03,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303261, 2, (MRB_SYM(value), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303261[] = "\x00\xf7\x84\x01\x04\x01\x09\x06\x02\xfb\xff\xff\xff\x0f\x1b\x01\x23\x01\x26\x01\x23\x02\x16\x07\x02\xfb\xff\xff\xff\x0f\x22\x01\x23\x01\x24\x01\x23\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303261[] = "\x00\xf9\x84\x01\x04\x01\x09\x06\x02\xfb\xff\xff\xff\x0f\x1b\x01\x23\x01\x26\x01\x23\x02\x16\x07\x02\xfb\xff\xff\xff\x0f\x22\x01\x23\x01\x24\x01\x23\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303261 = {
 0, 324, 38, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303261}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303261_ = &gem_mrblib_ruflet_framework_proc_debug_file_303261;
@@ -85028,7 +85029,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303262[194] = {
 0x04,0x45,0x06,0x26,0x00,0x1a,0x5c,0x06,0x05,0x33,0x06,0x03,0x01,0x07,0x05,0x52,0x07,0x01,0x5c,0x08,
 0x06,0x32,0x07,0x06,0x01,0x45,0x06,0x01,0x07,0x04,0x45,0x06,0x3d,0x06,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303262, 5, (MRB_SYM(value), 0,MRB_SYM(str), MRB_SYM(bytes), MRB_SYM(len), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303262[] = "\x00\x89\x85\x01\x04\x01\x13\x01\x09\x01\x09\x02\x0a\x01\x1c\x06\x02\xfb\xff\xff\xff\x0f\x0a\x01\x1d\x04\x02\xfd\xff\xff\xff\x0f\x0d\x01\x1d\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303262[] = "\x00\x8b\x85\x01\x04\x01\x13\x01\x09\x01\x09\x02\x0a\x01\x1c\x06\x02\xfb\xff\xff\xff\x0f\x0a\x01\x1d\x04\x02\xfd\xff\xff\xff\x0f\x0d\x01\x1d\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303262 = {
 0, 324, 36, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303262}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303262_ = &gem_mrblib_ruflet_framework_proc_debug_file_303262;
@@ -85060,7 +85061,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303263[138] = {
 0x45,0x05,0x01,0x06,0x03,0x45,0x05,0x26,0x00,0x1a,0x5c,0x05,0x04,0x33,0x05,0x01,0x01,0x06,0x04,0x52,
 0x06,0x01,0x5c,0x07,0x05,0x32,0x06,0x03,0x01,0x45,0x05,0x01,0x06,0x03,0x45,0x05,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303263, 4, (MRB_SYM(value), 0,MRB_SYM(bytes), MRB_SYM(len), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303263[] = "\x00\x99\x85\x01\x04\x01\x0c\x01\x09\x02\x0a\x01\x1d\x04\x02\xfd\xff\xff\xff\x0f\x0d\x01\x1d\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303263[] = "\x00\x9b\x85\x01\x04\x01\x0c\x01\x09\x02\x0a\x01\x1d\x04\x02\xfd\xff\xff\xff\x0f\x0d\x01\x1d\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303263 = {
 0, 324, 24, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303263}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303263_ = &gem_mrblib_ruflet_framework_proc_debug_file_303263;
@@ -85079,7 +85080,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303264[33] = {
 0x39,0x04,0x00,0x00,0x01,0x03,0x01,0x33,0x03,0x00,0x1d,0x04,0x02,0x1f,0x04,0x01,0x4d,0x03,0x27,0x03,
 0x00,0x09,0x01,0x03,0x01,0x33,0x03,0x03,0x33,0x03,0x04,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303264, 2, (MRB_SYM(value), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303264[] = "\x00\xa6\x85\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303264[] = "\x00\xa8\x85\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303264 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303264}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303264_ = &gem_mrblib_ruflet_framework_proc_debug_file_303264;
@@ -85098,7 +85099,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303343[21] = {
 0x39,0x04,0x00,0x00,0x21,0x03,0x05,0x00,0x01,0x05,0x01,0x2f,0x04,0x00,0x01,0x32,0x03,0x01,0x01,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303343, 2, (MRB_SYM(item), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303343[] = "\x00\xb6\x85\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303343[] = "\x00\xb8\x85\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303343 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303343}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303343_ = &gem_mrblib_ruflet_framework_proc_debug_file_303343;
@@ -85134,7 +85135,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303265[143] = {
 0x01,0x05,0x06,0x01,0x06,0x01,0x62,0x07,0x00,0x34,0x06,0x05,0x00,0x01,0x06,0x04,0x01,0x07,0x05,0x45,
 0x06,0x3d,0x06,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303265, 5, (MRB_SYM(value), 0,MRB_SYM(len), MRB_SYM(head), MRB_SYM(body), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303265[] = "\x00\xaa\x85\x01\x04\x01\x09\x02\x0a\x01\x17\x04\x02\xfd\xff\xff\xff\x0f\x0d\x01\x18\x02\x1a\x03\x0c\x01\x0a\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303265[] = "\x00\xac\x85\x01\x04\x01\x09\x02\x0a\x01\x17\x04\x02\xfd\xff\xff\xff\x0f\x0d\x01\x18\x02\x1a\x03\x0c\x01\x0a\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303265 = {
 0, 324, 28, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303265}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303265_ = &gem_mrblib_ruflet_framework_proc_debug_file_303265;
@@ -85153,7 +85154,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303356[31] = {
 0x39,0x08,0x00,0x00,0x57,0x04,0x01,0x00,0x57,0x05,0x01,0x01,0x01,0x07,0x02,0x01,0x08,0x04,0x33,0x08,
 0x00,0x01,0x09,0x05,0x01,0x06,0x09,0x25,0x07,0x3d,0x06,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303356, 5, (0,MRB_SYM(out), 0,MRB_SYM(k), MRB_SYM(v), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303356[] = "\x00\xbb\x85\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303356[] = "\x00\xbd\x85\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303356 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303356}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303356_ = &gem_mrblib_ruflet_framework_proc_debug_file_303356;
@@ -85172,7 +85173,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303357[36] = {
 0x39,0x08,0x00,0x00,0x21,0x04,0x06,0x00,0x01,0x06,0x01,0x2f,0x05,0x00,0x01,0x32,0x04,0x01,0x01,0x21,
 0x04,0x06,0x00,0x01,0x06,0x02,0x2f,0x05,0x00,0x01,0x32,0x04,0x01,0x01,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303357, 3, (MRB_SYM(k), MRB_SYM(v), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303357[] = "\x00\xc7\x85\x01\x04\x01\x0f\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303357[] = "\x00\xc9\x85\x01\x04\x01\x0f\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303357 = {
 0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303357}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303357_ = &gem_mrblib_ruflet_framework_proc_debug_file_303357;
@@ -85209,7 +85210,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303266[159] = {
 0x03,0x01,0x45,0x07,0x01,0x05,0x07,0x5c,0x07,0x05,0x33,0x07,0x04,0x33,0x07,0x05,0x01,0x06,0x07,0x01,
 0x07,0x03,0x62,0x08,0x01,0x34,0x07,0x06,0x00,0x01,0x07,0x05,0x01,0x08,0x06,0x45,0x07,0x3d,0x07,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303266, 6, (MRB_SYM(value), 0,MRB_SYM(pairs), MRB_SYM(len), MRB_SYM(head), MRB_SYM(body), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303266[] = "\x00\xba\x85\x01\x04\x01\x10\x01\x09\x02\x0a\x01\x17\x04\x02\xfd\xff\xff\xff\x0f\x0d\x01\x18\x02\x1a\x03\x0c\x01\x0a\x04";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303266[] = "\x00\xbc\x85\x01\x04\x01\x10\x01\x09\x02\x0a\x01\x17\x04\x02\xfd\xff\xff\xff\x0f\x0d\x01\x18\x02\x1a\x03\x0c\x01\x0a\x04";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303266 = {
 0, 324, 30, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303266}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303266_ = &gem_mrblib_ruflet_framework_proc_debug_file_303266;
@@ -85281,7 +85282,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303267[1008] = {
 0x06,0x00,0x01,0x07,0x03,0x03,0x08,0x10,0x32,0x07,0x11,0x01,0x5d,0x06,0x5c,0x07,0x01,0x5d,0x06,0x2f,
 0x05,0x12,0x01,0x26,0x00,0x00,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303267, 3, (MRB_SYM(reader), 0,MRB_SYM(marker), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303267[] = "\x00\xce\x85\x01\x04\x01\x09\x02\x0e\x01\x17\x02\x03\x01\x11\x2f\x02\xd2\xff\xff\xff\x0f\x11\x2e\x02\xd3\xff\xff\xff\x0f\x11\x2d\x02\xd4\xff\xff\xff\x0f\x15\x2c\x02\xd5\xff\xff\xff\x0f\x15\x2b\x02\xd6\xff\xff\xff\x0f\x15\x2a\x02\xd7\xff\xff\xff\x0f\x15\x29\x02\xd8\xff\xff\xff\x0f\x15\x28\x02\xd9\xff\xff\xff\x0f\x15\x27\x02\xda\xff\xff\xff\x0f\x15\x26\x02\xdb\xff\xff\xff\x0f\x15\x25\x02\xdc\xff\xff\xff\x0f\x15\x24\x02\xdd\xff\xff\xff\x0f\x15\x23\x02\xde\xff\xff\xff\x0f\x1c\x22\x02\xdf\xff\xff\xff\x0f\x1c\x21\x02\xe0\xff\xff\xff\x0f\x1c\x20\x02\xe1\xff\xff\xff\x0f\x1c\x1f\x02\xe2\xff\xff\xff\x0f\x1c\x1e\x02\xe3\xff\xff\xff\x0f\x1c\x1d\x02\xe4\xff\xff\xff\x0f\x1c\x1c\x02\xe5\xff\xff\xff\x0f\x1c\x1b\x02\xe6\xff\xff\xff\x0f\x1c\x1a\x02\xe7\xff\xff\xff\x0f\x1c\x19\x02\xe8\xff\xff\xff\x0f\x0c\x01\x0c\x17\x02\xea\xff\xff\xff\x0f\x0c\x01\x0c\x15\x02\xec\xff\xff\xff\x0f\x0c\x01\x0c\x13\x02\xee\xff\xff\xff\x0f\x0c\x01\x0d\x11\x02\xf0\xff\xff\xff\x0f\x0c\x01\x0d\x0f\x02\xf2\xff\xff\xff\x0f\x0c\x01\x10\x0d\x02\xf4\xff\xff\xff\x0f\x0c\x01\x10\x0b\x02\xf6\xff\xff\xff\x0f\x0c\x01\x10\x09\x02\xf9\xff\xff\xff\x0f\x11\x01\x14\x06\x02\xfb\xff\xff\xff\x0f\x11\x01\x14\x04\x02\xfd\xff\xff\xff\x0f\x11\x01\x14\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303267[] = "\x00\xd0\x85\x01\x04\x01\x09\x02\x0e\x01\x17\x02\x03\x01\x11\x2f\x02\xd2\xff\xff\xff\x0f\x11\x2e\x02\xd3\xff\xff\xff\x0f\x11\x2d\x02\xd4\xff\xff\xff\x0f\x15\x2c\x02\xd5\xff\xff\xff\x0f\x15\x2b\x02\xd6\xff\xff\xff\x0f\x15\x2a\x02\xd7\xff\xff\xff\x0f\x15\x29\x02\xd8\xff\xff\xff\x0f\x15\x28\x02\xd9\xff\xff\xff\x0f\x15\x27\x02\xda\xff\xff\xff\x0f\x15\x26\x02\xdb\xff\xff\xff\x0f\x15\x25\x02\xdc\xff\xff\xff\x0f\x15\x24\x02\xdd\xff\xff\xff\x0f\x15\x23\x02\xde\xff\xff\xff\x0f\x1c\x22\x02\xdf\xff\xff\xff\x0f\x1c\x21\x02\xe0\xff\xff\xff\x0f\x1c\x20\x02\xe1\xff\xff\xff\x0f\x1c\x1f\x02\xe2\xff\xff\xff\x0f\x1c\x1e\x02\xe3\xff\xff\xff\x0f\x1c\x1d\x02\xe4\xff\xff\xff\x0f\x1c\x1c\x02\xe5\xff\xff\xff\x0f\x1c\x1b\x02\xe6\xff\xff\xff\x0f\x1c\x1a\x02\xe7\xff\xff\xff\x0f\x1c\x19\x02\xe8\xff\xff\xff\x0f\x0c\x01\x0c\x17\x02\xea\xff\xff\xff\x0f\x0c\x01\x0c\x15\x02\xec\xff\xff\xff\x0f\x0c\x01\x0c\x13\x02\xee\xff\xff\xff\x0f\x0c\x01\x0d\x11\x02\xf0\xff\xff\xff\x0f\x0c\x01\x0d\x0f\x02\xf2\xff\xff\xff\x0f\x0c\x01\x10\x0d\x02\xf4\xff\xff\xff\x0f\x0c\x01\x10\x0b\x02\xf6\xff\xff\xff\x0f\x0c\x01\x10\x09\x02\xf9\xff\xff\xff\x0f\x11\x01\x14\x06\x02\xfb\xff\xff\xff\x0f\x11\x01\x14\x04\x02\xfd\xff\xff\xff\x0f\x11\x01\x14\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303267 = {
 0, 324, 302, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303267}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303267_ = &gem_mrblib_ruflet_framework_proc_debug_file_303267;
@@ -85299,7 +85300,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_303384, 1, (MRB_SYM(re
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303384[14] = {
 0x39,0x00,0x00,0x00,0x21,0x03,0x01,0x00,0x2f,0x02,0x00,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303384, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303384[] = "\x00\x8a\x86\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303384[] = "\x00\x8c\x86\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303384 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303384}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303384_ = &gem_mrblib_ruflet_framework_proc_debug_file_303384;
@@ -85320,7 +85321,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_303268, 2, (MRB_SYM(Ar
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303268[19] = {
 0x39,0x08,0x00,0x00,0x1d,0x04,0x00,0x01,0x05,0x02,0x62,0x06,0x00,0x34,0x04,0x01,0x01,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303268, 3, (MRB_SYM(reader), MRB_SYM(size), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303268[] = "\x00\x89\x86\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303268[] = "\x00\x8b\x86\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303268 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303268}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303268_ = &gem_mrblib_ruflet_framework_proc_debug_file_303268;
@@ -85339,7 +85340,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303397[40] = {
 0x39,0x00,0x00,0x00,0x21,0x04,0x01,0x00,0x2f,0x03,0x00,0x01,0x01,0x02,0x03,0x21,0x04,0x04,0x00,0x01,
 0x05,0x02,0x33,0x05,0x01,0x21,0x07,0x01,0x00,0x2f,0x06,0x00,0x01,0x01,0x03,0x06,0x25,0x04,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303397, 2, (0,MRB_SYM(key), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303397[] = "\x00\x8f\x86\x01\x04\x01\x0b\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303397[] = "\x00\x91\x86\x01\x04\x01\x0b\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303397 = {
 0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303397}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303397_ = &gem_mrblib_ruflet_framework_proc_debug_file_303397;
@@ -85360,7 +85361,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_303269, 1, (MRB_SYM(ti
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303269[19] = {
 0x39,0x08,0x00,0x00,0x5e,0x04,0x00,0x01,0x05,0x02,0x62,0x06,0x00,0x34,0x05,0x00,0x00,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303269, 4, (MRB_SYM(reader), MRB_SYM(size), 0,MRB_SYM(out), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303269[] = "\x00\x8d\x86\x01\x04\x01\x03\x01\x0a\x04";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303269[] = "\x00\x8f\x86\x01\x04\x01\x03\x01\x0a\x04";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303269 = {
 0, 324, 10, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303269}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303269_ = &gem_mrblib_ruflet_framework_proc_debug_file_303269;
@@ -85379,7 +85380,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303270[22] = {
 0x39,0x08,0x00,0x00,0x01,0x04,0x01,0x33,0x04,0x00,0x01,0x04,0x01,0x01,0x05,0x02,0x32,0x04,0x01,0x01,
 0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303270, 3, (MRB_SYM(reader), MRB_SYM(size), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303270[] = "\x00\x96\x86\x01\x04\x01\x06\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303270[] = "\x00\x98\x86\x01\x04\x01\x06\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303270 = {
 0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303270}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303270_ = &gem_mrblib_ruflet_framework_proc_debug_file_303270;
@@ -85412,7 +85413,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303257[53] = {
 0x6b,0x01,0x00,0x00,0x6b,0x01,0x01,0x01,0x30,0x01,0x02,0x6b,0x01,0x03,0x02,0x6b,0x01,0x04,0x03,0x6b,
 0x01,0x05,0x04,0x6b,0x01,0x06,0x05,0x6b,0x01,0x07,0x06,0x6b,0x01,0x08,0x07,0x6b,0x01,0x09,0x08,0x6b,
 0x01,0x0a,0x09,0x6b,0x01,0x0b,0x0a,0x6b,0x01,0x0c,0x0b,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303257[] = "\x00\xd7\x84\x01\x04\x19\x04\x05\x03\x02\x04\x12\x04\x10\x04\x0d\x04\x04\x04\x10\x04\x14\x04\x3b\x04\x04\x04\x09";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303257[] = "\x00\xd9\x84\x01\x04\x19\x04\x05\x03\x02\x04\x12\x04\x10\x04\x0d\x04\x04\x04\x10\x04\x14\x04\x3b\x04\x04\x04\x09";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303257 = {
 0, 324, 28, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303257}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303257_ = &gem_mrblib_ruflet_framework_proc_debug_file_303257;
@@ -85431,7 +85432,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303412[23] = {
 0x39,0x04,0x00,0x00,0x01,0x03,0x01,0x33,0x03,0x00,0x33,0x03,0x01,0x1a,0x03,0x02,0x06,0x03,0x1a,0x03,
 0x03,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303412, 2, (MRB_SYM(bytes), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303412[] = "\x00\x9d\x86\x01\x04\x01\x0c\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303412[] = "\x00\x9f\x86\x01\x04\x01\x0c\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303412 = {
 0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303412}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303412_ = &gem_mrblib_ruflet_framework_proc_debug_file_303412;
@@ -85454,7 +85455,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303413[45] = {
 0x29,0x03,0x00,0x03,0x26,0x00,0x07,0x5c,0x04,0x00,0x2f,0x03,0x03,0x01,0x19,0x03,0x01,0x46,0x03,0x01,
 0x1a,0x03,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303413, 2, (0,MRB_SYM(value), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303413[] = "\x00\xa2\x86\x01\x04\x01\x0d\x01\x11\x02\x09\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303413[] = "\x00\xa4\x86\x01\x04\x01\x0d\x01\x11\x02\x09\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303413 = {
 0, 324, 12, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303413}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303413_ = &gem_mrblib_ruflet_framework_proc_debug_file_303413;
@@ -85478,7 +85479,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303414[67] = {
 0x04,0x05,0x01,0x28,0x04,0x00,0x07,0x5c,0x05,0x00,0x2f,0x04,0x06,0x01,0x19,0x04,0x01,0x01,0x05,0x01,
 0x45,0x04,0x1a,0x04,0x01,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303414, 3, (MRB_SYM(size), 0,MRB_SYM(chunk), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303414[] = "\x00\xaa\x86\x01\x04\x01\x10\x01\x22\x02\x0b\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303414[] = "\x00\xac\x86\x01\x04\x01\x10\x01\x22\x02\x0b\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303414 = {
 0, 324, 12, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303414}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303414_ = &gem_mrblib_ruflet_framework_proc_debug_file_303414;
@@ -85499,7 +85500,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_303415, 2, (MRB_SYM(re
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303415[19] = {
 0x39,0x00,0x00,0x00,0x08,0x03,0x2f,0x02,0x00,0x01,0x5c,0x03,0x00,0x32,0x02,0x01,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303415, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303415[] = "\x00\xb2\x86\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303415[] = "\x00\xb4\x86\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303415 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303415}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303415_ = &gem_mrblib_ruflet_framework_proc_debug_file_303415;
@@ -85520,7 +85521,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_303416, 2, (MRB_SYM(re
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303416[19] = {
 0x39,0x00,0x00,0x00,0x0a,0x03,0x2f,0x02,0x00,0x01,0x5c,0x03,0x00,0x32,0x02,0x01,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303416, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303416[] = "\x00\xb6\x86\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303416[] = "\x00\xb8\x86\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303416 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303416}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303416_ = &gem_mrblib_ruflet_framework_proc_debug_file_303416;
@@ -85541,7 +85542,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_303417, 2, (MRB_SYM(re
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303417[20] = {
 0x39,0x00,0x00,0x00,0x03,0x03,0x08,0x2f,0x02,0x00,0x01,0x5c,0x03,0x00,0x32,0x02,0x01,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303417, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303417[] = "\x00\xba\x86\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303417[] = "\x00\xbc\x86\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303417 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303417}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303417_ = &gem_mrblib_ruflet_framework_proc_debug_file_303417;
@@ -85562,7 +85563,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_303418, 2, (MRB_SYM(re
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303418[19] = {
 0x39,0x00,0x00,0x00,0x07,0x03,0x2f,0x02,0x00,0x01,0x5c,0x03,0x00,0x32,0x02,0x01,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303418, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303418[] = "\x00\xbe\x86\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303418[] = "\x00\xc0\x86\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303418 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303418}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303418_ = &gem_mrblib_ruflet_framework_proc_debug_file_303418;
@@ -85583,7 +85584,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_303419, 2, (MRB_SYM(re
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303419[19] = {
 0x39,0x00,0x00,0x00,0x08,0x03,0x2f,0x02,0x00,0x01,0x5c,0x03,0x00,0x32,0x02,0x01,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303419, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303419[] = "\x00\xc2\x86\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303419[] = "\x00\xc4\x86\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303419 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303419}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303419_ = &gem_mrblib_ruflet_framework_proc_debug_file_303419;
@@ -85604,7 +85605,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_303420, 2, (MRB_SYM(re
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303420[19] = {
 0x39,0x00,0x00,0x00,0x0a,0x03,0x2f,0x02,0x00,0x01,0x5c,0x03,0x00,0x32,0x02,0x01,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303420, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303420[] = "\x00\xc6\x86\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303420[] = "\x00\xc8\x86\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303420 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303420}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303420_ = &gem_mrblib_ruflet_framework_proc_debug_file_303420;
@@ -85625,7 +85626,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_303421, 2, (MRB_SYM(re
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303421[20] = {
 0x39,0x00,0x00,0x00,0x03,0x03,0x08,0x2f,0x02,0x00,0x01,0x5c,0x03,0x00,0x32,0x02,0x01,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303421, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303421[] = "\x00\xca\x86\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303421[] = "\x00\xcc\x86\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303421 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303421}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303421_ = &gem_mrblib_ruflet_framework_proc_debug_file_303421;
@@ -85646,7 +85647,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_303422, 2, (MRB_SYM(re
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303422[19] = {
 0x39,0x00,0x00,0x00,0x0a,0x03,0x2f,0x02,0x00,0x01,0x5c,0x03,0x00,0x32,0x02,0x01,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303422, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303422[] = "\x00\xce\x86\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303422[] = "\x00\xd0\x86\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303422 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303422}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303422_ = &gem_mrblib_ruflet_framework_proc_debug_file_303422;
@@ -85667,7 +85668,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_303423, 2, (MRB_SYM(re
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303423[20] = {
 0x39,0x00,0x00,0x00,0x03,0x03,0x08,0x2f,0x02,0x00,0x01,0x5c,0x03,0x00,0x32,0x02,0x01,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303423, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303423[] = "\x00\xd2\x86\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303423[] = "\x00\xd4\x86\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303423 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303423}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303423_ = &gem_mrblib_ruflet_framework_proc_debug_file_303423;
@@ -85688,7 +85689,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_303424, 2, (MRB_SYM(re
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303424[20] = {
 0x39,0x04,0x00,0x00,0x01,0x04,0x01,0x2f,0x03,0x00,0x01,0x5c,0x04,0x00,0x32,0x03,0x01,0x01,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303424, 2, (MRB_SYM(size), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303424[] = "\x00\xd6\x86\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303424[] = "\x00\xd8\x86\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303424 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303424}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303424_ = &gem_mrblib_ruflet_framework_proc_debug_file_303424;
@@ -85706,7 +85707,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_303425, 1, (MRB_SYM(re
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303425[13] = {
 0x39,0x04,0x00,0x00,0x01,0x04,0x01,0x2f,0x03,0x00,0x01,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303425, 2, (MRB_SYM(size), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303425[] = "\x00\xda\x86\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303425[] = "\x00\xdc\x86\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303425 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303425}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303425_ = &gem_mrblib_ruflet_framework_proc_debug_file_303425;
@@ -85741,7 +85742,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303258[58] = {
 0x6b,0x01,0x00,0x00,0x6b,0x01,0x01,0x01,0x6b,0x01,0x02,0x02,0x6b,0x01,0x03,0x03,0x6b,0x01,0x04,0x04,
 0x6b,0x01,0x05,0x05,0x6b,0x01,0x06,0x06,0x6b,0x01,0x07,0x07,0x6b,0x01,0x08,0x08,0x6b,0x01,0x09,0x09,
 0x6b,0x01,0x0a,0x0a,0x6b,0x01,0x0b,0x0b,0x6b,0x01,0x0c,0x0c,0x6b,0x01,0x0d,0x0d,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303258[] = "\x00\x9d\x86\x01\x04\x05\x04\x08\x04\x08\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303258[] = "\x00\x9f\x86\x01\x04\x05\x04\x08\x04\x08\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303258 = {
 0, 324, 30, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303258}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303258_ = &gem_mrblib_ruflet_framework_proc_debug_file_303258;
@@ -85762,7 +85763,7 @@ static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_303256[2] = {
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_303256, 1, (MRB_SYM(ByteReader), ), const);
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303256[19] = {
 0x12,0x01,0x6f,0x01,0x69,0x01,0x00,0x11,0x01,0x11,0x02,0x67,0x01,0x00,0x69,0x01,0x01,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303256[] = "\x00\xd6\x84\x01\x07\xc6\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303256[] = "\x00\xd8\x84\x01\x07\xc6\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303256 = {
 0, 324, 7, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303256}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303256_ = &gem_mrblib_ruflet_framework_proc_debug_file_303256;
@@ -85782,7 +85783,7 @@ static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_213[1] = {
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_213, 1, (MRB_SYM(WireCodec), ), const);
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_213[12] = {
 0x11,0x01,0x11,0x02,0x67,0x01,0x00,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_213[] = "\x00\xd5\x84\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_213[] = "\x00\xd7\x84\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_213 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_213}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_213_ = &gem_mrblib_ruflet_framework_proc_debug_file_213;
@@ -85800,7 +85801,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_303832, 4, (MRB_IVSYM(
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303832[18] = {
 0x39,0x04,0x00,0x00,0x1a,0x01,0x00,0x1d,0x03,0x01,0x33,0x03,0x02,0x1a,0x03,0x03,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303832, 2, (MRB_SYM(socket), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303832[] = "\x00\xea\x86\x01\x04\x01\x03\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303832[] = "\x00\xec\x86\x01\x04\x01\x03\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303832 = {
 0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303832}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303832_ = &gem_mrblib_ruflet_framework_proc_debug_file_303832;
@@ -85818,7 +85819,7 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_303833, 2, (MRB_IVSYM(
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303833[12] = {
 0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x33,0x02,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303833, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303833[] = "\x00\xef\x86\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303833[] = "\x00\xf1\x86\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303833 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303833}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303833_ = &gem_mrblib_ruflet_framework_proc_debug_file_303833;
@@ -85838,7 +85839,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303834[50] = {
 0x03,0x27,0x03,0x00,0x03,0x26,0x00,0x05,0x13,0x02,0x26,0x00,0x02,0x2d,0x02,0x3d,0x02,0x00,0x00,0x00,
 0x00,0x04,0x00,0x00,0x00,0x0a,0x00,0x00,0x00,0x0d,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303834, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303834[] = "\x00\xf3\x86\x01\x04\x01\x07\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303834[] = "\x00\xf5\x86\x01\x04\x01\x07\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303834 = {
 0, 324, 18, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303834}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303834_ = &gem_mrblib_ruflet_framework_proc_debug_file_303834;
@@ -85857,7 +85858,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303835[21] = {
 0x39,0x04,0x00,0x00,0x08,0x04,0x01,0x05,0x01,0x33,0x05,0x00,0x33,0x05,0x01,0x2f,0x03,0x02,0x02,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303835, 2, (MRB_SYM(payload), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303835[] = "\x00\xf9\x86\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303835[] = "\x00\xfb\x86\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303835 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303835}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303835_ = &gem_mrblib_ruflet_framework_proc_debug_file_303835;
@@ -85876,7 +85877,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303836[21] = {
 0x39,0x04,0x00,0x00,0x07,0x04,0x01,0x05,0x01,0x33,0x05,0x00,0x33,0x05,0x01,0x2f,0x03,0x02,0x02,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303836, 2, (MRB_SYM(payload), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303836[] = "\x00\xfd\x86\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303836[] = "\x00\xff\x86\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303836 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303836}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303836_ = &gem_mrblib_ruflet_framework_proc_debug_file_303836;
@@ -85902,7 +85903,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303898[167] = {
 0x50,0x04,0x28,0x04,0x00,0x07,0x11,0x04,0x3e,0x04,0x26,0x00,0x02,0x11,0x04,0x26,0x00,0x07,0x11,0x04,
 0x3e,0x04,0x26,0x00,0x00,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303898, 2, (0,MRB_SYM(continuation), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303898[] = "\x00\x95\x87\x01\x04\x01\x06\x01\x0e\x02\x08\x01\x0c\x02\x02\xff\xff\xff\xff\x0f\x0f\x01\x02\x08\x02\xf9\xff\xff\xff\x0f\x0c\x01\x04\x06\x02\xfb\xff\xff\xff\x0f\x0b\x03\x02\xfe\xff\xff\xff\x0f\x10\x01\x12\x01\x1a\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303898[] = "\x00\x97\x87\x01\x04\x01\x06\x01\x0e\x02\x08\x01\x0c\x02\x02\xff\xff\xff\xff\x0f\x0f\x01\x02\x08\x02\xf9\xff\xff\xff\x0f\x0c\x01\x04\x06\x02\xfb\xff\xff\xff\x0f\x0b\x03\x02\xfe\xff\xff\xff\x0f\x10\x01\x12\x01\x1a\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303898 = {
 0, 324, 54, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303898}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303898_ = &gem_mrblib_ruflet_framework_proc_debug_file_303898;
@@ -85932,7 +85933,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303837[185] = {
 0x04,0x33,0x07,0x08,0x01,0x05,0x07,0x62,0x08,0x00,0x31,0x07,0x09,0x00,0x26,0x00,0x06,0x30,0x07,0x06,
 0x26,0x00,0x00,0x3d,0x07,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303837, 5, (0,MRB_SYM(frame), MRB_SYM(opcode), MRB_SYM(payload), MRB_SYM(message), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303837[] = "\x00\x81\x87\x01\x04\x01\x06\x01\x0b\x02\x0b\x01\x0b\x02\x03\x01\x0c\x02\x02\xff\xff\xff\xff\x0f\x03\x01\x03\x1d\x02\xe4\xff\xff\xff\x0f\x0c\x02\x02\xff\xff\xff\xff\x0f\x0a\x01\x04\x1a\x02\xe7\xff\xff\xff\x0f\x0c\x01\x06\x18\x02\xe9\xff\xff\xff\x0f\x18\x04\x02\xfd\xff\xff\xff\x0f\x0e\x02\x09\x01\x08\x13";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303837[] = "\x00\x83\x87\x01\x04\x01\x06\x01\x0b\x02\x0b\x01\x0b\x02\x03\x01\x0c\x02\x02\xff\xff\xff\xff\x0f\x03\x01\x03\x1d\x02\xe4\xff\xff\xff\x0f\x0c\x02\x02\xff\xff\xff\xff\x0f\x0a\x01\x04\x1a\x02\xe7\xff\xff\xff\x0f\x0c\x01\x06\x18\x02\xe9\xff\xff\xff\x0f\x18\x04\x02\xfd\xff\xff\xff\x0f\x0e\x02\x09\x01\x08\x13";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303837 = {
 0, 324, 76, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303837}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303837_ = &gem_mrblib_ruflet_framework_proc_debug_file_303837;
@@ -85952,7 +85953,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303838[58] = {
 0x16,0x2b,0x02,0x1d,0x03,0x03,0x2c,0x02,0x03,0x27,0x03,0x00,0x03,0x26,0x00,0x05,0x11,0x02,0x26,0x00,
 0x02,0x2d,0x02,0x3d,0x02,0x00,0x00,0x00,0x00,0x0c,0x00,0x00,0x00,0x12,0x00,0x00,0x00,0x15,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303838, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303838[] = "\x00\xac\x87\x01\x04\x01\x08\x03\x07\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303838[] = "\x00\xae\x87\x01\x04\x01\x08\x03\x07\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303838 = {
 0, 324, 20, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303838}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303838_ = &gem_mrblib_ruflet_framework_proc_debug_file_303838;
@@ -85992,7 +85993,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303839[345] = {
 0x05,0x10,0x0d,0x0c,0x01,0x0e,0x03,0x03,0x0f,0x0f,0x32,0x0e,0x02,0x01,0x10,0x0f,0x0d,0x01,0x10,0x0a,
 0x5e,0x0b,0x03,0x3d,0x0b,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303839, 10, (0,MRB_SYM(header), MRB_SYM(b1), MRB_SYM(b2), MRB_SYM(fin), MRB_SYM(masked), MRB_SYM(payload_len), MRB_SYM(ext), MRB_SYM(masking_key), MRB_SYM(payload), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303839[] = "\x00\xb8\x87\x01\x04\x01\x09\x01\x0b\x02\x0c\x01\x0c\x02\x13\x01\x13\x01\x0d\x02\x0a\x03\x02\xfe\xff\xff\xff\x0f\x09\x01\x0b\x01\x0e\x04\x02\xfd\xff\xff\xff\x0f\x0a\x03\x02\xfe\xff\xff\xff\x0f\x0a\x01\x0b\x01\x0d\x03\x17\x02\x15\x01\x12\x01\x1d\x01\x0b\x02\x14\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303839[] = "\x00\xba\x87\x01\x04\x01\x09\x01\x0b\x02\x0c\x01\x0c\x02\x13\x01\x13\x01\x0d\x02\x0a\x03\x02\xfe\xff\xff\xff\x0f\x09\x01\x0b\x01\x0e\x04\x02\xfd\xff\xff\xff\x0f\x0a\x03\x02\xfe\xff\xff\xff\x0f\x0a\x01\x0b\x01\x0d\x03\x17\x02\x15\x01\x12\x01\x1d\x01\x0b\x02\x14\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303839 = {
 0, 324, 66, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303839}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303839_ = &gem_mrblib_ruflet_framework_proc_debug_file_303839;
@@ -86012,7 +86013,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303932[48] = {
 0x01,0x19,0x02,0x00,0x10,0x03,0x02,0x32,0x02,0x03,0x01,0x28,0x02,0x00,0x09,0x19,0x02,0x00,0x33,0x02,
 0x02,0x26,0x00,0x02,0x11,0x02,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303932, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303932[] = "\x00\xe7\x87\x01\x04\x01\x11\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303932[] = "\x00\xe9\x87\x01\x04\x01\x11\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303932 = {
 0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303932}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303932_ = &gem_mrblib_ruflet_framework_proc_debug_file_303932;
@@ -86046,7 +86047,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303840[176] = {
 0x00,0x32,0x08,0x05,0x01,0x01,0x09,0x05,0x52,0x09,0x01,0x5c,0x0a,0x02,0x32,0x09,0x05,0x01,0x45,0x08,
 0x32,0x07,0x06,0x01,0x19,0x07,0x07,0x62,0x08,0x00,0x34,0x07,0x08,0x00,0x3d,0x07,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303840, 6, (MRB_SYM(opcode), MRB_SYM(payload), 0,MRB_SYM(bytes), MRB_SYM(len), MRB_SYM(header), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303840[] = "\x00\xd9\x87\x01\x04\x01\x0c\x01\x09\x01\x1e\x02\x03\x01\x0a\x01\x10\x04\x02\xfd\xff\xff\xff\x0f\x0d\x01\x1f\x02\x22\x03";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303840[] = "\x00\xdb\x87\x01\x04\x01\x0c\x01\x09\x01\x1e\x02\x03\x01\x0a\x01\x10\x04\x02\xfd\xff\xff\xff\x0f\x0d\x01\x1f\x02\x22\x03";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303840 = {
 0, 324, 30, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303840}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303840_ = &gem_mrblib_ruflet_framework_proc_debug_file_303840;
@@ -86065,7 +86066,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303944[38] = {
 0x39,0x08,0x00,0x00,0x21,0x04,0x04,0x00,0x01,0x05,0x01,0x21,0x06,0x02,0x00,0x01,0x07,0x02,0x0a,0x08,
 0x32,0x07,0x00,0x01,0x32,0x06,0x01,0x01,0x32,0x05,0x02,0x01,0x32,0x04,0x03,0x01,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303944, 3, (MRB_SYM(byte), MRB_SYM(idx), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303944[] = "\x00\xf0\x87\x01\x04\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303944[] = "\x00\xf2\x87\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303944 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303944}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303944_ = &gem_mrblib_ruflet_framework_proc_debug_file_303944;
@@ -86091,7 +86092,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303841[41] = {
 0x06,0x01,0x32,0x05,0x03,0x01,0x01,0x05,0x01,0x33,0x05,0x04,0x62,0x06,0x00,0x34,0x05,0x05,0x00,0x3d,
 0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303841, 4, (MRB_SYM(payload), MRB_SYM(mask), 0,MRB_SYM(out), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303841[] = "\x00\xed\x87\x01\x04\x01\x09\x01\x0d\x01\x0d\x03";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303841[] = "\x00\xef\x87\x01\x04\x01\x09\x01\x0d\x01\x0d\x03";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303841 = {
 0, 324, 12, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303841}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303841_ = &gem_mrblib_ruflet_framework_proc_debug_file_303841;
@@ -86121,7 +86122,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303842[197] = {
 0x00,0x0d,0x1d,0x06,0x0f,0x2c,0x05,0x06,0x27,0x06,0x00,0x03,0x26,0x00,0x05,0x11,0x05,0x26,0x00,0x02,
 0x2d,0x05,0x3d,0x05,0x00,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x93,0x00,0x00,0x00,0x96,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_303842, 4, (MRB_SYM(length), 0,MRB_SYM(chunk), MRB_SYM(part), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303842[] = "\x00\xf6\x87\x01\x04\x01\x12\x01\x1a\x02\x09\x01\x0d\x02\x0d\x04\x02\xfc\xff\xff\xff\x0f\x01\x01\x15\x01\x18\x02\x0d\x03\x04\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x15\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303842[] = "\x00\xf8\x87\x01\x04\x01\x12\x01\x1a\x02\x09\x01\x0d\x02\x0d\x04\x02\xfc\xff\xff\xff\x0f\x01\x01\x15\x01\x18\x02\x0d\x03\x04\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x15\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303842 = {
 0, 324, 42, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303842}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303842_ = &gem_mrblib_ruflet_framework_proc_debug_file_303842;
@@ -86153,7 +86154,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_303831[58] = {
 0x0f,0x01,0x01,0x00,0x00,0x00,0x1e,0x01,0x00,0x6b,0x01,0x01,0x00,0x6b,0x01,0x02,0x01,0x6b,0x01,0x03,
 0x02,0x6b,0x01,0x04,0x03,0x6b,0x01,0x05,0x04,0x6b,0x01,0x06,0x05,0x6b,0x01,0x07,0x06,0x30,0x01,0x08,
 0x6b,0x01,0x09,0x07,0x6b,0x01,0x0a,0x08,0x6b,0x01,0x0b,0x09,0x6b,0x01,0x0c,0x0a,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_303831[] = "\x00\xe8\x86\x01\x09\x02\x04\x05\x04\x04\x04\x06\x04\x04\x04\x04\x04\x2b\x04\x0a\x03\x02\x04\x21\x04\x14\x04\x09";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_303831[] = "\x00\xea\x86\x01\x09\x02\x04\x05\x04\x04\x04\x06\x04\x04\x04\x04\x04\x2b\x04\x0a\x03\x02\x04\x21\x04\x14\x04\x09";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_303831 = {
 0, 324, 28, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_303831}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_303831_ = &gem_mrblib_ruflet_framework_proc_debug_file_303831;
@@ -86173,7 +86174,7 @@ static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_214[1] = {
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_214, 1, (MRB_SYM(WebSocketConnection), ), const);
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_214[12] = {
 0x11,0x01,0x11,0x02,0x67,0x01,0x00,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_214[] = "\x00\xe6\x86\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_214[] = "\x00\xe8\x86\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_214 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_214}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_214_ = &gem_mrblib_ruflet_framework_proc_debug_file_214;
@@ -86187,28 +86188,28 @@ static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_214 = {
   &gem_mrblib_ruflet_framework_proc_debug_214,
   12,0,1,1,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304221, 2, (MRB_SYM(stop), MRB_SYM(StandardError), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304221[47] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304222, 2, (MRB_SYM(stop), MRB_SYM(StandardError), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304222[47] = {
 0x39,0x00,0x00,0x00,0x30,0x02,0x00,0x26,0x00,0x16,0x2b,0x02,0x1d,0x03,0x01,0x2c,0x02,0x03,0x27,0x03,
 0x00,0x03,0x26,0x00,0x05,0x11,0x02,0x26,0x00,0x02,0x2d,0x02,0x3d,0x02,0x00,0x00,0x00,0x00,0x04,0x00,
 0x00,0x00,0x07,0x00,0x00,0x00,0x0a,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304221, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304221[] = "\x00\xa8\x88\x01\x04\x02\x04\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304221 = {
-0, 324, 18, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304221}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304221_ = &gem_mrblib_ruflet_framework_proc_debug_file_304221;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304221 = {
-34, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304221_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304221 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304222, 1, (0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304222[] = "\x00\xaa\x88\x01\x04\x02\x04\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304222 = {
+0, 324, 18, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304222}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304222_ = &gem_mrblib_ruflet_framework_proc_debug_file_304222;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304222 = {
+34, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304222_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304222 = {
   2,4,1,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304221,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_304221,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304221,
-  &gem_mrblib_ruflet_framework_proc_debug_304221,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304222,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_304222,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304222,
+  &gem_mrblib_ruflet_framework_proc_debug_304222,
   34,0,2,0,0
 };
 static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304180[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_304221,
+  &gem_mrblib_ruflet_framework_proc_irep_304222,
 };
 static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304180[1] = {
 {IREP_TT_SSTR|(7<<2), {"\x30\x2e\x30\x2e\x30\x2e\x30"}},
@@ -86222,7 +86223,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304180[117] = {
 0x1a,0x06,0x08,0x5e,0x06,0x00,0x1a,0x06,0x09,0x1d,0x06,0x06,0x33,0x06,0x07,0x1a,0x06,0x0a,0x14,0x06,
 0x1a,0x06,0x0b,0x11,0x06,0x1a,0x06,0x0c,0x62,0x07,0x00,0x31,0x06,0x0d,0x00,0x3d,0x06,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304180, 5, (MRB_OPSYM(pow), 0,MRB_SYM(app_block), MRB_SYM(host), MRB_SYM(port), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304180[] = "\x00\x9d\x88\x01\x3b\x01\x03\x01\x03\x01\x03\x01\x06\x01\x09\x01\x06\x01\x09\x01\x05\x01\x05\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304180[] = "\x00\x9f\x88\x01\x3b\x01\x03\x01\x03\x01\x03\x01\x06\x01\x09\x01\x06\x01\x09\x01\x05\x01\x05\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304180 = {
 0, 324, 24, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304180}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304180_ = &gem_mrblib_ruflet_framework_proc_debug_file_304180;
@@ -86244,7 +86245,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304181[91] = {
 0x01,0x2d,0x05,0x3d,0x03,0x01,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x31,0x00,0x00,0x00,0x31,0x00,0x00,
 0x00,0x00,0x04,0x00,0x00,0x00,0x18,0x00,0x00,0x00,0x1b,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304181, 2, (0,MRB_SYM(previous_signals), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304181[] = "\x00\xb1\x88\x01\x04\x01\x06\x01\x03\x01\x05\x01\x03\x01\x04\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01\x0b\x02\x03\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304181[] = "\x00\xb3\x88\x01\x04\x01\x06\x01\x03\x01\x05\x01\x03\x01\x04\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01\x0b\x02\x03\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304181 = {
 0, 324, 30, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304181}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304181_ = &gem_mrblib_ruflet_framework_proc_debug_file_304181;
@@ -86263,7 +86264,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304182[29] = {
 0x39,0x04,0x00,0x00,0x1d,0x04,0x01,0x1f,0x04,0x00,0x01,0x05,0x01,0x32,0x04,0x02,0x01,0x01,0x03,0x04,
 0x01,0x05,0x03,0x2f,0x04,0x03,0x01,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304182, 3, (MRB_SYM(io), 0,MRB_SYM(ws), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304182[] = "\x00\xbf\x88\x01\x04\x01\x10\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304182[] = "\x00\xc1\x88\x01\x04\x01\x10\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304182 = {
 0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304182}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304182_ = &gem_mrblib_ruflet_framework_proc_debug_file_304182;
@@ -86277,40 +86278,41 @@ static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304182 = {
   &gem_mrblib_ruflet_framework_proc_debug_304182,
   29,0,4,0,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304345[5] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304349[5] = {
 {IREP_TT_SSTR|(29<<2), {"\x52\x55\x46\x4c\x45\x54\x5f\x53\x55\x50\x50\x52\x45\x53\x53\x5f\x53\x45\x52\x56\x45\x52\x5f\x42\x41\x4e\x4e\x45\x52"}},
 {IREP_TT_SSTR|(1<<2), {"\x31"}},
 {IREP_TT_SSTR|(15<<2), {"\x52\x65\x71\x75\x65\x73\x74\x65\x64\x20\x70\x6f\x72\x74\x20"}},
 {IREP_TT_SSTR|(19<<2), {"\x20\x69\x73\x20\x62\x75\x73\x79\x3b\x20\x62\x6f\x75\x6e\x64\x20\x74\x6f\x20"}},
 {IREP_TT_SSTR|(0<<2), {""}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304345, 10, (MRB_SYM(TCPServer), MRB_IVSYM(host), MRB_SYM(new), MRB_IVSYM(server_socket), MRB_IVSYM(port), MRB_OPSYM(neq), MRB_SYM(ENV), MRB_SYM(warn), MRB_SYM(EADDRINUSE), MRB_SYM(Errno), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304345[146] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304349, 12, (MRB_SYM(TCPServer), MRB_IVSYM(host), MRB_SYM(new), MRB_IVSYM(server_socket), MRB_SYM(addr), MRB_IVSYM(port), MRB_SYM(publish_runtime_port), MRB_OPSYM(neq), MRB_SYM(ENV), MRB_SYM(warn), MRB_SYM(EADDRINUSE), MRB_SYM(Errno), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304349[167] = {
 0x39,0x00,0x00,0x00,0x1d,0x02,0x00,0x19,0x03,0x01,0x21,0x04,0x05,0x00,0x32,0x02,0x02,0x02,0x1a,0x02,
-0x03,0x21,0x02,0x05,0x00,0x1a,0x02,0x04,0x19,0x02,0x04,0x21,0x03,0x04,0x00,0x32,0x02,0x05,0x01,0x28,
-0x02,0x00,0x0f,0x1d,0x02,0x06,0x5c,0x03,0x00,0x23,0x02,0x5c,0x03,0x01,0x32,0x02,0x05,0x01,0x28,0x02,
-0x00,0x1c,0x5c,0x03,0x02,0x21,0x04,0x04,0x00,0x5d,0x03,0x5c,0x04,0x03,0x5d,0x03,0x19,0x04,0x04,0x5d,
-0x03,0x5c,0x04,0x04,0x5d,0x03,0x2f,0x02,0x07,0x01,0x11,0x02,0x3e,0x02,0x26,0x00,0x22,0x2b,0x02,0x1d,
-0x03,0x09,0x1f,0x03,0x08,0x2c,0x02,0x03,0x27,0x03,0x00,0x03,0x26,0x00,0x0e,0x21,0x02,0x05,0x00,0x46,
-0x02,0x01,0x22,0x02,0x05,0x00,0x26,0x00,0x02,0x2d,0x02,0x3d,0x02,0x00,0x00,0x00,0x00,0x04,0x00,0x00,
-0x00,0x5e,0x00,0x00,0x00,0x61,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304345, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304345[] = "\x00\xc9\x88\x01\x04\x02\x11\x01\x07\x01\x20\x01\x1e\x02\x05\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0e\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304345 = {
-0, 324, 26, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304345}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304345_ = &gem_mrblib_ruflet_framework_proc_debug_file_304345;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304345 = {
-133, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304345_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304345 = {
+0x03,0x19,0x02,0x03,0x33,0x02,0x04,0x07,0x03,0x23,0x02,0x1a,0x02,0x05,0x30,0x02,0x06,0x21,0x02,0x04,
+0x00,0x06,0x03,0x50,0x02,0x28,0x02,0x00,0x0b,0x19,0x02,0x05,0x21,0x03,0x04,0x00,0x32,0x02,0x07,0x01,
+0x28,0x02,0x00,0x0f,0x1d,0x02,0x08,0x5c,0x03,0x00,0x23,0x02,0x5c,0x03,0x01,0x32,0x02,0x07,0x01,0x28,
+0x02,0x00,0x1c,0x5c,0x03,0x02,0x21,0x04,0x04,0x00,0x5d,0x03,0x5c,0x04,0x03,0x5d,0x03,0x19,0x04,0x05,
+0x5d,0x03,0x5c,0x04,0x04,0x5d,0x03,0x2f,0x02,0x09,0x01,0x11,0x02,0x3e,0x02,0x26,0x00,0x22,0x2b,0x02,
+0x1d,0x03,0x0b,0x1f,0x03,0x0a,0x2c,0x02,0x03,0x27,0x03,0x00,0x03,0x26,0x00,0x0e,0x21,0x02,0x05,0x00,
+0x46,0x02,0x01,0x22,0x02,0x05,0x00,0x26,0x00,0x02,0x2d,0x02,0x3d,0x02,0x00,0x00,0x00,0x00,0x04,0x00,
+0x00,0x00,0x73,0x00,0x00,0x00,0x76,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304349, 1, (0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304349[] = "\x00\xcb\x88\x01\x04\x02\x11\x01\x0d\x01\x03\x01\x2c\x01\x1e\x02\x05\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0e\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304349 = {
+0, 324, 28, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304349}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304349_ = &gem_mrblib_ruflet_framework_proc_debug_file_304349;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304349 = {
+154, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304349_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304349 = {
   2,6,1,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304345,
-  gem_mrblib_ruflet_framework_proc_pool_304345,gem_mrblib_ruflet_framework_proc_syms_304345,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304345,
-  &gem_mrblib_ruflet_framework_proc_debug_304345,
-  133,5,10,0,0
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304349,
+  gem_mrblib_ruflet_framework_proc_pool_304349,gem_mrblib_ruflet_framework_proc_syms_304349,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304349,
+  &gem_mrblib_ruflet_framework_proc_debug_304349,
+  154,5,12,0,0
 };
 static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304183[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_304345,
+  &gem_mrblib_ruflet_framework_proc_irep_304349,
 };
 static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304183[7] = {
 {IREP_TT_SSTR|(18<<2), {"\x52\x55\x46\x4c\x45\x54\x5f\x53\x54\x52\x49\x43\x54\x5f\x50\x4f\x52\x54"}},
@@ -86332,7 +86334,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304183[152] = {
 0x1f,0x08,0x05,0x5c,0x09,0x04,0x01,0x0a,0x04,0x5d,0x09,0x5c,0x0a,0x05,0x5d,0x09,0x01,0x0a,0x03,0x5d,
 0x09,0x5c,0x0a,0x06,0x5d,0x09,0x2f,0x07,0x07,0x02,0x3d,0x07,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304183, 6, (MRB_OPSYM(pow), 0,MRB_SYM(max_attempts), MRB_SYM(requested), MRB_SYM(candidate), MRB_SYM(attempts), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304183[] = "\x00\xc4\x88\x01\x21\x01\x09\x01\x03\x01\x1c\x02\x0a\x0d\x22\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304183[] = "\x00\xc6\x88\x01\x21\x01\x09\x01\x03\x01\x1c\x02\x0a\x0e\x22\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304183 = {
 0, 324, 16, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304183}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304183_ = &gem_mrblib_ruflet_framework_proc_debug_file_304183;
@@ -86346,47 +86348,47 @@ static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304183 = {
   &gem_mrblib_ruflet_framework_proc_debug_304183,
   152,7,8,1,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304387, 3, (MRB_IVSYM(connections), MRB_SYM(values), MRB_SYM(dup), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304387[15] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304392, 3, (MRB_IVSYM(connections), MRB_SYM(values), MRB_SYM(dup), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304392[15] = {
 0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x33,0x02,0x01,0x33,0x02,0x02,0x3d,0x02,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304387, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304387[] = "\x00\xe8\x88\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304387 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304387}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304387_ = &gem_mrblib_ruflet_framework_proc_debug_file_304387;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304387 = {
-15, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304387_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304387 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304392, 1, (0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304392[] = "\x00\xeb\x88\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304392 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304392}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304392_ = &gem_mrblib_ruflet_framework_proc_debug_file_304392;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304392 = {
+15, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304392_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304392 = {
   2,4,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304387,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_304387,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304387,
-  &gem_mrblib_ruflet_framework_proc_debug_304387,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304392,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_304392,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304392,
+  &gem_mrblib_ruflet_framework_proc_debug_304392,
   15,0,3,0,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304388, 2, (MRB_SYM(close), MRB_SYM(StandardError), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304388[50] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304393, 2, (MRB_SYM(close), MRB_SYM(StandardError), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304393[50] = {
 0x39,0x04,0x00,0x00,0x01,0x03,0x01,0x33,0x03,0x00,0x26,0x00,0x16,0x2b,0x03,0x1d,0x04,0x01,0x2c,0x03,
 0x04,0x27,0x04,0x00,0x03,0x26,0x00,0x05,0x11,0x03,0x26,0x00,0x02,0x2d,0x03,0x3d,0x03,0x00,0x00,0x00,
 0x00,0x04,0x00,0x00,0x00,0x0a,0x00,0x00,0x00,0x0d,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304388, 2, (MRB_SYM(conn), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304388[] = "\x00\xe9\x88\x01\x04\x02\x07\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304388 = {
-0, 324, 18, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304388}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304388_ = &gem_mrblib_ruflet_framework_proc_debug_file_304388;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304388 = {
-37, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304388_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304388 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304393, 2, (MRB_SYM(conn), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304393[] = "\x00\xec\x88\x01\x04\x02\x07\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304393 = {
+0, 324, 18, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304393}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304393_ = &gem_mrblib_ruflet_framework_proc_debug_file_304393;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304393 = {
+37, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304393_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304393 = {
   3,5,1,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304388,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_304388,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304388,
-  &gem_mrblib_ruflet_framework_proc_debug_304388,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304393,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_304393,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304393,
+  &gem_mrblib_ruflet_framework_proc_debug_304393,
   37,0,2,0,0
 };
 static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304184[2] = {
-  &gem_mrblib_ruflet_framework_proc_irep_304387,
-  &gem_mrblib_ruflet_framework_proc_irep_304388,
+  &gem_mrblib_ruflet_framework_proc_irep_304392,
+  &gem_mrblib_ruflet_framework_proc_irep_304393,
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304184, 7, (MRB_IVSYM(running), MRB_IVSYM(server_socket), MRB_SYM(close), MRB_SYM(IOError), MRB_IVSYM(connections_mutex), MRB_SYM(synchronize), MRB_SYM(each), ), const);
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304184[106] = {
@@ -86397,7 +86399,7 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304184[106] = {
 0x04,0x01,0x04,0x03,0x62,0x05,0x01,0x34,0x04,0x06,0x00,0x3d,0x04,0x00,0x00,0x00,0x00,0x20,0x00,0x00,
 0x00,0x2d,0x00,0x00,0x00,0x30,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304184, 3, (0,MRB_SYM(server), MRB_SYM(live_connections), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304184[] = "\x00\xdb\x88\x01\x04\x01\x0f\x02\x05\x02\x03\x01\x05\x02\x0e\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01\x07\x03\x0d\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304184[] = "\x00\xde\x88\x01\x04\x01\x0f\x02\x05\x02\x03\x01\x05\x02\x0e\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01\x07\x03\x0d\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304184 = {
 0, 324, 30, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304184}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304184_ = &gem_mrblib_ruflet_framework_proc_debug_file_304184;
@@ -86411,92 +86413,142 @@ static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304184 = {
   &gem_mrblib_ruflet_framework_proc_debug_304184,
   93,0,7,2,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304432, 2, (MRB_IVSYM(sessions), MRB_SYM(to_a), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304432[12] = {
-0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x33,0x02,0x01,0x3d,0x02,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304432, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304432[] = "\x00\xf3\x88\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304432 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304432}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304432_ = &gem_mrblib_ruflet_framework_proc_debug_file_304432;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304432 = {
-12, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304432_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304432 = {
-  2,4,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304432,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_304432,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304432,
-  &gem_mrblib_ruflet_framework_proc_debug_304432,
-  12,0,2,0,0
-};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304436, 1, (MRB_IVSYM(connections), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304436[15] = {
-0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x21,0x03,0x01,0x00,0x23,0x02,0x3d,0x02,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304436, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304436[] = "\x00\xf6\x88\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304436 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304436}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304436_ = &gem_mrblib_ruflet_framework_proc_debug_file_304436;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304436 = {
-15, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304436_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304436 = {
-  2,5,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304436,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_304436,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304436,
-  &gem_mrblib_ruflet_framework_proc_debug_304436,
-  15,0,1,0,0
-};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304437, 1, (MRB_SYM(send_message), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304437[20] = {
-0x39,0x08,0x00,0x00,0x21,0x05,0x04,0x00,0x01,0x06,0x01,0x01,0x07,0x02,0x2f,0x04,0x00,0x03,0x3d,0x04,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304437, 3, (MRB_SYM(action), MRB_SYM(payload), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304437[] = "\x00\xfc\x88\x01\x04\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304437 = {
-0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304437}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304437_ = &gem_mrblib_ruflet_framework_proc_debug_file_304437;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304437 = {
-20, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304437_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304437 = {
-  4,9,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304437,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_304437,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304437,
-  &gem_mrblib_ruflet_framework_proc_debug_304437,
-  20,0,1,0,0
-};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304438, 1, (MRB_IVSYM(sessions), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304438[22] = {
-0x39,0x00,0x00,0x00,0x19,0x03,0x00,0x21,0x04,0x01,0x00,0x21,0x05,0x05,0x00,0x01,0x02,0x05,0x25,0x03,
-0x3d,0x02,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304438, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304438[] = "\x00\x82\x89\x01\x04\x01";
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304438, 3, (MRB_IVSYM(port), MRB_SYM(to_s), MRB_SYM(write), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304438[19] = {
+0x39,0x04,0x00,0x00,0x01,0x03,0x01,0x19,0x04,0x00,0x33,0x04,0x01,0x32,0x03,0x02,0x01,0x3d,0x03,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304438, 2, (MRB_SYM(file), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304438[] = "\x00\xf9\x88\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304438 = {
-0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304438}};
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304438}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304438_ = &gem_mrblib_ruflet_framework_proc_debug_file_304438;
 static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304438 = {
-22, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304438_};
+19, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304438_};
 static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304438 = {
-  2,7,0,
+  3,6,0,
   MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304438,
   NULL,gem_mrblib_ruflet_framework_proc_syms_304438,NULL,
   gem_mrblib_ruflet_framework_proc_lv_304438,
   &gem_mrblib_ruflet_framework_proc_debug_304438,
-  22,0,1,0,0
+  19,0,3,0,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304433[3] = {
-  &gem_mrblib_ruflet_framework_proc_irep_304436,
-  &gem_mrblib_ruflet_framework_proc_irep_304437,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304185[1] = {
   &gem_mrblib_ruflet_framework_proc_irep_304438,
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304433[4] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304185[4] = {
+{IREP_TT_SSTR|(24<<2), {"\x52\x55\x46\x4c\x45\x54\x5f\x52\x55\x4e\x54\x49\x4d\x45\x5f\x50\x4f\x52\x54\x5f\x46\x49\x4c\x45"}},
+{IREP_TT_SSTR|(1<<2), {"\x77"}},
+{IREP_TT_SSTR|(39<<2), {"\x55\x6e\x61\x62\x6c\x65\x20\x74\x6f\x20\x70\x75\x62\x6c\x69\x73\x68\x20\x52\x75\x66\x6c\x65\x74\x20\x72\x75\x6e\x74\x69\x6d\x65\x20\x70\x6f\x72\x74\x3a\x20"}},
+{IREP_TT_SSTR|(0<<2), {""}},
+};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304185, 8, (MRB_SYM(ENV), MRB_SYM(to_s), MRB_SYM_Q(empty), MRB_SYM(File), MRB_SYM(open), MRB_SYM(StandardError), MRB_SYM(message), MRB_SYM(warn), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304185[109] = {
+0x39,0x00,0x00,0x00,0x1d,0x04,0x00,0x5c,0x05,0x00,0x23,0x04,0x33,0x04,0x01,0x01,0x02,0x04,0x01,0x04,
+0x02,0x33,0x04,0x02,0x28,0x04,0x00,0x04,0x11,0x04,0x3e,0x04,0x1d,0x04,0x03,0x01,0x05,0x02,0x5c,0x06,
+0x01,0x62,0x07,0x00,0x34,0x04,0x04,0x02,0x26,0x00,0x2b,0x2b,0x04,0x1d,0x05,0x05,0x2c,0x04,0x05,0x27,
+0x05,0x00,0x03,0x26,0x00,0x1a,0x01,0x03,0x04,0x5c,0x05,0x02,0x01,0x06,0x03,0x33,0x06,0x06,0x5d,0x05,
+0x5c,0x06,0x03,0x5d,0x05,0x2f,0x04,0x07,0x01,0x26,0x00,0x02,0x2d,0x04,0x3d,0x04,0x00,0x00,0x00,0x00,
+0x04,0x00,0x00,0x00,0x30,0x00,0x00,0x00,0x33,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304185, 3, (0,MRB_SYM(path), MRB_SYM(error), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304185[] = "\x00\xf5\x88\x01\x04\x01\x0e\x01\x0e\x02\x11\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01\x02\xff\xff\xff\xff\x0f\x03\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304185 = {
+0, 324, 30, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304185}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304185_ = &gem_mrblib_ruflet_framework_proc_debug_file_304185;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304185 = {
+96, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304185_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304185 = {
+  4,8,1,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304185,
+  gem_mrblib_ruflet_framework_proc_pool_304185,gem_mrblib_ruflet_framework_proc_syms_304185,gem_mrblib_ruflet_framework_proc_reps_304185,
+  gem_mrblib_ruflet_framework_proc_lv_304185,
+  &gem_mrblib_ruflet_framework_proc_debug_304185,
+  96,4,8,1,0
+};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304481, 2, (MRB_IVSYM(sessions), MRB_SYM(to_a), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304481[12] = {
+0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x33,0x02,0x01,0x3d,0x02,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304481, 1, (0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304481[] = "\x00\xff\x88\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304481 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304481}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304481_ = &gem_mrblib_ruflet_framework_proc_debug_file_304481;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304481 = {
+12, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304481_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304481 = {
+  2,4,0,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304481,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_304481,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304481,
+  &gem_mrblib_ruflet_framework_proc_debug_304481,
+  12,0,2,0,0
+};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304485, 1, (MRB_IVSYM(connections), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304485[15] = {
+0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x21,0x03,0x01,0x00,0x23,0x02,0x3d,0x02,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304485, 1, (0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304485[] = "\x00\x82\x89\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304485 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304485}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304485_ = &gem_mrblib_ruflet_framework_proc_debug_file_304485;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304485 = {
+15, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304485_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304485 = {
+  2,5,0,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304485,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_304485,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304485,
+  &gem_mrblib_ruflet_framework_proc_debug_304485,
+  15,0,1,0,0
+};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304486, 1, (MRB_SYM(send_message), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304486[20] = {
+0x39,0x08,0x00,0x00,0x21,0x05,0x04,0x00,0x01,0x06,0x01,0x01,0x07,0x02,0x2f,0x04,0x00,0x03,0x3d,0x04,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304486, 3, (MRB_SYM(action), MRB_SYM(payload), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304486[] = "\x00\x88\x89\x01\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304486 = {
+0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304486}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304486_ = &gem_mrblib_ruflet_framework_proc_debug_file_304486;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304486 = {
+20, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304486_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304486 = {
+  4,9,0,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304486,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_304486,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304486,
+  &gem_mrblib_ruflet_framework_proc_debug_304486,
+  20,0,1,0,0
+};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304487, 1, (MRB_IVSYM(sessions), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304487[22] = {
+0x39,0x00,0x00,0x00,0x19,0x03,0x00,0x21,0x04,0x01,0x00,0x21,0x05,0x05,0x00,0x01,0x02,0x05,0x25,0x03,
+0x3d,0x02,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304487, 1, (0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304487[] = "\x00\x8e\x89\x01\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304487 = {
+0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304487}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304487_ = &gem_mrblib_ruflet_framework_proc_debug_file_304487;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304487 = {
+22, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304487_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304487 = {
+  2,7,0,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304487,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_304487,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304487,
+  &gem_mrblib_ruflet_framework_proc_debug_304487,
+  22,0,1,0,0
+};
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304482[3] = {
+  &gem_mrblib_ruflet_framework_proc_irep_304485,
+  &gem_mrblib_ruflet_framework_proc_irep_304486,
+  &gem_mrblib_ruflet_framework_proc_irep_304487,
+};
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304482[4] = {
 {IREP_TT_SSTR|(10<<2), {"\x52\x75\x66\x6c\x65\x74\x20\x41\x70\x70"}},
 {IREP_TT_SSTR|(14<<2), {"\x72\x65\x6c\x6f\x61\x64\x20\x65\x72\x72\x6f\x72\x3a\x20"}},
 {IREP_TT_SSTR|(2<<2), {"\x3a\x20"}},
 {IREP_TT_SSTR|(0<<2), {""}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304433, 17, (MRB_IVSYM(connections_mutex), MRB_SYM(synchronize), MRB_SYM(Page), MRB_SYM(session_id), MRB_SYM(client_details), MRB_SYM(sender), MRB_SYM(lambda), MRB_SYM(new), MRB_SYM_E(title), MRB_IVSYM(sessions_mutex), MRB_IVSYM(app_block), MRB_SYM(call), MRB_SYM(update), MRB_SYM(StandardError), MRB_SYM(class), MRB_SYM(message), MRB_SYM(warn), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304433[173] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304482, 17, (MRB_IVSYM(connections_mutex), MRB_SYM(synchronize), MRB_SYM(Page), MRB_SYM(session_id), MRB_SYM(client_details), MRB_SYM(sender), MRB_SYM(lambda), MRB_SYM(new), MRB_SYM_E(title), MRB_IVSYM(sessions_mutex), MRB_IVSYM(app_block), MRB_SYM(call), MRB_SYM(update), MRB_SYM(StandardError), MRB_SYM(class), MRB_SYM(message), MRB_SYM(warn), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304482[173] = {
 0x39,0x08,0x00,0x00,0x19,0x07,0x00,0x62,0x08,0x00,0x34,0x07,0x01,0x00,0x01,0x04,0x07,0x01,0x07,0x04,
 0x27,0x07,0x00,0x01,0x40,0x1d,0x07,0x02,0x10,0x08,0x03,0x01,0x09,0x02,0x33,0x09,0x03,0x10,0x0a,0x04,
 0x01,0x0b,0x02,0x33,0x0b,0x04,0x10,0x0c,0x05,0x62,0x0e,0x01,0x31,0x0d,0x06,0x00,0x32,0x07,0x07,0x30,
@@ -86506,204 +86558,204 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304433[173] = {
 0x5c,0x08,0x01,0x01,0x09,0x06,0x33,0x09,0x0e,0x5d,0x08,0x5c,0x09,0x02,0x5d,0x08,0x01,0x09,0x06,0x33,
 0x09,0x0f,0x5d,0x08,0x5c,0x09,0x03,0x5d,0x08,0x2f,0x07,0x10,0x01,0x26,0x00,0x02,0x2d,0x07,0x3d,0x07,
 0x00,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x63,0x00,0x00,0x00,0x66,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304433, 6, (MRB_SYM(session_key), MRB_SYM(current_page), 0,MRB_SYM(ws), MRB_SYM(refreshed_page), MRB_SYM(e), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304433[] = "\x00\xf5\x88\x01\x04\x01\x0d\x01\x08\x02\x03\x01\x09\x01\x09\x03\x03\xfe\xff\xff\xff\x0f\x0e\x04\x0a\x02\x0a\x04\x0a\x01\x07\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01\x02\xff\xff\xff\xff\x0f\x03\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304433 = {
-0, 324, 50, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304433}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304433_ = &gem_mrblib_ruflet_framework_proc_debug_file_304433;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304433 = {
-160, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304433_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304433 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304482, 6, (MRB_SYM(session_key), MRB_SYM(current_page), 0,MRB_SYM(ws), MRB_SYM(refreshed_page), MRB_SYM(e), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304482[] = "\x00\x81\x89\x01\x04\x01\x0d\x01\x08\x02\x03\x01\x09\x01\x09\x03\x03\xfe\xff\xff\xff\x0f\x0e\x04\x0a\x02\x0a\x04\x0a\x01\x07\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01\x02\xff\xff\xff\xff\x0f\x03\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304482 = {
+0, 324, 50, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304482}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304482_ = &gem_mrblib_ruflet_framework_proc_debug_file_304482;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304482 = {
+160, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304482_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304482 = {
   7,15,1,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304433,
-  gem_mrblib_ruflet_framework_proc_pool_304433,gem_mrblib_ruflet_framework_proc_syms_304433,gem_mrblib_ruflet_framework_proc_reps_304433,
-  gem_mrblib_ruflet_framework_proc_lv_304433,
-  &gem_mrblib_ruflet_framework_proc_debug_304433,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304482,
+  gem_mrblib_ruflet_framework_proc_pool_304482,gem_mrblib_ruflet_framework_proc_syms_304482,gem_mrblib_ruflet_framework_proc_reps_304482,
+  gem_mrblib_ruflet_framework_proc_lv_304482,
+  &gem_mrblib_ruflet_framework_proc_debug_304482,
   160,4,17,3,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304185[2] = {
-  &gem_mrblib_ruflet_framework_proc_irep_304432,
-  &gem_mrblib_ruflet_framework_proc_irep_304433,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304186[2] = {
+  &gem_mrblib_ruflet_framework_proc_irep_304481,
+  &gem_mrblib_ruflet_framework_proc_irep_304482,
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304185, 3, (MRB_IVSYM(sessions_mutex), MRB_SYM(synchronize), MRB_SYM(each), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304185[29] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304186, 3, (MRB_IVSYM(sessions_mutex), MRB_SYM(synchronize), MRB_SYM(each), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304186[29] = {
 0x39,0x00,0x00,0x00,0x19,0x03,0x00,0x62,0x04,0x00,0x34,0x03,0x01,0x00,0x01,0x02,0x03,0x01,0x03,0x02,
 0x62,0x04,0x01,0x34,0x03,0x02,0x00,0x3d,0x03,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304185, 2, (0,MRB_SYM(snapshots), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304185[] = "\x00\xf2\x88\x01\x04\x01\x0d\x02";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304185 = {
-0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304185}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304185_ = &gem_mrblib_ruflet_framework_proc_debug_file_304185;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304185 = {
-29, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304185_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304185 = {
-  3,5,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304185,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_304185,gem_mrblib_ruflet_framework_proc_reps_304185,
-  gem_mrblib_ruflet_framework_proc_lv_304185,
-  &gem_mrblib_ruflet_framework_proc_debug_304185,
-  29,0,3,2,0
-};
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304186[2] = {
-{IREP_TT_SSTR|(3<<2), {"\x49\x4e\x54"}},
-{IREP_TT_SSTR|(4<<2), {"\x54\x45\x52\x4d"}},
-};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304186, 1, (MRB_SYM(trap_signal), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304186[29] = {
-0x39,0x00,0x00,0x00,0x5c,0x02,0x00,0x5c,0x04,0x00,0x2f,0x03,0x00,0x01,0x5c,0x04,0x01,0x5c,0x06,0x01,
-0x2f,0x05,0x00,0x01,0x5e,0x02,0x02,0x3d,0x02,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304186, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304186[] = "\x00\x8f\x89\x01\x04\x02\x0a\x01";
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304186, 2, (0,MRB_SYM(snapshots), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304186[] = "\x00\xfe\x88\x01\x04\x01\x0d\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304186 = {
 0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304186}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304186_ = &gem_mrblib_ruflet_framework_proc_debug_file_304186;
 static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304186 = {
 29, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304186_};
 static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304186 = {
-  2,8,0,
+  3,5,0,
   MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304186,
-  gem_mrblib_ruflet_framework_proc_pool_304186,gem_mrblib_ruflet_framework_proc_syms_304186,NULL,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_304186,gem_mrblib_ruflet_framework_proc_reps_304186,
   gem_mrblib_ruflet_framework_proc_lv_304186,
   &gem_mrblib_ruflet_framework_proc_debug_304186,
+  29,0,3,2,0
+};
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304187[2] = {
+{IREP_TT_SSTR|(3<<2), {"\x49\x4e\x54"}},
+{IREP_TT_SSTR|(4<<2), {"\x54\x45\x52\x4d"}},
+};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304187, 1, (MRB_SYM(trap_signal), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304187[29] = {
+0x39,0x00,0x00,0x00,0x5c,0x02,0x00,0x5c,0x04,0x00,0x2f,0x03,0x00,0x01,0x5c,0x04,0x01,0x5c,0x06,0x01,
+0x2f,0x05,0x00,0x01,0x5e,0x02,0x02,0x3d,0x02,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304187, 1, (0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304187[] = "\x00\x9b\x89\x01\x04\x02\x0a\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304187 = {
+0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304187}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304187_ = &gem_mrblib_ruflet_framework_proc_debug_file_304187;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304187 = {
+29, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304187_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304187 = {
+  2,8,0,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304187,
+  gem_mrblib_ruflet_framework_proc_pool_304187,gem_mrblib_ruflet_framework_proc_syms_304187,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304187,
+  &gem_mrblib_ruflet_framework_proc_debug_304187,
   29,2,1,0,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304527, 6, (MRB_SYM(stop), MRB_SYM(Thread), MRB_SYM(main), MRB_SYM(Interrupt), MRB_SYM(raise), MRB_SYM(StandardError), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304527[60] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304578, 6, (MRB_SYM(stop), MRB_SYM(Thread), MRB_SYM(main), MRB_SYM(Interrupt), MRB_SYM(raise), MRB_SYM(StandardError), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304578[60] = {
 0x39,0x00,0x00,0x00,0x30,0x02,0x00,0x1d,0x02,0x01,0x33,0x02,0x02,0x1d,0x03,0x03,0x32,0x02,0x04,0x01,
 0x26,0x00,0x16,0x2b,0x02,0x1d,0x03,0x05,0x2c,0x02,0x03,0x27,0x03,0x00,0x03,0x26,0x00,0x05,0x11,0x02,
 0x26,0x00,0x02,0x2d,0x02,0x3d,0x02,0x00,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x14,0x00,0x00,0x00,0x17,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304527, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304527[] = "\x00\x97\x89\x01\x04\x01\x03\x01\x0e\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304527 = {
-0, 324, 20, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304527}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304527_ = &gem_mrblib_ruflet_framework_proc_debug_file_304527;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304527 = {
-47, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304527_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304527 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304578, 1, (0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304578[] = "\x00\xa3\x89\x01\x04\x01\x03\x01\x0e\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304578 = {
+0, 324, 20, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304578}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304578_ = &gem_mrblib_ruflet_framework_proc_debug_file_304578;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304578 = {
+47, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304578_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304578 = {
   2,5,1,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304527,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_304527,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304527,
-  &gem_mrblib_ruflet_framework_proc_debug_304527,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304578,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_304578,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304578,
+  &gem_mrblib_ruflet_framework_proc_debug_304578,
   47,0,6,0,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304187[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_304527,
-};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304187, 2, (MRB_SYM(Signal), MRB_SYM(trap), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304187[19] = {
-0x39,0x04,0x00,0x00,0x1d,0x03,0x00,0x01,0x04,0x01,0x62,0x05,0x00,0x34,0x03,0x01,0x01,0x3d,0x03,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304187, 2, (MRB_SYM(signal_name), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304187[] = "\x00\x96\x89\x01\x04\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304187 = {
-0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304187}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304187_ = &gem_mrblib_ruflet_framework_proc_debug_file_304187;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304187 = {
-19, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304187_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304187 = {
-  3,6,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304187,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_304187,gem_mrblib_ruflet_framework_proc_reps_304187,
-  gem_mrblib_ruflet_framework_proc_lv_304187,
-  &gem_mrblib_ruflet_framework_proc_debug_304187,
-  19,0,2,1,0
-};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304569, 2, (MRB_SYM(Signal), MRB_SYM(trap), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304569[31] = {
-0x39,0x08,0x00,0x00,0x01,0x04,0x02,0x28,0x04,0x00,0x10,0x1d,0x04,0x00,0x01,0x05,0x01,0x01,0x06,0x02,
-0x32,0x04,0x01,0x02,0x26,0x00,0x02,0x11,0x04,0x3d,0x04,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304569, 3, (MRB_SYM(signal_name), MRB_SYM(handler), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304569[] = "\x00\xa2\x89\x01\x04\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304569 = {
-0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304569}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304569_ = &gem_mrblib_ruflet_framework_proc_debug_file_304569;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304569 = {
-31, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304569_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304569 = {
-  4,8,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304569,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_304569,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304569,
-  &gem_mrblib_ruflet_framework_proc_debug_304569,
-  31,0,2,0,0
-};
 static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304188[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_304569,
+  &gem_mrblib_ruflet_framework_proc_irep_304578,
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304188, 1, (MRB_SYM(each), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304188[24] = {
-0x39,0x04,0x00,0x00,0x01,0x03,0x01,0x27,0x03,0x00,0x01,0x40,0x01,0x03,0x01,0x62,0x04,0x00,0x34,0x03,
-0x00,0x00,0x3d,0x03,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304188, 2, (MRB_SYM(previous_signals), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304188[] = "\x00\x9f\x89\x01\x04\x01\x08\x02";
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304188, 2, (MRB_SYM(Signal), MRB_SYM(trap), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304188[19] = {
+0x39,0x04,0x00,0x00,0x1d,0x03,0x00,0x01,0x04,0x01,0x62,0x05,0x00,0x34,0x03,0x01,0x01,0x3d,0x03,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304188, 2, (MRB_SYM(signal_name), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304188[] = "\x00\xa2\x89\x01\x04\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304188 = {
-0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304188}};
+0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304188}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304188_ = &gem_mrblib_ruflet_framework_proc_debug_file_304188;
 static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304188 = {
-24, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304188_};
+19, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304188_};
 static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304188 = {
-  3,5,0,
+  3,6,0,
   MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304188,
   NULL,gem_mrblib_ruflet_framework_proc_syms_304188,gem_mrblib_ruflet_framework_proc_reps_304188,
   gem_mrblib_ruflet_framework_proc_lv_304188,
   &gem_mrblib_ruflet_framework_proc_debug_304188,
+  19,0,2,1,0
+};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304621, 2, (MRB_SYM(Signal), MRB_SYM(trap), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304621[31] = {
+0x39,0x08,0x00,0x00,0x01,0x04,0x02,0x28,0x04,0x00,0x10,0x1d,0x04,0x00,0x01,0x05,0x01,0x01,0x06,0x02,
+0x32,0x04,0x01,0x02,0x26,0x00,0x02,0x11,0x04,0x3d,0x04,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304621, 3, (MRB_SYM(signal_name), MRB_SYM(handler), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304621[] = "\x00\xae\x89\x01\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304621 = {
+0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304621}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304621_ = &gem_mrblib_ruflet_framework_proc_debug_file_304621;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304621 = {
+31, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304621_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304621 = {
+  4,8,0,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304621,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_304621,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304621,
+  &gem_mrblib_ruflet_framework_proc_debug_304621,
+  31,0,2,0,0
+};
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304189[1] = {
+  &gem_mrblib_ruflet_framework_proc_irep_304621,
+};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304189, 1, (MRB_SYM(each), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304189[24] = {
+0x39,0x04,0x00,0x00,0x01,0x03,0x01,0x27,0x03,0x00,0x01,0x40,0x01,0x03,0x01,0x62,0x04,0x00,0x34,0x03,
+0x00,0x00,0x3d,0x03,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304189, 2, (MRB_SYM(previous_signals), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304189[] = "\x00\xab\x89\x01\x04\x01\x08\x02";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304189 = {
+0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304189}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304189_ = &gem_mrblib_ruflet_framework_proc_debug_file_304189;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304189 = {
+24, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304189_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304189 = {
+  3,5,0,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304189,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_304189,gem_mrblib_ruflet_framework_proc_reps_304189,
+  gem_mrblib_ruflet_framework_proc_lv_304189,
+  &gem_mrblib_ruflet_framework_proc_debug_304189,
   24,0,1,1,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304189[5] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304190[5] = {
 {IREP_TT_SSTR|(29<<2), {"\x52\x55\x46\x4c\x45\x54\x5f\x53\x55\x50\x50\x52\x45\x53\x53\x5f\x53\x45\x52\x56\x45\x52\x5f\x42\x41\x4e\x4e\x45\x52"}},
 {IREP_TT_SSTR|(1<<2), {"\x31"}},
 {IREP_TT_SSTR|(32<<2), {"\x52\x75\x66\x6c\x65\x74\x20\x73\x65\x72\x76\x65\x72\x20\x6c\x69\x73\x74\x65\x6e\x69\x6e\x67\x20\x6f\x6e\x20\x77\x73\x3a\x2f\x2f"}},
 {IREP_TT_SSTR|(1<<2), {"\x3a"}},
 {IREP_TT_SSTR|(3<<2), {"\x2f\x77\x73"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304189, 4, (MRB_SYM(ENV), MRB_IVSYM(host), MRB_IVSYM(port), MRB_SYM(warn), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304189[51] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304190, 4, (MRB_SYM(ENV), MRB_IVSYM(host), MRB_IVSYM(port), MRB_SYM(warn), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304190[51] = {
 0x39,0x00,0x00,0x00,0x1d,0x02,0x00,0x5c,0x03,0x00,0x23,0x02,0x5c,0x03,0x01,0x4d,0x02,0x28,0x02,0x00,
 0x01,0x40,0x5c,0x03,0x02,0x19,0x04,0x01,0x5d,0x03,0x5c,0x04,0x03,0x5d,0x03,0x19,0x04,0x02,0x5d,0x03,
 0x5c,0x04,0x04,0x5d,0x03,0x2f,0x02,0x03,0x01,0x3d,0x02,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304189, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304189[] = "\x00\xa7\x89\x01\x04\x01\x12\x02";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304189 = {
-0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304189}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304189_ = &gem_mrblib_ruflet_framework_proc_debug_file_304189;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304189 = {
-51, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304189_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304189 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304190, 1, (0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304190[] = "\x00\xb3\x89\x01\x04\x01\x12\x02";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304190 = {
+0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304190}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304190_ = &gem_mrblib_ruflet_framework_proc_debug_file_304190;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304190 = {
+51, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304190_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304190 = {
   2,5,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304189,
-  gem_mrblib_ruflet_framework_proc_pool_304189,gem_mrblib_ruflet_framework_proc_syms_304189,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304189,
-  &gem_mrblib_ruflet_framework_proc_debug_304189,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304190,
+  gem_mrblib_ruflet_framework_proc_pool_304190,gem_mrblib_ruflet_framework_proc_syms_304190,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304190,
+  &gem_mrblib_ruflet_framework_proc_debug_304190,
   51,5,4,0,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304190, 3, (MRB_IVSYM(running), MRB_SYM(accept_client_socket), MRB_SYM(start_client_thread), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304190[44] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304191, 3, (MRB_IVSYM(running), MRB_SYM(accept_client_socket), MRB_SYM(start_client_thread), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304191[44] = {
 0x39,0x00,0x00,0x00,0x19,0x03,0x00,0x28,0x03,0x00,0x1d,0x00,0x30,0x03,0x01,0x01,0x02,0x03,0x01,0x03,
 0x02,0x27,0x03,0x00,0x05,0x11,0x03,0x2a,0x00,0x0c,0x01,0x04,0x02,0x2f,0x03,0x02,0x01,0x26,0xff,0xdc,
 0x11,0x03,0x3d,0x03,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304190, 2, (0,MRB_SYM(socket), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304190[] = "\x00\xad\x89\x01\x04\x01\x05\x04\x02\xfc\xff\xff\xff\x0f\x01\x01\x06\x01\x0a\x02";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304190 = {
-0, 324, 20, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304190}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304190_ = &gem_mrblib_ruflet_framework_proc_debug_file_304190;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304190 = {
-44, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304190_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304190 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304191, 2, (0,MRB_SYM(socket), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304191[] = "\x00\xb9\x89\x01\x04\x01\x05\x04\x02\xfc\xff\xff\xff\x0f\x01\x01\x06\x01\x0a\x02";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304191 = {
+0, 324, 20, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304191}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304191_ = &gem_mrblib_ruflet_framework_proc_debug_file_304191;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304191 = {
+44, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304191_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304191 = {
   3,6,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304190,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_304190,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304190,
-  &gem_mrblib_ruflet_framework_proc_debug_304190,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304191,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_304191,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304191,
+  &gem_mrblib_ruflet_framework_proc_debug_304191,
   44,0,3,0,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304191[4] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304192[4] = {
 {IREP_TT_SSTR|(14<<2), {"\x61\x63\x63\x65\x70\x74\x20\x65\x72\x72\x6f\x72\x3a\x20"}},
 {IREP_TT_SSTR|(2<<2), {"\x3a\x20"}},
 {IREP_TT_SSTR|(0<<2), {""}},
 {IREP_TT_SSTR|(1<<2), {"\x0a"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304191, 15, (MRB_IVSYM(server_socket), MRB_SYM(accept), MRB_SYM(Array), MRB_SYM_Q(is_a), MRB_SYM(first), MRB_SYM(IOError), MRB_SYM(EBADF), MRB_SYM(Errno), MRB_SYM(StandardError), MRB_IVSYM(running), MRB_SYM(class), MRB_SYM(message), MRB_SYM(warn), MRB_SYM(backtrace), MRB_SYM(join), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304191[191] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304192, 15, (MRB_IVSYM(server_socket), MRB_SYM(accept), MRB_SYM(Array), MRB_SYM_Q(is_a), MRB_SYM(first), MRB_SYM(IOError), MRB_SYM(EBADF), MRB_SYM(Errno), MRB_SYM(StandardError), MRB_IVSYM(running), MRB_SYM(class), MRB_SYM(message), MRB_SYM(warn), MRB_SYM(backtrace), MRB_SYM(join), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304192[191] = {
 0x39,0x00,0x00,0x00,0x19,0x04,0x00,0x33,0x04,0x01,0x01,0x02,0x04,0x01,0x04,0x02,0x1d,0x05,0x02,0x32,
 0x04,0x03,0x01,0x28,0x04,0x00,0x09,0x01,0x04,0x02,0x33,0x04,0x04,0x26,0x00,0x03,0x01,0x04,0x02,0x26,
 0x00,0x86,0x2b,0x04,0x1d,0x05,0x05,0x2c,0x04,0x05,0x27,0x05,0x00,0x10,0x1d,0x05,0x07,0x1f,0x05,0x06,
@@ -86714,63 +86766,63 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304191[191] = {
 0x0c,0x01,0x01,0x04,0x03,0x33,0x04,0x0d,0x28,0x04,0x00,0x11,0x01,0x05,0x03,0x33,0x05,0x0d,0x5c,0x06,
 0x03,0x32,0x05,0x0e,0x01,0x2f,0x04,0x0c,0x01,0x11,0x04,0x26,0x00,0x02,0x2d,0x04,0x3d,0x04,0x00,0x00,
 0x00,0x00,0x04,0x00,0x00,0x00,0x27,0x00,0x00,0x00,0x2a,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304191, 3, (0,MRB_SYM(accepted), MRB_SYM(e), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304191[] = "\x00\xb6\x89\x01\x04\x01\x09\x01\x1b\x08\x02\xf8\xff\xff\xff\x0f\x02\x01\x18\x01\x05\x06\x02\xfb\xff\xff\xff\x0f\x0b\x05\x02\xfb\xff\xff\xff\x0f\x03\x01\x12\x02\x21\x01\x1b\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304191 = {
-0, 324, 44, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304191}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304191_ = &gem_mrblib_ruflet_framework_proc_debug_file_304191;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304191 = {
-178, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304191_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304191 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304192, 3, (0,MRB_SYM(accepted), MRB_SYM(e), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304192[] = "\x00\xc2\x89\x01\x04\x01\x09\x01\x1b\x08\x02\xf8\xff\xff\xff\x0f\x02\x01\x18\x01\x05\x06\x02\xfb\xff\xff\xff\x0f\x0b\x05\x02\xfb\xff\xff\xff\x0f\x03\x01\x12\x02\x21\x01\x1b\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304192 = {
+0, 324, 44, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304192}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304192_ = &gem_mrblib_ruflet_framework_proc_debug_file_304192;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304192 = {
+178, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304192_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304192 = {
   4,8,1,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304191,
-  gem_mrblib_ruflet_framework_proc_pool_304191,gem_mrblib_ruflet_framework_proc_syms_304191,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304191,
-  &gem_mrblib_ruflet_framework_proc_debug_304191,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304192,
+  gem_mrblib_ruflet_framework_proc_pool_304192,gem_mrblib_ruflet_framework_proc_syms_304192,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304192,
+  &gem_mrblib_ruflet_framework_proc_debug_304192,
   178,4,15,0,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304734, 5, (MRB_SYM(Thread), MRB_SYM(current), MRB_SYM_E(report_on_exception), MRB_SYM_Q(respond_to), MRB_SYM(handle_socket), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304734[42] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304790, 5, (MRB_SYM(Thread), MRB_SYM(current), MRB_SYM_E(report_on_exception), MRB_SYM_Q(respond_to), MRB_SYM(handle_socket), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304790[42] = {
 0x39,0x04,0x00,0x00,0x1d,0x03,0x00,0x33,0x03,0x01,0x10,0x04,0x02,0x32,0x03,0x03,0x01,0x28,0x03,0x00,
 0x0c,0x1d,0x03,0x00,0x33,0x03,0x01,0x14,0x04,0x32,0x03,0x02,0x01,0x01,0x04,0x01,0x2f,0x03,0x04,0x01,
 0x3d,0x03,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304734, 2, (MRB_SYM(client), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304734[] = "\x00\xc4\x89\x01\x04\x01\x1d\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304734 = {
-0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304734}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304734_ = &gem_mrblib_ruflet_framework_proc_debug_file_304734;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304734 = {
-42, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304734_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304734 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304790, 2, (MRB_SYM(client), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304790[] = "\x00\xd0\x89\x01\x04\x01\x1d\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304790 = {
+0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304790}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304790_ = &gem_mrblib_ruflet_framework_proc_debug_file_304790;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304790 = {
+42, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304790_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304790 = {
   3,6,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304734,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_304734,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304734,
-  &gem_mrblib_ruflet_framework_proc_debug_304734,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304790,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_304790,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304790,
+  &gem_mrblib_ruflet_framework_proc_debug_304790,
   42,0,5,0,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304192[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_304734,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304193[1] = {
+  &gem_mrblib_ruflet_framework_proc_irep_304790,
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304192, 2, (MRB_SYM(Thread), MRB_SYM(new), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304192[19] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304193, 2, (MRB_SYM(Thread), MRB_SYM(new), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304193[19] = {
 0x39,0x04,0x00,0x00,0x1d,0x03,0x00,0x01,0x04,0x01,0x62,0x05,0x00,0x34,0x03,0x01,0x01,0x3d,0x03,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304192, 2, (MRB_SYM(socket), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304192[] = "\x00\xc3\x89\x01\x04\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304192 = {
-0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304192}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304192_ = &gem_mrblib_ruflet_framework_proc_debug_file_304192;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304192 = {
-19, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304192_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304192 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304193, 2, (MRB_SYM(socket), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304193[] = "\x00\xcf\x89\x01\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304193 = {
+0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304193}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304193_ = &gem_mrblib_ruflet_framework_proc_debug_file_304193;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304193 = {
+19, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304193_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304193 = {
   3,6,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304192,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_304192,gem_mrblib_ruflet_framework_proc_reps_304192,
-  gem_mrblib_ruflet_framework_proc_lv_304192,
-  &gem_mrblib_ruflet_framework_proc_debug_304192,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304193,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_304193,gem_mrblib_ruflet_framework_proc_reps_304193,
+  gem_mrblib_ruflet_framework_proc_lv_304193,
+  &gem_mrblib_ruflet_framework_proc_debug_304193,
   19,0,2,1,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304193[7] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304194[7] = {
 {IREP_TT_SSTR|(17<<2), {"\x73\x65\x63\x2d\x77\x65\x62\x73\x6f\x63\x6b\x65\x74\x2d\x6b\x65\x79"}},
 {IREP_TT_SSTR|(14<<2), {"\x73\x65\x72\x76\x65\x72\x20\x65\x72\x72\x6f\x72\x3a\x20"}},
 {IREP_TT_SSTR|(2<<2), {"\x3a\x20"}},
@@ -86779,8 +86831,8 @@ static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304193[7] = {
 {IREP_TT_SSTR|(7<<2), {"\x6d\x65\x73\x73\x61\x67\x65"}},
 {IREP_TT_SSTR|(5<<2), {"\x55\x54\x46\x2d\x38"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304193, 23, (MRB_SYM(read_http_upgrade_request), MRB_SYM_Q(websocket_upgrade_request), MRB_SYM(send_handshake_response), MRB_SYM(WebSocketConnection), MRB_SYM(Ruflet), MRB_SYM(new), MRB_SYM(run_connection), MRB_SYM(handle_http_request), MRB_SYM(StandardError), MRB_SYM_Q(disconnect_error), MRB_SYM(class), MRB_SYM(message), MRB_SYM(warn), MRB_SYM(backtrace), MRB_SYM(join), MRB_SYM(ACTIONS), MRB_SYM(Protocol), MRB_SYM(session_crashed), MRB_SYM(to_s), MRB_SYM(dup), MRB_SYM(force_encoding), MRB_SYM(send_message), MRB_SYM(close_connection), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304193[295] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304194, 23, (MRB_SYM(read_http_upgrade_request), MRB_SYM_Q(websocket_upgrade_request), MRB_SYM(send_handshake_response), MRB_SYM(WebSocketConnection), MRB_SYM(Ruflet), MRB_SYM(new), MRB_SYM(run_connection), MRB_SYM(handle_http_request), MRB_SYM(StandardError), MRB_SYM_Q(disconnect_error), MRB_SYM(class), MRB_SYM(message), MRB_SYM(warn), MRB_SYM(backtrace), MRB_SYM(join), MRB_SYM(ACTIONS), MRB_SYM(Protocol), MRB_SYM(session_crashed), MRB_SYM(to_s), MRB_SYM(dup), MRB_SYM(force_encoding), MRB_SYM(send_message), MRB_SYM(close_connection), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304194[295] = {
 0x39,0x04,0x00,0x00,0x11,0x03,0x01,0x08,0x01,0x2f,0x07,0x00,0x01,0x57,0x04,0x07,0x00,0x57,0x05,0x07,
 0x01,0x01,0x07,0x04,0x29,0x07,0x00,0x03,0x26,0x00,0x04,0x11,0x07,0x3e,0x07,0x01,0x08,0x04,0x01,0x09,
 0x05,0x2f,0x07,0x01,0x02,0x28,0x07,0x00,0x29,0x01,0x08,0x01,0x01,0x09,0x05,0x5c,0x0a,0x00,0x23,0x09,
@@ -86796,22 +86848,22 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304193[295] = {
 0x0a,0x01,0x2f,0x07,0x15,0x03,0x26,0x00,0x02,0x11,0x07,0x26,0x00,0x02,0x2d,0x07,0x2b,0x09,0x01,0x0b,
 0x03,0x2f,0x0a,0x16,0x01,0x2d,0x09,0x3d,0x07,0x01,0x00,0x00,0x00,0x06,0x00,0x00,0x01,0x00,0x00,0x00,
 0x01,0x00,0x00,0x00,0x00,0x00,0x06,0x00,0x00,0x00,0x64,0x00,0x00,0x00,0x67,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304193, 6, (MRB_SYM(socket), 0,MRB_SYM(ws), MRB_SYM(path), MRB_SYM(headers), MRB_SYM(e), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304193[] = "\x00\xca\x89\x01\x04\x01\x02\x02\x0f\x01\x0e\x02\x0c\x03\x02\xfe\xff\xff\xff\x0f\x0f\x01\x10\x01\x08\x02\x0d\x07\x02\xf9\xff\xff\xff\x0f\x02\x02\x0b\x05\x02\xfb\xff\xff\xff\x0f\x03\x01\x0f\x02\x21\x01\x1b\x01\x3e\x02";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304193 = {
-0, 324, 54, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304193}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304193_ = &gem_mrblib_ruflet_framework_proc_debug_file_304193;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304193 = {
-269, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304193_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304193 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304194, 6, (MRB_SYM(socket), 0,MRB_SYM(ws), MRB_SYM(path), MRB_SYM(headers), MRB_SYM(e), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304194[] = "\x00\xd6\x89\x01\x04\x01\x02\x02\x0f\x01\x0e\x02\x0c\x03\x02\xfe\xff\xff\xff\x0f\x0f\x01\x10\x01\x08\x02\x0d\x07\x02\xf9\xff\xff\xff\x0f\x02\x02\x0b\x05\x02\xfb\xff\xff\xff\x0f\x03\x01\x0f\x02\x21\x01\x1b\x01\x3e\x02";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304194 = {
+0, 324, 54, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304194}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304194_ = &gem_mrblib_ruflet_framework_proc_debug_file_304194;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304194 = {
+269, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304194_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304194 = {
   7,14,2,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304193,
-  gem_mrblib_ruflet_framework_proc_pool_304193,gem_mrblib_ruflet_framework_proc_syms_304193,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304193,
-  &gem_mrblib_ruflet_framework_proc_debug_304193,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304194,
+  gem_mrblib_ruflet_framework_proc_pool_304194,gem_mrblib_ruflet_framework_proc_syms_304194,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304194,
+  &gem_mrblib_ruflet_framework_proc_debug_304194,
   269,7,23,0,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304194[6] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304195[6] = {
 {IREP_TT_SSTR|(14<<2), {"\x73\x65\x72\x76\x65\x72\x20\x65\x72\x72\x6f\x72\x3a\x20"}},
 {IREP_TT_SSTR|(2<<2), {"\x3a\x20"}},
 {IREP_TT_SSTR|(0<<2), {""}},
@@ -86819,8 +86871,8 @@ static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304194[6] = {
 {IREP_TT_SSTR|(7<<2), {"\x6d\x65\x73\x73\x61\x67\x65"}},
 {IREP_TT_SSTR|(5<<2), {"\x55\x54\x46\x2d\x38"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304194, 18, (MRB_SYM(register_connection), MRB_SYM(read_message), MRB_SYM(handle_message), MRB_SYM(StandardError), MRB_SYM_Q(disconnect_error), MRB_SYM(class), MRB_SYM(message), MRB_SYM(warn), MRB_SYM(backtrace), MRB_SYM(join), MRB_SYM(ACTIONS), MRB_SYM(Protocol), MRB_SYM(session_crashed), MRB_SYM(to_s), MRB_SYM(dup), MRB_SYM(force_encoding), MRB_SYM(send_message), MRB_SYM(close_connection), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304194[223] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304195, 18, (MRB_SYM(register_connection), MRB_SYM(read_message), MRB_SYM(handle_message), MRB_SYM(StandardError), MRB_SYM_Q(disconnect_error), MRB_SYM(class), MRB_SYM(message), MRB_SYM(warn), MRB_SYM(backtrace), MRB_SYM(join), MRB_SYM(ACTIONS), MRB_SYM(Protocol), MRB_SYM(session_crashed), MRB_SYM(to_s), MRB_SYM(dup), MRB_SYM(force_encoding), MRB_SYM(send_message), MRB_SYM(close_connection), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304195[223] = {
 0x39,0x04,0x00,0x00,0x01,0x06,0x01,0x2f,0x05,0x00,0x01,0x01,0x05,0x01,0x33,0x05,0x01,0x01,0x03,0x05,
 0x28,0x05,0x00,0x0e,0x00,0x01,0x06,0x01,0x01,0x07,0x03,0x2f,0x05,0x02,0x02,0x26,0xff,0xe5,0x11,0x05,
 0x26,0x00,0x8d,0x2b,0x05,0x1d,0x06,0x03,0x2c,0x05,0x06,0x27,0x06,0x00,0x03,0x26,0x00,0x7c,0x01,0x04,
@@ -86833,77 +86885,77 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304194[223] = {
 0x00,0x02,0x2d,0x05,0x2b,0x07,0x01,0x09,0x01,0x2f,0x08,0x11,0x01,0x2d,0x07,0x3d,0x05,0x01,0x00,0x00,
 0x00,0x04,0x00,0x00,0x00,0xb8,0x00,0x00,0x00,0xb8,0x00,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x28,0x00,
 0x00,0x00,0x2b,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304194, 4, (MRB_SYM(ws), 0,MRB_SYM(raw), MRB_SYM(e), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304194[] = "\x00\xe2\x89\x01\x04\x01\x07\x02\x0b\x01\x02\xff\xff\xff\xff\x0f\x01\x01\x10\x07\x02\xf9\xff\xff\xff\x0f\x02\x02\x0b\x05\x02\xfb\xff\xff\xff\x0f\x03\x01\x0f\x02\x21\x01\x1b\x01\x32\x02";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304194 = {
-0, 324, 46, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304194}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304194_ = &gem_mrblib_ruflet_framework_proc_debug_file_304194;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304194 = {
-197, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304194_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304194 = {
-  5,12,2,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304194,
-  gem_mrblib_ruflet_framework_proc_pool_304194,gem_mrblib_ruflet_framework_proc_syms_304194,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304194,
-  &gem_mrblib_ruflet_framework_proc_debug_304194,
-  197,6,18,0,0
-};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304195, 3, (MRB_SYM(remove_session), MRB_SYM(unregister_connection), MRB_SYM(close), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304195[33] = {
-0x39,0x04,0x00,0x00,0x01,0x04,0x01,0x2f,0x03,0x00,0x01,0x01,0x04,0x01,0x2f,0x03,0x01,0x01,0x01,0x03,
-0x01,0x01,0x04,0x03,0x29,0x04,0x00,0x03,0x33,0x03,0x02,0x3d,0x03,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304195, 2, (MRB_SYM(ws), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304195[] = "\x00\xf2\x89\x01\x04\x01\x07\x01\x07\x01";
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304195, 4, (MRB_SYM(ws), 0,MRB_SYM(raw), MRB_SYM(e), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304195[] = "\x00\xee\x89\x01\x04\x01\x07\x02\x0b\x01\x02\xff\xff\xff\xff\x0f\x01\x01\x10\x07\x02\xf9\xff\xff\xff\x0f\x02\x02\x0b\x05\x02\xfb\xff\xff\xff\x0f\x03\x01\x0f\x02\x21\x01\x1b\x01\x32\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304195 = {
-0, 324, 10, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304195}};
+0, 324, 46, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304195}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304195_ = &gem_mrblib_ruflet_framework_proc_debug_file_304195;
 static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304195 = {
-33, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304195_};
+197, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304195_};
 static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304195 = {
-  3,6,0,
+  5,12,2,
   MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304195,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_304195,NULL,
+  gem_mrblib_ruflet_framework_proc_pool_304195,gem_mrblib_ruflet_framework_proc_syms_304195,NULL,
   gem_mrblib_ruflet_framework_proc_lv_304195,
   &gem_mrblib_ruflet_framework_proc_debug_304195,
+  197,6,18,0,0
+};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304196, 3, (MRB_SYM(remove_session), MRB_SYM(unregister_connection), MRB_SYM(close), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304196[33] = {
+0x39,0x04,0x00,0x00,0x01,0x04,0x01,0x2f,0x03,0x00,0x01,0x01,0x04,0x01,0x2f,0x03,0x01,0x01,0x01,0x03,
+0x01,0x01,0x04,0x03,0x29,0x04,0x00,0x03,0x33,0x03,0x02,0x3d,0x03,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304196, 2, (MRB_SYM(ws), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304196[] = "\x00\xfe\x89\x01\x04\x01\x07\x01\x07\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304196 = {
+0, 324, 10, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304196}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304196_ = &gem_mrblib_ruflet_framework_proc_debug_file_304196;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304196 = {
+33, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304196_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304196 = {
+  3,6,0,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304196,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_304196,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304196,
+  &gem_mrblib_ruflet_framework_proc_debug_304196,
   33,0,3,0,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304899[2] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304959[2] = {
 {IREP_TT_SSTR|(2<<2), {"\x0d\x0a"}},
 {IREP_TT_SSTR|(1<<2), {"\x3a"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304899, 5, (MRB_SYM(gets), MRB_SYM_Q(nil), MRB_SYM(split), MRB_SYM(strip), MRB_SYM(downcase), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304899[111] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304959, 5, (MRB_SYM(gets), MRB_SYM_Q(nil), MRB_SYM(split), MRB_SYM(strip), MRB_SYM(downcase), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304959[111] = {
 0x39,0x00,0x00,0x00,0x21,0x05,0x01,0x00,0x5c,0x06,0x00,0x32,0x05,0x00,0x01,0x01,0x02,0x05,0x01,0x05,
 0x02,0x33,0x05,0x01,0x27,0x05,0x00,0x08,0x01,0x05,0x02,0x5c,0x06,0x00,0x4d,0x05,0x28,0x05,0x00,0x04,
 0x11,0x05,0x43,0x05,0x01,0x05,0x02,0x5c,0x06,0x01,0x08,0x07,0x32,0x05,0x02,0x02,0x57,0x03,0x05,0x00,
 0x57,0x04,0x05,0x01,0x01,0x05,0x03,0x33,0x05,0x01,0x27,0x05,0x00,0x06,0x01,0x05,0x04,0x33,0x05,0x01,
 0x28,0x05,0x00,0x01,0x40,0x21,0x06,0x07,0x00,0x01,0x07,0x03,0x33,0x07,0x03,0x33,0x07,0x04,0x01,0x08,
 0x04,0x33,0x08,0x03,0x01,0x05,0x08,0x25,0x06,0x3d,0x05,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304899, 4, (0,MRB_SYM(line), MRB_SYM(key), MRB_SYM(value), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304899[] = "\x00\x82\x8a\x01\x04\x01\x0e\x01\x1a\x02\x14\x01\x15\x02";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304899 = {
-0, 324, 14, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304899}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304899_ = &gem_mrblib_ruflet_framework_proc_debug_file_304899;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304899 = {
-111, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304899_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304899 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304959, 4, (0,MRB_SYM(line), MRB_SYM(key), MRB_SYM(value), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304959[] = "\x00\x8e\x8a\x01\x04\x01\x0e\x01\x1a\x02\x14\x01\x15\x02";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304959 = {
+0, 324, 14, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304959}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304959_ = &gem_mrblib_ruflet_framework_proc_debug_file_304959;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304959 = {
+111, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304959_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304959 = {
   5,10,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304899,
-  gem_mrblib_ruflet_framework_proc_pool_304899,gem_mrblib_ruflet_framework_proc_syms_304899,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304899,
-  &gem_mrblib_ruflet_framework_proc_debug_304899,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304959,
+  gem_mrblib_ruflet_framework_proc_pool_304959,gem_mrblib_ruflet_framework_proc_syms_304959,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304959,
+  &gem_mrblib_ruflet_framework_proc_debug_304959,
   111,2,5,0,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304196[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_304899,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304197[1] = {
+  &gem_mrblib_ruflet_framework_proc_irep_304959,
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304196[3] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304197[3] = {
 {IREP_TT_SSTR|(2<<2), {"\x0d\x0a"}},
 {IREP_TT_SSTR|(1<<2), {"\x20"}},
 {IREP_TT_SSTR|(3<<2), {"\x47\x45\x54"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304196, 7, (MRB_SYM(gets), MRB_SYM_Q(include), MRB_SYM(strip), MRB_SYM(split), MRB_SYM(to_s), MRB_SYM_Q(empty), MRB_SYM(loop), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304196[154] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304197, 7, (MRB_SYM(gets), MRB_SYM_Q(include), MRB_SYM(strip), MRB_SYM(split), MRB_SYM(to_s), MRB_SYM_Q(empty), MRB_SYM(loop), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304197[154] = {
 0x39,0x04,0x00,0x00,0x01,0x08,0x01,0x5c,0x09,0x00,0x32,0x08,0x00,0x01,0x01,0x03,0x08,0x01,0x08,0x03,
 0x29,0x08,0x00,0x03,0x26,0x00,0x0a,0x11,0x08,0x5e,0x09,0x00,0x52,0x08,0x02,0x3d,0x08,0x01,0x08,0x03,
 0x5c,0x09,0x01,0x32,0x08,0x01,0x01,0x27,0x08,0x00,0x0a,0x11,0x08,0x5e,0x09,0x00,0x52,0x08,0x02,0x3d,
@@ -86912,52 +86964,52 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304196[154] = {
 0x11,0x08,0x5e,0x09,0x00,0x52,0x08,0x02,0x3d,0x08,0x01,0x08,0x05,0x33,0x08,0x04,0x33,0x08,0x05,0x28,
 0x08,0x00,0x0a,0x11,0x08,0x5e,0x09,0x00,0x52,0x08,0x02,0x3d,0x08,0x5e,0x07,0x00,0x62,0x09,0x00,0x31,
 0x08,0x06,0x00,0x01,0x08,0x05,0x01,0x09,0x07,0x52,0x08,0x02,0x3d,0x08,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304196, 7, (MRB_SYM(socket), 0,MRB_SYM(request_line), MRB_SYM(method), MRB_SYM(path), MRB_SYM(_version), MRB_SYM(headers), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304196[] = "\x00\xf8\x89\x01\x04\x01\x0d\x01\x14\x01\x18\x02\x1b\x01\x16\x01\x17\x02\x03\x01\x07\x0a";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304196 = {
-0, 324, 22, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304196}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304196_ = &gem_mrblib_ruflet_framework_proc_debug_file_304196;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304196 = {
-154, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304196_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304196 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304197, 7, (MRB_SYM(socket), 0,MRB_SYM(request_line), MRB_SYM(method), MRB_SYM(path), MRB_SYM(_version), MRB_SYM(headers), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304197[] = "\x00\x84\x8a\x01\x04\x01\x0d\x01\x14\x01\x18\x02\x1b\x01\x16\x01\x17\x02\x03\x01\x07\x0a";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304197 = {
+0, 324, 22, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304197}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304197_ = &gem_mrblib_ruflet_framework_proc_debug_file_304197;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304197 = {
+154, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304197_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304197 = {
   8,12,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304196,
-  gem_mrblib_ruflet_framework_proc_pool_304196,gem_mrblib_ruflet_framework_proc_syms_304196,gem_mrblib_ruflet_framework_proc_reps_304196,
-  gem_mrblib_ruflet_framework_proc_lv_304196,
-  &gem_mrblib_ruflet_framework_proc_debug_304196,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304197,
+  gem_mrblib_ruflet_framework_proc_pool_304197,gem_mrblib_ruflet_framework_proc_syms_304197,gem_mrblib_ruflet_framework_proc_reps_304197,
+  gem_mrblib_ruflet_framework_proc_lv_304197,
+  &gem_mrblib_ruflet_framework_proc_debug_304197,
   154,3,7,1,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304197[5] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304198[5] = {
 {IREP_TT_SSTR|(3<<2), {"\x2f\x77\x73"}},
 {IREP_TT_SSTR|(7<<2), {"\x75\x70\x67\x72\x61\x64\x65"}},
 {IREP_TT_SSTR|(9<<2), {"\x77\x65\x62\x73\x6f\x63\x6b\x65\x74"}},
 {IREP_TT_SSTR|(10<<2), {"\x63\x6f\x6e\x6e\x65\x63\x74\x69\x6f\x6e"}},
 {IREP_TT_SSTR|(17<<2), {"\x73\x65\x63\x2d\x77\x65\x62\x73\x6f\x63\x6b\x65\x74\x2d\x6b\x65\x79"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304197, 4, (MRB_SYM(downcase), MRB_SYM_Q(include), MRB_SYM(to_s), MRB_SYM_Q(empty), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304197[102] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304198, 4, (MRB_SYM(downcase), MRB_SYM_Q(include), MRB_SYM(to_s), MRB_SYM_Q(empty), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304198[102] = {
 0x39,0x08,0x00,0x00,0x01,0x04,0x01,0x5c,0x05,0x00,0x4d,0x04,0x27,0x04,0x00,0x01,0x42,0x01,0x04,0x02,
 0x5c,0x05,0x01,0x23,0x04,0x01,0x05,0x04,0x29,0x05,0x00,0x03,0x33,0x04,0x00,0x5c,0x05,0x02,0x4d,0x04,
 0x27,0x04,0x00,0x01,0x42,0x01,0x04,0x02,0x5c,0x05,0x03,0x23,0x04,0x01,0x05,0x04,0x29,0x05,0x00,0x03,
 0x33,0x04,0x00,0x01,0x05,0x04,0x29,0x05,0x00,0x07,0x5c,0x05,0x01,0x32,0x04,0x01,0x01,0x27,0x04,0x00,
 0x01,0x42,0x01,0x04,0x02,0x5c,0x05,0x04,0x23,0x04,0x33,0x04,0x02,0x33,0x04,0x03,0x28,0x04,0x00,0x01,
 0x42,0x41,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304197, 3, (MRB_SYM(path), MRB_SYM(headers), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304197[] = "\x00\x8f\x8a\x01\x04\x01\x0d\x01\x1c\x01\x25\x01\x13\x02";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304197 = {
-0, 324, 14, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304197}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304197_ = &gem_mrblib_ruflet_framework_proc_debug_file_304197;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304197 = {
-102, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304197_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304197 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304198, 3, (MRB_SYM(path), MRB_SYM(headers), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304198[] = "\x00\x9b\x8a\x01\x04\x01\x0d\x01\x1c\x01\x25\x01\x13\x02";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304198 = {
+0, 324, 14, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304198}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304198_ = &gem_mrblib_ruflet_framework_proc_debug_file_304198;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304198 = {
+102, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304198_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304198 = {
   4,7,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304197,
-  gem_mrblib_ruflet_framework_proc_pool_304197,gem_mrblib_ruflet_framework_proc_syms_304197,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304197,
-  &gem_mrblib_ruflet_framework_proc_debug_304197,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304198,
+  gem_mrblib_ruflet_framework_proc_pool_304198,gem_mrblib_ruflet_framework_proc_syms_304198,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304198,
+  &gem_mrblib_ruflet_framework_proc_debug_304198,
   102,5,4,0,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304198[11] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304199[11] = {
 {IREP_TT_SSTR|(7<<2), {"\x2f\x68\x65\x61\x6c\x74\x68"}},
 {IREP_TT_SSTR|(10<<2), {"\x74\x65\x78\x74\x2f\x70\x6c\x61\x69\x6e"}},
 {IREP_TT_SSTR|(2<<2), {"\x6f\x6b"}},
@@ -86970,8 +87022,8 @@ static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304198[11] = {
 {IREP_TT_SSTR|(0<<2), {""}},
 {IREP_TT_SSTR|(12<<2), {"\x73\x65\x72\x76\x65\x72\x20\x65\x72\x72\x6f\x72"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304198, 8, (MRB_OPSYM(eqq), MRB_SYM(write_http_response), MRB_SYM_Q(start_with), MRB_SYM(serve_asset), MRB_SYM(StandardError), MRB_SYM(class), MRB_SYM(message), MRB_SYM(warn), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304198[214] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304199, 8, (MRB_OPSYM(eqq), MRB_SYM(write_http_response), MRB_SYM_Q(start_with), MRB_SYM(serve_asset), MRB_SYM(StandardError), MRB_SYM(class), MRB_SYM(message), MRB_SYM(warn), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304199[214] = {
 0x39,0x08,0x00,0x00,0x01,0x05,0x02,0x5c,0x06,0x00,0x01,0x07,0x05,0x32,0x06,0x00,0x01,0x28,0x06,0x00,
 0x13,0x01,0x07,0x01,0x03,0x08,0xc8,0x5c,0x09,0x01,0x5c,0x0a,0x02,0x2f,0x06,0x01,0x04,0x26,0x00,0x50,
 0x5c,0x06,0x03,0x01,0x07,0x05,0x32,0x06,0x00,0x01,0x28,0x06,0x00,0x13,0x01,0x07,0x01,0x03,0x08,0xc8,
@@ -86983,52 +87035,52 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304198[214] = {
 0x01,0x07,0x04,0x33,0x07,0x06,0x5d,0x06,0x5c,0x07,0x09,0x5d,0x06,0x2f,0x05,0x07,0x01,0x01,0x06,0x01,
 0x0e,0x07,0x01,0xf4,0x5c,0x08,0x01,0x5c,0x09,0x0a,0x2f,0x05,0x01,0x04,0x26,0x00,0x02,0x2d,0x05,0x3d,
 0x05,0x00,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x7b,0x00,0x00,0x00,0x7e,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304198, 4, (MRB_SYM(socket), MRB_SYM(path), 0,MRB_SYM(e), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304198[] = "\x00\x98\x8a\x01\x04\x01\x03\x01\x0c\x01\x13\x07\x02\xfa\xff\xff\xff\x0f\x0c\x01\x13\x05\x02\xfd\xff\xff\xff\x0f\x0c\x01\x0d\x02\x1a\x05\x02\xfb\xff\xff\xff\x0f\x02\x03\x0b\x02\x02\xfe\xff\xff\xff\x0f\x03\x01\x21\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304198 = {
-0, 324, 54, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304198}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304198_ = &gem_mrblib_ruflet_framework_proc_debug_file_304198;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304198 = {
-201, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304198_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304198 = {
-  5,12,1,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304198,
-  gem_mrblib_ruflet_framework_proc_pool_304198,gem_mrblib_ruflet_framework_proc_syms_304198,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304198,
-  &gem_mrblib_ruflet_framework_proc_debug_304198,
-  201,11,8,0,0
-};
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304199[2] = {
-{IREP_TT_SSTR|(10<<2), {"\x74\x65\x78\x74\x2f\x70\x6c\x61\x69\x6e"}},
-{IREP_TT_SSTR|(9<<2), {"\x6e\x6f\x74\x20\x66\x6f\x75\x6e\x64"}},
-};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304199, 6, (MRB_SYM(resolve_asset_path), MRB_SYM(write_http_response), MRB_SYM(File), MRB_SYM(binread), MRB_SYM(content_type_for), MRB_SYM(binary), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304199[79] = {
-0x39,0x08,0x00,0x00,0x01,0x07,0x02,0x2f,0x06,0x00,0x01,0x01,0x04,0x06,0x01,0x06,0x04,0x27,0x06,0x00,
-0x12,0x01,0x07,0x01,0x0e,0x08,0x01,0x94,0x5c,0x09,0x00,0x5c,0x0a,0x01,0x2f,0x06,0x01,0x04,0x40,0x1d,
-0x06,0x02,0x01,0x07,0x04,0x32,0x06,0x03,0x01,0x01,0x05,0x06,0x01,0x07,0x01,0x03,0x08,0xc8,0x01,0x0a,
-0x04,0x2f,0x09,0x04,0x01,0x01,0x0a,0x05,0x10,0x0b,0x05,0x13,0x0c,0x2f,0x06,0x01,0x14,0x3d,0x06,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304199, 5, (MRB_SYM(socket), MRB_SYM(path), 0,MRB_SYM(asset_path), MRB_SYM(content), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304199[] = "\x00\xaa\x8a\x01\x04\x01\x0a\x01\x05\x02\x02\xff\xff\xff\xff\x0f\x11\x01\x01\x03\x0d\x01";
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304199, 4, (MRB_SYM(socket), MRB_SYM(path), 0,MRB_SYM(e), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304199[] = "\x00\xa4\x8a\x01\x04\x01\x03\x01\x0c\x01\x13\x07\x02\xfa\xff\xff\xff\x0f\x0c\x01\x13\x05\x02\xfd\xff\xff\xff\x0f\x0c\x01\x0d\x02\x1a\x05\x02\xfb\xff\xff\xff\x0f\x02\x03\x0b\x02\x02\xfe\xff\xff\xff\x0f\x03\x01\x21\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304199 = {
-0, 324, 22, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304199}};
+0, 324, 54, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304199}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304199_ = &gem_mrblib_ruflet_framework_proc_debug_file_304199;
 static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304199 = {
-79, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304199_};
+201, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304199_};
 static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304199 = {
-  6,14,0,
+  5,12,1,
   MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304199,
   gem_mrblib_ruflet_framework_proc_pool_304199,gem_mrblib_ruflet_framework_proc_syms_304199,NULL,
   gem_mrblib_ruflet_framework_proc_lv_304199,
   &gem_mrblib_ruflet_framework_proc_debug_304199,
-  79,2,6,0,0
+  201,11,8,0,0
 };
 static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304200[2] = {
+{IREP_TT_SSTR|(10<<2), {"\x74\x65\x78\x74\x2f\x70\x6c\x61\x69\x6e"}},
+{IREP_TT_SSTR|(9<<2), {"\x6e\x6f\x74\x20\x66\x6f\x75\x6e\x64"}},
+};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304200, 6, (MRB_SYM(resolve_asset_path), MRB_SYM(write_http_response), MRB_SYM(File), MRB_SYM(binread), MRB_SYM(content_type_for), MRB_SYM(binary), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304200[79] = {
+0x39,0x08,0x00,0x00,0x01,0x07,0x02,0x2f,0x06,0x00,0x01,0x01,0x04,0x06,0x01,0x06,0x04,0x27,0x06,0x00,
+0x12,0x01,0x07,0x01,0x0e,0x08,0x01,0x94,0x5c,0x09,0x00,0x5c,0x0a,0x01,0x2f,0x06,0x01,0x04,0x40,0x1d,
+0x06,0x02,0x01,0x07,0x04,0x32,0x06,0x03,0x01,0x01,0x05,0x06,0x01,0x07,0x01,0x03,0x08,0xc8,0x01,0x0a,
+0x04,0x2f,0x09,0x04,0x01,0x01,0x0a,0x05,0x10,0x0b,0x05,0x13,0x0c,0x2f,0x06,0x01,0x14,0x3d,0x06,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304200, 5, (MRB_SYM(socket), MRB_SYM(path), 0,MRB_SYM(asset_path), MRB_SYM(content), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304200[] = "\x00\xb6\x8a\x01\x04\x01\x0a\x01\x05\x02\x02\xff\xff\xff\xff\x0f\x11\x01\x01\x03\x0d\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304200 = {
+0, 324, 22, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304200}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304200_ = &gem_mrblib_ruflet_framework_proc_debug_file_304200;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304200 = {
+79, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304200_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304200 = {
+  6,14,0,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304200,
+  gem_mrblib_ruflet_framework_proc_pool_304200,gem_mrblib_ruflet_framework_proc_syms_304200,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304200,
+  &gem_mrblib_ruflet_framework_proc_debug_304200,
+  79,2,6,0,0
+};
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304201[2] = {
 {IREP_TT_SSTR|(10<<2), {"\x5c\x41\x2f\x61\x73\x73\x65\x74\x73\x2f"}},
 {IREP_TT_SSTR|(0<<2), {""}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304200, 10, (MRB_SYM(assets_root), MRB_SYM(File), MRB_SYM(expand_path), MRB_SYM(Regexp), MRB_SYM(compile), MRB_SYM(sub), MRB_SYM(join), MRB_SYM(SEPARATOR), MRB_SYM_Q(start_with), MRB_SYM_Q(file), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304200[131] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304201, 10, (MRB_SYM(assets_root), MRB_SYM(File), MRB_SYM(expand_path), MRB_SYM(Regexp), MRB_SYM(compile), MRB_SYM(sub), MRB_SYM(join), MRB_SYM(SEPARATOR), MRB_SYM_Q(start_with), MRB_SYM_Q(file), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304201[131] = {
 0x39,0x04,0x00,0x00,0x30,0x06,0x00,0x01,0x03,0x06,0x01,0x06,0x03,0x27,0x06,0x00,0x01,0x40,0x1d,0x06,
 0x01,0x01,0x07,0x03,0x32,0x06,0x02,0x01,0x01,0x03,0x06,0x01,0x06,0x01,0x66,0x07,0x1f,0x07,0x03,0x5c,
 0x08,0x00,0x32,0x07,0x04,0x01,0x5c,0x08,0x01,0x32,0x06,0x05,0x02,0x01,0x04,0x06,0x1d,0x06,0x01,0x1d,
@@ -87036,47 +87088,47 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304200[131] = {
 0x06,0x05,0x01,0x07,0x03,0x1d,0x08,0x01,0x1f,0x08,0x07,0x45,0x07,0x32,0x06,0x08,0x01,0x27,0x06,0x00,
 0x08,0x01,0x06,0x05,0x01,0x07,0x03,0x4d,0x06,0x27,0x06,0x00,0x01,0x40,0x1d,0x06,0x01,0x01,0x07,0x05,
 0x32,0x06,0x09,0x01,0x27,0x06,0x00,0x01,0x40,0x3d,0x05,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304200, 5, (MRB_SYM(path), 0,MRB_SYM(root), MRB_SYM(relative), MRB_SYM(full), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304200[] = "\x00\xb5\x8a\x01\x04\x01\x06\x01\x08\x02\x0d\x01\x19\x01\x17\x01\x23\x01\x0f\x02";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304200 = {
-0, 324, 20, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304200}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304200_ = &gem_mrblib_ruflet_framework_proc_debug_file_304200;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304200 = {
-131, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304200_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304200 = {
-  6,11,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304200,
-  gem_mrblib_ruflet_framework_proc_pool_304200,gem_mrblib_ruflet_framework_proc_syms_304200,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304200,
-  &gem_mrblib_ruflet_framework_proc_debug_304200,
-  131,2,10,0,0
-};
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304201[2] = {
-{IREP_TT_SSTR|(17<<2), {"\x52\x55\x46\x4c\x45\x54\x5f\x41\x53\x53\x45\x54\x53\x5f\x44\x49\x52"}},
-{IREP_TT_SSTR|(6<<2), {"\x61\x73\x73\x65\x74\x73"}},
-};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304201, 8, (MRB_SYM(ENV), MRB_SYM(to_s), MRB_SYM_Q(empty), MRB_SYM(File), MRB_SYM(Dir), MRB_SYM(pwd), MRB_SYM(join), MRB_SYM_Q(directory), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304201[73] = {
-0x39,0x00,0x00,0x00,0x1d,0x04,0x00,0x5c,0x05,0x00,0x23,0x04,0x33,0x04,0x01,0x01,0x02,0x04,0x01,0x04,
-0x02,0x33,0x04,0x02,0x27,0x04,0x00,0x02,0x3d,0x02,0x1d,0x04,0x03,0x1d,0x05,0x04,0x33,0x05,0x05,0x5c,
-0x06,0x01,0x32,0x04,0x06,0x02,0x01,0x03,0x04,0x1d,0x04,0x03,0x01,0x05,0x03,0x32,0x04,0x07,0x01,0x28,
-0x04,0x00,0x06,0x01,0x04,0x03,0x26,0x00,0x02,0x11,0x04,0x3d,0x04,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304201, 3, (0,MRB_SYM(root), MRB_SYM(default_root), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304201[] = "\x00\xc2\x8a\x01\x04\x01\x0e\x01\x0c\x02\x13\x01";
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304201, 5, (MRB_SYM(path), 0,MRB_SYM(root), MRB_SYM(relative), MRB_SYM(full), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304201[] = "\x00\xc1\x8a\x01\x04\x01\x06\x01\x08\x02\x0d\x01\x19\x01\x17\x01\x23\x01\x0f\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304201 = {
-0, 324, 12, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304201}};
+0, 324, 20, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304201}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304201_ = &gem_mrblib_ruflet_framework_proc_debug_file_304201;
 static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304201 = {
-73, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304201_};
+131, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304201_};
 static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304201 = {
-  4,8,0,
+  6,11,0,
   MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304201,
   gem_mrblib_ruflet_framework_proc_pool_304201,gem_mrblib_ruflet_framework_proc_syms_304201,NULL,
   gem_mrblib_ruflet_framework_proc_lv_304201,
   &gem_mrblib_ruflet_framework_proc_debug_304201,
+  131,2,10,0,0
+};
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304202[2] = {
+{IREP_TT_SSTR|(17<<2), {"\x52\x55\x46\x4c\x45\x54\x5f\x41\x53\x53\x45\x54\x53\x5f\x44\x49\x52"}},
+{IREP_TT_SSTR|(6<<2), {"\x61\x73\x73\x65\x74\x73"}},
+};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304202, 8, (MRB_SYM(ENV), MRB_SYM(to_s), MRB_SYM_Q(empty), MRB_SYM(File), MRB_SYM(Dir), MRB_SYM(pwd), MRB_SYM(join), MRB_SYM_Q(directory), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304202[73] = {
+0x39,0x00,0x00,0x00,0x1d,0x04,0x00,0x5c,0x05,0x00,0x23,0x04,0x33,0x04,0x01,0x01,0x02,0x04,0x01,0x04,
+0x02,0x33,0x04,0x02,0x27,0x04,0x00,0x02,0x3d,0x02,0x1d,0x04,0x03,0x1d,0x05,0x04,0x33,0x05,0x05,0x5c,
+0x06,0x01,0x32,0x04,0x06,0x02,0x01,0x03,0x04,0x1d,0x04,0x03,0x01,0x05,0x03,0x32,0x04,0x07,0x01,0x28,
+0x04,0x00,0x06,0x01,0x04,0x03,0x26,0x00,0x02,0x11,0x04,0x3d,0x04,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304202, 3, (0,MRB_SYM(root), MRB_SYM(default_root), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304202[] = "\x00\xce\x8a\x01\x04\x01\x0e\x01\x0c\x02\x13\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304202 = {
+0, 324, 12, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304202}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304202_ = &gem_mrblib_ruflet_framework_proc_debug_file_304202;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304202 = {
+73, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304202_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304202 = {
+  4,8,0,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304202,
+  gem_mrblib_ruflet_framework_proc_pool_304202,gem_mrblib_ruflet_framework_proc_syms_304202,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304202,
+  &gem_mrblib_ruflet_framework_proc_debug_304202,
   73,2,8,0,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304202[12] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304203[12] = {
 {IREP_TT_SSTR|(4<<2), {"\x2e\x70\x6e\x67"}},
 {IREP_TT_SSTR|(9<<2), {"\x69\x6d\x61\x67\x65\x2f\x70\x6e\x67"}},
 {IREP_TT_SSTR|(4<<2), {"\x2e\x6a\x70\x67"}},
@@ -87090,8 +87142,8 @@ static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304202[12] = {
 {IREP_TT_SSTR|(13<<2), {"\x69\x6d\x61\x67\x65\x2f\x73\x76\x67\x2b\x78\x6d\x6c"}},
 {IREP_TT_SSTR|(24<<2), {"\x61\x70\x70\x6c\x69\x63\x61\x74\x69\x6f\x6e\x2f\x6f\x63\x74\x65\x74\x2d\x73\x74\x72\x65\x61\x6d"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304202, 4, (MRB_SYM(File), MRB_SYM(extname), MRB_SYM(downcase), MRB_OPSYM(eqq), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304202[139] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304203, 4, (MRB_SYM(File), MRB_SYM(extname), MRB_SYM(downcase), MRB_OPSYM(eqq), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304203[139] = {
 0x39,0x04,0x00,0x00,0x1d,0x03,0x00,0x01,0x04,0x01,0x32,0x03,0x01,0x01,0x33,0x03,0x02,0x5c,0x04,0x00,
 0x01,0x05,0x03,0x32,0x04,0x03,0x01,0x28,0x04,0x00,0x06,0x5c,0x04,0x01,0x26,0x00,0x64,0x5c,0x04,0x02,
 0x01,0x05,0x03,0x32,0x04,0x03,0x01,0x27,0x04,0x00,0x0e,0x5c,0x04,0x03,0x01,0x05,0x03,0x32,0x04,0x03,
@@ -87099,22 +87151,22 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304202[139] = {
 0x01,0x28,0x04,0x00,0x06,0x5c,0x04,0x06,0x26,0x00,0x2e,0x5c,0x04,0x07,0x01,0x05,0x03,0x32,0x04,0x03,
 0x01,0x28,0x04,0x00,0x06,0x5c,0x04,0x08,0x26,0x00,0x1a,0x5c,0x04,0x09,0x01,0x05,0x03,0x32,0x04,0x03,
 0x01,0x28,0x04,0x00,0x06,0x5c,0x04,0x0a,0x26,0x00,0x06,0x5c,0x04,0x0b,0x26,0x00,0x00,0x3d,0x04,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304202, 2, (MRB_SYM(path), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304202[] = "\x00\xca\x8a\x01\x04\x01\x0d\x01\x0c\x01\x06\x0a\x02\xf7\xff\xff\xff\x0f\x1a\x01\x06\x08\x02\xf9\xff\xff\xff\x0f\x0c\x01\x06\x06\x02\xfb\xff\xff\xff\x0f\x0c\x01\x06\x04\x02\xfd\xff\xff\xff\x0f\x0c\x01\x06\x02";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304202 = {
-0, 324, 52, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304202}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304202_ = &gem_mrblib_ruflet_framework_proc_debug_file_304202;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304202 = {
-139, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304202_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304202 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304203, 2, (MRB_SYM(path), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304203[] = "\x00\xd6\x8a\x01\x04\x01\x0d\x01\x0c\x01\x06\x0a\x02\xf7\xff\xff\xff\x0f\x1a\x01\x06\x08\x02\xf9\xff\xff\xff\x0f\x0c\x01\x06\x06\x02\xfb\xff\xff\xff\x0f\x0c\x01\x06\x04\x02\xfd\xff\xff\xff\x0f\x0c\x01\x06\x02";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304203 = {
+0, 324, 52, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304203}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304203_ = &gem_mrblib_ruflet_framework_proc_debug_file_304203;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304203 = {
+139, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304203_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304203 = {
   3,7,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304202,
-  gem_mrblib_ruflet_framework_proc_pool_304202,gem_mrblib_ruflet_framework_proc_syms_304202,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304202,
-  &gem_mrblib_ruflet_framework_proc_debug_304202,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304203,
+  gem_mrblib_ruflet_framework_proc_pool_304203,gem_mrblib_ruflet_framework_proc_syms_304203,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304203,
+  &gem_mrblib_ruflet_framework_proc_debug_304203,
   139,12,4,0,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304203[9] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304204[9] = {
 {IREP_TT_SSTR|(2<<2), {"\x4f\x4b"}},
 {IREP_TT_SSTR|(9<<2), {"\x4e\x6f\x74\x20\x46\x6f\x75\x6e\x64"}},
 {IREP_TT_SSTR|(21<<2), {"\x49\x6e\x74\x65\x72\x6e\x61\x6c\x20\x53\x65\x72\x76\x65\x72\x20\x45\x72\x72\x6f\x72"}},
@@ -87125,8 +87177,8 @@ static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304203[9] = {
 {IREP_TT_SSTR|(16<<2), {"\x43\x6f\x6e\x74\x65\x6e\x74\x2d\x4c\x65\x6e\x67\x74\x68\x3a\x20"}},
 {IREP_TT_SSTR|(19<<2), {"\x43\x6f\x6e\x6e\x65\x63\x74\x69\x6f\x6e\x3a\x20\x63\x6c\x6f\x73\x65\x0d\x0a"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304203, 4, (MRB_SYM(binary), MRB_SYM(to_s), MRB_SYM(bytesize), MRB_SYM(write), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304203[203] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304204, 4, (MRB_SYM(binary), MRB_SYM(to_s), MRB_SYM(bytesize), MRB_SYM(write), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304204[203] = {
 0x39,0x10,0x00,0x04,0x3a,0x07,0x00,0x27,0x07,0x00,0x05,0x14,0x07,0x26,0x00,0x03,0x3c,0x07,0x00,0x3b,
 0x10,0x0b,0x00,0x01,0x0c,0x07,0x5e,0x0b,0x01,0x01,0x05,0x0b,0x03,0x0b,0xc8,0x5c,0x0c,0x00,0x0e,0x0d,
 0x01,0x94,0x5c,0x0e,0x01,0x0e,0x0f,0x01,0xf4,0x5c,0x10,0x02,0x5e,0x0b,0x03,0x01,0x0c,0x02,0x23,0x0b,
@@ -87138,22 +87190,22 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304203[203] = {
 0x5d,0x0c,0x5c,0x0d,0x05,0x5d,0x0c,0x32,0x0b,0x03,0x01,0x01,0x0b,0x01,0x5c,0x0c,0x08,0x32,0x0b,0x03,
 0x01,0x01,0x0b,0x01,0x5c,0x0c,0x05,0x32,0x0b,0x03,0x01,0x01,0x0b,0x01,0x01,0x0c,0x09,0x32,0x0b,0x03,
 0x01,0x3d,0x0b,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304203, 10, (MRB_SYM(socket), MRB_SYM(status), MRB_SYM(content_type), MRB_SYM(body), MRB_OPSYM(pow), 0,MRB_SYM(binary), MRB_SYM(reason), MRB_SYM(body_str), MRB_SYM(length), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304203[] = "\x00\xdb\x8a\x01\x20\x02\x06\x01\x07\x01\x0a\x01\x0f\x02\x16\x01\x09\x02\x1e\x01\x14\x01\x14\x01\x0a\x01\x0a\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304203 = {
-0, 324, 28, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304203}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304203_ = &gem_mrblib_ruflet_framework_proc_debug_file_304203;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304203 = {
-203, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304203_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304203 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304204, 10, (MRB_SYM(socket), MRB_SYM(status), MRB_SYM(content_type), MRB_SYM(body), MRB_OPSYM(pow), 0,MRB_SYM(binary), MRB_SYM(reason), MRB_SYM(body_str), MRB_SYM(length), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304204[] = "\x00\xe7\x8a\x01\x20\x02\x06\x01\x07\x01\x0a\x01\x0f\x02\x16\x01\x09\x02\x1e\x01\x14\x01\x14\x01\x0a\x01\x0a\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304204 = {
+0, 324, 28, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304204}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304204_ = &gem_mrblib_ruflet_framework_proc_debug_file_304204;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304204 = {
+203, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304204_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304204 = {
   11,17,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304203,
-  gem_mrblib_ruflet_framework_proc_pool_304203,gem_mrblib_ruflet_framework_proc_syms_304203,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304203,
-  &gem_mrblib_ruflet_framework_proc_debug_304203,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304204,
+  gem_mrblib_ruflet_framework_proc_pool_304204,gem_mrblib_ruflet_framework_proc_syms_304204,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304204,
+  &gem_mrblib_ruflet_framework_proc_debug_304204,
   203,9,4,0,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304204[7] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304205[7] = {
 {IREP_TT_SSTR|(0<<2), {""}},
 {IREP_TT_SSTR|(2<<2), {"\x6d\x30"}},
 {IREP_TT_SSTR|(34<<2), {"\x48\x54\x54\x50\x2f\x31\x2e\x31\x20\x31\x30\x31\x20\x53\x77\x69\x74\x63\x68\x69\x6e\x67\x20\x50\x72\x6f\x74\x6f\x63\x6f\x6c\x73\x0d\x0a"}},
@@ -87162,97 +87214,56 @@ static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304204[7] = {
 {IREP_TT_SSTR|(22<<2), {"\x53\x65\x63\x2d\x57\x65\x62\x53\x6f\x63\x6b\x65\x74\x2d\x41\x63\x63\x65\x70\x74\x3a\x20"}},
 {IREP_TT_SSTR|(2<<2), {"\x0d\x0a"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304204, 6, (MRB_SYM(SHA1), MRB_SYM(Digest), MRB_SYM(WEBSOCKET_GUID), MRB_SYM(digest), MRB_SYM(pack), MRB_SYM(write), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304204[112] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304205, 6, (MRB_SYM(SHA1), MRB_SYM(Digest), MRB_SYM(WEBSOCKET_GUID), MRB_SYM(digest), MRB_SYM(pack), MRB_SYM(write), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304205[112] = {
 0x39,0x08,0x00,0x00,0x1d,0x05,0x01,0x1f,0x05,0x00,0x5c,0x06,0x00,0x01,0x07,0x02,0x5d,0x06,0x5c,0x07,
 0x00,0x5d,0x06,0x1d,0x07,0x02,0x5d,0x06,0x5c,0x07,0x00,0x5d,0x06,0x32,0x05,0x03,0x01,0x52,0x05,0x01,
 0x5c,0x06,0x01,0x32,0x05,0x04,0x01,0x01,0x04,0x05,0x01,0x05,0x01,0x5c,0x06,0x02,0x32,0x05,0x05,0x01,
 0x01,0x05,0x01,0x5c,0x06,0x03,0x32,0x05,0x05,0x01,0x01,0x05,0x01,0x5c,0x06,0x04,0x32,0x05,0x05,0x01,
 0x01,0x05,0x01,0x5c,0x06,0x05,0x01,0x07,0x04,0x5d,0x06,0x5c,0x07,0x06,0x5d,0x06,0x32,0x05,0x05,0x01,
 0x01,0x05,0x01,0x5c,0x06,0x06,0x32,0x05,0x05,0x01,0x3d,0x05,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304204, 4, (MRB_SYM(socket), MRB_SYM(key), 0,MRB_SYM(accept), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304204[] = "\x00\xed\x8a\x01\x04\x01\x2e\x02\x0a\x01\x0a\x01\x0a\x01\x14\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304204 = {
-0, 324, 16, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304204}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304204_ = &gem_mrblib_ruflet_framework_proc_debug_file_304204;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304204 = {
-112, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304204_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304204 = {
-  5,8,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304204,
-  gem_mrblib_ruflet_framework_proc_pool_304204,gem_mrblib_ruflet_framework_proc_syms_304204,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304204,
-  &gem_mrblib_ruflet_framework_proc_debug_304204,
-  112,7,6,0,0
-};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305269, 3, (MRB_IVSYM(sessions), MRB_SYM(session_key), MRB_SYM(delete), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305269[20] = {
-0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x21,0x03,0x01,0x00,0x33,0x03,0x01,0x32,0x02,0x02,0x01,0x3d,0x02,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305269, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_305269[] = "\x00\xfa\x8a\x01\x04\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305269 = {
-0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305269}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305269_ = &gem_mrblib_ruflet_framework_proc_debug_file_305269;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305269 = {
-20, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305269_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305269 = {
-  2,5,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305269,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_305269,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_305269,
-  &gem_mrblib_ruflet_framework_proc_debug_305269,
-  20,0,3,0,0
-};
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304205[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_305269,
-};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304205, 2, (MRB_IVSYM(sessions_mutex), MRB_SYM(synchronize), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304205[24] = {
-0x39,0x04,0x00,0x00,0x01,0x03,0x01,0x27,0x03,0x00,0x01,0x40,0x19,0x03,0x00,0x62,0x04,0x00,0x34,0x03,
-0x01,0x00,0x3d,0x03,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304205, 2, (MRB_SYM(ws), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304205[] = "\x00\xf7\x8a\x01\x04\x01\x08\x02";
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304205, 4, (MRB_SYM(socket), MRB_SYM(key), 0,MRB_SYM(accept), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304205[] = "\x00\xf9\x8a\x01\x04\x01\x2e\x02\x0a\x01\x0a\x01\x0a\x01\x14\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304205 = {
-0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304205}};
+0, 324, 16, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304205}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304205_ = &gem_mrblib_ruflet_framework_proc_debug_file_304205;
 static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304205 = {
-24, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304205_};
+112, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304205_};
 static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304205 = {
-  3,5,0,
+  5,8,0,
   MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304205,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_304205,gem_mrblib_ruflet_framework_proc_reps_304205,
+  gem_mrblib_ruflet_framework_proc_pool_304205,gem_mrblib_ruflet_framework_proc_syms_304205,NULL,
   gem_mrblib_ruflet_framework_proc_lv_304205,
   &gem_mrblib_ruflet_framework_proc_debug_304205,
-  24,0,2,1,0
+  112,7,6,0,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305311, 2, (MRB_IVSYM(connections), MRB_SYM(session_key), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305311[25] = {
-0x39,0x00,0x00,0x00,0x19,0x03,0x00,0x21,0x04,0x01,0x00,0x33,0x04,0x01,0x21,0x05,0x01,0x00,0x01,0x02,
-0x05,0x25,0x03,0x3d,0x02,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305311, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_305311[] = "\x00\x82\x8b\x01\x04\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305311 = {
-0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305311}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305311_ = &gem_mrblib_ruflet_framework_proc_debug_file_305311;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305311 = {
-25, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305311_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305311 = {
-  2,7,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305311,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_305311,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_305311,
-  &gem_mrblib_ruflet_framework_proc_debug_305311,
-  25,0,2,0,0
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305338, 3, (MRB_IVSYM(sessions), MRB_SYM(session_key), MRB_SYM(delete), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305338[20] = {
+0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x21,0x03,0x01,0x00,0x33,0x03,0x01,0x32,0x02,0x02,0x01,0x3d,0x02,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305338, 1, (0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_305338[] = "\x00\x86\x8b\x01\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305338 = {
+0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305338}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305338_ = &gem_mrblib_ruflet_framework_proc_debug_file_305338;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305338 = {
+20, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305338_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305338 = {
+  2,5,0,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305338,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_305338,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_305338,
+  &gem_mrblib_ruflet_framework_proc_debug_305338,
+  20,0,3,0,0
 };
 static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304206[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_305311,
+  &gem_mrblib_ruflet_framework_proc_irep_305338,
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304206, 2, (MRB_IVSYM(connections_mutex), MRB_SYM(synchronize), ), const);
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304206, 2, (MRB_IVSYM(sessions_mutex), MRB_SYM(synchronize), ), const);
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304206[24] = {
 0x39,0x04,0x00,0x00,0x01,0x03,0x01,0x27,0x03,0x00,0x01,0x40,0x19,0x03,0x00,0x62,0x04,0x00,0x34,0x03,
 0x01,0x00,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304206, 2, (MRB_SYM(ws), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304206[] = "\x00\xff\x8a\x01\x04\x01\x08\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304206[] = "\x00\x83\x8b\x01\x04\x01\x08\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304206 = {
 0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304206}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304206_ = &gem_mrblib_ruflet_framework_proc_debug_file_304206;
@@ -87266,33 +87277,34 @@ static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304206 = {
   &gem_mrblib_ruflet_framework_proc_debug_304206,
   24,0,2,1,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305353, 3, (MRB_IVSYM(connections), MRB_SYM(session_key), MRB_SYM(delete), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305353[20] = {
-0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x21,0x03,0x01,0x00,0x33,0x03,0x01,0x32,0x02,0x02,0x01,0x3d,0x02,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305353, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_305353[] = "\x00\x8a\x8b\x01\x04\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305353 = {
-0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305353}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305353_ = &gem_mrblib_ruflet_framework_proc_debug_file_305353;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305353 = {
-20, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305353_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305353 = {
-  2,5,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305353,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_305353,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_305353,
-  &gem_mrblib_ruflet_framework_proc_debug_305353,
-  20,0,3,0,0
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305381, 2, (MRB_IVSYM(connections), MRB_SYM(session_key), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305381[25] = {
+0x39,0x00,0x00,0x00,0x19,0x03,0x00,0x21,0x04,0x01,0x00,0x33,0x04,0x01,0x21,0x05,0x01,0x00,0x01,0x02,
+0x05,0x25,0x03,0x3d,0x02,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305381, 1, (0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_305381[] = "\x00\x8e\x8b\x01\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305381 = {
+0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305381}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305381_ = &gem_mrblib_ruflet_framework_proc_debug_file_305381;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305381 = {
+25, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305381_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305381 = {
+  2,7,0,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305381,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_305381,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_305381,
+  &gem_mrblib_ruflet_framework_proc_debug_305381,
+  25,0,2,0,0
 };
 static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304207[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_305353,
+  &gem_mrblib_ruflet_framework_proc_irep_305381,
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304207, 2, (MRB_IVSYM(connections_mutex), MRB_SYM(synchronize), ), const);
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304207[24] = {
 0x39,0x04,0x00,0x00,0x01,0x03,0x01,0x27,0x03,0x00,0x01,0x40,0x19,0x03,0x00,0x62,0x04,0x00,0x34,0x03,
 0x01,0x00,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304207, 2, (MRB_SYM(ws), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304207[] = "\x00\x87\x8b\x01\x04\x01\x08\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304207[] = "\x00\x8b\x8b\x01\x04\x01\x08\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304207 = {
 0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304207}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304207_ = &gem_mrblib_ruflet_framework_proc_debug_file_304207;
@@ -87306,7 +87318,47 @@ static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304207 = {
   &gem_mrblib_ruflet_framework_proc_debug_304207,
   24,0,2,1,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304208[9] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305424, 3, (MRB_IVSYM(connections), MRB_SYM(session_key), MRB_SYM(delete), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305424[20] = {
+0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x21,0x03,0x01,0x00,0x33,0x03,0x01,0x32,0x02,0x02,0x01,0x3d,0x02,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305424, 1, (0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_305424[] = "\x00\x96\x8b\x01\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305424 = {
+0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305424}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305424_ = &gem_mrblib_ruflet_framework_proc_debug_file_305424;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305424 = {
+20, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305424_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305424 = {
+  2,5,0,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305424,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_305424,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_305424,
+  &gem_mrblib_ruflet_framework_proc_debug_305424,
+  20,0,3,0,0
+};
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304208[1] = {
+  &gem_mrblib_ruflet_framework_proc_irep_305424,
+};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304208, 2, (MRB_IVSYM(connections_mutex), MRB_SYM(synchronize), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304208[24] = {
+0x39,0x04,0x00,0x00,0x01,0x03,0x01,0x27,0x03,0x00,0x01,0x40,0x19,0x03,0x00,0x62,0x04,0x00,0x34,0x03,
+0x01,0x00,0x3d,0x03,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304208, 2, (MRB_SYM(ws), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304208[] = "\x00\x93\x8b\x01\x04\x01\x08\x02";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304208 = {
+0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304208}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304208_ = &gem_mrblib_ruflet_framework_proc_debug_file_304208;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304208 = {
+24, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304208_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304208 = {
+  3,5,0,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304208,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_304208,gem_mrblib_ruflet_framework_proc_reps_304208,
+  gem_mrblib_ruflet_framework_proc_lv_304208,
+  &gem_mrblib_ruflet_framework_proc_debug_304208,
+  24,0,2,1,0
+};
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304209[9] = {
 {IREP_TT_SSTR|(12<<2), {"\x52\x55\x46\x4c\x45\x54\x5f\x44\x45\x42\x55\x47"}},
 {IREP_TT_SSTR|(1<<2), {"\x31"}},
 {IREP_TT_SSTR|(16<<2), {"\x69\x6e\x63\x6f\x6d\x69\x6e\x67\x20\x61\x63\x74\x69\x6f\x6e\x3d"}},
@@ -87317,8 +87369,8 @@ static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304208[9] = {
 {IREP_TT_SSTR|(1<<2), {"\x0a"}},
 {IREP_TT_SSTR|(14<<2), {"\x68\x61\x6e\x64\x6c\x65\x5f\x6d\x65\x73\x73\x61\x67\x65"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304208, 26, (MRB_SYM(decode_incoming), MRB_SYM(ENV), MRB_SYM(inspect), MRB_SYM(warn), MRB_SYM(ACTIONS), MRB_SYM(Protocol), MRB_SYM(register_client), MRB_OPSYM(eqq), MRB_SYM(register_web_client), MRB_SYM(on_register_client), MRB_SYM(control_event), MRB_SYM(page_event_from_web), MRB_SYM(on_control_event), MRB_SYM(update_control), MRB_SYM(update_control_props), MRB_SYM(on_update_control), MRB_SYM(invoke_control_method), MRB_SYM(on_invoke_control_method), MRB_SYM(python_output), MRB_SYM(raise), MRB_SYM(StandardError), MRB_SYM(class), MRB_SYM(message), MRB_SYM(backtrace), MRB_SYM(join), MRB_SYM(report_runtime_error), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304208[456] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304209, 26, (MRB_SYM(decode_incoming), MRB_SYM(ENV), MRB_SYM(inspect), MRB_SYM(warn), MRB_SYM(ACTIONS), MRB_SYM(Protocol), MRB_SYM(register_client), MRB_OPSYM(eqq), MRB_SYM(register_web_client), MRB_SYM(on_register_client), MRB_SYM(control_event), MRB_SYM(page_event_from_web), MRB_SYM(on_control_event), MRB_SYM(update_control), MRB_SYM(update_control_props), MRB_SYM(on_update_control), MRB_SYM(invoke_control_method), MRB_SYM(on_invoke_control_method), MRB_SYM(python_output), MRB_SYM(raise), MRB_SYM(StandardError), MRB_SYM(class), MRB_SYM(message), MRB_SYM(backtrace), MRB_SYM(join), MRB_SYM(report_runtime_error), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304209[456] = {
 0x39,0x08,0x00,0x00,0x01,0x08,0x02,0x2f,0x07,0x00,0x01,0x57,0x04,0x07,0x00,0x57,0x05,0x07,0x01,0x01,
 0x07,0x05,0x27,0x07,0x00,0x03,0x5e,0x05,0x00,0x1d,0x07,0x01,0x5c,0x08,0x00,0x23,0x07,0x5c,0x08,0x01,
 0x4d,0x07,0x28,0x07,0x00,0x14,0x5c,0x08,0x02,0x01,0x09,0x04,0x33,0x09,0x02,0x5d,0x08,0x5c,0x09,0x03,
@@ -87342,55 +87394,55 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304208[456] = {
 0x5c,0x08,0x01,0x4d,0x07,0x28,0x07,0x00,0x11,0x01,0x08,0x06,0x33,0x08,0x17,0x5c,0x09,0x07,0x32,0x08,
 0x18,0x01,0x2f,0x07,0x03,0x01,0x01,0x08,0x06,0x5c,0x09,0x08,0x2f,0x07,0x19,0x02,0x26,0x00,0x02,0x2d,
 0x07,0x3d,0x07,0x00,0x00,0x00,0x00,0x04,0x00,0x00,0x01,0x48,0x00,0x00,0x01,0x4b,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304208, 6, (MRB_SYM(ws), MRB_SYM(raw), 0,MRB_SYM(action), MRB_SYM(payload), MRB_SYM(e), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304208[] = "\x00\x8f\x8b\x01\x04\x01\x0f\x01\x0a\x02\x25\x02\x03\x01\x2a\x01\x0d\x0a\x02\xf7\xff\xff\xff\x0f\x2a\x01\x0d\x08\x02\xf9\xff\xff\xff\x0f\x2a\x01\x0d\x06\x02\xfb\xff\xff\xff\x0f\x14\x01\x0d\x04\x02\xfd\xff\xff\xff\x0f\x14\x01\x05\x02\x1d\x09\x02\xf7\xff\xff\xff\x0f\x02\x02\x0b\x07\x02\xf9\xff\xff\xff\x0f\x03\x05\x21\x01\x2c\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304208 = {
-0, 324, 82, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304208}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304208_ = &gem_mrblib_ruflet_framework_proc_debug_file_304208;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304208 = {
-443, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304208_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304208 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304209, 6, (MRB_SYM(ws), MRB_SYM(raw), 0,MRB_SYM(action), MRB_SYM(payload), MRB_SYM(e), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304209[] = "\x00\x9b\x8b\x01\x04\x01\x0f\x01\x0a\x02\x25\x02\x03\x01\x2a\x01\x0d\x0a\x02\xf7\xff\xff\xff\x0f\x2a\x01\x0d\x08\x02\xf9\xff\xff\xff\x0f\x2a\x01\x0d\x06\x02\xfb\xff\xff\xff\x0f\x14\x01\x0d\x04\x02\xfd\xff\xff\xff\x0f\x14\x01\x05\x02\x1d\x09\x02\xf7\xff\xff\xff\x0f\x02\x02\x0b\x07\x02\xf9\xff\xff\xff\x0f\x03\x05\x21\x01\x2c\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304209 = {
+0, 324, 82, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304209}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304209_ = &gem_mrblib_ruflet_framework_proc_debug_file_304209;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304209 = {
+443, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304209_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304209 = {
   7,12,1,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304208,
-  gem_mrblib_ruflet_framework_proc_pool_304208,gem_mrblib_ruflet_framework_proc_syms_304208,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304208,
-  &gem_mrblib_ruflet_framework_proc_debug_304208,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304209,
+  gem_mrblib_ruflet_framework_proc_pool_304209,gem_mrblib_ruflet_framework_proc_syms_304209,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304209,
+  &gem_mrblib_ruflet_framework_proc_debug_304209,
   443,9,26,0,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_305436[1] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_305509[1] = {
 {IREP_TT_SSTR|(1<<2), {"\x0a"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305436, 2, (MRB_SYM(join), MRB_SYM(write), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305436[24] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305509, 2, (MRB_SYM(join), MRB_SYM(write), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305509[24] = {
 0x39,0x04,0x00,0x00,0x01,0x03,0x01,0x21,0x04,0x05,0x00,0x5c,0x05,0x00,0x32,0x04,0x00,0x01,0x32,0x03,
 0x01,0x01,0x3d,0x03,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305436, 2, (MRB_SYM(file), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_305436[] = "\x00\xb3\x8b\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305436 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305436}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305436_ = &gem_mrblib_ruflet_framework_proc_debug_file_305436;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305436 = {
-24, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305436_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305436 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305509, 2, (MRB_SYM(file), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_305509[] = "\x00\xbf\x8b\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305509 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305509}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305509_ = &gem_mrblib_ruflet_framework_proc_debug_file_305509;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305509 = {
+24, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305509_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305509 = {
   3,7,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305436,
-  gem_mrblib_ruflet_framework_proc_pool_305436,gem_mrblib_ruflet_framework_proc_syms_305436,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_305436,
-  &gem_mrblib_ruflet_framework_proc_debug_305436,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305509,
+  gem_mrblib_ruflet_framework_proc_pool_305509,gem_mrblib_ruflet_framework_proc_syms_305509,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_305509,
+  &gem_mrblib_ruflet_framework_proc_debug_305509,
   24,1,2,0,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304209[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_305436,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304210[1] = {
+  &gem_mrblib_ruflet_framework_proc_irep_305509,
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304209[5] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304210[5] = {
 {IREP_TT_SSTR|(25<<2), {"\x52\x55\x46\x4c\x45\x54\x5f\x52\x55\x4e\x54\x49\x4d\x45\x5f\x45\x52\x52\x4f\x52\x5f\x46\x49\x4c\x45"}},
 {IREP_TT_SSTR|(0<<2), {""}},
 {IREP_TT_SSTR|(2<<2), {"\x3a\x20"}},
 {IREP_TT_SSTR|(1<<2), {"\x77"}},
 {IREP_TT_SSTR|(32<<2), {"\x72\x75\x6e\x74\x69\x6d\x65\x20\x65\x72\x72\x6f\x72\x20\x72\x65\x70\x6f\x72\x74\x69\x6e\x67\x20\x66\x61\x69\x6c\x65\x64\x3a\x20"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304209, 11, (MRB_SYM(ENV), MRB_SYM(to_s), MRB_SYM_Q(empty), MRB_SYM(class), MRB_SYM(message), MRB_SYM(backtrace), MRB_SYM(concat), MRB_SYM(File), MRB_SYM(open), MRB_SYM(StandardError), MRB_SYM(warn), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304209[188] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304210, 11, (MRB_SYM(ENV), MRB_SYM(to_s), MRB_SYM_Q(empty), MRB_SYM(class), MRB_SYM(message), MRB_SYM(backtrace), MRB_SYM(concat), MRB_SYM(File), MRB_SYM(open), MRB_SYM(StandardError), MRB_SYM(warn), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304210[188] = {
 0x39,0x08,0x00,0x00,0x1d,0x07,0x00,0x5c,0x08,0x00,0x23,0x07,0x33,0x07,0x01,0x01,0x04,0x07,0x01,0x07,
 0x04,0x33,0x07,0x02,0x28,0x07,0x00,0x04,0x11,0x07,0x3e,0x07,0x5c,0x07,0x01,0x01,0x08,0x02,0x5d,0x07,
 0x5c,0x08,0x02,0x5d,0x07,0x01,0x08,0x01,0x33,0x08,0x03,0x5d,0x07,0x5c,0x08,0x02,0x5d,0x07,0x01,0x08,
@@ -87401,30 +87453,30 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304209[188] = {
 0x06,0x33,0x09,0x03,0x5d,0x08,0x5c,0x09,0x02,0x5d,0x08,0x01,0x09,0x06,0x33,0x09,0x04,0x5d,0x08,0x5c,
 0x09,0x01,0x5d,0x08,0x2f,0x07,0x0a,0x01,0x26,0x00,0x02,0x2d,0x07,0x3d,0x07,0x00,0x00,0x00,0x00,0x04,
 0x00,0x00,0x00,0x72,0x00,0x00,0x00,0x75,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304209, 6, (MRB_SYM(error), MRB_SYM(context), 0,MRB_SYM(path), MRB_SYM(lines), MRB_SYM(report_error), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304209[] = "\x00\xad\x8b\x01\x04\x01\x0e\x01\x0e\x02\x2b\x01\x17\x01\x11\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01\x02\xff\xff\xff\xff\x0f\x03\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304209 = {
-0, 324, 34, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304209}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304209_ = &gem_mrblib_ruflet_framework_proc_debug_file_304209;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304209 = {
-175, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304209_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304209 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304210, 6, (MRB_SYM(error), MRB_SYM(context), 0,MRB_SYM(path), MRB_SYM(lines), MRB_SYM(report_error), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304210[] = "\x00\xb9\x8b\x01\x04\x01\x0e\x01\x0e\x02\x2b\x01\x17\x01\x11\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01\x02\xff\xff\xff\xff\x0f\x03\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304210 = {
+0, 324, 34, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304210}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304210_ = &gem_mrblib_ruflet_framework_proc_debug_file_304210;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304210 = {
+175, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304210_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304210 = {
   7,11,1,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304209,
-  gem_mrblib_ruflet_framework_proc_pool_304209,gem_mrblib_ruflet_framework_proc_syms_304209,gem_mrblib_ruflet_framework_proc_reps_304209,
-  gem_mrblib_ruflet_framework_proc_lv_304209,
-  &gem_mrblib_ruflet_framework_proc_debug_304209,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304210,
+  gem_mrblib_ruflet_framework_proc_pool_304210,gem_mrblib_ruflet_framework_proc_syms_304210,gem_mrblib_ruflet_framework_proc_reps_304210,
+  gem_mrblib_ruflet_framework_proc_lv_304210,
+  &gem_mrblib_ruflet_framework_proc_debug_304210,
   175,5,11,1,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304210[5] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304211[5] = {
 {IREP_TT_SSTR|(6<<2), {"\x61\x63\x74\x69\x6f\x6e"}},
 {IREP_TT_SSTR|(7<<2), {"\x70\x61\x79\x6c\x6f\x61\x64"}},
 {IREP_TT_SSTR|(6<<2), {"\x74\x61\x72\x67\x65\x74"}},
 {IREP_TT_SSTR|(4<<2), {"\x6e\x61\x6d\x65"}},
 {IREP_TT_SSTR|(26<<2), {"\x55\x6e\x73\x75\x70\x70\x6f\x72\x74\x65\x64\x20\x70\x61\x79\x6c\x6f\x61\x64\x20\x66\x6f\x72\x6d\x61\x74"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304210, 19, (MRB_SYM(WireCodec), MRB_SYM(Ruflet), MRB_SYM(to_s), MRB_SYM(b), MRB_SYM(unpack), MRB_SYM(normalize_incoming), MRB_SYM(Array), MRB_SYM_Q(is_a), MRB_SYM(length), MRB_SYM(Hash), MRB_SYM(action), MRB_SYM(payload), MRB_SYM_Q(key), MRB_SYM(target), MRB_SYM(name), MRB_SYM(ACTIONS), MRB_SYM(Protocol), MRB_SYM(control_event), MRB_SYM(raise), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304210[235] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304211, 19, (MRB_SYM(WireCodec), MRB_SYM(Ruflet), MRB_SYM(to_s), MRB_SYM(b), MRB_SYM(unpack), MRB_SYM(normalize_incoming), MRB_SYM(Array), MRB_SYM_Q(is_a), MRB_SYM(length), MRB_SYM(Hash), MRB_SYM(action), MRB_SYM(payload), MRB_SYM_Q(key), MRB_SYM(target), MRB_SYM(name), MRB_SYM(ACTIONS), MRB_SYM(Protocol), MRB_SYM(control_event), MRB_SYM(raise), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304211[235] = {
 0x39,0x04,0x00,0x00,0x1d,0x07,0x01,0x1f,0x07,0x00,0x01,0x08,0x01,0x33,0x08,0x02,0x33,0x08,0x03,0x32,
 0x07,0x04,0x01,0x2f,0x06,0x05,0x01,0x01,0x03,0x06,0x01,0x06,0x03,0x1d,0x07,0x06,0x32,0x06,0x07,0x01,
 0x28,0x06,0x00,0x0a,0x01,0x06,0x03,0x33,0x06,0x08,0x08,0x07,0x51,0x06,0x28,0x06,0x00,0x0f,0x24,0x06,
@@ -87437,67 +87489,67 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304210[235] = {
 0x06,0x03,0x5c,0x07,0x03,0x32,0x06,0x0c,0x01,0x27,0x06,0x00,0x0a,0x01,0x06,0x03,0x10,0x07,0x0e,0x32,
 0x06,0x0c,0x01,0x28,0x06,0x00,0x13,0x1d,0x06,0x10,0x1f,0x06,0x0f,0x10,0x07,0x11,0x23,0x06,0x01,0x07,
 0x03,0x52,0x06,0x02,0x3d,0x06,0x5c,0x07,0x04,0x2f,0x06,0x12,0x01,0x3d,0x06,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304210, 5, (MRB_SYM(raw), 0,MRB_SYM(parsed), MRB_SYM(action), MRB_SYM(payload), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304210[] = "\x00\xb8\x8b\x01\x04\x01\x1a\x02\x1a\x01\x11\x03\x0c\x06\x02\xfb\xff\xff\xff\x0f\x17\x01\x17\x01\x12\x02\x36\x01\x15\x04";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304210 = {
-0, 324, 30, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304210}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304210_ = &gem_mrblib_ruflet_framework_proc_debug_file_304210;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304210 = {
-235, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304210_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304210 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304211, 5, (MRB_SYM(raw), 0,MRB_SYM(parsed), MRB_SYM(action), MRB_SYM(payload), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304211[] = "\x00\xc4\x8b\x01\x04\x01\x1a\x02\x1a\x01\x11\x03\x0c\x06\x02\xfb\xff\xff\xff\x0f\x17\x01\x17\x01\x12\x02\x36\x01\x15\x04";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304211 = {
+0, 324, 30, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304211}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304211_ = &gem_mrblib_ruflet_framework_proc_debug_file_304211;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304211 = {
+235, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304211_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304211 = {
   6,10,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304210,
-  gem_mrblib_ruflet_framework_proc_pool_304210,gem_mrblib_ruflet_framework_proc_syms_304210,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304210,
-  &gem_mrblib_ruflet_framework_proc_debug_304210,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304211,
+  gem_mrblib_ruflet_framework_proc_pool_304211,gem_mrblib_ruflet_framework_proc_syms_304211,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304211,
+  &gem_mrblib_ruflet_framework_proc_debug_304211,
   235,5,19,0,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305519, 1, (MRB_SYM(normalize_incoming), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305519[13] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305594, 1, (MRB_SYM(normalize_incoming), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305594[13] = {
 0x39,0x04,0x00,0x00,0x01,0x04,0x01,0x2f,0x03,0x00,0x01,0x3d,0x03,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305519, 2, (MRB_SYM(v), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_305519[] = "\x00\xd5\x8b\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305519 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305519}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305519_ = &gem_mrblib_ruflet_framework_proc_debug_file_305519;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305519 = {
-13, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305519_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305519 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305594, 2, (MRB_SYM(v), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_305594[] = "\x00\xe1\x8b\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305594 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305594}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305594_ = &gem_mrblib_ruflet_framework_proc_debug_file_305594;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305594 = {
+13, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305594_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305594 = {
   3,6,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305519,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_305519,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_305519,
-  &gem_mrblib_ruflet_framework_proc_debug_305519,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305594,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_305594,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_305594,
+  &gem_mrblib_ruflet_framework_proc_debug_305594,
   13,0,1,0,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305520, 2, (MRB_SYM(to_s), MRB_SYM(normalize_incoming), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305520[35] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305595, 2, (MRB_SYM(to_s), MRB_SYM(normalize_incoming), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305595[35] = {
 0x39,0x08,0x00,0x00,0x57,0x04,0x01,0x00,0x57,0x05,0x01,0x01,0x01,0x07,0x02,0x01,0x08,0x04,0x33,0x08,
 0x00,0x01,0x0a,0x05,0x2f,0x09,0x01,0x01,0x01,0x06,0x09,0x25,0x07,0x3d,0x06,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305520, 5, (0,MRB_SYM(out), 0,MRB_SYM(k), MRB_SYM(v), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_305520[] = "\x00\xd7\x8b\x01\x0c\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305520 = {
-0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305520}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305520_ = &gem_mrblib_ruflet_framework_proc_debug_file_305520;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305520 = {
-35, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305520_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305520 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305595, 5, (0,MRB_SYM(out), 0,MRB_SYM(k), MRB_SYM(v), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_305595[] = "\x00\xe3\x8b\x01\x0c\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305595 = {
+0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305595}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305595_ = &gem_mrblib_ruflet_framework_proc_debug_file_305595;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305595 = {
+35, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305595_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305595 = {
   6,12,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305520,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_305520,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_305520,
-  &gem_mrblib_ruflet_framework_proc_debug_305520,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305595,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_305595,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_305595,
+  &gem_mrblib_ruflet_framework_proc_debug_305595,
   35,0,2,0,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304211[2] = {
-  &gem_mrblib_ruflet_framework_proc_irep_305519,
-  &gem_mrblib_ruflet_framework_proc_irep_305520,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304212[2] = {
+  &gem_mrblib_ruflet_framework_proc_irep_305594,
+  &gem_mrblib_ruflet_framework_proc_irep_305595,
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304211[1] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304212[1] = {
 {IREP_TT_SSTR|(5<<2), {"\x55\x54\x46\x2d\x38"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304211, 15, (MRB_SYM(String), MRB_OPSYM(eqq), MRB_SYM(dup), MRB_SYM(force_encoding), MRB_SYM(Integer), MRB_SYM(Float), MRB_SYM(TrueClass), MRB_SYM(FalseClass), MRB_SYM(NilClass), MRB_SYM(Symbol), MRB_SYM(to_s), MRB_SYM(Array), MRB_SYM(map), MRB_SYM(Hash), MRB_SYM(each_with_object), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304211[204] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304212, 15, (MRB_SYM(String), MRB_OPSYM(eqq), MRB_SYM(dup), MRB_SYM(force_encoding), MRB_SYM(Integer), MRB_SYM(Float), MRB_SYM(TrueClass), MRB_SYM(FalseClass), MRB_SYM(NilClass), MRB_SYM(Symbol), MRB_SYM(to_s), MRB_SYM(Array), MRB_SYM(map), MRB_SYM(Hash), MRB_SYM(each_with_object), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304212[204] = {
 0x39,0x04,0x00,0x00,0x01,0x03,0x01,0x1d,0x04,0x00,0x01,0x05,0x03,0x32,0x04,0x01,0x01,0x28,0x04,0x00,
 0x10,0x01,0x04,0x01,0x33,0x04,0x02,0x5c,0x05,0x00,0x32,0x04,0x03,0x01,0x26,0x00,0xa5,0x1d,0x04,0x04,
 0x01,0x05,0x03,0x32,0x04,0x01,0x01,0x27,0x04,0x00,0x38,0x1d,0x04,0x05,0x01,0x05,0x03,0x32,0x04,0x01,
@@ -87509,69 +87561,69 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304211[204] = {
 0x26,0x00,0x27,0x1d,0x04,0x0d,0x01,0x05,0x03,0x32,0x04,0x01,0x01,0x28,0x04,0x00,0x10,0x01,0x04,0x01,
 0x5e,0x05,0x00,0x62,0x06,0x01,0x34,0x04,0x0e,0x01,0x26,0x00,0x09,0x01,0x04,0x01,0x33,0x04,0x0a,0x26,
 0x00,0x00,0x3d,0x04,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304211, 2, (MRB_SYM(value), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304211[] = "\x00\xcc\x8b\x01\x04\x01\x03\x01\x0c\x01\x10\x0c\x02\xf5\xff\xff\xff\x0f\x44\x01\x06\x0a\x02\xf7\xff\xff\xff\x0f\x0c\x01\x09\x08\x02\xf9\xff\xff\xff\x0f\x0c\x01\x0d\x06\x02\xfb\xff\xff\xff\x0f\x0c\x01\x10\x04";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304211 = {
-0, 324, 52, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304211}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304211_ = &gem_mrblib_ruflet_framework_proc_debug_file_304211;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304211 = {
-204, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304211_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304211 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304212, 2, (MRB_SYM(value), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304212[] = "\x00\xd8\x8b\x01\x04\x01\x03\x01\x0c\x01\x10\x0c\x02\xf5\xff\xff\xff\x0f\x44\x01\x06\x0a\x02\xf7\xff\xff\xff\x0f\x0c\x01\x09\x08\x02\xf9\xff\xff\xff\x0f\x0c\x01\x0d\x06\x02\xfb\xff\xff\xff\x0f\x0c\x01\x10\x04";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304212 = {
+0, 324, 52, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304212}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304212_ = &gem_mrblib_ruflet_framework_proc_debug_file_304212;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304212 = {
+204, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304212_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304212 = {
   3,7,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304211,
-  gem_mrblib_ruflet_framework_proc_pool_304211,gem_mrblib_ruflet_framework_proc_syms_304211,gem_mrblib_ruflet_framework_proc_reps_304211,
-  gem_mrblib_ruflet_framework_proc_lv_304211,
-  &gem_mrblib_ruflet_framework_proc_debug_304211,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304212,
+  gem_mrblib_ruflet_framework_proc_pool_304212,gem_mrblib_ruflet_framework_proc_syms_304212,gem_mrblib_ruflet_framework_proc_reps_304212,
+  gem_mrblib_ruflet_framework_proc_lv_304212,
+  &gem_mrblib_ruflet_framework_proc_debug_304212,
   204,1,15,2,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305564, 1, (MRB_SYM(send_message), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305564[20] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305640, 1, (MRB_SYM(send_message), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305640[20] = {
 0x39,0x08,0x00,0x00,0x21,0x05,0x01,0x00,0x01,0x06,0x01,0x01,0x07,0x02,0x2f,0x04,0x00,0x03,0x3d,0x04,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305564, 3, (MRB_SYM(action), MRB_SYM(msg_payload), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_305564[] = "\x00\xe6\x8b\x01\x04\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305564 = {
-0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305564}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305564_ = &gem_mrblib_ruflet_framework_proc_debug_file_305564;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305564 = {
-20, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305564_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305564 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305640, 3, (MRB_SYM(action), MRB_SYM(msg_payload), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_305640[] = "\x00\xf2\x8b\x01\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305640 = {
+0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305640}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305640_ = &gem_mrblib_ruflet_framework_proc_debug_file_305640;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305640 = {
+20, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305640_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305640 = {
   4,9,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305564,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_305564,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_305564,
-  &gem_mrblib_ruflet_framework_proc_debug_305564,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305640,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_305640,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_305640,
+  &gem_mrblib_ruflet_framework_proc_debug_305640,
   20,0,1,0,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305565, 2, (MRB_IVSYM(sessions), MRB_SYM(session_key), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305565[25] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305641, 2, (MRB_IVSYM(sessions), MRB_SYM(session_key), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305641[25] = {
 0x39,0x00,0x00,0x00,0x19,0x03,0x00,0x21,0x04,0x01,0x00,0x33,0x04,0x01,0x21,0x05,0x06,0x00,0x01,0x02,
 0x05,0x25,0x03,0x3d,0x02,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305565, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_305565[] = "\x00\xed\x8b\x01\x04\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305565 = {
-0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305565}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305565_ = &gem_mrblib_ruflet_framework_proc_debug_file_305565;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305565 = {
-25, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305565_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305565 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305641, 1, (0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_305641[] = "\x00\xf9\x8b\x01\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305641 = {
+0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305641}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305641_ = &gem_mrblib_ruflet_framework_proc_debug_file_305641;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305641 = {
+25, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305641_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305641 = {
   2,7,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305565,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_305565,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_305565,
-  &gem_mrblib_ruflet_framework_proc_debug_305565,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305641,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_305641,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_305641,
+  &gem_mrblib_ruflet_framework_proc_debug_305641,
   25,0,2,0,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304212[2] = {
-  &gem_mrblib_ruflet_framework_proc_irep_305564,
-  &gem_mrblib_ruflet_framework_proc_irep_305565,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304213[2] = {
+  &gem_mrblib_ruflet_framework_proc_irep_305640,
+  &gem_mrblib_ruflet_framework_proc_irep_305641,
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304212[3] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304213[3] = {
 {IREP_TT_SSTR|(10<<2), {"\x73\x65\x73\x73\x69\x6f\x6e\x5f\x69\x64"}},
 {IREP_TT_SSTR|(10<<2), {"\x52\x75\x66\x6c\x65\x74\x20\x41\x70\x70"}},
 {IREP_TT_SSTR|(7<<2), {"\x6d\x65\x73\x73\x61\x67\x65"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304212, 29, (MRB_SYM(Protocol), MRB_SYM(normalize_register_payload), MRB_SYM(to_s), MRB_SYM_Q(empty), MRB_SYM(pseudo_uuid), MRB_SYM(Page), MRB_SYM(session_id), MRB_SYM(client_details), MRB_SYM(sender), MRB_SYM(lambda), MRB_SYM(new), MRB_SYM_E(title), MRB_IVSYM(sessions_mutex), MRB_SYM(synchronize), MRB_SYM(ACTIONS), MRB_SYM(register_client), MRB_SYM(register_response), MRB_SYM(WireCodec), MRB_SYM(Ruflet), MRB_SYM(pack), MRB_SYM(send_binary), MRB_IVSYM(app_block), MRB_SYM(call), MRB_SYM(update), MRB_SYM(StandardError), MRB_SYM(session_crashed), MRB_SYM(message), MRB_SYM(send_message), MRB_SYM(raise), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304212[246] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304213, 29, (MRB_SYM(Protocol), MRB_SYM(normalize_register_payload), MRB_SYM(to_s), MRB_SYM_Q(empty), MRB_SYM(pseudo_uuid), MRB_SYM(Page), MRB_SYM(session_id), MRB_SYM(client_details), MRB_SYM(sender), MRB_SYM(lambda), MRB_SYM(new), MRB_SYM_E(title), MRB_IVSYM(sessions_mutex), MRB_SYM(synchronize), MRB_SYM(ACTIONS), MRB_SYM(register_client), MRB_SYM(register_response), MRB_SYM(WireCodec), MRB_SYM(Ruflet), MRB_SYM(pack), MRB_SYM(send_binary), MRB_IVSYM(app_block), MRB_SYM(call), MRB_SYM(update), MRB_SYM(StandardError), MRB_SYM(session_crashed), MRB_SYM(message), MRB_SYM(send_message), MRB_SYM(raise), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304213[246] = {
 0x39,0x08,0x00,0x00,0x1d,0x09,0x00,0x01,0x0a,0x02,0x32,0x09,0x01,0x01,0x01,0x04,0x09,0x01,0x09,0x04,
 0x5c,0x0a,0x00,0x23,0x09,0x33,0x09,0x02,0x33,0x09,0x03,0x28,0x09,0x00,0x06,0x30,0x09,0x04,0x26,0x00,
 0x08,0x01,0x09,0x04,0x5c,0x0a,0x00,0x23,0x09,0x01,0x05,0x09,0x1d,0x09,0x05,0x10,0x0a,0x06,0x01,0x0b,
@@ -87585,205 +87637,205 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304212[246] = {
 0x19,0x23,0x0b,0x5c,0x0c,0x02,0x01,0x0d,0x08,0x33,0x0d,0x1a,0x5e,0x0c,0x01,0x2f,0x09,0x1b,0x03,0x01,
 0x0a,0x08,0x2f,0x09,0x1c,0x01,0x26,0x00,0x02,0x2d,0x09,0x3d,0x09,0x00,0x00,0x00,0x00,0x04,0x00,0x00,
 0x00,0xa8,0x00,0x00,0x00,0xab,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304212, 8, (MRB_SYM(ws), MRB_SYM(payload), 0,MRB_SYM(normalized), MRB_SYM(session_id), MRB_SYM(page), MRB_SYM(initial_response), MRB_SYM(e), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304212[] = "\x00\xdf\x8b\x01\x04\x01\x0d\x01\x23\x02\x03\x01\x06\x01\x06\x03\x03\xfe\xff\xff\xff\x0f\x0e\x05\x0a\x02\x0a\x05\x0b\x01\x11\x02\x14\x02\x0a\x01\x07\x03\x02\xfd\xff\xff\xff\x0f\x02\x01\x0b\x02\x02\xfe\xff\xff\xff\x0f\x03\x01\x1e\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304212 = {
-0, 324, 58, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304212}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304212_ = &gem_mrblib_ruflet_framework_proc_debug_file_304212;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304212 = {
-233, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304212_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304212 = {
-  9,17,1,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304212,
-  gem_mrblib_ruflet_framework_proc_pool_304212,gem_mrblib_ruflet_framework_proc_syms_304212,gem_mrblib_ruflet_framework_proc_reps_304212,
-  gem_mrblib_ruflet_framework_proc_lv_304212,
-  &gem_mrblib_ruflet_framework_proc_debug_304212,
-  233,3,29,2,0
-};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304213, 2, (MRB_SYM(fetch_page), MRB_SYM(handle_invoke_method_result), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304213[26] = {
-0x39,0x08,0x00,0x00,0x01,0x06,0x01,0x2f,0x05,0x00,0x01,0x01,0x04,0x05,0x01,0x05,0x04,0x01,0x06,0x02,
-0x32,0x05,0x01,0x01,0x3d,0x05,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304213, 4, (MRB_SYM(ws), MRB_SYM(payload), 0,MRB_SYM(page), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304213[] = "\x00\xfe\x8b\x01\x04\x01\x0a\x01";
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304213, 8, (MRB_SYM(ws), MRB_SYM(payload), 0,MRB_SYM(normalized), MRB_SYM(session_id), MRB_SYM(page), MRB_SYM(initial_response), MRB_SYM(e), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304213[] = "\x00\xeb\x8b\x01\x04\x01\x0d\x01\x23\x02\x03\x01\x06\x01\x06\x03\x03\xfe\xff\xff\xff\x0f\x0e\x05\x0a\x02\x0a\x05\x0b\x01\x11\x02\x14\x02\x0a\x01\x07\x03\x02\xfd\xff\xff\xff\x0f\x02\x01\x0b\x02\x02\xfe\xff\xff\xff\x0f\x03\x01\x1e\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304213 = {
-0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304213}};
+0, 324, 58, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304213}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304213_ = &gem_mrblib_ruflet_framework_proc_debug_file_304213;
 static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304213 = {
-26, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304213_};
+233, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304213_};
 static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304213 = {
-  5,8,0,
+  9,17,1,
   MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304213,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_304213,NULL,
+  gem_mrblib_ruflet_framework_proc_pool_304213,gem_mrblib_ruflet_framework_proc_syms_304213,gem_mrblib_ruflet_framework_proc_reps_304213,
   gem_mrblib_ruflet_framework_proc_lv_304213,
   &gem_mrblib_ruflet_framework_proc_debug_304213,
+  233,3,29,2,0
+};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304214, 2, (MRB_SYM(fetch_page), MRB_SYM(handle_invoke_method_result), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304214[26] = {
+0x39,0x08,0x00,0x00,0x01,0x06,0x01,0x2f,0x05,0x00,0x01,0x01,0x04,0x05,0x01,0x05,0x04,0x01,0x06,0x02,
+0x32,0x05,0x01,0x01,0x3d,0x05,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304214, 4, (MRB_SYM(ws), MRB_SYM(payload), 0,MRB_SYM(page), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304214[] = "\x00\x8a\x8c\x01\x04\x01\x0a\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304214 = {
+0, 324, 8, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304214}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304214_ = &gem_mrblib_ruflet_framework_proc_debug_file_304214;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304214 = {
+26, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304214_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304214 = {
+  5,8,0,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304214,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_304214,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304214,
+  &gem_mrblib_ruflet_framework_proc_debug_304214,
   26,0,2,0,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304214[3] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304215[3] = {
 {IREP_TT_SSTR|(6<<2), {"\x74\x61\x72\x67\x65\x74"}},
 {IREP_TT_SSTR|(4<<2), {"\x6e\x61\x6d\x65"}},
 {IREP_TT_SSTR|(4<<2), {"\x64\x61\x74\x61"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304214, 11, (MRB_SYM(Protocol), MRB_SYM(normalize_control_event_payload), MRB_SYM(fetch_page), MRB_SYM_Q(nil), MRB_SYM(to_s), MRB_SYM_Q(empty), MRB_SYM(target), MRB_SYM(name), MRB_SYM(data), MRB_SYM(normalize_event_data), MRB_SYM(dispatch_event), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304214[107] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304215, 11, (MRB_SYM(Protocol), MRB_SYM(normalize_control_event_payload), MRB_SYM(fetch_page), MRB_SYM_Q(nil), MRB_SYM(to_s), MRB_SYM_Q(empty), MRB_SYM(target), MRB_SYM(name), MRB_SYM(data), MRB_SYM(normalize_event_data), MRB_SYM(dispatch_event), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304215[107] = {
 0x39,0x08,0x00,0x00,0x1d,0x06,0x00,0x01,0x07,0x02,0x32,0x06,0x01,0x01,0x01,0x04,0x06,0x01,0x07,0x01,
 0x2f,0x06,0x02,0x01,0x01,0x05,0x06,0x01,0x06,0x04,0x5c,0x07,0x00,0x23,0x06,0x33,0x06,0x03,0x27,0x06,
 0x00,0x0e,0x01,0x06,0x04,0x5c,0x07,0x01,0x23,0x06,0x33,0x06,0x04,0x33,0x06,0x05,0x28,0x06,0x00,0x01,
 0x40,0x01,0x06,0x05,0x10,0x07,0x06,0x01,0x08,0x04,0x5c,0x09,0x00,0x23,0x08,0x10,0x09,0x07,0x01,0x0a,
 0x04,0x5c,0x0b,0x01,0x23,0x0a,0x10,0x0b,0x08,0x01,0x0d,0x04,0x5c,0x0e,0x02,0x23,0x0d,0x2f,0x0c,0x09,
 0x01,0x32,0x06,0x0a,0x30,0x3d,0x06,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304214, 5, (MRB_SYM(ws), MRB_SYM(payload), 0,MRB_SYM(event), MRB_SYM(page), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304214[] = "\x00\x83\x8c\x01\x04\x01\x0d\x01\x0a\x01\x22\x02\x03\x01\x0b\x01\x0b\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304214 = {
-0, 324, 18, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304214}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304214_ = &gem_mrblib_ruflet_framework_proc_debug_file_304214;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304214 = {
-107, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304214_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304214 = {
-  6,16,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304214,
-  gem_mrblib_ruflet_framework_proc_pool_304214,gem_mrblib_ruflet_framework_proc_syms_304214,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304214,
-  &gem_mrblib_ruflet_framework_proc_debug_304214,
-  107,3,11,0,0
-};
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304215[2] = {
-{IREP_TT_SSTR|(2<<2), {"\x69\x64"}},
-{IREP_TT_SSTR|(5<<2), {"\x70\x72\x6f\x70\x73"}},
-};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304215, 4, (MRB_SYM(Protocol), MRB_SYM(normalize_update_control_payload), MRB_SYM(fetch_page), MRB_SYM(apply_client_update), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304215[75] = {
-0x39,0x08,0x00,0x00,0x1d,0x06,0x00,0x01,0x07,0x02,0x32,0x06,0x01,0x01,0x01,0x04,0x06,0x01,0x07,0x01,
-0x2f,0x06,0x02,0x01,0x01,0x05,0x06,0x01,0x06,0x04,0x5c,0x07,0x00,0x23,0x06,0x29,0x06,0x00,0x03,0x26,
-0x00,0x01,0x40,0x01,0x06,0x05,0x01,0x07,0x04,0x5c,0x08,0x00,0x23,0x07,0x01,0x08,0x04,0x5c,0x09,0x01,
-0x23,0x08,0x27,0x08,0x00,0x03,0x5e,0x08,0x00,0x32,0x06,0x03,0x02,0x3d,0x06,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304215, 5, (MRB_SYM(ws), MRB_SYM(payload), 0,MRB_SYM(update), MRB_SYM(page), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304215[] = "\x00\x8f\x8c\x01\x04\x01\x0d\x01\x0a\x01\x10\x02";
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304215, 5, (MRB_SYM(ws), MRB_SYM(payload), 0,MRB_SYM(event), MRB_SYM(page), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304215[] = "\x00\x8f\x8c\x01\x04\x01\x0d\x01\x0a\x01\x22\x02\x03\x01\x0b\x01\x0b\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304215 = {
-0, 324, 12, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304215}};
+0, 324, 18, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304215}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304215_ = &gem_mrblib_ruflet_framework_proc_debug_file_304215;
 static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304215 = {
-75, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304215_};
+107, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304215_};
 static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304215 = {
-  6,11,0,
+  6,16,0,
   MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304215,
   gem_mrblib_ruflet_framework_proc_pool_304215,gem_mrblib_ruflet_framework_proc_syms_304215,NULL,
   gem_mrblib_ruflet_framework_proc_lv_304215,
   &gem_mrblib_ruflet_framework_proc_debug_304215,
-  75,2,4,0,0
+  107,3,11,0,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305732, 2, (MRB_IVSYM(sessions), MRB_SYM(session_key), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305732[18] = {
-0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x21,0x03,0x01,0x00,0x33,0x03,0x01,0x23,0x02,0x3d,0x02,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305732, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_305732[] = "\x00\x98\x8c\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305732 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305732}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305732_ = &gem_mrblib_ruflet_framework_proc_debug_file_305732;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305732 = {
-18, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305732_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305732 = {
-  2,5,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305732,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_305732,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_305732,
-  &gem_mrblib_ruflet_framework_proc_debug_305732,
-  18,0,2,0,0
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304216[2] = {
+{IREP_TT_SSTR|(2<<2), {"\x69\x64"}},
+{IREP_TT_SSTR|(5<<2), {"\x70\x72\x6f\x70\x73"}},
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304216[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_305732,
-};
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304216[1] = {
-{IREP_TT_SSTR|(17<<2), {"\x53\x65\x73\x73\x69\x6f\x6e\x20\x6e\x6f\x74\x20\x66\x6f\x75\x6e\x64"}},
-};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304216, 3, (MRB_IVSYM(sessions_mutex), MRB_SYM(synchronize), MRB_SYM(raise), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304216[33] = {
-0x39,0x04,0x00,0x00,0x19,0x04,0x00,0x62,0x05,0x00,0x34,0x04,0x01,0x00,0x01,0x03,0x04,0x01,0x04,0x03,
-0x27,0x04,0x00,0x07,0x5c,0x05,0x00,0x2f,0x04,0x02,0x01,0x3d,0x03,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304216, 3, (MRB_SYM(ws), 0,MRB_SYM(page), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304216[] = "\x00\x97\x8c\x01\x04\x01\x0d\x01\x0e\x02";
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304216, 4, (MRB_SYM(Protocol), MRB_SYM(normalize_update_control_payload), MRB_SYM(fetch_page), MRB_SYM(apply_client_update), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304216[75] = {
+0x39,0x08,0x00,0x00,0x1d,0x06,0x00,0x01,0x07,0x02,0x32,0x06,0x01,0x01,0x01,0x04,0x06,0x01,0x07,0x01,
+0x2f,0x06,0x02,0x01,0x01,0x05,0x06,0x01,0x06,0x04,0x5c,0x07,0x00,0x23,0x06,0x29,0x06,0x00,0x03,0x26,
+0x00,0x01,0x40,0x01,0x06,0x05,0x01,0x07,0x04,0x5c,0x08,0x00,0x23,0x07,0x01,0x08,0x04,0x5c,0x09,0x01,
+0x23,0x08,0x27,0x08,0x00,0x03,0x5e,0x08,0x00,0x32,0x06,0x03,0x02,0x3d,0x06,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304216, 5, (MRB_SYM(ws), MRB_SYM(payload), 0,MRB_SYM(update), MRB_SYM(page), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304216[] = "\x00\x9b\x8c\x01\x04\x01\x0d\x01\x0a\x01\x10\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304216 = {
-0, 324, 10, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304216}};
+0, 324, 12, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304216}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304216_ = &gem_mrblib_ruflet_framework_proc_debug_file_304216;
 static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304216 = {
-33, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304216_};
+75, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304216_};
 static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304216 = {
-  4,7,0,
+  6,11,0,
   MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304216,
-  gem_mrblib_ruflet_framework_proc_pool_304216,gem_mrblib_ruflet_framework_proc_syms_304216,gem_mrblib_ruflet_framework_proc_reps_304216,
+  gem_mrblib_ruflet_framework_proc_pool_304216,gem_mrblib_ruflet_framework_proc_syms_304216,NULL,
   gem_mrblib_ruflet_framework_proc_lv_304216,
   &gem_mrblib_ruflet_framework_proc_debug_304216,
+  75,2,4,0,0
+};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305812, 2, (MRB_IVSYM(sessions), MRB_SYM(session_key), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305812[18] = {
+0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x21,0x03,0x01,0x00,0x33,0x03,0x01,0x23,0x02,0x3d,0x02,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305812, 1, (0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_305812[] = "\x00\xa4\x8c\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305812 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305812}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305812_ = &gem_mrblib_ruflet_framework_proc_debug_file_305812;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305812 = {
+18, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305812_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305812 = {
+  2,5,0,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305812,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_305812,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_305812,
+  &gem_mrblib_ruflet_framework_proc_debug_305812,
+  18,0,2,0,0
+};
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304217[1] = {
+  &gem_mrblib_ruflet_framework_proc_irep_305812,
+};
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304217[1] = {
+{IREP_TT_SSTR|(17<<2), {"\x53\x65\x73\x73\x69\x6f\x6e\x20\x6e\x6f\x74\x20\x66\x6f\x75\x6e\x64"}},
+};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304217, 3, (MRB_IVSYM(sessions_mutex), MRB_SYM(synchronize), MRB_SYM(raise), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304217[33] = {
+0x39,0x04,0x00,0x00,0x19,0x04,0x00,0x62,0x05,0x00,0x34,0x04,0x01,0x00,0x01,0x03,0x04,0x01,0x04,0x03,
+0x27,0x04,0x00,0x07,0x5c,0x05,0x00,0x2f,0x04,0x02,0x01,0x3d,0x03,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304217, 3, (MRB_SYM(ws), 0,MRB_SYM(page), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304217[] = "\x00\xa3\x8c\x01\x04\x01\x0d\x01\x0e\x02";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304217 = {
+0, 324, 10, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304217}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304217_ = &gem_mrblib_ruflet_framework_proc_debug_file_304217;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304217 = {
+33, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304217_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304217 = {
+  4,7,0,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304217,
+  gem_mrblib_ruflet_framework_proc_pool_304217,gem_mrblib_ruflet_framework_proc_syms_304217,gem_mrblib_ruflet_framework_proc_reps_304217,
+  gem_mrblib_ruflet_framework_proc_lv_304217,
+  &gem_mrblib_ruflet_framework_proc_debug_304217,
   33,1,3,1,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305774, 2, (MRB_SYM(to_sym), MRB_SYM(normalize_event_data), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305774[35] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305855, 2, (MRB_SYM(to_sym), MRB_SYM(normalize_event_data), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305855[35] = {
 0x39,0x08,0x00,0x00,0x57,0x04,0x01,0x00,0x57,0x05,0x01,0x01,0x01,0x07,0x02,0x01,0x08,0x04,0x33,0x08,
 0x00,0x01,0x0a,0x05,0x2f,0x09,0x01,0x01,0x01,0x06,0x09,0x25,0x07,0x3d,0x06,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305774, 5, (0,MRB_SYM(out), 0,MRB_SYM(k), MRB_SYM(v), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_305774[] = "\x00\xa1\x8c\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305774 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305774}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305774_ = &gem_mrblib_ruflet_framework_proc_debug_file_305774;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305774 = {
-35, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305774_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305774 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305855, 5, (0,MRB_SYM(out), 0,MRB_SYM(k), MRB_SYM(v), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_305855[] = "\x00\xad\x8c\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305855 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305855}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305855_ = &gem_mrblib_ruflet_framework_proc_debug_file_305855;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305855 = {
+35, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305855_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305855 = {
   6,12,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305774,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_305774,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_305774,
-  &gem_mrblib_ruflet_framework_proc_debug_305774,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305855,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_305855,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_305855,
+  &gem_mrblib_ruflet_framework_proc_debug_305855,
   35,0,2,0,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305775, 1, (MRB_SYM(normalize_event_data), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305775[13] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_305856, 1, (MRB_SYM(normalize_event_data), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_305856[13] = {
 0x39,0x04,0x00,0x00,0x01,0x04,0x01,0x2f,0x03,0x00,0x01,0x3d,0x03,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305775, 2, (MRB_SYM(entry), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_305775[] = "\x00\xa3\x8c\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305775 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305775}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305775_ = &gem_mrblib_ruflet_framework_proc_debug_file_305775;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305775 = {
-13, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305775_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305775 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_305856, 2, (MRB_SYM(entry), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_305856[] = "\x00\xaf\x8c\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_305856 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_305856}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_305856_ = &gem_mrblib_ruflet_framework_proc_debug_file_305856;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_305856 = {
+13, 1, &gem_mrblib_ruflet_framework_proc_debug_file_305856_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_305856 = {
   3,6,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305775,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_305775,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_305775,
-  &gem_mrblib_ruflet_framework_proc_debug_305775,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_305856,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_305856,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_305856,
+  &gem_mrblib_ruflet_framework_proc_debug_305856,
   13,0,1,0,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304217[2] = {
-  &gem_mrblib_ruflet_framework_proc_irep_305774,
-  &gem_mrblib_ruflet_framework_proc_irep_305775,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304218[2] = {
+  &gem_mrblib_ruflet_framework_proc_irep_305855,
+  &gem_mrblib_ruflet_framework_proc_irep_305856,
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304217, 5, (MRB_SYM(Hash), MRB_OPSYM(eqq), MRB_SYM(each_with_object), MRB_SYM(Array), MRB_SYM(map), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304217[72] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304218, 5, (MRB_SYM(Hash), MRB_OPSYM(eqq), MRB_SYM(each_with_object), MRB_SYM(Array), MRB_SYM(map), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304218[72] = {
 0x39,0x04,0x00,0x00,0x01,0x03,0x01,0x1d,0x04,0x00,0x01,0x05,0x03,0x32,0x04,0x01,0x01,0x28,0x04,0x00,
 0x10,0x01,0x04,0x01,0x5e,0x05,0x00,0x62,0x06,0x00,0x34,0x04,0x02,0x01,0x26,0x00,0x21,0x1d,0x04,0x03,
 0x01,0x05,0x03,0x32,0x04,0x01,0x01,0x28,0x04,0x00,0x0d,0x01,0x04,0x01,0x62,0x05,0x01,0x34,0x04,0x04,
 0x00,0x26,0x00,0x06,0x01,0x04,0x01,0x26,0x00,0x00,0x3d,0x04,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304217, 2, (MRB_SYM(value), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304217[] = "\x00\x9e\x8c\x01\x04\x01\x03\x01\x0c\x01\x10\x04\x02\xfd\xff\xff\xff\x0f\x0c\x01\x0d\x02";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304217 = {
-0, 324, 22, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304217}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304217_ = &gem_mrblib_ruflet_framework_proc_debug_file_304217;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304217 = {
-72, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304217_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304217 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304218, 2, (MRB_SYM(value), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304218[] = "\x00\xaa\x8c\x01\x04\x01\x03\x01\x0c\x01\x10\x04\x02\xfd\xff\xff\xff\x0f\x0c\x01\x0d\x02";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304218 = {
+0, 324, 22, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304218}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304218_ = &gem_mrblib_ruflet_framework_proc_debug_file_304218;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304218 = {
+72, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304218_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304218 = {
   3,7,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304217,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_304217,gem_mrblib_ruflet_framework_proc_reps_304217,
-  gem_mrblib_ruflet_framework_proc_lv_304217,
-  &gem_mrblib_ruflet_framework_proc_debug_304217,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304218,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_304218,gem_mrblib_ruflet_framework_proc_reps_304218,
+  gem_mrblib_ruflet_framework_proc_lv_304218,
+  &gem_mrblib_ruflet_framework_proc_debug_304218,
   72,0,5,2,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304218[3] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304219[3] = {
 {IREP_TT_SSTR|(12<<2), {"\x73\x65\x6e\x64\x20\x65\x72\x72\x6f\x72\x3a\x20"}},
 {IREP_TT_SSTR|(2<<2), {"\x3a\x20"}},
 {IREP_TT_SSTR|(0<<2), {""}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304218, 14, (MRB_SYM_Q(nil), MRB_SYM_Q(closed), MRB_SYM(WireCodec), MRB_SYM(Ruflet), MRB_SYM(pack), MRB_SYM(send_binary), MRB_SYM(StandardError), MRB_SYM_Q(disconnect_error), MRB_SYM(class), MRB_SYM(message), MRB_SYM(warn), MRB_SYM(remove_session), MRB_SYM(unregister_connection), MRB_SYM(close), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304218[176] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304219, 14, (MRB_SYM_Q(nil), MRB_SYM_Q(closed), MRB_SYM(WireCodec), MRB_SYM(Ruflet), MRB_SYM(pack), MRB_SYM(send_binary), MRB_SYM(StandardError), MRB_SYM_Q(disconnect_error), MRB_SYM(class), MRB_SYM(message), MRB_SYM(warn), MRB_SYM(remove_session), MRB_SYM(unregister_connection), MRB_SYM(close), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304219[176] = {
 0x39,0x0c,0x00,0x00,0x01,0x08,0x01,0x33,0x08,0x00,0x27,0x08,0x00,0x06,0x01,0x08,0x01,0x33,0x08,0x01,
 0x28,0x08,0x00,0x04,0x11,0x08,0x3e,0x08,0x01,0x08,0x02,0x01,0x09,0x03,0x53,0x05,0x08,0x02,0x1d,0x08,
 0x03,0x1f,0x08,0x02,0x01,0x09,0x05,0x32,0x08,0x04,0x01,0x01,0x06,0x08,0x01,0x08,0x01,0x01,0x09,0x06,
@@ -87793,23 +87845,23 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304218[176] = {
 0x5c,0x0a,0x02,0x5d,0x09,0x2f,0x08,0x0a,0x01,0x01,0x09,0x01,0x2f,0x08,0x0b,0x01,0x01,0x09,0x01,0x2f,
 0x08,0x0c,0x01,0x01,0x08,0x01,0x01,0x09,0x08,0x29,0x09,0x00,0x03,0x33,0x08,0x0d,0x26,0x00,0x02,0x2d,
 0x08,0x3d,0x08,0x00,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x40,0x00,0x00,0x00,0x43,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304218, 7, (MRB_SYM(ws), MRB_SYM(action), MRB_SYM(payload), 0,MRB_SYM(message), MRB_SYM(packed), MRB_SYM(e), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304218[] = "\x00\xa9\x8c\x01\x04\x01\x18\x02\x0a\x01\x10\x01\x0b\x07\x02\xf9\xff\xff\xff\x0f\x02\x01\x0b\x06\x02\xfa\xff\xff\xff\x0f\x03\x01\x09\x01\x23\x02\x07\x01\x07\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304218 = {
-0, 324, 40, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304218}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304218_ = &gem_mrblib_ruflet_framework_proc_debug_file_304218;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304218 = {
-163, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304218_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304218 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304219, 7, (MRB_SYM(ws), MRB_SYM(action), MRB_SYM(payload), 0,MRB_SYM(message), MRB_SYM(packed), MRB_SYM(e), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304219[] = "\x00\xb5\x8c\x01\x04\x01\x18\x02\x0a\x01\x10\x01\x0b\x07\x02\xf9\xff\xff\xff\x0f\x02\x01\x0b\x06\x02\xfa\xff\xff\xff\x0f\x03\x01\x09\x01\x23\x02\x07\x01\x07\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304219 = {
+0, 324, 40, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304219}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304219_ = &gem_mrblib_ruflet_framework_proc_debug_file_304219;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304219 = {
+163, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304219_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304219 = {
   8,12,1,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304218,
-  gem_mrblib_ruflet_framework_proc_pool_304218,gem_mrblib_ruflet_framework_proc_syms_304218,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304218,
-  &gem_mrblib_ruflet_framework_proc_debug_304218,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304219,
+  gem_mrblib_ruflet_framework_proc_pool_304219,gem_mrblib_ruflet_framework_proc_syms_304219,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304219,
+  &gem_mrblib_ruflet_framework_proc_debug_304219,
   163,3,14,0,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304219, 10, (MRB_SYM(IOError), MRB_SYM_Q(is_a), MRB_SYM(EPIPE), MRB_SYM(Errno), MRB_SYM(ECONNRESET), MRB_SYM(ECONNABORTED), MRB_SYM(ENOTCONN), MRB_SYM(ESHUTDOWN), MRB_SYM(EBADF), MRB_SYM(EINVAL), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304219[146] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304220, 10, (MRB_SYM(IOError), MRB_SYM_Q(is_a), MRB_SYM(EPIPE), MRB_SYM(Errno), MRB_SYM(ECONNRESET), MRB_SYM(ECONNABORTED), MRB_SYM(ENOTCONN), MRB_SYM(ESHUTDOWN), MRB_SYM(EBADF), MRB_SYM(EINVAL), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304220[146] = {
 0x39,0x04,0x00,0x00,0x01,0x03,0x01,0x1d,0x04,0x00,0x32,0x03,0x01,0x01,0x28,0x03,0x00,0x01,0x41,0x01,
 0x03,0x01,0x1d,0x04,0x03,0x1f,0x04,0x02,0x32,0x03,0x01,0x01,0x28,0x03,0x00,0x01,0x41,0x01,0x03,0x01,
 0x1d,0x04,0x03,0x1f,0x04,0x04,0x32,0x03,0x01,0x01,0x28,0x03,0x00,0x01,0x41,0x01,0x03,0x01,0x1d,0x04,
@@ -87818,26 +87870,26 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304219[146] = {
 0x32,0x03,0x01,0x01,0x28,0x03,0x00,0x01,0x41,0x01,0x03,0x01,0x1d,0x04,0x03,0x1f,0x04,0x08,0x32,0x03,
 0x01,0x01,0x28,0x03,0x00,0x01,0x41,0x01,0x03,0x01,0x1d,0x04,0x03,0x1f,0x04,0x09,0x32,0x03,0x01,0x01,
 0x28,0x03,0x00,0x01,0x41,0x42,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304219, 2, (MRB_SYM(error), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304219[] = "\x00\xb8\x8c\x01\x04\x01\x0f\x01\x12\x01\x12\x01\x12\x01\x12\x01\x12\x01\x12\x01\x12\x02";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304219 = {
-0, 324, 22, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304219}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304219_ = &gem_mrblib_ruflet_framework_proc_debug_file_304219;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304219 = {
-146, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304219_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304219 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304220, 2, (MRB_SYM(error), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304220[] = "\x00\xc4\x8c\x01\x04\x01\x0f\x01\x12\x01\x12\x01\x12\x01\x12\x01\x12\x01\x12\x01\x12\x02";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304220 = {
+0, 324, 22, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304220}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304220_ = &gem_mrblib_ruflet_framework_proc_debug_file_304220;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304220 = {
+146, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304220_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304220 = {
   3,6,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304219,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_304219,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304219,
-  &gem_mrblib_ruflet_framework_proc_debug_304219,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304220,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_304220,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304220,
+  &gem_mrblib_ruflet_framework_proc_debug_304220,
   146,0,10,0,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304220[1] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304221[1] = {
 {IREP_TT_SSTR|(25<<2), {"\x25\x30\x38\x78\x2d\x25\x30\x34\x78\x2d\x25\x30\x34\x78\x2d\x25\x30\x34\x78\x2d\x25\x30\x31\x32\x78"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304220, 4, (MRB_SYM(rand), MRB_OPSYM(lshift), MRB_OPSYM(or), MRB_OPSYM(mod), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304220[167] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304221, 4, (MRB_SYM(rand), MRB_OPSYM(lshift), MRB_OPSYM(or), MRB_OPSYM(mod), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304221[167] = {
 0x39,0x00,0x00,0x00,0x06,0x04,0x0f,0x05,0x00,0x00,0xff,0xff,0x64,0x04,0x2f,0x03,0x00,0x01,0x03,0x04,
 0x10,0x32,0x03,0x01,0x01,0x06,0x05,0x0f,0x06,0x00,0x00,0xff,0xff,0x64,0x05,0x2f,0x04,0x00,0x01,0x32,
 0x03,0x02,0x01,0x01,0x02,0x03,0x5c,0x03,0x00,0x01,0x04,0x02,0x06,0x06,0x0f,0x07,0x00,0x00,0xff,0xff,
@@ -87847,22 +87899,22 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304220[167] = {
 0x00,0xff,0xff,0x64,0x0a,0x2f,0x09,0x00,0x01,0x03,0x0a,0x10,0x32,0x09,0x01,0x01,0x32,0x08,0x02,0x01,
 0x06,0x0a,0x0f,0x0b,0x00,0x00,0xff,0xff,0x64,0x0a,0x2f,0x09,0x00,0x01,0x32,0x08,0x02,0x01,0x52,0x04,
 0x05,0x32,0x03,0x03,0x01,0x3d,0x03,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304220, 2, (0,MRB_SYM(rnd), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304220[] = "\x00\xc5\x8c\x01\x04\x01\x2a\x01\x03\x01\x03\x01\x0e\x01\x0e\x01\x0e\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304220 = {
-0, 324, 18, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304220}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304220_ = &gem_mrblib_ruflet_framework_proc_debug_file_304220;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304220 = {
-167, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304220_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304220 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_304221, 2, (0,MRB_SYM(rnd), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304221[] = "\x00\xd1\x8c\x01\x04\x01\x2a\x01\x03\x01\x03\x01\x0e\x01\x0e\x01\x0e\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304221 = {
+0, 324, 18, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304221}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304221_ = &gem_mrblib_ruflet_framework_proc_debug_file_304221;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304221 = {
+167, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304221_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304221 = {
   3,12,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304220,
-  gem_mrblib_ruflet_framework_proc_pool_304220,gem_mrblib_ruflet_framework_proc_syms_304220,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_304220,
-  &gem_mrblib_ruflet_framework_proc_debug_304220,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304221,
+  gem_mrblib_ruflet_framework_proc_pool_304221,gem_mrblib_ruflet_framework_proc_syms_304221,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_304221,
+  &gem_mrblib_ruflet_framework_proc_debug_304221,
   167,1,4,0,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304179[41] = {
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304179[42] = {
   &gem_mrblib_ruflet_framework_proc_irep_304180,
   &gem_mrblib_ruflet_framework_proc_irep_304181,
   &gem_mrblib_ruflet_framework_proc_irep_304182,
@@ -87904,35 +87956,36 @@ static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_304179[41] = {
   &gem_mrblib_ruflet_framework_proc_irep_304218,
   &gem_mrblib_ruflet_framework_proc_irep_304219,
   &gem_mrblib_ruflet_framework_proc_irep_304220,
+  &gem_mrblib_ruflet_framework_proc_irep_304221,
 };
 static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_304179[1] = {
 {IREP_TT_SSTR|(36<<2), {"\x32\x35\x38\x45\x41\x46\x41\x35\x2d\x45\x39\x31\x34\x2d\x34\x37\x44\x41\x2d\x39\x35\x43\x41\x2d\x43\x35\x41\x42\x30\x44\x43\x38\x35\x42\x31\x31"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304179, 45, (MRB_SYM(port), MRB_SYM(attr_reader), MRB_SYM(WEBSOCKET_GUID), MRB_SYM(initialize), MRB_SYM(start), MRB_SYM(handle_upgraded_socket), MRB_SYM_B(bind_server_socket), MRB_SYM(stop), MRB_SYM_B(reload_app), MRB_SYM(private), MRB_SYM(trap_stop_signals), MRB_SYM(trap_signal), MRB_SYM(restore_stop_signals), MRB_SYM(print_server_banner), MRB_SYM(accept_loop), MRB_SYM(accept_client_socket), MRB_SYM(start_client_thread), MRB_SYM(handle_socket), MRB_SYM(run_connection), MRB_SYM(close_connection), MRB_SYM(read_http_upgrade_request), MRB_SYM_Q(websocket_upgrade_request), MRB_SYM(handle_http_request), MRB_SYM(serve_asset), MRB_SYM(resolve_asset_path), MRB_SYM(assets_root), MRB_SYM(content_type_for), MRB_SYM(write_http_response), MRB_SYM(send_handshake_response), MRB_SYM(remove_session), MRB_SYM(register_connection), MRB_SYM(unregister_connection), MRB_SYM(handle_message), MRB_SYM(report_runtime_error), MRB_SYM(decode_incoming), MRB_SYM(normalize_incoming), MRB_SYM(on_register_client), MRB_SYM(on_invoke_control_method), MRB_SYM(on_control_event), MRB_SYM(on_update_control), MRB_SYM(fetch_page), MRB_SYM(normalize_event_data), MRB_SYM(send_message), MRB_SYM_Q(disconnect_error), MRB_SYM(pseudo_uuid), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304179[182] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_304179, 46, (MRB_SYM(port), MRB_SYM(attr_reader), MRB_SYM(WEBSOCKET_GUID), MRB_SYM(initialize), MRB_SYM(start), MRB_SYM(handle_upgraded_socket), MRB_SYM_B(bind_server_socket), MRB_SYM(stop), MRB_SYM(publish_runtime_port), MRB_SYM_B(reload_app), MRB_SYM(private), MRB_SYM(trap_stop_signals), MRB_SYM(trap_signal), MRB_SYM(restore_stop_signals), MRB_SYM(print_server_banner), MRB_SYM(accept_loop), MRB_SYM(accept_client_socket), MRB_SYM(start_client_thread), MRB_SYM(handle_socket), MRB_SYM(run_connection), MRB_SYM(close_connection), MRB_SYM(read_http_upgrade_request), MRB_SYM_Q(websocket_upgrade_request), MRB_SYM(handle_http_request), MRB_SYM(serve_asset), MRB_SYM(resolve_asset_path), MRB_SYM(assets_root), MRB_SYM(content_type_for), MRB_SYM(write_http_response), MRB_SYM(send_handshake_response), MRB_SYM(remove_session), MRB_SYM(register_connection), MRB_SYM(unregister_connection), MRB_SYM(handle_message), MRB_SYM(report_runtime_error), MRB_SYM(decode_incoming), MRB_SYM(normalize_incoming), MRB_SYM(on_register_client), MRB_SYM(on_invoke_control_method), MRB_SYM(on_control_event), MRB_SYM(on_update_control), MRB_SYM(fetch_page), MRB_SYM(normalize_event_data), MRB_SYM(send_message), MRB_SYM_Q(disconnect_error), MRB_SYM(pseudo_uuid), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_304179[186] = {
 0x10,0x02,0x00,0x2f,0x01,0x01,0x01,0x5c,0x01,0x00,0x1e,0x01,0x02,0x6b,0x01,0x03,0x00,0x6b,0x01,0x04,
-0x01,0x6b,0x01,0x05,0x02,0x6b,0x01,0x06,0x03,0x6b,0x01,0x07,0x04,0x6b,0x01,0x08,0x05,0x30,0x01,0x09,
-0x6b,0x01,0x0a,0x06,0x6b,0x01,0x0b,0x07,0x6b,0x01,0x0c,0x08,0x6b,0x01,0x0d,0x09,0x6b,0x01,0x0e,0x0a,
+0x01,0x6b,0x01,0x05,0x02,0x6b,0x01,0x06,0x03,0x6b,0x01,0x07,0x04,0x6b,0x01,0x08,0x05,0x6b,0x01,0x09,
+0x06,0x30,0x01,0x0a,0x6b,0x01,0x0b,0x07,0x6b,0x01,0x0c,0x08,0x6b,0x01,0x0d,0x09,0x6b,0x01,0x0e,0x0a,
 0x6b,0x01,0x0f,0x0b,0x6b,0x01,0x10,0x0c,0x6b,0x01,0x11,0x0d,0x6b,0x01,0x12,0x0e,0x6b,0x01,0x13,0x0f,
 0x6b,0x01,0x14,0x10,0x6b,0x01,0x15,0x11,0x6b,0x01,0x16,0x12,0x6b,0x01,0x17,0x13,0x6b,0x01,0x18,0x14,
 0x6b,0x01,0x19,0x15,0x6b,0x01,0x1a,0x16,0x6b,0x01,0x1b,0x17,0x6b,0x01,0x1c,0x18,0x6b,0x01,0x1d,0x19,
 0x6b,0x01,0x1e,0x1a,0x6b,0x01,0x1f,0x1b,0x6b,0x01,0x20,0x1c,0x6b,0x01,0x21,0x1d,0x6b,0x01,0x22,0x1e,
 0x6b,0x01,0x23,0x1f,0x6b,0x01,0x24,0x20,0x6b,0x01,0x25,0x21,0x6b,0x01,0x26,0x22,0x6b,0x01,0x27,0x23,
 0x6b,0x01,0x28,0x24,0x6b,0x01,0x29,0x25,0x6b,0x01,0x2a,0x26,0x6b,0x01,0x2b,0x27,0x6b,0x01,0x2c,0x28,
-0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_304179[] = "\x00\x99\x88\x01\x07\x02\x06\x02\x04\x14\x04\x0e\x04\x05\x04\x17\x04\x17\x04\x1b\x03\x02\x04\x07\x04\x09\x04\x08\x04\x06\x04\x09\x04\x0d\x04\x07\x04\x18\x04\x10\x04\x06\x04\x17\x04\x09\x04\x12\x04\x0b\x04\x0d\x04\x08\x04\x11\x04\x12\x04\x0a\x04\x08\x04\x08\x04\x08\x04\x1e\x04\x0b\x04\x14\x04\x13\x04\x1f\x04\x05\x04\x0c\x04\x08\x04\x07\x04\x0b\x04\x0f\x04\x0d";
+0x6b,0x01,0x2d,0x29,0x3d,0x00,};
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_304179[] = "\x00\x9b\x88\x01\x07\x02\x06\x02\x04\x14\x04\x0e\x04\x05\x04\x18\x04\x17\x04\x09\x04\x1b\x03\x02\x04\x07\x04\x09\x04\x08\x04\x06\x04\x09\x04\x0d\x04\x07\x04\x18\x04\x10\x04\x06\x04\x17\x04\x09\x04\x12\x04\x0b\x04\x0d\x04\x08\x04\x11\x04\x12\x04\x0a\x04\x08\x04\x08\x04\x08\x04\x1e\x04\x0b\x04\x14\x04\x13\x04\x1f\x04\x05\x04\x0c\x04\x08\x04\x07\x04\x0b\x04\x0f\x04\x0d";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_304179 = {
-0, 324, 90, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304179}};
+0, 324, 92, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_304179}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_304179_ = &gem_mrblib_ruflet_framework_proc_debug_file_304179;
 static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_304179 = {
-182, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304179_};
+186, 1, &gem_mrblib_ruflet_framework_proc_debug_file_304179_};
 static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_304179 = {
   1,4,0,
   MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_304179,
   gem_mrblib_ruflet_framework_proc_pool_304179,gem_mrblib_ruflet_framework_proc_syms_304179,gem_mrblib_ruflet_framework_proc_reps_304179,
   NULL,					/* lv */
   &gem_mrblib_ruflet_framework_proc_debug_304179,
-  182,1,45,41,0
+  186,1,46,42,0
 };
 static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_215[1] = {
   &gem_mrblib_ruflet_framework_proc_irep_304179,
@@ -87940,7 +87993,7 @@ static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_215[1] = {
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_215, 1, (MRB_SYM(Server), ), const);
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_215[12] = {
 0x11,0x01,0x11,0x02,0x67,0x01,0x00,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_215[] = "\x00\x98\x88\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_215[] = "\x00\x9a\x88\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_215 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_215}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_215_ = &gem_mrblib_ruflet_framework_proc_debug_file_215;
@@ -87954,62 +88007,64 @@ static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_215 = {
   &gem_mrblib_ruflet_framework_proc_debug_215,
   12,0,1,1,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306125, 1, (MRB_SYM(call), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306125[17] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306209, 1, (MRB_SYM(call), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306209[17] = {
 0x39,0x04,0x00,0x00,0x21,0x03,0x07,0x00,0x01,0x04,0x01,0x32,0x03,0x00,0x01,0x3d,0x03,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_306125, 2, (MRB_SYM(page), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_306125[] = "\x00\xe0\x8c\x01\x04\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306125 = {
-0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306125}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306125_ = &gem_mrblib_ruflet_framework_proc_debug_file_306125;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306125 = {
-17, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306125_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306125 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_306209, 2, (MRB_SYM(page), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_306209[] = "\x00\xee\x8c\x01\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306209 = {
+0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306209}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306209_ = &gem_mrblib_ruflet_framework_proc_debug_file_306209;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306209 = {
+17, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306209_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306209 = {
   3,6,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306125,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_306125,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_306125,
-  &gem_mrblib_ruflet_framework_proc_debug_306125,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306209,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_306209,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_306209,
+  &gem_mrblib_ruflet_framework_proc_debug_306209,
   17,0,1,0,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_306124[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_306125,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_306208[1] = {
+  &gem_mrblib_ruflet_framework_proc_irep_306209,
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_306124[2] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_306208[2] = {
 {IREP_TT_SSTR|(7<<2), {"\x30\x2e\x30\x2e\x30\x2e\x30"}},
 {IREP_TT_SSTR|(50<<2), {"\x52\x75\x66\x6c\x65\x74\x2e\x72\x75\x6e\x20\x72\x65\x71\x75\x69\x72\x65\x73\x20\x61\x20\x63\x61\x6c\x6c\x61\x62\x6c\x65\x20\x65\x6e\x74\x72\x79\x70\x6f\x69\x6e\x74\x20\x6f\x72\x20\x62\x6c\x6f\x63\x6b"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306124, 9, (MRB_SYM(host), MRB_SYM(port), MRB_SYM(call), MRB_SYM_Q(respond_to), MRB_SYM(ArgumentError), MRB_SYM(raise), MRB_SYM(Server), MRB_SYM(new), MRB_SYM(start), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306124[131] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306208, 10, (MRB_SYM(host), MRB_SYM(port), MRB_SYM(call), MRB_SYM_Q(respond_to), MRB_SYM(ArgumentError), MRB_SYM(raise), MRB_SYM(resolved_run_port), MRB_SYM(Server), MRB_SYM(new), MRB_SYM(start), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306208[164] = {
 0x39,0x00,0x20,0x09,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x3a,0x05,0x00,0x27,0x05,0x00,0x06,0x5c,
-0x05,0x00,0x26,0x00,0x03,0x3c,0x05,0x00,0x3a,0x06,0x01,0x27,0x06,0x00,0x07,0x0e,0x06,0x21,0x66,0x26,
-0x00,0x03,0x3c,0x06,0x01,0x3b,0x10,0x08,0x00,0x01,0x09,0x05,0x10,0x0a,0x01,0x01,0x0b,0x06,0x5e,0x08,
-0x02,0x01,0x02,0x08,0x01,0x04,0x03,0x01,0x08,0x01,0x27,0x08,0x00,0x03,0x01,0x08,0x04,0x01,0x07,0x08,
-0x01,0x08,0x07,0x10,0x09,0x02,0x32,0x08,0x03,0x01,0x27,0x08,0x00,0x0a,0x1d,0x09,0x04,0x5c,0x0a,0x01,
-0x2f,0x08,0x05,0x02,0x1d,0x08,0x06,0x10,0x09,0x00,0x01,0x0a,0x05,0x10,0x0b,0x01,0x01,0x0c,0x06,0x62,
-0x0d,0x00,0x34,0x08,0x07,0x20,0x33,0x08,0x08,0x3d,0x08,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_306124, 7, (MRB_SYM(entrypoint), MRB_OPSYM(pow), 0,MRB_SYM(block), MRB_SYM(host), MRB_SYM(port), MRB_SYM(callback), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_306124[] = "\x00\xdc\x8c\x01\x43\x01\x0d\x01\x18\x02";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306124 = {
-0, 324, 10, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306124}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306124_ = &gem_mrblib_ruflet_framework_proc_debug_file_306124;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306124 = {
-131, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306124_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306124 = {
+0x05,0x00,0x26,0x00,0x03,0x3c,0x05,0x00,0x3a,0x06,0x01,0x27,0x06,0x00,0x05,0x11,0x06,0x26,0x00,0x03,
+0x3c,0x06,0x01,0x3b,0x10,0x08,0x00,0x01,0x09,0x05,0x10,0x0a,0x01,0x01,0x0b,0x06,0x5e,0x08,0x02,0x01,
+0x02,0x08,0x01,0x04,0x03,0x01,0x08,0x01,0x27,0x08,0x00,0x03,0x01,0x08,0x04,0x01,0x07,0x08,0x01,0x08,
+0x07,0x10,0x09,0x02,0x32,0x08,0x03,0x01,0x27,0x08,0x00,0x0a,0x1d,0x09,0x04,0x5c,0x0a,0x01,0x2f,0x08,
+0x05,0x02,0x10,0x09,0x06,0x2f,0x08,0x03,0x01,0x28,0x08,0x00,0x0a,0x01,0x09,0x06,0x2f,0x08,0x06,0x01,
+0x01,0x06,0x08,0x01,0x08,0x06,0x29,0x08,0x00,0x03,0x26,0x00,0x04,0x0e,0x06,0x21,0x66,0x1d,0x08,0x07,
+0x10,0x09,0x00,0x01,0x0a,0x05,0x10,0x0b,0x01,0x01,0x0c,0x06,0x62,0x0d,0x00,0x34,0x08,0x08,0x20,0x33,
+0x08,0x09,0x3d,0x08,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_306208, 7, (MRB_SYM(entrypoint), MRB_OPSYM(pow), 0,MRB_SYM(block), MRB_SYM(host), MRB_SYM(port), MRB_SYM(callback), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_306208[] = "\x00\xe8\x8c\x01\x41\x01\x0d\x01\x18\x01\x15\x01\x0e\x02";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306208 = {
+0, 324, 14, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306208}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306208_ = &gem_mrblib_ruflet_framework_proc_debug_file_306208;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306208 = {
+164, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306208_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306208 = {
   8,14,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306124,
-  gem_mrblib_ruflet_framework_proc_pool_306124,gem_mrblib_ruflet_framework_proc_syms_306124,gem_mrblib_ruflet_framework_proc_reps_306124,
-  gem_mrblib_ruflet_framework_proc_lv_306124,
-  &gem_mrblib_ruflet_framework_proc_debug_306124,
-  131,2,9,1,0
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306208,
+  gem_mrblib_ruflet_framework_proc_pool_306208,gem_mrblib_ruflet_framework_proc_syms_306208,gem_mrblib_ruflet_framework_proc_reps_306208,
+  gem_mrblib_ruflet_framework_proc_lv_306208,
+  &gem_mrblib_ruflet_framework_proc_debug_306208,
+  164,2,10,1,0
 };
 static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_216[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_306124,
+  &gem_mrblib_ruflet_framework_proc_irep_306208,
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_216, 2, (MRB_SYM(module_function), MRB_SYM(run), ), const);
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_216[9] = {
 0x30,0x01,0x00,0x6b,0x01,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_216[] = "\x00\xda\x8c\x01\x03\x02";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_216[] = "\x00\xe6\x8c\x01\x03\x02";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_216 = {
 0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_216}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_216_ = &gem_mrblib_ruflet_framework_proc_debug_file_216;
@@ -88023,163 +88078,190 @@ static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_216 = {
   &gem_mrblib_ruflet_framework_proc_debug_216,
   9,0,2,1,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306351, 2, (MRB_IVSYM(run_interceptors), MRB_SYM(last), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306351[12] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306436, 2, (MRB_IVSYM(run_interceptors), MRB_SYM(last), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306436[12] = {
 0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x33,0x02,0x01,0x3d,0x02,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_306351, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_306351[] = "\x00\xf8\x8c\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306351 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306351}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306351_ = &gem_mrblib_ruflet_framework_proc_debug_file_306351;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306351 = {
-12, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306351_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306351 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_306436, 1, (0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_306436[] = "\x00\x87\x8d\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306436 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306436}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306436_ = &gem_mrblib_ruflet_framework_proc_debug_file_306436;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306436 = {
+12, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306436_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306436 = {
   2,4,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306351,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_306351,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_306351,
-  &gem_mrblib_ruflet_framework_proc_debug_306351,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306436,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_306436,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_306436,
+  &gem_mrblib_ruflet_framework_proc_debug_306436,
   12,0,2,0,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306352, 1, (MRB_SYM(call), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306352[17] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306437, 1, (MRB_SYM(call), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306437[17] = {
 0x39,0x04,0x00,0x00,0x21,0x03,0x07,0x00,0x01,0x04,0x01,0x32,0x03,0x00,0x01,0x3d,0x03,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_306352, 2, (MRB_SYM(page), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_306352[] = "\x00\x84\x8d\x01\x04\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306352 = {
-0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306352}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306352_ = &gem_mrblib_ruflet_framework_proc_debug_file_306352;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306352 = {
-17, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306352_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306352 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_306437, 2, (MRB_SYM(page), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_306437[] = "\x00\x93\x8d\x01\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306437 = {
+0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306437}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306437_ = &gem_mrblib_ruflet_framework_proc_debug_file_306437;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306437 = {
+17, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306437_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306437 = {
   3,6,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306352,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_306352,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_306352,
-  &gem_mrblib_ruflet_framework_proc_debug_306352,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306437,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_306437,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_306437,
+  &gem_mrblib_ruflet_framework_proc_debug_306437,
   17,0,1,0,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_306349[2] = {
-  &gem_mrblib_ruflet_framework_proc_irep_306351,
-  &gem_mrblib_ruflet_framework_proc_irep_306352,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_306433[2] = {
+  &gem_mrblib_ruflet_framework_proc_irep_306436,
+  &gem_mrblib_ruflet_framework_proc_irep_306437,
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_306349[4] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_306433[4] = {
 {IREP_TT_SSTR|(7<<2), {"\x30\x2e\x30\x2e\x30\x2e\x30"}},
 {IREP_TT_SSTR|(50<<2), {"\x52\x75\x66\x6c\x65\x74\x2e\x72\x75\x6e\x20\x72\x65\x71\x75\x69\x72\x65\x73\x20\x61\x20\x63\x61\x6c\x6c\x61\x62\x6c\x65\x20\x65\x6e\x74\x72\x79\x70\x6f\x69\x6e\x74\x20\x6f\x72\x20\x62\x6c\x6f\x63\x6b"}},
 {IREP_TT_SSTR|(13<<2), {"\x72\x75\x66\x6c\x65\x74\x5f\x73\x65\x72\x76\x65\x72"}},
 {IREP_TT_SSTR|(87<<2), {"\x52\x75\x66\x6c\x65\x74\x2e\x72\x75\x6e\x20\x72\x65\x71\x75\x69\x72\x65\x73\x20\x74\x68\x65\x20\x27\x72\x75\x66\x6c\x65\x74\x5f\x73\x65\x72\x76\x65\x72\x27\x20\x67\x65\x6d\x20\x75\x6e\x6c\x65\x73\x73\x20\x61\x20\x72\x75\x6e\x20\x69\x6e\x74\x65\x72\x63\x65\x70\x74\x6f\x72\x20\x68\x61\x6e\x64\x6c\x65\x73\x20\x65\x78\x65\x63\x75\x74\x69\x6f\x6e\x2e"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306349, 16, (MRB_SYM(host), MRB_SYM(port), MRB_SYM(call), MRB_SYM_Q(respond_to), MRB_SYM(ArgumentError), MRB_SYM(raise), MRB_IVSYM(run_interceptors_mutex), MRB_SYM(synchronize), MRB_SYM(entrypoint), MRB_SYM(pass), MRB_SYM(require), MRB_SYM(LoadError), MRB_SYM(backtrace), MRB_SYM(Server), MRB_SYM(new), MRB_SYM(start), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306349[255] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306433, 17, (MRB_SYM(host), MRB_SYM(port), MRB_SYM(call), MRB_SYM_Q(respond_to), MRB_SYM(ArgumentError), MRB_SYM(raise), MRB_SYM(resolved_run_port), MRB_IVSYM(run_interceptors_mutex), MRB_SYM(synchronize), MRB_SYM(entrypoint), MRB_SYM(pass), MRB_SYM(require), MRB_SYM(LoadError), MRB_SYM(backtrace), MRB_SYM(Server), MRB_SYM(new), MRB_SYM(start), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306433[263] = {
 0x39,0x00,0x20,0x09,0x26,0x00,0x03,0x26,0x00,0x02,0x11,0x01,0x3a,0x05,0x00,0x27,0x05,0x00,0x06,0x5c,
-0x05,0x00,0x26,0x00,0x03,0x3c,0x05,0x00,0x3a,0x06,0x01,0x27,0x06,0x00,0x07,0x0e,0x06,0x21,0x66,0x26,
-0x00,0x03,0x3c,0x06,0x01,0x3b,0x10,0x0b,0x00,0x01,0x0c,0x05,0x10,0x0d,0x01,0x01,0x0e,0x06,0x5e,0x0b,
-0x02,0x01,0x02,0x0b,0x01,0x04,0x03,0x01,0x0b,0x01,0x27,0x0b,0x00,0x03,0x01,0x0b,0x04,0x01,0x07,0x0b,
-0x01,0x0b,0x07,0x10,0x0c,0x02,0x32,0x0b,0x03,0x01,0x27,0x0b,0x00,0x0a,0x1d,0x0c,0x04,0x5c,0x0d,0x01,
-0x2f,0x0b,0x05,0x02,0x19,0x0b,0x06,0x62,0x0c,0x00,0x34,0x0b,0x07,0x00,0x01,0x08,0x0b,0x01,0x0b,0x08,
-0x28,0x0b,0x00,0x2a,0x01,0x0b,0x08,0x10,0x0c,0x08,0x01,0x0d,0x07,0x10,0x0e,0x00,0x01,0x0f,0x05,0x10,
-0x10,0x01,0x01,0x11,0x06,0x32,0x0b,0x02,0x30,0x01,0x09,0x0b,0x01,0x0b,0x09,0x10,0x0c,0x09,0x4d,0x0b,
-0x27,0x0b,0x00,0x02,0x3d,0x09,0x5c,0x0c,0x02,0x2f,0x0b,0x0a,0x01,0x26,0x00,0x27,0x2b,0x0b,0x1d,0x0c,
-0x0b,0x2c,0x0b,0x0c,0x27,0x0c,0x00,0x03,0x26,0x00,0x16,0x01,0x0a,0x0b,0x1d,0x0c,0x0b,0x5c,0x0d,0x03,
-0x01,0x0e,0x0a,0x33,0x0e,0x0c,0x2f,0x0b,0x05,0x03,0x26,0x00,0x02,0x2d,0x0b,0x1d,0x0b,0x0d,0x10,0x0c,
-0x00,0x01,0x0d,0x05,0x10,0x0e,0x01,0x01,0x0f,0x06,0x62,0x10,0x01,0x34,0x0b,0x0e,0x20,0x33,0x0b,0x0f,
-0x3d,0x0b,0x00,0x00,0x00,0x00,0xa6,0x00,0x00,0x00,0xad,0x00,0x00,0x00,0xb0,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_306349, 10, (MRB_SYM(entrypoint), MRB_OPSYM(pow), 0,MRB_SYM(block), MRB_SYM(host), MRB_SYM(port), MRB_SYM(callback), MRB_SYM(interceptor), MRB_SYM(result), MRB_SYM(e), ), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_306349[] = "\x00\xf4\x8c\x01\x43\x01\x0d\x01\x18\x02\x0d\x01\x05\x02\x02\xff\xff\xff\xff\x0f\x1c\x01\x0e\x04\x08\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01\x02\xff\xff\xff\xff\x0f\x03\x01\x15\x03";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306349 = {
-0, 324, 46, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306349}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306349_ = &gem_mrblib_ruflet_framework_proc_debug_file_306349;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306349 = {
-242, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306349_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306349 = {
+0x05,0x00,0x26,0x00,0x03,0x3c,0x05,0x00,0x3a,0x06,0x01,0x27,0x06,0x00,0x05,0x11,0x06,0x26,0x00,0x03,
+0x3c,0x06,0x01,0x3b,0x10,0x0b,0x00,0x01,0x0c,0x05,0x10,0x0d,0x01,0x01,0x0e,0x06,0x5e,0x0b,0x02,0x01,
+0x02,0x0b,0x01,0x04,0x03,0x01,0x0b,0x01,0x27,0x0b,0x00,0x03,0x01,0x0b,0x04,0x01,0x07,0x0b,0x01,0x0b,
+0x07,0x10,0x0c,0x02,0x32,0x0b,0x03,0x01,0x27,0x0b,0x00,0x0a,0x1d,0x0c,0x04,0x5c,0x0d,0x01,0x2f,0x0b,
+0x05,0x02,0x01,0x0c,0x06,0x2f,0x0b,0x06,0x01,0x01,0x06,0x0b,0x19,0x0b,0x07,0x62,0x0c,0x00,0x34,0x0b,
+0x08,0x00,0x01,0x08,0x0b,0x01,0x0b,0x08,0x28,0x0b,0x00,0x2a,0x01,0x0b,0x08,0x10,0x0c,0x09,0x01,0x0d,
+0x07,0x10,0x0e,0x00,0x01,0x0f,0x05,0x10,0x10,0x01,0x01,0x11,0x06,0x32,0x0b,0x02,0x30,0x01,0x09,0x0b,
+0x01,0x0b,0x09,0x10,0x0c,0x0a,0x4d,0x0b,0x27,0x0b,0x00,0x02,0x3d,0x09,0x5c,0x0c,0x02,0x2f,0x0b,0x0b,
+0x01,0x26,0x00,0x27,0x2b,0x0b,0x1d,0x0c,0x0c,0x2c,0x0b,0x0c,0x27,0x0c,0x00,0x03,0x26,0x00,0x16,0x01,
+0x0a,0x0b,0x1d,0x0c,0x0c,0x5c,0x0d,0x03,0x01,0x0e,0x0a,0x33,0x0e,0x0d,0x2f,0x0b,0x05,0x03,0x26,0x00,
+0x02,0x2d,0x0b,0x1d,0x0b,0x0e,0x10,0x0c,0x00,0x01,0x0d,0x05,0x10,0x0e,0x01,0x01,0x0f,0x06,0x62,0x10,
+0x01,0x34,0x0b,0x0f,0x20,0x33,0x0b,0x10,0x3d,0x0b,0x00,0x00,0x00,0x00,0xae,0x00,0x00,0x00,0xb5,0x00,
+0x00,0x00,0xb8,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_306433, 10, (MRB_SYM(entrypoint), MRB_OPSYM(pow), 0,MRB_SYM(block), MRB_SYM(host), MRB_SYM(port), MRB_SYM(callback), MRB_SYM(interceptor), MRB_SYM(result), MRB_SYM(e), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_306433[] = "\x00\x82\x8d\x01\x41\x01\x0d\x01\x18\x01\x0a\x02\x0d\x01\x05\x02\x02\xff\xff\xff\xff\x0f\x1c\x01\x0e\x04\x08\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01\x02\xff\xff\xff\xff\x0f\x03\x01\x15\x03";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306433 = {
+0, 324, 48, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306433}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306433_ = &gem_mrblib_ruflet_framework_proc_debug_file_306433;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306433 = {
+250, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306433_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306433 = {
   11,19,1,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306349,
-  gem_mrblib_ruflet_framework_proc_pool_306349,gem_mrblib_ruflet_framework_proc_syms_306349,gem_mrblib_ruflet_framework_proc_reps_306349,
-  gem_mrblib_ruflet_framework_proc_lv_306349,
-  &gem_mrblib_ruflet_framework_proc_debug_306349,
-  242,4,16,2,0
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306433,
+  gem_mrblib_ruflet_framework_proc_pool_306433,gem_mrblib_ruflet_framework_proc_syms_306433,gem_mrblib_ruflet_framework_proc_reps_306433,
+  gem_mrblib_ruflet_framework_proc_lv_306433,
+  &gem_mrblib_ruflet_framework_proc_debug_306433,
+  250,4,17,2,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306357, 2, (MRB_IVSYM(run_interceptors), MRB_OPSYM(lshift), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306357[17] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_306434[1] = {
+{IREP_TT_SSTR|(11<<2), {"\x52\x55\x46\x4c\x45\x54\x5f\x50\x4f\x52\x54"}},
+};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306434, 6, (MRB_SYM(ENV), MRB_SYM_Q(nil), MRB_SYM(to_s), MRB_SYM(strip), MRB_SYM_Q(empty), MRB_SYM(to_i), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306434[95] = {
+0x39,0x04,0x00,0x00,0x01,0x05,0x01,0x29,0x05,0x00,0x03,0x26,0x00,0x0b,0x1d,0x05,0x00,0x5c,0x06,0x00,
+0x23,0x05,0x26,0x00,0x03,0x01,0x05,0x01,0x01,0x03,0x05,0x01,0x05,0x03,0x33,0x05,0x01,0x27,0x05,0x00,
+0x0c,0x01,0x05,0x03,0x33,0x05,0x02,0x33,0x05,0x03,0x33,0x05,0x04,0x28,0x05,0x00,0x06,0x0e,0x05,0x21,
+0x66,0x3d,0x05,0x01,0x05,0x03,0x33,0x05,0x05,0x01,0x04,0x05,0x01,0x05,0x04,0x06,0x06,0x51,0x05,0x28,
+0x05,0x00,0x06,0x01,0x05,0x04,0x26,0x00,0x04,0x0e,0x05,0x21,0x66,0x3d,0x05,};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_306434, 4, (MRB_SYM(port), 0,MRB_SYM(raw), MRB_SYM(value), ), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_306434[] = "\x00\x98\x8d\x01\x04\x01\x1b\x01\x20\x02\x09\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306434 = {
+0, 324, 12, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306434}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306434_ = &gem_mrblib_ruflet_framework_proc_debug_file_306434;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306434 = {
+95, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306434_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306434 = {
+  5,8,0,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306434,
+  gem_mrblib_ruflet_framework_proc_pool_306434,gem_mrblib_ruflet_framework_proc_syms_306434,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_306434,
+  &gem_mrblib_ruflet_framework_proc_debug_306434,
+  95,1,6,0,0
+};
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306446, 2, (MRB_IVSYM(run_interceptors), MRB_OPSYM(lshift), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306446[17] = {
 0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x21,0x03,0x01,0x00,0x32,0x02,0x01,0x01,0x3d,0x02,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_306357, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_306357[] = "\x00\x8a\x8d\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306357 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306357}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306357_ = &gem_mrblib_ruflet_framework_proc_debug_file_306357;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306357 = {
-17, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306357_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306357 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_306446, 1, (0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_306446[] = "\x00\xa1\x8d\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306446 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306446}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306446_ = &gem_mrblib_ruflet_framework_proc_debug_file_306446;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306446 = {
+17, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306446_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306446 = {
   2,5,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306357,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_306357,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_306357,
-  &gem_mrblib_ruflet_framework_proc_debug_306357,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306446,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_306446,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_306446,
+  &gem_mrblib_ruflet_framework_proc_debug_306446,
   17,0,2,0,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306358, 2, (MRB_IVSYM(run_interceptors), MRB_SYM(delete), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306358[17] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306447, 2, (MRB_IVSYM(run_interceptors), MRB_SYM(delete), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306447[17] = {
 0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x21,0x03,0x01,0x00,0x32,0x02,0x01,0x01,0x3d,0x02,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_306358, 1, (0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_306358[] = "\x00\x8d\x8d\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306358 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306358}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306358_ = &gem_mrblib_ruflet_framework_proc_debug_file_306358;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306358 = {
-17, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306358_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306358 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_306447, 1, (0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_306447[] = "\x00\xa4\x8d\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306447 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306447}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306447_ = &gem_mrblib_ruflet_framework_proc_debug_file_306447;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306447 = {
+17, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306447_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306447 = {
   2,5,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306358,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_306358,NULL,
-  gem_mrblib_ruflet_framework_proc_lv_306358,
-  &gem_mrblib_ruflet_framework_proc_debug_306358,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306447,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_306447,NULL,
+  gem_mrblib_ruflet_framework_proc_lv_306447,
+  &gem_mrblib_ruflet_framework_proc_debug_306447,
   17,0,2,0,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_306350[2] = {
-  &gem_mrblib_ruflet_framework_proc_irep_306357,
-  &gem_mrblib_ruflet_framework_proc_irep_306358,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_306435[2] = {
+  &gem_mrblib_ruflet_framework_proc_irep_306446,
+  &gem_mrblib_ruflet_framework_proc_irep_306447,
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306350, 2, (MRB_IVSYM(run_interceptors_mutex), MRB_SYM(synchronize), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306350[50] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306435, 2, (MRB_IVSYM(run_interceptors_mutex), MRB_SYM(synchronize), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306435[50] = {
 0x39,0x04,0x00,0x00,0x19,0x03,0x00,0x62,0x04,0x00,0x34,0x03,0x01,0x00,0x44,0x03,0x08,0x00,0x36,0x03,
 0x00,0x2b,0x05,0x19,0x06,0x00,0x62,0x07,0x01,0x34,0x06,0x01,0x00,0x2d,0x05,0x3d,0x03,0x01,0x00,0x00,
 0x00,0x04,0x00,0x00,0x00,0x15,0x00,0x00,0x00,0x15,};
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_306350, 2, (MRB_SYM(interceptor), 0,), const);
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_306350[] = "\x00\x89\x8d\x01\x04\x01\x0a\x01\x09\x02";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306350 = {
-0, 324, 10, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306350}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306350_ = &gem_mrblib_ruflet_framework_proc_debug_file_306350;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306350 = {
-37, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306350_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306350 = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_lv_306435, 2, (MRB_SYM(interceptor), 0,), const);
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_306435[] = "\x00\xa0\x8d\x01\x04\x01\x0a\x01\x09\x02";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306435 = {
+0, 324, 10, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306435}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306435_ = &gem_mrblib_ruflet_framework_proc_debug_file_306435;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306435 = {
+37, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306435_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306435 = {
   3,8,1,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306350,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_306350,gem_mrblib_ruflet_framework_proc_reps_306350,
-  gem_mrblib_ruflet_framework_proc_lv_306350,
-  &gem_mrblib_ruflet_framework_proc_debug_306350,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306435,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_306435,gem_mrblib_ruflet_framework_proc_reps_306435,
+  gem_mrblib_ruflet_framework_proc_lv_306435,
+  &gem_mrblib_ruflet_framework_proc_debug_306435,
   37,0,2,2,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_217[2] = {
-  &gem_mrblib_ruflet_framework_proc_irep_306349,
-  &gem_mrblib_ruflet_framework_proc_irep_306350,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_217[3] = {
+  &gem_mrblib_ruflet_framework_proc_irep_306433,
+  &gem_mrblib_ruflet_framework_proc_irep_306434,
+  &gem_mrblib_ruflet_framework_proc_irep_306435,
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_217, 7, (MRB_IVSYM(run_interceptors), MRB_SYM(Mutex), MRB_SYM(new), MRB_IVSYM(run_interceptors_mutex), MRB_SYM(module_function), MRB_SYM(run), MRB_SYM(with_run_interceptor), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_217[28] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_217, 8, (MRB_IVSYM(run_interceptors), MRB_SYM(Mutex), MRB_SYM(new), MRB_IVSYM(run_interceptors_mutex), MRB_SYM(module_function), MRB_SYM(run), MRB_SYM(resolved_run_port), MRB_SYM(with_run_interceptor), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_217[32] = {
 0x52,0x01,0x00,0x1a,0x01,0x00,0x1d,0x01,0x01,0x33,0x01,0x02,0x1a,0x01,0x03,0x30,0x01,0x04,0x6b,0x01,
-0x05,0x00,0x6b,0x01,0x06,0x01,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_217[] = "\x00\xef\x8c\x01\x06\x01\x09\x02\x03\x02\x04\x15";
+0x05,0x00,0x6b,0x01,0x06,0x01,0x6b,0x01,0x07,0x02,0x3d,0x00,};
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_217[] = "\x00\xfd\x8c\x01\x06\x01\x09\x02\x03\x02\x04\x16\x04\x08";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_217 = {
-0, 324, 12, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_217}};
+0, 324, 14, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_217}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_217_ = &gem_mrblib_ruflet_framework_proc_debug_file_217;
 static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_217 = {
-28, 1, &gem_mrblib_ruflet_framework_proc_debug_file_217_};
+32, 1, &gem_mrblib_ruflet_framework_proc_debug_file_217_};
 static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_217 = {
   1,3,0,
   MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_217,
   NULL,gem_mrblib_ruflet_framework_proc_syms_217,gem_mrblib_ruflet_framework_proc_reps_217,
   NULL,					/* lv */
   &gem_mrblib_ruflet_framework_proc_debug_217,
-  28,0,7,2,0
+  32,0,8,3,0
 };
 static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_218[1] = {
 {IREP_TT_SSTR|(6<<2), {"\x30\x2e\x30\x2e\x31\x32"}},
@@ -88187,7 +88269,7 @@ static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_218[1] = {
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_218, 2, (MRB_SYM(VERSION), MRB_SYM_Q(const_defined), ), const);
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_218[19] = {
 0x10,0x02,0x00,0x2f,0x01,0x01,0x01,0x27,0x01,0x00,0x06,0x5c,0x01,0x00,0x1e,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_218[] = "\x00\x9c\x8d\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_218[] = "\x00\xb3\x8d\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_218 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_218}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_218_ = &gem_mrblib_ruflet_framework_proc_debug_file_218;
@@ -88201,7 +88283,7 @@ static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_218 = {
   &gem_mrblib_ruflet_framework_proc_debug_218,
   19,1,2,0,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_306810[48] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_306899[48] = {
 {IREP_TT_SSTR|(22<<2), {"\x63\x75\x70\x65\x72\x74\x69\x6e\x6f\x5f\x61\x63\x74\x69\x6f\x6e\x5f\x73\x68\x65\x65\x74"}},
 {IREP_TT_SSTR|(29<<2), {"\x63\x75\x70\x65\x72\x74\x69\x6e\x6f\x5f\x61\x63\x74\x69\x6f\x6e\x5f\x73\x68\x65\x65\x74\x5f\x61\x63\x74\x69\x6f\x6e"}},
 {IREP_TT_SSTR|(28<<2), {"\x63\x75\x70\x65\x72\x74\x69\x6e\x6f\x5f\x61\x63\x74\x69\x76\x69\x74\x79\x5f\x69\x6e\x64\x69\x63\x61\x74\x6f\x72"}},
@@ -88251,8 +88333,8 @@ static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_306810[48] = {
 {IREP_TT_SSTR|(20<<2), {"\x63\x75\x70\x65\x72\x74\x69\x6e\x6f\x74\x69\x6d\x65\x72\x70\x69\x63\x6b\x65\x72"}},
 {IREP_TT_SSTR|(21<<2), {"\x63\x75\x70\x65\x72\x74\x69\x6e\x6f\x74\x69\x6e\x74\x65\x64\x62\x75\x74\x74\x6f\x6e"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306810, 28, (MRB_SYM(module_function), MRB_SYM(CupertinoActionSheetControl), MRB_SYM(RufletComponents), MRB_SYM(CupertinoActionSheetActionControl), MRB_SYM(CupertinoActivityIndicatorControl), MRB_SYM(CupertinoAlertDialogControl), MRB_SYM(CupertinoAppBarControl), MRB_SYM(CupertinoBottomSheetControl), MRB_SYM(CupertinoButtonControl), MRB_SYM(CupertinoCheckboxControl), MRB_SYM(CupertinoContextMenuControl), MRB_SYM(CupertinoContextMenuActionControl), MRB_SYM(CupertinoDatePickerControl), MRB_SYM(CupertinoDialogActionControl), MRB_SYM(CupertinoFilledButtonControl), MRB_SYM(CupertinoListTileControl), MRB_SYM(CupertinoNavigationBarControl), MRB_SYM(CupertinoPickerControl), MRB_SYM(CupertinoRadioControl), MRB_SYM(CupertinoSegmentedButtonControl), MRB_SYM(CupertinoSliderControl), MRB_SYM(CupertinoSlidingSegmentedButtonControl), MRB_SYM(CupertinoSwitchControl), MRB_SYM(CupertinoTextFieldControl), MRB_SYM(CupertinoTimerPickerControl), MRB_SYM(CupertinoTintedButtonControl), MRB_SYM(freeze), MRB_SYM(CLASS_MAP), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306810[446] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306899, 28, (MRB_SYM(module_function), MRB_SYM(CupertinoActionSheetControl), MRB_SYM(RufletComponents), MRB_SYM(CupertinoActionSheetActionControl), MRB_SYM(CupertinoActivityIndicatorControl), MRB_SYM(CupertinoAlertDialogControl), MRB_SYM(CupertinoAppBarControl), MRB_SYM(CupertinoBottomSheetControl), MRB_SYM(CupertinoButtonControl), MRB_SYM(CupertinoCheckboxControl), MRB_SYM(CupertinoContextMenuControl), MRB_SYM(CupertinoContextMenuActionControl), MRB_SYM(CupertinoDatePickerControl), MRB_SYM(CupertinoDialogActionControl), MRB_SYM(CupertinoFilledButtonControl), MRB_SYM(CupertinoListTileControl), MRB_SYM(CupertinoNavigationBarControl), MRB_SYM(CupertinoPickerControl), MRB_SYM(CupertinoRadioControl), MRB_SYM(CupertinoSegmentedButtonControl), MRB_SYM(CupertinoSliderControl), MRB_SYM(CupertinoSlidingSegmentedButtonControl), MRB_SYM(CupertinoSwitchControl), MRB_SYM(CupertinoTextFieldControl), MRB_SYM(CupertinoTimerPickerControl), MRB_SYM(CupertinoTintedButtonControl), MRB_SYM(freeze), MRB_SYM(CLASS_MAP), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306899[446] = {
 0x30,0x01,0x00,0x5c,0x01,0x00,0x1d,0x02,0x02,0x1f,0x02,0x01,0x5c,0x03,0x01,0x1d,0x04,0x02,0x1f,0x04,
 0x03,0x5c,0x05,0x02,0x1d,0x06,0x02,0x1f,0x06,0x04,0x5c,0x07,0x03,0x1d,0x08,0x02,0x1f,0x08,0x05,0x5c,
 0x09,0x04,0x1d,0x0a,0x02,0x1f,0x0a,0x06,0x5c,0x0b,0x05,0x1d,0x0c,0x02,0x1f,0x0c,0x07,0x5c,0x0d,0x06,
@@ -88276,87 +88358,87 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306810[446] = {
 0x59,0x2c,0x1d,0x5a,0x02,0x1f,0x5a,0x16,0x5c,0x5b,0x2d,0x1d,0x5c,0x02,0x1f,0x5c,0x17,0x5c,0x5d,0x2e,
 0x1d,0x5e,0x02,0x1f,0x5e,0x18,0x5c,0x5f,0x2f,0x1d,0x60,0x02,0x1f,0x60,0x19,0x5e,0x01,0x30,0x33,0x01,
 0x1a,0x1e,0x01,0x1b,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_306810[] = "\x00\xc1\x8d\x01\x03\x03\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306810 = {
-0, 324, 100, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306810}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306810_ = &gem_mrblib_ruflet_framework_proc_debug_file_306810;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306810 = {
-446, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306810_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306810 = {
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_306899[] = "\x00\xd8\x8d\x01\x03\x03\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306899 = {
+0, 324, 100, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306899}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306899_ = &gem_mrblib_ruflet_framework_proc_debug_file_306899;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306899 = {
+446, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306899_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306899 = {
   1,97,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306810,
-  gem_mrblib_ruflet_framework_proc_pool_306810,gem_mrblib_ruflet_framework_proc_syms_306810,NULL,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306899,
+  gem_mrblib_ruflet_framework_proc_pool_306899,gem_mrblib_ruflet_framework_proc_syms_306899,NULL,
   NULL,					/* lv */
-  &gem_mrblib_ruflet_framework_proc_debug_306810,
+  &gem_mrblib_ruflet_framework_proc_debug_306899,
   446,48,28,0,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_306809[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_306810,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_306898[1] = {
+  &gem_mrblib_ruflet_framework_proc_irep_306899,
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306809, 1, (MRB_SYM(RufletControls), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306809[10] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306898, 1, (MRB_SYM(RufletControls), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306898[10] = {
 0x11,0x01,0x68,0x01,0x00,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_306809[] = "\x00\xc0\x8d\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306809 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306809}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306809_ = &gem_mrblib_ruflet_framework_proc_debug_file_306809;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306809 = {
-10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306809_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306809 = {
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_306898[] = "\x00\xd7\x8d\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306898 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306898}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306898_ = &gem_mrblib_ruflet_framework_proc_debug_file_306898;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306898 = {
+10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306898_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306898 = {
   1,2,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306809,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_306809,gem_mrblib_ruflet_framework_proc_reps_306809,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306898,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_306898,gem_mrblib_ruflet_framework_proc_reps_306898,
   NULL,					/* lv */
-  &gem_mrblib_ruflet_framework_proc_debug_306809,
+  &gem_mrblib_ruflet_framework_proc_debug_306898,
   10,0,1,1,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_306808[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_306809,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_306897[1] = {
+  &gem_mrblib_ruflet_framework_proc_irep_306898,
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306808, 1, (MRB_SYM(Cupertinos), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306808[10] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306897, 1, (MRB_SYM(Cupertinos), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306897[10] = {
 0x11,0x01,0x68,0x01,0x00,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_306808[] = "\x00\xbf\x8d\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306808 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306808}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306808_ = &gem_mrblib_ruflet_framework_proc_debug_file_306808;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306808 = {
-10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306808_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306808 = {
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_306897[] = "\x00\xd6\x8d\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306897 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306897}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306897_ = &gem_mrblib_ruflet_framework_proc_debug_file_306897;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306897 = {
+10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306897_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306897 = {
   1,2,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306808,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_306808,gem_mrblib_ruflet_framework_proc_reps_306808,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306897,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_306897,gem_mrblib_ruflet_framework_proc_reps_306897,
   NULL,					/* lv */
-  &gem_mrblib_ruflet_framework_proc_debug_306808,
+  &gem_mrblib_ruflet_framework_proc_debug_306897,
   10,0,1,1,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_306807[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_306808,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_306896[1] = {
+  &gem_mrblib_ruflet_framework_proc_irep_306897,
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306807, 1, (MRB_SYM(Controls), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306807[10] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_306896, 1, (MRB_SYM(Controls), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_306896[10] = {
 0x11,0x01,0x68,0x01,0x00,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_306807[] = "\x00\xbe\x8d\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306807 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306807}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306807_ = &gem_mrblib_ruflet_framework_proc_debug_file_306807;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306807 = {
-10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306807_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306807 = {
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_306896[] = "\x00\xd5\x8d\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_306896 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_306896}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_306896_ = &gem_mrblib_ruflet_framework_proc_debug_file_306896;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_306896 = {
+10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_306896_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_306896 = {
   1,2,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306807,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_306807,gem_mrblib_ruflet_framework_proc_reps_306807,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_306896,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_306896,gem_mrblib_ruflet_framework_proc_reps_306896,
   NULL,					/* lv */
-  &gem_mrblib_ruflet_framework_proc_debug_306807,
+  &gem_mrblib_ruflet_framework_proc_debug_306896,
   10,0,1,1,0
 };
 static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_219[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_306807,
+  &gem_mrblib_ruflet_framework_proc_irep_306896,
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_219, 1, (MRB_SYM(UI), ), const);
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_219[10] = {
 0x11,0x01,0x68,0x01,0x00,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_219[] = "\x00\xbd\x8d\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_219[] = "\x00\xd4\x8d\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_219 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_219}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_219_ = &gem_mrblib_ruflet_framework_proc_debug_file_219;
@@ -88370,7 +88452,7 @@ static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_219 = {
   &gem_mrblib_ruflet_framework_proc_debug_219,
   10,0,1,1,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_307037[167] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_307126[167] = {
 {IREP_TT_SSTR|(12<<2), {"\x61\x6c\x65\x72\x74\x5f\x64\x69\x61\x6c\x6f\x67"}},
 {IREP_TT_SSTR|(11<<2), {"\x61\x6c\x65\x72\x74\x64\x69\x61\x6c\x6f\x67"}},
 {IREP_TT_SSTR|(5<<2), {"\x61\x75\x64\x69\x6f"}},
@@ -88539,8 +88621,8 @@ static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_307037[167] = {
 {IREP_TT_SSTR|(8<<2), {"\x77\x65\x62\x5f\x76\x69\x65\x77"}},
 {IREP_TT_SSTR|(7<<2), {"\x77\x65\x62\x76\x69\x65\x77"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307037, 96, (MRB_SYM(module_function), MRB_SYM(AlertDialogControl), MRB_SYM(RufletComponents), MRB_SYM(AudioControl), MRB_SYM(AppBarControl), MRB_SYM(AutoCompleteControl), MRB_SYM(AutoCompleteSuggestionControl), MRB_SYM(BadgeControl), MRB_SYM(BannerControl), MRB_SYM(BottomAppBarControl), MRB_SYM(BottomSheetControl), MRB_SYM(BarChartControl), MRB_SYM(BarChartGroupControl), MRB_SYM(BarChartRodControl), MRB_SYM(BarChartRodStackItemControl), MRB_SYM(ButtonControl), MRB_SYM(CardControl), MRB_SYM(CandlestickChartControl), MRB_SYM(CandlestickChartSpotControl), MRB_SYM(ChartAxisControl), MRB_SYM(ChartAxisLabelControl), MRB_SYM(CheckboxControl), MRB_SYM(ChipControl), MRB_SYM(CircleAvatarControl), MRB_SYM(ContainerControl), MRB_SYM(ContextMenuControl), MRB_SYM(DataCellControl), MRB_SYM(DataColumnControl), MRB_SYM(DataRowControl), MRB_SYM(DataTableControl), MRB_SYM(DatePickerControl), MRB_SYM(DateRangePickerControl), MRB_SYM(DividerControl), MRB_SYM(DropdownControl), MRB_SYM(Dropdown2Control), MRB_SYM(DropdownOptionControl), MRB_SYM(ExpansionPanelControl), MRB_SYM(ExpansionPanelListControl), MRB_SYM(ExpansionTileControl), MRB_SYM(FilledButtonControl), MRB_SYM(FilledIconButtonControl), MRB_SYM(FilledTonalButtonControl), MRB_SYM(FilledTonalIconButtonControl), MRB_SYM(FloatingActionButtonControl), MRB_SYM(IconButtonControl), MRB_SYM(LineChartControl), MRB_SYM(LineChartDataControl), MRB_SYM(LineChartDataPointControl), MRB_SYM(ListTileControl), MRB_SYM(MenuBarControl), MRB_SYM(MenuItemButtonControl), MRB_SYM(NavigationBarControl), MRB_SYM(NavigationBarDestinationControl), MRB_SYM(NavigationDrawerControl), MRB_SYM(NavigationDrawerDestinationControl), MRB_SYM(NavigationRailControl), MRB_SYM(NavigationRailDestinationControl), MRB_SYM(OptionControl), MRB_SYM(OutlinedButtonControl), MRB_SYM(OutlinedIconButtonControl), MRB_SYM(PopupMenuButtonControl), MRB_SYM(PopupMenuItemControl), MRB_SYM(PieChartControl), MRB_SYM(PieChartSectionControl), MRB_SYM(ProgressBarControl), MRB_SYM(ProgressRingControl), MRB_SYM(RadioControl), MRB_SYM(RadioGroupControl), MRB_SYM(RadarChartControl), MRB_SYM(RadarChartTitleControl), MRB_SYM(RadarDataSetControl), MRB_SYM(RadarDataSetEntryControl), MRB_SYM(RangeSliderControl), MRB_SYM(ReorderableListViewControl), MRB_SYM(SearchBarControl), MRB_SYM(SegmentControl), MRB_SYM(SegmentedButtonControl), MRB_SYM(SelectionAreaControl), MRB_SYM(ScatterChartControl), MRB_SYM(ScatterChartSpotControl), MRB_SYM(SliderControl), MRB_SYM(SnackBarControl), MRB_SYM(SnackBarActionControl), MRB_SYM(SubmenuButtonControl), MRB_SYM(SwitchControl), MRB_SYM(TabControl), MRB_SYM(TabBarControl), MRB_SYM(TabBarViewControl), MRB_SYM(TabsControl), MRB_SYM(TextButtonControl), MRB_SYM(TextFieldControl), MRB_SYM(TimePickerControl), MRB_SYM(VerticalDividerControl), MRB_SYM(WebViewControl), MRB_SYM(freeze), MRB_SYM(CLASS_MAP), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307037[1755] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307126, 96, (MRB_SYM(module_function), MRB_SYM(AlertDialogControl), MRB_SYM(RufletComponents), MRB_SYM(AudioControl), MRB_SYM(AppBarControl), MRB_SYM(AutoCompleteControl), MRB_SYM(AutoCompleteSuggestionControl), MRB_SYM(BadgeControl), MRB_SYM(BannerControl), MRB_SYM(BottomAppBarControl), MRB_SYM(BottomSheetControl), MRB_SYM(BarChartControl), MRB_SYM(BarChartGroupControl), MRB_SYM(BarChartRodControl), MRB_SYM(BarChartRodStackItemControl), MRB_SYM(ButtonControl), MRB_SYM(CardControl), MRB_SYM(CandlestickChartControl), MRB_SYM(CandlestickChartSpotControl), MRB_SYM(ChartAxisControl), MRB_SYM(ChartAxisLabelControl), MRB_SYM(CheckboxControl), MRB_SYM(ChipControl), MRB_SYM(CircleAvatarControl), MRB_SYM(ContainerControl), MRB_SYM(ContextMenuControl), MRB_SYM(DataCellControl), MRB_SYM(DataColumnControl), MRB_SYM(DataRowControl), MRB_SYM(DataTableControl), MRB_SYM(DatePickerControl), MRB_SYM(DateRangePickerControl), MRB_SYM(DividerControl), MRB_SYM(DropdownControl), MRB_SYM(Dropdown2Control), MRB_SYM(DropdownOptionControl), MRB_SYM(ExpansionPanelControl), MRB_SYM(ExpansionPanelListControl), MRB_SYM(ExpansionTileControl), MRB_SYM(FilledButtonControl), MRB_SYM(FilledIconButtonControl), MRB_SYM(FilledTonalButtonControl), MRB_SYM(FilledTonalIconButtonControl), MRB_SYM(FloatingActionButtonControl), MRB_SYM(IconButtonControl), MRB_SYM(LineChartControl), MRB_SYM(LineChartDataControl), MRB_SYM(LineChartDataPointControl), MRB_SYM(ListTileControl), MRB_SYM(MenuBarControl), MRB_SYM(MenuItemButtonControl), MRB_SYM(NavigationBarControl), MRB_SYM(NavigationBarDestinationControl), MRB_SYM(NavigationDrawerControl), MRB_SYM(NavigationDrawerDestinationControl), MRB_SYM(NavigationRailControl), MRB_SYM(NavigationRailDestinationControl), MRB_SYM(OptionControl), MRB_SYM(OutlinedButtonControl), MRB_SYM(OutlinedIconButtonControl), MRB_SYM(PopupMenuButtonControl), MRB_SYM(PopupMenuItemControl), MRB_SYM(PieChartControl), MRB_SYM(PieChartSectionControl), MRB_SYM(ProgressBarControl), MRB_SYM(ProgressRingControl), MRB_SYM(RadioControl), MRB_SYM(RadioGroupControl), MRB_SYM(RadarChartControl), MRB_SYM(RadarChartTitleControl), MRB_SYM(RadarDataSetControl), MRB_SYM(RadarDataSetEntryControl), MRB_SYM(RangeSliderControl), MRB_SYM(ReorderableListViewControl), MRB_SYM(SearchBarControl), MRB_SYM(SegmentControl), MRB_SYM(SegmentedButtonControl), MRB_SYM(SelectionAreaControl), MRB_SYM(ScatterChartControl), MRB_SYM(ScatterChartSpotControl), MRB_SYM(SliderControl), MRB_SYM(SnackBarControl), MRB_SYM(SnackBarActionControl), MRB_SYM(SubmenuButtonControl), MRB_SYM(SwitchControl), MRB_SYM(TabControl), MRB_SYM(TabBarControl), MRB_SYM(TabBarViewControl), MRB_SYM(TabsControl), MRB_SYM(TextButtonControl), MRB_SYM(TextFieldControl), MRB_SYM(TimePickerControl), MRB_SYM(VerticalDividerControl), MRB_SYM(WebViewControl), MRB_SYM(freeze), MRB_SYM(CLASS_MAP), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307126[1755] = {
 0x30,0x01,0x00,0x5c,0x01,0x00,0x1d,0x02,0x02,0x1f,0x02,0x01,0x5c,0x03,0x01,0x1d,0x04,0x02,0x1f,0x04,
 0x01,0x5c,0x05,0x02,0x1d,0x06,0x02,0x1f,0x06,0x03,0x5c,0x07,0x03,0x1d,0x08,0x02,0x1f,0x08,0x04,0x5c,
 0x09,0x04,0x1d,0x0a,0x02,0x1f,0x0a,0x04,0x5c,0x0b,0x05,0x1d,0x0c,0x02,0x1f,0x0c,0x05,0x5c,0x0d,0x06,
@@ -88629,87 +88711,87 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307037[1755] = {
 0x5c,0x01,0x49,0xa4,0x73,0x1d,0x01,0x4a,0x02,0x73,0x1f,0x01,0x4a,0x5c,0x73,0x5c,0x01,0x4b,0xa5,0x73,
 0x1d,0x01,0x4c,0x02,0x73,0x1f,0x01,0x4c,0x5d,0x73,0x5c,0x01,0x4d,0xa6,0x73,0x1d,0x01,0x4e,0x02,0x73,
 0x1f,0x01,0x4e,0x5d,0x5e,0x01,0xa7,0x33,0x01,0x5e,0x1e,0x01,0x5f,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_307037[] = "\x00\xcf\x8e\x01\x03\x03\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x0d\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307037 = {
-0, 324, 338, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307037}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307037_ = &gem_mrblib_ruflet_framework_proc_debug_file_307037;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307037 = {
-1755, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307037_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307037 = {
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_307126[] = "\x00\xe6\x8e\x01\x03\x03\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x0d\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01\x0f\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307126 = {
+0, 324, 338, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307126}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307126_ = &gem_mrblib_ruflet_framework_proc_debug_file_307126;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307126 = {
+1755, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307126_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307126 = {
   1,335,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307037,
-  gem_mrblib_ruflet_framework_proc_pool_307037,gem_mrblib_ruflet_framework_proc_syms_307037,NULL,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307126,
+  gem_mrblib_ruflet_framework_proc_pool_307126,gem_mrblib_ruflet_framework_proc_syms_307126,NULL,
   NULL,					/* lv */
-  &gem_mrblib_ruflet_framework_proc_debug_307037,
+  &gem_mrblib_ruflet_framework_proc_debug_307126,
   1755,167,96,0,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_307036[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_307037,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_307125[1] = {
+  &gem_mrblib_ruflet_framework_proc_irep_307126,
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307036, 1, (MRB_SYM(RufletControls), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307036[10] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307125, 1, (MRB_SYM(RufletControls), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307125[10] = {
 0x11,0x01,0x68,0x01,0x00,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_307036[] = "\x00\xce\x8e\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307036 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307036}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307036_ = &gem_mrblib_ruflet_framework_proc_debug_file_307036;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307036 = {
-10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307036_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307036 = {
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_307125[] = "\x00\xe5\x8e\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307125 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307125}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307125_ = &gem_mrblib_ruflet_framework_proc_debug_file_307125;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307125 = {
+10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307125_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307125 = {
   1,2,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307036,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_307036,gem_mrblib_ruflet_framework_proc_reps_307036,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307125,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_307125,gem_mrblib_ruflet_framework_proc_reps_307125,
   NULL,					/* lv */
-  &gem_mrblib_ruflet_framework_proc_debug_307036,
+  &gem_mrblib_ruflet_framework_proc_debug_307125,
   10,0,1,1,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_307035[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_307036,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_307124[1] = {
+  &gem_mrblib_ruflet_framework_proc_irep_307125,
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307035, 1, (MRB_SYM(Materials), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307035[10] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307124, 1, (MRB_SYM(Materials), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307124[10] = {
 0x11,0x01,0x68,0x01,0x00,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_307035[] = "\x00\xcd\x8e\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307035 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307035}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307035_ = &gem_mrblib_ruflet_framework_proc_debug_file_307035;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307035 = {
-10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307035_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307035 = {
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_307124[] = "\x00\xe4\x8e\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307124 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307124}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307124_ = &gem_mrblib_ruflet_framework_proc_debug_file_307124;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307124 = {
+10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307124_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307124 = {
   1,2,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307035,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_307035,gem_mrblib_ruflet_framework_proc_reps_307035,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307124,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_307124,gem_mrblib_ruflet_framework_proc_reps_307124,
   NULL,					/* lv */
-  &gem_mrblib_ruflet_framework_proc_debug_307035,
+  &gem_mrblib_ruflet_framework_proc_debug_307124,
   10,0,1,1,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_307034[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_307035,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_307123[1] = {
+  &gem_mrblib_ruflet_framework_proc_irep_307124,
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307034, 1, (MRB_SYM(Controls), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307034[10] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307123, 1, (MRB_SYM(Controls), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307123[10] = {
 0x11,0x01,0x68,0x01,0x00,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_307034[] = "\x00\xcc\x8e\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307034 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307034}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307034_ = &gem_mrblib_ruflet_framework_proc_debug_file_307034;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307034 = {
-10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307034_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307034 = {
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_307123[] = "\x00\xe3\x8e\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307123 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307123}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307123_ = &gem_mrblib_ruflet_framework_proc_debug_file_307123;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307123 = {
+10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307123_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307123 = {
   1,2,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307034,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_307034,gem_mrblib_ruflet_framework_proc_reps_307034,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307123,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_307123,gem_mrblib_ruflet_framework_proc_reps_307123,
   NULL,					/* lv */
-  &gem_mrblib_ruflet_framework_proc_debug_307034,
+  &gem_mrblib_ruflet_framework_proc_debug_307123,
   10,0,1,1,0
 };
 static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_220[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_307034,
+  &gem_mrblib_ruflet_framework_proc_irep_307123,
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_220, 1, (MRB_SYM(UI), ), const);
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_220[10] = {
 0x11,0x01,0x68,0x01,0x00,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_220[] = "\x00\xcb\x8e\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_220[] = "\x00\xe2\x8e\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_220 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_220}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_220_ = &gem_mrblib_ruflet_framework_proc_debug_file_220;
@@ -88723,7 +88805,7 @@ static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_220 = {
   &gem_mrblib_ruflet_framework_proc_debug_220,
   10,0,1,1,0
 };
-static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_307264[75] = {
+static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_307353[75] = {
 {IREP_TT_SSTR|(17<<2), {"\x61\x6e\x69\x6d\x61\x74\x65\x64\x5f\x73\x77\x69\x74\x63\x68\x65\x72"}},
 {IREP_TT_SSTR|(16<<2), {"\x61\x6e\x69\x6d\x61\x74\x65\x64\x73\x77\x69\x74\x63\x68\x65\x72"}},
 {IREP_TT_SSTR|(3<<2), {"\x61\x72\x63"}},
@@ -88800,8 +88882,8 @@ static const mrb_irep_pool gem_mrblib_ruflet_framework_proc_pool_307264[75] = {
 {IREP_TT_SSTR|(16<<2), {"\x77\x69\x6e\x64\x6f\x77\x5f\x64\x72\x61\x67\x5f\x61\x72\x65\x61"}},
 {IREP_TT_SSTR|(14<<2), {"\x77\x69\x6e\x64\x6f\x77\x64\x72\x61\x67\x61\x72\x65\x61"}},
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307264, 57, (MRB_SYM(module_function), MRB_SYM(AnimatedSwitcherControl), MRB_SYM(RufletComponents), MRB_SYM(ArcControl), MRB_SYM(AutofillGroupControl), MRB_SYM(BasePageControl), MRB_SYM(BrowserContextMenuControl), MRB_SYM(CanvasControl), MRB_SYM(CircleControl), MRB_SYM(ColorControl), MRB_SYM(ColumnControl), MRB_SYM(DialogsControl), MRB_SYM(DismissibleControl), MRB_SYM(DragTargetControl), MRB_SYM(DraggableControl), MRB_SYM(FillControl), MRB_SYM(FletAppControl), MRB_SYM(GestureDetectorControl), MRB_SYM(GridViewControl), MRB_SYM(HeroControl), MRB_SYM(IconControl), MRB_SYM(ImageControl), MRB_SYM(InteractiveViewerControl), MRB_SYM(KeyboardListenerControl), MRB_SYM(LineControl), MRB_SYM(ListViewControl), MRB_SYM(MarkdownControl), MRB_SYM(MergeSemanticsControl), MRB_SYM(OvalControl), MRB_SYM(OverlayControl), MRB_SYM(PageControl), MRB_SYM(PageViewControl), MRB_SYM(PageletControl), MRB_SYM(PathControl), MRB_SYM(PlaceholderControl), MRB_SYM(PointsControl), MRB_SYM(RectControl), MRB_SYM(ReorderableDragHandleControl), MRB_SYM(ResponsiveRowControl), MRB_SYM(RowControl), MRB_SYM(RotatedBoxControl), MRB_SYM(SafeAreaControl), MRB_SYM(ScreenshotControl), MRB_SYM(SemanticsControl), MRB_SYM(ServiceRegistryControl), MRB_SYM(ShaderMaskControl), MRB_SYM(ShadowControl), MRB_SYM(ShimmerControl), MRB_SYM(StackControl), MRB_SYM(TextControl), MRB_SYM(TextSpanControl), MRB_SYM(TransparentPointerControl), MRB_SYM(ViewControl), MRB_SYM(WindowControl), MRB_SYM(WindowDragAreaControl), MRB_SYM(freeze), MRB_SYM(CLASS_MAP), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307264[689] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307353, 57, (MRB_SYM(module_function), MRB_SYM(AnimatedSwitcherControl), MRB_SYM(RufletComponents), MRB_SYM(ArcControl), MRB_SYM(AutofillGroupControl), MRB_SYM(BasePageControl), MRB_SYM(BrowserContextMenuControl), MRB_SYM(CanvasControl), MRB_SYM(CircleControl), MRB_SYM(ColorControl), MRB_SYM(ColumnControl), MRB_SYM(DialogsControl), MRB_SYM(DismissibleControl), MRB_SYM(DragTargetControl), MRB_SYM(DraggableControl), MRB_SYM(FillControl), MRB_SYM(FletAppControl), MRB_SYM(GestureDetectorControl), MRB_SYM(GridViewControl), MRB_SYM(HeroControl), MRB_SYM(IconControl), MRB_SYM(ImageControl), MRB_SYM(InteractiveViewerControl), MRB_SYM(KeyboardListenerControl), MRB_SYM(LineControl), MRB_SYM(ListViewControl), MRB_SYM(MarkdownControl), MRB_SYM(MergeSemanticsControl), MRB_SYM(OvalControl), MRB_SYM(OverlayControl), MRB_SYM(PageControl), MRB_SYM(PageViewControl), MRB_SYM(PageletControl), MRB_SYM(PathControl), MRB_SYM(PlaceholderControl), MRB_SYM(PointsControl), MRB_SYM(RectControl), MRB_SYM(ReorderableDragHandleControl), MRB_SYM(ResponsiveRowControl), MRB_SYM(RowControl), MRB_SYM(RotatedBoxControl), MRB_SYM(SafeAreaControl), MRB_SYM(ScreenshotControl), MRB_SYM(SemanticsControl), MRB_SYM(ServiceRegistryControl), MRB_SYM(ShaderMaskControl), MRB_SYM(ShadowControl), MRB_SYM(ShimmerControl), MRB_SYM(StackControl), MRB_SYM(TextControl), MRB_SYM(TextSpanControl), MRB_SYM(TransparentPointerControl), MRB_SYM(ViewControl), MRB_SYM(WindowControl), MRB_SYM(WindowDragAreaControl), MRB_SYM(freeze), MRB_SYM(CLASS_MAP), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307353[689] = {
 0x30,0x01,0x00,0x5c,0x01,0x00,0x1d,0x02,0x02,0x1f,0x02,0x01,0x5c,0x03,0x01,0x1d,0x04,0x02,0x1f,0x04,
 0x01,0x5c,0x05,0x02,0x1d,0x06,0x02,0x1f,0x06,0x03,0x5c,0x07,0x03,0x1d,0x08,0x02,0x1f,0x08,0x04,0x5c,
 0x09,0x04,0x1d,0x0a,0x02,0x1f,0x0a,0x04,0x5c,0x0b,0x05,0x1d,0x0c,0x02,0x1f,0x0c,0x05,0x5c,0x0d,0x06,
@@ -88837,87 +88919,87 @@ static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307264[689] = {
 0x8e,0x33,0x5c,0x8f,0x47,0x1d,0x90,0x02,0x1f,0x90,0x34,0x5c,0x91,0x48,0x1d,0x92,0x02,0x1f,0x92,0x35,
 0x5c,0x93,0x49,0x1d,0x94,0x02,0x1f,0x94,0x36,0x5c,0x95,0x4a,0x1d,0x96,0x02,0x1f,0x96,0x36,0x5e,0x01,
 0x4b,0x33,0x01,0x37,0x1e,0x01,0x38,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_307264[] = "\x00\xbf\x90\x01\x03\x03\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307264 = {
-0, 324, 154, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307264}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307264_ = &gem_mrblib_ruflet_framework_proc_debug_file_307264;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307264 = {
-689, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307264_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307264 = {
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_307353[] = "\x00\xd6\x90\x01\x03\x03\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01\x09\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307353 = {
+0, 324, 154, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307353}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307353_ = &gem_mrblib_ruflet_framework_proc_debug_file_307353;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307353 = {
+689, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307353_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307353 = {
   1,151,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307264,
-  gem_mrblib_ruflet_framework_proc_pool_307264,gem_mrblib_ruflet_framework_proc_syms_307264,NULL,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307353,
+  gem_mrblib_ruflet_framework_proc_pool_307353,gem_mrblib_ruflet_framework_proc_syms_307353,NULL,
   NULL,					/* lv */
-  &gem_mrblib_ruflet_framework_proc_debug_307264,
+  &gem_mrblib_ruflet_framework_proc_debug_307353,
   689,75,57,0,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_307263[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_307264,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_307352[1] = {
+  &gem_mrblib_ruflet_framework_proc_irep_307353,
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307263, 1, (MRB_SYM(RufletControls), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307263[10] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307352, 1, (MRB_SYM(RufletControls), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307352[10] = {
 0x11,0x01,0x68,0x01,0x00,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_307263[] = "\x00\xbe\x90\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307263 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307263}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307263_ = &gem_mrblib_ruflet_framework_proc_debug_file_307263;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307263 = {
-10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307263_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307263 = {
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_307352[] = "\x00\xd5\x90\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307352 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307352}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307352_ = &gem_mrblib_ruflet_framework_proc_debug_file_307352;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307352 = {
+10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307352_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307352 = {
   1,2,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307263,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_307263,gem_mrblib_ruflet_framework_proc_reps_307263,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307352,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_307352,gem_mrblib_ruflet_framework_proc_reps_307352,
   NULL,					/* lv */
-  &gem_mrblib_ruflet_framework_proc_debug_307263,
+  &gem_mrblib_ruflet_framework_proc_debug_307352,
   10,0,1,1,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_307262[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_307263,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_307351[1] = {
+  &gem_mrblib_ruflet_framework_proc_irep_307352,
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307262, 1, (MRB_SYM(Shared), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307262[10] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307351, 1, (MRB_SYM(Shared), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307351[10] = {
 0x11,0x01,0x68,0x01,0x00,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_307262[] = "\x00\xbd\x90\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307262 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307262}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307262_ = &gem_mrblib_ruflet_framework_proc_debug_file_307262;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307262 = {
-10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307262_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307262 = {
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_307351[] = "\x00\xd4\x90\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307351 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307351}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307351_ = &gem_mrblib_ruflet_framework_proc_debug_file_307351;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307351 = {
+10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307351_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307351 = {
   1,2,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307262,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_307262,gem_mrblib_ruflet_framework_proc_reps_307262,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307351,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_307351,gem_mrblib_ruflet_framework_proc_reps_307351,
   NULL,					/* lv */
-  &gem_mrblib_ruflet_framework_proc_debug_307262,
+  &gem_mrblib_ruflet_framework_proc_debug_307351,
   10,0,1,1,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_307261[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_307262,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_307350[1] = {
+  &gem_mrblib_ruflet_framework_proc_irep_307351,
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307261, 1, (MRB_SYM(Controls), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307261[10] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307350, 1, (MRB_SYM(Controls), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307350[10] = {
 0x11,0x01,0x68,0x01,0x00,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_307261[] = "\x00\xbc\x90\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307261 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307261}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307261_ = &gem_mrblib_ruflet_framework_proc_debug_file_307261;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307261 = {
-10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307261_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307261 = {
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_307350[] = "\x00\xd3\x90\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307350 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307350}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307350_ = &gem_mrblib_ruflet_framework_proc_debug_file_307350;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307350 = {
+10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307350_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307350 = {
   1,2,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307261,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_307261,gem_mrblib_ruflet_framework_proc_reps_307261,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307350,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_307350,gem_mrblib_ruflet_framework_proc_reps_307350,
   NULL,					/* lv */
-  &gem_mrblib_ruflet_framework_proc_debug_307261,
+  &gem_mrblib_ruflet_framework_proc_debug_307350,
   10,0,1,1,0
 };
 static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_221[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_307261,
+  &gem_mrblib_ruflet_framework_proc_irep_307350,
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_221, 1, (MRB_SYM(UI), ), const);
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_221[10] = {
 0x11,0x01,0x68,0x01,0x00,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_221[] = "\x00\xbb\x90\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_221[] = "\x00\xd2\x90\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_221 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_221}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_221_ = &gem_mrblib_ruflet_framework_proc_debug_file_221;
@@ -88931,51 +89013,51 @@ static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_221 = {
   &gem_mrblib_ruflet_framework_proc_debug_221,
   10,0,1,1,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307489, 6, (MRB_SYM(module_function), MRB_SYM(CLASS_MAP), MRB_SYM(RufletControls), MRB_SYM(Cupertinos), MRB_SYM(Controls), MRB_SYM(freeze), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307489[23] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307578, 6, (MRB_SYM(module_function), MRB_SYM(CLASS_MAP), MRB_SYM(RufletControls), MRB_SYM(Cupertinos), MRB_SYM(Controls), MRB_SYM(freeze), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307578[23] = {
 0x30,0x01,0x00,0x1d,0x01,0x04,0x1f,0x01,0x03,0x1f,0x01,0x02,0x1f,0x01,0x01,0x33,0x01,0x05,0x1e,0x01,
 0x01,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_307489[] = "\x00\x9d\x91\x01\x03\x02";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307489 = {
-0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307489}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307489_ = &gem_mrblib_ruflet_framework_proc_debug_file_307489;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307489 = {
-23, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307489_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307489 = {
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_307578[] = "\x00\xb4\x91\x01\x03\x02";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307578 = {
+0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307578}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307578_ = &gem_mrblib_ruflet_framework_proc_debug_file_307578;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307578 = {
+23, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307578_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307578 = {
   1,3,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307489,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_307489,NULL,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307578,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_307578,NULL,
   NULL,					/* lv */
-  &gem_mrblib_ruflet_framework_proc_debug_307489,
+  &gem_mrblib_ruflet_framework_proc_debug_307578,
   23,0,6,0,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_307488[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_307489,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_307577[1] = {
+  &gem_mrblib_ruflet_framework_proc_irep_307578,
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307488, 1, (MRB_SYM(CupertinoControlFactory), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307488[10] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307577, 1, (MRB_SYM(CupertinoControlFactory), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307577[10] = {
 0x11,0x01,0x68,0x01,0x00,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_307488[] = "\x00\x9c\x91\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307488 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307488}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307488_ = &gem_mrblib_ruflet_framework_proc_debug_file_307488;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307488 = {
-10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307488_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307488 = {
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_307577[] = "\x00\xb3\x91\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307577 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307577}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307577_ = &gem_mrblib_ruflet_framework_proc_debug_file_307577;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307577 = {
+10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307577_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307577 = {
   1,2,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307488,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_307488,gem_mrblib_ruflet_framework_proc_reps_307488,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307577,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_307577,gem_mrblib_ruflet_framework_proc_reps_307577,
   NULL,					/* lv */
-  &gem_mrblib_ruflet_framework_proc_debug_307488,
+  &gem_mrblib_ruflet_framework_proc_debug_307577,
   10,0,1,1,0
 };
 static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_222[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_307488,
+  &gem_mrblib_ruflet_framework_proc_irep_307577,
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_222, 1, (MRB_SYM(UI), ), const);
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_222[10] = {
 0x11,0x01,0x68,0x01,0x00,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_222[] = "\x00\x9b\x91\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_222[] = "\x00\xb2\x91\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_222 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_222}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_222_ = &gem_mrblib_ruflet_framework_proc_debug_file_222;
@@ -88989,51 +89071,51 @@ static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_222 = {
   &gem_mrblib_ruflet_framework_proc_debug_222,
   10,0,1,1,0
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307714, 6, (MRB_SYM(module_function), MRB_SYM(CLASS_MAP), MRB_SYM(RufletControls), MRB_SYM(Materials), MRB_SYM(Controls), MRB_SYM(freeze), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307714[23] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307803, 6, (MRB_SYM(module_function), MRB_SYM(CLASS_MAP), MRB_SYM(RufletControls), MRB_SYM(Materials), MRB_SYM(Controls), MRB_SYM(freeze), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307803[23] = {
 0x30,0x01,0x00,0x1d,0x01,0x04,0x1f,0x01,0x03,0x1f,0x01,0x02,0x1f,0x01,0x01,0x33,0x01,0x05,0x1e,0x01,
 0x01,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_307714[] = "\x00\xad\x91\x01\x03\x02";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307714 = {
-0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307714}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307714_ = &gem_mrblib_ruflet_framework_proc_debug_file_307714;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307714 = {
-23, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307714_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307714 = {
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_307803[] = "\x00\xc4\x91\x01\x03\x02";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307803 = {
+0, 324, 6, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307803}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307803_ = &gem_mrblib_ruflet_framework_proc_debug_file_307803;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307803 = {
+23, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307803_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307803 = {
   1,3,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307714,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_307714,NULL,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307803,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_307803,NULL,
   NULL,					/* lv */
-  &gem_mrblib_ruflet_framework_proc_debug_307714,
+  &gem_mrblib_ruflet_framework_proc_debug_307803,
   23,0,6,0,0
 };
-static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_307713[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_307714,
+static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_307802[1] = {
+  &gem_mrblib_ruflet_framework_proc_irep_307803,
 };
-mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307713, 1, (MRB_SYM(MaterialControlFactory), ), const);
-static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307713[10] = {
+mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_307802, 1, (MRB_SYM(MaterialControlFactory), ), const);
+static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_307802[10] = {
 0x11,0x01,0x68,0x01,0x00,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_307713[] = "\x00\xac\x91\x01";
-static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307713 = {
-0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307713}};
-static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307713_ = &gem_mrblib_ruflet_framework_proc_debug_file_307713;
-static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307713 = {
-10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307713_};
-static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307713 = {
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_307802[] = "\x00\xc3\x91\x01";
+static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_307802 = {
+0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_307802}};
+static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_307802_ = &gem_mrblib_ruflet_framework_proc_debug_file_307802;
+static mrb_irep_debug_info gem_mrblib_ruflet_framework_proc_debug_307802 = {
+10, 1, &gem_mrblib_ruflet_framework_proc_debug_file_307802_};
+static const mrb_irep gem_mrblib_ruflet_framework_proc_irep_307802 = {
   1,2,0,
-  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307713,
-  NULL,gem_mrblib_ruflet_framework_proc_syms_307713,gem_mrblib_ruflet_framework_proc_reps_307713,
+  MRB_IREP_STATIC,gem_mrblib_ruflet_framework_proc_iseq_307802,
+  NULL,gem_mrblib_ruflet_framework_proc_syms_307802,gem_mrblib_ruflet_framework_proc_reps_307802,
   NULL,					/* lv */
-  &gem_mrblib_ruflet_framework_proc_debug_307713,
+  &gem_mrblib_ruflet_framework_proc_debug_307802,
   10,0,1,1,0
 };
 static const mrb_irep *gem_mrblib_ruflet_framework_proc_reps_223[1] = {
-  &gem_mrblib_ruflet_framework_proc_irep_307713,
+  &gem_mrblib_ruflet_framework_proc_irep_307802,
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_ruflet_framework_proc_syms_223, 1, (MRB_SYM(UI), ), const);
 static const mrb_code gem_mrblib_ruflet_framework_proc_iseq_223[10] = {
 0x11,0x01,0x68,0x01,0x00,0x69,0x01,0x00,0x3d,0x00,};
-static const char gem_mrblib_ruflet_framework_proc_debug_lines_223[] = "\x00\xab\x91\x01";
+static const char gem_mrblib_ruflet_framework_proc_debug_lines_223[] = "\x00\xc2\x91\x01";
 static mrb_irep_debug_info_file gem_mrblib_ruflet_framework_proc_debug_file_223 = {
 0, 324, 4, mrb_debug_line_packed_map, {gem_mrblib_ruflet_framework_proc_debug_lines_223}};
 static mrb_irep_debug_info_file *gem_mrblib_ruflet_framework_proc_debug_file_223_ = &gem_mrblib_ruflet_framework_proc_debug_file_223;
@@ -93750,36 +93832,37 @@ gem_mrblib_ruflet_framework_proc_init_syms(mrb_state *mrb)
   gem_mrblib_ruflet_framework_proc_debug_file_303842.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_303831.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_214.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_304221.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_304222.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304180.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304181.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304182.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_304345.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_304349.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304183.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_304387.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_304388.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_304392.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_304393.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304184.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_304432.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_304436.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_304437.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304438.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_304433.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304185.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_304481.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_304485.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_304486.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_304487.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_304482.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304186.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_304527.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304187.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_304569.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_304578.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304188.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_304621.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304189.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304190.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304191.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_304734.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304192.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_304790.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304193.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304194.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304195.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_304899.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304196.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_304959.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304197.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304198.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304199.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
@@ -93788,66 +93871,68 @@ gem_mrblib_ruflet_framework_proc_init_syms(mrb_state *mrb)
   gem_mrblib_ruflet_framework_proc_debug_file_304202.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304203.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304204.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_305269.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304205.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_305311.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_305338.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304206.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_305353.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_305381.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304207.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_305424.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304208.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_305436.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304209.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_305509.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304210.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_305519.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_305520.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304211.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_305564.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_305565.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_305594.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_305595.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304212.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_305640.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_305641.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304213.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304214.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304215.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_305732.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304216.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_305774.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_305775.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_305812.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304217.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_305855.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_305856.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304218.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304219.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304220.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_304221.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_304179.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_215.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_306125.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_306124.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_306209.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_306208.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_216.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_306351.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_306352.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_306349.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_306357.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_306358.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_306350.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_306436.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_306437.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_306433.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_306434.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_306446.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_306447.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_306435.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_217.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_218.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_306810.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_306809.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_306808.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_306807.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_306899.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_306898.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_306897.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_306896.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_219.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_307037.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_307036.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_307035.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_307034.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_307126.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_307125.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_307124.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_307123.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_220.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_307264.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_307263.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_307262.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_307261.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_307353.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_307352.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_307351.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_307350.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_221.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_307489.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_307488.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_307578.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_307577.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_222.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_307714.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
-  gem_mrblib_ruflet_framework_proc_debug_file_307713.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_307803.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
+  gem_mrblib_ruflet_framework_proc_debug_file_307802.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_debug_file_223.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/vm/mrbgems/ruflet-framework/mrblib/10_framework.rb");
   gem_mrblib_ruflet_framework_proc_syms_0[3] = mrb_intern_lit(mrb, "$LOADED_FEATURES");
 }

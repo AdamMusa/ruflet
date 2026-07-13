@@ -61,8 +61,9 @@ module Ruflet
       attempts.times do
         begin
           @server_socket = TCPServer.new(@host, candidate)
-          @port = candidate
-          if @port != requested && ENV["RUFLET_SUPPRESS_SERVER_BANNER"] != "1"
+          @port = @server_socket.addr[1]
+          publish_runtime_port
+          if requested > 0 && @port != requested && ENV["RUFLET_SUPPRESS_SERVER_BANNER"] != "1"
             warn "Requested port #{requested} is busy; bound to #{@port}"
           end
           return
@@ -97,6 +98,15 @@ module Ruflet
           nil
         end
       end
+    end
+
+    def publish_runtime_port
+      path = ENV["RUFLET_RUNTIME_PORT_FILE"].to_s
+      return if path.empty?
+
+      File.open(path, "w") { |file| file.write(@port.to_s) }
+    rescue StandardError => error
+      warn "Unable to publish Ruflet runtime port: #{error.message}"
     end
 
     def reload_app!

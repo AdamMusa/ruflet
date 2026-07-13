@@ -10,9 +10,10 @@ module Ruflet
 
   module_function
 
-  def run(entrypoint = nil, host: "0.0.0.0", port: 8550, &block)
+  def run(entrypoint = nil, host: "0.0.0.0", port: nil, &block)
     callback = entrypoint || block
     raise ArgumentError, "Ruflet.run requires a callable entrypoint or block" unless callback.respond_to?(:call)
+    port = resolved_run_port(port)
 
     interceptor = @run_interceptors_mutex.synchronize { @run_interceptors.last }
     if interceptor
@@ -29,6 +30,14 @@ module Ruflet
     Server.new(host: host, port: port) do |page|
       callback.call(page)
     end.start
+  end
+
+  def resolved_run_port(port)
+    raw = port.nil? ? ENV["RUFLET_PORT"] : port
+    return 8550 if raw.nil? || raw.to_s.strip.empty?
+
+    value = raw.to_i
+    value >= 0 ? value : 8550
   end
 
   def with_run_interceptor(interceptor)

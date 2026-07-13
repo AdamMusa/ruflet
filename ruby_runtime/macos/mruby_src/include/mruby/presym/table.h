@@ -3252,6 +3252,7 @@ static const uint16_t presym_length_table[] = {
   17,	/* radardatasetentry */
   17,	/* recvfrom_nonblock */
   17,	/* register_response */
+  17,	/* resolved_run_port */
   17,	/* screen_brightness */
   17,	/* secondary_trigger */
   17,	/* selection_overlay */
@@ -3548,6 +3549,7 @@ static const uint16_t presym_length_table[] = {
   20,	/* outlined_icon_button */
   20,	/* page_control_target? */
   20,	/* property_name_lookup */
+  20,	/* publish_runtime_port */
   20,	/* push_dialogs_update! */
   20,	/* push_overlay_update! */
   20,	/* radar_data_set_entry */
@@ -7280,6 +7282,7 @@ static const char * const presym_name_table[] = {
   "radardatasetentry",
   "recvfrom_nonblock",
   "register_response",
+  "resolved_run_port",
   "screen_brightness",
   "secondary_trigger",
   "selection_overlay",
@@ -7576,6 +7579,7 @@ static const char * const presym_name_table[] = {
   "outlined_icon_button",
   "page_control_target?",
   "property_name_lookup",
+  "publish_runtime_port",
   "push_dialogs_update!",
   "push_overlay_update!",
   "radar_data_set_entry",

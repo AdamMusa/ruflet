@@ -40,7 +40,6 @@ import 'package:ruby_runtime/ruflet_runtime.dart';
 import 'ruflet_file_picker_service.dart';
 
 const bool isProduction = bool.fromEnvironment('dart.vm.product');
-const int kRufletPort = 8550;
 const String kConfiguredClientUrl = String.fromEnvironment(
   'RUFLET_BACKEND_URL',
   defaultValue: String.fromEnvironment('RUFLET_CLIENT_URL', defaultValue: ''),
@@ -85,13 +84,10 @@ String normalizePageUrlForPlatform(String rawUrl) {
   return uri.replace(host: host).toString();
 }
 
-String fallbackBackendUrl() =>
-    normalizePageUrlForPlatform('http://0.0.0.0:$kRufletPort');
-
 String resolveBackendUrl() {
   final configured = parseBackendUrl(kConfiguredClientUrl);
   if (configured != null) return configured;
-  return fallbackBackendUrl();
+  return '';
 }
 
 Future<void> main() async {
@@ -262,10 +258,10 @@ class EmbeddedRufletRuntime {
   final String? error;
 
   static Future<EmbeddedRufletRuntime> start() async {
-    await _deleteStaleTempWorkDirs();
     final workDir = await Directory.systemTemp.createTemp('ruflet_template_');
     final stopPath = '${workDir.path}/server.stop';
-    var pageUrl = 'http://127.0.0.1:$kRufletPort';
+    final portPath = '${workDir.path}/server.port';
+    var pageUrl = '';
 
     try {
       final entrypoint = await _prepareProjectFiles(workDir);
@@ -275,7 +271,8 @@ class EmbeddedRufletRuntime {
         entrypoint: entrypoint,
         loadPaths: [workDir.path],
         environment: {
-          'RUFLET_STRICT_PORT': '1',
+          'RUFLET_PORT': '0',
+          'RUFLET_RUNTIME_PORT_FILE': portPath,
           'RUFLET_RUNTIME_ERROR_FILE': errorFile,
         },
         errorFilePath: errorFile,
@@ -284,9 +281,8 @@ class EmbeddedRufletRuntime {
       if (status.error.isNotEmpty) {
         throw StateError(status.error);
       }
-      if (status.port > 0) {
-        pageUrl = 'http://127.0.0.1:${status.port}';
-      }
+      final port = await _waitForRuntimePort(portPath, errorFile);
+      pageUrl = 'http://127.0.0.1:$port';
       return EmbeddedRufletRuntime._(pageUrl: pageUrl, workDir: workDir);
     } catch (error, stackTrace) {
       return EmbeddedRufletRuntime._(
@@ -308,19 +304,31 @@ class EmbeddedRufletRuntime {
     } catch (_) {}
   }
 
-  static Future<void> _deleteStaleTempWorkDirs() async {
-    try {
-      await for (final entity in Directory.systemTemp.list()) {
-        if (entity is! Directory) continue;
-        final name = entity.uri.pathSegments.isEmpty
-            ? ''
-            : entity.uri.pathSegments[entity.uri.pathSegments.length - 2];
-        if (!name.startsWith('ruflet_template_')) continue;
-        try {
-          await entity.delete(recursive: true);
-        } catch (_) {}
+  static Future<int> _waitForRuntimePort(
+    String portPath,
+    String errorPath,
+  ) async {
+    final portFile = File(portPath);
+    final errorFile = File(errorPath);
+    final deadline = DateTime.now().add(const Duration(seconds: 15));
+
+    while (DateTime.now().isBefore(deadline)) {
+      if (await portFile.exists()) {
+        final port = int.tryParse((await portFile.readAsString()).trim()) ?? 0;
+        if (port > 0) return port;
       }
-    } catch (_) {}
+      if (await errorFile.exists()) {
+        final error = (await errorFile.readAsString()).trim();
+        if (error.isNotEmpty) throw StateError(error);
+      }
+      final status = await RufletRuntime.status();
+      if (status.error.isNotEmpty) throw StateError(status.error);
+      if (!status.running) {
+        throw StateError('Embedded Ruflet server stopped before binding.');
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 25));
+    }
+    throw TimeoutException('Embedded Ruflet server did not publish its port.');
   }
 
   static Future<String> _prepareProjectFiles(Directory workDir) async {

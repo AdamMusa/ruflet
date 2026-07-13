@@ -22,8 +22,10 @@ module Ruflet
 
     def default_port
       raw = ENV["RUFLET_PORT"].to_s
+      return 8550 if raw.strip.empty?
+
       value = raw.to_i
-      value > 0 ? value : 8550
+      value >= 0 ? value : 8550
     end
 
     def _pending_app

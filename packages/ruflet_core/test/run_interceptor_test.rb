@@ -34,4 +34,20 @@ class RufletRunInterceptorTest < Minitest::Test
     assert_equal :handled, result
     assert_equal [:second], order
   end
+
+  def test_run_preserves_zero_port_from_environment
+    previous = ENV["RUFLET_PORT"]
+    ENV["RUFLET_PORT"] = "0"
+    captured_port = nil
+    interceptor = lambda do |entrypoint:, host:, port:|
+      captured_port = port
+      :handled
+    end
+
+    Ruflet.with_run_interceptor(interceptor) { Ruflet.run { nil } }
+
+    assert_equal 0, captured_port
+  ensure
+    ENV["RUFLET_PORT"] = previous
+  end
 end

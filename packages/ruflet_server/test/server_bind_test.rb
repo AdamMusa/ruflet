@@ -3,6 +3,24 @@
 require_relative "test_helper"
 
 class RufletServerBindTest < Minitest::Test
+  def test_zero_port_uses_an_os_assigned_port_and_publishes_it
+    Dir.mktmpdir do |dir|
+      port_file = File.join(dir, "runtime.port")
+      previous = ENV["RUFLET_RUNTIME_PORT_FILE"]
+      ENV["RUFLET_RUNTIME_PORT_FILE"] = port_file
+      server = Ruflet::Server.new(host: "127.0.0.1", port: 0) { |_page| nil }
+
+      begin
+        server.bind_server_socket!
+        assert_operator server.port, :>, 0
+        assert_equal server.port, File.read(port_file).to_i
+      ensure
+        server.stop
+        ENV["RUFLET_RUNTIME_PORT_FILE"] = previous
+      end
+    end
+  end
+
   def test_bind_server_socket_falls_back_to_next_port_when_busy
     occupied = TCPServer.new("127.0.0.1", 0)
     busy_port = occupied.addr[1]
