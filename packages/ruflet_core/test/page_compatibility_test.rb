@@ -3,6 +3,28 @@
 require_relative "test_helper"
 
 class RufletPageCompatibilityTest < Minitest::Test
+  def test_initial_page_patch_mounts_internal_containers_before_incremental_updates
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    page.add(Ruflet.text("Root"))
+
+    patch = sent.last[1]["patch"]
+    assert_equal "Dialogs", patch_value(patch, "_dialogs")["_c"]
+    assert_equal "Overlay", patch_value(patch, "_overlay")["_c"]
+    assert_equal "ServiceRegistry", patch_value(patch, "_services")["_c"]
+
+    dialog = Ruflet.alert_dialog(title: Ruflet.text("Hello"))
+    page.show_dialog(dialog)
+    update = sent.last[1]
+    assert_equal patch_value(patch, "_dialogs")["_i"], update["id"]
+    assert_equal "AlertDialog", update["patch"][1][3].first["_c"]
+  end
+
   def test_web_capability_defaults_to_false_when_client_omits_it
     page = Ruflet::Page.new(
       session_id: "s1",

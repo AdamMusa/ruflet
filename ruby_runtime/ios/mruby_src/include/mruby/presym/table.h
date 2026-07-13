@@ -1149,7 +1149,6 @@ static const uint16_t presym_length_table[] = {
   7,	/* battery */
   7,	/* bgcolor */
   7,	/* binding */
-  7,	/* binread */
   7,	/* bsearch */
   7,	/* builder */
   7,	/* call_id */
@@ -3207,6 +3206,7 @@ static const uint16_t presym_length_table[] = {
   16,	/* previous_signals */
   16,	/* primary_velocity */
   16,	/* proper_superset? */
+  16,	/* read_binary_file */
   16,	/* require_relative */
   16,	/* reverse_duration */
   16,	/* route_from_event */
@@ -3935,6 +3935,8 @@ static const uint16_t presym_length_table[] = {
   25,	/* show_border_on_foreground */
   25,	/* show_default_drag_handles */
   25,	/* transition_between_routes */
+  26,	/* @dialogs_container_mounted */
+  26,	/* @overlay_container_mounted */
   26,	/* CONSTRUCTOR_KEYWORDS_CACHE */
   26,	/* CupertinoDatePickerControl */
   26,	/* ON_SECONDARY_FIXED_VARIANT */
@@ -5266,7 +5268,6 @@ static const char * const presym_name_table[] = {
   "battery",
   "bgcolor",
   "binding",
-  "binread",
   "bsearch",
   "builder",
   "call_id",
@@ -7324,6 +7325,7 @@ static const char * const presym_name_table[] = {
   "previous_signals",
   "primary_velocity",
   "proper_superset?",
+  "read_binary_file",
   "require_relative",
   "reverse_duration",
   "route_from_event",
@@ -8052,6 +8054,8 @@ static const char * const presym_name_table[] = {
   "show_border_on_foreground",
   "show_default_drag_handles",
   "transition_between_routes",
+  "@dialogs_container_mounted",
+  "@overlay_container_mounted",
   "CONSTRUCTOR_KEYWORDS_CACHE",
   "CupertinoDatePickerControl",
   "ON_SECONDARY_FIXED_VARIANT",

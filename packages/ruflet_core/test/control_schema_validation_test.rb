@@ -53,6 +53,30 @@ class ControlSchemaValidationTest < Minitest::Test
     assert_equal 4, line.props["y2"]
   end
 
+  def test_chart_controls_expose_complete_keyword_schemas
+    axis = Ruflet.chart_axis(
+      title: Ruflet.text("Revenue"),
+      labels: [],
+      label_size: 12,
+      title_size: 16,
+      show_labels: true
+    )
+    chart = Ruflet.bar_chart(
+      width: 320,
+      height: 180,
+      min_y: 0,
+      max_y: 100,
+      groups: [],
+      left_axis: axis,
+      horizontal_grid_lines: { interval: 10 }
+    )
+
+    assert_equal 16, axis.props["title_size"]
+    assert_equal true, axis.props["show_labels"]
+    assert_same axis, chart.props["left_axis"]
+    assert_equal({ "interval" => 10 }, chart.to_patch["horizontal_grid_lines"])
+  end
+
   def test_python_common_attributes_are_supported_with_children
     child = Ruflet.text("Child")
     parent = Ruflet.column(

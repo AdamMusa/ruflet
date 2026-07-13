@@ -348,8 +348,12 @@ module Ruflet
         return
       end
 
-      content = File.binread(asset_path)
+      content = read_binary_file(asset_path)
       write_http_response(socket, 200, content_type_for(asset_path), content, binary: true)
+    end
+
+    def read_binary_file(path)
+      File.open(path, "rb") { |file| file.read }
     end
 
     def resolve_asset_path(path)
@@ -357,7 +361,10 @@ module Ruflet
       return nil unless root
 
       root = File.expand_path(root)
-      relative = path.sub(%r{\A/assets/}, "")
+      prefix = "/assets/"
+      return nil unless path.start_with?(prefix)
+
+      relative = path[prefix.length..-1].to_s
       full = File.expand_path(File.join(root, relative))
       return nil unless full.start_with?(root + File::SEPARATOR) || full == root
       return nil unless File.file?(full)

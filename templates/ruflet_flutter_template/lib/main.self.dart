@@ -272,6 +272,7 @@ class EmbeddedRufletRuntime {
         loadPaths: [workDir.path],
         environment: {
           'RUFLET_PORT': '0',
+          'RUFLET_ASSETS_DIR': '${workDir.path}/assets',
           'RUFLET_RUNTIME_PORT_FILE': portPath,
           'RUFLET_RUNTIME_ERROR_FILE': errorFile,
         },

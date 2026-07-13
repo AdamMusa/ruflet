@@ -171,6 +171,8 @@ module Ruflet
       @root_controls = []
       @views = []
       @dialogs = []
+      @overlay_container_mounted = false
+      @dialogs_container_mounted = false
       @services_container_mounted = false
       @visual_service_controls = {}
       @page_event_handlers = {}
@@ -1367,6 +1369,8 @@ module Ruflet
           *page_patch_ops
         ]
       })
+      @overlay_container_mounted = true if @overlay_container.wire_id
+      @dialogs_container_mounted = true if @dialogs_container.wire_id
       @services_container_mounted = true if @services_container.wire_id
     end
 
@@ -1668,8 +1672,8 @@ module Ruflet
         # Keep internal containers stable after initial mount.
         # Re-sending them as full objects can replace Control instances with
         # same IDs and detach service invoke listeners on the Flutter side.
-        next nil if k == "_overlay" && @services_container_mounted
-        next nil if k == "_dialogs" && @dialogs_container.wire_id
+        next nil if k == "_overlay" && @overlay_container_mounted
+        next nil if k == "_dialogs" && @dialogs_container_mounted
         next nil if k == "_services" && @services_container_mounted
 
         [0, 0, k, serialize_patch_value(v)]

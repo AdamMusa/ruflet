@@ -58,6 +58,7 @@ class CanvasDrawingCompatibilityTest < Minitest::Test
 
     assert_equal "https://example.test/animation.riv", rive.to_patch["src"]
     assert_equal "puts :ok", editor.to_patch["value"]
+    assert_equal "CodeEditor", editor.to_patch["_c"]
     assert_equal "https://tiles.test/{z}/{x}/{y}", map.to_patch.fetch("layers").first["url_template"]
   end
 end

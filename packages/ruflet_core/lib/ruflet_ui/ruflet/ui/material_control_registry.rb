@@ -94,6 +94,8 @@ module Ruflet
         "clipboard" => "Clipboard",
         "audio" => "Audio",
         "video" => "Video",
+        "codeeditor" => "CodeEditor",
+        "code_editor" => "CodeEditor",
         "flashlight" => "Flashlight",
         "barchart" => "BarChart",
         "barchartgroup" => "group",
