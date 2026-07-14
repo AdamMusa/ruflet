@@ -36,4 +36,20 @@ class RufletServerWireCodecTest < Minitest::Test
 
     assert_equal 0xc4, encoded.getbyte(0)
   end
+
+  def test_flet_date_and_time_extensions_round_trip_with_their_types
+    date = Ruflet::Protocol.date_time("2026-05-21T00:00:00+00:00")
+    time = Ruflet::Protocol.time_of_day("9:30")
+
+    encoded = Ruflet::WireCodec.pack("date" => date, "time" => time)
+    decoded = Ruflet::WireCodec.unpack(encoded)
+
+    assert_equal 0xc7, Ruflet::WireCodec.pack(date).getbyte(0)
+    assert_equal 1, Ruflet::WireCodec.pack(date).getbyte(2)
+    assert_equal 2, Ruflet::WireCodec.pack(time).getbyte(2)
+    assert_instance_of Ruflet::Protocol::DateTimeValue, decoded["date"]
+    assert_instance_of Ruflet::Protocol::TimeOfDayValue, decoded["time"]
+    assert_equal date, decoded["date"]
+    assert_equal time, decoded["time"]
+  end
 end

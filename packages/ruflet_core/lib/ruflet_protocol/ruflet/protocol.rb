@@ -2,6 +2,13 @@
 
 module Ruflet
   module Protocol
+    # Flet transports these values as MessagePack extension objects. String
+    # subclasses preserve Ruflet's existing, convenient Ruby API while giving
+    # the wire codec the type information required by the Flutter client.
+    class DateTimeValue < String; end
+    class TimeOfDayValue < String; end
+    class DurationValue < String; end
+
     ACTIONS = {
       register_client: 1,
       patch_control: 2,
@@ -18,6 +25,24 @@ module Ruflet
     }.freeze
 
     module_function
+
+    def date_time(value)
+      return value if value.nil? || value.is_a?(DateTimeValue)
+
+      DateTimeValue.new(value.to_s)
+    end
+
+    def time_of_day(value)
+      return value if value.nil? || value.is_a?(TimeOfDayValue)
+
+      TimeOfDayValue.new(value.to_s)
+    end
+
+    def duration(value)
+      return value if value.nil? || value.is_a?(DurationValue)
+
+      DurationValue.new(value.to_s)
+    end
 
     def pack_message(action:, payload:)
       [action, payload]

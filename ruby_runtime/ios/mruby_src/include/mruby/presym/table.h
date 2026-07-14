@@ -1703,6 +1703,7 @@ static const uint16_t presym_length_table[] = {
   9,	/* data_cell */
   9,	/* data_sets */
   9,	/* datatable */
+  9,	/* date_time */
   9,	/* delete_at */
   9,	/* delete_if */
   9,	/* direction */
@@ -2353,6 +2354,7 @@ static const uint16_t presym_length_table[] = {
   11,	/* text_button */
   11,	/* theme_style */
   11,	/* thumb_color */
+  11,	/* time_of_day */
   11,	/* time_picker */
   11,	/* title_style */
   11,	/* to_sockaddr */
@@ -2610,7 +2612,9 @@ static const uint16_t presym_length_table[] = {
   13,	/* ColumnControl */
   13,	/* DISPLAY_LARGE */
   13,	/* DISPLAY_SMALL */
+  13,	/* DateTimeValue */
   13,	/* DragDownEvent */
+  13,	/* DurationValue */
   13,	/* EADDRNOTAVAIL */
   13,	/* EPROGMISMATCH */
   13,	/* MRUBY_VERSION */
@@ -2814,6 +2818,7 @@ static const uint16_t presym_length_table[] = {
   14,	/* TERTIARY_FIXED */
   14,	/* TextDecoration */
   14,	/* TextThemeStyle */
+  14,	/* TimeOfDayValue */
   14,	/* WEBSOCKET_GUID */
   14,	/* WebViewControl */
   14,	/* __do_with_enum */
@@ -2905,6 +2910,7 @@ static const uint16_t presym_length_table[] = {
   14,	/* on_text_change */
   14,	/* on_will_accept */
   14,	/* outlinedbutton */
+  14,	/* pack_extension */
   14,	/* page_patch_ops */
   14,	/* paragraph_mode */
   14,	/* polygon_marker */
@@ -5891,6 +5897,7 @@ static const char * const presym_name_table[] = {
   "data_cell",
   "data_sets",
   "datatable",
+  "date_time",
   "delete_at",
   "delete_if",
   "direction",
@@ -6541,6 +6548,7 @@ static const char * const presym_name_table[] = {
   "text_button",
   "theme_style",
   "thumb_color",
+  "time_of_day",
   "time_picker",
   "title_style",
   "to_sockaddr",
@@ -6798,7 +6806,9 @@ static const char * const presym_name_table[] = {
   "ColumnControl",
   "DISPLAY_LARGE",
   "DISPLAY_SMALL",
+  "DateTimeValue",
   "DragDownEvent",
+  "DurationValue",
   "EADDRNOTAVAIL",
   "EPROGMISMATCH",
   "MRUBY_VERSION",
@@ -7002,6 +7012,7 @@ static const char * const presym_name_table[] = {
   "TERTIARY_FIXED",
   "TextDecoration",
   "TextThemeStyle",
+  "TimeOfDayValue",
   "WEBSOCKET_GUID",
   "WebViewControl",
   "__do_with_enum",
@@ -7093,6 +7104,7 @@ static const char * const presym_name_table[] = {
   "on_text_change",
   "on_will_accept",
   "outlinedbutton",
+  "pack_extension",
   "page_patch_ops",
   "paragraph_mode",
   "polygon_marker",

@@ -5,6 +5,12 @@ module Ruflet
     class << self
       def pack(value)
         case value
+        when Ruflet::Protocol::DateTimeValue
+          pack_extension(1, value)
+        when Ruflet::Protocol::TimeOfDayValue
+          pack_extension(2, value)
+        when Ruflet::Protocol::DurationValue
+          pack_extension(3, value)
         when NilClass
           "\xc0".b
         when TrueClass
@@ -34,6 +40,20 @@ module Ruflet
       end
 
       private
+
+      def pack_extension(type, value)
+        bytes = value.to_s.b
+        length = bytes.bytesize
+        header =
+          if length <= 0xff
+            "\xc7".b + [length].pack("C")
+          elsif length <= 0xffff
+            "\xc8".b + [length].pack("n")
+          else
+            "\xc9".b + [length].pack("N")
+          end
+        header + [type].pack("c") + bytes
+      end
 
       def pack_integer(value)
         if value >= 0
@@ -195,8 +215,14 @@ module Ruflet
       end
 
       def read_ext(reader, size)
-        reader.read_i8 # type (ignored)
-        reader.read_exact(size)
+        type = reader.read_i8
+        value = reader.read_exact(size).force_encoding("UTF-8")
+        case type
+        when 1 then Ruflet::Protocol.date_time(value)
+        when 2 then Ruflet::Protocol.time_of_day(value)
+        when 3 then Ruflet::Protocol.duration(value)
+        else value
+        end
       end
     end
 

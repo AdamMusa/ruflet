@@ -14,6 +14,7 @@ module Ruflet
             compact = {}
             props.each do |key, value|
               raise ArgumentError, "unknown keyword: :#{key}" unless KEYWORDS.include?(key)
+              value = Ruflet::Protocol.date_time(value) if %i[start_value end_value first_date last_date current_date].include?(key)
               compact[key] = value unless value.nil?
             end
             super(type: TYPE, id: id, **compact)
