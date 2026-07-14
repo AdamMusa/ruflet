@@ -7,16 +7,16 @@
   "contains": ["mruby", "ruflet-framework", "onigmo", "native-gems"],
   "artifacts": {
     "arm64-v8a": {
-      "sha256": "5f52232ef20d9615d45a9b6f6e588d101048cdc6113b2a315426963694f160f2"
+      "sha256": "2922dfbd3f74300c6d35130f84081c3f7a79f46c4d40058f5b8bca8c27a6e2f0"
     },
     "armeabi-v7a": {
-      "sha256": "ee41dff564328a9bd6945c92c4c39a93b0c77ce1817ac2793508dbe9bfc62418"
+      "sha256": "3b1d65df28056594ef7f512e8071a78939c0d3cd46402b13b7f0e4d6152f0344"
     },
     "x86": {
-      "sha256": "fce7cce8155ee3e7112eb22a5a09dafd8605f9f4e7b6c4b30fae1f3615ebc938"
+      "sha256": "fb62eedee393ad381eb547617bf6174d08c510d4cb02ca51ef6ce435b38c828f"
     },
     "x86_64": {
-      "sha256": "0541595399e45596b08788ba0a7c3a5396d8658f6c194549e982bda33829b1f9"
+      "sha256": "fbcb6725b76f4cefaa1354cb19b3baddb821f985cdf06d0245c5f9f5ed0589e3"
     }
   }
 }

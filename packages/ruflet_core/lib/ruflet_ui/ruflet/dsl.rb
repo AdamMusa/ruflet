@@ -444,7 +444,7 @@ module Ruflet
         Ruflet::Server.new(host: host, port: port) do |runtime_page|
           runtime_page.set_view_props(page_props)
           runtime_page.add_service(*app_services) if app_services.any?
-          runtime_page.add(*app_roots)
+          app_roots.each { |control| runtime_page.add(control) }
         end.start
       end
 

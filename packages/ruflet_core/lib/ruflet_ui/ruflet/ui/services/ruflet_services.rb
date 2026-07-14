@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "ruflet/accelerometer_control"
+require_relative "ruflet/audio_recorder_control"
 require_relative "ruflet/barometer_control"
 require_relative "ruflet/battery_control"
 require_relative "ruflet/camera_control"
@@ -8,11 +9,14 @@ require_relative "ruflet/clipboard_control"
 require_relative "ruflet/connectivity_control"
 require_relative "ruflet/filepicker_control"
 require_relative "ruflet/flashlight_control"
+require_relative "ruflet/geolocator_control"
 require_relative "ruflet/gyroscope_control"
 require_relative "ruflet/hapticfeedback_control"
 require_relative "ruflet/magnetometer_control"
+require_relative "ruflet/permissionhandler_control"
 require_relative "ruflet/screenbrightness_control"
 require_relative "ruflet/screenshot_control"
+require_relative "ruflet/securestorage_control"
 require_relative "ruflet/semanticsservice_control"
 require_relative "ruflet/shakedetector_control"
 require_relative "ruflet/share_control"
@@ -30,6 +34,8 @@ module Ruflet
 
         CLASS_MAP = {
           "accelerometer" => RufletServicesComponents::AccelerometerControl,
+          "audio_recorder" => RufletServicesComponents::AudioRecorderControl,
+          "audiorecorder" => RufletServicesComponents::AudioRecorderControl,
           "barometer" => RufletServicesComponents::BarometerControl,
           "battery" => RufletServicesComponents::BatteryControl,
           "camera" => RufletServicesComponents::CameraControl,
@@ -38,13 +44,18 @@ module Ruflet
           "file_picker" => RufletServicesComponents::FilePickerControl,
           "filepicker" => RufletServicesComponents::FilePickerControl,
           "flashlight" => RufletServicesComponents::FlashlightControl,
+          "geolocator" => RufletServicesComponents::GeolocatorControl,
           "gyroscope" => RufletServicesComponents::GyroscopeControl,
           "haptic_feedback" => RufletServicesComponents::HapticFeedbackControl,
           "hapticfeedback" => RufletServicesComponents::HapticFeedbackControl,
           "magnetometer" => RufletServicesComponents::MagnetometerControl,
+          "permission_handler" => RufletServicesComponents::PermissionHandlerControl,
+          "permissionhandler" => RufletServicesComponents::PermissionHandlerControl,
           "screen_brightness" => RufletServicesComponents::ScreenBrightnessControl,
           "screenbrightness" => RufletServicesComponents::ScreenBrightnessControl,
           "screenshot" => RufletServicesComponents::ScreenshotControl,
+          "secure_storage" => RufletServicesComponents::SecureStorageControl,
+          "securestorage" => RufletServicesComponents::SecureStorageControl,
           "semantics_service" => RufletServicesComponents::SemanticsServiceControl,
           "semanticsservice" => RufletServicesComponents::SemanticsServiceControl,
           "shake_detector" => RufletServicesComponents::ShakeDetectorControl,

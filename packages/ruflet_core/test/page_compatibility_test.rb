@@ -147,18 +147,22 @@ class RufletPageCompatibilityTest < Minitest::Test
     refute view.key?("fab")
   end
 
-  def test_page_add_rejects_old_keyword_chrome_arguments
+  def test_page_add_accepts_exactly_one_control_and_appends_it
     page = Ruflet::Page.new(
       session_id: "s1",
       client_details: { "route" => "/" },
       sender: ->(_action, _payload) {}
     )
 
-    error = assert_raises(ArgumentError) do
-      page.add(Ruflet.text("Body"), appbar: Ruflet.app_bar(title: Ruflet.text("Home")))
-    end
+    one = Ruflet.text("One")
+    two = Ruflet.text("Two")
+    page.add(one)
+    page.add(two)
 
-    assert_match(/accepts only controls/, error.message)
+    assert_equal [one, two], page.controls
+
+    assert_raises(ArgumentError) { page.add(one, two) }
+    assert_raises(ArgumentError) { page.add(nil) }
   end
 
   def test_page_controls_insert_remove_remove_at_and_clean_match_flet_shape

@@ -217,7 +217,9 @@ class RufletPickerCompatibilityTest < Minitest::Test
       on_change: ->(event) { events << [:range, event.control.props["start_value"], event.control.props["end_value"]] }
     )
     time_picker = Ruflet.time_picker(value: "19:30", on_change: ->(event) { events << [:time, event.control.props["value"]] })
-    page.add(date_picker, range_picker, time_picker)
+    page.add(date_picker)
+    page.add(range_picker)
+    page.add(time_picker)
 
     page.dispatch_event(target: date_picker.wire_id, name: "change", data: { "value" => "2026-05-20" })
     page.dispatch_event(target: range_picker.wire_id, name: "change", data: { "start_value" => "2026-05-02", "end_value" => "2026-05-21" })

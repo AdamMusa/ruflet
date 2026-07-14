@@ -12,6 +12,51 @@ class RufletCliUpdateCommandTest < Minitest::Test
     include Ruflet::CLI::BuildCommand
   end
 
+  def test_load_config_merges_services_yaml_and_applies_mobile_permissions
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "ruflet.yaml"), "extensions:\n  - audio\n")
+      File.write(
+        File.join(dir, "services.yaml"),
+        <<~YAML
+          services:
+            - microphone:
+                description: Record voice notes.
+            - location:
+                description: Show the current location.
+            - motion:
+                description: Read device sensors.
+        YAML
+      )
+
+      manifest = File.join(dir, "client", "android", "app", "src", "main", "AndroidManifest.xml")
+      plist = File.join(dir, "client", "ios", "Runner", "Info.plist")
+      FileUtils.mkdir_p(File.dirname(manifest))
+      FileUtils.mkdir_p(File.dirname(plist))
+      File.write(manifest, "<manifest><application/></manifest>\n")
+      File.write(plist, "<plist><dict></dict></plist>\n")
+
+      Dir.chdir(dir) do
+        config = builder.send(:load_ruflet_config)
+        builder.send(:apply_native_service_permissions, File.join(dir, "client"), config)
+
+        assert_equal 3, config["services"].length
+      end
+
+      android = File.read(manifest)
+      assert_includes android, "android.permission.RECORD_AUDIO"
+      assert_includes android, "android.permission.ACCESS_FINE_LOCATION"
+      assert_includes android, "android.permission.HIGH_SAMPLING_RATE_SENSORS"
+
+      ios = File.read(plist)
+      assert_includes ios, "NSMicrophoneUsageDescription"
+      assert_includes ios, "Record voice notes."
+      assert_includes ios, "NSLocationWhenInUseUsageDescription"
+      assert_includes ios, "NSMotionUsageDescription"
+    end
+  end
+
   def test_command_update_check_reports_manifest_status
     updater = DummyUpdater.new
     Dir.mktmpdir do |dir|

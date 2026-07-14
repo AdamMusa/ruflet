@@ -257,12 +257,14 @@ module Ruflet
       @view_props["bgcolor"] = normalize_value("bgcolor", value)
     end
 
-    def add(*controls)
-      if controls.last.is_a?(Hash) && (controls.last.keys.map(&:to_sym) & PAGE_ADD_RESERVED_KEYS).any?
+    def add(control)
+      if control.is_a?(Hash) && (control.keys.map(&:to_sym) & PAGE_ADD_RESERVED_KEYS).any?
         raise ArgumentError, "Page#add accepts only controls; assign page.appbar, page.floating_action_button, dialogs, or other page properties before calling add"
       end
 
-      replace_root_controls(controls.flatten)
+      raise ArgumentError, "Page#add accepts exactly one control" unless control.is_a?(Control)
+
+      replace_root_controls(@root_controls + [control])
       self
     end
 
@@ -355,6 +357,10 @@ module Ruflet
 
     def audio(**props)
       service(:audio, **props)
+    end
+
+    def audio_recorder(**props)
+      service(:audio_recorder, **props)
     end
 
     def add_service(*value)
@@ -457,7 +463,7 @@ module Ruflet
     def mount(&block)
       builder = WidgetBuilder.new
       builder.instance_eval(&block)
-      add(*builder.children)
+      builder.children.each { |control| add(control) }
     end
 
     def appbar
@@ -615,6 +621,10 @@ module Ruflet
     end
 
     def show_snack_bar(snack_bar_control)
+      show_dialog(snack_bar_control)
+    end
+
+    def show_snackbar(snack_bar_control)
       show_dialog(snack_bar_control)
     end
 
@@ -917,6 +927,18 @@ module Ruflet
 
     def barometer(**props)
       service(:barometer, **props)
+    end
+
+    def geolocator(**props)
+      service(:geolocator, **props)
+    end
+
+    def permission_handler(**props)
+      service(:permission_handler, **props)
+    end
+
+    def secure_storage(**props)
+      service(:secure_storage, **props)
     end
 
     def shake_detector(**props)

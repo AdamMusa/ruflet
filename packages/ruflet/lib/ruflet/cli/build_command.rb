@@ -32,6 +32,24 @@ module Ruflet
         "video" => { package: "flet_video", alias: "ruflet_video" },
         "webview" => { package: "flet_webview", alias: "ruflet_webview" }
       }.freeze
+      PROTECTED_SERVICE_EXTENSIONS = {
+        "camera" => %w[camera permission_handler],
+        "microphone" => %w[audio_recorder permission_handler],
+        "location" => %w[geolocator permission_handler],
+        "motion" => %w[permission_handler]
+      }.freeze
+      ANDROID_SERVICE_PERMISSIONS = {
+        "camera" => %w[android.permission.CAMERA],
+        "microphone" => %w[android.permission.RECORD_AUDIO],
+        "location" => %w[android.permission.ACCESS_COARSE_LOCATION android.permission.ACCESS_FINE_LOCATION],
+        "motion" => %w[android.permission.ACTIVITY_RECOGNITION android.permission.HIGH_SAMPLING_RATE_SENSORS]
+      }.freeze
+      IOS_SERVICE_USAGE_KEYS = {
+        "camera" => "NSCameraUsageDescription",
+        "microphone" => "NSMicrophoneUsageDescription",
+        "location" => "NSLocationWhenInUseUsageDescription",
+        "motion" => "NSMotionUsageDescription"
+      }.freeze
 
       def command_build(args)
         self_contained = args.delete("--self")
@@ -367,6 +385,7 @@ module Ruflet
       def prepare_flutter_client(client_dir, platform:, tools:, config:, self_contained: false, verbose: false)
         refresh_managed_client_template_files(client_dir, verbose: verbose)
         sync_client_metadata(client_dir, config, verbose: verbose)
+        apply_native_service_permissions(client_dir, config)
         configured = configure_client_runtime_mode(client_dir, self_contained: self_contained, verbose: verbose)
         return false if configured == false
         @ruflet_self_contained_build = self_contained
@@ -566,7 +585,13 @@ module Ruflet
         end
         return {} unless File.file?(config_path)
 
-        YAML.safe_load(File.read(config_path), aliases: true) || {}
+        config = YAML.safe_load(File.read(config_path), aliases: true) || {}
+        services_path = File.join(File.dirname(File.expand_path(config_path)), "services.yaml")
+        if File.file?(services_path)
+          service_config = YAML.safe_load(File.read(services_path), aliases: true) || {}
+          config["services"] = service_config["services"] if service_config.key?("services")
+        end
+        config
       rescue StandardError => e
         warn "Failed to load ruflet config: #{e.class}: #{e.message}"
         {}
@@ -993,12 +1018,14 @@ module Ruflet
       end
 
       def apply_service_extension_config(client_dir, config = {}, self_contained: @ruflet_self_contained_build)
-        services = Array(config["services"])
+        services = configured_service_entries(config).map { |entry| entry[:name] }
+        requested_extensions = Array(config["extensions"]).map { |value| normalize_extension_key(value) }.compact
+        protected_extensions = services.flat_map { |name| PROTECTED_SERVICE_EXTENSIONS.fetch(name, []) }
         extension_keys =
           if self_contained
             CLIENT_EXTENSION_MAP.keys
           else
-            services.map { |v| normalize_extension_key(v) }.compact.uniq
+            (requested_extensions + protected_extensions + services).uniq
           end
         extension_packages = extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:package) }.uniq
         extension_aliases = extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:alias) }.uniq
@@ -1012,6 +1039,67 @@ module Ruflet
           sync_client_main_extensions(entrypoint, extension_aliases) if File.file?(entrypoint)
           prune_client_main(entrypoint, extension_aliases) if File.file?(entrypoint)
         end
+      end
+
+      def configured_service_entries(config)
+        Array(config["services"]).filter_map do |entry|
+          case entry
+          when Hash
+            name, options = entry.first
+            key = normalize_extension_key(name)
+            next unless key
+
+            description = options.is_a?(Hash) ? options["description"] || options[:description] : options
+            { name: key, description: description.to_s.strip }
+          else
+            key = normalize_extension_key(entry)
+            { name: key, description: "" } if key
+          end
+        end
+      end
+
+      def apply_native_service_permissions(client_dir, config)
+        entries = configured_service_entries(config)
+        return if entries.empty?
+
+        apply_android_service_permissions(client_dir, entries)
+        apply_ios_service_usage_descriptions(client_dir, entries)
+      end
+
+      def apply_android_service_permissions(client_dir, entries)
+        path = File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")
+        return unless File.file?(path)
+
+        content = File.read(path)
+        entries.flat_map { |entry| ANDROID_SERVICE_PERMISSIONS.fetch(entry[:name], []) }.uniq.each do |permission|
+          next if content.include?(%(android:name="#{permission}"))
+
+          content.sub!(/<manifest\b[^>]*>\s*/, "\\0    <uses-permission android:name=\"#{permission}\"/>\n")
+        end
+        File.write(path, content)
+      end
+
+      def apply_ios_service_usage_descriptions(client_dir, entries)
+        path = File.join(client_dir, "ios", "Runner", "Info.plist")
+        return unless File.file?(path)
+
+        content = File.read(path)
+        entries.each do |entry|
+          key = IOS_SERVICE_USAGE_KEYS[entry[:name]]
+          next unless key
+
+          description = entry[:description]
+          description = "This app uses #{entry[:name]} access for its Ruflet features." if description.empty?
+          escaped_description = xml_escape(description)
+          pair = "\t<key>#{key}</key>\n\t<string>#{escaped_description}</string>\n"
+
+          if content.match?(%r{<key>#{Regexp.escape(key)}</key>})
+            content.sub!(%r{<key>#{Regexp.escape(key)}</key>\s*<string>.*?</string>}m, "<key>#{key}</key>\n\t<string>#{escaped_description}</string>")
+          else
+            content.sub!(%r{</dict>\s*</plist>}m, "#{pair}</dict>\n</plist>")
+          end
+        end
+        File.write(path, content)
       end
 
       def clear_flutter_build_state(client_dir, verbose: false)
@@ -1126,7 +1214,8 @@ module Ruflet
           "lib/ruflet_file_picker_service.dart",
           "lib/connection_probe.dart",
           "lib/connection_probe_io.dart",
-          "lib/connection_probe_stub.dart"
+          "lib/connection_probe_stub.dart",
+          "ios/Podfile"
         ]
 
         managed_files.each do |relative_path|

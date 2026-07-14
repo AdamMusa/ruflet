@@ -37,7 +37,21 @@ target 'Runner' do
 end
 
 post_install do |installer|
+  permission_handler_enabled = installer.pods_project.targets.any? { |target| target.name == 'permission_handler_apple' }
+
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+
+    if permission_handler_enabled
+      target.build_configurations.each do |config|
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] += %w[
+          PERMISSION_CAMERA=1
+          PERMISSION_MICROPHONE=1
+          PERMISSION_LOCATION_WHENINUSE=1
+          PERMISSION_SENSORS=1
+        ]
+      end
+    end
   end
 end

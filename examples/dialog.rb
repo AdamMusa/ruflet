@@ -123,7 +123,7 @@ class FeedbackSurfacesApp < Ruflet::App
   def open_surface(page, control, status, message)
     case control.to_patch["_c"]
     when "SnackBar"
-      page.show_snack_bar(control)
+      page.show_snackbar(control)
     when "BottomSheet"
       page.show_bottom_sheet(control)
     else

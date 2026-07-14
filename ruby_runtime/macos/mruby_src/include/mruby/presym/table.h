@@ -63,6 +63,7 @@ static const uint16_t presym_length_table[] = {
   2,	/* UI */
   2,	/* [] */
   2,	/* _1 */
+  2,	/* _i */
   2,	/* af */
   2,	/* ai */
   2,	/* as */
@@ -306,6 +307,7 @@ static const uint16_t presym_length_table[] = {
   4,	/* dst? */
   4,	/* dump */
   4,	/* each */
+  4,	/* edge */
   4,	/* elem */
   4,	/* emit */
   4,	/* enum */
@@ -1037,6 +1039,7 @@ static const uint16_t presym_length_table[] = {
   7,	/* @status */
   7,	/* @target */
   7,	/* @weight */
+  7,	/* @window */
   7,	/* ACTIONS */
   7,	/* AF_INET */
   7,	/* AF_LINK */
@@ -1183,6 +1186,7 @@ static const uint16_t presym_length_table[] = {
   7,	/* dropped */
   7,	/* element */
   7,	/* enabled */
+  7,	/* encoder */
   7,	/* entries */
   7,	/* exclude */
   7,	/* exists? */
@@ -1195,6 +1199,7 @@ static const uint16_t presym_length_table[] = {
   7,	/* foreach */
   7,	/* friday? */
   7,	/* frozen? */
+  7,	/* get_all */
   7,	/* getbyte */
   7,	/* handler */
   7,	/* headers */
@@ -1259,6 +1264,7 @@ static const uint16_t presym_length_table[] = {
   7,	/* reject! */
   7,	/* release */
   7,	/* replace */
+  7,	/* request */
   7,	/* require */
   7,	/* result= */
   7,	/* reverse */
@@ -1543,6 +1549,7 @@ static const uint16_t presym_length_table[] = {
   8,	/* shuffle! */
   8,	/* shutdown */
   8,	/* snackbar */
+  8,	/* snapshot */
   8,	/* sockaddr */
   8,	/* socktype */
   8,	/* sort_by! */
@@ -1761,6 +1768,7 @@ static const uint16_t presym_length_table[] = {
   9,	/* on_result */
   9,	/* on_scroll */
   9,	/* on_select */
+  9,	/* on_stream */
   9,	/* on_submit */
   9,	/* on_tap_up */
   9,	/* on_update */
@@ -1939,6 +1947,7 @@ static const uint16_t presym_length_table[] = {
   10,	/* each_index */
   10,	/* each_slice */
   10,	/* each_value */
+  10,	/* edge_value */
   10,	/* end_drawer */
   10,	/* entry_mode */
   10,	/* entrypoint */
@@ -1953,6 +1962,8 @@ static const uint16_t presym_length_table[] = {
   10,	/* flashlight */
   10,	/* foreground */
   10,	/* fullscreen */
+  10,	/* geolocator */
+  10,	/* get_status */
   10,	/* getaddress */
   10,	/* getpeereid */
   10,	/* getsockopt */
@@ -2004,6 +2015,7 @@ static const uint16_t presym_length_table[] = {
   10,	/* parse_data */
   10,	/* patch_page */
   10,	/* path_close */
+  10,	/* permission */
   10,	/* pick_files */
   10,	/* point_mode */
   10,	/* pop_dialog */
@@ -2117,6 +2129,7 @@ static const uint16_t presym_length_table[] = {
   11,	/* MSG_WAITALL */
   11,	/* NI_NAMEREQD */
   11,	/* ON_TERTIARY */
+  11,	/* OPTION_KEYS */
   11,	/* ObjectSpace */
   11,	/* OvalControl */
   11,	/* PageControl */
@@ -2224,6 +2237,7 @@ static const uint16_t presym_length_table[] = {
   11,	/* interactive */
   11,	/* interceptor */
   11,	/* invoke_sync */
+  11,	/* ios_options */
   11,	/* item_extent */
   11,	/* item_height */
   11,	/* label_color */
@@ -2261,6 +2275,7 @@ static const uint16_t presym_length_table[] = {
   11,	/* orientation */
   11,	/* other_begin */
   11,	/* other_value */
+  11,	/* output_path */
   11,	/* pack_binary */
   11,	/* pack_string */
   11,	/* pan_enabled */
@@ -2325,6 +2340,7 @@ static const uint16_t presym_length_table[] = {
   11,	/* track_color */
   11,	/* trap_signal */
   11,	/* underscored */
+  11,	/* web_options */
   11,	/* with_object */
   12,	/* @connections */
   12,	/* @font_family */
@@ -2369,6 +2385,7 @@ static const uint16_t presym_length_table[] = {
   12,	/* NEWLINE_CRLF */
   12,	/* ON_SECONDARY */
   12,	/* PointerEvent */
+  12,	/* RESIZE_EDGES */
   12,	/* RUBY_VERSION */
   12,	/* RadioControl */
   12,	/* ReorderEvent */
@@ -2432,6 +2449,7 @@ static const uint16_t presym_length_table[] = {
   12,	/* color_filter */
   12,	/* column_count */
   12,	/* column_index */
+  12,	/* compact_args */
   12,	/* compact_type */
   12,	/* confirm_text */
   12,	/* connectivity */
@@ -2454,6 +2472,7 @@ static const uint16_t presym_length_table[] = {
   12,	/* dialog_slots */
   12,	/* dialog_title */
   12,	/* distance_max */
+  12,	/* end_latitude */
   12,	/* event_lookup */
   12,	/* exclude_end? */
   12,	/* expand_loose */
@@ -2642,6 +2661,7 @@ static const uint16_t presym_length_table[] = {
   13,	/* drag_interval */
   13,	/* enable_filter */
   13,	/* enable_search */
+  13,	/* end_longitude */
   13,	/* error_content */
   13,	/* expansiontile */
   13,	/* explicit_icon */
@@ -2657,6 +2677,7 @@ static const uint16_t presym_length_table[] = {
   13,	/* inset_padding */
   13,	/* instance_eval */
   13,	/* instance_exec */
+  13,	/* invoke_window */
   13,	/* is_three_line */
   13,	/* keyboard_type */
   13,	/* label_padding */
@@ -2666,6 +2687,7 @@ static const uint16_t presym_length_table[] = {
   13,	/* load_icon_map */
   13,	/* local_address */
   13,	/* local_service */
+  13,	/* macos_options */
   13,	/* magnification */
   13,	/* medium_impact */
   13,	/* menu_position */
@@ -2716,6 +2738,7 @@ static const uint16_t presym_length_table[] = {
   13,	/* set_clipboard */
   13,	/* set_endpoint! */
   13,	/* show_controls */
+  13,	/* show_snackbar */
   13,	/* skip_task_bar */
   13,	/* sleep_current */
   13,	/* splash_radius */
@@ -2786,6 +2809,7 @@ static const uint16_t presym_length_table[] = {
   14,	/* animate_offset */
   14,	/* assign_wire_id */
   14,	/* attach_handler */
+  14,	/* audio_recorder */
   14,	/* autofill_group */
   14,	/* autofill_hints */
   14,	/* bar_text_style */
@@ -2831,6 +2855,7 @@ static const uint16_t presym_length_table[] = {
   14,	/* inactive_color */
   14,	/* indicator_size */
   14,	/* interval_ratio */
+  14,	/* invoke_service */
   14,	/* invoke_timeout */
   14,	/* label_behavior */
   14,	/* label_position */
@@ -2880,6 +2905,7 @@ static const uint16_t presym_length_table[] = {
   14,	/* schedule_block */
   14,	/* scroll_padding */
   14,	/* sections_space */
+  14,	/* secure_storage */
   14,	/* selected_color */
   14,	/* selected_index */
   14,	/* selection_area */
@@ -2892,6 +2918,8 @@ static const uint16_t presym_length_table[] = {
   14,	/* show_snack_bar */
   14,	/* snackbaraction */
   14,	/* sort_ascending */
+  14,	/* start_latitude */
+  14,	/* start_resizing */
   14,	/* stringify_keys */
   14,	/* submenu_button */
   14,	/* tertiary_items */
@@ -2959,6 +2987,7 @@ static const uint16_t presym_length_table[] = {
   15,	/* actions_padding */
   15,	/* additional_info */
   15,	/* allowed_devices */
+  15,	/* android_options */
   15,	/* animate_opacity */
   15,	/* animation_style */
   15,	/* append_as_bytes */
@@ -3086,6 +3115,8 @@ static const uint16_t presym_length_table[] = {
   15,	/* singleton_class */
   15,	/* soft_line_break */
   15,	/* source_location */
+  15,	/* start_longitude */
+  15,	/* start_recording */
   15,	/* switch_in_curve */
   15,	/* symbolize_names */
   15,	/* task_scheduler? */
@@ -3095,6 +3126,7 @@ static const uint16_t presym_length_table[] = {
   15,	/* transform_keys! */
   15,	/* valid_encoding? */
   15,	/* verticaldivider */
+  15,	/* windows_options */
   16,	/* $LOADED_FEATURES */
   16,	/* @correct_touches */
   16,	/* @global_position */
@@ -3154,6 +3186,7 @@ static const uint16_t presym_length_table[] = {
   16,	/* decoration_color */
   16,	/* decoration_style */
   16,	/* disabled_bgcolor */
+  16,	/* distance_between */
   16,	/* each_with_object */
   16,	/* explicit_content */
   16,	/* extract_handlers */
@@ -3162,6 +3195,7 @@ static const uint16_t presym_length_table[] = {
   16,	/* foreground_color */
   16,	/* gapless_playback */
   16,	/* gesture_detector */
+  16,	/* get_availability */
   16,	/* get_connectivity */
   16,	/* global_variables */
   16,	/* helper_max_lines */
@@ -3247,6 +3281,7 @@ static const uint16_t presym_length_table[] = {
   17,	/* FilePickerControl */
   17,	/* FlashlightControl */
   17,	/* FlashlightService */
+  17,	/* GeolocatorControl */
   17,	/* IPV6_MULTICAST_IF */
   17,	/* IPV6_UNICAST_HOPS */
   17,	/* IP_ADD_MEMBERSHIP */
@@ -3322,6 +3357,7 @@ static const uint16_t presym_length_table[] = {
   17,	/* on_multi_view_add */
   17,	/* on_update_control */
   17,	/* onig_regexp_split */
+  17,	/* open_app_settings */
   17,	/* path_quadratic_to */
   17,	/* pie_chart_section */
   17,	/* placeholder_style */
@@ -3444,6 +3480,7 @@ static const uint16_t presym_length_table[] = {
   18,	/* onig_regexp_match? */
   18,	/* outlinediconbutton */
   18,	/* path_point_payload */
+  18,	/* permission_handler */
   18,	/* proportional_width */
   18,	/* read_duration_part */
   18,	/* resolve_asset_path */
@@ -3501,6 +3538,7 @@ static const uint16_t presym_length_table[] = {
   19,	/* apply_client_update */
   19,	/* bar_hint_text_style */
   19,	/* bind_server_socket! */
+  19,	/* build_client_window */
   19,	/* can_reveal_password */
   19,	/* center_space_radius */
   19,	/* constant_prefix_for */
@@ -3526,6 +3564,7 @@ static const uint16_t presym_length_table[] = {
   19,	/* implicit_view_patch */
   19,	/* indicator_animation */
   19,	/* indicator_thickness */
+  19,	/* invoke_with_options */
   19,	/* keyboard_brightness */
   19,	/* minimum_shake_count */
   19,	/* normalize_fab_props */
@@ -3568,6 +3607,7 @@ static const uint16_t presym_length_table[] = {
   19,	/* write_http_response */
   20,	/* @page_event_handlers */
   20,	/* AccelerometerControl */
+  20,	/* AudioRecorderControl */
   20,	/* AutofillGroupControl */
   20,	/* BarChartGroupControl */
   20,	/* ExpansionTileControl */
@@ -3577,6 +3617,7 @@ static const uint16_t presym_length_table[] = {
   20,	/* ON_PRIMARY_CONTAINER */
   20,	/* PopupMenuItemControl */
   20,	/* ResponsiveRowControl */
+  20,	/* SecureStorageControl */
   20,	/* SelectionAreaControl */
   20,	/* ShakeDetectorControl */
   20,	/* SubmenuButtonControl */
@@ -3618,6 +3659,7 @@ static const uint16_t presym_length_table[] = {
   20,	/* inactive_thumb_image */
   20,	/* inactive_track_color */
   20,	/* invoke_storage_paths */
+  20,	/* is_supported_encoder */
   20,	/* locale_configuration */
   20,	/* min_vertical_padding */
   20,	/* normalize_color_prop */
@@ -3871,6 +3913,7 @@ static const uint16_t presym_length_table[] = {
   24,	/* MCAST_LEAVE_SOURCE_GROUP */
   24,	/* ON_PRIMARY_FIXED_VARIANT */
   24,	/* PYTHON_COMMON_ATTRIBUTES */
+  24,	/* PermissionHandlerControl */
   24,	/* RadarDataSetEntryControl */
   24,	/* RufletServicesComponents */
   24,	/* SURFACE_CONTAINER_LOWEST */
@@ -4182,6 +4225,7 @@ static const char * const presym_name_table[] = {
   "UI",
   "[]",
   "_1",
+  "_i",
   "af",
   "ai",
   "as",
@@ -4425,6 +4469,7 @@ static const char * const presym_name_table[] = {
   "dst?",
   "dump",
   "each",
+  "edge",
   "elem",
   "emit",
   "enum",
@@ -5156,6 +5201,7 @@ static const char * const presym_name_table[] = {
   "@status",
   "@target",
   "@weight",
+  "@window",
   "ACTIONS",
   "AF_INET",
   "AF_LINK",
@@ -5302,6 +5348,7 @@ static const char * const presym_name_table[] = {
   "dropped",
   "element",
   "enabled",
+  "encoder",
   "entries",
   "exclude",
   "exists?",
@@ -5314,6 +5361,7 @@ static const char * const presym_name_table[] = {
   "foreach",
   "friday?",
   "frozen?",
+  "get_all",
   "getbyte",
   "handler",
   "headers",
@@ -5378,6 +5426,7 @@ static const char * const presym_name_table[] = {
   "reject!",
   "release",
   "replace",
+  "request",
   "require",
   "result=",
   "reverse",
@@ -5662,6 +5711,7 @@ static const char * const presym_name_table[] = {
   "shuffle!",
   "shutdown",
   "snackbar",
+  "snapshot",
   "sockaddr",
   "socktype",
   "sort_by!",
@@ -5880,6 +5930,7 @@ static const char * const presym_name_table[] = {
   "on_result",
   "on_scroll",
   "on_select",
+  "on_stream",
   "on_submit",
   "on_tap_up",
   "on_update",
@@ -6058,6 +6109,7 @@ static const char * const presym_name_table[] = {
   "each_index",
   "each_slice",
   "each_value",
+  "edge_value",
   "end_drawer",
   "entry_mode",
   "entrypoint",
@@ -6072,6 +6124,8 @@ static const char * const presym_name_table[] = {
   "flashlight",
   "foreground",
   "fullscreen",
+  "geolocator",
+  "get_status",
   "getaddress",
   "getpeereid",
   "getsockopt",
@@ -6123,6 +6177,7 @@ static const char * const presym_name_table[] = {
   "parse_data",
   "patch_page",
   "path_close",
+  "permission",
   "pick_files",
   "point_mode",
   "pop_dialog",
@@ -6236,6 +6291,7 @@ static const char * const presym_name_table[] = {
   "MSG_WAITALL",
   "NI_NAMEREQD",
   "ON_TERTIARY",
+  "OPTION_KEYS",
   "ObjectSpace",
   "OvalControl",
   "PageControl",
@@ -6343,6 +6399,7 @@ static const char * const presym_name_table[] = {
   "interactive",
   "interceptor",
   "invoke_sync",
+  "ios_options",
   "item_extent",
   "item_height",
   "label_color",
@@ -6380,6 +6437,7 @@ static const char * const presym_name_table[] = {
   "orientation",
   "other_begin",
   "other_value",
+  "output_path",
   "pack_binary",
   "pack_string",
   "pan_enabled",
@@ -6444,6 +6502,7 @@ static const char * const presym_name_table[] = {
   "track_color",
   "trap_signal",
   "underscored",
+  "web_options",
   "with_object",
   "@connections",
   "@font_family",
@@ -6488,6 +6547,7 @@ static const char * const presym_name_table[] = {
   "NEWLINE_CRLF",
   "ON_SECONDARY",
   "PointerEvent",
+  "RESIZE_EDGES",
   "RUBY_VERSION",
   "RadioControl",
   "ReorderEvent",
@@ -6551,6 +6611,7 @@ static const char * const presym_name_table[] = {
   "color_filter",
   "column_count",
   "column_index",
+  "compact_args",
   "compact_type",
   "confirm_text",
   "connectivity",
@@ -6573,6 +6634,7 @@ static const char * const presym_name_table[] = {
   "dialog_slots",
   "dialog_title",
   "distance_max",
+  "end_latitude",
   "event_lookup",
   "exclude_end?",
   "expand_loose",
@@ -6761,6 +6823,7 @@ static const char * const presym_name_table[] = {
   "drag_interval",
   "enable_filter",
   "enable_search",
+  "end_longitude",
   "error_content",
   "expansiontile",
   "explicit_icon",
@@ -6776,6 +6839,7 @@ static const char * const presym_name_table[] = {
   "inset_padding",
   "instance_eval",
   "instance_exec",
+  "invoke_window",
   "is_three_line",
   "keyboard_type",
   "label_padding",
@@ -6785,6 +6849,7 @@ static const char * const presym_name_table[] = {
   "load_icon_map",
   "local_address",
   "local_service",
+  "macos_options",
   "magnification",
   "medium_impact",
   "menu_position",
@@ -6835,6 +6900,7 @@ static const char * const presym_name_table[] = {
   "set_clipboard",
   "set_endpoint!",
   "show_controls",
+  "show_snackbar",
   "skip_task_bar",
   "sleep_current",
   "splash_radius",
@@ -6905,6 +6971,7 @@ static const char * const presym_name_table[] = {
   "animate_offset",
   "assign_wire_id",
   "attach_handler",
+  "audio_recorder",
   "autofill_group",
   "autofill_hints",
   "bar_text_style",
@@ -6950,6 +7017,7 @@ static const char * const presym_name_table[] = {
   "inactive_color",
   "indicator_size",
   "interval_ratio",
+  "invoke_service",
   "invoke_timeout",
   "label_behavior",
   "label_position",
@@ -6999,6 +7067,7 @@ static const char * const presym_name_table[] = {
   "schedule_block",
   "scroll_padding",
   "sections_space",
+  "secure_storage",
   "selected_color",
   "selected_index",
   "selection_area",
@@ -7011,6 +7080,8 @@ static const char * const presym_name_table[] = {
   "show_snack_bar",
   "snackbaraction",
   "sort_ascending",
+  "start_latitude",
+  "start_resizing",
   "stringify_keys",
   "submenu_button",
   "tertiary_items",
@@ -7078,6 +7149,7 @@ static const char * const presym_name_table[] = {
   "actions_padding",
   "additional_info",
   "allowed_devices",
+  "android_options",
   "animate_opacity",
   "animation_style",
   "append_as_bytes",
@@ -7205,6 +7277,8 @@ static const char * const presym_name_table[] = {
   "singleton_class",
   "soft_line_break",
   "source_location",
+  "start_longitude",
+  "start_recording",
   "switch_in_curve",
   "symbolize_names",
   "task_scheduler?",
@@ -7214,6 +7288,7 @@ static const char * const presym_name_table[] = {
   "transform_keys!",
   "valid_encoding?",
   "verticaldivider",
+  "windows_options",
   "$LOADED_FEATURES",
   "@correct_touches",
   "@global_position",
@@ -7273,6 +7348,7 @@ static const char * const presym_name_table[] = {
   "decoration_color",
   "decoration_style",
   "disabled_bgcolor",
+  "distance_between",
   "each_with_object",
   "explicit_content",
   "extract_handlers",
@@ -7281,6 +7357,7 @@ static const char * const presym_name_table[] = {
   "foreground_color",
   "gapless_playback",
   "gesture_detector",
+  "get_availability",
   "get_connectivity",
   "global_variables",
   "helper_max_lines",
@@ -7366,6 +7443,7 @@ static const char * const presym_name_table[] = {
   "FilePickerControl",
   "FlashlightControl",
   "FlashlightService",
+  "GeolocatorControl",
   "IPV6_MULTICAST_IF",
   "IPV6_UNICAST_HOPS",
   "IP_ADD_MEMBERSHIP",
@@ -7441,6 +7519,7 @@ static const char * const presym_name_table[] = {
   "on_multi_view_add",
   "on_update_control",
   "onig_regexp_split",
+  "open_app_settings",
   "path_quadratic_to",
   "pie_chart_section",
   "placeholder_style",
@@ -7563,6 +7642,7 @@ static const char * const presym_name_table[] = {
   "onig_regexp_match?",
   "outlinediconbutton",
   "path_point_payload",
+  "permission_handler",
   "proportional_width",
   "read_duration_part",
   "resolve_asset_path",
@@ -7620,6 +7700,7 @@ static const char * const presym_name_table[] = {
   "apply_client_update",
   "bar_hint_text_style",
   "bind_server_socket!",
+  "build_client_window",
   "can_reveal_password",
   "center_space_radius",
   "constant_prefix_for",
@@ -7645,6 +7726,7 @@ static const char * const presym_name_table[] = {
   "implicit_view_patch",
   "indicator_animation",
   "indicator_thickness",
+  "invoke_with_options",
   "keyboard_brightness",
   "minimum_shake_count",
   "normalize_fab_props",
@@ -7687,6 +7769,7 @@ static const char * const presym_name_table[] = {
   "write_http_response",
   "@page_event_handlers",
   "AccelerometerControl",
+  "AudioRecorderControl",
   "AutofillGroupControl",
   "BarChartGroupControl",
   "ExpansionTileControl",
@@ -7696,6 +7779,7 @@ static const char * const presym_name_table[] = {
   "ON_PRIMARY_CONTAINER",
   "PopupMenuItemControl",
   "ResponsiveRowControl",
+  "SecureStorageControl",
   "SelectionAreaControl",
   "ShakeDetectorControl",
   "SubmenuButtonControl",
@@ -7737,6 +7821,7 @@ static const char * const presym_name_table[] = {
   "inactive_thumb_image",
   "inactive_track_color",
   "invoke_storage_paths",
+  "is_supported_encoder",
   "locale_configuration",
   "min_vertical_padding",
   "normalize_color_prop",
@@ -7990,6 +8075,7 @@ static const char * const presym_name_table[] = {
   "MCAST_LEAVE_SOURCE_GROUP",
   "ON_PRIMARY_FIXED_VARIANT",
   "PYTHON_COMMON_ATTRIBUTES",
+  "PermissionHandlerControl",
   "RadarDataSetEntryControl",
   "RufletServicesComponents",
   "SURFACE_CONTAINER_LOWEST",
