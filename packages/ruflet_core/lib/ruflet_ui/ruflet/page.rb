@@ -407,6 +407,10 @@ module Ruflet
         return svc
       end
 
+      unless service_control_type?(normalized_type)
+        raise ArgumentError, "#{type} is a visual control, not a page service"
+      end
+
       existing =
         if id
           services.find { |s| s.is_a?(Control) && s.id.to_s == id.to_s }
@@ -415,7 +419,14 @@ module Ruflet
             s.is_a?(Control) && s.type.to_s.downcase.delete("_") == compact_type
           end
         end
-      return existing if existing
+      if existing
+        unless mapped_props.empty?
+          existing.merge_props(mapped_props)
+          refresh_services_container!
+          push_services_update!
+        end
+        return existing
+      end
 
       svc = Ruflet::UI::ControlFactory.build(type.to_s, id: id&.to_s, **mapped_props)
       add_service(svc) unless services.include?(svc)
@@ -950,7 +961,7 @@ module Ruflet
     end
 
     def screenshot(**props)
-      service(:screenshot, **props)
+      Ruflet::UI::ControlFactory.build(:screenshot, **props)
     end
 
     def battery(**props)
@@ -1370,6 +1381,14 @@ module Ruflet
 
     def visual_service_type?(type)
       type.to_s.delete("_") == "camera"
+    end
+
+    def service_control_type?(type)
+      normalized = type.to_s.downcase
+      compact = normalized.delete("_")
+      compact == "audio" ||
+        Ruflet::UI::Services::RufletServices::CLASS_MAP.key?(normalized) ||
+        Ruflet::UI::Services::RufletServices::CLASS_MAP.key?(compact)
     end
 
     def text_maps_to_content?(control, patch)

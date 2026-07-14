@@ -3,6 +3,22 @@
 module Ruflet
   module UI
     module MaterialControlMethods
+      def map_coordinates(value)
+        case value
+        when Array
+          return { "latitude" => value[0], "longitude" => value[1] } if value.length >= 2
+        when Hash
+          latitude = value["latitude"] || value[:latitude] || value["lat"] || value[:lat]
+          longitude = value["longitude"] || value[:longitude] || value["lon"] || value[:lon] || value["lng"] || value[:lng]
+          return { "latitude" => latitude, "longitude" => longitude } unless latitude.nil? || longitude.nil?
+        end
+        value.respond_to?(:to_h) ? map_coordinates(value.to_h) : value
+      end
+
+      def map_coordinate_list(value)
+        Array(value).map { |coordinates| map_coordinates(coordinates) }
+      end
+
       def view(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
@@ -174,6 +190,7 @@ module Ruflet
       def listtile(**props) = list_tile(**props)
       def map(layers = nil, **props)
         mapped = props.dup
+        mapped[:initial_center] = map_coordinates(mapped[:initial_center]) if mapped.key?(:initial_center)
         mapped[:layers] = layers unless layers.nil?
         build_widget(:map, **mapped)
       end
@@ -187,6 +204,7 @@ module Ruflet
       def markerlayer(markers = nil, **props) = marker_layer(markers, **props)
       def marker(content = nil, **props)
         mapped = props.dup
+        mapped[:coordinates] = map_coordinates(mapped[:coordinates]) if mapped.key?(:coordinates)
         mapped[:content] = content unless content.nil?
         build_widget(:marker, **mapped)
       end
@@ -196,7 +214,11 @@ module Ruflet
         build_widget(:circlelayer, **mapped)
       end
       def circlelayer(circles = nil, **props) = circle_layer(circles, **props)
-      def circle_marker(**props) = build_widget(:circlemarker, **props)
+      def circle_marker(**props)
+        mapped = props.dup
+        mapped[:coordinates] = map_coordinates(mapped[:coordinates]) if mapped.key?(:coordinates)
+        build_widget(:circlemarker, **mapped)
+      end
       def circlemarker(**props) = circle_marker(**props)
       def polyline_layer(polylines = nil, **props)
         mapped = props.dup
@@ -204,7 +226,11 @@ module Ruflet
         build_widget(:polylinelayer, **mapped)
       end
       def polylinelayer(polylines = nil, **props) = polyline_layer(polylines, **props)
-      def polyline_marker(**props) = build_widget(:polylinemarker, **props)
+      def polyline_marker(**props)
+        mapped = props.dup
+        mapped[:coordinates] = map_coordinate_list(mapped[:coordinates]) if mapped.key?(:coordinates)
+        build_widget(:polylinemarker, **mapped)
+      end
       def polylinemarker(**props) = polyline_marker(**props)
       def polygon_layer(polygons = nil, **props)
         mapped = props.dup
@@ -212,7 +238,11 @@ module Ruflet
         build_widget(:polygonlayer, **mapped)
       end
       def polygonlayer(polygons = nil, **props) = polygon_layer(polygons, **props)
-      def polygon_marker(**props) = build_widget(:polygonmarker, **props)
+      def polygon_marker(**props)
+        mapped = props.dup
+        mapped[:coordinates] = map_coordinate_list(mapped[:coordinates]) if mapped.key?(:coordinates)
+        build_widget(:polygonmarker, **mapped)
+      end
       def polygonmarker(**props) = polygon_marker(**props)
       def simple_attribution(**props) = build_widget(:simpleattribution, **props)
       def simpleattribution(**props) = simple_attribution(**props)

@@ -15,7 +15,6 @@ require_relative "ruflet/hapticfeedback_control"
 require_relative "ruflet/magnetometer_control"
 require_relative "ruflet/permissionhandler_control"
 require_relative "ruflet/screenbrightness_control"
-require_relative "ruflet/screenshot_control"
 require_relative "ruflet/securestorage_control"
 require_relative "ruflet/semanticsservice_control"
 require_relative "ruflet/shakedetector_control"
@@ -53,7 +52,6 @@ module Ruflet
           "permissionhandler" => RufletServicesComponents::PermissionHandlerControl,
           "screen_brightness" => RufletServicesComponents::ScreenBrightnessControl,
           "screenbrightness" => RufletServicesComponents::ScreenBrightnessControl,
-          "screenshot" => RufletServicesComponents::ScreenshotControl,
           "secure_storage" => RufletServicesComponents::SecureStorageControl,
           "securestorage" => RufletServicesComponents::SecureStorageControl,
           "semantics_service" => RufletServicesComponents::SemanticsServiceControl,

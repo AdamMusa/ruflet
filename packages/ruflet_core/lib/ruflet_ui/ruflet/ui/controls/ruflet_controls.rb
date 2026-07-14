@@ -61,6 +61,7 @@ require_relative "materials/filledtonaliconbutton_control"
 require_relative "materials/floatingactionbutton_control"
 require_relative "materials/iconbutton_control"
 require_relative "materials/listtile_control"
+require_relative "materials/map_control"
 require_relative "materials/menubar_control"
 require_relative "materials/menuitembutton_control"
 require_relative "materials/navigationbar_control"
@@ -326,6 +327,7 @@ module Ruflet
           "list_tile" => RufletComponents::ListTileControl,
           "list_view" => RufletComponents::ListViewControl,
           "listtile" => RufletComponents::ListTileControl,
+          "map" => RufletComponents::MapControl,
           "listview" => RufletComponents::ListViewControl,
           "markdown" => RufletComponents::MarkdownControl,
           "menu_bar" => RufletComponents::MenuBarControl,

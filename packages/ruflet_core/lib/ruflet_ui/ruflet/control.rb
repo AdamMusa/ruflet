@@ -54,6 +54,15 @@ module Ruflet
       @handlers.key?(normalized_event_name(event_name))
     end
 
+    # Refresh an existing control without replacing its identity. Page services
+    # are long-lived in Flet's ServiceRegistry, so revisiting a view must update
+    # both their configuration and their Ruby event handlers.
+    def merge_props(values = {})
+      normalized = normalize_props(extract_handlers(preprocess_props(values)))
+      @props.merge!(normalized)
+      self
+    end
+
     def to_patch
       wire_type = schema_wire_type_for_class
       if wire_type.nil?

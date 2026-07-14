@@ -166,11 +166,14 @@ static const uint16_t presym_length_table[] = {
   3,	/* ip? */
   3,	/* key */
   3,	/* kwd */
+  3,	/* lat */
   3,	/* lcm */
   3,	/* len */
   3,	/* lhs */
   3,	/* lim */
+  3,	/* lng */
   3,	/* log */
+  3,	/* lon */
   3,	/* low */
   3,	/* map */
   3,	/* max */
@@ -651,6 +654,7 @@ static const uint16_t presym_length_table[] = {
   5,	/* phase */
   5,	/* pipe? */
   5,	/* pitch */
+  5,	/* point */
   5,	/* polar */
   5,	/* popen */
   5,	/* pproc */
@@ -862,6 +866,7 @@ static const uint16_t presym_length_table[] = {
   6,	/* cover? */
   6,	/* curved */
   6,	/* define */
+  6,	/* degree */
   6,	/* delete */
   6,	/* detect */
   6,	/* device */
@@ -1227,6 +1232,7 @@ static const uint16_t presym_length_table[] = {
   7,	/* modules */
   7,	/* monday? */
   7,	/* movable */
+  7,	/* move_to */
   7,	/* nesting */
   7,	/* new_key */
   7,	/* newline */
@@ -1316,6 +1322,8 @@ static const uint16_t presym_length_table[] = {
   7,	/* weights */
   7,	/* wire_id */
   7,	/* yielder */
+  7,	/* zoom_in */
+  7,	/* zoom_to */
   8,	/* @bgcolor */
   8,	/* @control */
   8,	/* @current */
@@ -1474,6 +1482,7 @@ static const uint16_t presym_length_table[] = {
   8,	/* interval */
   8,	/* keywords */
   8,	/* kind_of? */
+  8,	/* latitude */
   8,	/* listtile */
   8,	/* listview */
   8,	/* markdown */
@@ -1578,6 +1587,8 @@ static const uint16_t presym_length_table[] = {
   8,	/* wakelock */
   8,	/* web_view */
   8,	/* wire_id= */
+  8,	/* wire_key */
+  8,	/* zoom_out */
   9,	/* @baseline */
   9,	/* @children */
   9,	/* @distance */
@@ -1676,6 +1687,7 @@ static const uint16_t presym_length_table[] = {
   9,	/* candidate */
   9,	/* canonical */
   9,	/* casefold? */
+  9,	/* center_on */
   9,	/* chartaxis */
   9,	/* client_ip */
   9,	/* clipboard */
@@ -1737,6 +1749,7 @@ static const uint16_t presym_length_table[] = {
   9,	/* list_tile */
   9,	/* list_view */
   9,	/* localtime */
+  9,	/* longitude */
   9,	/* magnitude */
   9,	/* max_lines */
   9,	/* max_scale */
@@ -1882,6 +1895,7 @@ static const uint16_t presym_length_table[] = {
   10,	/* MAX_10_EXP */
   10,	/* MIN_10_EXP */
   10,	/* MSG_CTRUNC */
+  10,	/* MapControl */
   10,	/* NI_MAXHOST */
   10,	/* NI_MAXSERV */
   10,	/* ON_PRIMARY */
@@ -1976,6 +1990,7 @@ static const uint16_t presym_length_table[] = {
   10,	/* iconbutton */
   10,	/* initialize */
   10,	/* intersect? */
+  10,	/* invoke_map */
   10,	/* ip_address */
   10,	/* is_enabled */
   10,	/* is_playing */
@@ -2198,6 +2213,7 @@ static const uint16_t presym_length_table[] = {
   11,	/* const_added */
   11,	/* constrained */
   11,	/* contextmenu */
+  11,	/* coordinates */
   11,	/* data_column */
   11,	/* data_series */
   11,	/* date_picker */
@@ -2206,6 +2222,7 @@ static const uint16_t presym_length_table[] = {
   11,	/* decorations */
   11,	/* delete_icon */
   11,	/* denominator */
+  11,	/* destination */
   11,	/* destructive */
   11,	/* dismissible */
   11,	/* drag_target */
@@ -2251,6 +2268,7 @@ static const uint16_t presym_length_table[] = {
   11,	/* maximizable */
   11,	/* media_index */
   11,	/* menu_height */
+  11,	/* merge_props */
   11,	/* method_name */
   11,	/* minimizable */
   11,	/* module_eval */
@@ -2299,6 +2317,7 @@ static const uint16_t presym_length_table[] = {
   11,	/* regexp_arg? */
   11,	/* reload_app! */
   11,	/* respond_to? */
+  11,	/* rotate_from */
   11,	/* rotated_box */
   11,	/* route_value */
   11,	/* run_spacing */
@@ -2854,6 +2873,7 @@ static const uint16_t presym_length_table[] = {
   14,	/* icon_prop_key? */
   14,	/* inactive_color */
   14,	/* indicator_size */
+  14,	/* initial_center */
   14,	/* interval_ratio */
   14,	/* invoke_service */
   14,	/* invoke_timeout */
@@ -2900,6 +2920,7 @@ static const uint16_t presym_length_table[] = {
   14,	/* remote_address */
   14,	/* remove_service */
   14,	/* remove_session */
+  14,	/* reset_rotation */
   14,	/* responsive_row */
   14,	/* run_connection */
   14,	/* schedule_block */
@@ -3051,6 +3072,7 @@ static const uint16_t presym_length_table[] = {
   15,	/* leading_padding */
   15,	/* line_chart_data */
   15,	/* local_variables */
+  15,	/* map_coordinates */
   15,	/* max_menu_height */
   15,	/* merge_semantics */
   15,	/* method_defined? */
@@ -3566,10 +3588,12 @@ static const uint16_t presym_length_table[] = {
   19,	/* indicator_thickness */
   19,	/* invoke_with_options */
   19,	/* keyboard_brightness */
+  19,	/* map_coordinate_list */
   19,	/* minimum_shake_count */
   19,	/* normalize_fab_props */
   19,	/* normalize_icon_name */
   19,	/* normalize_icon_prop */
+  19,	/* normalize_map_value */
   19,	/* obscuring_character */
   19,	/* old_square_brancket */
   19,	/* on_enter_fullscreen */
@@ -3754,6 +3778,7 @@ static const uint16_t presym_length_table[] = {
   21,	/* invoke_control_method */
   21,	/* line_chart_data_point */
   21,	/* min_action_bar_height */
+  21,	/* normalize_coordinates */
   21,	/* normalize_share_files */
   21,	/* normalized_event_name */
   21,	/* on_force_press_update */
@@ -3774,6 +3799,7 @@ static const uint16_t presym_length_table[] = {
   21,	/* secondary_track_value */
   21,	/* selected_shadow_color */
   21,	/* serialize_patch_value */
+  21,	/* service_control_type? */
   21,	/* set_global_variables= */
   21,	/* set_global_variables? */
   21,	/* share_position_origin */
@@ -4328,11 +4354,14 @@ static const char * const presym_name_table[] = {
   "ip?",
   "key",
   "kwd",
+  "lat",
   "lcm",
   "len",
   "lhs",
   "lim",
+  "lng",
   "log",
+  "lon",
   "low",
   "map",
   "max",
@@ -4813,6 +4842,7 @@ static const char * const presym_name_table[] = {
   "phase",
   "pipe?",
   "pitch",
+  "point",
   "polar",
   "popen",
   "pproc",
@@ -5024,6 +5054,7 @@ static const char * const presym_name_table[] = {
   "cover?",
   "curved",
   "define",
+  "degree",
   "delete",
   "detect",
   "device",
@@ -5389,6 +5420,7 @@ static const char * const presym_name_table[] = {
   "modules",
   "monday?",
   "movable",
+  "move_to",
   "nesting",
   "new_key",
   "newline",
@@ -5478,6 +5510,8 @@ static const char * const presym_name_table[] = {
   "weights",
   "wire_id",
   "yielder",
+  "zoom_in",
+  "zoom_to",
   "@bgcolor",
   "@control",
   "@current",
@@ -5636,6 +5670,7 @@ static const char * const presym_name_table[] = {
   "interval",
   "keywords",
   "kind_of?",
+  "latitude",
   "listtile",
   "listview",
   "markdown",
@@ -5740,6 +5775,8 @@ static const char * const presym_name_table[] = {
   "wakelock",
   "web_view",
   "wire_id=",
+  "wire_key",
+  "zoom_out",
   "@baseline",
   "@children",
   "@distance",
@@ -5838,6 +5875,7 @@ static const char * const presym_name_table[] = {
   "candidate",
   "canonical",
   "casefold?",
+  "center_on",
   "chartaxis",
   "client_ip",
   "clipboard",
@@ -5899,6 +5937,7 @@ static const char * const presym_name_table[] = {
   "list_tile",
   "list_view",
   "localtime",
+  "longitude",
   "magnitude",
   "max_lines",
   "max_scale",
@@ -6044,6 +6083,7 @@ static const char * const presym_name_table[] = {
   "MAX_10_EXP",
   "MIN_10_EXP",
   "MSG_CTRUNC",
+  "MapControl",
   "NI_MAXHOST",
   "NI_MAXSERV",
   "ON_PRIMARY",
@@ -6138,6 +6178,7 @@ static const char * const presym_name_table[] = {
   "iconbutton",
   "initialize",
   "intersect?",
+  "invoke_map",
   "ip_address",
   "is_enabled",
   "is_playing",
@@ -6360,6 +6401,7 @@ static const char * const presym_name_table[] = {
   "const_added",
   "constrained",
   "contextmenu",
+  "coordinates",
   "data_column",
   "data_series",
   "date_picker",
@@ -6368,6 +6410,7 @@ static const char * const presym_name_table[] = {
   "decorations",
   "delete_icon",
   "denominator",
+  "destination",
   "destructive",
   "dismissible",
   "drag_target",
@@ -6413,6 +6456,7 @@ static const char * const presym_name_table[] = {
   "maximizable",
   "media_index",
   "menu_height",
+  "merge_props",
   "method_name",
   "minimizable",
   "module_eval",
@@ -6461,6 +6505,7 @@ static const char * const presym_name_table[] = {
   "regexp_arg?",
   "reload_app!",
   "respond_to?",
+  "rotate_from",
   "rotated_box",
   "route_value",
   "run_spacing",
@@ -7016,6 +7061,7 @@ static const char * const presym_name_table[] = {
   "icon_prop_key?",
   "inactive_color",
   "indicator_size",
+  "initial_center",
   "interval_ratio",
   "invoke_service",
   "invoke_timeout",
@@ -7062,6 +7108,7 @@ static const char * const presym_name_table[] = {
   "remote_address",
   "remove_service",
   "remove_session",
+  "reset_rotation",
   "responsive_row",
   "run_connection",
   "schedule_block",
@@ -7213,6 +7260,7 @@ static const char * const presym_name_table[] = {
   "leading_padding",
   "line_chart_data",
   "local_variables",
+  "map_coordinates",
   "max_menu_height",
   "merge_semantics",
   "method_defined?",
@@ -7728,10 +7776,12 @@ static const char * const presym_name_table[] = {
   "indicator_thickness",
   "invoke_with_options",
   "keyboard_brightness",
+  "map_coordinate_list",
   "minimum_shake_count",
   "normalize_fab_props",
   "normalize_icon_name",
   "normalize_icon_prop",
+  "normalize_map_value",
   "obscuring_character",
   "old_square_brancket",
   "on_enter_fullscreen",
@@ -7916,6 +7966,7 @@ static const char * const presym_name_table[] = {
   "invoke_control_method",
   "line_chart_data_point",
   "min_action_bar_height",
+  "normalize_coordinates",
   "normalize_share_files",
   "normalized_event_name",
   "on_force_press_update",
@@ -7936,6 +7987,7 @@ static const char * const presym_name_table[] = {
   "secondary_track_value",
   "selected_shadow_color",
   "serialize_patch_value",
+  "service_control_type?",
   "set_global_variables=",
   "set_global_variables?",
   "share_position_origin",
