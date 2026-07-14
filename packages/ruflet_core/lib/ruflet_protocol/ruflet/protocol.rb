@@ -33,6 +33,7 @@ module Ruflet
         "height" => page["height"],
         "platform" => page["platform"],
         "platform_brightness" => page["platform_brightness"],
+        "window" => page["window"] || {},
         "media" => page["media"] || {}
       }
     end

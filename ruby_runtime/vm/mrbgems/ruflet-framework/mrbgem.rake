@@ -28,7 +28,7 @@ MRuby::Gem::Specification.new("ruflet-framework") do |spec|
     return unless path
 
     visiting[feature] = true
-    File.foreach(path) do |line|
+    File.foreach(path, encoding: "UTF-8") do |line|
       if (match = line.match(/^\s*require\s+["']([^"']+)["']/))
         visit.call(match[1])
       elsif (match = line.match(/^\s*require_relative\s+["']([^"']+)["']/))

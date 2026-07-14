@@ -158,7 +158,7 @@ module Ruflet
       %i[control widget]
     ).map(&:to_s).uniq.freeze
 
-    attr_reader :session_id, :client_details, :views
+    attr_reader :session_id, :client_details, :views, :window
 
     def initialize(session_id:, client_details:, sender:)
       @session_id = session_id
@@ -178,6 +178,8 @@ module Ruflet
       @page_event_handlers = {}
       @view_props = {}
       @page_props = { "route" => (client_details["route"] || "/") }
+      @window = build_client_window(client_details["window"])
+      @page_props["window"] = @window
       @overlay_container = Ruflet::Control.new(
         type: "overlay",
         id: "_overlay",
@@ -1248,6 +1250,22 @@ module Ruflet
     end
 
     private
+
+    def build_client_window(snapshot)
+      properties = snapshot.is_a?(Hash) ? snapshot : {}
+      allowed = Ruflet::UI::Controls::RufletComponents::WindowControl::KEYWORDS
+      props = properties.each_with_object({}) do |(key, value), result|
+        name = key.to_s
+        result[name.to_sym] = value if allowed.include?(name.to_sym)
+      end
+      control = Ruflet::UI::Controls::RufletComponents::WindowControl.new(
+        id: "_window",
+        **props
+      )
+      control.wire_id = (properties["_i"] || properties[:_i] || 2).to_i
+      control.runtime_page = self
+      control
+    end
 
     def invoke_and_wait(control_or_id, method_name, args: nil, timeout: 10)
       control_id =

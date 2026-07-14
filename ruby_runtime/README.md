@@ -28,6 +28,10 @@ packages only the developer's application code and assets.
 - iOS
 - macOS (the universal `arm64`/`x86_64` VM archive is distributed in
   `macos/Frameworks`; application builds compile only the Flutter bridge)
+- Linux (prebuilt `aarch64` and `x86_64` VM libraries are distributed in
+  `linux/lib`; application builds compile only the Flutter method-channel bridge)
+- Windows (the prebuilt `x86_64` VM DLL is distributed in `windows/bin`;
+  application builds compile only the Flutter method-channel bridge)
 
 Native VM artifacts are part of the `ruby_runtime` release, not part of the
 developer application build. Each artifact has a checked manifest beside it
@@ -38,6 +42,12 @@ version. It does not copy framework Ruby sources into an application.
 Android application builds link the packaged `libruby_runtime.so` for their
 target ABI. They never read mruby's local `build/host_vm` directory and never
 compile Ruflet gems while building the developer application.
+
+Desktop application builds follow the same rule. Linux links and bundles the
+packaged library selected for the host architecture. Windows bundles the
+packaged DLL and loads its stable C API. The native window is the one owned by
+the Flutter/Flet client; `Page.window` controls it through the normal Ruflet
+protocol and does not start another VM.
 
 ## Dart API
 

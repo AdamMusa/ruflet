@@ -1,3 +1,10 @@
+## 0.0.4
+
+- Add packaged Linux `aarch64`/`x86_64` and Windows `x86_64` Ruflet VMs.
+- Expose the same `start`, `status`, and `stop` runtime contract on Windows and Linux.
+- Rebuild the universal macOS VM with the current preloaded Ruflet gems.
+- Support Flet-compatible `Page.window` through the existing Ruflet protocol without creating another VM.
+
 ## 0.0.3
 
 - Fix native Android, iOS, and macOS includes to load the packaged embedded Ruflet runtime header from `shared/`.
