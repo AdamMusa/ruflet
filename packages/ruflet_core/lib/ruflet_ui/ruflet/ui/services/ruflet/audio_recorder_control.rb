@@ -7,6 +7,7 @@ module Ruflet
         class AudioRecorderControl < Ruflet::Control
           TYPE = "audiorecorder".freeze
           WIRE = "AudioRecorder".freeze
+          KEYWORDS = [:configuration, :data, :key, :on_state_change, :on_stream, :on_upload].freeze
 
           def initialize(id: nil, configuration: nil, data: nil, key: nil, on_state_change: nil, on_stream: nil, on_upload: nil)
             configuration ||= {}

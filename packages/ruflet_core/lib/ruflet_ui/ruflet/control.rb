@@ -294,10 +294,15 @@ module Ruflet
       return [] unless schema_class
       return schema_class::KEYWORDS if schema_class.const_defined?(:KEYWORDS)
 
-      schema_class.instance_method(:initialize).parameters
-                 .select { |kind, _| kind == :key || kind == :keyreq }
-                 .map { |_, name| name }
-                 .reject { |name| name == :id }
+      keyword_parameters = schema_class.instance_method(:initialize).parameters
+                                       .select { |kind, _| kind == :key || kind == :keyreq }
+      # mruby can omit keyword names that are not present in its presymbol
+      # table. A partial schema is unsafe because it rejects valid application
+      # properties. Explicit KEYWORDS metadata remains strict; otherwise the
+      # constructor itself performs initial keyword validation.
+      return [] if keyword_parameters.any? { |_, name| name.nil? }
+
+      keyword_parameters.map { |_, name| name }.reject { |name| name == :id }
     rescue StandardError
       []
     end

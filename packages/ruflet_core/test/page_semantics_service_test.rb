@@ -16,6 +16,23 @@ class PageSemanticsServiceTest < Minitest::Test
     assert_same service, page.service(:semantics_service)
   end
 
+  def test_semantics_service_invokes_native_flet_methods
+    sent = []
+    page = build_page(sent)
+    service = page.semantics_service
+    sent.clear
+
+    service.announce_message("Saved", rtl: true, assertiveness: :assertive)
+    payload = sent.map(&:last).find { |item| item["name"] == "announce_message" }
+
+    refute_nil payload
+    assert_equal({
+      "message" => "Saved",
+      "rtl" => true,
+      "assertiveness" => "assertive"
+    }, payload["args"])
+  end
+
   private
 
   def build_page(sent)

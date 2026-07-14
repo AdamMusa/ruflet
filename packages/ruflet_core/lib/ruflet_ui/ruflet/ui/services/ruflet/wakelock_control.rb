@@ -7,6 +7,7 @@ module Ruflet
         class WakelockControl < Ruflet::Control
           TYPE = "wakelock".freeze
           WIRE = "Wakelock".freeze
+          KEYWORDS = [:data, :key].freeze
 
           def initialize(id: nil, data: nil, key: nil)
             props = {}

@@ -7,6 +7,7 @@ module Ruflet
         class ScreenBrightnessControl < Ruflet::Control
           TYPE = "screenbrightness".freeze
           WIRE = "ScreenBrightness".freeze
+          KEYWORDS = [:data, :key, :on_application_screen_brightness_change, :on_system_screen_brightness_change].freeze
 
           def initialize(id: nil, data: nil, key: nil, on_application_screen_brightness_change: nil, on_system_screen_brightness_change: nil)
             props = {}

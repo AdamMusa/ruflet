@@ -7,6 +7,7 @@ module Ruflet
         class PermissionHandlerControl < Ruflet::Control
           TYPE = "permissionhandler".freeze
           WIRE = "PermissionHandler".freeze
+          KEYWORDS = [:data, :key].freeze
 
           def initialize(id: nil, data: nil, key: nil)
             props = {}

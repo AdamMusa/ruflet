@@ -576,6 +576,7 @@ static const uint16_t presym_length_table[] = {
   5,	/* curve */
   5,	/* cycle */
   5,	/* debug */
+  5,	/* delay */
   5,	/* delta */
   5,	/* dense */
   5,	/* entry */
@@ -1157,10 +1158,12 @@ static const uint16_t presym_length_table[] = {
   7,	/* battery */
   7,	/* bgcolor */
   7,	/* binding */
+  7,	/* binread */
   7,	/* bsearch */
   7,	/* builder */
   7,	/* call_id */
   7,	/* can_pop */
+  7,	/* capture */
   7,	/* casecmp */
   7,	/* ceildiv */
   7,	/* checked */
@@ -1434,6 +1437,7 @@ static const uint16_t presym_length_table[] = {
   8,	/* behavior */
   8,	/* between? */
   8,	/* bgcolor= */
+  8,	/* binwrite */
   8,	/* body_str */
   8,	/* bytesize */
   8,	/* callback */
@@ -1729,6 +1733,8 @@ static const uint16_t presym_length_table[] = {
   9,	/* frameless */
   9,	/* from_data */
   9,	/* from_wire */
+  9,	/* get_files */
+  9,	/* get_image */
   9,	/* grid_view */
   9,	/* gyroscope */
   9,	/* help_text */
@@ -1823,6 +1829,8 @@ static const uint16_t presym_length_table[] = {
   9,	/* send_text */
   9,	/* separator */
   9,	/* services= */
+  9,	/* set_files */
+  9,	/* set_image */
   9,	/* share_uri */
   9,	/* snack_bar */
   9,	/* snackbar= */
@@ -2303,6 +2311,7 @@ static const uint16_t presym_length_table[] = {
   11,	/* payload_len */
   11,	/* peek_values */
   11,	/* permutation */
+  11,	/* pixel_ratio */
   11,	/* placeholder */
   11,	/* prefix_icon */
   11,	/* progressbar */
@@ -2649,6 +2658,7 @@ static const uint16_t presym_length_table[] = {
   13,	/* always_on_top */
   13,	/* animate_align */
   13,	/* animate_scale */
+  13,	/* assertiveness */
   13,	/* attr_accessor */
   13,	/* auto_complete */
   13,	/* autofillgroup */
@@ -3191,6 +3201,8 @@ static const uint16_t presym_length_table[] = {
   16,	/* animate_position */
   16,	/* animate_rotation */
   16,	/* animatedswitcher */
+  16,	/* announce_message */
+  16,	/* announce_tooltip */
   16,	/* bar_shadow_color */
   16,	/* candlestickchart */
   16,	/* chart_axis_label */
@@ -3485,6 +3497,7 @@ static const uint16_t presym_length_table[] = {
   18,	/* instance_variables */
   18,	/* interactive_viewer */
   18,	/* invoke_file_picker */
+  18,	/* keyword_parameters */
   18,	/* latest_open_dialog */
   18,	/* latex_scale_factor */
   18,	/* linechartdatapoint */
@@ -4024,6 +4037,7 @@ static const uint16_t presym_length_table[] = {
   26,	/* cupertinoactionsheetaction */
   26,	/* cupertinoactivityindicator */
   26,	/* cupertinocontextmenuaction */
+  26,	/* get_accessibility_features */
   26,	/* instance_variable_defined? */
   26,	/* invoke_connectivity_method */
   26,	/* navigation_bar_destination */
@@ -4770,6 +4784,7 @@ static const char * const presym_name_table[] = {
   "curve",
   "cycle",
   "debug",
+  "delay",
   "delta",
   "dense",
   "entry",
@@ -5351,10 +5366,12 @@ static const char * const presym_name_table[] = {
   "battery",
   "bgcolor",
   "binding",
+  "binread",
   "bsearch",
   "builder",
   "call_id",
   "can_pop",
+  "capture",
   "casecmp",
   "ceildiv",
   "checked",
@@ -5628,6 +5645,7 @@ static const char * const presym_name_table[] = {
   "behavior",
   "between?",
   "bgcolor=",
+  "binwrite",
   "body_str",
   "bytesize",
   "callback",
@@ -5923,6 +5941,8 @@ static const char * const presym_name_table[] = {
   "frameless",
   "from_data",
   "from_wire",
+  "get_files",
+  "get_image",
   "grid_view",
   "gyroscope",
   "help_text",
@@ -6017,6 +6037,8 @@ static const char * const presym_name_table[] = {
   "send_text",
   "separator",
   "services=",
+  "set_files",
+  "set_image",
   "share_uri",
   "snack_bar",
   "snackbar=",
@@ -6497,6 +6519,7 @@ static const char * const presym_name_table[] = {
   "payload_len",
   "peek_values",
   "permutation",
+  "pixel_ratio",
   "placeholder",
   "prefix_icon",
   "progressbar",
@@ -6843,6 +6866,7 @@ static const char * const presym_name_table[] = {
   "always_on_top",
   "animate_align",
   "animate_scale",
+  "assertiveness",
   "attr_accessor",
   "auto_complete",
   "autofillgroup",
@@ -7385,6 +7409,8 @@ static const char * const presym_name_table[] = {
   "animate_position",
   "animate_rotation",
   "animatedswitcher",
+  "announce_message",
+  "announce_tooltip",
   "bar_shadow_color",
   "candlestickchart",
   "chart_axis_label",
@@ -7679,6 +7705,7 @@ static const char * const presym_name_table[] = {
   "instance_variables",
   "interactive_viewer",
   "invoke_file_picker",
+  "keyword_parameters",
   "latest_open_dialog",
   "latex_scale_factor",
   "linechartdatapoint",
@@ -8218,6 +8245,7 @@ static const char * const presym_name_table[] = {
   "cupertinoactionsheetaction",
   "cupertinoactivityindicator",
   "cupertinocontextmenuaction",
+  "get_accessibility_features",
   "instance_variable_defined?",
   "invoke_connectivity_method",
   "navigation_bar_destination",

@@ -19,6 +19,20 @@ class PageScreenshotControlTest < Minitest::Test
     assert_raises(ArgumentError) { page.service(:screenshot) }
   end
 
+  def test_screenshot_capture_invokes_native_control
+    sent = []
+    page = build_page(sent)
+    screenshot = page.screenshot(content: Ruflet.text(value: "Capture me"))
+    page.add(screenshot)
+    sent.clear
+
+    screenshot.capture(pixel_ratio: 2, delay: 20)
+    payload = sent.map(&:last).find { |item| item["name"] == "capture" }
+
+    refute_nil payload
+    assert_equal({ "pixel_ratio" => 2, "delay" => 20 }, payload["args"])
+  end
+
   private
 
   def build_page(sent)

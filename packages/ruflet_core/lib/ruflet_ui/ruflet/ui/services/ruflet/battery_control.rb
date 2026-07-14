@@ -7,6 +7,7 @@ module Ruflet
         class BatteryControl < Ruflet::Control
           TYPE = "battery".freeze
           WIRE = "Battery".freeze
+          KEYWORDS = [:data, :key, :on_state_change].freeze
 
           def initialize(id: nil, data: nil, key: nil, on_state_change: nil)
             props = {}

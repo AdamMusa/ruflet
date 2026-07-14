@@ -7,6 +7,7 @@ module Ruflet
         class GeolocatorControl < Ruflet::Control
           TYPE = "geolocator".freeze
           WIRE = "Geolocator".freeze
+          KEYWORDS = [:configuration, :data, :key, :on_error, :on_position_change].freeze
 
           def initialize(id: nil, configuration: nil, data: nil, key: nil, on_error: nil, on_position_change: nil)
             props = {}

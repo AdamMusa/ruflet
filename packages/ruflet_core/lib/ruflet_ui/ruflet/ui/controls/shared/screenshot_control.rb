@@ -7,6 +7,7 @@ module Ruflet
         class ScreenshotControl < Ruflet::Control
           TYPE = "screenshot".freeze
           WIRE = "Screenshot".freeze
+          KEYWORDS = [:badge, :col, :content, :data, :disabled, :expand, :expand_loose, :key, :opacity, :rtl, :tooltip, :visible].freeze
 
           def initialize(id: nil, badge: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, key: nil, opacity: nil, rtl: nil, tooltip: nil, visible: nil)
             raise ArgumentError, "missing keyword: :content" if content.nil?
@@ -25,6 +26,19 @@ module Ruflet
             props[:tooltip] = tooltip unless tooltip.nil?
             props[:visible] = visible unless visible.nil?
             super(type: TYPE, id: id, **props)
+          end
+
+          def capture(pixel_ratio: nil, delay: nil, timeout: 10, on_result: nil)
+            args = {}
+            args["pixel_ratio"] = pixel_ratio unless pixel_ratio.nil?
+            args["delay"] = delay unless delay.nil?
+            runtime_page&.invoke(
+              self,
+              "capture",
+              args: args.empty? ? nil : args,
+              timeout: timeout,
+              on_result: on_result
+            )
           end
         end
       end

@@ -7,6 +7,7 @@ module Ruflet
         class SecureStorageControl < Ruflet::Control
           TYPE = "securestorage".freeze
           WIRE = "SecureStorage".freeze
+          KEYWORDS = [:android_options, :data, :ios_options, :key, :macos_options, :web_options, :windows_options, :on_change].freeze
           OPTION_KEYS = %w[web ios macos android windows].freeze
 
           def initialize(id: nil, android_options: nil, data: nil, ios_options: nil, key: nil, macos_options: nil, web_options: nil, windows_options: nil, on_change: nil)

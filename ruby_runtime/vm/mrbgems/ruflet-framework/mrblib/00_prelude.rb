@@ -50,6 +50,31 @@ class Array
   end unless method_defined?(:to_set)
 end
 
+# mruby-io exposes instance IO#write but omits Ruby's commonly used File class
+# helpers. Developer applications should not need mruby-specific file code.
+class File
+  class << self
+    def write(path, content, offset = nil, **options)
+      mode = options[:mode] || "w"
+      open(path, mode) do |file|
+        file.seek(offset) unless offset.nil?
+        file.write(content)
+      end
+    end unless respond_to?(:write)
+
+    def binwrite(path, content, offset = nil)
+      write(path, content, offset, mode: "wb")
+    end unless respond_to?(:binwrite)
+
+    def binread(path, length = nil, offset = 0)
+      open(path, "rb") do |file|
+        file.seek(offset) unless offset.nil? || offset == 0
+        length.nil? ? file.read : file.read(length)
+      end
+    end unless respond_to?(:binread)
+  end
+end
+
 $LOADED_FEATURES ||= []
 %w[ruflet ruflet_core ruflet_server].each do |feature|
   $LOADED_FEATURES << feature unless $LOADED_FEATURES.include?(feature)
