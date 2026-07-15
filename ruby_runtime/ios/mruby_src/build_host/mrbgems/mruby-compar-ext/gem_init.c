@@ -43,12 +43,18 @@ static const mrb_code gem_mrblib_mruby_compar_ext_proc_iseq_2[269] = {
 0x02,0x29,0x05,0x00,0x17,0x01,0x06,0x02,0x2f,0x05,0x09,0x01,0x01,0x04,0x05,0x01,0x05,0x04,0x06,0x06,
 0x50,0x05,0x28,0x05,0x00,0x02,0x3d,0x02,0x3f,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_compar_ext_proc_lv_2, 4, (MRB_SYM(min), MRB_SYM(max), 0,MRB_SYM(cmp), ), const);
+static const char gem_mrblib_mruby_compar_ext_proc_debug_lines_2[] = "\x00\x2b\x0c\x02\x08\x06\x02\xfb\xff\xff\xff\x0f\x0c\x05\x02\xfc\xff\xff\xff\x0f\x09\x01\x15\x01\x0c\x02\x09\x04\x18\x05\x02\xfc\xff\xff\xff\x0f\x0d\x01\x08\x01\x27\x02\x02\xff\xff\xff\xff\x0f\x09\x01\x0c\x04\x05\x03\x02\xfe\xff\xff\xff\x0f\x0a\x01\x0c\x01\x0d\x02\x05\x02\x02\xff\xff\xff\xff\x0f\x0a\x01\x0d\x02";
+static mrb_irep_debug_info_file gem_mrblib_mruby_compar_ext_proc_debug_file_2 = {
+0, 278, 78, mrb_debug_line_packed_map, {gem_mrblib_mruby_compar_ext_proc_debug_lines_2}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_compar_ext_proc_debug_file_2_ = &gem_mrblib_mruby_compar_ext_proc_debug_file_2;
+static mrb_irep_debug_info gem_mrblib_mruby_compar_ext_proc_debug_2 = {
+269, 1, &gem_mrblib_mruby_compar_ext_proc_debug_file_2_};
 static const mrb_irep gem_mrblib_mruby_compar_ext_proc_irep_2 = {
   5,10,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_compar_ext_proc_iseq_2,
   gem_mrblib_mruby_compar_ext_proc_pool_2,gem_mrblib_mruby_compar_ext_proc_syms_2,NULL,
   gem_mrblib_mruby_compar_ext_proc_lv_2,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_compar_ext_proc_debug_2,
   269,5,11,0,0
 };
 static const mrb_irep *gem_mrblib_mruby_compar_ext_proc_reps_1[1] = {
@@ -57,12 +63,18 @@ static const mrb_irep *gem_mrblib_mruby_compar_ext_proc_reps_1[1] = {
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_compar_ext_proc_syms_1, 1, (MRB_SYM(clamp), ), const);
 static const mrb_code gem_mrblib_mruby_compar_ext_proc_iseq_1[6] = {
 0x6b,0x01,0x00,0x00,0x3d,0x01,};
+static const char gem_mrblib_mruby_compar_ext_proc_debug_lines_1[] = "\x00\x2b";
+static mrb_irep_debug_info_file gem_mrblib_mruby_compar_ext_proc_debug_file_1 = {
+0, 278, 2, mrb_debug_line_packed_map, {gem_mrblib_mruby_compar_ext_proc_debug_lines_1}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_compar_ext_proc_debug_file_1_ = &gem_mrblib_mruby_compar_ext_proc_debug_file_1;
+static mrb_irep_debug_info gem_mrblib_mruby_compar_ext_proc_debug_1 = {
+6, 1, &gem_mrblib_mruby_compar_ext_proc_debug_file_1_};
 static const mrb_irep gem_mrblib_mruby_compar_ext_proc_irep_1 = {
   1,2,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_compar_ext_proc_iseq_1,
   NULL,gem_mrblib_mruby_compar_ext_proc_syms_1,gem_mrblib_mruby_compar_ext_proc_reps_1,
   NULL,					/* lv */
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_compar_ext_proc_debug_1,
   6,0,1,1,0
 };
 static const mrb_irep *gem_mrblib_mruby_compar_ext_proc_reps_0[1] = {
@@ -71,12 +83,18 @@ static const mrb_irep *gem_mrblib_mruby_compar_ext_proc_reps_0[1] = {
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_compar_ext_proc_syms_0, 1, (MRB_SYM(Comparable), ), const);
 static const mrb_code gem_mrblib_mruby_compar_ext_proc_iseq_0[11] = {
 0x11,0x01,0x68,0x01,0x00,0x69,0x01,0x00,0x3d,0x01,0x76,};
+static const char gem_mrblib_mruby_compar_ext_proc_debug_lines_0[] = "\x00\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_compar_ext_proc_debug_file_0 = {
+0, 278, 2, mrb_debug_line_packed_map, {gem_mrblib_mruby_compar_ext_proc_debug_lines_0}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_compar_ext_proc_debug_file_0_ = &gem_mrblib_mruby_compar_ext_proc_debug_file_0;
+static mrb_irep_debug_info gem_mrblib_mruby_compar_ext_proc_debug_0 = {
+11, 1, &gem_mrblib_mruby_compar_ext_proc_debug_file_0_};
 static const mrb_irep gem_mrblib_mruby_compar_ext_proc_irep_0 = {
   1,2,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_compar_ext_proc_iseq_0,
   NULL,gem_mrblib_mruby_compar_ext_proc_syms_0,gem_mrblib_mruby_compar_ext_proc_reps_0,
   NULL,					/* lv */
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_compar_ext_proc_debug_0,
   11,0,1,1,0
 };
 static
@@ -86,6 +104,9 @@ NULL,MRB_TT_PROC,MRB_GC_RED,MRB_OBJ_IS_FROZEN,0,{&gem_mrblib_mruby_compar_ext_pr
 static void
 gem_mrblib_mruby_compar_ext_proc_init_syms(mrb_state *mrb)
 {
+  gem_mrblib_mruby_compar_ext_proc_debug_file_2.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-compar-ext/mrblib/compar.rb");
+  gem_mrblib_mruby_compar_ext_proc_debug_file_1.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-compar-ext/mrblib/compar.rb");
+  gem_mrblib_mruby_compar_ext_proc_debug_file_0.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-compar-ext/mrblib/compar.rb");
 }
 void mrb_mruby_compar_ext_gem_init(mrb_state *mrb);
 void mrb_mruby_compar_ext_gem_final(mrb_state *mrb);

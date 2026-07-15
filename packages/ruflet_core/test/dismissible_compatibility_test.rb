@@ -44,28 +44,32 @@ class RufletDismissibleCompatibilityTest < Minitest::Test
     assert_equal 300, control.props["resize_duration"]
   end
 
-  def test_dismissible_requires_visible_content_like_flet
+  def test_dismissible_requires_content_and_serializes_hidden_content_like_flet
     assert_raises(ArgumentError) { Ruflet.dismissible }
-    assert_raises(ArgumentError) { Ruflet.dismissible(Ruflet.text("Hidden", visible: false)) }
+    hidden = Ruflet.dismissible(Ruflet.container(visible: false)).to_patch
+
+    assert_equal false, hidden["content"]["visible"]
   end
 
-  def test_secondary_background_requires_visible_background_like_flet
-    assert_raises(ArgumentError) do
-      Ruflet.dismissible(Ruflet.text("Swipe"), secondary_background: Ruflet.container(bgcolor: "#ff0000"))
-    end
+  def test_secondary_background_serializes_without_visible_background_like_flet
+    without_background = Ruflet.dismissible(Ruflet.text("Swipe"), secondary_background: Ruflet.container(bgcolor: "#ff0000")).to_patch
+    hidden_background = Ruflet.dismissible(
+      Ruflet.text("Swipe"),
+      background: Ruflet.container(bgcolor: "#00ff00", visible: false),
+      secondary_background: Ruflet.container(bgcolor: "#ff0000")
+    ).to_patch
 
-    assert_raises(ArgumentError) do
-      Ruflet.dismissible(
-        Ruflet.text("Swipe"),
-        background: Ruflet.container(bgcolor: "#00ff00", visible: false),
-        secondary_background: Ruflet.container(bgcolor: "#ff0000")
-      )
-    end
+    assert_equal "Container", without_background["secondary_background"]["_c"]
+    refute without_background.key?("background")
+    assert_equal false, hidden_background["background"]["visible"]
   end
 
-  def test_dismiss_thresholds_must_be_between_zero_and_one_like_flet
-    assert_raises(ArgumentError) { Ruflet.dismissible(Ruflet.text("Swipe"), dismiss_thresholds: { horizontal: -0.1 }) }
-    assert_raises(ArgumentError) { Ruflet.dismissible(Ruflet.text("Swipe"), dismiss_thresholds: { horizontal: 1.1 }) }
+  def test_dismiss_thresholds_serialize_outside_zero_and_one_like_flet
+    low = Ruflet.dismissible(Ruflet.text("Swipe"), dismiss_thresholds: { horizontal: -0.1 }).to_patch
+    high = Ruflet.dismissible(Ruflet.text("Swipe"), dismiss_thresholds: { horizontal: 1.1 }).to_patch
+
+    assert_equal({ "horizontal" => -0.1 }, low["dismiss_thresholds"])
+    assert_equal({ "horizontal" => 1.1 }, high["dismiss_thresholds"])
   end
 
   def test_dismiss_and_update_events_expose_direction_details

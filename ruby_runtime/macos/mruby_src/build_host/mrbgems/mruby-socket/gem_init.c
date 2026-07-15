@@ -38,24 +38,36 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_10[209] = {
 0x07,0x01,0x19,0x08,0x06,0x32,0x07,0x09,0x01,0x1a,0x07,0x0a,0x26,0x00,0x03,0x1a,0x02,0x0a,0x1a,0x03,
 0x0b,0x01,0x07,0x04,0x1a,0x07,0x0c,0x3d,0x07,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_10, 6, (MRB_SYM(sockaddr), MRB_SYM(family), MRB_SYM(socktype), MRB_SYM(protocol), 0,MRB_SYM(sary), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_10[] = "\x00\x0d\x1d\x01\x05\x01\x0c\x06\x02\xfb\xff\xff\xff\x0f\x03\x01\x16\x02\x02\xff\xff\xff\xff\x0f\x18\x01\x0b\x02\x02\xff\xff\xff\xff\x0f\x0a\x01\x14\x03\x0b\x02\x18\x01\x10\x02\x05\x02\x03\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_10 = {
+0, 278, 48, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_10}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_10_ = &gem_mrblib_mruby_socket_proc_debug_file_10;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_10 = {
+209, 1, &gem_mrblib_mruby_socket_proc_debug_file_10_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_10 = {
   7,12,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_10,
   gem_mrblib_mruby_socket_proc_pool_10,gem_mrblib_mruby_socket_proc_syms_10,NULL,
   gem_mrblib_mruby_socket_proc_lv_10,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_10,
   209,3,13,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_48, 1, (MRB_SYM(call), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_48[17] = {
 0x39,0x04,0x00,0x00,0x21,0x03,0x08,0x00,0x01,0x04,0x01,0x32,0x03,0x00,0x01,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_48, 2, (MRB_SYM(ai), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_48[] = "\x00\x2f";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_48 = {
+0, 278, 2, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_48}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_48_ = &gem_mrblib_mruby_socket_proc_debug_file_48;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_48 = {
+17, 1, &gem_mrblib_mruby_socket_proc_debug_file_48_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_48 = {
   3,6,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_48,
   NULL,gem_mrblib_mruby_socket_proc_syms_48,NULL,
   gem_mrblib_mruby_socket_proc_lv_48,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_48,
   17,0,1,0,0
 };
 static const mrb_irep *gem_mrblib_mruby_socket_proc_reps_11[1] = {
@@ -68,12 +80,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_11[67] = {
 0x0e,0x04,0x01,0x0f,0x05,0x01,0x10,0x06,0x2f,0x0a,0x00,0x06,0x01,0x09,0x0a,0x01,0x0a,0x09,0x62,0x0b,
 0x00,0x34,0x0a,0x01,0x00,0x3d,0x09,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_11, 9, (MRB_SYM(nodename), MRB_SYM(service), MRB_SYM(family), MRB_SYM(socktype), MRB_SYM(protocol), MRB_SYM(flags), 0,MRB_SYM(block), MRB_SYM(a), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_11[] = "\x00\x2d\x1e\x01\x19\x01\x0a\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_11 = {
+0, 278, 8, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_11}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_11_ = &gem_mrblib_mruby_socket_proc_debug_file_11;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_11 = {
+67, 1, &gem_mrblib_mruby_socket_proc_debug_file_11_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_11 = {
   10,18,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_11,
   NULL,gem_mrblib_mruby_socket_proc_syms_11,gem_mrblib_mruby_socket_proc_reps_11,
   gem_mrblib_mruby_socket_proc_lv_11,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_11,
   67,0,2,1,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_12, 4, (MRB_SYM(Addrinfo), MRB_SYM(Socket), MRB_SYM(sockaddr_in), MRB_SYM(new), ), const);
@@ -81,12 +99,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_12[25] = {
 0x39,0x04,0x00,0x00,0x1d,0x03,0x00,0x1d,0x04,0x01,0x06,0x05,0x01,0x06,0x01,0x32,0x04,0x02,0x02,0x32,
 0x03,0x03,0x01,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_12, 2, (MRB_SYM(host), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_12[] = "\x00\x3d\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_12 = {
+0, 278, 4, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_12}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_12_ = &gem_mrblib_mruby_socket_proc_debug_file_12;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_12 = {
+25, 1, &gem_mrblib_mruby_socket_proc_debug_file_12_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_12 = {
   3,8,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_12,
   NULL,gem_mrblib_mruby_socket_proc_syms_12,NULL,
   gem_mrblib_mruby_socket_proc_lv_12,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_12,
   25,0,4,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_13, 5, (MRB_SYM(Addrinfo), MRB_SYM(SOCK_STREAM), MRB_SYM(Socket), MRB_SYM(IPPROTO_TCP), MRB_SYM(getaddrinfo), ), const);
@@ -94,12 +118,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_13[37] = {
 0x39,0x08,0x00,0x00,0x1d,0x04,0x00,0x01,0x05,0x01,0x01,0x06,0x02,0x11,0x07,0x1d,0x08,0x02,0x1f,0x08,
 0x01,0x1d,0x09,0x02,0x1f,0x09,0x03,0x32,0x04,0x04,0x05,0x06,0x05,0x23,0x04,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_13, 3, (MRB_SYM(host), MRB_SYM(port), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_13[] = "\x00\x4a\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_13 = {
+0, 278, 4, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_13}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_13_ = &gem_mrblib_mruby_socket_proc_debug_file_13;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_13 = {
+37, 1, &gem_mrblib_mruby_socket_proc_debug_file_13_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_13 = {
   4,11,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_13,
   NULL,gem_mrblib_mruby_socket_proc_syms_13,NULL,
   gem_mrblib_mruby_socket_proc_lv_13,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_13,
   37,0,5,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_14, 5, (MRB_SYM(Addrinfo), MRB_SYM(SOCK_DGRAM), MRB_SYM(Socket), MRB_SYM(IPPROTO_UDP), MRB_SYM(getaddrinfo), ), const);
@@ -107,12 +137,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_14[37] = {
 0x39,0x08,0x00,0x00,0x1d,0x04,0x00,0x01,0x05,0x01,0x01,0x06,0x02,0x11,0x07,0x1d,0x08,0x02,0x1f,0x08,
 0x01,0x1d,0x09,0x02,0x1f,0x09,0x03,0x32,0x04,0x04,0x05,0x06,0x05,0x23,0x04,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_14, 3, (MRB_SYM(host), MRB_SYM(port), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_14[] = "\x00\x57\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_14 = {
+0, 278, 4, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_14}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_14_ = &gem_mrblib_mruby_socket_proc_debug_file_14;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_14 = {
+37, 1, &gem_mrblib_mruby_socket_proc_debug_file_14_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_14 = {
   4,11,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_14,
   NULL,gem_mrblib_mruby_socket_proc_syms_14,NULL,
   gem_mrblib_mruby_socket_proc_lv_14,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_14,
   37,0,5,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_15, 6, (MRB_SYM(SOCK_STREAM), MRB_SYM(Socket), MRB_SYM(Addrinfo), MRB_SYM(sockaddr_un), MRB_SYM(AF_UNIX), MRB_SYM(new), ), const);
@@ -121,24 +157,36 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_15[47] = {
 0x04,0x02,0x1d,0x05,0x01,0x01,0x06,0x01,0x32,0x05,0x03,0x01,0x1d,0x06,0x01,0x1f,0x06,0x04,0x01,0x07,
 0x02,0x32,0x04,0x05,0x03,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_15, 3, (MRB_SYM(path), MRB_SYM(socktype), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_15[] = "\x00\x64\x13\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_15 = {
+0, 278, 4, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_15}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_15_ = &gem_mrblib_mruby_socket_proc_debug_file_15;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_15 = {
+47, 1, &gem_mrblib_mruby_socket_proc_debug_file_15_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_15 = {
   4,9,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_15,
   NULL,gem_mrblib_mruby_socket_proc_syms_15,NULL,
   gem_mrblib_mruby_socket_proc_lv_15,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_15,
   47,0,6,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_16, 1, (MRB_IVSYM(family), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_16[9] = {
 0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_16, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_16[] = "\x00\x7a\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_16 = {
+0, 278, 4, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_16}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_16_ = &gem_mrblib_mruby_socket_proc_debug_file_16;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_16 = {
+9, 1, &gem_mrblib_mruby_socket_proc_debug_file_16_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_16 = {
   2,3,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_16,
   NULL,gem_mrblib_mruby_socket_proc_syms_16,NULL,
   gem_mrblib_mruby_socket_proc_lv_16,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_16,
   9,0,1,0,0
 };
 static const mrb_irep_pool gem_mrblib_mruby_socket_proc_pool_17[7] = {
@@ -161,12 +209,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_17[146] = {
 0x03,0x5c,0x03,0x04,0x30,0x04,0x09,0x5d,0x03,0x5c,0x04,0x05,0x5d,0x03,0x01,0x04,0x02,0x5d,0x03,0x5c,
 0x04,0x06,0x5d,0x03,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_17, 2, (0,MRB_SYM(proto), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_17[] = "\x00\x92\x01\x04\x01\x0c\x06\x02\xfb\xff\xff\xff\x0f\x27\x01\x06\x04\x02\xfd\xff\xff\xff\x0f\x27\x01\x06\x02\x06\x03\x05\x02";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_17 = {
+0, 278, 31, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_17}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_17_ = &gem_mrblib_mruby_socket_proc_debug_file_17;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_17 = {
+146, 1, &gem_mrblib_mruby_socket_proc_debug_file_17_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_17 = {
   3,6,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_17,
   gem_mrblib_mruby_socket_proc_pool_17,gem_mrblib_mruby_socket_proc_syms_17,NULL,
   gem_mrblib_mruby_socket_proc_lv_17,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_17,
   146,7,10,0,0
 };
 static const mrb_irep_pool gem_mrblib_mruby_socket_proc_pool_18[5] = {
@@ -185,48 +239,72 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_18[110] = {
 0x05,0x03,0x5d,0x04,0x5c,0x05,0x00,0x5d,0x04,0x26,0x00,0x10,0x30,0x04,0x03,0x28,0x04,0x00,0x06,0x30,
 0x04,0x04,0x26,0x00,0x03,0x5c,0x04,0x04,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_18, 3, (0,MRB_SYM(a), MRB_SYM(p), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_18[] = "\x00\xaa\x01\x04\x01\x05\x02\x02\xff\xff\xff\xff\x0f\x0b\x01\x18\x07\x02\xfa\xff\xff\xff\x0f\x05\x02\x02\xff\xff\xff\xff\x0f\x0b\x01\x18\x04\x02\xfd\xff\xff\xff\x0f\x05\x01\x06\x02";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_18 = {
+0, 278, 45, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_18}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_18_ = &gem_mrblib_mruby_socket_proc_debug_file_18;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_18 = {
+110, 1, &gem_mrblib_mruby_socket_proc_debug_file_18_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_18 = {
   4,6,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_18,
   gem_mrblib_mruby_socket_proc_pool_18,gem_mrblib_mruby_socket_proc_syms_18,NULL,
   gem_mrblib_mruby_socket_proc_lv_18,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_18,
   110,5,5,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_19, 2, (MRB_SYM_Q(ipv4), MRB_SYM_Q(ipv6), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_19[16] = {
 0x39,0x00,0x00,0x00,0x30,0x02,0x00,0x27,0x02,0x00,0x03,0x30,0x02,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_19, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_19[] = "\x00\xc1\x01\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_19 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_19}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_19_ = &gem_mrblib_mruby_socket_proc_debug_file_19;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_19 = {
+16, 1, &gem_mrblib_mruby_socket_proc_debug_file_19_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_19 = {
   2,4,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_19,
   NULL,gem_mrblib_mruby_socket_proc_syms_19,NULL,
   gem_mrblib_mruby_socket_proc_lv_19,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_19,
   16,0,2,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_20, 1, (MRB_SYM(ip_unpack), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_20[13] = {
 0x39,0x00,0x00,0x00,0x30,0x02,0x00,0x06,0x03,0x23,0x02,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_20, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_20[] = "\x00\xce\x01\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_20 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_20}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_20_ = &gem_mrblib_mruby_socket_proc_debug_file_20;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_20 = {
+13, 1, &gem_mrblib_mruby_socket_proc_debug_file_20_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_20 = {
   2,5,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_20,
   NULL,gem_mrblib_mruby_socket_proc_syms_20,NULL,
   gem_mrblib_mruby_socket_proc_lv_20,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_20,
   13,0,1,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_21, 1, (MRB_SYM(ip_unpack), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_21[13] = {
 0x39,0x00,0x00,0x00,0x30,0x02,0x00,0x07,0x03,0x23,0x02,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_21, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_21[] = "\x00\xdb\x01\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_21 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_21}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_21_ = &gem_mrblib_mruby_socket_proc_debug_file_21;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_21 = {
+13, 1, &gem_mrblib_mruby_socket_proc_debug_file_21_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_21 = {
   2,5,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_21,
   NULL,gem_mrblib_mruby_socket_proc_syms_21,NULL,
   gem_mrblib_mruby_socket_proc_lv_21,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_21,
   13,0,1,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_22, 6, (MRB_SYM(NI_NUMERICHOST), MRB_SYM(Socket), MRB_SYM(NI_NUMERICSERV), MRB_OPSYM(or), MRB_SYM(getnameinfo), MRB_SYM(to_i), ), const);
@@ -235,48 +313,72 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_22[46] = {
 0x2f,0x04,0x04,0x01,0x57,0x02,0x04,0x00,0x57,0x03,0x04,0x01,0x01,0x04,0x02,0x01,0x05,0x03,0x33,0x05,
 0x05,0x52,0x04,0x02,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_22, 3, (0,MRB_SYM(h), MRB_SYM(p), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_22[] = "\x00\xe8\x01\x04\x01\x1c\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_22 = {
+0, 278, 7, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_22}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_22_ = &gem_mrblib_mruby_socket_proc_debug_file_22;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_22 = {
+46, 1, &gem_mrblib_mruby_socket_proc_debug_file_22_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_22 = {
   4,8,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_22,
   NULL,gem_mrblib_mruby_socket_proc_syms_22,NULL,
   gem_mrblib_mruby_socket_proc_lv_22,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_22,
   46,0,6,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_23, 3, (MRB_IVSYM(family), MRB_SYM(AF_INET), MRB_SYM(Socket), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_23[17] = {
 0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x1d,0x03,0x02,0x1f,0x03,0x01,0x4d,0x02,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_23, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_23[] = "\x00\xf6\x01\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_23 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_23}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_23_ = &gem_mrblib_mruby_socket_proc_debug_file_23;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_23 = {
+17, 1, &gem_mrblib_mruby_socket_proc_debug_file_23_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_23 = {
   2,5,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_23,
   NULL,gem_mrblib_mruby_socket_proc_syms_23,NULL,
   gem_mrblib_mruby_socket_proc_lv_23,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_23,
   17,0,3,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_24, 3, (MRB_IVSYM(family), MRB_SYM(AF_INET6), MRB_SYM(Socket), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_24[17] = {
 0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x1d,0x03,0x02,0x1f,0x03,0x01,0x4d,0x02,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_24, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_24[] = "\x00\x87\x02\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_24 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_24}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_24_ = &gem_mrblib_mruby_socket_proc_debug_file_24;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_24 = {
+17, 1, &gem_mrblib_mruby_socket_proc_debug_file_24_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_24 = {
   2,5,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_24,
   NULL,gem_mrblib_mruby_socket_proc_syms_24,NULL,
   gem_mrblib_mruby_socket_proc_lv_24,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_24,
   17,0,3,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_25, 1, (MRB_IVSYM(family), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_25[9] = {
 0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_25, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_25[] = "\x00\xa1\x02\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_25 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_25}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_25_ = &gem_mrblib_mruby_socket_proc_debug_file_25;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_25 = {
+9, 1, &gem_mrblib_mruby_socket_proc_debug_file_25_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_25 = {
   2,3,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_25,
   NULL,gem_mrblib_mruby_socket_proc_syms_25,NULL,
   gem_mrblib_mruby_socket_proc_lv_25,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_25,
   9,0,1,0,0
 };
 static const mrb_irep_pool gem_mrblib_mruby_socket_proc_pool_26[4] = {
@@ -295,36 +397,54 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_26[130] = {
 0x09,0x01,0x57,0x03,0x05,0x00,0x57,0x04,0x05,0x01,0x01,0x05,0x02,0x01,0x06,0x04,0x33,0x06,0x0a,0x01,
 0x07,0x03,0x01,0x08,0x03,0x52,0x05,0x04,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_26, 4, (0,MRB_SYM(s), MRB_SYM(addr), MRB_SYM(port), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_26[] = "\x00\xc2\x02\x04\x01\x03\x01\x0f\x01\x06\x06\x02\xfb\xff\xff\xff\x0f\x0f\x01\x06\x04\x02\xfd\xff\xff\xff\x0f\x0f\x01\x06\x02\x08\x02\x1c\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_26 = {
+0, 278, 35, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_26}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_26_ = &gem_mrblib_mruby_socket_proc_debug_file_26;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_26 = {
+130, 1, &gem_mrblib_mruby_socket_proc_debug_file_26_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_26 = {
   5,9,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_26,
   gem_mrblib_mruby_socket_proc_pool_26,gem_mrblib_mruby_socket_proc_syms_26,NULL,
   gem_mrblib_mruby_socket_proc_lv_26,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_26,
   130,4,11,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_27, 1, (MRB_IVSYM(sockaddr), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_27[9] = {
 0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_27, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_27[] = "\x00\xda\x02\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_27 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_27}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_27_ = &gem_mrblib_mruby_socket_proc_debug_file_27;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_27 = {
+9, 1, &gem_mrblib_mruby_socket_proc_debug_file_27_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_27 = {
   2,3,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_27,
   NULL,gem_mrblib_mruby_socket_proc_syms_27,NULL,
   gem_mrblib_mruby_socket_proc_lv_27,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_27,
   9,0,1,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_28, 3, (MRB_IVSYM(family), MRB_SYM(AF_UNIX), MRB_SYM(Socket), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_28[17] = {
 0x39,0x00,0x00,0x00,0x19,0x02,0x00,0x1d,0x03,0x02,0x1f,0x03,0x01,0x4d,0x02,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_28, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_28[] = "\x00\xe9\x02\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_28 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_28}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_28_ = &gem_mrblib_mruby_socket_proc_debug_file_28;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_28 = {
+17, 1, &gem_mrblib_mruby_socket_proc_debug_file_28_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_28 = {
   2,5,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_28,
   NULL,gem_mrblib_mruby_socket_proc_syms_28,NULL,
   gem_mrblib_mruby_socket_proc_lv_28,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_28,
   17,0,3,0,0
 };
 static const mrb_irep *gem_mrblib_mruby_socket_proc_reps_1[19] = {
@@ -356,24 +476,36 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_1[105] = {
 0x0c,0x0c,0x6b,0x01,0x0d,0x0d,0x6b,0x01,0x0e,0x0e,0x6b,0x01,0x0f,0x0f,0x10,0x02,0x10,0x2f,0x01,0x11,
 0x01,0x10,0x02,0x12,0x2f,0x01,0x11,0x01,0x6b,0x01,0x13,0x10,0x6b,0x01,0x14,0x11,0x6d,0x15,0x14,0x6b,
 0x01,0x16,0x12,0x3d,0x00,};
+static const char gem_mrblib_mruby_socket_proc_debug_lines_1[] = "\x00\x0d\x04\x20\x06\x10\x06\x0d\x06\x0d\x06\x0d\x06\x16\x04\x18\x04\x18\x04\x17\x04\x0d\x04\x0d\x04\x0d\x04\x0e\x04\x11\x04\x1a\x04\x0d\x07\x0b\x07\x09\x04\x18\x04\x04\x03\x0b";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_1 = {
+0, 278, 44, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_1}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_1_ = &gem_mrblib_mruby_socket_proc_debug_file_1;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_1 = {
+105, 1, &gem_mrblib_mruby_socket_proc_debug_file_1_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_1 = {
   1,4,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_1,
   NULL,gem_mrblib_mruby_socket_proc_syms_1,gem_mrblib_mruby_socket_proc_reps_1,
   NULL,					/* lv */
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_1,
   105,0,23,19,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_381, 1, (MRB_CVSYM(do_not_reverse_lookup), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_381[9] = {
 0x39,0x00,0x00,0x00,0x1b,0x02,0x00,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_381, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_381[] = "\x00\xf9\x02\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_381 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_381}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_381_ = &gem_mrblib_mruby_socket_proc_debug_file_381;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_381 = {
+9, 1, &gem_mrblib_mruby_socket_proc_debug_file_381_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_381 = {
   2,3,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_381,
   NULL,gem_mrblib_mruby_socket_proc_syms_381,NULL,
   gem_mrblib_mruby_socket_proc_lv_381,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_381,
   9,0,1,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_382, 1, (MRB_CVSYM(do_not_reverse_lookup), ), const);
@@ -381,12 +513,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_382[23] = {
 0x39,0x04,0x00,0x00,0x01,0x03,0x01,0x28,0x03,0x00,0x05,0x13,0x03,0x26,0x00,0x02,0x14,0x03,0x1c,0x03,
 0x00,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_382, 2, (MRB_SYM(val), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_382[] = "\x00\x85\x03\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_382 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_382}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_382_ = &gem_mrblib_mruby_socket_proc_debug_file_382;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_382 = {
+23, 1, &gem_mrblib_mruby_socket_proc_debug_file_382_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_382 = {
   3,4,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_382,
   NULL,gem_mrblib_mruby_socket_proc_syms_382,NULL,
   gem_mrblib_mruby_socket_proc_lv_382,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_382,
   23,0,1,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_383, 3, (MRB_SYM_E(_is_socket), MRB_CVSYM(do_not_reverse_lookup), MRB_IVSYM(do_not_reverse_lookup), ), const);
@@ -394,12 +532,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_383[33] = {
 0x39,0x00,0x10,0x00,0x11,0x04,0x01,0x05,0x01,0x54,0x04,0x01,0x05,0x02,0x37,0x03,0x0f,0x12,0x03,0x13,
 0x04,0x32,0x03,0x00,0x01,0x1b,0x03,0x01,0x1a,0x03,0x02,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_383, 2, (MRB_SYM(args), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_383[] = "\x00\x8f\x03\x04\x01\x0d\x01\x08\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_383 = {
+0, 278, 9, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_383}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_383_ = &gem_mrblib_mruby_socket_proc_debug_file_383;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_383 = {
+33, 1, &gem_mrblib_mruby_socket_proc_debug_file_383_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_383 = {
   3,6,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_383,
   NULL,gem_mrblib_mruby_socket_proc_syms_383,NULL,
   gem_mrblib_mruby_socket_proc_lv_383,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_383,
   33,0,3,0,0
 };
 static const mrb_irep_pool gem_mrblib_mruby_socket_proc_pool_384[1] = {
@@ -408,24 +552,36 @@ static const mrb_irep_pool gem_mrblib_mruby_socket_proc_pool_384[1] = {
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_384[18] = {
 0x39,0x04,0x00,0x00,0x01,0x04,0x01,0x5c,0x05,0x00,0x01,0x06,0x02,0x37,0x03,0x02,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_384, 2, (MRB_SYM(fd), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_384[] = "\x00\x9d\x03\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_384 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_384}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_384_ = &gem_mrblib_mruby_socket_proc_debug_file_384;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_384 = {
+18, 1, &gem_mrblib_mruby_socket_proc_debug_file_384_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_384 = {
   3,7,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_384,
   gem_mrblib_mruby_socket_proc_pool_384,NULL,NULL,
   gem_mrblib_mruby_socket_proc_lv_384,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_384,
   18,1,0,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_385, 3, (MRB_SYM(Addrinfo), MRB_SYM(getsockname), MRB_SYM(new), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_385[16] = {
 0x39,0x00,0x00,0x00,0x1d,0x02,0x00,0x30,0x03,0x01,0x32,0x02,0x02,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_385, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_385[] = "\x00\xab\x03\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_385 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_385}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_385_ = &gem_mrblib_mruby_socket_proc_debug_file_385;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_385 = {
+16, 1, &gem_mrblib_mruby_socket_proc_debug_file_385_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_385 = {
   2,5,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_385,
   NULL,gem_mrblib_mruby_socket_proc_syms_385,NULL,
   gem_mrblib_mruby_socket_proc_lv_385,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_385,
   16,0,3,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_386, 2, (MRB_SYM(_setnonblock), MRB_SYM(recv), ), const);
@@ -434,24 +590,36 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_386[53] = {
 0x01,0x01,0x06,0x02,0x2f,0x04,0x01,0x02,0x2b,0x06,0x14,0x08,0x2f,0x07,0x00,0x01,0x2d,0x06,0x3d,0x04,
 0x01,0x00,0x00,0x00,0x0c,0x00,0x00,0x00,0x1c,0x00,0x00,0x00,0x1c,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_386, 3, (MRB_SYM(maxlen), MRB_SYM(flags), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_386[] = "\x00\xb8\x03\x0c\x02\x06\x01\x0c\x02";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_386 = {
+0, 278, 9, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_386}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_386_ = &gem_mrblib_mruby_socket_proc_debug_file_386;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_386 = {
+40, 1, &gem_mrblib_mruby_socket_proc_debug_file_386_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_386 = {
   4,10,1,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_386,
   NULL,gem_mrblib_mruby_socket_proc_syms_386,NULL,
   gem_mrblib_mruby_socket_proc_lv_386,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_386,
   40,0,2,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_387, 3, (MRB_SYM(Addrinfo), MRB_SYM(getpeername), MRB_SYM(new), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_387[16] = {
 0x39,0x00,0x00,0x00,0x1d,0x02,0x00,0x30,0x03,0x01,0x32,0x02,0x02,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_387, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_387[] = "\x00\xc9\x03\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_387 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_387}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_387_ = &gem_mrblib_mruby_socket_proc_debug_file_387;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_387 = {
+16, 1, &gem_mrblib_mruby_socket_proc_debug_file_387_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_387 = {
   2,5,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_387,
   NULL,gem_mrblib_mruby_socket_proc_syms_387,NULL,
   gem_mrblib_mruby_socket_proc_lv_387,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_387,
   16,0,3,0,0
 };
 static const mrb_irep *gem_mrblib_mruby_socket_proc_reps_2[7] = {
@@ -468,48 +636,72 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_2[48] = {
 0x13,0x01,0x1c,0x01,0x00,0x12,0x01,0x6c,0x01,0x01,0x00,0x12,0x01,0x6c,0x01,0x02,0x01,0x6b,0x01,0x03,
 0x02,0x12,0x01,0x6c,0x01,0x04,0x03,0x6b,0x01,0x05,0x04,0x6b,0x01,0x06,0x05,0x6b,0x01,0x07,0x06,0x10,
 0x02,0x01,0x2f,0x01,0x08,0x01,0x3d,0x00,};
+static const char gem_mrblib_mruby_socket_proc_debug_lines_2[] = "\x00\xef\x02\x05\x0a\x06\x0c\x06\x0a\x04\x0e\x06\x0e\x04\x0d\x04\x11\x04\x04";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_2 = {
+0, 278, 19, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_2}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_2_ = &gem_mrblib_mruby_socket_proc_debug_file_2;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_2 = {
+48, 1, &gem_mrblib_mruby_socket_proc_debug_file_2_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_2 = {
   1,4,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_2,
   NULL,gem_mrblib_mruby_socket_proc_syms_2,gem_mrblib_mruby_socket_proc_reps_2,
   NULL,					/* lv */
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_2,
   48,0,9,7,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_439, 3, (MRB_SYM(Addrinfo), MRB_SYM(ip), MRB_SYM(ip_address), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_439[19] = {
 0x39,0x04,0x00,0x00,0x1d,0x03,0x00,0x01,0x04,0x01,0x32,0x03,0x01,0x01,0x33,0x03,0x02,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_439, 2, (MRB_SYM(host), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_439[] = "\x00\xda\x03\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_439 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_439}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_439_ = &gem_mrblib_mruby_socket_proc_debug_file_439;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_439 = {
+19, 1, &gem_mrblib_mruby_socket_proc_debug_file_439_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_439 = {
   3,6,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_439,
   NULL,gem_mrblib_mruby_socket_proc_syms_439,NULL,
   gem_mrblib_mruby_socket_proc_lv_439,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_439,
   19,0,3,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_440, 4, (MRB_SYM(Addrinfo), MRB_SYM(getsockname), MRB_SYM(new), MRB_SYM(_to_array), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_440[19] = {
 0x39,0x00,0x00,0x00,0x1d,0x02,0x00,0x30,0x03,0x01,0x32,0x02,0x02,0x01,0x33,0x02,0x03,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_440, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_440[] = "\x00\xe6\x03\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_440 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_440}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_440_ = &gem_mrblib_mruby_socket_proc_debug_file_440;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_440 = {
+19, 1, &gem_mrblib_mruby_socket_proc_debug_file_440_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_440 = {
   2,5,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_440,
   NULL,gem_mrblib_mruby_socket_proc_syms_440,NULL,
   gem_mrblib_mruby_socket_proc_lv_440,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_440,
   19,0,4,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_441, 4, (MRB_SYM(Addrinfo), MRB_SYM(getpeername), MRB_SYM(new), MRB_SYM(_to_array), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_441[19] = {
 0x39,0x00,0x00,0x00,0x1d,0x02,0x00,0x30,0x03,0x01,0x32,0x02,0x02,0x01,0x33,0x02,0x03,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_441, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_441[] = "\x00\xf2\x03\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_441 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_441}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_441_ = &gem_mrblib_mruby_socket_proc_debug_file_441;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_441 = {
+19, 1, &gem_mrblib_mruby_socket_proc_debug_file_441_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_441 = {
   2,5,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_441,
   NULL,gem_mrblib_mruby_socket_proc_syms_441,NULL,
   gem_mrblib_mruby_socket_proc_lv_441,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_441,
   19,0,4,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_442, 4, (MRB_SYM(_recvfrom), MRB_SYM(Addrinfo), MRB_SYM(new), MRB_SYM(_to_array), ), const);
@@ -518,12 +710,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_442[51] = {
 0x00,0x02,0x57,0x04,0x06,0x00,0x57,0x05,0x06,0x01,0x01,0x06,0x04,0x1d,0x07,0x01,0x01,0x08,0x05,0x32,
 0x07,0x02,0x01,0x33,0x07,0x03,0x52,0x06,0x02,0x3d,0x06,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_442, 5, (MRB_SYM(maxlen), MRB_SYM(flags), 0,MRB_SYM(msg), MRB_SYM(sa), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_442[] = "\x00\xff\x03\x0c\x01\x12\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_442 = {
+0, 278, 7, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_442}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_442_ = &gem_mrblib_mruby_socket_proc_debug_file_442;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_442 = {
+51, 1, &gem_mrblib_mruby_socket_proc_debug_file_442_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_442 = {
   6,10,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_442,
   NULL,gem_mrblib_mruby_socket_proc_syms_442,NULL,
   gem_mrblib_mruby_socket_proc_lv_442,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_442,
   51,0,4,0,0
 };
 static const mrb_irep *gem_mrblib_mruby_socket_proc_reps_3[4] = {
@@ -535,12 +733,18 @@ static const mrb_irep *gem_mrblib_mruby_socket_proc_reps_3[4] = {
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_3, 4, (MRB_SYM(getaddress), MRB_SYM(addr), MRB_SYM(peeraddr), MRB_SYM(recvfrom), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_3[20] = {
 0x12,0x01,0x6c,0x01,0x00,0x00,0x6b,0x01,0x01,0x01,0x6b,0x01,0x02,0x02,0x6b,0x01,0x03,0x03,0x3d,0x00,};
+static const char gem_mrblib_mruby_socket_proc_debug_lines_3[] = "\x00\xda\x03\x06\x0c\x04\x0c\x04\x0d";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_3 = {
+0, 278, 9, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_3}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_3_ = &gem_mrblib_mruby_socket_proc_debug_file_3;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_3 = {
+20, 1, &gem_mrblib_mruby_socket_proc_debug_file_3_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_3 = {
   1,2,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_3,
   NULL,gem_mrblib_mruby_socket_proc_syms_3,gem_mrblib_mruby_socket_proc_reps_3,
   NULL,					/* lv */
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_3,
   20,0,4,4,0
 };
 static const mrb_irep_pool gem_mrblib_mruby_socket_proc_pool_465[4] = {
@@ -564,12 +768,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_465[230] = {
 0x26,0x00,0x0a,0x01,0x04,0x05,0x22,0x04,0x07,0x00,0x26,0x00,0x02,0x2d,0x05,0x3d,0x05,0x00,0x00,0x00,
 0x00,0x04,0x00,0x00,0x00,0xb9,0x00,0x00,0x00,0xbc,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_465, 4, (MRB_SYM(ai), 0,MRB_SYM(bi), MRB_SYM(e0), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_465[] = "\x00\x97\x04\x04\x02\x19\x01\x0e\x04\x02\xfd\xff\xff\xff\x0f\x27\x01\x0f\x01\x22\x01\x11\x02\x11\x01\x0e\x01\x05\x02\x02\xfe\xff\xff\xff\x0f\x0d\x02\x02\xfe\xff\xff\xff\x0f\x03\x02";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_465 = {
+0, 278, 45, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_465}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_465_ = &gem_mrblib_mruby_socket_proc_debug_file_465;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_465 = {
+217, 1, &gem_mrblib_mruby_socket_proc_debug_file_465_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_465 = {
   5,11,1,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_465,
   gem_mrblib_mruby_socket_proc_pool_465,gem_mrblib_mruby_socket_proc_syms_465,NULL,
   gem_mrblib_mruby_socket_proc_lv_465,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_465,
   217,4,12,0,0
 };
 static const mrb_irep *gem_mrblib_mruby_socket_proc_reps_464[1] = {
@@ -582,12 +792,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_464[69] = {
 0x06,0x1d,0x07,0x01,0x1d,0x08,0x02,0x01,0x09,0x01,0x01,0x0a,0x02,0x62,0x0b,0x00,0x34,0x08,0x03,0x02,
 0x01,0x09,0x07,0x2f,0x08,0x04,0x01,0x3d,0x08,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_464, 7, (MRB_SYM(host), MRB_SYM(service), MRB_SYM(local_host), MRB_SYM(local_service), 0,MRB_SYM(s), MRB_SYM(e), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_464[] = "\x00\x91\x04\x11\x01\x05\x01\x0f\x14\x02\xee\xff\xff\xff\x0f\x02\x01\x03\x01\x10\x10";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_464 = {
+0, 278, 21, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_464}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_464_ = &gem_mrblib_mruby_socket_proc_debug_file_464;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_464 = {
+69, 1, &gem_mrblib_mruby_socket_proc_debug_file_464_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_464 = {
   8,12,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_464,
   NULL,gem_mrblib_mruby_socket_proc_syms_464,gem_mrblib_mruby_socket_proc_reps_464,
   gem_mrblib_mruby_socket_proc_lv_464,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_464,
   69,0,5,1,0
 };
 static const mrb_irep *gem_mrblib_mruby_socket_proc_reps_4[1] = {
@@ -596,12 +812,18 @@ static const mrb_irep *gem_mrblib_mruby_socket_proc_reps_4[1] = {
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_4, 1, (MRB_SYM(initialize), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_4[6] = {
 0x6b,0x01,0x00,0x00,0x3d,0x00,};
+static const char gem_mrblib_mruby_socket_proc_debug_lines_4[] = "\x00\x91\x04";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_4 = {
+0, 278, 3, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_4}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_4_ = &gem_mrblib_mruby_socket_proc_debug_file_4;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_4 = {
+6, 1, &gem_mrblib_mruby_socket_proc_debug_file_4_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_4 = {
   1,1,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_4,
   NULL,gem_mrblib_mruby_socket_proc_syms_4,gem_mrblib_mruby_socket_proc_reps_4,
   NULL,					/* lv */
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_4,
   6,0,1,1,0
 };
 static const mrb_irep_pool gem_mrblib_mruby_socket_proc_pool_475[1] = {
@@ -617,24 +839,36 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_475[134] = {
 0x07,0x02,0x1f,0x07,0x08,0x13,0x08,0x2f,0x05,0x0b,0x03,0x1d,0x05,0x02,0x30,0x06,0x0c,0x01,0x07,0x04,
 0x33,0x07,0x0d,0x32,0x05,0x0e,0x02,0x0b,0x06,0x2f,0x05,0x0f,0x01,0x3f,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_475, 4, (MRB_SYM(host), MRB_SYM(service), 0,MRB_SYM(ai), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_475[] = "\x00\xb9\x04\x0c\x01\x20\x01\x05\x01\x1e\x01\x0c\x01\x14\x02\x10\x01\x06\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_475 = {
+0, 278, 19, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_475}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_475_ = &gem_mrblib_mruby_socket_proc_debug_file_475;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_475 = {
+134, 1, &gem_mrblib_mruby_socket_proc_debug_file_475_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_475 = {
   5,13,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_475,
   gem_mrblib_mruby_socket_proc_pool_475,gem_mrblib_mruby_socket_proc_syms_475,NULL,
   gem_mrblib_mruby_socket_proc_lv_475,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_475,
   134,1,16,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_485, 1, (MRB_IVSYM(init_with_fd), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_485[11] = {
 0x39,0x00,0x00,0x00,0x13,0x02,0x1a,0x02,0x00,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_485, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_485[] = "\x00\xd2\x04\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_485 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_485}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_485_ = &gem_mrblib_mruby_socket_proc_debug_file_485;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_485 = {
+11, 1, &gem_mrblib_mruby_socket_proc_debug_file_485_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_485 = {
   2,3,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_485,
   NULL,gem_mrblib_mruby_socket_proc_syms_485,NULL,
   gem_mrblib_mruby_socket_proc_lv_485,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_485,
   11,0,1,0,0
 };
 static const mrb_irep *gem_mrblib_mruby_socket_proc_reps_476[1] = {
@@ -654,12 +888,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_476[142] = {
 0x0a,0x00,0x00,0x00,0x30,0x00,0x00,0x00,0x33,0x00,0x00,0x00,0x00,0x45,0x00,0x00,0x00,0x4f,0x00,0x00,
 0x00,0x52,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_476, 4, (0,MRB_SYM(fd), MRB_SYM(s), MRB_SYM(e), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_476[] = "\x00\xce\x04\x04\x01\x06\x02\x09\x01\x0a\x03\x10\x01\x04\x03\x02\xfd\xff\xff\xff\x0f\x0d\x03\x02\xfd\xff\xff\xff\x0f\x03\x02\x21\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_476 = {
+0, 278, 33, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_476}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_476_ = &gem_mrblib_mruby_socket_proc_debug_file_476;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_476 = {
+116, 1, &gem_mrblib_mruby_socket_proc_debug_file_476_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_476 = {
   5,10,2,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_476,
   gem_mrblib_mruby_socket_proc_pool_476,gem_mrblib_mruby_socket_proc_syms_476,gem_mrblib_mruby_socket_proc_reps_476,
   gem_mrblib_mruby_socket_proc_lv_476,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_476,
   116,1,10,1,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_477, 2, (MRB_SYM(_setnonblock), MRB_SYM(accept), ), const);
@@ -667,12 +907,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_477[38] = {
 0x39,0x00,0x00,0x00,0x13,0x03,0x2f,0x02,0x00,0x01,0x30,0x02,0x01,0x2b,0x04,0x14,0x06,0x2f,0x05,0x00,
 0x01,0x2d,0x04,0x3d,0x02,0x01,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x0d,0x00,0x00,0x00,0x0d,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_477, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_477[] = "\x00\xe6\x04\x04\x02\x06\x01\x05\x02";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_477 = {
+0, 278, 9, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_477}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_477_ = &gem_mrblib_mruby_socket_proc_debug_file_477;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_477 = {
+25, 1, &gem_mrblib_mruby_socket_proc_debug_file_477_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_477 = {
   2,8,1,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_477,
   NULL,gem_mrblib_mruby_socket_proc_syms_477,NULL,
   gem_mrblib_mruby_socket_proc_lv_477,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_477,
   25,0,2,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_478, 3, (MRB_SYM(Socket), MRB_SYM(fileno), MRB_SYM(_listen), ), const);
@@ -680,24 +926,36 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_478[21] = {
 0x39,0x04,0x00,0x00,0x1d,0x03,0x00,0x30,0x04,0x01,0x01,0x05,0x01,0x32,0x03,0x02,0x02,0x06,0x03,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_478, 2, (MRB_SYM(backlog), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_478[] = "\x00\xf8\x04\x04\x01\x0d\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_478 = {
+0, 278, 7, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_478}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_478_ = &gem_mrblib_mruby_socket_proc_debug_file_478;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_478 = {
+21, 1, &gem_mrblib_mruby_socket_proc_debug_file_478_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_478 = {
   3,7,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_478,
   NULL,gem_mrblib_mruby_socket_proc_syms_478,NULL,
   gem_mrblib_mruby_socket_proc_lv_478,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_478,
   21,0,3,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_479, 3, (MRB_SYM(Socket), MRB_SYM(fileno), MRB_SYM(_accept), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_479[16] = {
 0x39,0x00,0x00,0x00,0x1d,0x02,0x00,0x30,0x03,0x01,0x32,0x02,0x02,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_479, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_479[] = "\x00\x85\x05\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_479 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_479}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_479_ = &gem_mrblib_mruby_socket_proc_debug_file_479;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_479 = {
+16, 1, &gem_mrblib_mruby_socket_proc_debug_file_479_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_479 = {
   2,5,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_479,
   NULL,gem_mrblib_mruby_socket_proc_syms_479,NULL,
   gem_mrblib_mruby_socket_proc_lv_479,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_479,
   16,0,3,0,0
 };
 static const mrb_irep *gem_mrblib_mruby_socket_proc_reps_5[5] = {
@@ -711,12 +969,18 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_5, 5, (MRB_SYM(initialize)
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_5[22] = {
 0x6b,0x01,0x00,0x00,0x6b,0x01,0x01,0x01,0x6b,0x01,0x02,0x02,0x6b,0x01,0x03,0x03,0x6b,0x01,0x04,0x04,
 0x3d,0x00,};
+static const char gem_mrblib_mruby_socket_proc_debug_lines_5[] = "\x00\xb9\x04\x04\x15\x04\x18\x04\x12\x04\x0d";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_5 = {
+0, 278, 11, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_5}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_5_ = &gem_mrblib_mruby_socket_proc_debug_file_5;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_5 = {
+22, 1, &gem_mrblib_mruby_socket_proc_debug_file_5_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_5 = {
   1,1,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_5,
   NULL,gem_mrblib_mruby_socket_proc_syms_5,gem_mrblib_mruby_socket_proc_reps_5,
   NULL,					/* lv */
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_5,
   22,0,5,5,0
 };
 static const mrb_irep_pool gem_mrblib_mruby_socket_proc_pool_510[1] = {
@@ -728,12 +992,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_510[50] = {
 0x04,0x01,0x01,0x05,0x01,0x1d,0x06,0x01,0x1f,0x06,0x02,0x06,0x07,0x32,0x04,0x03,0x03,0x5c,0x05,0x00,
 0x01,0x06,0x02,0x37,0x03,0x02,0x1a,0x01,0x04,0x3f,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_510, 2, (MRB_SYM(af), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_510[] = "\x00\x94\x05\x13\x01\x1b\x01\x03\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_510 = {
+0, 278, 9, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_510}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_510_ = &gem_mrblib_mruby_socket_proc_debug_file_510;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_510 = {
+50, 1, &gem_mrblib_mruby_socket_proc_debug_file_510_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_510 = {
   3,9,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_510,
   gem_mrblib_mruby_socket_proc_pool_510,gem_mrblib_mruby_socket_proc_syms_510,NULL,
   gem_mrblib_mruby_socket_proc_lv_510,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_510,
   50,1,5,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_511, 4, (MRB_SYM(Socket), MRB_SYM(fileno), MRB_SYM(_sockaddr_in), MRB_SYM(_bind), ), const);
@@ -741,12 +1011,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_511[28] = {
 0x39,0x08,0x00,0x00,0x1d,0x04,0x00,0x30,0x05,0x01,0x01,0x07,0x02,0x01,0x08,0x01,0x2f,0x06,0x02,0x02,
 0x32,0x04,0x03,0x02,0x06,0x04,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_511, 3, (MRB_SYM(host), MRB_SYM(port), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_511[] = "\x00\xa3\x05\x04\x01\x14\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_511 = {
+0, 278, 7, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_511}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_511_ = &gem_mrblib_mruby_socket_proc_debug_file_511;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_511 = {
+28, 1, &gem_mrblib_mruby_socket_proc_debug_file_511_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_511 = {
   4,10,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_511,
   NULL,gem_mrblib_mruby_socket_proc_syms_511,NULL,
   gem_mrblib_mruby_socket_proc_lv_511,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_511,
   28,0,4,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_512, 4, (MRB_SYM(Socket), MRB_SYM(fileno), MRB_SYM(_sockaddr_in), MRB_SYM(_connect), ), const);
@@ -754,12 +1030,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_512[28] = {
 0x39,0x08,0x00,0x00,0x1d,0x04,0x00,0x30,0x05,0x01,0x01,0x07,0x02,0x01,0x08,0x01,0x2f,0x06,0x02,0x02,
 0x32,0x04,0x03,0x02,0x06,0x04,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_512, 3, (MRB_SYM(host), MRB_SYM(port), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_512[] = "\x00\xb1\x05\x04\x01\x14\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_512 = {
+0, 278, 7, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_512}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_512_ = &gem_mrblib_mruby_socket_proc_debug_file_512;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_512 = {
+28, 1, &gem_mrblib_mruby_socket_proc_debug_file_512_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_512 = {
   4,10,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_512,
   NULL,gem_mrblib_mruby_socket_proc_syms_512,NULL,
   gem_mrblib_mruby_socket_proc_lv_512,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_512,
   28,0,4,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_513, 2, (MRB_SYM(_setnonblock), MRB_SYM(recvfrom), ), const);
@@ -768,12 +1050,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_513[51] = {
 0x04,0x01,0x0f,0x2b,0x06,0x01,0x07,0x03,0x14,0x08,0x32,0x07,0x00,0x01,0x2d,0x06,0x3d,0x04,0x01,0x00,
 0x00,0x00,0x06,0x00,0x00,0x00,0x17,0x00,0x00,0x00,0x17,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_513, 3, (MRB_SYM(args), 0,MRB_SYM(s), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_513[] = "\x00\xbf\x05\x04\x01\x02\x02\x06\x01\x0d\x03";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_513 = {
+0, 278, 11, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_513}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_513_ = &gem_mrblib_mruby_socket_proc_debug_file_513;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_513 = {
+38, 1, &gem_mrblib_mruby_socket_proc_debug_file_513_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_513 = {
   4,10,1,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_513,
   NULL,gem_mrblib_mruby_socket_proc_syms_513,NULL,
   gem_mrblib_mruby_socket_proc_lv_513,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_513,
   38,0,2,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_514, 1, (MRB_SYM(_sockaddr_in), ), const);
@@ -784,12 +1072,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_514[88] = {
 0x08,0x02,0x01,0x09,0x03,0x01,0x0a,0x05,0x37,0x06,0x03,0x26,0x00,0x0c,0x01,0x07,0x01,0x01,0x08,0x02,
 0x01,0x09,0x05,0x37,0x06,0x02,0x3d,0x06,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_514, 5, (MRB_SYM(mesg), MRB_SYM(flags), MRB_SYM(host), MRB_SYM(port), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_514[] = "\x00\xd3\x05\x11\x01\x05\x01\x19\x04\x02\xfd\xff\xff\xff\x0f\x05\x01\x12\x02";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_514 = {
+0, 278, 19, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_514}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_514_ = &gem_mrblib_mruby_socket_proc_debug_file_514;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_514 = {
+88, 1, &gem_mrblib_mruby_socket_proc_debug_file_514_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_514 = {
   6,13,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_514,
   NULL,gem_mrblib_mruby_socket_proc_syms_514,NULL,
   gem_mrblib_mruby_socket_proc_lv_514,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_514,
   88,0,1,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_515, 6, (MRB_SYM(Addrinfo), MRB_IVSYM(af), MRB_SYM(SOCK_DGRAM), MRB_SYM(Socket), MRB_SYM(getaddrinfo), MRB_SYM(to_sockaddr), ), const);
@@ -798,12 +1092,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_515[41] = {
 0x09,0x02,0x32,0x05,0x04,0x04,0x06,0x06,0x23,0x05,0x01,0x04,0x05,0x01,0x05,0x04,0x33,0x05,0x05,0x3d,
 0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_515, 4, (MRB_SYM(port), MRB_SYM(host), 0,MRB_SYM(ai), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_515[] = "\x00\xe4\x05\x04\x01\x1d\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_515 = {
+0, 278, 7, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_515}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_515_ = &gem_mrblib_mruby_socket_proc_debug_file_515;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_515 = {
+41, 1, &gem_mrblib_mruby_socket_proc_debug_file_515_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_515 = {
   5,11,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_515,
   NULL,gem_mrblib_mruby_socket_proc_syms_515,NULL,
   gem_mrblib_mruby_socket_proc_lv_515,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_515,
   41,0,6,0,0
 };
 static const mrb_irep *gem_mrblib_mruby_socket_proc_reps_6[6] = {
@@ -818,12 +1118,18 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_6, 6, (MRB_SYM(initialize)
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_6[26] = {
 0x6b,0x01,0x00,0x00,0x6b,0x01,0x01,0x01,0x6b,0x01,0x02,0x02,0x6b,0x01,0x03,0x03,0x6b,0x01,0x04,0x04,
 0x6b,0x01,0x05,0x05,0x3d,0x00,};
+static const char gem_mrblib_mruby_socket_proc_debug_lines_6[] = "\x00\x94\x05\x04\x0f\x04\x0e\x04\x0e\x04\x14\x04\x11";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_6 = {
+0, 278, 13, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_6}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_6_ = &gem_mrblib_mruby_socket_proc_debug_file_6;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_6 = {
+26, 1, &gem_mrblib_mruby_socket_proc_debug_file_6_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_6 = {
   1,1,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_6,
   NULL,gem_mrblib_mruby_socket_proc_syms_6,gem_mrblib_mruby_socket_proc_reps_6,
   NULL,					/* lv */
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_6,
   26,0,6,6,0
 };
 static const mrb_irep_pool gem_mrblib_mruby_socket_proc_pool_555[1] = {
@@ -834,12 +1140,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_555[39] = {
 0x39,0x08,0x20,0x00,0x26,0x00,0x03,0x26,0x00,0x02,0x06,0x03,0x1d,0x06,0x00,0x01,0x07,0x01,0x01,0x08,
 0x02,0x01,0x09,0x03,0x32,0x06,0x01,0x03,0x5c,0x07,0x00,0x01,0x08,0x04,0x37,0x05,0x02,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_555, 4, (MRB_SYM(domain), MRB_SYM(type), MRB_SYM(protocol), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_555[] = "\x00\xf4\x05\x0c\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_555 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_555}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_555_ = &gem_mrblib_mruby_socket_proc_debug_file_555;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_555 = {
+39, 1, &gem_mrblib_mruby_socket_proc_debug_file_555_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_555 = {
   5,11,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_555,
   gem_mrblib_mruby_socket_proc_pool_555,gem_mrblib_mruby_socket_proc_syms_555,NULL,
   gem_mrblib_mruby_socket_proc_lv_555,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_555,
   39,1,2,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_587, 4, (MRB_SYM(_to_array), MRB_SYM(afamily), MRB_SYM(socktype), MRB_SYM(protocol), ), const);
@@ -849,12 +1161,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_587[65] = {
 0x0b,0x05,0x01,0x06,0x01,0x33,0x06,0x02,0x25,0x04,0x01,0x04,0x03,0x0c,0x05,0x01,0x06,0x01,0x33,0x06,
 0x03,0x25,0x04,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_587, 3, (MRB_SYM(ai), 0,MRB_SYM(ary), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_587[] = "\x00\x84\x06\x04\x01\x09\x01\x0b\x01\x0d\x01\x0d\x01\x0d\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_587 = {
+0, 278, 15, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_587}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_587_ = &gem_mrblib_mruby_socket_proc_debug_file_587;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_587 = {
+65, 1, &gem_mrblib_mruby_socket_proc_debug_file_587_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_587 = {
   4,8,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_587,
   NULL,gem_mrblib_mruby_socket_proc_syms_587,NULL,
   gem_mrblib_mruby_socket_proc_lv_587,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_587,
   65,0,4,0,0
 };
 static const mrb_irep *gem_mrblib_mruby_socket_proc_reps_556[1] = {
@@ -867,24 +1185,36 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_556[61] = {
 0x0c,0x04,0x01,0x0d,0x05,0x01,0x0e,0x06,0x32,0x08,0x01,0x06,0x62,0x09,0x00,0x34,0x08,0x02,0x00,0x3d,
 0x08,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_556, 7, (MRB_SYM(nodename), MRB_SYM(servname), MRB_SYM(family), MRB_SYM(socktype), MRB_SYM(protocol), MRB_SYM(flags), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_556[] = "\x00\x83\x06\x1b\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_556 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_556}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_556_ = &gem_mrblib_mruby_socket_proc_debug_file_556;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_556 = {
+61, 1, &gem_mrblib_mruby_socket_proc_debug_file_556_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_556 = {
   8,16,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_556,
   NULL,gem_mrblib_mruby_socket_proc_syms_556,gem_mrblib_mruby_socket_proc_reps_556,
   gem_mrblib_mruby_socket_proc_lv_556,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_556,
   61,0,3,1,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_557, 1, (MRB_SYM(new), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_557[13] = {
 0x39,0x00,0x10,0x00,0x01,0x04,0x01,0x2f,0x03,0x00,0x01,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_557, 2, (MRB_SYM(args), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_557[] = "\x00\x99\x06\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_557 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_557}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_557_ = &gem_mrblib_mruby_socket_proc_debug_file_557;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_557 = {
+13, 1, &gem_mrblib_mruby_socket_proc_debug_file_557_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_557 = {
   3,6,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_557,
   NULL,gem_mrblib_mruby_socket_proc_syms_557,NULL,
   gem_mrblib_mruby_socket_proc_lv_557,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_557,
   13,0,1,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_558, 5, (MRB_SYM(Addrinfo), MRB_SYM(SOCK_DGRAM), MRB_SYM(Socket), MRB_SYM(getaddrinfo), MRB_SYM(to_sockaddr), ), const);
@@ -892,12 +1222,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_558[40] = {
 0x39,0x08,0x00,0x00,0x1d,0x05,0x00,0x01,0x06,0x02,0x01,0x07,0x01,0x11,0x08,0x1d,0x09,0x02,0x1f,0x09,
 0x01,0x32,0x05,0x03,0x04,0x06,0x06,0x23,0x05,0x01,0x04,0x05,0x01,0x05,0x04,0x33,0x05,0x04,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_558, 4, (MRB_SYM(port), MRB_SYM(host), 0,MRB_SYM(ai), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_558[] = "\x00\xa6\x06\x04\x01\x1c\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_558 = {
+0, 278, 7, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_558}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_558_ = &gem_mrblib_mruby_socket_proc_debug_file_558;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_558 = {
+40, 1, &gem_mrblib_mruby_socket_proc_debug_file_558_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_558 = {
   5,11,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_558,
   NULL,gem_mrblib_mruby_socket_proc_syms_558,NULL,
   gem_mrblib_mruby_socket_proc_lv_558,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_558,
   40,0,5,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_559, 4, (MRB_SYM(Addrinfo), MRB_SYM(new), MRB_SYM(ip_unpack), MRB_SYM(reverse), ), const);
@@ -905,35 +1241,53 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_559[22] = {
 0x39,0x04,0x00,0x00,0x1d,0x03,0x00,0x01,0x04,0x01,0x32,0x03,0x01,0x01,0x33,0x03,0x02,0x33,0x03,0x03,
 0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_559, 2, (MRB_SYM(sa), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_559[] = "\x00\xbe\x06\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_559 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_559}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_559_ = &gem_mrblib_mruby_socket_proc_debug_file_559;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_559 = {
+22, 1, &gem_mrblib_mruby_socket_proc_debug_file_559_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_559 = {
   3,6,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_559,
   NULL,gem_mrblib_mruby_socket_proc_syms_559,NULL,
   gem_mrblib_mruby_socket_proc_lv_559,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_559,
   22,0,4,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_560, 3, (MRB_SYM(Addrinfo), MRB_SYM(new), MRB_SYM(unix_path), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_560[19] = {
 0x39,0x04,0x00,0x00,0x1d,0x03,0x00,0x01,0x04,0x01,0x32,0x03,0x01,0x01,0x33,0x03,0x02,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_560, 2, (MRB_SYM(sa), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_560[] = "\x00\xca\x06\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_560 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_560}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_560_ = &gem_mrblib_mruby_socket_proc_debug_file_560;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_560 = {
+19, 1, &gem_mrblib_mruby_socket_proc_debug_file_560_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_560 = {
   3,6,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_560,
   NULL,gem_mrblib_mruby_socket_proc_syms_560,NULL,
   gem_mrblib_mruby_socket_proc_lv_560,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_560,
   19,0,3,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_561, 6, (MRB_SYM(pack_sockaddr_in), MRB_SYM(sockaddr_in), MRB_SYM(pack_sockaddr_un), MRB_SYM(sockaddr_un), MRB_SYM(pair), MRB_SYM(socketpair), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_561[11] = {
 0x6d,0x00,0x01,0x6d,0x02,0x03,0x6d,0x04,0x05,0x3d,0x00,};
+static const char gem_mrblib_mruby_socket_proc_debug_lines_561[] = "\x00\xcf\x06\x03\x01\x03\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_561 = {
+0, 278, 7, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_561}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_561_ = &gem_mrblib_mruby_socket_proc_debug_file_561;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_561 = {
+11, 1, &gem_mrblib_mruby_socket_proc_debug_file_561_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_561 = {
   1,1,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_561,
   NULL,gem_mrblib_mruby_socket_proc_syms_561,NULL,
   NULL,					/* lv */
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_561,
   11,0,6,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_562, 3, (MRB_SYM(sysaccept), MRB_SYM(Socket), MRB_SYM(for_fd), ), const);
@@ -941,12 +1295,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_562[33] = {
 0x39,0x00,0x00,0x00,0x30,0x04,0x00,0x57,0x02,0x04,0x00,0x57,0x03,0x04,0x01,0x1d,0x04,0x01,0x01,0x05,
 0x02,0x32,0x04,0x02,0x01,0x01,0x05,0x03,0x52,0x04,0x02,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_562, 3, (0,MRB_SYM(fd), MRB_SYM(addr), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_562[] = "\x00\xd4\x06\x04\x01\x0b\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_562 = {
+0, 278, 7, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_562}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_562_ = &gem_mrblib_mruby_socket_proc_debug_file_562;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_562 = {
+33, 1, &gem_mrblib_mruby_socket_proc_debug_file_562_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_562 = {
   4,7,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_562,
   NULL,gem_mrblib_mruby_socket_proc_syms_562,NULL,
   gem_mrblib_mruby_socket_proc_lv_562,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_562,
   33,0,3,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_563, 2, (MRB_SYM(_setnonblock), MRB_SYM(accept), ), const);
@@ -954,12 +1314,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_563[38] = {
 0x39,0x00,0x00,0x00,0x13,0x03,0x2f,0x02,0x00,0x01,0x30,0x02,0x01,0x2b,0x04,0x14,0x06,0x2f,0x05,0x00,
 0x01,0x2d,0x04,0x3d,0x02,0x01,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x0d,0x00,0x00,0x00,0x0d,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_563, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_563[] = "\x00\xd9\x06\x04\x02\x06\x01\x05\x02";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_563 = {
+0, 278, 9, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_563}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_563_ = &gem_mrblib_mruby_socket_proc_debug_file_563;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_563 = {
+25, 1, &gem_mrblib_mruby_socket_proc_debug_file_563_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_563 = {
   2,8,1,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_563,
   NULL,gem_mrblib_mruby_socket_proc_syms_563,NULL,
   gem_mrblib_mruby_socket_proc_lv_563,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_563,
   25,0,2,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_564, 6, (MRB_SYM(Addrinfo), MRB_SYM_Q(is_a), MRB_SYM(to_sockaddr), MRB_SYM(Socket), MRB_SYM(fileno), MRB_SYM(_bind), ), const);
@@ -968,12 +1334,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_564[44] = {
 0x01,0x33,0x03,0x02,0x01,0x01,0x03,0x1d,0x03,0x03,0x30,0x04,0x04,0x01,0x05,0x01,0x32,0x03,0x05,0x02,
 0x06,0x03,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_564, 2, (MRB_SYM(sockaddr), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_564[] = "\x00\xeb\x06\x04\x01\x17\x01\x0d\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_564 = {
+0, 278, 9, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_564}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_564_ = &gem_mrblib_mruby_socket_proc_debug_file_564;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_564 = {
+44, 1, &gem_mrblib_mruby_socket_proc_debug_file_564_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_564 = {
   3,7,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_564,
   NULL,gem_mrblib_mruby_socket_proc_syms_564,NULL,
   gem_mrblib_mruby_socket_proc_lv_564,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_564,
   44,0,6,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_565, 6, (MRB_SYM(Addrinfo), MRB_SYM_Q(is_a), MRB_SYM(to_sockaddr), MRB_SYM(Socket), MRB_SYM(fileno), MRB_SYM(_connect), ), const);
@@ -982,12 +1354,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_565[44] = {
 0x01,0x33,0x03,0x02,0x01,0x01,0x03,0x1d,0x03,0x03,0x30,0x04,0x04,0x01,0x05,0x01,0x32,0x03,0x05,0x02,
 0x06,0x03,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_565, 2, (MRB_SYM(sockaddr), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_565[] = "\x00\xfa\x06\x04\x01\x17\x01\x0d\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_565 = {
+0, 278, 9, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_565}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_565_ = &gem_mrblib_mruby_socket_proc_debug_file_565;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_565 = {
+44, 1, &gem_mrblib_mruby_socket_proc_debug_file_565_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_565 = {
   3,7,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_565,
   NULL,gem_mrblib_mruby_socket_proc_syms_565,NULL,
   gem_mrblib_mruby_socket_proc_lv_565,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_565,
   44,0,6,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_566, 2, (MRB_SYM(_setnonblock), MRB_SYM(connect), ), const);
@@ -996,12 +1374,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_566[42] = {
 0x07,0x2f,0x06,0x00,0x01,0x2d,0x05,0x3d,0x03,0x01,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x11,0x00,0x00,
 0x00,0x11,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_566, 2, (MRB_SYM(sockaddr), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_566[] = "\x00\x89\x07\x04\x02\x06\x01\x09\x02";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_566 = {
+0, 278, 9, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_566}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_566_ = &gem_mrblib_mruby_socket_proc_debug_file_566;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_566 = {
+29, 1, &gem_mrblib_mruby_socket_proc_debug_file_566_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_566 = {
   3,9,1,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_566,
   NULL,gem_mrblib_mruby_socket_proc_syms_566,NULL,
   gem_mrblib_mruby_socket_proc_lv_566,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_566,
   29,0,2,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_567, 3, (MRB_SYM(Socket), MRB_SYM(fileno), MRB_SYM(_listen), ), const);
@@ -1009,12 +1393,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_567[21] = {
 0x39,0x04,0x00,0x00,0x1d,0x03,0x00,0x30,0x04,0x01,0x01,0x05,0x01,0x32,0x03,0x02,0x02,0x06,0x03,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_567, 2, (MRB_SYM(backlog), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_567[] = "\x00\x94\x07\x04\x01\x0d\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_567 = {
+0, 278, 7, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_567}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_567_ = &gem_mrblib_mruby_socket_proc_debug_file_567;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_567 = {
+21, 1, &gem_mrblib_mruby_socket_proc_debug_file_567_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_567 = {
   3,7,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_567,
   NULL,gem_mrblib_mruby_socket_proc_syms_567,NULL,
   gem_mrblib_mruby_socket_proc_lv_567,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_567,
   21,0,3,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_568, 9, (MRB_SYM(_recvfrom), MRB_SYM(SOL_SOCKET), MRB_SYM(Socket), MRB_SYM(SO_TYPE), MRB_SYM(getsockopt), MRB_SYM(int), MRB_SYM(Addrinfo), MRB_SYM(PF_UNSPEC), MRB_SYM(new), ), const);
@@ -1024,12 +1414,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_568[79] = {
 0x09,0x03,0x2f,0x07,0x04,0x02,0x33,0x07,0x05,0x01,0x06,0x07,0x01,0x07,0x04,0x1d,0x08,0x06,0x01,0x09,
 0x05,0x1d,0x0a,0x02,0x1f,0x0a,0x07,0x01,0x0b,0x06,0x32,0x08,0x08,0x03,0x52,0x07,0x02,0x3d,0x07,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_568, 6, (MRB_SYM(maxlen), MRB_SYM(flags), 0,MRB_SYM(msg), MRB_SYM(sa), MRB_SYM(socktype), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_568[] = "\x00\x99\x07\x0c\x01\x12\x01\x16\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_568 = {
+0, 278, 9, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_568}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_568_ = &gem_mrblib_mruby_socket_proc_debug_file_568;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_568 = {
+79, 1, &gem_mrblib_mruby_socket_proc_debug_file_568_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_568 = {
   7,13,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_568,
   NULL,gem_mrblib_mruby_socket_proc_syms_568,NULL,
   gem_mrblib_mruby_socket_proc_lv_568,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_568,
   79,0,9,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_569, 2, (MRB_SYM(_setnonblock), MRB_SYM(_recvfrom), ), const);
@@ -1038,24 +1434,36 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_569[46] = {
 0x0f,0x2b,0x05,0x14,0x07,0x2f,0x06,0x00,0x01,0x2d,0x05,0x3d,0x03,0x01,0x00,0x00,0x00,0x04,0x00,0x00,
 0x00,0x15,0x00,0x00,0x00,0x15,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_569, 2, (MRB_SYM(args), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_569[] = "\x00\x9f\x07\x04\x02\x06\x01\x0d\x02";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_569 = {
+0, 278, 9, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_569}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_569_ = &gem_mrblib_mruby_socket_proc_debug_file_569;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_569 = {
+33, 1, &gem_mrblib_mruby_socket_proc_debug_file_569_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_569 = {
   3,9,1,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_569,
   NULL,gem_mrblib_mruby_socket_proc_syms_569,NULL,
   gem_mrblib_mruby_socket_proc_lv_569,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_569,
   33,0,2,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_570, 3, (MRB_SYM(Socket), MRB_SYM(fileno), MRB_SYM(_accept2), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_570[16] = {
 0x39,0x00,0x00,0x00,0x1d,0x02,0x00,0x30,0x03,0x01,0x32,0x02,0x02,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_570, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_570[] = "\x00\xa8\x07\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_570 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_570}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_570_ = &gem_mrblib_mruby_socket_proc_debug_file_570;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_570 = {
+16, 1, &gem_mrblib_mruby_socket_proc_debug_file_570_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_570 = {
   2,5,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_570,
   NULL,gem_mrblib_mruby_socket_proc_syms_570,NULL,
   gem_mrblib_mruby_socket_proc_lv_570,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_570,
   16,0,3,0,0
 };
 static const mrb_irep *gem_mrblib_mruby_socket_proc_reps_7[16] = {
@@ -1082,12 +1490,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_7[79] = {
 0x03,0x03,0x12,0x01,0x6c,0x01,0x04,0x04,0x12,0x01,0x6c,0x01,0x05,0x05,0x12,0x01,0x6f,0x01,0x69,0x01,
 0x06,0x6b,0x01,0x06,0x07,0x6b,0x01,0x07,0x08,0x6b,0x01,0x08,0x09,0x6b,0x01,0x09,0x0a,0x6b,0x01,0x0a,
 0x0b,0x6b,0x01,0x0b,0x0c,0x6b,0x01,0x0c,0x0d,0x6b,0x01,0x0d,0x0e,0x6b,0x01,0x0e,0x0f,0x3d,0x00,};
+static const char gem_mrblib_mruby_socket_proc_debug_lines_7[] = "\x00\xf4\x05\x04\x0f\x06\x16\x06\x0d\x06\x18\x06\x0c\x06\x04\x07\x06\x04\x05\x04\x12\x04\x0f\x04\x0f\x04\x0b\x04\x05\x04\x06\x04\x09";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_7 = {
+0, 278, 33, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_7}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_7_ = &gem_mrblib_mruby_socket_proc_debug_file_7;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_7 = {
+79, 1, &gem_mrblib_mruby_socket_proc_debug_file_7_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_7 = {
   1,2,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_7,
   NULL,gem_mrblib_mruby_socket_proc_syms_7,gem_mrblib_mruby_socket_proc_reps_7,
   NULL,					/* lv */
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_7,
   79,0,15,16,0
 };
 static const mrb_irep_pool gem_mrblib_mruby_socket_proc_pool_821[2] = {
@@ -1106,12 +1520,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_821[174] = {
 0x06,0x26,0x00,0x02,0x11,0x04,0x3d,0x04,0x01,0x00,0x00,0x00,0x5a,0x00,0x00,0x00,0x63,0x00,0x00,0x00,
 0x63,0x00,0x00,0x00,0x00,0x65,0x00,0x00,0x00,0x74,0x00,0x00,0x00,0x77,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_821, 3, (MRB_SYM(path), 0,MRB_SYM(block), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_821[] = "\x00\xb9\x07\x07\x01\x09\x01\x0f\x0c\x02\xf6\xff\xff\xff\x0f\x1e\x01\x14\x02\x05\x07\x02\xfb\xff\xff\xff\x0f\x0b\x03\x10\x02\x02\xfe\xff\xff\xff\x0f\x02\x01\x0b\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_821 = {
+0, 278, 41, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_821}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_821_ = &gem_mrblib_mruby_socket_proc_debug_file_821;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_821 = {
+148, 1, &gem_mrblib_mruby_socket_proc_debug_file_821_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_821 = {
   4,10,2,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_821,
   gem_mrblib_mruby_socket_proc_pool_821,gem_mrblib_mruby_socket_proc_syms_821,NULL,
   gem_mrblib_mruby_socket_proc_lv_821,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_821,
   148,2,13,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_833, 6, (MRB_SYM(SOCK_STREAM), MRB_SYM(Socket), MRB_SYM(AF_UNIX), MRB_SYM(socketpair), MRB_SYM(UNIXSocket), MRB_SYM(for_fd), ), const);
@@ -1121,12 +1541,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_833[75] = {
 0x05,0x03,0x03,0x01,0x04,0x05,0x1d,0x05,0x04,0x24,0x06,0x04,0x32,0x05,0x05,0x01,0x1d,0x06,0x04,0x01,
 0x07,0x04,0x07,0x08,0x23,0x07,0x32,0x06,0x05,0x01,0x52,0x05,0x02,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_833, 4, (MRB_SYM(type), MRB_SYM(protocol), 0,MRB_SYM(a), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_833[] = "\x00\xd7\x07\x18\x01\x16\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_833 = {
+0, 278, 7, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_833}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_833_ = &gem_mrblib_mruby_socket_proc_debug_file_833;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_833 = {
+75, 1, &gem_mrblib_mruby_socket_proc_debug_file_833_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_833 = {
   5,10,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_833,
   NULL,gem_mrblib_mruby_socket_proc_syms_833,NULL,
   gem_mrblib_mruby_socket_proc_lv_833,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_833,
   75,0,6,0,0
 };
 static const mrb_irep *gem_mrblib_mruby_socket_proc_reps_822[1] = {
@@ -1135,12 +1561,18 @@ static const mrb_irep *gem_mrblib_mruby_socket_proc_reps_822[1] = {
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_822, 2, (MRB_SYM(socketpair), MRB_SYM(pair), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_822[9] = {
 0x6b,0x01,0x00,0x00,0x6d,0x01,0x00,0x3d,0x00,};
+static const char gem_mrblib_mruby_socket_proc_debug_lines_822[] = "\x00\xd7\x07\x04\x05";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_822 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_822}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_822_ = &gem_mrblib_mruby_socket_proc_debug_file_822;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_822 = {
+9, 1, &gem_mrblib_mruby_socket_proc_debug_file_822_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_822 = {
   1,1,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_822,
   NULL,gem_mrblib_mruby_socket_proc_syms_822,gem_mrblib_mruby_socket_proc_reps_822,
   NULL,					/* lv */
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_822,
   9,0,2,1,0
 };
 static const mrb_irep_pool gem_mrblib_mruby_socket_proc_pool_823[1] = {
@@ -1150,24 +1582,36 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_823, 1, (MRB_SYM(path), ),
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_823[15] = {
 0x39,0x00,0x00,0x00,0x5c,0x02,0x00,0x30,0x03,0x00,0x52,0x02,0x02,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_823, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_823[] = "\x00\xe7\x07\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_823 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_823}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_823_ = &gem_mrblib_mruby_socket_proc_debug_file_823;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_823 = {
+15, 1, &gem_mrblib_mruby_socket_proc_debug_file_823_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_823 = {
   2,5,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_823,
   gem_mrblib_mruby_socket_proc_pool_823,gem_mrblib_mruby_socket_proc_syms_823,NULL,
   gem_mrblib_mruby_socket_proc_lv_823,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_823,
   15,1,1,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_824, 4, (MRB_SYM(Addrinfo), MRB_SYM(getsockname), MRB_SYM(new), MRB_SYM(unix_path), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_824[19] = {
 0x39,0x00,0x00,0x00,0x1d,0x02,0x00,0x30,0x03,0x01,0x32,0x02,0x02,0x01,0x33,0x02,0x03,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_824, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_824[] = "\x00\xf3\x07\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_824 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_824}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_824_ = &gem_mrblib_mruby_socket_proc_debug_file_824;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_824 = {
+19, 1, &gem_mrblib_mruby_socket_proc_debug_file_824_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_824 = {
   2,5,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_824,
   NULL,gem_mrblib_mruby_socket_proc_syms_824,NULL,
   gem_mrblib_mruby_socket_proc_lv_824,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_824,
   19,0,4,0,0
 };
 static const mrb_irep_pool gem_mrblib_mruby_socket_proc_pool_825[1] = {
@@ -1178,12 +1622,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_825[25] = {
 0x39,0x00,0x00,0x00,0x5c,0x02,0x00,0x1d,0x03,0x00,0x30,0x04,0x01,0x32,0x03,0x02,0x01,0x33,0x03,0x03,
 0x52,0x02,0x02,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_825, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_825[] = "\x00\xff\x07\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_825 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_825}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_825_ = &gem_mrblib_mruby_socket_proc_debug_file_825;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_825 = {
+25, 1, &gem_mrblib_mruby_socket_proc_debug_file_825_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_825 = {
   2,6,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_825,
   gem_mrblib_mruby_socket_proc_pool_825,gem_mrblib_mruby_socket_proc_syms_825,NULL,
   gem_mrblib_mruby_socket_proc_lv_825,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_825,
   25,1,4,0,0
 };
 static const mrb_irep_pool gem_mrblib_mruby_socket_proc_pool_826[2] = {
@@ -1198,12 +1648,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_826[83] = {
 0x5c,0x07,0x00,0x01,0x06,0x07,0x01,0x07,0x04,0x5c,0x08,0x01,0x01,0x09,0x06,0x52,0x08,0x02,0x52,0x07,
 0x02,0x3d,0x07,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_826, 6, (MRB_SYM(maxlen), MRB_SYM(flags), 0,MRB_SYM(msg), MRB_SYM(sa), MRB_SYM(path), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_826[] = "\x00\x85\x08\x0c\x01\x12\x01\x24\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_826 = {
+0, 278, 9, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_826}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_826_ = &gem_mrblib_mruby_socket_proc_debug_file_826;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_826 = {
+83, 1, &gem_mrblib_mruby_socket_proc_debug_file_826_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_826 = {
   7,11,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_826,
   gem_mrblib_mruby_socket_proc_pool_826,gem_mrblib_mruby_socket_proc_syms_826,NULL,
   gem_mrblib_mruby_socket_proc_lv_826,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_826,
   83,2,5,0,0
 };
 static const mrb_irep *gem_mrblib_mruby_socket_proc_reps_8[6] = {
@@ -1218,12 +1674,18 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_8, 5, (MRB_SYM(initialize)
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_8[29] = {
 0x6b,0x01,0x00,0x00,0x12,0x01,0x6f,0x01,0x69,0x01,0x01,0x6b,0x01,0x01,0x02,0x6b,0x01,0x02,0x03,0x6b,
 0x01,0x03,0x04,0x6b,0x01,0x04,0x05,0x3d,0x00,};
+static const char gem_mrblib_mruby_socket_proc_debug_lines_8[] = "\x00\xb9\x07\x04\x14\x07\x1a\x04\x0c\x04\x0c\x04\x06";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_8 = {
+0, 278, 13, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_8}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_8_ = &gem_mrblib_mruby_socket_proc_debug_file_8;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_8 = {
+29, 1, &gem_mrblib_mruby_socket_proc_debug_file_8_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_8 = {
   1,2,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_8,
   NULL,gem_mrblib_mruby_socket_proc_syms_8,gem_mrblib_mruby_socket_proc_reps_8,
   NULL,					/* lv */
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_8,
   29,0,5,6,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_867, 14, (MRB_SYM(Socket), MRB_SYM(AF_UNIX), MRB_SYM(SOCK_STREAM), MRB_SYM(_socket), MRB_SYM(pack_sockaddr_un), MRB_SYM(_bind), MRB_SYM(listen), MRB_SYM(StandardError), MRB_SYM(IO), MRB_SYM(_sysclose), MRB_SYM(raise), MRB_SYM_Q(block_given), MRB_SYM_Q(closed), MRB_SYM(close), ), const);
@@ -1242,12 +1704,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_867[241] = {
 0x00,0x00,0x00,0x91,0x00,0x00,0x00,0x91,0x00,0x00,0x00,0x00,0x9a,0x00,0x00,0x00,0x9d,0x00,0x00,0x00,
 0xa0,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_867, 4, (MRB_SYM(path), 0,MRB_SYM(fd), MRB_SYM(e), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_867[] = "\x00\x97\x08\x04\x01\x18\x02\x09\x01\x14\x01\x07\x03\x02\xfd\xff\xff\xff\x0f\x0d\x03\x02\xfd\xff\xff\xff\x0f\x03\x02\x21\x01\x0c\x03\x05\x04\x02\xfe\xff\xff\xff\x0f\x0b\x02";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_867 = {
+0, 278, 43, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_867}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_867_ = &gem_mrblib_mruby_socket_proc_debug_file_867;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_867 = {
+189, 1, &gem_mrblib_mruby_socket_proc_debug_file_867_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_867 = {
   5,10,4,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_867,
   NULL,gem_mrblib_mruby_socket_proc_syms_867,NULL,
   gem_mrblib_mruby_socket_proc_lv_867,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_867,
   189,0,14,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_868, 6, (MRB_SYM(sysaccept), MRB_SYM(UNIXSocket), MRB_SYM(for_fd), MRB_SYM(StandardError), MRB_SYM(IO), MRB_SYM(_sysclose), ), const);
@@ -1259,12 +1727,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_868[107] = {
 0x03,0x00,0x00,0x00,0x00,0x0a,0x00,0x00,0x00,0x17,0x00,0x00,0x00,0x1a,0x00,0x00,0x00,0x00,0x29,0x00,
 0x00,0x00,0x33,0x00,0x00,0x00,0x36,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_868, 3, (0,MRB_SYM(fd), MRB_SYM(sock), ), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_868[] = "\x00\xb4\x08\x04\x01\x06\x02\x0e\x02\x02\xfe\xff\xff\xff\x0f\x0d\x02\x28\x02";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_868 = {
+0, 278, 19, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_868}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_868_ = &gem_mrblib_mruby_socket_proc_debug_file_868;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_868 = {
+81, 1, &gem_mrblib_mruby_socket_proc_debug_file_868_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_868 = {
   4,7,2,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_868,
   NULL,gem_mrblib_mruby_socket_proc_syms_868,NULL,
   gem_mrblib_mruby_socket_proc_lv_868,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_868,
   81,0,6,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_869, 2, (MRB_SYM(_setnonblock), MRB_SYM(accept), ), const);
@@ -1272,12 +1746,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_869[38] = {
 0x39,0x00,0x00,0x00,0x13,0x03,0x2f,0x02,0x00,0x01,0x30,0x02,0x01,0x2b,0x04,0x14,0x06,0x2f,0x05,0x00,
 0x01,0x2d,0x04,0x3d,0x02,0x01,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x0d,0x00,0x00,0x00,0x0d,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_869, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_869[] = "\x00\xc7\x08\x04\x02\x06\x01\x05\x02";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_869 = {
+0, 278, 9, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_869}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_869_ = &gem_mrblib_mruby_socket_proc_debug_file_869;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_869 = {
+25, 1, &gem_mrblib_mruby_socket_proc_debug_file_869_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_869 = {
   2,8,1,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_869,
   NULL,gem_mrblib_mruby_socket_proc_syms_869,NULL,
   gem_mrblib_mruby_socket_proc_lv_869,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_869,
   25,0,2,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_870, 3, (MRB_SYM(Socket), MRB_SYM(fileno), MRB_SYM(_listen), ), const);
@@ -1285,24 +1765,36 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_870[21] = {
 0x39,0x04,0x00,0x00,0x1d,0x03,0x00,0x30,0x04,0x01,0x01,0x05,0x01,0x32,0x03,0x02,0x02,0x06,0x03,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_870, 2, (MRB_SYM(backlog), 0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_870[] = "\x00\xd9\x08\x04\x01\x0d\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_870 = {
+0, 278, 7, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_870}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_870_ = &gem_mrblib_mruby_socket_proc_debug_file_870;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_870 = {
+21, 1, &gem_mrblib_mruby_socket_proc_debug_file_870_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_870 = {
   3,7,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_870,
   NULL,gem_mrblib_mruby_socket_proc_syms_870,NULL,
   gem_mrblib_mruby_socket_proc_lv_870,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_870,
   21,0,3,0,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_871, 3, (MRB_SYM(Socket), MRB_SYM(fileno), MRB_SYM(_accept), ), const);
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_871[16] = {
 0x39,0x00,0x00,0x00,0x1d,0x02,0x00,0x30,0x03,0x01,0x32,0x02,0x02,0x01,0x3d,0x02,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_lv_871, 1, (0,), const);
+static const char gem_mrblib_mruby_socket_proc_debug_lines_871[] = "\x00\xe6\x08\x04\x01";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_871 = {
+0, 278, 5, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_871}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_871_ = &gem_mrblib_mruby_socket_proc_debug_file_871;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_871 = {
+16, 1, &gem_mrblib_mruby_socket_proc_debug_file_871_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_871 = {
   2,5,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_871,
   NULL,gem_mrblib_mruby_socket_proc_syms_871,NULL,
   gem_mrblib_mruby_socket_proc_lv_871,
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_871,
   16,0,3,0,0
 };
 static const mrb_irep *gem_mrblib_mruby_socket_proc_reps_9[5] = {
@@ -1316,12 +1808,18 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_socket_proc_syms_9, 5, (MRB_SYM(initialize)
 static const mrb_code gem_mrblib_mruby_socket_proc_iseq_9[22] = {
 0x6b,0x01,0x00,0x00,0x6b,0x01,0x01,0x01,0x6b,0x01,0x02,0x02,0x6b,0x01,0x03,0x03,0x6b,0x01,0x04,0x04,
 0x3d,0x00,};
+static const char gem_mrblib_mruby_socket_proc_debug_lines_9[] = "\x00\x97\x08\x04\x1d\x04\x13\x04\x12\x04\x0d";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_9 = {
+0, 278, 11, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_9}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_9_ = &gem_mrblib_mruby_socket_proc_debug_file_9;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_9 = {
+22, 1, &gem_mrblib_mruby_socket_proc_debug_file_9_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_9 = {
   1,1,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_9,
   NULL,gem_mrblib_mruby_socket_proc_syms_9,gem_mrblib_mruby_socket_proc_reps_9,
   NULL,					/* lv */
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_9,
   22,0,5,5,0
 };
 static const mrb_irep *gem_mrblib_mruby_socket_proc_reps_0[9] = {
@@ -1343,12 +1841,18 @@ static const mrb_code gem_mrblib_mruby_socket_proc_iseq_0[108] = {
 0x01,0x06,0x69,0x01,0x05,0x11,0x01,0x1d,0x02,0x02,0x67,0x01,0x07,0x69,0x01,0x06,0x11,0x01,0x1d,0x02,
 0x02,0x67,0x01,0x08,0x69,0x01,0x07,0x11,0x01,0x1d,0x02,0x08,0x67,0x01,0x09,0x69,0x01,0x08,0x11,0x01,
 0x1d,0x02,0x0a,0x67,0x01,0x0b,0x40,0x76,};
+static const char gem_mrblib_mruby_socket_proc_debug_lines_0[] = "\x00\x01\x0a\xed\x02\x0b\x62\x0b\x35\x0b\x28\x0b\x5d\x0b\x60\x0b\xc3\x01\x0b\x61\x0b\x5d";
+static mrb_irep_debug_info_file gem_mrblib_mruby_socket_proc_debug_file_0 = {
+0, 278, 22, mrb_debug_line_packed_map, {gem_mrblib_mruby_socket_proc_debug_lines_0}};
+static mrb_irep_debug_info_file *gem_mrblib_mruby_socket_proc_debug_file_0_ = &gem_mrblib_mruby_socket_proc_debug_file_0;
+static mrb_irep_debug_info gem_mrblib_mruby_socket_proc_debug_0 = {
+108, 1, &gem_mrblib_mruby_socket_proc_debug_file_0_};
 static const mrb_irep gem_mrblib_mruby_socket_proc_irep_0 = {
   1,3,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_socket_proc_iseq_0,
   NULL,gem_mrblib_mruby_socket_proc_syms_0,gem_mrblib_mruby_socket_proc_reps_0,
   NULL,					/* lv */
-  NULL,					/* debug_info */
+  &gem_mrblib_mruby_socket_proc_debug_0,
   108,0,12,9,0
 };
 static
@@ -1358,6 +1862,90 @@ NULL,MRB_TT_PROC,MRB_GC_RED,MRB_OBJ_IS_FROZEN,0,{&gem_mrblib_mruby_socket_proc_i
 static void
 gem_mrblib_mruby_socket_proc_init_syms(mrb_state *mrb)
 {
+  gem_mrblib_mruby_socket_proc_debug_file_10.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_48.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_11.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_12.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_13.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_14.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_15.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_16.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_17.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_18.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_19.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_20.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_21.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_22.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_23.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_24.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_25.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_26.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_27.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_28.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_1.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_381.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_382.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_383.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_384.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_385.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_386.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_387.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_2.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_439.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_440.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_441.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_442.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_3.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_465.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_464.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_4.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_475.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_485.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_476.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_477.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_478.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_479.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_5.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_510.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_511.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_512.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_513.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_514.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_515.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_6.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_555.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_587.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_556.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_557.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_558.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_559.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_560.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_561.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_562.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_563.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_564.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_565.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_566.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_567.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_568.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_569.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_570.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_7.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_821.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_833.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_822.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_823.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_824.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_825.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_826.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_8.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_867.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_868.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_869.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_870.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_871.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_9.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
+  gem_mrblib_mruby_socket_proc_debug_file_0.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-socket/mrblib/socket.rb");
 }
 void mrb_mruby_socket_gem_init(mrb_state *mrb);
 void mrb_mruby_socket_gem_final(mrb_state *mrb);

@@ -38,7 +38,9 @@ require_relative "rect_control"
 require_relative "reorderabledraghandle_control"
 require_relative "responsiverow_control"
 require_relative "row_control"
+require_relative "rotatedbox_control"
 require_relative "safearea_control"
+require_relative "screenshot_control"
 require_relative "semantics_control"
 require_relative "serviceregistry_control"
 require_relative "shadermask_control"
@@ -113,8 +115,11 @@ module Ruflet
             "responsive_row" => RufletComponents::ResponsiveRowControl,
             "responsiverow" => RufletComponents::ResponsiveRowControl,
             "row" => RufletComponents::RowControl,
+            "rotated_box" => RufletComponents::RotatedBoxControl,
+            "rotatedbox" => RufletComponents::RotatedBoxControl,
             "safe_area" => RufletComponents::SafeAreaControl,
             "safearea" => RufletComponents::SafeAreaControl,
+            "screenshot" => RufletComponents::ScreenshotControl,
             "semantics" => RufletComponents::SemanticsControl,
             "service_registry" => RufletComponents::ServiceRegistryControl,
             "serviceregistry" => RufletComponents::ServiceRegistryControl,

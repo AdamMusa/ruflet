@@ -9,7 +9,7 @@ module Ruflet
           WIRE = "CupertinoContextMenuAction".freeze
 
           def initialize(id: nil, adaptive: nil, badge: nil, col: nil, content: nil, data: nil, default: nil, destructive: nil, disabled: nil, expand: nil, expand_loose: nil, key: nil, opacity: nil, rtl: nil, tooltip: nil, trailing_icon: nil, visible: nil, on_click: nil)
-            raise ArgumentError, "cupertino_context_menu_action requires visible content" if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
+            raise ArgumentError, "cupertino_context_menu_action requires content" if content.nil?
             default = false if default.nil?
             destructive = false if destructive.nil?
 

@@ -6,7 +6,11 @@ module Ruflet
       def control(type, **props, &block) = control_delegate.control(type, **props, &block)
       def widget(type, **props, &block) = control_delegate.widget(type, **props, &block)
       def service(type, **props, &block) = control_delegate.service(type, **props, &block)
-      def view(children = nil, **props, &block) = control_delegate.view(children, **props, &block)
+      def view(children = nil, **props, &block)
+        mapped = props.dup
+        mapped[:controls] = children unless children.nil?
+        control_delegate.control(:view, **mapped, &block)
+      end
       def column(children = nil, **props, &block) = control_delegate.column(children, **props, &block)
       def center(**props, &block) = control_delegate.center(**props, &block)
       def row(children = nil, **props, &block) = control_delegate.row(children, **props, &block)
@@ -134,6 +138,7 @@ module Ruflet
       def pageview(children = nil, **props) = control_delegate.pageview(children, **props)
       def progress_ring(**props) = control_delegate.progress_ring(**props)
       def progressring(**props) = control_delegate.progressring(**props)
+      def spinkit(**props) = control_delegate.spinkit(**props)
       def range_slider(**props) = control_delegate.range_slider(**props)
       def rangeslider(**props) = control_delegate.rangeslider(**props)
       def responsive_row(children = nil, **props, &block) = control_delegate.responsive_row(children, **props, &block)
@@ -191,6 +196,9 @@ module Ruflet
       def slider(**props) = control_delegate.slider(**props)
       def transparent_pointer(content = nil, **props) = control_delegate.transparent_pointer(content, **props)
       def transparentpointer(content = nil, **props) = control_delegate.transparentpointer(content, **props)
+      def rotated_box(content = nil, **props) = control_delegate.rotated_box(content, **props)
+      def rotatedbox(content = nil, **props) = control_delegate.rotatedbox(content, **props)
+      def screenshot(content = nil, **props) = control_delegate.screenshot(content, **props)
       def radio(**props) = control_delegate.radio(**props)
       def radio_group(content = nil, **props) = control_delegate.radio_group(content, **props)
       def radiogroup(content = nil, **props) = control_delegate.radiogroup(content, **props)
@@ -198,6 +206,8 @@ module Ruflet
       def alertdialog(**props) = control_delegate.alertdialog(**props)
       def snack_bar(content = nil, **props) = control_delegate.snack_bar(content, **props)
       def snackbar(content = nil, **props) = control_delegate.snackbar(content, **props)
+      def snack_bar_action(label = nil, **props) = control_delegate.snack_bar_action(label, **props)
+      def snackbaraction(label = nil, **props) = control_delegate.snackbaraction(label, **props)
       def bottom_sheet(content = nil, **props) = control_delegate.bottom_sheet(content, **props)
       def bottomsheet(content = nil, **props) = control_delegate.bottomsheet(content, **props)
       def markdown(value = nil, **props) = control_delegate.markdown(value, **props)
@@ -270,7 +280,6 @@ module Ruflet
       def web_view(**props) = control_delegate.web_view(**props)
       def webview(**props) = control_delegate.webview(**props)
       def video(**props) = control_delegate.video(**props)
-      def spinkit(**variant) = control_delegate.spinkit(**variant)
       def code_editor(value = nil, **props) = control_delegate.code_editor(value, **props)
       def codeeditor(value = nil, **props) = control_delegate.codeeditor(value, **props)
       def rive(src = nil, **props) = control_delegate.rive(src, **props)
@@ -323,6 +332,20 @@ module Ruflet
       def cupertino_sliding_segmented_button(children = nil, **props) = control_delegate.cupertino_sliding_segmented_button(children, **props)
       def cupertinoslidingsegmentedbutton(children = nil, **props) = control_delegate.cupertinoslidingsegmentedbutton(children, **props)
       def duration(**parts) = control_delegate.duration(**parts)
+
+      # Client extensions are open-ended and cannot all be generated into this
+      # module. Unknown widget-style helpers with properties are forwarded as
+      # generic controls, allowing locally installed extensions to participate
+      # in the same Ruby DSL without VM or application-specific methods.
+      def method_missing(name, *args, **props, &block)
+        return super if name.to_s.end_with?("=") || (args.empty? && props.empty? && !block)
+
+        forwarded = props.dup
+        forwarded[:value] = args.shift unless args.empty?
+        return super unless args.empty?
+
+        control_delegate.control(name.to_s, **forwarded, &block)
+      end
 
       private
 

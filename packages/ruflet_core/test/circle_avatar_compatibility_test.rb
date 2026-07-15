@@ -31,17 +31,22 @@ class RufletCircleAvatarCompatibilityTest < Minitest::Test
     assert_equal "CircleAvatar", Ruflet.circleavatar("AB").to_patch["_c"]
   end
 
-  def test_circle_avatar_rejects_negative_radius_values_like_flet
-    %i[radius min_radius max_radius].each do |prop|
-      error = assert_raises(ArgumentError) { Ruflet.circle_avatar(prop => -1) }
+  def test_circle_avatar_serializes_negative_radius_values_like_flet
+    patch = Ruflet.circle_avatar(radius: -1, min_radius: -2, max_radius: -3).to_patch
 
-      assert_match(/#{prop}/, error.message)
-    end
+    assert_equal(-1, patch["radius"])
+    assert_equal(-2, patch["min_radius"])
+    assert_equal(-3, patch["max_radius"])
   end
 
-  def test_circle_avatar_rejects_radius_with_min_or_max_radius_like_flet
-    assert_raises(ArgumentError) { Ruflet.circle_avatar(radius: 20, min_radius: 10) }
-    assert_raises(ArgumentError) { Ruflet.circle_avatar(radius: 20, max_radius: 30) }
+  def test_circle_avatar_serializes_radius_with_min_or_max_radius_like_flet
+    min_patch = Ruflet.circle_avatar(radius: 20, min_radius: 10).to_patch
+    max_patch = Ruflet.circle_avatar(radius: 20, max_radius: 30).to_patch
+
+    assert_equal 20, min_patch["radius"]
+    assert_equal 10, min_patch["min_radius"]
+    assert_equal 20, max_patch["radius"]
+    assert_equal 30, max_patch["max_radius"]
   end
 
   def test_circle_avatar_image_error_event_dispatches

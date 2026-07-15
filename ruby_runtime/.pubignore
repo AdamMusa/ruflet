@@ -11,3 +11,23 @@ android/.gradle/
 android/build/
 ios/build/
 macos/build/
+
+# Release consumers receive prebuilt VMs. Keep compiler inputs and generated
+# mruby trees out of the Dart package; only bridge headers remain where needed.
+android/src/main/cpp/
+desktop/ruflet_vm_host.cpp
+ios/build_host/
+ios/vendor/
+ios/Classes/mruby_digest_gem.c
+ios/Classes/mruby_gems_init.c
+ios/mruby_src/*
+!ios/mruby_src/include/
+!ios/mruby_src/include/**
+macos/vendor/
+macos/Classes/mruby_digest_gem.c
+macos/Classes/mruby_gems_init.c
+macos/mruby_src/*
+!macos/mruby_src/include/
+!macos/mruby_src/include/**
+shared/*.c
+vm/

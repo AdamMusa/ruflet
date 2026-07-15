@@ -55,10 +55,11 @@ class RufletReorderableListViewCompatibilityTest < Minitest::Test
     assert_equal "ReorderableDragHandle", handle.to_patch["_c"]
   end
 
-  def test_reorderable_drag_handle_requires_visible_content_like_flet
+  def test_reorderable_drag_handle_requires_content_and_serializes_hidden_content_like_flet
     assert_raises(ArgumentError) { Ruflet.reorderable_drag_handle }
-    assert_raises(ArgumentError) { Ruflet.reorderable_drag_handle(Ruflet.icon("drag_handle", visible: false)) }
+    hidden = Ruflet.reorderable_drag_handle(Ruflet.container(visible: false)).to_patch
 
+    assert_equal false, hidden["content"]["visible"]
     handle = Ruflet.reorderable_drag_handle(Ruflet.icon("drag_handle"))
     assert_equal "icon", handle.props["content"].type
   end

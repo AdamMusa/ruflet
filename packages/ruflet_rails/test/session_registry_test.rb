@@ -114,7 +114,8 @@ class RufletRailsSessionRegistryTest < Minitest::Test
     server = Ruflet::Rails::Protocol::LocalServer.new(session_registry: registry) do |page|
       label = Ruflet.text("Before")
       button = Ruflet.text_button("Change", on_click: ->(_event) { page.update(label, value: "After") })
-      page.add(label, button)
+      page.add(label)
+      page.add(button)
     end
     first_ws = FakeWebSocket.new("socket-1")
     second_ws = FakeWebSocket.new("socket-2")

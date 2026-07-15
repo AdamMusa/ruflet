@@ -5,9 +5,16 @@ module Ruflet
     MAIN_TEMPLATE = <<~RUBY
     require "ruflet"
     Ruflet.run do |page|
-      page.title = "%<app_title>s"
+      page.title = "Counter Demo"
       count = 0
       count_text = text(count.to_s, style: {size: 40})
+      page.floating_action_button = fab(
+        icon: "add",
+        on_click: ->(_e) do
+          count += 1
+          page.update(count_text, value: count.to_s)
+        end
+      )
       page.add(
         container(
           expand: true,
@@ -20,13 +27,6 @@ module Ruflet
               count_text
             ]
           )
-        ),
-        floating_action_button: fab(
-          icon: "add",
-          on_click: ->(_e) do
-            count += 1
-            page.update(count_text, value: count.to_s)
-          end
         )
       )
     end
@@ -36,7 +36,6 @@ module Ruflet
     GEMFILE_TEMPLATE = <<~GEMFILE
       source "https://rubygems.org"
 
-      gem "ruflet", ">= #{Ruflet::VERSION}"
       gem "ruflet_core", ">= #{Ruflet::VERSION}"
       gem "ruflet_server", ">= #{Ruflet::VERSION}"
     GEMFILE

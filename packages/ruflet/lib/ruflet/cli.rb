@@ -2,23 +2,10 @@
 
 require "optparse"
 
-# Project files (pbxproj, plists, embedded runtime sources) are UTF-8; never
-# depend on the caller's locale for reading them.
-Encoding.default_external = Encoding::UTF_8 if Encoding.default_external == Encoding::US_ASCII
-
-# Provisioning (downloads, package installs, SDK extraction) can run for
-# minutes. When stdout is not a TTY (CI logs, pipes, editor consoles) Ruby
-# buffers it, so progress notes would only appear once the whole run finishes.
-# Unbuffer both streams so the pipeline reports progress as it happens.
-$stdout.sync = true
-$stderr.sync = true
-
 require_relative "version"
 require_relative "cli/templates"
 require_relative "cli/new_command"
 require_relative "cli/flutter_sdk"
-require_relative "cli/environment_setup"
-require_relative "cli/android_sdk"
 require_relative "cli/run_command"
 require_relative "cli/update_command"
 require_relative "cli/build_command"

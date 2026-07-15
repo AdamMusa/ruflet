@@ -3,9 +3,12 @@
 require_relative "test_helper"
 
 class RufletDslDynamicControlMethodsTest < Minitest::Test
-  def test_unknown_snake_case_helper_raises_no_method_error
+  def test_unknown_snake_case_helper_builds_generic_extension_control
     app = Ruflet::DSL.app
-    assert_raises(NoMethodError) { app.not_a_real_control(suggestions: []) }
+    control = app.custom_extension_control(value: "ready")
+
+    assert_equal "custom_extension_control", control.type
+    assert_equal "CustomExtensionControl", control.to_patch["_c"]
   end
 
   def test_navigation_rail_helper_with_block_is_supported

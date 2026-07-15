@@ -1,0 +1,3 @@
+# Native capabilities that activate matching extensions and platform permissions.
+# Generated applications use the developer project's root services.yaml.
+services: []

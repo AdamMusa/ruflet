@@ -8,24 +8,59 @@ module Ruflet
           TYPE = "cupertinotimerpicker".freeze
           WIRE = "CupertinoTimerPicker".freeze
 
-          def initialize(id: nil, align: nil, alignment: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bgcolor: nil, bottom: nil, col: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, item_extent: nil, key: nil, left: nil, margin: nil, minute_interval: nil, mode: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, second_interval: nil, size_change_interval: nil, tooltip: nil, top: nil, value: nil, visible: nil, width: nil, on_animation_end: nil, on_change: nil, on_size_change: nil)
+          KEYWORDS = [:align, :alignment, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :bottom, :col, :data, :disabled, :expand, :expand_loose, :height, :item_extent, :key, :left, :margin, :minute_interval, :mode, :offset, :opacity, :right, :rotate, :rtl, :scale, :second_interval, :size_change_interval, :tooltip, :top, :value, :visible, :width, :on_animation_end, :on_change, :on_size_change].freeze
+
+          def initialize(id: nil, **props)
+            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
+            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
+            align = props[:align]
+            alignment = props[:alignment]
+            animate_align = props[:animate_align]
+            animate_margin = props[:animate_margin]
+            animate_offset = props[:animate_offset]
+            animate_opacity = props[:animate_opacity]
+            animate_position = props[:animate_position]
+            animate_rotation = props[:animate_rotation]
+            animate_scale = props[:animate_scale]
+            animate_size = props[:animate_size]
+            aspect_ratio = props[:aspect_ratio]
+            badge = props[:badge]
+            bgcolor = props[:bgcolor]
+            bottom = props[:bottom]
+            col = props[:col]
+            data = props[:data]
+            disabled = props[:disabled]
+            expand = props[:expand]
+            expand_loose = props[:expand_loose]
+            height = props[:height]
+            item_extent = props[:item_extent]
+            key = props[:key]
+            left = props[:left]
+            margin = props[:margin]
+            minute_interval = props[:minute_interval]
+            mode = props[:mode]
+            offset = props[:offset]
+            opacity = props[:opacity]
+            right = props[:right]
+            rotate = props[:rotate]
+            rtl = props[:rtl]
+            scale = props[:scale]
+            second_interval = props[:second_interval]
+            size_change_interval = props[:size_change_interval]
+            tooltip = props[:tooltip]
+            top = props[:top]
+            value = props[:value]
+            visible = props[:visible]
+            width = props[:width]
+            on_animation_end = props[:on_animation_end]
+            on_change = props[:on_change]
+            on_size_change = props[:on_size_change]
             alignment = "center" if alignment.nil?
             item_extent = 32.0 if item_extent.nil?
             minute_interval = 1 if minute_interval.nil?
             mode = "hour_minute_seconds" if mode.nil?
             second_interval = 1 if second_interval.nil?
             value = 0 if value.nil?
-            raise ArgumentError, "cupertino_timer_picker item_extent must be greater than 0" unless item_extent.positive?
-            unless minute_interval.positive? && (60 % minute_interval).zero?
-              raise ArgumentError, "cupertino_timer_picker minute_interval must be a positive factor of 60"
-            end
-            unless second_interval.positive? && (60 % second_interval).zero?
-              raise ArgumentError, "cupertino_timer_picker second_interval must be a positive factor of 60"
-            end
-            raise ArgumentError, "cupertino_timer_picker value must be greater than or equal to 0" unless value >= 0
-            raise ArgumentError, "cupertino_timer_picker value must be less than 24 hours" unless value < 86_400
-            raise ArgumentError, "cupertino_timer_picker value must be a multiple of minute_interval" unless (value % minute_interval).zero?
-            raise ArgumentError, "cupertino_timer_picker value must be a multiple of second_interval" unless (value % second_interval).zero?
 
             props = {}
             props[:align] = align unless align.nil?

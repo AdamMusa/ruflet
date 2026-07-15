@@ -47,8 +47,12 @@ class RufletFilledTonalButtonCompatibilityTest < Minitest::Test
     assert_equal "none", button.props["clip_behavior"]
   end
 
-  def test_filled_tonal_button_requires_content_or_icon_like_flet
-    assert_raises(ArgumentError) { Ruflet.filled_tonal_button }
+  def test_filled_tonal_button_serializes_without_content_or_icon_like_flet
+    patch = Ruflet.filled_tonal_button.to_patch
+
+    assert_equal "FilledTonalButton", patch["_c"]
+    refute patch.key?("content")
+    refute patch.key?("icon")
   end
 
   def test_compact_alias_uses_same_control

@@ -7,18 +7,13 @@ require "thread"
 require "ruflet_core"
 require_relative "server/wire_codec"
 require_relative "server/web_socket_connection"
-require_relative "server/connection_protocol"
 
 module Ruflet
-  # Standalone TCP transport for the Ruflet protocol. The protocol itself
-  # lives in Ruflet::ConnectionProtocol and is shared with host-server
-  # adapters (e.g. ruflet_rails runs it on the Rails server's own socket).
   class Server
-    include ConnectionProtocol
-
     attr_reader :port
 
     WEBSOCKET_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+    TASK_IO_POLL_INTERVAL = 0.01
 
     def initialize(host: "0.0.0.0", port: 8550, &app_block)
       @host = host
@@ -41,6 +36,13 @@ module Ruflet
     end
 
     def start
+      if Object.const_defined?(:Task) && Task.current.name == "main"
+        server = self
+        task = Task.new(name: "ruflet-server") { server.start }
+        Task.run
+        return task
+      end
+
       previous_signals = trap_stop_signals
       bind_server_socket!
       @running = true
@@ -53,6 +55,12 @@ module Ruflet
       restore_stop_signals(previous_signals)
     end
 
+    # For Rack-hosted mode: caller already performed the HTTP upgrade.
+    def handle_upgraded_socket(io)
+      ws = Ruflet::WebSocketConnection.new(io)
+      run_connection(ws)
+    end
+
     def bind_server_socket!(max_attempts: 100)
       requested = @port.to_i
       candidate = requested
@@ -61,11 +69,11 @@ module Ruflet
       attempts.times do
         begin
           @server_socket = TCPServer.new(@host, candidate)
-          @port = candidate
-          if @port != requested && ENV["RUFLET_SUPPRESS_SERVER_BANNER"] != "1"
-            warn "Port #{requested} is busy; using #{@port}."
+          @port = @server_socket.addr[1]
+          publish_runtime_port
+          if requested > 0 && @port != requested && ENV["RUFLET_SUPPRESS_SERVER_BANNER"] != "1"
+            warn "Requested port #{requested} is busy; bound to #{@port}"
           end
-          publish_bound_port!
           return
         rescue Errno::EADDRINUSE
           candidate += 1
@@ -81,7 +89,6 @@ module Ruflet
       return unless @running || @server_socket
 
       @running = false
-      remove_port_file!
 
       server = @server_socket
       @server_socket = nil
@@ -99,6 +106,15 @@ module Ruflet
           nil
         end
       end
+    end
+
+    def publish_runtime_port
+      path = ENV["RUFLET_RUNTIME_PORT_FILE"].to_s
+      return if path.empty?
+
+      File.open(path, "w") { |file| file.write(@port.to_s) }
+    rescue StandardError => error
+      warn "Unable to publish Ruflet runtime port: #{error.message}"
     end
 
     def reload_app!
@@ -129,30 +145,6 @@ module Ruflet
     end
 
     private
-
-    # Lets embedding hosts (e.g. the ruby_runtime Flutter plugins) discover
-    # which port the server actually bound when the requested one was busy.
-    def publish_bound_port!
-      path = ENV["RUFLET_PORT_FILE"].to_s
-      return if path.empty?
-
-      begin
-        File.write(path, @port.to_s)
-      rescue StandardError
-        nil
-      end
-    end
-
-    def remove_port_file!
-      path = ENV["RUFLET_PORT_FILE"].to_s
-      return if path.empty?
-
-      begin
-        File.delete(path)
-      rescue StandardError
-        nil
-      end
-    end
 
     def trap_stop_signals
       {
@@ -194,23 +186,39 @@ module Ruflet
     end
 
     def accept_client_socket
-      accepted = @server_socket.accept
+      accepted = task_scheduler? ? @server_socket.accept_nonblock : @server_socket.accept
       accepted.is_a?(Array) ? accepted.first : accepted
     rescue IOError, Errno::EBADF
       nil
     rescue StandardError => e
       return nil unless @running && @server_socket
 
+      if task_scheduler? && would_block_error?(e)
+        sleep TASK_IO_POLL_INTERVAL
+        Thread.pass if Thread.respond_to?(:cooperative?)
+        retry
+      end
+
       warn "accept error: #{e.class}: #{e.message}"
       warn e.backtrace.join("\n") if e.backtrace
       nil
     end
 
+    def task_scheduler?
+      Object.const_defined?(:Task) || (Thread.respond_to?(:cooperative?) && Thread.cooperative?)
+    end
+
+    def would_block_error?(error)
+      %w[Errno::EAGAIN Errno::EWOULDBLOCK IO::EAGAINWaitReadable IO::WaitReadable].include?(error.class.to_s)
+    end
+
     def start_client_thread(socket)
-      Thread.new(socket) do |client|
+      thread = Thread.new(socket) do |client|
         Thread.current.report_on_exception = false if Thread.current.respond_to?(:report_on_exception=)
         handle_socket(client)
       end
+      Thread.pass if task_scheduler?
+      thread
     end
 
     def handle_socket(socket)
@@ -233,26 +241,34 @@ module Ruflet
         warn e.backtrace.join("\n") if e.backtrace
         send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => e.message.to_s.dup.force_encoding("UTF-8") }) if ws
       ensure
-        if ws
-          close_connection(ws)
-        else
-          # Plain HTTP request: we answer with `Connection: close`, so we must
-          # actually close the socket. Leaving it open exhausts the browser's
-          # per-host connection pool and the later /ws upgrade never opens —
-          # the app then hangs on its "connecting" screen.
-          close_http_socket(socket)
-        end
+        close_connection(ws)
       end
     end
 
-    def close_http_socket(socket)
-      socket.close if socket && !socket.closed?
-    rescue StandardError
-      nil
+    def run_connection(ws)
+      register_connection(ws)
+
+      while (raw = ws.read_message)
+        handle_message(ws, raw)
+      end
+    rescue StandardError => e
+      return if disconnect_error?(e)
+
+      warn "server error: #{e.class}: #{e.message}"
+      warn e.backtrace.join("\n") if e.backtrace
+      send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => e.message.to_s.dup.force_encoding("UTF-8") })
+    ensure
+      close_connection(ws)
+    end
+
+    def close_connection(ws)
+      remove_session(ws)
+      unregister_connection(ws)
+      ws&.close
     end
 
     def read_http_upgrade_request(socket)
-      request_line = socket.gets("\r\n")
+      request_line = read_http_line(socket)
       return [nil, {}] if request_line.nil?
       return [nil, {}] unless request_line.include?(" ")
 
@@ -262,7 +278,7 @@ module Ruflet
 
       headers = {}
       loop do
-        line = socket.gets("\r\n")
+        line = read_http_line(socket)
         break if line.nil? || line == "\r\n"
 
         key, value = line.split(":", 2)
@@ -272,10 +288,34 @@ module Ruflet
       end
 
       [path, headers]
+    ensure
+      @http_read_buffers&.delete(socket.object_id) if task_scheduler?
+    end
+
+    def read_http_line(socket)
+      return socket.gets("\r\n") unless task_scheduler? && socket.respond_to?(:recv_nonblock)
+
+      @http_read_buffers ||= {}
+      buffer = (@http_read_buffers[socket.object_id] ||= +"")
+      loop do
+        newline = buffer.index("\r\n")
+        return buffer.slice!(0, newline + 2) if newline
+
+        begin
+          part = socket.recv_nonblock(4096)
+          return nil if part.nil? || part.empty?
+
+          buffer << part
+        rescue StandardError => error
+          raise unless would_block_error?(error)
+
+          sleep TASK_IO_POLL_INTERVAL
+        end
+      end
     end
 
     def websocket_upgrade_request?(path, headers)
-      return false unless path.to_s.split("?", 2).first == "/ws"
+      return false unless path == "/ws"
       return false unless headers["upgrade"]&.downcase == "websocket"
       return false unless headers["connection"]&.downcase&.include?("upgrade")
       return false if headers["sec-websocket-key"].to_s.empty?
@@ -284,95 +324,21 @@ module Ruflet
     end
 
     def handle_http_request(socket, path)
-      clean = path.to_s.split("?", 2).first.split("#", 2).first
-      return write_http_response(socket, 200, "text/plain", "ok") if clean == "/health"
-
-      # In web mode the standalone backend also serves the Flutter web client,
-      # so the browser loads the app and opens its websocket on this same
-      # origin/port — no separate static server or proxy is needed.
-      return serve_web_client(socket, clean) if web_client_root
-
-      case clean
+      case path
+      when "/health"
+        write_http_response(socket, 200, "text/plain", "ok")
       when "/"
         write_http_response(socket, 200, "text/plain", "ruflet server")
       else
-        if clean.start_with?("/assets/")
-          serve_asset(socket, clean)
+        if path.start_with?("/assets/")
+          serve_asset(socket, path)
         else
           write_http_response(socket, 404, "text/plain", "not found")
         end
       end
     rescue StandardError => e
-      # The browser routinely cancels in-flight asset requests (preloads,
-      # duplicate connections); writing to a reset socket raises EPIPE/ECONNRESET
-      # and is expected, not an error.
-      return if disconnect_error?(e)
-
       warn "http error: #{e.class}: #{e.message}"
-      begin
-        write_http_response(socket, 500, "text/plain", "server error")
-      rescue StandardError
-        nil
-      end
-    end
-
-    def web_client_root
-      dir = ENV["RUFLET_WEB_CLIENT_DIR"].to_s
-      return nil if dir.empty?
-
-      full = File.expand_path(dir)
-      File.directory?(full) ? full : nil
-    end
-
-    def serve_web_client(socket, path)
-      root = web_client_root
-
-      # Neutralize the Flutter service worker: when this dev server hops between
-      # localhost ports a cached worker would otherwise keep a stale client
-      # alive that reconnects to the wrong backend. This unregisters it and
-      # clears caches so the browser always loads the current client.
-      if path == "/flutter_service_worker.js"
-        return write_http_response(socket, 200, "text/javascript", service_worker_reset_js, cache: false)
-      end
-
-      relative = path == "/" ? "index.html" : path.sub(%r{\A/}, "")
-      full = File.expand_path(File.join(root, relative))
-      if (full == root || full.start_with?(root + File::SEPARATOR)) && File.file?(full)
-        return write_http_response(socket, 200, content_type_for(full), File.binread(full), binary: true, cache: false)
-      end
-
-      # App runtime assets (images referenced by the app) fall back to the
-      # configured assets directory when not part of the client bundle.
-      if path.start_with?("/assets/") && (asset = resolve_asset_path(path))
-        return write_http_response(socket, 200, content_type_for(asset), File.binread(asset), binary: true, cache: false)
-      end
-
-      # SPA fallback: serve index.html for extension-less route paths.
-      index = File.join(root, "index.html")
-      if File.extname(path).empty? && File.file?(index)
-        return write_http_response(socket, 200, "text/html", File.binread(index), binary: true, cache: false)
-      end
-
-      write_http_response(socket, 404, "text/plain", "not found")
-    end
-
-    # A no-op service worker: it registers cleanly (so Flutter's loader, which
-    # awaits navigator.serviceWorker.ready, never hangs), wipes any caches a
-    # previous run left behind, claims the page, and installs NO fetch handler —
-    # so every request (including the app shell) goes straight to the network and
-    # the client always loads fresh and connects to the current origin/port.
-    # (Self-unregistering here can leave serviceWorker.ready unresolved.)
-    def service_worker_reset_js
-      <<~JS
-        self.addEventListener('install', function (e) { self.skipWaiting(); });
-        self.addEventListener('activate', function (e) {
-          e.waitUntil((async function () {
-            var keys = await caches.keys();
-            await Promise.all(keys.map(function (k) { return caches.delete(k); }));
-            await self.clients.claim();
-          })());
-        });
-      JS
+      write_http_response(socket, 500, "text/plain", "server error")
     end
 
     def serve_asset(socket, path)
@@ -382,8 +348,12 @@ module Ruflet
         return
       end
 
-      content = File.binread(asset_path)
+      content = read_binary_file(asset_path)
       write_http_response(socket, 200, content_type_for(asset_path), content, binary: true)
+    end
+
+    def read_binary_file(path)
+      File.open(path, "rb") { |file| file.read }
     end
 
     def resolve_asset_path(path)
@@ -391,7 +361,10 @@ module Ruflet
       return nil unless root
 
       root = File.expand_path(root)
-      relative = path.sub(%r{\A/assets/}, "")
+      prefix = "/assets/"
+      return nil unless path.start_with?(prefix)
+
+      relative = path[prefix.length..-1].to_s
       full = File.expand_path(File.join(root, relative))
       return nil unless full.start_with?(root + File::SEPARATOR) || full == root
       return nil unless File.file?(full)
@@ -403,39 +376,28 @@ module Ruflet
       root = ENV["RUFLET_ASSETS_DIR"].to_s
       return root unless root.empty?
 
-      embedded_root = defined?($__ruflet_app_root) ? $__ruflet_app_root.to_s : ""
-      unless embedded_root.empty?
-        embedded_assets = File.join(embedded_root, "assets")
-        return embedded_assets if File.directory?(embedded_assets)
-      end
-
       default_root = File.join(Dir.pwd, "assets")
       File.directory?(default_root) ? default_root : nil
     end
 
     def content_type_for(path)
       case File.extname(path).downcase
-      when ".html", ".htm" then "text/html; charset=utf-8"
-      when ".js", ".mjs" then "text/javascript; charset=utf-8"
-      when ".json", ".map" then "application/json; charset=utf-8"
-      when ".css" then "text/css; charset=utf-8"
-      when ".wasm" then "application/wasm"
-      when ".png" then "image/png"
-      when ".jpg", ".jpeg" then "image/jpeg"
-      when ".gif" then "image/gif"
-      when ".webp" then "image/webp"
-      when ".svg" then "image/svg+xml"
-      when ".ico" then "image/x-icon"
-      when ".ttf" then "font/ttf"
-      when ".otf" then "font/otf"
-      when ".woff" then "font/woff"
-      when ".woff2" then "font/woff2"
-      when ".txt" then "text/plain; charset=utf-8"
-      else "application/octet-stream"
+      when ".png"
+        "image/png"
+      when ".jpg", ".jpeg"
+        "image/jpeg"
+      when ".gif"
+        "image/gif"
+      when ".webp"
+        "image/webp"
+      when ".svg"
+        "image/svg+xml"
+      else
+        "application/octet-stream"
       end
     end
 
-    def write_http_response(socket, status, content_type, body, binary: false, cache: true)
+    def write_http_response(socket, status, content_type, body, binary: false)
       reason = {
         200 => "OK",
         404 => "Not Found",
@@ -448,10 +410,6 @@ module Ruflet
       socket.write("HTTP/1.1 #{status} #{reason}\r\n")
       socket.write("Content-Type: #{content_type}\r\n")
       socket.write("Content-Length: #{length}\r\n")
-      unless cache
-        socket.write("Cache-Control: no-store, no-cache, must-revalidate, max-age=0\r\n")
-        socket.write("Pragma: no-cache\r\n")
-      end
       socket.write("Connection: close\r\n")
       socket.write("\r\n")
       socket.write(body_str)
@@ -467,8 +425,15 @@ module Ruflet
       socket.write("\r\n")
     end
 
-    # ConnectionProtocol hooks: track live sockets so #stop can close them.
-    def connection_opened(ws)
+    def remove_session(ws)
+      return unless ws
+
+      @sessions_mutex.synchronize do
+        @sessions.delete(ws.session_key)
+      end
+    end
+
+    def register_connection(ws)
       return unless ws
 
       @connections_mutex.synchronize do
@@ -476,7 +441,7 @@ module Ruflet
       end
     end
 
-    def connection_closed(ws)
+    def unregister_connection(ws)
       return unless ws
 
       @connections_mutex.synchronize do
@@ -484,5 +449,197 @@ module Ruflet
       end
     end
 
+    def handle_message(ws, raw)
+      action, payload = decode_incoming(raw)
+      payload ||= {}
+
+      warn "incoming action=#{action.inspect}" if ENV["RUFLET_DEBUG"] == "1"
+
+      case action
+      when Protocol::ACTIONS[:register_client], Protocol::ACTIONS[:register_web_client]
+        on_register_client(ws, payload)
+      when Protocol::ACTIONS[:control_event], Protocol::ACTIONS[:page_event_from_web]
+        on_control_event(ws, payload)
+      when Protocol::ACTIONS[:update_control], Protocol::ACTIONS[:update_control_props]
+        on_update_control(ws, payload)
+      when Protocol::ACTIONS[:invoke_control_method]
+        on_invoke_control_method(ws, payload)
+      when Protocol::ACTIONS[:python_output]
+        nil
+      else
+        raise "Unknown action: #{action.inspect}"
+      end
+    rescue StandardError => e
+      # A per-message handler error (e.g. an event callback that renders a
+      # control the runtime does not implement) must not tear down the whole
+      # WebSocket connection — that would disconnect the client on every
+      # navigation. Log it and keep the session alive.
+      warn "[embedded server] handle_message error: #{e.class}: #{e.message}"
+      warn e.backtrace.join("\n") if e.backtrace && ENV["RUFLET_DEBUG"] == "1"
+      report_runtime_error(e, "handle_message")
+    end
+
+    def report_runtime_error(error, context)
+      path = ENV["RUFLET_RUNTIME_ERROR_FILE"].to_s
+      return if path.empty?
+
+      lines = ["#{context}: #{error.class}: #{error.message}"]
+      lines.concat(error.backtrace) if error.backtrace
+      File.open(path, "w") { |file| file.write(lines.join("\n")) }
+    rescue StandardError => report_error
+      warn "runtime error reporting failed: #{report_error.class}: #{report_error.message}"
+    end
+
+    def decode_incoming(raw)
+      parsed = normalize_incoming(Ruflet::WireCodec.unpack(raw.to_s.b))
+
+      if parsed.is_a?(Array) && parsed.length >= 2
+        return [parsed[0], parsed[1]]
+      end
+
+      if parsed.is_a?(Hash)
+        action = parsed["action"] || parsed[:action]
+        payload = parsed["payload"] || parsed[:payload]
+        return [action, payload] unless action.nil?
+
+        if (parsed.key?("target") || parsed.key?(:target)) && (parsed.key?("name") || parsed.key?(:name))
+          return [Protocol::ACTIONS[:control_event], parsed]
+        end
+      end
+
+      raise "Unsupported payload format"
+    end
+
+    def normalize_incoming(value)
+      case value
+      when String
+        value.dup.force_encoding("UTF-8")
+      when Integer, Float, TrueClass, FalseClass, NilClass
+        value
+      when Symbol
+        value.to_s
+      when Array
+        value.map { |v| normalize_incoming(v) }
+      when Hash
+        value.each_with_object({}) do |(k, v), out|
+          out[k.to_s] = normalize_incoming(v)
+        end
+      else
+        value.to_s
+      end
+    end
+
+    def on_register_client(ws, payload)
+      normalized = Protocol.normalize_register_payload(payload)
+      session_id = normalized["session_id"].to_s.empty? ? pseudo_uuid : normalized["session_id"]
+
+      page = Page.new(
+        session_id: session_id,
+        client_details: normalized,
+        sender: lambda do |action, msg_payload|
+          send_message(ws, action, msg_payload)
+        end
+      )
+
+      page.title = "Ruflet App"
+
+      @sessions_mutex.synchronize do
+        @sessions[ws.session_key] = page
+      end
+
+      initial_response = [
+        Protocol::ACTIONS[:register_client],
+        Protocol.register_response(session_id: session_id)
+      ]
+      ws.send_binary(Ruflet::WireCodec.pack(initial_response))
+
+      @app_block.call(page)
+      page.update
+    rescue StandardError => e
+      send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => e.message })
+      raise e
+    end
+
+    def on_invoke_control_method(ws, payload)
+      page = fetch_page(ws)
+      page.handle_invoke_method_result(payload)
+    end
+
+    def on_control_event(ws, payload)
+      event = Protocol.normalize_control_event_payload(payload)
+      page = fetch_page(ws)
+      return if event["target"].nil? || event["name"].to_s.empty?
+
+      page.dispatch_event(
+        target: event["target"],
+        name: event["name"],
+        data: normalize_event_data(event["data"])
+      )
+    end
+
+    def on_update_control(ws, payload)
+      update = Protocol.normalize_update_control_payload(payload)
+      page = fetch_page(ws)
+      return if update["id"].nil?
+
+      page.apply_client_update(update["id"], update["props"] || {})
+    end
+
+    def fetch_page(ws)
+      page = @sessions_mutex.synchronize { @sessions[ws.session_key] }
+      raise "Session not found" unless page
+
+      page
+    end
+
+    def normalize_event_data(value)
+      case value
+      when Hash
+        value.each_with_object({}) { |(k, v), out| out[k.to_sym] = normalize_event_data(v) }
+      when Array
+        value.map { |entry| normalize_event_data(entry) }
+      else
+        value
+      end
+    end
+
+    def send_message(ws, action, payload)
+      return if ws.nil? || ws.closed?
+
+      message = [action, payload]
+      packed = Ruflet::WireCodec.pack(message)
+      ws.send_binary(packed)
+    rescue StandardError => e
+      unless disconnect_error?(e)
+        warn "send error: #{e.class}: #{e.message}"
+      end
+      remove_session(ws)
+      unregister_connection(ws)
+      ws&.close
+    end
+
+    def disconnect_error?(error)
+      return true if error.is_a?(IOError)
+      return true if error.is_a?(Errno::EPIPE)
+      return true if error.is_a?(Errno::ECONNRESET)
+      return true if error.is_a?(Errno::ECONNABORTED)
+      return true if error.is_a?(Errno::ENOTCONN)
+      return true if error.is_a?(Errno::ESHUTDOWN)
+      return true if error.is_a?(Errno::EBADF)
+      return true if error.is_a?(Errno::EINVAL)
+
+      false
+    end
+
+    def pseudo_uuid
+      rnd = (rand(0..0xffff) << 16) | rand(0..0xffff)
+      "%08x-%04x-%04x-%04x-%012x" % [
+        rnd,
+        rand(0..0xffff),
+        rand(0..0xffff),
+        rand(0..0xffff),
+        (rand(0..0xffff) << 32) | (rand(0..0xffff) << 16) | rand(0..0xffff)
+      ]
+    end
   end
 end

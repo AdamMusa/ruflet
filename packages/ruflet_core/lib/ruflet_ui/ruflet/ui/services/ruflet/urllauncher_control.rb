@@ -7,6 +7,7 @@ module Ruflet
         class UrlLauncherControl < Ruflet::Control
           TYPE = "urllauncher".freeze
           WIRE = "UrlLauncher".freeze
+          KEYWORDS = [:data, :key].freeze
 
           def initialize(id: nil, data: nil, key: nil)
             props = {}

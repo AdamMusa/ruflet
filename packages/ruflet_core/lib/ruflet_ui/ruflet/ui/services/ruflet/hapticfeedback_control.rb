@@ -7,6 +7,7 @@ module Ruflet
         class HapticFeedbackControl < Ruflet::Control
           TYPE = "hapticfeedback".freeze
           WIRE = "HapticFeedback".freeze
+          KEYWORDS = [:data, :key].freeze
 
           def initialize(id: nil, data: nil, key: nil)
             props = {}

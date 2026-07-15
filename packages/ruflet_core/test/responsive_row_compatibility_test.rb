@@ -64,10 +64,18 @@ class RufletResponsiveRowCompatibilityTest < Minitest::Test
     assert_equal "start", row.props["vertical_alignment"]
   end
 
-  def test_responsive_row_rejects_negative_numeric_layout_props_like_flet
-    assert_raises(ArgumentError) { Ruflet.responsive_row(columns: -1) }
-    assert_raises(ArgumentError) { Ruflet.responsive_row(run_spacing: -1) }
-    assert_raises(ArgumentError) { Ruflet.responsive_row(spacing: -1) }
-    assert_raises(ArgumentError) { Ruflet.responsive_row(breakpoints: { phone: -1 }) }
+  def test_responsive_row_serializes_negative_numeric_layout_props_like_flet
+    row = Ruflet.responsive_row(
+      columns: -1,
+      run_spacing: -2,
+      spacing: -3,
+      breakpoints: { phone: -4 }
+    )
+    patch = row.to_patch
+
+    assert_equal(-1, patch["columns"])
+    assert_equal(-2, patch["run_spacing"])
+    assert_equal(-3, patch["spacing"])
+    assert_equal({ "phone" => -4 }, patch["breakpoints"])
   end
 end

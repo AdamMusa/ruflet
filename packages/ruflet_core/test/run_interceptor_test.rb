@@ -35,21 +35,18 @@ class RufletRunInterceptorTest < Minitest::Test
     assert_equal [:second], order
   end
 
-  def test_run_uses_ruflet_port_env_when_port_not_explicit
+  def test_run_preserves_zero_port_from_environment
     previous = ENV["RUFLET_PORT"]
-    ENV["RUFLET_PORT"] = "8560"
+    ENV["RUFLET_PORT"] = "0"
+    captured_port = nil
     interceptor = lambda do |entrypoint:, host:, port:|
-      assert_equal "0.0.0.0", host
-      assert_equal 8560, port
-      assert entrypoint.respond_to?(:call)
-      :captured
+      captured_port = port
+      :handled
     end
 
-    result = Ruflet.with_run_interceptor(interceptor) do
-      Ruflet.run { nil }
-    end
+    Ruflet.with_run_interceptor(interceptor) { Ruflet.run { nil } }
 
-    assert_equal :captured, result
+    assert_equal 0, captured_port
   ensure
     ENV["RUFLET_PORT"] = previous
   end

@@ -11,13 +11,6 @@ module Ruflet
           def initialize(id: nil, adaptive: nil, badge: nil, bgcolor: nil, col: nil, controls: nil, data: nil, disabled: nil, elevation: nil, expand: nil, expand_loose: nil, indicator_color: nil, indicator_shape: nil, key: nil, opacity: nil, rtl: nil, selected_index: nil, shadow_color: nil, surface_tint_color: nil, tile_padding: nil, tooltip: nil, visible: nil, width: nil, on_change: nil, on_dismiss: nil)
             selected_index = 0 if selected_index.nil?
 
-            {
-              elevation: elevation,
-              width: width
-            }.each do |name, value|
-              raise ArgumentError, "navigation_drawer #{name} must be greater than or equal to 0" unless value.nil? || value >= 0
-            end
-
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:badge] = badge unless badge.nil?

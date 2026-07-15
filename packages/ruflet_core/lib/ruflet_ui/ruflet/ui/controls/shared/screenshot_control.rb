@@ -1,0 +1,47 @@
+# frozen_string_literal: true
+
+module Ruflet
+  module UI
+    module Controls
+      module RufletComponents
+        class ScreenshotControl < Ruflet::Control
+          TYPE = "screenshot".freeze
+          WIRE = "Screenshot".freeze
+          KEYWORDS = [:badge, :col, :content, :data, :disabled, :expand, :expand_loose, :key, :opacity, :rtl, :tooltip, :visible].freeze
+
+          def initialize(id: nil, badge: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, key: nil, opacity: nil, rtl: nil, tooltip: nil, visible: nil)
+            raise ArgumentError, "missing keyword: :content" if content.nil?
+
+            props = {}
+            props[:badge] = badge unless badge.nil?
+            props[:col] = col unless col.nil?
+            props[:content] = content unless content.nil?
+            props[:data] = data unless data.nil?
+            props[:disabled] = disabled unless disabled.nil?
+            props[:expand] = expand unless expand.nil?
+            props[:expand_loose] = expand_loose unless expand_loose.nil?
+            props[:key] = key unless key.nil?
+            props[:opacity] = opacity unless opacity.nil?
+            props[:rtl] = rtl unless rtl.nil?
+            props[:tooltip] = tooltip unless tooltip.nil?
+            props[:visible] = visible unless visible.nil?
+            super(type: TYPE, id: id, **props)
+          end
+
+          def capture(pixel_ratio: nil, delay: nil, timeout: 10, on_result: nil)
+            args = {}
+            args["pixel_ratio"] = pixel_ratio unless pixel_ratio.nil?
+            args["delay"] = delay unless delay.nil?
+            runtime_page&.invoke(
+              self,
+              "capture",
+              args: args.empty? ? nil : args,
+              timeout: timeout,
+              on_result: on_result
+            )
+          end
+        end
+      end
+    end
+  end
+end

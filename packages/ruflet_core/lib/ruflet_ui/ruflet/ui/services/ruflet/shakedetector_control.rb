@@ -7,6 +7,7 @@ module Ruflet
         class ShakeDetectorControl < Ruflet::Control
           TYPE = "shakedetector".freeze
           WIRE = "ShakeDetector".freeze
+          KEYWORDS = [:data, :key, :minimum_shake_count, :shake_count_reset_time_ms, :shake_slop_time_ms, :shake_threshold_gravity, :on_shake].freeze
 
           def initialize(id: nil, data: nil, key: nil, minimum_shake_count: nil, shake_count_reset_time_ms: nil, shake_slop_time_ms: nil, shake_threshold_gravity: nil, on_shake: nil)
             props = {}

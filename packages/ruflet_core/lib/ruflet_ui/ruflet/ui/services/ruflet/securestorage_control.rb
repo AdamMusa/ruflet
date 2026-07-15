@@ -7,6 +7,7 @@ module Ruflet
         class SecureStorageControl < Ruflet::Control
           TYPE = "securestorage".freeze
           WIRE = "SecureStorage".freeze
+          KEYWORDS = [:android_options, :data, :ios_options, :key, :macos_options, :web_options, :windows_options, :on_change].freeze
           OPTION_KEYS = %w[web ios macos android windows].freeze
 
           def initialize(id: nil, android_options: nil, data: nil, ios_options: nil, key: nil, macos_options: nil, web_options: nil, windows_options: nil, on_change: nil)
@@ -22,66 +23,38 @@ module Ruflet
             super(type: TYPE, id: id, **props)
           end
 
-          def set(key, value, **options)
-            raise ArgumentError, "value must not be nil" if value.nil?
-
-            invoke_secure_storage("set", args: option_args(options).merge("key" => key, "value" => value), **invoke_options(options))
-          end
-
-          def get(key, **options)
-            invoke_secure_storage("get", args: option_args(options).merge("key" => key), **invoke_options(options))
-          end
-
-          def contains_key(key, **options)
-            invoke_secure_storage("contains_key", args: option_args(options).merge("key" => key), **invoke_options(options))
-          end
-
-          def get_all(**options)
-            invoke_secure_storage("get_all", args: option_args(options), **invoke_options(options))
-          end
-
-          def remove(key, **options)
-            invoke_secure_storage("remove", args: option_args(options).merge("key" => key), **invoke_options(options))
-          end
-
-          def clear(**options)
-            invoke_secure_storage("clear", args: option_args(options), **invoke_options(options))
-          end
+          def set(key, value, **options) = invoke_with_options("set", options, "key" => key, "value" => value)
+          def get(key, **options) = invoke_with_options("get", options, "key" => key)
+          def contains_key(key, **options) = invoke_with_options("contains_key", options, "key" => key)
+          def get_all(**options) = invoke_with_options("get_all", options)
+          def remove(key, **options) = invoke_with_options("remove", options, "key" => key)
+          def clear(**options) = invoke_with_options("clear", options)
 
           def get_availability(timeout: 10, on_result: nil)
-            invoke_secure_storage("get_availability", timeout: timeout, on_result: on_result)
+            runtime_page&.invoke(self, "get_availability", timeout: timeout, on_result: on_result)
           end
 
           private
 
-          def invoke_secure_storage(method_name, args: nil, timeout:, on_result:)
-            runtime_page&.invoke(self, method_name, args: args, timeout: timeout, on_result: on_result)
-          end
-
-          def invoke_options(options)
-            {
+          def invoke_with_options(method_name, options, args = {})
+            OPTION_KEYS.each do |key|
+              value = options[key.to_sym] || options[key]
+              args[key] = normalize_value(value) unless value.nil?
+            end
+            runtime_page&.invoke(
+              self,
+              method_name,
+              args: args,
               timeout: options.fetch(:timeout, 10),
               on_result: options[:on_result]
-            }
+            )
           end
 
-          def option_args(options)
-            OPTION_KEYS.each_with_object({}) do |key, result|
-              value = options[key.to_sym] || options[key]
-              result[key] = normalize_service_value(value) unless value.nil?
-            end
-          end
-
-          def normalize_service_value(value)
+          def normalize_value(value)
             case value
-            when Array
-              value.map { |item| normalize_service_value(item) }
-            when Hash
-              value.transform_keys(&:to_s).each_with_object({}) do |(key, item), result|
-                result[key] = normalize_service_value(item) unless item.nil?
-              end
-            else
-              value.respond_to?(:to_h) ? normalize_service_value(value.to_h) : value
+            when Array then value.map { |item| normalize_value(item) }
+            when Hash then value.each_with_object({}) { |(key, item), result| result[key.to_s] = normalize_value(item) unless item.nil? }
+            else value.respond_to?(:to_h) ? normalize_value(value.to_h) : value
             end
           end
         end

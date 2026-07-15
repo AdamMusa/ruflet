@@ -2,20 +2,35 @@
 
 require_relative "test_helper"
 
-class PageScreenshotServiceTest < Minitest::Test
-  def test_screenshot_returns_page_service_with_flet_wire_name
+class PageScreenshotControlTest < Minitest::Test
+  def test_screenshot_returns_visual_control_without_poisoning_service_registry
     sent = []
     page = build_page(sent)
     content = Ruflet.text(value: "Capture me")
 
-    service = page.screenshot(content: content, tooltip: "Capture area", visible: false)
+    screenshot = page.screenshot(content: content, tooltip: "Capture area", visible: false)
 
-    assert_equal "screenshot", service.type
-    assert_equal "Screenshot", service.to_patch["_c"]
-    assert_same content, service.props["content"]
-    assert_equal "Capture area", service.props["tooltip"]
-    assert_equal false, service.props["visible"]
-    assert_same service, page.service(:screenshot)
+    assert_equal "screenshot", screenshot.type
+    assert_equal "Screenshot", screenshot.to_patch["_c"]
+    assert_same content, screenshot.props["content"]
+    assert_equal "Capture area", screenshot.props["tooltip"]
+    assert_equal false, screenshot.props["visible"]
+    assert_empty page.services
+    assert_raises(ArgumentError) { page.service(:screenshot) }
+  end
+
+  def test_screenshot_capture_invokes_native_control
+    sent = []
+    page = build_page(sent)
+    screenshot = page.screenshot(content: Ruflet.text(value: "Capture me"))
+    page.add(screenshot)
+    sent.clear
+
+    screenshot.capture(pixel_ratio: 2, delay: 20)
+    payload = sent.map(&:last).find { |item| item["name"] == "capture" }
+
+    refute_nil payload
+    assert_equal({ "pixel_ratio" => 2, "delay" => 20 }, payload["args"])
   end
 
   private

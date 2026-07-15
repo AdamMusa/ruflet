@@ -7,6 +7,7 @@ module Ruflet
         class SharedPreferencesControl < Ruflet::Control
           TYPE = "sharedpreferences".freeze
           WIRE = "SharedPreferences".freeze
+          KEYWORDS = [:data, :key].freeze
 
           def initialize(id: nil, data: nil, key: nil)
             props = {}

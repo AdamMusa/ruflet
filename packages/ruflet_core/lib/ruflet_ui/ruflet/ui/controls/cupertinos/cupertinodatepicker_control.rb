@@ -8,20 +8,65 @@ module Ruflet
           TYPE = "cupertinodatepicker".freeze
           WIRE = "CupertinoDatePicker".freeze
 
-          def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bgcolor: nil, bottom: nil, col: nil, data: nil, date_order: nil, date_picker_mode: nil, disabled: nil, expand: nil, expand_loose: nil, first_date: nil, height: nil, item_extent: nil, key: nil, last_date: nil, left: nil, locale: nil, margin: nil, maximum_year: nil, minimum_year: nil, minute_interval: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, show_day_of_week: nil, size_change_interval: nil, tooltip: nil, top: nil, use_24h_format: nil, value: nil, visible: nil, width: nil, on_animation_end: nil, on_change: nil, on_size_change: nil)
+          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :bottom, :col, :data, :date_order, :date_picker_mode, :disabled, :expand, :expand_loose, :first_date, :height, :item_extent, :key, :last_date, :left, :locale, :margin, :maximum_year, :minimum_year, :minute_interval, :offset, :opacity, :right, :rotate, :rtl, :scale, :show_day_of_week, :size_change_interval, :tooltip, :top, :use_24h_format, :value, :visible, :width, :on_animation_end, :on_change, :on_size_change].freeze
+
+          def initialize(id: nil, **props)
+            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
+            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
+            align = props[:align]
+            animate_align = props[:animate_align]
+            animate_margin = props[:animate_margin]
+            animate_offset = props[:animate_offset]
+            animate_opacity = props[:animate_opacity]
+            animate_position = props[:animate_position]
+            animate_rotation = props[:animate_rotation]
+            animate_scale = props[:animate_scale]
+            animate_size = props[:animate_size]
+            aspect_ratio = props[:aspect_ratio]
+            badge = props[:badge]
+            bgcolor = props[:bgcolor]
+            bottom = props[:bottom]
+            col = props[:col]
+            data = props[:data]
+            date_order = props[:date_order]
+            date_picker_mode = props[:date_picker_mode]
+            disabled = props[:disabled]
+            expand = props[:expand]
+            expand_loose = props[:expand_loose]
+            first_date = props[:first_date]
+            height = props[:height]
+            item_extent = props[:item_extent]
+            key = props[:key]
+            last_date = props[:last_date]
+            left = props[:left]
+            locale = props[:locale]
+            margin = props[:margin]
+            maximum_year = props[:maximum_year]
+            minimum_year = props[:minimum_year]
+            minute_interval = props[:minute_interval]
+            offset = props[:offset]
+            opacity = props[:opacity]
+            right = props[:right]
+            rotate = props[:rotate]
+            rtl = props[:rtl]
+            scale = props[:scale]
+            show_day_of_week = props[:show_day_of_week]
+            size_change_interval = props[:size_change_interval]
+            tooltip = props[:tooltip]
+            top = props[:top]
+            use_24h_format = props[:use_24h_format]
+            value = props[:value]
+            visible = props[:visible]
+            width = props[:width]
+            on_animation_end = props[:on_animation_end]
+            on_change = props[:on_change]
+            on_size_change = props[:on_size_change]
             date_picker_mode = "date_and_time" if date_picker_mode.nil?
             item_extent = 32.0 if item_extent.nil?
             minimum_year = 1 if minimum_year.nil?
             minute_interval = 1 if minute_interval.nil?
             show_day_of_week = false if show_day_of_week.nil?
             use_24h_format = false if use_24h_format.nil?
-            raise ArgumentError, "cupertino_date_picker item_extent must be greater than 0" unless item_extent.positive?
-            unless minute_interval.positive? && (60 % minute_interval).zero?
-              raise ArgumentError, "cupertino_date_picker minute_interval must be a positive factor of 60"
-            end
-            if show_day_of_week && date_picker_mode != "date"
-              raise ArgumentError, "cupertino_date_picker show_day_of_week requires date_picker_mode: 'date'"
-            end
 
             props = {}
             props[:align] = align unless align.nil?

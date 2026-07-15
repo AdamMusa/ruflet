@@ -2,6 +2,7 @@
 
 module Ruflet
   class WebSocketConnection
+    TASK_IO_POLL_INTERVAL = 0.01
     # Ruflet control messages are small; anything much larger is invalid or hostile.
     MAX_FRAME_PAYLOAD_BYTES = 16 * 1024 * 1024
 
@@ -45,7 +46,27 @@ module Ruflet
       when 0xA
         read_message
       when 0x1, 0x2
-        payload
+        return payload if frame[:fin]
+
+        message = payload.dup
+        loop do
+          continuation = read_frame
+          return nil if continuation.nil?
+
+          case continuation[:opcode]
+          when 0x9
+            send_frame(0xA, continuation[:payload])
+            next
+          when 0xA
+            next
+          when 0x0
+            message << continuation[:payload]
+            return message if continuation[:fin]
+            return nil if message.bytesize > MAX_FRAME_PAYLOAD_BYTES
+          else
+            return nil
+          end
+        end
       else
         read_message
       end
@@ -70,6 +91,7 @@ module Ruflet
       b1 = header.getbyte(0)
       b2 = header.getbyte(1)
 
+      fin = (b1 & 0x80) != 0
       masked = (b2 & 0x80) != 0
       payload_len = b2 & 0x7f
 
@@ -92,7 +114,7 @@ module Ruflet
 
       payload = unmask(payload, masking_key) if masked
 
-      { opcode: b1 & 0x0f, payload: payload }
+      { fin: fin, opcode: b1 & 0x0f, payload: payload }
     end
 
     def send_frame(opcode, payload)
@@ -110,8 +132,8 @@ module Ruflet
         end
 
       @write_mutex.synchronize do
-        @socket.write(header)
-        @socket.write(bytes) unless bytes.empty?
+        @socket.write(header + bytes)
+        @socket.flush if @socket.respond_to?(:flush)
       end
     end
 
@@ -132,15 +154,33 @@ module Ruflet
       chunk.force_encoding(Encoding::BINARY)
 
       while chunk.bytesize < length
-        part = @socket.read(length - chunk.bytesize)
+        part = if task_scheduler?
+          @socket.recv_nonblock(length - chunk.bytesize)
+        else
+          @socket.read(length - chunk.bytesize)
+        end
         return nil if part.nil? || part.empty?
 
         chunk << part
       end
 
       chunk
-    rescue IOError, SystemCallError
+    rescue StandardError => error
+      if task_scheduler? && would_block_error?(error)
+        sleep TASK_IO_POLL_INTERVAL
+        retry
+      end
+
       nil
+    end
+
+    def task_scheduler?
+      concurrent = Object.const_defined?(:Task) || (Thread.respond_to?(:cooperative?) && Thread.cooperative?)
+      concurrent && @socket.respond_to?(:recv_nonblock)
+    end
+
+    def would_block_error?(error)
+      %w[Errno::EAGAIN Errno::EWOULDBLOCK IO::EAGAINWaitReadable IO::WaitReadable].include?(error.class.to_s)
     end
   end
 end

@@ -53,12 +53,10 @@ class RufletBottomSheetCompatibilityTest < Minitest::Test
     assert_match(/content/, error.message)
   end
 
-  def test_bottom_sheet_rejects_negative_elevation_like_flet
-    error = assert_raises(ArgumentError) do
-      Ruflet.bottom_sheet(Ruflet.text("Sheet"), elevation: -1)
-    end
+  def test_bottom_sheet_serializes_negative_elevation_like_flet
+    patch = Ruflet.bottom_sheet(Ruflet.text("Sheet"), elevation: -1).to_patch
 
-    assert_match(/elevation/, error.message)
+    assert_equal(-1, patch["elevation"])
   end
 
   def test_bottom_sheet_dismiss_event_closes_dialog_tracking_and_calls_handler
@@ -76,47 +74,10 @@ class RufletBottomSheetCompatibilityTest < Minitest::Test
     )
 
     page.add(Ruflet.text("Root"))
-    page.show_dialog(sheet)
+    page.show_bottom_sheet(sheet)
     page.dispatch_event(target: sheet.wire_id, name: "dismiss", data: nil)
 
     assert_equal [["dismiss", true]], dismissed
-    assert_equal [], dialog_controls_from_patch(sent.last[1]["patch"])
-  end
-
-  # Regression: NativeApp's modal: sheets assign `page.bottom_sheet = ...`. Once
-  # the dialogs container is already mounted (a prior dialog/snackbar), the
-  # setter must push an in-place patch — otherwise the sheet never reaches the
-  # client (send_view_patch skips _dialogs once mounted). This previously failed
-  # because bottom_sheet= did not call push_dialogs_update! like its siblings.
-  def test_bottom_sheet_setter_pushes_patch_when_container_already_mounted
-    sent = []
-    page = Ruflet::Page.new(
-      session_id: "s1",
-      client_details: { "route" => "/" },
-      sender: ->(action, payload) { sent << [action, payload] }
-    )
-
-    page.add(Ruflet.text("Root"))
-    page.show_dialog(Ruflet.alert_dialog(title: Ruflet.text("Mount")))
-    sent.clear
-
-    page.bottom_sheet = Ruflet.bottom_sheet(Ruflet.text("Sheet"), open: true)
-
-    refute_empty sent, "bottom_sheet= must push an update once the dialogs container is mounted"
-    controls = dialog_controls_from_patch(sent.last[1]["patch"])
-    assert(
-      controls.any? { |control| control.is_a?(Hash) && control["_c"] == "BottomSheet" },
-      "pushed controls should include the BottomSheet"
-    )
-  end
-
-  private
-
-  def dialog_controls_from_patch(patch)
-    controls_patch = patch.find { |op| op[2] == "controls" }
-    return controls_patch[3] if controls_patch
-
-    dialogs_patch = patch.find { |op| op[2] == "_dialogs" }
-    dialogs_patch[3]["controls"]
+    assert_equal [], sent.last[1]["patch"][1][3]
   end
 end

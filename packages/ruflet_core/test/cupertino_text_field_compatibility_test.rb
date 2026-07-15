@@ -33,7 +33,7 @@ class RufletCupertinoTextFieldCompatibilityTest < Minitest::Test
     assert_equal "CupertinoTextField", patch["_c"]
     assert_equal "42", patch["value"]
     assert_equal "Amount", patch["placeholder_text"]
-    assert_equal({ "color" => "#aaaaaa" }, patch["placeholder_style"])
+    assert_equal({ "color" => "#AAAAAA" }, patch["placeholder_style"])
     assert_equal "editing", patch["clear_button_visibility_mode"]
     assert_equal "Clear amount", patch["clear_button_semantics_label"]
     assert_equal "Text", patch["prefix"]["_c"]
@@ -44,7 +44,7 @@ class RufletCupertinoTextFieldCompatibilityTest < Minitest::Test
     assert_equal "not_editing", patch["suffix_visibility_mode"]
     assert_equal({ "left" => 8, "top" => 7, "right" => 8, "bottom" => 7 }, patch["padding"])
     assert_equal "#ffffff", patch["bgcolor"]
-    assert_equal({ "colors" => ["#ffffff", "#eeeeee"] }, patch["gradient"])
+    assert_equal({ "colors" => ["#FFFFFF", "#EEEEEE"] }, patch["gradient"])
     assert_equal({ "src" => "background.png" }, patch["image"])
     assert_equal [{ "color" => "#111111", "blur_radius" => 2 }], patch["shadows"]
     assert_equal "multiply", patch["blend_mode"]

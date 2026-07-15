@@ -5,7 +5,6 @@ require_relative "ruflet_ui/ruflet/colors"
 require_relative "ruflet_ui/ruflet/icon_data"
 require_relative "ruflet_ui/ruflet/icons/material/material_icons"
 require_relative "ruflet_ui/ruflet/icons/cupertino/cupertino_icons"
-require_relative "ruflet_ui/ruflet/types/animation"
 require_relative "ruflet_ui/ruflet/types/text_style"
 require_relative "ruflet_ui/ruflet/types/geometry"
 require_relative "ruflet_ui/ruflet/control"
@@ -27,9 +26,6 @@ module Ruflet
   TextDecorationStyle = UI::Types::TextDecorationStyle
   Offset = UI::Types::Offset
   Duration = UI::Types::Duration
-  Animation = UI::Types::Animation
-  AnimationStyle = UI::Types::AnimationStyle
-  AnimationCurve = UI::Types::AnimationCurve
 
   module MainAxisAlignment
     CENTER = "center"
@@ -140,7 +136,7 @@ module Ruflet
       private
 
       def control_delegate
-        Ruflet::WidgetBuilder.new
+        Ruflet::DSL
       end
     end
   end
@@ -154,12 +150,18 @@ module Kernel
   def app(**opts, &block) = Ruflet::DSL.app(**opts, &block)
   def page(**props, &block) = Ruflet::DSL.page(**props, &block)
 
-  # Bare widget helpers (view, text, container, …) build real controls anywhere
-  # — top-level scripts and Ruflet.run blocks — with no builder to instantiate.
-  # The framework owns this plumbing so dev code stays free of it; a fresh
-  # builder per call keeps the helpers stateless.
   def control_delegate
-    Ruflet::WidgetBuilder.new
+    Ruflet::DSL
+  end
+
+  def method_missing(name, *args, **props, &block)
+    return super if name.to_s.end_with?("=") || (args.empty? && props.empty? && !block)
+
+    forwarded = props.dup
+    forwarded[:value] = args.shift unless args.empty?
+    return super unless args.empty?
+
+    Ruflet::DSL.control(name.to_s, **forwarded, &block)
   end
 
   if Ruflet::UI::SharedControlForwarders.respond_to?(:instance_methods)

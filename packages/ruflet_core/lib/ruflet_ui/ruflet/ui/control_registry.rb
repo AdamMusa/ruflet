@@ -14,12 +14,19 @@ module Ruflet
           .values
           .uniq
           .each_with_object({}) do |schema, events|
-            schema.instance_method(:initialize).parameters
-              .select { |kind, name| (kind == :key || kind == :keyreq) && name.to_s.start_with?("on_") }
-              .reject { |_, name| name.to_s.end_with?("_hint_text") }
-              .each do |_, name|
-              event_name = name.to_s.sub(/\Aon_/, "")
-              normalized = event_name.to_s.sub(/\Aon_/, "")
+            keywords =
+              if schema.const_defined?(:KEYWORDS)
+                schema::KEYWORDS
+              else
+                schema.instance_method(:initialize).parameters
+                      .select { |kind, _| kind == :key || kind == :keyreq }
+                      .map { |_, name| name }
+              end
+            keywords
+              .select { |name| name.to_s.start_with?("on_") }
+              .reject { |name| name.to_s.end_with?("_hint_text") }
+              .each do |name|
+              normalized = name.to_s[3..-1]
               events[:"on_#{normalized}"] = normalized
             end
           end

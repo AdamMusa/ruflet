@@ -5,7 +5,6 @@ require "securerandom"
 rescue LoadError
   nil
 end
-require_relative "colors"
 require_relative "icon_data"
 require_relative "icons/material_icon_lookup"
 require_relative "icons/cupertino_icon_lookup"
@@ -14,6 +13,7 @@ require "set"
 module Ruflet
   class Control
     HOST_EXPANDED_TYPES = %w[view row column].freeze
+    SCHEMA_METADATA_CACHE = {}
 
     attr_reader :type, :id, :props, :children
     attr_accessor :wire_id, :runtime_page
@@ -30,7 +30,13 @@ module Ruflet
     def on(event_name, &block)
       name = normalized_event_name(event_name)
       validate_event_name!(name)
-      @handlers[name] = block
+      attach_handler(name, block)
+      self
+    end
+
+    def attach_handler(event_name, handler)
+      name = normalized_event_name(event_name)
+      @handlers[name] = handler if handler.respond_to?(:call)
       @props["on_#{name}"] = true
       runtime_page&.update(self, "on_#{name}": true) if wire_id
       self
@@ -48,35 +54,13 @@ module Ruflet
       @handlers.key?(normalized_event_name(event_name))
     end
 
-    # Read a prop by name: control["value"] or control[:value].
-    def [](key)
-      @props[key.to_s]
-    end
-
-    # Write a prop by name: control["value"] = "x".
-    def []=(key, value)
-      @props[key.to_s] = value
-    end
-
-    # Convenience dot access to props, mirroring Flet-style controls:
-    #   control.value            # => @props["value"] (reads an existing prop)
-    #   control.value = "hello"  # => sets @props["value"]
-    # Reads only resolve props that exist, so typos still raise NoMethodError
-    # instead of silently returning nil. Defined methods (type, id, props,
-    # children, on, emit, to_patch, …) are never shadowed.
-    def method_missing(name, *args, &block)
-      key = name.to_s
-      if key.end_with?("=")
-        return @props[key[0..-2]] = args.first
-      end
-      return @props[key] if args.empty? && @props.key?(key)
-
-      super
-    end
-
-    def respond_to_missing?(name, include_private = false)
-      key = name.to_s
-      key.end_with?("=") || @props.key?(key) || super
+    # Refresh an existing control without replacing its identity. Page services
+    # are long-lived in Flet's ServiceRegistry, so revisiting a view must update
+    # both their configuration and their Ruby event handlers.
+    def merge_props(values = {})
+      normalized = normalize_props(extract_handlers(preprocess_props(values)))
+      @props.merge!(normalized)
+      self
     end
 
     def to_patch
@@ -84,8 +68,8 @@ module Ruflet
       if wire_type.nil?
         compact_type_key = type.delete("_")
         wire_type = type_map[type] || type_map[compact_type_key]
+        wire_type ||= type.split("_").map { |part| part[0].to_s.upcase + part[1..].to_s }.join
       end
-      raise ArgumentError, "Unknown control type: #{type}" unless wire_type
       patch = {
         "_c" => wire_type,
         "_i" => wire_id
@@ -108,10 +92,10 @@ module Ruflet
 
     class << self
       def generate_id
-        if defined?(SecureRandom) && SecureRandom.respond_to?(:hex)
+        if Object.const_defined?(:SecureRandom) && SecureRandom.respond_to?(:hex)
           SecureRandom.hex(4)
         else
-          format("%08x", rand(0..0xffff_ffff))
+          format("%04x%04x", rand(0..0xffff), rand(0..0xffff))
         end
       end
     end
@@ -134,7 +118,7 @@ module Ruflet
     def extract_handlers(input)
       output = input.dup
       allowed_events = event_names
-      allowed_events_set = allowed_events.to_set
+      allowed_event_lookup = event_name_lookup
 
       output.keys.each do |key|
         key_string = key.to_s
@@ -143,21 +127,11 @@ module Ruflet
         next if key_string == "on_label_color"
 
         event_name = normalized_event_name(key_string)
-        if allowed_events.any? && !allowed_events_set.include?(event_name)
+        if allowed_events.any? && !allowed_event_lookup.key?(event_name)
           raise ArgumentError, "Unknown event `#{key_string}` for control type `#{type}`"
         end
 
         handler = output.delete(key)
-        @handlers[event_name] = handler if handler.respond_to?(:call)
-        output["on_#{event_name}"] = true
-      end
-
-      event_props.each do |prop, event_name|
-        string_prop = prop.to_s
-        next unless output.key?(prop) || output.key?(string_prop)
-        next if allowed_events.any? && !allowed_events_set.include?(event_name)
-
-        handler = output.key?(prop) ? output.delete(prop) : output.delete(string_prop)
         @handlers[event_name] = handler if handler.respond_to?(:call)
         output["on_#{event_name}"] = true
       end
@@ -167,7 +141,7 @@ module Ruflet
 
     def normalize_props(hash)
       allowed_props = property_names
-      normalized_allowed = allowed_props.to_set
+      allowed_prop_lookup = property_name_lookup
 
       hash.each_with_object({}) do |(k, v), result|
         key = k.to_s
@@ -175,7 +149,7 @@ module Ruflet
         if strict_schema_enforced?(allowed_props) &&
             !mapped_key.start_with?("_") &&
             !mapped_key.start_with?("on_") &&
-            !normalized_allowed.include?(mapped_key)
+            !allowed_prop_lookup.key?(mapped_key)
           raise ArgumentError, "Unknown attribute `#{mapped_key}` for control type `#{type}`"
         end
 
@@ -198,11 +172,14 @@ module Ruflet
     end
 
     def normalize_color_prop(key, value)
-      Ruflet::Colors.normalize_property(key, value)
+      return value unless value.is_a?(String)
+      return value.downcase if color_prop_key?(key)
+
+      value
     end
 
     def color_prop_key?(key)
-      Ruflet::Colors.color_key?(key)
+      key == "color" || key.end_with?("bgcolor") || key.end_with?("_color")
     end
 
     def normalize_icon_prop(key, value)
@@ -232,7 +209,8 @@ module Ruflet
     end
 
     def normalized_event_name(event_name)
-      event_name.to_s.sub(/\Aon_/, "")
+      name = event_name.to_s
+      name.start_with?("on_") ? name[3..-1] : name
     end
 
     def validate_event_name!(event_name)
@@ -247,16 +225,39 @@ module Ruflet
     end
 
     def property_names
-      constructor_keywords_for_schema_class
-        .reject { |name| name.to_s.start_with?("on_") && name != :on_label_color }
-        .map(&:to_s)
+      schema_metadata[0]
     end
 
     def event_names
-      constructor_keywords_for_schema_class
+      schema_metadata[1]
+    end
+
+    def property_name_lookup
+      schema_metadata[2]
+    end
+
+    def event_name_lookup
+      schema_metadata[3]
+    end
+
+    def schema_metadata
+      cache_key = type
+      cached = SCHEMA_METADATA_CACHE[cache_key]
+      return cached if cached
+
+      keywords = constructor_keywords_for_schema_class
+      properties = keywords
+        .reject { |name| name.to_s.start_with?("on_") && name != :on_label_color }
+        .map(&:to_s)
+        .freeze
+      events = keywords
         .select { |name| name.to_s.start_with?("on_") }
         .reject { |name| name == :on_label_color }
-        .map { |name| name.to_s.sub(/\Aon_/, "") }
+        .map { |name| name.to_s[3..-1] }
+        .freeze
+      property_lookup = properties.each_with_object({}) { |name, lookup| lookup[name] = true }.freeze
+      event_lookup = events.each_with_object({}) { |name, lookup| lookup[name] = true }.freeze
+      SCHEMA_METADATA_CACHE[cache_key] = [properties, events, property_lookup, event_lookup].freeze
     end
 
     def schema_wire_type_for_class
@@ -291,16 +292,24 @@ module Ruflet
     def constructor_keywords_for_schema_class
       schema_class = schema_class_for_validation
       return [] unless schema_class
+      return schema_class::KEYWORDS if schema_class.const_defined?(:KEYWORDS)
 
-      schema_class.instance_method(:initialize).parameters
-                 .select { |kind, _| kind == :key || kind == :keyreq }
-                 .map { |_, name| name }
-                 .reject { |name| name == :id }
+      keyword_parameters = schema_class.instance_method(:initialize).parameters
+                                       .select { |kind, _| kind == :key || kind == :keyreq }
+      # mruby can omit keyword names that are not present in its presymbol
+      # table. A partial schema is unsafe because it rejects valid application
+      # properties. Explicit KEYWORDS metadata remains strict; otherwise the
+      # constructor itself performs initial keyword validation.
+      return [] if keyword_parameters.any? { |_, name| name.nil? }
+
+      keyword_parameters.map { |_, name| name }.reject { |name| name == :id }
     rescue StandardError
       []
     end
 
     def has_explicit_initialize_keywords?(klass)
+      return true if klass.const_defined?(:KEYWORDS)
+
       params = klass.instance_method(:initialize).parameters
       params.any? { |kind, _| kind == :key || kind == :keyreq }
     rescue StandardError
@@ -312,9 +321,5 @@ module Ruflet
       UI::ControlRegistry::TYPE_MAP
     end
 
-    def event_props
-      require_relative "ui/control_registry"
-      UI::ControlRegistry::EVENT_PROPS
-    end
   end
 end

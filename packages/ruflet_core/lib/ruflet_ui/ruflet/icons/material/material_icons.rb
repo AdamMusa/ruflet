@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../icon_data"
+require_relative "../icon_constant_names"
 require_relative "../material_icon_lookup"
 
 module Ruflet
@@ -19,8 +20,7 @@ module Ruflet
         }
       else
         source.keys.each_with_object({}) do |name, result|
-          text = name.to_s.gsub(/[^a-zA-Z0-9]/, "_").gsub(/_+/, "_").sub(/\A_/, "").sub(/_\z/, "")
-          text = "ICON_#{text}" if text.match?(/\A\d/)
+          text = Ruflet::IconNames.constant_for(name)
           result[text.upcase.to_sym] = name
         end
       end.freeze

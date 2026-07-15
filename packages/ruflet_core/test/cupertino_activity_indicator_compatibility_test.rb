@@ -33,8 +33,8 @@ class RufletCupertinoActivityIndicatorCompatibilityTest < Minitest::Test
     assert_equal 10, indicator.props["radius"]
   end
 
-  def test_cupertino_activity_indicator_rejects_non_positive_radius_like_flet
-    assert_raises(ArgumentError) { Ruflet.cupertino_activity_indicator(radius: 0) }
-    assert_raises(ArgumentError) { Ruflet.cupertino_activity_indicator(radius: -1) }
+  def test_cupertino_activity_indicator_serializes_non_positive_radius_like_flet
+    assert_equal 0, Ruflet.cupertino_activity_indicator(radius: 0).to_patch["radius"]
+    assert_equal(-1, Ruflet.cupertino_activity_indicator(radius: -1).to_patch["radius"])
   end
 end

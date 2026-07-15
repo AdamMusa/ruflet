@@ -8,7 +8,56 @@ module Ruflet
           TYPE = "pageview".freeze
           WIRE = "PageView".freeze
 
-          def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, clip_behavior: nil, col: nil, controls: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, horizontal: nil, implicit_scrolling: nil, keep_page: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, pad_ends: nil, reverse: nil, right: nil, rotate: nil, rtl: nil, scale: nil, selected_index: nil, size_change_interval: nil, snap: nil, tooltip: nil, top: nil, viewport_fraction: nil, visible: nil, width: nil, on_animation_end: nil, on_change: nil, on_size_change: nil)
+          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bottom, :clip_behavior, :col, :controls, :data, :disabled, :expand, :expand_loose, :height, :horizontal, :implicit_scrolling, :keep_page, :key, :left, :margin, :offset, :opacity, :pad_ends, :reverse, :right, :rotate, :rtl, :scale, :selected_index, :size_change_interval, :snap, :tooltip, :top, :viewport_fraction, :visible, :width, :on_animation_end, :on_change, :on_size_change].freeze
+
+          def initialize(id: nil, **props)
+            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
+            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
+            align = props[:align]
+            animate_align = props[:animate_align]
+            animate_margin = props[:animate_margin]
+            animate_offset = props[:animate_offset]
+            animate_opacity = props[:animate_opacity]
+            animate_position = props[:animate_position]
+            animate_rotation = props[:animate_rotation]
+            animate_scale = props[:animate_scale]
+            animate_size = props[:animate_size]
+            aspect_ratio = props[:aspect_ratio]
+            badge = props[:badge]
+            bottom = props[:bottom]
+            clip_behavior = props[:clip_behavior]
+            col = props[:col]
+            controls = props[:controls]
+            data = props[:data]
+            disabled = props[:disabled]
+            expand = props[:expand]
+            expand_loose = props[:expand_loose]
+            height = props[:height]
+            horizontal = props[:horizontal]
+            implicit_scrolling = props[:implicit_scrolling]
+            keep_page = props[:keep_page]
+            key = props[:key]
+            left = props[:left]
+            margin = props[:margin]
+            offset = props[:offset]
+            opacity = props[:opacity]
+            pad_ends = props[:pad_ends]
+            reverse = props[:reverse]
+            right = props[:right]
+            rotate = props[:rotate]
+            rtl = props[:rtl]
+            scale = props[:scale]
+            selected_index = props[:selected_index]
+            size_change_interval = props[:size_change_interval]
+            snap = props[:snap]
+            tooltip = props[:tooltip]
+            top = props[:top]
+            viewport_fraction = props[:viewport_fraction]
+            visible = props[:visible]
+            width = props[:width]
+            on_animation_end = props[:on_animation_end]
+            on_change = props[:on_change]
+            on_size_change = props[:on_size_change]
             clip_behavior = "hardEdge" if clip_behavior.nil?
             horizontal = true if horizontal.nil?
             implicit_scrolling = false if implicit_scrolling.nil?
@@ -18,9 +67,6 @@ module Ruflet
             selected_index = 0 if selected_index.nil?
             snap = true if snap.nil?
             viewport_fraction = 1.0 if viewport_fraction.nil?
-
-            raise ArgumentError, "page_view selected_index must be greater than or equal to 0" if selected_index.negative?
-            raise ArgumentError, "page_view viewport_fraction must be greater than 0" unless viewport_fraction.positive?
 
             props = {}
             props[:align] = align unless align.nil?

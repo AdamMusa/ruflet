@@ -46,19 +46,21 @@ class RufletDividerCompatibilityTest < Minitest::Test
     assert_equal 12, patch["width"]
   end
 
-  def test_divider_rejects_negative_numeric_values_like_flet
-    %i[height leading_indent thickness trailing_indent].each do |prop|
-      error = assert_raises(ArgumentError) { Ruflet.divider(prop => -1) }
+  def test_divider_serializes_negative_numeric_values_like_flet
+    patch = Ruflet.divider(height: -1, leading_indent: -2, thickness: -3, trailing_indent: -4).to_patch
 
-      assert_match(/#{prop}/, error.message)
-    end
+    assert_equal(-1, patch["height"])
+    assert_equal(-2, patch["leading_indent"])
+    assert_equal(-3, patch["thickness"])
+    assert_equal(-4, patch["trailing_indent"])
   end
 
-  def test_vertical_divider_rejects_negative_numeric_values_like_flet
-    %i[leading_indent thickness trailing_indent width].each do |prop|
-      error = assert_raises(ArgumentError) { Ruflet.vertical_divider(prop => -1) }
+  def test_vertical_divider_serializes_negative_numeric_values_like_flet
+    patch = Ruflet.vertical_divider(leading_indent: -1, thickness: -2, trailing_indent: -3, width: -4).to_patch
 
-      assert_match(/#{prop}/, error.message)
-    end
+    assert_equal(-1, patch["leading_indent"])
+    assert_equal(-2, patch["thickness"])
+    assert_equal(-3, patch["trailing_indent"])
+    assert_equal(-4, patch["width"])
   end
 end

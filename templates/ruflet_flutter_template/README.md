@@ -1,31 +1,75 @@
-# Ruflet Flutter Template
+# ruflet_flutter_template
 
-This template is used by the Ruflet build pipeline to produce self-contained or
-server-driven Flutter clients.
+Ruflet Flutter template for self-contained and server-driven clients.
 
-## Entry Points
+## What is included
 
-- `lib/main.self.dart` starts the embedded Ruby runtime and bundled `assets/main.rb`.
-- `lib/main.server.dart` connects to an external Ruflet backend.
-- `RUFLET_BACKEND_URL` overrides the backend URL for a server-driven client.
+- Ruflet/Flet client bootstrap with automatic embedded-server port discovery.
+- Self-contained startup via `ruby_runtime` in `lib/main.self.dart`.
+- Server-driven startup in `lib/main.server.dart`.
+- Compiler-free startup from the packaged `main.mrb` artifact.
+- External backend override via:
+  - `--dart-define=RUFLET_BACKEND_URL=http://host:8550`
 
-Run the template directly while developing the build pipeline:
+## Run client template
 
 ```bash
+cd ruflet_flutter_template
 flutter pub get
-flutter run -t lib/main.self.dart
-flutter run -t lib/main.server.dart \
-  --dart-define=RUFLET_BACKEND_URL=http://127.0.0.1:8550
+flutter run
 ```
 
-Application developers normally build through the Ruflet CLI:
+`ruflet build --self` compiles the project's `main.rb` and packages the resulting `main.mrb` automatically.
+
+## Conditional extensions and native services
+
+Application dependencies are selected from the developer project's configuration;
+the generated client does not bundle every optional plugin.
+
+```yaml
+# ruflet.yaml
+extensions:
+  - charts
+  - map
+  - rive
+```
+
+Native capabilities that require Android or iOS permissions belong in a sibling
+`services.yaml`. Ruflet activates their required client extensions and writes the
+platform permission declarations during the build.
+
+```yaml
+# services.yaml
+services:
+  - camera:
+      description: Capture profile photos.
+  - location:
+      description: Show the device location on the map.
+```
+
+The same selection is applied to server-driven and self-contained builds.
+
+To connect to an external backend instead:
 
 ```bash
-bundle exec ruflet build apk --self
-bundle exec ruflet build ios --self
-bundle exec ruflet build apk
-bundle exec ruflet build ios
+flutter run --dart-define=RUFLET_BACKEND_URL=http://127.0.0.1:8550
 ```
 
-`--self` packages the Ruby runtime and application with the native client.
-Without it, the client connects to a separately running Ruflet backend.
+For Ruflet CLI builds:
+
+```bash
+ruflet build apk --self
+ruflet build ios --self
+ruflet build apk
+ruflet build ios
+```
+
+- `ruflet build ... --self` builds the self-contained client with `ruby_runtime`.
+- `ruflet build ...` without `--self` builds the server-driven client without `ruby_runtime`.
+
+For desktop or web testing:
+
+```bash
+flutter run -d macos
+flutter run -d chrome
+```

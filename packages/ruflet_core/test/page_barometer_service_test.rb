@@ -29,6 +29,24 @@ class PageBarometerServiceTest < Minitest::Test
     assert_equal true, service.props["on_error"]
   end
 
+  def test_reusing_service_refreshes_configuration_and_handlers
+    sent = []
+    page = build_page(sent)
+    old_readings = 0
+    new_readings = 0
+
+    service = page.barometer(enabled: false, on_reading: ->(_event) { old_readings += 1 })
+    reused = page.barometer(enabled: true, interval: 250, on_reading: ->(_event) { new_readings += 1 })
+    reused.emit(:reading, Object.new)
+
+    assert_same service, reused
+    assert_equal true, reused.props["enabled"]
+    assert_equal 250, reused.props["interval"]
+    assert_equal 0, old_readings
+    assert_equal 1, new_readings
+    assert sent.any? { |action, _payload| action == Ruflet::Protocol::ACTIONS[:patch_control] }
+  end
+
   private
 
   def build_page(sent)

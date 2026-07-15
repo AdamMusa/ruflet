@@ -33,9 +33,11 @@ class RufletPlaceholderCompatibilityTest < Minitest::Test
     assert_equal 2.0, placeholder.props["stroke_width"]
   end
 
-  def test_placeholder_rejects_negative_numeric_dimensions_like_flet
-    assert_raises(ArgumentError) { Ruflet.placeholder(fallback_height: -1) }
-    assert_raises(ArgumentError) { Ruflet.placeholder(fallback_width: -1) }
-    assert_raises(ArgumentError) { Ruflet.placeholder(stroke_width: -1) }
+  def test_placeholder_serializes_negative_numeric_dimensions_like_flet
+    patch = Ruflet.placeholder(fallback_height: -1, fallback_width: -2, stroke_width: -3).to_patch
+
+    assert_equal(-1, patch["fallback_height"])
+    assert_equal(-2, patch["fallback_width"])
+    assert_equal(-3, patch["stroke_width"])
   end
 end
