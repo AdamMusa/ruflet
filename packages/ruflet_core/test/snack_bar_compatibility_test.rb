@@ -118,4 +118,26 @@ class RufletSnackBarCompatibilityTest < Minitest::Test
 
     assert_equal ["visible", "action"], events
   end
+
+  def test_same_snack_bar_can_be_shown_again_after_client_dismissal
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+    snack_bar = Ruflet.snack_bar("Saved", duration: 1000)
+
+    page.add(Ruflet.text("Root"))
+    page.show_snackbar(snack_bar)
+    assert page.send(:dialog_open?, snack_bar)
+
+    page.apply_client_update(snack_bar.wire_id, "open" => false)
+    page.dispatch_event(target: snack_bar.wire_id, name: "dismiss", data: nil)
+    refute page.send(:dialog_open?, snack_bar)
+
+    page.show_snackbar(snack_bar)
+
+    assert page.send(:dialog_open?, snack_bar)
+    assert_equal true, snack_bar.props["open"]
+  end
 end

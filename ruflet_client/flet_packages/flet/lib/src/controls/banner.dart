@@ -22,8 +22,10 @@ class BannerControl extends StatelessWidget {
       actions: control.buildWidgets("actions"),
       forceActionsBelow: control.getBool("force_actions_below", false)!,
       backgroundColor: control.getColor("bgcolor", context),
-      contentTextStyle:
-          control.getTextStyle("content_text_style", Theme.of(context)),
+      contentTextStyle: control.getTextStyle(
+        "content_text_style",
+        Theme.of(context),
+      ),
       shadowColor: control.getColor("shadow_color", context),
       dividerColor: control.getColor("divider_color", context),
       elevation: control.getDouble("elevation"),
@@ -37,49 +39,50 @@ class BannerControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dismissed = control.getBool("_dismissed", false)!;
+    final lastOpen = control.getBool("_open", false)!;
+    final open = control.getBool("open", false)!;
 
-    debugPrint("Banner build: ${control.id}, _dismissed=$dismissed");
-
-    if (!dismissed) {
-      final lastOpen = control.getBool("_open", false)!;
-      var open = control.getBool("open", false)!;
-
-      if (open && (open != lastOpen)) {
-        if (control.get("content") == null) {
-          return const ErrorControl(
-              "Banner.content must be provided and visible");
-        } else if (control.children("actions").isEmpty) {
-          return const ErrorControl(
-              "Banner.actions must be provided and at least one action should be visible");
-        }
-
-        control.updateProperties({"_open": open}, python: false);
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).removeCurrentMaterialBanner();
-          ScaffoldMessenger.of(context)
-              .showMaterialBanner(_createBanner(context))
-              .closed
-              .then((reason) {
-            debugPrint("Closing Banner(${control.id}) with reason: $reason");
-            if (control.get("_dismissed") != true) {
-              control.updateProperties({"_dismissed": true});
-              debugPrint(
-                  "Dismissing Banner(${control.id}) with reason: $reason");
-              //_open = false;
-              control.updateProperties({"_open": false}, python: false);
-              control.updateProperties({"open": false});
-              control.triggerEvent("dismiss");
-            }
-          });
-        });
-      } else if (!open && lastOpen) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
-          control.updateProperties({"_open": false}, python: false);
-        });
+    if (open && !lastOpen) {
+      if (control.get("content") == null) {
+        return const ErrorControl(
+          "Banner.content must be provided and visible",
+        );
+      } else if (control.children("actions").isEmpty) {
+        return const ErrorControl(
+          "Banner.actions must be provided and at least one action should be visible",
+        );
       }
+
+      final generation = control.getInt("_show_generation", 0)! + 1;
+      control.updateProperties({
+        "_open": true,
+        "_dismissed": false,
+        "_show_generation": generation,
+      }, python: false);
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).removeCurrentMaterialBanner();
+        ScaffoldMessenger.of(
+          context,
+        ).showMaterialBanner(_createBanner(context)).closed.then((reason) {
+          debugPrint("Closing Banner(${control.id}) with reason: $reason");
+          final isCurrentCycle =
+              control.getInt("_show_generation", 0) == generation;
+          if (isCurrentCycle && control.get("_dismissed") != true) {
+            control.updateProperties({"_dismissed": true}, python: false);
+            debugPrint("Dismissing Banner(${control.id}) with reason: $reason");
+            //_open = false;
+            control.updateProperties({"_open": false}, python: false);
+            control.updateProperties({"open": false});
+            control.triggerEvent("dismiss");
+          }
+        });
+      });
+    } else if (!open && lastOpen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+        control.updateProperties({"_open": false}, python: false);
+      });
     }
     return const SizedBox.shrink();
   }

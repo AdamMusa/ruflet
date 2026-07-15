@@ -21,7 +21,8 @@ class SnackBarControl extends StatelessWidget {
     var content = control.buildTextOrWidget("content");
     if (content == null) {
       return const ErrorControl(
-          "SnackBar.content must be provided and visible");
+        "SnackBar.content must be provided and visible",
+      );
     }
 
     var backend = FletBackend.of(context);
@@ -33,10 +34,14 @@ class SnackBarControl extends StatelessWidget {
         label: actionControl.getString("label", "Action")!,
         backgroundColor: actionControl.getColor("bgcolor", context),
         textColor: actionControl.getColor("text_color", context),
-        disabledBackgroundColor:
-            actionControl.getColor("disabled_bgcolor", context),
-        disabledTextColor:
-            actionControl.getColor("disabled_text_color", context),
+        disabledBackgroundColor: actionControl.getColor(
+          "disabled_bgcolor",
+          context,
+        ),
+        disabledTextColor: actionControl.getColor(
+          "disabled_text_color",
+          context,
+        ),
         onPressed: () => actionControl.triggerEvent("click"),
       );
     } else if (actionControl is String) {
@@ -77,56 +82,65 @@ class SnackBarControl extends StatelessWidget {
       padding: control.getPadding("padding"),
       width: width,
       elevation: control.getDouble("elevation"),
-      duration:
-          control.getDuration("duration", const Duration(milliseconds: 4000))!,
+      duration: control.getDuration(
+        "duration",
+        const Duration(milliseconds: 4000),
+      )!,
       persist: control.getBool("persist"),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final dismissed = control.getBool("_dismissed", false)!;
+    final open = control.getBool("open", false)!;
+    final lastOpen = control.getBool("_open", false)!;
 
-    if (!dismissed) {
-      final open = control.getBool("open", false)!;
-      final lastOpen = control.getBool("_open", false)!;
+    debugPrint("SnackBar build: ${control.id}, open: $open, _open: $lastOpen");
 
-      debugPrint(
-          "SnackBar build: ${control.id}, open: $open, _open: $lastOpen");
+    if (open && !lastOpen) {
+      var dialog = _createSnackBar(context);
 
-      if (open && (open != lastOpen)) {
-        var dialog = _createSnackBar(context);
-
-        if (dialog is ErrorControl) {
-          debugPrint(
-              "SnackBar: ErrorControl, not showing dialog: ${dialog.message}");
-          return dialog;
-        }
-
-        control.updateProperties({"_open": open}, python: false);
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).removeCurrentSnackBar();
-          ScaffoldMessenger.of(context)
-              .showSnackBar(dialog as SnackBar)
-              .closed
-              .then((reason) {
-            if (!dismissed) {
-              control.updateProperties({"_dismissed": true});
-              debugPrint(
-                  "Dismissing SnackBar(${control.id}) with reason: $reason");
-              control.updateProperties({"_open": false}, python: false);
-              control.updateProperties({"open": false});
-              control.triggerEvent("dismiss");
-            }
-          });
-        });
-      } else if (!open && lastOpen) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).removeCurrentSnackBar();
-          control.updateProperties({"_open": false}, python: false);
-        });
+      if (dialog is ErrorControl) {
+        debugPrint(
+          "SnackBar: ErrorControl, not showing dialog: ${dialog.message}",
+        );
+        return dialog;
       }
+
+      // A Snackbar control can be shown more than once. Reset the state from
+      // the previous dismissal and identify this display cycle so a delayed
+      // completion from an older cycle cannot close the current Snackbar.
+      final generation = control.getInt("_show_generation", 0)! + 1;
+      control.updateProperties({
+        "_open": true,
+        "_dismissed": false,
+        "_show_generation": generation,
+      }, python: false);
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).removeCurrentSnackBar();
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(dialog as SnackBar).closed.then((reason) {
+          final isCurrentCycle =
+              control.getInt("_show_generation", 0) == generation;
+          final alreadyDismissed = control.getBool("_dismissed", false)!;
+          if (isCurrentCycle && !alreadyDismissed) {
+            control.updateProperties({"_dismissed": true}, python: false);
+            debugPrint(
+              "Dismissing SnackBar(${control.id}) with reason: $reason",
+            );
+            control.updateProperties({"_open": false}, python: false);
+            control.updateProperties({"open": false});
+            control.triggerEvent("dismiss");
+          }
+        });
+      });
+    } else if (!open && lastOpen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).removeCurrentSnackBar();
+        control.updateProperties({"_open": false}, python: false);
+      });
     }
     return const SizedBox.shrink();
   }

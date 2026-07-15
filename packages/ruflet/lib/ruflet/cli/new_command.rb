@@ -8,7 +8,7 @@ require "yaml"
 module Ruflet
   module CLI
     module NewCommand
-      TEMPLATE_REPO_URL = ENV.fetch("RUFLET_TEMPLATE_REPO_URL", "https://github.com/AdamMusa/ruflet.git")
+      TEMPLATE_REPO_URL = ENV.fetch("RUFLET_TEMPLATE_REPO_URL", "https://github.com/AdamMusa/ruflet-template.git")
       TEMPLATE_REPO_REF = ENV.fetch("RUFLET_TEMPLATE_REPO_REF", "main")
       RUNTIME_REPO_URL = ENV.fetch("RUFLET_RUNTIME_REPO_URL", "https://github.com/AdamMusa/ruflet.git")
 

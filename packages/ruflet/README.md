@@ -37,7 +37,7 @@ ruflet install [--device DEVICE_ID]
 ```
 
 Commands that create, diagnose, or build a Flutter client compare the cached
-template revision with the canonical template in `AdamMusa/ruflet` on GitHub. When `main`
+template revision with `AdamMusa/ruflet-template` on GitHub. When `main`
 changes, Ruflet downloads the new template and refreshes its managed
 `build/client` automatically. If GitHub is unavailable, Ruflet keeps using the
 last complete cached template. Use `ruflet doctor --fix` to force a clean
