@@ -45,10 +45,14 @@ module Ruflet
             runtime_page&.invoke(self, "pause", timeout: timeout, on_result: on_result)
           end
 
-          def play(position: nil, timeout: 10, on_result: nil)
-            args = {}
-            args["position"] = position unless position.nil?
-            runtime_page&.invoke(self, "play", args: args.empty? ? nil : args, timeout: timeout, on_result: on_result)
+          def play(position: 0, timeout: 10, on_result: nil)
+            runtime_page&.invoke(
+              self,
+              "play",
+              args: { "position" => position.nil? ? 0 : position },
+              timeout: timeout,
+              on_result: on_result
+            )
           end
 
           def release(timeout: 10, on_result: nil)
@@ -59,10 +63,14 @@ module Ruflet
             runtime_page&.invoke(self, "resume", timeout: timeout, on_result: on_result)
           end
 
-          def seek(position_milliseconds = nil, timeout: 10, on_result: nil)
-            args = {}
-            args["position"] = position_milliseconds unless position_milliseconds.nil?
-            runtime_page&.invoke(self, "seek", args: args.empty? ? nil : args, timeout: timeout, on_result: on_result)
+          def seek(position_milliseconds, timeout: 10, on_result: nil)
+            runtime_page&.invoke(
+              self,
+              "seek",
+              args: { "position" => position_milliseconds },
+              timeout: timeout,
+              on_result: on_result
+            )
           end
         end
       end

@@ -58,4 +58,21 @@ class RufletAudioCompatibilityTest < Minitest::Test
     assert_equal audio.wire_id, invoke_payload["control_id"]
     assert_nil invoke_payload["args"]
   end
+
+  def test_play_always_sends_the_position_map_expected_by_flet_audio
+    messages = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { messages << [action, payload] }
+    )
+    audio = page.audio(src: "assets/intro.mp3")
+    messages.clear
+
+    audio.play
+
+    invoke_payload = messages.reverse.map(&:last).find { |payload| payload["name"] == "play" }
+    refute_nil invoke_payload
+    assert_equal({ "position" => 0 }, invoke_payload["args"])
+  end
 end
