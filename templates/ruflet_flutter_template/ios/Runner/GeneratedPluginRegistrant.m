@@ -102,6 +102,12 @@
 @import record_ios;
 #endif
 
+#if __has_include(<rive_native/RiveNativePlugin.h>)
+#import <rive_native/RiveNativePlugin.h>
+#else
+@import rive_native;
+#endif
+
 #if __has_include(<ruby_runtime/MrubyRuntimePlugin.h>)
 #import <ruby_runtime/MrubyRuntimePlugin.h>
 #else
@@ -175,6 +181,7 @@
   [PasteboardPlugin registerWithRegistrar:[registry registrarForPlugin:@"PasteboardPlugin"]];
   [PermissionHandlerPlugin registerWithRegistrar:[registry registrarForPlugin:@"PermissionHandlerPlugin"]];
   [RecordIosPlugin registerWithRegistrar:[registry registrarForPlugin:@"RecordIosPlugin"]];
+  [RiveNativePlugin registerWithRegistrar:[registry registrarForPlugin:@"RiveNativePlugin"]];
   [MrubyRuntimePlugin registerWithRegistrar:[registry registrarForPlugin:@"MrubyRuntimePlugin"]];
   [ScreenBrightnessIosPlugin registerWithRegistrar:[registry registrarForPlugin:@"ScreenBrightnessIosPlugin"]];
   [FPPSensorsPlusPlugin registerWithRegistrar:[registry registrarForPlugin:@"FPPSensorsPlusPlugin"]];

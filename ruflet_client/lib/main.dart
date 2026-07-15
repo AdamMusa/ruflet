@@ -19,14 +19,14 @@ import 'package:flet_permission_handler/flet_permission_handler.dart'
 import 'package:flet_rive/flet_rive.dart' as flet_rive;
 import 'package:flet_secure_storage/flet_secure_storage.dart'
     as flet_secure_storage;
-import 'package:flet_spinkit/flet_spinkit.dart' as flet_spinkit;
 import 'package:flet_video/flet_video.dart' as flet_video;
-import 'package:flet_webview/flet_webview.dart' as flet_webview;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'connection_probe.dart';
+import 'ruflet_spinkit.dart';
+import 'ruflet_webview.dart';
 
 const bool isProduction = bool.fromEnvironment('dart.vm.product');
 const String configuredRufletUrl = String.fromEnvironment(
@@ -182,9 +182,9 @@ void main([List<String>? args]) async {
     flet_permission_handler.Extension(),
     flet_rive.Extension(),
     flet_secure_storage.Extension(),
-    flet_spinkit.Extension(),
+    RufletSpinKitExtension(),
     flet_video.Extension(),
-    flet_webview.Extension(),
+    RufletWebViewExtension(),
   ];
 
   for (final extension in rufletExtensions) {

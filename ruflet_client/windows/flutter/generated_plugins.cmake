@@ -13,10 +13,12 @@ list(APPEND FLUTTER_PLUGIN_LIST
   pasteboard
   permission_handler_windows
   record_windows
+  rive_native
   screen_brightness_windows
   screen_retriever_windows
   share_plus
   url_launcher_windows
+  webview_all_windows
   window_manager
   window_to_front
 )

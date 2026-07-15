@@ -17,10 +17,9 @@ module Ruflet
         #   clear_local_storage, enable_zoom, disable_zoom, set_javascript_mode,
         #   get_current_url, get_title, get_user_agent.
         #
-        # Platform note: the native webview (and therefore run_javascript and the
-        # events/methods) runs on iOS, Android and macOS. On web it falls back to
-        # an <iframe>, which cannot run the methods and which most external sites
-        # block via X-Frame-Options/CSP — embed your own same-origin pages there.
+        # Platform note: the native webview runs on iOS, Android, macOS, Windows,
+        # and Linux. Linux distributions must provide WebKitGTK 4.1. On web it
+        # uses an iframe, so browser cross-origin restrictions still apply.
         class WebViewControl < Ruflet::Control
           TYPE = "WebView".freeze
           WIRE = "WebView".freeze

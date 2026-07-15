@@ -29,7 +29,7 @@ module Ruflet
         "rive" => { package: "flet_rive", alias: "ruflet_rive" },
         "secure_storage" => { package: "flet_secure_storage", alias: "ruflet_secure_storage" },
         "video" => { package: "flet_video", alias: "ruflet_video" },
-        "webview" => { package: "flet_webview", alias: "ruflet_webview" }
+        "webview" => { package: "webview_all", alias: "ruflet_webview" }
       }.freeze
 
       def command_new(args)

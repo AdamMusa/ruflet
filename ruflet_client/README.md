@@ -17,6 +17,9 @@ flutter run -d macos
 flutter run -d chrome
 ```
 
+Linux WebView support uses WebKitGTK 4.1. Debian and Ubuntu development hosts
+can install it with `sudo apt install libwebkit2gtk-4.1-dev`.
+
 ## Connect To An App
 
 Start a Ruflet application in another terminal:
