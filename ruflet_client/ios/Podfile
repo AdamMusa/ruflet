@@ -39,5 +39,60 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+
+    target.build_configurations.each do |config|
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] += [
+        'PERMISSION_CAMERA=1',
+        'PERMISSION_LOCATION_WHENINUSE=1',
+        'PERMISSION_MICROPHONE=1',
+        'PERMISSION_PHOTOS=1',
+      ]
+    end
+  end
+
+  # rive_native (rive >= 0.14) ships prebuilt static engine libs and force-loads
+  # them via its pod_target_xcconfig. Under `use_frameworks! :linkage => :static`
+  # those pod-level link flags do NOT reach the Runner app target, so rive's
+  # symbols (_createRiveRenderer, _riveFontDummyLinker, ReadWriteRing, ...) end up
+  # undefined at the final link. Re-apply rive_native's force-load + library search
+  # path on Runner (sdk-conditional so device and simulator both link). Only when
+  # rive is actually in the build, so non-rive apps are unaffected.
+  apply_rive_native_linking(installer)
+end
+
+# Adds rive_native's prebuilt-lib force-load to the Pods-Runner xcconfigs so the
+# rive engine links into the app under static-framework linkage.
+def apply_rive_native_linking(installer)
+  return unless installer.pods_project.targets.any? { |t| t.name == 'rive_native' }
+
+  rive_libs = %w[
+    rive rive_pls_renderer rive_yoga rive_harfbuzz rive_sheenbidi rive_decoders
+    libpng zlib libjpeg libwebp miniaudio luau_vm luau_compiler luau_analyzer
+    rive_scripting_workspace spirv_cross brotli
+  ]
+  rive_ldflags = " -Wl,-force_load,${RIVE_NATIVE_LIB_DIR}/librive_native.a " +
+                 rive_libs.map { |lib| "-l#{lib}" }.join(' ')
+  base = '${PODS_ROOT}/../.symlinks/plugins/rive_native/native/build/iphoneos/bin'
+
+  Dir.glob(File.join(installer.sandbox.root, 'Target Support Files', 'Pods-Runner', 'Pods-Runner.*.xcconfig')).each do |xcconfig|
+    contents = File.read(xcconfig)
+    next if contents.include?('RIVE_NATIVE_LIB_DIR')
+
+    if contents =~ /^OTHER_LDFLAGS = .*$/
+      contents = contents.sub(/^OTHER_LDFLAGS = (.*)$/) { "OTHER_LDFLAGS = #{Regexp.last_match(1)}#{rive_ldflags}" }
+    else
+      contents += "OTHER_LDFLAGS = $(inherited)#{rive_ldflags}\n"
+    end
+
+    if contents =~ /^LIBRARY_SEARCH_PATHS = .*$/
+      contents = contents.sub(/^LIBRARY_SEARCH_PATHS = (.*)$/) { "LIBRARY_SEARCH_PATHS = #{Regexp.last_match(1)} \"${RIVE_NATIVE_LIB_DIR}\"" }
+    else
+      contents += "LIBRARY_SEARCH_PATHS = $(inherited) \"${RIVE_NATIVE_LIB_DIR}\"\n"
+    end
+
+    contents += "RIVE_NATIVE_LIB_DIR[sdk=iphoneos*] = #{base}/release\n"
+    contents += "RIVE_NATIVE_LIB_DIR[sdk=iphonesimulator*] = #{base}/emulator\n"
+    File.write(xcconfig, contents)
   end
 end

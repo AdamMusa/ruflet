@@ -44,9 +44,9 @@ class RufletCupertinoButtonCompatibilityTest < Minitest::Test
     assert_equal "large", button.props["size"]
   end
 
-  def test_cupertino_button_serializes_opacity_on_click_outside_flet_range
-    assert_equal(-0.1, Ruflet.cupertino_button(opacity_on_click: -0.1).to_patch["opacity_on_click"])
-    assert_equal 1.1, Ruflet.cupertino_button(opacity_on_click: 1.1).to_patch["opacity_on_click"]
+  def test_cupertino_button_rejects_opacity_on_click_outside_flet_range
+    assert_raises(ArgumentError) { Ruflet.cupertino_button(opacity_on_click: -0.1) }
+    assert_raises(ArgumentError) { Ruflet.cupertino_button(opacity_on_click: 1.1) }
   end
 
   def test_filled_and_tinted_buttons_inherit_cupertino_button_behavior

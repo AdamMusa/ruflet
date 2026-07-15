@@ -7,7 +7,6 @@ module Ruflet
         class PointsControl < Ruflet::Control
           TYPE = "points".freeze
           WIRE = "Points".freeze
-          KEYWORDS = [:data, :key, :paint, :point_mode, :points].freeze
 
           def initialize(id: nil, data: nil, key: nil, paint: nil, point_mode: nil, points: nil)
             props = {}

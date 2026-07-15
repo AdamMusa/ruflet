@@ -7,7 +7,6 @@ module Ruflet
         class ChartAxisControl < Ruflet::Control
           TYPE = "chartaxis".freeze
           WIRE = "axis".freeze
-          KEYWORDS = [:title, :labels, :label_size, :title_size, :show_labels].freeze
 
           def initialize(id: nil, title: nil, labels: nil, label_size: nil, title_size: nil, show_labels: nil)
             props = {}
@@ -23,7 +22,6 @@ module Ruflet
         class ChartAxisLabelControl < Ruflet::Control
           TYPE = "chartaxislabel".freeze
           WIRE = "l".freeze
-          KEYWORDS = [:value, :label].freeze
 
           def initialize(id: nil, value: nil, label: nil)
             props = {}
@@ -36,7 +34,6 @@ module Ruflet
         class BarChartControl < Ruflet::Control
           TYPE = "barchart".freeze
           WIRE = "BarChart".freeze
-          KEYWORDS = [:width, :height, :min_y, :max_y, :min_x, :max_x, :groups, :left_axis, :right_axis, :top_axis, :bottom_axis, :horizontal_grid_lines, :vertical_grid_lines, :border, :tooltip, :on_event].freeze
 
           def initialize(id: nil, width: nil, height: nil, min_y: nil, max_y: nil, min_x: nil, max_x: nil, groups: nil, left_axis: nil, right_axis: nil, top_axis: nil, bottom_axis: nil, horizontal_grid_lines: nil, vertical_grid_lines: nil, border: nil, tooltip: nil, on_event: nil)
             props = {}
@@ -63,7 +60,6 @@ module Ruflet
         class BarChartGroupControl < Ruflet::Control
           TYPE = "barchartgroup".freeze
           WIRE = "group".freeze
-          KEYWORDS = [:x, :rods, :bars_space, :showing_tooltip_indicators].freeze
 
           def initialize(id: nil, x: nil, rods: nil, bars_space: nil, showing_tooltip_indicators: nil)
             props = {}
@@ -78,7 +74,6 @@ module Ruflet
         class BarChartRodControl < Ruflet::Control
           TYPE = "barchartrod".freeze
           WIRE = "rod".freeze
-          KEYWORDS = [:from_y, :to_y, :width, :color, :gradient, :border_radius, :rod_stack_items].freeze
 
           def initialize(id: nil, from_y: nil, to_y: nil, width: nil, color: nil, gradient: nil, border_radius: nil, rod_stack_items: nil)
             props = {}
@@ -96,7 +91,6 @@ module Ruflet
         class BarChartRodStackItemControl < Ruflet::Control
           TYPE = "barchartrodstackitem".freeze
           WIRE = "stack_item".freeze
-          KEYWORDS = [:from_y, :to_y, :color, :border_side].freeze
 
           def initialize(id: nil, from_y: nil, to_y: nil, color: nil, border_side: nil)
             props = {}
@@ -111,7 +105,6 @@ module Ruflet
         class LineChartControl < Ruflet::Control
           TYPE = "linechart".freeze
           WIRE = "LineChart".freeze
-          KEYWORDS = [:width, :height, :min_y, :max_y, :min_x, :max_x, :data_series, :left_axis, :right_axis, :top_axis, :bottom_axis, :interactive, :tooltip, :on_event].freeze
 
           def initialize(id: nil, width: nil, height: nil, min_y: nil, max_y: nil, min_x: nil, max_x: nil, data_series: nil, left_axis: nil, right_axis: nil, top_axis: nil, bottom_axis: nil, interactive: nil, tooltip: nil, on_event: nil)
             props = {}
@@ -136,7 +129,6 @@ module Ruflet
         class LineChartDataControl < Ruflet::Control
           TYPE = "linechartdata".freeze
           WIRE = "data".freeze
-          KEYWORDS = [:points, :color, :gradient, :stroke_width, :curved, :rounded_stroke_cap].freeze
 
           def initialize(id: nil, points: nil, color: nil, gradient: nil, stroke_width: nil, curved: nil, rounded_stroke_cap: nil)
             props = {}
@@ -153,7 +145,6 @@ module Ruflet
         class LineChartDataPointControl < Ruflet::Control
           TYPE = "linechartdatapoint".freeze
           WIRE = "p".freeze
-          KEYWORDS = [:x, :y].freeze
 
           def initialize(id: nil, x: nil, y: nil)
             props = {}
@@ -166,7 +157,6 @@ module Ruflet
         class PieChartControl < Ruflet::Control
           TYPE = "piechart".freeze
           WIRE = "PieChart".freeze
-          KEYWORDS = [:width, :height, :sections, :sections_space, :center_space_radius, :tooltip, :on_event].freeze
 
           def initialize(id: nil, width: nil, height: nil, sections: nil, sections_space: nil, center_space_radius: nil, tooltip: nil, on_event: nil)
             props = {}
@@ -184,7 +174,6 @@ module Ruflet
         class PieChartSectionControl < Ruflet::Control
           TYPE = "piechartsection".freeze
           WIRE = "section".freeze
-          KEYWORDS = [:value, :title, :color, :radius, :title_style, :badge_widget, :badge_position_percentage_offset].freeze
 
           def initialize(id: nil, value: nil, title: nil, color: nil, radius: nil, title_style: nil, badge_widget: nil, badge_position_percentage_offset: nil)
             props = {}
@@ -202,7 +191,6 @@ module Ruflet
         class CandlestickChartControl < Ruflet::Control
           TYPE = "candlestickchart".freeze
           WIRE = "CandlestickChart".freeze
-          KEYWORDS = [:width, :height, :min_x, :max_x, :min_y, :max_y, :spots, :left_axis, :right_axis, :top_axis, :bottom_axis, :tooltip, :on_event].freeze
 
           def initialize(id: nil, width: nil, height: nil, min_x: nil, max_x: nil, min_y: nil, max_y: nil, spots: nil, left_axis: nil, right_axis: nil, top_axis: nil, bottom_axis: nil, tooltip: nil, on_event: nil)
             props = {}
@@ -226,7 +214,6 @@ module Ruflet
         class CandlestickChartSpotControl < Ruflet::Control
           TYPE = "candlestickchartspot".freeze
           WIRE = "CandlestickChartSpot".freeze
-          KEYWORDS = [:x, :open, :high, :low, :close, :selected].freeze
 
           def initialize(id: nil, x: nil, open: nil, high: nil, low: nil, close: nil, selected: nil)
             props = {}
@@ -243,7 +230,6 @@ module Ruflet
         class RadarChartControl < Ruflet::Control
           TYPE = "radarchart".freeze
           WIRE = "RadarChart".freeze
-          KEYWORDS = [:width, :height, :titles, :data_sets, :on_event].freeze
 
           def initialize(id: nil, width: nil, height: nil, titles: nil, data_sets: nil, on_event: nil)
             props = {}
@@ -259,7 +245,6 @@ module Ruflet
         class RadarChartTitleControl < Ruflet::Control
           TYPE = "radarcharttitle".freeze
           WIRE = "RadarChartTitle".freeze
-          KEYWORDS = [:text, :angle, :position_percentage_offset].freeze
 
           def initialize(id: nil, text: nil, angle: nil, position_percentage_offset: nil)
             props = {}
@@ -273,7 +258,6 @@ module Ruflet
         class RadarDataSetControl < Ruflet::Control
           TYPE = "radardataset".freeze
           WIRE = "RadarDataSet".freeze
-          KEYWORDS = [:entries, :border_color, :fill_color, :border_width].freeze
 
           def initialize(id: nil, entries: nil, border_color: nil, fill_color: nil, border_width: nil)
             props = {}
@@ -288,7 +272,6 @@ module Ruflet
         class RadarDataSetEntryControl < Ruflet::Control
           TYPE = "radardatasetentry".freeze
           WIRE = "RadarDataSetEntry".freeze
-          KEYWORDS = [:value].freeze
 
           def initialize(id: nil, value: nil)
             props = {}
@@ -300,7 +283,6 @@ module Ruflet
         class ScatterChartControl < Ruflet::Control
           TYPE = "scatterchart".freeze
           WIRE = "ScatterChart".freeze
-          KEYWORDS = [:width, :height, :min_x, :max_x, :min_y, :max_y, :spots, :left_axis, :right_axis, :top_axis, :bottom_axis, :on_event].freeze
 
           def initialize(id: nil, width: nil, height: nil, min_x: nil, max_x: nil, min_y: nil, max_y: nil, spots: nil, left_axis: nil, right_axis: nil, top_axis: nil, bottom_axis: nil, on_event: nil)
             props = {}
@@ -323,7 +305,6 @@ module Ruflet
         class ScatterChartSpotControl < Ruflet::Control
           TYPE = "scatterchartspot".freeze
           WIRE = "ScatterChartSpot".freeze
-          KEYWORDS = [:x, :y, :radius, :color].freeze
 
           def initialize(id: nil, x: nil, y: nil, radius: nil, color: nil)
             props = {}

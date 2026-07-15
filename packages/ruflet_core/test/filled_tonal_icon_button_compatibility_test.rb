@@ -73,9 +73,9 @@ class RufletFilledTonalIconButtonCompatibilityTest < Minitest::Test
     assert_equal({ "all" => 8 }, button.props["padding"])
   end
 
-  def test_filled_tonal_icon_button_serializes_non_positive_splash_radius_like_flet
-    assert_equal 0, Ruflet.filled_tonal_icon_button("check", splash_radius: 0).to_patch["splash_radius"]
-    assert_equal(-1, Ruflet.filled_tonal_icon_button("check", splash_radius: -1).to_patch["splash_radius"])
+  def test_filled_tonal_icon_button_rejects_non_positive_splash_radius_like_flet
+    assert_raises(ArgumentError) { Ruflet.filled_tonal_icon_button("check", splash_radius: 0) }
+    assert_raises(ArgumentError) { Ruflet.filled_tonal_icon_button("check", splash_radius: -1) }
   end
 
   def test_compact_alias_uses_same_control

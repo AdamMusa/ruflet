@@ -7,7 +7,6 @@ module Ruflet
         class StoragePathsControl < Ruflet::Control
           TYPE = "storagepaths".freeze
           WIRE = "StoragePaths".freeze
-          KEYWORDS = [:data, :key].freeze
 
           def initialize(id: nil, data: nil, key: nil)
             props = {}

@@ -6,6 +6,7 @@ on:
     types: [published]
   push:
     branches: [main, prebuild]
+    tags: ['v*']
     paths:
       - '.github/workflows/build-ruflet-android.yml'
       - 'ruflet_client/**'
@@ -129,6 +130,17 @@ jobs:
         with:
           tag_name: ${{ github.ref_name == 'prebuild' && 'prebuild' || 'prebuild-main' }}
           name: ${{ github.ref_name == 'prebuild' && 'Ruflet Client Prebuild (prebuild)' || 'Ruflet Client Prebuild (main)' }}
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
+          files: ${{ matrix.artifact }}
+
+      - name: Publish versioned client release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Ruflet Client ${{ github.ref_name }}
           prerelease: true
           make_latest: false
           overwrite_files: true

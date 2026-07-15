@@ -7,7 +7,6 @@ module Ruflet
         class AudioControl < Ruflet::Control
           TYPE = "audio".freeze
           WIRE = "Audio".freeze
-          KEYWORDS = [:autoplay, :balance, :data, :key, :opacity, :playback_rate, :release_mode, :rtl, :src, :src_base64, :tooltip, :visible, :volume, :on_duration_change, :on_error, :on_loaded, :on_position_change, :on_seek_complete, :on_state_change].freeze
 
           def initialize(id: nil, autoplay: nil, balance: nil, data: nil, key: nil, opacity: nil, playback_rate: nil, release_mode: nil, rtl: nil, src: nil, src_base64: nil, tooltip: nil, visible: nil, volume: nil, on_duration_change: nil, on_error: nil, on_loaded: nil, on_position_change: nil, on_seek_complete: nil, on_state_change: nil)
             props = {}
@@ -46,13 +45,7 @@ module Ruflet
           end
 
           def play(position: 0, timeout: 10, on_result: nil)
-            runtime_page&.invoke(
-              self,
-              "play",
-              args: { "position" => position.nil? ? 0 : position },
-              timeout: timeout,
-              on_result: on_result
-            )
+            runtime_page&.invoke(self, "play", args: { "position" => position }, timeout: timeout, on_result: on_result)
           end
 
           def release(timeout: 10, on_result: nil)
@@ -63,14 +56,10 @@ module Ruflet
             runtime_page&.invoke(self, "resume", timeout: timeout, on_result: on_result)
           end
 
-          def seek(position_milliseconds, timeout: 10, on_result: nil)
-            runtime_page&.invoke(
-              self,
-              "seek",
-              args: { "position" => position_milliseconds },
-              timeout: timeout,
-              on_result: on_result
-            )
+          def seek(position_milliseconds = nil, timeout: 10, on_result: nil)
+            args = {}
+            args["position"] = position_milliseconds unless position_milliseconds.nil?
+            runtime_page&.invoke(self, "seek", args: args.empty? ? nil : args, timeout: timeout, on_result: on_result)
           end
         end
       end

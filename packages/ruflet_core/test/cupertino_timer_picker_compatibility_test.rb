@@ -39,13 +39,16 @@ class RufletCupertinoTimerPickerCompatibilityTest < Minitest::Test
     assert_equal 0, picker.props["value"]
   end
 
-  def test_cupertino_timer_picker_serializes_invalid_flet_values
-    patch = Ruflet.cupertino_timer_picker(item_extent: -1, minute_interval: 7, second_interval: 7, value: -1).to_patch
-
-    assert_equal(-1, patch["item_extent"])
-    assert_equal 7, patch["minute_interval"]
-    assert_equal 7, patch["second_interval"]
-    assert_equal(-1, patch["value"])
+  def test_cupertino_timer_picker_rejects_invalid_flet_values
+    assert_raises(ArgumentError) { Ruflet.cupertino_timer_picker(item_extent: 0) }
+    assert_raises(ArgumentError) { Ruflet.cupertino_timer_picker(minute_interval: 0) }
+    assert_raises(ArgumentError) { Ruflet.cupertino_timer_picker(minute_interval: 7) }
+    assert_raises(ArgumentError) { Ruflet.cupertino_timer_picker(second_interval: 0) }
+    assert_raises(ArgumentError) { Ruflet.cupertino_timer_picker(second_interval: 7) }
+    assert_raises(ArgumentError) { Ruflet.cupertino_timer_picker(value: -1) }
+    assert_raises(ArgumentError) { Ruflet.cupertino_timer_picker(value: 86_400) }
+    assert_raises(ArgumentError) { Ruflet.cupertino_timer_picker(value: 61, minute_interval: 2) }
+    assert_raises(ArgumentError) { Ruflet.cupertino_timer_picker(value: 61, second_interval: 2) }
   end
 
   def test_cupertino_timer_picker_change_event_updates_value_before_handler

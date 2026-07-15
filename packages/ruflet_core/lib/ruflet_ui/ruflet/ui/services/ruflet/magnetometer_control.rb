@@ -7,7 +7,6 @@ module Ruflet
         class MagnetometerControl < Ruflet::Control
           TYPE = "magnetometer".freeze
           WIRE = "Magnetometer".freeze
-          KEYWORDS = [:cancel_on_error, :data, :enabled, :interval, :key, :on_error, :on_reading].freeze
 
           def initialize(id: nil, cancel_on_error: nil, data: nil, enabled: nil, interval: nil, key: nil, on_error: nil, on_reading: nil)
             props = {}

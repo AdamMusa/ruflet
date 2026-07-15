@@ -51,13 +51,11 @@ class RufletCupertinoDatePickerCompatibilityTest < Minitest::Test
     assert_equal false, picker.props["use_24h_format"]
   end
 
-  def test_cupertino_date_picker_serializes_invalid_flet_values
-    patch = Ruflet.cupertino_date_picker(item_extent: -1, minute_interval: 7, date_picker_mode: "time", show_day_of_week: true).to_patch
-
-    assert_equal(-1, patch["item_extent"])
-    assert_equal 7, patch["minute_interval"]
-    assert_equal "time", patch["date_picker_mode"]
-    assert_equal true, patch["show_day_of_week"]
+  def test_cupertino_date_picker_rejects_invalid_flet_values
+    assert_raises(ArgumentError) { Ruflet.cupertino_date_picker(item_extent: 0) }
+    assert_raises(ArgumentError) { Ruflet.cupertino_date_picker(minute_interval: 0) }
+    assert_raises(ArgumentError) { Ruflet.cupertino_date_picker(minute_interval: 7) }
+    assert_raises(ArgumentError) { Ruflet.cupertino_date_picker(date_picker_mode: "time", show_day_of_week: true) }
   end
 
   def test_cupertino_date_picker_change_event_updates_value_before_handler

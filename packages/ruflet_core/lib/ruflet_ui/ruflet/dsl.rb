@@ -22,10 +22,8 @@ module Ruflet
 
     def default_port
       raw = ENV["RUFLET_PORT"].to_s
-      return 8550 if raw.strip.empty?
-
       value = raw.to_i
-      value >= 0 ? value : 8550
+      value > 0 ? value : 8550
     end
 
     def _pending_app
@@ -178,7 +176,6 @@ module Ruflet
     def pageview(children = nil, **props) = _pending_app.pageview(children, **props)
     def progress_ring(**props) = _pending_app.progress_ring(**props)
     def progressring(**props) = _pending_app.progressring(**props)
-    def spinkit(**props) = _pending_app.spinkit(**props)
     def range_slider(**props) = _pending_app.range_slider(**props)
     def rangeslider(**props) = _pending_app.rangeslider(**props)
     def responsive_row(children = nil, **props, &block) = _pending_app.responsive_row(children, **props, &block)
@@ -243,9 +240,6 @@ module Ruflet
     def slider(**props) = _pending_app.slider(**props)
     def transparent_pointer(content = nil, **props) = _pending_app.transparent_pointer(content, **props)
     def transparentpointer(content = nil, **props) = _pending_app.transparentpointer(content, **props)
-    def rotated_box(content = nil, **props) = _pending_app.rotated_box(content, **props)
-    def rotatedbox(content = nil, **props) = _pending_app.rotatedbox(content, **props)
-    def screenshot(content = nil, **props) = _pending_app.screenshot(content, **props)
     def radio(**props) = _pending_app.radio(**props)
     def radio_group(content = nil, **props) = _pending_app.radio_group(content, **props)
     def radiogroup(content = nil, **props) = _pending_app.radiogroup(content, **props)
@@ -253,8 +247,6 @@ module Ruflet
     def alertdialog(**props) = _pending_app.alertdialog(**props)
     def snack_bar(content = nil, **props) = _pending_app.snack_bar(content, **props)
     def snackbar(content = nil, **props) = _pending_app.snackbar(content, **props)
-    def snack_bar_action(label = nil, **props) = _pending_app.snack_bar_action(label, **props)
-    def snackbaraction(label = nil, **props) = _pending_app.snackbaraction(label, **props)
     def bottom_sheet(content = nil, **props) = _pending_app.bottom_sheet(content, **props)
     def bottomsheet(content = nil, **props) = _pending_app.bottomsheet(content, **props)
     def markdown(value = nil, **props) = _pending_app.markdown(value, **props)
@@ -319,6 +311,7 @@ module Ruflet
     def web_view(**props) = _pending_app.web_view(**props)
     def webview(**props) = _pending_app.webview(**props)
     def video(**props) = _pending_app.video(**props)
+    def spinkit(**variant) = _pending_app.spinkit(**variant)
     def code_editor(value = nil, **props) = _pending_app.code_editor(value, **props)
     def codeeditor(value = nil, **props) = _pending_app.codeeditor(value, **props)
     def rive(src = nil, **props) = _pending_app.rive(src, **props)
@@ -444,7 +437,7 @@ module Ruflet
         Ruflet::Server.new(host: host, port: port) do |runtime_page|
           runtime_page.set_view_props(page_props)
           runtime_page.add_service(*app_services) if app_services.any?
-          app_roots.each { |control| runtime_page.add(control) }
+          runtime_page.add(*app_roots)
         end.start
       end
 

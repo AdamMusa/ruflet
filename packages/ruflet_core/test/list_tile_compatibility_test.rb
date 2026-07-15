@@ -82,11 +82,10 @@ class RufletListTileCompatibilityTest < Minitest::Test
     assert_equal "ListTile", Ruflet.listtile(title: "One").to_patch["_c"]
   end
 
-  def test_list_tile_serializes_three_line_without_subtitle_like_flet
-    patch = Ruflet.list_tile(title: "Jane Doe", is_three_line: true).to_patch
+  def test_list_tile_requires_subtitle_when_three_line_like_flet
+    error = assert_raises(ArgumentError) { Ruflet.list_tile(title: "Jane Doe", is_three_line: true) }
 
-    assert_equal true, patch["is_three_line"]
-    refute patch.key?("subtitle")
+    assert_match(/subtitle/, error.message)
   end
 
   def test_list_tile_click_and_long_press_events_dispatch

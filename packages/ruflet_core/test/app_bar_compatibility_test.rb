@@ -58,9 +58,9 @@ class RufletAppBarCompatibilityTest < Minitest::Test
     assert_equal({ "weight" => "bold" }, patch["toolbar_text_style"])
   end
 
-  def test_app_bar_serializes_toolbar_opacity_outside_flet_range
-    assert_equal(-0.01, Ruflet.app_bar(toolbar_opacity: -0.01).to_patch["toolbar_opacity"])
-    assert_equal 1.01, Ruflet.app_bar(toolbar_opacity: 1.01).to_patch["toolbar_opacity"]
+  def test_app_bar_rejects_toolbar_opacity_outside_flet_range
+    assert_raises(ArgumentError) { Ruflet.app_bar(toolbar_opacity: -0.01) }
+    assert_raises(ArgumentError) { Ruflet.app_bar(toolbar_opacity: 1.01) }
   end
 
   def test_page_add_serializes_app_bar_as_view_appbar
@@ -71,10 +71,10 @@ class RufletAppBarCompatibilityTest < Minitest::Test
       sender: ->(action, payload) { sent << [action, payload] }
     )
 
-    page.appbar = Ruflet.app_bar(title: Ruflet.text("Home"))
-    page.add(Ruflet.text("Body"))
+    page.add(Ruflet.text("Body"), appbar: Ruflet.app_bar(title: Ruflet.text("Home")))
 
-    view = sent.last[1]["patch"][1][3].first
+    views_patch = sent.last[1]["patch"].find { |op| op[2] == "views" }
+    view = views_patch[3].first
     assert_equal "AppBar", view["appbar"]["_c"]
     assert_equal "Text", view["appbar"]["title"]["_c"]
     assert_equal "Home", view["appbar"]["title"]["value"]

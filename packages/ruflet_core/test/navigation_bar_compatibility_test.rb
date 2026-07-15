@@ -52,20 +52,22 @@ class RufletNavigationBarCompatibilityTest < Minitest::Test
     assert_equal "Icon", second["icon"]["_c"]
   end
 
-  def test_navigation_bar_serializes_single_destination_like_flet
-    bar = Ruflet.navigation_bar(destinations: [Ruflet.navigation_bar_destination(icon: "home")])
+  def test_navigation_bar_requires_at_least_two_visible_destinations_like_flet
+    error = assert_raises(ArgumentError) do
+      Ruflet.navigation_bar(destinations: [Ruflet.navigation_bar_destination(icon: "home")])
+    end
 
-    assert_equal 1, bar.to_patch["destinations"].length
+    assert_match(/destinations/, error.message)
   end
 
-  def test_navigation_bar_serializes_selected_index_out_of_range_like_flet
+  def test_navigation_bar_rejects_selected_index_out_of_range_like_flet
     destinations = [
       Ruflet.navigation_bar_destination(icon: "home"),
       Ruflet.navigation_bar_destination(icon: "search")
     ]
 
-    assert_equal(-1, Ruflet.navigation_bar(destinations: destinations, selected_index: -1).to_patch["selected_index"])
-    assert_equal 2, Ruflet.navigation_bar(destinations: destinations, selected_index: 2).to_patch["selected_index"]
+    assert_raises(IndexError) { Ruflet.navigation_bar(destinations: destinations, selected_index: -1) }
+    assert_raises(IndexError) { Ruflet.navigation_bar(destinations: destinations, selected_index: 2) }
   end
 
   def test_navigation_bar_destination_requires_icon_like_flet
@@ -90,8 +92,7 @@ class RufletNavigationBarCompatibilityTest < Minitest::Test
       selected_index: 0,
       on_change: ->(event) { observed << [event.value, event.control.props["selected_index"]] }
     )
-    page.navigation_bar = bar
-    page.add(Ruflet.text("Body"))
+    page.add(Ruflet.text("Body"), navigation_bar: bar)
 
     page.dispatch_event(target: bar.wire_id, name: "change", data: { "value" => 1 })
 

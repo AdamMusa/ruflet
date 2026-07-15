@@ -7,7 +7,6 @@ module Ruflet
         class ShareControl < Ruflet::Control
           TYPE = "share".freeze
           WIRE = "Share".freeze
-          KEYWORDS = [:data, :key].freeze
 
           def initialize(id: nil, data: nil, key: nil)
             props = {}

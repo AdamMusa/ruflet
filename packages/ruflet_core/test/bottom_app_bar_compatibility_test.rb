@@ -46,8 +46,8 @@ class RufletBottomAppBarCompatibilityTest < Minitest::Test
     assert_equal "#000000", bar.props["bgcolor"]
   end
 
-  def test_bottom_app_bar_serializes_negative_elevation_like_flet
-    assert_equal(-1, Ruflet.bottom_app_bar(elevation: -1).to_patch["elevation"])
+  def test_bottom_app_bar_rejects_negative_elevation_like_flet
+    assert_raises(ArgumentError) { Ruflet.bottom_app_bar(elevation: -1) }
   end
 
   def test_page_add_serializes_bottom_app_bar_as_view_slot
@@ -58,10 +58,10 @@ class RufletBottomAppBarCompatibilityTest < Minitest::Test
       sender: ->(action, payload) { sent << [action, payload] }
     )
 
-    page.bottom_appbar = Ruflet.bottom_app_bar(Ruflet.text("Actions"))
-    page.add(Ruflet.text("Body"))
+    page.add(Ruflet.text("Body"), bottom_appbar: Ruflet.bottom_app_bar(Ruflet.text("Actions")))
 
-    view = sent.last[1]["patch"][1][3].first
+    views_patch = sent.last[1]["patch"].find { |op| op[2] == "views" }
+    view = views_patch[3].first
     assert_equal "BottomAppBar", view["bottom_appbar"]["_c"]
     assert_equal "Text", view["bottom_appbar"]["content"]["_c"]
   end
@@ -78,7 +78,8 @@ class RufletBottomAppBarCompatibilityTest < Minitest::Test
     page.bottom_appbar = Ruflet.bottom_app_bar(Ruflet.text("Actions"))
     page.update
 
-    view = sent.last[1]["patch"][1][3].first
+    views_patch = sent.last[1]["patch"].find { |op| op[2] == "views" }
+    view = views_patch[3].first
     assert_equal "BottomAppBar", view["bottom_appbar"]["_c"]
   end
 end

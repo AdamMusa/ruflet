@@ -8,89 +8,20 @@ module Ruflet
           TYPE = "searchbar".freeze
           WIRE = "SearchBar".freeze
 
-          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :autofocus, :badge, :bar_bgcolor, :bar_border_side, :bar_elevation, :bar_hint_text, :bar_hint_text_style, :bar_leading, :bar_overlay_color, :bar_padding, :bar_scroll_padding, :bar_shadow_color, :bar_shape, :bar_size_constraints, :bar_text_style, :bar_trailing, :bottom, :capitalization, :col, :controls, :data, :disabled, :divider_color, :expand, :expand_loose, :full_screen, :height, :key, :keyboard_type, :left, :margin, :offset, :opacity, :right, :rotate, :rtl, :scale, :shrink_wrap, :size_change_interval, :tooltip, :top, :value, :view_bar_padding, :view_bgcolor, :view_elevation, :view_header_height, :view_header_text_style, :view_hint_text, :view_hint_text_style, :view_leading, :view_padding, :view_shape, :view_side, :view_size_constraints, :view_trailing, :visible, :width, :on_animation_end, :on_blur, :on_change, :on_focus, :on_size_change, :on_submit, :on_tap, :on_tap_outside_bar].freeze
-
-          def initialize(id: nil, **props)
-            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
-            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
-            align = props[:align]
-            animate_align = props[:animate_align]
-            animate_margin = props[:animate_margin]
-            animate_offset = props[:animate_offset]
-            animate_opacity = props[:animate_opacity]
-            animate_position = props[:animate_position]
-            animate_rotation = props[:animate_rotation]
-            animate_scale = props[:animate_scale]
-            animate_size = props[:animate_size]
-            aspect_ratio = props[:aspect_ratio]
-            autofocus = props[:autofocus]
-            badge = props[:badge]
-            bar_bgcolor = props[:bar_bgcolor]
-            bar_border_side = props[:bar_border_side]
-            bar_elevation = props[:bar_elevation]
-            bar_hint_text = props[:bar_hint_text]
-            bar_hint_text_style = props[:bar_hint_text_style]
-            bar_leading = props[:bar_leading]
-            bar_overlay_color = props[:bar_overlay_color]
-            bar_padding = props[:bar_padding]
-            bar_scroll_padding = props[:bar_scroll_padding]
-            bar_shadow_color = props[:bar_shadow_color]
-            bar_shape = props[:bar_shape]
-            bar_size_constraints = props[:bar_size_constraints]
-            bar_text_style = props[:bar_text_style]
-            bar_trailing = props[:bar_trailing]
-            bottom = props[:bottom]
-            capitalization = props[:capitalization]
-            col = props[:col]
-            controls = props[:controls]
-            data = props[:data]
-            disabled = props[:disabled]
-            divider_color = props[:divider_color]
-            expand = props[:expand]
-            expand_loose = props[:expand_loose]
-            full_screen = props[:full_screen]
-            height = props[:height]
-            key = props[:key]
-            keyboard_type = props[:keyboard_type]
-            left = props[:left]
-            margin = props[:margin]
-            offset = props[:offset]
-            opacity = props[:opacity]
-            right = props[:right]
-            rotate = props[:rotate]
-            rtl = props[:rtl]
-            scale = props[:scale]
-            shrink_wrap = props[:shrink_wrap]
-            size_change_interval = props[:size_change_interval]
-            tooltip = props[:tooltip]
-            top = props[:top]
-            value = props[:value]
-            view_bar_padding = props[:view_bar_padding]
-            view_bgcolor = props[:view_bgcolor]
-            view_elevation = props[:view_elevation]
-            view_header_height = props[:view_header_height]
-            view_header_text_style = props[:view_header_text_style]
-            view_hint_text = props[:view_hint_text]
-            view_hint_text_style = props[:view_hint_text_style]
-            view_leading = props[:view_leading]
-            view_padding = props[:view_padding]
-            view_shape = props[:view_shape]
-            view_side = props[:view_side]
-            view_size_constraints = props[:view_size_constraints]
-            view_trailing = props[:view_trailing]
-            visible = props[:visible]
-            width = props[:width]
-            on_animation_end = props[:on_animation_end]
-            on_blur = props[:on_blur]
-            on_change = props[:on_change]
-            on_focus = props[:on_focus]
-            on_size_change = props[:on_size_change]
-            on_submit = props[:on_submit]
-            on_tap = props[:on_tap]
-            on_tap_outside_bar = props[:on_tap_outside_bar]
+          def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, autofocus: nil, badge: nil, bar_bgcolor: nil, bar_border_side: nil, bar_elevation: nil, bar_hint_text: nil, bar_hint_text_style: nil, bar_leading: nil, bar_overlay_color: nil, bar_padding: nil, bar_scroll_padding: nil, bar_shadow_color: nil, bar_shape: nil, bar_size_constraints: nil, bar_text_style: nil, bar_trailing: nil, bottom: nil, capitalization: nil, col: nil, controls: nil, data: nil, disabled: nil, divider_color: nil, expand: nil, expand_loose: nil, full_screen: nil, height: nil, key: nil, keyboard_type: nil, left: nil, margin: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, shrink_wrap: nil, size_change_interval: nil, tooltip: nil, top: nil, value: nil, view_bar_padding: nil, view_bgcolor: nil, view_elevation: nil, view_header_height: nil, view_header_text_style: nil, view_hint_text: nil, view_hint_text_style: nil, view_leading: nil, view_padding: nil, view_shape: nil, view_side: nil, view_size_constraints: nil, view_trailing: nil, visible: nil, width: nil, on_animation_end: nil, on_blur: nil, on_change: nil, on_focus: nil, on_size_change: nil, on_submit: nil, on_tap: nil, on_tap_outside_bar: nil)
             autofocus = false if autofocus.nil?
             full_screen = false if full_screen.nil?
             value = "" if value.nil?
+
+            {
+              bar_elevation: bar_elevation,
+              view_elevation: view_elevation,
+              view_header_height: view_header_height
+            }.each do |name, value|
+              next unless value.is_a?(Numeric)
+
+              raise ArgumentError, "search_bar #{name} must be greater than or equal to 0" if value.negative?
+            end
 
             props = {}
             props[:align] = align unless align.nil?

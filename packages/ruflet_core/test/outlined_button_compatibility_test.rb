@@ -41,12 +41,8 @@ class RufletOutlinedButtonCompatibilityTest < Minitest::Test
     assert_equal "none", button.props["clip_behavior"]
   end
 
-  def test_outlined_button_serializes_without_content_or_icon_like_flet
-    patch = Ruflet.outlined_button.to_patch
-
-    assert_equal "OutlinedButton", patch["_c"]
-    refute patch.key?("content")
-    refute patch.key?("icon")
+  def test_outlined_button_requires_content_or_icon_like_flet
+    assert_raises(ArgumentError) { Ruflet.outlined_button }
   end
 
   def test_compact_alias_uses_same_control

@@ -9,22 +9,18 @@ import io.flutter.plugin.common.MethodChannel.Result
 class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
     private lateinit var channel: MethodChannel
 
-    external fun nativeStart(
-        projectRoot: String,
-        entrypoint: String,
-        loadPaths: Array<String>,
-        environmentKeys: Array<String>,
-        environmentValues: Array<String>,
-        errorFilePath: String,
-        stopSignalPath: String,
-    )
-    external fun nativeStop()
-    external fun nativeIsRunning(): Boolean
-    external fun nativeLastError(): String
+    external fun nativeEval(code: String): String
+    external fun nativeRunFile(path: String): String
+    external fun nativeReset()
+    external fun nativeStartFileServer(path: String, stopSignalPath: String): String
+    external fun nativeStopFileServer()
+    external fun nativeIsFileServerRunning(): Boolean
+    external fun nativeServerPort(): Int
+    external fun nativeLastFileServerError(): String
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         System.loadLibrary("ruby_runtime")
-        channel = MethodChannel(binding.binaryMessenger, "ruflet_runtime")
+        channel = MethodChannel(binding.binaryMessenger, "ruby_runtime")
         channel.setMethodCallHandler(this)
     }
 
@@ -32,55 +28,52 @@ class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
         channel.setMethodCallHandler(null)
     }
 
-    private fun status(): Map<String, Any> {
-        val running = nativeIsRunning()
-        return mapOf(
-            "running" to running,
-            "error" to nativeLastError(),
-        )
-    }
-
     override fun onMethodCall(call: MethodCall, result: Result) {
         try {
             when (call.method) {
-                "start" -> {
-                    val projectRoot = call.argument<String>("projectRoot")
-                    val entrypoint = call.argument<String>("entrypoint")
-                    if (projectRoot.isNullOrBlank() || entrypoint.isNullOrBlank()) {
-                        result.error(
-                            "invalid_args",
-                            "Missing projectRoot or entrypoint.",
-                            null,
-                        )
-                        return
+                "eval" -> {
+                    val code = call.argument<String>("code")
+                    if (code.isNullOrEmpty()) {
+                        result.error("invalid_args", "Missing 'code' argument.", null)
+                    } else {
+                        result.success(nativeEval(code))
                     }
-                    val loadPaths = call.argument<List<String>>("loadPaths") ?: emptyList()
-                    val environment =
-                        call.argument<Map<String, String>>("environment") ?: emptyMap()
-                    val stopSignalPath =
-                        call.argument<String>("stopSignalPath")?.takeIf { it.isNotBlank() }
-                            ?: "$projectRoot/.runtime.stop"
-                    val errorFilePath = call.argument<String>("errorFilePath") ?: ""
-                    nativeStart(
-                        projectRoot,
-                        entrypoint,
-                        loadPaths.toTypedArray(),
-                        environment.keys.toTypedArray(),
-                        environment.values.toTypedArray(),
-                        errorFilePath,
-                        stopSignalPath,
-                    )
-                    result.success(status())
                 }
-                "status" -> result.success(status())
-                "stop" -> {
-                    nativeStop()
+                "runFile" -> {
+                    val path = call.argument<String>("path")
+                    if (path.isNullOrEmpty()) {
+                        result.error("invalid_args", "Missing 'path' argument.", null)
+                    } else {
+                        result.success(nativeRunFile(path))
+                    }
+                }
+                "reset" -> {
+                    nativeReset()
                     result.success(null)
                 }
+                "startFileServer" -> {
+                    val path = call.argument<String>("path")
+                    if (path.isNullOrEmpty()) {
+                        result.error("invalid_args", "Missing 'path' argument.", null)
+                    } else {
+                        val stopSignalPath =
+                            call.argument<String>("stopSignalPath")?.takeIf { it.isNotBlank() }
+                                ?: "$path.stop"
+                        nativeStartFileServer(path, stopSignalPath)
+                        result.success(null)
+                    }
+                }
+                "stopFileServer" -> {
+                    nativeStopFileServer()
+                    result.success(null)
+                }
+                "isFileServerRunning" -> result.success(nativeIsFileServerRunning())
+                "serverPort" -> result.success(nativeServerPort())
+                "lastFileServerError" -> result.success(nativeLastFileServerError())
                 else -> result.notImplemented()
             }
         } catch (error: RuntimeException) {
-            result.error("ruflet_runtime_error", error.message, null)
+            result.error("mruby_error", error.message, null)
         }
     }
 }

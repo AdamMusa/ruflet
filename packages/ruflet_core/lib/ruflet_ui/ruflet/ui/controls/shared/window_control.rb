@@ -7,46 +7,78 @@ module Ruflet
         class WindowControl < Ruflet::Control
           TYPE = "window".freeze
           WIRE = "Window".freeze
-          RESIZE_EDGES = {
-            "top" => "top",
-            "left" => "left",
-            "right" => "right",
-            "bottom" => "bottom",
-            "top_left" => "topLeft",
-            "bottom_left" => "bottomLeft",
-            "top_right" => "topRight",
-            "bottom_right" => "bottomRight"
-          }.freeze
 
-          KEYWORDS = [:alignment, :always_on_bottom, :always_on_top, :aspect_ratio, :badge_label, :bgcolor, :brightness, :data, :focused, :frameless, :full_screen, :height, :icon, :ignore_mouse_events, :key, :left, :max_height, :max_width, :maximizable, :maximized, :min_height, :min_width, :minimizable, :minimized, :movable, :opacity, :prevent_close, :progress_bar, :resizable, :shadow, :skip_task_bar, :title_bar_buttons_hidden, :title_bar_hidden, :top, :visible, :width, :on_event].freeze
-
-          def initialize(id: nil, **props)
-            compact = {}
-            props.each do |key, value|
-              raise ArgumentError, "unknown keyword: :#{key}" unless KEYWORDS.include?(key)
-              compact[key] = value unless value.nil?
-            end
-            super(type: TYPE, id: id, **compact)
+          def initialize(id: nil, alignment: nil, always_on_bottom: nil, always_on_top: nil, aspect_ratio: nil, badge_label: nil, bgcolor: nil, brightness: nil, data: nil, focused: nil, frameless: nil, full_screen: nil, height: nil, icon: nil, ignore_mouse_events: nil, key: nil, left: nil, max_height: nil, max_width: nil, maximizable: nil, maximized: nil, min_height: nil, min_width: nil, minimizable: nil, minimized: nil, movable: nil, opacity: nil, prevent_close: nil, progress_bar: nil, resizable: nil, shadow: nil, skip_task_bar: nil, title_bar_buttons_hidden: nil, title_bar_hidden: nil, top: nil, visible: nil, width: nil, on_event: nil)
+            props = {}
+            props[:alignment] = alignment unless alignment.nil?
+            props[:always_on_bottom] = always_on_bottom unless always_on_bottom.nil?
+            props[:always_on_top] = always_on_top unless always_on_top.nil?
+            props[:aspect_ratio] = aspect_ratio unless aspect_ratio.nil?
+            props[:badge_label] = badge_label unless badge_label.nil?
+            props[:bgcolor] = bgcolor unless bgcolor.nil?
+            props[:brightness] = brightness unless brightness.nil?
+            props[:data] = data unless data.nil?
+            props[:focused] = focused unless focused.nil?
+            props[:frameless] = frameless unless frameless.nil?
+            props[:full_screen] = full_screen unless full_screen.nil?
+            props[:height] = height unless height.nil?
+            props[:icon] = icon unless icon.nil?
+            props[:ignore_mouse_events] = ignore_mouse_events unless ignore_mouse_events.nil?
+            props[:key] = key unless key.nil?
+            props[:left] = left unless left.nil?
+            props[:max_height] = max_height unless max_height.nil?
+            props[:max_width] = max_width unless max_width.nil?
+            props[:maximizable] = maximizable unless maximizable.nil?
+            props[:maximized] = maximized unless maximized.nil?
+            props[:min_height] = min_height unless min_height.nil?
+            props[:min_width] = min_width unless min_width.nil?
+            props[:minimizable] = minimizable unless minimizable.nil?
+            props[:minimized] = minimized unless minimized.nil?
+            props[:movable] = movable unless movable.nil?
+            props[:opacity] = opacity unless opacity.nil?
+            props[:prevent_close] = prevent_close unless prevent_close.nil?
+            props[:progress_bar] = progress_bar unless progress_bar.nil?
+            props[:resizable] = resizable unless resizable.nil?
+            props[:shadow] = shadow unless shadow.nil?
+            props[:skip_task_bar] = skip_task_bar unless skip_task_bar.nil?
+            props[:title_bar_buttons_hidden] = title_bar_buttons_hidden unless title_bar_buttons_hidden.nil?
+            props[:title_bar_hidden] = title_bar_hidden unless title_bar_hidden.nil?
+            props[:top] = top unless top.nil?
+            props[:visible] = visible unless visible.nil?
+            props[:width] = width unless width.nil?
+            props[:on_event] = on_event unless on_event.nil?
+            super(type: TYPE, id: id, **props)
           end
 
-          %w[
-            wait_until_ready_to_show
-            destroy
-            center
-            close
-            to_front
-            start_dragging
-          ].each do |method_name|
-            define_method(method_name) do |timeout: 10, on_result: nil|
-              invoke_window(method_name, timeout: timeout, on_result: on_result)
-            end
+          def wait_until_ready_to_show(timeout: 10, on_result: nil)
+            invoke_window_method("wait_until_ready_to_show", timeout: timeout, on_result: on_result)
+          end
+
+          def to_front(timeout: 10, on_result: nil)
+            invoke_window_method("to_front", timeout: timeout, on_result: on_result)
+          end
+
+          def center(timeout: 10, on_result: nil)
+            invoke_window_method("center", timeout: timeout, on_result: on_result)
+          end
+
+          def close(timeout: 10, on_result: nil)
+            invoke_window_method("close", timeout: timeout, on_result: on_result)
+          end
+
+          def destroy(timeout: 10, on_result: nil)
+            invoke_window_method("destroy", timeout: timeout, on_result: on_result)
+          end
+
+          def start_dragging(timeout: 10, on_result: nil)
+            invoke_window_method("start_dragging", timeout: timeout, on_result: on_result)
           end
 
           def start_resizing(edge, timeout: 10, on_result: nil)
-            edge_value = RESIZE_EDGES.fetch(edge.to_s, edge.to_s)
-            invoke_window(
+            runtime_page&.invoke(
+              self,
               "start_resizing",
-              args: { "edge" => edge_value },
+              args: { "edge" => edge },
               timeout: timeout,
               on_result: on_result
             )
@@ -54,14 +86,8 @@ module Ruflet
 
           private
 
-          def invoke_window(method_name, args: nil, timeout:, on_result:)
-            runtime_page&.invoke(
-              self,
-              method_name,
-              args: args,
-              timeout: timeout,
-              on_result: on_result
-            )
+          def invoke_window_method(method_name, timeout:, on_result:)
+            runtime_page&.invoke(self, method_name, timeout: timeout, on_result: on_result)
           end
         end
       end

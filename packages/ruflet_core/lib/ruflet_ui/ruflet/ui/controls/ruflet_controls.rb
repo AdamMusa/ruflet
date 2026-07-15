@@ -39,6 +39,7 @@ require_relative "materials/card_control"
 require_relative "materials/checkbox_control"
 require_relative "materials/chip_control"
 require_relative "materials/circleavatar_control"
+require_relative "materials/codeeditor_control"
 require_relative "materials/container_control"
 require_relative "materials/contextmenu_control"
 require_relative "materials/datacell_control"
@@ -58,10 +59,11 @@ require_relative "materials/filledbutton_control"
 require_relative "materials/fillediconbutton_control"
 require_relative "materials/filledtonalbutton_control"
 require_relative "materials/filledtonaliconbutton_control"
+require_relative "materials/spinkit_controls"
 require_relative "materials/floatingactionbutton_control"
 require_relative "materials/iconbutton_control"
 require_relative "materials/listtile_control"
-require_relative "materials/map_control"
+require_relative "materials/map_controls"
 require_relative "materials/menubar_control"
 require_relative "materials/menuitembutton_control"
 require_relative "materials/navigationbar_control"
@@ -77,18 +79,17 @@ require_relative "materials/popupmenubutton_control"
 require_relative "materials/popupmenuitem_control"
 require_relative "materials/progressbar_control"
 require_relative "materials/progressring_control"
-require_relative "materials/spinkit_control"
 require_relative "materials/radio_control"
 require_relative "materials/radiogroup_control"
 require_relative "materials/rangeslider_control"
 require_relative "materials/reorderablelistview_control"
+require_relative "materials/rive_control"
 require_relative "materials/searchbar_control"
 require_relative "materials/segment_control"
 require_relative "materials/segmentedbutton_control"
 require_relative "materials/selectionarea_control"
 require_relative "materials/slider_control"
 require_relative "materials/snackbar_control"
-require_relative "materials/snackbaraction_control"
 require_relative "materials/submenubutton_control"
 require_relative "materials/switch_control"
 require_relative "materials/tab_control"
@@ -139,9 +140,7 @@ require_relative "shared/rect_control"
 require_relative "shared/reorderabledraghandle_control"
 require_relative "shared/responsiverow_control"
 require_relative "shared/row_control"
-require_relative "shared/rotatedbox_control"
 require_relative "shared/safearea_control"
-require_relative "shared/screenshot_control"
 require_relative "shared/semantics_control"
 require_relative "shared/serviceregistry_control"
 require_relative "shared/shadermask_control"
@@ -210,6 +209,8 @@ module Ruflet
           "circle" => RufletComponents::CircleControl,
           "circle_avatar" => RufletComponents::CircleAvatarControl,
           "circleavatar" => RufletComponents::CircleAvatarControl,
+          "code_editor" => RufletComponents::CodeEditorControl,
+          "codeeditor" => RufletComponents::CodeEditorControl,
           "color" => RufletComponents::ColorControl,
           "column" => RufletComponents::ColumnControl,
           "container" => RufletComponents::ContainerControl,
@@ -328,8 +329,27 @@ module Ruflet
           "list_tile" => RufletComponents::ListTileControl,
           "list_view" => RufletComponents::ListViewControl,
           "listtile" => RufletComponents::ListTileControl,
-          "map" => RufletComponents::MapControl,
           "listview" => RufletComponents::ListViewControl,
+          "map" => RufletComponents::MapControl,
+          "tile_layer" => RufletComponents::TileLayerControl,
+          "tilelayer" => RufletComponents::TileLayerControl,
+          "marker_layer" => RufletComponents::MarkerLayerControl,
+          "markerlayer" => RufletComponents::MarkerLayerControl,
+          "marker" => RufletComponents::MarkerControl,
+          "circle_layer" => RufletComponents::CircleLayerControl,
+          "circlelayer" => RufletComponents::CircleLayerControl,
+          "circle_marker" => RufletComponents::CircleMarkerControl,
+          "circlemarker" => RufletComponents::CircleMarkerControl,
+          "polyline_layer" => RufletComponents::PolylineLayerControl,
+          "polylinelayer" => RufletComponents::PolylineLayerControl,
+          "polyline_marker" => RufletComponents::PolylineMarkerControl,
+          "polylinemarker" => RufletComponents::PolylineMarkerControl,
+          "polygon_layer" => RufletComponents::PolygonLayerControl,
+          "polygonlayer" => RufletComponents::PolygonLayerControl,
+          "polygon_marker" => RufletComponents::PolygonMarkerControl,
+          "polygonmarker" => RufletComponents::PolygonMarkerControl,
+          "simple_attribution" => RufletComponents::SimpleAttributionControl,
+          "simpleattribution" => RufletComponents::SimpleAttributionControl,
           "markdown" => RufletComponents::MarkdownControl,
           "menu_bar" => RufletComponents::MenuBarControl,
           "menu_item_button" => RufletComponents::MenuItemButtonControl,
@@ -375,7 +395,6 @@ module Ruflet
           "progress_ring" => RufletComponents::ProgressRingControl,
           "progressbar" => RufletComponents::ProgressBarControl,
           "progressring" => RufletComponents::ProgressRingControl,
-          "spinkit" => RufletComponents::SpinkitControl,
           "radio" => RufletComponents::RadioControl,
           "radio_group" => RufletComponents::RadioGroupControl,
           "radiogroup" => RufletComponents::RadioGroupControl,
@@ -394,14 +413,12 @@ module Ruflet
           "reorderable_list_view" => RufletComponents::ReorderableListViewControl,
           "reorderabledraghandle" => RufletComponents::ReorderableDragHandleControl,
           "reorderablelistview" => RufletComponents::ReorderableListViewControl,
+          "rive" => RufletComponents::RiveControl,
           "responsive_row" => RufletComponents::ResponsiveRowControl,
           "responsiverow" => RufletComponents::ResponsiveRowControl,
           "row" => RufletComponents::RowControl,
-          "rotated_box" => RufletComponents::RotatedBoxControl,
-          "rotatedbox" => RufletComponents::RotatedBoxControl,
           "safe_area" => RufletComponents::SafeAreaControl,
           "safearea" => RufletComponents::SafeAreaControl,
-          "screenshot" => RufletComponents::ScreenshotControl,
           "search_bar" => RufletComponents::SearchBarControl,
           "searchbar" => RufletComponents::SearchBarControl,
           "segment" => RufletComponents::SegmentControl,
@@ -422,8 +439,6 @@ module Ruflet
           "shimmer" => RufletComponents::ShimmerControl,
           "slider" => RufletComponents::SliderControl,
           "snack_bar" => RufletComponents::SnackBarControl,
-          "snack_bar_action" => RufletComponents::SnackBarActionControl,
-          "snackbaraction" => RufletComponents::SnackBarActionControl,
           "snackbar" => RufletComponents::SnackBarControl,
           "stack" => RufletComponents::StackControl,
           "submenu_button" => RufletComponents::SubmenuButtonControl,
@@ -455,7 +470,7 @@ module Ruflet
           "window" => RufletComponents::WindowControl,
           "window_drag_area" => RufletComponents::WindowDragAreaControl,
           "windowdragarea" => RufletComponents::WindowDragAreaControl,
-        }.freeze
+        }.merge(RufletComponents::SPINKIT_CONTROLS).freeze
       end
     end
   end

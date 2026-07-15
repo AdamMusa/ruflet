@@ -8,63 +8,7 @@ module Ruflet
           TYPE = "gridview".freeze
           WIRE = "GridView".freeze
 
-          KEYWORDS = [:adaptive, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :auto_scroll, :badge, :bottom, :build_controls_on_demand, :cache_extent, :child_aspect_ratio, :clip_behavior, :col, :controls, :data, :disabled, :expand, :expand_loose, :height, :horizontal, :key, :left, :margin, :max_extent, :offset, :opacity, :padding, :reverse, :right, :rotate, :rtl, :run_spacing, :runs_count, :scale, :scroll, :scroll_interval, :semantic_child_count, :size_change_interval, :spacing, :tooltip, :top, :visible, :width, :on_animation_end, :on_scroll, :on_size_change].freeze
-
-          def initialize(id: nil, **props)
-            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
-            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
-            adaptive = props[:adaptive]
-            align = props[:align]
-            animate_align = props[:animate_align]
-            animate_margin = props[:animate_margin]
-            animate_offset = props[:animate_offset]
-            animate_opacity = props[:animate_opacity]
-            animate_position = props[:animate_position]
-            animate_rotation = props[:animate_rotation]
-            animate_scale = props[:animate_scale]
-            animate_size = props[:animate_size]
-            aspect_ratio = props[:aspect_ratio]
-            auto_scroll = props[:auto_scroll]
-            badge = props[:badge]
-            bottom = props[:bottom]
-            build_controls_on_demand = props[:build_controls_on_demand]
-            cache_extent = props[:cache_extent]
-            child_aspect_ratio = props[:child_aspect_ratio]
-            clip_behavior = props[:clip_behavior]
-            col = props[:col]
-            controls = props[:controls]
-            data = props[:data]
-            disabled = props[:disabled]
-            expand = props[:expand]
-            expand_loose = props[:expand_loose]
-            height = props[:height]
-            horizontal = props[:horizontal]
-            key = props[:key]
-            left = props[:left]
-            margin = props[:margin]
-            max_extent = props[:max_extent]
-            offset = props[:offset]
-            opacity = props[:opacity]
-            padding = props[:padding]
-            reverse = props[:reverse]
-            right = props[:right]
-            rotate = props[:rotate]
-            rtl = props[:rtl]
-            run_spacing = props[:run_spacing]
-            runs_count = props[:runs_count]
-            scale = props[:scale]
-            scroll = props[:scroll]
-            scroll_interval = props[:scroll_interval]
-            semantic_child_count = props[:semantic_child_count]
-            size_change_interval = props[:size_change_interval]
-            spacing = props[:spacing]
-            tooltip = props[:tooltip]
-            top = props[:top]
-            visible = props[:visible]
-            width = props[:width]
-            on_animation_end = props[:on_animation_end]
-            on_scroll = props[:on_scroll]
-            on_size_change = props[:on_size_change]
+          def initialize(id: nil, adaptive: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, auto_scroll: nil, badge: nil, bottom: nil, build_controls_on_demand: nil, cache_extent: nil, child_aspect_ratio: nil, clip_behavior: nil, col: nil, controls: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, horizontal: nil, key: nil, left: nil, margin: nil, max_extent: nil, offset: nil, opacity: nil, padding: nil, reverse: nil, right: nil, rotate: nil, rtl: nil, run_spacing: nil, runs_count: nil, scale: nil, scroll: nil, scroll_interval: nil, semantic_child_count: nil, size_change_interval: nil, spacing: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_scroll: nil, on_size_change: nil)
             build_controls_on_demand = true if build_controls_on_demand.nil?
             child_aspect_ratio = 1.0 if child_aspect_ratio.nil?
             horizontal = false if horizontal.nil?
@@ -72,6 +16,18 @@ module Ruflet
             run_spacing = 10 if run_spacing.nil?
             runs_count = 1 if runs_count.nil?
             spacing = 10 if spacing.nil?
+
+            {
+              child_aspect_ratio: child_aspect_ratio,
+              max_extent: max_extent,
+              run_spacing: run_spacing,
+              runs_count: runs_count,
+              semantic_child_count: semantic_child_count,
+              spacing: spacing
+            }.each do |name, value|
+              next if value.nil?
+              raise ArgumentError, "grid_view #{name} must be greater than or equal to 0" if value.negative?
+            end
 
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?

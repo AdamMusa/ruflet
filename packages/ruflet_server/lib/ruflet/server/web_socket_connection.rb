@@ -2,7 +2,6 @@
 
 module Ruflet
   class WebSocketConnection
-    TASK_IO_POLL_INTERVAL = 0.01
     # Ruflet control messages are small; anything much larger is invalid or hostile.
     MAX_FRAME_PAYLOAD_BYTES = 16 * 1024 * 1024
 
@@ -165,22 +164,8 @@ module Ruflet
       end
 
       chunk
-    rescue StandardError => error
-      if task_scheduler? && would_block_error?(error)
-        sleep TASK_IO_POLL_INTERVAL
-        retry
-      end
-
+    rescue IOError, SystemCallError
       nil
-    end
-
-    def task_scheduler?
-      concurrent = Object.const_defined?(:Task) || (Thread.respond_to?(:cooperative?) && Thread.cooperative?)
-      concurrent && @socket.respond_to?(:recv_nonblock)
-    end
-
-    def would_block_error?(error)
-      %w[Errno::EAGAIN Errno::EWOULDBLOCK IO::EAGAINWaitReadable IO::WaitReadable].include?(error.class.to_s)
     end
   end
 end

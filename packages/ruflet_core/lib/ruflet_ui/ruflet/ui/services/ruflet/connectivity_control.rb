@@ -7,7 +7,6 @@ module Ruflet
         class ConnectivityControl < Ruflet::Control
           TYPE = "connectivity".freeze
           WIRE = "Connectivity".freeze
-          KEYWORDS = [:data, :key, :on_change].freeze
 
           def initialize(id: nil, data: nil, key: nil, on_change: nil)
             props = {}

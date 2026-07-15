@@ -7,7 +7,6 @@ module Ruflet
         class FilePickerControl < Ruflet::Control
           TYPE = "filepicker".freeze
           WIRE = "FilePicker".freeze
-          KEYWORDS = [:data, :key, :on_result, :on_upload].freeze
 
           def initialize(id: nil, data: nil, key: nil, on_result: nil, on_upload: nil)
             props = {}

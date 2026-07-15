@@ -47,12 +47,8 @@ class RufletFilledButtonCompatibilityTest < Minitest::Test
     assert_equal "none", button.props["clip_behavior"]
   end
 
-  def test_filled_button_serializes_without_content_or_icon_like_flet
-    patch = Ruflet.filled_button.to_patch
-
-    assert_equal "FilledButton", patch["_c"]
-    refute patch.key?("content")
-    refute patch.key?("icon")
+  def test_filled_button_requires_content_or_icon_like_flet
+    assert_raises(ArgumentError) { Ruflet.filled_button }
   end
 
   def test_compact_alias_uses_same_control

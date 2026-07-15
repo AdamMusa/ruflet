@@ -8,62 +8,7 @@ module Ruflet
           TYPE = "cupertinocheckbox".freeze
           WIRE = "CupertinoCheckbox".freeze
 
-          KEYWORDS = [:active_color, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :autofocus, :badge, :border_side, :bottom, :check_color, :col, :data, :disabled, :expand, :expand_loose, :fill_color, :focus_color, :height, :key, :label, :label_position, :left, :margin, :mouse_cursor, :offset, :opacity, :right, :rotate, :rtl, :scale, :semantics_label, :shape, :size_change_interval, :spacing, :tooltip, :top, :tristate, :value, :visible, :width, :on_animation_end, :on_blur, :on_change, :on_focus, :on_size_change].freeze
-
-          def initialize(id: nil, **props)
-            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
-            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
-            active_color = props[:active_color]
-            align = props[:align]
-            animate_align = props[:animate_align]
-            animate_margin = props[:animate_margin]
-            animate_offset = props[:animate_offset]
-            animate_opacity = props[:animate_opacity]
-            animate_position = props[:animate_position]
-            animate_rotation = props[:animate_rotation]
-            animate_scale = props[:animate_scale]
-            animate_size = props[:animate_size]
-            aspect_ratio = props[:aspect_ratio]
-            autofocus = props[:autofocus]
-            badge = props[:badge]
-            border_side = props[:border_side]
-            bottom = props[:bottom]
-            check_color = props[:check_color]
-            col = props[:col]
-            data = props[:data]
-            disabled = props[:disabled]
-            expand = props[:expand]
-            expand_loose = props[:expand_loose]
-            fill_color = props[:fill_color]
-            focus_color = props[:focus_color]
-            height = props[:height]
-            key = props[:key]
-            label = props[:label]
-            label_position = props[:label_position]
-            left = props[:left]
-            margin = props[:margin]
-            mouse_cursor = props[:mouse_cursor]
-            offset = props[:offset]
-            opacity = props[:opacity]
-            right = props[:right]
-            rotate = props[:rotate]
-            rtl = props[:rtl]
-            scale = props[:scale]
-            semantics_label = props[:semantics_label]
-            shape = props[:shape]
-            size_change_interval = props[:size_change_interval]
-            spacing = props[:spacing]
-            tooltip = props[:tooltip]
-            top = props[:top]
-            tristate = props[:tristate]
-            value = props[:value]
-            visible = props[:visible]
-            width = props[:width]
-            on_animation_end = props[:on_animation_end]
-            on_blur = props[:on_blur]
-            on_change = props[:on_change]
-            on_focus = props[:on_focus]
-            on_size_change = props[:on_size_change]
+          def initialize(id: nil, active_color: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, autofocus: nil, badge: nil, border_side: nil, bottom: nil, check_color: nil, col: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, fill_color: nil, focus_color: nil, height: nil, key: nil, label: nil, label_position: nil, left: nil, margin: nil, mouse_cursor: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, semantics_label: nil, shape: nil, size_change_interval: nil, spacing: nil, tooltip: nil, top: nil, tristate: nil, value: nil, visible: nil, width: nil, on_animation_end: nil, on_blur: nil, on_change: nil, on_focus: nil, on_size_change: nil)
             autofocus = false if autofocus.nil?
             label_position = "right" if label_position.nil?
             spacing = 10 if spacing.nil?

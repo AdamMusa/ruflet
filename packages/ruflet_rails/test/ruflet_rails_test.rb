@@ -10,7 +10,7 @@ class RufletRailsTest < Minitest::Test
     assert_equal expected, loaded_ruflet
   end
 
-  def test_mobile_loader_captures_entrypoint_without_ruflet_server
+  def test_app_loader_captures_ruflet_run_entrypoint_for_rails
     app_file = nil
 
     Dir.mktmpdir do |dir|
@@ -35,4 +35,28 @@ class RufletRailsTest < Minitest::Test
   ensure
     File.delete(app_file) if app_file && File.exist?(app_file)
   end
+
+  def test_endpoint_without_an_entry_raises
+    # A bare endpoint has no auto-discovery fallback — the developer must
+    # declare an app file or a block.
+    error = assert_raises(ArgumentError) { Ruflet::Rails.endpoint }
+    assert_match(/requires one of app_file: or a block/, error.message)
+  end
+
+  def test_configuration_serializes_declared_extensions
+    config = Ruflet::Rails::Configuration.new
+    config.extensions = %w[webview]
+
+    assert_equal %w[webview], config.to_ruflet_yaml_hash["extensions"]
+  end
+
+  def test_configuration_omits_empty_services_and_extensions
+    config = Ruflet::Rails::Configuration.new
+
+    yaml_hash = config.to_ruflet_yaml_hash
+
+    refute_includes yaml_hash, "services"
+    refute_includes yaml_hash, "extensions"
+  end
+
 end

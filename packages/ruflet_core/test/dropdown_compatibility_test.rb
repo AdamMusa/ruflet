@@ -57,7 +57,7 @@ class RufletDropdownCompatibilityTest < Minitest::Test
 
     assert_equal "Dropdown", patch["_c"]
     assert_equal true, patch["autofocus"]
-    assert_equal({ "focused" => "#ABCDEF" }, patch["bgcolor"])
+    assert_equal({ "focused" => "#abcdef" }, patch["bgcolor"])
     assert_equal "outline", patch["border"]
     assert_equal "#111111", patch["border_color"]
     assert_equal 8, patch["border_radius"]
@@ -119,23 +119,18 @@ class RufletDropdownCompatibilityTest < Minitest::Test
     assert_equal "Blue", texted.props["text"]
   end
 
-  def test_dropdown_option_serializes_without_key_or_text_like_flet
-    patch = Ruflet.dropdown_option.to_patch
+  def test_dropdown_option_requires_key_or_text_like_flet
+    error = assert_raises(ArgumentError) { Ruflet.dropdown_option }
 
-    assert_equal "DropdownOption", patch["_c"]
-    refute patch.key?("key")
-    refute patch.key?("text")
+    assert_match(/key|text/, error.message)
   end
 
-  def test_dropdown_serializes_negative_numeric_values_like_flet
-    patch = Ruflet.dropdown([], border_width: -1, elevation: -2, focused_border_width: -3, menu_height: -4, menu_width: -5, text_size: -6).to_patch
+  def test_dropdown_rejects_negative_numeric_values_like_flet
+    %i[border_width elevation focused_border_width menu_height menu_width text_size].each do |prop|
+      error = assert_raises(ArgumentError) { Ruflet.dropdown([], prop => -1) }
 
-    assert_equal(-1, patch["border_width"])
-    assert_equal(-2, patch["elevation"])
-    assert_equal(-3, patch["focused_border_width"])
-    assert_equal(-4, patch["menu_height"])
-    assert_equal(-5, patch["menu_width"])
-    assert_equal(-6, patch["text_size"])
+      assert_match(/#{prop}/, error.message)
+    end
   end
 
   def test_dropdown_select_event_updates_value_before_handler

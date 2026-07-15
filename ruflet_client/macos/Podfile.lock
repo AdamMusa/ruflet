@@ -146,6 +146,7 @@ SPEC CHECKSUMS:
   pasteboard: 278d8100149f940fb795d6b3a74f0720c890ecb7
   path_provider_foundation: bb55f6dbba17d0dccd6737fe6f7f34fbd0376880
   record_macos: 7f227161b93c49e7e34fe681c5891c8622c8cc8b
+  rive_native: 7c43020540833c8258564b726317daf39d2c3bda
   screen_brightness_macos: 2a3ee243f8051c340381e8e51bcedced8360f421
   screen_retriever_macos: 452e51764a9e1cdb74b3c541238795849f21557f
   share_plus: 510bf0af1a42cd602274b4629920c9649c52f4cc

@@ -41,20 +41,15 @@ class RufletCupertinoSliderCompatibilityTest < Minitest::Test
     assert_equal 1.0, slider.props["max"]
   end
 
-  def test_cupertino_slider_serializes_invalid_flet_ranges
-    inverted = Ruflet.cupertino_slider(min: 2, max: 1).to_patch
-    low = Ruflet.cupertino_slider(min: 0, max: 1, value: -0.1).to_patch
-    high = Ruflet.cupertino_slider(min: 0, max: 1, value: 1.1).to_patch
-
-    assert_equal 2, inverted["min"]
-    assert_equal 1, inverted["max"]
-    assert_equal(-0.1, low["value"])
-    assert_equal 1.1, high["value"]
+  def test_cupertino_slider_rejects_invalid_flet_ranges
+    assert_raises(ArgumentError) { Ruflet.cupertino_slider(min: 2, max: 1) }
+    assert_raises(ArgumentError) { Ruflet.cupertino_slider(min: 0, max: 1, value: -0.1) }
+    assert_raises(ArgumentError) { Ruflet.cupertino_slider(min: 0, max: 1, value: 1.1) }
   end
 
-  def test_cupertino_slider_serializes_non_positive_divisions
-    assert_equal 0, Ruflet.cupertino_slider(divisions: 0).to_patch["divisions"]
-    assert_equal(-1, Ruflet.cupertino_slider(divisions: -1).to_patch["divisions"])
+  def test_cupertino_slider_rejects_non_positive_divisions
+    assert_raises(ArgumentError) { Ruflet.cupertino_slider(divisions: 0) }
+    assert_raises(ArgumentError) { Ruflet.cupertino_slider(divisions: -1) }
   end
 
   def test_cupertino_slider_change_event_updates_control_value_before_handler

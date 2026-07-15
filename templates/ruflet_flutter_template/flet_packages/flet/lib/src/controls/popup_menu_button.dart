@@ -1,0 +1,63 @@
+import 'package:flutter/material.dart';
+
+import '../extensions/control.dart';
+import '../models/control.dart';
+import '../utils/animations.dart';
+import '../utils/borders.dart';
+import '../utils/box.dart';
+import '../utils/buttons.dart';
+import '../utils/colors.dart';
+import '../utils/edge_insets.dart';
+import '../utils/misc.dart';
+import '../utils/numbers.dart';
+import '../utils/popup_menu.dart';
+import 'base_controls.dart';
+
+class PopupMenuButtonControl extends StatelessWidget {
+  final Control control;
+
+  const PopupMenuButtonControl({super.key, required this.control});
+
+  @override
+  Widget build(BuildContext context) {
+    debugPrint("PopupMenuButton build: ${control.id}");
+
+    var content = control.buildTextOrWidget("content");
+
+    var popupMenuButton = PopupMenuButton<String>(
+        enabled: !control.disabled,
+        tooltip: null,
+        icon: control.buildIconOrWidget("icon"),
+        iconSize: control.getDouble("icon_size"),
+        splashRadius: control.getDouble("splash_radius"),
+        shadowColor: control.getColor("shadow_color", context),
+        iconColor: control.getColor("icon_color", context),
+        elevation: control.getDouble("elevation"),
+        enableFeedback: control.getBool("enable_feedback"),
+        padding: control.getPadding("padding", const EdgeInsets.all(8))!,
+        color: control.getColor("bgcolor", context),
+        clipBehavior: control.getClipBehavior("clip_behavior", Clip.none)!,
+        shape: control.getShape(
+          "shape",
+          Theme.of(context),
+        ),
+        constraints: control.getBoxConstraints("size_constraints"),
+        style: control.getButtonStyle("style", Theme.of(context)),
+        popUpAnimationStyle: control.getAnimationStyle("popup_animation_style"),
+        menuPadding: control.getPadding("menu_padding"),
+        position: control.getPopupMenuPosition("menu_position"),
+        onSelected: (String selection) =>
+            control.triggerEvent("select", selection),
+        onCanceled: () => control.triggerEvent("cancel"),
+        onOpened: () => control.triggerEvent("open"),
+        itemBuilder: (BuildContext context) =>
+            buildPopupMenuEntries(control.children("items"), context),
+        child: content);
+
+    return LayoutControl(
+        control: control,
+        child: TooltipVisibility(
+            visible: control.getString("tooltip") == null,
+            child: popupMenuButton));
+  }
+}

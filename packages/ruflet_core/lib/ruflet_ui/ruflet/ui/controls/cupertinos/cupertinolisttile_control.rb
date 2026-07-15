@@ -8,64 +8,19 @@ module Ruflet
           TYPE = "cupertinolisttile".freeze
           WIRE = "CupertinoListTile".freeze
 
-          KEYWORDS = [:additional_info, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :bgcolor_activated, :bottom, :col, :data, :disabled, :expand, :expand_loose, :height, :key, :leading, :leading_size, :leading_to_title, :left, :margin, :notched, :offset, :opacity, :padding, :right, :rotate, :rtl, :scale, :size_change_interval, :subtitle, :title, :toggle_inputs, :tooltip, :top, :trailing, :url, :visible, :width, :on_animation_end, :on_click, :on_size_change].freeze
-
-          def initialize(id: nil, **props)
-            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
-            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
-            additional_info = props[:additional_info]
-            align = props[:align]
-            animate_align = props[:animate_align]
-            animate_margin = props[:animate_margin]
-            animate_offset = props[:animate_offset]
-            animate_opacity = props[:animate_opacity]
-            animate_position = props[:animate_position]
-            animate_rotation = props[:animate_rotation]
-            animate_scale = props[:animate_scale]
-            animate_size = props[:animate_size]
-            aspect_ratio = props[:aspect_ratio]
-            badge = props[:badge]
-            bgcolor = props[:bgcolor]
-            bgcolor_activated = props[:bgcolor_activated]
-            bottom = props[:bottom]
-            col = props[:col]
-            data = props[:data]
-            disabled = props[:disabled]
-            expand = props[:expand]
-            expand_loose = props[:expand_loose]
-            height = props[:height]
-            key = props[:key]
-            leading = props[:leading]
-            leading_size = props[:leading_size]
-            leading_to_title = props[:leading_to_title]
-            left = props[:left]
-            margin = props[:margin]
-            notched = props[:notched]
-            offset = props[:offset]
-            opacity = props[:opacity]
-            padding = props[:padding]
-            right = props[:right]
-            rotate = props[:rotate]
-            rtl = props[:rtl]
-            scale = props[:scale]
-            size_change_interval = props[:size_change_interval]
-            subtitle = props[:subtitle]
-            title = props[:title]
-            toggle_inputs = props[:toggle_inputs]
-            tooltip = props[:tooltip]
-            top = props[:top]
-            trailing = props[:trailing]
-            url = props[:url]
-            visible = props[:visible]
-            width = props[:width]
-            on_animation_end = props[:on_animation_end]
-            on_click = props[:on_click]
-            on_size_change = props[:on_size_change]
-            raise ArgumentError, "cupertino_list_tile requires title" if title.nil?
+          def initialize(id: nil, additional_info: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bgcolor: nil, bgcolor_activated: nil, bottom: nil, col: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, key: nil, leading: nil, leading_size: nil, leading_to_title: nil, left: nil, margin: nil, notched: nil, offset: nil, opacity: nil, padding: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, subtitle: nil, title: nil, toggle_inputs: nil, tooltip: nil, top: nil, trailing: nil, url: nil, visible: nil, width: nil, on_animation_end: nil, on_click: nil, on_size_change: nil)
+            raise ArgumentError, "cupertino_list_tile requires visible title" if title.nil? || (title.respond_to?(:props) && title.props["visible"] == false)
             notched = false if notched.nil?
             leading_size = notched ? 30.0 : 28.0 if leading_size.nil?
             leading_to_title = notched ? 12.0 : 16.0 if leading_to_title.nil?
             toggle_inputs = false if toggle_inputs.nil?
+            {
+              leading_size: leading_size,
+              leading_to_title: leading_to_title
+            }.each do |name, value|
+              raise ArgumentError, "cupertino_list_tile #{name} must be greater than or equal to 0" if value.negative?
+            end
+
             props = {}
             props[:additional_info] = additional_info unless additional_info.nil?
             props[:align] = align unless align.nil?

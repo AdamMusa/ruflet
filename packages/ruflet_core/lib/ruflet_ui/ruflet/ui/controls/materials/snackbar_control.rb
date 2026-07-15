@@ -8,44 +8,11 @@ module Ruflet
           TYPE = "snackbar".freeze
           WIRE = "SnackBar".freeze
 
-          KEYWORDS = [:action, :action_overflow_threshold, :adaptive, :badge, :behavior, :bgcolor, :clip_behavior, :close_icon_color, :col, :content, :data, :disabled, :dismiss_direction, :duration, :elevation, :expand, :expand_loose, :key, :margin, :opacity, :open, :padding, :persist, :rtl, :shape, :show_close_icon, :tooltip, :visible, :width, :on_action, :on_dismiss, :on_visible].freeze
-
-          def initialize(id: nil, **props)
-            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
-            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
-            action = props[:action]
-            action_overflow_threshold = props[:action_overflow_threshold]
-            adaptive = props[:adaptive]
-            badge = props[:badge]
-            behavior = props[:behavior]
-            bgcolor = props[:bgcolor]
-            clip_behavior = props[:clip_behavior]
-            close_icon_color = props[:close_icon_color]
-            col = props[:col]
-            content = props[:content]
-            data = props[:data]
-            disabled = props[:disabled]
-            dismiss_direction = props[:dismiss_direction]
-            duration = props[:duration]
-            elevation = props[:elevation]
-            expand = props[:expand]
-            expand_loose = props[:expand_loose]
-            key = props[:key]
-            margin = props[:margin]
-            opacity = props[:opacity]
-            open = props[:open]
-            padding = props[:padding]
-            persist = props[:persist]
-            rtl = props[:rtl]
-            shape = props[:shape]
-            show_close_icon = props[:show_close_icon]
-            tooltip = props[:tooltip]
-            visible = props[:visible]
-            width = props[:width]
-            on_action = props[:on_action]
-            on_dismiss = props[:on_dismiss]
-            on_visible = props[:on_visible]
+          def initialize(id: nil, action: nil, action_overflow_threshold: nil, adaptive: nil, badge: nil, behavior: nil, bgcolor: nil, clip_behavior: nil, close_icon_color: nil, col: nil, content: nil, data: nil, disabled: nil, dismiss_direction: nil, duration: nil, elevation: nil, expand: nil, expand_loose: nil, key: nil, margin: nil, opacity: nil, open: nil, padding: nil, persist: nil, rtl: nil, shape: nil, show_close_icon: nil, tooltip: nil, visible: nil, width: nil, on_action: nil, on_dismiss: nil, on_visible: nil)
             raise ArgumentError, "snack_bar requires content" if content.nil?
+            unless action_overflow_threshold.nil? || (0.0..1.0).cover?(action_overflow_threshold)
+              raise ArgumentError, "snack_bar action_overflow_threshold must be between 0.0 and 1.0"
+            end
 
             props = {}
             props[:action] = action unless action.nil?

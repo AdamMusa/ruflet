@@ -72,25 +72,21 @@ class RufletPopupMenuCompatibilityTest < Minitest::Test
     assert_equal "PopupMenuItem", Ruflet.popupmenuitem("Edit").to_patch["_c"]
   end
 
-  def test_popup_menu_item_serializes_without_visible_content_like_flet
-    empty = Ruflet.popup_menu_item.to_patch
-    hidden = Ruflet.popup_menu_item(Ruflet.container(visible: false)).to_patch
-
-    assert_equal "PopupMenuItem", empty["_c"]
-    refute empty.key?("content")
-    assert_equal false, hidden["content"]["visible"]
+  def test_popup_menu_item_requires_visible_content_like_flet
+    assert_raises(ArgumentError) { Ruflet.popup_menu_item }
+    assert_raises(ArgumentError) { Ruflet.popup_menu_item(Ruflet.text("Hidden", visible: false)) }
   end
 
-  def test_popup_menu_serializes_negative_numeric_values_like_flet
-    item = Ruflet.popup_menu_item("Edit", height: -1)
-    button = Ruflet.popup_menu_button([Ruflet.popup_menu_item("Edit")], elevation: -1, icon_size: -2, splash_radius: -3)
+  def test_popup_menu_rejects_negative_numeric_values_like_flet
+    assert_raises(ArgumentError) { Ruflet.popup_menu_item("Edit", height: -1) }
 
-    assert_equal(-1, item.to_patch["height"])
+    %i[elevation icon_size splash_radius].each do |prop|
+      error = assert_raises(ArgumentError) do
+        Ruflet.popup_menu_button([Ruflet.popup_menu_item("Edit")], prop => -1)
+      end
 
-    patch = button.to_patch
-    assert_equal(-1, patch["elevation"])
-    assert_equal(-2, patch["icon_size"])
-    assert_equal(-3, patch["splash_radius"])
+      assert_match(/#{prop}/, error.message)
+    end
   end
 
   def test_popup_menu_select_event_exposes_selected_value

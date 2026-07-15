@@ -6,16 +6,18 @@ module Ruflet
   module Rails
     module Protocol
       class Endpoint
+        include WebSocketDetection
+
         WEBSOCKET_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
-        def initialize(server:, path: "/ws")
+        def initialize(server:, path: nil)
           @server = server
           @path = path
         end
 
         def call(env)
-          return not_found unless env["PATH_INFO"] == @path
-          return bad_request("Expected WebSocket upgrade") unless websocket_upgrade_request?(env)
+          return not_found if @path && env["PATH_INFO"] != @path
+          return bad_request("Expected WebSocket upgrade") unless websocket_upgrade?(env)
 
           hijack = env["rack.hijack"]
           return bad_request("Rack hijack is required by Ruflet::Rails::Protocol::Endpoint") unless hijack.respond_to?(:call)
@@ -30,9 +32,7 @@ module Ruflet
           captured_env = env.dup
           Thread.new(io, captured_env) do |socket, ws_env|
             Thread.current.report_on_exception = false if Thread.current.respond_to?(:report_on_exception=)
-            Context.with_env(ws_env) do
-              @server.handle_upgraded_socket(socket)
-            end
+            rails_executor_wrap { handle_socket(socket, ws_env) }
           end
 
           [-1, {}, []]
@@ -42,14 +42,22 @@ module Ruflet
 
         private
 
-        def websocket_upgrade_request?(env)
-          return false unless env["REQUEST_METHOD"] == "GET"
+        def handle_socket(socket, env)
+          Context.with_env(env) do
+            @server.handle_upgraded_socket(socket)
+          end
+        end
 
-          upgrade = env["HTTP_UPGRADE"].to_s.downcase
-          connection = env["HTTP_CONNECTION"].to_s.downcase
-          key = env["HTTP_SEC_WEBSOCKET_KEY"].to_s
+        def rails_executor_wrap(&block)
+          executor = if defined?(::Rails) && ::Rails.respond_to?(:application) && ::Rails.application
+                       ::Rails.application.executor
+                     end
 
-          upgrade == "websocket" && connection.include?("upgrade") && !key.empty?
+          if executor.respond_to?(:wrap)
+            executor.wrap(&block)
+          else
+            yield
+          end
         end
 
         def write_handshake(io, key)

@@ -48,10 +48,11 @@ class RufletBadgeCompatibilityTest < Minitest::Test
     assert_equal "10", patch["badge"]["label"]
   end
 
-  def test_badge_serializes_negative_sizes_like_flet
-    patch = Ruflet.badge(large_size: -1, small_size: -2).to_patch
+  def test_badge_rejects_negative_sizes_like_flet
+    %i[large_size small_size].each do |prop|
+      error = assert_raises(ArgumentError) { Ruflet.badge(prop => -1) }
 
-    assert_equal(-1, patch["large_size"])
-    assert_equal(-2, patch["small_size"])
+      assert_match(/#{prop}/, error.message)
+    end
   end
 end

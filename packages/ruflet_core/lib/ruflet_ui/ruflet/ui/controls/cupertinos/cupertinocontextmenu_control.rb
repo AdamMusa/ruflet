@@ -10,7 +10,9 @@ module Ruflet
 
           def initialize(id: nil, actions: nil, adaptive: nil, badge: nil, col: nil, content: nil, data: nil, disabled: nil, enable_haptic_feedback: nil, expand: nil, expand_loose: nil, key: nil, opacity: nil, rtl: nil, tooltip: nil, visible: nil)
             enable_haptic_feedback = true if enable_haptic_feedback.nil?
-            raise ArgumentError, "cupertino_context_menu requires content" if content.nil?
+            visible_actions = Array(actions).reject { |action| hidden_control?(action) }
+            raise ArgumentError, "cupertino_context_menu requires visible content" if content.nil? || hidden_control?(content)
+            raise ArgumentError, "cupertino_context_menu requires at least one visible action" if visible_actions.empty?
 
             props = {}
             props[:actions] = actions unless actions.nil?

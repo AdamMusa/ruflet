@@ -8,52 +8,7 @@ module Ruflet
           TYPE = "cupertinoslidingsegmentedbutton".freeze
           WIRE = "CupertinoSlidingSegmentedButton".freeze
 
-          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :bottom, :col, :controls, :data, :disabled, :expand, :expand_loose, :height, :key, :left, :margin, :offset, :opacity, :padding, :proportional_width, :right, :rotate, :rtl, :scale, :selected_index, :size_change_interval, :thumb_color, :tooltip, :top, :visible, :width, :on_animation_end, :on_change, :on_size_change].freeze
-
-          def initialize(id: nil, **props)
-            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
-            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
-            align = props[:align]
-            animate_align = props[:animate_align]
-            animate_margin = props[:animate_margin]
-            animate_offset = props[:animate_offset]
-            animate_opacity = props[:animate_opacity]
-            animate_position = props[:animate_position]
-            animate_rotation = props[:animate_rotation]
-            animate_scale = props[:animate_scale]
-            animate_size = props[:animate_size]
-            aspect_ratio = props[:aspect_ratio]
-            badge = props[:badge]
-            bgcolor = props[:bgcolor]
-            bottom = props[:bottom]
-            col = props[:col]
-            controls = props[:controls]
-            data = props[:data]
-            disabled = props[:disabled]
-            expand = props[:expand]
-            expand_loose = props[:expand_loose]
-            height = props[:height]
-            key = props[:key]
-            left = props[:left]
-            margin = props[:margin]
-            offset = props[:offset]
-            opacity = props[:opacity]
-            padding = props[:padding]
-            proportional_width = props[:proportional_width]
-            right = props[:right]
-            rotate = props[:rotate]
-            rtl = props[:rtl]
-            scale = props[:scale]
-            selected_index = props[:selected_index]
-            size_change_interval = props[:size_change_interval]
-            thumb_color = props[:thumb_color]
-            tooltip = props[:tooltip]
-            top = props[:top]
-            visible = props[:visible]
-            width = props[:width]
-            on_animation_end = props[:on_animation_end]
-            on_change = props[:on_change]
-            on_size_change = props[:on_size_change]
+          def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bgcolor: nil, bottom: nil, col: nil, controls: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, padding: nil, proportional_width: nil, right: nil, rotate: nil, rtl: nil, scale: nil, selected_index: nil, size_change_interval: nil, thumb_color: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_change: nil, on_size_change: nil)
             proportional_width = false if proportional_width.nil?
             selected_index = 0 if selected_index.nil?
 

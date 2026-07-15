@@ -7,7 +7,6 @@ module Ruflet
         class PathControl < Ruflet::Control
           TYPE = "path".freeze
           WIRE = "Path".freeze
-          KEYWORDS = [:data, :elements, :key, :paint].freeze
 
           def initialize(id: nil, data: nil, elements: nil, key: nil, paint: nil)
             props = {}

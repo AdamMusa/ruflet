@@ -15,12 +15,14 @@ require_relative "ruflet/hapticfeedback_control"
 require_relative "ruflet/magnetometer_control"
 require_relative "ruflet/permissionhandler_control"
 require_relative "ruflet/screenbrightness_control"
+require_relative "ruflet/screenshot_control"
 require_relative "ruflet/securestorage_control"
 require_relative "ruflet/semanticsservice_control"
 require_relative "ruflet/shakedetector_control"
 require_relative "ruflet/share_control"
 require_relative "ruflet/sharedpreferences_control"
 require_relative "ruflet/storagepaths_control"
+require_relative "ruflet/tester_control"
 require_relative "ruflet/urllauncher_control"
 require_relative "ruflet/useraccelerometer_control"
 require_relative "ruflet/wakelock_control"
@@ -37,6 +39,8 @@ module Ruflet
           "audiorecorder" => RufletServicesComponents::AudioRecorderControl,
           "barometer" => RufletServicesComponents::BarometerControl,
           "battery" => RufletServicesComponents::BatteryControl,
+          "browser_context_menu" => Ruflet::UI::Controls::RufletComponents::BrowserContextMenuControl,
+          "browsercontextmenu" => Ruflet::UI::Controls::RufletComponents::BrowserContextMenuControl,
           "camera" => RufletServicesComponents::CameraControl,
           "clipboard" => RufletServicesComponents::ClipboardControl,
           "connectivity" => RufletServicesComponents::ConnectivityControl,
@@ -52,6 +56,7 @@ module Ruflet
           "permissionhandler" => RufletServicesComponents::PermissionHandlerControl,
           "screen_brightness" => RufletServicesComponents::ScreenBrightnessControl,
           "screenbrightness" => RufletServicesComponents::ScreenBrightnessControl,
+          "screenshot" => RufletServicesComponents::ScreenshotControl,
           "secure_storage" => RufletServicesComponents::SecureStorageControl,
           "securestorage" => RufletServicesComponents::SecureStorageControl,
           "semantics_service" => RufletServicesComponents::SemanticsServiceControl,
@@ -63,11 +68,13 @@ module Ruflet
           "sharedpreferences" => RufletServicesComponents::SharedPreferencesControl,
           "storage_paths" => RufletServicesComponents::StoragePathsControl,
           "storagepaths" => RufletServicesComponents::StoragePathsControl,
+          "tester" => RufletServicesComponents::TesterControl,
           "url_launcher" => RufletServicesComponents::UrlLauncherControl,
           "urllauncher" => RufletServicesComponents::UrlLauncherControl,
           "user_accelerometer" => RufletServicesComponents::UserAccelerometerControl,
           "useraccelerometer" => RufletServicesComponents::UserAccelerometerControl,
           "wakelock" => RufletServicesComponents::WakelockControl,
+          "window" => Ruflet::UI::Controls::RufletComponents::WindowControl,
         }.freeze
       end
     end

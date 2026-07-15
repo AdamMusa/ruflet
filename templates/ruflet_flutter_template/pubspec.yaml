@@ -32,100 +32,48 @@ dependencies:
     sdk: flutter
   flutter_web_plugins:
     sdk: flutter
-  flutter_spinkit: ^5.2.2
-  file_picker: ^10.3.10
 
+  # Flet Flutter packages, vendored locally (Dart only) from flet ref
+  # 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965. No git/Python dependency.
   flet:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: packages/flet
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
+    path: flet_packages/flet
   flet_ads:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-ads/src/flutter/flet_ads
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
+    path: flet_packages/flet_ads
   flet_audio:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-audio/src/flutter/flet_audio
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
+    path: flet_packages/flet_audio
   flet_audio_recorder:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-audio-recorder/src/flutter/flet_audio_recorder
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
+    path: flet_packages/flet_audio_recorder
   flet_camera:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-camera/src/flutter/flet_camera
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
+    path: flet_packages/flet_camera
   flet_charts:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-charts/src/flutter/flet_charts
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
+    path: flet_packages/flet_charts
   flet_code_editor:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-code-editor/src/flutter/flet_code_editor
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
+    path: flet_packages/flet_code_editor
   flet_color_pickers:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-color-pickers/src/flutter/flet_color_pickers
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
+    path: flet_packages/flet_color_pickers
   flet_datatable2:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-datatable2/src/flutter/flet_datatable2
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
+    path: flet_packages/flet_datatable2
   flet_flashlight:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-flashlight/src/flutter/flet_flashlight
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
+    path: flet_packages/flet_flashlight
   flet_geolocator:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-geolocator/src/flutter/flet_geolocator
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
+    path: flet_packages/flet_geolocator
   flet_lottie:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-lottie/src/flutter/flet_lottie
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
+    path: flet_packages/flet_lottie
   flet_map:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-map/src/flutter/flet_map
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
-  flet_permission_handler:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-permission-handler/src/flutter/flet_permission_handler
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
+    path: flet_packages/flet_map
   flet_rive:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-rive/src/flutter/flet_rive
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
+    path: flet_packages/flet_rive
+  flet_permission_handler:
+    path: flet_packages/flet_permission_handler
   flet_secure_storage:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-secure-storage/src/flutter/flet_secure_storage
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
+    path: flet_packages/flet_secure_storage
+  flet_spinkit:
+    path: flet_packages/flet_spinkit
   flet_video:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-video/src/flutter/flet_video
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
+    path: flet_packages/flet_video
   flet_webview:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-webview/src/flutter/flet_webview
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
-  ruby_runtime: ^0.0.7
+    path: flet_packages/flet_webview
+  ruby_runtime: ^0.0.6
   flutter_native_splash: ^2.4.7
 dev_dependencies:
   flutter_launcher_icons: "^0.14.4"
@@ -173,6 +121,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/main.rb
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

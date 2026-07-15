@@ -1,38 +1,52 @@
-## 0.0.7
-
-- Run self-contained Ruflet applications through the generic embedded mruby VM
-  and preloaded Ruflet gems, using the app's normal `main.rb` entry point.
-- Embed the published `ruflet_core` 0.0.18 and `ruflet_server` 0.0.18 payloads
-  in prebuilt device binaries; application builds no longer compile the VM.
-- Package the runtime for Android, iOS, macOS, Linux, and Windows, with dynamic
-  embedded-server port discovery for multiple application instances.
-- Add the runtime and protocol fixes required by current Ruflet controls,
-  services, pickers, dialogs, maps, audio, Rive, charts, and SpinKit clients.
-- Improve embedded runtime concurrency, callback reporting, and UI update
-  performance without adding application-specific behavior to the VM.
-
 ## 0.0.6
 
 - Update embedded Ruflet pages from client resize events so `page.width` and
   `page.height` reflect the live viewport, and expose `page.on_resize`.
-- Add Linux desktop support with the complete `ruby_runtime` method-channel
-  contract used by self-contained applications.
+- Add Linux desktop support: a GTK plugin (`linux/`) embeds mruby exactly like
+  the macOS plugin and implements the full `ruby_runtime` method channel
+  (`eval`, `runFile`, `reset`, `startFileServer`, `stopFileServer`,
+  `isFileServerRunning`, `serverPort`, `lastFileServerError`). This removes the
+  `MissingPluginException(No implementation found for method reset on channel
+  ruby_runtime)` seen when running self-contained apps on Linux. mruby is
+  compiled from the shared `ios/mruby_src` sources (same set used by Android).
 
 ## 0.0.5
 
-- Bind the embedded server to an available port and report the selected port to
-  the client, allowing multiple packaged apps to run at the same time.
-- Add the mruby compatibility surface needed by Ruflet gems, including regular
-  expressions, standard extension gems, common stdlib helpers, randomness,
-  clocks, and sleep support.
-- Add a desktop harness that exercises the same mruby sources shipped on device.
+- Bind any free port instead of failing on a busy one: the embedded server
+  now reports its actual bound port through a `server.port` file in the app
+  work dir (seeded via `RUFLET_PORT_FILE`), exposed to Dart with the new
+  `RubyRuntime.serverPort()` method. The plugins no longer force
+  `RUFLET_STRICT_PORT=1`; strict binding remains available by setting that
+  variable explicitly.
+- Seed `ENV` through the Ruby prelude on all platforms: the embedded VM's
+  `ENV` is isolated from the process environment, so the plugins' `setenv`
+  calls (`RUFLET_PORT_FILE`, `RUFLET_PROD_STOP_FILE`) never reached the
+  server.
+- Add a pure-Ruby `Regexp`/`MatchData` engine: regex literals (mruby compiles
+  them to `Regexp.compile`), named captures, lookahead, backreferences,
+  `i m x` options, and full `String` integration (`match`, `match?`, `=~`,
+  `scan`, `gsub`/`sub` with backreference replacements, `split`, `[]`,
+  `partition`, `index`, `start_with?`, `case/when`). Validated by a test
+  suite that also passes under CRuby.
+- Make the embedded runtime general-purpose: vendor the standard mruby
+  extension gems (time, math, random, struct, set, data, enumerator, fiber,
+  catch, method, dir, eval/binding, kernel-ext, class-ext, and all
+  array/hash/string/numeric/object/range/symbol/proc/compar/enum/toplevel
+  ext gems) into the Android, iOS, and macOS builds.
+- Add pure-Ruby stdlib supplements: JSON generation (`JSON.generate`,
+  `#to_json`), `StringIO`, `OpenStruct`, `Forwardable`, `Base64`,
+  `SecureRandom.uuid`/`random_bytes`, `Time#strftime`/`#iso8601`,
+  `SystemExit`/`exit`/`abort`, `pp`, richer `FileUtils` and `File` helpers.
+- Replace the deterministic LCG fallbacks: `Kernel.rand`, `SecureRandom`,
+  and control IDs now draw from mruby-random; `Process.clock_gettime` uses
+  the real clock; `Kernel#sleep` actually sleeps (via `IO.select`).
+- Add a desktop test harness (`tools/embedded_vm_harness`) that compiles the
+  exact packaged mruby sources plus a standard-Ruby compatibility regression
+  suite.
 
 ## 0.0.4
 
-- Add packaged Linux `aarch64`/`x86_64` and Windows `x86_64` Ruflet VMs.
-- Expose the same `start`, `status`, and `stop` runtime contract on Windows and Linux.
-- Rebuild the universal macOS VM with the current preloaded Ruflet gems.
-- Support Flet-compatible `Page.window` through the existing Ruflet protocol without creating another VM.
+- Fix Android native builds to compile from the packaged mruby source tree.
 
 ## 0.0.3
 

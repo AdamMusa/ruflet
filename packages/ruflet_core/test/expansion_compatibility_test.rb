@@ -160,34 +160,17 @@ class RufletExpansionCompatibilityTest < Minitest::Test
 
   def test_expansion_controls_require_visible_required_content_like_flet
     assert_raises(ArgumentError) { Ruflet.expansion_tile }
-    hidden = Ruflet.expansion_tile(title: Ruflet.container(visible: false)).to_patch
-
-    assert_equal false, hidden["title"]["visible"]
+    assert_raises(ArgumentError) { Ruflet.expansion_tile(title: Ruflet.text("Hidden", visible: false)) }
+    assert_raises(ArgumentError) { Ruflet.expansion_panel(content: Ruflet.text("Body")) }
+    assert_raises(ArgumentError) { Ruflet.expansion_panel(header: Ruflet.text("Header")) }
+    assert_raises(ArgumentError) { Ruflet.expansion_panel(header: Ruflet.text("Hidden", visible: false), content: Ruflet.text("Body")) }
+    assert_raises(ArgumentError) { Ruflet.expansion_panel(header: Ruflet.text("Header"), content: Ruflet.text("Hidden", visible: false)) }
   end
 
-  def test_expansion_panel_serializes_without_required_content_like_flet
-    empty = Ruflet.expansion_panel.to_patch
-    header_only = Ruflet.expansion_panel(header: Ruflet.text("Header")).to_patch
-    content_only = Ruflet.expansion_panel(content: Ruflet.text("Body")).to_patch
-
-    assert_equal "ExpansionPanel", empty["_c"]
-    refute empty.key?("header")
-    refute empty.key?("content")
-    assert_equal "Header", header_only["header"]["value"]
-    assert_equal "Body", content_only["content"]["value"]
-  end
-
-  def test_expansion_controls_serialize_negative_numeric_values_like_flet
-    tile_patch = Ruflet.expansion_tile(title: Ruflet.text("Title"), min_tile_height: -1).to_patch
-    panel_list_patch = Ruflet.expansion_panel_list(
-      [Ruflet.expansion_panel(header: Ruflet.text("Header"), content: Ruflet.text("Body"))],
-      elevation: -1,
-      spacing: -2
-    ).to_patch
-
-    assert_equal(-1, tile_patch["min_tile_height"])
-    assert_equal(-1, panel_list_patch["elevation"])
-    assert_equal(-2, panel_list_patch["spacing"])
+  def test_expansion_controls_reject_negative_numeric_values_like_flet
+    assert_raises(ArgumentError) { Ruflet.expansion_tile(title: Ruflet.text("Title"), min_tile_height: -1) }
+    assert_raises(ArgumentError) { Ruflet.expansion_panel_list([Ruflet.expansion_panel(header: Ruflet.text("Header"), content: Ruflet.text("Body"))], elevation: -1) }
+    assert_raises(ArgumentError) { Ruflet.expansion_panel_list([Ruflet.expansion_panel(header: Ruflet.text("Header"), content: Ruflet.text("Body"))], spacing: -1) }
   end
 
   def test_expansion_tile_change_event_updates_expanded_before_handler

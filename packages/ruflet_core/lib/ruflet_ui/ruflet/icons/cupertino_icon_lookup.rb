@@ -67,7 +67,6 @@ module Ruflet
     end
 
     def load_icon_map
-      return COMPILED_ICON_MAP if const_defined?(:COMPILED_ICON_MAP, false)
       return {} unless File.file?(LOCAL_ICONS_JSON)
 
       parse_icons_json(LOCAL_ICONS_JSON)

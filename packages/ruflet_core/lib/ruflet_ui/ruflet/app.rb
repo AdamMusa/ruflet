@@ -21,7 +21,7 @@ module Ruflet
 
     def normalize_port(value)
       port = value.to_i
-      port >= 0 ? port : 8550
+      port > 0 ? port : 8550
     end
   end
 end

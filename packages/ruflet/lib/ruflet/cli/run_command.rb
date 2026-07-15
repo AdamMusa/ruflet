@@ -12,16 +12,23 @@ require "uri"
 require "thread"
 require "io/console"
 require "time"
+require "yaml"
 
 module Ruflet
   module CLI
     module RunCommand
+      DEFAULT_BACKEND_PORTS = {
+        "web" => 8550,
+        "desktop" => 8560,
+        "mobile" => 8570
+      }.freeze
+
       def command_run(args)
-        options = { target: "mobile", requested_port: 8550 }
+        options = { target: "mobile", requested_port: nil }
         parser = OptionParser.new do |o|
           o.on("--web") { options[:target] = "web" }
           o.on("--desktop") { options[:target] = "desktop" }
-          o.on("--port PORT", Integer) { |v| options[:requested_port] = v }
+          o.on("--port PORT", Integer, "Backend port (defaults: web 8550, desktop 8560, mobile 8570)") { |v| options[:requested_port] = v }
         end
         parser.parse!(args)
 
@@ -33,18 +40,33 @@ module Ruflet
           return 1
         end
 
-        selected_port = resolve_backend_port(options[:target], requested_port: options[:requested_port])
+        requested_port = options[:requested_port] || default_backend_port(options[:target])
+        selected_port = resolve_backend_port(options[:target], requested_port: requested_port)
         return 1 unless selected_port
         env = {
           "RUFLET_TARGET" => options[:target],
           "RUFLET_SUPPRESS_SERVER_BANNER" => "1",
-          "RUFLET_PORT" => selected_port.to_s
+          "RUFLET_PORT" => selected_port.to_s,
+          "RUFLET_STRICT_PORT" => "1"
         }
         apply_local_ruflet_dev_overrides(env)
         assets_dir = File.join(File.dirname(script_path), "assets")
         env["RUFLET_ASSETS_DIR"] = assets_dir if File.directory?(assets_dir)
 
-        print_run_banner(target: options[:target], requested_port: options[:requested_port], port: selected_port)
+        # Web: the Ruby backend serves the Flutter web client itself (same
+        # origin/port as /ws), so no separate static server or proxy is needed.
+        if options[:target] == "web"
+          web_dir = detect_web_client_dir
+          if web_dir
+            env["RUFLET_WEB_CLIENT_DIR"] = web_dir
+          else
+            warn "Ruflet web client unavailable for version #{ruflet_version}."
+            warn "Install the matching GitHub release client before running --web."
+            return 1
+          end
+        end
+
+        print_run_banner(target: options[:target], requested_port: requested_port, port: selected_port)
         print_mobile_qr_hint(port: selected_port) if options[:target] == "mobile"
 
         gemfile_path = find_nearest_gemfile(Dir.pwd)
@@ -149,16 +171,14 @@ module Ruflet
 
       def print_run_banner(target:, requested_port:, port:)
         if port != requested_port.to_i
-          puts "Requested port #{requested_port} is busy; bound to #{port}"
+          puts "Port #{requested_port} is busy; using #{port} for #{target}."
         end
         if target == "desktop"
           puts "Ruflet desktop URL: http://localhost:#{port}"
         elsif target == "mobile"
           puts "Ruflet target: #{target}"
-        else
-          puts "Ruflet target: #{target}"
-          puts "Ruflet URL: http://localhost:#{port}"
         end
+        # web: launch_web_client prints the single app URL after the server boots
       end
 
       def launch_target_client(target, port)
@@ -174,30 +194,19 @@ module Ruflet
         end
       end
 
+      # The Ruby backend (Ruflet::Server) serves the Flutter web client on its
+      # own port, so the client loads and opens its websocket on that same
+      # origin. The prebuilt web client derives its backend from Uri.base, so
+      # the public URL stays clean and dynamic port selection works naturally.
       def launch_web_client(port)
-        web_dir = detect_web_client_dir
-        unless web_dir
-          warn "Web client build not found and prebuilt download failed."
-          return []
-        end
-
-        web_port = find_available_port(port + 1)
-        web_pid = Process.spawn("python3", "-m", "http.server", web_port.to_s, "--bind", "127.0.0.1", chdir: web_dir, out: File::NULL, err: File::NULL)
-        Process.detach(web_pid)
-        wait_for_server_boot(web_port)
-        backend_url = "http://localhost:#{port}"
-        web_url = "http://localhost:#{web_port}/?#{URI.encode_www_form(url: backend_url)}"
-        browser_pid = open_in_browser_app_mode(web_url)
-        open_in_browser(web_url) if browser_pid.nil?
-        puts "Ruflet web client: #{web_url}"
-        puts "Ruflet backend ws: ws://localhost:#{port}/ws"
-        [web_pid, browser_pid].compact
-      rescue Errno::ENOENT
-        warn "python3 is required to host web client locally."
-        warn "Install Python 3 and rerun."
-        []
+        url = "http://localhost:#{port}/"
+        browser_pid = open_in_browser_app_mode(url)
+        open_in_browser(url) if browser_pid.nil?
+        puts "Ruflet web app: #{url}"
+        [browser_pid].compact
       rescue StandardError => e
-        warn "Failed to launch web client: #{e.class}: #{e.message}"
+        warn "Failed to open web client: #{e.class}: #{e.message}"
+        warn "Open it manually: http://localhost:#{port}/"
         []
       end
 
@@ -307,45 +316,36 @@ module Ruflet
       end
 
       def detect_desktop_client_command(url)
-        root = ENV["RUFLET_CLIENT_DIR"]
-        root = File.expand_path("ruflet_client", Dir.pwd) if root.to_s.strip.empty?
-        root = nil unless Dir.exist?(root)
-        root ||= ensure_prebuilt_client(desktop: true)
+        root = configured_client_root
+
+        command = desktop_client_command_from_root(root, url)
+        return command if command
+
+        cached_root = ensure_prebuilt_client(desktop: true)
+        desktop_client_command_from_root(cached_root, url)
+      end
+
+      def desktop_client_command_from_root(root, url)
         return nil unless root && Dir.exist?(root)
 
         host_os = RbConfig::CONFIG["host_os"]
         if host_os.match?(/darwin/i)
-          release_bin = File.join(root, "build", "macos", "Build", "Products", "Release", "ruflet_client.app", "Contents", "MacOS", "ruflet_client")
-          debug_bin = File.join(root, "build", "macos", "Build", "Products", "Debug", "ruflet_client.app", "Contents", "MacOS", "ruflet_client")
-          prebuilt_bin = File.join(root, "desktop", "ruflet_client.app", "Contents", "MacOS", "ruflet_client")
-          executable = [release_bin, debug_bin].find { |p| File.file?(p) && File.executable?(p) }
-          executable ||= prebuilt_bin if File.file?(prebuilt_bin) && File.executable?(prebuilt_bin)
-          return [executable, url] if executable
+          app_path = File.join(root, "desktop", "ruflet_client.app")
+          bin = File.join(app_path, "Contents", "MacOS", "ruflet_client")
+          return [bin, url] if File.file?(bin) && File.executable?(bin) && ensure_macos_file_picker_entitlement(app_path)
         elsif host_os.match?(/mswin|mingw|cygwin/i)
-          exe = File.join(root, "build", "windows", "x64", "runner", "Release", "ruflet_client.exe")
-          prebuilt = File.join(root, "desktop", "ruflet_client.exe")
-          exe = prebuilt if !File.file?(exe) && File.file?(prebuilt)
+          exe = File.join(root, "desktop", "ruflet_client.exe")
           return [exe, url] if File.file?(exe)
         else
-          direct = File.join(root, "build", "linux", "x64", "release", "bundle", "ruflet_client")
-          prebuilt_direct = File.join(root, "desktop", "ruflet_client")
-          direct = prebuilt_direct if !File.file?(direct) && File.file?(prebuilt_direct)
+          direct = File.join(root, "desktop", "ruflet_client")
           return [direct, url] if File.file?(direct)
-          bundle_dir = File.join(root, "build", "linux", "x64", "release", "bundle")
-          if Dir.exist?(bundle_dir)
-            candidate = Dir.children(bundle_dir).map { |f| File.join(bundle_dir, f) }
-              .find { |path| File.file?(path) && File.executable?(path) }
-            return [candidate, url] if candidate
-          end
         end
 
         nil
       end
 
       def detect_web_client_dir
-        root = ENV["RUFLET_CLIENT_DIR"]
-        root = File.expand_path("ruflet_client", Dir.pwd) if root.to_s.strip.empty?
-        root = nil unless Dir.exist?(root)
+        root = configured_client_root
         root ||= ensure_prebuilt_client(web: true)
         return nil unless root && Dir.exist?(root)
 
@@ -355,6 +355,14 @@ module Ruflet
         return prebuilt if Dir.exist?(prebuilt) && File.file?(File.join(prebuilt, "index.html"))
 
         nil
+      end
+
+      def configured_client_root
+        root = ENV["RUFLET_CLIENT_DIR"].to_s.strip
+        return nil if root.empty?
+
+        expanded = File.expand_path(root)
+        Dir.exist?(expanded) ? expanded : nil
       end
 
       def ensure_prebuilt_client(web: false, desktop: false, platform: nil, force: false)
@@ -371,10 +379,12 @@ module Ruflet
           return nil if desktop_asset.nil?
           wanted_assets << { kind: :desktop, name: desktop_asset, platform: platform }
         end
-        if !force && (wanted_assets.empty? || prebuilt_assets_present?(cache_root, web: web, desktop: desktop, platform: platform))
-          ensure_client_manifest(cache_root, platform: platform)
+        cached = prebuilt_assets_present?(cache_root, web: web, desktop: desktop, platform: platform)
+        compatible_cache = cached && compatible_client_cache?(cache_root, platform: platform)
+        if !force && (wanted_assets.empty? || compatible_cache)
           return cache_root
         end
+        force = true if cached && !compatible_cache
 
         release = fetch_release_for_version
         return nil unless release
@@ -436,7 +446,9 @@ module Ruflet
 
         case platform
         when "macos"
-          File.file?(File.join(root, "desktop", "ruflet_client.app", "Contents", "MacOS", "ruflet_client"))
+          app_path = File.join(root, "desktop", "ruflet_client.app")
+          bin = File.join(app_path, "Contents", "MacOS", "ruflet_client")
+          File.file?(bin) && ensure_macos_file_picker_entitlement(app_path)
         when "linux"
           File.file?(File.join(root, "desktop", "ruflet_client"))
         when "windows"
@@ -468,11 +480,33 @@ module Ruflet
       end
 
       def fetch_release_for_version
-        release_by_tag("v#{ruflet_version}") ||
-          release_by_tag(ruflet_version) ||
-          release_by_tag("prebuild") ||
-          release_by_tag("prebuild-main") ||
-          release_latest
+        client_release_tags.each do |tag|
+          release = release_by_tag(tag)
+          return release if release
+        end
+
+        nil
+      end
+
+      def client_release_tags
+        channel = ENV["RUFLET_CLIENT_CHANNEL"].to_s.strip
+        unless channel.empty?
+          raise ArgumentError, "Invalid RUFLET_CLIENT_CHANNEL" unless channel.match?(/\A[A-Za-z0-9._-]+\z/)
+
+          return [channel]
+        end
+
+        ["v#{ruflet_version}", ruflet_version]
+      end
+
+      def compatible_client_cache?(root, platform:)
+        manifest = read_client_manifest(root)
+        return false unless manifest
+
+        manifest["schema"] == 1 &&
+          manifest["ruflet_version"] == ruflet_version &&
+          manifest["platform"] == platform &&
+          client_release_tags.include?(manifest["release_tag"])
       end
 
       def ruflet_version
@@ -482,14 +516,57 @@ module Ruflet
         Ruflet::VERSION
       end
 
-      def release_latest
-        github_get_json("https://api.github.com/repos/AdamMusa/Ruflet/releases/latest")
-      end
-
       def release_by_tag(tag)
         github_get_json("https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/#{tag}")
       rescue StandardError
         nil
+      end
+
+      def ensure_macos_file_picker_entitlement(app_path)
+        return true if macos_app_has_file_picker_entitlement?(app_path)
+
+        Dir.mktmpdir("ruflet-entitlements-") do |dir|
+          entitlements_path = File.join(dir, "ruflet_file_picker.entitlements")
+          File.write(entitlements_path, macos_file_picker_entitlements_plist)
+          system(
+            "/usr/bin/codesign",
+            "--force",
+            "--deep",
+            "--sign",
+            "-",
+            "--entitlements",
+            entitlements_path,
+            app_path,
+            out: File::NULL,
+            err: File::NULL
+          )
+        end
+
+        macos_app_has_file_picker_entitlement?(app_path)
+      end
+
+      def macos_app_has_file_picker_entitlement?(app_path)
+        output = IO.popen(["/usr/bin/codesign", "-d", "--entitlements", ":-", app_path], err: [:child, :out], &:read)
+        $?.success? && output.include?("com.apple.security.files.user-selected.read-write")
+      rescue StandardError
+        false
+      end
+
+      def macos_file_picker_entitlements_plist
+        <<~PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+          \t<key>com.apple.security.app-sandbox</key>
+          \t<true/>
+          \t<key>com.apple.security.files.user-selected.read-write</key>
+          \t<true/>
+          \t<key>com.apple.security.network.client</key>
+          \t<true/>
+          </dict>
+          </plist>
+        PLIST
       end
 
       def fallback_release_asset(assets, wanted)
@@ -530,6 +607,8 @@ module Ruflet
         return JSON.parse(response.body) if response.is_a?(Net::HTTPSuccess)
 
         raise "GitHub API failed (#{response.code})"
+      rescue OpenSSL::SSL::SSLError
+        JSON.parse(curl_get(url, headers: ["Accept: application/vnd.github+json", "User-Agent: ruflet-cli"]))
       end
 
       def download_file(url, destination, limit: 5)
@@ -551,6 +630,31 @@ module Ruflet
             end
           end
         end
+      rescue OpenSSL::SSL::SSLError
+        curl_download(url, destination)
+      end
+
+      def curl_get(url, headers: [])
+        args = ["curl", "-fsSL"]
+        headers.each do |header|
+          args += ["-H", header]
+        end
+        args << url
+        output = IO.popen(args, err: File::NULL, &:read)
+        return output if $?.success?
+
+        raise "curl failed while requesting #{url}"
+      rescue Errno::ENOENT
+        raise "Ruby SSL verification failed and curl is not available"
+      end
+
+      def curl_download(url, destination)
+        ok = system("curl", "-fL", "--retry", "2", "--connect-timeout", "20", "-o", destination, url, out: File::NULL, err: File::NULL)
+        return destination if ok
+
+        raise "curl failed while downloading #{url}"
+      rescue Errno::ENOENT
+        raise "Ruby SSL verification failed and curl is not available"
       end
 
       def extract_archive(archive, destination)
@@ -579,19 +683,6 @@ module Ruflet
         JSON.parse(File.read(path))
       rescue StandardError
         nil
-      end
-
-      def ensure_client_manifest(root, platform:)
-        return if read_client_manifest(root)
-
-        assets = []
-        assets << { "kind" => "web", "platform" => platform, "asset_name" => nil } if File.file?(File.join(root, "web", "index.html"))
-        if prebuilt_desktop_present?(root, platform: platform)
-          assets << { "kind" => "desktop", "platform" => platform, "asset_name" => nil }
-        end
-        return if assets.empty?
-
-        write_client_manifest(root, platform: platform, release: nil, assets: assets)
       end
 
       def write_client_manifest(root, platform:, release:, assets:)
@@ -626,26 +717,24 @@ module Ruflet
         port = start_port.to_i
 
         max_attempts.times do
-          begin
-            begin
-              probe = TCPServer.new("0.0.0.0", port)
-            rescue Errno::EACCES, Errno::EPERM
-              probe = TCPServer.new("127.0.0.1", port)
-            end
-            probe.close
-            return port
-          rescue Errno::EADDRINUSE, Errno::EACCES, Errno::EPERM
-            port += 1
-          end
+          return port if port_available?(port)
+
+          port += 1
         end
 
-        start_port
+        nil
       end
 
-      def resolve_backend_port(_target, requested_port: 8550)
+      def default_backend_port(target)
+        DEFAULT_BACKEND_PORTS.fetch(target.to_s, DEFAULT_BACKEND_PORTS.fetch("mobile"))
+      end
+
+      def resolve_backend_port(target, requested_port: nil)
         base = requested_port.to_i
-        base = 8550 if base <= 0
-        find_available_port(base)
+        base = default_backend_port(target) if base <= 0
+        selected = find_available_port(base)
+        warn "No available Ruflet port found starting at #{base}." unless selected
+        selected
       end
 
       def port_available?(port)
@@ -657,7 +746,7 @@ module Ruflet
             probe = TCPServer.new("127.0.0.1", port)
           end
           true
-        rescue Errno::EADDRINUSE
+        rescue Errno::EADDRINUSE, Errno::EACCES, Errno::EPERM
           false
         ensure
           probe&.close

@@ -9,7 +9,7 @@ module Ruflet
           WIRE = "CupertinoDialogAction".freeze
 
           def initialize(id: nil, badge: nil, col: nil, content: nil, data: nil, default: nil, destructive: nil, disabled: nil, expand: nil, expand_loose: nil, key: nil, opacity: nil, rtl: nil, text_style: nil, tooltip: nil, visible: nil, on_click: nil)
-            raise ArgumentError, "cupertino_dialog_action requires content" if content.nil?
+            raise ArgumentError, "cupertino_dialog_action requires visible content" if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
             default = false if default.nil?
             destructive = false if destructive.nil?
 

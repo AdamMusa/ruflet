@@ -15,6 +15,7 @@ require_relative "card_control"
 require_relative "checkbox_control"
 require_relative "chip_control"
 require_relative "circleavatar_control"
+require_relative "codeeditor_control"
 require_relative "container_control"
 require_relative "contextmenu_control"
 require_relative "datacell_control"
@@ -37,6 +38,7 @@ require_relative "filledtonaliconbutton_control"
 require_relative "floatingactionbutton_control"
 require_relative "iconbutton_control"
 require_relative "listtile_control"
+require_relative "map_controls"
 require_relative "menubar_control"
 require_relative "menuitembutton_control"
 require_relative "navigationbar_control"
@@ -52,18 +54,17 @@ require_relative "popupmenubutton_control"
 require_relative "popupmenuitem_control"
 require_relative "progressbar_control"
 require_relative "progressring_control"
-require_relative "spinkit_control"
 require_relative "radio_control"
 require_relative "radiogroup_control"
 require_relative "rangeslider_control"
 require_relative "reorderablelistview_control"
+require_relative "rive_control"
 require_relative "searchbar_control"
 require_relative "segment_control"
 require_relative "segmentedbutton_control"
 require_relative "selectionarea_control"
 require_relative "slider_control"
 require_relative "snackbar_control"
-require_relative "snackbaraction_control"
 require_relative "submenubutton_control"
 require_relative "switch_control"
 require_relative "tab_control"
@@ -121,6 +122,8 @@ module Ruflet
             "chip" => RufletComponents::ChipControl,
             "circle_avatar" => RufletComponents::CircleAvatarControl,
             "circleavatar" => RufletComponents::CircleAvatarControl,
+            "code_editor" => RufletComponents::CodeEditorControl,
+            "codeeditor" => RufletComponents::CodeEditorControl,
             "container" => RufletComponents::ContainerControl,
             "context_menu" => RufletComponents::ContextMenuControl,
             "contextmenu" => RufletComponents::ContextMenuControl,
@@ -168,6 +171,26 @@ module Ruflet
             "linechartdatapoint" => RufletComponents::LineChartDataPointControl,
             "list_tile" => RufletComponents::ListTileControl,
             "listtile" => RufletComponents::ListTileControl,
+            "map" => RufletComponents::MapControl,
+            "tile_layer" => RufletComponents::TileLayerControl,
+            "tilelayer" => RufletComponents::TileLayerControl,
+            "marker_layer" => RufletComponents::MarkerLayerControl,
+            "markerlayer" => RufletComponents::MarkerLayerControl,
+            "marker" => RufletComponents::MarkerControl,
+            "circle_layer" => RufletComponents::CircleLayerControl,
+            "circlelayer" => RufletComponents::CircleLayerControl,
+            "circle_marker" => RufletComponents::CircleMarkerControl,
+            "circlemarker" => RufletComponents::CircleMarkerControl,
+            "polyline_layer" => RufletComponents::PolylineLayerControl,
+            "polylinelayer" => RufletComponents::PolylineLayerControl,
+            "polyline_marker" => RufletComponents::PolylineMarkerControl,
+            "polylinemarker" => RufletComponents::PolylineMarkerControl,
+            "polygon_layer" => RufletComponents::PolygonLayerControl,
+            "polygonlayer" => RufletComponents::PolygonLayerControl,
+            "polygon_marker" => RufletComponents::PolygonMarkerControl,
+            "polygonmarker" => RufletComponents::PolygonMarkerControl,
+            "simple_attribution" => RufletComponents::SimpleAttributionControl,
+            "simpleattribution" => RufletComponents::SimpleAttributionControl,
             "menu_bar" => RufletComponents::MenuBarControl,
             "menu_item_button" => RufletComponents::MenuItemButtonControl,
             "menubar" => RufletComponents::MenuBarControl,
@@ -201,7 +224,6 @@ module Ruflet
             "progress_ring" => RufletComponents::ProgressRingControl,
             "progressbar" => RufletComponents::ProgressBarControl,
             "progressring" => RufletComponents::ProgressRingControl,
-            "spinkit" => RufletComponents::SpinkitControl,
             "radio" => RufletComponents::RadioControl,
             "radio_group" => RufletComponents::RadioGroupControl,
             "radiogroup" => RufletComponents::RadioGroupControl,
@@ -217,6 +239,7 @@ module Ruflet
             "rangeslider" => RufletComponents::RangeSliderControl,
             "reorderable_list_view" => RufletComponents::ReorderableListViewControl,
             "reorderablelistview" => RufletComponents::ReorderableListViewControl,
+            "rive" => RufletComponents::RiveControl,
             "search_bar" => RufletComponents::SearchBarControl,
             "searchbar" => RufletComponents::SearchBarControl,
             "segment" => RufletComponents::SegmentControl,
@@ -230,8 +253,6 @@ module Ruflet
             "scatterchartspot" => RufletComponents::ScatterChartSpotControl,
             "slider" => RufletComponents::SliderControl,
             "snack_bar" => RufletComponents::SnackBarControl,
-            "snack_bar_action" => RufletComponents::SnackBarActionControl,
-            "snackbaraction" => RufletComponents::SnackBarActionControl,
             "snackbar" => RufletComponents::SnackBarControl,
             "submenu_button" => RufletComponents::SubmenuButtonControl,
             "submenubutton" => RufletComponents::SubmenuButtonControl,

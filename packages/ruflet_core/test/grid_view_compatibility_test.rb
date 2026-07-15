@@ -80,23 +80,13 @@ class RufletGridViewCompatibilityTest < Minitest::Test
     assert_equal 10, grid.props["spacing"]
   end
 
-  def test_grid_view_serializes_negative_numeric_layout_props_like_flet
-    grid = Ruflet.grid_view(
-      child_aspect_ratio: -1,
-      max_extent: -2,
-      run_spacing: -3,
-      runs_count: -4,
-      semantic_child_count: -5,
-      spacing: -6
-    )
-    patch = grid.to_patch
-
-    assert_equal(-1, patch["child_aspect_ratio"])
-    assert_equal(-2, patch["max_extent"])
-    assert_equal(-3, patch["run_spacing"])
-    assert_equal(-4, patch["runs_count"])
-    assert_equal(-5, patch["semantic_child_count"])
-    assert_equal(-6, patch["spacing"])
+  def test_grid_view_rejects_negative_numeric_layout_props_like_flet
+    assert_raises(ArgumentError) { Ruflet.grid_view(child_aspect_ratio: -1) }
+    assert_raises(ArgumentError) { Ruflet.grid_view(max_extent: -1) }
+    assert_raises(ArgumentError) { Ruflet.grid_view(run_spacing: -1) }
+    assert_raises(ArgumentError) { Ruflet.grid_view(runs_count: -1) }
+    assert_raises(ArgumentError) { Ruflet.grid_view(semantic_child_count: -1) }
+    assert_raises(ArgumentError) { Ruflet.grid_view(spacing: -1) }
   end
 
   def test_scroll_event_dispatches_existing_scroll_payload

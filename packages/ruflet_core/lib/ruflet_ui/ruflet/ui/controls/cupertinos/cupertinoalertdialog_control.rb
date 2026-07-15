@@ -13,6 +13,11 @@ module Ruflet
             inset_animation = { "duration" => 100, "curve" => "decelerate" } if inset_animation.nil?
             modal = false if modal.nil?
 
+            visible_actions = Array(actions).reject { |action| hidden_control?(action) }
+            if visible_actions.empty? && hidden_or_nil?(title) && hidden_or_nil?(content)
+              raise ArgumentError, "cupertino_alert_dialog requires title, content, or actions"
+            end
+
             props = {}
             props[:actions] = actions unless actions.nil?
             props[:adaptive] = adaptive unless adaptive.nil?

@@ -37,19 +37,40 @@ class RufletServerWireCodecTest < Minitest::Test
     assert_equal 0xc4, encoded.getbyte(0)
   end
 
-  def test_flet_date_and_time_extensions_round_trip_with_their_types
-    date = Ruflet::Protocol.date_time("2026-05-21T00:00:00+00:00")
-    time = Ruflet::Protocol.time_of_day("9:30")
+  def test_unpack_decodes_flet_message_pack_ext_values
+    assert_equal "2026-05-20T12:30:00+00:00", Ruflet::WireCodec.unpack(ext8(1, "2026-05-20T12:30:00+00:00"))
+    assert_equal "09:45", Ruflet::WireCodec.unpack(ext8(2, "09:45"))
+    assert_equal 123_456, Ruflet::WireCodec.unpack(ext8(3, "123456"))
+    assert_equal "js-value", Ruflet::WireCodec.unpack(ext8(4, "js-value"))
+  end
 
-    encoded = Ruflet::WireCodec.pack("date" => date, "time" => time)
-    decoded = Ruflet::WireCodec.unpack(encoded)
+  def test_pack_encodes_picker_dates_as_flet_message_pack_ext_values
+    payload = {
+      "_c" => "DatePicker",
+      "value" => "2026-05-20",
+      "first_date" => "2026-01-01",
+      "last_date" => "2026-12-31"
+    }
 
-    assert_equal 0xc7, Ruflet::WireCodec.pack(date).getbyte(0)
-    assert_equal 1, Ruflet::WireCodec.pack(date).getbyte(2)
-    assert_equal 2, Ruflet::WireCodec.pack(time).getbyte(2)
-    assert_instance_of Ruflet::Protocol::DateTimeValue, decoded["date"]
-    assert_instance_of Ruflet::Protocol::TimeOfDayValue, decoded["time"]
-    assert_equal date, decoded["date"]
-    assert_equal time, decoded["time"]
+    encoded = Ruflet::WireCodec.pack(payload)
+
+    assert_includes encoded, ext8(1, "2026-05-20T00:00:00+00:00")
+    assert_includes encoded, ext8(1, "2026-01-01T00:00:00+00:00")
+    assert_includes encoded, ext8(1, "2026-12-31T00:00:00+00:00")
+  end
+
+  def test_pack_encodes_time_picker_value_as_flet_message_pack_ext_value
+    payload = { "_c" => "TimePicker", "value" => "09:30" }
+
+    encoded = Ruflet::WireCodec.pack(payload)
+
+    assert_includes encoded, ext8(2, "09:30")
+  end
+
+  private
+
+  def ext8(type, payload)
+    bytes = payload.b
+    "\xc7".b + [bytes.bytesize, type].pack("Cc") + bytes
   end
 end

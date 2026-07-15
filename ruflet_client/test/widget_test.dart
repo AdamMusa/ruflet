@@ -64,9 +64,9 @@ void main() {
     expect(url, 'https://example.com');
   });
 
-  test('web query URL wins over the production default', () {
+  test('web falls back to its own page URL', () {
     final url = resolveInitialRufletUrl(
-      baseUrl: 'https://explorer.example/?url=https%3A%2F%2Fapp.example',
+      baseUrl: 'https://explorer.example/',
       args: null,
       isWeb: true,
       isDebugMode: false,
@@ -74,6 +74,19 @@ void main() {
       productionDefaultUrl: 'https://ruflet.dev',
     );
 
-    expect(url, 'https://app.example');
+    expect(url, 'https://explorer.example/');
+  });
+
+  test('production web keeps its clean dynamic localhost origin', () {
+    final url = resolveInitialRufletUrl(
+      baseUrl: 'http://localhost:9127/',
+      args: null,
+      isWeb: true,
+      isDebugMode: false,
+      isMobilePlatform: false,
+      productionDefaultUrl: '',
+    );
+
+    expect(url, 'http://localhost:9127/');
   });
 }

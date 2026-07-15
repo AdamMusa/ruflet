@@ -9,21 +9,11 @@ require_relative "icons/material_icon_lookup"
 require_relative "icons/cupertino_icon_lookup"
 require "set"
 require "cgi"
-require "uri"
 require "thread"
 require "timeout"
 
 module Ruflet
   class Page
-    # Older and embedded clients may omit this capability from registration.
-    # Ruflet applications should still be able to branch on `page.web` just as
-    # they do with a full desktop client.
-    def web
-      !!(@client_details && @client_details["web"])
-    end
-
-    alias web? web
-
     class SharedPreferencesService
       def initialize(page)
         @page = page
@@ -149,16 +139,15 @@ module Ruflet
       end
     end
 
-    PAGE_PROP_KEYS = %w[dark_theme fonts route rtl show_semantics_debugger theme theme_mode theme_animation_style title vertical_alignment horizontal_alignment scroll].freeze
+    PAGE_PROP_KEYS = %w[dark_theme fonts route rtl show_semantics_debugger theme theme_mode title vertical_alignment horizontal_alignment scroll].freeze
     DIALOG_PROP_KEYS = %w[dialog snack_bar bottom_sheet].freeze
-    PAGE_ADD_RESERVED_KEYS = %i[appbar bottom_appbar floating_action_button navigation_bar dialog snack_bar bottom_sheet].freeze
     WIDGET_HELPER_METHODS = (
       Ruflet::UI::MaterialControlMethods.instance_methods(false) +
       Ruflet::UI::CupertinoControlMethods.instance_methods(false) +
       %i[control widget]
-    ).map(&:to_s).uniq.freeze
+    ).map(&:to_s).to_set.freeze
 
-    attr_reader :session_id, :client_details, :views, :window
+    attr_reader :session_id, :client_details, :views
 
     def initialize(session_id:, client_details:, sender:)
       @session_id = session_id
@@ -178,8 +167,6 @@ module Ruflet
       @page_event_handlers = {}
       @view_props = {}
       @page_props = { "route" => (client_details["route"] || "/") }
-      @window = build_client_window(client_details["window"])
-      @page_props["window"] = @window
       @overlay_container = Ruflet::Control.new(
         type: "overlay",
         id: "_overlay",
@@ -196,6 +183,7 @@ module Ruflet
         id: "_dialogs",
         controls: []
       )
+      @mounted_services = []
       @invoke_waiters = {}
       @invoke_callbacks = {}
       @invoke_waiters_mutex = Mutex.new
@@ -257,62 +245,62 @@ module Ruflet
       @view_props["bgcolor"] = normalize_value("bgcolor", value)
     end
 
-    def add(control)
-      if control.is_a?(Hash) && (control.keys.map(&:to_sym) & PAGE_ADD_RESERVED_KEYS).any?
-        raise ArgumentError, "Page#add accepts only controls; assign page.appbar, page.floating_action_button, dialogs, or other page properties before calling add"
-      end
-
-      raise ArgumentError, "Page#add accepts exactly one control" unless control.is_a?(Control)
-
-      replace_root_controls(@root_controls + [control])
-      self
+    # Client-reported page properties. The Flutter client sends these in its
+    # register payload (see Protocol.normalize_register_payload), where they are
+    # stored in @client_details; expose them as readers so apps can do
+    # `page.width`, `page.platform`, etc. without reaching into client_details.
+    def width
+      client_reported_prop("width")
     end
 
-    def controls
-      @root_controls
+    def height
+      client_reported_prop("height")
     end
 
-    def controls=(value)
-      replace_root_controls(Array(value).flatten.compact)
-      self
+    def platform
+      client_reported_prop("platform")
     end
 
-    def insert(at, *controls)
-      @root_controls.insert(at.to_i, *controls.flatten.compact)
+    def platform_brightness
+      client_reported_prop("platform_brightness")
+    end
+
+    def web
+      client_reported_prop("web")
+    end
+
+    def pwa
+      client_reported_prop("pwa")
+    end
+
+    def wasm
+      client_reported_prop("wasm")
+    end
+
+    def media
+      client_reported_prop("media")
+    end
+
+    def add(*controls, appbar: nil, bottom_appbar: nil, floating_action_button: nil, navigation_bar: nil, dialog: nil, snack_bar: nil, bottom_sheet: nil)
+      controls = controls.flatten
+      visited = Set.new
+      controls.each { |c| register_control_tree(c, visited) }
+      @root_controls = controls
+
+      update_view_slot("appbar", appbar)
+      update_view_slot("bottom_appbar", bottom_appbar)
+      update_view_slot("floating_action_button", floating_action_button)
+      update_view_slot("navigation_bar", navigation_bar)
+      @dialog = dialog if dialog
+      @snack_bar = snack_bar if snack_bar
+      @bottom_sheet = bottom_sheet if bottom_sheet
+
+      refresh_dialogs_container!
+      @view_props.each_value { |value| register_embedded_value(value, visited) }
+
       send_view_patch
+
       self
-    end
-
-    def remove(*controls)
-      controls.flatten.each { |control| @root_controls.delete(control) }
-      send_view_patch
-      self
-    end
-
-    def remove_at(index)
-      @root_controls.delete_at(index.to_i)
-      send_view_patch
-      self
-    end
-
-    def clean
-      replace_root_controls([])
-      self
-    end
-
-    def overlay
-      @overlay_container.children
-    end
-
-    def overlay=(value)
-      @overlay_container.children.replace(Array(value).flatten.compact)
-      push_overlay_update!
-      self
-    end
-
-    def get_control(id)
-      refresh_control_indexes!
-      resolve_control(id)
     end
 
     def views=(value)
@@ -363,6 +351,18 @@ module Ruflet
       service(:audio_recorder, **props)
     end
 
+    def browser_context_menu(**props)
+      service(:browser_context_menu, **props)
+    end
+
+    def window(**props)
+      service(:window, **props)
+    end
+
+    def tester(**props)
+      service(:tester, **props)
+    end
+
     def add_service(*value)
       @services_container.props["_services"] = services + value.flatten.compact
       refresh_services_container!
@@ -407,10 +407,6 @@ module Ruflet
         return svc
       end
 
-      unless service_control_type?(normalized_type)
-        raise ArgumentError, "#{type} is a visual control, not a page service"
-      end
-
       existing =
         if id
           services.find { |s| s.is_a?(Control) && s.id.to_s == id.to_s }
@@ -419,14 +415,7 @@ module Ruflet
             s.is_a?(Control) && s.type.to_s.downcase.delete("_") == compact_type
           end
         end
-      if existing
-        unless mapped_props.empty?
-          existing.merge_props(mapped_props)
-          refresh_services_container!
-          push_services_update!
-        end
-        return existing
-      end
+      return existing if existing
 
       svc = Ruflet::UI::ControlFactory.build(type.to_s, id: id&.to_s, **mapped_props)
       add_service(svc) unless services.include?(svc)
@@ -460,33 +449,23 @@ module Ruflet
       @page_event_handlers["view_pop"] = handler
     end
 
-    def on_views_pop_until=(handler)
-      @page_event_handlers["views_pop_until"] = handler
+    def on_resize=(handler)
+      @page_event_handlers["resize"] = handler
     end
 
     def on(event_name, &block)
-      name = event_name.to_s
-      name = name[3..-1] if name.start_with?("on_")
-      @page_event_handlers[name] = block
+      @page_event_handlers[event_name.to_s.sub(/\Aon_/, "")] = block
       self
     end
 
     def mount(&block)
       builder = WidgetBuilder.new
       builder.instance_eval(&block)
-      builder.children.each { |control| add(control) }
-    end
-
-    def appbar
-      @view_props["appbar"]
+      add(*builder.children)
     end
 
     def appbar=(value)
       @view_props["appbar"] = value
-    end
-
-    def bottom_appbar
-      @view_props["bottom_appbar"]
     end
 
     def bottom_appbar=(value)
@@ -497,76 +476,8 @@ module Ruflet
       self.bottom_appbar = value
     end
 
-    def floating_action_button
-      @view_props["floating_action_button"]
-    end
-
     def floating_action_button=(value)
       @view_props["floating_action_button"] = value
-    end
-
-    def navigation_bar
-      @view_props["navigation_bar"]
-    end
-
-    def navigation_bar=(value)
-      @view_props["navigation_bar"] = value
-    end
-
-    def auto_scroll
-      @view_props["auto_scroll"]
-    end
-
-    def auto_scroll=(value)
-      @view_props["auto_scroll"] = value
-    end
-
-    def browser_context_menu
-      @view_props["browser_context_menu"]
-    end
-
-    def browser_context_menu=(value)
-      @view_props["browser_context_menu"] = value
-    end
-
-    def decoration
-      @view_props["decoration"]
-    end
-
-    def decoration=(value)
-      @view_props["decoration"] = value
-    end
-
-    def floating_action_button_location
-      @view_props["floating_action_button_location"]
-    end
-
-    def floating_action_button_location=(value)
-      @view_props["floating_action_button_location"] = value
-    end
-
-    def foreground_decoration
-      @view_props["foreground_decoration"]
-    end
-
-    def foreground_decoration=(value)
-      @view_props["foreground_decoration"] = value
-    end
-
-    def padding
-      @view_props["padding"]
-    end
-
-    def padding=(value)
-      @view_props["padding"] = value
-    end
-
-    def spacing
-      @view_props["spacing"]
-    end
-
-    def spacing=(value)
-      @view_props["spacing"] = value
     end
 
     def drawer
@@ -585,20 +496,42 @@ module Ruflet
       @view_props["end_drawer"] = value
     end
 
+    def show_drawer(timeout: 10, on_result: nil)
+      raise ArgumentError, "show_drawer requires drawer" unless drawer
+
+      invoke_current_view("show_drawer", timeout: timeout, on_result: on_result)
+      self
+    end
+
+    def close_drawer(timeout: 10, on_result: nil)
+      invoke_current_view("close_drawer", timeout: timeout, on_result: on_result)
+      self
+    end
+
+    def show_end_drawer(timeout: 10, on_result: nil)
+      raise ArgumentError, "show_end_drawer requires end_drawer" unless end_drawer
+
+      invoke_current_view("show_end_drawer", timeout: timeout, on_result: on_result)
+      self
+    end
+
+    def close_end_drawer(timeout: 10, on_result: nil)
+      invoke_current_view("close_end_drawer", timeout: timeout, on_result: on_result)
+      self
+    end
+
     def dialog = @dialog
 
     def dialog=(value)
       @dialog = value
       refresh_dialogs_container!
+      push_dialogs_update! if @dialogs_container_mounted
     end
 
     def snack_bar=(value)
       @snack_bar = value
       refresh_dialogs_container!
-    end
-
-    def snack_bar
-      @snack_bar
+      push_dialogs_update! if @dialogs_container_mounted
     end
 
     def snackbar=(value)
@@ -608,10 +541,12 @@ module Ruflet
     def bottom_sheet=(value)
       @bottom_sheet = value
       refresh_dialogs_container!
-    end
-
-    def bottom_sheet
-      @bottom_sheet
+      # Mirror dialog= / snack_bar=: once the dialogs container is mounted, push
+      # the change as an in-place patch. Without this, opening a bottom sheet
+      # after the container is already mounted (e.g. a prior dialog/snackbar)
+      # never reaches the client, since send_view_patch skips _dialogs once
+      # mounted. This is what made NativeApp's modal: sheets fail to open.
+      push_dialogs_update! if @dialogs_container_mounted
     end
 
     def bottomsheet=(value)
@@ -624,77 +559,12 @@ module Ruflet
       return self if dialog_open?(dialog_control)
 
       dialog_control.props["open"] = true
+      remove_existing_singleton_dialogs(dialog_control)
       @dialogs << dialog_control unless @dialogs.include?(dialog_control)
       refresh_dialogs_container!
       send_view_patch unless @dialogs_container.wire_id
       push_dialogs_update!
       self
-    end
-
-    def show_snack_bar(snack_bar_control)
-      show_dialog(snack_bar_control)
-    end
-
-    def show_snackbar(snack_bar_control)
-      show_dialog(snack_bar_control)
-    end
-
-    def show_bottom_sheet(bottom_sheet_control)
-      show_dialog(bottom_sheet_control)
-    end
-
-    def show_banner(banner_control)
-      show_dialog(banner_control)
-    end
-
-    def close_banner(banner_control = nil)
-      close_dialog(banner_control)
-    end
-
-    def close_dialog(dialog_control = nil)
-      target = dialog_control || latest_open_dialog
-      return nil unless target
-
-      target.props["open"] = false
-      refresh_dialogs_container!
-      push_dialogs_update!
-      target
-    end
-
-    def show_drawer(timeout: 10, on_result: nil)
-      raise ArgumentError, "No drawer defined" unless drawer
-
-      invoke(:page, "show_drawer", timeout: timeout, on_result: on_result)
-    end
-
-    def close_drawer(timeout: 10, on_result: nil)
-      invoke(:page, "close_drawer", timeout: timeout, on_result: on_result)
-    end
-
-    def show_end_drawer(timeout: 10, on_result: nil)
-      raise ArgumentError, "No end_drawer defined" unless end_drawer
-
-      invoke(:page, "show_end_drawer", timeout: timeout, on_result: on_result)
-    end
-
-    def close_end_drawer(timeout: 10, on_result: nil)
-      invoke(:page, "close_end_drawer", timeout: timeout, on_result: on_result)
-    end
-
-    def scroll_to(offset: nil, delta: nil, scroll_key: nil, duration: nil, curve: nil, timeout: 10, on_result: nil)
-      invoke(
-        :page,
-        "scroll_to",
-        args: {
-          "offset" => offset,
-          "delta" => delta,
-          "scroll_key" => scroll_key,
-          "duration" => duration,
-          "curve" => curve
-        },
-        timeout: timeout,
-        on_result: on_result
-      )
     end
 
     def invoke(control_or_id, method_name, args: nil, timeout: 10, on_result: nil)
@@ -710,7 +580,7 @@ module Ruflet
       call_id = "call_#{Ruflet::Control.generate_id}"
       if on_result.respond_to?(:call)
         @invoke_waiters_mutex.synchronize { @invoke_callbacks[call_id] = on_result }
-        unless timeout.nil?
+        if embedded_async_timeout_available? && !timeout.nil?
           Thread.new(call_id, timeout.to_f) do |pending_call_id, invoke_timeout|
             sleep([invoke_timeout, 0.0].max + 0.1)
             callback = @invoke_waiters_mutex.synchronize { @invoke_callbacks.delete(pending_call_id) }
@@ -859,6 +729,167 @@ module Ruflet
       upload(files, timeout: timeout, on_result: on_result)
     end
 
+    def disable_browser_context_menu(timeout: 10, on_result: nil)
+      invoke_browser_context_menu("disable_menu", timeout: timeout, on_result: on_result)
+    end
+
+    def enable_browser_context_menu(timeout: 10, on_result: nil)
+      invoke_browser_context_menu("enable_menu", timeout: timeout, on_result: on_result)
+    end
+
+    def wait_until_ready_to_show(timeout: 10, on_result: nil)
+      invoke_window("wait_until_ready_to_show", timeout: timeout, on_result: on_result)
+    end
+
+    def window_to_front(timeout: 10, on_result: nil)
+      invoke_window("to_front", timeout: timeout, on_result: on_result)
+    end
+
+    def center_window(timeout: 10, on_result: nil)
+      invoke_window("center", timeout: timeout, on_result: on_result)
+    end
+
+    def close_window(timeout: 10, on_result: nil)
+      invoke_window("close", timeout: timeout, on_result: on_result)
+    end
+
+    def destroy_window(timeout: 10, on_result: nil)
+      invoke_window("destroy", timeout: timeout, on_result: on_result)
+    end
+
+    def start_window_dragging(timeout: 10, on_result: nil)
+      invoke_window("start_dragging", timeout: timeout, on_result: on_result)
+    end
+
+    def start_window_resizing(edge, timeout: 10, on_result: nil)
+      invoke_window(
+        "start_resizing",
+        args: { "edge" => normalize_service_value(edge) },
+        timeout: timeout,
+        on_result: on_result
+      )
+    end
+
+    def tester_pump(options = nil, duration: nil, timeout: 10, on_result: nil)
+      duration = options[:duration] || options["duration"] if options.is_a?(Hash) && duration.nil?
+      invoke_tester("pump", args: compact_service_args("duration" => duration), timeout: timeout, on_result: on_result)
+    end
+
+    def tester_pump_and_settle(options = nil, duration: nil, timeout: 10, on_result: nil)
+      duration = options[:duration] || options["duration"] if options.is_a?(Hash) && duration.nil?
+      invoke_tester("pump_and_settle", args: compact_service_args("duration" => duration), timeout: timeout, on_result: on_result)
+    end
+
+    def find_by_text(text, timeout: 10, on_result: nil)
+      invoke_tester("find_by_text", args: { "text" => text }, timeout: timeout, on_result: on_result)
+    end
+
+    def find_by_text_containing(pattern, timeout: 10, on_result: nil)
+      invoke_tester("find_by_text_containing", args: { "pattern" => pattern }, timeout: timeout, on_result: on_result)
+    end
+
+    def find_by_key(key, timeout: 10, on_result: nil)
+      invoke_tester("find_by_key", args: { "key" => key }, timeout: timeout, on_result: on_result)
+    end
+
+    def find_by_tooltip(value, timeout: 10, on_result: nil)
+      invoke_tester("find_by_tooltip", args: { "value" => value }, timeout: timeout, on_result: on_result)
+    end
+
+    def find_by_icon(icon, timeout: 10, on_result: nil)
+      invoke_tester("find_by_icon", args: { "icon" => normalize_service_value(icon) }, timeout: timeout, on_result: on_result)
+    end
+
+    def take_screenshot(name, timeout: 10, on_result: nil)
+      invoke_tester("take_screenshot", args: { "name" => name }, timeout: timeout, on_result: on_result)
+    end
+
+    def tap(finder_id = nil, options = nil, finder_index: nil, timeout: 10, on_result: nil)
+      finder_index = options[:finder_index] || options["finder_index"] if options.is_a?(Hash) && finder_index.nil?
+      invoke_tester_finder("tap", finder_id, finder_index: finder_index, timeout: timeout, on_result: on_result)
+    end
+
+    def mouse_click(finder_id = nil, options = nil, finder_index: nil, timeout: 10, on_result: nil)
+      finder_index = options[:finder_index] || options["finder_index"] if options.is_a?(Hash) && finder_index.nil?
+      invoke_tester_finder("mouse_click", finder_id, finder_index: finder_index, timeout: timeout, on_result: on_result)
+    end
+
+    def mouse_double_click(finder_id = nil, options = nil, finder_index: nil, timeout: 10, on_result: nil)
+      finder_index = options[:finder_index] || options["finder_index"] if options.is_a?(Hash) && finder_index.nil?
+      invoke_tester_finder("mouse_double_click", finder_id, finder_index: finder_index, timeout: timeout, on_result: on_result)
+    end
+
+    def right_mouse_click(finder_id = nil, options = nil, finder_index: nil, timeout: 10, on_result: nil)
+      finder_index = options[:finder_index] || options["finder_index"] if options.is_a?(Hash) && finder_index.nil?
+      invoke_tester_finder("right_mouse_click", finder_id, finder_index: finder_index, timeout: timeout, on_result: on_result)
+    end
+
+    def tap_at(offset = nil, timeout: 10, on_result: nil)
+      invoke_tester_at("tap_at", offset, timeout: timeout, on_result: on_result)
+    end
+
+    def mouse_click_at(offset = nil, timeout: 10, on_result: nil)
+      invoke_tester_at("mouse_click_at", offset, timeout: timeout, on_result: on_result)
+    end
+
+    def mouse_double_click_at(offset = nil, timeout: 10, on_result: nil)
+      invoke_tester_at("mouse_double_click_at", offset, timeout: timeout, on_result: on_result)
+    end
+
+    def right_mouse_click_at(offset = nil, timeout: 10, on_result: nil)
+      invoke_tester_at("right_mouse_click_at", offset, timeout: timeout, on_result: on_result)
+    end
+
+    def drag(finder_id, offset, finder_index: nil, timeout: 10, on_result: nil)
+      invoke_tester(
+        "drag",
+        args: compact_service_args(
+          "finder_id" => finder_id,
+          "finder_index" => finder_index,
+          "offset" => offset
+        ),
+        timeout: timeout,
+        on_result: on_result
+      )
+    end
+
+    def drag_from(start, offset, timeout: 10, on_result: nil)
+      invoke_tester(
+        "drag_from",
+        args: compact_service_args("start" => start, "offset" => offset),
+        timeout: timeout,
+        on_result: on_result
+      )
+    end
+
+    def long_press(finder_id = nil, options = nil, finder_index: nil, timeout: 10, on_result: nil)
+      finder_index = options[:finder_index] || options["finder_index"] if options.is_a?(Hash) && finder_index.nil?
+      invoke_tester_finder("long_press", finder_id, finder_index: finder_index, timeout: timeout, on_result: on_result)
+    end
+
+    def enter_text(finder_id, text, options = nil, finder_index: nil, timeout: 10, on_result: nil)
+      finder_index = options[:finder_index] || options["finder_index"] if options.is_a?(Hash) && finder_index.nil?
+      invoke_tester(
+        "enter_text",
+        args: compact_service_args(
+          "finder_id" => finder_id,
+          "finder_index" => finder_index,
+          "text" => text
+        ),
+        timeout: timeout,
+        on_result: on_result
+      )
+    end
+
+    def mouse_hover(finder_id = nil, options = nil, finder_index: nil, timeout: 10, on_result: nil)
+      finder_index = options[:finder_index] || options["finder_index"] if options.is_a?(Hash) && finder_index.nil?
+      invoke_tester_finder("mouse_hover", finder_id, finder_index: finder_index, timeout: timeout, on_result: on_result)
+    end
+
+    def tester_teardown(timeout: 10, on_result: nil)
+      invoke_tester("teardown", timeout: timeout, on_result: on_result)
+    end
+
     def heavy_impact(timeout: 10, on_result: nil)
       invoke_haptic_feedback("heavy_impact", timeout: timeout, on_result: on_result)
     end
@@ -958,18 +989,6 @@ module Ruflet
       service(:barometer, **props)
     end
 
-    def geolocator(**props)
-      service(:geolocator, **props)
-    end
-
-    def permission_handler(**props)
-      service(:permission_handler, **props)
-    end
-
-    def secure_storage(**props)
-      service(:secure_storage, **props)
-    end
-
     def shake_detector(**props)
       service(:shake_detector, **props)
     end
@@ -979,7 +998,7 @@ module Ruflet
     end
 
     def screenshot(**props)
-      Ruflet::UI::ControlFactory.build(:screenshot, **props)
+      service(:screenshot, **props)
     end
 
     def battery(**props)
@@ -1016,6 +1035,18 @@ module Ruflet
 
     def haptic_feedback(**props)
       service(:haptic_feedback, **props)
+    end
+
+    def geolocator(**props)
+      service(:geolocator, **props)
+    end
+
+    def permission_handler(**props)
+      service(:permission_handler, **props)
+    end
+
+    def secure_storage(**props)
+      service(:secure_storage, **props)
     end
 
     def get_application_cache_directory(timeout: nil, on_result: nil)
@@ -1162,7 +1193,27 @@ module Ruflet
     end
 
     def pop_dialog
-      close_dialog
+      dialog_control = latest_open_dialog
+      return nil unless dialog_control
+
+      dialog_control.props["open"] = false
+      update(dialog_control, open: false)
+      dialog_control
+    end
+
+    def close_dialog(dialog_control)
+      return self unless dialog_control
+
+      dialog_control.props["open"] = false
+      @dialog = nil if @dialog.equal?(dialog_control)
+      remove_dialog_tracking(dialog_control)
+      refresh_dialogs_container!
+      # Patch the dialogs container in place. Forcing a full view re-render
+      # here would remount the whole overlay — fatal while another dialog
+      # (e.g. the form behind a nested picker) is still open. The empty case
+      # is handled inside push_dialogs_update!.
+      push_dialogs_update!
+      self
     end
 
     def update(control_or_id = nil, **props)
@@ -1200,6 +1251,7 @@ module Ruflet
 
       visited = Set.new
       patch.each_value { |value| register_embedded_value(value, visited) }
+      patch.each { |k, v| control.props[k] = v }
 
       patch_ops = patch.map { |k, v| [0, 0, k, serialize_patch_value(v)] }
 
@@ -1209,10 +1261,6 @@ module Ruflet
       })
 
       self
-    end
-
-    def schedule_update
-      update
     end
 
     def patch_page(control_id, **props)
@@ -1226,8 +1274,6 @@ module Ruflet
       patch = normalize_props(props || {})
       patch.each { |k, v| control.props[k] = v }
 
-      remove_dialog_tracking(control) if patch.key?("open") && patch["open"] == false
-
       self
     end
 
@@ -1235,8 +1281,17 @@ module Ruflet
       if page_control_target?(target)
         if name.to_s == "route_change"
           route_from_event = extract_route(data)
-          return if route_from_event && route_from_event == @page_props["route"]
+          # Dialogs (including pickers) belong to the view that opened them.
+          # Navigating away must dismiss them, or they ghost onto the next
+          # view — the picker that "reappears after going home".
+          dismiss_tracked_dialogs! if route_from_event && route_from_event != @page_props["route"]
           @page_props["route"] = route_from_event if route_from_event
+        elsif name.to_s == "resize"
+          # The client reports the live page size via the "resize" event. Store
+          # it so `page.width`/`page.height` reflect the real viewport — without
+          # this, responsive layouts collapse on clients (e.g. embedded/iOS)
+          # that don't know their size at the initial handshake.
+          store_reported_page_size(data)
         end
         dispatch_page_event(name: name, data: data)
         return
@@ -1245,13 +1300,19 @@ module Ruflet
       control = @wire_index[target.to_i] || @control_index[target.to_s]
       return unless control
 
-      event = Event.new(name: name, target: target, raw_data: data, page: self, control: control)
+      event = Ruflet::Event.new(name: name, target: target, raw_data: data, page: self, control: control)
       apply_event_value_to_control(control, event) if %w[change select select_change].include?(name.to_s)
-      control.emit(name, event)
-
-      if name.to_s == "dismiss" && remove_dialog_tracking(control)
+      # Material/Cupertino pickers dismiss themselves on the client once a
+      # value is confirmed, but only send a value event — never a close. Mark
+      # the dialog closed here so show_dialog can reopen it next time.
+      mark_picker_dialog_closed(control, name)
+      if dialog_close_event?(control, name) && remove_dialog_tracking(control)
+        # Patch the container in place; never force a full view re-render that
+        # would remount a still-open parent dialog (the nested-picker case).
         push_dialogs_update!
       end
+
+      control.emit(name, event)
     end
 
     def method_missing(name, *args, &block)
@@ -1269,9 +1330,6 @@ module Ruflet
       if args.empty? && !block
         return @page_props[method_name] if @page_props.key?(method_name)
         return @view_props[method_name] if @view_props.key?(method_name)
-        # Client-reported page properties (width, height, platform,
-        # platform_brightness, media) arrive in the register payload.
-        return @client_details[method_name] if @client_details.respond_to?(:key?) && @client_details.key?(method_name)
         return instance_variable_get("@#{method_name}") if DIALOG_PROP_KEYS.include?(method_name)
       end
 
@@ -1296,20 +1354,14 @@ module Ruflet
 
     private
 
-    def build_client_window(snapshot)
-      properties = snapshot.is_a?(Hash) ? snapshot : {}
-      allowed = Ruflet::UI::Controls::RufletComponents::WindowControl::KEYWORDS
-      props = properties.each_with_object({}) do |(key, value), result|
-        name = key.to_s
-        result[name.to_sym] = value if allowed.include?(name.to_sym)
-      end
-      control = Ruflet::UI::Controls::RufletComponents::WindowControl.new(
-        id: "_window",
-        **props
-      )
-      control.wire_id = (properties["_i"] || properties[:_i] || 2).to_i
-      control.runtime_page = self
-      control
+    def client_reported_prop(name)
+      return @page_props[name] if @page_props.key?(name)
+
+      @client_details[name]
+    end
+
+    def embedded_async_timeout_available?
+      !Object.const_defined?(:RUFLET_EMBEDDED_FAKE_THREAD)
     end
 
     def invoke_and_wait(control_or_id, method_name, args: nil, timeout: 10)
@@ -1395,14 +1447,6 @@ module Ruflet
       type.to_s.delete("_") == "camera"
     end
 
-    def service_control_type?(type)
-      normalized = type.to_s.downcase
-      compact = normalized.delete("_")
-      compact == "audio" ||
-        Ruflet::UI::Services::RufletServices::CLASS_MAP.key?(normalized) ||
-        Ruflet::UI::Services::RufletServices::CLASS_MAP.key?(compact)
-    end
-
     def text_maps_to_content?(control, patch)
       patch.key?("text") && control.type.end_with?("button")
     end
@@ -1417,14 +1461,12 @@ module Ruflet
       @sender.call(action, payload)
     end
 
-    def replace_root_controls(controls)
-      visited = Set.new
-      controls.each { |control| register_control_tree(control, visited) }
-      @root_controls = controls
-
-      refresh_dialogs_container!
-      @view_props.each_value { |value| register_embedded_value(value, visited) }
-      send_view_patch
+    def update_view_slot(name, value)
+      if value.nil?
+        @view_props.delete(name)
+      else
+        @view_props[name] = value
+      end
     end
 
     def send_view_patch
@@ -1436,8 +1478,8 @@ module Ruflet
         "id" => 1,
         "patch" => [
           [0],
-          [0, 0, "views", view_patches],
-          *page_patch_ops
+          *page_patch_ops,
+          [0, 0, "views", view_patches]
         ]
       })
       @overlay_container_mounted = true if @overlay_container.wire_id
@@ -1532,6 +1574,7 @@ module Ruflet
         raise ArgumentError, "page #{key} must use an icon name string, not #{value.inspect}"
       end
 
+      value = Ruflet::Colors.normalize_property(key, value)
       return value.value if value.is_a?(Ruflet::IconData)
       value.is_a?(Symbol) ? value.to_s : value
     end
@@ -1557,9 +1600,14 @@ module Ruflet
       query_string = route_value.to_s.split("?", 2)[1].to_s
       return {} if query_string.empty?
 
-      URI.decode_www_form(query_string).group_by(&:first).each_with_object({}) do |(key, pairs), result|
-        values = pairs.map(&:last)
-        result[key] = values.size == 1 ? values.first : values
+      query_string.split("&").each_with_object({}) do |pair, result|
+        next if pair.empty?
+
+        key, value = pair.split("=", 2)
+        key = CGI.unescape(key.to_s.tr("+", " "))
+        value = CGI.unescape(value.to_s.tr("+", " "))
+        previous = result[key]
+        result[key] = previous.nil? ? value : Array(previous) << value
       end
     end
 
@@ -1574,13 +1622,20 @@ module Ruflet
       end
     end
 
+    def store_reported_page_size(data)
+      return unless data.is_a?(Hash)
+
+      width = data["width"] || data[:width]
+      height = data["height"] || data[:height]
+      @page_props["width"] = width unless width.nil?
+      @page_props["height"] = height unless height.nil?
+    end
+
     def dispatch_page_event(name:, data:)
-      event_name = name.to_s
-      event_name = event_name[3..-1] if event_name.start_with?("on_")
-      handler = @page_event_handlers[event_name]
+      handler = @page_event_handlers[name.to_s.sub(/\Aon_/, "")]
       return unless handler.respond_to?(:call)
 
-      event = Event.new(name: name.to_s, target: 1, raw_data: data, page: self, control: nil)
+      event = Ruflet::Event.new(name: name.to_s, target: 1, raw_data: data, page: self, control: nil)
       handler.call(event)
     end
 
@@ -1596,8 +1651,8 @@ module Ruflet
           end_value = range_value["end_value"] || range_value[:end_value]
           control.props["start_value"] = start_value unless start_value.nil?
           control.props["end_value"] = end_value unless end_value.nil?
-          return
         end
+        return
       end
 
       return if value.nil?
@@ -1644,26 +1699,13 @@ module Ruflet
     end
 
     def refresh_dialogs_container!
-      dialog_controls = (@dialogs + dialog_slots).uniq
+      dialog_controls = (dialog_slots + @dialogs).uniq
       @dialogs_container.props["controls"] = dialog_controls
       @page_props["_dialogs"] = @dialogs_container
     end
 
     def refresh_overlay_container!
       @page_props["_overlay"] = @overlay_container
-    end
-
-    def push_overlay_update!
-      refresh_control_indexes!
-
-      if @overlay_container.wire_id
-        send_message(Protocol::ACTIONS[:patch_control], {
-          "id" => @overlay_container.wire_id,
-          "patch" => [[0], [0, 0, "controls", serialize_patch_value(@overlay_container.children)]]
-        })
-      else
-        send_view_patch
-      end
     end
 
     def refresh_services_container!
@@ -1673,19 +1715,72 @@ module Ruflet
     def push_services_update!
       refresh_control_indexes!
 
-      if @services_container.wire_id
+      unless @services_container.wire_id
+        # First mount: the whole list ships inside the page/view patch.
+        send_view_patch
+        @mounted_services = Array(@services_container.props["_services"]).dup
+        return
+      end
+
+      current = Array(@services_container.props["_services"])
+      ops = services_patch_ops(@mounted_services, current)
+      unless ops.empty?
+        # Incrementally add/remove individual services. Re-sending the whole
+        # `_services` list as full objects (a single replace op) makes the
+        # client run Control.fromMap for EVERY service, replacing each Control
+        # instance while ServiceRegistry only binds ids it hasn't seen — so an
+        # already-mounted service (share, clipboard, haptic) keeps its old
+        # binding while controlsIndex points at the fresh, listener-less
+        # instance, and its next invoke hangs. That was the "after Copy, Share
+        # stops working" bug. Add/remove ops leave untouched services intact.
         send_message(Protocol::ACTIONS[:patch_control], {
           "id" => @services_container.wire_id,
-          "patch" => [[0], [0, 0, "_services", serialize_patch_value(@services_container.props["_services"])]]
+          "patch" => [[0, { "_services" => [1] }], *ops]
         })
-      else
-        send_view_patch
       end
+      @mounted_services = current.dup
+    end
+
+    # Diff the previously-mounted services list against the current one and emit
+    # add (1) / remove (2) ops against the `_services` list (patch node 1).
+    # Services are normally append-only; a moved entry is expressed as
+    # remove + add. Existing entries are never re-serialized, so their client
+    # Control instances (and invoke listeners) survive.
+    def services_patch_ops(previous, current)
+      ops = []
+      working = previous.dup
+
+      (working.length - 1).downto(0) do |index|
+        next if current.any? { |service| service.equal?(working[index]) }
+
+        ops << [2, 1, index]
+        working.delete_at(index)
+      end
+
+      current.each_with_index do |service, index|
+        next if working[index]&.equal?(service)
+
+        existing = working.index { |candidate| candidate.equal?(service) }
+        if existing
+          ops << [2, 1, existing]
+          working.delete_at(existing)
+        end
+        ops << [1, 1, index, serialize_patch_value(service)]
+        working.insert(index, service)
+      end
+
+      ops
     end
 
     def push_dialogs_update!
       refresh_control_indexes!
 
+      # Once the dialogs container is mounted, every change — opening, closing,
+      # even down to no dialogs at all — is an in-place patch of its controls
+      # list. Re-sending the view (or the container as a whole object) would
+      # replace the live container instance on the Flutter side, detaching its
+      # listeners and breaking any other dialog still open. Only the very first
+      # dialog, before the container has a wire id, needs a view patch to mount.
       if @dialogs_container.wire_id
         send_message(Protocol::ACTIONS[:patch_control], {
           "id" => @dialogs_container.wire_id,
@@ -1708,12 +1803,57 @@ module Ruflet
       @dialogs.include?(dialog_control) && dialog_control.props["open"] == true
     end
 
+    def dialog_close_event?(control, name)
+      name = name.to_s
+      name == "dismiss" || (%w[change select select_change].include?(name) && @dialogs.include?(control) && control.props["open"] == false)
+    end
+
+    # Picker dialogs that auto-dismiss on the client after a selection. Their
+    # confirm sends a value event (change/select), not a close, so the server
+    # must flip `open` to false or show_dialog's open-guard blocks reopening.
+    PICKER_DIALOG_TYPES = %w[
+      datepicker daterangepicker timepicker
+      cupertinodatepicker cupertinotimerpicker
+    ].freeze
+
+    def picker_dialog?(control)
+      PICKER_DIALOG_TYPES.include?(control.type.to_s.tr("_", "").downcase)
+    end
+
+    def mark_picker_dialog_closed(control, name)
+      return unless picker_dialog?(control)
+      return unless %w[change select select_change dismiss].include?(name.to_s)
+
+      control.props["open"] = false
+    end
+
+    # Close and untrack every dialog currently shown. Called on navigation so
+    # a dialog opened in one view does not linger as an overlay on the next.
+    def dismiss_tracked_dialogs!
+      return if @dialogs.empty?
+
+      @dialogs.each { |dialog| dialog.props["open"] = false }
+      @dialogs.clear
+      refresh_dialogs_container!
+      push_dialogs_update! if @dialogs_container_mounted
+    end
+
     def remove_dialog_tracking(control)
       return false unless @dialogs.include?(control)
 
       @dialogs.delete(control)
       refresh_dialogs_container!
       true
+    end
+
+    def remove_existing_singleton_dialogs(control)
+      return unless singleton_dialog_control?(control)
+
+      @dialogs.delete_if { |dialog| dialog != control && singleton_dialog_control?(dialog) }
+    end
+
+    def singleton_dialog_control?(control)
+      control.type.to_s.tr("_", "").downcase == "snackbar"
     end
 
     def assign_split_prop(key, value)
@@ -1762,6 +1902,7 @@ module Ruflet
       existing = service_by_type(type)
       return [existing, false] if existing
 
+      # `service` already syncs via add_service -> push_services_update!.
       [service(type), true]
     end
 
@@ -1786,6 +1927,51 @@ module Ruflet
       service(:url_launcher)
     end
 
+    def ensure_browser_context_menu_service
+      service(:browser_context_menu)
+    end
+
+    def invoke_browser_context_menu(method_name, timeout:, on_result:)
+      browser_context_menu = ensure_browser_context_menu_service
+      invoke(browser_context_menu, method_name, timeout: timeout, on_result: on_result)
+    end
+
+    def ensure_window_service
+      service(:window)
+    end
+
+    def invoke_window(method_name, args: nil, timeout:, on_result:)
+      window = ensure_window_service
+      invoke(window, method_name, args: args, timeout: timeout, on_result: on_result)
+    end
+
+    def ensure_tester_service
+      service(:tester)
+    end
+
+    def invoke_tester(method_name, args: nil, timeout:, on_result:)
+      tester = ensure_tester_service
+      invoke(tester, method_name, args: args, timeout: timeout, on_result: on_result)
+    end
+
+    def invoke_tester_finder(method_name, finder_id, finder_index:, timeout:, on_result:)
+      invoke_tester(
+        method_name,
+        args: compact_service_args("finder_id" => finder_id, "finder_index" => finder_index),
+        timeout: timeout,
+        on_result: on_result
+      )
+    end
+
+    def invoke_tester_at(method_name, offset, timeout:, on_result:)
+      invoke_tester(
+        method_name,
+        args: compact_service_args("offset" => offset),
+        timeout: timeout,
+        on_result: on_result
+      )
+    end
+
     def ensure_haptic_feedback_service
       service(:haptic_feedback)
     end
@@ -1793,6 +1979,38 @@ module Ruflet
     def invoke_haptic_feedback(method_name, timeout:, on_result:)
       haptic_feedback = ensure_haptic_feedback_service
       invoke(haptic_feedback, method_name, timeout: timeout, on_result: on_result)
+    end
+
+    def invoke_current_view(method_name, timeout:, on_result:)
+      target_id = @views.last&.wire_id || @view_id
+      invoke_control_id(target_id, method_name, timeout: timeout, on_result: on_result)
+    end
+
+    def invoke_control_id(control_id, method_name, args: nil, timeout: 10, on_result: nil)
+      call_id = "call_#{Ruflet::Control.generate_id}"
+      if on_result.respond_to?(:call)
+        @invoke_waiters_mutex.synchronize { @invoke_callbacks[call_id] = on_result }
+        if embedded_async_timeout_available? && !timeout.nil?
+          Thread.new(call_id, timeout.to_f) do |pending_call_id, invoke_timeout|
+            sleep([invoke_timeout, 0.0].max + 0.1)
+            callback = @invoke_waiters_mutex.synchronize { @invoke_callbacks.delete(pending_call_id) }
+            callback&.call(nil, "execution expired")
+          rescue StandardError => e
+            Kernel.warn("invoke timeout callback error: #{e.class}: #{e.message}")
+          end
+        end
+      end
+
+      payload = {
+        "control_id" => control_id,
+        "call_id" => call_id,
+        "name" => method_name.to_s,
+        "args" => args
+      }
+      payload["timeout"] = timeout unless timeout.nil?
+      send_message(Protocol::ACTIONS[:invoke_control_method], payload)
+
+      call_id
     end
 
     def ensure_connectivity_service

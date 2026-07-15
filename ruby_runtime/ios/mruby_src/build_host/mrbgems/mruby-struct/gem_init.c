@@ -24,18 +24,12 @@ static const mrb_code gem_mrblib_mruby_struct_proc_iseq_6[21] = {
 0x39,0x04,0x00,0x00,0x21,0x03,0x02,0x00,0x12,0x04,0x01,0x05,0x01,0x23,0x04,0x32,0x03,0x00,0x01,0x3d,
 0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_struct_proc_lv_6, 2, (MRB_SYM(field), 0,), const);
-static const char gem_mrblib_mruby_struct_proc_debug_lines_6[] = "\x00\x0e\x04\x01";
-static mrb_irep_debug_info_file gem_mrblib_mruby_struct_proc_debug_file_6 = {
-0, 278, 4, mrb_debug_line_packed_map, {gem_mrblib_mruby_struct_proc_debug_lines_6}};
-static mrb_irep_debug_info_file *gem_mrblib_mruby_struct_proc_debug_file_6_ = &gem_mrblib_mruby_struct_proc_debug_file_6;
-static mrb_irep_debug_info gem_mrblib_mruby_struct_proc_debug_6 = {
-21, 1, &gem_mrblib_mruby_struct_proc_debug_file_6_};
 static const mrb_irep gem_mrblib_mruby_struct_proc_irep_6 = {
   3,7,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_struct_proc_iseq_6,
   NULL,gem_mrblib_mruby_struct_proc_syms_6,NULL,
   gem_mrblib_mruby_struct_proc_lv_6,
-  &gem_mrblib_mruby_struct_proc_debug_6,
+  NULL,					/* debug_info */
   21,0,1,0,0
 };
 static const mrb_irep *gem_mrblib_mruby_struct_proc_reps_2[1] = {
@@ -46,18 +40,12 @@ static const mrb_code gem_mrblib_mruby_struct_proc_iseq_2[21] = {
 0x39,0x00,0x00,0x01,0x01,0x02,0x01,0x30,0x03,0x00,0x33,0x03,0x01,0x62,0x04,0x00,0x34,0x03,0x02,0x00,
 0x3f,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_struct_proc_lv_2, 2, (0,MRB_SYM(block), ), const);
-static const char gem_mrblib_mruby_struct_proc_debug_lines_2[] = "\x00\x0d\x07\x01\x0d\x03";
-static mrb_irep_debug_info_file gem_mrblib_mruby_struct_proc_debug_file_2 = {
-0, 278, 6, mrb_debug_line_packed_map, {gem_mrblib_mruby_struct_proc_debug_lines_2}};
-static mrb_irep_debug_info_file *gem_mrblib_mruby_struct_proc_debug_file_2_ = &gem_mrblib_mruby_struct_proc_debug_file_2;
-static mrb_irep_debug_info gem_mrblib_mruby_struct_proc_debug_2 = {
-21, 1, &gem_mrblib_mruby_struct_proc_debug_file_2_};
 static const mrb_irep gem_mrblib_mruby_struct_proc_irep_2 = {
   3,5,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_struct_proc_iseq_2,
   NULL,gem_mrblib_mruby_struct_proc_syms_2,gem_mrblib_mruby_struct_proc_reps_2,
   gem_mrblib_mruby_struct_proc_lv_2,
-  &gem_mrblib_mruby_struct_proc_debug_2,
+  NULL,					/* debug_info */
   21,0,3,1,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_struct_proc_syms_11, 2, (MRB_SYM(to_sym), MRB_SYM(call), ), const);
@@ -65,18 +53,12 @@ static const mrb_code gem_mrblib_mruby_struct_proc_iseq_11[27] = {
 0x39,0x04,0x00,0x00,0x21,0x03,0x02,0x00,0x01,0x04,0x01,0x33,0x04,0x00,0x12,0x05,0x01,0x06,0x01,0x23,
 0x05,0x32,0x03,0x01,0x02,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_struct_proc_lv_11, 2, (MRB_SYM(field), 0,), const);
-static const char gem_mrblib_mruby_struct_proc_debug_lines_11[] = "\x00\x1b\x04\x01";
-static mrb_irep_debug_info_file gem_mrblib_mruby_struct_proc_debug_file_11 = {
-0, 278, 4, mrb_debug_line_packed_map, {gem_mrblib_mruby_struct_proc_debug_lines_11}};
-static mrb_irep_debug_info_file *gem_mrblib_mruby_struct_proc_debug_file_11_ = &gem_mrblib_mruby_struct_proc_debug_file_11;
-static mrb_irep_debug_info gem_mrblib_mruby_struct_proc_debug_11 = {
-27, 1, &gem_mrblib_mruby_struct_proc_debug_file_11_};
 static const mrb_irep gem_mrblib_mruby_struct_proc_irep_11 = {
   3,8,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_struct_proc_iseq_11,
   NULL,gem_mrblib_mruby_struct_proc_syms_11,NULL,
   gem_mrblib_mruby_struct_proc_lv_11,
-  &gem_mrblib_mruby_struct_proc_debug_11,
+  NULL,					/* debug_info */
   27,0,2,0,0
 };
 static const mrb_irep *gem_mrblib_mruby_struct_proc_reps_3[1] = {
@@ -87,18 +69,12 @@ static const mrb_code gem_mrblib_mruby_struct_proc_iseq_3[21] = {
 0x39,0x00,0x00,0x01,0x01,0x02,0x01,0x30,0x03,0x00,0x33,0x03,0x01,0x62,0x04,0x00,0x34,0x03,0x02,0x00,
 0x3f,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_struct_proc_lv_3, 2, (0,MRB_SYM(block), ), const);
-static const char gem_mrblib_mruby_struct_proc_debug_lines_3[] = "\x00\x1a\x07\x01\x0d\x03";
-static mrb_irep_debug_info_file gem_mrblib_mruby_struct_proc_debug_file_3 = {
-0, 278, 6, mrb_debug_line_packed_map, {gem_mrblib_mruby_struct_proc_debug_lines_3}};
-static mrb_irep_debug_info_file *gem_mrblib_mruby_struct_proc_debug_file_3_ = &gem_mrblib_mruby_struct_proc_debug_file_3;
-static mrb_irep_debug_info gem_mrblib_mruby_struct_proc_debug_3 = {
-21, 1, &gem_mrblib_mruby_struct_proc_debug_file_3_};
 static const mrb_irep gem_mrblib_mruby_struct_proc_irep_3 = {
   3,5,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_struct_proc_iseq_3,
   NULL,gem_mrblib_mruby_struct_proc_syms_3,gem_mrblib_mruby_struct_proc_reps_3,
   gem_mrblib_mruby_struct_proc_lv_3,
-  &gem_mrblib_mruby_struct_proc_debug_3,
+  NULL,					/* debug_info */
   21,0,3,1,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_struct_proc_syms_16, 2, (MRB_SYM(call), MRB_SYM(push), ), const);
@@ -107,18 +83,12 @@ static const mrb_code gem_mrblib_mruby_struct_proc_iseq_16[47] = {
 0x03,0x32,0x04,0x00,0x01,0x28,0x04,0x00,0x0e,0x21,0x04,0x03,0x00,0x01,0x05,0x03,0x32,0x04,0x01,0x01,
 0x26,0x00,0x02,0x11,0x04,0x3d,0x04,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_struct_proc_lv_16, 3, (MRB_SYM(field), 0,MRB_SYM(val), ), const);
-static const char gem_mrblib_mruby_struct_proc_debug_lines_16[] = "\x00\x29\x04\x01\x0a\x01";
-static mrb_irep_debug_info_file gem_mrblib_mruby_struct_proc_debug_file_16 = {
-0, 278, 6, mrb_debug_line_packed_map, {gem_mrblib_mruby_struct_proc_debug_lines_16}};
-static mrb_irep_debug_info_file *gem_mrblib_mruby_struct_proc_debug_file_16_ = &gem_mrblib_mruby_struct_proc_debug_file_16;
-static mrb_irep_debug_info gem_mrblib_mruby_struct_proc_debug_16 = {
-47, 1, &gem_mrblib_mruby_struct_proc_debug_file_16_};
 static const mrb_irep gem_mrblib_mruby_struct_proc_irep_16 = {
   4,7,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_struct_proc_iseq_16,
   NULL,gem_mrblib_mruby_struct_proc_syms_16,NULL,
   gem_mrblib_mruby_struct_proc_lv_16,
-  &gem_mrblib_mruby_struct_proc_debug_16,
+  NULL,					/* debug_info */
   47,0,2,0,0
 };
 static const mrb_irep *gem_mrblib_mruby_struct_proc_reps_4[1] = {
@@ -129,18 +99,12 @@ static const mrb_code gem_mrblib_mruby_struct_proc_iseq_4[25] = {
 0x39,0x00,0x00,0x01,0x01,0x02,0x01,0x52,0x03,0x00,0x30,0x04,0x00,0x33,0x04,0x01,0x62,0x05,0x00,0x34,
 0x04,0x02,0x00,0x3d,0x03,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_struct_proc_lv_4, 3, (0,MRB_SYM(block), MRB_SYM(ary), ), const);
-static const char gem_mrblib_mruby_struct_proc_debug_lines_4[] = "\x00\x27\x07\x01\x03\x01\x0d\x04";
-static mrb_irep_debug_info_file gem_mrblib_mruby_struct_proc_debug_file_4 = {
-0, 278, 8, mrb_debug_line_packed_map, {gem_mrblib_mruby_struct_proc_debug_lines_4}};
-static mrb_irep_debug_info_file *gem_mrblib_mruby_struct_proc_debug_file_4_ = &gem_mrblib_mruby_struct_proc_debug_file_4;
-static mrb_irep_debug_info gem_mrblib_mruby_struct_proc_debug_4 = {
-25, 1, &gem_mrblib_mruby_struct_proc_debug_file_4_};
 static const mrb_irep gem_mrblib_mruby_struct_proc_irep_4 = {
   4,6,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_struct_proc_iseq_4,
   NULL,gem_mrblib_mruby_struct_proc_syms_4,gem_mrblib_mruby_struct_proc_reps_4,
   gem_mrblib_mruby_struct_proc_lv_4,
-  &gem_mrblib_mruby_struct_proc_debug_4,
+  NULL,					/* debug_info */
   25,0,3,1,0
 };
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_struct_proc_syms_5, 2, (MRB_SYM(size), MRB_SYM(dig), ), const);
@@ -149,18 +113,12 @@ static const mrb_code gem_mrblib_mruby_struct_proc_iseq_5[57] = {
 0x06,0x06,0x50,0x05,0x28,0x05,0x00,0x18,0x01,0x05,0x04,0x01,0x06,0x05,0x29,0x06,0x00,0x0b,0x11,0x06,
 0x01,0x07,0x02,0x54,0x06,0x32,0x05,0x01,0x0f,0x26,0x00,0x03,0x01,0x05,0x04,0x3d,0x05,};
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_struct_proc_lv_5, 4, (MRB_SYM(idx), MRB_SYM(args), 0,MRB_SYM(n), ), const);
-static const char gem_mrblib_mruby_struct_proc_debug_lines_5[] = "\x00\x3d\x04\x01\x0a\x01\x0c\x01\x18\x02";
-static mrb_irep_debug_info_file gem_mrblib_mruby_struct_proc_debug_file_5 = {
-0, 278, 10, mrb_debug_line_packed_map, {gem_mrblib_mruby_struct_proc_debug_lines_5}};
-static mrb_irep_debug_info_file *gem_mrblib_mruby_struct_proc_debug_file_5_ = &gem_mrblib_mruby_struct_proc_debug_file_5;
-static mrb_irep_debug_info gem_mrblib_mruby_struct_proc_debug_5 = {
-57, 1, &gem_mrblib_mruby_struct_proc_debug_file_5_};
 static const mrb_irep gem_mrblib_mruby_struct_proc_irep_5 = {
   5,8,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_struct_proc_iseq_5,
   NULL,gem_mrblib_mruby_struct_proc_syms_5,NULL,
   gem_mrblib_mruby_struct_proc_lv_5,
-  &gem_mrblib_mruby_struct_proc_debug_5,
+  NULL,					/* debug_info */
   57,0,2,0,0
 };
 static const mrb_irep *gem_mrblib_mruby_struct_proc_reps_1[4] = {
@@ -173,18 +131,12 @@ mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_struct_proc_syms_1, 8, (MRB_SYM(Enumerable)
 static const mrb_code gem_mrblib_mruby_struct_proc_iseq_1[28] = {
 0x1d,0x02,0x00,0x2f,0x01,0x01,0x01,0x6b,0x01,0x02,0x00,0x6b,0x01,0x03,0x01,0x6b,0x01,0x04,0x02,0x6d,
 0x05,0x06,0x6b,0x01,0x07,0x03,0x3d,0x01,};
-static const char gem_mrblib_mruby_struct_proc_debug_lines_1[] = "\x00\x06\x07\x07\x04\x0d\x04\x0d\x04\x0c\x03\x0a";
-static mrb_irep_debug_info_file gem_mrblib_mruby_struct_proc_debug_file_1 = {
-0, 278, 12, mrb_debug_line_packed_map, {gem_mrblib_mruby_struct_proc_debug_lines_1}};
-static mrb_irep_debug_info_file *gem_mrblib_mruby_struct_proc_debug_file_1_ = &gem_mrblib_mruby_struct_proc_debug_file_1;
-static mrb_irep_debug_info gem_mrblib_mruby_struct_proc_debug_1 = {
-28, 1, &gem_mrblib_mruby_struct_proc_debug_file_1_};
 static const mrb_irep gem_mrblib_mruby_struct_proc_irep_1 = {
   1,4,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_struct_proc_iseq_1,
   NULL,gem_mrblib_mruby_struct_proc_syms_1,gem_mrblib_mruby_struct_proc_reps_1,
   NULL,					/* lv */
-  &gem_mrblib_mruby_struct_proc_debug_1,
+  NULL,					/* debug_info */
   28,0,8,4,0
 };
 static const mrb_irep *gem_mrblib_mruby_struct_proc_reps_0[1] = {
@@ -193,18 +145,12 @@ static const mrb_irep *gem_mrblib_mruby_struct_proc_reps_0[1] = {
 mrb_DEFINE_SYMS_VAR(gem_mrblib_mruby_struct_proc_syms_0, 1, (MRB_SYM(Struct), ), const);
 static const mrb_code gem_mrblib_mruby_struct_proc_iseq_0[13] = {
 0x11,0x01,0x11,0x02,0x67,0x01,0x00,0x69,0x01,0x00,0x3d,0x01,0x76,};
-static const char gem_mrblib_mruby_struct_proc_debug_lines_0[] = "\x00\x05";
-static mrb_irep_debug_info_file gem_mrblib_mruby_struct_proc_debug_file_0 = {
-0, 278, 2, mrb_debug_line_packed_map, {gem_mrblib_mruby_struct_proc_debug_lines_0}};
-static mrb_irep_debug_info_file *gem_mrblib_mruby_struct_proc_debug_file_0_ = &gem_mrblib_mruby_struct_proc_debug_file_0;
-static mrb_irep_debug_info gem_mrblib_mruby_struct_proc_debug_0 = {
-13, 1, &gem_mrblib_mruby_struct_proc_debug_file_0_};
 static const mrb_irep gem_mrblib_mruby_struct_proc_irep_0 = {
   1,3,0,
   MRB_IREP_STATIC,gem_mrblib_mruby_struct_proc_iseq_0,
   NULL,gem_mrblib_mruby_struct_proc_syms_0,gem_mrblib_mruby_struct_proc_reps_0,
   NULL,					/* lv */
-  &gem_mrblib_mruby_struct_proc_debug_0,
+  NULL,					/* debug_info */
   13,0,1,1,0
 };
 static
@@ -214,15 +160,6 @@ NULL,MRB_TT_PROC,MRB_GC_RED,MRB_OBJ_IS_FROZEN,0,{&gem_mrblib_mruby_struct_proc_i
 static void
 gem_mrblib_mruby_struct_proc_init_syms(mrb_state *mrb)
 {
-  gem_mrblib_mruby_struct_proc_debug_file_6.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-struct/mrblib/struct.rb");
-  gem_mrblib_mruby_struct_proc_debug_file_2.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-struct/mrblib/struct.rb");
-  gem_mrblib_mruby_struct_proc_debug_file_11.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-struct/mrblib/struct.rb");
-  gem_mrblib_mruby_struct_proc_debug_file_3.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-struct/mrblib/struct.rb");
-  gem_mrblib_mruby_struct_proc_debug_file_16.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-struct/mrblib/struct.rb");
-  gem_mrblib_mruby_struct_proc_debug_file_4.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-struct/mrblib/struct.rb");
-  gem_mrblib_mruby_struct_proc_debug_file_5.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-struct/mrblib/struct.rb");
-  gem_mrblib_mruby_struct_proc_debug_file_1.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-struct/mrblib/struct.rb");
-  gem_mrblib_mruby_struct_proc_debug_file_0.filename_sym = mrb_intern_lit(mrb,"/Users/macbookpro/Documents/Izeesoft/FlutterApp/ruflet/ruby_runtime/third_party/mruby/mrbgems/mruby-struct/mrblib/struct.rb");
 }
 void mrb_mruby_struct_gem_init(mrb_state *mrb);
 void mrb_mruby_struct_gem_final(mrb_state *mrb);

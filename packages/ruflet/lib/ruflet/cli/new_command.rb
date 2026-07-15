@@ -24,8 +24,8 @@ module Ruflet
         "lottie" => { package: "flet_lottie", alias: "ruflet_lottie" },
         "map" => { package: "flet_map", alias: "ruflet_map" },
         "permission_handler" => { package: "flet_permission_handler", alias: "ruflet_permission_handler" },
-        "rive" => { package: "flet_rive", alias: "ruflet_rive" },
         "secure_storage" => { package: "flet_secure_storage", alias: "ruflet_secure_storage" },
+        "spinkit" => { package: "flet_spinkit", alias: "ruflet_spinkit" },
         "video" => { package: "flet_video", alias: "ruflet_video" },
         "webview" => { package: "flet_webview", alias: "ruflet_webview" }
       }.freeze
@@ -85,7 +85,20 @@ module Ruflet
         end
 
         cached_template = cached_ruflet_client_template_root
-        return cached_template if Dir.exist?(cached_template)
+        if Dir.exist?(cached_template)
+          return cached_template if cached_template_current?(cached_template)
+
+          # The cache was written by a different ruflet version; stale
+          # framework Dart breaks newer asset layouts. Refresh, but never
+          # block a build on the network: fall back to the stale copy loudly.
+          refreshed = download_ruflet_template(force: true)
+          return refreshed if refreshed && Dir.exist?(refreshed)
+
+          warn "ruflet: could not refresh the Flutter client template cache; " \
+               "using a stale copy from another ruflet version at #{cached_template}. " \
+               "Delete it or run with network access to update."
+          return cached_template
+        end
 
         [
           File.expand_path("../../../ruflet_client", __dir__),
@@ -111,6 +124,21 @@ module Ruflet
 
       def cached_ruflet_client_template_root
         File.join(template_cache_root, "ruflet_flutter_template")
+      end
+
+      TEMPLATE_CACHE_STAMP = ".ruflet_template_version"
+
+      def cached_template_current?(target)
+        stamp = File.join(target, TEMPLATE_CACHE_STAMP)
+        File.file?(stamp) && File.read(stamp).strip == Ruflet::VERSION
+      rescue StandardError
+        false
+      end
+
+      def write_template_cache_stamp(target)
+        File.write(File.join(target, TEMPLATE_CACHE_STAMP), Ruflet::VERSION)
+      rescue StandardError
+        nil
       end
 
       def cached_ruby_runtime_root
@@ -151,6 +179,7 @@ module Ruflet
           FileUtils.cp_r(source, target)
         end
 
+        write_template_cache_stamp(target)
         target
       rescue StandardError => e
         warn "Failed to fetch Ruflet template: #{e.class}: #{e.message}"
@@ -196,8 +225,10 @@ module Ruflet
             # Example: https://api.example.com
             backend_url: ""
 
-          # Optional Flutter client extensions. Only listed extensions are bundled.
-          # Examples: audio, charts, code_editor, map, rive, video, webview
+          # Flutter extension packages included in the managed client.
+          # Permission-backed extensions such as camera, audio_recorder,
+          # geolocator, and permission_handler are activated by services.yaml
+          # and ignored here.
           extensions: []
 
           # Build assets configuration consumed by `ruflet build`.
@@ -215,9 +246,7 @@ module Ruflet
         YAML
 
         File.write(File.join(root, "services.yaml"), <<~YAML)
-          # Native capabilities that require platform permissions. Ruflet activates
-          # the matching client extensions and writes Android/iOS permissions.
-          # Supported services: camera, microphone, location, motion
+          # Protected device access requested by this app.
           services: []
         YAML
       end

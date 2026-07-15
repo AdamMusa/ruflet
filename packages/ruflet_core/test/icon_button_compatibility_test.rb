@@ -62,10 +62,10 @@ class RufletIconButtonCompatibilityTest < Minitest::Test
     assert_equal true, patch["on_long_press"]
   end
 
-  def test_icon_button_serializes_negative_splash_radius_like_flet
-    patch = Ruflet.icon_button("favorite", splash_radius: -1).to_patch
+  def test_icon_button_rejects_negative_splash_radius_like_flet
+    error = assert_raises(ArgumentError) { Ruflet.icon_button("favorite", splash_radius: -1) }
 
-    assert_equal(-1, patch["splash_radius"])
+    assert_match(/splash_radius/, error.message)
   end
 
   def test_icon_button_click_event_dispatches

@@ -178,28 +178,17 @@ class RufletPickerCompatibilityTest < Minitest::Test
     assert_equal "TimePicker", Ruflet.timepicker.to_patch["_c"]
   end
 
-  def test_date_picker_serializes_out_of_range_values_like_flet
-    inverted = Ruflet.date_picker(first_date: "2026-12-31", last_date: "2026-01-01").to_patch
-    before = Ruflet.date_picker(first_date: "2026-01-01", last_date: "2026-12-31", value: "2025-12-31").to_patch
-    after = Ruflet.date_picker(first_date: "2026-01-01", last_date: "2026-12-31", value: "2027-01-01").to_patch
-
-    assert_equal "2026-12-31", inverted["first_date"]
-    assert_equal "2026-01-01", inverted["last_date"]
-    assert_equal "2025-12-31", before["value"]
-    assert_equal "2027-01-01", after["value"]
+  def test_date_picker_rejects_out_of_range_values_like_flet
+    assert_raises(ArgumentError) { Ruflet.date_picker(first_date: "2026-12-31", last_date: "2026-01-01") }
+    assert_raises(ArgumentError) { Ruflet.date_picker(first_date: "2026-01-01", last_date: "2026-12-31", value: "2025-12-31") }
+    assert_raises(ArgumentError) { Ruflet.date_picker(first_date: "2026-01-01", last_date: "2026-12-31", value: "2027-01-01") }
   end
 
-  def test_date_range_picker_serializes_invalid_ranges_like_flet
-    inverted = Ruflet.date_range_picker(first_date: "2026-12-31", last_date: "2026-01-01").to_patch
-    outside = Ruflet.date_range_picker(first_date: "2026-01-01", last_date: "2026-12-31", start_value: "2025-12-31", end_value: "2027-01-01").to_patch
-    reversed = Ruflet.date_range_picker(start_value: "2026-05-14", end_value: "2026-05-01").to_patch
-
-    assert_equal "2026-12-31", inverted["first_date"]
-    assert_equal "2026-01-01", inverted["last_date"]
-    assert_equal "2025-12-31", outside["start_value"]
-    assert_equal "2027-01-01", outside["end_value"]
-    assert_equal "2026-05-14", reversed["start_value"]
-    assert_equal "2026-05-01", reversed["end_value"]
+  def test_date_range_picker_rejects_invalid_ranges_like_flet
+    assert_raises(ArgumentError) { Ruflet.date_range_picker(first_date: "2026-12-31", last_date: "2026-01-01") }
+    assert_raises(ArgumentError) { Ruflet.date_range_picker(first_date: "2026-01-01", last_date: "2026-12-31", start_value: "2025-12-31") }
+    assert_raises(ArgumentError) { Ruflet.date_range_picker(first_date: "2026-01-01", last_date: "2026-12-31", end_value: "2027-01-01") }
+    assert_raises(ArgumentError) { Ruflet.date_range_picker(start_value: "2026-05-14", end_value: "2026-05-01") }
   end
 
   def test_picker_change_events_update_values_before_handler
@@ -217,9 +206,7 @@ class RufletPickerCompatibilityTest < Minitest::Test
       on_change: ->(event) { events << [:range, event.control.props["start_value"], event.control.props["end_value"]] }
     )
     time_picker = Ruflet.time_picker(value: "19:30", on_change: ->(event) { events << [:time, event.control.props["value"]] })
-    page.add(date_picker)
-    page.add(range_picker)
-    page.add(time_picker)
+    page.add(date_picker, range_picker, time_picker)
 
     page.dispatch_event(target: date_picker.wire_id, name: "change", data: { "value" => "2026-05-20" })
     page.dispatch_event(target: range_picker.wire_id, name: "change", data: { "start_value" => "2026-05-02", "end_value" => "2026-05-21" })
@@ -230,5 +217,105 @@ class RufletPickerCompatibilityTest < Minitest::Test
       [:range, "2026-05-02", "2026-05-21"],
       [:time, "20:15"]
     ], events
+  end
+
+  def test_show_dialog_mounts_pickers_in_dialogs_container
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    picker = Ruflet.date_picker(value: "2026-05-21", first_date: "2026-01-01", last_date: "2026-12-31")
+    page.add(Ruflet.text("Root"))
+    page.show_dialog(picker)
+
+    controls_patch = sent.last[1]["patch"].find { |op| op[2] == "controls" }
+    picker_patch = controls_patch[3].first
+
+    assert_equal "DatePicker", picker_patch["_c"]
+    assert_equal true, picker_patch["open"]
+    assert_equal "2026-05-21", picker_patch["value"]
+  end
+
+  def test_client_close_keeps_picker_indexed_until_change_event_then_reopens
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    changes = []
+    result = Ruflet.text("Time: 09:30")
+    picker = Ruflet.time_picker(
+      value: "09:30",
+      on_change: ->(event) {
+        changes << event.control.props["value"]
+        page.update(result, value: "Time: #{event.control.props["value"]}")
+      }
+    )
+    page.add(Ruflet.column(children: [Ruflet.text("Root"), result]))
+    page.show_dialog(picker)
+    sent.clear
+
+    page.apply_client_update(picker.wire_id, "open" => false, "value" => "10:15")
+
+    assert_equal false, picker.props["open"]
+    assert_equal "10:15", picker.props["value"]
+    assert_empty sent
+
+    page.dispatch_event(target: picker.wire_id, name: "change", data: "10:15")
+
+    assert_equal ["10:15"], changes
+    dialog_message = sent.find { |(_action, payload)| Array(payload["patch"]).any? { |op| %w[controls _dialogs].include?(op[2]) } }
+    refute_nil dialog_message
+    assert_equal Ruflet::Protocol::ACTIONS[:patch_control], dialog_message[0]
+    assert_equal [], dialog_controls_from_patch(dialog_message[1]["patch"])
+    assert_equal "Time: 10:15", result.props["value"]
+
+    sent.clear
+    page.show_dialog(picker)
+
+    picker_patch = dialog_controls_from_patch(sent.last[1]["patch"]).first
+    assert_equal "TimePicker", picker_patch["_c"]
+    assert_equal true, picker_patch["open"]
+  end
+
+  def test_date_range_picker_preserves_updated_range_when_change_payload_is_empty
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+
+    events = []
+    picker = Ruflet.date_range_picker(
+      start_value: "2026-05-01",
+      end_value: "2026-05-21",
+      on_change: ->(event) { events << [event.control.props["start_value"], event.control.props["end_value"], event.control.props["value"]] }
+    )
+    page.add(picker)
+
+    page.apply_client_update(
+      picker.wire_id,
+      "open" => false,
+      "start_value" => "2026-05-03",
+      "end_value" => "2026-05-24"
+    )
+    page.dispatch_event(target: picker.wire_id, name: "change", data: "")
+
+    assert_equal [["2026-05-03", "2026-05-24", nil]], events
+  end
+
+  private
+
+  def dialog_controls_from_patch(patch)
+    controls_patch = patch.find { |op| op[2] == "controls" }
+    return controls_patch[3] if controls_patch
+
+    dialogs_patch = patch.find { |op| op[2] == "_dialogs" }
+    dialogs_patch[3]["controls"]
   end
 end

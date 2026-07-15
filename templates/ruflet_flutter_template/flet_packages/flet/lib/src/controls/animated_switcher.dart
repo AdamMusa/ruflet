@@ -1,0 +1,49 @@
+import 'package:flutter/material.dart';
+
+import '../extensions/control.dart';
+import '../models/control.dart';
+import '../utils/animations.dart';
+import '../utils/numbers.dart';
+import '../utils/time.dart';
+import '../widgets/error.dart';
+import 'base_controls.dart';
+
+class AnimatedSwitcherControl extends StatelessWidget {
+  final Control control;
+
+  const AnimatedSwitcherControl({super.key, required this.control});
+
+  @override
+  Widget build(BuildContext context) {
+    debugPrint("AnimatedSwitcher build: ${control.id}");
+
+    var content =
+        control.buildWidget("content", notifyParent: true, key: UniqueKey());
+    if (content == null) {
+      return const ErrorControl(
+          "AnimatedSwitcher.content must be provided and visible");
+    }
+
+    return LayoutControl(
+      control: control,
+      child: AnimatedSwitcher(
+        duration: control.getDuration("duration", const Duration(seconds: 1))!,
+        reverseDuration: control.getDuration(
+            "reverse_duration", const Duration(seconds: 1))!,
+        switchInCurve: control.getCurve("switch_in_curve", Curves.linear)!,
+        switchOutCurve: control.getCurve("switch_out_curve", Curves.linear)!,
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          switch (control.getString("transition")?.toLowerCase()) {
+            case "rotation":
+              return RotationTransition(turns: animation, child: child);
+            case "scale":
+              return ScaleTransition(scale: animation, child: child);
+            default:
+              return FadeTransition(opacity: animation, child: child);
+          }
+        },
+        child: content,
+      ),
+    );
+  }
+}

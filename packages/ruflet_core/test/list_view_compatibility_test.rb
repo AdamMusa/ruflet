@@ -77,19 +77,11 @@ class RufletListViewCompatibilityTest < Minitest::Test
     assert_equal 0, list.props["spacing"]
   end
 
-  def test_list_view_serializes_negative_numeric_layout_props_like_flet
-    list = Ruflet.list_view(
-      divider_thickness: -1,
-      item_extent: -2,
-      semantic_child_count: -3,
-      spacing: -4
-    )
-    patch = list.to_patch
-
-    assert_equal(-1, patch["divider_thickness"])
-    assert_equal(-2, patch["item_extent"])
-    assert_equal(-3, patch["semantic_child_count"])
-    assert_equal(-4, patch["spacing"])
+  def test_list_view_rejects_negative_numeric_layout_props_like_flet
+    assert_raises(ArgumentError) { Ruflet.list_view(divider_thickness: -1) }
+    assert_raises(ArgumentError) { Ruflet.list_view(item_extent: -1) }
+    assert_raises(ArgumentError) { Ruflet.list_view(semantic_child_count: -1) }
+    assert_raises(ArgumentError) { Ruflet.list_view(spacing: -1) }
   end
 
   def test_scroll_event_dispatches_existing_scroll_payload

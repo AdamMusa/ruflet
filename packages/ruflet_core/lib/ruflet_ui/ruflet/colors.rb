@@ -151,11 +151,57 @@ module Ruflet
     end
 
     def self.normalize_color(color)
-      return color.to_s if color.is_a?(Symbol)
-      return color if color.is_a?(String)
-      return color.to_s unless color.respond_to?(:to_s)
+      return canonicalize(color.to_s) if color.is_a?(Symbol)
+      return canonicalize(color) if color.is_a?(String)
+      return canonicalize(color.to_s) unless color.respond_to?(:to_s)
 
-      color.to_s
+      canonicalize(color.to_s)
+    end
+
+    def self.normalize_property(key, value)
+      normalize_value(value, color_key?(key))
+    end
+
+    def self.color_key?(key)
+      name = key.to_s
+      name == "color" ||
+        name == "colors" ||
+        name.end_with?("bgcolor") ||
+        name.end_with?("_color") ||
+        name.end_with?("_colors") ||
+        name == "color_scheme_seed"
+    end
+
+    def self.normalize_value(value, color_context = false)
+      case value
+      when String
+        color_context ? canonicalize(value) : value
+      when Symbol
+        color_context ? canonicalize(value.to_s) : value
+      when Array
+        value.map { |nested| normalize_value(nested, color_context) }
+      when Hash
+        value.each_with_object({}) do |(nested_key, nested_value), result|
+          result[nested_key] = normalize_value(nested_value, color_context || color_key?(nested_key))
+        end
+      else
+        value
+      end
+    end
+
+    # Canonicalizes a named color into flet's wire format. Flet color names are
+    # lowercase with no separators ("bluegrey", "deeporange", "red500"), so we
+    # strip underscores, hyphens, and whitespace before downcasing. Hex values
+    # (#... / 0x...) are downcased without separator stripping; the optional
+    # ",opacity" suffix is preserved untouched.
+    def self.canonicalize(value)
+      return value unless value.is_a?(String)
+
+      color, separator, opacity = value.partition(",")
+      color = color.strip.downcase
+      color = color.gsub(/[_\-\s]+/, "") unless color.start_with?("#") || color.start_with?("0x")
+
+      "#{color}#{separator}#{opacity}"
     end
 
     BASE_PREFIX = {

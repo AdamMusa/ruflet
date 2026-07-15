@@ -1,205 +1,99 @@
-# Contributing to Ruflet (Ruby Side)
+# Contributing To Ruflet
 
-This guide explains how Ruflet works, how protocol patches flow, and how to add a new feature step‑by‑step with a minimal `Row`/`Text` example.
+This guide covers the Ruby framework, client, Rails integration, and showcase.
 
-## 1. How Ruflet Works (High Level)
-1. **Ruby builds controls** (e.g., `page.text`, `page.row`).
-2. **Controls are serialized** into protocol patches (maps with `_c`, `_i`, and props).
-3. **Client renders** those patches into Flutter widgets.
+## Architecture
 
-Key Ruby files:
-- `packages/ruflet_core/lib/ruflet_ui/ruflet/page.rb` — patch generation, updates.
-- `packages/ruflet_core/lib/ruflet_ui/ruflet/control.rb` — control serialization.
-- `packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/` — control classes.
-- `packages/ruflet_core/lib/ruflet_ui/ruflet/ui/*_control_registry.rb` — mapping of control names.
-- `examples/ruflet_studio/` — demo app.
+Ruflet applications build controls in Ruby. The Ruby runtime serializes those
+controls and their updates for the Flutter client, which renders the interface
+and sends user events back to Ruby.
 
-## 2. Protocol in Practice
-Ruflet controls serialize into patches like:
+The main areas are:
 
-```json
-{
-  "_c": "Text",
-  "_i": 101,
-  "value": "Hello"
-}
-```
+- `packages/ruflet` - CLI, project generation, run, update, and build commands
+- `packages/ruflet_core` - controls, builders, page APIs, events, and services
+- `packages/ruflet_server` - server-driven application runtime
+- `packages/ruflet_rails` - Rails mounting, generators, and integration helpers
+- `ruflet_client` - mobile, desktop, and web Flutter client
+- `ruby_runtime` - embedded Ruby runtime for self-contained native builds
+- `showcase` - framework feature and client-behavior test application
 
-- `_c`: widget type
-- `_i`: wire id
-- Remaining fields: props
+## Application API
 
-When you call:
-```ruby
-page.update(control, value: "New text")
-```
-Ruflet sends a patch like:
-```json
-[0, 0, "value", "New text"]
-```
-
-## 3. Step‑by‑Step: Add a New Feature (Example)
-Let’s add a simple **"tag"** control that renders text in a styled container.
-
-### Step 1 — Create a control class
-Create a new control class in `packages/ruflet_core/lib/ruflet_ui/ruflet/ui/controls/material/tag_control.rb`:
+Use the same public API in examples and tests that developers use:
 
 ```ruby
-# frozen_string_literal: true
+require "ruflet"
 
-module Ruflet
-  module UI
-    module Controls
-      class TagControl < Ruflet::Control
-        def initialize(id: nil, **props)
-          super(type: "tag", id: id, **props)
-        end
-      end
-    end
-  end
-end
-```
+Ruflet.run do |page|
+  message = text("Hello Ruflet")
 
-### Step 2 — Register the control
-Add a registry entry in:
-`packages/ruflet_core/lib/ruflet_ui/ruflet/ui/material_control_registry.rb`
-
-```ruby
-"tag" => "Tag",
-```
-
-### Step 3 — Add a DSL helper (optional)
-In `packages/ruflet_core/lib/ruflet_ui/ruflet/ui/material_control_methods.rb`:
-
-```ruby
-def tag(**props) = build_widget(:tag, **props)
-```
-
-### Step 4 — Demo the control in Studio
-In `examples/ruflet_studio/sections_misc.rb` or a new section:
-
-```ruby
-page.column(
-  spacing: 8,
-  controls: [
-    page.text(value: "New Tag Control"),
-    page.row(
-      controls: [
-        page.tag(text: "Ruflet", bgcolor: "#dbe4ff", color: "#1f2328")
+  page.add(
+    column(
+      children: [
+        message,
+        button(
+          "Update",
+          on_click: ->(_event) { page.update(message, value: "Updated") }
+        )
       ]
     )
-  ]
-)
-```
-
-### Step 5 — Test
-- Run Ruflet Studio
-- Navigate to the demo section
-- Verify patch logs show `_c: "Tag"`
-
-## 4. Minimal Examples (Row/Text)
-Use these for quick validation:
-
-```ruby
-page.column(
-  controls: [
-    page.text(value: "Hello Ruflet"),
-    page.row(controls: [page.text(value: "Row item")])
-  ]
-)
-```
-
-## 5. Contribution Checklist
-- Control class added
-- Registry updated
-- Optional DSL helper added
-- Example added
-- Patch logs validated
-
-## 6. Writing Tests (Step-by-Step)
-Keep tests small and independent. Do not put an entire gem's coverage into one large file.
-
-### Test Layout Rules
-- Add tests under each gem package:
-  - `packages/ruflet_core/test/`
-  - `packages/ruflet_server/test/`
-  - `packages/ruflet/test/`
-- Use one `test_helper.rb` per gem package.
-- Split by behavior:
-  - `run_interceptor_test.rb`
-  - `wire_codec_test.rb`
-  - `new_command_test.rb`
-
-### Step 1 — Pick one behavior
-Example: `Ruflet.run` should return interceptor result without requiring `ruflet_server`.
-
-### Step 2 — Create (or reuse) test helper
-`packages/ruflet_core/test/test_helper.rb`
-
-```ruby
-# frozen_string_literal: true
-
-require "minitest/autorun"
-$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
-require "ruflet"
-```
-
-### Step 3 — Write one focused test file
-`packages/ruflet_core/test/run_interceptor_test.rb`
-
-```ruby
-# frozen_string_literal: true
-
-require_relative "test_helper"
-
-class RufletRunInterceptorTest < Minitest::Test
-  def test_run_short_circuits_when_interceptor_handles_execution
-    interceptor = ->(**) { :handled }
-
-    result = Ruflet.with_run_interceptor(interceptor) do
-      Ruflet.run { nil }
-    end
-
-    assert_equal :handled, result
-  end
+  )
 end
 ```
 
-### Step 4 — Run only that file
-From the package directory:
+Controls are built with helpers such as `text`, `button`, `row`, and `column`.
+Use `page` for application-level operations such as `add`, `update`,
+navigation, dialogs, and services.
 
-```bash
-/opt/homebrew/opt/ruby/bin/ruby -Ilib -Itest test/run_interceptor_test.rb
-```
+## Adding Or Changing A Control
 
-### Step 5 — Add neighboring tests in separate files
-Examples:
-- `packages/ruflet_core/test/manifest_compiler_test.rb`
-- `packages/ruflet_server/test/wire_codec_test.rb`
-- `packages/ruflet_server/test/server_bind_test.rb`
-- `packages/ruflet/test/new_command_test.rb`
-- `packages/ruflet/test/templates_test.rb`
+1. Add or update the Ruby control definition and builder in `ruflet_core`.
+2. Update the client implementation when rendering or event behavior changes.
+3. Keep the control catalog and property descriptions current.
+4. Add a focused Ruby test and relevant client test.
+5. Add or update the showcase example.
+6. Update public documentation when the developer-facing API changes.
 
-### Step 6 — Verify each gem independently
-Run tests per gem package, not as one global monolith.
+Protocol changes must remain compatible across the Ruby runtime and every
+supported client target.
+
+## Tests
+
+Run focused tests from the package you changed:
 
 ```bash
 cd packages/ruflet_core
-/opt/homebrew/opt/ruby/bin/ruby -Ilib -Itest test/run_interceptor_test.rb
-/opt/homebrew/opt/ruby/bin/ruby -Ilib -Itest test/manifest_compiler_test.rb
+bundle exec ruby -Itest test/bare_widget_helpers_test.rb
 
 cd ../ruflet_server
-/opt/homebrew/opt/ruby/bin/ruby -Ilib -Itest test/wire_codec_test.rb
-/opt/homebrew/opt/ruby/bin/ruby -Ilib -Itest test/server_bind_test.rb
+bundle exec ruby -Itest test/wire_codec_test.rb
 
-cd ../ruflet_cli
-/opt/homebrew/opt/ruby/bin/ruby -Ilib -Itest test/new_command_test.rb
-/opt/homebrew/opt/ruby/bin/ruby -Ilib -Itest test/templates_test.rb
+cd ../ruflet
+bundle exec ruby -Itest test/new_command_test.rb
+
+cd ../ruflet_rails
+bundle exec ruby -Itest test/scaffold_generator_test.rb
 ```
 
-### Testing Checklist
-- One behavior per test file.
-- No cross-gem coupling in assertions.
-- No hidden network dependency for unit tests.
-- Deterministic assertions (no timing-sensitive flakiness).
-- Tests runnable directly from each package.
+Run all tests for a Ruby package:
+
+```bash
+bundle exec ruby -Itest -e 'Dir["test/**/*_test.rb"].sort.each { |file| require_relative file }'
+```
+
+Run Flutter checks in a changed Flutter package:
+
+```bash
+flutter analyze
+flutter test
+```
+
+## Contribution Checklist
+
+- Public examples use the current builder API.
+- Behavior changes have focused tests.
+- Ruby and client implementations agree on protocol fields and events.
+- Showcase behavior is verified on affected platforms.
+- Documentation describes developer workflows rather than repository internals.
+- Generated files, build output, and packaged gems are not committed.

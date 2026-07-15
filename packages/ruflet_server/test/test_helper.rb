@@ -3,6 +3,5 @@
 require "minitest/autorun"
 require "socket"
 
-$LOAD_PATH.unshift(File.expand_path("../../ruflet_core/lib", __dir__))
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 require "ruflet_server"

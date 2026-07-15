@@ -7,7 +7,6 @@ module Ruflet
         class GeolocatorControl < Ruflet::Control
           TYPE = "geolocator".freeze
           WIRE = "Geolocator".freeze
-          KEYWORDS = [:configuration, :data, :key, :on_error, :on_position_change].freeze
 
           def initialize(id: nil, configuration: nil, data: nil, key: nil, on_error: nil, on_position_change: nil)
             props = {}
@@ -19,14 +18,21 @@ module Ruflet
             super(type: TYPE, id: id, **props)
           end
 
-          %w[get_last_known_position get_permission_status is_location_service_enabled open_app_settings open_location_settings request_permission].each do |method_name|
+          %w[
+            get_last_known_position
+            get_permission_status
+            is_location_service_enabled
+            open_app_settings
+            open_location_settings
+            request_permission
+          ].each do |method_name|
             define_method(method_name) do |timeout: 10, on_result: nil|
-              invoke_service(method_name, timeout: timeout, on_result: on_result)
+              invoke_geolocator(method_name, timeout: timeout, on_result: on_result)
             end
           end
 
           def distance_between(start_latitude, start_longitude, end_latitude, end_longitude, timeout: 10, on_result: nil)
-            invoke_service(
+            invoke_geolocator(
               "distance_between",
               args: {
                 "start_latitude" => start_latitude,
@@ -40,26 +46,36 @@ module Ruflet
           end
 
           def get_current_position(configuration: nil, timeout: 10, on_result: nil)
-            # The public Ruflet/Flet API calls this value `configuration`, while
-            # the Flutter service currently reads it from the `settings` invoke
-            # argument.
-            args = configuration.nil? ? nil : { "settings" => normalize_value(configuration) }
-            invoke_service("get_current_position", args: args, timeout: timeout, on_result: on_result)
+            invoke_geolocator(
+              "get_current_position",
+              args: compact_args("configuration" => configuration),
+              timeout: timeout,
+              on_result: on_result
+            )
           end
 
           private
 
-          def invoke_service(method_name, args: nil, timeout:, on_result:)
+          def invoke_geolocator(method_name, args: nil, timeout:, on_result:)
             runtime_page&.invoke(self, method_name, args: args, timeout: timeout, on_result: on_result)
           end
 
-          def normalize_value(value)
+          def compact_args(hash)
+            hash.each_with_object({}) do |(key, value), result|
+              result[key] = normalize_service_value(value) unless value.nil?
+            end
+          end
+
+          def normalize_service_value(value)
             case value
-            when Array then value.map { |item| normalize_value(item) }
+            when Array
+              value.map { |item| normalize_service_value(item) }
             when Hash
-              value.each_with_object({}) { |(key, item), result| result[key.to_s] = normalize_value(item) unless item.nil? }
+              value.transform_keys(&:to_s).each_with_object({}) do |(key, item), result|
+                result[key] = normalize_service_value(item) unless item.nil?
+              end
             else
-              value.respond_to?(:to_h) ? normalize_value(value.to_h) : value
+              value.respond_to?(:to_h) ? normalize_service_value(value.to_h) : value
             end
           end
         end

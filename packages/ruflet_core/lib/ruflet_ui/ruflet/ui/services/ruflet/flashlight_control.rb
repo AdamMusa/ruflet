@@ -7,7 +7,6 @@ module Ruflet
         class FlashlightControl < Ruflet::Control
           TYPE = "flashlight".freeze
           WIRE = "Flashlight".freeze
-          KEYWORDS = [:data, :key, :on_error].freeze
 
           def initialize(id: nil, data: nil, key: nil, on_error: nil)
             props = {}

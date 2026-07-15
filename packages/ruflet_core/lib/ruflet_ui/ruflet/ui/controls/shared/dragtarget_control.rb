@@ -9,7 +9,9 @@ module Ruflet
           WIRE = "DragTarget".freeze
 
           def initialize(id: nil, badge: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, group: nil, key: nil, opacity: nil, rtl: nil, tooltip: nil, visible: nil, on_accept: nil, on_leave: nil, on_move: nil, on_will_accept: nil)
-            raise ArgumentError, "drag_target requires content" if content.nil?
+            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
+              raise ArgumentError, "drag_target requires visible content"
+            end
 
             group = "default" if group.nil?
 

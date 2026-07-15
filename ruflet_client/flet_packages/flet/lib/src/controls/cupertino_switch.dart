@@ -1,0 +1,153 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
+import '../models/control.dart';
+import '../utils/colors.dart';
+import '../utils/icons.dart';
+import '../utils/images.dart';
+import '../utils/misc.dart';
+import '../utils/numbers.dart';
+import 'base_controls.dart';
+import 'list_tile.dart';
+
+class CupertinoSwitchControl extends StatefulWidget {
+  final Control control;
+
+  CupertinoSwitchControl({Key? key, required this.control})
+      : super(key: key ?? ValueKey("control_${control.id}"));
+
+  @override
+  State<CupertinoSwitchControl> createState() => _CupertinoSwitchControlState();
+}
+
+class _CupertinoSwitchControlState extends State<CupertinoSwitchControl> {
+  bool _value = false;
+  late final FocusNode _focusNode;
+  Listenable? _tileClicksNotifier;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode()..addListener(_onFocusChange);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final newNotifier = ListTileClicks.of(context)?.notifier;
+
+    // If the inherited source changed, swap listeners
+    if (!identical(_tileClicksNotifier, newNotifier)) {
+      _tileClicksNotifier?.removeListener(_toggleValue);
+      _tileClicksNotifier = newNotifier;
+      _tileClicksNotifier?.addListener(_toggleValue);
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_onFocusChange);
+    _tileClicksNotifier?.removeListener(_toggleValue);
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _toggleValue() {
+    _onChange(!_value);
+  }
+
+  void _onChange(bool value) {
+    _value = value;
+    var props = {"value": value};
+    widget.control.updateProperties(props, notify: true);
+    widget.control.triggerEvent("change");
+  }
+
+  void _onFocusChange() {
+    widget.control.triggerEvent(_focusNode.hasFocus ? "focus" : "blur");
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    debugPrint("CupertinoSwitchControl build: ${widget.control.id}");
+
+    String label = widget.control.getString("label", "")!;
+    LabelPosition labelPosition =
+        widget.control.getLabelPosition("label_position", LabelPosition.right)!;
+    bool autofocus = widget.control.getBool("autofocus", false)!;
+
+    bool value = widget.control.getBool("value", false)!;
+    if (_value != value) {
+      _value = value;
+    }
+
+    ThemeData theme = Theme.of(context);
+
+    var materialThumbColor =
+        widget.control.getWidgetStateColor("thumb_color", theme);
+    var activeThumbImage =
+        widget.control.getImageProvider("active_thumb_image_src", context);
+    var inactiveThumbImage =
+        widget.control.getImageProvider("inactive_thumb_image_src", context);
+
+    var swtch = CupertinoSwitch(
+        autofocus: autofocus,
+        focusNode: _focusNode,
+        activeTrackColor:
+            widget.control.getColor("active_track_color", context),
+        thumbColor: materialThumbColor?.resolve({}),
+        focusColor: widget.control.getColor("focusColor", context),
+        inactiveTrackColor:
+            widget.control.getColor("inactive_track_color", context),
+        inactiveThumbColor:
+            widget.control.getColor("inactive_thumb_color", context),
+        trackOutlineColor:
+            widget.control.getWidgetStateColor("track_outline_color", theme),
+        trackOutlineWidth:
+            widget.control.getWidgetStateDouble("track_outline_width"),
+        thumbIcon: widget.control.getWidgetStateIcon("thumb_icon", theme),
+        inactiveThumbImage: inactiveThumbImage,
+        activeThumbImage: activeThumbImage,
+        onActiveThumbImageError: activeThumbImage == null
+            ? null
+            : (Object exception, StackTrace? stackTrace) {
+                widget.control
+                    .triggerEvent("image_error", exception.toString());
+              },
+        onInactiveThumbImageError: inactiveThumbImage == null
+            ? null
+            : (Object exception, StackTrace? stackTrace) {
+                widget.control
+                    .triggerEvent("image_error", exception.toString());
+              },
+        value: _value,
+        offLabelColor: widget.control.getColor("off_label_color", context),
+        onLabelColor: widget.control.getColor("on_label_color", context),
+        onChanged: !widget.control.disabled
+            ? (bool value) {
+                _onChange(value);
+              }
+            : null);
+
+    Widget result = swtch;
+    if (label != "") {
+      var labelWidget = widget.control.disabled
+          ? Text(label,
+              style: TextStyle(color: Theme.of(context).disabledColor))
+          : MouseRegion(cursor: SystemMouseCursors.click, child: Text(label));
+      result = MergeSemantics(
+          child: GestureDetector(
+              onTap: !widget.control.disabled
+                  ? () {
+                      _onChange(!_value);
+                    }
+                  : null,
+              child: labelPosition == LabelPosition.right
+                  ? Row(children: [swtch, labelWidget])
+                  : Row(children: [labelWidget, swtch])));
+    }
+
+    return LayoutControl(control: widget.control, child: result);
+    //});
+  }
+}

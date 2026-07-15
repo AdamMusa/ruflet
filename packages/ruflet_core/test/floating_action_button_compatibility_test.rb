@@ -52,30 +52,20 @@ class RufletFloatingActionButtonCompatibilityTest < Minitest::Test
     assert_equal true, patch["on_click"]
   end
 
-  def test_floating_action_button_serializes_without_icon_or_content_like_flet
-    patch = Ruflet.floating_action_button.to_patch
+  def test_floating_action_button_requires_icon_or_content_like_flet
+    error = assert_raises(ArgumentError) { Ruflet.floating_action_button }
 
-    assert_equal "FloatingActionButton", patch["_c"]
-    refute patch.key?("content")
-    refute patch.key?("icon")
+    assert_match(/icon or.*content/, error.message)
   end
 
-  def test_floating_action_button_serializes_negative_elevations_like_flet
-    button = Ruflet.floating_action_button(
-      icon: "add",
-      disabled_elevation: -1,
-      elevation: -2,
-      focus_elevation: -3,
-      highlight_elevation: -4,
-      hover_elevation: -5
-    )
-    patch = button.to_patch
+  def test_floating_action_button_rejects_negative_elevations_like_flet
+    %i[disabled_elevation elevation focus_elevation highlight_elevation hover_elevation].each do |prop|
+      error = assert_raises(ArgumentError) do
+        Ruflet.floating_action_button(icon: "add", prop => -1)
+      end
 
-    assert_equal(-1, patch["disabled_elevation"])
-    assert_equal(-2, patch["elevation"])
-    assert_equal(-3, patch["focus_elevation"])
-    assert_equal(-4, patch["highlight_elevation"])
-    assert_equal(-5, patch["hover_elevation"])
+      assert_match(/#{prop}/, error.message)
+    end
   end
 
   def test_page_add_serializes_floating_action_button_as_view_slot
@@ -86,10 +76,10 @@ class RufletFloatingActionButtonCompatibilityTest < Minitest::Test
       sender: ->(action, payload) { sent << [action, payload] }
     )
 
-    page.floating_action_button = Ruflet.floating_action_button(icon: "add")
-    page.add(Ruflet.text("Body"))
+    page.add(Ruflet.text("Body"), floating_action_button: Ruflet.floating_action_button(icon: "add"))
 
-    view = sent.last[1]["patch"][1][3].first
+    views_patch = sent.last[1]["patch"].find { |op| op[2] == "views" }
+    view = views_patch[3].first
     assert_equal "FloatingActionButton", view["floating_action_button"]["_c"]
     assert_equal Ruflet::MaterialIconLookup.codepoint_for("add"), view["floating_action_button"]["icon"]
   end

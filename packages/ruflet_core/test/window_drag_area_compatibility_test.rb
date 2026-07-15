@@ -37,11 +37,10 @@ class RufletWindowDragAreaCompatibilityTest < Minitest::Test
     assert_equal true, area.props["maximizable"]
   end
 
-  def test_window_drag_area_requires_content_and_serializes_hidden_content_like_flet
+  def test_window_drag_area_requires_visible_content_like_flet
     assert_raises(ArgumentError) { Ruflet.window_drag_area }
-    hidden = Ruflet.window_drag_area(Ruflet.container(visible: false)).to_patch
+    assert_raises(ArgumentError) { Ruflet.window_drag_area(Ruflet.text("Hidden", visible: false)) }
 
-    assert_equal false, hidden["content"]["visible"]
     area = Ruflet.window_drag_area(Ruflet.text("Shown"))
     assert_equal "Shown", area.props["content"].props["value"]
   end

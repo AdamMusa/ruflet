@@ -56,10 +56,10 @@ class RufletContainerCompatibilityTest < Minitest::Test
     assert_equal 10, patch["blur"]
     assert_equal({ "blur_radius" => 4 }, patch["shadow"])
     assert_equal "https://flet.dev", patch["url"]
-    assert_equal({ "color_scheme_seed" => "#00FF00" }, patch["theme"])
+    assert_equal({ "color_scheme_seed" => "#00ff00" }, patch["theme"])
     assert_equal({ "color_scheme_seed" => "#000000" }, patch["dark_theme"])
     assert_equal "dark", patch["theme_mode"]
-    assert_equal({ "color" => "#FFFFFF" }, patch["color_filter"])
+    assert_equal({ "color" => "#ffffff" }, patch["color_filter"])
     assert_equal true, patch["ignore_interactions"]
     assert_equal({ "border_radius" => 4 }, patch["foreground_decoration"])
     assert_equal true, patch["on_click"]
