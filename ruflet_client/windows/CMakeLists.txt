@@ -29,8 +29,13 @@ set(CMAKE_SHARED_LINKER_FLAGS_PROFILE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE}")
 set(CMAKE_C_FLAGS_PROFILE "${CMAKE_C_FLAGS_RELEASE}")
 set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_RELEASE}")
 
-# Use Unicode for all projects.
-add_definitions(-DUNICODE -D_UNICODE)
+# Use Unicode for all projects. The coroutine compatibility definition keeps
+# older Flutter plugins buildable with current MSVC releases while upstream
+# migrates from <experimental/coroutine> to the C++20 header.
+add_definitions(
+  -DUNICODE
+  -D_UNICODE
+  -D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS)
 
 # Compilation settings that should be applied to most targets.
 #

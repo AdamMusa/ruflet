@@ -1229,7 +1229,8 @@ module Ruflet
           "lib/connection_probe.dart",
           "lib/connection_probe_io.dart",
           "lib/connection_probe_stub.dart",
-          "ios/Podfile"
+          "ios/Podfile",
+          "windows/CMakeLists.txt"
         ]
 
         managed_files.each do |relative_path|
