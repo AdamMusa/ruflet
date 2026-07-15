@@ -37,11 +37,19 @@ ruflet install [--device DEVICE_ID]
 ```
 
 Commands that create, diagnose, or build a Flutter client compare the cached
-template revision with `AdamMusa/ruflet-template` on GitHub. When `main`
+template revision with the canonical template in `AdamMusa/ruflet` on GitHub. When `main`
 changes, Ruflet downloads the new template and refreshes its managed
 `build/client` automatically. If GitHub is unavailable, Ruflet keeps using the
 last complete cached template. Use `ruflet doctor --fix` to force a clean
 template download.
+
+Desktop and web runs use the completed `prebuild-main` client channel by
+default. Ruflet checks the channel at most once every six hours and downloads
+a new platform build only after every required prebuild job has finished.
+Use `ruflet update --force` for an immediate refresh. Set
+`RUFLET_CLIENT_CHANNEL=stable` to stay on versioned release assets,
+`RUFLET_CLIENT_UPDATE_INTERVAL=0` to check on every run, or
+`RUFLET_CLIENT_AUTO_UPDATE=0` to disable automatic client updates.
 
 Run `ruflet install` without `--device` to choose from a numbered list of
 connected devices. Pass `--device DEVICE_ID` to skip the prompt.

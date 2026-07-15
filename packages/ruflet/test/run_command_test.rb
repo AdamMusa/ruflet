@@ -68,4 +68,140 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
+  def test_fetch_release_prefers_completed_prebuild_channel
+    runner = DummyRunner.new
+    releases = {
+      "prebuild-main" => {
+        "tag_name" => "prebuild-main",
+        "assets" => [
+          { "name" => "ruflet_client-manifest.json", "id" => 10, "updated_at" => "2026-07-15T12:00:00Z" },
+          { "name" => "ruflet_client-linux-x64.tar.gz" }
+        ]
+      },
+      "v0.0.18" => { "tag_name" => "v0.0.18", "assets" => [{ "name" => "ruflet_client-linux-x64.tar.gz" }] }
+    }
+    runner.define_singleton_method(:ruflet_version) { "0.0.18" }
+    runner.define_singleton_method(:release_by_tag) { |tag| releases[tag] }
+    runner.define_singleton_method(:release_latest) { nil }
+
+    release = runner.send(
+      :fetch_release_for_version,
+      wanted_assets: [{ kind: :desktop, name: "ruflet_client-linux-x64.tar.gz", platform: "linux" }]
+    )
+
+    assert_equal "prebuild-main", release["tag_name"]
+  end
+
+  def test_fetch_release_ignores_prebuild_until_completion_manifest_exists
+    runner = DummyRunner.new
+    releases = {
+      "prebuild-main" => {
+        "tag_name" => "prebuild-main",
+        "assets" => [{ "name" => "ruflet_client-linux-x64.tar.gz" }]
+      },
+      "v0.0.18" => {
+        "tag_name" => "v0.0.18",
+        "assets" => [{ "name" => "ruflet_client-linux-x64.tar.gz" }]
+      }
+    }
+    runner.define_singleton_method(:ruflet_version) { "0.0.18" }
+    runner.define_singleton_method(:release_by_tag) { |tag| releases[tag] }
+    runner.define_singleton_method(:release_latest) { nil }
+
+    release = runner.send(
+      :fetch_release_for_version,
+      wanted_assets: [{ kind: :desktop, name: "ruflet_client-linux-x64.tar.gz", platform: "linux" }]
+    )
+
+    assert_equal "v0.0.18", release["tag_name"]
+  end
+
+  def test_client_release_current_is_tracked_per_target
+    runner = DummyRunner.new
+    release = {
+      "assets" => [
+        { "name" => "ruflet_client-manifest.json", "id" => 10, "updated_at" => "2026-07-15T12:00:00Z", "size" => 120 }
+      ]
+    }
+    revision = runner.send(:client_release_revision, release)
+    manifest = {
+      "targets" => [
+        { "kind" => "desktop", "platform" => "linux", "release_revision" => revision },
+        { "kind" => "web", "platform" => "linux", "release_revision" => "older" }
+      ]
+    }
+
+    assert runner.send(
+      :client_release_current?, manifest, release,
+      [{ kind: :desktop, name: "ruflet_client-linux-x64.tar.gz", platform: "linux" }]
+    )
+    refute runner.send(
+      :client_release_current?, manifest, release,
+      [{ kind: :web, name: "ruflet_client-web.tar.gz" }]
+    )
+  end
+
+  def test_client_update_interval_can_force_immediate_revalidation
+    runner = DummyRunner.new
+    previous = ENV["RUFLET_CLIENT_UPDATE_INTERVAL"]
+    ENV["RUFLET_CLIENT_UPDATE_INTERVAL"] = "0"
+
+    assert runner.send(:client_update_due?, { "checked_at" => Time.now.utc.iso8601 })
+  ensure
+    ENV["RUFLET_CLIENT_UPDATE_INTERVAL"] = previous
+  end
+
+  def test_existing_client_cache_refreshes_when_prebuild_revision_changes
+    runner = DummyRunner.new
+    previous_interval = ENV["RUFLET_CLIENT_UPDATE_INTERVAL"]
+    ENV["RUFLET_CLIENT_UPDATE_INTERVAL"] = "0"
+
+    Dir.mktmpdir do |dir|
+      desktop = File.join(dir, "desktop")
+      FileUtils.mkdir_p(desktop)
+      File.write(File.join(desktop, "ruflet_client"), "old")
+      File.write(
+        File.join(dir, "manifest.json"),
+        JSON.generate(
+          "targets" => [
+            { "kind" => "desktop", "platform" => "linux", "release_revision" => "old" }
+          ],
+          "checked_at" => Time.now.utc.iso8601
+        )
+      )
+
+      release = {
+        "tag_name" => "prebuild-main",
+        "published_at" => "2026-07-15T12:00:00Z",
+        "assets" => [
+          { "name" => "ruflet_client-manifest.json", "id" => 10, "updated_at" => "2026-07-15T12:00:00Z" },
+          {
+            "name" => "ruflet_client-linux-x64.tar.gz",
+            "browser_download_url" => "https://example.test/client.tar.gz"
+          }
+        ]
+      }
+      runner.define_singleton_method(:ruflet_version) { "0.0.18" }
+      runner.define_singleton_method(:client_cache_root_for) { |_platform| dir }
+      runner.define_singleton_method(:fetch_release_for_version) { |wanted_assets:| release }
+      runner.define_singleton_method(:download_file) do |_url, destination, limit: 5|
+        File.write(destination, "archive")
+      end
+      runner.define_singleton_method(:extract_archive) do |_archive, destination|
+        FileUtils.mkdir_p(destination)
+        File.write(File.join(destination, "ruflet_client"), "new")
+        true
+      end
+
+      root = runner.send(:ensure_prebuilt_client, desktop: true, platform: "linux")
+      manifest = JSON.parse(File.read(File.join(dir, "manifest.json")))
+
+      assert_equal dir, root
+      assert_equal "new", File.read(File.join(desktop, "ruflet_client"))
+      assert_equal runner.send(:client_release_revision, release), manifest.dig("targets", 0, "release_revision")
+    end
+  ensure
+    ENV["RUFLET_CLIENT_UPDATE_INTERVAL"] = previous_interval
+  end
+
 end

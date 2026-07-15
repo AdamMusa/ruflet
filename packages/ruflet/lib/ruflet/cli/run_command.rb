@@ -16,6 +16,9 @@ require "time"
 module Ruflet
   module CLI
     module RunCommand
+      CLIENT_CHANNEL_MANIFEST = "ruflet_client-manifest.json"
+      DEFAULT_CLIENT_UPDATE_INTERVAL = 6 * 60 * 60
+
       def command_run(args)
         options = { target: "mobile", requested_port: 8550 }
         parser = OptionParser.new do |o|
@@ -371,17 +374,29 @@ module Ruflet
           return nil if desktop_asset.nil?
           wanted_assets << { kind: :desktop, name: desktop_asset, platform: platform }
         end
-        if !force && (wanted_assets.empty? || prebuilt_assets_present?(cache_root, web: web, desktop: desktop, platform: platform))
+        cache_ready = wanted_assets.empty? || prebuilt_assets_present?(cache_root, web: web, desktop: desktop, platform: platform)
+        release = nil
+        if !force && cache_ready
           ensure_client_manifest(cache_root, platform: platform)
-          return cache_root
+          manifest = read_client_manifest(cache_root)
+          return cache_root unless client_update_due?(manifest)
+
+          release = fetch_release_for_version(wanted_assets: wanted_assets)
+          if release.nil? || client_release_current?(manifest, release, wanted_assets)
+            mark_client_update_checked(cache_root)
+            return cache_root
+          end
+
+          force = true
         end
 
-        release = fetch_release_for_version
+        release ||= fetch_release_for_version(wanted_assets: wanted_assets)
         return nil unless release
 
         assets = release.fetch("assets", [])
         asset_names = assets.map { |a| a["name"].to_s }
         installed_assets = []
+        release_revision = client_release_revision(release)
         Dir.mktmpdir("ruflet-prebuilt-") do |tmpdir|
           wanted_assets.each do |wanted|
             asset_name = wanted.fetch(:name)
@@ -408,7 +423,8 @@ module Ruflet
               "kind" => wanted[:kind].to_s,
               "platform" => wanted[:platform] || platform,
               "asset_name" => resolved_name,
-              "download_url" => asset.fetch("browser_download_url")
+              "download_url" => asset.fetch("browser_download_url"),
+              "release_revision" => release_revision
             }
           end
         end
@@ -467,12 +483,71 @@ module Ruflet
         File.join(Dir.home, ".ruflet", "client", ruflet_version, platform.to_s)
       end
 
-      def fetch_release_for_version
-        release_by_tag("v#{ruflet_version}") ||
-          release_by_tag(ruflet_version) ||
-          release_by_tag("prebuild") ||
-          release_by_tag("prebuild-main") ||
-          release_latest
+      def fetch_release_for_version(wanted_assets: [])
+        releases = []
+        channel = client_release_channel
+        if channel != "stable"
+          rolling = release_by_tag(channel)
+          releases << rolling if rolling && rolling_release_complete?(rolling)
+        end
+        releases << release_by_tag("v#{ruflet_version}")
+        releases << release_by_tag(ruflet_version)
+        releases << release_latest
+        releases.compact.find { |release| release_has_wanted_assets?(release, wanted_assets) }
+      end
+
+      def client_release_channel
+        value = ENV.fetch("RUFLET_CLIENT_CHANNEL", "prebuild-main").to_s.strip
+        value.empty? ? "prebuild-main" : value
+      end
+
+      def rolling_release_complete?(release)
+        release.fetch("assets", []).any? { |asset| asset["name"] == CLIENT_CHANNEL_MANIFEST }
+      end
+
+      def release_has_wanted_assets?(release, wanted_assets)
+        assets = release.fetch("assets", [])
+        wanted_assets.all? do |wanted|
+          assets.any? { |asset| asset["name"] == wanted[:name] } || fallback_release_asset(assets, wanted)
+        end
+      end
+
+      def client_release_revision(release)
+        marker = release.fetch("assets", []).find { |asset| asset["name"] == CLIENT_CHANNEL_MANIFEST }
+        source = marker || release
+        [source["id"], source["updated_at"] || source["published_at"], source["size"]].compact.join(":")
+      end
+
+      def client_release_current?(manifest, release, wanted_assets)
+        return false unless manifest
+
+        revision = client_release_revision(release)
+        targets = Array(manifest["targets"])
+        wanted_assets.all? do |wanted|
+          targets.any? do |target|
+            target["kind"] == wanted[:kind].to_s &&
+              (wanted[:platform].nil? || target["platform"] == wanted[:platform]) &&
+              target["release_revision"] == revision
+          end
+        end
+      end
+
+      def client_update_due?(manifest)
+        return false if ENV["RUFLET_CLIENT_AUTO_UPDATE"].to_s.match?(/\A(?:0|false|no|off)\z/i)
+        return true unless manifest
+
+        checked_at = manifest["checked_at"] || manifest["installed_at"]
+        return true if checked_at.to_s.empty?
+
+        Time.now.utc - Time.iso8601(checked_at) >= client_update_interval
+      rescue ArgumentError
+        true
+      end
+
+      def client_update_interval
+        Integer(ENV.fetch("RUFLET_CLIENT_UPDATE_INTERVAL", DEFAULT_CLIENT_UPDATE_INTERVAL.to_s), 10).clamp(0, 7 * 24 * 60 * 60)
+      rescue ArgumentError
+        DEFAULT_CLIENT_UPDATE_INTERVAL
       end
 
       def ruflet_version
@@ -596,16 +671,34 @@ module Ruflet
 
       def write_client_manifest(root, platform:, release:, assets:)
         FileUtils.mkdir_p(root)
+        existing = read_client_manifest(root) || {}
+        installed_targets = Array(existing["targets"])
+        assets.each do |asset|
+          installed_targets.reject! do |target|
+            target["kind"] == asset["kind"] && target["platform"] == asset["platform"]
+          end
+          installed_targets << asset
+        end
         payload = {
-          "schema" => 1,
+          "schema" => 2,
           "ruflet_version" => ruflet_version,
           "platform" => platform,
-          "release_tag" => release && release["tag_name"],
-          "released_at" => release && release["published_at"],
+          "release_tag" => release && release["tag_name"] || existing["release_tag"],
+          "release_revision" => release && client_release_revision(release) || existing["release_revision"],
+          "released_at" => release && release["published_at"] || existing["released_at"],
+          "checked_at" => Time.now.utc.iso8601,
           "installed_at" => Time.now.utc.iso8601,
-          "targets" => assets
+          "targets" => installed_targets
         }
         File.write(client_manifest_path(root), JSON.pretty_generate(payload))
+      end
+
+      def mark_client_update_checked(root)
+        manifest = read_client_manifest(root)
+        return unless manifest
+
+        manifest["checked_at"] = Time.now.utc.iso8601
+        File.write(client_manifest_path(root), JSON.pretty_generate(manifest))
       end
 
       def print_mobile_qr_hint(port: 8550)

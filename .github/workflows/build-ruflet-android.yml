@@ -18,6 +18,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: ruflet-client-prebuild-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-platforms:
     name: Build ${{ matrix.target }}
@@ -38,7 +42,7 @@ jobs:
           - target: windows
             runner: windows-latest
             artifact: ruflet_client-windows-x64.zip
-            allow_failure: true
+            allow_failure: false
           - target: macos
             runner: macos-latest
             artifact: ruflet_client-macos-universal.zip
@@ -125,7 +129,7 @@ jobs:
           files: ${{ matrix.artifact }}
 
       - name: Publish prebuild channel release
-        if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'prebuild')
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'prebuild'))
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name == 'prebuild' && 'prebuild' || 'prebuild-main' }}
@@ -190,6 +194,17 @@ jobs:
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
+          files: ruflet_client-ios-simulator.zip
+
+      - name: Publish iOS simulator to prebuild channel
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'prebuild'))
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name == 'prebuild' && 'prebuild' || 'prebuild-main' }}
+          name: ${{ github.ref_name == 'prebuild' && 'Ruflet Client Prebuild (prebuild)' || 'Ruflet Client Prebuild (main)' }}
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
           files: ruflet_client-ios-simulator.zip
 
   build-ios-release:
@@ -323,3 +338,54 @@ jobs:
           files: |
             ruflet_client-android-apk.apk
             ruflet_client-android-appbundle.aab
+
+      - name: Publish Android to prebuild channel
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'prebuild'))
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name == 'prebuild' && 'prebuild' || 'prebuild-main' }}
+          name: ${{ github.ref_name == 'prebuild' && 'Ruflet Client Prebuild (prebuild)' || 'Ruflet Client Prebuild (main)' }}
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
+          files: |
+            ruflet_client-android-apk.apk
+            ruflet_client-android-appbundle.aab
+
+  publish-prebuild-manifest:
+    name: Publish completed prebuild revision
+    if: >-
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'prebuild'))) &&
+      needs.build-platforms.result == 'success' &&
+      needs.build-ios-simulator.result == 'success' &&
+      needs.build-android.result == 'success'
+    needs:
+      - build-platforms
+      - build-ios-simulator
+      - build-android
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write completed-build manifest
+        env:
+          RUFLET_REVISION: ${{ github.sha }}
+          RUFLET_RUN_ID: ${{ github.run_id }}
+          RUFLET_REF: ${{ github.ref_name }}
+        run: |
+          ruby -rjson -rtime -e 'File.write("ruflet_client-manifest.json", JSON.pretty_generate({schema: 1, revision: ENV.fetch("RUFLET_REVISION"), run_id: ENV.fetch("RUFLET_RUN_ID"), ref: ENV.fetch("RUFLET_REF"), completed_at: Time.now.utc.iso8601}))'
+
+      - name: Upload completed-build manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruflet-client-prebuild-manifest
+          path: ruflet_client-manifest.json
+
+      - name: Mark prebuild channel complete
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name == 'prebuild' && 'prebuild' || 'prebuild-main' }}
+          name: ${{ github.ref_name == 'prebuild' && 'Ruflet Client Prebuild (prebuild)' || 'Ruflet Client Prebuild (main)' }}
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
+          files: ruflet_client-manifest.json

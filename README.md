@@ -81,6 +81,13 @@ ruflet build <apk|android|ios|aab|web|macos|windows|linux>
 ruflet install [--device DEVICE_ID]
 ```
 
+Ruflet automatically refreshes its Flutter template and completed desktop/web
+client prebuilds. Rolling clients are published to `prebuild-main`; the CLI
+checks for a new revision every six hours and retains the last complete local
+build if GitHub is unavailable. Run `ruflet update --force` to refresh
+immediately or set `RUFLET_CLIENT_CHANNEL=stable` to use only versioned release
+assets.
+
 Run `ruflet install` without `--device` to choose from a numbered list of
 connected devices. Pass `--device DEVICE_ID` to skip the prompt.
 
