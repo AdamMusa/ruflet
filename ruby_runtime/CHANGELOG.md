@@ -1,3 +1,32 @@
+## 0.0.7
+
+- Run self-contained Ruflet applications through the generic embedded mruby VM
+  and preloaded Ruflet gems, using the app's normal `main.rb` entry point.
+- Embed the published `ruflet_core` 0.0.18 and `ruflet_server` 0.0.18 payloads
+  in prebuilt device binaries; application builds no longer compile the VM.
+- Package the runtime for Android, iOS, macOS, Linux, and Windows, with dynamic
+  embedded-server port discovery for multiple application instances.
+- Add the runtime and protocol fixes required by current Ruflet controls,
+  services, pickers, dialogs, maps, audio, Rive, charts, and SpinKit clients.
+- Improve embedded runtime concurrency, callback reporting, and UI update
+  performance without adding application-specific behavior to the VM.
+
+## 0.0.6
+
+- Update embedded Ruflet pages from client resize events so `page.width` and
+  `page.height` reflect the live viewport, and expose `page.on_resize`.
+- Add Linux desktop support with the complete `ruby_runtime` method-channel
+  contract used by self-contained applications.
+
+## 0.0.5
+
+- Bind the embedded server to an available port and report the selected port to
+  the client, allowing multiple packaged apps to run at the same time.
+- Add the mruby compatibility surface needed by Ruflet gems, including regular
+  expressions, standard extension gems, common stdlib helpers, randomness,
+  clocks, and sleep support.
+- Add a desktop harness that exercises the same mruby sources shipped on device.
+
 ## 0.0.4
 
 - Add packaged Linux `aarch64`/`x86_64` and Windows `x86_64` Ruflet VMs.

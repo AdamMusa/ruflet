@@ -25,7 +25,9 @@ packages only the developer's application code and assets.
 
 - Android (prebuilt `armeabi-v7a`, `arm64-v8a`, `x86`, and `x86_64` VM
   libraries are distributed in `android/src/main/jniLibs`)
-- iOS
+- iOS (prebuilt device `arm64` and simulator `arm64`/`x86_64` VM slices are
+  distributed in `ios/Frameworks/RufletVM.xcframework`; application builds
+  compile only the Flutter bridge)
 - macOS (the universal `arm64`/`x86_64` VM archive is distributed in
   `macos/Frameworks`; application builds compile only the Flutter bridge)
 - Linux (prebuilt `aarch64` and `x86_64` VM libraries are distributed in
@@ -75,7 +77,9 @@ address.
 1. Bundles `require_relative` application files into one source unit.
 2. Compiles that unit to `main.mrb` with the vendored `mrbc`.
 3. Packages `main.mrb` and non-Ruby project assets into the Flutter app.
-4. Builds the Flutter client with the local `ruby_runtime` package.
+4. Builds the Flutter client with the resolved `ruby_runtime` dependency. The
+   package already contains every native VM binary; the application build does
+   not compile mruby or Ruflet gems.
 
 The runtime is intentionally scoped to Ruflet. Applications needing an
 external CRuby process or arbitrary gems should use Ruflet's server-driven

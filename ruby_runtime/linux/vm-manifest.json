@@ -4,12 +4,16 @@
   "platform": "linux",
   "library": "libruflet_vm.so",
   "contains": ["mruby", "ruflet-framework", "onigmo", "native-gems"],
+  "ruflet_gems": {
+    "ruflet_core": "0.0.18",
+    "ruflet_server": "0.0.18"
+  },
   "artifacts": {
     "aarch64": {
-      "sha256": "9e3e90a1a245de6448622dcad93f798304d8f0725e2aee1238722167189e2edd"
+      "sha256": "697c3c264a653ef67e0c8c452aea5765001d9ac1df99fbcab8e7a9574bd44b4a"
     },
     "x64": {
-      "sha256": "4a5875a18cf95a2ecff9b56129f211c7e8cf8363fc05022b026b5331eca4f027"
+      "sha256": "0c56c7b99724f155141cdcf0341b8ba23f0250d3057235e2ac8fa0935ec7e390"
     }
   }
 }

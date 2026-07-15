@@ -4,6 +4,10 @@
   "platform": "windows",
   "architectures": ["x86_64"],
   "library": "ruflet_vm.dll",
-  "sha256": "a6eee1cc0d8b8f6c85495e8c61f7442a9e8b63c7d756ef88f267ba2b2429b86f",
-  "contains": ["mruby", "ruflet-framework", "onigmo", "native-gems"]
+  "sha256": "2a4ea053e2a9189fd7c05cd1f64805043108af3d5f5fd9b80296f970590ff4ed",
+  "contains": ["mruby", "ruflet-framework", "onigmo", "native-gems"],
+  "ruflet_gems": {
+    "ruflet_core": "0.0.18",
+    "ruflet_server": "0.0.18"
+  }
 }

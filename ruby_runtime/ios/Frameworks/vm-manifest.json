@@ -1,0 +1,19 @@
+{
+  "format": 1,
+  "runtime": "ruflet-mruby",
+  "platform": "ios",
+  "library": "RufletVM.xcframework",
+  "contains": ["mruby", "ruflet-framework", "onigmo", "native-gems"],
+  "ruflet_gems": {
+    "ruflet_core": "0.0.18",
+    "ruflet_server": "0.0.18"
+  },
+  "artifacts": {
+    "ios-arm64": {
+      "sha256": "a96a115752e802c0d8115ba3613d7bd8994f05b5578642c303af082dab53bec1"
+    },
+    "ios-arm64_x86_64-simulator": {
+      "sha256": "dc7045f452aca832f73d5b093806acaf126f40c528717e23d0c56e00c18ad4ba"
+    }
+  }
+}
