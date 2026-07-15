@@ -82,11 +82,27 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Build self-contained Ruflet Studio
+      - name: Build self-contained Ruflet Studio on Linux
+        if: matrix.target == 'linux'
         working-directory: studio
         env:
           RUFLET_RUBY_RUNTIME_PATH: ${{ github.workspace }}/ruby_runtime
-        run: bundle exec ruflet build ${{ matrix.target }} --self
+        run: bundle exec ruflet build linux --self
+
+      - name: Build self-contained Ruflet Studio on Windows
+        if: matrix.target == 'windows'
+        working-directory: studio
+        shell: pwsh
+        env:
+          RUFLET_RUBY_RUNTIME_PATH: ${{ github.workspace }}/ruby_runtime
+        run: |
+          bundle exec ruflet build windows --self 2>&1 | Tee-Object -FilePath windows-build.log
+          $buildExitCode = $LASTEXITCODE
+          if ($buildExitCode -ne 0) {
+            $tail = (Get-Content windows-build.log -Tail 30) -join "%0A"
+            Write-Host "::error title=Ruflet Studio Windows build failed::$tail"
+            exit $buildExitCode
+          }
 
       - name: Verify Linux distribution
         if: matrix.target == 'linux'
