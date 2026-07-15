@@ -57,6 +57,46 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  def test_services_activate_only_their_required_client_extensions
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "client")
+      FileUtils.mkdir_p(File.join(client_dir, "lib"))
+      File.write(
+        File.join(client_dir, "pubspec.yaml"),
+        "dependencies:\n  flutter:\n    sdk: flutter\n  flet: any\n"
+      )
+      File.write(
+        File.join(client_dir, "lib", "main.self.dart"),
+        <<~DART
+          import 'package:flet/flet.dart';
+          void main() {
+            final extensions = <FletExtension>[
+            ];
+          }
+        DART
+      )
+
+      config = { "services" => ["microphone", "location"] }
+      builder.send(:apply_service_extension_config, client_dir, config, self_contained: true)
+
+      pubspec = YAML.safe_load(File.read(File.join(client_dir, "pubspec.yaml")), aliases: true)
+      dependencies = pubspec.fetch("dependencies")
+      assert dependencies.key?("flet_audio_recorder")
+      assert dependencies.key?("flet_geolocator")
+      assert dependencies.key?("flet_permission_handler")
+      refute dependencies.key?("flet_camera")
+      refute dependencies.key?("flet_video")
+
+      main = File.read(File.join(client_dir, "lib", "main.self.dart"))
+      assert_includes main, "ruflet_audio_recorder.Extension(),"
+      assert_includes main, "ruflet_geolocator.Extension(),"
+      assert_includes main, "ruflet_permission_handler.Extension(),"
+      refute_includes main, "ruflet_camera.Extension(),"
+    end
+  end
+
   def test_command_update_check_reports_manifest_status
     updater = DummyUpdater.new
     Dir.mktmpdir do |dir|
@@ -273,7 +313,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
-  def test_self_contained_service_extension_config_restores_full_client_extensions
+  def test_self_contained_service_extension_config_only_restores_configured_extensions
     builder = DummyBuilder.new
 
     Dir.mktmpdir do |dir|
@@ -334,7 +374,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
       Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)
 
       begin
-        builder.send(:apply_service_extension_config, client_dir, {}, self_contained: true)
+        config = { "extensions" => ["webview"] }
+        builder.send(:apply_service_extension_config, client_dir, config, self_contained: true)
 
         pubspec = YAML.safe_load(File.read(File.join(client_dir, "pubspec.yaml")), aliases: true)
         assert pubspec.dig("dependencies", "flet_webview")

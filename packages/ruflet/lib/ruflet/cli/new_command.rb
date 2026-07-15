@@ -196,9 +196,9 @@ module Ruflet
             # Example: https://api.example.com
             backend_url: ""
 
-          # Source of truth for Flutter client extensions/plugins.
-          # Examples: camera, video, audio, flashlight, webview, map
-          services: []
+          # Optional Flutter client extensions. Only listed extensions are bundled.
+          # Examples: audio, charts, code_editor, map, rive, video, webview
+          extensions: []
 
           # Build assets configuration consumed by `ruflet build`.
           # Paths are relative to this file unless absolute.
@@ -212,6 +212,13 @@ module Ruflet
             splash_dark_color: "#0B0B0B"
             icon_background: "#FFFFFF"
             theme_color: "#FFFFFF"
+        YAML
+
+        File.write(File.join(root, "services.yaml"), <<~YAML)
+          # Native capabilities that require platform permissions. Ruflet activates
+          # the matching client extensions and writes Android/iOS permissions.
+          # Supported services: camera, microphone, location, motion
+          services: []
         YAML
       end
 

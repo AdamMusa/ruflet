@@ -1021,12 +1021,7 @@ module Ruflet
         services = configured_service_entries(config).map { |entry| entry[:name] }
         requested_extensions = Array(config["extensions"]).map { |value| normalize_extension_key(value) }.compact
         protected_extensions = services.flat_map { |name| PROTECTED_SERVICE_EXTENSIONS.fetch(name, []) }
-        extension_keys =
-          if self_contained
-            CLIENT_EXTENSION_MAP.keys
-          else
-            (requested_extensions + protected_extensions + services).uniq
-          end
+        extension_keys = (requested_extensions + protected_extensions + services).uniq
         extension_packages = extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:package) }.uniq
         extension_aliases = extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:alias) }.uniq
 
