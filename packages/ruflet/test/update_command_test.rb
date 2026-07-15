@@ -327,7 +327,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
               sdk: flutter
             flet: any
             flet_audio: any
-            webview_all: ^1.2.1
+            flet_webview: any
           flutter:
             assets:
               - assets/demo/
@@ -340,7 +340,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes pubspec, "  assets:\n    - assets/demo/"
       refute_includes pubspec, "  assets:\n- assets/demo/"
       refute_includes pubspec, "flet_audio:"
-      refute_includes pubspec, "webview_all:"
+      refute_includes pubspec, "flet_webview:"
     end
   end
 
@@ -360,18 +360,18 @@ class RufletCliUpdateCommandTest < Minitest::Test
             flutter:
               sdk: flutter
             flet: any
-            webview_all: ^1.2.1
+            flet_webview: any
         YAML
       )
       File.write(
         File.join(template_dir, "lib", "main.self.dart"),
         <<~DART
           import 'package:flet/flet.dart';
-          import 'ruflet_webview.dart' as ruflet_webview;
+          import 'package:flet_webview/flet_webview.dart' as ruflet_webview;
 
           void main() {
             final extensions = <FletExtension>[
-              ruflet_webview.RufletWebViewExtension(),
+              ruflet_webview.Extension(),
             ];
           }
         DART
@@ -406,11 +406,11 @@ class RufletCliUpdateCommandTest < Minitest::Test
         builder.send(:apply_service_extension_config, client_dir, config, self_contained: true)
 
         pubspec = YAML.safe_load(File.read(File.join(client_dir, "pubspec.yaml")), aliases: true)
-        assert_equal "^1.2.1", pubspec.dig("dependencies", "webview_all")
+        assert_equal "any", pubspec.dig("dependencies", "flet_webview")
 
         main = File.read(File.join(client_dir, "lib", "main.self.dart"))
-        assert_includes main, "import 'ruflet_webview.dart' as ruflet_webview;"
-        assert_includes main, "ruflet_webview.RufletWebViewExtension(),"
+        assert_includes main, "import 'package:flet_webview/flet_webview.dart' as ruflet_webview;"
+        assert_includes main, "ruflet_webview.Extension(),"
       ensure
         Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root, original_method)
         Ruflet::CLI.singleton_class.send(:private, :resolve_ruflet_client_template_root)

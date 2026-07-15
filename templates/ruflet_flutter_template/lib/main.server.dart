@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flet/flet.dart';
-import 'package:flet_ads/flet_ads.dart' as ruflet_ads;
 // --FAT_CLIENT_START--
 import 'package:flet_audio/flet_audio.dart' as ruflet_audio;
 // --FAT_CLIENT_END--
@@ -34,7 +33,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'connection_probe.dart';
 import 'ruflet_file_picker_service.dart';
 import 'ruflet_spinkit.dart';
-import 'ruflet_webview.dart' as ruflet_webview;
+import 'package:flet_webview/flet_webview.dart' as ruflet_webview;
 
 const bool isProduction = bool.fromEnvironment('dart.vm.product');
 const int kRufletPort = 8550;
@@ -106,7 +105,6 @@ Future<void> main() async {
   final extensions = <FletExtension>[
     RufletFilePickerExtension(),
     RufletSpinKitExtension(),
-    ruflet_ads.Extension(),
     ruflet_audio_recorder.Extension(),
     ruflet_camera.Extension(),
     ruflet_charts.Extension(),
@@ -120,7 +118,7 @@ Future<void> main() async {
     ruflet_permission_handler.Extension(),
     ruflet_rive.Extension(),
     ruflet_secure_storage.Extension(),
-    ruflet_webview.RufletWebViewExtension(),
+    ruflet_webview.Extension(),
 
     // --FAT_CLIENT_START--
     ruflet_audio.Extension(),

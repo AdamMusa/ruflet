@@ -1,11 +1,12 @@
 app:
   name: ruflet_client
-  display_name: Ruflet Client
+  display_name: Ruflet Explorer
 
-# The reusable connection client intentionally supports the complete extension
-# catalog. Per-app builds are pruned to the developer project's selection.
+# Ruflet Explorer is the universal preview client, so it intentionally bundles
+# the complete optional extension catalog. Core controls and services (including
+# clipboard, file picker, screenshot, sensors, and SpinKit) need no entry here.
+# Per-app builds remain pruned to the developer project's selection.
 extensions:
-  - ads
   - audio
   - audio_recorder
   - camera

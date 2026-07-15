@@ -60,12 +60,6 @@
 @import geolocator_apple;
 #endif
 
-#if __has_include(<google_mobile_ads/FLTGoogleMobileAdsPlugin.h>)
-#import <google_mobile_ads/FLTGoogleMobileAdsPlugin.h>
-#else
-@import google_mobile_ads;
-#endif
-
 #if __has_include(<media_kit_libs_ios_video/MediaKitLibsIosVideoPlugin.h>)
 #import <media_kit_libs_ios_video/MediaKitLibsIosVideoPlugin.h>
 #else
@@ -174,7 +168,6 @@
   [FlutterNativeSplashPlugin registerWithRegistrar:[registry registrarForPlugin:@"FlutterNativeSplashPlugin"]];
   [FlutterSecureStorageDarwinPlugin registerWithRegistrar:[registry registrarForPlugin:@"FlutterSecureStorageDarwinPlugin"]];
   [GeolocatorPlugin registerWithRegistrar:[registry registrarForPlugin:@"GeolocatorPlugin"]];
-  [FLTGoogleMobileAdsPlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTGoogleMobileAdsPlugin"]];
   [MediaKitLibsIosVideoPlugin registerWithRegistrar:[registry registrarForPlugin:@"MediaKitLibsIosVideoPlugin"]];
   [MediaKitVideoPlugin registerWithRegistrar:[registry registrarForPlugin:@"MediaKitVideoPlugin"]];
   [FPPPackageInfoPlusPlugin registerWithRegistrar:[registry registrarForPlugin:@"FPPPackageInfoPlusPlugin"]];

@@ -28,5 +28,11 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access may be requested by previewed Ruflet applications.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Microphone access may be requested by previewed Ruflet applications.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>Location access may be requested by previewed Ruflet applications.</string>
 </dict>
 </plist>

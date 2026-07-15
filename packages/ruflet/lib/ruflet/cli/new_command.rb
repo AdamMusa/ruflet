@@ -13,7 +13,6 @@ module Ruflet
       RUNTIME_REPO_URL = ENV.fetch("RUFLET_RUNTIME_REPO_URL", "https://github.com/AdamMusa/ruflet.git")
 
       CLIENT_EXTENSION_MAP = {
-        "ads" => { package: "flet_ads", alias: "ruflet_ads" },
         "audio" => { package: "flet_audio", alias: "ruflet_audio" },
         "audio_recorder" => { package: "flet_audio_recorder", alias: "ruflet_audio_recorder" },
         "camera" => { package: "flet_camera", alias: "ruflet_camera" },
@@ -29,7 +28,7 @@ module Ruflet
         "rive" => { package: "flet_rive", alias: "ruflet_rive" },
         "secure_storage" => { package: "flet_secure_storage", alias: "ruflet_secure_storage" },
         "video" => { package: "flet_video", alias: "ruflet_video" },
-        "webview" => { package: "webview_all", alias: "ruflet_webview" }
+        "webview" => { package: "flet_webview", alias: "ruflet_webview" }
       }.freeze
 
       def command_new(args)

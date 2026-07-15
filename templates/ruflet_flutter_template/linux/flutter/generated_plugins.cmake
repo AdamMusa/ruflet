@@ -13,7 +13,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   ruby_runtime
   screen_retriever_linux
   url_launcher_linux
-  webview_all_linux
   window_manager
   window_to_front
 )

@@ -14,7 +14,6 @@ module Ruflet
     module BuildCommand
       include FlutterSdk
       CLIENT_EXTENSION_MAP = {
-        "ads" => { package: "flet_ads", alias: "ruflet_ads" },
         "audio" => { package: "flet_audio", alias: "ruflet_audio" },
         "audio_recorder" => { package: "flet_audio_recorder", alias: "ruflet_audio_recorder" },
         "camera" => { package: "flet_camera", alias: "ruflet_camera" },
@@ -30,7 +29,7 @@ module Ruflet
         "rive" => { package: "flet_rive", alias: "ruflet_rive" },
         "secure_storage" => { package: "flet_secure_storage", alias: "ruflet_secure_storage" },
         "video" => { package: "flet_video", alias: "ruflet_video" },
-        "webview" => { package: "webview_all", alias: "ruflet_webview" }
+        "webview" => { package: "flet_webview", alias: "ruflet_webview" }
       }.freeze
       PROTECTED_SERVICE_EXTENSIONS = {
         "camera" => %w[camera permission_handler],
@@ -1227,7 +1226,6 @@ module Ruflet
           "lib/main.server.dart",
           "lib/ruflet_file_picker_service.dart",
           "lib/ruflet_spinkit.dart",
-          "lib/ruflet_webview.dart",
           "lib/connection_probe.dart",
           "lib/connection_probe_io.dart",
           "lib/connection_probe_stub.dart",
