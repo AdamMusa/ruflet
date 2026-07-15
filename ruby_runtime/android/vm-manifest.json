@@ -6,21 +6,21 @@
   "library": "libruby_runtime.so",
   "contains": ["mruby", "ruflet-framework", "onigmo", "native-gems"],
   "ruflet_gems": {
-    "ruflet_core": "0.0.18",
-    "ruflet_server": "0.0.18"
+    "ruflet_core": "0.0.19",
+    "ruflet_server": "0.0.19"
   },
   "artifacts": {
     "arm64-v8a": {
-      "sha256": "28d2aab3c0a907f00f5cdfee10f252d8e6a87ce65fd64f0edee9c1a59649995d"
+      "sha256": "b05c198cea0e8f08120ca4f01d06875f3427e0107479d43d5af9884ce5d92da9"
     },
     "armeabi-v7a": {
-      "sha256": "0403520112e27a103e9ed8136a3a498e01781b8bd5c546d89696f744d3440f76"
+      "sha256": "dbdf24c22c17e13df15ae3693e0580d54e5b91f26d6c0939a4f845f7bc901787"
     },
     "x86": {
-      "sha256": "edf96ff5fa0eef911b234a743a36043a19c427874e2d8db01992fc4d12a49861"
+      "sha256": "bcae55a04a9dfea105144e36ebca16752be3fd4f1afc05dcb5ae792e21268669"
     },
     "x86_64": {
-      "sha256": "95cae4fa63dfe98f6e1b581ed1f0e44154301cde8cfcb76124a184ce807799bb"
+      "sha256": "9b8ac14359f71f06fa9f23570c9ecb466eee7c3bf07e707ef662473127d41296"
     }
   }
 }

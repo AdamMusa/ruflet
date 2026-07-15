@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'ruby_runtime'
-  s.version          = '0.0.7'
+  s.version          = '0.0.8'
   s.summary          = 'Embedded Ruby (mruby) VM for Flutter iOS.'
   s.description      = <<-DESC
 Embeds a generic mruby VM with gem-loading support ($LOAD_PATH/require) and

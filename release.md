@@ -66,15 +66,16 @@ Also verify any affected native target on a real device or emulator.
 ## Embedded Ruby Runtime
 
 For `ruby_runtime`, update its package version and changelog, run Flutter
-analysis/tests, and run the embedded VM compatibility harness:
+analysis/tests, and verify the packaged VM loads the expected Ruflet gems:
 
 ```bash
 cd ruby_runtime
 flutter analyze
 flutter test
+cd ..
 tools/embedded_vm_harness/build.sh
 tools/embedded_vm_harness/build/embedded_mruby --preload \
-  tools/embedded_vm_harness/tests/compat_test.rb
+  tools/embedded_vm_harness/tests/ruflet_gem_test.rb
 ```
 
 ## Release Checklist

@@ -6,8 +6,8 @@
  * embedded runtime can be exercised on desktop without booting Flutter.
  *
  * Usage: embedded_mruby [--preload] script.rb
- *   --preload  load ruby_runtime/shared/embedded_ruflet_runtime.h first,
- *              exactly like the plugin does at startup.
+ *   --preload  load ruby_runtime/shared/vm_bootstrap.h first, exactly like
+ *              the plugin does at startup.
  */
 
 #include <stdio.h>
@@ -16,10 +16,11 @@
 
 #include <mruby.h>
 #include <mruby/compile.h>
+#include <mruby/irep.h>
 #include <mruby/string.h>
 #include <mruby/variable.h>
 
-#include "../../ruby_runtime/shared/embedded_ruflet_runtime.h"
+#include "../../ruby_runtime/shared/vm_bootstrap.h"
 
 static int report_exception(mrb_state *mrb, const char *stage) {
   if (mrb->exc == NULL) {
@@ -78,10 +79,7 @@ int main(int argc, char **argv) {
   }
 
   if (preload) {
-    mrbc_context *context = mrbc_context_new(mrb);
-    mrbc_filename(mrb, context, "/__ruflet__/embedded_runtime.rb");
-    mrb_load_string_cxt(mrb, kEmbeddedRufletRuntime, context);
-    mrbc_context_free(mrb, context);
+    mrb_load_irep(mrb, kRubyRuntimeVmBootstrapIrep);
     if (report_exception(mrb, "preload")) {
       mrb_close(mrb);
       return 1;

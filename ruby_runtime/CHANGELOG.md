@@ -1,3 +1,11 @@
+## 0.0.8
+
+- Embed the published `ruflet_core` 0.0.19 and `ruflet_server` 0.0.19 gems in
+  every prebuilt Android, iOS, macOS, Linux, and Windows VM artifact.
+- Include repeatable snackbar and banner presentation fixes from Ruflet 0.0.19.
+- Refresh artifact manifests and checksums so application builds continue to
+  consume the packaged VM without compiling mruby in developer environments.
+
 ## 0.0.7
 
 - Run self-contained Ruflet applications through the generic embedded mruby VM

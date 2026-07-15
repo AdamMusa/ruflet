@@ -5,10 +5,10 @@
   "minimum_os_version": "10.14",
   "architectures": ["arm64", "x86_64"],
   "library": "libruflet_vm.a",
-  "sha256": "28dc55626a110f4b237754d8bd0d4a9a5d778ea7de7d0f9776c9c622b4a9e1a9",
+  "sha256": "749e74c628b842155f0e8e1dfc8f6b367856c550b3e36eaa4fd063a7e2a043a2",
   "contains": ["mruby", "ruflet-framework", "onigmo", "native-gems"],
   "ruflet_gems": {
-    "ruflet_core": "0.0.18",
-    "ruflet_server": "0.0.18"
+    "ruflet_core": "0.0.19",
+    "ruflet_server": "0.0.19"
   }
 }

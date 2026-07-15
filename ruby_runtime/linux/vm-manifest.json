@@ -5,15 +5,15 @@
   "library": "libruflet_vm.so",
   "contains": ["mruby", "ruflet-framework", "onigmo", "native-gems"],
   "ruflet_gems": {
-    "ruflet_core": "0.0.18",
-    "ruflet_server": "0.0.18"
+    "ruflet_core": "0.0.19",
+    "ruflet_server": "0.0.19"
   },
   "artifacts": {
     "aarch64": {
-      "sha256": "697c3c264a653ef67e0c8c452aea5765001d9ac1df99fbcab8e7a9574bd44b4a"
+      "sha256": "5d64d7db92a9f809d3acc8da6330dec48453163c195f9c523c7174aa4d475e3e"
     },
     "x64": {
-      "sha256": "0c56c7b99724f155141cdcf0341b8ba23f0250d3057235e2ac8fa0935ec7e390"
+      "sha256": "d6f07f7c86674c39a7dda45830e56bdeadd6583eca0b40dc8d1b505cf25cf5f9"
     }
   }
 }
