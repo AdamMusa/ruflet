@@ -1,0 +1,15 @@
+# GitHub Linguist should report Ruflet's authored sources, not the bundled
+# mruby toolchain and generated VM payloads required to build/package the VM.
+ruby_runtime/ios/mruby_src/** linguist-vendored
+ruby_runtime/macos/mruby_src/** linguist-vendored
+ruby_runtime/ios/vendor/** linguist-vendored
+ruby_runtime/macos/vendor/** linguist-vendored
+ruby_runtime/vm/mrbgems/mruby-onig-regexp/** linguist-vendored
+
+ruby_runtime/ios/build_host/** linguist-generated
+ruby_runtime/macos/build_host/** linguist-generated
+ruby_runtime/shared/vm_bootstrap.h linguist-generated
+ruby_runtime/ios/Classes/vm_bootstrap.h linguist-generated
+ruby_runtime/macos/Classes/vm_bootstrap.h linguist-generated
+ruby_runtime/android/src/main/cpp/vm_bootstrap.h linguist-generated
+ruby_runtime/shared/mruby_gems_init.c linguist-generated

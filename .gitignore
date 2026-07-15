@@ -22,6 +22,9 @@ templates/ruflet_flutter_template/macos/Podfile.lock
 # Third-party dependencies for ruby_runtime
 ruby_runtime/third_party/
 ruby_runtime/build/*_mruby/
+ruby_runtime/.dart_tool/
+ruby_runtime/build/
+ruby_runtime/android/.cxx/
 
 # Local demo app
 mruby_runtime_demo/
