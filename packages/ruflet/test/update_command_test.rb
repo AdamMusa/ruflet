@@ -12,6 +12,34 @@ class RufletCliUpdateCommandTest < Minitest::Test
     include Ruflet::CLI::BuildCommand
   end
 
+  def test_existing_managed_client_is_replaced_when_template_revision_changes
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "build", "client")
+      template_dir = File.join(dir, "template")
+      FileUtils.mkdir_p(client_dir)
+      FileUtils.mkdir_p(template_dir)
+      File.write(File.join(client_dir, ".metadata"), "managed\n")
+      File.write(File.join(client_dir, "stale.txt"), "old\n")
+
+      copied = []
+      previous_dir = Dir.pwd
+      Dir.chdir(dir)
+      Ruflet::CLI.stub(:resolve_ruflet_client_template_root, template_dir) do
+        Ruflet::CLI.stub(:client_template_current?, false) do
+          Ruflet::CLI.stub(:copy_ruflet_client_template, ->(root) { copied << root }) do
+            assert_equal File.realpath(client_dir), File.realpath(builder.send(:ensure_flutter_client_dir))
+          end
+        end
+      end
+
+      assert_equal [File.realpath(dir)], copied.map { |path| File.realpath(path) }
+    ensure
+      Dir.chdir(previous_dir) if previous_dir
+    end
+  end
+
   def test_load_config_merges_services_yaml_and_applies_mobile_permissions
     builder = DummyBuilder.new
 
@@ -299,6 +327,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
               sdk: flutter
             flet: any
             flet_audio: any
+            flet_webview: any
           flutter:
             assets:
               - assets/demo/
@@ -310,6 +339,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
       pubspec = File.read(path)
       assert_includes pubspec, "  assets:\n    - assets/demo/"
       refute_includes pubspec, "  assets:\n- assets/demo/"
+      refute_includes pubspec, "flet_audio:"
+      refute_includes pubspec, "flet_webview:"
     end
   end
 
@@ -329,10 +360,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
             flutter:
               sdk: flutter
             flet: any
-            flet_webview:
-              git:
-                url: https://example.com/ruflet.git
-                path: webview
+            flet_webview: any
         YAML
       )
       File.write(
@@ -378,10 +406,10 @@ class RufletCliUpdateCommandTest < Minitest::Test
         builder.send(:apply_service_extension_config, client_dir, config, self_contained: true)
 
         pubspec = YAML.safe_load(File.read(File.join(client_dir, "pubspec.yaml")), aliases: true)
-        assert pubspec.dig("dependencies", "flet_webview")
+        assert_equal "any", pubspec.dig("dependencies", "flet_webview")
 
         main = File.read(File.join(client_dir, "lib", "main.self.dart"))
-        assert_includes main, "package:flet_webview/flet_webview.dart"
+        assert_includes main, "import 'package:flet_webview/flet_webview.dart' as ruflet_webview;"
         assert_includes main, "ruflet_webview.Extension(),"
       ensure
         Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root, original_method)
@@ -1331,11 +1359,13 @@ class RufletCliUpdateCommandTest < Minitest::Test
               as ruflet_color_picker;
           import 'package:flet_secure_storage/flet_secure_storage.dart'
               as ruflet_secure_storage;
+          import 'ruflet_webview.dart' as ruflet_webview;
 
           final extensions = <FletExtension>[
             ruflet_audio_recorder.Extension(),
             ruflet_color_picker.Extension(),
             ruflet_secure_storage.Extension(),
+            ruflet_webview.RufletWebViewExtension(),
           ];
         DART
       )
@@ -1346,9 +1376,11 @@ class RufletCliUpdateCommandTest < Minitest::Test
       refute_includes content, "flet_audio_recorder"
       refute_includes content, "flet_color_pickers"
       refute_includes content, "flet_secure_storage"
+      refute_includes content, "ruflet_webview.dart"
       refute_includes content, "ruflet_audio_recorder.Extension()"
       refute_includes content, "ruflet_color_picker.Extension()"
       refute_includes content, "ruflet_secure_storage.Extension()"
+      refute_includes content, "ruflet_webview.RufletWebViewExtension()"
       assert_includes content, "import 'package:flet/flet.dart';"
     end
   end

@@ -73,7 +73,7 @@ module Ruflet
           ruflet install [--device DEVICE_ID] [--verbose]
           ruflet devices
           ruflet emulators
-          ruflet doctor
+          ruflet doctor [--fix] [--verbose]
       HELP
     end
 
@@ -89,7 +89,7 @@ module Ruflet
     private
 
     def ensure_first_run_assets(command)
-      return if %w[version -v --version help -h --help].include?(command)
+      return unless %w[create new bootstrap init update debug build install doctor].include?(command)
       return unless respond_to?(:download_ruflet_assets, true)
 
       send(:download_ruflet_assets)

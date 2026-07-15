@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flet/flet.dart';
-import 'package:flet_ads/flet_ads.dart' as ruflet_ads;
 // --FAT_CLIENT_START--
 import 'package:flet_audio/flet_audio.dart' as ruflet_audio;
 // --FAT_CLIENT_END--
@@ -27,7 +26,6 @@ import 'package:flet_secure_storage/flet_secure_storage.dart'
 // --FAT_CLIENT_START--
 import 'package:flet_video/flet_video.dart' as ruflet_video;
 // --FAT_CLIENT_END--
-import 'package:flet_webview/flet_webview.dart' as ruflet_webview;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -36,6 +34,7 @@ import 'package:ruby_runtime/ruflet_runtime.dart';
 
 import 'ruflet_file_picker_service.dart';
 import 'ruflet_spinkit.dart';
+import 'package:flet_webview/flet_webview.dart' as ruflet_webview;
 
 const bool isProduction = bool.fromEnvironment('dart.vm.product');
 const String kConfiguredClientUrl = String.fromEnvironment(
@@ -107,7 +106,6 @@ Future<void> main() async {
   final extensions = <FletExtension>[
     RufletFilePickerExtension(),
     RufletSpinKitExtension(),
-    ruflet_ads.Extension(),
     ruflet_audio_recorder.Extension(),
     ruflet_camera.Extension(),
     ruflet_charts.Extension(),

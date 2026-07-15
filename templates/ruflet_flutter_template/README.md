@@ -21,6 +21,9 @@ flutter run
 
 `ruflet build --self` compiles the project's `main.rb` and packages the resulting `main.mrb` automatically.
 
+Linux WebView builds require WebKitGTK 4.1 development files. On Debian or
+Ubuntu install them with `sudo apt install libwebkit2gtk-4.1-dev`.
+
 ## Conditional extensions and native services
 
 Application dependencies are selected from the developer project's configuration;

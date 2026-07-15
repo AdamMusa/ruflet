@@ -16,20 +16,23 @@ module Ruflet
         verbose = args.delete("--verbose") || args.delete("-v")
         fix = args.delete("--fix")
         client_dir = detect_client_dir
-        template_root = resolve_ruflet_client_template_root
+        template_root =
+          if fix
+            ensure_cached_ruflet_client_template!(force: true, verbose: !!verbose)
+          else
+            resolve_ruflet_client_template_root
+          end
         puts "Ruflet doctor"
         puts "  Ruby: #{RUBY_VERSION}"
         puts "  Flutter host target: #{flutter_host || 'unsupported'}"
         if template_root
           puts "  Template: #{template_root}"
+          revision = cached_template_revision if respond_to?(:cached_template_revision, true)
+          puts "  Template revision: #{revision}" if revision
         elsif fix
-          template_root = ensure_cached_ruflet_client_template!(force: true, verbose: !!verbose)
-          unless template_root
-            warn "  Template: missing"
-            warn "Failed to fetch the Ruflet Flutter template from GitHub."
-            return 1
-          end
-          puts "  Template: #{template_root}"
+          warn "  Template: missing"
+          warn "Failed to fetch the Ruflet Flutter template from GitHub."
+          return 1
         else
           warn "  Template: missing"
           warn "Run `ruflet doctor --fix` to fetch the Flutter template from GitHub."

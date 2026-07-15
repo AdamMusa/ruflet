@@ -30,11 +30,18 @@ ruflet run [scriptname|path] [--web|--desktop] [--port PORT]
 ruflet debug [scriptname|path]
 ruflet devices
 ruflet emulators
-ruflet doctor
+ruflet doctor [--fix]
 ruflet update [web|desktop|all] [--check] [--force]
 ruflet build <apk|android|ios|aab|web|macos|windows|linux> [--self]
 ruflet install [--device DEVICE_ID]
 ```
+
+Commands that create, diagnose, or build a Flutter client compare the cached
+template revision with `AdamMusa/ruflet-template` on GitHub. When `main`
+changes, Ruflet downloads the new template and refreshes its managed
+`build/client` automatically. If GitHub is unavailable, Ruflet keeps using the
+last complete cached template. Use `ruflet doctor --fix` to force a clean
+template download.
 
 Run `ruflet install` without `--device` to choose from a numbered list of
 connected devices. Pass `--device DEVICE_ID` to skip the prompt.

@@ -13,6 +13,8 @@ list(APPEND FLUTTER_PLUGIN_LIST
   pasteboard
   permission_handler_windows
   record_windows
+  rive_native
+  ruby_runtime
   screen_brightness_windows
   screen_retriever_windows
   share_plus
@@ -22,6 +24,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
+  jni
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)

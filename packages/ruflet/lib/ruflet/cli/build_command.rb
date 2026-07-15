@@ -14,7 +14,6 @@ module Ruflet
     module BuildCommand
       include FlutterSdk
       CLIENT_EXTENSION_MAP = {
-        "ads" => { package: "flet_ads", alias: "ruflet_ads" },
         "audio" => { package: "flet_audio", alias: "ruflet_audio" },
         "audio_recorder" => { package: "flet_audio_recorder", alias: "ruflet_audio_recorder" },
         "camera" => { package: "flet_camera", alias: "ruflet_camera" },
@@ -175,11 +174,28 @@ module Ruflet
 
       def ensure_flutter_client_dir(verbose: false)
         client_dir = detect_flutter_client_dir
-        return client_dir if client_dir
+        if client_dir
+          refresh_hidden_flutter_client_template(client_dir, verbose: verbose)
+          return client_dir
+        end
 
         bootstrapped = bootstrap_flutter_client_template
         build_log(verbose, "bootstrapped client template at #{bootstrapped}") if bootstrapped
         bootstrapped
+      end
+
+      def refresh_hidden_flutter_client_template(client_dir, verbose: false)
+        return unless File.expand_path(client_dir) == File.expand_path(hidden_flutter_client_dir)
+        return unless File.file?(File.join(client_dir, ".metadata"))
+        return unless Ruflet::CLI.respond_to?(:resolve_ruflet_client_template_root, true)
+
+        template_root = Ruflet::CLI.send(:resolve_ruflet_client_template_root)
+        return unless template_root && Dir.exist?(template_root)
+        return if Ruflet::CLI.respond_to?(:client_template_current?, true) &&
+          Ruflet::CLI.send(:client_template_current?, client_dir, template_root)
+
+        Ruflet::CLI.send(:copy_ruflet_client_template, Dir.pwd)
+        build_log(verbose, "refreshed managed Flutter client from template #{template_root}")
       end
 
       def build_tool_env(env, platform, client_dir = nil)
@@ -1213,7 +1229,8 @@ module Ruflet
           "lib/connection_probe.dart",
           "lib/connection_probe_io.dart",
           "lib/connection_probe_stub.dart",
-          "ios/Podfile"
+          "ios/Podfile",
+          "windows/CMakeLists.txt"
         ]
 
         managed_files.each do |relative_path|
@@ -1388,10 +1405,10 @@ module Ruflet
       def prune_client_pubspec(path, selected_packages)
         data = YAML.safe_load(File.read(path), aliases: true) || {}
         deps = (data["dependencies"] || {}).dup
+        optional_packages = CLIENT_EXTENSION_MAP.values.map { |entry| entry.fetch(:package) }.uniq
 
         deps.keys.each do |name|
-          next unless name.start_with?("flet_")
-          next if name == "flet"
+          next unless optional_packages.include?(name)
           next if selected_packages.include?(name)
 
           deps.delete(name)
@@ -1445,7 +1462,9 @@ module Ruflet
 
         selected_aliases.each do |extension_alias|
           import_line = template.lines.find { |line| line.match?(/\sas #{Regexp.escape(extension_alias)};\s*\z/) }
-          extension_line = template.lines.find { |line| line.match?(/^\s*#{Regexp.escape(extension_alias)}\.Extension\(\),\s*$/) }
+          extension_line = template.lines.find do |line|
+            line.match?(/^\s*#{Regexp.escape(extension_alias)}\.[A-Za-z0-9_]+\(\),\s*$/)
+          end
 
           content = insert_missing_import(content, import_line) if import_line && !content.include?(import_line)
           content = insert_missing_extension(content, extension_line) if extension_line && !content.include?(extension_line)
@@ -1491,25 +1510,37 @@ module Ruflet
       def prune_client_main(path, selected_aliases)
         content = File.read(path)
         alias_to_package = {}
+        optional_aliases = CLIENT_EXTENSION_MAP.values.map { |entry| entry.fetch(:alias) }.uniq
 
-        content.scan(%r{^import 'package:(flet_[^/]+)/\1\.dart'\s+as ([a-zA-Z0-9_]+);$}m) do |package_name, import_alias|
+        content.scan(%r{^import 'package:([^/]+)/[^']+'\s+as ([a-zA-Z0-9_]+);$}m) do |package_name, import_alias|
           alias_to_package[import_alias] = package_name
         end
+        content.scan(%r{^import '([^']+)'\s+as ([a-zA-Z0-9_]+);$}m) do |_source, import_alias|
+          alias_to_package[import_alias] = :local if optional_aliases.include?(import_alias)
+        end
 
-        content = content.gsub(%r{^import 'package:(flet_[^/]+)/\1\.dart'\s+as ([a-zA-Z0-9_]+);\n}m) do |match|
+        content = content.gsub(%r{^import 'package:([^/]+)/[^']+'\s+as ([a-zA-Z0-9_]+);\n}m) do |match|
           package_name = Regexp.last_match(1)
           import_alias = Regexp.last_match(2)
-          if package_name == "flet" || selected_aliases.include?(import_alias)
+          if !optional_aliases.include?(import_alias) || selected_aliases.include?(import_alias)
+            match
+          else
+            ""
+          end
+        end
+        content = content.gsub(%r{^import '([^']+)'\s+as ([a-zA-Z0-9_]+);\n}m) do |match|
+          import_alias = Regexp.last_match(2)
+          if !optional_aliases.include?(import_alias) || selected_aliases.include?(import_alias)
             match
           else
             ""
           end
         end
 
-        content = content.gsub(/^(\s*)([a-zA-Z0-9_]+)\.Extension\(\),\s*$/) do |match|
+        content = content.gsub(/^(\s*)([a-zA-Z0-9_]+)\.[A-Za-z0-9_]+\(\),\s*$/) do |match|
           extension_alias = Regexp.last_match(2)
           package_name = alias_to_package[extension_alias]
-          if package_name.nil? || selected_aliases.include?(extension_alias)
+          if package_name.nil? || !optional_aliases.include?(extension_alias) || selected_aliases.include?(extension_alias)
             match
           else
             ""

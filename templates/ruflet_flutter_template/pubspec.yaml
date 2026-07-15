@@ -40,11 +40,6 @@ dependencies:
       url: https://github.com/flet-dev/flet.git
       path: packages/flet
       ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
-  flet_ads:
-    git:
-      url: https://github.com/flet-dev/flet.git
-      path: sdk/python/packages/flet-ads/src/flutter/flet_ads
-      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
   flet_audio:
     git:
       url: https://github.com/flet-dev/flet.git

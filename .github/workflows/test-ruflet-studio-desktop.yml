@@ -1,0 +1,135 @@
+name: Test Ruflet Studio Desktop Builds
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/test-ruflet-studio-desktop.yml"
+      - "packages/ruflet/**"
+      - "packages/ruflet_core/**"
+      - "packages/ruflet_server/**"
+      - "ruby_runtime/**"
+      - "ruflet_flutter_template/**"
+  push:
+    paths:
+      - ".github/workflows/test-ruflet-studio-desktop.yml"
+      - "packages/ruflet/**"
+      - "packages/ruflet_core/**"
+      - "packages/ruflet_server/**"
+      - "ruby_runtime/**"
+      - "ruflet_flutter_template/**"
+
+permissions:
+  contents: read
+
+jobs:
+  build-studio:
+    name: Ruflet Studio (${{ matrix.target }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux
+            runner: ubuntu-latest
+          - target: windows
+            runner: windows-latest
+
+    steps:
+      - name: Checkout Ruflet
+        uses: actions/checkout@v4
+
+      - name: Checkout Ruflet Studio
+        uses: actions/checkout@v4
+        with:
+          repository: AdamMusa/ruflet_studio
+          path: studio
+
+      - name: Install Linux desktop dependencies
+        if: matrix.target == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev \
+            libsecret-1-dev libmpv-dev mpv \
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+            gstreamer1.0-plugins-base gstreamer1.0-plugins-good
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Use the checked-out Ruflet gems
+        shell: bash
+        run: |
+          ruby -e 'root = ENV.fetch("GITHUB_WORKSPACE").tr("\\", "/"); File.write("studio/Gemfile", <<~GEMFILE)
+          source "https://rubygems.org"
+
+          gem "ruflet", path: "#{root}/packages/ruflet"
+          gem "ruflet_core", path: "#{root}/packages/ruflet_core"
+          gem "ruflet_server", path: "#{root}/packages/ruflet_server"
+          GEMFILE
+          '
+
+      - name: Install Ruflet Studio gems
+        working-directory: studio
+        run: bundle install
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Build self-contained Ruflet Studio on Linux
+        if: matrix.target == 'linux'
+        working-directory: studio
+        env:
+          RUFLET_RUBY_RUNTIME_PATH: ${{ github.workspace }}/ruby_runtime
+        run: bundle exec ruflet build linux --self
+
+      - name: Build self-contained Ruflet Studio on Windows
+        if: matrix.target == 'windows'
+        working-directory: studio
+        shell: pwsh
+        env:
+          RUFLET_RUBY_RUNTIME_PATH: ${{ github.workspace }}/ruby_runtime
+        run: |
+          bundle exec ruflet build windows --self 2>&1 | Tee-Object -FilePath windows-build.log
+          $buildExitCode = $LASTEXITCODE
+          if ($buildExitCode -ne 0) {
+            $tail = (Get-Content windows-build.log -Tail 30) -join "%0A"
+            Write-Host "::error title=Ruflet Studio Windows build failed::$tail"
+            exit $buildExitCode
+          }
+
+      - name: Verify Linux distribution
+        if: matrix.target == 'linux'
+        shell: bash
+        run: |
+          bundle="studio/build/client/build/linux/x64/release/bundle"
+          test -x "$bundle/ruflet_studio"
+          test -f "$bundle/lib/libruflet_vm.so"
+          ! ldd "$bundle/lib/libruflet_vm.so" | grep "not found"
+
+      - name: Verify Windows distribution
+        if: matrix.target == 'windows'
+        shell: pwsh
+        run: |
+          $bundle = "studio/build/client/build/windows/x64/runner/Release"
+          if (!(Test-Path "$bundle/ruflet_studio.exe")) {
+            throw "Missing Ruflet Studio Windows executable"
+          }
+          if (!(Test-Path "$bundle/ruflet_vm.dll")) {
+            throw "Missing packaged Ruflet VM DLL"
+          }
+
+      - name: Upload desktop distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruflet-studio-${{ matrix.target }}
+          path: |
+            studio/build/client/build/linux/x64/release/bundle
+            studio/build/client/build/windows/x64/runner/Release
+          if-no-files-found: error
