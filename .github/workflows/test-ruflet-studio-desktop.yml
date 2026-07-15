@@ -11,7 +11,6 @@ on:
       - "ruby_runtime/**"
       - "ruflet_flutter_template/**"
   push:
-    branches: [main, dev]
     paths:
       - ".github/workflows/test-ruflet-studio-desktop.yml"
       - "packages/ruflet/**"
