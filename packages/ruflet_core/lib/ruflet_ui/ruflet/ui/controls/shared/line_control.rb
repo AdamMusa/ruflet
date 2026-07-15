@@ -7,6 +7,7 @@ module Ruflet
         class LineControl < Ruflet::Control
           TYPE = "line".freeze
           WIRE = "Line".freeze
+          KEYWORDS = [:data, :key, :paint, :x1, :x2, :y1, :y2].freeze
 
           def initialize(id: nil, data: nil, key: nil, paint: nil, x1: nil, x2: nil, y1: nil, y2: nil)
             props = {}

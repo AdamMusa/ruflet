@@ -7,6 +7,7 @@ module Ruflet
         class RectControl < Ruflet::Control
           TYPE = "rect".freeze
           WIRE = "Rect".freeze
+          KEYWORDS = [:border_radius, :data, :height, :key, :paint, :width, :x, :y].freeze
 
           def initialize(id: nil, border_radius: nil, data: nil, height: nil, key: nil, paint: nil, width: nil, x: nil, y: nil)
             props = {}

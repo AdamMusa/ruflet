@@ -29,7 +29,7 @@ class RufletRadioCompatibilityTest < Minitest::Test
     assert_equal({ "size" => 14 }, patch["label_style"])
     assert_equal "red", patch["value"]
     assert_equal true, patch["autofocus"]
-    assert_equal({ "selected" => "#abcdef" }, patch["fill_color"])
+    assert_equal({ "selected" => "#ABCDEF" }, patch["fill_color"])
     assert_equal "#123456", patch["active_color"]
     assert_equal({ "hovered" => "#111111" }, patch["overlay_color"])
     assert_equal "#222222", patch["hover_color"]

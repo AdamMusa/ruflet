@@ -52,9 +52,11 @@ class RufletContextMenuCompatibilityTest < Minitest::Test
     assert_equal "ContextMenu", menu.to_patch["_c"]
   end
 
-  def test_context_menu_requires_visible_content_like_flet
+  def test_context_menu_requires_content_and_serializes_hidden_content_like_flet
     assert_raises(ArgumentError) { Ruflet.context_menu }
-    assert_raises(ArgumentError) { Ruflet.context_menu(Ruflet.text("Hidden", visible: false)) }
+    hidden = Ruflet.context_menu(Ruflet.container(visible: false)).to_patch
+
+    assert_equal false, hidden["content"]["visible"]
   end
 
   def test_context_menu_select_and_dismiss_events_dispatch

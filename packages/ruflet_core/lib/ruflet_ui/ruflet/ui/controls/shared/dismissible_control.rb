@@ -8,25 +8,65 @@ module Ruflet
           TYPE = "dismissible".freeze
           WIRE = "Dismissible".freeze
 
-          def initialize(id: nil, adaptive: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, background: nil, badge: nil, bottom: nil, col: nil, content: nil, cross_axis_end_offset: nil, data: nil, disabled: nil, dismiss_direction: nil, dismiss_thresholds: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, movement_duration: nil, offset: nil, opacity: nil, resize_duration: nil, right: nil, rotate: nil, rtl: nil, scale: nil, secondary_background: nil, size_change_interval: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_confirm_dismiss: nil, on_dismiss: nil, on_resize: nil, on_size_change: nil, on_update: nil)
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "dismissible requires visible content"
-            end
+          KEYWORDS = [:adaptive, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :background, :badge, :bottom, :col, :content, :cross_axis_end_offset, :data, :disabled, :dismiss_direction, :dismiss_thresholds, :expand, :expand_loose, :height, :key, :left, :margin, :movement_duration, :offset, :opacity, :resize_duration, :right, :rotate, :rtl, :scale, :secondary_background, :size_change_interval, :tooltip, :top, :visible, :width, :on_animation_end, :on_confirm_dismiss, :on_dismiss, :on_resize, :on_size_change, :on_update].freeze
 
-            if secondary_background && (background.nil? || (background.respond_to?(:props) && background.props["visible"] == false))
-              raise ArgumentError, "dismissible secondary_background requires visible background"
-            end
+          def initialize(id: nil, **props)
+            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
+            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
+            adaptive = props[:adaptive]
+            align = props[:align]
+            animate_align = props[:animate_align]
+            animate_margin = props[:animate_margin]
+            animate_offset = props[:animate_offset]
+            animate_opacity = props[:animate_opacity]
+            animate_position = props[:animate_position]
+            animate_rotation = props[:animate_rotation]
+            animate_scale = props[:animate_scale]
+            animate_size = props[:animate_size]
+            aspect_ratio = props[:aspect_ratio]
+            background = props[:background]
+            badge = props[:badge]
+            bottom = props[:bottom]
+            col = props[:col]
+            content = props[:content]
+            cross_axis_end_offset = props[:cross_axis_end_offset]
+            data = props[:data]
+            disabled = props[:disabled]
+            dismiss_direction = props[:dismiss_direction]
+            dismiss_thresholds = props[:dismiss_thresholds]
+            expand = props[:expand]
+            expand_loose = props[:expand_loose]
+            height = props[:height]
+            key = props[:key]
+            left = props[:left]
+            margin = props[:margin]
+            movement_duration = props[:movement_duration]
+            offset = props[:offset]
+            opacity = props[:opacity]
+            resize_duration = props[:resize_duration]
+            right = props[:right]
+            rotate = props[:rotate]
+            rtl = props[:rtl]
+            scale = props[:scale]
+            secondary_background = props[:secondary_background]
+            size_change_interval = props[:size_change_interval]
+            tooltip = props[:tooltip]
+            top = props[:top]
+            visible = props[:visible]
+            width = props[:width]
+            on_animation_end = props[:on_animation_end]
+            on_confirm_dismiss = props[:on_confirm_dismiss]
+            on_dismiss = props[:on_dismiss]
+            on_resize = props[:on_resize]
+            on_size_change = props[:on_size_change]
+            on_update = props[:on_update]
+            raise ArgumentError, "dismissible requires content" if content.nil?
 
             cross_axis_end_offset = 0.0 if cross_axis_end_offset.nil?
             dismiss_direction = "horizontal" if dismiss_direction.nil?
             dismiss_thresholds = {} if dismiss_thresholds.nil?
             movement_duration = 200 if movement_duration.nil?
             resize_duration = 300 if resize_duration.nil?
-
-            dismiss_thresholds.each_value do |threshold|
-              next if threshold.nil?
-              raise ArgumentError, "dismissible dismiss_thresholds values must be between 0.0 and 1.0" unless (0.0..1.0).cover?(threshold)
-            end
 
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?

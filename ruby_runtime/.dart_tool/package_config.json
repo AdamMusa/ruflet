@@ -39,7 +39,7 @@
     },
     {
       "name": "flutter",
-      "rootUri": "file:///Users/macbookpro/fvm/versions/stable/packages/flutter",
+      "rootUri": "file:///Users/macbookpro/Documents/setup/flutter/packages/flutter",
       "packageUri": "lib/",
       "languageVersion": "3.9"
     },
@@ -51,7 +51,7 @@
     },
     {
       "name": "flutter_test",
-      "rootUri": "file:///Users/macbookpro/fvm/versions/stable/packages/flutter_test",
+      "rootUri": "file:///Users/macbookpro/Documents/setup/flutter/packages/flutter_test",
       "packageUri": "lib/",
       "languageVersion": "3.9"
     },
@@ -81,7 +81,7 @@
     },
     {
       "name": "matcher",
-      "rootUri": "file:///Users/macbookpro/.pub-cache/hosted/pub.dev/matcher-0.12.19",
+      "rootUri": "file:///Users/macbookpro/.pub-cache/hosted/pub.dev/matcher-0.12.18",
       "packageUri": "lib/",
       "languageVersion": "3.7"
     },
@@ -111,7 +111,7 @@
     },
     {
       "name": "sky_engine",
-      "rootUri": "file:///Users/macbookpro/fvm/versions/stable/bin/cache/pkg/sky_engine",
+      "rootUri": "file:///Users/macbookpro/Documents/setup/flutter/bin/cache/pkg/sky_engine",
       "packageUri": "lib/",
       "languageVersion": "3.9"
     },
@@ -147,7 +147,7 @@
     },
     {
       "name": "test_api",
-      "rootUri": "file:///Users/macbookpro/.pub-cache/hosted/pub.dev/test_api-0.7.10",
+      "rootUri": "file:///Users/macbookpro/.pub-cache/hosted/pub.dev/test_api-0.7.9",
       "packageUri": "lib/",
       "languageVersion": "3.7"
     },
@@ -171,8 +171,8 @@
     }
   ],
   "generator": "pub",
-  "generatorVersion": "3.11.1",
-  "flutterRoot": "file:///Users/macbookpro/fvm/versions/stable",
-  "flutterVersion": "3.41.4",
+  "generatorVersion": "3.11.0",
+  "flutterRoot": "file:///Users/macbookpro/Documents/setup/flutter",
+  "flutterVersion": "3.41.2",
   "pubCache": "file:///Users/macbookpro/.pub-cache"
 }

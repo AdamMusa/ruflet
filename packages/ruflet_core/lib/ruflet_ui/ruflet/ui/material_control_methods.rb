@@ -3,9 +3,25 @@
 module Ruflet
   module UI
     module MaterialControlMethods
+      def map_coordinates(value)
+        case value
+        when Array
+          return { "latitude" => value[0], "longitude" => value[1] } if value.length >= 2
+        when Hash
+          latitude = value["latitude"] || value[:latitude] || value["lat"] || value[:lat]
+          longitude = value["longitude"] || value[:longitude] || value["lon"] || value[:lon] || value["lng"] || value[:lng]
+          return { "latitude" => latitude, "longitude" => longitude } unless latitude.nil? || longitude.nil?
+        end
+        value.respond_to?(:to_h) ? map_coordinates(value.to_h) : value
+      end
+
+      def map_coordinate_list(value)
+        Array(value).map { |coordinates| map_coordinates(coordinates) }
+      end
+
       def view(children = nil, **props, &block)
         mapped = props.dup
-        mapped[:children] = children unless children.nil?
+        mapped[:controls] = children unless children.nil?
         build_widget(:view, **mapped, &block)
       end
       def column(children = nil, **props, &block)
@@ -174,6 +190,7 @@ module Ruflet
       def listtile(**props) = list_tile(**props)
       def map(layers = nil, **props)
         mapped = props.dup
+        mapped[:initial_center] = map_coordinates(mapped[:initial_center]) if mapped.key?(:initial_center)
         mapped[:layers] = layers unless layers.nil?
         build_widget(:map, **mapped)
       end
@@ -187,6 +204,7 @@ module Ruflet
       def markerlayer(markers = nil, **props) = marker_layer(markers, **props)
       def marker(content = nil, **props)
         mapped = props.dup
+        mapped[:coordinates] = map_coordinates(mapped[:coordinates]) if mapped.key?(:coordinates)
         mapped[:content] = content unless content.nil?
         build_widget(:marker, **mapped)
       end
@@ -196,7 +214,11 @@ module Ruflet
         build_widget(:circlelayer, **mapped)
       end
       def circlelayer(circles = nil, **props) = circle_layer(circles, **props)
-      def circle_marker(**props) = build_widget(:circlemarker, **props)
+      def circle_marker(**props)
+        mapped = props.dup
+        mapped[:coordinates] = map_coordinates(mapped[:coordinates]) if mapped.key?(:coordinates)
+        build_widget(:circlemarker, **mapped)
+      end
       def circlemarker(**props) = circle_marker(**props)
       def polyline_layer(polylines = nil, **props)
         mapped = props.dup
@@ -204,7 +226,11 @@ module Ruflet
         build_widget(:polylinelayer, **mapped)
       end
       def polylinelayer(polylines = nil, **props) = polyline_layer(polylines, **props)
-      def polyline_marker(**props) = build_widget(:polylinemarker, **props)
+      def polyline_marker(**props)
+        mapped = props.dup
+        mapped[:coordinates] = map_coordinate_list(mapped[:coordinates]) if mapped.key?(:coordinates)
+        build_widget(:polylinemarker, **mapped)
+      end
       def polylinemarker(**props) = polyline_marker(**props)
       def polygon_layer(polygons = nil, **props)
         mapped = props.dup
@@ -212,7 +238,11 @@ module Ruflet
         build_widget(:polygonlayer, **mapped)
       end
       def polygonlayer(polygons = nil, **props) = polygon_layer(polygons, **props)
-      def polygon_marker(**props) = build_widget(:polygonmarker, **props)
+      def polygon_marker(**props)
+        mapped = props.dup
+        mapped[:coordinates] = map_coordinate_list(mapped[:coordinates]) if mapped.key?(:coordinates)
+        build_widget(:polygonmarker, **mapped)
+      end
       def polygonmarker(**props) = polygon_marker(**props)
       def simple_attribution(**props) = build_widget(:simpleattribution, **props)
       def simpleattribution(**props) = simple_attribution(**props)
@@ -329,6 +359,17 @@ module Ruflet
       def pageview(children = nil, **props) = page_view(children, **props)
       def progress_ring(**props) = build_widget(:progressring, **props)
       def progressring(**props) = progress_ring(**props)
+      SPINKIT_VARIANTS = [:rotating_circle, :rotating_plain, :double_bounce, :wave, :wandering_cubes, :fading_four, :fading_cube, :pulse, :chasing_dots, :three_bounce, :circle, :cube_grid, :fading_circle, :folding_cube, :pumping_heart, :hour_glass, :pouring_hour_glass, :pouring_hour_glass_refined, :fading_grid, :ring, :ripple, :dual_ring, :spinning_circle, :spinning_lines, :square_circle, :three_in_out, :dancing_square, :piano_wave, :pulsing_grid, :wave_spinner].freeze
+
+      def spinkit(**variants)
+        selected = variants.select { |name, _value| SPINKIT_VARIANTS.include?(name) }
+        raise ArgumentError, "spinkit requires exactly one variant" unless selected.length == 1 && selected.length == variants.length
+
+        variant, options = selected.first
+        raise ArgumentError, "spinkit variant options must be a Hash" unless options.is_a?(Hash)
+
+        build_widget(:spinkit, variant: variant.to_s, **options)
+      end
       def range_slider(**props) = build_widget(:rangeslider, **props)
       def rangeslider(**props) = range_slider(**props)
       def responsive_row(children = nil, **props, &block)
@@ -509,6 +550,17 @@ module Ruflet
         build_widget(:transparentpointer, **mapped)
       end
       def transparentpointer(content = nil, **props) = transparent_pointer(content, **props)
+      def rotated_box(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:rotatedbox, **mapped)
+      end
+      def rotatedbox(content = nil, **props) = rotated_box(content, **props)
+      def screenshot(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:screenshot, **mapped)
+      end
       def radio(**props) = build_widget(:radio, **props)
       def radio_group(content = nil, **props)
         mapped = props.dup
@@ -524,6 +576,12 @@ module Ruflet
         build_widget(:snackbar, **mapped)
       end
       def snackbar(content = nil, **props) = snack_bar(content, **props)
+      def snack_bar_action(label = nil, **props)
+        mapped = props.dup
+        mapped[:label] = label unless label.nil?
+        build_widget(:snackbaraction, **mapped)
+      end
+      def snackbaraction(label = nil, **props) = snack_bar_action(label, **props)
       def bottom_sheet(content = nil, **props)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
@@ -638,26 +696,12 @@ module Ruflet
       def web_view(**props) = build_widget(:webview, **props)
       def webview(**props) = web_view(**props)
       def video(**props) = build_widget(:video, **props)
-
-      # spinkit(wave: { color: "red", size: 50 }) — one variant keyword whose
-      # value is the props hash. See https://flet.dev/docs/controls/spinkit/
-      def spinkit(**variant)
-        raise ArgumentError, "spinkit expects exactly one variant, e.g. spinkit(wave: { color: ... })" unless variant.size == 1
-
-        name, props = variant.first
-        props ||= {}
-        raise ArgumentError, "spinkit #{name} options must be a Hash" unless props.is_a?(Hash)
-
-        build_widget(:"spinkit_#{name}", **props)
-      end
-
       def code_editor(value = nil, **props)
         mapped = props.dup
         mapped[:value] = value unless value.nil?
         build_widget(:codeeditor, **mapped)
       end
       def codeeditor(value = nil, **props) = code_editor(value, **props)
-
       def rive(src = nil, **props)
         mapped = props.dup
         mapped[:src] = src unless src.nil?

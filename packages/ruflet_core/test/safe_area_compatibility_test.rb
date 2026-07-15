@@ -46,10 +46,11 @@ class RufletSafeAreaCompatibilityTest < Minitest::Test
     assert_equal 0, area.props["minimum_padding"]
   end
 
-  def test_safe_area_requires_visible_content_like_flet
+  def test_safe_area_requires_content_and_serializes_hidden_content_like_flet
     assert_raises(ArgumentError) { Ruflet.safe_area }
-    assert_raises(ArgumentError) { Ruflet.safe_area(Ruflet.text("Hidden", visible: false)) }
+    hidden = Ruflet.safe_area(Ruflet.container(visible: false)).to_patch
 
+    assert_equal false, hidden["content"]["visible"]
     area = Ruflet.safe_area(Ruflet.text("Shown"))
     assert_equal "Shown", area.props["content"].props["value"]
   end

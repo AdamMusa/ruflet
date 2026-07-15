@@ -42,16 +42,21 @@ class RufletCupertinoAlertDialogCompatibilityTest < Minitest::Test
     assert_equal "CupertinoDialogAction", Ruflet.cupertinodialogaction(content: "OK").to_patch["_c"]
   end
 
-  def test_cupertino_alert_dialog_requires_visible_content_like_flet
-    assert_raises(ArgumentError) { Ruflet.cupertino_alert_dialog }
-    assert_raises(ArgumentError) { Ruflet.cupertino_alert_dialog(title: Ruflet.text("Hidden", visible: false)) }
-    assert_raises(ArgumentError) { Ruflet.cupertino_alert_dialog(content: Ruflet.text("Hidden", visible: false)) }
-    assert_raises(ArgumentError) { Ruflet.cupertino_alert_dialog(actions: [Ruflet.text("Hidden", visible: false)]) }
+  def test_cupertino_alert_dialog_serializes_without_visible_content_like_flet
+    empty = Ruflet.cupertino_alert_dialog.to_patch
+    hidden = Ruflet.cupertino_alert_dialog(actions: [Ruflet.container(visible: false)]).to_patch
+
+    assert_equal "CupertinoAlertDialog", empty["_c"]
+    refute empty.key?("title")
+    refute empty.key?("content")
+    assert_equal false, hidden["actions"].first["visible"]
   end
 
-  def test_cupertino_dialog_action_requires_visible_content_like_flet
+  def test_cupertino_dialog_action_requires_content_and_serializes_hidden_content_like_flet
     assert_raises(ArgumentError) { Ruflet.cupertino_dialog_action }
-    assert_raises(ArgumentError) { Ruflet.cupertino_dialog_action(content: Ruflet.text("Hidden", visible: false)) }
+    hidden = Ruflet.cupertino_dialog_action(content: Ruflet.container(visible: false)).to_patch
+
+    assert_equal false, hidden["content"]["visible"]
   end
 
   def test_defaults_match_flet

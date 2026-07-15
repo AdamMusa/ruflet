@@ -44,17 +44,22 @@ class RufletRangeSliderCompatibilityTest < Minitest::Test
     assert_equal "RangeSlider", Ruflet.rangeslider(max: 3, start_value: 1, end_value: 2).to_patch["_c"]
   end
 
-  def test_range_slider_rejects_invalid_flet_ranges
-    assert_raises(ArgumentError) { Ruflet.range_slider(min: 10, max: 0, start_value: 2, end_value: 7) }
-    assert_raises(ArgumentError) { Ruflet.range_slider(min: 0, max: 10, start_value: -1, end_value: 7) }
-    assert_raises(ArgumentError) { Ruflet.range_slider(min: 0, max: 10, start_value: 8, end_value: 7) }
-    assert_raises(ArgumentError) { Ruflet.range_slider(min: 0, max: 10, start_value: 2, end_value: 11) }
+  def test_range_slider_serializes_permissive_flet_ranges
+    slider = Ruflet.range_slider(min: 10, max: 0, start_value: 8, end_value: 7)
+    patch = slider.to_patch
+
+    assert_equal 10, patch["min"]
+    assert_equal 0, patch["max"]
+    assert_equal 8, patch["start_value"]
+    assert_equal 7, patch["end_value"]
   end
 
-  def test_range_slider_rejects_invalid_flet_discrete_values
-    assert_raises(ArgumentError) { Ruflet.range_slider(start_value: 1, end_value: 2, divisions: 0) }
-    assert_raises(ArgumentError) { Ruflet.range_slider(start_value: 1, end_value: 2, round: -1) }
-    assert_raises(ArgumentError) { Ruflet.range_slider(start_value: 1, end_value: 2, round: 21) }
+  def test_range_slider_serializes_permissive_flet_discrete_values
+    slider = Ruflet.range_slider(start_value: 1, end_value: 2, divisions: 0, round: -1)
+    patch = slider.to_patch
+
+    assert_equal 0, patch["divisions"]
+    assert_equal(-1, patch["round"])
   end
 
   def test_range_slider_change_event_updates_start_and_end_values_before_handler

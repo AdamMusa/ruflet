@@ -155,7 +155,7 @@ module Ruflet
           html.include?("</head>") ? html.sub("</head>", "#{script}</head>") : "#{script}#{html}"
         end
 
-        # Pins Flet-style clients to <mount>/ws (derived from the rewritten
+        # Pins Ruflet clients to <mount>/ws (derived from the rewritten
         # <base href>) instead of the origin's /ws. The Ruflet client itself
         # uses the mounted page URL, so Rails needs no separate backend URL.
         def mount_websocket_bootstrap

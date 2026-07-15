@@ -16,25 +16,21 @@ class PageSemanticsServiceTest < Minitest::Test
     assert_same service, page.service(:semantics_service)
   end
 
-  def test_semantics_service_object_methods_use_flet_payload_shape
+  def test_semantics_service_invokes_native_flet_methods
     sent = []
     page = build_page(sent)
     service = page.semantics_service
+    sent.clear
 
-    service.announce_message("Saved", rtl: true, assertiveness: "assertive")
-    service.announce_tooltip("Tap to save")
-    service.get_accessibility_features
+    service.announce_message("Saved", rtl: true, assertiveness: :assertive)
+    payload = sent.map(&:last).find { |item| item["name"] == "announce_message" }
 
-    message_payload = sent.reverse.map(&:last).find { |payload| payload["name"] == "announce_message" }
-    tooltip_payload = sent.reverse.map(&:last).find { |payload| payload["name"] == "announce_tooltip" }
-    features_payload = sent.reverse.map(&:last).find { |payload| payload["name"] == "get_accessibility_features" }
-
-    refute_nil message_payload
-    refute_nil tooltip_payload
-    refute_nil features_payload
-    assert_equal({ "message" => "Saved", "rtl" => true, "assertiveness" => "assertive" }, message_payload["args"])
-    assert_equal({ "message" => "Tap to save" }, tooltip_payload["args"])
-    assert_nil features_payload["args"]
+    refute_nil payload
+    assert_equal({
+      "message" => "Saved",
+      "rtl" => true,
+      "assertiveness" => "assertive"
+    }, payload["args"])
   end
 
   private

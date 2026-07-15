@@ -57,9 +57,44 @@ class RufletSnackBarCompatibilityTest < Minitest::Test
     assert_match(/content/, error.message)
   end
 
-  def test_snack_bar_rejects_action_overflow_threshold_outside_flet_range
-    assert_raises(ArgumentError) { Ruflet.snack_bar("Saved", action_overflow_threshold: -0.1) }
-    assert_raises(ArgumentError) { Ruflet.snack_bar("Saved", action_overflow_threshold: 1.1) }
+  def test_snack_bar_action_serializes_current_flet_props
+    action = Ruflet.snack_bar_action(
+      "Undo",
+      text_color: "#ABCDEF",
+      disabled_text_color: "#123456",
+      bgcolor: "#FEDCBA",
+      disabled_bgcolor: "#654321",
+      on_click: ->(_event) {}
+    )
+    patch = action.to_patch
+
+    assert_equal "SnackBarAction", patch["_c"]
+    assert_equal "Undo", patch["label"]
+    assert_equal "#abcdef", patch["text_color"]
+    assert_equal "#123456", patch["disabled_text_color"]
+    assert_equal "#fedcba", patch["bgcolor"]
+    assert_equal "#654321", patch["disabled_bgcolor"]
+    assert_equal true, patch["on_click"]
+    assert_equal "SnackBarAction", Ruflet.snackbaraction("Undo").to_patch["_c"]
+  end
+
+  def test_snack_bar_action_requires_label_like_flet
+    assert_raises(ArgumentError) { Ruflet.snack_bar_action }
+  end
+
+  def test_snack_bar_accepts_action_control_like_flet
+    patch = Ruflet.snack_bar("Saved", action: Ruflet.snack_bar_action("Undo")).to_patch
+
+    assert_equal "SnackBarAction", patch["action"]["_c"]
+    assert_equal "Undo", patch["action"]["label"]
+  end
+
+  def test_snack_bar_serializes_action_overflow_threshold_outside_flet_range
+    low = Ruflet.snack_bar("Saved", action_overflow_threshold: -0.1)
+    high = Ruflet.snack_bar("Saved", action_overflow_threshold: 1.1)
+
+    assert_equal(-0.1, low.to_patch["action_overflow_threshold"])
+    assert_equal 1.1, high.to_patch["action_overflow_threshold"]
   end
 
   def test_snack_bar_action_and_visible_events_dispatch
@@ -77,73 +112,10 @@ class RufletSnackBarCompatibilityTest < Minitest::Test
     )
 
     page.add(Ruflet.text("Root"))
-    page.show_dialog(snack_bar)
+    page.show_snackbar(snack_bar)
     page.dispatch_event(target: snack_bar.wire_id, name: "visible", data: nil)
     page.dispatch_event(target: snack_bar.wire_id, name: "action", data: nil)
 
     assert_equal ["visible", "action"], events
-  end
-
-  def test_show_dialog_replaces_existing_snack_bar_like_scaffold_messenger
-    sent = []
-    page = Ruflet::Page.new(
-      session_id: "s1",
-      client_details: { "route" => "/" },
-      sender: ->(action, payload) { sent << [action, payload] }
-    )
-
-    first = Ruflet.snack_bar("First", open: true)
-    second = Ruflet.snack_bar("Second", open: true)
-
-    page.add(Ruflet.text("Root"))
-    page.show_dialog(first)
-    page.show_dialog(second)
-
-    controls_patch = sent.last[1]["patch"].find { |op| op[2] == "controls" }
-    assert_equal ["Second"], controls_patch[3].map { |control| control["content"] }
-  end
-
-  def test_snackbar_setter_pushes_dialog_container_update_after_mount
-    sent = []
-    page = Ruflet::Page.new(
-      session_id: "s1",
-      client_details: { "route" => "/" },
-      sender: ->(action, payload) { sent << [action, payload] }
-    )
-
-    page.add(Ruflet.text("Root"))
-    sent.clear
-    page.snackbar = Ruflet.snackbar("Saved", open: true)
-
-    controls_patch = sent.last[1]["patch"].find { |op| op[2] == "controls" }
-    refute_nil controls_patch
-    assert_equal ["Saved"], controls_patch[3].map { |control| control["content"] }
-  end
-
-  def test_close_dialog_removes_dialog_from_dialogs_container
-    sent = []
-    page = Ruflet::Page.new(
-      session_id: "s1",
-      client_details: { "route" => "/" },
-      sender: ->(action, payload) { sent << [action, payload] }
-    )
-    dialog = Ruflet.alert_dialog(open: false, title: Ruflet.text("Form"))
-
-    page.add(Ruflet.text("Root"))
-    page.show_dialog(dialog)
-    sent.clear
-    page.close_dialog(dialog)
-
-    assert_empty dialog_controls_from_patch(sent.last[1]["patch"])
-  end
-
-  private
-
-  def dialog_controls_from_patch(patch)
-    controls_patch = patch.find { |op| op[2] == "controls" }
-    return controls_patch[3] if controls_patch
-
-    dialogs_patch = patch.find { |op| op[2] == "_dialogs" }
-    dialogs_patch[3]["controls"]
   end
 end

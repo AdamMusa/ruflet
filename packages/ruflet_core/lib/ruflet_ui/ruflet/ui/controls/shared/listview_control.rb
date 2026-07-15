@@ -8,23 +8,69 @@ module Ruflet
           TYPE = "listview".freeze
           WIRE = "ListView".freeze
 
-          def initialize(id: nil, adaptive: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, auto_scroll: nil, badge: nil, bottom: nil, build_controls_on_demand: nil, cache_extent: nil, clip_behavior: nil, col: nil, controls: nil, data: nil, disabled: nil, divider_thickness: nil, expand: nil, expand_loose: nil, first_item_prototype: nil, height: nil, horizontal: nil, item_extent: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, padding: nil, prototype_item: nil, reverse: nil, right: nil, rotate: nil, rtl: nil, scale: nil, scroll: nil, scroll_interval: nil, semantic_child_count: nil, size_change_interval: nil, spacing: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_scroll: nil, on_size_change: nil)
+          KEYWORDS = [:adaptive, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :auto_scroll, :badge, :bottom, :build_controls_on_demand, :cache_extent, :clip_behavior, :col, :controls, :data, :disabled, :divider_thickness, :expand, :expand_loose, :first_item_prototype, :height, :horizontal, :item_extent, :key, :left, :margin, :offset, :opacity, :padding, :prototype_item, :reverse, :right, :rotate, :rtl, :scale, :scroll, :scroll_interval, :semantic_child_count, :size_change_interval, :spacing, :tooltip, :top, :visible, :width, :on_animation_end, :on_scroll, :on_size_change].freeze
+
+          def initialize(id: nil, **props)
+            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
+            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
+            adaptive = props[:adaptive]
+            align = props[:align]
+            animate_align = props[:animate_align]
+            animate_margin = props[:animate_margin]
+            animate_offset = props[:animate_offset]
+            animate_opacity = props[:animate_opacity]
+            animate_position = props[:animate_position]
+            animate_rotation = props[:animate_rotation]
+            animate_scale = props[:animate_scale]
+            animate_size = props[:animate_size]
+            aspect_ratio = props[:aspect_ratio]
+            auto_scroll = props[:auto_scroll]
+            badge = props[:badge]
+            bottom = props[:bottom]
+            build_controls_on_demand = props[:build_controls_on_demand]
+            cache_extent = props[:cache_extent]
+            clip_behavior = props[:clip_behavior]
+            col = props[:col]
+            controls = props[:controls]
+            data = props[:data]
+            disabled = props[:disabled]
+            divider_thickness = props[:divider_thickness]
+            expand = props[:expand]
+            expand_loose = props[:expand_loose]
+            first_item_prototype = props[:first_item_prototype]
+            height = props[:height]
+            horizontal = props[:horizontal]
+            item_extent = props[:item_extent]
+            key = props[:key]
+            left = props[:left]
+            margin = props[:margin]
+            offset = props[:offset]
+            opacity = props[:opacity]
+            padding = props[:padding]
+            prototype_item = props[:prototype_item]
+            reverse = props[:reverse]
+            right = props[:right]
+            rotate = props[:rotate]
+            rtl = props[:rtl]
+            scale = props[:scale]
+            scroll = props[:scroll]
+            scroll_interval = props[:scroll_interval]
+            semantic_child_count = props[:semantic_child_count]
+            size_change_interval = props[:size_change_interval]
+            spacing = props[:spacing]
+            tooltip = props[:tooltip]
+            top = props[:top]
+            visible = props[:visible]
+            width = props[:width]
+            on_animation_end = props[:on_animation_end]
+            on_scroll = props[:on_scroll]
+            on_size_change = props[:on_size_change]
             build_controls_on_demand = true if build_controls_on_demand.nil?
             divider_thickness = 0 if divider_thickness.nil?
             first_item_prototype = false if first_item_prototype.nil?
             horizontal = false if horizontal.nil?
             reverse = false if reverse.nil?
             spacing = 0 if spacing.nil?
-
-            {
-              divider_thickness: divider_thickness,
-              item_extent: item_extent,
-              semantic_child_count: semantic_child_count,
-              spacing: spacing
-            }.each do |name, value|
-              next if value.nil?
-              raise ArgumentError, "list_view #{name} must be greater than or equal to 0" if value.negative?
-            end
 
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?

@@ -58,7 +58,7 @@ class RufletSearchBarCompatibilityTest < Minitest::Test
     assert_equal children, search_bar.children
     refute search_bar.props.key?("controls")
     assert_equal true, patch["autofocus"]
-    assert_equal({ "focused" => "#abcdef" }, patch["bar_bgcolor"])
+    assert_equal({ "focused" => "#ABCDEF" }, patch["bar_bgcolor"])
     assert_equal({ "color" => "#111111", "width" => 1 }, patch["bar_border_side"])
     assert_equal({ "hovered" => 3 }, patch["bar_elevation"])
     assert_equal "Search colors", patch["bar_hint_text"]
@@ -127,12 +127,13 @@ class RufletSearchBarCompatibilityTest < Minitest::Test
     assert_equal "SearchBar", Ruflet.searchbar(value: "query").to_patch["_c"]
   end
 
-  def test_search_bar_rejects_negative_numeric_values_like_flet
-    %i[bar_elevation view_elevation view_header_height].each do |prop|
-      error = assert_raises(ArgumentError) { Ruflet.search_bar(prop => -1) }
+  def test_search_bar_serializes_negative_numeric_values_like_flet
+    search_bar = Ruflet.search_bar(bar_elevation: -1, view_elevation: -2, view_header_height: -3)
+    patch = search_bar.to_patch
 
-      assert_match(/#{prop}/, error.message)
-    end
+    assert_equal(-1, patch["bar_elevation"])
+    assert_equal(-2, patch["view_elevation"])
+    assert_equal(-3, patch["view_header_height"])
   end
 
   def test_search_bar_change_event_updates_value_before_handler

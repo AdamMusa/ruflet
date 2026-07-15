@@ -3,7 +3,7 @@
 require_relative "test_helper"
 
 class RufletCliNewCommandTest < Minitest::Test
-  def test_command_new_creates_project_template
+  def test_command_new_creates_project_scaffold
     Dir.mktmpdir do |dir|
       Dir.chdir(dir) do
         out = StringIO.new
@@ -17,6 +17,11 @@ class RufletCliNewCommandTest < Minitest::Test
         assert File.exist?(File.join(dir, "demo_app", "Gemfile"))
         assert File.exist?(File.join(dir, "demo_app", "README.md"))
         assert File.exist?(File.join(dir, "demo_app", "ruflet.yaml"))
+        assert File.exist?(File.join(dir, "demo_app", "services.yaml"))
+        config = YAML.safe_load(File.read(File.join(dir, "demo_app", "ruflet.yaml")))
+        services = YAML.safe_load(File.read(File.join(dir, "demo_app", "services.yaml")))
+        assert_equal [], config["extensions"]
+        assert_equal [], services["services"]
         assert File.file?(File.join(dir, "demo_app", "assets", "icon.png"))
         assert File.file?(File.join(dir, "demo_app", "assets", "splash.png"))
         refute File.exist?(File.join(dir, "demo_app", "ruflet_client"))
@@ -36,7 +41,7 @@ class RufletCliNewCommandTest < Minitest::Test
 
       client_dir = File.join(target_root, "build", "client")
       assert File.directory?(client_dir)
-      assert File.file?(File.join(client_dir, "assets", "main.rb"))
+      refute File.exist?(File.join(client_dir, "assets", "main.rb"))
       assert File.file?(File.join(client_dir, "lib", "main.dart"))
       assert File.file?(File.join(client_dir, "lib", "main.self.dart"))
       assert File.file?(File.join(client_dir, "lib", "main.server.dart"))
@@ -77,18 +82,6 @@ class RufletCliNewCommandTest < Minitest::Test
     spec = Dir.chdir(gem_root) { Gem::Specification.load("ruflet.gemspec") }
 
     refute_includes spec.files, "assets/bootstrap/ruby_runtime.tar.gz"
-  end
-
-  def test_default_project_keeps_services_out_of_ruflet_config
-    Dir.mktmpdir do |dir|
-      Ruflet::CLI.send(:write_default_ruflet_config, dir, "demo_app")
-
-      config = File.read(File.join(dir, "ruflet.yaml"))
-      services = YAML.safe_load(File.read(File.join(dir, "services.yaml")), aliases: true)
-      refute_includes config, "services:"
-      assert_includes config, "extensions: []"
-      assert_equal [], services["services"]
-    end
   end
 
   def test_copy_ruflet_client_template_ignores_missing_template

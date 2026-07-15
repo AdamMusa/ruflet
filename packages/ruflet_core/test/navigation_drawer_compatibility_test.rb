@@ -89,17 +89,15 @@ class RufletNavigationDrawerCompatibilityTest < Minitest::Test
     assert_match(/icon/, error.message)
   end
 
-  def test_navigation_drawer_rejects_negative_elevation_and_width_like_flet
+  def test_navigation_drawer_serializes_negative_elevation_and_width_like_flet
     controls = [
       Ruflet.navigation_drawer_destination(icon: "home"),
       Ruflet.navigation_drawer_destination(icon: "search")
     ]
+    patch = Ruflet.navigation_drawer(controls, elevation: -1, width: -2).to_patch
 
-    %i[elevation width].each do |prop|
-      error = assert_raises(ArgumentError) { Ruflet.navigation_drawer(controls, prop => -1) }
-
-      assert_match(/#{prop}/, error.message)
-    end
+    assert_equal(-1, patch["elevation"])
+    assert_equal(-2, patch["width"])
   end
 
   def test_navigation_drawer_change_event_updates_selected_index_before_handler
@@ -124,5 +122,58 @@ class RufletNavigationDrawerCompatibilityTest < Minitest::Test
 
     assert_equal 1, drawer.props["selected_index"]
     assert_equal [[1, 1]], observed
+  end
+
+  def test_page_drawer_properties_serialize_as_view_slots
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    drawer = Ruflet.navigation_drawer([Ruflet.navigation_drawer_destination(icon: "home")])
+    end_drawer = Ruflet.navigation_drawer([Ruflet.navigation_drawer_destination(icon: "search")])
+
+    page.drawer = drawer
+    page.end_drawer = end_drawer
+    page.add(Ruflet.text("Body"))
+
+    assert_same drawer, page.drawer
+    assert_same end_drawer, page.end_drawer
+    view = sent.last[1]["patch"].find { |op| op[2] == "views" }[3].first
+    assert_equal "NavigationDrawer", view["drawer"]["_c"]
+    assert_equal "NavigationDrawer", view["end_drawer"]["_c"]
+  end
+
+  def test_page_show_and_close_drawer_use_flet_method_names
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    page.drawer = Ruflet.navigation_drawer([Ruflet.navigation_drawer_destination(icon: "home")])
+    page.end_drawer = Ruflet.navigation_drawer([Ruflet.navigation_drawer_destination(icon: "search")])
+    page.add(Ruflet.text("Body"))
+    sent.clear
+
+    page.show_drawer
+    page.close_drawer
+    page.show_end_drawer
+    page.close_end_drawer
+
+    assert_equal ["show_drawer", "close_drawer", "show_end_drawer", "close_end_drawer"], sent.map { |(_action, payload)| payload["name"] }
+    assert sent.all? { |(_action, payload)| payload["control_id"] == 1 }
+  end
+
+  def test_show_drawer_requires_matching_page_drawer_like_flet
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+
+    assert_match(/No drawer defined/, assert_raises(ArgumentError) { page.show_drawer }.message)
+    assert_match(/No end_drawer defined/, assert_raises(ArgumentError) { page.show_end_drawer }.message)
   end
 end

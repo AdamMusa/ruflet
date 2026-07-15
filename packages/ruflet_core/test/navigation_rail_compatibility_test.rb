@@ -67,37 +67,41 @@ class RufletNavigationRailCompatibilityTest < Minitest::Test
     assert_equal "NavigationRail", Ruflet.navigationrail(destinations: destinations).to_patch["_c"]
   end
 
-  def test_navigation_rail_requires_at_least_two_visible_destinations_like_flet
-    error = assert_raises(ArgumentError) do
-      Ruflet.navigation_rail(destinations: [Ruflet.navigation_rail_destination(icon: "home")])
-    end
+  def test_navigation_rail_serializes_single_destination_like_flet
+    rail = Ruflet.navigation_rail(destinations: [Ruflet.navigation_rail_destination(icon: "home")])
 
-    assert_match(/destinations/, error.message)
+    assert_equal 1, rail.to_patch["destinations"].length
   end
 
-  def test_navigation_rail_rejects_out_of_range_values_like_flet
+  def test_navigation_rail_serializes_out_of_range_values_like_flet
     destinations = [
       Ruflet.navigation_rail_destination(icon: "home"),
       Ruflet.navigation_rail_destination(icon: "search")
     ]
 
-    assert_raises(IndexError) { Ruflet.navigation_rail(destinations: destinations, selected_index: -1) }
-    assert_raises(IndexError) { Ruflet.navigation_rail(destinations: destinations, selected_index: 2) }
-    assert_raises(ArgumentError) { Ruflet.navigation_rail(destinations: destinations, group_alignment: -1.1) }
-    assert_raises(ArgumentError) { Ruflet.navigation_rail(destinations: destinations, group_alignment: 1.1) }
+    assert_equal(-1, Ruflet.navigation_rail(destinations: destinations, selected_index: -1).to_patch["selected_index"])
+    assert_equal 2, Ruflet.navigation_rail(destinations: destinations, selected_index: 2).to_patch["selected_index"]
+    assert_equal(-1.1, Ruflet.navigation_rail(destinations: destinations, group_alignment: -1.1).to_patch["group_alignment"])
+    assert_equal 1.1, Ruflet.navigation_rail(destinations: destinations, group_alignment: 1.1).to_patch["group_alignment"]
   end
 
-  def test_navigation_rail_rejects_negative_numeric_values_like_flet
+  def test_navigation_rail_serializes_negative_numeric_values_like_flet
     destinations = [
       Ruflet.navigation_rail_destination(icon: "home"),
       Ruflet.navigation_rail_destination(icon: "search")
     ]
 
-    %i[elevation min_extended_width min_width].each do |prop|
-      error = assert_raises(ArgumentError) { Ruflet.navigation_rail(destinations: destinations, prop => -1) }
+    rail = Ruflet.navigation_rail(
+      destinations: destinations,
+      elevation: -1,
+      min_extended_width: -2,
+      min_width: -3
+    )
+    patch = rail.to_patch
 
-      assert_match(/#{prop}/, error.message)
-    end
+    assert_equal(-1, patch["elevation"])
+    assert_equal(-2, patch["min_extended_width"])
+    assert_equal(-3, patch["min_width"])
   end
 
   def test_navigation_rail_destination_requires_icon_like_flet

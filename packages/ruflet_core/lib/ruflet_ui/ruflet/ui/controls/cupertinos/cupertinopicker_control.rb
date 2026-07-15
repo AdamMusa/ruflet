@@ -8,7 +8,58 @@ module Ruflet
           TYPE = "cupertinopicker".freeze
           WIRE = "CupertinoPicker".freeze
 
-          def initialize(id: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bgcolor: nil, bottom: nil, col: nil, controls: nil, data: nil, default_selection_overlay_bgcolor: nil, diameter_ratio: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, item_extent: nil, key: nil, left: nil, looping: nil, magnification: nil, margin: nil, off_axis_fraction: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, selected_index: nil, selection_overlay: nil, size_change_interval: nil, squeeze: nil, tooltip: nil, top: nil, use_magnifier: nil, visible: nil, width: nil, on_animation_end: nil, on_change: nil, on_size_change: nil)
+          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :bottom, :col, :controls, :data, :default_selection_overlay_bgcolor, :diameter_ratio, :disabled, :expand, :expand_loose, :height, :item_extent, :key, :left, :looping, :magnification, :margin, :off_axis_fraction, :offset, :opacity, :right, :rotate, :rtl, :scale, :selected_index, :selection_overlay, :size_change_interval, :squeeze, :tooltip, :top, :use_magnifier, :visible, :width, :on_animation_end, :on_change, :on_size_change].freeze
+
+          def initialize(id: nil, **props)
+            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
+            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
+            align = props[:align]
+            animate_align = props[:animate_align]
+            animate_margin = props[:animate_margin]
+            animate_offset = props[:animate_offset]
+            animate_opacity = props[:animate_opacity]
+            animate_position = props[:animate_position]
+            animate_rotation = props[:animate_rotation]
+            animate_scale = props[:animate_scale]
+            animate_size = props[:animate_size]
+            aspect_ratio = props[:aspect_ratio]
+            badge = props[:badge]
+            bgcolor = props[:bgcolor]
+            bottom = props[:bottom]
+            col = props[:col]
+            controls = props[:controls]
+            data = props[:data]
+            default_selection_overlay_bgcolor = props[:default_selection_overlay_bgcolor]
+            diameter_ratio = props[:diameter_ratio]
+            disabled = props[:disabled]
+            expand = props[:expand]
+            expand_loose = props[:expand_loose]
+            height = props[:height]
+            item_extent = props[:item_extent]
+            key = props[:key]
+            left = props[:left]
+            looping = props[:looping]
+            magnification = props[:magnification]
+            margin = props[:margin]
+            off_axis_fraction = props[:off_axis_fraction]
+            offset = props[:offset]
+            opacity = props[:opacity]
+            right = props[:right]
+            rotate = props[:rotate]
+            rtl = props[:rtl]
+            scale = props[:scale]
+            selected_index = props[:selected_index]
+            selection_overlay = props[:selection_overlay]
+            size_change_interval = props[:size_change_interval]
+            squeeze = props[:squeeze]
+            tooltip = props[:tooltip]
+            top = props[:top]
+            use_magnifier = props[:use_magnifier]
+            visible = props[:visible]
+            width = props[:width]
+            on_animation_end = props[:on_animation_end]
+            on_change = props[:on_change]
+            on_size_change = props[:on_size_change]
             diameter_ratio = 1.07 if diameter_ratio.nil?
             item_extent = 32.0 if item_extent.nil?
             looping = false if looping.nil?
@@ -17,15 +68,6 @@ module Ruflet
             selected_index = 0 if selected_index.nil?
             squeeze = 1.45 if squeeze.nil?
             use_magnifier = false if use_magnifier.nil?
-
-            {
-              item_extent: item_extent,
-              magnification: magnification,
-              squeeze: squeeze
-            }.each do |name, value|
-              raise ArgumentError, "cupertino_picker #{name} must be greater than 0" unless value.positive?
-            end
-            raise ArgumentError, "cupertino_picker selected_index must be greater than or equal to 0" if selected_index.negative?
 
             props = {}
             props[:align] = align unless align.nil?

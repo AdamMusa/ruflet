@@ -75,10 +75,14 @@ class RufletPageViewCompatibilityTest < Minitest::Test
     assert_equal 1.0, page_view.props["viewport_fraction"]
   end
 
-  def test_page_view_rejects_invalid_numeric_props_like_flet
-    assert_raises(ArgumentError) { Ruflet.page_view(selected_index: -1) }
-    assert_raises(ArgumentError) { Ruflet.page_view(viewport_fraction: 0) }
-    assert_raises(ArgumentError) { Ruflet.page_view(viewport_fraction: -1) }
+  def test_page_view_serializes_invalid_numeric_props_like_flet
+    selected_patch = Ruflet.page_view(selected_index: -1).to_patch
+    zero_viewport_patch = Ruflet.page_view(viewport_fraction: 0).to_patch
+    negative_viewport_patch = Ruflet.page_view(viewport_fraction: -1).to_patch
+
+    assert_equal(-1, selected_patch["selected_index"])
+    assert_equal 0, zero_viewport_patch["viewport_fraction"]
+    assert_equal(-1, negative_viewport_patch["viewport_fraction"])
   end
 
   def test_page_view_change_event_updates_selected_index_before_handler

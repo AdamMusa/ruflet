@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../icon_data"
+require_relative "../icon_constant_names"
 require_relative "../material_icon_lookup"
 
 module Ruflet

@@ -8,18 +8,59 @@ module Ruflet
           TYPE = "responsiverow".freeze
           WIRE = "ResponsiveRow".freeze
 
-          def initialize(id: nil, adaptive: nil, align: nil, alignment: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, breakpoints: nil, col: nil, columns: nil, controls: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, run_spacing: nil, scale: nil, size_change_interval: nil, spacing: nil, tooltip: nil, top: nil, vertical_alignment: nil, visible: nil, width: nil, on_animation_end: nil, on_size_change: nil)
+          KEYWORDS = [:adaptive, :align, :alignment, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bottom, :breakpoints, :col, :columns, :controls, :data, :disabled, :expand, :expand_loose, :height, :key, :left, :margin, :offset, :opacity, :right, :rotate, :rtl, :run_spacing, :scale, :size_change_interval, :spacing, :tooltip, :top, :vertical_alignment, :visible, :width, :on_animation_end, :on_size_change].freeze
+
+          def initialize(id: nil, **props)
+            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
+            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
+            adaptive = props[:adaptive]
+            align = props[:align]
+            alignment = props[:alignment]
+            animate_align = props[:animate_align]
+            animate_margin = props[:animate_margin]
+            animate_offset = props[:animate_offset]
+            animate_opacity = props[:animate_opacity]
+            animate_position = props[:animate_position]
+            animate_rotation = props[:animate_rotation]
+            animate_scale = props[:animate_scale]
+            animate_size = props[:animate_size]
+            aspect_ratio = props[:aspect_ratio]
+            badge = props[:badge]
+            bottom = props[:bottom]
+            breakpoints = props[:breakpoints]
+            col = props[:col]
+            columns = props[:columns]
+            controls = props[:controls]
+            data = props[:data]
+            disabled = props[:disabled]
+            expand = props[:expand]
+            expand_loose = props[:expand_loose]
+            height = props[:height]
+            key = props[:key]
+            left = props[:left]
+            margin = props[:margin]
+            offset = props[:offset]
+            opacity = props[:opacity]
+            right = props[:right]
+            rotate = props[:rotate]
+            rtl = props[:rtl]
+            run_spacing = props[:run_spacing]
+            scale = props[:scale]
+            size_change_interval = props[:size_change_interval]
+            spacing = props[:spacing]
+            tooltip = props[:tooltip]
+            top = props[:top]
+            vertical_alignment = props[:vertical_alignment]
+            visible = props[:visible]
+            width = props[:width]
+            on_animation_end = props[:on_animation_end]
+            on_size_change = props[:on_size_change]
             alignment = "start" if alignment.nil?
             breakpoints = { "xs" => 0, "sm" => 576, "md" => 768, "lg" => 992, "xl" => 1200, "xxl" => 1400 } if breakpoints.nil?
             columns = 12 if columns.nil?
             run_spacing = 10 if run_spacing.nil?
             spacing = 10 if spacing.nil?
             vertical_alignment = "start" if vertical_alignment.nil?
-
-            validate_non_negative(:columns, columns)
-            validate_non_negative(:run_spacing, run_spacing)
-            validate_non_negative(:spacing, spacing)
-            validate_non_negative(:breakpoints, breakpoints)
 
             props = {}
             props[:adaptive] = adaptive unless adaptive.nil?
@@ -67,15 +108,6 @@ module Ruflet
             super(type: TYPE, id: id, **props)
           end
 
-          private
-
-          def validate_non_negative(name, value)
-            values = value.is_a?(Hash) ? value.values : [value]
-            values.each do |entry|
-              next if entry.nil?
-              raise ArgumentError, "responsive_row #{name} must be greater than or equal to 0" if entry.negative?
-            end
-          end
         end
       end
     end

@@ -7,6 +7,7 @@ module Ruflet
         class ArcControl < Ruflet::Control
           TYPE = "arc".freeze
           WIRE = "Arc".freeze
+          KEYWORDS = [:data, :height, :key, :paint, :start_angle, :sweep_angle, :use_center, :width, :x, :y].freeze
 
           def initialize(id: nil, data: nil, height: nil, key: nil, paint: nil, start_angle: nil, sweep_angle: nil, use_center: nil, width: nil, x: nil, y: nil)
             props = {}

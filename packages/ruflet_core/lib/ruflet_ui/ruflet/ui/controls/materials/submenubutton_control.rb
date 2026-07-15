@@ -8,14 +8,59 @@ module Ruflet
           TYPE = "submenubutton".freeze
           WIRE = "SubmenuButton".freeze
 
-          def initialize(id: nil, align: nil, alignment_offset: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bottom: nil, clip_behavior: nil, col: nil, content: nil, controls: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, key: nil, leading: nil, left: nil, margin: nil, menu_style: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, size_change_interval: nil, style: nil, tooltip: nil, top: nil, trailing: nil, visible: nil, width: nil, on_animation_end: nil, on_blur: nil, on_close: nil, on_focus: nil, on_hover: nil, on_open: nil, on_size_change: nil)
+          KEYWORDS = [:align, :alignment_offset, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bottom, :clip_behavior, :col, :content, :controls, :data, :disabled, :expand, :expand_loose, :height, :key, :leading, :left, :margin, :menu_style, :offset, :opacity, :right, :rotate, :rtl, :scale, :size_change_interval, :style, :tooltip, :top, :trailing, :visible, :width, :on_animation_end, :on_blur, :on_close, :on_focus, :on_hover, :on_open, :on_size_change].freeze
+
+          def initialize(id: nil, **props)
+            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
+            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
+            align = props[:align]
+            alignment_offset = props[:alignment_offset]
+            animate_align = props[:animate_align]
+            animate_margin = props[:animate_margin]
+            animate_offset = props[:animate_offset]
+            animate_opacity = props[:animate_opacity]
+            animate_position = props[:animate_position]
+            animate_rotation = props[:animate_rotation]
+            animate_scale = props[:animate_scale]
+            animate_size = props[:animate_size]
+            aspect_ratio = props[:aspect_ratio]
+            badge = props[:badge]
+            bottom = props[:bottom]
+            clip_behavior = props[:clip_behavior]
+            col = props[:col]
+            content = props[:content]
+            controls = props[:controls]
+            data = props[:data]
+            disabled = props[:disabled]
+            expand = props[:expand]
+            expand_loose = props[:expand_loose]
+            height = props[:height]
+            key = props[:key]
+            leading = props[:leading]
+            left = props[:left]
+            margin = props[:margin]
+            menu_style = props[:menu_style]
+            offset = props[:offset]
+            opacity = props[:opacity]
+            right = props[:right]
+            rotate = props[:rotate]
+            rtl = props[:rtl]
+            scale = props[:scale]
+            size_change_interval = props[:size_change_interval]
+            style = props[:style]
+            tooltip = props[:tooltip]
+            top = props[:top]
+            trailing = props[:trailing]
+            visible = props[:visible]
+            width = props[:width]
+            on_animation_end = props[:on_animation_end]
+            on_blur = props[:on_blur]
+            on_close = props[:on_close]
+            on_focus = props[:on_focus]
+            on_hover = props[:on_hover]
+            on_open = props[:on_open]
+            on_size_change = props[:on_size_change]
             clip_behavior = "none" if clip_behavior.nil?
-
-            if content.nil? || (content.respond_to?(:props) && content.props["visible"] == false)
-              raise ArgumentError, "submenu_button requires visible content"
-            end
-
-            raise ArgumentError, "submenu_button height must be greater than or equal to 0" unless height.nil? || height >= 0
 
             props = {}
             props[:align] = align unless align.nil?

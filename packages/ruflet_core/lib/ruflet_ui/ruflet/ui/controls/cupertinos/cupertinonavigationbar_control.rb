@@ -8,17 +8,55 @@ module Ruflet
           TYPE = "cupertinonavigationbar".freeze
           WIRE = "CupertinoNavigationBar".freeze
 
-          def initialize(id: nil, active_color: nil, align: nil, animate_align: nil, animate_margin: nil, animate_offset: nil, animate_opacity: nil, animate_position: nil, animate_rotation: nil, animate_scale: nil, animate_size: nil, aspect_ratio: nil, badge: nil, bgcolor: nil, border: nil, bottom: nil, col: nil, data: nil, destinations: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, icon_size: nil, inactive_color: nil, key: nil, left: nil, margin: nil, offset: nil, opacity: nil, right: nil, rotate: nil, rtl: nil, scale: nil, selected_index: nil, size_change_interval: nil, tooltip: nil, top: nil, visible: nil, width: nil, on_animation_end: nil, on_change: nil, on_size_change: nil)
+          KEYWORDS = [:active_color, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :border, :bottom, :col, :data, :destinations, :disabled, :expand, :expand_loose, :height, :icon_size, :inactive_color, :key, :left, :margin, :offset, :opacity, :right, :rotate, :rtl, :scale, :selected_index, :size_change_interval, :tooltip, :top, :visible, :width, :on_animation_end, :on_change, :on_size_change].freeze
+
+          def initialize(id: nil, **props)
+            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
+            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
+            active_color = props[:active_color]
+            align = props[:align]
+            animate_align = props[:animate_align]
+            animate_margin = props[:animate_margin]
+            animate_offset = props[:animate_offset]
+            animate_opacity = props[:animate_opacity]
+            animate_position = props[:animate_position]
+            animate_rotation = props[:animate_rotation]
+            animate_scale = props[:animate_scale]
+            animate_size = props[:animate_size]
+            aspect_ratio = props[:aspect_ratio]
+            badge = props[:badge]
+            bgcolor = props[:bgcolor]
+            border = props[:border]
+            bottom = props[:bottom]
+            col = props[:col]
+            data = props[:data]
+            destinations = props[:destinations]
+            disabled = props[:disabled]
+            expand = props[:expand]
+            expand_loose = props[:expand_loose]
+            height = props[:height]
+            icon_size = props[:icon_size]
+            inactive_color = props[:inactive_color]
+            key = props[:key]
+            left = props[:left]
+            margin = props[:margin]
+            offset = props[:offset]
+            opacity = props[:opacity]
+            right = props[:right]
+            rotate = props[:rotate]
+            rtl = props[:rtl]
+            scale = props[:scale]
+            selected_index = props[:selected_index]
+            size_change_interval = props[:size_change_interval]
+            tooltip = props[:tooltip]
+            top = props[:top]
+            visible = props[:visible]
+            width = props[:width]
+            on_animation_end = props[:on_animation_end]
+            on_change = props[:on_change]
+            on_size_change = props[:on_size_change]
             icon_size = 30 if icon_size.nil?
             selected_index = 0 if selected_index.nil?
-            visible_destinations = Array(destinations).reject { |destination| destination.respond_to?(:props) && destination.props["visible"] == false }
-            unless destinations.nil? || visible_destinations.length >= 2
-              raise ArgumentError, "cupertino_navigation_bar destinations must include at least two visible destinations"
-            end
-
-            unless destinations.nil? || (0...visible_destinations.length).cover?(selected_index)
-              raise IndexError, "cupertino_navigation_bar selected_index is out of range"
-            end
 
             props = {}
             props[:active_color] = active_color unless active_color.nil?

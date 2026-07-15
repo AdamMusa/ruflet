@@ -35,17 +35,20 @@ class RufletCupertinoActionSheetCompatibilityTest < Minitest::Test
     assert_equal "CupertinoActionSheetAction", Ruflet.cupertinoactionsheetaction(content: "Save").to_patch["_c"]
   end
 
-  def test_action_sheet_requires_some_visible_content_like_flet
-    assert_raises(ArgumentError) { Ruflet.cupertino_action_sheet }
-    assert_raises(ArgumentError) { Ruflet.cupertino_action_sheet(title: Ruflet.text("Hidden", visible: false)) }
-    assert_raises(ArgumentError) { Ruflet.cupertino_action_sheet(message: Ruflet.text("Hidden", visible: false)) }
-    assert_raises(ArgumentError) { Ruflet.cupertino_action_sheet(cancel: Ruflet.text("Hidden", visible: false)) }
-    assert_raises(ArgumentError) { Ruflet.cupertino_action_sheet(actions: [Ruflet.text("Hidden", visible: false)]) }
+  def test_action_sheet_serializes_without_visible_content_like_flet
+    empty = Ruflet.cupertino_action_sheet.to_patch
+    hidden = Ruflet.cupertino_action_sheet(actions: [Ruflet.container(visible: false)]).to_patch
+
+    assert_equal "CupertinoActionSheet", empty["_c"]
+    refute empty.key?("actions")
+    assert_equal false, hidden["actions"].first["visible"]
   end
 
-  def test_action_sheet_action_requires_visible_content_like_flet
+  def test_action_sheet_action_requires_content_and_serializes_hidden_content_like_flet
     assert_raises(ArgumentError) { Ruflet.cupertino_action_sheet_action }
-    assert_raises(ArgumentError) { Ruflet.cupertino_action_sheet_action(content: Ruflet.text("Hidden", visible: false)) }
+    hidden = Ruflet.cupertino_action_sheet_action(content: Ruflet.container(visible: false)).to_patch
+
+    assert_equal false, hidden["content"]["visible"]
   end
 
   def test_action_sheet_action_defaults_match_flet

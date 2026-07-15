@@ -77,14 +77,13 @@ class RufletCupertinoPickerCompatibilityTest < Minitest::Test
     assert_equal false, picker.props["use_magnifier"]
   end
 
-  def test_cupertino_picker_rejects_invalid_numeric_props_like_flet
-    assert_raises(ArgumentError) { Ruflet.cupertino_picker(item_extent: 0) }
-    assert_raises(ArgumentError) { Ruflet.cupertino_picker(item_extent: -1) }
-    assert_raises(ArgumentError) { Ruflet.cupertino_picker(magnification: 0) }
-    assert_raises(ArgumentError) { Ruflet.cupertino_picker(magnification: -1) }
-    assert_raises(ArgumentError) { Ruflet.cupertino_picker(squeeze: 0) }
-    assert_raises(ArgumentError) { Ruflet.cupertino_picker(squeeze: -1) }
-    assert_raises(ArgumentError) { Ruflet.cupertino_picker(selected_index: -1) }
+  def test_cupertino_picker_serializes_invalid_numeric_props_like_flet
+    patch = Ruflet.cupertino_picker(item_extent: -1, magnification: -2, squeeze: -3, selected_index: -4).to_patch
+
+    assert_equal(-1, patch["item_extent"])
+    assert_equal(-2, patch["magnification"])
+    assert_equal(-3, patch["squeeze"])
+    assert_equal(-4, patch["selected_index"])
   end
 
   def test_cupertino_picker_change_event_updates_selected_index_before_handler

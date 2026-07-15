@@ -7,6 +7,7 @@ module Ruflet
         class CircleControl < Ruflet::Control
           TYPE = "circle".freeze
           WIRE = "Circle".freeze
+          KEYWORDS = [:data, :key, :paint, :radius, :x, :y].freeze
 
           def initialize(id: nil, data: nil, key: nil, paint: nil, radius: nil, x: nil, y: nil)
             props = {}
