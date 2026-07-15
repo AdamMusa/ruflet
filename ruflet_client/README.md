@@ -2,6 +2,11 @@
 
 Ruflet Explorer connection client for mobile, desktop, and web.
 
+This reusable connection client intentionally includes the complete optional
+extension catalog. Its `ruflet.yaml` and `services.yaml` make that choice and
+the required native permissions explicit. Generated per-application clients
+are pruned to the developer project's own configuration.
+
 ## What is included
 
 - QR scanning and manual URL connection flow.

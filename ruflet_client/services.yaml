@@ -1,0 +1,10 @@
+# Native capabilities included in the reusable Ruflet connection client.
+services:
+  - camera:
+      description: Allow Ruflet apps to capture photos and video.
+  - microphone:
+      description: Allow Ruflet apps to record audio.
+  - location:
+      description: Allow Ruflet apps to use the device location.
+  - motion:
+      description: Allow Ruflet apps to use motion sensors.

@@ -4,7 +4,7 @@ Ruflet Flutter template for self-contained and server-driven clients.
 
 ## What is included
 
-- Ruflet/Flet client bootstrap with fixed local port auto-connect (`8550`).
+- Ruflet/Flet client bootstrap with automatic embedded-server port discovery.
 - Self-contained startup via `ruby_runtime` in `lib/main.self.dart`.
 - Server-driven startup in `lib/main.server.dart`.
 - Compiler-free startup from the packaged `main.mrb` artifact.
@@ -20,6 +20,34 @@ flutter run
 ```
 
 `ruflet build --self` compiles the project's `main.rb` and packages the resulting `main.mrb` automatically.
+
+## Conditional extensions and native services
+
+Application dependencies are selected from the developer project's configuration;
+the generated client does not bundle every optional plugin.
+
+```yaml
+# ruflet.yaml
+extensions:
+  - charts
+  - map
+  - rive
+```
+
+Native capabilities that require Android or iOS permissions belong in a sibling
+`services.yaml`. Ruflet activates their required client extensions and writes the
+platform permission declarations during the build.
+
+```yaml
+# services.yaml
+services:
+  - camera:
+      description: Capture profile photos.
+  - location:
+      description: Show the device location on the map.
+```
+
+The same selection is applied to server-driven and self-contained builds.
 
 To connect to an external backend instead:
 

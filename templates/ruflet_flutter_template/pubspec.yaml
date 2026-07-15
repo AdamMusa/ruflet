@@ -33,6 +33,7 @@ dependencies:
   flutter_web_plugins:
     sdk: flutter
   flutter_spinkit: ^5.2.2
+  file_picker: ^10.3.10
 
   flet:
     git:
@@ -124,7 +125,7 @@ dependencies:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-webview/src/flutter/flet_webview
       ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
-  ruby_runtime: ^0.0.3
+  ruby_runtime: ^0.0.7
   flutter_native_splash: ^2.4.7
 dev_dependencies:
   flutter_launcher_icons: "^0.14.4"
