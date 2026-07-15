@@ -643,6 +643,24 @@ module Ruflet
       show_dialog(bottom_sheet_control)
     end
 
+    def show_banner(banner_control)
+      show_dialog(banner_control)
+    end
+
+    def close_banner(banner_control = nil)
+      close_dialog(banner_control)
+    end
+
+    def close_dialog(dialog_control = nil)
+      target = dialog_control || latest_open_dialog
+      return nil unless target
+
+      target.props["open"] = false
+      refresh_dialogs_container!
+      push_dialogs_update!
+      target
+    end
+
     def show_drawer(timeout: 10, on_result: nil)
       raise ArgumentError, "No drawer defined" unless drawer
 
@@ -1144,13 +1162,7 @@ module Ruflet
     end
 
     def pop_dialog
-      dialog_control = latest_open_dialog
-      return nil unless dialog_control
-
-      dialog_control.props["open"] = false
-      refresh_dialogs_container!
-      push_dialogs_update!
-      dialog_control
+      close_dialog
     end
 
     def update(control_or_id = nil, **props)

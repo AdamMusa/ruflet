@@ -359,16 +359,16 @@ module Ruflet
       def pageview(children = nil, **props) = page_view(children, **props)
       def progress_ring(**props) = build_widget(:progressring, **props)
       def progressring(**props) = progress_ring(**props)
-      # The flet_spinkit extension is not bundled in the self-contained runtime.
-      # Fall back to a core progress ring so spinkit(...) still renders a spinner
-      # (using the variant hash's color/size) instead of raising.
+      SPINKIT_VARIANTS = [:rotating_circle, :rotating_plain, :double_bounce, :wave, :wandering_cubes, :fading_four, :fading_cube, :pulse, :chasing_dots, :three_bounce, :circle, :cube_grid, :fading_circle, :folding_cube, :pumping_heart, :hour_glass, :pouring_hour_glass, :pouring_hour_glass_refined, :fading_grid, :ring, :ripple, :dual_ring, :spinning_circle, :spinning_lines, :square_circle, :three_in_out, :dancing_square, :piano_wave, :pulsing_grid, :wave_spinner].freeze
+
       def spinkit(**variants)
-        opts = variants.values.find { |value| value.is_a?(Hash) } || {}
-        props = {}
-        props[:color] = opts[:color] if opts[:color]
-        props[:width] = opts[:size] if opts[:size]
-        props[:height] = opts[:size] if opts[:size]
-        progress_ring(**props)
+        selected = variants.select { |name, _value| SPINKIT_VARIANTS.include?(name) }
+        raise ArgumentError, "spinkit requires exactly one variant" unless selected.length == 1 && selected.length == variants.length
+
+        variant, options = selected.first
+        raise ArgumentError, "spinkit variant options must be a Hash" unless options.is_a?(Hash)
+
+        build_widget(:spinkit, variant: variant.to_s, **options)
       end
       def range_slider(**props) = build_widget(:rangeslider, **props)
       def rangeslider(**props) = range_slider(**props)

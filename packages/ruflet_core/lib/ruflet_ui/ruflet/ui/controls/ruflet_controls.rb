@@ -77,6 +77,7 @@ require_relative "materials/popupmenubutton_control"
 require_relative "materials/popupmenuitem_control"
 require_relative "materials/progressbar_control"
 require_relative "materials/progressring_control"
+require_relative "materials/spinkit_control"
 require_relative "materials/radio_control"
 require_relative "materials/radiogroup_control"
 require_relative "materials/rangeslider_control"
@@ -374,6 +375,7 @@ module Ruflet
           "progress_ring" => RufletComponents::ProgressRingControl,
           "progressbar" => RufletComponents::ProgressBarControl,
           "progressring" => RufletComponents::ProgressRingControl,
+          "spinkit" => RufletComponents::SpinkitControl,
           "radio" => RufletComponents::RadioControl,
           "radio_group" => RufletComponents::RadioGroupControl,
           "radiogroup" => RufletComponents::RadioGroupControl,

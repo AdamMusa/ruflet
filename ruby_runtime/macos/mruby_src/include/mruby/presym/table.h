@@ -404,6 +404,7 @@ static const uint16_t presym_length_table[] = {
   4,	/* rect */
   4,	/* recv */
   4,	/* rest */
+  4,	/* ring */
   4,	/* rive */
   4,	/* rods */
   4,	/* root */
@@ -454,6 +455,7 @@ static const uint16_t presym_length_table[] = {
   4,	/* wait */
   4,	/* warn */
   4,	/* wasm */
+  4,	/* wave */
   4,	/* wday */
   4,	/* web? */
   4,	/* wrap */
@@ -663,6 +665,7 @@ static const uint16_t presym_length_table[] = {
   5,	/* print */
   5,	/* props */
   5,	/* proto */
+  5,	/* pulse */
   5,	/* query */
   5,	/* quote */
   5,	/* radio */
@@ -839,6 +842,7 @@ static const uint16_t presym_length_table[] = {
   6,	/* _mtime */
   6,	/* _owner */
   6,	/* _popen */
+  6,	/* _value */
   6,	/* accept */
   6,	/* action */
   6,	/* alive? */
@@ -976,6 +980,7 @@ static const uint16_t presym_length_table[] = {
   6,	/* resume */
   6,	/* rewind */
   6,	/* rindex */
+  6,	/* ripple */
   6,	/* rotate */
   6,	/* route= */
   6,	/* rstrip */
@@ -1703,6 +1708,7 @@ static const uint16_t presym_length_table[] = {
   9,	/* constants */
   9,	/* container */
   9,	/* controls= */
+  9,	/* cube_grid */
   9,	/* cupertino */
   9,	/* data_cell */
   9,	/* data_sets */
@@ -1715,6 +1721,7 @@ static const uint16_t presym_length_table[] = {
   9,	/* divisions */
   9,	/* downcase! */
   9,	/* draggable */
+  9,	/* dual_ring */
   9,	/* each_byte */
   9,	/* each_char */
   9,	/* each_cons */
@@ -1995,6 +2002,7 @@ static const uint16_t presym_length_table[] = {
   10,	/* has_value? */
   10,	/* hint_style */
   10,	/* horizontal */
+  10,	/* hour_glass */
   10,	/* icon_color */
   10,	/* iconbutton */
   10,	/* initialize */
@@ -2040,6 +2048,7 @@ static const uint16_t presym_length_table[] = {
   10,	/* patch_page */
   10,	/* path_close */
   10,	/* permission */
+  10,	/* piano_wave */
   10,	/* pick_files */
   10,	/* point_mode */
   10,	/* pop_dialog */
@@ -2241,6 +2250,9 @@ static const uint16_t presym_length_table[] = {
   11,	/* error_style */
   11,	/* event_names */
   11,	/* expand_path */
+  11,	/* fading_cube */
+  11,	/* fading_four */
+  11,	/* fading_grid */
   11,	/* file_picker */
   11,	/* fit_content */
   11,	/* focus_color */
@@ -2339,6 +2351,7 @@ static const uint16_t presym_length_table[] = {
   11,	/* shader_mask */
   11,	/* share_files */
   11,	/* shift_enter */
+  11,	/* show_banner */
   11,	/* show_cursor */
   11,	/* show_dialog */
   11,	/* show_drawer */
@@ -2472,9 +2485,12 @@ static const uint16_t presym_length_table[] = {
   12,	/* cache_height */
   12,	/* canvas_color */
   12,	/* center_title */
+  12,	/* chasing_dots */
   12,	/* circle_layer */
   12,	/* circleavatar */
   12,	/* circlemarker */
+  12,	/* close_banner */
+  12,	/* close_dialog */
   12,	/* close_drawer */
   12,	/* color_filter */
   12,	/* column_count */
@@ -2508,6 +2524,7 @@ static const uint16_t presym_length_table[] = {
   12,	/* expand_loose */
   12,	/* fetch_values */
   12,	/* filledbutton */
+  12,	/* folding_cube */
   12,	/* get_duration */
   12,	/* global_delta */
   12,	/* has_handler? */
@@ -2558,6 +2575,7 @@ static const uint16_t presym_length_table[] = {
   12,	/* pressure_min */
   12,	/* progress_bar */
   12,	/* progressring */
+  12,	/* pulsing_grid */
   12,	/* query_params */
   12,	/* query_string */
   12,	/* radardataset */
@@ -2585,6 +2603,8 @@ static const uint16_t presym_length_table[] = {
   12,	/* super_method */
   12,	/* supplemental */
   12,	/* tab_bar_view */
+  12,	/* three_bounce */
+  12,	/* three_in_out */
   12,	/* tile_padding */
   12,	/* undef_method */
   12,	/* upload_files */
@@ -2593,6 +2613,7 @@ static const uint16_t presym_length_table[] = {
   12,	/* view_leading */
   12,	/* view_padding */
   12,	/* view_patches */
+  12,	/* wave_spinner */
   12,	/* with_opacity */
   12,	/* word_spacing */
   13,	/* @_pending_app */
@@ -2691,6 +2712,7 @@ static const uint16_t presym_length_table[] = {
   13,	/* delete_prefix */
   13,	/* delete_suffix */
   13,	/* divider_color */
+  13,	/* double_bounce */
   13,	/* drag_interval */
   13,	/* enable_filter */
   13,	/* enable_search */
@@ -2700,6 +2722,7 @@ static const uint16_t presym_length_table[] = {
   13,	/* explicit_icon */
   13,	/* extension_set */
   13,	/* extract_route */
+  13,	/* fading_circle */
   13,	/* filled_button */
   13,	/* focused_color */
   13,	/* force_pyodide */
@@ -2755,6 +2778,7 @@ static const uint16_t presym_length_table[] = {
   13,	/* primary_items */
   13,	/* progress_ring */
   13,	/* prop_children */
+  13,	/* pumping_heart */
   13,	/* python_output */
   13,	/* quarter_turns */
   13,	/* recv_nonblock */
@@ -2775,6 +2799,7 @@ static const uint16_t presym_length_table[] = {
   13,	/* skip_task_bar */
   13,	/* sleep_current */
   13,	/* splash_radius */
+  13,	/* square_circle */
   13,	/* storage_paths */
   13,	/* submenubutton */
   13,	/* tab_alignment */
@@ -2825,6 +2850,7 @@ static const uint16_t presym_length_table[] = {
   14,	/* SURFACE_BRIGHT */
   14,	/* SegmentControl */
   14,	/* ShimmerControl */
+  14,	/* SpinkitControl */
   14,	/* TERTIARY_FIXED */
   14,	/* TextDecoration */
   14,	/* TextThemeStyle */
@@ -2846,6 +2872,7 @@ static const uint16_t presym_length_table[] = {
   14,	/* audio_recorder */
   14,	/* autofill_group */
   14,	/* autofill_hints */
+  14,	/* banner_control */
   14,	/* bar_text_style */
   14,	/* binary_string? */
   14,	/* blank_content? */
@@ -2864,6 +2891,7 @@ static const uint16_t presym_length_table[] = {
   14,	/* const_defined? */
   14,	/* constant_names */
   14,	/* cupertinoradio */
+  14,	/* dancing_square */
   14,	/* data_row_color */
   14,	/* delete_prefix! */
   14,	/* delete_suffix! */
@@ -2938,6 +2966,7 @@ static const uint16_t presym_length_table[] = {
   14,	/* remove_session */
   14,	/* reset_rotation */
   14,	/* responsive_row */
+  14,	/* rotating_plain */
   14,	/* run_connection */
   14,	/* schedule_block */
   14,	/* scroll_padding */
@@ -2955,6 +2984,7 @@ static const uint16_t presym_length_table[] = {
   14,	/* show_snack_bar */
   14,	/* snackbaraction */
   14,	/* sort_ascending */
+  14,	/* spinning_lines */
   14,	/* start_latitude */
   14,	/* start_resizing */
   14,	/* stringify_keys */
@@ -3133,6 +3163,7 @@ static const uint16_t presym_length_table[] = {
   15,	/* resize_interval */
   15,	/* resolve_control */
   15,	/* rod_stack_items */
+  15,	/* rotating_circle */
   15,	/* schedule_update */
   15,	/* schema_metadata */
   15,	/* scroll_interval */
@@ -3153,6 +3184,7 @@ static const uint16_t presym_length_table[] = {
   15,	/* singleton_class */
   15,	/* soft_line_break */
   15,	/* source_location */
+  15,	/* spinning_circle */
   15,	/* start_longitude */
   15,	/* start_recording */
   15,	/* switch_in_curve */
@@ -3164,6 +3196,7 @@ static const uint16_t presym_length_table[] = {
   15,	/* transform_keys! */
   15,	/* valid_encoding? */
   15,	/* verticaldivider */
+  15,	/* wandering_cubes */
   15,	/* windows_options */
   16,	/* $LOADED_FEATURES */
   16,	/* @correct_touches */
@@ -3187,6 +3220,7 @@ static const uint16_t presym_length_table[] = {
   16,	/* MRUBY_RELEASE_NO */
   16,	/* ON_PRIMARY_FIXED */
   16,	/* RufletComponents */
+  16,	/* SPINKIT_VARIANTS */
   16,	/* ScaleUpdateEvent */
   16,	/* SearchBarControl */
   16,	/* SemanticsControl */
@@ -3522,6 +3556,7 @@ static const uint16_t presym_length_table[] = {
   18,	/* outlinediconbutton */
   18,	/* path_point_payload */
   18,	/* permission_handler */
+  18,	/* pouring_hour_glass */
   18,	/* proportional_width */
   18,	/* read_duration_part */
   18,	/* resolve_asset_path */
@@ -4045,6 +4080,7 @@ static const uint16_t presym_length_table[] = {
   26,	/* on_secondary_long_press_up */
   26,	/* on_tertiary_long_press_end */
   26,	/* position_percentage_offset */
+  26,	/* pouring_hour_glass_refined */
   26,	/* protected_instance_methods */
   26,	/* refresh_dialogs_container! */
   26,	/* refresh_overlay_container! */
@@ -4612,6 +4648,7 @@ static const char * const presym_name_table[] = {
   "rect",
   "recv",
   "rest",
+  "ring",
   "rive",
   "rods",
   "root",
@@ -4662,6 +4699,7 @@ static const char * const presym_name_table[] = {
   "wait",
   "warn",
   "wasm",
+  "wave",
   "wday",
   "web?",
   "wrap",
@@ -4871,6 +4909,7 @@ static const char * const presym_name_table[] = {
   "print",
   "props",
   "proto",
+  "pulse",
   "query",
   "quote",
   "radio",
@@ -5047,6 +5086,7 @@ static const char * const presym_name_table[] = {
   "_mtime",
   "_owner",
   "_popen",
+  "_value",
   "accept",
   "action",
   "alive?",
@@ -5184,6 +5224,7 @@ static const char * const presym_name_table[] = {
   "resume",
   "rewind",
   "rindex",
+  "ripple",
   "rotate",
   "route=",
   "rstrip",
@@ -5911,6 +5952,7 @@ static const char * const presym_name_table[] = {
   "constants",
   "container",
   "controls=",
+  "cube_grid",
   "cupertino",
   "data_cell",
   "data_sets",
@@ -5923,6 +5965,7 @@ static const char * const presym_name_table[] = {
   "divisions",
   "downcase!",
   "draggable",
+  "dual_ring",
   "each_byte",
   "each_char",
   "each_cons",
@@ -6203,6 +6246,7 @@ static const char * const presym_name_table[] = {
   "has_value?",
   "hint_style",
   "horizontal",
+  "hour_glass",
   "icon_color",
   "iconbutton",
   "initialize",
@@ -6248,6 +6292,7 @@ static const char * const presym_name_table[] = {
   "patch_page",
   "path_close",
   "permission",
+  "piano_wave",
   "pick_files",
   "point_mode",
   "pop_dialog",
@@ -6449,6 +6494,9 @@ static const char * const presym_name_table[] = {
   "error_style",
   "event_names",
   "expand_path",
+  "fading_cube",
+  "fading_four",
+  "fading_grid",
   "file_picker",
   "fit_content",
   "focus_color",
@@ -6547,6 +6595,7 @@ static const char * const presym_name_table[] = {
   "shader_mask",
   "share_files",
   "shift_enter",
+  "show_banner",
   "show_cursor",
   "show_dialog",
   "show_drawer",
@@ -6680,9 +6729,12 @@ static const char * const presym_name_table[] = {
   "cache_height",
   "canvas_color",
   "center_title",
+  "chasing_dots",
   "circle_layer",
   "circleavatar",
   "circlemarker",
+  "close_banner",
+  "close_dialog",
   "close_drawer",
   "color_filter",
   "column_count",
@@ -6716,6 +6768,7 @@ static const char * const presym_name_table[] = {
   "expand_loose",
   "fetch_values",
   "filledbutton",
+  "folding_cube",
   "get_duration",
   "global_delta",
   "has_handler?",
@@ -6766,6 +6819,7 @@ static const char * const presym_name_table[] = {
   "pressure_min",
   "progress_bar",
   "progressring",
+  "pulsing_grid",
   "query_params",
   "query_string",
   "radardataset",
@@ -6793,6 +6847,8 @@ static const char * const presym_name_table[] = {
   "super_method",
   "supplemental",
   "tab_bar_view",
+  "three_bounce",
+  "three_in_out",
   "tile_padding",
   "undef_method",
   "upload_files",
@@ -6801,6 +6857,7 @@ static const char * const presym_name_table[] = {
   "view_leading",
   "view_padding",
   "view_patches",
+  "wave_spinner",
   "with_opacity",
   "word_spacing",
   "@_pending_app",
@@ -6899,6 +6956,7 @@ static const char * const presym_name_table[] = {
   "delete_prefix",
   "delete_suffix",
   "divider_color",
+  "double_bounce",
   "drag_interval",
   "enable_filter",
   "enable_search",
@@ -6908,6 +6966,7 @@ static const char * const presym_name_table[] = {
   "explicit_icon",
   "extension_set",
   "extract_route",
+  "fading_circle",
   "filled_button",
   "focused_color",
   "force_pyodide",
@@ -6963,6 +7022,7 @@ static const char * const presym_name_table[] = {
   "primary_items",
   "progress_ring",
   "prop_children",
+  "pumping_heart",
   "python_output",
   "quarter_turns",
   "recv_nonblock",
@@ -6983,6 +7043,7 @@ static const char * const presym_name_table[] = {
   "skip_task_bar",
   "sleep_current",
   "splash_radius",
+  "square_circle",
   "storage_paths",
   "submenubutton",
   "tab_alignment",
@@ -7033,6 +7094,7 @@ static const char * const presym_name_table[] = {
   "SURFACE_BRIGHT",
   "SegmentControl",
   "ShimmerControl",
+  "SpinkitControl",
   "TERTIARY_FIXED",
   "TextDecoration",
   "TextThemeStyle",
@@ -7054,6 +7116,7 @@ static const char * const presym_name_table[] = {
   "audio_recorder",
   "autofill_group",
   "autofill_hints",
+  "banner_control",
   "bar_text_style",
   "binary_string?",
   "blank_content?",
@@ -7072,6 +7135,7 @@ static const char * const presym_name_table[] = {
   "const_defined?",
   "constant_names",
   "cupertinoradio",
+  "dancing_square",
   "data_row_color",
   "delete_prefix!",
   "delete_suffix!",
@@ -7146,6 +7210,7 @@ static const char * const presym_name_table[] = {
   "remove_session",
   "reset_rotation",
   "responsive_row",
+  "rotating_plain",
   "run_connection",
   "schedule_block",
   "scroll_padding",
@@ -7163,6 +7228,7 @@ static const char * const presym_name_table[] = {
   "show_snack_bar",
   "snackbaraction",
   "sort_ascending",
+  "spinning_lines",
   "start_latitude",
   "start_resizing",
   "stringify_keys",
@@ -7341,6 +7407,7 @@ static const char * const presym_name_table[] = {
   "resize_interval",
   "resolve_control",
   "rod_stack_items",
+  "rotating_circle",
   "schedule_update",
   "schema_metadata",
   "scroll_interval",
@@ -7361,6 +7428,7 @@ static const char * const presym_name_table[] = {
   "singleton_class",
   "soft_line_break",
   "source_location",
+  "spinning_circle",
   "start_longitude",
   "start_recording",
   "switch_in_curve",
@@ -7372,6 +7440,7 @@ static const char * const presym_name_table[] = {
   "transform_keys!",
   "valid_encoding?",
   "verticaldivider",
+  "wandering_cubes",
   "windows_options",
   "$LOADED_FEATURES",
   "@correct_touches",
@@ -7395,6 +7464,7 @@ static const char * const presym_name_table[] = {
   "MRUBY_RELEASE_NO",
   "ON_PRIMARY_FIXED",
   "RufletComponents",
+  "SPINKIT_VARIANTS",
   "ScaleUpdateEvent",
   "SearchBarControl",
   "SemanticsControl",
@@ -7730,6 +7800,7 @@ static const char * const presym_name_table[] = {
   "outlinediconbutton",
   "path_point_payload",
   "permission_handler",
+  "pouring_hour_glass",
   "proportional_width",
   "read_duration_part",
   "resolve_asset_path",
@@ -8253,6 +8324,7 @@ static const char * const presym_name_table[] = {
   "on_secondary_long_press_up",
   "on_tertiary_long_press_end",
   "position_percentage_offset",
+  "pouring_hour_glass_refined",
   "protected_instance_methods",
   "refresh_dialogs_container!",
   "refresh_overlay_container!",

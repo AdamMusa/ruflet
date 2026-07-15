@@ -32,6 +32,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'connection_probe.dart';
+import 'ruflet_spinkit.dart';
 
 const bool isProduction = bool.fromEnvironment('dart.vm.product');
 const int kRufletPort = 8550;
@@ -101,6 +102,7 @@ Future<void> main() async {
   }
 
   final extensions = <FletExtension>[
+    RufletSpinKitExtension(),
     ruflet_ads.Extension(),
     ruflet_audio_recorder.Extension(),
     ruflet_camera.Extension(),

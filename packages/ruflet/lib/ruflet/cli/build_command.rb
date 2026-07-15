@@ -1153,6 +1153,8 @@ module Ruflet
         data = YAML.safe_load(File.read(pubspec_path), aliases: true) || {}
         dependencies = data["dependencies"]
         dependencies = data["dependencies"] = {} unless dependencies.is_a?(Hash)
+        spinkit_dependency = template_client_pubspec_dependencies["flutter_spinkit"]
+        dependencies["flutter_spinkit"] = spinkit_dependency if spinkit_dependency
         flutter = data["flutter"]
         flutter = data["flutter"] = {} unless flutter.is_a?(Hash)
         assets = Array(flutter["assets"]).map(&:to_s)
@@ -1212,6 +1214,7 @@ module Ruflet
           "lib/main.self.dart",
           "lib/main.server.dart",
           "lib/ruflet_file_picker_service.dart",
+          "lib/ruflet_spinkit.dart",
           "lib/connection_probe.dart",
           "lib/connection_probe_io.dart",
           "lib/connection_probe_stub.dart",

@@ -81,4 +81,22 @@ class RufletBannerCompatibilityTest < Minitest::Test
 
     assert_equal ["visible", "dismiss"], events
   end
+
+  def test_page_show_and_close_banner_helpers_target_the_given_banner
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    banner = Ruflet.banner("Saved", actions: [Ruflet.text_button(content: "Dismiss")])
+
+    page.add(Ruflet.text("Root"))
+    page.show_banner(banner)
+    assert_equal true, banner.props["open"]
+
+    assert_same banner, page.close_banner(banner)
+    assert_equal false, banner.props["open"]
+    assert_equal false, sent.last[1]["patch"][1][3].first["open"]
+  end
 end

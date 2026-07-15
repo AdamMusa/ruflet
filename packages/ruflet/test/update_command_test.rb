@@ -154,6 +154,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
       pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
       ruby_runtime = YAML.safe_load(pubspec, aliases: true).dig("dependencies", "ruby_runtime")
       assert_equal File.expand_path("../../../ruby_runtime", __dir__), ruby_runtime["path"]
+      assert_equal "^5.2.2", YAML.safe_load(pubspec, aliases: true).dig("dependencies", "flutter_spinkit")
+      assert_path_exists File.join(client_dir, "lib", "ruflet_spinkit.dart")
       assert_includes calls, client_dir
     end
   end
