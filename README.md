@@ -75,7 +75,7 @@ ruflet run [scriptname|path] [--web|--desktop] [--port PORT]
 ruflet debug [scriptname|path]
 ruflet devices
 ruflet emulators
-ruflet doctor
+ruflet doctor [--fix]
 ruflet update [web|desktop|all] [--check] [--force]
 ruflet build <apk|android|ios|aab|web|macos|windows|linux>
 ruflet install [--device DEVICE_ID]

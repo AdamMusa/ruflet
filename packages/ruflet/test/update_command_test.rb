@@ -12,6 +12,34 @@ class RufletCliUpdateCommandTest < Minitest::Test
     include Ruflet::CLI::BuildCommand
   end
 
+  def test_existing_managed_client_is_replaced_when_template_revision_changes
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "build", "client")
+      template_dir = File.join(dir, "template")
+      FileUtils.mkdir_p(client_dir)
+      FileUtils.mkdir_p(template_dir)
+      File.write(File.join(client_dir, ".metadata"), "managed\n")
+      File.write(File.join(client_dir, "stale.txt"), "old\n")
+
+      copied = []
+      previous_dir = Dir.pwd
+      Dir.chdir(dir)
+      Ruflet::CLI.stub(:resolve_ruflet_client_template_root, template_dir) do
+        Ruflet::CLI.stub(:client_template_current?, false) do
+          Ruflet::CLI.stub(:copy_ruflet_client_template, ->(root) { copied << root }) do
+            assert_equal File.realpath(client_dir), File.realpath(builder.send(:ensure_flutter_client_dir))
+          end
+        end
+      end
+
+      assert_equal [File.realpath(dir)], copied.map { |path| File.realpath(path) }
+    ensure
+      Dir.chdir(previous_dir) if previous_dir
+    end
+  end
+
   def test_load_config_merges_services_yaml_and_applies_mobile_permissions
     builder = DummyBuilder.new
 

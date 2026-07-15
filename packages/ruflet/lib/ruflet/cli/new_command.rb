@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "open3"
 require "tmpdir"
 require "yaml"
 
@@ -8,6 +9,7 @@ module Ruflet
   module CLI
     module NewCommand
       TEMPLATE_REPO_URL = ENV.fetch("RUFLET_TEMPLATE_REPO_URL", "https://github.com/AdamMusa/ruflet-template.git")
+      TEMPLATE_REPO_REF = ENV.fetch("RUFLET_TEMPLATE_REPO_REF", "main")
       RUNTIME_REPO_URL = ENV.fetch("RUFLET_RUNTIME_REPO_URL", "https://github.com/AdamMusa/ruflet.git")
 
       CLIENT_EXTENSION_MAP = {
@@ -69,8 +71,10 @@ module Ruflet
 
         target = hidden_flutter_client_dir(root)
         FileUtils.mkdir_p(File.dirname(target))
+        FileUtils.rm_rf(target)
         FileUtils.cp_r(template_root, target)
         prune_client_template(target)
+        write_client_template_revision(target, installed_template_revision(template_root))
       end
 
       def hidden_flutter_client_dir(root = Dir.pwd)
@@ -99,8 +103,6 @@ module Ruflet
 
       def ensure_cached_ruflet_client_template!(force: false, verbose: false)
         cached_template = cached_ruflet_client_template_root
-        return cached_template if !force && Dir.exist?(cached_template)
-
         download_ruflet_template(force: force, verbose: verbose)
         Dir.exist?(cached_template) ? cached_template : nil
       end
@@ -111,6 +113,10 @@ module Ruflet
 
       def cached_ruflet_client_template_root
         File.join(template_cache_root, "ruflet_flutter_template")
+      end
+
+      def cached_ruflet_client_template_revision_path
+        File.join(template_cache_root, "ruflet_flutter_template.revision")
       end
 
       def cached_ruby_runtime_root
@@ -126,40 +132,104 @@ module Ruflet
       end
 
       def download_ruflet_assets(force: false, verbose: false)
-        template_target = cached_ruflet_client_template_root
-        return true if !force && Dir.exist?(template_target)
-
-        Dir.exist?(template_target) || download_ruflet_template(force: force, verbose: verbose)
+        !ensure_cached_ruflet_client_template!(force: force, verbose: verbose).nil?
       end
 
       def download_ruflet_template(force: false, verbose: false)
         target = cached_ruflet_client_template_root
-        return target if !force && Dir.exist?(target)
+        remote_revision = remote_template_revision(verbose: verbose)
+        current_revision = cached_template_revision
+        cache_available = valid_ruflet_template?(target)
+        if !force && cache_available && remote_revision && current_revision == remote_revision
+          return target
+        end
+        if !force && cache_available && remote_revision.nil?
+          build_log(verbose, "Unable to check the Ruflet template revision; using cached #{current_revision || 'template'}") if respond_to?(:build_log, true)
+          return target
+        end
 
         FileUtils.mkdir_p(template_cache_root)
 
         Dir.mktmpdir("ruflet-assets") do |tmp|
           repo_dir = File.join(tmp, "Ruflet")
-          clone_cmd = ["git", "clone", "--depth", "1", "--filter=blob:none", "--sparse", TEMPLATE_REPO_URL, repo_dir]
-          return nil unless run_template_command(clone_cmd, verbose: verbose)
-          return nil unless run_template_command(["git", "-C", repo_dir, "sparse-checkout", "set", "templates/ruflet_flutter_template"], verbose: verbose)
+          clone_cmd = ["git", "clone", "--depth", "1", "--branch", TEMPLATE_REPO_REF, "--filter=blob:none", "--sparse", TEMPLATE_REPO_URL, repo_dir]
+          return target_if_present(target) unless run_template_command(clone_cmd, verbose: verbose)
+          return target_if_present(target) unless run_template_command(["git", "-C", repo_dir, "sparse-checkout", "set", "templates/ruflet_flutter_template"], verbose: verbose)
 
           source = File.join(repo_dir, "templates", "ruflet_flutter_template")
-          return nil unless Dir.exist?(source)
+          return target_if_present(target) unless valid_ruflet_template?(source)
 
+          fetched_revision = git_revision(repo_dir) || remote_revision
+          staged_target = File.join(tmp, "ruflet_flutter_template")
+          FileUtils.cp_r(source, staged_target)
           FileUtils.rm_rf(target)
-          FileUtils.cp_r(source, target)
+          FileUtils.mv(staged_target, target)
+          File.write(cached_ruflet_client_template_revision_path, "#{fetched_revision}\n") if fetched_revision
         end
 
         target
       rescue StandardError => e
         warn "Failed to fetch Ruflet template: #{e.class}: #{e.message}"
-        nil
+        target_if_present(target)
       end
 
       def run_template_command(cmd, verbose: false)
         output = verbose ? $stdout : File::NULL
-        system(*cmd, out: output, err: verbose ? $stderr : File::NULL)
+        env = { "GIT_TERMINAL_PROMPT" => "0" }
+        system(env, *cmd, out: output, err: verbose ? $stderr : File::NULL)
+      end
+
+      def remote_template_revision(verbose: false)
+        return @ruflet_template_remote_revision if defined?(@ruflet_template_remote_revision)
+
+        env = { "GIT_TERMINAL_PROMPT" => "0" }
+        stdout, stderr, status = Open3.capture3(env, "git", "ls-remote", TEMPLATE_REPO_URL, "refs/heads/#{TEMPLATE_REPO_REF}")
+        warn stderr unless status.success? || !verbose || stderr.empty?
+        @ruflet_template_remote_revision = status.success? ? stdout.split.first : nil
+      rescue StandardError => e
+        warn "Failed to check Ruflet template revision: #{e.message}" if verbose
+        @ruflet_template_remote_revision = nil
+      end
+
+      def cached_template_revision
+        return nil unless File.file?(cached_ruflet_client_template_revision_path)
+
+        File.read(cached_ruflet_client_template_revision_path).strip.then { |value| value.empty? ? nil : value }
+      end
+
+      def installed_template_revision(template_root)
+        return cached_template_revision if File.expand_path(template_root) == File.expand_path(cached_ruflet_client_template_root)
+
+        git_revision(File.expand_path("../..", template_root))
+      end
+
+      def write_client_template_revision(target, revision)
+        return unless revision
+
+        File.write(File.join(target, ".ruflet-template-revision"), "#{revision}\n")
+      end
+
+      def client_template_current?(target, template_root)
+        expected = installed_template_revision(template_root)
+        return false unless expected
+
+        marker = File.join(target, ".ruflet-template-revision")
+        File.file?(marker) && File.read(marker).strip == expected
+      end
+
+      def git_revision(repo_dir)
+        stdout, _stderr, status = Open3.capture3("git", "-C", repo_dir, "rev-parse", "HEAD")
+        status.success? ? stdout.strip : nil
+      rescue StandardError
+        nil
+      end
+
+      def valid_ruflet_template?(path)
+        Dir.exist?(path) && File.file?(File.join(path, "pubspec.yaml")) && File.file?(File.join(path, "lib", "main.dart"))
+      end
+
+      def target_if_present(target)
+        valid_ruflet_template?(target) ? target : nil
       end
 
       def prune_client_template(target)

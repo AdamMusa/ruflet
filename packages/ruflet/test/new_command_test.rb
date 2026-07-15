@@ -45,6 +45,83 @@ class RufletCliNewCommandTest < Minitest::Test
       assert File.file?(File.join(client_dir, "lib", "main.dart"))
       assert File.file?(File.join(client_dir, "lib", "main.self.dart"))
       assert File.file?(File.join(client_dir, "lib", "main.server.dart"))
+      assert File.file?(File.join(client_dir, ".ruflet-template-revision"))
+    end
+  end
+
+  def test_cached_template_is_not_downloaded_when_revision_matches_github
+    Dir.mktmpdir do |dir|
+      previous_cache = ENV["RUFLET_CACHE_DIR"]
+      ENV["RUFLET_CACHE_DIR"] = dir
+      target = File.join(dir, "templates", "ruflet_flutter_template")
+      FileUtils.mkdir_p(File.join(target, "lib"))
+      File.write(File.join(target, "pubspec.yaml"), "name: ruflet_client\n")
+      File.write(File.join(target, "lib", "main.dart"), "void main() {}\n")
+      File.write(File.join(dir, "templates", "ruflet_flutter_template.revision"), "abc123\n")
+
+      Ruflet::CLI.stub(:remote_template_revision, "abc123") do
+        Ruflet::CLI.stub(:run_template_command, ->(*) { flunk "current template should not be downloaded" }) do
+          assert_equal target, Ruflet::CLI.send(:ensure_cached_ruflet_client_template!)
+        end
+      end
+    ensure
+      ENV["RUFLET_CACHE_DIR"] = previous_cache
+    end
+  end
+
+  def test_cached_template_is_replaced_when_github_revision_changes
+    Dir.mktmpdir do |dir|
+      previous_cache = ENV["RUFLET_CACHE_DIR"]
+      ENV["RUFLET_CACHE_DIR"] = dir
+      target = File.join(dir, "templates", "ruflet_flutter_template")
+      FileUtils.mkdir_p(File.join(target, "lib"))
+      File.write(File.join(target, "pubspec.yaml"), "name: ruflet_client\n")
+      File.write(File.join(target, "lib", "main.dart"), "void main() {}\n")
+      File.write(File.join(target, "stale.txt"), "old\n")
+      File.write(File.join(dir, "templates", "ruflet_flutter_template.revision"), "old123\n")
+
+      command_runner = lambda do |cmd, verbose: false|
+        if cmd[0, 2] == ["git", "clone"]
+          source = File.join(cmd.last, "templates", "ruflet_flutter_template")
+          FileUtils.mkdir_p(File.join(source, "lib"))
+          File.write(File.join(source, "pubspec.yaml"), "name: ruflet_client\n")
+          File.write(File.join(source, "lib", "main.dart"), "void main() {}\n")
+        end
+        true
+      end
+
+      Ruflet::CLI.stub(:remote_template_revision, "new456") do
+        Ruflet::CLI.stub(:run_template_command, command_runner) do
+          Ruflet::CLI.stub(:git_revision, nil) do
+            assert_equal target, Ruflet::CLI.send(:ensure_cached_ruflet_client_template!)
+          end
+        end
+      end
+
+      refute File.exist?(File.join(target, "stale.txt"))
+      assert File.file?(File.join(target, "lib", "main.dart"))
+      assert_equal "new456", File.read(File.join(dir, "templates", "ruflet_flutter_template.revision")).strip
+    ensure
+      ENV["RUFLET_CACHE_DIR"] = previous_cache
+    end
+  end
+
+  def test_cached_template_remains_available_when_github_is_offline
+    Dir.mktmpdir do |dir|
+      previous_cache = ENV["RUFLET_CACHE_DIR"]
+      ENV["RUFLET_CACHE_DIR"] = dir
+      target = File.join(dir, "templates", "ruflet_flutter_template")
+      FileUtils.mkdir_p(File.join(target, "lib"))
+      File.write(File.join(target, "pubspec.yaml"), "name: ruflet_client\n")
+      File.write(File.join(target, "lib", "main.dart"), "void main() {}\n")
+
+      Ruflet::CLI.stub(:remote_template_revision, nil) do
+        Ruflet::CLI.stub(:run_template_command, ->(*) { flunk "offline cache should not be replaced" }) do
+          assert_equal target, Ruflet::CLI.send(:ensure_cached_ruflet_client_template!)
+        end
+      end
+    ensure
+      ENV["RUFLET_CACHE_DIR"] = previous_cache
     end
   end
 

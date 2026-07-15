@@ -175,11 +175,28 @@ module Ruflet
 
       def ensure_flutter_client_dir(verbose: false)
         client_dir = detect_flutter_client_dir
-        return client_dir if client_dir
+        if client_dir
+          refresh_hidden_flutter_client_template(client_dir, verbose: verbose)
+          return client_dir
+        end
 
         bootstrapped = bootstrap_flutter_client_template
         build_log(verbose, "bootstrapped client template at #{bootstrapped}") if bootstrapped
         bootstrapped
+      end
+
+      def refresh_hidden_flutter_client_template(client_dir, verbose: false)
+        return unless File.expand_path(client_dir) == File.expand_path(hidden_flutter_client_dir)
+        return unless File.file?(File.join(client_dir, ".metadata"))
+        return unless Ruflet::CLI.respond_to?(:resolve_ruflet_client_template_root, true)
+
+        template_root = Ruflet::CLI.send(:resolve_ruflet_client_template_root)
+        return unless template_root && Dir.exist?(template_root)
+        return if Ruflet::CLI.respond_to?(:client_template_current?, true) &&
+          Ruflet::CLI.send(:client_template_current?, client_dir, template_root)
+
+        Ruflet::CLI.send(:copy_ruflet_client_template, Dir.pwd)
+        build_log(verbose, "refreshed managed Flutter client from template #{template_root}")
       end
 
       def build_tool_env(env, platform, client_dir = nil)
