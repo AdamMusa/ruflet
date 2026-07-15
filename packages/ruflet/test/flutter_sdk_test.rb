@@ -50,7 +50,7 @@ class RufletCliFlutterSdkTest < Minitest::Test
     end
   end
 
-  def test_desired_flutter_spec_prefers_client_metadata_when_no_fvmrc
+  def test_desired_flutter_spec_uses_metadata_channel_without_pinning_creation_revision
     Dir.mktmpdir do |dir|
       path = File.join(dir, ".metadata")
       File.write(path, <<~YAML)
@@ -62,7 +62,7 @@ class RufletCliFlutterSdkTest < Minitest::Test
       sdk = DummySdk.new
       spec = sdk.send(:desired_flutter_spec, client_dir: dir)
 
-      assert_equal "adc901062556672b4138e18a4dc62a4be8f4b3c2", spec[:revision]
+      refute spec.key?(:revision)
       assert_equal "stable", spec[:channel]
       assert_equal :metadata, spec[:source]
     end
@@ -138,7 +138,32 @@ class RufletCliFlutterSdkTest < Minitest::Test
     end
   end
 
-  def test_flutter_tools_falls_back_to_managed_sdk_when_fvm_is_unavailable
+  def test_flutter_tools_uses_system_flutter_for_unpinned_project
+    sdk = DummySdk.new
+
+    Dir.mktmpdir do |dir|
+      bin_dir = File.join(dir, "bin")
+      FileUtils.mkdir_p(bin_dir)
+      flutter = File.join(bin_dir, "flutter")
+      dart = File.join(bin_dir, "dart")
+      File.write(flutter, "#!/bin/sh\n")
+      File.write(dart, "#!/bin/sh\n")
+      FileUtils.chmod("+x", flutter)
+      FileUtils.chmod("+x", dart)
+
+      sdk.define_singleton_method(:desired_flutter_spec) { |client_dir: nil| { channel: "stable", source: :metadata } }
+      sdk.define_singleton_method(:which_command) { |name| name == "flutter" ? flutter : nil }
+      sdk.define_singleton_method(:flutter_tools_via_fvm) { |**| flunk "FVM should not run for an unpinned project" }
+      sdk.define_singleton_method(:flutter_tools_via_managed_sdk) { |**| flunk "managed SDK should not replace system Flutter" }
+
+      tools = sdk.send(:flutter_tools, client_dir: dir, auto_install: true)
+
+      assert_equal flutter, tools[:flutter]
+      assert_equal dart, tools[:dart]
+    end
+  end
+
+  def test_flutter_tools_falls_back_to_managed_sdk_when_system_flutter_is_unavailable
     sdk = DummySdk.new
 
     Dir.mktmpdir do |dir|
@@ -152,7 +177,8 @@ class RufletCliFlutterSdkTest < Minitest::Test
       FileUtils.chmod("+x", flutter)
       FileUtils.chmod("+x", dart)
 
-      sdk.define_singleton_method(:flutter_tools_via_fvm) { |client_dir: nil, auto_install: true| nil }
+      sdk.define_singleton_method(:desired_flutter_spec) { |client_dir: nil| { channel: "stable", source: :default } }
+      sdk.define_singleton_method(:flutter_tools_via_system) { nil }
       sdk.define_singleton_method(:ensure_flutter_sdk_downloaded) { |client_dir: nil| sdk_root }
 
       with_singleton_method(Dir, :home, -> { dir }) do

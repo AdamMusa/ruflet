@@ -47,14 +47,30 @@ module Ruflet
       private
 
       def flutter_tools(client_dir: nil, auto_install: true)
-        # Prefer FVM when available so Flutter/Dart match a pinned SDK.
-        fvm_tools = flutter_tools_via_fvm(client_dir: client_dir, auto_install: auto_install)
-        return fvm_tools if fvm_tools
+        desired = desired_flutter_spec(client_dir: client_dir)
+
+        # Environment and .fvmrc versions are intentional pins. Flutter's
+        # generated .metadata revision only records which SDK created the
+        # project; it must not force every build to download that old SDK.
+        if %i[env fvmrc].include?(desired[:source])
+          fvm_tools = flutter_tools_via_fvm(client_dir: client_dir, auto_install: auto_install)
+          return fvm_tools if fvm_tools
+        else
+          system_tools = flutter_tools_via_system
+          return system_tools if system_tools
+        end
 
         managed_tools = flutter_tools_via_managed_sdk(client_dir: client_dir, auto_install: auto_install)
         return managed_tools if managed_tools
 
         nil
+      end
+
+      def flutter_tools_via_system
+        flutter = which_command("flutter")
+        return nil unless flutter
+
+        tools_from_flutter_bin(flutter)
       end
 
       def flutter_tools_via_managed_sdk(client_dir: nil, auto_install: true)
@@ -199,7 +215,12 @@ module Ruflet
         return { version: fvm, source: :fvmrc } if fvm
 
         metadata = parse_flutter_metadata(find_flutter_metadata(client_dir))
-        return metadata.merge(source: :metadata) if metadata
+        if metadata
+          return {
+            channel: metadata[:channel] || DEFAULT_FLUTTER_CHANNEL,
+            source: :metadata
+          }
+        end
 
         { channel: DEFAULT_FLUTTER_CHANNEL, version: DEFAULT_FLUTTER_CHANNEL, source: :default }
       end
