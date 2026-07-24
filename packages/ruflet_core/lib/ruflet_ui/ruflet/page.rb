@@ -300,6 +300,90 @@ module Ruflet
       self
     end
 
+    # Complete page state as a property map for the register_client response
+    # (Flet's page_patch). The client applies this through Control.update,
+    # which merges by control id and keeps existing instances alive — the only
+    # patch path that survives a re-register on a client with prior state
+    # (reconnect after a backend restart). The op-based view patch replaces
+    # control instances and detaches containers on such clients.
+    def register_page_patch
+      refresh_control_indexes!
+      patch = { "views" => build_view_patches }
+      @page_props.each { |key, value| patch[key] = serialize_patch_value(value) }
+      @overlay_container_mounted = true if @overlay_container.wire_id
+      @dialogs_container_mounted = true if @dialogs_container.wire_id
+      @services_container_mounted = true if @services_container.wire_id
+      patch
+    end
+
+    # Page props that must survive a hot reload: the route (kept on purpose),
+    # the client-reported window, and the internal overlay/services/dialogs
+    # containers (kept mounted so the client keeps their bindings).
+    RELOAD_PRESERVED_PAGE_PROPS = %w[route window _overlay _dialogs _services].freeze
+
+    # Quietly clears session content and page chrome so a reloaded app block
+    # can re-render on this same Page without recreating it. The page object
+    # must survive a hot reload: a new Page re-sends the internal
+    # overlay/service/dialogs containers, which replaces their client-side
+    # instances and detaches them (see build_page_patch_ops) — after that,
+    # dialog and service patches are silently ignored by the client.
+    #
+    # Chrome (appbar, drawer, FAB, bgcolor, title, ...) lives in @view_props
+    # and @page_props. If the reloaded block no longer sets a piece of chrome,
+    # the previous run's value would linger, so both are cleared here. The
+    # view is fully rebuilt on the next patch, which drops any @view_props not
+    # re-set; page-level props merge on the client, so finalize_reload! sends
+    # explicit nils for the ones that disappeared. Sends nothing itself.
+    def reset_for_reload!
+      @root_controls = []
+      @views = []
+      @dialogs = []
+      @dialog = nil
+      @snack_bar = nil
+      @bottom_sheet = nil
+      @route_change_seen_since_reset = false
+
+      @reload_prior_page_prop_keys = @page_props.keys - RELOAD_PRESERVED_PAGE_PROPS
+      @view_props = {}
+      @page_props = @page_props.select { |key, _| RELOAD_PRESERVED_PAGE_PROPS.include?(key) }
+      @page_props["route"] ||= (@client_details["route"] || "/")
+      @page_props["window"] ||= @window
+      @overlay_container.children.clear
+      refresh_overlay_container!
+      refresh_services_container!
+      refresh_dialogs_container!
+      self
+    end
+
+    # Called after the reloaded app block ran, before the reload view patch.
+    # Page-level props merge on the client (the Page control is not recreated),
+    # so chrome the reloaded block dropped must be sent as an explicit nil or
+    # it lingers. View props need no such treatment: the View is rebuilt
+    # wholesale from @view_props. Also flushes the overlay container, which
+    # stays mounted and is skipped by a plain view patch.
+    def finalize_reload!
+      keys = @reload_prior_page_prop_keys
+      if keys
+        (keys - @page_props.keys).each { |key| @page_props[key] = nil }
+        @reload_prior_page_prop_keys = nil
+      end
+      push_overlay_update!
+      self
+    end
+
+    # Called after the reloaded app block ran. The route survives a reload
+    # (page props are kept), but the client only sends its route_change event
+    # at connect time — apps that render routes exclusively inside
+    # on_route_change would be stuck on stale content after a reload. Replay
+    # the event for them, unless the block already routed itself (page.go).
+    def replay_route_after_reload!
+      return self if @route_change_seen_since_reset
+      return self unless @page_event_handlers["route_change"].respond_to?(:call)
+
+      dispatch_page_event(name: "route_change", data: @page_props["route"])
+      self
+    end
+
     def overlay
       @overlay_container.children
     end
@@ -654,16 +738,29 @@ module Ruflet
       close_dialog(banner_control)
     end
 
+    # Flet-compatible overlay API: page.open(dialog) / page.close(dialog)
+    # work for dialogs, bottom sheets, banners, and snack bars.
+    def open(dialog_control)
+      show_dialog(dialog_control)
+    end
+
+    def close(dialog_control = nil)
+      close_dialog(dialog_control)
+    end
+
     def close_dialog(dialog_control = nil)
       target = dialog_control || latest_open_dialog
       return nil unless target
 
-      target.props["open"] = false
       @dialog = nil if @dialog.equal?(target)
       @snack_bar = nil if @snack_bar.equal?(target)
       @bottom_sheet = nil if @bottom_sheet.equal?(target)
-      refresh_dialogs_container!
-      push_dialogs_update!
+      # The client pops a dialog's route only when the mounted control sees
+      # its `open` prop flip to false (alert_dialog.dart tracks open/_open).
+      # Replacing the dialogs container recreates the control client-side and
+      # the transition is lost, so patch the open prop on the control itself.
+      target.props["open"] = false
+      update(target, open: false)
       target
     end
 
@@ -1585,6 +1682,7 @@ module Ruflet
     def dispatch_page_event(name:, data:)
       event_name = name.to_s
       event_name = event_name[3..-1] if event_name.start_with?("on_")
+      @route_change_seen_since_reset = true if event_name == "route_change"
       handler = @page_event_handlers[event_name]
       return unless handler.respond_to?(:call)
 

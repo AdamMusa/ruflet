@@ -78,10 +78,10 @@ module Ruflet
       }
     end
 
-    def register_response(session_id:)
+    def register_response(session_id:, page_patch: {})
       {
         "session_id" => session_id,
-        "page_patch" => {},
+        "page_patch" => page_patch,
         "error" => ""
       }
     end

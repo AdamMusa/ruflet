@@ -97,6 +97,12 @@ class RufletBannerCompatibilityTest < Minitest::Test
 
     assert_same banner, page.close_banner(banner)
     assert_equal false, banner.props["open"]
-    assert_equal false, sent.last[1]["patch"][1][3].first["open"]
+    # Closing must patch `open` on the mounted control itself; replacing the
+    # dialogs container recreates the control client-side and the close
+    # transition is lost (alert_dialog.dart tracks open/_open per instance).
+    last_action, last_payload = sent.last
+    assert_equal Ruflet::Protocol::ACTIONS[:patch_control], last_action
+    assert_equal banner.wire_id, last_payload["id"]
+    assert_includes last_payload["patch"], [0, 0, "open", false]
   end
 end

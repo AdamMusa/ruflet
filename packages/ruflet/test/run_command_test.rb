@@ -68,6 +68,62 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
+  def test_build_runtime_command_with_reload_wraps_script_in_harness
+    runner = DummyRunner.new
+    env = {}
+
+    cmd = runner.send(:build_runtime_command, "/tmp/app.rb", gemfile_path: nil, env: env, reload: true)
+
+    harness = File.expand_path("../lib/ruflet/hot_reload/harness.rb", __dir__)
+    assert_equal [RbConfig.ruby, harness], cmd
+    assert_equal "/tmp/app.rb", env["RUFLET_APP_SCRIPT"]
+    assert_equal "/tmp", env["RUFLET_WATCH_ROOT"]
+    assert File.file?(harness), "hot reload harness must ship with the CLI gem"
+  end
+
+  def test_build_runtime_command_with_reload_and_gemfile_keeps_bundler_setup
+    runner = DummyRunner.new
+    Dir.mktmpdir do |dir|
+      gemfile = File.join(dir, "Gemfile")
+      File.write(gemfile, "source \"https://rubygems.org\"\n")
+      env = {}
+      runner.define_singleton_method(:system) { |_env, *_args| true }
+
+      cmd = runner.send(:build_runtime_command, "/tmp/app.rb", gemfile_path: gemfile, env: env, reload: true)
+
+      assert_equal "-rbundler/setup", cmd[1]
+      assert_equal runner.send(:hot_reload_harness_path), cmd[2]
+      assert_equal "/tmp/app.rb", env["RUFLET_APP_SCRIPT"]
+    end
+  end
+
+  def test_handle_reload_command_big_r_requests_full_restart
+    runner = DummyRunner.new
+    child = Process.spawn(RbConfig.ruby, "-e", "sleep 30", pgroup: true)
+    run_state = { child_pid: child, restart: false }
+
+    assert runner.send(:handle_reload_command, "R", run_state)
+    assert run_state[:restart], "R must flag a full restart before terminating the child"
+    _pid, status = Process.wait2(child)
+    assert status.signaled?, "R must terminate the child process group"
+  ensure
+    begin
+      Process.kill("KILL", -child) if child
+    rescue Errno::ESRCH
+      nil
+    end
+  end
+
+  def test_handle_reload_command_reports_dead_child
+    runner = DummyRunner.new
+    child = Process.spawn(RbConfig.ruby, "-e", "exit 0", pgroup: true)
+    Process.wait2(child)
+    run_state = { child_pid: child, restart: false }
+
+    refute runner.send(:handle_reload_command, "R", run_state)
+    refute run_state[:restart], "a dead child must not leave a pending restart flag"
+  end
+
   def test_fetch_release_prefers_completed_prebuild_channel
     runner = DummyRunner.new
     releases = {

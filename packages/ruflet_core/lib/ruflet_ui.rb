@@ -3,8 +3,6 @@
 require "ruflet_protocol"
 require_relative "ruflet_ui/ruflet/colors"
 require_relative "ruflet_ui/ruflet/icon_data"
-require_relative "ruflet_ui/ruflet/icons/material/material_icons"
-require_relative "ruflet_ui/ruflet/icons/cupertino/cupertino_icons"
 require_relative "ruflet_ui/ruflet/types/text_style"
 require_relative "ruflet_ui/ruflet/types/geometry"
 require_relative "ruflet_ui/ruflet/control"
@@ -17,6 +15,21 @@ require_relative "ruflet_ui/ruflet/app"
 require_relative "ruflet_ui/ruflet/dsl"
 
 module Ruflet
+  # Icon tables are large (the material set alone parses a ~234KB map and
+  # defines thousands of constants) but the common `icon("home")` path passes
+  # the name straight through — nothing in the runtime touches these modules
+  # unless an app references a constant like `Ruflet::Icons::HOME`. Autoload
+  # them so boot (and every full restart) skips that cost until first use.
+  #
+  # CRuby only: under the embedded mruby VM the framework is concatenated into
+  # one blob with no filesystem require, so these modules are already defined
+  # there and the guard keeps the autoload calls out of that path entirely.
+  if RUBY_ENGINE != "mruby"
+    icons_root = File.expand_path("ruflet_ui/ruflet/icons", __dir__)
+    autoload :MaterialIcons, File.join(icons_root, "material/material_icons")
+    autoload :CupertinoIcons, File.join(icons_root, "cupertino/cupertino_icons")
+  end
+
   TextStyle = UI::Types::TextStyle
   StrutStyle = UI::Types::StrutStyle
   TextOverflow = UI::Types::TextOverflow

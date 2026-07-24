@@ -124,21 +124,50 @@ module Ruflet
         ws = @connections_mutex.synchronize { @connections[session_key] }
         next unless ws
 
-        refreshed_page = Page.new(
-          session_id: current_page.session_id,
-          client_details: current_page.client_details,
-          sender: lambda do |action, payload|
-            send_message(ws, action, payload)
-          end
-        )
-        refreshed_page.title = "Ruflet App"
-
-        @sessions_mutex.synchronize do
-          @sessions[session_key] = refreshed_page
+        # Open dialogs, sheets, and snack bars are Navigator routes on the
+        # client; replacing the control tree does not pop them. Close them
+        # first, otherwise a reload while an overlay is open leaves it on
+        # screen wired to control ids the reloaded page cannot resolve.
+        begin
+          nil while current_page.respond_to?(:close_dialog) && current_page.close_dialog
+        rescue StandardError
+          nil
         end
 
-        @app_block.call(refreshed_page)
-        refreshed_page.update
+        if current_page.respond_to?(:reset_for_reload!)
+          # Re-render on the live page. The client's overlay/service/dialogs
+          # containers stay mounted; a recreated Page would re-send them,
+          # replacing their client-side instances and detaching them — after
+          # which dialog and service patches are silently ignored.
+          current_page.reset_for_reload!
+          @app_block.call(current_page)
+          # Clear page-level chrome the reloaded block dropped and flush the
+          # overlay (appbar/drawer/FAB live in the view and rebuild wholesale;
+          # page props and the mounted overlay need explicit updates).
+          current_page.finalize_reload! if current_page.respond_to?(:finalize_reload!)
+          # Keeps route-driven apps on their current route: replays the
+          # route_change event when the block did not route itself.
+          current_page.replay_route_after_reload! if current_page.respond_to?(:replay_route_after_reload!)
+          current_page.update
+        else
+          # Older ruflet_core without reset_for_reload!: fall back to a fresh
+          # page (loses client-side container bindings until reconnect).
+          refreshed_page = Page.new(
+            session_id: current_page.session_id,
+            client_details: current_page.client_details,
+            sender: lambda do |action, payload|
+              send_message(ws, action, payload)
+            end
+          )
+          refreshed_page.title = "Ruflet App"
+
+          @sessions_mutex.synchronize do
+            @sessions[session_key] = refreshed_page
+          end
+
+          @app_block.call(refreshed_page)
+          refreshed_page.update
+        end
       rescue StandardError => e
         warn "reload error: #{e.class}: #{e.message}"
       end
@@ -155,7 +184,10 @@ module Ruflet
 
     def trap_signal(signal_name)
       Signal.trap(signal_name) do
-        stop
+        # Trap context restricts Mutex use, so calling stop here raises
+        # ThreadError and the signal is silently swallowed. Only unwind the
+        # main thread; start's ensure performs the actual stop outside the
+        # trap context.
         Thread.main.raise(Interrupt)
       rescue StandardError
         nil
@@ -533,11 +565,23 @@ module Ruflet
       normalized = Protocol.normalize_register_payload(payload)
       session_id = normalized["session_id"].to_s.empty? ? pseudo_uuid : normalized["session_id"]
 
+      # Run the app block BEFORE responding and ship the complete state in the
+      # register response (page_patch), like Flet. The client merges that map
+      # by control id, keeping existing instances alive — required for
+      # reconnecting clients (backend restarts) whose control store persists.
+      # Incremental op patches sent during the block are superseded by the
+      # full state and dropped; everything else is flushed afterwards.
+      registered = false
+      buffered = []
       page = Page.new(
         session_id: session_id,
         client_details: normalized,
         sender: lambda do |action, msg_payload|
-          send_message(ws, action, msg_payload)
+          if registered
+            send_message(ws, action, msg_payload)
+          else
+            buffered << [action, msg_payload]
+          end
         end
       )
 
@@ -547,14 +591,29 @@ module Ruflet
         @sessions[ws.session_key] = page
       end
 
+      @app_block.call(page)
+
+      page_patch = page.respond_to?(:register_page_patch) ? page.register_page_patch : {}
+      response = begin
+        Protocol.register_response(session_id: session_id, page_patch: page_patch)
+      rescue ArgumentError
+        # Older ruflet_core without the page_patch parameter.
+        page_patch = {}
+        Protocol.register_response(session_id: session_id)
+      end
       initial_response = [
         Protocol::ACTIONS[:register_client],
-        Protocol.register_response(session_id: session_id)
+        response
       ]
       ws.send_binary(Ruflet::WireCodec.pack(initial_response))
+      registered = true
 
-      @app_block.call(page)
-      page.update
+      buffered.each do |action, msg_payload|
+        next if action == Protocol::ACTIONS[:patch_control]
+
+        send_message(ws, action, msg_payload)
+      end
+      page.update if page_patch.empty?
     rescue StandardError => e
       send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => e.message })
       raise e

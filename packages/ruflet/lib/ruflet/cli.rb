@@ -66,7 +66,7 @@ module Ruflet
           ruflet --version
           ruflet create <appname>
           ruflet new <appname>
-          ruflet run [scriptname|path] [--web|--desktop] [--port PORT]
+          ruflet run [scriptname|path] [--web|--desktop] [--port PORT] [--no-reload]
           ruflet update [web|desktop|all] [--check] [--force] [--platform PLATFORM]
           ruflet debug [scriptname|path]
           ruflet build <apk|android|ios|aab|web|macos|windows|linux> [--self] [--verbose]

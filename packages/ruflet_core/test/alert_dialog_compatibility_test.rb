@@ -74,6 +74,48 @@ class RufletAlertDialogCompatibilityTest < Minitest::Test
     refute patch.key?("actions")
   end
 
+  def test_page_open_and_close_are_flet_compatible_overlay_aliases
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    dialog = Ruflet.alert_dialog(title: Ruflet.text("Hello"))
+    page.add(Ruflet.text("Root"))
+
+    page.open(dialog)
+    assert_equal true, dialog.props["open"]
+
+    assert_same dialog, page.close(dialog)
+    assert_equal false, dialog.props["open"]
+  end
+
+  def test_close_dialog_patches_open_on_the_mounted_control
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    dialog = Ruflet.alert_dialog(title: Ruflet.text("Hello"))
+
+    page.add(Ruflet.text("Root"))
+    page.show_dialog(dialog)
+    sent.clear
+
+    assert_same dialog, page.close_dialog(dialog)
+    assert_equal false, dialog.props["open"]
+
+    # The client pops the dialog route only on an in-place open true->false
+    # transition of the mounted control (alert_dialog.dart open/_open), so
+    # close must send patch_control targeting the dialog's own wire id.
+    action, payload = sent.last
+    assert_equal Ruflet::Protocol::ACTIONS[:patch_control], action
+    assert_equal dialog.wire_id, payload["id"]
+    assert_includes payload["patch"], [0, 0, "open", false]
+  end
+
   def test_alert_dialog_dismiss_event_closes_dialog_tracking_and_calls_handler
     sent = []
     page = Ruflet::Page.new(

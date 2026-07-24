@@ -71,7 +71,7 @@ Declare optional UI extensions, such as maps or webview, in `ruflet.yaml`.
 ## CLI
 
 ```bash
-ruflet run [scriptname|path] [--web|--desktop] [--port PORT]
+ruflet run [scriptname|path] [--web|--desktop] [--port PORT] [--no-reload]
 ruflet debug [scriptname|path]
 ruflet devices
 ruflet emulators
@@ -87,6 +87,16 @@ checks for a new revision every six hours and retains the last complete local
 build if GitHub is unavailable. Run `ruflet update --force` to refresh
 immediately or set `RUFLET_CLIENT_CHANNEL=stable` to use only versioned release
 assets.
+
+`ruflet run` hot reloads by default: it watches the project's `*.rb` files and
+repaints every connected client over its live connection when a file changes
+(the current route survives; open dialogs close; in-memory state resets; broken
+edits keep the last good UI and print the error). In the terminal, press `r`
+to force a reload or `R` for a full backend restart (clients reconnect
+automatically — use it after Gemfile or ruflet.yaml changes). Pass
+`--no-reload` to disable watching. Add `gem "bootsnap", require: false` to the
+app's Gemfile to make full restarts a little faster (Ruflet caches compiled
+bytecode under `~/.ruflet/bootsnap`).
 
 Run `ruflet install` without `--device` to choose from a numbered list of
 connected devices. Pass `--device DEVICE_ID` to skip the prompt.

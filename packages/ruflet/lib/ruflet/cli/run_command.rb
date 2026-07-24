@@ -20,11 +20,12 @@ module Ruflet
       DEFAULT_CLIENT_UPDATE_INTERVAL = 6 * 60 * 60
 
       def command_run(args)
-        options = { target: "mobile", requested_port: 8550 }
+        options = { target: "mobile", requested_port: 8550, reload: true }
         parser = OptionParser.new do |o|
           o.on("--web") { options[:target] = "web" }
           o.on("--desktop") { options[:target] = "desktop" }
           o.on("--port PORT", Integer) { |v| options[:requested_port] = v }
+          o.on("--no-reload") { options[:reload] = false }
         end
         parser.parse!(args)
 
@@ -49,16 +50,18 @@ module Ruflet
 
         print_run_banner(target: options[:target], requested_port: options[:requested_port], port: selected_port)
         print_mobile_qr_hint(port: selected_port) if options[:target] == "mobile"
+        print_hot_reload_banner if options[:reload]
 
         gemfile_path = find_nearest_gemfile(Dir.pwd)
-        cmd = build_runtime_command(script_path, gemfile_path: gemfile_path, env: env)
+        cmd = build_runtime_command(script_path, gemfile_path: gemfile_path, env: env, reload: options[:reload])
         return 1 unless cmd
 
-        child_pid = Process.spawn(env, *cmd, pgroup: true)
+        run_state = { child_pid: Process.spawn(env, *cmd, pgroup: true), restart: false }
+        reload_input_thread = options[:reload] ? start_reload_input_thread(run_state) : nil
         launched_client_pids = launch_target_client(options[:target], selected_port)
         forward_signal = lambda do |signal|
           begin
-            Process.kill(signal, -child_pid)
+            Process.kill(signal, -run_state[:child_pid])
           rescue Errno::ESRCH
             nil
           end
@@ -67,15 +70,28 @@ module Ruflet
         previous_int = Signal.trap("INT") { forward_signal.call("INT") }
         previous_term = Signal.trap("TERM") { forward_signal.call("TERM") }
 
-        _pid, status = Process.wait2(child_pid)
-        status.success? ? 0 : (status.exitstatus || 1)
+        loop do
+          _pid, status = Process.wait2(run_state[:child_pid])
+          return status.success? ? 0 : (status.exitstatus || 1) unless run_state[:restart]
+
+          # Full restart requested ("R"): respawn the backend; connected
+          # clients reconnect and re-register on their own (Flet-style).
+          run_state[:restart] = false
+          puts "Restarting app..."
+          started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          run_state[:child_pid] = Process.spawn(env, *cmd, pgroup: true)
+          wait_for_server_boot(selected_port)
+          elapsed_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
+          puts "Restarted in #{elapsed_ms}ms"
+        end
       ensure
+        reload_input_thread&.kill if defined?(reload_input_thread)
         Signal.trap("INT", previous_int) if defined?(previous_int) && previous_int
         Signal.trap("TERM", previous_term) if defined?(previous_term) && previous_term
 
-        if defined?(child_pid) && child_pid
+        if defined?(run_state) && run_state && run_state[:child_pid]
           begin
-            Process.kill("TERM", -child_pid)
+            Process.kill("TERM", -run_state[:child_pid])
           rescue Errno::ESRCH
             nil
           end
@@ -97,16 +113,111 @@ module Ruflet
 
       private
 
-      def build_runtime_command(script_path, gemfile_path:, env:)
+      def build_runtime_command(script_path, gemfile_path:, env:, reload: false)
+        entry_script = script_path
+        if reload
+          env["RUFLET_APP_SCRIPT"] = script_path
+          env["RUFLET_WATCH_ROOT"] = File.dirname(script_path)
+          env["RUFLET_BOOTSNAP_DIR"] = bootsnap_cache_dir(script_path)
+          entry_script = hot_reload_harness_path
+        end
+
         if gemfile_path
           env["BUNDLE_GEMFILE"] = gemfile_path
           bundle_ready = system(env, RbConfig.ruby, "-S", "bundle", "check", out: File::NULL, err: File::NULL)
           return nil unless bundle_ready || system(env, RbConfig.ruby, "-S", "bundle", "install")
 
-          return [RbConfig.ruby, "-rbundler/setup", script_path]
+          return [RbConfig.ruby, "-rbundler/setup", entry_script]
         end
 
-        [RbConfig.ruby, script_path]
+        [RbConfig.ruby, entry_script]
+      end
+
+      def hot_reload_harness_path
+        File.expand_path("../hot_reload/harness.rb", __dir__)
+      end
+
+      # Persistent, per-app bootsnap cache so it stays warm across restarts.
+      # Kept under ~/.ruflet (not the project, so nothing to gitignore) and
+      # keyed by app path + Ruby version so bytecode never crosses apps or
+      # incompatible VMs.
+      def bootsnap_cache_dir(script_path)
+        app_key = File.dirname(File.expand_path(script_path)).gsub(/[^a-zA-Z0-9]+/, "-").delete_prefix("-")
+        File.join(Dir.home, ".ruflet", "bootsnap", RUBY_VERSION, app_key)
+      end
+
+      def manual_reload_supported?
+        $stdin.tty? && Signal.list.key?("USR1")
+      end
+
+      def print_hot_reload_banner
+        hint = manual_reload_supported? ? "; press \"r\" to reload, \"R\" to restart" : ""
+        puts "Hot reload: watching *.rb#{hint} (disable with --no-reload)"
+      end
+
+      def start_reload_input_thread(run_state)
+        return nil unless manual_reload_supported?
+
+        Thread.new do
+          loop do
+            key = read_reload_key
+            break if key.nil?
+            break unless handle_reload_command(key, run_state)
+          end
+        rescue StandardError
+          nil
+        end
+      end
+
+      # Single keypress, no Enter required. getch puts the terminal in raw
+      # mode only for the duration of the read; intr keeps Ctrl-C working.
+      def read_reload_key
+        $stdin.getch(intr: true)
+      rescue ArgumentError
+        # Older Rubies without the intr keyword.
+        $stdin.getch
+      rescue StandardError
+        nil
+      end
+
+      # Returns false when the child process is gone and the thread should end.
+      def handle_reload_command(command, run_state)
+        case command
+        when "r"
+          Process.kill("USR1", run_state[:child_pid])
+        when "R"
+          run_state[:restart] = true
+          Process.kill("TERM", -run_state[:child_pid])
+          escalate_child_shutdown(run_state[:child_pid])
+        end
+        true
+      rescue Errno::ESRCH
+        run_state[:restart] = false
+        false
+      end
+
+      # An app can block TERM (bad traps, stuck threads); force the restart
+      # through with KILL if the child is still running after the grace period.
+      def escalate_child_shutdown(child_pid, grace_seconds: 3)
+        Thread.new do
+          deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + grace_seconds
+          loop do
+            sleep 0.1
+            begin
+              Process.kill(0, child_pid)
+            rescue Errno::ESRCH
+              break
+            end
+            next unless Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+
+            begin
+              Process.kill("KILL", -child_pid)
+            rescue Errno::ESRCH
+              nil
+            end
+            break
+          end
+        end
       end
 
       def apply_local_ruflet_dev_overrides(env)
@@ -204,7 +315,7 @@ module Ruflet
         []
       end
 
-      def wait_for_server_boot(port, timeout_seconds: 10)
+      def wait_for_server_boot(port, timeout_seconds: 10, poll_interval: 0.01)
         Timeout.timeout(timeout_seconds) do
           loop do
             begin
@@ -213,7 +324,7 @@ module Ruflet
               sock.close
               break
             rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
-              sleep 0.15
+              sleep poll_interval
             end
           end
         end
