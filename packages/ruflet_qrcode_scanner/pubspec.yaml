@@ -1,0 +1,19 @@
+name: ruflet_qrcode_scanner
+description: Flet Flutter extension for Ruflet QR and barcode scanning.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flet: ">=0.80.2 <1.0.0"
+  mobile_scanner: ^7.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
