@@ -702,6 +702,11 @@ module Ruflet
         build_widget(:codeeditor, **mapped)
       end
       def codeeditor(value = nil, **props) = code_editor(value, **props)
+      def lottie(src = nil, **props)
+        mapped = props.dup
+        mapped[:src] = src unless src.nil?
+        build_widget(:lottie, **mapped)
+      end
       def rive(src = nil, **props)
         mapped = props.dup
         mapped[:src] = src unless src.nil?

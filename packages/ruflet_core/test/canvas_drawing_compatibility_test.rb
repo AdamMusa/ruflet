@@ -54,11 +54,15 @@ class CanvasDrawingCompatibilityTest < Minitest::Test
   def test_extension_helpers_preserve_positional_payload_slots
     rive = Ruflet.rive("https://example.test/animation.riv", fit: "contain")
     editor = Ruflet.code_editor("puts :ok", language: "ruby")
+    lottie = Ruflet.lottie("assets/success.json", repeat: true)
     map = Ruflet.map([Ruflet.tile_layer(url_template: "https://tiles.test/{z}/{x}/{y}")])
 
     assert_equal "https://example.test/animation.riv", rive.to_patch["src"]
     assert_equal "puts :ok", editor.to_patch["value"]
     assert_equal "CodeEditor", editor.to_patch["_c"]
+    assert_equal "assets/success.json", lottie.to_patch["src"]
+    assert_equal true, lottie.to_patch["repeat"]
+    assert_equal "Lottie", lottie.to_patch["_c"]
     assert_equal "https://tiles.test/{z}/{x}/{y}", map.to_patch.fetch("layers").first["url_template"]
   end
 end

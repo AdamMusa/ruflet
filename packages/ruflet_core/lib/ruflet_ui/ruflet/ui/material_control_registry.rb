@@ -116,6 +116,7 @@ module Ruflet
         "simple_attribution" => "SimpleAttribution",
         "codeeditor" => "CodeEditor",
         "code_editor" => "CodeEditor",
+        "lottie" => "Lottie",
         "flashlight" => "Flashlight",
         "barchart" => "BarChart",
         "barchartgroup" => "group",

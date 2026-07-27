@@ -321,6 +321,7 @@ module Ruflet
     def video(**props) = _pending_app.video(**props)
     def code_editor(value = nil, **props) = _pending_app.code_editor(value, **props)
     def codeeditor(value = nil, **props) = _pending_app.codeeditor(value, **props)
+    def lottie(src = nil, **props) = _pending_app.lottie(src, **props)
     def rive(src = nil, **props) = _pending_app.rive(src, **props)
     def fab(content = nil, **props) = _pending_app.fab(content, **props)
     def cupertino_button(content = nil, **props) = _pending_app.cupertino_button(content, **props)

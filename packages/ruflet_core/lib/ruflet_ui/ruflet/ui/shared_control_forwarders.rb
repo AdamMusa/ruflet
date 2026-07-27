@@ -282,6 +282,7 @@ module Ruflet
       def video(**props) = control_delegate.video(**props)
       def code_editor(value = nil, **props) = control_delegate.code_editor(value, **props)
       def codeeditor(value = nil, **props) = control_delegate.codeeditor(value, **props)
+      def lottie(src = nil, **props) = control_delegate.lottie(src, **props)
       def rive(src = nil, **props) = control_delegate.rive(src, **props)
       def cupertino_button(content = nil, **props) = control_delegate.cupertino_button(content, **props)
       def cupertinobutton(content = nil, **props) = control_delegate.cupertinobutton(content, **props)
