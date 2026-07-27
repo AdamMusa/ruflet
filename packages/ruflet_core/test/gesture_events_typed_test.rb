@@ -99,4 +99,13 @@ class GestureEventsTypedTest < Minitest::Test
     evt = build_event("totally_unknown", { "x" => 1 })
     assert_nil evt.typed_data
   end
+
+  def test_unknown_extension_event_exposes_value
+    evt = build_event("detect", { "value" => "https://ruflet.dev", "barcodes" => [] })
+
+    assert_nil evt.typed_data
+    assert_equal "https://ruflet.dev", evt.value
+    assert_equal [], evt.data["barcodes"]
+    assert_respond_to evt, :value
+  end
 end

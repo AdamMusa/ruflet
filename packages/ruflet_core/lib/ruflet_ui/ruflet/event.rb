@@ -17,6 +17,15 @@ module Ruflet
       @control = control
     end
 
+    # A stable convenience accessor shared by built-in and extension events.
+    # Extension event names are intentionally not part of the core typed-event
+    # registry, so fall back to the same value extraction used by GenericEvent.
+    def value
+      return typed_data.value if typed_data&.respond_to?(:value)
+
+      Events::GenericEvent.from_data(data).value
+    end
+
     private
 
     def parse_data(raw)
