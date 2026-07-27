@@ -405,6 +405,8 @@ module Ruflet
       def prepare_flutter_client(client_dir, platform:, tools:, config:, self_contained: false, verbose: false)
         refresh_managed_client_template_files(client_dir, verbose: verbose)
         metadata = sync_client_metadata(client_dir, config, verbose: verbose)
+        return false unless validate_mobile_app_identity(metadata, platform: platform)
+
         apply_native_service_permissions(client_dir, config)
         configured = configure_client_runtime_mode(client_dir, self_contained: self_contained, verbose: verbose)
         return false if configured == false
@@ -607,12 +609,16 @@ module Ruflet
           alt = "ruflet.yml"
           config_path = alt if File.file?(alt)
         end
-        return {} unless File.file?(config_path)
-
-        config = YAML.safe_load(File.read(config_path), aliases: true) || {}
-        services_path = File.join(File.dirname(File.expand_path(config_path)), "services.yaml")
+        config_exists = File.file?(config_path)
+        config = config_exists ? YAML.safe_load(File.read(config_path), aliases: true) || {} : {}
+        config_dir = File.dirname(File.expand_path(config_path))
+        services_path = File.join(config_dir, "services.yaml")
         if File.file?(services_path)
           service_config = YAML.safe_load(File.read(services_path), aliases: true) || {}
+          if service_config["app"].is_a?(Hash)
+            config["app"] = (config["app"].is_a?(Hash) ? config["app"] : {}).merge(service_config["app"])
+            config["_app_identity_source"] = "services.yaml"
+          end
           config["services"] = service_config["services"] if service_config.key?("services")
         end
         config
@@ -759,15 +765,23 @@ module Ruflet
         app = config["app"].is_a?(Hash) ? config["app"] : {}
         current_pubspec = load_client_pubspec(client_dir)
         current_name = current_pubspec["name"].to_s
-        inferred_display_name = app["name"] || config["name"] || humanize_name(File.basename(Dir.pwd))
-        package_name = normalize_package_name(app["package_name"] || config["package_name"] || current_name || inferred_display_name)
-        display_name = first_present(app["display_name"], app["name"], config["display_name"], config["name"], humanize_name(package_name))
+        inferred_display_name = app["app_name"] || app["name"] || config["name"] || humanize_name(File.basename(Dir.pwd))
+        configured_app_name = first_present(app["app_name"], app["display_name"], app["name"])
+        package_source = first_present(app["package_name"], config["package_name"], configured_app_name)
+        package_source = current_name if package_source.nil?
+        package_name = normalize_package_name(package_source)
+        display_name = first_present(app["app_name"], app["display_name"], app["name"], config["display_name"], config["name"], humanize_name(package_name))
         organization = normalize_bundle_prefix(
           first_present(app["org"], app["organization"], config["org"], config["organization"], "com.example")
         )
         bundle_identifier = normalize_bundle_identifier(
           first_present(app["bundle_identifier"], config["bundle_identifier"], "#{organization}.#{package_name}")
         )
+        identity_errors = []
+        identity_errors << "app.app_name" if app["app_name"].to_s.strip.empty?
+        identity_errors << "app.package_name" if app["package_name"].to_s.strip.empty?
+        identity_errors << "app.organization" if app["organization"].to_s.strip.empty?
+        identity_errors << "services.yaml app section" unless config["_app_identity_source"] == "services.yaml"
 
         {
           package_name: package_name,
@@ -789,8 +803,21 @@ module Ruflet
           linux_application_id: normalize_bundle_identifier(
             first_present(app["linux_application_id"], config["linux_application_id"], bundle_identifier)
           ),
-          short_name: first_present(app["short_name"], config["short_name"], display_name)
+          short_name: first_present(app["short_name"], config["short_name"], display_name),
+          mobile_identity_errors: identity_errors.uniq
         }
+      end
+
+      def validate_mobile_app_identity(metadata, platform:)
+        return true unless %w[apk android aab ios].include?(platform.to_s)
+        return true unless metadata
+
+        errors = Array(metadata[:mobile_identity_errors])
+        return true if errors.empty?
+
+        warn "build config error: services.yaml must define #{errors.join(', ')}"
+        warn "Set app.app_name, app.package_name, and app.organization before building a mobile app."
+        false
       end
 
       def load_client_pubspec(client_dir)

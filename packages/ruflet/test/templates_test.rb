@@ -36,18 +36,9 @@ class RufletCliTemplatesTest < Minitest::Test
     refute_includes Ruflet::CLI::GEMFILE_TEMPLATE, 'gem "ruflet",'
   end
 
-  def test_explorer_configs_enable_every_extension_and_protected_service
-    expected_extensions = Ruflet::CLI::BuildCommand::CLIENT_EXTENSION_MAP.keys.sort
-    expected_services = Ruflet::CLI::BuildCommand::PROTECTED_SERVICE_EXTENSIONS.keys.sort
-
-    EXPLORER_CONFIG_DIRS.each do |directory|
-      config = YAML.safe_load(File.read(repo_file(directory, "ruflet.yaml")))
-      services = YAML.safe_load(File.read(repo_file(directory, "services.yaml")))
-      service_names = services.fetch("services").map { |entry| entry.keys.fetch(0) }
-
-      assert_equal expected_extensions, config.fetch("extensions").sort, directory
-      assert_equal expected_services, service_names.sort, directory
-    end
+  def test_reusable_explorer_does_not_contain_project_configuration
+    refute_path_exists repo_file("ruflet_client", "ruflet.yaml")
+    refute_path_exists repo_file("ruflet_client", "services.yaml")
   end
 
   def test_reusable_explorer_registers_every_optional_extension

@@ -12,6 +12,17 @@ class RufletCliUpdateCommandTest < Minitest::Test
     include Ruflet::CLI::BuildCommand
   end
 
+  def services_app_config
+    {
+      "_app_identity_source" => "services.yaml",
+      "app" => {
+        "app_name" => "Test App",
+        "package_name" => "test_app",
+        "organization" => "com.example"
+      }
+    }
+  end
+
   def test_existing_managed_client_is_replaced_when_template_revision_changes
     builder = DummyBuilder.new
 
@@ -44,10 +55,17 @@ class RufletCliUpdateCommandTest < Minitest::Test
     builder = DummyBuilder.new
 
     Dir.mktmpdir do |dir|
-      File.write(File.join(dir, "ruflet.yaml"), "extensions:\n  - audio\n")
+      File.write(
+        File.join(dir, "ruflet.yaml"),
+        "app:\n  app_name: Legacy Name\n  package_name: legacy_name\n  organization: com.legacy\nextensions:\n  - audio\n"
+      )
       File.write(
         File.join(dir, "services.yaml"),
         <<~YAML
+          app:
+            app_name: Voice Journal
+            package_name: voice_journal
+            organization: com.acme
           services:
             - microphone:
                 description: Record voice notes.
@@ -68,8 +86,16 @@ class RufletCliUpdateCommandTest < Minitest::Test
       Dir.chdir(dir) do
         config = builder.send(:load_ruflet_config)
         builder.send(:apply_native_service_permissions, File.join(dir, "client"), config)
+        metadata = builder.send(:build_client_metadata, config, File.join(dir, "client"))
 
         assert_equal 3, config["services"].length
+        assert_equal "Voice Journal", config.dig("app", "app_name")
+        assert_equal "voice_journal", config.dig("app", "package_name")
+        assert_equal "com.acme", config.dig("app", "organization")
+        assert_equal "Voice Journal", metadata[:display_name]
+        assert_equal "com.acme.voice_journal", metadata[:android_application_id]
+        assert_equal "com.acme.voice_journal", metadata[:ios_bundle_identifier]
+        assert_empty metadata[:mobile_identity_errors]
       end
 
       android = File.read(manifest)
@@ -243,7 +269,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
         client_dir,
         platform: "apk",
         tools: { env: {}, flutter: "flutter", dart: "dart" },
-        config: {},
+        config: services_app_config,
         self_contained: true,
         verbose: false
       )
@@ -289,7 +315,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
         client_dir,
         platform: "apk",
         tools: { env: {}, flutter: "flutter", dart: "dart" },
-        config: {},
+        config: services_app_config,
         self_contained: true,
         verbose: false
       )
@@ -510,7 +536,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
         client_dir,
         platform: "ios",
         tools: { env: {}, flutter: "flutter", dart: "dart" },
-        config: {},
+        config: services_app_config,
         self_contained: false,
         verbose: false
       )
@@ -1018,7 +1044,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
         client_dir,
         platform: "android",
         tools: { env: {}, flutter: "flutter", dart: "dart" },
-        config: {},
+        config: services_app_config,
         self_contained: false,
         verbose: false
       )
@@ -1030,7 +1056,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes out.string, "Generating launcher icons with flutter_launcher_icons"
       assert_equal ["flutter", "precache", "--android"], calls[0][:args]
       assert_equal ["flutter", "pub", "get"], calls[1][:args]
-      assert_equal ["dart", "run", "change_app_package_name:main", "com.example.ruflet_client", "--android"], calls[2][:args]
+      assert_equal ["dart", "run", "change_app_package_name:main", "com.example.test_app", "--android"], calls[2][:args]
       assert_equal ["dart", "run", "flutter_native_splash:create"], calls[3][:args]
       assert_equal ["dart", "run", "flutter_launcher_icons"], calls[4][:args]
     ensure
@@ -1295,7 +1321,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
       FileUtils.mkdir_p(client_dir)
       metadata = {
         android_application_id: "com.acme.test_app",
-        ios_bundle_identifier: "com.acme.test_app"
+        ios_bundle_identifier: "com.acme.test_app",
+        mobile_identity_errors: []
       }
 
       builder.define_singleton_method(:apply_service_extension_config) { |_client_dir, _config| nil }
@@ -1327,6 +1354,39 @@ class RufletCliUpdateCommandTest < Minitest::Test
         calls[2][:args]
       )
       assert_equal client_dir, calls[2][:chdir]
+    end
+  end
+
+  def test_prepare_flutter_client_rejects_mobile_build_without_services_app_identity
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |client_dir|
+      metadata = {
+        mobile_identity_errors: ["app.app_name", "app.package_name", "app.organization", "services.yaml app section"]
+      }
+      builder.define_singleton_method(:sync_client_metadata) { |_client_dir, _config, verbose: false| metadata }
+      builder.define_singleton_method(:system) { |*| flunk "Flutter commands must not run without app identity" }
+
+      stderr = StringIO.new
+      original_stderr = $stderr
+      $stderr = stderr
+      result = builder.send(
+        :prepare_flutter_client,
+        client_dir,
+        platform: "apk",
+        tools: { env: {}, flutter: "flutter", dart: "dart" },
+        config: {},
+        self_contained: true,
+        verbose: false
+      )
+
+      assert_equal false, result
+      assert_includes stderr.string, "services.yaml must define"
+      assert_includes stderr.string, "app.app_name"
+      assert_includes stderr.string, "app.package_name"
+      assert_includes stderr.string, "app.organization"
+    ensure
+      $stderr = original_stderr
     end
   end
 

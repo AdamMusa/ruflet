@@ -258,12 +258,6 @@ module Ruflet
       def write_default_ruflet_config(root, app_name)
         File.write(File.join(root, "ruflet.yaml"), <<~YAML)
           app:
-            name: #{app_name}
-            display_name: #{humanize_name(app_name)}
-            package_name: #{app_name.gsub(/[^a-zA-Z0-9_]+/, "_").downcase}
-            organization: com.example
-            version: 1.0.0+1
-            description: A new Ruflet app.
             # Required for server-driven builds: `ruflet build ios`, `apk`, `web`, etc. without `--self`.
             # Example: https://api.example.com
             backend_url: ""
@@ -287,6 +281,16 @@ module Ruflet
         YAML
 
         File.write(File.join(root, "services.yaml"), <<~YAML)
+          # Application identity used by the Flutter build pipeline. Ruflet derives
+          # the mobile identifier as organization.package_name and passes it to
+          # change_app_package_name for Android and iOS builds.
+          app:
+            app_name: #{humanize_name(app_name)}
+            package_name: #{app_name.gsub(/[^a-zA-Z0-9_]+/, "_").downcase}
+            organization: com.example
+            version: 1.0.0+1
+            description: A new Ruflet app.
+
           # Native capabilities that require platform permissions. Ruflet activates
           # the matching client extensions and writes Android/iOS permissions.
           # Supported services: camera, microphone, location, motion

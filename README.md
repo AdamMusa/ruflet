@@ -61,11 +61,31 @@ dialogs, services, and updates.
 A generated Ruflet app includes:
 
 - `main.rb` - Ruby application entrypoint
-- `ruflet.yaml` - app metadata, assets, extensions, and build settings
-- `services.yaml` - protected device capabilities requested by the app
+- `ruflet.yaml` - runtime URL, assets, extensions, and build settings
+- `services.yaml` - app identity and protected device capabilities
 - `Gemfile` - Ruflet runtime dependencies
 
-Declare camera, microphone, location, or motion access in `services.yaml`.
+Set `app_name`, `package_name`, and `organization` under `app` in
+`services.yaml`. Mobile builds derive `organization.package_name` and apply it
+through `change_app_package_name`. Declare camera, microphone, location, or
+motion access in the same file.
+
+```yaml
+app:
+  app_name: My Ruflet App
+  package_name: my_ruflet_app
+  organization: com.example
+  version: 1.0.0+1
+
+services:
+  - camera:
+      description: Scan QR codes.
+```
+
+For this example, Android and iOS builds use
+`com.example.my_ruflet_app` as the application identifier. Mobile builds stop
+with a configuration error when any of these three identity fields is missing;
+the Flutter template package name is never retained for an application build.
 Declare optional UI extensions, such as maps or webview, in `ruflet.yaml`.
 
 ## CLI
