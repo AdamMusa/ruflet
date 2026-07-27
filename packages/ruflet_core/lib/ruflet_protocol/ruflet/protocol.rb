@@ -78,6 +78,21 @@ module Ruflet
       }
     end
 
+    # The client's reply to `invoke_control_method`: the pending call id plus its
+    # result/error. Ruflet::ConnectionProtocol (ruflet_rails' Rack-hijack adapter
+    # and any other host adapter) normalizes this before handing it to
+    # Page#handle_invoke_method_result, which matches `call_id` back to the
+    # waiting callback. Without this method that path fell through to the DSL's
+    # method_missing and every invoke result was silently discarded.
+    def normalize_invoke_method_result_payload(payload)
+      payload = {} unless payload.is_a?(Hash)
+      {
+        "call_id" => payload["call_id"] || payload["callId"],
+        "result" => payload.key?("result") ? payload["result"] : payload["value"],
+        "error" => payload["error"]
+      }
+    end
+
     def register_response(session_id:, page_patch: {})
       {
         "session_id" => session_id,
