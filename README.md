@@ -271,6 +271,69 @@ build:
 `backend_url` is required for server-driven production builds. It is not
 required when building with `--self`.
 
+### Per-platform icon and splash
+
+Every platform has its own section using the same key names — `splash_screen`,
+`splash_dark`, `splash_color`, `splash_dark_color`, and `icon_launcher` — falling
+back to the shared `assets` and `build` values when a key is not overridden. The
+same keys are also accepted under `build.<platform>` and `assets.<platform>`.
+
+```yaml
+android:
+  splash_color: "#FFFFFF"
+  splash_dark_color: "#0B0B0B"
+  splash_fullscreen: true
+  splash_android_12_icon_background_color: "#FFFFFF"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: assets/icon_foreground.png
+  min_sdk: 21
+
+ios:
+  splash_screen: assets/splash_ios.png
+  icon_launcher: assets/icon_ios.png
+  remove_alpha: true
+  content_mode: scaleAspectFit
+
+web:
+  icon_launcher: assets/icon_web.png
+  icon_background: "#FFFFFF"
+  theme_color: "#6750A4"
+
+macos:
+  icon_launcher: assets/icon_macos.png
+
+windows:
+  icon_launcher: assets/icon_windows.ico
+  icon_size: 48
+```
+
+What each platform can actually generate is limited by the underlying tools:
+
+| Platform | Splash | Launcher icon |
+| --- | --- | --- |
+| `android`, `ios`, `web` | yes | yes |
+| `macos`, `windows` | no | yes |
+| `linux` | no | no |
+
+A section for a platform that cannot generate an asset is reported during the
+build rather than silently ignored.
+
+Android-only keys, because the OS draws both the splash and the icon itself:
+
+| Key | Effect |
+| --- | --- |
+| `splash_android_12`, `splash_android_12_dark` | Images for the API 31+ system splash; default to the Android splash |
+| `splash_android_12_icon_background_color[_dark]` | Background behind the API 31+ splash icon; defaults to `splash_color` |
+| `splash_fullscreen`, `splash_gravity` | Legacy (pre-API 31) splash behaviour |
+| `adaptive_icon_foreground` | Adaptive icon foreground layer; defaults to the launcher icon |
+| `adaptive_icon_background` | Adaptive icon background, either a color or an image path; defaults to `build.icon_background` |
+| `adaptive_icon_monochrome` | Themed-icon layer for Android 13+ |
+| `min_sdk` | Minimum API level for the generated icon set |
+
+After the generators run, an Android build verifies that `values-v31/styles.xml`,
+`mipmap-anydpi-v26/`, and the manifest icon reference were actually produced, and
+warns when a configured icon or splash did not reach the native project.
+
 ## Build and install
 
 Check the local toolchain first. Ruflet can install and manage a compatible
