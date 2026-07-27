@@ -10,11 +10,39 @@ import '../utils/misc.dart';
 import '../utils/numbers.dart';
 import '../widgets/error.dart';
 
-class BottomSheetControl extends StatelessWidget {
+class BottomSheetControl extends StatefulWidget {
   final Control control;
 
   BottomSheetControl({Key? key, required this.control})
       : super(key: key ?? ValueKey("control_${control.id}"));
+
+  @override
+  State<BottomSheetControl> createState() => _BottomSheetControlState();
+}
+
+class _BottomSheetControlState extends State<BottomSheetControl> {
+  ModalRoute<dynamic>? _sheetRoute;
+  bool _opening = false;
+  bool _closeRequested = false;
+
+  Control get control => widget.control;
+
+  void _closeOwnedRoute(BuildContext context) {
+    _closeRequested = true;
+    control.updateProperties({"_open": false}, python: false);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      final route = _sheetRoute;
+      if (route?.isActive == true && route?.navigator != null) {
+        route!.navigator!.pop();
+      } else if (!_opening) {
+        final navigator = Navigator.maybeOf(context);
+        if (navigator?.canPop() == true) navigator!.pop();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,12 +58,28 @@ class BottomSheetControl extends StatelessWidget {
     final draggable = control.getBool("draggable", false)!;
 
     if (open && !lastOpen) {
+      _opening = true;
+      _closeRequested = false;
       control.updateProperties({"_open": open}, python: false);
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+
+        ModalRoute<dynamic>? sheetRoute;
         showModalBottomSheet<void>(
                 context: context,
                 builder: (context) {
+                  sheetRoute ??= ModalRoute.of(context);
+                  _sheetRoute = sheetRoute;
+                  _opening = false;
+                  if (_closeRequested) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted && sheetRoute?.isActive == true) {
+                        sheetRoute?.navigator?.pop();
+                      }
+                    });
+                  }
+
                   var content = control.buildWidget("content");
 
                   if (content == null) {
@@ -73,13 +117,18 @@ class BottomSheetControl extends StatelessWidget {
                 shape: control.getOutlinedBorder("shape", Theme.of(context)),
                 useSafeArea: control.getBool("use_safe_area", true)!)
             .then((value) {
-          control.updateProperties({"_open": false}, python: false);
-          control.updateProperties({"open": false});
-          control.triggerEvent("dismiss");
+          (sheetRoute?.completed ?? Future<void>.value()).then((_) {
+            _sheetRoute = null;
+            _opening = false;
+            _closeRequested = false;
+            control.updateProperties({"_open": false}, python: false);
+            control.updateProperties({"open": false});
+            control.triggerEvent("dismiss");
+          });
         });
       });
     } else if (open != lastOpen && lastOpen) {
-      Navigator.of(context).pop();
+      _closeOwnedRoute(context);
     }
 
     return const SizedBox.shrink();
