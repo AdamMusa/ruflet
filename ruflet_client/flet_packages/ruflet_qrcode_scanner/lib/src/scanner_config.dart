@@ -33,7 +33,7 @@ class ScannerConfiguration {
       scanWindow: parseScannerRect(control.get("scan_window")),
       tapToFocus: control.getBool("tap_to_focus", false)!,
       torchEnabled: control.getBool("torch_enabled", false)!,
-      zoomScale: control.getDouble("zoom_scale", 1.0)!,
+      zoomScale: parseZoomScale(control.get("zoom_scale")),
     );
   }
 
@@ -49,7 +49,7 @@ class ScannerConfiguration {
   final Rect? scanWindow;
   final bool tapToFocus;
   final bool torchEnabled;
-  final double zoomScale;
+  final double? zoomScale;
 
   @override
   bool operator ==(Object other) {
@@ -147,6 +147,11 @@ String _normalizedEnumName(String? value) =>
 double? _asDouble(dynamic value) {
   if (value is num) return value.toDouble();
   return double.tryParse(value?.toString() ?? "");
+}
+
+double? parseZoomScale(dynamic value) {
+  final zoomScale = _asDouble(value);
+  return zoomScale?.clamp(0.0, 1.0).toDouble();
 }
 
 bool _listEquals<T>(List<T> left, List<T> right) {

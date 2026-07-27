@@ -43,4 +43,11 @@ void main() {
       const Rect.fromLTWH(10, 20, 100, 200),
     );
   });
+
+  test("leaves initial zoom unset unless explicitly configured", () {
+    expect(parseZoomScale(null), isNull);
+    expect(parseZoomScale(0.25), 0.25);
+    expect(parseZoomScale(-1), 0.0);
+    expect(parseZoomScale(2), 1.0);
+  });
 }

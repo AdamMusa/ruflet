@@ -68,7 +68,8 @@ Scanner properties (defaults in parentheses):
 - `scan_window` (`nil`; `{ left:, top:, right:, bottom: }` or `{ x:, y:, width:, height: }`)
 - `tap_to_focus` (`false`)
 - `torch_enabled` (`false`)
-- `zoom_scale` (`1.0`)
+- `zoom_scale` (`nil`, preserving the camera's normal 1x zoom; explicit values
+  use the `0.0`–`1.0` normalized zoom range)
 
 It also accepts Ruflet's common layout properties: `align`, `animate_align`,
 `animate_margin`, `animate_offset`, `animate_opacity`, `animate_position`,
