@@ -13,6 +13,7 @@ module Ruflet
         Services::RufletServices::CLASS_MAP
           .merge(Controls::RufletControls::CLASS_MAP)
           .freeze
+      EXTENSION_CLASS_MAP = {}
       CONSTRUCTOR_KEYWORDS_CACHE = {}
 
       COMMON_ATTRIBUTES = %i[flip ref transform].freeze
@@ -40,7 +41,7 @@ module Ruflet
         if ENV["RUFLET_DEBUG"] == "1" && normalized_type == "floatingactionbutton"
           Kernel.warn("[factory] type=#{normalized_type} id=#{id.inspect} props=#{props.inspect}")
         end
-        klass = CLASS_MAP[normalized_type]
+        klass = EXTENSION_CLASS_MAP[normalized_type] || CLASS_MAP[normalized_type]
         if klass
           normalized_props, supplemental_props = normalize_constructor_props(klass, normalized_type, props)
           if ENV["RUFLET_DEBUG"] == "1" && normalized_type == "floatingactionbutton"
@@ -94,6 +95,21 @@ module Ruflet
         CONSTRUCTOR_KEYWORDS_CACHE[klass] = keywords.freeze
       rescue StandardError
         []
+      end
+
+      def register_extension(type, klass)
+        key = type.to_s.downcase
+        raise ArgumentError, "Extension control type cannot be empty" if key.empty?
+        raise ArgumentError, "Extension control must inherit Ruflet::Control" unless klass <= Ruflet::Control
+
+        existing = EXTENSION_CLASS_MAP[key]
+        if existing && existing != klass
+          raise ArgumentError, "Extension control `#{key}` is already registered by #{existing}"
+        end
+
+        EXTENSION_CLASS_MAP[key] = klass
+        CONSTRUCTOR_KEYWORDS_CACHE.delete(klass)
+        klass
       end
 
       def normalize_common_value(value)

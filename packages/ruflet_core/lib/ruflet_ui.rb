@@ -13,6 +13,8 @@ require_relative "ruflet_ui/ruflet/event"
 require_relative "ruflet_ui/ruflet/page"
 require_relative "ruflet_ui/ruflet/app"
 require_relative "ruflet_ui/ruflet/dsl"
+require_relative "ruflet_ui/ruflet/extensions"
+require_relative "ruflet_ui/ruflet/extensions/qrcode_scanner"
 
 module Ruflet
   # Icon tables are large (the material set alone parses a ~234KB map and
