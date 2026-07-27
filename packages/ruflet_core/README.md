@@ -15,7 +15,10 @@ Ruflet.run do |page|
     container(
       bgcolor: :surface_container_high,
       padding: 24,
-      content: text("Hello Ruflet", color: "DeepOrange500")
+      content: text(
+        value: "Hello Ruflet",
+        style: { color: "DeepOrange500", size: 20, weight: "w600" }
+      )
     )
   )
 end

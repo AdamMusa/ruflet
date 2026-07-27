@@ -7,7 +7,10 @@ module Ruflet
     Ruflet.run do |page|
       page.title = "Counter Demo"
       count = 0
-      count_text = text(count.to_s, style: {size: 40})
+      count_text = text(
+        value: count.to_s,
+        style: { size: 40, weight: "w700" }
+      )
       page.floating_action_button = fab(
         icon: "add",
         on_click: ->(_e) do
@@ -23,7 +26,7 @@ module Ruflet
             alignment: Ruflet::MainAxisAlignment::CENTER,
             horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
             children: [
-              text("You have pushed the button this many times:"),
+              text(value: "You have pushed the button this many times:"),
               count_text
             ]
           )
@@ -54,14 +57,14 @@ module Ruflet
       ## Run
 
       ```bash
-      bundle exec ruflet run main
+      ruflet run main
       ```
 
       ## Build
 
       ```bash
-      bundle exec ruflet build apk
-      bundle exec ruflet build ios
+      ruflet build apk
+      ruflet build ios
       ```
     MD
   end

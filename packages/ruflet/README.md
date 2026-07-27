@@ -15,12 +15,11 @@ Create a project and run it:
 ruflet new my_app
 cd my_app
 bundle install
-bundle exec ruflet run --web
+ruflet run --web
 ```
 
 Generated projects include `ruflet_core` and `ruflet_server` as application
-dependencies. Use `bundle exec ruflet` inside a project so commands run with
-the versions declared in its `Gemfile`.
+dependencies. Run Ruflet commands directly inside the generated project.
 
 ## Commands
 

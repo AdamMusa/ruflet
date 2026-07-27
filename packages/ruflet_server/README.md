@@ -7,9 +7,9 @@ It is installed automatically in projects created with `ruflet new`. Start an
 application through the Ruflet CLI:
 
 ```bash
-bundle exec ruflet run
-bundle exec ruflet run --web
-bundle exec ruflet run --desktop
+ruflet run
+ruflet run --web
+ruflet run --desktop
 ```
 
 Application code uses the public `Ruflet.run` API supplied by `ruflet_core`.

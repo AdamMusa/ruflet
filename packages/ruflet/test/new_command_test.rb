@@ -20,12 +20,17 @@ class RufletCliNewCommandTest < Minitest::Test
         assert File.exist?(File.join(dir, "demo_app", "services.yaml"))
         config = YAML.safe_load(File.read(File.join(dir, "demo_app", "ruflet.yaml")))
         services = YAML.safe_load(File.read(File.join(dir, "demo_app", "services.yaml")))
+        generated_readme = File.read(File.join(dir, "demo_app", "README.md"))
         assert_equal [], config["extensions"]
         assert_equal "Demo App", services.dig("app", "app_name")
         assert_equal "demo_app", services.dig("app", "package_name")
         assert_equal "com.example", services.dig("app", "organization")
         assert_nil config.dig("app", "package_name")
         assert_equal [], services["services"]
+        assert_includes generated_readme, "ruflet run main"
+        refute_includes generated_readme, "bundle exec ruflet"
+        assert_includes out.string, "ruflet run main.rb"
+        refute_includes out.string, "bundle exec ruflet"
         assert File.file?(File.join(dir, "demo_app", "assets", "icon.png"))
         assert File.file?(File.join(dir, "demo_app", "assets", "splash.png"))
         refute File.exist?(File.join(dir, "demo_app", "ruflet_client"))

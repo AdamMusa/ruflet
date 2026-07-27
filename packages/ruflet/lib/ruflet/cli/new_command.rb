@@ -55,11 +55,11 @@ module Ruflet
         puts "Run:"
         puts "  cd #{project_name}"
         puts "  bundle install"
-        puts "  bundle exec ruflet run main.rb"
+        puts "  ruflet run main.rb"
         puts
         puts "Build:"
-        puts "  bundle exec ruflet build android --self"
-        puts "  bundle exec ruflet build ios --self"
+        puts "  ruflet build android --self"
+        puts "  ruflet build ios --self"
         0
       end
 
