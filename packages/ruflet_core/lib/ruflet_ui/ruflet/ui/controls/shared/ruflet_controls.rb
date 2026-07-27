@@ -14,7 +14,6 @@ require_relative "dismissible_control"
 require_relative "draggable_control"
 require_relative "dragtarget_control"
 require_relative "fill_control"
-require_relative "fletapp_control"
 require_relative "gesturedetector_control"
 require_relative "gridview_control"
 require_relative "hero_control"
@@ -39,6 +38,7 @@ require_relative "reorderabledraghandle_control"
 require_relative "responsiverow_control"
 require_relative "row_control"
 require_relative "rotatedbox_control"
+require_relative "ruflet_app_control"
 require_relative "safearea_control"
 require_relative "screenshot_control"
 require_relative "semantics_control"
@@ -81,8 +81,6 @@ module Ruflet
             "draggable" => RufletComponents::DraggableControl,
             "dragtarget" => RufletComponents::DragTargetControl,
             "fill" => RufletComponents::FillControl,
-            "flet_app" => RufletComponents::FletAppControl,
-            "fletapp" => RufletComponents::FletAppControl,
             "gesture_detector" => RufletComponents::GestureDetectorControl,
             "gesturedetector" => RufletComponents::GestureDetectorControl,
             "grid_view" => RufletComponents::GridViewControl,
@@ -117,6 +115,8 @@ module Ruflet
             "row" => RufletComponents::RowControl,
             "rotated_box" => RufletComponents::RotatedBoxControl,
             "rotatedbox" => RufletComponents::RotatedBoxControl,
+            "ruflet_app" => RufletComponents::RufletAppControl,
+            "rufletapp" => RufletComponents::RufletAppControl,
             "safe_area" => RufletComponents::SafeAreaControl,
             "safearea" => RufletComponents::SafeAreaControl,
             "screenshot" => RufletComponents::ScreenshotControl,

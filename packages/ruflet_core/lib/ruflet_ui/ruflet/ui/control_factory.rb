@@ -19,7 +19,8 @@ module Ruflet
       COMMON_ATTRIBUTES = %i[flip ref transform].freeze
       ATTRIBUTE_OVERRIDES = {
         "expansionpanellist" => %i[auto_scroll on_scroll scroll scroll_interval],
-        "fletapp" => %i[assets_dir on_python_output],
+        "ruflet_app" => %i[assets_dir on_python_output],
+        "rufletapp" => %i[assets_dir on_python_output],
         "image" => %i[
           align animate_align animate_margin animate_offset animate_opacity animate_position
           animate_rotation animate_scale animate_size aspect_ratio badge bottom col disabled

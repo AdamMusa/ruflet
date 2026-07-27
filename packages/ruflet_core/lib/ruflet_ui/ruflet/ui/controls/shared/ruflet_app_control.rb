@@ -4,8 +4,10 @@ module Ruflet
   module UI
     module Controls
       module RufletComponents
-        class FletAppControl < Ruflet::Control
-          TYPE = "fletapp".freeze
+        class RufletAppControl < Ruflet::Control
+          TYPE = "ruflet_app".freeze
+          # The client widget is still registered under its upstream name, so the
+          # wire type stays FletApp while the Ruby API is ruflet_app.
           WIRE = "FletApp".freeze
 
           KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :app_error_message, :app_startup_screen_message, :args, :aspect_ratio, :badge, :bottom, :col, :data, :disabled, :expand, :expand_loose, :force_pyodide, :height, :key, :left, :margin, :offset, :opacity, :reconnect_interval_ms, :reconnect_timeout_ms, :right, :rotate, :rtl, :scale, :show_app_startup_screen, :size_change_interval, :tooltip, :top, :url, :visible, :width, :on_animation_end, :on_error, :on_size_change].freeze
