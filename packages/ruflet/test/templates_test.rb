@@ -18,6 +18,7 @@ class RufletCliTemplatesTest < Minitest::Test
     "lottie" => "flet_lottie.Extension()",
     "map" => "flet_map.Extension()",
     "permission_handler" => "flet_permission_handler.Extension()",
+    "qrcode_scanner" => "ruflet_qrcode_scanner.Extension()",
     "rive" => "flet_rive.Extension()",
     "secure_storage" => "flet_secure_storage.Extension()",
     "video" => "flet_video.Extension()",

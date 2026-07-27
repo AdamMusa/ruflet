@@ -25,6 +25,7 @@ module Ruflet
         "lottie" => { package: "flet_lottie", alias: "ruflet_lottie" },
         "map" => { package: "flet_map", alias: "ruflet_map" },
         "permission_handler" => { package: "flet_permission_handler", alias: "ruflet_permission_handler" },
+        "qrcode_scanner" => { package: "ruflet_qrcode_scanner", alias: "ruflet_qrcode_scanner" },
         "rive" => { package: "flet_rive", alias: "ruflet_rive" },
         "secure_storage" => { package: "flet_secure_storage", alias: "ruflet_secure_storage" },
         "video" => { package: "flet_video", alias: "ruflet_video" },

@@ -125,6 +125,36 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  def test_qrcode_scanner_adds_extension_and_camera_permissions
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "client")
+      manifest = File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")
+      plist = File.join(client_dir, "ios", "Runner", "Info.plist")
+      FileUtils.mkdir_p(File.join(client_dir, "lib"))
+      FileUtils.mkdir_p(File.dirname(manifest))
+      FileUtils.mkdir_p(File.dirname(plist))
+      File.write(File.join(client_dir, "pubspec.yaml"), "dependencies:\n  flet: any\n")
+      File.write(
+        File.join(client_dir, "lib", "main.self.dart"),
+        "import 'package:flet/flet.dart';\nfinal extensions = <FletExtension>[\n];\n"
+      )
+      File.write(manifest, "<manifest><application/></manifest>\n")
+      File.write(plist, "<plist><dict></dict></plist>\n")
+
+      config = { "extensions" => ["qrcode_scanner"] }
+      builder.send(:apply_service_extension_config, client_dir, config, self_contained: true)
+      builder.send(:apply_native_service_permissions, client_dir, config)
+
+      dependencies = YAML.safe_load(File.read(File.join(client_dir, "pubspec.yaml")), aliases: true).fetch("dependencies")
+      assert dependencies.key?("ruflet_qrcode_scanner")
+      assert_includes File.read(File.join(client_dir, "lib", "main.self.dart")), "ruflet_qrcode_scanner.Extension(),"
+      assert_includes File.read(manifest), "android.permission.CAMERA"
+      assert_includes File.read(plist), "NSCameraUsageDescription"
+    end
+  end
+
   def test_command_update_check_reports_manifest_status
     updater = DummyUpdater.new
     Dir.mktmpdir do |dir|

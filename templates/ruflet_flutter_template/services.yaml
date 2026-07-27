@@ -1,4 +1,4 @@
-# Native capabilities included in the reusable Ruflet connection client.
+# Native capabilities available to apps generated from this template.
 services:
   - camera:
       description: Allow Ruflet apps to capture photos, video, and scan codes.

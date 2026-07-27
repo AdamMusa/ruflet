@@ -120,8 +120,19 @@ dependencies:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-webview/src/flutter/flet_webview
       ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
+  ruflet_qrcode_scanner:
+    git:
+      url: https://github.com/AdamMusa/ruflet.git
+      path: packages/ruflet_qrcode_scanner
+      ref: main
   ruby_runtime: ^0.0.8
   flutter_native_splash: ^2.4.7
+dependency_overrides:
+  flet:
+    git:
+      url: https://github.com/flet-dev/flet.git
+      path: packages/flet
+      ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
 dev_dependencies:
   flutter_launcher_icons: "^0.14.4"
   

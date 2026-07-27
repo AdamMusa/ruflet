@@ -1,0 +1,24 @@
+app:
+  name: ruflet_client
+  display_name: Ruflet
+
+# The template carries every optional extension so per-app builds can select
+# only the entries declared in the developer project's ruflet.yaml.
+extensions:
+  - audio
+  - audio_recorder
+  - camera
+  - charts
+  - code_editor
+  - color_pickers
+  - datatable2
+  - flashlight
+  - geolocator
+  - lottie
+  - map
+  - permission_handler
+  - qrcode_scanner
+  - rive
+  - secure_storage
+  - video
+  - webview

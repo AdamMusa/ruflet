@@ -21,6 +21,8 @@ import 'package:flet_secure_storage/flet_secure_storage.dart'
     as flet_secure_storage;
 import 'package:flet_video/flet_video.dart' as flet_video;
 import 'package:flet_webview/flet_webview.dart' as flet_webview;
+import 'package:ruflet_qrcode_scanner/ruflet_qrcode_scanner.dart'
+    as ruflet_qrcode_scanner;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
@@ -185,6 +187,7 @@ void main([List<String>? args]) async {
     RufletSpinKitExtension(),
     flet_video.Extension(),
     flet_webview.Extension(),
+    ruflet_qrcode_scanner.Extension(),
   ];
 
   for (final extension in rufletExtensions) {

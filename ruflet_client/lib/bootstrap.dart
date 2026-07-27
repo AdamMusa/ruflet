@@ -20,6 +20,8 @@ import 'package:flet_secure_storage/flet_secure_storage.dart'
 import 'package:flet_spinkit/flet_spinkit.dart' as flet_spinkit;
 import 'package:flet_video/flet_video.dart' as flet_video;
 import 'package:flet_webview/flet_webview.dart' as flet_webview;
+import 'package:ruflet_qrcode_scanner/ruflet_qrcode_scanner.dart'
+    as ruflet_qrcode_scanner;
 
 export 'package:flet/flet.dart' show FletExtension;
 export 'main.dart'
@@ -51,6 +53,7 @@ List<FletExtension> createDefaultRufletExtensions() {
     flet_spinkit.Extension(),
     flet_video.Extension(),
     flet_webview.Extension(),
+    ruflet_qrcode_scanner.Extension(),
   ];
 }
 

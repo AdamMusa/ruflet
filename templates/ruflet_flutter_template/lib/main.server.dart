@@ -19,6 +19,8 @@ import 'package:flet_map/flet_map.dart' as ruflet_map;
 import 'package:flet_permission_handler/flet_permission_handler.dart'
     as ruflet_permission_handler;
 import 'package:flet_rive/flet_rive.dart' as ruflet_rive;
+import 'package:ruflet_qrcode_scanner/ruflet_qrcode_scanner.dart'
+    as ruflet_qrcode_scanner;
 // --FAT_CLIENT_START--
 // --FAT_CLIENT_END--
 import 'package:flet_secure_storage/flet_secure_storage.dart'
@@ -117,6 +119,7 @@ Future<void> main() async {
     ruflet_map.Extension(),
     ruflet_permission_handler.Extension(),
     ruflet_rive.Extension(),
+    ruflet_qrcode_scanner.Extension(),
     ruflet_secure_storage.Extension(),
     ruflet_webview.Extension(),
 

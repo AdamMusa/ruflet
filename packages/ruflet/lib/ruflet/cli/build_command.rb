@@ -26,6 +26,7 @@ module Ruflet
         "lottie" => { package: "flet_lottie", alias: "ruflet_lottie" },
         "map" => { package: "flet_map", alias: "ruflet_map" },
         "permission_handler" => { package: "flet_permission_handler", alias: "ruflet_permission_handler" },
+        "qrcode_scanner" => { package: "ruflet_qrcode_scanner", alias: "ruflet_qrcode_scanner" },
         "rive" => { package: "flet_rive", alias: "ruflet_rive" },
         "secure_storage" => { package: "flet_secure_storage", alias: "ruflet_secure_storage" },
         "video" => { package: "flet_video", alias: "ruflet_video" },
@@ -36,6 +37,9 @@ module Ruflet
         "microphone" => %w[audio_recorder permission_handler],
         "location" => %w[geolocator permission_handler],
         "motion" => %w[permission_handler]
+      }.freeze
+      EXTENSION_REQUIRED_SERVICES = {
+        "qrcode_scanner" => %w[camera]
       }.freeze
       ANDROID_SERVICE_PERMISSIONS = {
         "camera" => %w[android.permission.CAMERA],
@@ -1071,6 +1075,13 @@ module Ruflet
 
       def apply_native_service_permissions(client_dir, config)
         entries = configured_service_entries(config)
+        configured_extensions = Array(config["extensions"]).filter_map { |entry| normalize_extension_key(entry) }
+        extension_services = configured_extensions.flat_map do |extension|
+          EXTENSION_REQUIRED_SERVICES.fetch(extension, [])
+        end
+        extension_services.each do |service|
+          entries << { name: service, description: "" } unless entries.any? { |entry| entry[:name] == service }
+        end
         return if entries.empty?
 
         apply_android_service_permissions(client_dir, entries)
@@ -1398,6 +1409,7 @@ module Ruflet
 
         key.tr!("-", "_")
         key.gsub!(/\A(flet_)+/, "")
+        key.gsub!(/\A(ruflet_)+/, "")
         key.gsub!(/\Aservice_/, "")
         key
       end

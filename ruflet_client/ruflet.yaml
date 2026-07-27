@@ -19,6 +19,7 @@ extensions:
   - lottie
   - map
   - permission_handler
+  - qrcode_scanner
   - rive
   - secure_storage
   - video
