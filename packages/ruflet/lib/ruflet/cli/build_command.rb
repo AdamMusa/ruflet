@@ -404,7 +404,7 @@ module Ruflet
 
       def prepare_flutter_client(client_dir, platform:, tools:, config:, self_contained: false, verbose: false)
         refresh_managed_client_template_files(client_dir, verbose: verbose)
-        sync_client_metadata(client_dir, config, verbose: verbose)
+        metadata = sync_client_metadata(client_dir, config, verbose: verbose)
         apply_native_service_permissions(client_dir, config)
         configured = configure_client_runtime_mode(client_dir, self_contained: self_contained, verbose: verbose)
         return false if configured == false
@@ -425,6 +425,10 @@ module Ruflet
         build_log(verbose, "running flutter pub get")
         unless run_external_command(tools[:env], tools[:flutter], "pub", "get", chdir: client_dir, unbundled: true)
           warn "flutter pub get failed"
+          return false
+        end
+
+        unless apply_mobile_package_name(client_dir, metadata, platform: platform, tools: tools, verbose: verbose)
           return false
         end
 
@@ -748,6 +752,7 @@ module Ruflet
           verbose,
           "app=#{metadata[:display_name]} package=#{metadata[:package_name]} org=#{metadata[:organization]} bundle=#{metadata[:bundle_identifier]}"
         )
+        metadata
       end
 
       def build_client_metadata(config, client_dir)
@@ -809,28 +814,6 @@ module Ruflet
       end
 
       def apply_android_metadata(client_dir, metadata)
-        gradle_path = File.join(client_dir, "android", "app", "build.gradle.kts")
-        replace_in_file(
-          gradle_path,
-          /^\s*namespace = ".*"$/,
-          %(    namespace = "#{metadata[:android_application_id]}")
-        )
-        replace_in_file(
-          gradle_path,
-          /^\s*applicationId = ".*"$/,
-          %(        applicationId = "#{metadata[:android_application_id]}")
-        )
-
-        Dir.glob(
-          File.join(client_dir, "android", "app", "src", "main", "kotlin", "**", "MainActivity.kt")
-        ).each do |activity_path|
-          replace_in_file(
-            activity_path,
-            /^package\s+[^\s]+$/,
-            "package #{metadata[:android_application_id]}"
-          )
-        end
-
         manifest_path = File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")
         replace_in_file(
           manifest_path,
@@ -849,15 +832,35 @@ module Ruflet
 
         content = File.read(pbxproj_path)
         content.gsub!(/INFOPLIST_KEY_CFBundleDisplayName = "[^"]*";/, %(INFOPLIST_KEY_CFBundleDisplayName = "#{xcode_escape(metadata[:display_name])}";))
-        content.gsub!(/PRODUCT_BUNDLE_IDENTIFIER = ([^;]+);/) do |match|
-          identifier = Regexp.last_match(1).to_s.strip
-          if identifier.include?("RunnerTests")
-            match
-          else
-            "PRODUCT_BUNDLE_IDENTIFIER = #{metadata[:ios_bundle_identifier]};"
-          end
-        end
         File.write(pbxproj_path, content)
+      end
+
+      def apply_mobile_package_name(client_dir, metadata, platform:, tools:, verbose: false)
+        return true unless metadata
+
+        package_name, platform_flag = case platform.to_s
+        when "apk", "android", "aab"
+          [metadata[:android_application_id], "--android"]
+        when "ios"
+          [metadata[:ios_bundle_identifier], "--ios"]
+        else
+          return true
+        end
+
+        build_note("Applying #{platform_flag.delete_prefix('--')} package name #{package_name}")
+        build_log(verbose, "running change_app_package_name for #{package_name} #{platform_flag}")
+        ok = run_external_command(
+          tools[:env],
+          tools[:dart],
+          "run",
+          "change_app_package_name:main",
+          package_name,
+          platform_flag,
+          chdir: client_dir,
+          unbundled: true
+        )
+        warn "change_app_package_name failed for #{package_name}" unless ok
+        ok
       end
 
       def apply_macos_metadata(client_dir, metadata)

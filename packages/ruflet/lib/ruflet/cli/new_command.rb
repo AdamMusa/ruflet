@@ -82,21 +82,23 @@ module Ruflet
       end
 
       def resolve_ruflet_client_template_root
-        [
-          File.expand_path("../../../../../templates/ruflet_flutter_template", __dir__)
-        ].each do |template|
-          return template if Dir.exist?(template)
+        explicit = ENV["RUFLET_TEMPLATE_ROOT"].to_s.strip
+        unless explicit.empty?
+          explicit_template = [
+            explicit,
+            File.join(explicit, "templates", "ruflet_flutter_template")
+          ].find { |path| valid_ruflet_template?(path) }
+          return explicit_template if explicit_template
         end
+
+        sibling_template = File.expand_path(
+          "../../../../../../ruflet-template/templates/ruflet_flutter_template",
+          __dir__
+        )
+        return sibling_template if valid_ruflet_template?(sibling_template)
 
         cached_template = cached_ruflet_client_template_root
-        return cached_template if Dir.exist?(cached_template)
-
-        [
-          File.expand_path("../../../ruflet_client", __dir__),
-          File.expand_path("../../../../../ruflet_client", __dir__)
-        ].each do |fallback|
-          return fallback if Dir.exist?(fallback)
-        end
+        return cached_template if valid_ruflet_template?(cached_template)
 
         nil
       end

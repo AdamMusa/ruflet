@@ -1030,8 +1030,9 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes out.string, "Generating launcher icons with flutter_launcher_icons"
       assert_equal ["flutter", "precache", "--android"], calls[0][:args]
       assert_equal ["flutter", "pub", "get"], calls[1][:args]
-      assert_equal ["dart", "run", "flutter_native_splash:create"], calls[2][:args]
-      assert_equal ["dart", "run", "flutter_launcher_icons"], calls[3][:args]
+      assert_equal ["dart", "run", "change_app_package_name:main", "com.example.ruflet_client", "--android"], calls[2][:args]
+      assert_equal ["dart", "run", "flutter_native_splash:create"], calls[3][:args]
+      assert_equal ["dart", "run", "flutter_launcher_icons"], calls[4][:args]
     ensure
       $stdout = original_stdout
     end
@@ -1245,19 +1246,19 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes pubspec, "version: 2.3.4+5"
 
       android_gradle = File.read(File.join(client_dir, "android", "app", "build.gradle.kts"))
-      assert_includes android_gradle, 'namespace = "com.acme.test_app"'
-      assert_includes android_gradle, 'applicationId = "com.acme.test_app"'
+      assert_includes android_gradle, 'namespace = "com.example.ruflet_client"'
+      assert_includes android_gradle, 'applicationId = "com.example.ruflet_client"'
       android_activity = Dir.glob(
         File.join(client_dir, "android", "app", "src", "main", "kotlin", "**", "MainActivity.kt")
       ).first
-      assert_includes File.read(android_activity), "package com.acme.test_app"
+      assert_includes File.read(android_activity), "package com.example.ruflet_client"
       assert_includes File.read(File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")), 'android:label="Test App"'
 
       ios_info = File.read(File.join(client_dir, "ios", "Runner", "Info.plist"))
       assert_includes ios_info, "<string>Test App</string>"
       ios_project = File.read(File.join(client_dir, "ios", "Runner.xcodeproj", "project.pbxproj"))
       assert_includes ios_project, 'INFOPLIST_KEY_CFBundleDisplayName = "Test App";'
-      assert_includes ios_project, "PRODUCT_BUNDLE_IDENTIFIER = com.acme.test_app;"
+      assert_includes ios_project, "PRODUCT_BUNDLE_IDENTIFIER = com.example.ruflet_client;"
       assert_includes ios_project, "PRODUCT_BUNDLE_IDENTIFIER = com.example.ruflet_client.RunnerTests;"
 
       macos_info = File.read(File.join(client_dir, "macos", "Runner", "Configs", "AppInfo.xcconfig"))
@@ -1283,6 +1284,49 @@ class RufletCliUpdateCommandTest < Minitest::Test
       linux_cmake = File.read(File.join(client_dir, "linux", "CMakeLists.txt"))
       assert_includes linux_cmake, 'set(BINARY_NAME "test_app")'
       assert_includes linux_cmake, 'set(APPLICATION_ID "com.acme.test_app")'
+    end
+  end
+
+  def test_prepare_flutter_client_applies_mobile_package_name_after_pub_get
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "ruflet_client")
+      FileUtils.mkdir_p(client_dir)
+      metadata = {
+        android_application_id: "com.acme.test_app",
+        ios_bundle_identifier: "com.acme.test_app"
+      }
+
+      builder.define_singleton_method(:apply_service_extension_config) { |_client_dir, _config| nil }
+      builder.define_singleton_method(:configure_client_runtime_mode) { |_client_dir, self_contained:, verbose: false| nil }
+      builder.define_singleton_method(:sync_client_metadata) { |_client_dir, _config, verbose: false| metadata }
+      builder.define_singleton_method(:apply_build_config) { |_client_dir, _config| { has_icon: false, has_splash: false, error: nil } }
+
+      calls = []
+      builder.define_singleton_method(:system) do |_env, *args, chdir: nil|
+        calls << { args: args, chdir: chdir }
+        true
+      end
+
+      result = builder.send(
+        :prepare_flutter_client,
+        client_dir,
+        platform: "apk",
+        tools: { env: {}, flutter: "flutter", dart: "dart" },
+        config: {},
+        self_contained: true,
+        verbose: false
+      )
+
+      assert_equal true, result
+      assert_equal ["flutter", "precache", "--android"], calls[0][:args]
+      assert_equal ["flutter", "pub", "get"], calls[1][:args]
+      assert_equal(
+        ["dart", "run", "change_app_package_name:main", "com.acme.test_app", "--android"],
+        calls[2][:args]
+      )
+      assert_equal client_dir, calls[2][:chdir]
     end
   end
 

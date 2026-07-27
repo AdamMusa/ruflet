@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 class RufletCliTemplatesTest < Minitest::Test
   REPOSITORY_ROOT = File.expand_path("../../..", __dir__)
-  EXPLORER_CONFIG_DIRS = %w[ruflet_client templates/ruflet_flutter_template].freeze
+  EXPLORER_CONFIG_DIRS = %w[ruflet_client].freeze
   EXPLORER_EXTENSION_REGISTRATIONS = {
     "audio" => "flet_audio.Extension()",
     "audio_recorder" => "flet_audio_recorder.Extension()",
@@ -78,7 +78,6 @@ class RufletCliTemplatesTest < Minitest::Test
 
   def test_spinkit_uses_the_bundled_flet_extension_package
     client_pubspec = YAML.safe_load(File.read(repo_file("ruflet_client", "pubspec.yaml")), aliases: true)
-    template_pubspec = YAML.safe_load(File.read(repo_file("templates/ruflet_flutter_template", "pubspec.yaml")), aliases: true)
     client_main = File.read(repo_file("ruflet_client", "lib/main.dart"))
 
     assert_equal(
@@ -86,13 +85,28 @@ class RufletCliTemplatesTest < Minitest::Test
       client_pubspec.dig("dependencies", "flet_spinkit")
     )
     refute client_pubspec.dig("dependencies").key?("flutter_spinkit")
-    assert_equal(
-      "ruflet_client/flet_packages/flet_spinkit",
-      template_pubspec.dig("dependencies", "flet_spinkit", "git", "path")
-    )
     assert_includes client_main, "flet_spinkit.Extension(),"
     refute_path_exists repo_file("ruflet_client", "lib/ruflet_spinkit.dart")
-    refute_path_exists repo_file("templates/ruflet_flutter_template", "lib/ruflet_spinkit.dart")
+  end
+
+  def test_template_is_owned_by_external_repository
+    assert_equal "https://github.com/AdamMusa/ruflet-template.git", Ruflet::CLI::NewCommand::TEMPLATE_REPO_URL
+    refute_path_exists repo_file("templates", "ruflet_flutter_template")
+  end
+
+  def test_template_root_accepts_the_external_repository_directory
+    Dir.mktmpdir do |root|
+      template = File.join(root, "templates", "ruflet_flutter_template")
+      FileUtils.mkdir_p(File.join(template, "lib"))
+      File.write(File.join(template, "pubspec.yaml"), "name: ruflet_client\n")
+      File.write(File.join(template, "lib", "main.dart"), "void main() {}\n")
+
+      previous = ENV["RUFLET_TEMPLATE_ROOT"]
+      ENV["RUFLET_TEMPLATE_ROOT"] = root
+      assert_equal template, Ruflet::CLI.send(:resolve_ruflet_client_template_root)
+    ensure
+      ENV["RUFLET_TEMPLATE_ROOT"] = previous
+    end
   end
 
   def test_explorer_android_builds_declare_every_service_permission
