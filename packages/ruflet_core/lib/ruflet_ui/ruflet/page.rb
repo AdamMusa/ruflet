@@ -727,7 +727,20 @@ module Ruflet
     end
 
     def show_bottom_sheet(bottom_sheet_control)
+      @bottom_sheet = bottom_sheet_control
       show_dialog(bottom_sheet_control)
+    end
+
+    def show_bottomsheet(bottom_sheet_control)
+      show_bottom_sheet(bottom_sheet_control)
+    end
+
+    def close_bottom_sheet(bottom_sheet_control = nil)
+      close_dialog(bottom_sheet_control || @bottom_sheet)
+    end
+
+    def close_bottomsheet(bottom_sheet_control = nil)
+      close_bottom_sheet(bottom_sheet_control)
     end
 
     def show_banner(banner_control)
@@ -738,8 +751,8 @@ module Ruflet
       close_dialog(banner_control)
     end
 
-    # Flet-compatible overlay API: page.open(dialog) / page.close(dialog)
-    # work for dialogs, bottom sheets, banners, and snack bars.
+    # Flet-compatible generic overlay API. Prefer close_bottom_sheet for sheets
+    # so the page's current bottom-sheet slot is handled explicitly.
     def open(dialog_control)
       show_dialog(dialog_control)
     end
@@ -752,9 +765,7 @@ module Ruflet
       target = dialog_control || latest_open_dialog
       return nil unless target
 
-      @dialog = nil if @dialog.equal?(target)
-      @snack_bar = nil if @snack_bar.equal?(target)
-      @bottom_sheet = nil if @bottom_sheet.equal?(target)
+      clear_dialog_slots(target)
       # The client pops a dialog's route only when the mounted control sees
       # its `open` prop flip to false (alert_dialog.dart tracks open/_open).
       # Replacing the dialogs container recreates the control client-side and
@@ -1818,8 +1829,15 @@ module Ruflet
       return false unless @dialogs.include?(control)
 
       @dialogs.delete(control)
+      clear_dialog_slots(control)
       refresh_dialogs_container!
       true
+    end
+
+    def clear_dialog_slots(control)
+      @dialog = nil if @dialog.equal?(control)
+      @snack_bar = nil if @snack_bar.equal?(control)
+      @bottom_sheet = nil if @bottom_sheet.equal?(control)
     end
 
     def assign_split_prop(key, value)

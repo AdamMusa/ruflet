@@ -80,4 +80,41 @@ class RufletBottomSheetCompatibilityTest < Minitest::Test
     assert_equal [["dismiss", true]], dismissed
     assert_equal [], sent.last[1]["patch"][1][3]
   end
+
+  def test_page_closes_current_bottom_sheet_without_an_argument
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    sheet = Ruflet.bottom_sheet(Ruflet.text("Sheet"))
+
+    page.add(Ruflet.text("Root"))
+    page.show_bottom_sheet(sheet)
+
+    assert_same sheet, page.bottom_sheet
+    assert_same sheet, page.close_bottom_sheet
+    assert_nil page.bottom_sheet
+    assert_equal false, sheet.props["open"]
+    assert_equal sheet.wire_id, sent.last[1]["id"]
+    assert_equal "open", sent.last[1]["patch"][1][2]
+    assert_equal false, sent.last[1]["patch"][1][3]
+  end
+
+  def test_bottomsheet_aliases_show_and_close_the_sheet
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+    sheet = Ruflet.bottom_sheet(Ruflet.text("Sheet"))
+
+    page.add(Ruflet.text("Root"))
+    page.show_bottomsheet(sheet)
+
+    assert_same sheet, page.bottom_sheet
+    assert_same sheet, page.close_bottomsheet
+    assert_nil page.bottom_sheet
+  end
 end
