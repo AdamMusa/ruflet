@@ -10,7 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flet: ">=0.80.2 <1.0.0"
+  flet:
+    path: ../flet
   mobile_scanner: ^7.1.2
 
 dev_dependencies:

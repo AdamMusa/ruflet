@@ -65,13 +65,14 @@ dependencies:
     path: flet_packages/flet_permission_handler
   flet_secure_storage:
     path: flet_packages/flet_secure_storage
+  flet_spinkit:
+    path: flet_packages/flet_spinkit
   flet_video:
     path: flet_packages/flet_video
   flet_webview:
     path: flet_packages/flet_webview
   ruflet_qrcode_scanner:
-    path: ../packages/ruflet_qrcode_scanner
-  flutter_spinkit: ^5.2.2
+    path: flet_packages/ruflet_qrcode_scanner
   flutter_native_splash: ^2.4.7
   mobile_scanner: ^7.1.2
 dependency_overrides:

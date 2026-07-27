@@ -458,6 +458,13 @@ packages:
       relative: true
     source: path
     version: "0.1.0"
+  flet_spinkit:
+    dependency: "direct main"
+    description:
+      path: "flet_packages/flet_spinkit"
+      relative: true
+    source: path
+    version: "0.1.0"
   flet_video:
     dependency: "direct main"
     description:
@@ -627,7 +634,7 @@ packages:
     source: hosted
     version: "4.1.0"
   flutter_spinkit:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: flutter_spinkit
       sha256: "77850df57c00dc218bfe96071d576a8babec24cf58b2ed121c83cca4a2fdce7f"
@@ -1295,7 +1302,7 @@ packages:
   ruflet_qrcode_scanner:
     dependency: "direct main"
     description:
-      path: "../packages/ruflet_qrcode_scanner"
+      path: "flet_packages/ruflet_qrcode_scanner"
       relative: true
     source: path
     version: "0.1.0"

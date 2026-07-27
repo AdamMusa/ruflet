@@ -7,6 +7,7 @@ class Extension extends FletExtension {
   @override
   Widget? createWidget(Key? key, Control control) {
     switch (control.type) {
+      case "RufletSpinKit":
       case "SpinKitRotatingPlain":
       case "SpinKitDoubleBounce":
       case "SpinKitWave":

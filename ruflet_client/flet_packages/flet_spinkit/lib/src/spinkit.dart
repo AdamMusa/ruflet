@@ -14,13 +14,18 @@ class SpinKitControl extends StatefulWidget {
 class _SpinKitControlState extends State<SpinKitControl> {
   @override
   Widget build(BuildContext context) {
-    debugPrint(
-        "SpinKitControl build: ${widget.control.id} (${widget.control.type})");
-
     final color = widget.control.getColor("color", context) ??
         Theme.of(context).primaryColor;
     final size = widget.control.getDouble("size", 50.0)!;
-    final duration = widget.control.getDuration("duration");
+    final isRufletControl = widget.control.type == "RufletSpinKit";
+    final duration = isRufletControl
+        ? Duration(
+            milliseconds: widget.control.getInt("duration", 1200)!,
+          )
+        : widget.control.getDuration("duration");
+    final spinnerType = isRufletControl
+        ? spinkitTypeForVariant(widget.control.getString("variant"))
+        : widget.control.type;
 
     final lineWidth = widget.control.getDouble("line_width");
     final borderWidth = widget.control.getDouble("border_width");
@@ -30,7 +35,7 @@ class _SpinKitControlState extends State<SpinKitControl> {
 
     Widget spinner;
 
-    switch (widget.control.type) {
+    switch (spinnerType) {
       case "SpinKitRotatingPlain":
         spinner = SpinKitRotatingPlain(
           color: color,
@@ -258,4 +263,16 @@ class _SpinKitControlState extends State<SpinKitControl> {
 
     return LayoutControl(control: widget.control, child: spinner);
   }
+}
+
+String spinkitTypeForVariant(String? value) {
+  final words = (value ?? "rotating_circle")
+      .trim()
+      .split(RegExp(r"[^a-zA-Z0-9]+"))
+      .where((word) => word.isNotEmpty);
+  final suffix = words
+      .map((word) =>
+          "${word[0].toUpperCase()}${word.substring(1).toLowerCase()}")
+      .join();
+  return "SpinKit${suffix.isEmpty ? 'RotatingCircle' : suffix}";
 }

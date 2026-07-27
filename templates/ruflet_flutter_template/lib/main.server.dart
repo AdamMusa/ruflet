@@ -25,6 +25,7 @@ import 'package:ruflet_qrcode_scanner/ruflet_qrcode_scanner.dart'
 // --FAT_CLIENT_END--
 import 'package:flet_secure_storage/flet_secure_storage.dart'
     as ruflet_secure_storage;
+import 'package:flet_spinkit/flet_spinkit.dart' as ruflet_spinkit;
 // --FAT_CLIENT_START--
 import 'package:flet_video/flet_video.dart' as ruflet_video;
 // --FAT_CLIENT_END--
@@ -34,7 +35,6 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'connection_probe.dart';
 import 'ruflet_file_picker_service.dart';
-import 'ruflet_spinkit.dart';
 import 'package:flet_webview/flet_webview.dart' as ruflet_webview;
 
 const bool isProduction = bool.fromEnvironment('dart.vm.product');
@@ -106,7 +106,7 @@ Future<void> main() async {
 
   final extensions = <FletExtension>[
     RufletFilePickerExtension(),
-    RufletSpinKitExtension(),
+    ruflet_spinkit.Extension(),
     ruflet_audio_recorder.Extension(),
     ruflet_camera.Extension(),
     ruflet_charts.Extension(),

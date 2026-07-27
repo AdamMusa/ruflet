@@ -60,6 +60,41 @@ class RufletCliTemplatesTest < Minitest::Test
     end
   end
 
+  def test_qrcode_scanner_is_bundled_inside_the_sparse_checkout
+    package_root = repo_file("ruflet_client", "flet_packages/ruflet_qrcode_scanner")
+    pubspec = YAML.safe_load(File.read(File.join(package_root, "pubspec.yaml")), aliases: true)
+    client_pubspec = YAML.safe_load(File.read(repo_file("ruflet_client", "pubspec.yaml")), aliases: true)
+    workflow = File.read(repo_file(".github", "workflows/build-ruflet-android.yml"))
+
+    assert_equal "ruflet_qrcode_scanner", pubspec.fetch("name")
+    assert_equal({ "path" => "../flet" }, pubspec.dig("dependencies", "flet"))
+    assert_equal(
+      { "path" => "flet_packages/ruflet_qrcode_scanner" },
+      client_pubspec.dig("dependencies", "ruflet_qrcode_scanner")
+    )
+    assert_includes workflow, "working-directory: ruflet_client/flet_packages/ruflet_qrcode_scanner"
+    assert_includes workflow, "needs: validate-extensions"
+  end
+
+  def test_spinkit_uses_the_bundled_flet_extension_package
+    client_pubspec = YAML.safe_load(File.read(repo_file("ruflet_client", "pubspec.yaml")), aliases: true)
+    template_pubspec = YAML.safe_load(File.read(repo_file("templates/ruflet_flutter_template", "pubspec.yaml")), aliases: true)
+    client_main = File.read(repo_file("ruflet_client", "lib/main.dart"))
+
+    assert_equal(
+      { "path" => "flet_packages/flet_spinkit" },
+      client_pubspec.dig("dependencies", "flet_spinkit")
+    )
+    refute client_pubspec.dig("dependencies").key?("flutter_spinkit")
+    assert_equal(
+      "ruflet_client/flet_packages/flet_spinkit",
+      template_pubspec.dig("dependencies", "flet_spinkit", "git", "path")
+    )
+    assert_includes client_main, "flet_spinkit.Extension(),"
+    refute_path_exists repo_file("ruflet_client", "lib/ruflet_spinkit.dart")
+    refute_path_exists repo_file("templates/ruflet_flutter_template", "lib/ruflet_spinkit.dart")
+  end
+
   def test_explorer_android_builds_declare_every_service_permission
     expected_permissions = Ruflet::CLI::BuildCommand::ANDROID_SERVICE_PERMISSIONS.values.flatten.uniq
 

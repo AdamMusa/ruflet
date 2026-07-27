@@ -32,7 +32,6 @@ dependencies:
     sdk: flutter
   flutter_web_plugins:
     sdk: flutter
-  flutter_spinkit: ^5.2.2
   file_picker: ^10.3.10
 
   flet:
@@ -110,6 +109,11 @@ dependencies:
       url: https://github.com/flet-dev/flet.git
       path: sdk/python/packages/flet-secure-storage/src/flutter/flet_secure_storage
       ref: 67a9763da3bd2611bbb7626c3a1ec5e9d30fc965
+  flet_spinkit:
+    git:
+      url: https://github.com/AdamMusa/ruflet.git
+      path: ruflet_client/flet_packages/flet_spinkit
+      ref: main
   flet_video:
     git:
       url: https://github.com/flet-dev/flet.git
@@ -123,7 +127,7 @@ dependencies:
   ruflet_qrcode_scanner:
     git:
       url: https://github.com/AdamMusa/ruflet.git
-      path: packages/ruflet_qrcode_scanner
+      path: ruflet_client/flet_packages/ruflet_qrcode_scanner
       ref: main
   ruby_runtime: ^0.0.8
   flutter_native_splash: ^2.4.7
