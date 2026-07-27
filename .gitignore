@@ -1,33 +1,83 @@
-vendor/*
-/build/
+# Operating-system metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+Desktop.ini
 
-# Ruby Bundler local config
-.bundle/
+# Editors and local workspace state
+.claude/
+.idea/
+.ruby-lsp/
 .vscode/
+*.iml
+*.ipr
+*.iws
+*.swp
+*.swo
+*~
 
-# Flutter template generated output
-templates/ruflet_flutter_template/.dart_tool/
-templates/ruflet_flutter_template/.flutter-plugins-dependencies
-templates/ruflet_flutter_template/build/
-templates/ruflet_flutter_template/pubspec.lock
-templates/ruflet_flutter_template/android/.gradle/
-templates/ruflet_flutter_template/android/.kotlin/
-templates/ruflet_flutter_template/android/local.properties
-templates/ruflet_flutter_template/ios/.symlinks/
-templates/ruflet_flutter_template/ios/Pods/
-templates/ruflet_flutter_template/ios/Podfile.lock
-templates/ruflet_flutter_template/macos/Pods/
-templates/ruflet_flutter_template/macos/Podfile.lock
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.p12
+*.mobileprovision
+**/android/key.properties
 
-# Third-party dependencies for ruby_runtime
+# Ruby and Bundler
+.bundle/
+/vendor/
+pkg/
+*.gem
+*.rbc
+
+# Logs, coverage, and temporary runtime files
+*.log
+*.pid
+*.pid.lock
+coverage/
+log/
+tmp/
+hs_err_pid*.log
+replay_pid*.log
+
+# Dart, Flutter, and Pub output
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.fvm/
+**/.pub-cache/
+**/.pub/
+**/build/
+**/coverage/
+**/doc/api/
+**/pubspec_overrides.yaml
+
+# Android generated state
+**/android/.cxx/
+**/android/.gradle/
+**/android/.kotlin/
+**/android/local.properties
+
+# Apple generated state
+**/.symlinks/
+**/DerivedData/
+**/xcuserdata/
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Pods/
+**/macos/Flutter/ephemeral/
+**/macos/Pods/
+*.xcuserstate
+
+# Generated desktop runner state
+**/linux/flutter/ephemeral/
+**/windows/flutter/ephemeral/
+
+# Ruflet-managed dependencies and local applications
 ruby_runtime/third_party/
-ruby_runtime/build/*_mruby/
-ruby_runtime/.dart_tool/
-ruby_runtime/build/
-ruby_runtime/android/.cxx/
-
-# Local demo app
 mruby_runtime_demo/
-
-# Showcase local build output
-showcase/build/
