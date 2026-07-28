@@ -1292,6 +1292,36 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  def test_project_assets_never_embed_credentials
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "credentials"))
+      FileUtils.mkdir_p(File.join(dir, "fastlane"))
+      FileUtils.mkdir_p(File.join(dir, "lib"))
+      File.write(File.join(dir, "credentials", "AuthKey_ABC123.p8"), "secret")
+      File.write(File.join(dir, "fastlane", "Fastfile"), "lane :beta do; end")
+      File.write(File.join(dir, "google-play-service-account.json"), "{}")
+      File.write(File.join(dir, "signing.keystore"), "secret")
+      File.write(File.join(dir, ".env.production"), "TOKEN=abc")
+      File.write(File.join(dir, ".env.example"), "TOKEN=")
+      File.write(File.join(dir, "main.rb"), "puts 1")
+      File.write(File.join(dir, "lib", "app.rb"), "puts 2")
+
+      included = Dir.chdir(dir) { builder.send(:project_asset_relative_paths) }
+
+      assert_includes included, "main.rb"
+      assert_includes included, File.join("lib", "app.rb")
+
+      refute_includes included, File.join("credentials", "AuthKey_ABC123.p8")
+      refute_includes included, File.join("fastlane", "Fastfile")
+      refute_includes included, "google-play-service-account.json"
+      refute_includes included, "signing.keystore"
+      refute_includes included, ".env.production"
+      assert(included.none? { |path| path.end_with?(".p8") }, "no signing key may be embedded")
+    end
+  end
+
   def test_verify_android_generated_assets_warns_when_android_12_splash_is_missing
     builder = DummyBuilder.new
 

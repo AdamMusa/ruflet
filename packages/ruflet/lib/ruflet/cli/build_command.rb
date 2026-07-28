@@ -1808,6 +1808,8 @@ module Ruflet
           .vscode
           build
           coverage
+          credentials
+          fastlane
           log
           node_modules
           pkg
@@ -1820,10 +1822,30 @@ module Ruflet
         end
       end
 
+      # Anything embedded here is readable by anyone who unpacks the shipped
+      # app, so signing keys and local environment files must never be copied
+      # in even when a project keeps them beside its source.
+      SECRET_ASSET_EXTENSIONS = %w[.p8 .p12 .pem .key .jks .keystore .mobileprovision].freeze
+      SECRET_ASSET_BASENAMES = %w[.env .netrc].freeze
+
+      def secret_project_asset?(relative)
+        basename = File.basename(relative)
+        return true if SECRET_ASSET_BASENAMES.include?(basename)
+        return true if basename.start_with?(".env.") && basename != ".env.example"
+        return true if SECRET_ASSET_EXTENSIONS.include?(File.extname(basename).downcase)
+        return true if basename.match?(/\Agoogle-play.*\.json\z/i)
+
+        false
+      end
+
       def include_project_asset_file?(relative)
         basename = File.basename(relative)
         return false if basename == ".DS_Store"
         return false if %w[Gemfile.lock pubspec.lock Podfile.lock package-lock.json yarn.lock pnpm-lock.yaml].include?(basename)
+        if secret_project_asset?(relative)
+          build_note("Excluded #{relative} from the embedded project; it looks like a credential")
+          return false
+        end
         true
       end
 
