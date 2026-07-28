@@ -1008,6 +1008,22 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  def test_build_refuses_a_self_contained_web_target
+    builder = DummyBuilder.new
+    builder.define_singleton_method(:prepare_flutter_client) { |*, **| flunk("must not prepare a client") }
+
+    err = StringIO.new
+    original_stderr = $stderr
+    $stderr = err
+
+    code = builder.command_build(["web", "--self"])
+
+    assert_equal 1, code
+    assert_includes err.string, "--self is not supported for web"
+  ensure
+    $stderr = original_stderr
+  end
+
   def test_apply_build_config_falls_back_to_template_assets_when_custom_files_are_missing
     builder = DummyBuilder.new
 

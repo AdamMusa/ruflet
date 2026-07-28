@@ -83,6 +83,15 @@ module Ruflet
           return 1
         end
 
+        # The embedded Ruby VM is a native plugin with no browser
+        # implementation, so a self-contained web build produces an app that
+        # cannot start. Say so rather than shipping one that hangs.
+        if self_contained && platform == "web"
+          warn "build config error: --self is not supported for web"
+          warn "A web client runs no embedded Ruby; build it with `ruflet build web`."
+          return 1
+        end
+
         ensure_ruflet_build_assets(verbose: !!verbose)
         client_dir = ensure_flutter_client_dir(verbose: !!verbose)
         unless client_dir

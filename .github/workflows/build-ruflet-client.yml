@@ -44,8 +44,47 @@ env:
   EXPLORER_REF: ${{ github.event.inputs.explorer_ref || 'main' }}
 
 jobs:
+  validate-extensions:
+    name: Validate bundled extensions
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout ruflet
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve QR scanner package
+        working-directory: ruflet_client/flet_packages/ruflet_qrcode_scanner
+        run: flutter pub get
+
+      - name: Analyze QR scanner package
+        working-directory: ruflet_client/flet_packages/ruflet_qrcode_scanner
+        run: flutter analyze
+
+      - name: Test QR scanner package
+        working-directory: ruflet_client/flet_packages/ruflet_qrcode_scanner
+        run: flutter test
+
+      - name: Resolve SpinKit package
+        working-directory: ruflet_client/flet_packages/flet_spinkit
+        run: flutter pub get
+
+      - name: Analyze SpinKit package
+        working-directory: ruflet_client/flet_packages/flet_spinkit
+        run: flutter analyze
+
+      - name: Test SpinKit package
+        working-directory: ruflet_client/flet_packages/flet_spinkit
+        run: flutter test
+
   verify-explorer:
     name: Verify Ruflet Explorer
+    needs: validate-extensions
     runs-on: ubuntu-latest
     steps:
       - name: Checkout ruflet
