@@ -113,13 +113,17 @@ module Ruflet
           # deterministically instead of inferring from a single main.rb — the
           # app tree now ships many main.rb files (standalone_apps/*/main.rb).
           build_args += ["--dart-define", "RUFLET_EMBEDDED_PROJECT=#{self_contained_project_name}"]
-        else
-          unless backend_url
-            warn "build config error: backend_url is required for server-driven builds"
-            warn "Set app.backend_url or backend_url in ruflet.yaml"
-            return 1
-          end
+        elsif backend_url
           build_args += ["--dart-define", "RUFLET_BACKEND_URL=#{backend_url}"]
+        elsif platform == "web"
+          # A web client is served from the backend's own origin, so it resolves
+          # the server from its own location. Baking a URL in would pin it to a
+          # single host and port, which a preview client cannot use.
+          build_note("No backend_url configured; the web client will use the origin it is served from")
+        else
+          warn "build config error: backend_url is required for server-driven builds"
+          warn "Set app.backend_url or backend_url in ruflet.yaml"
+          return 1
         end
         build_args << "-v" if verbose
         stage_ios_simulator_ruby_runtime(client_dir, build_args, verbose: !!verbose) if self_contained
