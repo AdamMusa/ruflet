@@ -67,10 +67,7 @@ Ruflet.run do |page|
   page.title = "Ruflet Counter"
 
   count = 0
-  counter = text(
-    value: "0",
-    style: { size: 48, weight: "w700" }
-  )
+  counter = text("0", style: { size: 48, weight: "w700" })
 
   page.add(
     container(
@@ -81,10 +78,7 @@ Ruflet.run do |page|
         spacing: 16,
         horizontal_alignment: "center",
         children: [
-          text(
-            value: "Count every tap",
-            style: { size: 22, weight: "w600" }
-          ),
+          text("Count every tap", style: { size: 22, weight: "w600" }),
           counter,
           button(
             content: "Add one",
@@ -161,11 +155,11 @@ Use the Ruby DSL directly:
 dashboard = column(
   spacing: 12,
   children: [
-    text(value: "Dashboard", style: { size: 28, weight: "w700" }),
+    text("Dashboard", style: { size: 28, weight: "w700" }),
     responsive_row(
       children: [
-        card(content: text(value: "Revenue"), col: { xs: 12, md: 6 }),
-        card(content: text(value: "Orders"), col: { xs: 12, md: 6 })
+        card(content: text("Revenue"), col: { xs: 12, md: 6 }),
+        card(content: text("Orders"), col: { xs: 12, md: 6 })
       ]
     ),
     lottie("assets/success.json", repeat: true)
@@ -186,11 +180,11 @@ page.launch_url("https://example.com")
 saved = alert_dialog(
   open: false,
   modal: true,
-  title: text(value: "Saved"),
-  content: text(value: "Your changes are stored."),
+  title: text("Saved"),
+  content: text("Your changes are stored."),
   actions: [
     text_button(
-      content: text(value: "OK"),
+      content: text("OK"),
       on_click: ->(_event) { page.close_dialog(saved) }
     )
   ]
