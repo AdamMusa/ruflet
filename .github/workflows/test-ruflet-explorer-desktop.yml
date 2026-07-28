@@ -1,8 +1,10 @@
 name: Test Ruflet Explorer Desktop Builds
 
-# Smoke test for self-contained desktop builds: proves the embedded Ruby VM is
-# packaged and linked correctly on Linux and Windows. Ruflet Explorer is the app
-# under test because it is the client we ship.
+# Smoke test for the desktop clients on Linux and Windows, the two platforms the
+# release matrix cannot be checked on locally. Built server-driven, the same way
+# the published clients are: a desktop client is told which server to open at
+# launch and embeds no Ruby, so building it --self here would test something we
+# do not ship.
 
 on:
   workflow_dispatch:
@@ -84,23 +86,20 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Build self-contained Ruflet Explorer on Linux
+      - name: Build Ruflet Explorer for Linux
         if: matrix.target == 'linux'
         working-directory: explorer
         env:
-          RUFLET_RUBY_RUNTIME_PATH: ${{ github.workspace }}/ruby_runtime
           LANG: en_US.UTF-8
           LC_ALL: en_US.UTF-8
-        run: bundle exec ruflet build linux --self
+        run: bundle exec ruflet build linux
 
-      - name: Build self-contained Ruflet Explorer on Windows
+      - name: Build Ruflet Explorer for Windows
         if: matrix.target == 'windows'
         working-directory: explorer
         shell: pwsh
-        env:
-          RUFLET_RUBY_RUNTIME_PATH: ${{ github.workspace }}/ruby_runtime
         run: |
-          bundle exec ruflet build windows --self 2>&1 | Tee-Object -FilePath windows-build.log
+          bundle exec ruflet build windows 2>&1 | Tee-Object -FilePath windows-build.log
           $buildExitCode = $LASTEXITCODE
           if ($buildExitCode -ne 0) {
             $tail = (Get-Content windows-build.log -Tail 30) -join "%0A"
@@ -121,8 +120,10 @@ jobs:
           test -n "$exe" || { echo "No executable in $bundle"; exit 1; }
           echo "Executable: $exe"
 
-          test -f "$bundle/lib/libruflet_vm.so" || { echo "Missing packaged Ruflet VM"; exit 1; }
-          ! ldd "$bundle/lib/libruflet_vm.so" | grep "not found"
+          # A server-driven client links no Ruby VM; check the Flutter runtime
+          # resolved instead.
+          test -f "$bundle/lib/libflutter_linux_gtk.so" || { echo "Missing Flutter runtime"; exit 1; }
+          ! ldd "$exe" | grep "not found"
 
       - name: Verify Windows distribution
         if: matrix.target == 'windows'
@@ -135,8 +136,10 @@ jobs:
           if (-not $exe) { throw "No executable in $bundle" }
           Write-Host "Executable: $($exe.Name)"
 
-          if (!(Test-Path "$bundle/ruflet_vm.dll")) {
-            throw "Missing packaged Ruflet VM DLL"
+          # A server-driven client links no Ruby VM; check the Flutter runtime
+          # shipped instead.
+          if (!(Test-Path "$bundle/flutter_windows.dll")) {
+            throw "Missing Flutter runtime DLL"
           }
 
       - name: Refuse a bundle carrying credentials

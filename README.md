@@ -25,8 +25,9 @@ The same code runs two ways: **server-driven**, where a Ruby process drives the
 client and your edits reload in place, or **self-contained**, where Ruby and your
 app are packaged into the native binary and ship as one.
 
-Ruflet Explorer is the preview client — install it once and every Ruby app you
-write appears on the device, with no rebuild in between.
+[Ruflet Explorer](https://github.com/AdamMusa/ruflet_explorer) is the preview
+client — install it once and every Ruby app you write appears on the device, with
+no rebuild in between. It is itself written in Ruflet.
 
 > [!NOTE]
 > Ruflet is under active pre-1.0 development. APIs can evolve as the framework
@@ -317,33 +318,6 @@ windows:
   icon_size: 48
 ```
 
-What each platform can actually generate is limited by the underlying tools:
-
-| Platform | Splash | Launcher icon |
-| --- | --- | --- |
-| `android`, `ios`, `web` | yes | yes |
-| `macos`, `windows` | no | yes |
-| `linux` | no | no |
-
-A section for a platform that cannot generate an asset is reported during the
-build rather than silently ignored.
-
-Android-only keys, because the OS draws both the splash and the icon itself:
-
-| Key | Effect |
-| --- | --- |
-| `splash_android_12`, `splash_android_12_dark` | Images for the API 31+ system splash; default to the Android splash |
-| `splash_android_12_icon_background_color[_dark]` | Background behind the API 31+ splash icon; defaults to `splash_color` |
-| `splash_fullscreen`, `splash_gravity` | Legacy (pre-API 31) splash behaviour |
-| `adaptive_icon_foreground` | Adaptive icon foreground layer; defaults to the launcher icon |
-| `adaptive_icon_background` | Adaptive icon background, either a color or an image path; defaults to `build.icon_background` |
-| `adaptive_icon_monochrome` | Themed-icon layer for Android 13+ |
-| `min_sdk` | Minimum API level for the generated icon set |
-
-After the generators run, an Android build verifies that `values-v31/styles.xml`,
-`mipmap-anydpi-v26/`, and the manifest icon reference were actually produced, and
-warns when a configured icon or splash did not reach the native project.
-
 ## Build and install
 
 Check the local toolchain first. Ruflet can install and manage a compatible
@@ -424,6 +398,11 @@ updates into Flet-compatible messages. The Flutter client renders the controls
 and sends user events back to Ruby. The same model works with a standalone
 Ruflet server, a Rails host, or the embedded Ruby runtime.
 
+Ruflet renders through the same engine [Flet](https://flet.dev) uses, and speaks
+its wire protocol — which is why a Flet Flutter extension package works here
+unchanged. That foundation is the Flet team's work, and Ruflet would not exist
+without it. Thank you.
+
 ## CLI reference
 
 <details>
@@ -460,6 +439,8 @@ ruflet install [--device DEVICE_ID] [--verbose]
 - `ruby_runtime` — embedded Ruby runtime for self-contained native builds.
 - `ruflet_client` — reusable Flutter client and bundled Flet extension
   packages.
+- [`ruflet_explorer`](https://github.com/AdamMusa/ruflet_explorer) — the preview
+  client, written in Ruflet and built by this repository's release workflow.
 
 </details>
 
