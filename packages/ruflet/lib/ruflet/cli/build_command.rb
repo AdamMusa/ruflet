@@ -784,12 +784,31 @@ module Ruflet
               section["icon_launcher"] || section["icon"] ||
                 build["icon_#{name}"] || assets["icon_#{name}"]
             ),
+            background_image: resolve_asset.call(
+              section["splash_background_image"] || section["background_image"] || assets["splash_background_#{name}"]
+            ),
+            background_image_dark: resolve_asset.call(
+              section["splash_background_image_dark"] || section["background_image_dark"]
+            ),
+            branding: resolve_asset.call(section["splash_branding"] || section["branding"]),
+            branding_dark: resolve_asset.call(section["splash_branding_dark"] || section["branding_dark"]),
             splash_color: section["splash_color"] || splash_color,
             splash_dark_color: section["splash_dark_color"] || section["splash_color_dark"] || splash_dark_color,
             icon_background: section["icon_background"] || icon_background,
             theme_color: section["theme_color"] || theme_color
           }
         end
+
+        splash_background_image = resolve_asset.call(
+          build["splash_background_image"] || assets["splash_background_image"] || build["background_image"]
+        )
+        splash_background_image_dark = resolve_asset.call(
+          build["splash_background_image_dark"] || assets["splash_background_image_dark"]
+        )
+        splash_branding = resolve_asset.call(build["splash_branding"] || assets["splash_branding"])
+        splash_branding_dark = resolve_asset.call(build["splash_branding_dark"] || assets["splash_branding_dark"])
+        splash_branding_mode = build["splash_branding_mode"] || build["branding_mode"]
+        splash_branding_padding = build["splash_branding_bottom_padding"] || build["branding_bottom_padding"]
 
         android = platforms.dig("android", :config)
         android_splash = platforms.dig("android", :splash)
@@ -817,6 +836,9 @@ module Ruflet
           android["icon_background_color"] || android_splash_color
         android_12_icon_background_dark = android["splash_android_12_icon_background_color_dark"] ||
           android["icon_background_color_dark"] || android_splash_dark_color
+        android_12_color = android["splash_android_12_color"] || android["android_12_color"]
+        android_12_color_dark = android["splash_android_12_color_dark"] || android["android_12_color_dark"]
+        android_12_branding = resolve_asset.call(android["splash_android_12_branding"] || android["android_12_branding"])
         adaptive_background_color = android["adaptive_icon_background"] || icon_background
         android_min_sdk = android["min_sdk"] || android["min_sdk_android"] || build["min_sdk_android"]
         android_splash_fullscreen = first_defined(android, "splash_fullscreen", "fullscreen")
@@ -833,12 +855,20 @@ module Ruflet
         copy_asset.call(splash, "splash.png")
         copy_asset.call(splash_dark, "splash_dark.png")
         copy_asset.call(icon, "icon.png")
+        copy_asset.call(splash_background_image, "splash_background.png")
+        copy_asset.call(splash_background_image_dark, "splash_background_dark.png")
+        copy_asset.call(splash_branding, "splash_branding.png")
+        copy_asset.call(splash_branding_dark, "splash_branding_dark.png")
 
         platforms.each do |name, entry|
           support = PLATFORM_ASSET_SUPPORT.fetch(name)
           if support[:splash]
             copy_asset.call(entry[:splash], "splash_#{name}.png")
             copy_asset.call(entry[:splash_dark], "splash_#{name}_dark.png")
+            copy_asset.call(entry[:background_image], "splash_background_#{name}.png")
+            copy_asset.call(entry[:background_image_dark], "splash_background_#{name}_dark.png")
+            copy_asset.call(entry[:branding], "splash_branding_#{name}.png")
+            copy_asset.call(entry[:branding_dark], "splash_branding_#{name}_dark.png")
           elsif entry[:splash] || entry[:splash_dark]
             build_note("#{name} has no splash screen generator; ignoring #{name}.splash_screen")
           end
@@ -973,6 +1003,15 @@ module Ruflet
         update_pubspec_value(pubspec_path, "flutter_native_splash", "color_dark", "\"#{splash_dark_color}\"") if splash_dark_color
 
         if has_splash
+          update_pubspec_value(pubspec_path, "flutter_native_splash", "background_image", "\"assets/splash_background.png\"") if splash_background_image
+          update_pubspec_value(pubspec_path, "flutter_native_splash", "background_image_dark", "\"assets/splash_background_dark.png\"") if splash_background_image_dark
+          update_pubspec_value(pubspec_path, "flutter_native_splash", "branding", "\"assets/splash_branding.png\"") if splash_branding
+          update_pubspec_value(pubspec_path, "flutter_native_splash", "branding_dark", "\"assets/splash_branding_dark.png\"") if splash_branding_dark
+          update_pubspec_value(pubspec_path, "flutter_native_splash", "branding_mode", splash_branding_mode.to_s) if splash_branding_mode
+          update_pubspec_value(pubspec_path, "flutter_native_splash", "branding_bottom_padding", splash_branding_padding.to_s) if splash_branding_padding
+        end
+
+        if has_splash
           # flutter_native_splash only generates for android, ios, and web; each
           # takes the shared keys suffixed with the platform name.
           %w[android ios web].each do |name|
@@ -986,6 +1025,10 @@ module Ruflet
             if entry[:splash_dark_color] && entry[:splash_dark_color] != splash_dark_color
               update_pubspec_value(pubspec_path, "flutter_native_splash", "color_dark_#{name}", "\"#{entry[:splash_dark_color]}\"")
             end
+            update_pubspec_value(pubspec_path, "flutter_native_splash", "background_image_#{name}", "\"assets/splash_background_#{name}.png\"") if entry[:background_image]
+            update_pubspec_value(pubspec_path, "flutter_native_splash", "background_image_dark_#{name}", "\"assets/splash_background_#{name}_dark.png\"") if entry[:background_image_dark]
+            update_pubspec_value(pubspec_path, "flutter_native_splash", "branding_#{name}", "\"assets/splash_branding_#{name}.png\"") if entry[:branding]
+            update_pubspec_value(pubspec_path, "flutter_native_splash", "branding_dark_#{name}", "\"assets/splash_branding_#{name}_dark.png\"") if entry[:branding_dark]
           end
 
           if (ios_content_mode = platforms.dig("ios", :config)["content_mode"] || platforms.dig("ios", :config)["ios_content_mode"])
@@ -1027,6 +1070,15 @@ module Ruflet
             update_pubspec_nested_value(
               pubspec_path, "flutter_native_splash", "android_12",
               "icon_background_color_dark", "\"#{android_12_icon_background_dark}\""
+            )
+          end
+          update_pubspec_nested_value(pubspec_path, "flutter_native_splash", "android_12", "color", "\"#{android_12_color}\"") if android_12_color
+          update_pubspec_nested_value(pubspec_path, "flutter_native_splash", "android_12", "color_dark", "\"#{android_12_color_dark}\"") if android_12_color_dark
+          if android_12_branding
+            copy_asset.call(android_12_branding, "splash_android_12_branding.png")
+            update_pubspec_nested_value(
+              pubspec_path, "flutter_native_splash", "android_12",
+              "branding", "\"assets/splash_android_12_branding.png\""
             )
           end
         end

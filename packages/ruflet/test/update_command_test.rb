@@ -1236,6 +1236,62 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  def test_apply_build_config_writes_splash_background_and_branding_keys
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "ruflet_client")
+      FileUtils.mkdir_p(File.join(client_dir, "assets"))
+      File.write(File.join(client_dir, "assets", "splash.png"), "png")
+      File.write(File.join(client_dir, "assets", "icon.png"), "png")
+      File.write(File.join(client_dir, "pubspec.yaml"), "flutter_native_splash:\n  image: assets/splash.png\n")
+
+      project_assets = File.join(dir, "assets")
+      FileUtils.mkdir_p(project_assets)
+      %w[splash.png bg.png brand.png a12brand.png].each do |name|
+        File.write(File.join(project_assets, name), "png")
+      end
+
+      Dir.chdir(dir) do
+        builder.send(
+          :apply_build_config,
+          client_dir,
+          {
+            "assets" => { "dir" => "assets", "splash_screen" => "assets/splash.png" },
+            "build" => {
+              "splash_background_image" => "assets/bg.png",
+              "splash_branding" => "assets/brand.png",
+              "splash_branding_mode" => "bottom",
+              "splash_branding_bottom_padding" => 24
+            },
+            "android" => {
+              "splash_background_image" => "assets/bg.png",
+              "splash_branding" => "assets/brand.png",
+              "splash_android_12_color" => "#101010",
+              "splash_android_12_color_dark" => "#000000",
+              "splash_android_12_branding" => "assets/a12brand.png"
+            }
+          }
+        )
+      end
+
+      pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
+
+      assert_match(%r{^\s{2}background_image: "assets/splash_background\.png"$}, pubspec)
+      assert_match(%r{^\s{2}branding: "assets/splash_branding\.png"$}, pubspec)
+      assert_match(/^\s{2}branding_mode: bottom$/, pubspec)
+      assert_match(/^\s{2}branding_bottom_padding: 24$/, pubspec)
+      assert_match(%r{^\s{2}background_image_android: "assets/splash_background_android\.png"$}, pubspec)
+      assert_match(%r{^\s{2}branding_android: "assets/splash_branding_android\.png"$}, pubspec)
+      assert_match(/^\s{4}color: "#101010"$/, pubspec)
+      assert_match(/^\s{4}color_dark: "#000000"$/, pubspec)
+      assert_match(%r{^\s{4}branding: "assets/splash_android_12_branding\.png"$}, pubspec)
+
+      assert File.file?(File.join(client_dir, "assets", "splash_background.png"))
+      assert File.file?(File.join(client_dir, "assets", "splash_branding_android.png"))
+    end
+  end
+
   def test_verify_android_generated_assets_warns_when_android_12_splash_is_missing
     builder = DummyBuilder.new
 
