@@ -398,10 +398,10 @@ updates into Flet-compatible messages. The Flutter client renders the controls
 and sends user events back to Ruby. The same model works with a standalone
 Ruflet server, a Rails host, or the embedded Ruby runtime.
 
-Ruflet renders through the same engine [Flet](https://flet.dev) uses, and speaks
-its wire protocol — which is why a Flet Flutter extension package works here
-unchanged. That foundation is the Flet team's work, and Ruflet would not exist
-without it. Thank you.
+Ruflet renders through the same engine [Flet](https://github.com/flet-dev/flet)
+uses, and speaks its wire protocol — which is why a Flet Flutter extension
+package works here unchanged. That foundation is the Flet team's work, and Ruflet
+would not exist without it. Thank you.
 
 ## CLI reference
 
