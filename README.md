@@ -437,8 +437,6 @@ ruflet install [--device DEVICE_ID] [--verbose]
 - [`ruflet_rails`](packages/ruflet_rails/README.md) — Rails mounting,
   generators, native builds, and WebView integration.
 - `ruby_runtime` — embedded Ruby runtime for self-contained native builds.
-- `ruflet_client` — reusable Flutter client and bundled Flet extension
-  packages.
 - [`ruflet_explorer`](https://github.com/AdamMusa/ruflet_explorer) — the preview
   client, written in Ruflet and built by this repository's release workflow.
 
