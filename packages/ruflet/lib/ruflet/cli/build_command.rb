@@ -1708,7 +1708,10 @@ module Ruflet
           "lib/connection_probe_io.dart",
           "lib/connection_probe_stub.dart",
           "ios/Podfile",
-          "windows/CMakeLists.txt"
+          "windows/CMakeLists.txt",
+          # Release signing lives here; an existing client would otherwise keep
+          # signing release builds with the debug key.
+          "android/app/build.gradle.kts"
         ]
 
         managed_files.each do |relative_path|
