@@ -181,9 +181,26 @@ URLs, storage paths, screenshots, camera access, haptics, and other services.
 
 ```ruby
 page.go("/settings", tab: "profile")
-page.open(alert_dialog(title: text(value: "Saved")))
 page.launch_url("https://example.com")
+
+saved = alert_dialog(
+  open: false,
+  modal: true,
+  title: text(value: "Saved"),
+  content: text(value: "Your changes are stored."),
+  actions: [
+    text_button(
+      content: text(value: "OK"),
+      on_click: ->(_event) { page.close_dialog(saved) }
+    )
+  ]
+)
+
+page.show_dialog(saved)
 ```
+
+A dialog is an ordinary control: build it once, keep the reference, and let
+`page` mount and dismiss it.
 
 ### Extensions that stay typed in Ruby
 
