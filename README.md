@@ -11,17 +11,25 @@
 <p align="center">
   <a href="https://rubygems.org/gems/ruflet"><img src="https://img.shields.io/gem/v/ruflet.svg" alt="RubyGems version"></a>
   <img src="https://img.shields.io/badge/Ruby-3.1%2B-CC342D?logo=ruby&logoColor=white" alt="Ruby 3.1 or newer">
-  <a href="https://github.com/AdamMusa/ruflet/actions/workflows/build-ruflet-android.yml"><img src="https://github.com/AdamMusa/ruflet/actions/workflows/build-ruflet-android.yml/badge.svg" alt="Ruflet client builds"></a>
+  <a href="https://github.com/AdamMusa/ruflet/actions/workflows/build-ruflet-client.yml"><img src="https://github.com/AdamMusa/ruflet/actions/workflows/build-ruflet-client.yml/badge.svg" alt="Ruflet client builds"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
 </p>
 
-Ruflet is a Ruby-first cross-platform UI framework. Write controls, events,
-state, navigation, and device integrations in Ruby while Flutter renders the
-application on Android, iOS, macOS, Windows, Linux, and the web.
+Ruflet is a Ruby-first cross-platform UI framework. You write the controls,
+events, state, navigation, and device integrations in Ruby; Flutter renders them
+as a real native application on Android, iOS, macOS, Windows, Linux, and the web.
 
-Develop against a live Ruby backend with fast reloads, or package Ruby and the
-application into a self-contained native build. No Dart, Kotlin, Swift,
-JavaScript, or platform-specific UI code is required in your application.
+There is no Dart, Kotlin, Swift, or JavaScript in your application — and no
+platform-specific UI code to keep in sync across six targets.
+
+Two ways to run the same code. **Server-driven**, where a Ruby process drives the
+client over a socket and your edits reload in place — the fast loop you develop
+in. Or **self-contained**, where Ruby and your application are packaged into the
+native binary and ship as one app, with no server to run.
+
+Ruflet Explorer is the preview client: install it once and every Ruby app you
+write appears on the device, no rebuild in between. It is itself a Ruflet app,
+which makes it the framework's hardest test.
 
 > [!NOTE]
 > Ruflet is under active pre-1.0 development. APIs can evolve as the framework
@@ -259,17 +267,85 @@ extensions:
 assets:
   dir: assets
   splash_screen: assets/splash.png
-  icon_launcher: assets/icon.png
-
-build:
   splash_color: "#FFFFFF"
   splash_dark_color: "#0B0B0B"
+  icon_launcher: assets/icon.png
   icon_background: "#FFFFFF"
-  theme_color: "#FFFFFF"
+  theme_color: "#6750A4"
 ```
 
-`backend_url` is required for server-driven production builds. It is not
-required when building with `--self`.
+`assets` holds the images and the colours that style them. Every key is also
+accepted under `build`, which older projects use, and under a platform section
+that overrides it — see [Per-platform icon and splash](#per-platform-icon-and-splash).
+
+`backend_url` is required for server-driven production builds, and ignored when
+building with `--self`. Clients that are told which server to use at launch may
+omit it: a web client resolves the origin it is served from, and a desktop
+client takes the URL its launcher passes. Baking one in would pin them to a
+single host and port.
+
+### Per-platform icon and splash
+
+Every platform has its own section using the same key names — `splash_screen`,
+`splash_dark`, `splash_color`, `splash_dark_color`, and `icon_launcher` — falling
+back to the shared `assets` and `build` values when a key is not overridden. The
+same keys are also accepted under `build.<platform>` and `assets.<platform>`.
+
+```yaml
+android:
+  splash_color: "#FFFFFF"
+  splash_dark_color: "#0B0B0B"
+  splash_fullscreen: true
+  splash_android_12_icon_background_color: "#FFFFFF"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: assets/icon_foreground.png
+  min_sdk: 21
+
+ios:
+  splash_screen: assets/splash_ios.png
+  icon_launcher: assets/icon_ios.png
+  remove_alpha: true
+  content_mode: scaleAspectFit
+
+web:
+  icon_launcher: assets/icon_web.png
+  icon_background: "#FFFFFF"
+  theme_color: "#6750A4"
+
+macos:
+  icon_launcher: assets/icon_macos.png
+
+windows:
+  icon_launcher: assets/icon_windows.ico
+  icon_size: 48
+```
+
+What each platform can actually generate is limited by the underlying tools:
+
+| Platform | Splash | Launcher icon |
+| --- | --- | --- |
+| `android`, `ios`, `web` | yes | yes |
+| `macos`, `windows` | no | yes |
+| `linux` | no | no |
+
+A section for a platform that cannot generate an asset is reported during the
+build rather than silently ignored.
+
+Android-only keys, because the OS draws both the splash and the icon itself:
+
+| Key | Effect |
+| --- | --- |
+| `splash_android_12`, `splash_android_12_dark` | Images for the API 31+ system splash; default to the Android splash |
+| `splash_android_12_icon_background_color[_dark]` | Background behind the API 31+ splash icon; defaults to `splash_color` |
+| `splash_fullscreen`, `splash_gravity` | Legacy (pre-API 31) splash behaviour |
+| `adaptive_icon_foreground` | Adaptive icon foreground layer; defaults to the launcher icon |
+| `adaptive_icon_background` | Adaptive icon background, either a color or an image path; defaults to `build.icon_background` |
+| `adaptive_icon_monochrome` | Themed-icon layer for Android 13+ |
+| `min_sdk` | Minimum API level for the generated icon set |
+
+After the generators run, an Android build verifies that `values-v31/styles.xml`,
+`mipmap-anydpi-v26/`, and the manifest icon reference were actually produced, and
+warns when a configured icon or splash did not reach the native project.
 
 ## Build and install
 

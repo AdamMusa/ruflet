@@ -53,6 +53,20 @@ module Ruflet
         "location" => "NSLocationWhenInUseUsageDescription",
         "motion" => "NSMotionUsageDescription"
       }.freeze
+      # Clients that are told which server to use at launch rather than at build
+      # time, so they may be built without a configured backend_url.
+      RUNTIME_RESOLVED_BACKEND_PLATFORMS = %w[web macos windows linux].freeze
+      # What the underlying generators can actually produce per platform:
+      # flutter_native_splash covers android/ios/web, flutter_launcher_icons
+      # covers android/ios/web/windows/macos. Linux has neither.
+      PLATFORM_ASSET_SUPPORT = {
+        "android" => { splash: true, icon: true },
+        "ios" => { splash: true, icon: true },
+        "web" => { splash: true, icon: true },
+        "macos" => { splash: false, icon: true },
+        "windows" => { splash: false, icon: true },
+        "linux" => { splash: false, icon: false }
+      }.freeze
 
       def command_build(args)
         self_contained = args.delete("--self")
@@ -66,6 +80,15 @@ module Ruflet
         flutter_cmd = flutter_build_command(platform)
         unless flutter_cmd
           warn "Unsupported build target: #{platform}"
+          return 1
+        end
+
+        # The embedded Ruby VM is a native plugin with no browser
+        # implementation, so a self-contained web build produces an app that
+        # cannot start. Say so rather than shipping one that hangs.
+        if self_contained && platform == "web"
+          warn "build config error: --self is not supported for web"
+          warn "A web client runs no embedded Ruby; build it with `ruflet build web`."
           return 1
         end
 
@@ -102,15 +125,21 @@ module Ruflet
           # deterministically instead of inferring from a single main.rb — the
           # app tree now ships many main.rb files (standalone_apps/*/main.rb).
           build_args += ["--dart-define", "RUFLET_EMBEDDED_PROJECT=#{self_contained_project_name}"]
-        else
-          unless backend_url
-            warn "build config error: backend_url is required for server-driven builds"
-            warn "Set app.backend_url or backend_url in ruflet.yaml"
-            return 1
-          end
+        elsif backend_url
           build_args += ["--dart-define", "RUFLET_BACKEND_URL=#{backend_url}"]
+        elsif RUNTIME_RESOLVED_BACKEND_PLATFORMS.include?(platform)
+          # These clients learn their server at launch: a web client from the
+          # origin it is served from, a desktop client from the URL the launcher
+          # passes. Baking one in would pin them to a single host and port,
+          # which a preview client cannot use.
+          build_note("No backend_url configured; the #{platform} client will resolve its server at launch")
+        else
+          warn "build config error: backend_url is required for server-driven builds"
+          warn "Set app.backend_url or backend_url in ruflet.yaml"
+          return 1
         end
         build_args << "-v" if verbose
+        stage_ios_simulator_ruby_runtime(client_dir, build_args, verbose: !!verbose) if self_contained
 
         build_log(verbose, "mode=#{self_contained ? 'self' : 'server'}")
         build_log(verbose, "client_dir=#{client_dir}")
@@ -456,7 +485,58 @@ module Ruflet
           end
         end
 
+        verify_android_generated_assets(client_dir, asset_flags, platform, verbose: verbose)
+
         true
+      end
+
+      # The generators can succeed while silently skipping Android output, which
+      # ships a build with the stock Flutter icon and splash. Confirm the native
+      # resources that ruflet.yaml asked for are actually on disk.
+      def verify_android_generated_assets(client_dir, asset_flags, platform, verbose: false)
+        return true unless %w[apk android aab appbundle].include?(platform.to_s)
+
+        res_dir = File.join(client_dir, "android", "app", "src", "main", "res")
+        return true unless File.directory?(res_dir)
+
+        ok = true
+
+        if asset_flags[:has_splash]
+          launch_background = File.join(res_dir, "drawable", "launch_background.xml")
+          if !File.file?(launch_background) || !read_text_file(launch_background).include?("splash")
+            warn "Android splash screen was not generated in res/drawable/launch_background.xml"
+            ok = false
+          end
+
+          styles_v31 = File.join(res_dir, "values-v31", "styles.xml")
+          if !File.file?(styles_v31) || !read_text_file(styles_v31).include?("windowSplashScreenBackground")
+            warn "Android 12+ splash screen is missing from res/values-v31/styles.xml; " \
+                 "devices on Android 12 and newer will show the system default splash"
+            ok = false
+          else
+            build_log(verbose, "android 12+ splash present in values-v31/styles.xml")
+          end
+        end
+
+        if asset_flags[:has_icon]
+          adaptive_icon = File.join(res_dir, "mipmap-anydpi-v26", "launcher_icon.xml")
+          if File.file?(adaptive_icon)
+            build_log(verbose, "adaptive launcher icon present in mipmap-anydpi-v26")
+          else
+            warn "Android adaptive launcher icon was not generated in res/mipmap-anydpi-v26/; " \
+                 "set android.adaptive_icon_foreground and android.adaptive_icon_background in ruflet.yaml"
+            ok = false
+          end
+
+          manifest = File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")
+          if File.file?(manifest) && !read_text_file(manifest).include?("@mipmap/launcher_icon")
+            warn "AndroidManifest.xml does not reference @mipmap/launcher_icon; the configured launcher icon is unused"
+            ok = false
+          end
+        end
+
+        build_note("Android launcher icon and splash resources verified") if ok && (asset_flags[:has_icon] || asset_flags[:has_splash])
+        ok
       end
 
       def ensure_flutter_platform_artifacts(client_dir, platform, env, flutter, verbose: false)
@@ -503,6 +583,50 @@ module Ruflet
         else
           true
         end
+      end
+
+      # CocoaPods can incorrectly treat the static-library XCFramework copy
+      # phase as up to date after Ruflet clears Debug-iphonesimulator. The
+      # Runner then links with -lruflet_vm while the selected simulator slice
+      # is absent. Stage that deterministic slice before Flutter invokes
+      # Xcode; CocoaPods may still copy over it normally.
+      def stage_ios_simulator_ruby_runtime(client_dir, build_args, verbose: false)
+        return true unless build_args.include?("ios")
+        return true unless build_args.include?("--simulator")
+
+        runtime_root = explicit_local_ruby_runtime_path || source_checkout_ruby_runtime_path
+        return true unless runtime_root
+
+        source = File.join(
+          runtime_root,
+          "ios",
+          "Frameworks",
+          "RufletVM.xcframework",
+          "ios-arm64_x86_64-simulator"
+        )
+        library = File.join(source, "libruflet_vm.a")
+        return true unless File.file?(library)
+
+        destination = File.join(
+          client_dir,
+          "build",
+          "ios",
+          "Debug-iphonesimulator",
+          "XCFrameworkIntermediates",
+          "ruby_runtime"
+        )
+        FileUtils.mkdir_p(destination)
+        FileUtils.cp(library, File.join(destination, "libruflet_vm.a"))
+
+        headers = File.join(source, "Headers")
+        if Dir.exist?(headers)
+          destination_headers = File.join(destination, "Headers")
+          FileUtils.rm_rf(destination_headers)
+          FileUtils.cp_r(headers, destination_headers)
+        end
+
+        build_log(verbose, "staged iOS simulator Ruflet VM at #{destination}")
+        true
       end
 
       def ensure_cocoapods_install(client_dir, platform_dir, env, verbose: false)
@@ -559,7 +683,7 @@ module Ruflet
         shim_dir = File.join(client_dir, ".ruflet", "bin")
         FileUtils.mkdir_p(shim_dir)
         shim_path = File.join(shim_dir, "pod")
-        File.write(
+        write_text_file(
           shim_path,
           <<~SH
             #!/bin/sh
@@ -610,11 +734,11 @@ module Ruflet
           config_path = alt if File.file?(alt)
         end
         config_exists = File.file?(config_path)
-        config = config_exists ? YAML.safe_load(File.read(config_path), aliases: true) || {} : {}
+        config = config_exists ? YAML.safe_load(read_text_file(config_path), aliases: true) || {} : {}
         config_dir = File.dirname(File.expand_path(config_path))
         services_path = File.join(config_dir, "services.yaml")
         if File.file?(services_path)
-          service_config = YAML.safe_load(File.read(services_path), aliases: true) || {}
+          service_config = YAML.safe_load(read_text_file(services_path), aliases: true) || {}
           if service_config["app"].is_a?(Hash)
             config["app"] = (config["app"].is_a?(Hash) ? config["app"] : {}).merge(service_config["app"])
             config["_app_identity_source"] = "services.yaml"
@@ -654,16 +778,93 @@ module Ruflet
         splash = resolve_asset.call(build["splash_screen"] || assets["splash_screen"] || config["splash_screen"])
         splash_dark = resolve_asset.call(build["splash_dark"] || build["splash_dark_image"] || assets["splash_dark"])
         icon = resolve_asset.call(build["icon_launcher"] || assets["icon_launcher"] || config["icon_launcher"])
-        icon_android = resolve_asset.call(build["icon_android"] || assets["icon_android"])
-        icon_ios = resolve_asset.call(build["icon_ios"] || assets["icon_ios"])
-        icon_web = resolve_asset.call(build["icon_web"] || assets["icon_web"])
-        icon_windows = resolve_asset.call(build["icon_windows"] || assets["icon_windows"])
-        icon_macos = resolve_asset.call(build["icon_macos"] || assets["icon_macos"])
 
-        splash_color = build["splash_color"]
-        splash_dark_color = build["splash_dark_color"] || build["splash_color_dark"]
-        icon_background = build["icon_background"]
-        theme_color = build["theme_color"]
+        # Splash and icon appearance belongs with the assets it styles. `build`
+        # is still read first so existing projects keep working.
+        splash_color = build["splash_color"] || assets["splash_color"]
+        splash_dark_color = build["splash_dark_color"] || build["splash_color_dark"] ||
+          assets["splash_dark_color"] || assets["splash_color_dark"]
+        icon_background = build["icon_background"] || assets["icon_background"]
+        theme_color = build["theme_color"] || assets["theme_color"]
+
+        # Every platform gets its own section with the same key names, falling
+        # back to the shared assets/build values when a key is not overridden.
+        platforms = PLATFORM_ASSET_SUPPORT.keys.each_with_object({}) do |name, resolved|
+          section = platform_build_config(config, name)
+          resolved[name] = {
+            config: section,
+            splash: resolve_asset.call(
+              section["splash_screen"] || section["splash_image"] ||
+                build["splash_#{name}"] || assets["splash_#{name}"]
+            ),
+            splash_dark: resolve_asset.call(
+              section["splash_dark"] || section["splash_dark_image"] || assets["splash_#{name}_dark"]
+            ),
+            icon: resolve_asset.call(
+              section["icon_launcher"] || section["icon"] ||
+                build["icon_#{name}"] || assets["icon_#{name}"]
+            ),
+            background_image: resolve_asset.call(
+              section["splash_background_image"] || section["background_image"] || assets["splash_background_#{name}"]
+            ),
+            background_image_dark: resolve_asset.call(
+              section["splash_background_image_dark"] || section["background_image_dark"]
+            ),
+            branding: resolve_asset.call(section["splash_branding"] || section["branding"]),
+            branding_dark: resolve_asset.call(section["splash_branding_dark"] || section["branding_dark"]),
+            splash_color: section["splash_color"] || splash_color,
+            splash_dark_color: section["splash_dark_color"] || section["splash_color_dark"] || splash_dark_color,
+            icon_background: section["icon_background"] || icon_background,
+            theme_color: section["theme_color"] || theme_color
+          }
+        end
+
+        splash_background_image = resolve_asset.call(
+          build["splash_background_image"] || assets["splash_background_image"] || build["background_image"]
+        )
+        splash_background_image_dark = resolve_asset.call(
+          build["splash_background_image_dark"] || assets["splash_background_image_dark"]
+        )
+        splash_branding = resolve_asset.call(build["splash_branding"] || assets["splash_branding"])
+        splash_branding_dark = resolve_asset.call(build["splash_branding_dark"] || assets["splash_branding_dark"])
+        splash_branding_mode = build["splash_branding_mode"] || build["branding_mode"] ||
+          assets["splash_branding_mode"] || assets["branding_mode"]
+        splash_branding_padding = build["splash_branding_bottom_padding"] || build["branding_bottom_padding"] ||
+          assets["splash_branding_bottom_padding"] || assets["branding_bottom_padding"]
+
+        android = platforms.dig("android", :config)
+        android_splash = platforms.dig("android", :splash)
+        android_splash_dark = platforms.dig("android", :splash_dark)
+        android_12_splash = resolve_asset.call(
+          android["splash_android_12"] || android["android_12_image"] || assets["splash_android_12"]
+        )
+        android_12_splash_dark = resolve_asset.call(
+          android["splash_android_12_dark"] || android["android_12_image_dark"] || assets["splash_android_12_dark"]
+        )
+        adaptive_foreground = resolve_asset.call(
+          android["adaptive_icon_foreground"] || android["icon_foreground"] ||
+            assets["icon_adaptive_foreground"] || assets["icon_foreground"]
+        )
+        adaptive_background_image = resolve_asset.call(
+          android["adaptive_icon_background_image"] || assets["icon_adaptive_background_image"]
+        )
+        adaptive_monochrome = resolve_asset.call(
+          android["adaptive_icon_monochrome"] || android["icon_monochrome"] || assets["icon_adaptive_monochrome"]
+        )
+
+        android_splash_color = platforms.dig("android", :splash_color)
+        android_splash_dark_color = platforms.dig("android", :splash_dark_color)
+        android_12_icon_background = android["splash_android_12_icon_background_color"] ||
+          android["icon_background_color"] || android_splash_color
+        android_12_icon_background_dark = android["splash_android_12_icon_background_color_dark"] ||
+          android["icon_background_color_dark"] || android_splash_dark_color
+        android_12_color = android["splash_android_12_color"] || android["android_12_color"]
+        android_12_color_dark = android["splash_android_12_color_dark"] || android["android_12_color_dark"]
+        android_12_branding = resolve_asset.call(android["splash_android_12_branding"] || android["android_12_branding"])
+        adaptive_background_color = android["adaptive_icon_background"] || icon_background
+        android_min_sdk = android["min_sdk"] || android["min_sdk_android"] || build["min_sdk_android"]
+        android_splash_fullscreen = first_defined(android, "splash_fullscreen", "fullscreen")
+        android_splash_gravity = android["splash_gravity"] || android["android_gravity"]
 
         assets_dir = File.join(client_dir, "assets")
         FileUtils.mkdir_p(assets_dir)
@@ -676,14 +877,43 @@ module Ruflet
         copy_asset.call(splash, "splash.png")
         copy_asset.call(splash_dark, "splash_dark.png")
         copy_asset.call(icon, "icon.png")
-        copy_asset.call(icon_android, "icon_android.png")
-        copy_asset.call(icon_ios, "icon_ios.png")
-        copy_asset.call(icon_web, "icon_web.png")
-        if icon_windows
-          ext = File.extname(icon_windows).downcase
-          copy_asset.call(icon_windows, ext == ".ico" ? "icon_windows.ico" : "icon_windows.png")
+        copy_asset.call(splash_background_image, "splash_background.png")
+        copy_asset.call(splash_background_image_dark, "splash_background_dark.png")
+        copy_asset.call(splash_branding, "splash_branding.png")
+        copy_asset.call(splash_branding_dark, "splash_branding_dark.png")
+
+        platforms.each do |name, entry|
+          support = PLATFORM_ASSET_SUPPORT.fetch(name)
+          if support[:splash]
+            copy_asset.call(entry[:splash], "splash_#{name}.png")
+            copy_asset.call(entry[:splash_dark], "splash_#{name}_dark.png")
+            copy_asset.call(entry[:background_image], "splash_background_#{name}.png")
+            copy_asset.call(entry[:background_image_dark], "splash_background_#{name}_dark.png")
+            copy_asset.call(entry[:branding], "splash_branding_#{name}.png")
+            copy_asset.call(entry[:branding_dark], "splash_branding_#{name}_dark.png")
+          elsif entry[:splash] || entry[:splash_dark]
+            build_note("#{name} has no splash screen generator; ignoring #{name}.splash_screen")
+          end
+
+          next unless entry[:icon]
+
+          unless support[:icon]
+            build_note("#{name} has no launcher icon generator; ignoring #{name}.icon_launcher")
+            next
+          end
+
+          if name == "windows" && File.extname(entry[:icon]).downcase == ".ico"
+            copy_asset.call(entry[:icon], "icon_windows.ico")
+          else
+            copy_asset.call(entry[:icon], "icon_#{name}.png")
+          end
         end
-        copy_asset.call(icon_macos, "icon_macos.png")
+
+        copy_asset.call(android_12_splash, "splash_android_12.png")
+        copy_asset.call(android_12_splash_dark, "splash_android_12_dark.png")
+        copy_asset.call(adaptive_foreground, "icon_foreground.png")
+        copy_asset.call(adaptive_background_image, "icon_background.png")
+        copy_asset.call(adaptive_monochrome, "icon_monochrome.png")
 
         default_splash = File.file?(File.join(assets_dir, "splash.png"))
         default_icon = File.file?(File.join(assets_dir, "icon.png"))
@@ -708,41 +938,233 @@ module Ruflet
           end
         end
 
-        has_splash = !splash.nil? || default_splash
-        has_icon = !icon.nil? || default_icon
+        # A project may configure nothing shared and declare everything under the
+        # platform sections, so a platform asset alone has to run the generators.
+        platform_splash = platforms.any? { |name, entry| PLATFORM_ASSET_SUPPORT.fetch(name)[:splash] && entry[:splash] }
+        platform_icon = platforms.any? { |name, entry| PLATFORM_ASSET_SUPPORT.fetch(name)[:icon] && entry[:icon] }
+
+        platforms.each do |name, entry|
+          support = PLATFORM_ASSET_SUPPORT.fetch(name)
+          if support[:splash] && entry[:splash].nil? && key_defined?(entry[:config], "splash_screen")
+            build_note("#{name}.splash_screen was set but the file was not found")
+          end
+          if support[:icon] && entry[:icon].nil? && key_defined?(entry[:config], "icon_launcher")
+            build_note("#{name}.icon_launcher was set but the file was not found")
+          end
+        end
+
+        shared_splash_asset = !splash.nil? || default_splash
+        shared_icon_asset = !icon.nil? || default_icon
+        has_splash = shared_splash_asset || platform_splash
+        has_icon = shared_icon_asset || platform_icon
+
+        # Fall back to whatever Android configured when nothing is shared.
+        effective_icon_background = icon_background || platforms.dig("android", :icon_background)
+        effective_theme_color = theme_color || platforms.dig("android", :theme_color)
 
         pubspec_path = File.join(client_dir, "pubspec.yaml")
         unless File.file?(pubspec_path)
           return { has_icon: has_icon, has_splash: has_splash, error: nil }
         end
 
-        if has_icon
-          update_pubspec_value(pubspec_path, "flutter_launcher_icons", "image_path", "\"assets/icon.png\"", multiple: true)
-        end
-        update_pubspec_value(pubspec_path, "flutter_launcher_icons", "image_path_android", "\"assets/icon_android.png\"", multiple: true) if icon_android
-        update_pubspec_value(pubspec_path, "flutter_launcher_icons", "image_path_ios", "\"assets/icon_ios.png\"", multiple: true) if icon_ios
-        update_pubspec_value(pubspec_path, "flutter_launcher_icons", "image_path_web", "\"assets/icon_web.png\"", multiple: true) if icon_web
-        if icon_windows
-          ext = File.extname(icon_windows).downcase
-          value = ext == ".ico" ? "\"assets/icon_windows.ico\"" : "\"assets/icon_windows.png\""
-          update_pubspec_value(pubspec_path, "flutter_launcher_icons", "image_path_windows", value, multiple: true)
-        end
-        update_pubspec_value(pubspec_path, "flutter_launcher_icons", "image_path_macos", "\"assets/icon_macos.png\"", multiple: true) if icon_macos
-        update_pubspec_value(pubspec_path, "flutter_launcher_icons", "background_color", "\"#{icon_background}\"") if icon_background
-        update_pubspec_value(pubspec_path, "flutter_launcher_icons", "theme_color", "\"#{theme_color}\"") if theme_color
+        ensure_pubspec_block(pubspec_path, "flutter_launcher_icons") if has_icon
+        ensure_pubspec_block(pubspec_path, "flutter_native_splash") if has_splash
 
-        update_pubspec_value(pubspec_path, "flutter_native_splash", "image", "\"assets/splash.png\"") if has_splash
+        if has_icon
+          if shared_icon_asset
+            update_pubspec_value(pubspec_path, "flutter_launcher_icons", "image_path", "\"assets/icon.png\"", multiple: true)
+          end
+          # Android 8+ renders adaptive icons. Without these keys flutter_launcher_icons
+          # never writes mipmap-anydpi-v26/, and the launcher falls back to the legacy
+          # bitmap, ignoring icon_background entirely.
+          update_pubspec_value(pubspec_path, "flutter_launcher_icons", "android", "launcher_icon", multiple: true)
+          adaptive_foreground_path =
+            if adaptive_foreground then "assets/icon_foreground.png"
+            elsif platforms.dig("android", :icon) then "assets/icon_android.png"
+            else "assets/icon.png"
+            end
+          update_pubspec_value(
+            pubspec_path, "flutter_launcher_icons", "adaptive_icon_foreground",
+            "\"#{adaptive_foreground_path}\"", multiple: true
+          )
+          adaptive_background_value =
+            if adaptive_background_image
+              "\"assets/icon_background.png\""
+            elsif adaptive_background_color
+              "\"#{adaptive_background_color}\""
+            end
+          if adaptive_background_value
+            update_pubspec_value(
+              pubspec_path, "flutter_launcher_icons", "adaptive_icon_background",
+              adaptive_background_value, multiple: true
+            )
+          end
+          if adaptive_monochrome
+            update_pubspec_value(
+              pubspec_path, "flutter_launcher_icons", "adaptive_icon_monochrome",
+              "\"assets/icon_monochrome.png\"", multiple: true
+            )
+          end
+          update_pubspec_value(pubspec_path, "flutter_launcher_icons", "min_sdk_android", android_min_sdk.to_s) if android_min_sdk
+        end
+        if has_icon
+          # flutter_launcher_icons takes android/ios as flat image_path_* keys but
+          # web/windows/macos as nested platform blocks.
+          if platforms.dig("android", :icon)
+            update_pubspec_value(pubspec_path, "flutter_launcher_icons", "image_path_android", "\"assets/icon_android.png\"", multiple: true)
+          end
+          if platforms.dig("ios", :icon)
+            update_pubspec_value(pubspec_path, "flutter_launcher_icons", "image_path_ios", "\"assets/icon_ios.png\"", multiple: true)
+          end
+          if (remove_alpha = first_defined(platforms.dig("ios", :config), "remove_alpha", "remove_alpha_ios"))
+            update_pubspec_value(pubspec_path, "flutter_launcher_icons", "remove_alpha_ios", remove_alpha ? "true" : "false")
+          end
+
+          %w[web windows macos].each do |name|
+            entry = platforms.fetch(name)
+            section = entry[:config]
+            next if entry[:icon].nil? && section.empty?
+
+            update_pubspec_nested_value(pubspec_path, "flutter_launcher_icons", name, "generate", "true")
+            if entry[:icon]
+              image = if name == "windows" && File.extname(entry[:icon]).downcase == ".ico"
+                "assets/icon_windows.ico"
+              else
+                "assets/icon_#{name}.png"
+              end
+              update_pubspec_nested_value(pubspec_path, "flutter_launcher_icons", name, "image_path", "\"#{image}\"")
+            end
+            if name == "web"
+              update_pubspec_nested_value(pubspec_path, "flutter_launcher_icons", "web", "background_color", "\"#{entry[:icon_background]}\"") if entry[:icon_background]
+              update_pubspec_nested_value(pubspec_path, "flutter_launcher_icons", "web", "theme_color", "\"#{entry[:theme_color]}\"") if entry[:theme_color]
+            end
+            if name == "windows" && (icon_size = section["icon_size"])
+              update_pubspec_nested_value(pubspec_path, "flutter_launcher_icons", "windows", "icon_size", icon_size.to_s)
+            end
+          end
+        end
+        update_pubspec_value(pubspec_path, "flutter_launcher_icons", "background_color", "\"#{effective_icon_background}\"") if effective_icon_background
+        update_pubspec_value(pubspec_path, "flutter_launcher_icons", "theme_color", "\"#{effective_theme_color}\"") if effective_theme_color
+
+        update_pubspec_value(pubspec_path, "flutter_native_splash", "image", "\"assets/splash.png\"") if shared_splash_asset
         update_pubspec_value(pubspec_path, "flutter_native_splash", "image_dark", "\"assets/splash_dark.png\"") if splash_dark
         update_pubspec_value(pubspec_path, "flutter_native_splash", "color", "\"#{splash_color}\"") if splash_color
         update_pubspec_value(pubspec_path, "flutter_native_splash", "color_dark", "\"#{splash_dark_color}\"") if splash_dark_color
+
+        if has_splash
+          update_pubspec_value(pubspec_path, "flutter_native_splash", "background_image", "\"assets/splash_background.png\"") if splash_background_image
+          update_pubspec_value(pubspec_path, "flutter_native_splash", "background_image_dark", "\"assets/splash_background_dark.png\"") if splash_background_image_dark
+          update_pubspec_value(pubspec_path, "flutter_native_splash", "branding", "\"assets/splash_branding.png\"") if splash_branding
+          update_pubspec_value(pubspec_path, "flutter_native_splash", "branding_dark", "\"assets/splash_branding_dark.png\"") if splash_branding_dark
+          update_pubspec_value(pubspec_path, "flutter_native_splash", "branding_mode", splash_branding_mode.to_s) if splash_branding_mode
+          update_pubspec_value(pubspec_path, "flutter_native_splash", "branding_bottom_padding", splash_branding_padding.to_s) if splash_branding_padding
+        end
+
+        if has_splash
+          # flutter_native_splash only generates for android, ios, and web; each
+          # takes the shared keys suffixed with the platform name.
+          %w[android ios web].each do |name|
+            entry = platforms.fetch(name)
+            update_pubspec_value(pubspec_path, "flutter_native_splash", name, "true")
+            update_pubspec_value(pubspec_path, "flutter_native_splash", "image_#{name}", "\"assets/splash_#{name}.png\"") if entry[:splash]
+            update_pubspec_value(pubspec_path, "flutter_native_splash", "image_dark_#{name}", "\"assets/splash_#{name}_dark.png\"") if entry[:splash_dark]
+            if entry[:splash_color] && entry[:splash_color] != splash_color
+              update_pubspec_value(pubspec_path, "flutter_native_splash", "color_#{name}", "\"#{entry[:splash_color]}\"")
+            end
+            if entry[:splash_dark_color] && entry[:splash_dark_color] != splash_dark_color
+              update_pubspec_value(pubspec_path, "flutter_native_splash", "color_dark_#{name}", "\"#{entry[:splash_dark_color]}\"")
+            end
+            update_pubspec_value(pubspec_path, "flutter_native_splash", "background_image_#{name}", "\"assets/splash_background_#{name}.png\"") if entry[:background_image]
+            update_pubspec_value(pubspec_path, "flutter_native_splash", "background_image_dark_#{name}", "\"assets/splash_background_#{name}_dark.png\"") if entry[:background_image_dark]
+            update_pubspec_value(pubspec_path, "flutter_native_splash", "branding_#{name}", "\"assets/splash_branding_#{name}.png\"") if entry[:branding]
+            update_pubspec_value(pubspec_path, "flutter_native_splash", "branding_dark_#{name}", "\"assets/splash_branding_#{name}_dark.png\"") if entry[:branding_dark]
+          end
+
+          if (ios_content_mode = platforms.dig("ios", :config)["content_mode"] || platforms.dig("ios", :config)["ios_content_mode"])
+            update_pubspec_value(pubspec_path, "flutter_native_splash", "ios_content_mode", ios_content_mode.to_s)
+          end
+          if (web_image_mode = platforms.dig("web", :config)["image_mode"] || platforms.dig("web", :config)["web_image_mode"])
+            update_pubspec_value(pubspec_path, "flutter_native_splash", "web_image_mode", web_image_mode.to_s)
+          end
+          update_pubspec_value(pubspec_path, "flutter_native_splash", "fullscreen", android_splash_fullscreen ? "true" : "false") unless android_splash_fullscreen.nil?
+          update_pubspec_value(pubspec_path, "flutter_native_splash", "android_gravity", android_splash_gravity.to_s) if android_splash_gravity
+
+          # Android 12+ draws the splash itself and ignores the legacy `image`/`color`
+          # keys. Without an android_12 section the OS shows the launcher icon on a
+          # system background, so mirror the configured splash into it.
+          android_12_image =
+            if android_12_splash then "assets/splash_android_12.png"
+            elsif android_splash then "assets/splash_android.png"
+            else "assets/splash.png"
+            end
+          update_pubspec_nested_value(pubspec_path, "flutter_native_splash", "android_12", "image", "\"#{android_12_image}\"")
+          if android_12_icon_background
+            update_pubspec_nested_value(
+              pubspec_path, "flutter_native_splash", "android_12",
+              "icon_background_color", "\"#{android_12_icon_background}\""
+            )
+          end
+          android_12_image_dark =
+            if android_12_splash_dark then "assets/splash_android_12_dark.png"
+            elsif android_splash_dark then "assets/splash_android_dark.png"
+            elsif splash_dark then "assets/splash_dark.png"
+            end
+          if android_12_image_dark
+            update_pubspec_nested_value(
+              pubspec_path, "flutter_native_splash", "android_12",
+              "image_dark", "\"#{android_12_image_dark}\""
+            )
+          end
+          if android_12_icon_background_dark
+            update_pubspec_nested_value(
+              pubspec_path, "flutter_native_splash", "android_12",
+              "icon_background_color_dark", "\"#{android_12_icon_background_dark}\""
+            )
+          end
+          update_pubspec_nested_value(pubspec_path, "flutter_native_splash", "android_12", "color", "\"#{android_12_color}\"") if android_12_color
+          update_pubspec_nested_value(pubspec_path, "flutter_native_splash", "android_12", "color_dark", "\"#{android_12_color_dark}\"") if android_12_color_dark
+          if android_12_branding
+            copy_asset.call(android_12_branding, "splash_android_12_branding.png")
+            update_pubspec_nested_value(
+              pubspec_path, "flutter_native_splash", "android_12",
+              "branding", "\"assets/splash_android_12_branding.png\""
+            )
+          end
+        end
 
         {
           has_icon: has_icon,
           has_splash: has_splash,
           using_default_icon: using_default_icon,
           using_default_splash: using_default_splash,
+          android_adaptive_icon: has_icon,
+          android_12_splash: has_splash,
           error: nil
         }
+      end
+
+      # Platform-specific overrides may live in a top-level `<platform>:` block,
+      # under `build.<platform>:`, or under `assets.<platform>:`. Later sources win.
+      def platform_build_config(config, platform)
+        name = platform.to_s
+        build = config["build"].is_a?(Hash) ? config["build"] : {}
+        assets = config["assets"].is_a?(Hash) ? config["assets"] : {}
+        [config[name], build[name], assets[name]].each_with_object({}) do |source, merged|
+          next unless source.is_a?(Hash)
+
+          source.each { |key, value| merged[key.to_s] = value }
+        end
+      end
+
+      # Like first_present, but keeps `false` — needed for boolean toggles.
+      def first_defined(hash, *keys)
+        return nil unless hash.is_a?(Hash)
+
+        keys.each do |key|
+          return hash[key] if hash.key?(key)
+          return hash[key.to_sym] if hash.key?(key.to_sym)
+        end
+        nil
       end
 
       def sync_client_metadata(client_dir, config = {}, verbose: false)
@@ -824,7 +1246,7 @@ module Ruflet
         pubspec_path = File.join(client_dir, "pubspec.yaml")
         return {} unless File.file?(pubspec_path)
 
-        YAML.safe_load(File.read(pubspec_path), aliases: true) || {}
+        YAML.safe_load(read_text_file(pubspec_path), aliases: true) || {}
       rescue StandardError
         {}
       end
@@ -833,7 +1255,7 @@ module Ruflet
         pubspec_path = File.join(client_dir, "pubspec.yaml")
         return unless File.file?(pubspec_path)
 
-        data = YAML.safe_load(File.read(pubspec_path), aliases: true) || {}
+        data = YAML.safe_load(read_text_file(pubspec_path), aliases: true) || {}
         data["name"] = metadata[:package_name]
         data["description"] = metadata[:description]
         data["version"] = metadata[:version]
@@ -857,9 +1279,9 @@ module Ruflet
         pbxproj_path = File.join(client_dir, "ios", "Runner.xcodeproj", "project.pbxproj")
         return unless File.file?(pbxproj_path)
 
-        content = File.read(pbxproj_path)
+        content = read_text_file(pbxproj_path)
         content.gsub!(/INFOPLIST_KEY_CFBundleDisplayName = "[^"]*";/, %(INFOPLIST_KEY_CFBundleDisplayName = "#{xcode_escape(metadata[:display_name])}";))
-        File.write(pbxproj_path, content)
+        write_text_file(pbxproj_path, content)
       end
 
       def apply_mobile_package_name(client_dir, metadata, platform:, tools:, verbose: false)
@@ -912,11 +1334,11 @@ module Ruflet
       def apply_web_metadata(client_dir, metadata)
         manifest_path = File.join(client_dir, "web", "manifest.json")
         if File.file?(manifest_path)
-          data = JSON.parse(File.read(manifest_path))
+          data = JSON.parse(read_text_file(manifest_path))
           data["name"] = metadata[:display_name]
           data["short_name"] = metadata[:short_name]
           data["description"] = metadata[:description]
-          File.write(manifest_path, JSON.pretty_generate(data) + "\n")
+          write_text_file(manifest_path, JSON.pretty_generate(data) + "\n")
         end
 
         index_path = File.join(client_dir, "web", "index.html")
@@ -981,23 +1403,34 @@ module Ruflet
         replace_in_file(cmake_path, /^set\(APPLICATION_ID ".*"\)$/, %(set(APPLICATION_ID "#{metadata[:linux_application_id]}")))
       end
 
+      # Native project files are UTF-8 and the values written into them are too
+      # (the macOS copyright line carries a ©). Reading them with the default
+      # external encoding fails outright under a non-UTF-8 locale, so pin it.
+      def read_text_file(path)
+        File.read(path, encoding: Encoding::UTF_8)
+      end
+
+      def write_text_file(path, content)
+        File.write(path, content, encoding: Encoding::UTF_8)
+      end
+
       def replace_plist_value(path, key, value)
         return unless File.file?(path)
 
-        content = File.read(path)
+        content = read_text_file(path)
         pattern = %r{(<key>#{Regexp.escape(key)}</key>\s*<string>)(.*?)(</string>)}m
         updated = content.gsub(pattern) do
           "#{Regexp.last_match(1)}#{xml_escape(value)}#{Regexp.last_match(3)}"
         end
-        File.write(path, updated) unless updated == content
+        write_text_file(path, updated) unless updated == content
       end
 
       def replace_in_file(path, pattern, replacement)
         return unless File.file?(path)
 
-        content = File.read(path)
+        content = read_text_file(path)
         updated = content.gsub(pattern) { replacement }
-        File.write(path, updated) unless updated == content
+        write_text_file(path, updated) unless updated == content
       end
 
       def first_present(*values)
@@ -1122,20 +1555,20 @@ module Ruflet
         path = File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")
         return unless File.file?(path)
 
-        content = File.read(path)
+        content = read_text_file(path)
         entries.flat_map { |entry| ANDROID_SERVICE_PERMISSIONS.fetch(entry[:name], []) }.uniq.each do |permission|
           next if content.include?(%(android:name="#{permission}"))
 
           content.sub!(/<manifest\b[^>]*>\s*/, "\\0    <uses-permission android:name=\"#{permission}\"/>\n")
         end
-        File.write(path, content)
+        write_text_file(path, content)
       end
 
       def apply_ios_service_usage_descriptions(client_dir, entries)
         path = File.join(client_dir, "ios", "Runner", "Info.plist")
         return unless File.file?(path)
 
-        content = File.read(path)
+        content = read_text_file(path)
         entries.each do |entry|
           key = IOS_SERVICE_USAGE_KEYS[entry[:name]]
           next unless key
@@ -1151,7 +1584,7 @@ module Ruflet
             content.sub!(%r{</dict>\s*</plist>}m, "#{pair}</dict>\n</plist>")
           end
         end
-        File.write(path, content)
+        write_text_file(path, content)
       end
 
       def clear_flutter_build_state(client_dir, verbose: false)
@@ -1202,7 +1635,7 @@ module Ruflet
         pubspec_path = File.join(client_dir, "pubspec.yaml")
         return unless File.file?(pubspec_path)
 
-        data = YAML.safe_load(File.read(pubspec_path), aliases: true) || {}
+        data = YAML.safe_load(read_text_file(pubspec_path), aliases: true) || {}
         dependencies = data["dependencies"]
         dependencies = data["dependencies"] = {} unless dependencies.is_a?(Hash)
         spinkit_dependency = template_client_pubspec_dependencies["flet_spinkit"]
@@ -1290,7 +1723,7 @@ module Ruflet
 
         content = indent_pubspec_sequences(content)
 
-        File.write(path, content)
+        write_text_file(path, content)
       end
 
       def indent_pubspec_sequences(content)
@@ -1392,6 +1825,8 @@ module Ruflet
           .vscode
           build
           coverage
+          credentials
+          fastlane
           log
           node_modules
           pkg
@@ -1404,10 +1839,30 @@ module Ruflet
         end
       end
 
+      # Anything embedded here is readable by anyone who unpacks the shipped
+      # app, so signing keys and local environment files must never be copied
+      # in even when a project keeps them beside its source.
+      SECRET_ASSET_EXTENSIONS = %w[.p8 .p12 .pem .key .jks .keystore .mobileprovision].freeze
+      SECRET_ASSET_BASENAMES = %w[.env .netrc].freeze
+
+      def secret_project_asset?(relative)
+        basename = File.basename(relative)
+        return true if SECRET_ASSET_BASENAMES.include?(basename)
+        return true if basename.start_with?(".env.") && basename != ".env.example"
+        return true if SECRET_ASSET_EXTENSIONS.include?(File.extname(basename).downcase)
+        return true if basename.match?(/\Agoogle-play.*\.json\z/i)
+
+        false
+      end
+
       def include_project_asset_file?(relative)
         basename = File.basename(relative)
         return false if basename == ".DS_Store"
         return false if %w[Gemfile.lock pubspec.lock Podfile.lock package-lock.json yarn.lock pnpm-lock.yaml].include?(basename)
+        if secret_project_asset?(relative)
+          build_note("Excluded #{relative} from the embedded project; it looks like a credential")
+          return false
+        end
         true
       end
 
@@ -1444,7 +1899,7 @@ module Ruflet
       end
 
       def prune_client_pubspec(path, selected_packages)
-        data = YAML.safe_load(File.read(path), aliases: true) || {}
+        data = YAML.safe_load(read_text_file(path), aliases: true) || {}
         deps = (data["dependencies"] || {}).dup
         optional_packages = CLIENT_EXTENSION_MAP.values.map { |entry| entry.fetch(:package) }.uniq
 
@@ -1465,7 +1920,7 @@ module Ruflet
         template_deps = template_client_pubspec_dependencies
         return if template_deps.empty?
 
-        data = YAML.safe_load(File.read(path), aliases: true) || {}
+        data = YAML.safe_load(read_text_file(path), aliases: true) || {}
         deps = (data["dependencies"] || {}).dup
         selected_packages.each do |package_name|
           deps[package_name] = template_deps[package_name] if template_deps.key?(package_name)
@@ -1485,7 +1940,7 @@ module Ruflet
         pubspec_path = File.join(template_root, "pubspec.yaml")
         return {} unless File.file?(pubspec_path)
 
-        data = YAML.safe_load(File.read(pubspec_path), aliases: true) || {}
+        data = YAML.safe_load(read_text_file(pubspec_path), aliases: true) || {}
         deps = data["dependencies"]
         deps.is_a?(Hash) ? deps : {}
       rescue StandardError
@@ -1498,8 +1953,8 @@ module Ruflet
         template_path = template_client_entrypoint_path(File.basename(path))
         return unless template_path
 
-        content = File.read(path)
-        template = File.read(template_path)
+        content = read_text_file(path)
+        template = read_text_file(template_path)
 
         selected_aliases.each do |extension_alias|
           import_line = template.lines.find { |line| line.match?(/\sas #{Regexp.escape(extension_alias)};\s*\z/) }
@@ -1511,7 +1966,7 @@ module Ruflet
           content = insert_missing_extension(content, extension_line) if extension_line && !content.include?(extension_line)
         end
 
-        File.write(path, content)
+        write_text_file(path, content)
       end
 
       def template_client_entrypoint_path(name)
@@ -1549,7 +2004,7 @@ module Ruflet
       end
 
       def prune_client_main(path, selected_aliases)
-        content = File.read(path)
+        content = read_text_file(path)
         alias_to_package = {}
         optional_aliases = CLIENT_EXTENSION_MAP.values.map { |entry| entry.fetch(:alias) }.uniq
 
@@ -1588,11 +2043,58 @@ module Ruflet
           end
         end
 
-        File.write(path, content)
+        write_text_file(path, content)
+      end
+
+      # update_pubspec_value only rewrites blocks that already exist. Create the
+      # block first so a template without it still receives the configured values.
+      def ensure_pubspec_block(path, block)
+        return unless File.file?(path)
+
+        content = read_text_file(path)
+        return if content.lines.any? { |line| line.start_with?("#{block}:") }
+
+        content += "\n" unless content.empty? || content.end_with?("\n")
+        write_text_file(path, "#{content}#{block}:\n")
+      end
+
+      # Writes `block: -> section: -> key: value`, creating the block and the
+      # nested section when they are missing (for example flutter_native_splash's
+      # android_12 section).
+      def update_pubspec_nested_value(path, block, section, key, value)
+        return unless File.file?(path)
+
+        ensure_pubspec_block(path, block)
+        lines = read_text_file(path).split("\n", -1)
+        block_start = lines.index { |line| line.start_with?("#{block}:") }
+        return unless block_start
+
+        block_end = block_start + 1
+        block_end += 1 while block_end < lines.length && (lines[block_end].strip.empty? || lines[block_end].start_with?(" ", "\t"))
+        block_end -= 1 while block_end > block_start + 1 && lines[block_end - 1].strip.empty?
+
+        section_index = (block_start + 1...block_end).find do |index|
+          lines[index] =~ /\A\s{2}#{Regexp.escape(section)}:\s*(#.*)?\z/
+        end
+
+        if section_index.nil?
+          lines.insert(block_end, "  #{section}:", "    #{key}: #{value}")
+        else
+          section_end = section_index + 1
+          section_end += 1 while section_end < block_end && lines[section_end] =~ /\A\s{3,}\S/
+          existing = (section_index + 1...section_end).find { |index| lines[index].strip.start_with?("#{key}:") }
+          if existing
+            lines[existing] = "#{lines[existing][/\A\s*/]}#{key}: #{value}"
+          else
+            lines.insert(section_end, "    #{key}: #{value}")
+          end
+        end
+
+        write_text_file(path, indent_pubspec_sequences(lines.join("\n")))
       end
 
       def update_pubspec_value(path, block, key, value, multiple: false)
-        lines = File.read(path).split("\n", -1)
+        lines = read_text_file(path).split("\n", -1)
         out = []
         in_block = false
         replaced = false
@@ -1627,7 +2129,7 @@ module Ruflet
         if in_block && !replaced
           out << "#{block_indent}#{key}: #{value}"
         end
-        File.write(path, indent_pubspec_sequences(out.join("\n")))
+        write_text_file(path, indent_pubspec_sequences(out.join("\n")))
       end
 
       def flutter_build_command(platform)

@@ -55,7 +55,7 @@ class RufletCliTemplatesTest < Minitest::Test
     package_root = repo_file("ruflet_client", "flet_packages/ruflet_qrcode_scanner")
     pubspec = YAML.safe_load(File.read(File.join(package_root, "pubspec.yaml")), aliases: true)
     client_pubspec = YAML.safe_load(File.read(repo_file("ruflet_client", "pubspec.yaml")), aliases: true)
-    workflow = File.read(repo_file(".github", "workflows/build-ruflet-android.yml"))
+    workflow = File.read(repo_file(".github", "workflows/build-ruflet-client.yml"))
 
     assert_equal "ruflet_qrcode_scanner", pubspec.fetch("name")
     assert_equal({ "path" => "../flet" }, pubspec.dig("dependencies", "flet"))

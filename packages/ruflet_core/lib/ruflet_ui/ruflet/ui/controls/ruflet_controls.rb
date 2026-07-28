@@ -115,7 +115,6 @@ require_relative "shared/dismissible_control"
 require_relative "shared/draggable_control"
 require_relative "shared/dragtarget_control"
 require_relative "shared/fill_control"
-require_relative "shared/fletapp_control"
 require_relative "shared/gesturedetector_control"
 require_relative "shared/gridview_control"
 require_relative "shared/hero_control"
@@ -140,6 +139,7 @@ require_relative "shared/reorderabledraghandle_control"
 require_relative "shared/responsiverow_control"
 require_relative "shared/row_control"
 require_relative "shared/rotatedbox_control"
+require_relative "shared/ruflet_app_control"
 require_relative "shared/safearea_control"
 require_relative "shared/screenshot_control"
 require_relative "shared/semantics_control"
@@ -301,8 +301,6 @@ module Ruflet
           "fillediconbutton" => RufletComponents::FilledIconButtonControl,
           "filledtonalbutton" => RufletComponents::FilledTonalButtonControl,
           "filledtonaliconbutton" => RufletComponents::FilledTonalIconButtonControl,
-          "flet_app" => RufletComponents::FletAppControl,
-          "fletapp" => RufletComponents::FletAppControl,
           "floating_action_button" => RufletComponents::FloatingActionButtonControl,
           "floatingactionbutton" => RufletComponents::FloatingActionButtonControl,
           "gesture_detector" => RufletComponents::GestureDetectorControl,
@@ -399,6 +397,8 @@ module Ruflet
           "row" => RufletComponents::RowControl,
           "rotated_box" => RufletComponents::RotatedBoxControl,
           "rotatedbox" => RufletComponents::RotatedBoxControl,
+          "ruflet_app" => RufletComponents::RufletAppControl,
+          "rufletapp" => RufletComponents::RufletAppControl,
           "safe_area" => RufletComponents::SafeAreaControl,
           "safearea" => RufletComponents::SafeAreaControl,
           "screenshot" => RufletComponents::ScreenshotControl,

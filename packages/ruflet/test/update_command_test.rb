@@ -328,6 +328,49 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  def test_stages_static_ruby_runtime_slice_for_ios_simulator_build
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "client")
+      runtime_dir = File.join(dir, "ruby_runtime")
+      slice_dir = File.join(
+        runtime_dir,
+        "ios",
+        "Frameworks",
+        "RufletVM.xcframework",
+        "ios-arm64_x86_64-simulator"
+      )
+      FileUtils.mkdir_p(File.join(slice_dir, "Headers"))
+      File.write(File.join(runtime_dir, "pubspec.yaml"), "name: ruby_runtime\n")
+      File.write(File.join(slice_dir, "libruflet_vm.a"), "simulator-library")
+      File.write(File.join(slice_dir, "Headers", "mruby.h"), "header")
+
+      previous_runtime = ENV["RUFLET_RUBY_RUNTIME_PATH"]
+      ENV["RUFLET_RUBY_RUNTIME_PATH"] = runtime_dir
+
+      builder.send(
+        :stage_ios_simulator_ruby_runtime,
+        client_dir,
+        ["build", "ios", "--simulator"],
+        verbose: false
+      )
+
+      destination = File.join(
+        client_dir,
+        "build",
+        "ios",
+        "Debug-iphonesimulator",
+        "XCFrameworkIntermediates",
+        "ruby_runtime"
+      )
+      assert_equal "simulator-library", File.read(File.join(destination, "libruflet_vm.a"))
+      assert_equal "header", File.read(File.join(destination, "Headers", "mruby.h"))
+    ensure
+      ENV["RUFLET_RUBY_RUNTIME_PATH"] = previous_runtime
+    end
+  end
+
   def test_write_pubspec_yaml_indents_flutter_assets
     builder = DummyBuilder.new
 
@@ -965,6 +1008,22 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  def test_build_refuses_a_self_contained_web_target
+    builder = DummyBuilder.new
+    builder.define_singleton_method(:prepare_flutter_client) { |*, **| flunk("must not prepare a client") }
+
+    err = StringIO.new
+    original_stderr = $stderr
+    $stderr = err
+
+    code = builder.command_build(["web", "--self"])
+
+    assert_equal 1, code
+    assert_includes err.string, "--self is not supported for web"
+  ensure
+    $stderr = original_stderr
+  end
+
   def test_apply_build_config_falls_back_to_template_assets_when_custom_files_are_missing
     builder = DummyBuilder.new
 
@@ -1005,6 +1064,338 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_equal true, result[:using_default_icon]
       assert_includes out.string, "Configured splash_screen was not found; using default template asset"
       assert_includes out.string, "Configured icon_launcher was not found; using default template asset"
+    ensure
+      $stdout = original_stdout
+    end
+  end
+
+  def test_apply_build_config_writes_android_splash_and_adaptive_icon_settings
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "ruflet_client")
+      FileUtils.mkdir_p(File.join(client_dir, "assets"))
+      File.write(File.join(client_dir, "assets", "splash.png"), "png")
+      File.write(File.join(client_dir, "assets", "icon.png"), "png")
+      File.write(
+        File.join(client_dir, "pubspec.yaml"),
+        <<~YAML
+          flutter_native_splash:
+            image: assets/splash.png
+          flutter_launcher_icons:
+            image_path: "assets/icon.png"
+        YAML
+      )
+
+      project_assets = File.join(dir, "assets")
+      FileUtils.mkdir_p(project_assets)
+      %w[splash.png icon.png icon_foreground.png].each do |name|
+        File.write(File.join(project_assets, name), "png")
+      end
+
+      result = nil
+      Dir.chdir(dir) do
+        result = builder.send(
+          :apply_build_config,
+          client_dir,
+          {
+            "assets" => { "dir" => "assets", "splash_screen" => "assets/splash.png", "icon_launcher" => "assets/icon.png" },
+            "build" => { "splash_color" => "#FFFFFF", "splash_dark_color" => "#0B0B0B", "icon_background" => "#FFFFFF" },
+            "android" => {
+              "adaptive_icon_foreground" => "assets/icon_foreground.png",
+              "adaptive_icon_background" => "#101010",
+              "min_sdk" => 23
+            }
+          }
+        )
+      end
+
+      assert_nil result[:error]
+      pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
+
+      assert_match(/^\s{2}android: true$/, pubspec)
+      assert_match(/^\s{2}android_12:$/, pubspec)
+      assert_match(%r{^\s{4}image: "assets/splash\.png"$}, pubspec)
+      assert_match(/^\s{4}icon_background_color: "#FFFFFF"$/, pubspec)
+      assert_match(/^\s{4}icon_background_color_dark: "#0B0B0B"$/, pubspec)
+
+      assert_match(/^\s{2}android: launcher_icon$/, pubspec)
+      assert_match(%r{^\s{2}adaptive_icon_foreground: "assets/icon_foreground\.png"$}, pubspec)
+      assert_match(/^\s{2}adaptive_icon_background: "#101010"$/, pubspec)
+      assert_match(/^\s{2}min_sdk_android: 23$/, pubspec)
+
+      assert File.file?(File.join(client_dir, "assets", "icon_foreground.png"))
+      assert_equal true, result[:android_adaptive_icon]
+      assert_equal true, result[:android_12_splash]
+    end
+  end
+
+  def test_apply_build_config_defaults_adaptive_foreground_to_the_launcher_icon
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "ruflet_client")
+      FileUtils.mkdir_p(File.join(client_dir, "assets"))
+      File.write(File.join(client_dir, "assets", "icon.png"), "png")
+      File.write(File.join(client_dir, "pubspec.yaml"), "flutter_launcher_icons:\n  image_path: \"assets/icon.png\"\n")
+
+      builder.send(:apply_build_config, client_dir, {})
+
+      pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
+      assert_match(%r{^\s{2}adaptive_icon_foreground: "assets/icon\.png"$}, pubspec)
+    end
+  end
+
+  def test_apply_build_config_writes_every_platform_section
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "ruflet_client")
+      FileUtils.mkdir_p(File.join(client_dir, "assets"))
+      File.write(File.join(client_dir, "assets", "splash.png"), "png")
+      File.write(File.join(client_dir, "assets", "icon.png"), "png")
+      File.write(
+        File.join(client_dir, "pubspec.yaml"),
+        <<~YAML
+          flutter_native_splash:
+            image: assets/splash.png
+          flutter_launcher_icons:
+            image_path: "assets/icon.png"
+        YAML
+      )
+
+      project_assets = File.join(dir, "assets")
+      FileUtils.mkdir_p(project_assets)
+      %w[splash.png icon.png splash_ios.png icon_ios.png icon_macos.png icon_win.ico].each do |name|
+        File.write(File.join(project_assets, name), "png")
+      end
+
+      out = StringIO.new
+      original_stdout = $stdout
+      $stdout = out
+
+      Dir.chdir(dir) do
+        builder.send(
+          :apply_build_config,
+          client_dir,
+          {
+            "assets" => { "dir" => "assets", "splash_screen" => "assets/splash.png", "icon_launcher" => "assets/icon.png" },
+            "build" => { "splash_color" => "#FFFFFF", "icon_background" => "#FFFFFF", "theme_color" => "#6750A4" },
+            "ios" => {
+              "splash_screen" => "assets/splash_ios.png",
+              "splash_color" => "#101010",
+              "icon_launcher" => "assets/icon_ios.png",
+              "remove_alpha" => true,
+              "content_mode" => "scaleAspectFit"
+            },
+            "macos" => { "icon_launcher" => "assets/icon_macos.png" },
+            "windows" => { "icon_launcher" => "assets/icon_win.ico", "icon_size" => 64 },
+            "linux" => { "icon_launcher" => "assets/icon.png" }
+          }
+        )
+      end
+
+      pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
+
+      # iOS takes flat, platform-suffixed keys.
+      assert_match(/^\s{2}ios: true$/, pubspec)
+      assert_match(%r{^\s{2}image_ios: "assets/splash_ios\.png"$}, pubspec)
+      assert_match(/^\s{2}color_ios: "#101010"$/, pubspec)
+      assert_match(/^\s{2}ios_content_mode: scaleAspectFit$/, pubspec)
+      assert_match(%r{^\s{2}image_path_ios: "assets/icon_ios\.png"$}, pubspec)
+      assert_match(/^\s{2}remove_alpha_ios: true$/, pubspec)
+
+      # macOS and Windows take nested blocks.
+      assert_match(/^\s{2}macos:$/, pubspec)
+      assert_match(%r{^\s{4}image_path: "assets/icon_macos\.png"$}, pubspec)
+      assert_match(/^\s{2}windows:$/, pubspec)
+      assert_match(%r{^\s{4}image_path: "assets/icon_windows\.ico"$}, pubspec)
+      assert_match(/^\s{4}icon_size: 64$/, pubspec)
+
+      assert File.file?(File.join(client_dir, "assets", "icon_macos.png"))
+      assert File.file?(File.join(client_dir, "assets", "icon_windows.ico"))
+      assert File.file?(File.join(client_dir, "assets", "splash_ios.png"))
+
+      # Linux has no generator in either tool.
+      assert_includes out.string, "linux has no launcher icon generator"
+      refute File.file?(File.join(client_dir, "assets", "icon_linux.png"))
+    ensure
+      $stdout = original_stdout
+    end
+  end
+
+  def test_apply_build_config_leaves_platform_keys_alone_when_no_section_is_given
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "ruflet_client")
+      FileUtils.mkdir_p(File.join(client_dir, "assets"))
+      File.write(File.join(client_dir, "assets", "splash.png"), "png")
+      File.write(File.join(client_dir, "assets", "icon.png"), "png")
+      File.write(
+        File.join(client_dir, "pubspec.yaml"),
+        <<~YAML
+          flutter_native_splash:
+            image: assets/splash.png
+          flutter_launcher_icons:
+            image_path: "assets/icon.png"
+        YAML
+      )
+
+      builder.send(:apply_build_config, client_dir, {})
+      pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
+
+      refute_match(/image_ios:/, pubspec)
+      refute_match(/image_path_ios:/, pubspec)
+      refute_match(/^\s{2}macos:$/, pubspec)
+      refute_match(/^\s{2}windows:$/, pubspec)
+    end
+  end
+
+  def test_apply_build_config_writes_splash_background_and_branding_keys
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "ruflet_client")
+      FileUtils.mkdir_p(File.join(client_dir, "assets"))
+      File.write(File.join(client_dir, "assets", "splash.png"), "png")
+      File.write(File.join(client_dir, "assets", "icon.png"), "png")
+      File.write(File.join(client_dir, "pubspec.yaml"), "flutter_native_splash:\n  image: assets/splash.png\n")
+
+      project_assets = File.join(dir, "assets")
+      FileUtils.mkdir_p(project_assets)
+      %w[splash.png bg.png brand.png a12brand.png].each do |name|
+        File.write(File.join(project_assets, name), "png")
+      end
+
+      Dir.chdir(dir) do
+        builder.send(
+          :apply_build_config,
+          client_dir,
+          {
+            "assets" => { "dir" => "assets", "splash_screen" => "assets/splash.png" },
+            "build" => {
+              "splash_background_image" => "assets/bg.png",
+              "splash_branding" => "assets/brand.png",
+              "splash_branding_mode" => "bottom",
+              "splash_branding_bottom_padding" => 24
+            },
+            "android" => {
+              "splash_background_image" => "assets/bg.png",
+              "splash_branding" => "assets/brand.png",
+              "splash_android_12_color" => "#101010",
+              "splash_android_12_color_dark" => "#000000",
+              "splash_android_12_branding" => "assets/a12brand.png"
+            }
+          }
+        )
+      end
+
+      pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
+
+      assert_match(%r{^\s{2}background_image: "assets/splash_background\.png"$}, pubspec)
+      assert_match(%r{^\s{2}branding: "assets/splash_branding\.png"$}, pubspec)
+      assert_match(/^\s{2}branding_mode: bottom$/, pubspec)
+      assert_match(/^\s{2}branding_bottom_padding: 24$/, pubspec)
+      assert_match(%r{^\s{2}background_image_android: "assets/splash_background_android\.png"$}, pubspec)
+      assert_match(%r{^\s{2}branding_android: "assets/splash_branding_android\.png"$}, pubspec)
+      assert_match(/^\s{4}color: "#101010"$/, pubspec)
+      assert_match(/^\s{4}color_dark: "#000000"$/, pubspec)
+      assert_match(%r{^\s{4}branding: "assets/splash_android_12_branding\.png"$}, pubspec)
+
+      assert File.file?(File.join(client_dir, "assets", "splash_background.png"))
+      assert File.file?(File.join(client_dir, "assets", "splash_branding_android.png"))
+    end
+  end
+
+  def test_project_assets_never_embed_credentials
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "credentials"))
+      FileUtils.mkdir_p(File.join(dir, "fastlane"))
+      FileUtils.mkdir_p(File.join(dir, "lib"))
+      File.write(File.join(dir, "credentials", "AuthKey_ABC123.p8"), "secret")
+      File.write(File.join(dir, "fastlane", "Fastfile"), "lane :beta do; end")
+      File.write(File.join(dir, "google-play-service-account.json"), "{}")
+      File.write(File.join(dir, "signing.keystore"), "secret")
+      File.write(File.join(dir, ".env.production"), "TOKEN=abc")
+      File.write(File.join(dir, ".env.example"), "TOKEN=")
+      File.write(File.join(dir, "main.rb"), "puts 1")
+      File.write(File.join(dir, "lib", "app.rb"), "puts 2")
+
+      included = Dir.chdir(dir) { builder.send(:project_asset_relative_paths) }
+
+      assert_includes included, "main.rb"
+      assert_includes included, File.join("lib", "app.rb")
+
+      refute_includes included, File.join("credentials", "AuthKey_ABC123.p8")
+      refute_includes included, File.join("fastlane", "Fastfile")
+      refute_includes included, "google-play-service-account.json"
+      refute_includes included, "signing.keystore"
+      refute_includes included, ".env.production"
+      assert(included.none? { |path| path.end_with?(".p8") }, "no signing key may be embedded")
+    end
+  end
+
+  def test_verify_android_generated_assets_warns_when_android_12_splash_is_missing
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      res_dir = File.join(dir, "android", "app", "src", "main", "res")
+      FileUtils.mkdir_p(File.join(res_dir, "drawable"))
+      FileUtils.mkdir_p(File.join(res_dir, "values-v31"))
+      File.write(File.join(res_dir, "drawable", "launch_background.xml"), "<layer-list>splash</layer-list>")
+      File.write(File.join(res_dir, "values-v31", "styles.xml"), "<resources><style name=\"LaunchTheme\" /></resources>")
+
+      err = StringIO.new
+      original_stderr = $stderr
+      $stderr = err
+
+      ok = builder.send(
+        :verify_android_generated_assets,
+        dir,
+        { has_splash: true, has_icon: false },
+        "apk"
+      )
+
+      assert_equal false, ok
+      assert_includes err.string, "Android 12+ splash screen is missing"
+    ensure
+      $stderr = original_stderr
+    end
+  end
+
+  def test_verify_android_generated_assets_passes_when_resources_exist
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      main_dir = File.join(dir, "android", "app", "src", "main")
+      res_dir = File.join(main_dir, "res")
+      FileUtils.mkdir_p(File.join(res_dir, "drawable"))
+      FileUtils.mkdir_p(File.join(res_dir, "values-v31"))
+      FileUtils.mkdir_p(File.join(res_dir, "mipmap-anydpi-v26"))
+      File.write(File.join(res_dir, "drawable", "launch_background.xml"), "<layer-list>splash</layer-list>")
+      File.write(
+        File.join(res_dir, "values-v31", "styles.xml"),
+        "<resources><item name=\"android:windowSplashScreenBackground\">@color/x</item></resources>"
+      )
+      File.write(File.join(res_dir, "mipmap-anydpi-v26", "launcher_icon.xml"), "<adaptive-icon />")
+      File.write(File.join(main_dir, "AndroidManifest.xml"), "<application android:icon=\"@mipmap/launcher_icon\" />")
+
+      out = StringIO.new
+      original_stdout = $stdout
+      $stdout = out
+
+      ok = builder.send(
+        :verify_android_generated_assets,
+        dir,
+        { has_splash: true, has_icon: true },
+        "aab"
+      )
+
+      assert_equal true, ok
+      assert_includes out.string, "Android launcher icon and splash resources verified"
     ensure
       $stdout = original_stdout
     end

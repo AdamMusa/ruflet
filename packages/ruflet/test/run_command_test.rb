@@ -10,6 +10,105 @@ class RufletCliRunCommandTest < Minitest::Test
     include Ruflet::CLI::RunCommand
   end
 
+  def with_client_dir(dir)
+    previous = ENV["RUFLET_CLIENT_DIR"]
+    ENV["RUFLET_CLIENT_DIR"] = dir
+    yield
+  ensure
+    ENV["RUFLET_CLIENT_DIR"] = previous
+  end
+
+  def build_macos_app(products_dir, app_name)
+    macos_dir = File.join(products_dir, "#{app_name}.app", "Contents", "MacOS")
+    FileUtils.mkdir_p(macos_dir)
+    executable = File.join(macos_dir, app_name)
+    File.write(executable, "#!/bin/sh\n")
+    FileUtils.chmod(0o755, executable)
+    executable
+  end
+
+  def test_detect_desktop_client_finds_a_ruflet_app_client_by_its_own_name
+    skip "macOS layout" unless RbConfig::CONFIG["host_os"].match?(/darwin/i)
+
+    Dir.mktmpdir do |dir|
+      products = File.join(dir, "build", "client", "build", "macos", "Build", "Products", "Release")
+      expected = build_macos_app(products, "Ruflet Explorer")
+
+      command = with_client_dir(dir) do
+        DummyRunner.new.send(:detect_desktop_client_command, "http://127.0.0.1:8550")
+      end
+
+      assert_equal [expected, "http://127.0.0.1:8550"], command
+    end
+  end
+
+  def test_detect_desktop_client_still_finds_a_bare_flutter_client
+    skip "macOS layout" unless RbConfig::CONFIG["host_os"].match?(/darwin/i)
+
+    Dir.mktmpdir do |dir|
+      products = File.join(dir, "build", "macos", "Build", "Products", "Release")
+      expected = build_macos_app(products, "ruflet_client")
+
+      command = with_client_dir(dir) do
+        DummyRunner.new.send(:detect_desktop_client_command, "http://127.0.0.1:8550")
+      end
+
+      assert_equal [expected, "http://127.0.0.1:8550"], command
+    end
+  end
+
+  def test_detect_desktop_client_finds_a_prebuilt_bundle_of_any_name
+    skip "macOS layout" unless RbConfig::CONFIG["host_os"].match?(/darwin/i)
+
+    Dir.mktmpdir do |dir|
+      expected = build_macos_app(File.join(dir, "desktop"), "Ruflet Explorer")
+
+      command = with_client_dir(dir) do
+        DummyRunner.new.send(:detect_desktop_client_command, "http://127.0.0.1:8550")
+      end
+
+      assert_equal [expected, "http://127.0.0.1:8550"], command
+    end
+  end
+
+  def build_web_output(dir)
+    FileUtils.mkdir_p(dir)
+    File.write(File.join(dir, "index.html"), "<html></html>")
+    File.write(File.join(dir, "flutter_bootstrap.js"), "// built")
+    dir
+  end
+
+  def test_detect_web_client_dir_prefers_the_ruflet_app_build
+    Dir.mktmpdir do |dir|
+      web_dir = build_web_output(File.join(dir, "build", "client", "build", "web"))
+
+      found = with_client_dir(dir) { DummyRunner.new.send(:detect_web_client_dir) }
+      assert_equal web_dir, found
+    end
+  end
+
+  def test_detect_web_client_dir_still_finds_a_bare_flutter_web_build
+    Dir.mktmpdir do |dir|
+      web_dir = build_web_output(File.join(dir, "build", "web"))
+
+      found = with_client_dir(dir) { DummyRunner.new.send(:detect_web_client_dir) }
+      assert_equal web_dir, found
+    end
+  end
+
+  def test_detect_web_client_dir_ignores_an_unbuilt_projects_web_sources
+    Dir.mktmpdir do |dir|
+      # A Flutter project ships web/index.html as a source template; serving it
+      # would hand the browser a page with no application in it.
+      sources = File.join(dir, "build", "client", "web")
+      FileUtils.mkdir_p(sources)
+      File.write(File.join(sources, "index.html"), "<html></html>")
+
+      found = with_client_dir(dir) { DummyRunner.new.send(:detect_web_client_dir) }
+      assert_nil found
+    end
+  end
+
   def test_find_nearest_gemfile_walks_up_directories
     Dir.mktmpdir do |dir|
       root = File.join(dir, "repo")

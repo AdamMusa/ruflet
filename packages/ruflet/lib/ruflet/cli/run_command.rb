@@ -48,6 +48,18 @@ module Ruflet
         assets_dir = File.join(File.dirname(script_path), "assets")
         env["RUFLET_ASSETS_DIR"] = assets_dir if File.directory?(assets_dir)
 
+        # The backend serves the web client itself so both share one origin.
+        if options[:target] == "web"
+          web_client_dir = detect_web_client_dir
+          if web_client_dir
+            env["RUFLET_WEB_CLIENT_DIR"] = web_client_dir
+          else
+            warn "Web client build not found and prebuilt download failed."
+            warn "Build one with `ruflet build web`, or set RUFLET_CLIENT_DIR."
+            return 1
+          end
+        end
+
         print_run_banner(target: options[:target], requested_port: options[:requested_port], port: selected_port)
         print_mobile_qr_hint(port: selected_port) if options[:target] == "mobile"
         print_hot_reload_banner if options[:reload]
@@ -288,28 +300,18 @@ module Ruflet
         end
       end
 
+      # The backend serves the web client on its own port, so the client loads
+      # and opens its websocket on the same origin. The explicit url parameter
+      # is kept because prebuilt production clients have no default URL and use
+      # it to select the websocket transport.
       def launch_web_client(port)
-        web_dir = detect_web_client_dir
-        unless web_dir
-          warn "Web client build not found and prebuilt download failed."
-          return []
-        end
-
-        web_port = find_available_port(port + 1)
-        web_pid = Process.spawn("python3", "-m", "http.server", web_port.to_s, "--bind", "127.0.0.1", chdir: web_dir, out: File::NULL, err: File::NULL)
-        Process.detach(web_pid)
-        wait_for_server_boot(web_port)
         backend_url = "http://localhost:#{port}"
-        web_url = "http://localhost:#{web_port}/?#{URI.encode_www_form(url: backend_url)}"
+        web_url = "#{backend_url}/?#{URI.encode_www_form(url: backend_url)}"
         browser_pid = open_in_browser_app_mode(web_url)
         open_in_browser(web_url) if browser_pid.nil?
         puts "Ruflet web client: #{web_url}"
         puts "Ruflet backend ws: ws://localhost:#{port}/ws"
-        [web_pid, browser_pid].compact
-      rescue Errno::ENOENT
-        warn "python3 is required to host web client locally."
-        warn "Install Python 3 and rerun."
-        []
+        [browser_pid].compact
       rescue StandardError => e
         warn "Failed to launch web client: #{e.class}: #{e.message}"
         []
@@ -407,7 +409,10 @@ module Ruflet
           return
         end
 
-        pid = Process.spawn(*cmd, out: File::NULL, err: File::NULL)
+        # The Flutter client took the URL as argv; a Ruflet app used as the
+        # client reads RUFLET_URL, so it connects instead of showing its own
+        # launcher. Pass both so either client auto-connects.
+        pid = Process.spawn({ "RUFLET_URL" => url }, *cmd, out: File::NULL, err: File::NULL)
         Process.detach(pid)
         if !pid
           warn "Failed to launch desktop client: #{cmd.first}"
@@ -420,6 +425,38 @@ module Ruflet
         []
       end
 
+      # A Ruflet app used as the preview client builds its native project into
+      # build/client, so its Flutter output is one level deeper than a bare
+      # Flutter client's. Search both, and never assume the app is named
+      # ruflet_client: the bundle takes the app's own display name.
+      def client_build_roots(root)
+        [File.join(root, "build", "client"), root].select { |dir| Dir.exist?(dir) }
+      end
+
+      def executable_file?(path)
+        File.file?(path) && File.executable?(path)
+      end
+
+      # A Flutter project's own web/ folder holds a source index.html, so
+      # index.html alone would match an unbuilt project. Require a compiled
+      # entrypoint as well.
+      WEB_BUILD_MARKERS = %w[flutter_bootstrap.js main.dart.js flutter.js].freeze
+
+      def built_web_client_dir?(dir)
+        return false unless Dir.exist?(dir) && File.file?(File.join(dir, "index.html"))
+
+        WEB_BUILD_MARKERS.any? { |marker| File.file?(File.join(dir, marker)) }
+      end
+
+      def macos_app_executable(app_bundle)
+        macos_dir = File.join(app_bundle, "Contents", "MacOS")
+        return nil unless Dir.exist?(macos_dir)
+
+        Dir.children(macos_dir)
+          .map { |entry| File.join(macos_dir, entry) }
+          .find { |path| executable_file?(path) }
+      end
+
       def detect_desktop_client_command(url)
         root = ENV["RUFLET_CLIENT_DIR"]
         root = File.expand_path("ruflet_client", Dir.pwd) if root.to_s.strip.empty?
@@ -428,28 +465,42 @@ module Ruflet
         return nil unless root && Dir.exist?(root)
 
         host_os = RbConfig::CONFIG["host_os"]
-        if host_os.match?(/darwin/i)
-          release_bin = File.join(root, "build", "macos", "Build", "Products", "Release", "ruflet_client.app", "Contents", "MacOS", "ruflet_client")
-          debug_bin = File.join(root, "build", "macos", "Build", "Products", "Debug", "ruflet_client.app", "Contents", "MacOS", "ruflet_client")
-          prebuilt_bin = File.join(root, "desktop", "ruflet_client.app", "Contents", "MacOS", "ruflet_client")
-          executable = [release_bin, debug_bin].find { |p| File.file?(p) && File.executable?(p) }
-          executable ||= prebuilt_bin if File.file?(prebuilt_bin) && File.executable?(prebuilt_bin)
-          return [executable, url] if executable
-        elsif host_os.match?(/mswin|mingw|cygwin/i)
-          exe = File.join(root, "build", "windows", "x64", "runner", "Release", "ruflet_client.exe")
-          prebuilt = File.join(root, "desktop", "ruflet_client.exe")
-          exe = prebuilt if !File.file?(exe) && File.file?(prebuilt)
-          return [exe, url] if File.file?(exe)
-        else
-          direct = File.join(root, "build", "linux", "x64", "release", "bundle", "ruflet_client")
-          prebuilt_direct = File.join(root, "desktop", "ruflet_client")
-          direct = prebuilt_direct if !File.file?(direct) && File.file?(prebuilt_direct)
-          return [direct, url] if File.file?(direct)
-          bundle_dir = File.join(root, "build", "linux", "x64", "release", "bundle")
-          if Dir.exist?(bundle_dir)
-            candidate = Dir.children(bundle_dir).map { |f| File.join(bundle_dir, f) }
-              .find { |path| File.file?(path) && File.executable?(path) }
-            return [candidate, url] if candidate
+        client_build_roots(root).each do |base|
+          if host_os.match?(/darwin/i)
+            search = %w[Release Debug].map { |config| File.join(base, "build", "macos", "Build", "Products", config) }
+            search << File.join(base, "desktop")
+            search.each do |dir|
+              next unless Dir.exist?(dir)
+
+              Dir.glob(File.join(dir, "*.app")).sort.each do |app_bundle|
+                executable = macos_app_executable(app_bundle)
+                return [executable, url] if executable
+              end
+            end
+          elsif host_os.match?(/mswin|mingw|cygwin/i)
+            search = [
+              File.join(base, "build", "windows", "x64", "runner", "Release"),
+              File.join(base, "desktop")
+            ]
+            search.each do |dir|
+              next unless Dir.exist?(dir)
+
+              exe = Dir.glob(File.join(dir, "*.exe")).sort.find { |path| File.file?(path) }
+              return [exe, url] if exe
+            end
+          else
+            search = [
+              File.join(base, "build", "linux", "x64", "release", "bundle"),
+              File.join(base, "desktop")
+            ]
+            search.each do |dir|
+              next unless Dir.exist?(dir)
+
+              candidate = Dir.children(dir).sort
+                .map { |entry| File.join(dir, entry) }
+                .find { |path| executable_file?(path) }
+              return [candidate, url] if candidate
+            end
           end
         end
 
@@ -463,10 +514,11 @@ module Ruflet
         root ||= ensure_prebuilt_client(web: true)
         return nil unless root && Dir.exist?(root)
 
-        built = File.join(root, "build", "web")
-        return built if Dir.exist?(built) && File.file?(File.join(built, "index.html"))
-        prebuilt = File.join(root, "web")
-        return prebuilt if Dir.exist?(prebuilt) && File.file?(File.join(prebuilt, "index.html"))
+        client_build_roots(root).each do |base|
+          [File.join(base, "build", "web"), File.join(base, "web")].each do |dir|
+            return dir if built_web_client_dir?(dir)
+          end
+        end
 
         nil
       end

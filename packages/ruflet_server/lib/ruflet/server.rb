@@ -356,14 +356,17 @@ module Ruflet
     end
 
     def handle_http_request(socket, path)
-      case path
+      request_path = path.to_s.split("?", 2).first.to_s
+      return if serve_web_client(socket, request_path)
+
+      case request_path
       when "/health"
         write_http_response(socket, 200, "text/plain", "ok")
       when "/"
         write_http_response(socket, 200, "text/plain", "ruflet server")
       else
-        if path.start_with?("/assets/")
-          serve_asset(socket, path)
+        if request_path.start_with?("/assets/")
+          serve_asset(socket, request_path)
         else
           write_http_response(socket, 404, "text/plain", "not found")
         end
@@ -371,6 +374,37 @@ module Ruflet
     rescue StandardError => e
       warn "http error: #{e.class}: #{e.message}"
       write_http_response(socket, 500, "text/plain", "server error")
+    end
+
+    # The Flutter web client is served from this same port so that it loads and
+    # opens its websocket on one origin. Without that the client cannot reach
+    # /ws at all.
+    def web_client_root
+      return @web_client_root if defined?(@web_client_root)
+
+      configured = ENV["RUFLET_WEB_CLIENT_DIR"].to_s.strip
+      @web_client_root =
+        if configured.empty? || !File.directory?(configured)
+          nil
+        else
+          File.expand_path(configured)
+        end
+    end
+
+    def serve_web_client(socket, request_path)
+      root = web_client_root
+      return false unless root
+
+      relative = request_path
+      relative = "/index.html" if relative.empty? || relative == "/"
+      candidate = File.expand_path(File.join(root, relative))
+      # Never serve outside the client bundle.
+      return false unless candidate == root || candidate.start_with?("#{root}#{File::SEPARATOR}")
+      return false unless File.file?(candidate)
+
+      content = read_binary_file(candidate)
+      write_http_response(socket, 200, content_type_for(candidate), content, binary: true)
+      true
     end
 
     def serve_asset(socket, path)
@@ -424,6 +458,28 @@ module Ruflet
         "image/webp"
       when ".svg"
         "image/svg+xml"
+      when ".html", ".htm"
+        "text/html; charset=utf-8"
+      when ".js", ".mjs"
+        "text/javascript; charset=utf-8"
+      when ".css"
+        "text/css; charset=utf-8"
+      when ".json", ".map"
+        "application/json; charset=utf-8"
+      when ".wasm"
+        "application/wasm"
+      when ".ttf"
+        "font/ttf"
+      when ".otf"
+        "font/otf"
+      when ".woff"
+        "font/woff"
+      when ".woff2"
+        "font/woff2"
+      when ".ico"
+        "image/x-icon"
+      when ".txt", ".symbols"
+        "text/plain; charset=utf-8"
       else
         "application/octet-stream"
       end

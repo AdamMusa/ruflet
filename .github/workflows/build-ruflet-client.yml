@@ -1,0 +1,466 @@
+name: Build Ruflet Client Prebuilds
+
+# The preview client shipped by `ruflet run` is Ruflet Explorer, built through
+# the Ruflet CLI rather than a bare `flutter build`, so the published binaries
+# are exactly what a user gets locally.
+#
+# Desktop and web are built server-driven: those clients are told which server
+# to use at launch (desktop from the launcher's argument, web from the origin it
+# is served from), so no backend can be baked in. Mobile is built self-contained
+# because there the client is Explorer itself — its launcher, QR scanner and
+# bundled Studio are Ruby and need the embedded VM.
+
+on:
+  workflow_dispatch:
+    inputs:
+      explorer_ref:
+        description: Ruflet Explorer ref to build
+        required: false
+        default: main
+  release:
+    types: [published]
+  push:
+    branches: [main, prebuild]
+    tags: ['v*']
+    paths:
+      - '.github/workflows/build-ruflet-client.yml'
+      - 'packages/**'
+      - 'ruby_runtime/**'
+  pull_request:
+    paths:
+      - '.github/workflows/build-ruflet-client.yml'
+      - 'packages/**'
+      - 'ruby_runtime/**'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ruflet-client-prebuild-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  EXPLORER_REPOSITORY: AdamMusa/ruflet_explorer
+  EXPLORER_REF: ${{ github.event.inputs.explorer_ref || 'main' }}
+
+jobs:
+  validate-extensions:
+    name: Validate bundled extensions
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout ruflet
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve QR scanner package
+        working-directory: ruflet_client/flet_packages/ruflet_qrcode_scanner
+        run: flutter pub get
+
+      - name: Analyze QR scanner package
+        working-directory: ruflet_client/flet_packages/ruflet_qrcode_scanner
+        run: flutter analyze
+
+      - name: Test QR scanner package
+        working-directory: ruflet_client/flet_packages/ruflet_qrcode_scanner
+        run: flutter test
+
+      - name: Resolve SpinKit package
+        working-directory: ruflet_client/flet_packages/flet_spinkit
+        run: flutter pub get
+
+      - name: Analyze SpinKit package
+        working-directory: ruflet_client/flet_packages/flet_spinkit
+        run: flutter analyze
+
+      - name: Test SpinKit package
+        working-directory: ruflet_client/flet_packages/flet_spinkit
+        run: flutter test
+
+  verify-explorer:
+    name: Verify Ruflet Explorer
+    needs: validate-extensions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ruflet
+        uses: actions/checkout@v4
+        with:
+          path: ruflet
+
+      - name: Checkout Ruflet Explorer
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.EXPLORER_REPOSITORY }}
+          ref: ${{ env.EXPLORER_REF }}
+          path: explorer
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+
+      - name: Run framework tests
+        working-directory: ruflet
+        run: |
+          for package in packages/ruflet packages/ruflet_core packages/ruflet_server; do
+            echo "== $package =="
+            (cd "$package" && ruby -Ilib -Itest -e 'Dir["test/*_test.rb"].each { |f| require File.expand_path(f) }')
+          done
+
+      - name: Run Explorer tests
+        working-directory: explorer
+        env:
+          RUBYLIB: ${{ github.workspace }}/ruflet/packages/ruflet_core/lib:${{ github.workspace }}/ruflet/packages/ruflet_server/lib:${{ github.workspace }}/ruflet/packages/ruflet/lib
+        run: |
+          ruby test/url_test.rb
+          ruby test/app_test.rb
+          ruby test/standalone_apps_test.rb
+
+      - name: Refuse to publish a client carrying credentials
+        working-directory: explorer
+        run: |
+          found=$(find . -path ./build -prune -o \
+            \( -name '*.p8' -o -name '*.p12' -o -name '*.jks' -o -name '*.keystore' \
+               -o -name '*.mobileprovision' -o -name '.env' \) -print)
+          if [ -n "$found" ]; then
+            echo "Credentials present in the checkout:"
+            echo "$found"
+            exit 1
+          fi
+
+  build-desktop-and-web:
+    name: Build ${{ matrix.target }}
+    needs: verify-explorer
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: web
+            runner: ubuntu-latest
+            artifact: ruflet_client-web.tar.gz
+          - target: linux
+            runner: ubuntu-latest
+            artifact: ruflet_client-linux-x64.tar.gz
+          - target: windows
+            runner: windows-latest
+            artifact: ruflet_client-windows-x64.zip
+          - target: macos
+            runner: macos-latest
+            artifact: ruflet_client-macos-universal.zip
+
+    steps:
+      - name: Checkout ruflet
+        uses: actions/checkout@v4
+        with:
+          path: ruflet
+
+      - name: Checkout Ruflet Explorer
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.EXPLORER_REPOSITORY }}
+          ref: ${{ env.EXPLORER_REF }}
+          path: explorer
+
+      - name: Install Linux build deps
+        if: matrix.target == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev \
+            libsecret-1-dev \
+            libmpv-dev mpv \
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+            gstreamer1.0-plugins-base gstreamer1.0-plugins-good
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # Server-driven: the client resolves its backend at launch, so no
+      # backend_url is baked in and one binary works against any port.
+      - name: Build ${{ matrix.target }} client
+        working-directory: explorer
+        shell: bash
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+        run: ../ruflet/packages/ruflet/bin/ruflet build ${{ matrix.target }} --verbose
+
+      - name: Package web artifact
+        if: matrix.target == 'web'
+        run: tar -C explorer/build/client/build/web -czf ruflet_client-web.tar.gz .
+
+      - name: Package linux artifact
+        if: matrix.target == 'linux'
+        run: tar -C explorer/build/client/build/linux/x64/release/bundle -czf ruflet_client-linux-x64.tar.gz .
+
+      - name: Package macos artifact
+        if: matrix.target == 'macos'
+        run: |
+          app=$(find explorer/build/client/build/macos/Build/Products/Release -maxdepth 1 -name '*.app' | head -n 1)
+          if [ -z "$app" ]; then
+            echo "No .app produced under explorer/build/client/build/macos"
+            exit 1
+          fi
+          echo "Packaging $app"
+          ditto -c -k --sequesterRsrc --keepParent "$app" ruflet_client-macos-universal.zip
+
+      - name: Package windows artifact
+        if: matrix.target == 'windows'
+        shell: pwsh
+        run: |
+          $release = "explorer/build/client/build/windows/x64/runner/Release"
+          if (-not (Test-Path $release)) { throw "No Windows release output at $release" }
+          Compress-Archive -Path "$release/*" -DestinationPath ruflet_client-windows-x64.zip -Force
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruflet_client-${{ matrix.target }}
+          path: ${{ matrix.artifact }}
+
+      - name: Attach to GitHub release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.artifact }}
+
+      - name: Publish prebuild channel release
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'prebuild'))
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name == 'prebuild' && 'prebuild' || 'prebuild-main' }}
+          name: ${{ github.ref_name == 'prebuild' && 'Ruflet Client Prebuild (prebuild)' || 'Ruflet Client Prebuild (main)' }}
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
+          files: ${{ matrix.artifact }}
+
+      - name: Publish versioned client release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Ruflet Client ${{ github.ref_name }}
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
+          files: ${{ matrix.artifact }}
+
+  build-android:
+    name: Build Android
+    needs: verify-explorer
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout ruflet
+        uses: actions/checkout@v4
+        with:
+          path: ruflet
+
+      - name: Checkout Ruflet Explorer
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.EXPLORER_REPOSITORY }}
+          ref: ${{ env.EXPLORER_REF }}
+          path: explorer
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # Self-contained: on mobile the client is Explorer itself, so the Ruby
+      # launcher, QR scanner and bundled Studio ship inside the app.
+      - name: Build Android APK
+        working-directory: explorer
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+        run: ../ruflet/packages/ruflet/bin/ruflet build apk --self --verbose
+
+      - name: Build Android App Bundle
+        working-directory: explorer
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+        run: ../ruflet/packages/ruflet/bin/ruflet build aab --self --verbose
+
+      - name: Package Android artifacts
+        run: |
+          apk=$(find explorer/build -name 'app-release.apk' | head -n 1)
+          aab=$(find explorer/build -name 'app-release.aab' | head -n 1)
+          if [ -z "$apk" ] || [ -z "$aab" ]; then
+            echo "Missing Android outputs (apk=$apk aab=$aab)"
+            exit 1
+          fi
+          cp "$apk" ruflet_client-android-apk.apk
+          cp "$aab" ruflet_client-android-appbundle.aab
+
+      - name: Verify no credentials were embedded
+        run: |
+          if unzip -l ruflet_client-android-apk.apk | grep -Ei '\.(p8|p12|jks|keystore|mobileprovision)$|/credentials/'; then
+            echo "The APK embeds credential material."
+            exit 1
+          fi
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruflet_client-android
+          path: |
+            ruflet_client-android-apk.apk
+            ruflet_client-android-appbundle.aab
+
+      - name: Attach to GitHub release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ruflet_client-android-apk.apk
+            ruflet_client-android-appbundle.aab
+
+      - name: Publish Android to prebuild channel
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'prebuild'))
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name == 'prebuild' && 'prebuild' || 'prebuild-main' }}
+          name: ${{ github.ref_name == 'prebuild' && 'Ruflet Client Prebuild (prebuild)' || 'Ruflet Client Prebuild (main)' }}
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
+          files: |
+            ruflet_client-android-apk.apk
+            ruflet_client-android-appbundle.aab
+
+  build-ios-simulator:
+    name: Build iOS Simulator
+    needs: verify-explorer
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout ruflet
+        uses: actions/checkout@v4
+        with:
+          path: ruflet
+
+      - name: Checkout Ruflet Explorer
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.EXPLORER_REPOSITORY }}
+          ref: ${{ env.EXPLORER_REF }}
+          path: explorer
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Build iOS simulator client
+        working-directory: explorer
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+        run: ../ruflet/packages/ruflet/bin/ruflet build ios --self --simulator --verbose
+
+      - name: Package iOS simulator artifact
+        run: |
+          app=$(find explorer/build -path '*iphonesimulator*' -name '*.app' -maxdepth 8 | head -n 1)
+          if [ -z "$app" ]; then
+            echo "No simulator .app produced"
+            exit 1
+          fi
+          ditto -c -k --sequesterRsrc --keepParent "$app" ruflet_client-ios-simulator.zip
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruflet_client-ios-simulator
+          path: ruflet_client-ios-simulator.zip
+
+      - name: Attach to GitHub release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ruflet_client-ios-simulator.zip
+
+      - name: Publish iOS simulator to prebuild channel
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'prebuild'))
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name == 'prebuild' && 'prebuild' || 'prebuild-main' }}
+          name: ${{ github.ref_name == 'prebuild' && 'Ruflet Client Prebuild (prebuild)' || 'Ruflet Client Prebuild (main)' }}
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
+          files: ruflet_client-ios-simulator.zip
+
+  publish-prebuild-manifest:
+    name: Publish completed prebuild revision
+    if: >-
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'prebuild'))) &&
+      needs.build-desktop-and-web.result == 'success' &&
+      needs.build-ios-simulator.result == 'success' &&
+      needs.build-android.result == 'success'
+    needs:
+      - build-desktop-and-web
+      - build-ios-simulator
+      - build-android
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write completed-build manifest
+        env:
+          RUFLET_REVISION: ${{ github.sha }}
+          RUFLET_RUN_ID: ${{ github.run_id }}
+          RUFLET_REF: ${{ github.ref_name }}
+          RUFLET_EXPLORER_REF: ${{ env.EXPLORER_REF }}
+        run: |
+          ruby -rjson -rtime -e 'File.write("ruflet_client-manifest.json", JSON.pretty_generate({schema: 1, revision: ENV.fetch("RUFLET_REVISION"), run_id: ENV.fetch("RUFLET_RUN_ID"), ref: ENV.fetch("RUFLET_REF"), explorer_ref: ENV.fetch("RUFLET_EXPLORER_REF"), completed_at: Time.now.utc.iso8601}))'
+
+      - name: Upload completed-build manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruflet-client-prebuild-manifest
+          path: ruflet_client-manifest.json
+
+      - name: Mark prebuild channel complete
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name == 'prebuild' && 'prebuild' || 'prebuild-main' }}
+          name: ${{ github.ref_name == 'prebuild' && 'Ruflet Client Prebuild (prebuild)' || 'Ruflet Client Prebuild (main)' }}
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
+          files: ruflet_client-manifest.json

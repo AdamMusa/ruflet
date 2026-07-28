@@ -131,7 +131,21 @@ module Ruflet
       end
 
       def fvm_env
-        { "PATH" => "#{pub_cache_bin_dir}#{File::PATH_SEPARATOR}#{ENV.fetch('PATH', '')}" }
+        utf8_locale_env.merge("PATH" => "#{pub_cache_bin_dir}#{File::PATH_SEPARATOR}#{ENV.fetch('PATH', '')}")
+      end
+
+      # CocoaPods aborts with "Unicode Normalization not appropriate for
+      # ASCII-8BIT" when it inherits a non-UTF-8 locale, which takes the whole
+      # iOS and macOS build with it. Hand the toolchain a UTF-8 locale unless
+      # the environment already has one.
+      def utf8_locale_env
+        return {} if utf8_locale?(ENV["LC_ALL"]) || utf8_locale?(ENV["LANG"])
+
+        { "LANG" => "en_US.UTF-8", "LC_ALL" => "en_US.UTF-8" }
+      end
+
+      def utf8_locale?(value)
+        value.to_s.match?(/utf-?8/i)
       end
 
       def tools_from_flutter_bin(flutter_bin)
@@ -143,11 +157,11 @@ module Ruflet
         {
           flutter: flutter_bin,
           dart: (File.executable?(dart) ? dart : "dart"),
-          env: {
+          env: utf8_locale_env.merge(
             "PATH" => "#{bin_dir}#{File::PATH_SEPARATOR}#{pub_cache_bin_dir}#{File::PATH_SEPARATOR}#{ENV.fetch('PATH', '')}",
             "FLUTTER_ROOT" => sdk_root,
             "FVM_FLUTTER_SDK" => sdk_root
-          }
+          )
         }
       end
 
