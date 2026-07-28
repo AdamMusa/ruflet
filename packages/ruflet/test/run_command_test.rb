@@ -208,7 +208,8 @@ class RufletCliRunCommandTest < Minitest::Test
   ensure
     begin
       Process.kill("KILL", -child) if child
-    rescue Errno::ESRCH
+    rescue Errno::ESRCH, Errno::EPERM
+      # ESRCH: already reaped. EPERM: the runner denies signalling the group.
       nil
     end
   end

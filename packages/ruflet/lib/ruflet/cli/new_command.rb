@@ -205,10 +205,16 @@ module Ruflet
         git_revision(File.expand_path("../..", template_root))
       end
 
+      # Always record where the client came from. A template resolved from a
+      # local checkout may have no readable revision, and skipping the marker
+      # entirely left the copied client indistinguishable from one that was
+      # never stamped. "local" never matches an expected revision, so the client
+      # is refreshed rather than treated as current.
       def write_client_template_revision(target, revision)
-        return unless revision
+        value = revision.to_s.strip
+        value = "local" if value.empty?
 
-        File.write(File.join(target, ".ruflet-template-revision"), "#{revision}\n")
+        File.write(File.join(target, ".ruflet-template-revision"), "#{value}\n")
       end
 
       def client_template_current?(target, template_root)

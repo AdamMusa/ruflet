@@ -79,9 +79,14 @@ jobs:
         env:
           RUFLET_TEMPLATE_ROOT: ${{ github.workspace }}/ruflet-template
         run: |
+          # One process per file. ruflet/hot_reload requires ruflet_core, whose
+          # Kernel#method_missing turns any missing-method call in the process
+          # into a control object — including inside Process::Waiter threads.
+          # Loading every file together made that leak across suites, failing
+          # unrelated tests depending on the random seed.
           for package in packages/ruflet packages/ruflet_core packages/ruflet_server; do
             echo "== $package =="
-            (cd "$package" && ruby -Ilib -Itest -e 'Dir["test/*_test.rb"].each { |f| require File.expand_path(f) }')
+            (cd "$package" && for file in test/*_test.rb; do ruby -Ilib -Itest "$file"; done)
           done
 
       - name: Run Explorer tests
