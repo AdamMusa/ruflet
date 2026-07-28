@@ -1,30 +1,32 @@
-name: Test Ruflet Studio Desktop Builds
+name: Test Ruflet Explorer Desktop Builds
+
+# Smoke test for self-contained desktop builds: proves the embedded Ruby VM is
+# packaged and linked correctly on Linux and Windows. Ruflet Explorer is the app
+# under test because it is the client we ship.
 
 on:
   workflow_dispatch:
   pull_request:
     paths:
-      - ".github/workflows/test-ruflet-studio-desktop.yml"
+      - ".github/workflows/test-ruflet-explorer-desktop.yml"
       - "packages/ruflet/**"
       - "packages/ruflet_core/**"
       - "packages/ruflet_server/**"
       - "ruby_runtime/**"
-      - "ruflet_flutter_template/**"
   push:
     paths:
-      - ".github/workflows/test-ruflet-studio-desktop.yml"
+      - ".github/workflows/test-ruflet-explorer-desktop.yml"
       - "packages/ruflet/**"
       - "packages/ruflet_core/**"
       - "packages/ruflet_server/**"
       - "ruby_runtime/**"
-      - "ruflet_flutter_template/**"
 
 permissions:
   contents: read
 
 jobs:
-  build-studio:
-    name: Ruflet Studio (${{ matrix.target }})
+  build-explorer:
+    name: Ruflet Explorer (${{ matrix.target }})
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -39,11 +41,11 @@ jobs:
       - name: Checkout Ruflet
         uses: actions/checkout@v4
 
-      - name: Checkout Ruflet Studio
+      - name: Checkout Ruflet Explorer
         uses: actions/checkout@v4
         with:
-          repository: AdamMusa/ruflet_studio
-          path: studio
+          repository: AdamMusa/ruflet_explorer
+          path: explorer
 
       - name: Install Linux desktop dependencies
         if: matrix.target == 'linux'
@@ -63,7 +65,7 @@ jobs:
       - name: Use the checked-out Ruflet gems
         shell: bash
         run: |
-          ruby -e 'root = ENV.fetch("GITHUB_WORKSPACE").tr("\\", "/"); File.write("studio/Gemfile", <<~GEMFILE)
+          ruby -e 'root = ENV.fetch("GITHUB_WORKSPACE").tr("\\", "/"); File.write("explorer/Gemfile", <<~GEMFILE)
           source "https://rubygems.org"
 
           gem "ruflet", path: "#{root}/packages/ruflet"
@@ -72,8 +74,8 @@ jobs:
           GEMFILE
           '
 
-      - name: Install Ruflet Studio gems
-        working-directory: studio
+      - name: Install Ruflet Explorer gems
+        working-directory: explorer
         run: bundle install
 
       - name: Set up Flutter
@@ -82,16 +84,18 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Build self-contained Ruflet Studio on Linux
+      - name: Build self-contained Ruflet Explorer on Linux
         if: matrix.target == 'linux'
-        working-directory: studio
+        working-directory: explorer
         env:
           RUFLET_RUBY_RUNTIME_PATH: ${{ github.workspace }}/ruby_runtime
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
         run: bundle exec ruflet build linux --self
 
-      - name: Build self-contained Ruflet Studio on Windows
+      - name: Build self-contained Ruflet Explorer on Windows
         if: matrix.target == 'windows'
-        working-directory: studio
+        working-directory: explorer
         shell: pwsh
         env:
           RUFLET_RUBY_RUNTIME_PATH: ${{ github.workspace }}/ruby_runtime
@@ -100,36 +104,57 @@ jobs:
           $buildExitCode = $LASTEXITCODE
           if ($buildExitCode -ne 0) {
             $tail = (Get-Content windows-build.log -Tail 30) -join "%0A"
-            Write-Host "::error title=Ruflet Studio Windows build failed::$tail"
+            Write-Host "::error title=Ruflet Explorer Windows build failed::$tail"
             exit $buildExitCode
           }
 
+      # The executable takes the app's own package name, so discover it rather
+      # than hardcoding one and silently passing against the wrong binary.
       - name: Verify Linux distribution
         if: matrix.target == 'linux'
         shell: bash
         run: |
-          bundle="studio/build/client/build/linux/x64/release/bundle"
-          test -x "$bundle/ruflet_studio"
-          test -f "$bundle/lib/libruflet_vm.so"
+          bundle="explorer/build/client/build/linux/x64/release/bundle"
+          test -d "$bundle" || { echo "No Linux bundle at $bundle"; exit 1; }
+
+          exe=$(find "$bundle" -maxdepth 1 -type f -perm -u+x | head -n 1)
+          test -n "$exe" || { echo "No executable in $bundle"; exit 1; }
+          echo "Executable: $exe"
+
+          test -f "$bundle/lib/libruflet_vm.so" || { echo "Missing packaged Ruflet VM"; exit 1; }
           ! ldd "$bundle/lib/libruflet_vm.so" | grep "not found"
 
       - name: Verify Windows distribution
         if: matrix.target == 'windows'
         shell: pwsh
         run: |
-          $bundle = "studio/build/client/build/windows/x64/runner/Release"
-          if (!(Test-Path "$bundle/ruflet_studio.exe")) {
-            throw "Missing Ruflet Studio Windows executable"
-          }
+          $bundle = "explorer/build/client/build/windows/x64/runner/Release"
+          if (!(Test-Path $bundle)) { throw "No Windows release output at $bundle" }
+
+          $exe = Get-ChildItem -Path $bundle -Filter *.exe | Select-Object -First 1
+          if (-not $exe) { throw "No executable in $bundle" }
+          Write-Host "Executable: $($exe.Name)"
+
           if (!(Test-Path "$bundle/ruflet_vm.dll")) {
             throw "Missing packaged Ruflet VM DLL"
           }
 
+      - name: Refuse a bundle carrying credentials
+        shell: bash
+        run: |
+          found=$(find explorer/build/client/build -type d -name credentials -o -type f \
+            \( -name '*.p8' -o -name '*.p12' -o -name '*.jks' -o -name '*.keystore' \) 2>/dev/null)
+          if [ -n "$found" ]; then
+            echo "The desktop bundle embeds credential material:"
+            echo "$found"
+            exit 1
+          fi
+
       - name: Upload desktop distribution
         uses: actions/upload-artifact@v4
         with:
-          name: ruflet-studio-${{ matrix.target }}
+          name: ruflet-explorer-${{ matrix.target }}
           path: |
-            studio/build/client/build/linux/x64/release/bundle
-            studio/build/client/build/windows/x64/runner/Release
+            explorer/build/client/build/linux/x64/release/bundle
+            explorer/build/client/build/windows/x64/runner/Release
           if-no-files-found: error

@@ -15,21 +15,18 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
 </p>
 
-Ruflet is a Ruby-first cross-platform UI framework. You write the controls,
-events, state, navigation, and device integrations in Ruby; Flutter renders them
-as a real native application on Android, iOS, macOS, Windows, Linux, and the web.
+Ruflet is a Ruby framework for building mobile, desktop, and web applications
+from one codebase. Flutter does the rendering, so what ships is a real native
+app on Android, iOS, macOS, Windows, Linux, and the web.
 
-There is no Dart, Kotlin, Swift, or JavaScript in your application — and no
-platform-specific UI code to keep in sync across six targets.
+You write Ruby. There is no Dart, Kotlin, Swift, or JavaScript in your app.
 
-Two ways to run the same code. **Server-driven**, where a Ruby process drives the
-client over a socket and your edits reload in place — the fast loop you develop
-in. Or **self-contained**, where Ruby and your application are packaged into the
-native binary and ship as one app, with no server to run.
+The same code runs two ways: **server-driven**, where a Ruby process drives the
+client and your edits reload in place, or **self-contained**, where Ruby and your
+app are packaged into the native binary and ship as one.
 
-Ruflet Explorer is the preview client: install it once and every Ruby app you
-write appears on the device, no rebuild in between. It is itself a Ruflet app,
-which makes it the framework's hardest test.
+Ruflet Explorer is the preview client — install it once and every Ruby app you
+write appears on the device, with no rebuild in between.
 
 > [!NOTE]
 > Ruflet is under active pre-1.0 development. APIs can evolve as the framework
