@@ -111,6 +111,62 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
+  def test_prebuilt_assets_present_rejects_a_web_cache_without_a_compiled_entrypoint
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "web"))
+      File.write(File.join(dir, "web", "index.html"), "<html></html>")
+
+      refute DummyRunner.new.send(:prebuilt_assets_present?, dir, web: true, desktop: false)
+
+      File.write(File.join(dir, "web", "flutter_bootstrap.js"), "// built")
+
+      assert DummyRunner.new.send(:prebuilt_assets_present?, dir, web: true, desktop: false)
+    end
+  end
+
+  # A cache that passes the presence check short circuits the download, so a
+  # check looser than what `run --web` accepts would strand the user on a
+  # broken cache that never repairs itself.
+  def test_incomplete_web_cache_is_redownloaded_instead_of_being_accepted
+    runner = DummyRunner.new
+
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "web"))
+      File.write(File.join(dir, "web", "index.html"), "<html></html>")
+
+      release = {
+        "tag_name" => "prebuild-main",
+        "published_at" => "2026-07-15T12:00:00Z",
+        "assets" => [
+          {
+            "name" => "ruflet_client-web.tar.gz",
+            "browser_download_url" => "https://example.test/web.tar.gz"
+          }
+        ]
+      }
+      downloads = 0
+      runner.define_singleton_method(:ruflet_version) { "0.0.20" }
+      runner.define_singleton_method(:client_cache_root_for) { |_platform| dir }
+      runner.define_singleton_method(:fetch_release_for_version) { |wanted_assets:| release }
+      runner.define_singleton_method(:download_file) do |_url, destination, limit: 5|
+        downloads += 1
+        File.write(destination, "archive")
+      end
+      runner.define_singleton_method(:extract_archive) do |_archive, destination|
+        FileUtils.mkdir_p(destination)
+        File.write(File.join(destination, "index.html"), "<html></html>")
+        File.write(File.join(destination, "flutter_bootstrap.js"), "// built")
+        true
+      end
+
+      root = runner.send(:ensure_prebuilt_client, web: true, platform: "macos")
+
+      assert_equal dir, root
+      assert_equal 1, downloads
+      assert File.file?(File.join(dir, "web", "flutter_bootstrap.js"))
+    end
+  end
+
   def test_prebuilt_desktop_present_is_false_without_a_desktop_directory
     Dir.mktmpdir do |dir|
       refute DummyRunner.new.send(:prebuilt_desktop_present?, dir, platform: "macos")

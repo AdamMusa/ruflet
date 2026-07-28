@@ -188,6 +188,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "web"))
       File.write(File.join(dir, "web", "index.html"), "<html></html>")
+      File.write(File.join(dir, "web", "flutter_bootstrap.js"), "// built")
 
       updater.define_singleton_method(:host_platform_name) { "macos" }
       updater.define_singleton_method(:ruflet_version) { "0.0.8" }

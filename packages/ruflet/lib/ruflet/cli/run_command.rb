@@ -603,8 +603,13 @@ module Ruflet
         nil
       end
 
+      # This decides both "the download installed correctly" and "the cache is
+      # still usable, skip the network". It has to agree with what `ruflet run`
+      # will actually accept later, or a half-extracted cache reports success
+      # here and then fails to launch -- and, because a present cache short
+      # circuits the download, never repairs itself without --force.
       def prebuilt_assets_present?(root, web:, desktop:, platform: nil)
-        ok_web = !web || File.file?(File.join(root, "web", "index.html"))
+        ok_web = !web || built_web_client_dir?(File.join(root, "web"))
         ok_desktop = !desktop || prebuilt_desktop_present?(root, platform: platform)
         ok_web && ok_desktop
       end
@@ -830,7 +835,7 @@ module Ruflet
         return if read_client_manifest(root)
 
         assets = []
-        assets << { "kind" => "web", "platform" => platform, "asset_name" => nil } if File.file?(File.join(root, "web", "index.html"))
+        assets << { "kind" => "web", "platform" => platform, "asset_name" => nil } if built_web_client_dir?(File.join(root, "web"))
         if prebuilt_desktop_present?(root, platform: platform)
           assets << { "kind" => "desktop", "platform" => platform, "asset_name" => nil }
         end

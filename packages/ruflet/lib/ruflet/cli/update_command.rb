@@ -108,12 +108,12 @@ module Ruflet
 
         installed = true
         targets.each do |target|
-          present =
-            if target == :web
-              File.file?(File.join(root, "web", "index.html"))
-            else
-              prebuilt_desktop_present?(root, platform: platform)
-            end
+          present = prebuilt_assets_present?(
+            root,
+            web: target == :web,
+            desktop: target == :desktop,
+            platform: platform
+          )
           installed &&= present
           puts "#{target}: #{present ? 'installed' : 'missing'}"
         end
