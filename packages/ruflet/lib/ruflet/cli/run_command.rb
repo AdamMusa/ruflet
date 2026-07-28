@@ -407,7 +407,10 @@ module Ruflet
           return
         end
 
-        pid = Process.spawn(*cmd, out: File::NULL, err: File::NULL)
+        # The Flutter client took the URL as argv; a Ruflet app used as the
+        # client reads RUFLET_URL, so it connects instead of showing its own
+        # launcher. Pass both so either client auto-connects.
+        pid = Process.spawn({ "RUFLET_URL" => url }, *cmd, out: File::NULL, err: File::NULL)
         Process.detach(pid)
         if !pid
           warn "Failed to launch desktop client: #{cmd.first}"
@@ -430,6 +433,17 @@ module Ruflet
 
       def executable_file?(path)
         File.file?(path) && File.executable?(path)
+      end
+
+      # A Flutter project's own web/ folder holds a source index.html, so
+      # index.html alone would match an unbuilt project. Require a compiled
+      # entrypoint as well.
+      WEB_BUILD_MARKERS = %w[flutter_bootstrap.js main.dart.js flutter.js].freeze
+
+      def built_web_client_dir?(dir)
+        return false unless Dir.exist?(dir) && File.file?(File.join(dir, "index.html"))
+
+        WEB_BUILD_MARKERS.any? { |marker| File.file?(File.join(dir, marker)) }
       end
 
       def macos_app_executable(app_bundle)
@@ -500,7 +514,7 @@ module Ruflet
 
         client_build_roots(root).each do |base|
           [File.join(base, "build", "web"), File.join(base, "web")].each do |dir|
-            return dir if Dir.exist?(dir) && File.file?(File.join(dir, "index.html"))
+            return dir if built_web_client_dir?(dir)
           end
         end
 
