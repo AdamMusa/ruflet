@@ -1338,6 +1338,96 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  def test_android_signing_is_taken_from_the_project_not_the_client
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "build", "client")
+      FileUtils.mkdir_p(File.join(client_dir, "android"))
+      FileUtils.mkdir_p(File.join(dir, "android"))
+      File.write(File.join(dir, "upload.jks"), "keystore")
+      File.write(
+        File.join(dir, "android", "key.properties"),
+        "storePassword=s3cret\nkeyPassword=k3y\nkeyAlias=upload\nstoreFile=../upload.jks\n"
+      )
+
+      Dir.chdir(dir) { builder.send(:apply_android_signing_config, client_dir, "aab") }
+
+      written = File.read(File.join(client_dir, "android", "key.properties"))
+      assert_includes written, "keyAlias=upload"
+      assert_includes written, "storePassword=s3cret"
+      # Relative to the project, but the client sits deeper, so it must resolve.
+      store_line = written.lines.find { |line| line.start_with?("storeFile=") }.to_s.strip
+      resolved = store_line.delete_prefix("storeFile=")
+      assert_equal File.realpath(File.join(dir, "upload.jks")), File.realpath(resolved)
+    end
+  end
+
+  def test_android_signing_prefers_the_environment
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "build", "client")
+      FileUtils.mkdir_p(File.join(client_dir, "android"))
+      keystore = File.join(dir, "ci.jks")
+      File.write(keystore, "keystore")
+
+      previous = ENV.to_hash
+      ENV["RUFLET_ANDROID_KEYSTORE"] = keystore
+      ENV["RUFLET_ANDROID_KEYSTORE_PASSWORD"] = "envstore"
+      ENV["RUFLET_ANDROID_KEY_ALIAS"] = "ci"
+      ENV["RUFLET_ANDROID_KEY_PASSWORD"] = "envkey"
+      begin
+        Dir.chdir(dir) { builder.send(:apply_android_signing_config, client_dir, "aab") }
+      ensure
+        %w[RUFLET_ANDROID_KEYSTORE RUFLET_ANDROID_KEYSTORE_PASSWORD RUFLET_ANDROID_KEY_ALIAS RUFLET_ANDROID_KEY_PASSWORD].each do |key|
+          previous.key?(key) ? ENV[key] = previous[key] : ENV.delete(key)
+        end
+      end
+
+      written = File.read(File.join(client_dir, "android", "key.properties"))
+      assert_includes written, "keyAlias=ci"
+      store_line = written.lines.find { |line| line.start_with?("storeFile=") }.to_s.strip
+      assert_equal File.realpath(keystore), File.realpath(store_line.delete_prefix("storeFile="))
+    end
+  end
+
+  def test_android_signing_absent_leaves_no_stale_key_properties
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "build", "client")
+      FileUtils.mkdir_p(File.join(client_dir, "android"))
+      stale = File.join(client_dir, "android", "key.properties")
+      File.write(stale, "storePassword=old\n")
+
+      out = StringIO.new
+      original_stdout = $stdout
+      $stdout = out
+      Dir.chdir(dir) { builder.send(:apply_android_signing_config, client_dir, "aab") }
+
+      refute_path_exists stale
+      assert_includes out.string, "will use the debug key"
+    ensure
+      $stdout = original_stdout
+    end
+  end
+
+  def test_key_properties_is_never_embedded_in_the_app
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "android"))
+      File.write(File.join(dir, "android", "key.properties"), "storePassword=s3cret\n")
+      File.write(File.join(dir, "main.rb"), "puts 1")
+
+      included = Dir.chdir(dir) { builder.send(:project_asset_relative_paths) }
+
+      assert_includes included, "main.rb"
+      refute(included.any? { |path| path.end_with?("key.properties") }, "signing passwords must not ship")
+    end
+  end
+
   def test_verify_android_generated_assets_warns_when_android_12_splash_is_missing
     builder = DummyBuilder.new
 
