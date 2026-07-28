@@ -921,8 +921,29 @@ module Ruflet
           end
         end
 
-        has_splash = !splash.nil? || default_splash
-        has_icon = !icon.nil? || default_icon
+        # A project may configure nothing shared and declare everything under the
+        # platform sections, so a platform asset alone has to run the generators.
+        platform_splash = platforms.any? { |name, entry| PLATFORM_ASSET_SUPPORT.fetch(name)[:splash] && entry[:splash] }
+        platform_icon = platforms.any? { |name, entry| PLATFORM_ASSET_SUPPORT.fetch(name)[:icon] && entry[:icon] }
+
+        platforms.each do |name, entry|
+          support = PLATFORM_ASSET_SUPPORT.fetch(name)
+          if support[:splash] && entry[:splash].nil? && key_defined?(entry[:config], "splash_screen")
+            build_note("#{name}.splash_screen was set but the file was not found")
+          end
+          if support[:icon] && entry[:icon].nil? && key_defined?(entry[:config], "icon_launcher")
+            build_note("#{name}.icon_launcher was set but the file was not found")
+          end
+        end
+
+        shared_splash_asset = !splash.nil? || default_splash
+        shared_icon_asset = !icon.nil? || default_icon
+        has_splash = shared_splash_asset || platform_splash
+        has_icon = shared_icon_asset || platform_icon
+
+        # Fall back to whatever Android configured when nothing is shared.
+        effective_icon_background = icon_background || platforms.dig("android", :icon_background)
+        effective_theme_color = theme_color || platforms.dig("android", :theme_color)
 
         pubspec_path = File.join(client_dir, "pubspec.yaml")
         unless File.file?(pubspec_path)
@@ -933,12 +954,18 @@ module Ruflet
         ensure_pubspec_block(pubspec_path, "flutter_native_splash") if has_splash
 
         if has_icon
-          update_pubspec_value(pubspec_path, "flutter_launcher_icons", "image_path", "\"assets/icon.png\"", multiple: true)
+          if shared_icon_asset
+            update_pubspec_value(pubspec_path, "flutter_launcher_icons", "image_path", "\"assets/icon.png\"", multiple: true)
+          end
           # Android 8+ renders adaptive icons. Without these keys flutter_launcher_icons
           # never writes mipmap-anydpi-v26/, and the launcher falls back to the legacy
           # bitmap, ignoring icon_background entirely.
           update_pubspec_value(pubspec_path, "flutter_launcher_icons", "android", "launcher_icon", multiple: true)
-          adaptive_foreground_path = adaptive_foreground ? "assets/icon_foreground.png" : "assets/icon.png"
+          adaptive_foreground_path =
+            if adaptive_foreground then "assets/icon_foreground.png"
+            elsif platforms.dig("android", :icon) then "assets/icon_android.png"
+            else "assets/icon.png"
+            end
           update_pubspec_value(
             pubspec_path, "flutter_launcher_icons", "adaptive_icon_foreground",
             "\"#{adaptive_foreground_path}\"", multiple: true
@@ -999,10 +1026,10 @@ module Ruflet
             end
           end
         end
-        update_pubspec_value(pubspec_path, "flutter_launcher_icons", "background_color", "\"#{icon_background}\"") if icon_background
-        update_pubspec_value(pubspec_path, "flutter_launcher_icons", "theme_color", "\"#{theme_color}\"") if theme_color
+        update_pubspec_value(pubspec_path, "flutter_launcher_icons", "background_color", "\"#{effective_icon_background}\"") if effective_icon_background
+        update_pubspec_value(pubspec_path, "flutter_launcher_icons", "theme_color", "\"#{effective_theme_color}\"") if effective_theme_color
 
-        update_pubspec_value(pubspec_path, "flutter_native_splash", "image", "\"assets/splash.png\"") if has_splash
+        update_pubspec_value(pubspec_path, "flutter_native_splash", "image", "\"assets/splash.png\"") if shared_splash_asset
         update_pubspec_value(pubspec_path, "flutter_native_splash", "image_dark", "\"assets/splash_dark.png\"") if splash_dark
         update_pubspec_value(pubspec_path, "flutter_native_splash", "color", "\"#{splash_color}\"") if splash_color
         update_pubspec_value(pubspec_path, "flutter_native_splash", "color_dark", "\"#{splash_dark_color}\"") if splash_dark_color
