@@ -71,6 +71,54 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
+  def test_prebuilt_desktop_present_accepts_a_bundle_named_after_the_project
+    skip "macOS layout" unless RbConfig::CONFIG["host_os"].match?(/darwin/i)
+
+    Dir.mktmpdir do |dir|
+      build_macos_app(File.join(dir, "desktop"), "Ruflet Explorer")
+
+      assert DummyRunner.new.send(:prebuilt_desktop_present?, dir, platform: "macos")
+    end
+  end
+
+  def test_prebuilt_desktop_present_rejects_a_bundle_without_an_executable
+    skip "macOS layout" unless RbConfig::CONFIG["host_os"].match?(/darwin/i)
+
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "desktop", "Ruflet Explorer.app", "Contents", "MacOS"))
+
+      refute DummyRunner.new.send(:prebuilt_desktop_present?, dir, platform: "macos")
+    end
+  end
+
+  def test_prebuilt_desktop_present_accepts_linux_and_windows_binaries_of_any_name
+    Dir.mktmpdir do |dir|
+      desktop = File.join(dir, "desktop")
+      FileUtils.mkdir_p(File.join(desktop, "lib"))
+      binary = File.join(desktop, "rufletexplorer")
+      File.write(binary, "#!/bin/sh\n")
+      FileUtils.chmod(0o755, binary)
+
+      assert DummyRunner.new.send(:prebuilt_desktop_present?, dir, platform: "linux")
+    end
+
+    Dir.mktmpdir do |dir|
+      desktop = File.join(dir, "desktop")
+      FileUtils.mkdir_p(desktop)
+      File.write(File.join(desktop, "rufletexplorer.exe"), "MZ")
+
+      assert DummyRunner.new.send(:prebuilt_desktop_present?, dir, platform: "windows")
+    end
+  end
+
+  def test_prebuilt_desktop_present_is_false_without_a_desktop_directory
+    Dir.mktmpdir do |dir|
+      refute DummyRunner.new.send(:prebuilt_desktop_present?, dir, platform: "macos")
+      refute DummyRunner.new.send(:prebuilt_desktop_present?, dir, platform: "linux")
+      refute DummyRunner.new.send(:prebuilt_desktop_present?, dir, platform: "windows")
+    end
+  end
+
   def build_web_output(dir)
     FileUtils.mkdir_p(dir)
     File.write(File.join(dir, "index.html"), "<html></html>")
@@ -315,7 +363,9 @@ class RufletCliRunCommandTest < Minitest::Test
     Dir.mktmpdir do |dir|
       desktop = File.join(dir, "desktop")
       FileUtils.mkdir_p(desktop)
-      File.write(File.join(desktop, "ruflet_client"), "old")
+      stale_binary = File.join(desktop, "ruflet_client")
+      File.write(stale_binary, "old")
+      FileUtils.chmod(0o755, stale_binary)
       File.write(
         File.join(dir, "manifest.json"),
         JSON.generate(
@@ -345,7 +395,9 @@ class RufletCliRunCommandTest < Minitest::Test
       end
       runner.define_singleton_method(:extract_archive) do |_archive, destination|
         FileUtils.mkdir_p(destination)
-        File.write(File.join(destination, "ruflet_client"), "new")
+        extracted = File.join(destination, "ruflet_client")
+        File.write(extracted, "new")
+        FileUtils.chmod(0o755, extracted)
         true
       end
 

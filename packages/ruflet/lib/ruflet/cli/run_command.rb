@@ -609,17 +609,24 @@ module Ruflet
         ok_web && ok_desktop
       end
 
+      # The prebuilt client is whatever `ruflet build` produced from Ruflet
+      # Explorer, so its bundle and binary carry that project's app name --
+      # "Ruflet Explorer.app", not the old "ruflet_client.app". Match on shape
+      # the way detect_desktop_client_command does rather than on a fixed name.
       def prebuilt_desktop_present?(root, platform: nil)
         platform ||= host_platform_name
         return false if platform.nil?
 
+        desktop = File.join(root, "desktop")
+        return false unless Dir.exist?(desktop)
+
         case platform
         when "macos"
-          File.file?(File.join(root, "desktop", "ruflet_client.app", "Contents", "MacOS", "ruflet_client"))
+          Dir.glob(File.join(desktop, "*.app")).any? { |app_bundle| macos_app_executable(app_bundle) }
         when "linux"
-          File.file?(File.join(root, "desktop", "ruflet_client"))
+          Dir.children(desktop).any? { |entry| executable_file?(File.join(desktop, entry)) }
         when "windows"
-          File.file?(File.join(root, "desktop", "ruflet_client.exe"))
+          Dir.glob(File.join(desktop, "*.exe")).any? { |path| File.file?(path) }
         else
           false
         end
