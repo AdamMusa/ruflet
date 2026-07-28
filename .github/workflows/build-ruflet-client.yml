@@ -49,16 +49,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout ruflet
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: ruflet
 
       - name: Checkout Ruflet Explorer
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ env.EXPLORER_REPOSITORY }}
           ref: ${{ env.EXPLORER_REF }}
           path: explorer
+
+      - name: Checkout Ruflet template
+        uses: actions/checkout@v5
+        with:
+          repository: AdamMusa/ruflet-template
+          path: ruflet-template
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -67,6 +73,8 @@ jobs:
 
       - name: Run framework tests
         working-directory: ruflet
+        env:
+          RUFLET_TEMPLATE_ROOT: ${{ github.workspace }}/ruflet-template
         run: |
           for package in packages/ruflet packages/ruflet_core packages/ruflet_server; do
             echo "== $package =="
@@ -117,12 +125,12 @@ jobs:
 
     steps:
       - name: Checkout ruflet
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: ruflet
 
       - name: Checkout Ruflet Explorer
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ env.EXPLORER_REPOSITORY }}
           ref: ${{ env.EXPLORER_REF }}
@@ -138,6 +146,12 @@ jobs:
             libmpv-dev mpv \
             libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
             gstreamer1.0-plugins-base gstreamer1.0-plugins-good
+
+      - name: Checkout Ruflet template
+        uses: actions/checkout@v5
+        with:
+          repository: AdamMusa/ruflet-template
+          path: ruflet-template
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -158,6 +172,8 @@ jobs:
         env:
           LANG: en_US.UTF-8
           LC_ALL: en_US.UTF-8
+          RUFLET_TEMPLATE_ROOT: ${{ github.workspace }}/ruflet-template
+          RUFLET_RUBY_RUNTIME_PATH: ${{ github.workspace }}/ruflet/ruby_runtime
         run: ../ruflet/packages/ruflet/bin/ruflet build ${{ matrix.target }} --verbose
 
       - name: Package web artifact
@@ -188,7 +204,7 @@ jobs:
           Compress-Archive -Path "$release/*" -DestinationPath ruflet_client-windows-x64.zip -Force
 
       - name: Upload workflow artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ruflet_client-${{ matrix.target }}
           path: ${{ matrix.artifact }}
@@ -228,22 +244,28 @@ jobs:
 
     steps:
       - name: Checkout ruflet
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: ruflet
 
       - name: Checkout Ruflet Explorer
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ env.EXPLORER_REPOSITORY }}
           ref: ${{ env.EXPLORER_REF }}
           path: explorer
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
+
+      - name: Checkout Ruflet template
+        uses: actions/checkout@v5
+        with:
+          repository: AdamMusa/ruflet-template
+          path: ruflet-template
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -263,13 +285,17 @@ jobs:
         env:
           LANG: en_US.UTF-8
           LC_ALL: en_US.UTF-8
-        run: ../ruflet/packages/ruflet/bin/ruflet build apk --self --verbose
+          RUFLET_TEMPLATE_ROOT: ${{ github.workspace }}/ruflet-template
+          RUFLET_RUBY_RUNTIME_PATH: ${{ github.workspace }}/ruflet/ruby_runtime
+        run: ../ruflet/packages/ruflet/bin/ruflet build android --self --verbose
 
       - name: Build Android App Bundle
         working-directory: explorer
         env:
           LANG: en_US.UTF-8
           LC_ALL: en_US.UTF-8
+          RUFLET_TEMPLATE_ROOT: ${{ github.workspace }}/ruflet-template
+          RUFLET_RUBY_RUNTIME_PATH: ${{ github.workspace }}/ruflet/ruby_runtime
         run: ../ruflet/packages/ruflet/bin/ruflet build aab --self --verbose
 
       - name: Package Android artifacts
@@ -291,7 +317,7 @@ jobs:
           fi
 
       - name: Upload workflow artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ruflet_client-android
           path: |
@@ -326,16 +352,22 @@ jobs:
 
     steps:
       - name: Checkout ruflet
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: ruflet
 
       - name: Checkout Ruflet Explorer
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ env.EXPLORER_REPOSITORY }}
           ref: ${{ env.EXPLORER_REF }}
           path: explorer
+
+      - name: Checkout Ruflet template
+        uses: actions/checkout@v5
+        with:
+          repository: AdamMusa/ruflet-template
+          path: ruflet-template
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -353,6 +385,8 @@ jobs:
         env:
           LANG: en_US.UTF-8
           LC_ALL: en_US.UTF-8
+          RUFLET_TEMPLATE_ROOT: ${{ github.workspace }}/ruflet-template
+          RUFLET_RUBY_RUNTIME_PATH: ${{ github.workspace }}/ruflet/ruby_runtime
         run: ../ruflet/packages/ruflet/bin/ruflet build ios --self --simulator --verbose
 
       - name: Package iOS simulator artifact
@@ -365,7 +399,7 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent "$app" ruflet_client-ios-simulator.zip
 
       - name: Upload workflow artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ruflet_client-ios-simulator
           path: ruflet_client-ios-simulator.zip
@@ -411,7 +445,7 @@ jobs:
           ruby -rjson -rtime -e 'File.write("ruflet_client-manifest.json", JSON.pretty_generate({schema: 1, revision: ENV.fetch("RUFLET_REVISION"), run_id: ENV.fetch("RUFLET_RUN_ID"), ref: ENV.fetch("RUFLET_REF"), explorer_ref: ENV.fetch("RUFLET_EXPLORER_REF"), completed_at: Time.now.utc.iso8601}))'
 
       - name: Upload completed-build manifest
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ruflet-client-prebuild-manifest
           path: ruflet_client-manifest.json
