@@ -1428,6 +1428,60 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  def test_extensions_may_declare_a_git_package
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "client")
+      FileUtils.mkdir_p(File.join(client_dir, "lib"))
+      File.write(
+        File.join(client_dir, "pubspec.yaml"),
+        "name: ruflet_client\ndependencies:\n  flutter:\n    sdk: flutter\n"
+      )
+      File.write(
+        File.join(client_dir, "lib", "main.self.dart"),
+        "import 'package:flet/flet.dart';\n\nvoid main() {\n  final extensions = <FletExtension>[\n  ];\n}\n"
+      )
+
+      config = {
+        "extensions" => [
+          "charts",
+          { "my_package" => { "git" => { "url" => "https://github.com/owner/my_package", "branch" => "main" } } }
+        ]
+      }
+      builder.send(:apply_service_extension_config, client_dir, config, self_contained: true)
+
+      pubspec = YAML.safe_load(File.read(File.join(client_dir, "pubspec.yaml")), aliases: true)
+      assert_equal(
+        { "git" => { "url" => "https://github.com/owner/my_package", "ref" => "main" } },
+        pubspec.dig("dependencies", "my_package")
+      )
+
+      main = File.read(File.join(client_dir, "lib", "main.self.dart"))
+      assert_includes main, "import 'package:my_package/my_package.dart' as my_package;"
+      assert_includes main, "my_package.Extension(),"
+    end
+  end
+
+  def test_extension_git_entry_accepts_a_bare_url_and_tolerates_plain_names
+    builder = DummyBuilder.new
+
+    entries = builder.send(
+      :external_extension_entries,
+      { "extensions" => [
+        "charts",
+        { "with_url" => { "url" => "https://github.com/owner/with_url", "tag" => "v1.2.0" } },
+        { "local_one" => { "path" => "../local_one" } },
+        { "no_source" => { "description" => "not a dependency" } }
+      ] }
+    )
+
+    names = entries.map { |entry| entry[:name] }
+    assert_equal %w[with_url local_one], names
+    assert_equal({ "git" => { "url" => "https://github.com/owner/with_url", "ref" => "v1.2.0" } }, entries[0][:dependency])
+    assert_equal({ "path" => "../local_one" }, entries[1][:dependency])
+  end
+
   def test_verify_android_generated_assets_warns_when_android_12_splash_is_missing
     builder = DummyBuilder.new
 

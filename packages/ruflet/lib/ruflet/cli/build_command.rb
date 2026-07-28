@@ -1509,15 +1509,107 @@ module Ruflet
         extension_packages = extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:package) }.uniq
         extension_aliases = extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:alias) }.uniq
 
+        external = external_extension_entries(config)
+
         pubspec_path = File.join(client_dir, "pubspec.yaml")
         if File.file?(pubspec_path)
           sync_client_extension_dependencies(pubspec_path, extension_packages)
           prune_client_pubspec(pubspec_path, extension_packages)
+          sync_external_extension_dependencies(pubspec_path, external)
         end
         client_entrypoint_paths(client_dir).each do |entrypoint|
-          sync_client_main_extensions(entrypoint, extension_aliases) if File.file?(entrypoint)
-          prune_client_main(entrypoint, extension_aliases) if File.file?(entrypoint)
+          next unless File.file?(entrypoint)
+
+          sync_client_main_extensions(entrypoint, extension_aliases)
+          prune_client_main(entrypoint, extension_aliases)
+          sync_external_extension_registrations(entrypoint, external)
         end
+      end
+
+      # An extension may name a package the template does not bundle, declared
+      # with the source to fetch it from:
+      #
+      #   extensions:
+      #     - charts
+      #     - my_package:
+      #         git:
+      #           url: https://github.com/owner/my_package
+      #           ref: main
+      #
+      # `branch` is accepted for `ref`, and `path` for a local checkout.
+      def external_extension_entries(config)
+        Array(config["extensions"]).filter_map do |entry|
+          next unless entry.is_a?(Hash)
+          next unless entry.size == 1
+
+          name, source = entry.first
+          package = name.to_s.strip
+          next if package.empty?
+
+          dependency = external_extension_dependency(source)
+          next unless dependency
+
+          { name: package, dependency: dependency }
+        end
+      end
+
+      def external_extension_dependency(source)
+        return nil unless source.is_a?(Hash)
+
+        normalized = source.each_with_object({}) { |(key, value), out| out[key.to_s] = value }
+        git = normalized["git"] || normalized["github"] || normalized["repository"]
+        git = normalized if git.nil? && normalized.key?("url")
+
+        if git.is_a?(String)
+          return { "git" => git }
+        elsif git.is_a?(Hash)
+          git = git.each_with_object({}) { |(key, value), out| out[key.to_s] = value }
+          url = git["url"].to_s.strip
+          return nil if url.empty?
+
+          spec = { "url" => url }
+          ref = (git["ref"] || git["branch"] || git["tag"]).to_s.strip
+          spec["ref"] = ref unless ref.empty?
+          path = git["path"].to_s.strip
+          spec["path"] = path unless path.empty?
+          return { "git" => spec }
+        end
+
+        local = normalized["path"]
+        return { "path" => local.to_s } if local.is_a?(String) && !local.to_s.strip.empty?
+
+        nil
+      end
+
+      def sync_external_extension_dependencies(pubspec_path, entries)
+        return if entries.empty?
+
+        data = YAML.safe_load(read_text_file(pubspec_path), aliases: true) || {}
+        dependencies = (data["dependencies"] || {}).dup
+        entries.each { |entry| dependencies[entry[:name]] = entry[:dependency] }
+        data["dependencies"] = dependencies
+        write_pubspec_yaml(pubspec_path, data)
+        build_note("Added #{entries.map { |e| e[:name] }.join(', ')} from the extension configuration")
+      end
+
+      # Flet extension packages expose an Extension class from a library named
+      # after the package, so the import and registration can be derived.
+      def sync_external_extension_registrations(path, entries)
+        return if entries.empty?
+
+        content = read_text_file(path)
+        original = content.dup
+
+        entries.each do |entry|
+          name = entry[:name]
+          import_line = %(import 'package:#{name}/#{name}.dart' as #{name};\n)
+          extension_line = "    #{name}.Extension(),\n"
+
+          content = insert_missing_import(content, import_line) unless content.include?("package:#{name}/#{name}.dart")
+          content = insert_missing_extension(content, extension_line) unless content.match?(/^\s*#{Regexp.escape(name)}\.Extension\(\),/)
+        end
+
+        write_text_file(path, content) unless content == original
       end
 
       def configured_service_entries(config)
