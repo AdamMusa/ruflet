@@ -53,6 +53,9 @@ module Ruflet
         "location" => "NSLocationWhenInUseUsageDescription",
         "motion" => "NSMotionUsageDescription"
       }.freeze
+      # Clients that are told which server to use at launch rather than at build
+      # time, so they may be built without a configured backend_url.
+      RUNTIME_RESOLVED_BACKEND_PLATFORMS = %w[web macos windows linux].freeze
       # What the underlying generators can actually produce per platform:
       # flutter_native_splash covers android/ios/web, flutter_launcher_icons
       # covers android/ios/web/windows/macos. Linux has neither.
@@ -115,11 +118,12 @@ module Ruflet
           build_args += ["--dart-define", "RUFLET_EMBEDDED_PROJECT=#{self_contained_project_name}"]
         elsif backend_url
           build_args += ["--dart-define", "RUFLET_BACKEND_URL=#{backend_url}"]
-        elsif platform == "web"
-          # A web client is served from the backend's own origin, so it resolves
-          # the server from its own location. Baking a URL in would pin it to a
-          # single host and port, which a preview client cannot use.
-          build_note("No backend_url configured; the web client will use the origin it is served from")
+        elsif RUNTIME_RESOLVED_BACKEND_PLATFORMS.include?(platform)
+          # These clients learn their server at launch: a web client from the
+          # origin it is served from, a desktop client from the URL the launcher
+          # passes. Baking one in would pin them to a single host and port,
+          # which a preview client cannot use.
+          build_note("No backend_url configured; the #{platform} client will resolve its server at launch")
         else
           warn "build config error: backend_url is required for server-driven builds"
           warn "Set app.backend_url or backend_url in ruflet.yaml"
