@@ -48,6 +48,18 @@ module Ruflet
         assets_dir = File.join(File.dirname(script_path), "assets")
         env["RUFLET_ASSETS_DIR"] = assets_dir if File.directory?(assets_dir)
 
+        # The backend serves the web client itself so both share one origin.
+        if options[:target] == "web"
+          web_client_dir = detect_web_client_dir
+          if web_client_dir
+            env["RUFLET_WEB_CLIENT_DIR"] = web_client_dir
+          else
+            warn "Web client build not found and prebuilt download failed."
+            warn "Build one with `ruflet build web`, or set RUFLET_CLIENT_DIR."
+            return 1
+          end
+        end
+
         print_run_banner(target: options[:target], requested_port: options[:requested_port], port: selected_port)
         print_mobile_qr_hint(port: selected_port) if options[:target] == "mobile"
         print_hot_reload_banner if options[:reload]
@@ -288,28 +300,18 @@ module Ruflet
         end
       end
 
+      # The backend serves the web client on its own port, so the client loads
+      # and opens its websocket on the same origin. The explicit url parameter
+      # is kept because prebuilt production clients have no default URL and use
+      # it to select the websocket transport.
       def launch_web_client(port)
-        web_dir = detect_web_client_dir
-        unless web_dir
-          warn "Web client build not found and prebuilt download failed."
-          return []
-        end
-
-        web_port = find_available_port(port + 1)
-        web_pid = Process.spawn("python3", "-m", "http.server", web_port.to_s, "--bind", "127.0.0.1", chdir: web_dir, out: File::NULL, err: File::NULL)
-        Process.detach(web_pid)
-        wait_for_server_boot(web_port)
         backend_url = "http://localhost:#{port}"
-        web_url = "http://localhost:#{web_port}/?#{URI.encode_www_form(url: backend_url)}"
+        web_url = "#{backend_url}/?#{URI.encode_www_form(url: backend_url)}"
         browser_pid = open_in_browser_app_mode(web_url)
         open_in_browser(web_url) if browser_pid.nil?
         puts "Ruflet web client: #{web_url}"
         puts "Ruflet backend ws: ws://localhost:#{port}/ws"
-        [web_pid, browser_pid].compact
-      rescue Errno::ENOENT
-        warn "python3 is required to host web client locally."
-        warn "Install Python 3 and rerun."
-        []
+        [browser_pid].compact
       rescue StandardError => e
         warn "Failed to launch web client: #{e.class}: #{e.message}"
         []
