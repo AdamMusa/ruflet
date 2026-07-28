@@ -142,8 +142,8 @@ wanted.
 
 | Mode | Best for | How it works |
 | --- | --- | --- |
-| **Server-driven** | Connected applications, shared business logic, Rails, and centrally deployed updates | The Flutter client connects to a Ruby backend and receives UI patches over its live connection. |
-| **Self-contained** | Native distribution and local or offline Ruby execution | Ruflet packages the Ruby runtime, application files, and Flutter client together with `ruflet build <target> --self`. |
+| **Server-driven** | Connected applications, shared business logic, Rails, and centrally deployed updates | The Ruflet client connects to a Ruby backend and receives UI patches over its live connection. |
+| **Self-contained** | Native distribution and local or offline Ruby execution | Ruflet packages the Ruby runtime, application files, and the Ruflet client together with `ruflet build <target> --self`. |
 
 Both modes use the same Ruby controls and event handlers.
 
@@ -387,14 +387,14 @@ native builds, WebView navigation, Turbo behavior, and ERB helpers.
 ```mermaid
 flowchart LR
   A["Ruby app or Rails"] --> B["Ruflet Ruby runtime"]
-  B <-->|"UI patches and events"| C["Ruflet Flutter client"]
+  B <-->|"UI patches and events"| C["Ruflet client"]
   C --> D["iOS · Android · macOS · Windows · Linux · Web"]
   B --> E["Server-driven build"]
   B --> F["Embedded Ruby native build"]
 ```
 
 Ruby creates a typed control tree. Ruflet serializes that tree and later
-updates into Flet-compatible messages. The Flutter client renders the controls
+updates into Flet-compatible messages. The Ruflet client renders the controls
 and sends user events back to Ruby. The same model works with a standalone
 Ruflet server, a Rails host, or the embedded Ruby runtime.
 
