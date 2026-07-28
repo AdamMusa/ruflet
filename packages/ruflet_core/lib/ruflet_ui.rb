@@ -169,8 +169,20 @@ module Kernel
     Ruflet::DSL
   end
 
+  # This is Kernel, so it sees every missing method in the process, including
+  # ones Ruby itself calls speculatively and expects to raise. Fabricating a
+  # control for those hands internals an object of the wrong type — a
+  # Process::Waiter receiving one fails with "wrong argument type
+  # Ruflet::Control (expected Process::Status)".
+  #
+  # Only build a control for a name the framework actually knows, or for calls
+  # written at the top level of a script, where an unregistered extension
+  # helper is still expected to work.
   def method_missing(name, *args, **props, &block)
     return super if name.to_s.end_with?("=") || (args.empty? && props.empty? && !block)
+    unless Ruflet::UI::ControlFactory.known_control?(name) || Ruflet::UI::ControlFactory.dsl_receiver?(self)
+      return super
+    end
 
     forwarded = props.dup
     forwarded[:value] = args.shift unless args.empty?

@@ -37,6 +37,26 @@ module Ruflet
         ]
       }.freeze
 
+      # Whether a name resolves to a control, including extensions registered at
+      # runtime. Used to decide when a missing method is a DSL call rather than
+      # something Ruby expected to raise.
+      def known_control?(name)
+        key = name.to_s.downcase
+        EXTENSION_CLASS_MAP.key?(key) || CLASS_MAP.key?(key)
+      end
+
+      # Where an unregistered extension helper is still meant to build a
+      # control: a script's top level, and objects the framework owns. Anything
+      # else asking for an unknown method is asking by accident.
+      def dsl_receiver?(receiver)
+        return true if receiver.equal?(TOPLEVEL_BINDING.receiver)
+
+        name = receiver.class.name
+        name.is_a?(String) && name.start_with?("Ruflet::")
+      rescue StandardError
+        false
+      end
+
       def build(type, id: nil, **props)
         normalized_type = type.to_s.downcase
         if ENV["RUFLET_DEBUG"] == "1" && normalized_type == "floatingactionbutton"

@@ -338,8 +338,13 @@ module Ruflet
       # module. Unknown widget-style helpers with properties are forwarded as
       # generic controls, allowing locally installed extensions to participate
       # in the same Ruby DSL without VM or application-specific methods.
+      # See Kernel#method_missing: this module is included into Kernel, so it
+      # must decline the same calls Ruby expects to raise on.
       def method_missing(name, *args, **props, &block)
         return super if name.to_s.end_with?("=") || (args.empty? && props.empty? && !block)
+        unless Ruflet::UI::ControlFactory.known_control?(name) || Ruflet::UI::ControlFactory.dsl_receiver?(self)
+          return super
+        end
 
         forwarded = props.dup
         forwarded[:value] = args.shift unless args.empty?
