@@ -73,7 +73,7 @@ module Ruflet
         verbose = args.delete("--verbose") || args.delete("-v")
         platform = (args.shift || "").downcase
         if platform.empty?
-          warn "Usage: ruflet build <apk|android|ios|aab|web|macos|windows|linux> [--self] [--verbose]"
+          warn "Usage: ruflet build <apk|android|aab|ios|ipa|web|macos|windows|linux> [--self] [--verbose]"
           return 1
         end
 
@@ -82,6 +82,11 @@ module Ruflet
           warn "Unsupported build target: #{platform}"
           return 1
         end
+
+        # `ipa` produces the uploadable archive; every other step — pods,
+        # signing, icons, package name — is the same as a plain iOS build.
+        requested_platform = platform
+        platform = "ios" if platform == "ipa"
 
         # The embedded Ruby VM is a native plugin with no browser
         # implementation, so a self-contained web build produces an app that
@@ -115,7 +120,7 @@ module Ruflet
         return 1 unless ok
 
         build_args = [*flutter_cmd, *args]
-        build_args << "--codesign" if ios_device_build_needs_codesign_flag?(platform, build_args)
+        build_args << "--codesign" if ios_device_build_needs_codesign_flag?(requested_platform, build_args)
         target_entrypoint = flutter_target_entrypoint(client_dir, self_contained: !!self_contained)
         build_args += ["--target", target_entrypoint] if target_entrypoint
         backend_url = configured_backend_url(config)
@@ -2317,6 +2322,8 @@ module Ruflet
           ["build", "appbundle"]
         when "ios"
           ["build", "ios"]
+        when "ipa"
+          ["build", "ipa"]
         when "web"
           ["build", "web"]
         when "macos"
