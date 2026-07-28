@@ -52,9 +52,9 @@ no rebuild in between. It is itself written in Ruflet.
 - **Rails-aware.** Mount Ruflet inside Rails, work with the same models and
   application code, or place existing Rails pages inside a managed native
   WebView shell.
-- **Extensible the Flet way.** Add typed Ruby controls backed by standard Flet
-  Flutter extension packages. Ruflet's QR and barcode scanner is built with the
-  same extension model.
+- **Extensible.** Add typed Ruby controls backed by standard Flutter extension
+  packages. Ruflet's QR and barcode scanner is built with the same extension
+  model.
 
 ## A Ruflet app
 
@@ -188,7 +188,7 @@ page.launch_url("https://example.com")
 ### Extensions that stay typed in Ruby
 
 Independent extensions are selected in `ruflet.yaml`, then Ruflet includes the
-matching Flet Flutter packages and registrations in the generated client. Maps,
+matching Flutter packages and registrations in the generated client. Maps,
 charts, code editing, Lottie, Rive, video, WebView, and QR scanning are examples
 of extension-backed controls.
 
@@ -202,8 +202,8 @@ extensions:
 ```
 
 The QR scanner is a first-party example: `ruflet_qrcode_scanner` is a normal
-Flet extension package backed by `mobile_scanner`, while application code uses
-the Ruby `qrcode_scanner(...)` builder.
+extension package backed by `mobile_scanner`, while application code uses the
+Ruby `qrcode_scanner(...)` builder.
 
 An extension that Ruflet does not bundle names where to fetch it from:
 
@@ -217,9 +217,9 @@ extensions:
 ```
 
 Ruflet adds it to the generated client's dependencies and registers it, taking
-the import and the `Extension()` call from the package name — the convention
-every Flet extension follows. `branch` and `tag` work in place of `ref`, and
-`path` takes a local checkout instead of a repository.
+the import and the `Extension()` call from the package name, which every
+extension package follows. `branch` and `tag` work in place of `ref`, and `path`
+takes a local checkout instead of a repository.
 
 ### Protected capabilities are explicit
 
@@ -410,7 +410,7 @@ flowchart LR
 ```
 
 Ruby creates a typed control tree. Ruflet serializes that tree and later
-updates into Flet-compatible messages. The Ruflet client renders the controls
+updates into wire messages. The Ruflet client renders the controls
 and sends user events back to Ruby. The same model works with a standalone
 Ruflet server, a Rails host, or the embedded Ruby runtime.
 
