@@ -51,7 +51,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
-  def test_load_config_merges_services_yaml_and_applies_mobile_permissions
+  def test_ruflet_yaml_identity_wins_over_services_yaml
     builder = DummyBuilder.new
 
     Dir.mktmpdir do |dir|
@@ -88,13 +88,15 @@ class RufletCliUpdateCommandTest < Minitest::Test
         builder.send(:apply_native_service_permissions, File.join(dir, "client"), config)
         metadata = builder.send(:build_client_metadata, config, File.join(dir, "client"))
 
+        # Services still come from services.yaml, but the app is declared by
+        # ruflet.yaml, so its identity is the one that ships.
         assert_equal 3, config["services"].length
-        assert_equal "Voice Journal", config.dig("app", "app_name")
-        assert_equal "voice_journal", config.dig("app", "package_name")
-        assert_equal "com.acme", config.dig("app", "organization")
-        assert_equal "Voice Journal", metadata[:display_name]
-        assert_equal "com.acme.voice_journal", metadata[:android_application_id]
-        assert_equal "com.acme.voice_journal", metadata[:ios_bundle_identifier]
+        assert_equal "Legacy Name", config.dig("app", "app_name")
+        assert_equal "legacy_name", config.dig("app", "package_name")
+        assert_equal "com.legacy", config.dig("app", "organization")
+        assert_equal "Legacy Name", metadata[:display_name]
+        assert_equal "com.legacy.legacy_name", metadata[:android_application_id]
+        assert_equal "com.legacy.legacy_name", metadata[:ios_bundle_identifier]
         assert_empty metadata[:mobile_identity_errors]
       end
 
@@ -1892,7 +1894,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
-  def test_prepare_flutter_client_rejects_mobile_build_without_services_app_identity
+  def test_prepare_flutter_client_rejects_a_mobile_build_without_an_app_identity
     builder = DummyBuilder.new
 
     Dir.mktmpdir do |client_dir|
@@ -1916,8 +1918,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
       )
 
       assert_equal false, result
-      assert_includes stderr.string, "services.yaml must define"
-      assert_includes stderr.string, "app.app_name"
+      assert_includes stderr.string, "ruflet.yaml must define"
+      assert_includes stderr.string, "app.name"
       assert_includes stderr.string, "app.package_name"
       assert_includes stderr.string, "app.organization"
     ensure

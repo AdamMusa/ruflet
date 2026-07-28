@@ -741,8 +741,11 @@ module Ruflet
         if File.file?(services_path)
           service_config = YAML.safe_load(read_text_file(services_path), aliases: true) || {}
           if service_config["app"].is_a?(Hash)
-            config["app"] = (config["app"].is_a?(Hash) ? config["app"] : {}).merge(service_config["app"])
-            config["_app_identity_source"] = "services.yaml"
+            # ruflet.yaml declares the app; services.yaml may still carry an
+            # identity from older projects, so it fills gaps rather than
+            # overriding what the project states.
+            declared = config["app"].is_a?(Hash) ? config["app"] : {}
+            config["app"] = service_config["app"].merge(declared)
           end
           config["services"] = service_config["services"] if service_config.key?("services")
         end
@@ -1201,10 +1204,10 @@ module Ruflet
           first_present(app["bundle_identifier"], config["bundle_identifier"], "#{organization}.#{package_name}")
         )
         identity_errors = []
-        identity_errors << "app.app_name" if app["app_name"].to_s.strip.empty?
+        named = first_present(app["name"], app["app_name"], app["display_name"])
+        identity_errors << "app.name" if named.nil?
         identity_errors << "app.package_name" if app["package_name"].to_s.strip.empty?
-        identity_errors << "app.organization" if app["organization"].to_s.strip.empty?
-        identity_errors << "services.yaml app section" unless config["_app_identity_source"] == "services.yaml"
+        identity_errors << "app.organization" if first_present(app["organization"], app["org"]).nil?
 
         {
           package_name: package_name,
@@ -1238,8 +1241,8 @@ module Ruflet
         errors = Array(metadata[:mobile_identity_errors])
         return true if errors.empty?
 
-        warn "build config error: services.yaml must define #{errors.join(', ')}"
-        warn "Set app.app_name, app.package_name, and app.organization before building a mobile app."
+        warn "build config error: ruflet.yaml must define #{errors.join(', ')}"
+        warn "A mobile build needs app.name, app.package_name and app.organization."
         false
       end
 
