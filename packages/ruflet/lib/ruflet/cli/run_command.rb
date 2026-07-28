@@ -300,13 +300,12 @@ module Ruflet
         end
       end
 
-      # The backend serves the web client on its own port, so the client loads
-      # and opens its websocket on the same origin. The explicit url parameter
-      # is kept because prebuilt production clients have no default URL and use
-      # it to select the websocket transport.
+      # The backend serves the web client on its own port, so the client reads
+      # the origin it was loaded from and opens its websocket there. No URL is
+      # passed in the query string: nothing in the client parses one.
       def launch_web_client(port)
         backend_url = "http://localhost:#{port}"
-        web_url = "#{backend_url}/?#{URI.encode_www_form(url: backend_url)}"
+        web_url = "#{backend_url}/"
         browser_pid = open_in_browser_app_mode(web_url)
         open_in_browser(web_url) if browser_pid.nil?
         puts "Ruflet web client: #{web_url}"
