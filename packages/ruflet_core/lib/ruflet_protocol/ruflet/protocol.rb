@@ -93,10 +93,13 @@ module Ruflet
       }
     end
 
-    def register_response(session_id:, page_patch: {})
+    # page_patch defaults to nil rather than {} because mruby cannot parse a
+    # hash literal as a keyword argument default, and this file is compiled
+    # into the embedded VM.
+    def register_response(session_id:, page_patch: nil)
       {
         "session_id" => session_id,
-        "page_patch" => page_patch,
+        "page_patch" => page_patch || {},
         "error" => ""
       }
     end
