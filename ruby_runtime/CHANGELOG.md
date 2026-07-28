@@ -1,3 +1,11 @@
+## 0.0.9
+
+- Rebuild the macOS VM from the current framework sources. The 0.0.8 artifact
+  predates the `ruflet_app` control rename, so an application calling
+  `ruflet_app` fell through to a control the client cannot render and failed
+  silently, with no connection and no error.
+- Embed `ruflet_core` and `ruflet_server` 0.0.20.
+
 ## 0.0.8
 
 - Embed the published `ruflet_core` 0.0.19 and `ruflet_server` 0.0.19 gems in

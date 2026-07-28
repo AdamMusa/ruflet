@@ -1663,11 +1663,16 @@ module Ruflet
         write_pubspec_yaml(pubspec_path, data)
       end
 
+      # A self-contained build needs the embedded VM. Prefer a local checkout so
+      # the runtime under development is the one packaged, and otherwise resolve
+      # the published package.
+      PUBLISHED_RUBY_RUNTIME_CONSTRAINT = "^0.0.9"
+
       def ruby_runtime_dependency(current_dependency = nil)
         local_path = explicit_local_ruby_runtime_path || source_checkout_ruby_runtime_path
         return { "path" => local_path } if local_path
 
-        current_dependency || "^0.0.3"
+        current_dependency || PUBLISHED_RUBY_RUNTIME_CONSTRAINT
       end
 
       def explicit_local_ruby_runtime_path
