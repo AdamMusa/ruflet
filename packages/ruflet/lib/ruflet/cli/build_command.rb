@@ -486,13 +486,13 @@ module Ruflet
 
         if asset_flags[:has_splash]
           launch_background = File.join(res_dir, "drawable", "launch_background.xml")
-          if !File.file?(launch_background) || !File.read(launch_background).include?("splash")
+          if !File.file?(launch_background) || !read_text_file(launch_background).include?("splash")
             warn "Android splash screen was not generated in res/drawable/launch_background.xml"
             ok = false
           end
 
           styles_v31 = File.join(res_dir, "values-v31", "styles.xml")
-          if !File.file?(styles_v31) || !File.read(styles_v31).include?("windowSplashScreenBackground")
+          if !File.file?(styles_v31) || !read_text_file(styles_v31).include?("windowSplashScreenBackground")
             warn "Android 12+ splash screen is missing from res/values-v31/styles.xml; " \
                  "devices on Android 12 and newer will show the system default splash"
             ok = false
@@ -512,7 +512,7 @@ module Ruflet
           end
 
           manifest = File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")
-          if File.file?(manifest) && !File.read(manifest).include?("@mipmap/launcher_icon")
+          if File.file?(manifest) && !read_text_file(manifest).include?("@mipmap/launcher_icon")
             warn "AndroidManifest.xml does not reference @mipmap/launcher_icon; the configured launcher icon is unused"
             ok = false
           end
@@ -666,7 +666,7 @@ module Ruflet
         shim_dir = File.join(client_dir, ".ruflet", "bin")
         FileUtils.mkdir_p(shim_dir)
         shim_path = File.join(shim_dir, "pod")
-        File.write(
+        write_text_file(
           shim_path,
           <<~SH
             #!/bin/sh
@@ -717,11 +717,11 @@ module Ruflet
           config_path = alt if File.file?(alt)
         end
         config_exists = File.file?(config_path)
-        config = config_exists ? YAML.safe_load(File.read(config_path), aliases: true) || {} : {}
+        config = config_exists ? YAML.safe_load(read_text_file(config_path), aliases: true) || {} : {}
         config_dir = File.dirname(File.expand_path(config_path))
         services_path = File.join(config_dir, "services.yaml")
         if File.file?(services_path)
-          service_config = YAML.safe_load(File.read(services_path), aliases: true) || {}
+          service_config = YAML.safe_load(read_text_file(services_path), aliases: true) || {}
           if service_config["app"].is_a?(Hash)
             config["app"] = (config["app"].is_a?(Hash) ? config["app"] : {}).merge(service_config["app"])
             config["_app_identity_source"] = "services.yaml"
@@ -1229,7 +1229,7 @@ module Ruflet
         pubspec_path = File.join(client_dir, "pubspec.yaml")
         return {} unless File.file?(pubspec_path)
 
-        YAML.safe_load(File.read(pubspec_path), aliases: true) || {}
+        YAML.safe_load(read_text_file(pubspec_path), aliases: true) || {}
       rescue StandardError
         {}
       end
@@ -1238,7 +1238,7 @@ module Ruflet
         pubspec_path = File.join(client_dir, "pubspec.yaml")
         return unless File.file?(pubspec_path)
 
-        data = YAML.safe_load(File.read(pubspec_path), aliases: true) || {}
+        data = YAML.safe_load(read_text_file(pubspec_path), aliases: true) || {}
         data["name"] = metadata[:package_name]
         data["description"] = metadata[:description]
         data["version"] = metadata[:version]
@@ -1262,9 +1262,9 @@ module Ruflet
         pbxproj_path = File.join(client_dir, "ios", "Runner.xcodeproj", "project.pbxproj")
         return unless File.file?(pbxproj_path)
 
-        content = File.read(pbxproj_path)
+        content = read_text_file(pbxproj_path)
         content.gsub!(/INFOPLIST_KEY_CFBundleDisplayName = "[^"]*";/, %(INFOPLIST_KEY_CFBundleDisplayName = "#{xcode_escape(metadata[:display_name])}";))
-        File.write(pbxproj_path, content)
+        write_text_file(pbxproj_path, content)
       end
 
       def apply_mobile_package_name(client_dir, metadata, platform:, tools:, verbose: false)
@@ -1317,11 +1317,11 @@ module Ruflet
       def apply_web_metadata(client_dir, metadata)
         manifest_path = File.join(client_dir, "web", "manifest.json")
         if File.file?(manifest_path)
-          data = JSON.parse(File.read(manifest_path))
+          data = JSON.parse(read_text_file(manifest_path))
           data["name"] = metadata[:display_name]
           data["short_name"] = metadata[:short_name]
           data["description"] = metadata[:description]
-          File.write(manifest_path, JSON.pretty_generate(data) + "\n")
+          write_text_file(manifest_path, JSON.pretty_generate(data) + "\n")
         end
 
         index_path = File.join(client_dir, "web", "index.html")
@@ -1538,20 +1538,20 @@ module Ruflet
         path = File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")
         return unless File.file?(path)
 
-        content = File.read(path)
+        content = read_text_file(path)
         entries.flat_map { |entry| ANDROID_SERVICE_PERMISSIONS.fetch(entry[:name], []) }.uniq.each do |permission|
           next if content.include?(%(android:name="#{permission}"))
 
           content.sub!(/<manifest\b[^>]*>\s*/, "\\0    <uses-permission android:name=\"#{permission}\"/>\n")
         end
-        File.write(path, content)
+        write_text_file(path, content)
       end
 
       def apply_ios_service_usage_descriptions(client_dir, entries)
         path = File.join(client_dir, "ios", "Runner", "Info.plist")
         return unless File.file?(path)
 
-        content = File.read(path)
+        content = read_text_file(path)
         entries.each do |entry|
           key = IOS_SERVICE_USAGE_KEYS[entry[:name]]
           next unless key
@@ -1567,7 +1567,7 @@ module Ruflet
             content.sub!(%r{</dict>\s*</plist>}m, "#{pair}</dict>\n</plist>")
           end
         end
-        File.write(path, content)
+        write_text_file(path, content)
       end
 
       def clear_flutter_build_state(client_dir, verbose: false)
@@ -1618,7 +1618,7 @@ module Ruflet
         pubspec_path = File.join(client_dir, "pubspec.yaml")
         return unless File.file?(pubspec_path)
 
-        data = YAML.safe_load(File.read(pubspec_path), aliases: true) || {}
+        data = YAML.safe_load(read_text_file(pubspec_path), aliases: true) || {}
         dependencies = data["dependencies"]
         dependencies = data["dependencies"] = {} unless dependencies.is_a?(Hash)
         spinkit_dependency = template_client_pubspec_dependencies["flet_spinkit"]
@@ -1706,7 +1706,7 @@ module Ruflet
 
         content = indent_pubspec_sequences(content)
 
-        File.write(path, content)
+        write_text_file(path, content)
       end
 
       def indent_pubspec_sequences(content)
@@ -1860,7 +1860,7 @@ module Ruflet
       end
 
       def prune_client_pubspec(path, selected_packages)
-        data = YAML.safe_load(File.read(path), aliases: true) || {}
+        data = YAML.safe_load(read_text_file(path), aliases: true) || {}
         deps = (data["dependencies"] || {}).dup
         optional_packages = CLIENT_EXTENSION_MAP.values.map { |entry| entry.fetch(:package) }.uniq
 
@@ -1881,7 +1881,7 @@ module Ruflet
         template_deps = template_client_pubspec_dependencies
         return if template_deps.empty?
 
-        data = YAML.safe_load(File.read(path), aliases: true) || {}
+        data = YAML.safe_load(read_text_file(path), aliases: true) || {}
         deps = (data["dependencies"] || {}).dup
         selected_packages.each do |package_name|
           deps[package_name] = template_deps[package_name] if template_deps.key?(package_name)
@@ -1901,7 +1901,7 @@ module Ruflet
         pubspec_path = File.join(template_root, "pubspec.yaml")
         return {} unless File.file?(pubspec_path)
 
-        data = YAML.safe_load(File.read(pubspec_path), aliases: true) || {}
+        data = YAML.safe_load(read_text_file(pubspec_path), aliases: true) || {}
         deps = data["dependencies"]
         deps.is_a?(Hash) ? deps : {}
       rescue StandardError
@@ -1914,8 +1914,8 @@ module Ruflet
         template_path = template_client_entrypoint_path(File.basename(path))
         return unless template_path
 
-        content = File.read(path)
-        template = File.read(template_path)
+        content = read_text_file(path)
+        template = read_text_file(template_path)
 
         selected_aliases.each do |extension_alias|
           import_line = template.lines.find { |line| line.match?(/\sas #{Regexp.escape(extension_alias)};\s*\z/) }
@@ -1927,7 +1927,7 @@ module Ruflet
           content = insert_missing_extension(content, extension_line) if extension_line && !content.include?(extension_line)
         end
 
-        File.write(path, content)
+        write_text_file(path, content)
       end
 
       def template_client_entrypoint_path(name)
@@ -1965,7 +1965,7 @@ module Ruflet
       end
 
       def prune_client_main(path, selected_aliases)
-        content = File.read(path)
+        content = read_text_file(path)
         alias_to_package = {}
         optional_aliases = CLIENT_EXTENSION_MAP.values.map { |entry| entry.fetch(:alias) }.uniq
 
@@ -2004,7 +2004,7 @@ module Ruflet
           end
         end
 
-        File.write(path, content)
+        write_text_file(path, content)
       end
 
       # update_pubspec_value only rewrites blocks that already exist. Create the
@@ -2012,11 +2012,11 @@ module Ruflet
       def ensure_pubspec_block(path, block)
         return unless File.file?(path)
 
-        content = File.read(path)
+        content = read_text_file(path)
         return if content.lines.any? { |line| line.start_with?("#{block}:") }
 
         content += "\n" unless content.empty? || content.end_with?("\n")
-        File.write(path, "#{content}#{block}:\n")
+        write_text_file(path, "#{content}#{block}:\n")
       end
 
       # Writes `block: -> section: -> key: value`, creating the block and the
@@ -2026,7 +2026,7 @@ module Ruflet
         return unless File.file?(path)
 
         ensure_pubspec_block(path, block)
-        lines = File.read(path).split("\n", -1)
+        lines = read_text_file(path).split("\n", -1)
         block_start = lines.index { |line| line.start_with?("#{block}:") }
         return unless block_start
 
@@ -2051,11 +2051,11 @@ module Ruflet
           end
         end
 
-        File.write(path, indent_pubspec_sequences(lines.join("\n")))
+        write_text_file(path, indent_pubspec_sequences(lines.join("\n")))
       end
 
       def update_pubspec_value(path, block, key, value, multiple: false)
-        lines = File.read(path).split("\n", -1)
+        lines = read_text_file(path).split("\n", -1)
         out = []
         in_block = false
         replaced = false
@@ -2090,7 +2090,7 @@ module Ruflet
         if in_block && !replaced
           out << "#{block_indent}#{key}: #{value}"
         end
-        File.write(path, indent_pubspec_sequences(out.join("\n")))
+        write_text_file(path, indent_pubspec_sequences(out.join("\n")))
       end
 
       def flutter_build_command(platform)

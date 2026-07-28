@@ -71,11 +71,16 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
+  def build_web_output(dir)
+    FileUtils.mkdir_p(dir)
+    File.write(File.join(dir, "index.html"), "<html></html>")
+    File.write(File.join(dir, "flutter_bootstrap.js"), "// built")
+    dir
+  end
+
   def test_detect_web_client_dir_prefers_the_ruflet_app_build
     Dir.mktmpdir do |dir|
-      web_dir = File.join(dir, "build", "client", "build", "web")
-      FileUtils.mkdir_p(web_dir)
-      File.write(File.join(web_dir, "index.html"), "<html></html>")
+      web_dir = build_web_output(File.join(dir, "build", "client", "build", "web"))
 
       found = with_client_dir(dir) { DummyRunner.new.send(:detect_web_client_dir) }
       assert_equal web_dir, found
@@ -84,12 +89,23 @@ class RufletCliRunCommandTest < Minitest::Test
 
   def test_detect_web_client_dir_still_finds_a_bare_flutter_web_build
     Dir.mktmpdir do |dir|
-      web_dir = File.join(dir, "build", "web")
-      FileUtils.mkdir_p(web_dir)
-      File.write(File.join(web_dir, "index.html"), "<html></html>")
+      web_dir = build_web_output(File.join(dir, "build", "web"))
 
       found = with_client_dir(dir) { DummyRunner.new.send(:detect_web_client_dir) }
       assert_equal web_dir, found
+    end
+  end
+
+  def test_detect_web_client_dir_ignores_an_unbuilt_projects_web_sources
+    Dir.mktmpdir do |dir|
+      # A Flutter project ships web/index.html as a source template; serving it
+      # would hand the browser a page with no application in it.
+      sources = File.join(dir, "build", "client", "web")
+      FileUtils.mkdir_p(sources)
+      File.write(File.join(sources, "index.html"), "<html></html>")
+
+      found = with_client_dir(dir) { DummyRunner.new.send(:detect_web_client_dir) }
+      assert_nil found
     end
   end
 
