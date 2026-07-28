@@ -205,6 +205,22 @@ The QR scanner is a first-party example: `ruflet_qrcode_scanner` is a normal
 Flet extension package backed by `mobile_scanner`, while application code uses
 the Ruby `qrcode_scanner(...)` builder.
 
+An extension that Ruflet does not bundle names where to fetch it from:
+
+```yaml
+extensions:
+  - charts
+  - my_package:
+      git:
+        url: https://github.com/owner/my_package
+        ref: main
+```
+
+Ruflet adds it to the generated client's dependencies and registers it, taking
+the import and the `Extension()` call from the package name — the convention
+every Flet extension follows. `branch` and `tag` work in place of `ref`, and
+`path` takes a local checkout instead of a repository.
+
 ### Protected capabilities are explicit
 
 Camera, microphone, location, and motion access are declared in
