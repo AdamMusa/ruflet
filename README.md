@@ -237,38 +237,60 @@ services:
 
 ## Project configuration
 
-A generated application keeps runtime and build choices separate from native
-identity and protected capabilities:
+`ruflet.yaml` describes the application — who it is, where it connects, and how
+it is built. `services.yaml` is reserved for capabilities the operating system
+guards behind a permission prompt:
 
 | File | Purpose |
 | --- | --- |
 | `main.rb` | Ruby application entry point. |
-| `ruflet.yaml` | Backend URL, UI extensions, assets, and build presentation. |
-| `services.yaml` | Application identity and protected native capabilities. |
+| `ruflet.yaml` | Application identity, backend URL, UI extensions, assets, and build presentation. |
+| `services.yaml` | Protected native capabilities. |
 | `Gemfile` | Ruby runtime dependencies. |
 
 ### Application identity
 
-Mobile application identity comes from `services.yaml`:
+Identity is the `app` block in `ruflet.yaml`:
 
 ```yaml
 app:
-  app_name: My Ruflet App
+  name: My Ruflet App
   package_name: my_ruflet_app
   organization: com.example
   version: 1.0.0+1
   description: A cross-platform Ruflet application.
-
-services: []
 ```
 
-For Android and iOS, Ruflet derives `com.example.my_ruflet_app` and applies it
-through `change_app_package_name` during the build pipeline. A mobile build
-stops with a configuration error when `app_name`, `package_name`, or
+`name` is the label under the icon on the device, `package_name` is the
+technical identifier, and `organization` is the reverse-domain prefix that owns
+it. For Android and iOS, Ruflet joins the last two into
+`com.example.my_ruflet_app` and applies it through `change_app_package_name`
+during the build pipeline. Every other target reads the same block: bundle
+identifiers on macOS, the application ID on Linux, the binary name and version
+resources on Windows, and the document title on the web.
+
+A mobile build stops with a configuration error when `name`, `package_name`, or
 `organization` is missing; the Flutter template identifier is never shipped as
 the application's identifier.
 
+A store listing that needs an identifier other than the derived one names it
+directly:
+
+```yaml
+app:
+  android_application_id: com.example.myapp.android
+  ios_bundle_identifier: com.example.myapp
+```
+
+Projects created before identity moved into `ruflet.yaml` may still carry an
+`app` block in `services.yaml`. Ruflet keeps reading it, but only to fill in
+keys `ruflet.yaml` leaves out — what the project states wins. `app_name` and
+`display_name` remain accepted spellings of `name`.
+
 ### Runtime and assets
+
+The same `app` block carries the backend URL, alongside the extension, asset,
+and build sections:
 
 ```yaml
 app:
