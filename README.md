@@ -11,17 +11,25 @@
 <p align="center">
   <a href="https://rubygems.org/gems/ruflet"><img src="https://img.shields.io/gem/v/ruflet.svg" alt="RubyGems version"></a>
   <img src="https://img.shields.io/badge/Ruby-3.1%2B-CC342D?logo=ruby&logoColor=white" alt="Ruby 3.1 or newer">
-  <a href="https://github.com/AdamMusa/ruflet/actions/workflows/build-ruflet-android.yml"><img src="https://github.com/AdamMusa/ruflet/actions/workflows/build-ruflet-android.yml/badge.svg" alt="Ruflet client builds"></a>
+  <a href="https://github.com/AdamMusa/ruflet/actions/workflows/build-ruflet-client.yml"><img src="https://github.com/AdamMusa/ruflet/actions/workflows/build-ruflet-client.yml/badge.svg" alt="Ruflet client builds"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
 </p>
 
-Ruflet is a Ruby-first cross-platform UI framework. Write controls, events,
-state, navigation, and device integrations in Ruby while Flutter renders the
-application on Android, iOS, macOS, Windows, Linux, and the web.
+Ruflet is a Ruby-first cross-platform UI framework. You write the controls,
+events, state, navigation, and device integrations in Ruby; Flutter renders them
+as a real native application on Android, iOS, macOS, Windows, Linux, and the web.
 
-Develop against a live Ruby backend with fast reloads, or package Ruby and the
-application into a self-contained native build. No Dart, Kotlin, Swift,
-JavaScript, or platform-specific UI code is required in your application.
+There is no Dart, Kotlin, Swift, or JavaScript in your application — and no
+platform-specific UI code to keep in sync across six targets.
+
+Two ways to run the same code. **Server-driven**, where a Ruby process drives the
+client over a socket and your edits reload in place — the fast loop you develop
+in. Or **self-contained**, where Ruby and your application are packaged into the
+native binary and ship as one app, with no server to run.
+
+Ruflet Explorer is the preview client: install it once and every Ruby app you
+write appears on the device, no rebuild in between. It is itself a Ruflet app,
+which makes it the framework's hardest test.
 
 > [!NOTE]
 > Ruflet is under active pre-1.0 development. APIs can evolve as the framework
@@ -259,17 +267,22 @@ extensions:
 assets:
   dir: assets
   splash_screen: assets/splash.png
-  icon_launcher: assets/icon.png
-
-build:
   splash_color: "#FFFFFF"
   splash_dark_color: "#0B0B0B"
+  icon_launcher: assets/icon.png
   icon_background: "#FFFFFF"
-  theme_color: "#FFFFFF"
+  theme_color: "#6750A4"
 ```
 
-`backend_url` is required for server-driven production builds. It is not
-required when building with `--self`.
+`assets` holds the images and the colours that style them. Every key is also
+accepted under `build`, which older projects use, and under a platform section
+that overrides it — see [Per-platform icon and splash](#per-platform-icon-and-splash).
+
+`backend_url` is required for server-driven production builds, and ignored when
+building with `--self`. Clients that are told which server to use at launch may
+omit it: a web client resolves the origin it is served from, and a desktop
+client takes the URL its launcher passes. Baking one in would pin them to a
+single host and port.
 
 ### Per-platform icon and splash
 
