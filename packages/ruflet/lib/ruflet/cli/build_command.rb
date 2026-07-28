@@ -443,6 +443,7 @@ module Ruflet
 
         apply_native_service_permissions(client_dir, config)
         apply_android_signing_config(client_dir, platform, verbose: !!verbose)
+        apply_ios_signing_team(client_dir, config) if %w[ios ipa macos].include?(platform.to_s)
         configured = configure_client_runtime_mode(client_dir, self_contained: self_contained, verbose: verbose)
         return false if configured == false
         @ruflet_self_contained_build = self_contained
@@ -1277,6 +1278,33 @@ module Ruflet
           manifest_path,
           /android:label="[^"]*"/,
           %(android:label="#{xml_escape(metadata[:display_name])}")
+        )
+      end
+
+      # The signing team belongs to whoever ships the app, so it comes from the
+      # project rather than being baked into the client.
+      def apply_ios_signing_team(client_dir, config)
+        team = ios_signing_team(config)
+        pbxproj_path = File.join(client_dir, "ios", "Runner.xcodeproj", "project.pbxproj")
+        return unless File.file?(pbxproj_path)
+
+        if team.to_s.strip.empty?
+          build_note("No ios.team_id configured; Xcode will pick the signing team")
+          replace_in_file(pbxproj_path, /DEVELOPMENT_TEAM = [^;]*;/, "DEVELOPMENT_TEAM = \"\";")
+          return
+        end
+
+        replace_in_file(pbxproj_path, /DEVELOPMENT_TEAM = [^;]*;/, "DEVELOPMENT_TEAM = #{team};")
+        build_note("iOS signing team set to #{team}")
+      end
+
+      def ios_signing_team(config)
+        app = config["app"].is_a?(Hash) ? config["app"] : {}
+        first_present(
+          platform_build_config(config, "ios")["team_id"],
+          app["ios_team_id"],
+          app["team_id"],
+          ENV["RUFLET_IOS_TEAM_ID"]
         )
       end
 
