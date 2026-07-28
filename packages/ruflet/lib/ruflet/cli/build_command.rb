@@ -762,10 +762,13 @@ module Ruflet
         splash_dark = resolve_asset.call(build["splash_dark"] || build["splash_dark_image"] || assets["splash_dark"])
         icon = resolve_asset.call(build["icon_launcher"] || assets["icon_launcher"] || config["icon_launcher"])
 
-        splash_color = build["splash_color"]
-        splash_dark_color = build["splash_dark_color"] || build["splash_color_dark"]
-        icon_background = build["icon_background"]
-        theme_color = build["theme_color"]
+        # Splash and icon appearance belongs with the assets it styles. `build`
+        # is still read first so existing projects keep working.
+        splash_color = build["splash_color"] || assets["splash_color"]
+        splash_dark_color = build["splash_dark_color"] || build["splash_color_dark"] ||
+          assets["splash_dark_color"] || assets["splash_color_dark"]
+        icon_background = build["icon_background"] || assets["icon_background"]
+        theme_color = build["theme_color"] || assets["theme_color"]
 
         # Every platform gets its own section with the same key names, falling
         # back to the shared assets/build values when a key is not overridden.
@@ -807,8 +810,10 @@ module Ruflet
         )
         splash_branding = resolve_asset.call(build["splash_branding"] || assets["splash_branding"])
         splash_branding_dark = resolve_asset.call(build["splash_branding_dark"] || assets["splash_branding_dark"])
-        splash_branding_mode = build["splash_branding_mode"] || build["branding_mode"]
-        splash_branding_padding = build["splash_branding_bottom_padding"] || build["branding_bottom_padding"]
+        splash_branding_mode = build["splash_branding_mode"] || build["branding_mode"] ||
+          assets["splash_branding_mode"] || assets["branding_mode"]
+        splash_branding_padding = build["splash_branding_bottom_padding"] || build["branding_bottom_padding"] ||
+          assets["splash_branding_bottom_padding"] || assets["branding_bottom_padding"]
 
         android = platforms.dig("android", :config)
         android_splash = platforms.dig("android", :splash)
