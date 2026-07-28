@@ -1386,23 +1386,34 @@ module Ruflet
         replace_in_file(cmake_path, /^set\(APPLICATION_ID ".*"\)$/, %(set(APPLICATION_ID "#{metadata[:linux_application_id]}")))
       end
 
+      # Native project files are UTF-8 and the values written into them are too
+      # (the macOS copyright line carries a ©). Reading them with the default
+      # external encoding fails outright under a non-UTF-8 locale, so pin it.
+      def read_text_file(path)
+        File.read(path, encoding: Encoding::UTF_8)
+      end
+
+      def write_text_file(path, content)
+        File.write(path, content, encoding: Encoding::UTF_8)
+      end
+
       def replace_plist_value(path, key, value)
         return unless File.file?(path)
 
-        content = File.read(path)
+        content = read_text_file(path)
         pattern = %r{(<key>#{Regexp.escape(key)}</key>\s*<string>)(.*?)(</string>)}m
         updated = content.gsub(pattern) do
           "#{Regexp.last_match(1)}#{xml_escape(value)}#{Regexp.last_match(3)}"
         end
-        File.write(path, updated) unless updated == content
+        write_text_file(path, updated) unless updated == content
       end
 
       def replace_in_file(path, pattern, replacement)
         return unless File.file?(path)
 
-        content = File.read(path)
+        content = read_text_file(path)
         updated = content.gsub(pattern) { replacement }
-        File.write(path, updated) unless updated == content
+        write_text_file(path, updated) unless updated == content
       end
 
       def first_present(*values)
