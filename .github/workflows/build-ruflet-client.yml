@@ -46,7 +46,10 @@ env:
 jobs:
   verify-explorer:
     name: Verify Ruflet Explorer
-    runs-on: ubuntu-latest
+    # macOS: parts of the CLI branch on the host being darwin — the Apple pod
+    # shim and the install platform it infers — so the suites assume a macOS
+    # host and fail on Linux for reasons unrelated to the code under test.
+    runs-on: macos-latest
     steps:
       - name: Checkout ruflet
         uses: actions/checkout@v5
