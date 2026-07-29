@@ -5,8 +5,8 @@
   "library": "libruflet_vm.so",
   "contains": ["mruby", "ruflet-framework", "onigmo", "native-gems"],
   "ruflet_gems": {
-    "ruflet_core": "0.0.19",
-    "ruflet_server": "0.0.19"
+    "ruflet_core": "0.0.21",
+    "ruflet_server": "0.0.21"
   },
   "artifacts": {
     "aarch64": {

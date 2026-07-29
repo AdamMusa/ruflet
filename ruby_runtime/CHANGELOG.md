@@ -1,3 +1,14 @@
+## 0.0.10
+
+- Rebuild every prebuilt VM from current framework sources: iOS device and
+  simulator, Android (all four ABIs), Linux x64 and aarch64, and Windows.
+  0.0.9 rebuilt only macOS, so every other platform still shipped a framework
+  from before the `ruflet_app` control rename. An application calling
+  `ruflet_app` serialized a control name no client registers, and a
+  self-contained build rendered "Unknown control: RufletApp" on device while
+  server-driven web and desktop, which serialize on the host, worked.
+- Embed `ruflet_core` and `ruflet_server` 0.0.21.
+
 ## 0.0.9
 
 - Rebuild the macOS VM from the current framework sources. The 0.0.8 artifact
