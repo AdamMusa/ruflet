@@ -1,3 +1,14 @@
+## 0.0.11
+
+- Fix the Linux and Windows VM libraries. 0.0.10 rebuilt them from the mruby
+  archive alone, which dropped the host layer the desktop plugins link
+  against: `ruflet_vm_start`, `ruflet_vm_stop`, `ruflet_vm_is_running`,
+  `ruflet_vm_copy_error`, and the embedded bootstrap bytecode. A Linux or
+  Windows build failed at link time with undefined references. Both are now
+  built from the mruby archive plus `desktop/ruflet_vm_host.cpp`, exporting
+  the same API as before. iOS, macOS and Android were unaffected -- their
+  plugins compile the host layer themselves.
+
 ## 0.0.10
 
 - Rebuild every prebuilt VM from current framework sources: iOS device and
