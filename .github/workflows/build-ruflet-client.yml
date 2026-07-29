@@ -228,7 +228,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name == 'prebuild' && 'prebuild' || 'prebuild-main' }}
-          name: ${{ github.ref_name == 'prebuild' && 'Ruflet Client Prebuild (prebuild)' || 'Ruflet Client Prebuild (main)' }}
+          name: ${{ github.ref_name == 'prebuild' && 'Ruflet Explorer Prebuild (prebuild)' || 'Ruflet Explorer Prebuild (main)' }}
           prerelease: true
           make_latest: false
           overwrite_files: true
@@ -239,7 +239,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: Ruflet Client ${{ github.ref_name }}
+          name: Ruflet Explorer ${{ github.ref_name }}
           prerelease: true
           make_latest: false
           overwrite_files: true
@@ -345,7 +345,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name == 'prebuild' && 'prebuild' || 'prebuild-main' }}
-          name: ${{ github.ref_name == 'prebuild' && 'Ruflet Client Prebuild (prebuild)' || 'Ruflet Client Prebuild (main)' }}
+          name: ${{ github.ref_name == 'prebuild' && 'Ruflet Explorer Prebuild (prebuild)' || 'Ruflet Explorer Prebuild (main)' }}
           prerelease: true
           make_latest: false
           overwrite_files: true
@@ -423,7 +423,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name == 'prebuild' && 'prebuild' || 'prebuild-main' }}
-          name: ${{ github.ref_name == 'prebuild' && 'Ruflet Client Prebuild (prebuild)' || 'Ruflet Client Prebuild (main)' }}
+          name: ${{ github.ref_name == 'prebuild' && 'Ruflet Explorer Prebuild (prebuild)' || 'Ruflet Explorer Prebuild (main)' }}
           prerelease: true
           make_latest: false
           overwrite_files: true
@@ -462,7 +462,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name == 'prebuild' && 'prebuild' || 'prebuild-main' }}
-          name: ${{ github.ref_name == 'prebuild' && 'Ruflet Client Prebuild (prebuild)' || 'Ruflet Client Prebuild (main)' }}
+          name: ${{ github.ref_name == 'prebuild' && 'Ruflet Explorer Prebuild (prebuild)' || 'Ruflet Explorer Prebuild (main)' }}
           prerelease: true
           make_latest: false
           overwrite_files: true
