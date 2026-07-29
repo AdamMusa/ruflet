@@ -1,3 +1,19 @@
+## 0.0.12
+
+- Every platform plugin now bridges to the same four `ruflet_vm_*` entry points
+  in the prebuilt VM. iOS and macOS previously drove mruby themselves and
+  carried their own copy of the bootstrap and host logic, so the plugin and the
+  VM could drift apart -- and the shipped Linux and Windows libraries had
+  already broken that way. Releasing a runtime is now replacing the built
+  artifact, nothing else.
+- Drop the vendored mruby sources, Onigmo and host build outputs from the iOS
+  and macOS folders. Nothing compiles them any more: the bridge needs only
+  ruflet_vm_host.h.
+- Fix `Ruflet::Server#web_client_root`, which used `defined?(@ivar)`. The
+  embedded VM has no `defined?` keyword, so it parsed as a method call and
+  every HTTP request raised NoMethodError on device.
+- Rebuild every VM artifact from current framework sources.
+
 ## 0.0.11
 
 - Fix the Linux and Windows VM libraries. 0.0.10 rebuilt them from the mruby
