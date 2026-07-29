@@ -16,7 +16,13 @@ require "time"
 module Ruflet
   module CLI
     module RunCommand
-      CLIENT_CHANNEL_MANIFEST = "ruflet_client-manifest.json"
+      # Release assets were published as ruflet_client-* before the preview
+      # client became Ruflet Explorer. Ask for the current names, but keep
+      # recognising the old ones so an existing release still resolves.
+      ASSET_PREFIX = "ruflet_explorer"
+      LEGACY_ASSET_PREFIX = "ruflet_client"
+      CLIENT_CHANNEL_MANIFEST = "#{ASSET_PREFIX}-manifest.json"
+      LEGACY_CLIENT_CHANNEL_MANIFEST = "#{LEGACY_ASSET_PREFIX}-manifest.json"
       DEFAULT_CLIENT_UPDATE_INTERVAL = 6 * 60 * 60
 
       def command_run(args)
@@ -530,7 +536,7 @@ module Ruflet
         FileUtils.mkdir_p(cache_root)
 
         wanted_assets = []
-        wanted_assets << { kind: :web, name: "ruflet_client-web.tar.gz" } if web
+        wanted_assets << { kind: :web, name: "#{ASSET_PREFIX}-web.tar.gz" } if web
         if desktop
           desktop_asset = desktop_asset_name_for(platform)
           return nil if desktop_asset.nil?
@@ -647,9 +653,9 @@ module Ruflet
 
       def desktop_asset_name_for(platform)
         case platform
-        when "macos" then "ruflet_client-macos-universal.zip"
-        when "linux" then "ruflet_client-linux-x64.tar.gz"
-        when "windows" then "ruflet_client-windows-x64.zip"
+        when "macos" then "#{ASSET_PREFIX}-macos-universal.zip"
+        when "linux" then "#{ASSET_PREFIX}-linux-x64.tar.gz"
+        when "windows" then "#{ASSET_PREFIX}-windows-x64.zip"
         end
       end
 
@@ -676,7 +682,15 @@ module Ruflet
       end
 
       def rolling_release_complete?(release)
-        release.fetch("assets", []).any? { |asset| asset["name"] == CLIENT_CHANNEL_MANIFEST }
+        !channel_manifest_asset(release).nil?
+      end
+
+      # The manifest is written last, so its presence means the run finished
+      # uploading every platform. Accept either naming for releases published
+      # before the assets were renamed.
+      def channel_manifest_asset(release)
+        names = [CLIENT_CHANNEL_MANIFEST, LEGACY_CLIENT_CHANNEL_MANIFEST]
+        release.fetch("assets", []).find { |asset| names.include?(asset["name"]) }
       end
 
       def release_has_wanted_assets?(release, wanted_assets)
@@ -687,8 +701,7 @@ module Ruflet
       end
 
       def client_release_revision(release)
-        marker = release.fetch("assets", []).find { |asset| asset["name"] == CLIENT_CHANNEL_MANIFEST }
-        source = marker || release
+        source = channel_manifest_asset(release) || release
         [source["id"], source["updated_at"] || source["published_at"], source["size"]].compact.join(":")
       end
 
@@ -750,7 +763,7 @@ module Ruflet
 
       def release_asset_matches?(name, kind, platform)
         n = name.to_s.downcase
-        return false unless n.include?("ruflet_client")
+        return false unless n.include?(ASSET_PREFIX) || n.include?(LEGACY_ASSET_PREFIX)
 
         if kind == :web
           return n.include?("web") && (n.end_with?(".tar.gz") || n.end_with?(".zip"))

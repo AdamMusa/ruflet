@@ -120,16 +120,16 @@ jobs:
         include:
           - target: web
             runner: ubuntu-latest
-            artifact: ruflet_client-web.tar.gz
+            artifact: ruflet_explorer-web.tar.gz
           - target: linux
             runner: ubuntu-latest
-            artifact: ruflet_client-linux-x64.tar.gz
+            artifact: ruflet_explorer-linux-x64.tar.gz
           - target: windows
             runner: windows-latest
-            artifact: ruflet_client-windows-x64.zip
+            artifact: ruflet_explorer-windows-x64.zip
           - target: macos
             runner: macos-latest
-            artifact: ruflet_client-macos-universal.zip
+            artifact: ruflet_explorer-macos-universal.zip
 
     steps:
       - name: Checkout ruflet
@@ -186,11 +186,11 @@ jobs:
 
       - name: Package web artifact
         if: matrix.target == 'web'
-        run: tar -C explorer/build/client/build/web -czf ruflet_client-web.tar.gz .
+        run: tar -C explorer/build/client/build/web -czf ruflet_explorer-web.tar.gz .
 
       - name: Package linux artifact
         if: matrix.target == 'linux'
-        run: tar -C explorer/build/client/build/linux/x64/release/bundle -czf ruflet_client-linux-x64.tar.gz .
+        run: tar -C explorer/build/client/build/linux/x64/release/bundle -czf ruflet_explorer-linux-x64.tar.gz .
 
       - name: Package macos artifact
         if: matrix.target == 'macos'
@@ -201,7 +201,7 @@ jobs:
             exit 1
           fi
           echo "Packaging $app"
-          ditto -c -k --sequesterRsrc --keepParent "$app" ruflet_client-macos-universal.zip
+          ditto -c -k --sequesterRsrc --keepParent "$app" ruflet_explorer-macos-universal.zip
 
       - name: Package windows artifact
         if: matrix.target == 'windows'
@@ -209,12 +209,12 @@ jobs:
         run: |
           $release = "explorer/build/client/build/windows/x64/runner/Release"
           if (-not (Test-Path $release)) { throw "No Windows release output at $release" }
-          Compress-Archive -Path "$release/*" -DestinationPath ruflet_client-windows-x64.zip -Force
+          Compress-Archive -Path "$release/*" -DestinationPath ruflet_explorer-windows-x64.zip -Force
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v5
         with:
-          name: ruflet_client-${{ matrix.target }}
+          name: ruflet_explorer-${{ matrix.target }}
           path: ${{ matrix.artifact }}
 
       - name: Attach to GitHub release
@@ -314,12 +314,12 @@ jobs:
             echo "Missing Android outputs (apk=$apk aab=$aab)"
             exit 1
           fi
-          cp "$apk" ruflet_client-android-apk.apk
-          cp "$aab" ruflet_client-android-appbundle.aab
+          cp "$apk" ruflet_explorer-android-apk.apk
+          cp "$aab" ruflet_explorer-android-appbundle.aab
 
       - name: Verify no credentials were embedded
         run: |
-          if unzip -l ruflet_client-android-apk.apk | grep -Ei '\.(p8|p12|jks|keystore|mobileprovision)$|/credentials/'; then
+          if unzip -l ruflet_explorer-android-apk.apk | grep -Ei '\.(p8|p12|jks|keystore|mobileprovision)$|/credentials/'; then
             echo "The APK embeds credential material."
             exit 1
           fi
@@ -327,18 +327,18 @@ jobs:
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v5
         with:
-          name: ruflet_client-android
+          name: ruflet_explorer-android
           path: |
-            ruflet_client-android-apk.apk
-            ruflet_client-android-appbundle.aab
+            ruflet_explorer-android-apk.apk
+            ruflet_explorer-android-appbundle.aab
 
       - name: Attach to GitHub release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ruflet_client-android-apk.apk
-            ruflet_client-android-appbundle.aab
+            ruflet_explorer-android-apk.apk
+            ruflet_explorer-android-appbundle.aab
 
       - name: Publish Android to prebuild channel
         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'prebuild'))
@@ -350,8 +350,8 @@ jobs:
           make_latest: false
           overwrite_files: true
           files: |
-            ruflet_client-android-apk.apk
-            ruflet_client-android-appbundle.aab
+            ruflet_explorer-android-apk.apk
+            ruflet_explorer-android-appbundle.aab
 
   build-ios-simulator:
     name: Build iOS Simulator
@@ -404,19 +404,19 @@ jobs:
             echo "No simulator .app produced"
             exit 1
           fi
-          ditto -c -k --sequesterRsrc --keepParent "$app" ruflet_client-ios-simulator.zip
+          ditto -c -k --sequesterRsrc --keepParent "$app" ruflet_explorer-ios-simulator.zip
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v5
         with:
-          name: ruflet_client-ios-simulator
-          path: ruflet_client-ios-simulator.zip
+          name: ruflet_explorer-ios-simulator
+          path: ruflet_explorer-ios-simulator.zip
 
       - name: Attach to GitHub release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: ruflet_client-ios-simulator.zip
+          files: ruflet_explorer-ios-simulator.zip
 
       - name: Publish iOS simulator to prebuild channel
         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'prebuild'))
@@ -427,7 +427,7 @@ jobs:
           prerelease: true
           make_latest: false
           overwrite_files: true
-          files: ruflet_client-ios-simulator.zip
+          files: ruflet_explorer-ios-simulator.zip
 
   publish-prebuild-manifest:
     name: Publish completed prebuild revision
@@ -450,13 +450,13 @@ jobs:
           RUFLET_REF: ${{ github.ref_name }}
           RUFLET_EXPLORER_REF: ${{ env.EXPLORER_REF }}
         run: |
-          ruby -rjson -rtime -e 'File.write("ruflet_client-manifest.json", JSON.pretty_generate({schema: 1, revision: ENV.fetch("RUFLET_REVISION"), run_id: ENV.fetch("RUFLET_RUN_ID"), ref: ENV.fetch("RUFLET_REF"), explorer_ref: ENV.fetch("RUFLET_EXPLORER_REF"), completed_at: Time.now.utc.iso8601}))'
+          ruby -rjson -rtime -e 'File.write("ruflet_explorer-manifest.json", JSON.pretty_generate({schema: 1, revision: ENV.fetch("RUFLET_REVISION"), run_id: ENV.fetch("RUFLET_RUN_ID"), ref: ENV.fetch("RUFLET_REF"), explorer_ref: ENV.fetch("RUFLET_EXPLORER_REF"), completed_at: Time.now.utc.iso8601}))'
 
       - name: Upload completed-build manifest
         uses: actions/upload-artifact@v5
         with:
           name: ruflet-client-prebuild-manifest
-          path: ruflet_client-manifest.json
+          path: ruflet_explorer-manifest.json
 
       - name: Mark prebuild channel complete
         uses: softprops/action-gh-release@v2
@@ -466,4 +466,4 @@ jobs:
           prerelease: true
           make_latest: false
           overwrite_files: true
-          files: ruflet_client-manifest.json
+          files: ruflet_explorer-manifest.json

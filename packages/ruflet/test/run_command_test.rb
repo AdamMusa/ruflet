@@ -247,6 +247,62 @@ class RufletCliRunCommandTest < Minitest::Test
     refute runner.send(:release_asset_matches?, "ruflet_client-macos.tar.gz", :desktop, "macos")
   end
 
+  def test_release_asset_matches_accepts_the_explorer_names
+    runner = DummyRunner.new
+
+    assert runner.send(:release_asset_matches?, "ruflet_explorer-web.tar.gz", :web, nil)
+    assert runner.send(:release_asset_matches?, "ruflet_explorer-macos-universal.zip", :desktop, "macos")
+    assert runner.send(:release_asset_matches?, "ruflet_explorer-linux-x64.tar.gz", :desktop, "linux")
+    assert runner.send(:release_asset_matches?, "ruflet_explorer-windows-x64.zip", :desktop, "windows")
+
+    refute runner.send(:release_asset_matches?, "some_other_explorer-web.tar.gz", :web, nil)
+  end
+
+  def test_wanted_asset_names_use_the_explorer_prefix
+    runner = DummyRunner.new
+
+    assert_equal "ruflet_explorer-macos-universal.zip", runner.send(:desktop_asset_name_for, "macos")
+    assert_equal "ruflet_explorer-linux-x64.tar.gz", runner.send(:desktop_asset_name_for, "linux")
+    assert_equal "ruflet_explorer-windows-x64.zip", runner.send(:desktop_asset_name_for, "windows")
+  end
+
+  # The manifest is uploaded last, so it is how a run is judged complete. A
+  # release published before the rename still carries the old name.
+  def test_rolling_release_complete_accepts_either_manifest_name
+    runner = DummyRunner.new
+
+    assert runner.send(:rolling_release_complete?, { "assets" => [{ "name" => "ruflet_explorer-manifest.json" }] })
+    assert runner.send(:rolling_release_complete?, { "assets" => [{ "name" => "ruflet_client-manifest.json" }] })
+    refute runner.send(:rolling_release_complete?, { "assets" => [{ "name" => "ruflet_explorer-web.tar.gz" }] })
+  end
+
+  def test_prebuilt_client_installs_from_renamed_release_assets
+    runner = DummyRunner.new
+
+    Dir.mktmpdir do |dir|
+      release = {
+        "tag_name" => "prebuild-main",
+        "assets" => [
+          { "name" => "ruflet_explorer-manifest.json", "id" => 7, "updated_at" => "2026-07-29T00:00:00Z" },
+          { "name" => "ruflet_explorer-web.tar.gz", "browser_download_url" => "https://example.test/web.tar.gz" }
+        ]
+      }
+      runner.define_singleton_method(:ruflet_version) { "0.0.21" }
+      runner.define_singleton_method(:client_cache_root_for) { |_platform| dir }
+      runner.define_singleton_method(:fetch_release_for_version) { |wanted_assets:| release }
+      runner.define_singleton_method(:download_file) { |_url, destination, limit: 5| File.write(destination, "archive") }
+      runner.define_singleton_method(:extract_archive) do |_archive, destination|
+        FileUtils.mkdir_p(destination)
+        File.write(File.join(destination, "index.html"), "<html></html>")
+        File.write(File.join(destination, "flutter_bootstrap.js"), "// built")
+        true
+      end
+
+      assert_equal dir, runner.send(:ensure_prebuilt_client, web: true, platform: "macos")
+      assert File.file?(File.join(dir, "web", "flutter_bootstrap.js"))
+    end
+  end
+
   def test_build_runtime_command_without_gemfile_runs_script_directly
     runner = DummyRunner.new
     env = {}
