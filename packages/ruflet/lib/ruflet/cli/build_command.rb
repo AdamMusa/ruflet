@@ -1910,6 +1910,11 @@ module Ruflet
           "lib/connection_probe_io.dart",
           "lib/connection_probe_stub.dart",
           "ios/Podfile",
+          # Carries the usage descriptions and the local-network/ATS policy a
+          # preview client needs. Without refreshing it, a client generated
+          # before those keys existed keeps a plist that silently blocks
+          # connections to a development server on the local network.
+          "ios/Runner/Info.plist",
           "windows/CMakeLists.txt",
           # Release signing lives here; an existing client would otherwise keep
           # signing release builds with the debug key.
@@ -2065,15 +2070,40 @@ module Ruflet
         false
       end
 
+      # What a self-contained build actually needs from the project at runtime:
+      # the entrypoint, the Ruby under lib/, and the assets that code loads by
+      # path (image(src: "assets/logo.png"), lottie(...), fonts, audio).
+      #
+      # Everything else is already consumed by the time the app runs. The gems
+      # are compiled into the VM, ruflet.yaml and services.yaml have been turned
+      # into native configuration, and lockfiles, tests, CI and store artwork
+      # were never runtime inputs. Listing what belongs in rather than guessing
+      # what to leave out keeps unexpected directories from being shipped --
+      # release artwork once carried a lockfile that Apple read as an unsigned
+      # code object and rejected the whole upload over.
+      SELF_CONTAINED_PROJECT_ENTRYPOINT = "main.rb"
+      SELF_CONTAINED_PROJECT_DIRECTORIES = %w[lib assets].freeze
+
       def include_project_asset_file?(relative)
         basename = File.basename(relative)
         return false if basename == ".DS_Store"
-        return false if %w[Gemfile.lock pubspec.lock Podfile.lock package-lock.json yarn.lock pnpm-lock.yaml].include?(basename)
+
+        unless self_contained_project_path?(relative)
+          return false
+        end
+
         if secret_project_asset?(relative)
           build_note("Excluded #{relative} from the embedded project; it looks like a credential")
           return false
         end
         true
+      end
+
+      def self_contained_project_path?(relative)
+        return true if relative == SELF_CONTAINED_PROJECT_ENTRYPOINT
+
+        top = relative.split(File::SEPARATOR).first
+        SELF_CONTAINED_PROJECT_DIRECTORIES.include?(top)
       end
 
       def flutter_target_entrypoint(client_dir, self_contained:)

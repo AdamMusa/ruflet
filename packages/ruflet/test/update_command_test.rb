@@ -397,15 +397,34 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
-  def test_project_asset_filter_packages_generic_project_files
+  # A self-contained build embeds only what the app needs at runtime: the
+  # entrypoint, lib/, and assets/ that code loads by path. The gems live in the
+  # VM and the yaml config has already been applied to the native project.
+  def test_project_asset_filter_packages_only_the_runtime_project
     builder = DummyBuilder.new
 
-    assert builder.send(:include_project_asset_file?, "templates/editor.html")
-    assert builder.send(:include_project_asset_file?, "data/sample.csv")
     assert builder.send(:include_project_asset_file?, "main.rb")
     assert builder.send(:include_project_asset_file?, "lib/widgets.rb")
+    assert builder.send(:include_project_asset_file?, "lib/studio/lib/gallery.rb")
+    assert builder.send(:include_project_asset_file?, "assets/icon.png")
+    assert builder.send(:include_project_asset_file?, "assets/animations/success.json")
+  end
+
+  def test_project_asset_filter_leaves_out_everything_that_is_not_runtime
+    builder = DummyBuilder.new
+
+    # Consumed by the build, or already compiled into the VM.
+    refute builder.send(:include_project_asset_file?, "Gemfile")
     refute builder.send(:include_project_asset_file?, "Gemfile.lock")
-    refute builder.send(:include_project_asset_file?, "nested/pubspec.lock")
+    refute builder.send(:include_project_asset_file?, "ruflet.yaml")
+    refute builder.send(:include_project_asset_file?, "services.yaml")
+    # Never runtime inputs. release_assets carried a lockfile that Apple read as
+    # an unsigned code object and rejected the upload over.
+    refute builder.send(:include_project_asset_file?, "release_assets/generator/bun.lockb")
+    refute builder.send(:include_project_asset_file?, "test/app_test.rb")
+    refute builder.send(:include_project_asset_file?, "README.md")
+    refute builder.send(:include_project_asset_file?, "android/key.properties")
+    refute builder.send(:include_project_asset_file?, "fastlane/Fastfile")
   end
 
   def test_project_asset_filter_prunes_hidden_workspace_directories
