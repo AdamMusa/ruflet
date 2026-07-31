@@ -32,7 +32,7 @@ class RufletWebAppTest < Minitest::Test
   end
 
   def app_for(dir)
-    Ruflet::Rails.web_app(build_dir: dir) { |page| page.title = "Mounted" }
+    Ruflet::Rails.web(build_dir: dir) { |page| page.title = "Mounted" }
   end
 
   def test_index_base_href_follows_the_mount_point
@@ -141,7 +141,7 @@ class RufletWebAppTest < Minitest::Test
   end
 
   def test_missing_build_reports_actionable_error
-    app = Ruflet::Rails.web_app(build_dir: "/nonexistent/build") { |page| page.title = "x" }
+    app = Ruflet::Rails.web(build_dir: "/nonexistent/build") { |page| page.title = "x" }
     status, _headers, body = app.call("PATH_INFO" => "/", "SCRIPT_NAME" => "/m", "REQUEST_METHOD" => "GET")
 
     assert_equal 404, status
@@ -151,7 +151,7 @@ class RufletWebAppTest < Minitest::Test
   def test_build_dir_under_public_is_rejected
     with_rails_stub do |root|
       public_app = File.join(root, "public", "app")
-      app = Ruflet::Rails.web_app(build_dir: public_app) { |page| page.title = "x" }
+      app = Ruflet::Rails.web(build_dir: public_app) { |page| page.title = "x" }
 
       error = assert_raises(ArgumentError) do
         app.call("PATH_INFO" => "/", "SCRIPT_NAME" => "/m", "REQUEST_METHOD" => "GET")
@@ -165,7 +165,7 @@ class RufletWebAppTest < Minitest::Test
       FileUtils.mkdir_p(File.join(root, "frontend"))
       File.write(File.join(root, "frontend", "index.html"), "<html><head></head><body></body></html>")
 
-      app = Ruflet::Rails.web_app { |page| page.title = "Default" }
+      app = Ruflet::Rails.web { |page| page.title = "Default" }
       status, _headers, body = app.call("PATH_INFO" => "/", "SCRIPT_NAME" => "/x", "REQUEST_METHOD" => "GET")
 
       assert_equal 200, status
@@ -234,7 +234,7 @@ class RufletWebAppTest < Minitest::Test
 
   def test_web_app_rejects_multiple_entrypoint_sources
     assert_raises(ArgumentError) do
-      Ruflet::Rails.web_app(app_file: "b.rb") { |page| page }
+      Ruflet::Rails.web(app_file: "b.rb") { |page| page }
     end
   end
 

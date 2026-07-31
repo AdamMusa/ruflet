@@ -40,7 +40,7 @@ class InstallSupportTest < Minitest::Test
   def test_route_snippet_matches_exact_websocket_route
     route = Ruflet::Rails::InstallSupport.route_snippet(mount_path: "/ws")
 
-    assert_equal 'match "/ws", to: Ruflet::Rails.app(Rails.root.join("app/views/ruflet/main.rb")), via: :all', route
+    assert_equal 'match "/ws", to: Ruflet::Rails.native(Rails.root.join("app/views/ruflet/main.rb")), via: :all', route
   end
 
   def test_default_entrypoint_path_uses_ruflet_views_root
@@ -50,7 +50,7 @@ class InstallSupportTest < Minitest::Test
   def test_web_route_mounts_the_generated_entrypoint_at_ruflet
     route = Ruflet::Rails::InstallSupport.web_route_snippet
 
-    assert_equal 'mount Ruflet::Rails.web_app(app_file: Rails.root.join("app/views/ruflet/main.rb")), at: "/ruflet"', route
+    assert_equal 'mount Ruflet::Rails.web(app_file: Rails.root.join("app/views/ruflet/main.rb")), at: "/ruflet"', route
     refute_includes route, "/products"
   end
 

@@ -31,7 +31,7 @@ module Ruflet
       def mount_websocket
         routes = File.join(destination_root, "config", "routes.rb")
         return unless File.file?(routes)
-        return if File.read(routes).include?("Ruflet::Rails.app(")
+        return if File.read(routes).include?("Ruflet::Rails.native(")
 
         route Ruflet::Rails::InstallSupport.route_snippet(entrypoint: entrypoint_path)
       end
@@ -41,7 +41,8 @@ module Ruflet
 
         routes = File.join(destination_root, "config", "routes.rb")
         return unless File.file?(routes)
-        return if File.read(routes).include?("Ruflet::Rails.web_app(")
+        contents = File.read(routes)
+        return if contents.include?("Ruflet::Rails.web(")
 
         route Ruflet::Rails::InstallSupport.web_route_snippet(entrypoint: entrypoint_path)
       end

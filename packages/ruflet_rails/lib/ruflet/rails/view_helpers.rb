@@ -10,7 +10,7 @@ module Ruflet
     # available in any .erb template.
     #
     # A Ruflet web frontend is a Flutter app mounted at a route (see
-    # Ruflet::Rails.web_app in config/routes.rb). To embed that native UI inside
+    # Ruflet::Rails.native in config/routes.rb). To embed that native UI inside
     # an HTML page, render it in an isolated frame pointed at the mount:
     #
     #   <%= ruflet_frame "/products", height: 640 %>
@@ -49,7 +49,7 @@ module Ruflet
       #
       # These emit plain HTML decorated with `ruflet-*` attributes. In a normal
       # browser they render and behave as ordinary HTML; inside the Ruflet
-      # native shell (Ruflet::Rails.native_app) the HTML adapter reads the
+      # native shell (Ruflet::Rails.native_shell) the HTML adapter reads the
       # attributes and drives native navigation/chrome instead. They degrade
       # gracefully — no JavaScript required for the web rendering.
 

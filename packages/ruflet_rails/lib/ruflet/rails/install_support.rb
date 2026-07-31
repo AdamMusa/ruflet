@@ -13,7 +13,7 @@ module Ruflet
 
           # The home screen for this Ruflet app. You own this file; nothing is
           # auto-discovered. It is mounted explicitly in config/routes.rb:
-          #   match "/ws", to: Ruflet::Rails.app(Rails.root.join("app/views/ruflet/main.rb")), via: :all
+          #   match "/ws", to: Ruflet::Rails.native(Rails.root.join("app/views/ruflet/main.rb")), via: :all
           Ruflet.run do |page|
             page.title = #{app_title.inspect}
             page.add(
@@ -139,12 +139,12 @@ module Ruflet
         File.join("app", "views", "ruflet", "main.rb")
       end
 
-      def route_snippet(entrypoint: default_entrypoint_path, mount_path: "/ws", helper: "app")
+      def route_snippet(entrypoint: default_entrypoint_path, mount_path: "/ws", helper: "native")
         %(match "#{mount_path}", to: Ruflet::Rails.#{helper}(Rails.root.join("#{entrypoint}")), via: :all)
       end
 
       def web_route_snippet(entrypoint: default_entrypoint_path, mount_path: "/ruflet")
-        %(mount Ruflet::Rails.web_app(app_file: Rails.root.join("#{entrypoint}")), at: "#{mount_path}")
+        %(mount Ruflet::Rails.web(app_file: Rails.root.join("#{entrypoint}")), at: "#{mount_path}")
       end
 
       def install_next_steps(target:, entrypoint:, client:, mount_path: "/ws")

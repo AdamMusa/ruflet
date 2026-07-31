@@ -39,8 +39,8 @@ class RufletRailsTest < Minitest::Test
   def test_endpoint_without_an_entry_raises
     # A bare endpoint has no auto-discovery fallback — the developer must
     # declare an app file or a block.
-    error = assert_raises(ArgumentError) { Ruflet::Rails.endpoint }
-    assert_match(/requires one of app_file: or a block/, error.message)
+    error = assert_raises(ArgumentError) { Ruflet::Rails.native }
+    assert_match(/native requires an app file or a block/, error.message)
   end
 
   def test_configuration_serializes_declared_extensions
