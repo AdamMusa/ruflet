@@ -489,6 +489,8 @@ module Ruflet
           case action
           when "start"
             start_audio_recording(recorder, spec)
+          when "stop"
+            stop_audio_recording(recorder, spec)
           when "supported-encoder"
             recorder.is_supported_encoder(spec["encoder"], on_result: callback)
           else
@@ -536,7 +538,8 @@ module Ruflet
                                              title: "Audio recorder failed", target: target)
                   end
 
-                  show_service_result("Recording → #{file}", title: "Audio recorder", target: target)
+                  set_audio_recording_state(spec, recording: true)
+                  show_service_result("Recording… Speak now.", title: "Audio recorder", target: target)
                 end
               )
             end)
@@ -560,6 +563,62 @@ module Ruflet
 
         def microphone_permission_granted?(status)
           status == true || status.to_s == "granted"
+        end
+
+        def stop_audio_recording(recorder, spec)
+          target = spec["result-target"]
+          recorder.stop_recording(on_result: lambda do |path, error|
+            set_audio_recording_state(spec, recording: false)
+            if service_error?(error)
+              next show_service_result("Stop error: #{error}",
+                                       title: "Audio recorder failed", target: target)
+            end
+            if path.to_s.empty?
+              next show_service_result("Recording stopped, but no audio file was returned.",
+                                       title: "Audio recorder failed", target: target)
+            end
+
+            autoplay_recording(path.to_s, target: target)
+          end)
+        end
+
+        def set_audio_recording_state(spec, recording:)
+          update_control_property(spec["indicator-target"], visible: recording)
+          update_control_property(spec["record-target"], disabled: recording)
+          update_control_property(spec["stop-target"], disabled: !recording)
+        end
+
+        def update_control_property(id, **props)
+          return if id.to_s.empty?
+
+          control = @page.get_control(id.to_s)
+          @page.update(control, **props) if control
+        end
+
+        def autoplay_recording(path, target:)
+          @page.remove_service(@recording_playback) if @recording_playback
+          @recording_playback = @page.service(
+            :audio,
+            id: "ruflet_rails_recording_playback",
+            src: path,
+            autoplay: true,
+            release_mode: "stop",
+            on_state_change: lambda do |event|
+              data = event.respond_to?(:data) ? event.data : event
+              state = data.is_a?(Hash) ? (data["state"] || data[:state]) : data
+              message = case state.to_s
+                        when "playing" then "Playing your recording…"
+                        when "completed", "stopped" then "Recording saved and playback finished."
+                        end
+              show_service_result(message, target: target) if message
+            end,
+            on_error: lambda do |event|
+              data = event.respond_to?(:data) ? event.data : event
+              show_service_result("Playback error: #{format_service_value(data)}",
+                                  title: "Audio playback failed", target: target)
+            end
+          )
+          show_service_result("Saved. Playing your recording…", title: "Audio recorder", target: target)
         end
 
         def toggle_sensor(type, action, spec)

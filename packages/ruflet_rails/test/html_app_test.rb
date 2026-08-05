@@ -398,7 +398,7 @@ class RufletHtmlAppTest < Minitest::Test
     assert_equal ["audiorecorder", "start_recording"], calls[1][0, 2]
     assert_equal "/device/Documents/voice.wav", calls[1][2]["output_path"]
     assert_equal({ "encoder" => "wav" }, calls[1][2]["configuration"])
-    assert_equal "Recording → /device/Documents/voice.wav",
+    assert_equal "Recording… Speak now.",
                  @page.get_control("recorder-status").props["value"]
   end
 
@@ -418,6 +418,59 @@ class RufletHtmlAppTest < Minitest::Test
     find_all(@page.views.first, "button").first.emit("click", nil)
 
     assert_equal "The recorder could not start.",
+                 @page.get_control("recorder-status").props["value"]
+  end
+
+  def test_audio_recorder_animates_while_recording_and_autoplays_after_stop
+    @page.define_singleton_method(:get_application_documents_directory) do |on_result: nil, **_|
+      on_result&.call("/device/Documents", nil)
+    end
+    @page.define_singleton_method(:invoke) do |control, method, args: nil, timeout: 10, on_result: nil|
+      result = if control.type == "permissionhandler"
+                 "granted"
+               elsif method == "stop_recording"
+                 "/device/Documents/ruflet_recording.wav"
+               else
+                 true
+               end
+      on_result&.call(result, nil)
+    end
+
+    start(
+      "/" => <<~HTML
+        <audio-recorder></audio-recorder>
+        <permission-handler></permission-handler>
+        <storage-paths></storage-paths>
+        <spinkit id="recorder-pulse" variant="pulse" visible="false"></spinkit>
+        <text id="recorder-status">Ready</text>
+        <button id="recorder-record" service="audio-recorder-start"
+                result-target="recorder-status" indicator-target="recorder-pulse"
+                record-target="recorder-record" stop-target="recorder-stop">Record</button>
+        <button id="recorder-stop" service="audio-recorder-stop" disabled
+                result-target="recorder-status" indicator-target="recorder-pulse"
+                record-target="recorder-record" stop-target="recorder-stop">Stop</button>
+      HTML
+    )
+
+    record, stop = find_all(@page.views.first, "button")
+    record.emit("click", nil)
+    assert_equal true, @page.get_control("recorder-pulse").props["visible"]
+    assert_equal true, record.props["disabled"]
+    assert_equal false, stop.props["disabled"]
+    assert_equal "Recording… Speak now.", @page.get_control("recorder-status").props["value"]
+
+    stop.emit("click", nil)
+    assert_equal false, @page.get_control("recorder-pulse").props["visible"]
+    assert_equal false, record.props["disabled"]
+    assert_equal true, stop.props["disabled"]
+    player = @page.services.find { |service| service.type == "audio" }
+    assert_equal "/device/Documents/ruflet_recording.wav", player.props["src"]
+    assert_equal true, player.props["autoplay"]
+    assert_equal "Saved. Playing your recording…",
+                 @page.get_control("recorder-status").props["value"]
+
+    player.emit("state_change", Struct.new(:data).new({ "state" => "completed" }))
+    assert_equal "Recording saved and playback finished.",
                  @page.get_control("recorder-status").props["value"]
   end
 
