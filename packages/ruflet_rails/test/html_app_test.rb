@@ -423,7 +423,10 @@ class RufletHtmlAppTest < Minitest::Test
 
   def test_audio_recorder_animates_while_recording_and_autoplays_after_stop
     recording_paths = []
+    documents_requests = 0
+    permission_requests = 0
     @page.define_singleton_method(:get_application_documents_directory) do |on_result: nil, **_|
+      documents_requests += 1
       on_result&.call("/device/Documents", nil)
     end
     @page.define_singleton_method(:invoke) do |control, method, args: nil, timeout: 10, on_result: nil|
@@ -432,6 +435,7 @@ class RufletHtmlAppTest < Minitest::Test
       next if control.type == "audio" && method == "release"
 
       result = if control.type == "permissionhandler"
+                 permission_requests += 1
                  "granted"
                elsif method == "start_recording"
                  recording_paths << args["output_path"]
@@ -486,6 +490,8 @@ class RufletHtmlAppTest < Minitest::Test
       "/device/Documents/ruflet_recording_1.wav",
       "/device/Documents/ruflet_recording_2.wav"
     ], recording_paths
+    assert_equal 1, documents_requests
+    assert_equal 1, permission_requests
     assert_equal true, @page.get_control("recorder-pulse").props["visible"]
     assert_equal true, record.props["disabled"]
     assert_equal false, stop.props["disabled"]

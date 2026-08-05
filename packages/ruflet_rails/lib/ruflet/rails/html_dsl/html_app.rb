@@ -513,18 +513,7 @@ module Ruflet
           explicit = (spec["output-path"] || spec["path"]).to_s
 
           begin_recording = lambda do |file|
-            permissions = reuse_service(:permission_handler, "ruflet_rails_permissions")
-            permissions.request("microphone", timeout: interactive_timeout(spec), on_result: lambda do |*out|
-              permission_status, perm_error = out
-              if service_error?(perm_error)
-                next show_service_result("Recorder permission error: #{perm_error}",
-                                         title: "Audio recorder failed", target: target)
-              end
-              unless microphone_permission_granted?(permission_status)
-                next show_service_result("Microphone permission was not granted.",
-                                         title: "Audio recorder", target: target)
-              end
-
+            start_native_recording = lambda do
               recorder.start_recording(
                 output_path: file, configuration: configuration, upload: spec["upload"],
                 timeout: interactive_timeout(spec),
@@ -542,6 +531,27 @@ module Ruflet
                   show_service_result("Recording… Speak now.", title: "Audio recorder", target: target)
                 end
               )
+            end
+
+            if @recording_microphone_permission_granted
+              start_native_recording.call
+              next
+            end
+
+            permissions = reuse_service(:permission_handler, "ruflet_rails_permissions")
+            permissions.request("microphone", timeout: interactive_timeout(spec), on_result: lambda do |*out|
+              permission_status, perm_error = out
+              if service_error?(perm_error)
+                next show_service_result("Recorder permission error: #{perm_error}",
+                                         title: "Audio recorder failed", target: target)
+              end
+              unless microphone_permission_granted?(permission_status)
+                next show_service_result("Microphone permission was not granted.",
+                                         title: "Audio recorder", target: target)
+              end
+
+              @recording_microphone_permission_granted = true
+              start_native_recording.call
             end)
           end
 
@@ -549,6 +559,12 @@ module Ruflet
             next begin_recording.call(explicit) unless explicit.empty?
 
             show_service_result("Preparing recording…", title: "Audio recorder", target: target)
+            if @recording_documents_directory
+              file_name = spec["file-name"].to_s
+              file_name = next_recording_file_name if file_name.empty?
+              next begin_recording.call("#{@recording_documents_directory}/#{file_name}")
+            end
+
             @page.get_application_documents_directory(on_result: lambda do |dir, dir_error|
               if service_error?(dir_error) || dir.to_s.empty?
                 next show_service_result(
@@ -557,9 +573,10 @@ module Ruflet
                 )
               end
 
+              @recording_documents_directory = dir.to_s.sub(%r{/+\z}, "")
               requested_name = spec["file-name"].to_s
               file_name = requested_name.empty? ? next_recording_file_name : requested_name
-              file = "#{dir.to_s.sub(%r{/+\z}, '')}/#{file_name}"
+              file = "#{@recording_documents_directory}/#{file_name}"
               begin_recording.call(file)
             end)
           end
