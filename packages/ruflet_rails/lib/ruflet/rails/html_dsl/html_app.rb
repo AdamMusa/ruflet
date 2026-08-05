@@ -576,10 +576,11 @@ module Ruflet
           @recording_playback = nil
           return after_release.call unless previous
 
-          previous.release(on_result: lambda do |_result, _error|
-            @page.remove_service(previous)
-            after_release.call
-          end)
+          # A completed native player does not consistently answer a `release`
+          # invocation. Removing the service disposes the player and must not
+          # block the next recording session on an optional callback.
+          @page.remove_service(previous)
+          after_release.call
         end
 
         def microphone_permission_granted?(status)

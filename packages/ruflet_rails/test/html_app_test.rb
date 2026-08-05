@@ -427,6 +427,10 @@ class RufletHtmlAppTest < Minitest::Test
       on_result&.call("/device/Documents", nil)
     end
     @page.define_singleton_method(:invoke) do |control, method, args: nil, timeout: 10, on_result: nil|
+      # Completed audio players may never acknowledge release. Starting the
+      # next recording must not depend on that callback.
+      next if control.type == "audio" && method == "release"
+
       result = if control.type == "permissionhandler"
                  "granted"
                elsif method == "start_recording"
