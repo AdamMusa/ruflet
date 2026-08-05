@@ -396,6 +396,9 @@ ruflet build apk --self
 ruflet build ios --self
 ```
 
+`ruflet build ios --self` prepares both the physical-device and simulator app
+bundles. You do not need a separate simulator build command.
+
 Install the latest mobile build on a connected device:
 
 ```bash
@@ -403,6 +406,10 @@ ruflet devices
 ruflet install
 ruflet install --device DEVICE_ID
 ```
+
+With one compatible mobile target connected, plain `ruflet install` selects it
+automatically; `--device` remains available when several matching targets are
+connected.
 
 Ruflet uses the canonical external Flutter template, resolves packages,
 applies app identity, generates splash screens and launcher icons, prepares

@@ -876,7 +876,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
 
       assert_equal 0, code
       refute calls.first[:env].key?("BUNDLE_GEMFILE")
-    assert_equal ["flutter", "build", "ios", "--codesign", "--target", "lib/main.self.dart", "--dart-define", "RUFLET_EMBEDDED_PROJECT=ruflet"], calls.first[:args]
+      assert_equal ["flutter", "build", "ios", "--codesign", "--target", "lib/main.self.dart", "--dart-define", "RUFLET_EMBEDDED_PROJECT=ruflet"], calls.first[:args]
+      assert_equal ["flutter", "build", "ios", "--simulator", "--target", "lib/main.self.dart", "--dart-define", "RUFLET_EMBEDDED_PROJECT=ruflet"], calls.last[:args]
       refute_includes calls.first[:env]["PATH"], "/Users/macbookpro/.gem/ruby/3.4.0/bin"
       assert_includes calls.first[:env]["PATH"], File.join(client_dir, ".ruflet", "bin")
       assert File.executable?(File.join(client_dir, ".ruflet", "bin", "pod"))
@@ -934,6 +935,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       ios_app_dir = File.join(dir, "build", "ios", "iphonesimulator", "Runner.app")
       FileUtils.mkdir_p(ios_app_dir)
       File.write(File.join(ios_app_dir, "Info.plist"), "plist")
+      File.write(File.join(ios_app_dir, "Runner"), "simulator executable")
 
       builder.define_singleton_method(:detect_flutter_client_dir) { client_dir }
       builder.define_singleton_method(:load_ruflet_config) { {} }
@@ -941,6 +943,18 @@ class RufletCliUpdateCommandTest < Minitest::Test
         { flutter: "flutter", dart: "dart", env: {} }
       end
       builder.define_singleton_method(:prepare_flutter_client) { |_client_dir, **_kwargs| flunk("install should not run build preparation") }
+      builder.define_singleton_method(:connected_flutter_devices) do |_flutter, _env|
+        [
+          {
+            "name" => "iPhone 16 Pro",
+            "id" => "6C2A608D-7753-49FC-AEDD-A1C1F4D23C1E",
+            "targetPlatform" => "ios",
+            "emulator" => true,
+            "isSupported" => true
+          },
+          { "name" => "macOS", "id" => "macos", "targetPlatform" => "darwin-arm64", "emulator" => false }
+        ]
+      end
 
       calls = []
       builder.define_singleton_method(:system) do |_env, *_args, chdir: nil|
@@ -951,7 +965,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       code = builder.command_install([])
 
       assert_equal 0, code
-      assert_equal ["flutter", "install"], calls.first[:args]
+      assert_equal ["flutter", "install", "-d", "6C2A608D-7753-49FC-AEDD-A1C1F4D23C1E"], calls.first[:args]
       assert_equal client_dir, calls.first[:chdir]
       assert File.exist?(File.join(client_dir, "build", "ios", "iphonesimulator", "Runner.app", "Info.plist"))
     ensure
@@ -1005,6 +1019,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
     builder = DummyBuilder.new
 
     Dir.mktmpdir do |dir|
+      previous_dir = Dir.pwd
+      Dir.chdir(dir)
       client_dir = File.join(dir, "ruflet_client")
       FileUtils.mkdir_p(File.join(client_dir, "lib"))
       File.write(File.join(client_dir, "lib", "main.server.dart"), "void main() {}\n")
@@ -1027,6 +1043,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes err.string, "Could not find built app outputs under ./build"
     ensure
       $stderr = original_stderr
+      Dir.chdir(previous_dir) if previous_dir
     end
   end
 

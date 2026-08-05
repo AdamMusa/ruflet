@@ -155,6 +155,25 @@ module Ruflet
 
         build_note("Running Flutter #{build_args.join(' ')}")
         ok = run_external_command(command_env, tools[:flutter], *build_args, chdir: client_dir, unbundled: true)
+
+        # A physical iPhone app and a simulator app are different Apple
+        # products, but Ruflet users should not have to learn that distinction.
+        # Keep both outputs behind the ordinary self-contained iOS build so the
+        # following `ruflet install` can target whichever mobile device is
+        # connected. An explicit --simulator remains a simulator-only build.
+        if ok && self_contained && requested_platform == "ios" && !build_args.include?("--simulator")
+          simulator_args = build_args.dup
+          simulator_args.delete("--codesign")
+          simulator_args.insert(simulator_args.index("ios") + 1, "--simulator")
+          stage_ios_simulator_ruby_runtime(client_dir, simulator_args, verbose: !!verbose)
+          build_log(verbose, "command=#{([tools[:flutter]] + simulator_args).join(' ')}")
+          build_note("Running Flutter #{simulator_args.join(' ')}")
+          ok = run_external_command(
+            command_env, tools[:flutter], *simulator_args,
+            chdir: client_dir, unbundled: true
+          )
+        end
+
         export_platform_build_outputs(client_dir, platform, verbose: !!verbose) if ok
         ok ? 0 : 1
       end
@@ -181,6 +200,19 @@ module Ruflet
         unless validate_install_artifacts(client_dir, platform: install_platform, device_id: device_id)
           return 1
         end
+
+        # `flutter install` counts macOS and Chrome alongside mobile devices.
+        # That makes an otherwise unambiguous install fail whenever a simulator
+        # is booted on a development Mac. Keep an explicit --device untouched,
+        # but when it is omitted select the only connected iOS target compatible
+        # with the newest app bundle (iphoneos vs iphonesimulator).
+        device_id ||= compatible_ios_install_device(
+          client_dir,
+          flutter: tools[:flutter],
+          env: command_env,
+          platform: install_platform,
+          verbose: !!verbose
+        )
 
         install_args = ["install"]
         install_args += ["-d", device_id] if device_id
@@ -365,6 +397,42 @@ module Ruflet
         return false if device_id.to_s.strip.empty?
 
         device_id.match?(/\A[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}\z/i)
+      end
+
+      def compatible_ios_install_device(client_dir, flutter:, env:, platform:, verbose: false)
+        return nil unless platform == "ios"
+
+        simulator = File.join(client_dir, "build", "ios", "iphonesimulator", "Runner.app", "Runner")
+        physical = File.join(client_dir, "build", "ios", "iphoneos", "Runner.app", "Runner")
+        artifacts = { simulator: simulator, physical: physical }.select { |_kind, path| File.file?(path) }
+        return nil if artifacts.empty?
+
+        devices = connected_flutter_devices(flutter, env).select do |device|
+          device["targetPlatform"].to_s == "ios" && device.fetch("isSupported", true)
+        end
+        ordered_kinds = artifacts.sort_by { |_kind, path| File.mtime(path) }.reverse.map(&:first)
+        kind, candidates = ordered_kinds.filter_map do |candidate_kind|
+          matching = devices.select { |device| !!device["emulator"] == (candidate_kind == :simulator) }
+          [candidate_kind, matching] if matching.one?
+        end.first
+        return nil unless kind
+
+        selected = candidates.first
+        build_log(verbose, "selected #{kind} device #{selected['id']} (#{selected['name']})")
+        selected["id"].to_s
+      rescue StandardError => e
+        build_log(verbose, "automatic iOS device selection skipped: #{e.class}: #{e.message}")
+        nil
+      end
+
+      def connected_flutter_devices(flutter, env)
+        output, status = Open3.capture2e(env, flutter, "devices", "--machine")
+        return [] unless status.success?
+
+        parsed = JSON.parse(output)
+        parsed.is_a?(Array) ? parsed : []
+      rescue JSON::ParserError
+        []
       end
 
       def ios_app_signed?(app_path)
