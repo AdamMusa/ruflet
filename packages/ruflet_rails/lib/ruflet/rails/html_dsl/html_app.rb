@@ -501,39 +501,42 @@ module Ruflet
         end
 
         # Recording needs a writable file path *on the device*, and the mic
-        # permission has to be granted first. This mirrors Studio's flow exactly:
-        # resolve the documents dir → check `has_permission` → record to a .wav in
-        # that dir with the wav encoder. A multi-step async chain, not a single
-        # fire-and-forget invoke (which is why "Start" did nothing before).
+        # permission has to be granted first. Studio establishes the same
+        # sequence; Rails asks PermissionHandler explicitly because the record
+        # plugin's `has_permission` preflight can remain pending on an iOS
+        # simulator before the system prompt has ever been shown.
         def start_audio_recording(recorder, spec)
           target = spec["result-target"]
           configuration = spec["configuration"] || { "encoder" => "wav" }
           explicit = (spec["output-path"] || spec["path"]).to_s
 
           begin_recording = lambda do |file|
-            # First call raises the OS microphone prompt and blocks until the
-            # person answers it, so this cannot use the 10s default.
-            recorder.has_permission(timeout: interactive_timeout(spec), on_result: lambda do |*out|
-              allowed, perm_error = out
+            permissions = reuse_service(:permission_handler, "ruflet_rails_permissions")
+            permissions.request("microphone", timeout: interactive_timeout(spec), on_result: lambda do |*out|
+              permission_status, perm_error = out
               if service_error?(perm_error)
                 next show_service_result("Recorder permission error: #{perm_error}",
                                          title: "Audio recorder failed", target: target)
               end
-              unless allowed
+              unless microphone_permission_granted?(permission_status)
                 next show_service_result("Microphone permission was not granted.",
                                          title: "Audio recorder", target: target)
               end
 
-              show_service_result("Recording → #{file}", title: "Audio recorder", target: target)
               recorder.start_recording(
                 output_path: file, configuration: configuration, upload: spec["upload"],
-                # Starting capture can itself surface the OS prompt when the
-                # permission was only just granted.
                 timeout: interactive_timeout(spec),
                 on_result: lambda do |*rec|
-                  next unless service_error?(rec[1])
+                  if service_error?(rec[1])
+                    next show_service_result("Start error: #{rec[1]}",
+                                             title: "Audio recorder failed", target: target)
+                  end
+                  unless rec[0]
+                    next show_service_result("The recorder could not start.",
+                                             title: "Audio recorder failed", target: target)
+                  end
 
-                  show_service_result("Start error: #{rec[1]}", title: "Audio recorder failed", target: target)
+                  show_service_result("Recording → #{file}", title: "Audio recorder", target: target)
                 end
               )
             end)
@@ -553,6 +556,10 @@ module Ruflet
             file = "#{dir.to_s.sub(%r{/+\z}, '')}/#{spec['file-name'] || 'ruflet_recording.wav'}"
             begin_recording.call(file)
           end)
+        end
+
+        def microphone_permission_granted?(status)
+          status == true || status.to_s == "granted"
         end
 
         def toggle_sensor(type, action, spec)

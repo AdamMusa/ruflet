@@ -371,6 +371,56 @@ class RufletHtmlAppTest < Minitest::Test
     assert_equal [["permissionhandler", "request", { "permission" => "camera" }, 4.0]], calls
   end
 
+  def test_audio_recorder_requests_microphone_then_records_in_documents
+    calls = []
+    @page.define_singleton_method(:get_application_documents_directory) do |on_result: nil, **_|
+      on_result&.call("/device/Documents", nil)
+    end
+    @page.define_singleton_method(:invoke) do |control, method, args: nil, timeout: 10, on_result: nil|
+      calls << [control.type, method, args, timeout]
+      result = control.type == "permissionhandler" ? "granted" : true
+      on_result&.call(result, nil)
+    end
+
+    start(
+      "/" => <<~HTML
+        <audio-recorder></audio-recorder>
+        <permission-handler></permission-handler>
+        <storage-paths></storage-paths>
+        <text id="recorder-status">Ready</text>
+        <button service="audio-recorder-start" file-name="voice.wav"
+                result-target="recorder-status">Record</button>
+      HTML
+    )
+    find_all(@page.views.first, "button").first.emit("click", nil)
+
+    assert_equal ["permissionhandler", "request", { "permission" => "microphone" }], calls[0][0, 3]
+    assert_equal ["audiorecorder", "start_recording"], calls[1][0, 2]
+    assert_equal "/device/Documents/voice.wav", calls[1][2]["output_path"]
+    assert_equal({ "encoder" => "wav" }, calls[1][2]["configuration"])
+    assert_equal "Recording → /device/Documents/voice.wav",
+                 @page.get_control("recorder-status").props["value"]
+  end
+
+  def test_audio_recorder_does_not_claim_recording_when_native_start_returns_false
+    @page.define_singleton_method(:get_application_documents_directory) do |on_result: nil, **_|
+      on_result&.call("/device/Documents", nil)
+    end
+    @page.define_singleton_method(:invoke) do |control, _method, args: nil, timeout: 10, on_result: nil|
+      on_result&.call(control.type == "permissionhandler" ? "granted" : false, nil)
+    end
+
+    start(
+      "/" => '<audio-recorder></audio-recorder><permission-handler></permission-handler>' \
+             '<text id="recorder-status">Ready</text>' \
+             '<button service="audio-recorder-start" result-target="recorder-status">Record</button>'
+    )
+    find_all(@page.views.first, "button").first.emit("click", nil)
+
+    assert_equal "The recorder could not start.",
+                 @page.get_control("recorder-status").props["value"]
+  end
+
   def test_service_button_can_invoke_a_mounted_extension_service_by_id
     calls = []
     @page.define_singleton_method(:invoke) do |control, method, args: nil, timeout: 10, on_result: nil|
