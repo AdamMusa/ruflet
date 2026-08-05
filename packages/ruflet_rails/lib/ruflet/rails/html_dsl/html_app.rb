@@ -358,7 +358,7 @@ module Ruflet
         def handle_control_event(spec, event)
           data = event.respond_to?(:data) ? event.data : event
           value = if data.is_a?(Hash)
-                    data["value"] || data[:value] || data
+                    data["value"] || data[:value] || (data.one? ? data.values.first : data)
                   else
                     data
                   end
@@ -378,7 +378,7 @@ module Ruflet
           return unless target
 
           message = spec["message"]
-          message = "#{spec['prefix']}#{format_service_value(data)}" if message.to_s.empty?
+          message = "#{spec['prefix']}#{format_service_value(value)}" if message.to_s.empty?
           show_service_result(message, target: target)
         end
 

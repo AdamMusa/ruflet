@@ -332,7 +332,7 @@ class RufletHtmlAppTest < Minitest::Test
     rive = @page.get_control("demo-rive")
     event = Struct.new(:data).new({ "state" => "playing" })
     assert rive.emit("state_change", event)
-    assert_equal "State: state: playing", @page.get_control("rive-status").props["value"]
+    assert_equal "State: playing", @page.get_control("rive-status").props["value"]
   end
 
   def test_service_result_can_update_inline_like_ruflet_studio
