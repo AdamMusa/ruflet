@@ -545,19 +545,40 @@ module Ruflet
             end)
           end
 
-          return begin_recording.call(explicit) unless explicit.empty?
+          release_recording_playback do
+            next begin_recording.call(explicit) unless explicit.empty?
 
-          show_service_result("Preparing recording…", title: "Audio recorder", target: target)
-          @page.get_application_documents_directory(on_result: lambda do |dir, dir_error|
-            if service_error?(dir_error) || dir.to_s.empty?
-              next show_service_result(
-                "Recording path error: #{dir_error || 'documents directory unavailable'}",
-                title: "Audio recorder failed", target: target
-              )
-            end
+            show_service_result("Preparing recording…", title: "Audio recorder", target: target)
+            @page.get_application_documents_directory(on_result: lambda do |dir, dir_error|
+              if service_error?(dir_error) || dir.to_s.empty?
+                next show_service_result(
+                  "Recording path error: #{dir_error || 'documents directory unavailable'}",
+                  title: "Audio recorder failed", target: target
+                )
+              end
 
-            file = "#{dir.to_s.sub(%r{/+\z}, '')}/#{spec['file-name'] || 'ruflet_recording.wav'}"
-            begin_recording.call(file)
+              requested_name = spec["file-name"].to_s
+              file_name = requested_name.empty? ? next_recording_file_name : requested_name
+              file = "#{dir.to_s.sub(%r{/+\z}, '')}/#{file_name}"
+              begin_recording.call(file)
+            end)
+          end
+        end
+
+        def next_recording_file_name
+          @recording_sequence = @recording_sequence.to_i + 1
+          "ruflet_recording_#{@recording_sequence}.wav"
+        end
+
+        def release_recording_playback(&after_release)
+          @recording_playback_generation = @recording_playback_generation.to_i + 1
+          previous = @recording_playback
+          @recording_playback = nil
+          return after_release.call unless previous
+
+          previous.release(on_result: lambda do |_result, _error|
+            @page.remove_service(previous)
+            after_release.call
           end)
         end
 
@@ -597,6 +618,8 @@ module Ruflet
 
         def autoplay_recording(path, target:)
           @page.remove_service(@recording_playback) if @recording_playback
+          @recording_playback_generation = @recording_playback_generation.to_i + 1
+          generation = @recording_playback_generation
           @recording_playback = @page.service(
             :audio,
             id: "ruflet_rails_recording_playback",
@@ -604,6 +627,8 @@ module Ruflet
             autoplay: true,
             release_mode: "stop",
             on_state_change: lambda do |event|
+              next unless generation == @recording_playback_generation
+
               data = event.respond_to?(:data) ? event.data : event
               state = data.is_a?(Hash) ? (data["state"] || data[:state]) : data
               message = case state.to_s
@@ -613,6 +638,8 @@ module Ruflet
               show_service_result(message, target: target) if message
             end,
             on_error: lambda do |event|
+              next unless generation == @recording_playback_generation
+
               data = event.respond_to?(:data) ? event.data : event
               show_service_result("Playback error: #{format_service_value(data)}",
                                   title: "Audio playback failed", target: target)

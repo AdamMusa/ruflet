@@ -422,14 +422,18 @@ class RufletHtmlAppTest < Minitest::Test
   end
 
   def test_audio_recorder_animates_while_recording_and_autoplays_after_stop
+    recording_paths = []
     @page.define_singleton_method(:get_application_documents_directory) do |on_result: nil, **_|
       on_result&.call("/device/Documents", nil)
     end
     @page.define_singleton_method(:invoke) do |control, method, args: nil, timeout: 10, on_result: nil|
       result = if control.type == "permissionhandler"
                  "granted"
+               elsif method == "start_recording"
+                 recording_paths << args["output_path"]
+                 true
                elsif method == "stop_recording"
-                 "/device/Documents/ruflet_recording.wav"
+                 recording_paths.last
                else
                  true
                end
@@ -464,7 +468,7 @@ class RufletHtmlAppTest < Minitest::Test
     assert_equal false, record.props["disabled"]
     assert_equal true, stop.props["disabled"]
     player = @page.services.find { |service| service.type == "audio" }
-    assert_equal "/device/Documents/ruflet_recording.wav", player.props["src"]
+    assert_equal "/device/Documents/ruflet_recording_1.wav", player.props["src"]
     assert_equal true, player.props["autoplay"]
     assert_equal "Saved. Playing your recording…",
                  @page.get_control("recorder-status").props["value"]
@@ -472,6 +476,21 @@ class RufletHtmlAppTest < Minitest::Test
     player.emit("state_change", Struct.new(:data).new({ "state" => "completed" }))
     assert_equal "Recording saved and playback finished.",
                  @page.get_control("recorder-status").props["value"]
+
+    record.emit("click", nil)
+    assert_equal [
+      "/device/Documents/ruflet_recording_1.wav",
+      "/device/Documents/ruflet_recording_2.wav"
+    ], recording_paths
+    assert_equal true, @page.get_control("recorder-pulse").props["visible"]
+    assert_equal true, record.props["disabled"]
+    assert_equal false, stop.props["disabled"]
+    assert_equal "Recording… Speak now.", @page.get_control("recorder-status").props["value"]
+
+    # A late completion event from the released first playback cannot reset the
+    # status or controls for the second recording session.
+    player.emit("state_change", Struct.new(:data).new({ "state" => "completed" }))
+    assert_equal "Recording… Speak now.", @page.get_control("recorder-status").props["value"]
   end
 
   def test_service_button_can_invoke_a_mounted_extension_service_by_id
