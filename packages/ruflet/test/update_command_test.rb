@@ -943,19 +943,6 @@ class RufletCliUpdateCommandTest < Minitest::Test
         { flutter: "flutter", dart: "dart", env: {} }
       end
       builder.define_singleton_method(:prepare_flutter_client) { |_client_dir, **_kwargs| flunk("install should not run build preparation") }
-      builder.define_singleton_method(:connected_flutter_devices) do |_flutter, _env|
-        [
-          {
-            "name" => "iPhone 16 Pro",
-            "id" => "6C2A608D-7753-49FC-AEDD-A1C1F4D23C1E",
-            "targetPlatform" => "ios",
-            "emulator" => true,
-            "isSupported" => true
-          },
-          { "name" => "macOS", "id" => "macos", "targetPlatform" => "darwin-arm64", "emulator" => false }
-        ]
-      end
-
       calls = []
       builder.define_singleton_method(:system) do |_env, *_args, chdir: nil|
         calls << { env: _env, args: _args, chdir: chdir }
@@ -965,7 +952,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       code = builder.command_install([])
 
       assert_equal 0, code
-      assert_equal ["flutter", "install", "-d", "6C2A608D-7753-49FC-AEDD-A1C1F4D23C1E"], calls.first[:args]
+      assert_equal ["flutter", "install"], calls.first[:args]
       assert_equal client_dir, calls.first[:chdir]
       assert File.exist?(File.join(client_dir, "build", "ios", "iphonesimulator", "Runner.app", "Info.plist"))
     ensure
