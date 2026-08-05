@@ -29,6 +29,7 @@ module Ruflet
         "qrcode_scanner" => { package: "ruflet_qrcode_scanner", alias: "ruflet_qrcode_scanner" },
         "rive" => { package: "flet_rive", alias: "ruflet_rive" },
         "secure_storage" => { package: "flet_secure_storage", alias: "ruflet_secure_storage" },
+        "spinkit" => { package: "flet_spinkit", alias: "ruflet_spinkit" },
         "video" => { package: "flet_video", alias: "ruflet_video" },
         "webview" => { package: "flet_webview", alias: "ruflet_webview" }
       }.freeze
@@ -53,6 +54,14 @@ module Ruflet
         "location" => "NSLocationWhenInUseUsageDescription",
         "motion" => "NSMotionUsageDescription"
       }.freeze
+      MANAGED_ANDROID_PERMISSIONS = (
+        ANDROID_SERVICE_PERMISSIONS.values.flatten +
+        %w[android.permission.FLASHLIGHT android.permission.MODIFY_AUDIO_SETTINGS]
+      ).uniq.freeze
+      MANAGED_IOS_USAGE_KEYS = (
+        IOS_SERVICE_USAGE_KEYS.values +
+        %w[NSLocationAlwaysAndWhenInUseUsageDescription NSPhotoLibraryUsageDescription]
+      ).uniq.freeze
       # Clients that are told which server to use at launch rather than at build
       # time, so they may be built without a configured backend_url.
       RUNTIME_RESOLVED_BACKEND_PLATFORMS = %w[web macos windows linux].freeze
@@ -1572,6 +1581,7 @@ module Ruflet
           prune_client_pubspec(pubspec_path, extension_packages)
           sync_external_extension_dependencies(pubspec_path, external)
         end
+        sync_client_package_directories(client_dir, extension_packages)
         client_entrypoint_paths(client_dir).each do |entrypoint|
           next unless File.file?(entrypoint)
 
@@ -1766,8 +1776,6 @@ module Ruflet
         extension_services.each do |service|
           entries << { name: service, description: "" } unless entries.any? { |entry| entry[:name] == service }
         end
-        return if entries.empty?
-
         apply_android_service_permissions(client_dir, entries)
         apply_ios_service_usage_descriptions(client_dir, entries)
       end
@@ -1777,6 +1785,12 @@ module Ruflet
         return unless File.file?(path)
 
         content = read_text_file(path)
+        MANAGED_ANDROID_PERMISSIONS.each do |permission|
+          content.gsub!(
+            %r{^\s*<uses-permission\b[^>]*android:name="#{Regexp.escape(permission)}"[^>]*/>\s*\n?},
+            ""
+          )
+        end
         entries.flat_map { |entry| ANDROID_SERVICE_PERMISSIONS.fetch(entry[:name], []) }.uniq.each do |permission|
           next if content.include?(%(android:name="#{permission}"))
 
@@ -1790,6 +1804,12 @@ module Ruflet
         return unless File.file?(path)
 
         content = read_text_file(path)
+        MANAGED_IOS_USAGE_KEYS.each do |key|
+          content.gsub!(
+            %r{\s*<key>#{Regexp.escape(key)}</key>\s*<string>.*?</string>}m,
+            ""
+          )
+        end
         entries.each do |entry|
           key = IOS_SERVICE_USAGE_KEYS[entry[:name]]
           next unless key
@@ -1859,8 +1879,6 @@ module Ruflet
         data = YAML.safe_load(read_text_file(pubspec_path), aliases: true) || {}
         dependencies = data["dependencies"]
         dependencies = data["dependencies"] = {} unless dependencies.is_a?(Hash)
-        spinkit_dependency = template_client_pubspec_dependencies["flet_spinkit"]
-        dependencies["flet_spinkit"] = spinkit_dependency if spinkit_dependency
         flutter = data["flutter"]
         flutter = data["flutter"] = {} unless flutter.is_a?(Hash)
         assets = Array(flutter["assets"]).map(&:to_s)
@@ -1924,7 +1942,6 @@ module Ruflet
           "lib/main.dart",
           "lib/main.self.dart",
           "lib/main.server.dart",
-          "lib/ruflet_file_picker_service.dart",
           "lib/connection_probe.dart",
           "lib/connection_probe_io.dart",
           "lib/connection_probe_stub.dart",
@@ -1949,6 +1966,11 @@ module Ruflet
           FileUtils.cp(source, destination)
           build_log(verbose, "refreshed template file #{relative_path}")
         end
+
+        # Older managed clients carried a macOS-only FilePicker override. Flet's
+        # core service owns FilePicker now, so this duplicate must not survive a
+        # template refresh.
+        FileUtils.rm_f(File.join(client_dir, "lib", "ruflet_file_picker_service.dart"))
       end
 
       def write_pubspec_yaml(path, data)
@@ -2171,6 +2193,40 @@ module Ruflet
 
         data["dependencies"] = deps
         write_pubspec_yaml(path, data)
+      end
+
+      def sync_client_package_directories(client_dir, selected_packages)
+        packages_root = File.join(client_dir, "flet_packages")
+        return unless Dir.exist?(packages_root)
+
+        kept_packages = (["flet"] + selected_packages).uniq
+        template_root =
+          if Ruflet::CLI.respond_to?(:resolve_ruflet_client_template_root, true)
+            Ruflet::CLI.send(:resolve_ruflet_client_template_root)
+          end
+        template_packages_root = template_root && File.join(template_root, "flet_packages")
+
+        # A declaration can change between builds. Restore newly selected local
+        # packages from the immutable template before pruning the old selection.
+        kept_packages.each do |package_name|
+          destination = File.join(packages_root, package_name)
+          next if Dir.exist?(destination)
+          next unless template_packages_root
+
+          source = File.join(template_packages_root, package_name)
+          next unless Dir.exist?(source)
+          next if File.expand_path(source) == File.expand_path(destination)
+
+          FileUtils.cp_r(source, destination)
+        end
+
+        Dir.children(packages_root).each do |entry|
+          path = File.join(packages_root, entry)
+          next unless Dir.exist?(path)
+          next if kept_packages.include?(entry)
+
+          FileUtils.rm_rf(path)
+        end
       end
 
       def sync_client_extension_dependencies(path, selected_packages)
