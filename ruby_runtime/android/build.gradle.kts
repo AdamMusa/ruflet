@@ -71,6 +71,10 @@ android {
 }
 
 dependencies {
+    // Provides the ContentProvider that runs RufletRuntimeInitializer before
+    // Application.onCreate, so the VM can boot in parallel with Flutter.
+    implementation("androidx.startup:startup-runtime:1.1.1")
+
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.mockito:mockito-core:5.0.0")
 }

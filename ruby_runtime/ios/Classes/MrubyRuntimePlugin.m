@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 
+#include "ruflet_runtime_autostart.h"
 #include "ruflet_vm_host.h"
 
 // Flutter bridge for the embedded Ruby VM.
@@ -12,11 +13,17 @@
 // RufletVM library behind four C entry points. Every platform bridges to those
 // same entry points, so releasing a runtime means replacing the built artifact
 // and nothing else; there is no host logic to keep in step across plugins.
+//
+// Startup itself is shared with macOS in apple/ruflet_runtime_autostart.h.
 
 @interface MrubyRuntimePlugin : NSObject <FlutterPlugin>
 @end
 
 @implementation MrubyRuntimePlugin
+
++ (void)load {
+  ruflet_autostart_on_load();
+}
 
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar> *)registrar {
   FlutterMethodChannel *channel =
@@ -91,6 +98,16 @@ static const char **borrow_utf8(NSArray<NSString *> *values,
 
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
   if ([call.method isEqualToString:@"start"]) {
+    if (ruflet_autostart_owns_runtime()) {
+      result([FlutterError
+          errorWithCode:@"autostart_owns_runtime"
+                message:@"The platform already started the runtime "
+                        @"(RufletRuntimeAutostart). Use serverUrl() instead of "
+                        @"start(), or turn autostart off."
+                details:nil]);
+      return;
+    }
+
     NSDictionary *arguments = [call.arguments isKindOfClass:[NSDictionary class]]
                                   ? (NSDictionary *)call.arguments
                                   : @{};
@@ -141,8 +158,20 @@ static const char **borrow_utf8(NSArray<NSString *> *values,
     return;
   }
 
+  if ([call.method isEqualToString:@"serverUrl"]) {
+    ruflet_autostart_resolve_url(result);
+    return;
+  }
+
   if ([call.method isEqualToString:@"status"]) {
     result(runtime_status());
+    return;
+  }
+
+  // Milliseconds since the plugin's dylib was loaded. Lets Dart place its own
+  // timestamps on a timeline that starts before the engine did.
+  if ([call.method isEqualToString:@"timeline"]) {
+    result(@{@"sinceLoadMs" : [NSNumber numberWithDouble:ruflet_ms_since_load()]});
     return;
   }
 

@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'ruby_runtime'
-  s.version          = '0.0.8'
+  s.version          = '0.0.13'
   s.summary          = 'Embedded Ruby (mruby) VM for Flutter iOS.'
   s.description      = <<-DESC
 Embeds a generic mruby VM with gem-loading support ($LOAD_PATH/require) and
@@ -19,7 +19,9 @@ frameworks ship as plain gem file trees in app assets.
   s.source_files = [
     'Classes/MrubyRuntimePlugin.{h,m}'
   ]
-  s.preserve_paths = '../desktop/ruflet_vm_host.h'
+  # apple/ holds the platform-side startup shared with macOS; desktop/ holds the
+  # VM entry points shared with every platform.
+  s.preserve_paths = ['../desktop/ruflet_vm_host.h', '../apple/*.h']
   s.vendored_frameworks = 'Frameworks/RufletVM.xcframework'
 
   s.public_header_files = 'Classes/**/*.h'
@@ -35,6 +37,6 @@ frameworks ship as plain gem file trees in app assets.
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
-    'HEADER_SEARCH_PATHS' => '$(inherited) "$(PODS_TARGET_SRCROOT)/../desktop"'
+    'HEADER_SEARCH_PATHS' => '$(inherited) "$(PODS_TARGET_SRCROOT)/../desktop" "$(PODS_TARGET_SRCROOT)/../apple"'
   }
 end
