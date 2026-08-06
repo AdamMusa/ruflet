@@ -49,6 +49,11 @@ class RufletRuntime {
   /// starting. Apps using this do not call [start]; the platform owns the
   /// runtime's lifecycle and reads its configuration from the app bundle.
   ///
+  /// Do not await this before `runApp`. The VM is already booting in parallel
+  /// with the engine, and blocking startup on it hands back the time that
+  /// parallelism was there to save. Request it from the widget tree and show a
+  /// splash until it resolves.
+  ///
   /// Throws a [PlatformException] if the platform has no autostarted runtime,
   /// or if the runtime failed before binding.
   static Future<Uri> serverUrl() {

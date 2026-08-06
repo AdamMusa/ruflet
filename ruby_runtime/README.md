@@ -70,6 +70,45 @@ await RufletRuntime.stop();
 runtime error. The application/framework configuration determines its server
 address.
 
+### Platform-started runtime
+
+Where the platform can start the VM before the Flutter engine exists, it does,
+and the application asks for the result instead of driving startup itself. The
+VM boots in parallel with the engine, so by the time Dart asks, the server has
+usually already bound its port.
+
+macOS opts in with `RufletRuntimeAutostart` in `Info.plist`; the plugin finds
+the packaged project in the app bundle and reads it in place, so the project
+never has to be copied to a writable directory first.
+
+```dart
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Nothing about the VM is awaited here. The platform is already booting it.
+  runApp(const MyApp());
+}
+
+class _MyAppState extends State<MyApp> {
+  Uri? _serverUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    RufletRuntime.serverUrl().then((url) => setState(() => _serverUrl = url));
+  }
+  // build() renders a splash while _serverUrl is null.
+}
+```
+
+**Do not `await RufletRuntime.serverUrl()` before `runApp`.** Awaiting it there
+gives the delay back: the first frame would wait for the VM, which is the thing
+starting the VM early was meant to avoid. Request it from the widget tree and
+render a splash until it arrives.
+
+`tools/coldstart_bench/` measures this. Making the VM 16x slower moves the URL's
+arrival by 188ms and the first frame by 0.8ms — the frame does not wait.
+
 ## Build Flow
 
 `ruflet build --self`:
