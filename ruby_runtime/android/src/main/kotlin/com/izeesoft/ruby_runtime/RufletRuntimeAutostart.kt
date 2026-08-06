@@ -117,8 +117,11 @@ internal object RufletRuntimeAutostart {
     private fun begin(context: Context) {
         try {
             System.loadLibrary("ruby_runtime")
+            val libraryLoadedAt = millisSinceLoad()
 
             val projectRoot = unpackProject(context)
+            val unpackedAt = millisSinceLoad()
+
             val entrypoint = File(projectRoot, "main.rb")
             if (!entrypoint.isFile) {
                 finish(null, "The packaged Ruflet project does not contain main.rb.")
@@ -156,6 +159,18 @@ internal object RufletRuntimeAutostart {
             )
 
             awaitPort(portFile, errorFile)
+
+            // Cheap, and the only way to tell unpacking from VM boot when
+            // diagnosing startup on a real device.
+            Log.i(
+                TAG,
+                "startup: library=%.0fms unpack=%.0fms boot=%.0fms total=%.0fms".format(
+                    libraryLoadedAt,
+                    unpackedAt - libraryLoadedAt,
+                    millisSinceLoad() - unpackedAt,
+                    millisSinceLoad(),
+                ),
+            )
         } catch (error: Throwable) {
             finish(null, "${error.javaClass.simpleName}: ${error.message}")
         }

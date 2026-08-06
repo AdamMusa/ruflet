@@ -648,8 +648,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes out.string, "[ruflet build] running flutter pub get"
       assert_includes out.string, "[ruflet build] mode=self"
       assert_includes out.string, "[ruflet build] target=lib/main.self.dart"
-    assert_includes out.string, "[ruflet build] command=flutter build apk --target lib/main.self.dart --dart-define RUFLET_BACKEND_URL=https://api.example.com --dart-define RUFLET_EMBEDDED_PROJECT=ruflet -v"
-    assert_equal ["flutter", "build", "apk", "--target", "lib/main.self.dart", "--dart-define", "RUFLET_BACKEND_URL=https://api.example.com", "--dart-define", "RUFLET_EMBEDDED_PROJECT=ruflet", "-v"], calls.first[:args]
+    assert_includes out.string, "[ruflet build] command=flutter build apk --target lib/main.self.dart --dart-define RUFLET_BACKEND_URL=https://api.example.com -v"
+    assert_equal ["flutter", "build", "apk", "--target", "lib/main.self.dart", "--dart-define", "RUFLET_BACKEND_URL=https://api.example.com", "-v"], calls.first[:args]
       assert_equal client_dir, calls.first[:chdir]
     ensure
       $stdout = original_stdout
@@ -876,7 +876,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
 
       assert_equal 0, code
       refute calls.first[:env].key?("BUNDLE_GEMFILE")
-    assert_equal ["flutter", "build", "ios", "--codesign", "--target", "lib/main.self.dart", "--dart-define", "RUFLET_EMBEDDED_PROJECT=ruflet"], calls.first[:args]
+    assert_equal ["flutter", "build", "ios", "--codesign", "--target", "lib/main.self.dart"], calls.first[:args]
       refute_includes calls.first[:env]["PATH"], "/Users/macbookpro/.gem/ruby/3.4.0/bin"
       assert_includes calls.first[:env]["PATH"], File.join(client_dir, ".ruflet", "bin")
       assert File.executable?(File.join(client_dir, ".ruflet", "bin", "pod"))
@@ -2076,4 +2076,89 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+end
+
+# The platform layer starts the embedded VM before Flutter exists, so it -- not
+# Dart -- has to be told to, and which project to run. These assert that a
+# self-contained build writes that configuration where each platform reads it.
+class RufletCliPlatformAutostartTest < Minitest::Test
+  class DummyBuilder
+    include Ruflet::CLI::BuildCommand
+
+    def build_log(*); end
+    def self_contained_project_name = "demo"
+  end
+
+  def setup
+    @dir = Dir.mktmpdir("ruflet_autostart")
+    FileUtils.mkdir_p(File.join(@dir, "macos", "Runner"))
+    FileUtils.mkdir_p(File.join(@dir, "android", "app", "src", "main"))
+    File.write(plist_path, <<~PLIST)
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+      <dict>
+      \t<key>CFBundleName</key>
+      \t<string>Demo</string>
+      </dict>
+      </plist>
+    PLIST
+    File.write(manifest_path, <<~XML)
+      <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+          <application android:label="Demo">
+              <activity android:name=".MainActivity" />
+          </application>
+      </manifest>
+    XML
+  end
+
+  def teardown
+    FileUtils.remove_entry(@dir)
+  end
+
+  def plist_path = File.join(@dir, "macos", "Runner", "Info.plist")
+  def manifest_path = File.join(@dir, "android", "app", "src", "main", "AndroidManifest.xml")
+
+  def plist_value(key)
+    `/usr/libexec/PlistBuddy -c "Print :#{key}" #{plist_path} 2>/dev/null`.strip
+  end
+
+  def test_apple_builds_record_autostart_and_project
+    DummyBuilder.new.send(:configure_platform_autostart, @dir, "macos")
+
+    assert_equal "true", plist_value("RufletRuntimeAutostart")
+    assert_equal "demo", plist_value("RufletEmbeddedProject")
+  end
+
+  def test_android_builds_record_autostart_and_project
+    DummyBuilder.new.send(:configure_platform_autostart, @dir, "apk")
+
+    manifest = File.read(manifest_path)
+    assert_includes manifest, 'android:name="ruflet.runtime.autostart" android:value="true"'
+    assert_includes manifest, 'android:name="ruflet.runtime.project" android:value="demo"'
+    assert_includes manifest, "</application>"
+  end
+
+  # Rebuilding must not duplicate the entries, and PlistBuddy's Add fails on an
+  # existing key, so the writers have to be idempotent.
+  def test_configuration_is_idempotent_across_rebuilds
+    builder = DummyBuilder.new
+    2.times do
+      builder.send(:configure_platform_autostart, @dir, "macos")
+      builder.send(:configure_platform_autostart, @dir, "apk")
+    end
+
+    assert_equal "true", plist_value("RufletRuntimeAutostart")
+    assert_equal 1, File.read(manifest_path).scan("ruflet.runtime.autostart").length
+    assert_equal 1, File.read(manifest_path).scan("ruflet.runtime.project").length
+  end
+
+  # Desktop has no manifest to carry a flag; it treats the presence of a
+  # packaged project as the opt-in, so there is nothing to write.
+  def test_desktop_builds_need_no_configuration
+    before = File.read(manifest_path)
+    DummyBuilder.new.send(:configure_platform_autostart, @dir, "macos-desktop-unknown")
+
+    assert_equal before, File.read(manifest_path)
+  end
 end

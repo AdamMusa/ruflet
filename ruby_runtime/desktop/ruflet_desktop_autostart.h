@@ -15,10 +15,11 @@
 // Flutter assets are ordinary files there, so nothing has to be copied to a
 // writable directory first.
 //
-// Autostart is opt-in, because a server-driven app has no packaged project and
-// must not boot a VM. A build opts in by shipping a marker file next to the
-// executable at data/flutter_assets/ruflet_runtime_autostart; setting
-// RUFLET_RUNTIME_AUTOSTART=1 in the environment does the same for development.
+// Desktop has no Info.plist or AndroidManifest to carry an opt-in flag, so the
+// packaged project is the opt-in: a self-contained build ships one and a
+// server-driven build does not, which is exactly the distinction the flag
+// encodes on the other platforms. RUFLET_RUNTIME_AUTOSTART=0 turns it off for
+// an app that wants to drive startup from Dart anyway.
 //
 // Header-only, with internal linkage, because each platform compiles exactly
 // one bridge translation unit. It mirrors how both bridges already share
@@ -68,14 +69,14 @@ inline std::filesystem::path flutter_assets_dir() {
   return executable_directory() / "data" / "flutter_assets";
 }
 
+std::filesystem::path packaged_project_root();
+
 inline bool autostart_enabled() {
   const char *env = std::getenv("RUFLET_RUNTIME_AUTOSTART");
-  if (env != nullptr && env[0] == '1') {
-    return true;
+  if (env != nullptr && env[0] == '0') {
+    return false;
   }
-  std::error_code error;
-  return std::filesystem::exists(
-      flutter_assets_dir() / "ruflet_runtime_autostart", error);
+  return !packaged_project_root().empty();
 }
 
 /// The packaged project is the single directory under flutter_assets/assets
@@ -210,9 +211,9 @@ inline void on_register(StartFunction start) {
 inline bool await_url(std::string *url, std::string *error) {
   if (!attempted()) {
     *error =
-        "This app does not start the runtime from the platform layer. Ship "
-        "data/flutter_assets/ruflet_runtime_autostart to use serverUrl(), or "
-        "call start() instead.";
+        "This app does not start the runtime from the platform layer. Build "
+        "with `ruflet build --self` so a packaged project ships, or call "
+        "start() instead.";
     return false;
   }
   std::unique_lock<std::mutex> lock(state_mutex());

@@ -126,10 +126,11 @@ module Ruflet
         backend_url = configured_backend_url(config)
         if self_contained
           build_args += ["--dart-define", "RUFLET_BACKEND_URL=#{backend_url}"] if backend_url
-          # Pin the embedded project so main.self.dart extracts assets/<name>/
-          # deterministically instead of inferring from a single main.rb — the
-          # app tree now ships many main.rb files (standalone_apps/*/main.rb).
-          build_args += ["--dart-define", "RUFLET_EMBEDDED_PROJECT=#{self_contained_project_name}"]
+          # The platform layer starts the VM before Flutter exists, so it -- not
+          # Dart -- needs to know that it should and which project to run. Pin
+          # the project rather than let it infer from a single main.rb: the app
+          # tree ships many (standalone_apps/*/main.rb).
+          configure_platform_autostart(client_dir, platform, verbose: !!verbose)
         elsif backend_url
           build_args += ["--dart-define", "RUFLET_BACKEND_URL=#{backend_url}"]
         elsif RUNTIME_RESOLVED_BACKEND_PLATFORMS.include?(platform)
@@ -2028,6 +2029,62 @@ module Ruflet
         name = File.basename(Dir.pwd.to_s)
         name = "app" if name.to_s.strip.empty?
         name
+      end
+
+      # Tells the platform layer to start the embedded runtime, and which
+      # packaged project to run.
+      #
+      # This is platform configuration rather than a dart-define because the VM
+      # starts before Dart does: on Apple platforms from the plugin's +load, on
+      # Android from an androidx.startup provider. Neither can read a value that
+      # only exists inside the Dart isolate.
+      #
+      # Desktop needs nothing here -- it has no manifest to carry a flag, and
+      # treats the presence of a packaged project as the opt-in, which is the
+      # same distinction this flag draws on the other platforms.
+      def configure_platform_autostart(client_dir, platform, verbose: false)
+        project = self_contained_project_name
+        case platform
+        when "ios", "macos"
+          plist = File.join(client_dir, platform, "Runner", "Info.plist")
+          return unless File.file?(plist)
+
+          set_plist_value(plist, "RufletRuntimeAutostart", "bool", "true")
+          set_plist_value(plist, "RufletEmbeddedProject", "string", project)
+          build_log(verbose, "enabled runtime autostart in #{platform}/Runner/Info.plist")
+        when "apk", "appbundle", "android"
+          manifest = File.join(
+            client_dir, "android", "app", "src", "main", "AndroidManifest.xml"
+          )
+          return unless File.file?(manifest)
+
+          set_android_meta_data(manifest, "ruflet.runtime.autostart", "true")
+          set_android_meta_data(manifest, "ruflet.runtime.project", project)
+          build_log(verbose, "enabled runtime autostart in AndroidManifest.xml")
+        end
+      end
+
+      def set_plist_value(plist, key, type, value)
+        # Delete first: PlistBuddy's Add fails on an existing key, and a rebuild
+        # after renaming the project would otherwise keep the stale name.
+        system("/usr/libexec/PlistBuddy", "-c", "Delete :#{key}", plist,
+               out: File::NULL, err: File::NULL)
+        system("/usr/libexec/PlistBuddy", "-c", "Add :#{key} #{type} #{value}",
+               plist, out: File::NULL, err: File::NULL)
+      end
+
+      def set_android_meta_data(manifest, name, value)
+        contents = File.read(manifest)
+        entry = %(<meta-data android:name="#{name}" android:value="#{value}" />)
+        existing = /<meta-data\s+android:name="#{Regexp.escape(name)}"[^>]*\/>/
+
+        contents =
+          if contents.match?(existing)
+            contents.sub(existing, entry)
+          else
+            contents.sub(%r{(\n(\s*)</application>)}) { "\n#{$2}    #{entry}#{$1}" }
+          end
+        File.write(manifest, contents)
       end
 
       def skip_project_asset_directory?(relative)
