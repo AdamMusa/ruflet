@@ -78,6 +78,43 @@ patch, so all four configurations really rendered the app.
 ~319 ms; starting the VM from the platform layer is worth ~212 ms on its own
 and still ~313 ms after the icon fix.
 
+### Time to the UI, in the real client
+
+The table above measures when the *server* can render a page. This measures when
+the *application* gets there, which is the number a user feels. Both startup
+designs are instrumented identically and timestamped on the platform timeline,
+which starts before the Flutter engine exists:
+
+- `extensions_ready` — Dart main has initialized the Flet extensions
+- `url_ready` — the app knows where its embedded server is
+- `flet_app_frame` — the frame that mounts FletApp has been painted
+
+macOS, medians of 8 cold starts:
+
+| VM | Startup design | extensions_ready | url_ready | **flet_app_frame** |
+| --- | --- | --- | --- | --- |
+| icons at VM open | Dart-driven | 213.9 ms | 574.2 ms | **579.4 ms** ← ships today |
+| icons at VM open | autostart | 207.8 ms | 388.8 ms | **402.5 ms** |
+| icons on demand | Dart-driven | 218.0 ms | 255.6 ms | **261.7 ms** |
+| icons on demand | autostart | 209.4 ms | 213.2 ms | **224.9 ms** |
+
+Android (API 35 emulator, icons at VM open in both — the .so has not been
+rebuilt), medians of 6 cold starts, each after `pm clear` so nothing is reused:
+
+| Startup design | extensions_ready | url_ready | **flet_app_frame** |
+| --- | --- | --- | --- |
+| Dart-driven | 506.7 ms | 926.6 ms | **932.1 ms** |
+| autostart | 508.0 ms | 524.6 ms | **551.8 ms** |
+
+The gap between `extensions_ready` and `url_ready` is the whole story: it is the
+runtime sitting on the critical path. Dart-driven leaves 360 ms of it on macOS
+and 420 ms on Android. Autostart closes it to 4 ms and 17 ms — the runtime stops
+being the bottleneck and Flutter's own startup becomes the floor.
+
+`flet_app_frame` is when FletApp mounts, not when the page is on screen; the
+WebSocket register round-trip (~40–55 ms) follows, and both designs pay it
+equally, so the deltas hold.
+
 ### A minimal harness, for contrast
 
 The same measurement with `flutter_harness/main_real_app.dart` — one Flutter
