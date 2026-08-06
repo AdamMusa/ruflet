@@ -49,24 +49,51 @@ the whole grid.
 The macOS Runner also needs `com.apple.security.network.server` in its
 entitlements, or the embedded server cannot bind and the harness times out.
 
+## Verifying a built application
+
+`verify_app.py <App.app>` launches a real built client, finds the port its
+embedded server bound, and performs the same register handshake. Use it to
+check a shipped `.app` rather than a purpose-built harness.
+
 ## What these measured
 
-macOS arm64, the real `RufletApp/demo` project (24 files, the quantum-particle
-simulation), medians of 8 cold starts, timed from the plugin's dylib load —
-which happens before the Flutter engine exists. Every run produced an identical
-27,307-byte page patch, so all four configurations really rendered the app.
+Two sets of numbers, and the difference between them matters.
 
-| VM | Startup design | first frame | server bound | **page rendered** |
-| --- | --- | --- | --- | --- |
-| icons at VM open (today) | Dart-driven (today) | 191.5 ms | 565.7 ms | **610.0 ms** |
-| icons at VM open | platform autostart | 187.6 ms | 379.9 ms | **434.7 ms** |
-| icons on demand | Dart-driven | 190.3 ms | 242.5 ms | **289.3 ms** |
-| icons on demand | platform autostart | 200.4 ms | 201.8 ms | **242.0 ms** |
+### The real client
 
-Deferring the icon tables is worth ~321 ms; starting the VM from the platform
-layer is worth ~175 ms on its own but only ~47 ms once the icon tables are
-deferred, because it can only hide as much Ruby boot as there is Ruby boot.
+`RufletApp/demo` (the quantum-particle simulation) built with
+`flutter build macos --release --target lib/main.self.dart`, i.e. the full
+80MB client with its Flet extensions. Medians of 5–6 runs after a warmup,
+timed from process spawn. Every run returned an identical 27,307-byte page
+patch, so all four configurations really rendered the app.
 
-The first frame holds at ~190 ms across all four, while page-rendered moves by
-368 ms — Flutter never waits on the VM. If a change ever makes the first frame
-track VM boot time, something has started awaiting the runtime before `runApp`.
+| VM | Startup design | server bound | **page rendered** |
+| --- | --- | --- | --- |
+| icons at VM open | Dart-driven | 626 ms | **762 ms** ← ships today |
+| icons at VM open | platform autostart | 473 ms | **550 ms** |
+| icons on demand | Dart-driven | 306 ms | **443 ms** |
+| icons on demand | platform autostart | 85 ms | **130 ms** |
+
+762 ms → 130 ms, a 5.9x improvement. Deferring the icon tables is worth
+~319 ms; starting the VM from the platform layer is worth ~212 ms on its own
+and still ~313 ms after the icon fix.
+
+### A minimal harness, for contrast
+
+The same measurement with `flutter_harness/main_real_app.dart` — one Flutter
+app with no extensions — put autostart's marginal value at only ~47 ms.
+
+The gap is the point: autostart hides the application's startup prologue, and a
+minimal app barely has one. The real client initializes a dozen Flet extensions
+and extracts its project out of the asset bundle before it ever calls `start`,
+which is why the platform gets so much further ahead. Benchmark autostart
+against a real client, not a toy.
+
+The first frame holds at ~190 ms regardless of how slow the VM is, in every
+configuration — Flutter never waits on the VM. If a change ever makes the first
+frame track VM boot time, something has started awaiting the runtime before
+`runApp`.
+
+`client_patch/main.self.autostart.diff` is the change to the client entrypoint
+these numbers came from: drop the extract-and-start block, go straight to
+`runApp`, and resolve `serverUrl()` inside the widget tree.
