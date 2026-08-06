@@ -261,6 +261,21 @@ static const char **borrow_utf8(NSArray<NSString *> *values,
 
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
   if ([call.method isEqualToString:@"start"]) {
+    // The VM boots once per process. When autostart owns it, a start() call
+    // cannot take effect: ruflet_vm_start sees a running VM and returns
+    // success without adopting any of the arguments, so the runtime keeps
+    // writing to the paths autostart chose and the caller waits forever on a
+    // port file nothing will write. Say so instead of reporting success.
+    if (g_autostart_attempted) {
+      result([FlutterError
+          errorWithCode:@"autostart_owns_runtime"
+                message:@"The platform already started the runtime "
+                        @"(RufletRuntimeAutostart). Use serverUrl() instead of "
+                        @"start(), or turn autostart off."
+                details:nil]);
+      return;
+    }
+
     NSDictionary *arguments = [call.arguments isKindOfClass:[NSDictionary class]]
                                   ? (NSDictionary *)call.arguments
                                   : @{};
