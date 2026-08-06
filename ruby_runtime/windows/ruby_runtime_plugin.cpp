@@ -5,8 +5,27 @@
 #include <flutter/standard_method_codec.h>
 
 #include <filesystem>
+#include <memory>
 #include <string>
+#include <thread>
 #include <vector>
+
+#include "../desktop/ruflet_desktop_autostart.h"
+
+namespace ruflet_autostart {
+// Flutter lays the bundle out relative to the executable, so `data/` is found
+// from the module path rather than the working directory, which a desktop
+// launcher does not guarantee.
+std::filesystem::path executable_directory() {
+  std::vector<wchar_t> buffer(32768, L'\0');
+  const DWORD length = GetModuleFileNameW(nullptr, buffer.data(),
+                                          static_cast<DWORD>(buffer.size()));
+  if (length == 0 || length >= buffer.size()) {
+    return std::filesystem::current_path();
+  }
+  return std::filesystem::path(buffer.data()).parent_path();
+}
+} // namespace ruflet_autostart
 
 namespace ruby_runtime {
 namespace {
@@ -109,6 +128,11 @@ flutter::EncodableValue status() {
 
 void RubyRuntimePlugin::RegisterWithRegistrar(
     flutter::PluginRegistrarWindows *registrar) {
+  // Earliest point a Windows plugin runs. Still before Dart's main(), so the VM
+  // boots while the engine finishes coming up rather than after the application
+  // has initialized. Returns immediately; the VM boots on its own thread.
+  ruflet_autostart::on_register(vm_api().start);
+
   auto channel =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           registrar->messenger(), "ruflet_runtime",
@@ -134,6 +158,25 @@ void RubyRuntimePlugin::HandleMethodCall(
                   "The packaged ruflet_vm.dll could not be loaded.");
     return;
   }
+  if (method_call.method_name() == "serverUrl") {
+    // The wait happens on its own thread; the platform thread never blocks on
+    // the VM finishing.
+    std::shared_ptr<flutter::MethodResult<flutter::EncodableValue>> shared(
+        result.release());
+    std::thread([shared]() {
+      std::string url;
+      std::string error;
+      if (ruflet_autostart::await_url(&url, &error)) {
+        shared->Success(flutter::EncodableValue(flutter::EncodableMap{
+            {flutter::EncodableValue("url"), flutter::EncodableValue(url)}}));
+      } else {
+        shared->Error(ruflet_autostart::owns_runtime() ? "ruflet_runtime_error"
+                                                       : "autostart_disabled",
+                      error);
+      }
+    }).detach();
+    return;
+  }
   if (method_call.method_name() == "status") {
     result->Success(status());
     return;
@@ -145,6 +188,15 @@ void RubyRuntimePlugin::HandleMethodCall(
   }
   if (method_call.method_name() != "start") {
     result->NotImplemented();
+    return;
+  }
+  // The VM boots once per process. When autostart owns it, api.start would see
+  // a running VM and return success without adopting any of these arguments,
+  // leaving the caller waiting on a port file nothing will write.
+  if (ruflet_autostart::owns_runtime()) {
+    result->Error("autostart_owns_runtime",
+                  "The platform already started the runtime. Use serverUrl() "
+                  "instead of start(), or remove the autostart marker.");
     return;
   }
   const flutter::EncodableMap *arguments =

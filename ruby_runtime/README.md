@@ -77,9 +77,28 @@ and the application asks for the result instead of driving startup itself. The
 VM boots in parallel with the engine, so by the time Dart asks, the server has
 usually already bound its port.
 
-macOS opts in with `RufletRuntimeAutostart` in `Info.plist`; the plugin finds
-the packaged project in the app bundle and reads it in place, so the project
-never has to be copied to a writable directory first.
+Autostart is opt-in on every platform: a server-driven app has no packaged
+project and must not boot a VM.
+
+| Platform | Starts at | Opt in with |
+| --- | --- | --- |
+| iOS, macOS | the plugin's `+load`, before `UIApplicationMain` | `RufletRuntimeAutostart` in `Info.plist` |
+| Android | an `androidx.startup` provider, before `Application.onCreate` | `ruflet.runtime.autostart` meta-data in `AndroidManifest.xml` |
+| Linux, Windows | plugin registration, before Dart's `main()` | shipping `data/flutter_assets/ruflet_runtime_autostart` |
+
+The packaged project is found automatically when the app ships one; name it
+explicitly when there is more than one, with `RufletEmbeddedProject`
+(Info.plist), `ruflet.runtime.project` (Android meta-data) or
+`RUFLET_EMBEDDED_PROJECT` (desktop environment).
+
+Apple and desktop platforms read the project straight out of the bundle, so it
+never has to be copied to a writable directory. Android assets live inside the
+APK rather than on disk, so the project is unpacked once per install and reused
+on later launches.
+
+Because the VM boots once per process, `start()` and autostart are mutually
+exclusive: with autostart on, `start()` fails with `autostart_owns_runtime`
+rather than silently doing nothing.
 
 ```dart
 void main() {
