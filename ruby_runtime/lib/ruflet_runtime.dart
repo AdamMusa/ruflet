@@ -41,6 +41,20 @@ class RufletRuntime {
     );
   }
 
+  /// The URL of a runtime the platform layer started on its own.
+  ///
+  /// Platforms that can boot the VM before the Flutter engine exists do so, and
+  /// this completes as soon as the embedded server has bound its port —
+  /// immediately, when the VM finished booting while the engine was still
+  /// starting. Apps using this do not call [start]; the platform owns the
+  /// runtime's lifecycle and reads its configuration from the app bundle.
+  ///
+  /// Throws a [PlatformException] if the platform has no autostarted runtime,
+  /// or if the runtime failed before binding.
+  static Future<Uri> serverUrl() {
+    return RufletRuntimePlatform.instance.serverUrl();
+  }
+
   static Future<RufletRuntimeStatus> status() {
     return RufletRuntimePlatform.instance.status();
   }
