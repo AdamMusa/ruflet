@@ -160,7 +160,7 @@ module Ruflet
       end
 
       # Native platform services from ERB. These are normal HTML elements in a
-      # browser and native service calls inside Ruflet::Rails.native_app.
+      # browser and native service calls inside Ruflet::Rails.native_shell.
       def ruflet_share_link(label, href = "#", text: nil, title: nil, subject: nil, url: nil, files: nil, **attrs)
         payload = ruflet_compact_hash(component: "share", text: text, title: title, subject: subject,
                                       url: url || href, files: files)

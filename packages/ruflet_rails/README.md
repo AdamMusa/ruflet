@@ -60,7 +60,7 @@ bundle exec rake ruflet:web
 Mount the installed client and a developer-owned Ruflet entrypoint:
 
 ```ruby
-mount Ruflet::Rails.native(app_file: Rails.root.join("app/views/ruflet/main.rb")), at: "/app"
+mount Ruflet::Rails.web(app_file: Rails.root.join("app/views/ruflet/main.rb")), at: "/app"
 ```
 
 The install generator adds the same mount at `/ruflet` when `--web` is used.

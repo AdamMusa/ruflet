@@ -34,7 +34,7 @@ class RufletEndpointDeclarationTest < Minitest::Test
     end
   end
 
-  def test_app_shorthand_delegates_to_endpoint_app_file
+  def test_native_accepts_an_app_file
     Dir.mktmpdir do |dir|
       file = File.join(dir, "main.rb")
       File.write(file, "Ruflet.run { |page| page.add(Ruflet::UI::ControlFactory.build(:text, value: \"hi\")) }\n")
