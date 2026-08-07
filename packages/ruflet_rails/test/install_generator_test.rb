@@ -70,7 +70,7 @@ class RufletInstallGeneratorTest < Minitest::Test
 
       routes = File.read(File.join(dir, "config", "routes.rb"))
       assert_includes routes,
-                      'match "/ws", to: Ruflet::Rails.app(Rails.root.join("app/views/ruflet/main.rb")), via: :all',
+                      'match "/ws", to: Ruflet::Rails.native(Rails.root.join("app/views/ruflet/main.rb")), via: :all',
                       "the generator should mount /ws explicitly — no Railtie auto-mount magic"
     end
   end
@@ -85,7 +85,7 @@ class RufletInstallGeneratorTest < Minitest::Test
       generator2 = Ruflet::Generators::InstallGenerator.new([], {}, destination_root: dir)
       capture_io { generator2.invoke_all }
 
-      assert_equal 1, File.read(File.join(dir, "config", "routes.rb")).scan("Ruflet::Rails.app(").length
+      assert_equal 1, File.read(File.join(dir, "config", "routes.rb")).scan("Ruflet::Rails.native(").length
     end
   end
 
@@ -100,7 +100,7 @@ class RufletInstallGeneratorTest < Minitest::Test
 
       routes = File.read(File.join(dir, "config", "routes.rb"))
       assert_includes routes,
-                      'mount Ruflet::Rails.web_app(app_file: Rails.root.join("app/views/ruflet/main.rb")), at: "/ruflet"'
+                      'mount Ruflet::Rails.web(app_file: Rails.root.join("app/views/ruflet/main.rb")), at: "/ruflet"'
       refute_includes routes, "/products"
     end
   end

@@ -14,31 +14,31 @@ class RufletEndpointDeclarationTest < Minitest::Test
     Dir.mktmpdir do |dir|
       file = File.join(dir, "main.rb")
       File.write(file, "Ruflet.run { |page| page.add(Ruflet::UI::ControlFactory.build(:text, value: \"hi\")) }\n")
-      assert rack_app?(Ruflet::Rails.endpoint(app_file: file))
+      assert rack_app?(Ruflet::Rails.native(file))
     end
   end
 
   def test_endpoint_with_a_block_is_a_rack_endpoint
-    assert rack_app?(Ruflet::Rails.endpoint { |page| page.add(Ruflet::UI::ControlFactory.build(:text, value: "hi")) })
+    assert rack_app?(Ruflet::Rails.native { |page| page.add(Ruflet::UI::ControlFactory.build(:text, value: "hi")) })
   end
 
   def test_bare_endpoint_raises
     # No declared entry and no auto-discovery fallback — the developer must
     # declare app_file: or a block.
-    assert_raises(ArgumentError) { Ruflet::Rails.endpoint }
+    assert_raises(ArgumentError) { Ruflet::Rails.native }
   end
 
   def test_endpoint_rejects_more_than_one_source
     assert_raises(ArgumentError) do
-      Ruflet::Rails.endpoint(app_file: "x.rb") { |page| page }
+      Ruflet::Rails.native("x.rb") { |page| page }
     end
   end
 
-  def test_app_shorthand_delegates_to_endpoint_app_file
+  def test_native_accepts_an_app_file
     Dir.mktmpdir do |dir|
       file = File.join(dir, "main.rb")
       File.write(file, "Ruflet.run { |page| page.add(Ruflet::UI::ControlFactory.build(:text, value: \"hi\")) }\n")
-      assert rack_app?(Ruflet::Rails.app(file))
+      assert rack_app?(Ruflet::Rails.native(file))
     end
   end
 

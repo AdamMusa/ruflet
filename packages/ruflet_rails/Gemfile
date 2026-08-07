@@ -1,0 +1,19 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+gemspec
+
+# Develop against the sibling packages in this repo, not the released gems.
+# The HTML DSL leans on current ruflet_core (ControlFactory, the control
+# registry the transformer builds every tag from) and on ruflet_server's
+# WireCodec, so resolving those to a published version would test the gem
+# against code it is not actually shipping with.
+gem "ruflet", path: "../ruflet"
+gem "ruflet_core", path: "../ruflet_core"
+gem "ruflet_server", path: "../ruflet_server"
+
+group :development, :test do
+  gem "minitest", "~> 5.0"
+  gem "rake", "~> 13.0"
+end

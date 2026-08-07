@@ -8,10 +8,10 @@ module Ruflet
       # the same mount point, so it mounts like any Rack app:
       #
       #   # config/routes.rb
-      #   mount Ruflet::Rails.web_app(app_file: Rails.root.join("app/views/ruflet/main.rb")), at: "/myfrontend"
+      #   mount Ruflet::Rails.web(app_file: Rails.root.join("app/views/ruflet/main.rb")), at: "/myfrontend"
       #
       #   # or with an explicit entrypoint and build directory:
-      #   mount Ruflet::Rails.web_app(build_dir: Rails.root.join("frontend")) { |page|
+      #   mount Ruflet::Rails.web(build_dir: Rails.root.join("frontend")) { |page|
       #     CounterView.render(page)
       #   }, at: "/myfrontend"
       #
@@ -74,7 +74,7 @@ module Ruflet
 
         def entrypoint
           @entrypoint_option || @app_block ||
-            raise(ArgumentError, "web_app requires one of app_file: or a block")
+            raise(ArgumentError, "Ruflet::Rails.web requires one of app_file: or a block")
         end
 
         # The web build must NOT live under public/, or Rails' static
