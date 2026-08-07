@@ -70,6 +70,64 @@ await RufletRuntime.stop();
 runtime error. The application/framework configuration determines its server
 address.
 
+### Platform-started runtime
+
+Where the platform can start the VM before the Flutter engine exists, it does,
+and the application asks for the result instead of driving startup itself. The
+VM boots in parallel with the engine, so by the time Dart asks, the server has
+usually already bound its port.
+
+Autostart is opt-in on every platform: a server-driven app has no packaged
+project and must not boot a VM.
+
+| Platform | Starts at | Opt in with |
+| --- | --- | --- |
+| iOS, macOS | the plugin's `+load`, before `UIApplicationMain` | `RufletRuntimeAutostart` in `Info.plist` |
+| Android | an `androidx.startup` provider, before `Application.onCreate` | `ruflet.runtime.autostart` meta-data in `AndroidManifest.xml` |
+| Linux, Windows | plugin registration, before Dart's `main()` | shipping `data/flutter_assets/ruflet_runtime_autostart` |
+
+The packaged project is found automatically when the app ships one; name it
+explicitly when there is more than one, with `RufletEmbeddedProject`
+(Info.plist), `ruflet.runtime.project` (Android meta-data) or
+`RUFLET_EMBEDDED_PROJECT` (desktop environment).
+
+Apple and desktop platforms read the project straight out of the bundle, so it
+never has to be copied to a writable directory. Android assets live inside the
+APK rather than on disk, so the project is unpacked once per install and reused
+on later launches.
+
+Because the VM boots once per process, `start()` and autostart are mutually
+exclusive: with autostart on, `start()` fails with `autostart_owns_runtime`
+rather than silently doing nothing.
+
+```dart
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Nothing about the VM is awaited here. The platform is already booting it.
+  runApp(const MyApp());
+}
+
+class _MyAppState extends State<MyApp> {
+  Uri? _serverUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    RufletRuntime.serverUrl().then((url) => setState(() => _serverUrl = url));
+  }
+  // build() renders a splash while _serverUrl is null.
+}
+```
+
+**Do not `await RufletRuntime.serverUrl()` before `runApp`.** Awaiting it there
+gives the delay back: the first frame would wait for the VM, which is the thing
+starting the VM early was meant to avoid. Request it from the widget tree and
+render a splash until it arrives.
+
+`tools/coldstart_bench/` measures this. Making the VM 16x slower moves the URL's
+arrival by 188ms and the first frame by 0.8ms — the frame does not wait.
+
 ## Build Flow
 
 `ruflet build --self`:

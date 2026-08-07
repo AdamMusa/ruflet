@@ -3,17 +3,22 @@
   "runtime": "ruflet-mruby",
   "platform": "linux",
   "library": "libruflet_vm.so",
-  "contains": ["mruby", "ruflet-framework", "onigmo", "native-gems"],
+  "contains": [
+    "mruby",
+    "ruflet-framework",
+    "onigmo",
+    "native-gems"
+  ],
   "ruflet_gems": {
-    "ruflet_core": "0.0.19",
-    "ruflet_server": "0.0.19"
+    "ruflet_core": "0.0.21",
+    "ruflet_server": "0.0.21"
   },
   "artifacts": {
     "aarch64": {
-      "sha256": "5d64d7db92a9f809d3acc8da6330dec48453163c195f9c523c7174aa4d475e3e"
+      "sha256": "e3363eabe347724280e3b0e812a260c6cac80edb534ecad1ca99bda5d1b7cbc8"
     },
     "x64": {
-      "sha256": "d6f07f7c86674c39a7dda45830e56bdeadd6583eca0b40dc8d1b505cf25cf5f9"
+      "sha256": "8e84c2a3ecbfe6678aee6ad01db0a84eba0fe637e6aa11c6b439d0749cc76663"
     }
   }
 }

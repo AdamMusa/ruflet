@@ -380,7 +380,12 @@ module Ruflet
     # opens its websocket on one origin. Without that the client cannot reach
     # /ws at all.
     def web_client_root
-      return @web_client_root if defined?(@web_client_root)
+      # Memoized with a separate flag rather than defined?(@web_client_root):
+      # the embedded mruby VM has no defined? keyword, so it parses as a method
+      # call and every request raises NoMethodError. The resolved value is
+      # legitimately nil when no web client is configured, so nil cannot double
+      # as "not resolved yet".
+      return @web_client_root if @web_client_root_resolved
 
       configured = ENV["RUFLET_WEB_CLIENT_DIR"].to_s.strip
       @web_client_root =
@@ -389,6 +394,8 @@ module Ruflet
         else
           File.expand_path(configured)
         end
+      @web_client_root_resolved = true
+      @web_client_root
     end
 
     def serve_web_client(socket, request_path)

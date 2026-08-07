@@ -1,13 +1,23 @@
 package com.izeesoft.ruby_runtime
 
+import android.os.Handler
+import android.os.Looper
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import java.util.concurrent.Executors
 
 class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
     private lateinit var channel: MethodChannel
+
+    // Answering serverUrl means waiting for the VM to finish booting, which
+    // must never happen on the platform thread.
+    private val worker = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "ruflet-runtime-plugin").apply { isDaemon = true }
+    }
+    private val mainThread = Handler(Looper.getMainLooper())
 
     external fun nativeStart(
         projectRoot: String,
@@ -30,6 +40,7 @@ class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
+        worker.shutdown()
     }
 
     private fun status(): Map<String, Any> {
@@ -44,6 +55,22 @@ class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
         try {
             when (call.method) {
                 "start" -> {
+                    // The platform already started the runtime, so these
+                    // arguments cannot take effect -- the VM boots once per
+                    // process. Rather than fail, hand this caller the port that
+                    // already exists through the file it is about to poll, so a
+                    // client written against the older start() flow still finds
+                    // the server and still gets the parallel startup.
+                    if (RufletRuntimeAutostart.attempted) {
+                        val environment =
+                            call.argument<Map<String, String>>("environment") ?: emptyMap()
+                        RufletRuntimeAutostart.mirrorPort(
+                            environment["RUFLET_RUNTIME_PORT_FILE"].orEmpty(),
+                        )
+                        result.success(status())
+                        return
+                    }
+
                     val projectRoot = call.argument<String>("projectRoot")
                     val entrypoint = call.argument<String>("entrypoint")
                     if (projectRoot.isNullOrBlank() || entrypoint.isNullOrBlank()) {
@@ -72,6 +99,28 @@ class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
                     )
                     result.success(status())
                 }
+                "serverUrl" -> {
+                    val enabled = RufletRuntimeAutostart.attempted
+                    worker.execute {
+                        val resolved = RufletRuntimeAutostart.awaitUrl()
+                        // A MethodChannel result must be delivered on the
+                        // platform thread; the wait above must not be.
+                        mainThread.post {
+                            resolved.fold(
+                                onSuccess = { result.success(mapOf("url" to it)) },
+                                onFailure = {
+                                    result.error(
+                                        if (enabled) "ruflet_runtime_error" else "autostart_disabled",
+                                        it.message,
+                                        null,
+                                    )
+                                },
+                            )
+                        }
+                    }
+                }
+                "timeline" ->
+                    result.success(mapOf("sinceLoadMs" to RufletRuntimeAutostart.millisSinceLoad()))
                 "status" -> result.success(status())
                 "stop" -> {
                     nativeStop()

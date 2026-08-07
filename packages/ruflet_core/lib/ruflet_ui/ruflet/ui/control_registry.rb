@@ -7,7 +7,24 @@ module Ruflet
       require_relative "cupertino_control_registry"
       require_relative "controls/ruflet_controls"
       require_relative "services/ruflet_services"
-      TYPE_MAP = MaterialControlRegistry::TYPE_MAP.merge(CupertinoControlRegistry::TYPE_MAP).freeze
+      # Controls whose Ruby name and wire name differ on purpose. The client
+      # widget is registered upstream as FletApp, so the wire type stays FletApp
+      # while the Ruby API is ruflet_app.
+      #
+      # RufletAppControl::WIRE already says this, but that is only read when the
+      # control resolves to its own class. Serialization otherwise derives the
+      # wire name from the type and would send RufletApp, which no client knows.
+      # Map it here so both paths agree. to_patch also looks the type up with
+      # underscores removed, so register that spelling too.
+      SHARED_TYPE_MAP = {
+        "ruflet_app" => "FletApp",
+        "rufletapp" => "FletApp"
+      }.freeze
+
+      TYPE_MAP = MaterialControlRegistry::TYPE_MAP
+                 .merge(CupertinoControlRegistry::TYPE_MAP)
+                 .merge(SHARED_TYPE_MAP)
+                 .freeze
       SCHEMA_EVENT_PROPS =
         Controls::RufletControls::CLASS_MAP
           .merge(Services::RufletServices::CLASS_MAP)

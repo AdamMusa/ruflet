@@ -1,3 +1,80 @@
+## 0.0.14
+
+- Autostart no longer needs configuring. The packaged project is the opt-in: a
+  self-contained build ships one and a server-driven build does not, which is
+  the distinction the flag encoded anyway. It therefore does not matter which
+  version of the CLI generated the client.
+  `RufletRuntimeAutostart` / `ruflet.runtime.autostart` still turn it off.
+- `start()` keeps working when the platform owns the runtime. Its arguments
+  cannot take effect -- the VM boots once per process -- so instead of failing,
+  the port is written into the file the caller is polling. A client generated
+  before `serverUrl()` existed finds the server and gets the parallel startup
+  without changing a line. On macOS that takes such a client from 350ms to a
+  bound server and 435ms to a rendered page, down to 104ms and 154ms.
+- Rebuild the Linux and Windows VM artifacts, which 0.0.13 left with the eager
+  icon tables. All five platforms now build them on demand.
+
+## 0.0.13
+
+- The platform layer now starts the VM itself, before the Flutter engine
+  exists: from `+load` on iOS and macOS, from an `androidx.startup` provider on
+  Android, and from plugin registration on Linux and Windows. The VM boots in
+  parallel with the engine instead of after it, so by the time Dart asks the
+  embedded server has usually already bound its port. Opt in with
+  `RufletRuntimeAutostart` (Info.plist) or `ruflet.runtime.autostart`
+  (AndroidManifest); desktop treats a packaged project as the opt-in.
+- Add `RufletRuntime.serverUrl()`, which reports where that runtime ended up.
+  Do not await it before `runApp` -- the VM is already booting alongside the
+  engine, and blocking startup on it gives back the time that buys.
+- `start()` now fails with `autostart_owns_runtime` when the platform owns the
+  runtime. The VM boots once per process, so the call could not take effect;
+  it previously reported success while silently doing nothing, leaving the
+  caller waiting on a port file nothing would write.
+- Android unpacks the packaged project out of the APK itself, once per install,
+  rather than having Dart copy it file by file on every launch.
+- Rebuild the VM artifacts. Icon tables are now built on demand instead of at
+  VM open, which was ~300ms of every cold start: macOS boots in 23ms (was
+  348ms) and Android in 41ms (was 466ms). The artifacts are also stripped,
+  roughly a 60% size reduction. Linux and Windows artifacts are unchanged.
+
+## 0.0.12
+
+- Every platform plugin now bridges to the same four `ruflet_vm_*` entry points
+  in the prebuilt VM. iOS and macOS previously drove mruby themselves and
+  carried their own copy of the bootstrap and host logic, so the plugin and the
+  VM could drift apart -- and the shipped Linux and Windows libraries had
+  already broken that way. Releasing a runtime is now replacing the built
+  artifact, nothing else.
+- Drop the vendored mruby sources, Onigmo and host build outputs from the iOS
+  and macOS folders. Nothing compiles them any more: the bridge needs only
+  ruflet_vm_host.h.
+- Fix `Ruflet::Server#web_client_root`, which used `defined?(@ivar)`. The
+  embedded VM has no `defined?` keyword, so it parsed as a method call and
+  every HTTP request raised NoMethodError on device.
+- Rebuild every VM artifact from current framework sources.
+
+## 0.0.11
+
+- Fix the Linux and Windows VM libraries. 0.0.10 rebuilt them from the mruby
+  archive alone, which dropped the host layer the desktop plugins link
+  against: `ruflet_vm_start`, `ruflet_vm_stop`, `ruflet_vm_is_running`,
+  `ruflet_vm_copy_error`, and the embedded bootstrap bytecode. A Linux or
+  Windows build failed at link time with undefined references. Both are now
+  built from the mruby archive plus `desktop/ruflet_vm_host.cpp`, exporting
+  the same API as before. iOS, macOS and Android were unaffected -- their
+  plugins compile the host layer themselves.
+
+## 0.0.10
+
+- Rebuild every prebuilt VM from current framework sources: iOS device and
+  simulator, Android (all four ABIs), Linux x64 and aarch64, and Windows.
+  0.0.9 rebuilt only macOS, so every other platform still shipped a framework
+  from before the `ruflet_app` control rename. An application calling
+  `ruflet_app` serialized a control name no client registers, and a
+  self-contained build rendered "Unknown control: RufletApp" on device while
+  server-driven web and desktop, which serialize on the host, worked.
+- Embed `ruflet_core` and `ruflet_server` 0.0.21.
+
 ## 0.0.9
 
 - Rebuild the macOS VM from the current framework sources. The 0.0.8 artifact

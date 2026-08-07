@@ -126,10 +126,11 @@ module Ruflet
         backend_url = configured_backend_url(config)
         if self_contained
           build_args += ["--dart-define", "RUFLET_BACKEND_URL=#{backend_url}"] if backend_url
-          # Pin the embedded project so main.self.dart extracts assets/<name>/
-          # deterministically instead of inferring from a single main.rb — the
-          # app tree now ships many main.rb files (standalone_apps/*/main.rb).
-          build_args += ["--dart-define", "RUFLET_EMBEDDED_PROJECT=#{self_contained_project_name}"]
+          # The platform layer starts the VM before Flutter exists, so it -- not
+          # Dart -- needs to know that it should and which project to run. Pin
+          # the project rather than let it infer from a single main.rb: the app
+          # tree ships many (standalone_apps/*/main.rb).
+          configure_platform_autostart(client_dir, platform, verbose: !!verbose)
         elsif backend_url
           build_args += ["--dart-define", "RUFLET_BACKEND_URL=#{backend_url}"]
         elsif RUNTIME_RESOLVED_BACKEND_PLATFORMS.include?(platform)
@@ -1868,7 +1869,10 @@ module Ruflet
       # A self-contained build needs the embedded VM. Prefer a local checkout so
       # the runtime under development is the one packaged, and otherwise resolve
       # the published package.
-      PUBLISHED_RUBY_RUNTIME_CONSTRAINT = "^0.0.9"
+      # 0.0.13 is the first release where the platform layer starts the VM and
+      # exposes serverUrl(); the client entrypoint calls it, so an older runtime
+      # would not build.
+      PUBLISHED_RUBY_RUNTIME_CONSTRAINT = "^0.0.14"
 
       def ruby_runtime_dependency(current_dependency = nil)
         local_path = explicit_local_ruby_runtime_path || source_checkout_ruby_runtime_path
@@ -1910,6 +1914,11 @@ module Ruflet
           "lib/connection_probe_io.dart",
           "lib/connection_probe_stub.dart",
           "ios/Podfile",
+          # Carries the usage descriptions and the local-network/ATS policy a
+          # preview client needs. Without refreshing it, a client generated
+          # before those keys existed keeps a plist that silently blocks
+          # connections to a development server on the local network.
+          "ios/Runner/Info.plist",
           "windows/CMakeLists.txt",
           # Release signing lives here; an existing client would otherwise keep
           # signing release builds with the debug key.
@@ -2025,6 +2034,62 @@ module Ruflet
         name
       end
 
+      # Tells the platform layer to start the embedded runtime, and which
+      # packaged project to run.
+      #
+      # This is platform configuration rather than a dart-define because the VM
+      # starts before Dart does: on Apple platforms from the plugin's +load, on
+      # Android from an androidx.startup provider. Neither can read a value that
+      # only exists inside the Dart isolate.
+      #
+      # Desktop needs nothing here -- it has no manifest to carry a flag, and
+      # treats the presence of a packaged project as the opt-in, which is the
+      # same distinction this flag draws on the other platforms.
+      def configure_platform_autostart(client_dir, platform, verbose: false)
+        project = self_contained_project_name
+        case platform
+        when "ios", "macos"
+          plist = File.join(client_dir, platform, "Runner", "Info.plist")
+          return unless File.file?(plist)
+
+          set_plist_value(plist, "RufletRuntimeAutostart", "bool", "true")
+          set_plist_value(plist, "RufletEmbeddedProject", "string", project)
+          build_log(verbose, "enabled runtime autostart in #{platform}/Runner/Info.plist")
+        when "apk", "appbundle", "android"
+          manifest = File.join(
+            client_dir, "android", "app", "src", "main", "AndroidManifest.xml"
+          )
+          return unless File.file?(manifest)
+
+          set_android_meta_data(manifest, "ruflet.runtime.autostart", "true")
+          set_android_meta_data(manifest, "ruflet.runtime.project", project)
+          build_log(verbose, "enabled runtime autostart in AndroidManifest.xml")
+        end
+      end
+
+      def set_plist_value(plist, key, type, value)
+        # Delete first: PlistBuddy's Add fails on an existing key, and a rebuild
+        # after renaming the project would otherwise keep the stale name.
+        system("/usr/libexec/PlistBuddy", "-c", "Delete :#{key}", plist,
+               out: File::NULL, err: File::NULL)
+        system("/usr/libexec/PlistBuddy", "-c", "Add :#{key} #{type} #{value}",
+               plist, out: File::NULL, err: File::NULL)
+      end
+
+      def set_android_meta_data(manifest, name, value)
+        contents = File.read(manifest)
+        entry = %(<meta-data android:name="#{name}" android:value="#{value}" />)
+        existing = /<meta-data\s+android:name="#{Regexp.escape(name)}"[^>]*\/>/
+
+        contents =
+          if contents.match?(existing)
+            contents.sub(existing, entry)
+          else
+            contents.sub(%r{(\n(\s*)</application>)}) { "\n#{$2}    #{entry}#{$1}" }
+          end
+        File.write(manifest, contents)
+      end
+
       def skip_project_asset_directory?(relative)
         excluded_directories = %w[
           .git
@@ -2065,15 +2130,40 @@ module Ruflet
         false
       end
 
+      # What a self-contained build actually needs from the project at runtime:
+      # the entrypoint, the Ruby under lib/, and the assets that code loads by
+      # path (image(src: "assets/logo.png"), lottie(...), fonts, audio).
+      #
+      # Everything else is already consumed by the time the app runs. The gems
+      # are compiled into the VM, ruflet.yaml and services.yaml have been turned
+      # into native configuration, and lockfiles, tests, CI and store artwork
+      # were never runtime inputs. Listing what belongs in rather than guessing
+      # what to leave out keeps unexpected directories from being shipped --
+      # release artwork once carried a lockfile that Apple read as an unsigned
+      # code object and rejected the whole upload over.
+      SELF_CONTAINED_PROJECT_ENTRYPOINT = "main.rb"
+      SELF_CONTAINED_PROJECT_DIRECTORIES = %w[lib assets].freeze
+
       def include_project_asset_file?(relative)
         basename = File.basename(relative)
         return false if basename == ".DS_Store"
-        return false if %w[Gemfile.lock pubspec.lock Podfile.lock package-lock.json yarn.lock pnpm-lock.yaml].include?(basename)
+
+        unless self_contained_project_path?(relative)
+          return false
+        end
+
         if secret_project_asset?(relative)
           build_note("Excluded #{relative} from the embedded project; it looks like a credential")
           return false
         end
         true
+      end
+
+      def self_contained_project_path?(relative)
+        return true if relative == SELF_CONTAINED_PROJECT_ENTRYPOINT
+
+        top = relative.split(File::SEPARATOR).first
+        SELF_CONTAINED_PROJECT_DIRECTORIES.include?(top)
       end
 
       def flutter_target_entrypoint(client_dir, self_contained:)

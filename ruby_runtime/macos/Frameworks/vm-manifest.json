@@ -3,10 +3,18 @@
   "runtime": "ruflet-mruby",
   "platform": "macos",
   "minimum_os_version": "10.14",
-  "architectures": ["arm64", "x86_64"],
+  "architectures": [
+    "arm64",
+    "x86_64"
+  ],
   "library": "libruflet_vm.a",
-  "sha256": "749e74c628b842155f0e8e1dfc8f6b367856c550b3e36eaa4fd063a7e2a043a2",
-  "contains": ["mruby", "ruflet-framework", "onigmo", "native-gems"],
+  "sha256": "0d8ad3e3d7cfce350b7d9b3c2594fcffd0ea056626955334450e209da9d4bbc4",
+  "contains": [
+    "mruby",
+    "ruflet-framework",
+    "onigmo",
+    "native-gems"
+  ],
   "ruflet_gems": {
     "ruflet_core": "0.0.19",
     "ruflet_server": "0.0.19"

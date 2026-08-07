@@ -2,12 +2,19 @@
   "format": 1,
   "runtime": "ruflet-mruby",
   "platform": "windows",
-  "architectures": ["x86_64"],
+  "architectures": [
+    "x86_64"
+  ],
   "library": "ruflet_vm.dll",
-  "sha256": "5a1a0dabb87874b44b3f3ba24f43e563f06afe0c0bcd04a95a753c002cf8d1ed",
-  "contains": ["mruby", "ruflet-framework", "onigmo", "native-gems"],
+  "sha256": "f8f861576e33bf65acf73842ec28bdb887b5de3a3760d41a8d59746e1a20516e",
+  "contains": [
+    "mruby",
+    "ruflet-framework",
+    "onigmo",
+    "native-gems"
+  ],
   "ruflet_gems": {
-    "ruflet_core": "0.0.19",
-    "ruflet_server": "0.0.19"
+    "ruflet_core": "0.0.21",
+    "ruflet_server": "0.0.21"
   }
 }

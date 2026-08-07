@@ -31,3 +31,4 @@ macos/mruby_src/*
 !macos/mruby_src/include/**
 shared/*.c
 vm/
+third_party/
