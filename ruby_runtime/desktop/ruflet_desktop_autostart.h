@@ -229,8 +229,35 @@ inline bool await_url(std::string *url, std::string *error) {
 
 /// True when the platform owns the runtime, so a start() call cannot take
 /// effect. The VM boots once per process: ruflet_vm_start would see a running
-/// VM and return success without adopting any of the arguments, leaving the
-/// caller waiting on a port file nothing will write.
+/// VM and return success without adopting any of the arguments.
 inline bool owns_runtime() { return attempted(); }
+
+/// Copies the autostarted server's port into `path` once it is known.
+///
+/// A client generated before serverUrl() existed calls start() and then polls
+/// the file it named in RUFLET_RUNTIME_PORT_FILE. Its arguments cannot take
+/// effect, but the thing it is waiting for already exists, so hand it over
+/// there. That keeps those clients working -- and getting the parallel
+/// startup -- without them knowing anything about it.
+inline void mirror_port(const std::string &path) {
+  if (path.empty()) {
+    return;
+  }
+  std::thread([path]() {
+    std::string url;
+    std::string error;
+    if (!await_url(&url, &error)) {
+      return;
+    }
+    const std::size_t colon = url.rfind(':');
+    if (colon == std::string::npos) {
+      return;
+    }
+    std::ofstream out(path, std::ios::trunc);
+    if (out) {
+      out << url.substr(colon + 1);
+    }
+  }).detach();
+}
 
 } // namespace ruflet_autostart

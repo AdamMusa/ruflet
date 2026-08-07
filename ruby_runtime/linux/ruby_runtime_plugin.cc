@@ -109,15 +109,22 @@ FlMethodResponse *status_response() {
 }
 
 FlMethodResponse *start(FlValue *arguments) {
-  // The VM boots once per process. When autostart owns it, ruflet_vm_start
-  // would see a running VM and return success without adopting any of these
-  // arguments, leaving the caller waiting on a port file nothing will write.
+  // The platform already started the runtime, so these arguments cannot take
+  // effect -- the VM boots once per process. Rather than fail, hand this caller
+  // the port that already exists through the file it is about to poll, so a
+  // client written against the older start() flow still finds the server and
+  // still gets the parallel startup.
   if (ruflet_autostart::owns_runtime()) {
-    return FL_METHOD_RESPONSE(fl_method_error_response_new(
-        "autostart_owns_runtime",
-        "The platform already started the runtime. Use serverUrl() instead of "
-        "start(), or remove the autostart marker.",
-        nullptr));
+    std::vector<std::string> keys;
+    std::vector<std::string> values;
+    environment_argument(arguments, &keys, &values);
+    for (size_t index = 0; index < keys.size(); ++index) {
+      if (keys[index] == "RUFLET_RUNTIME_PORT_FILE") {
+        ruflet_autostart::mirror_port(values[index]);
+        break;
+      }
+    }
+    return status_response();
   }
 
   const std::string root = string_argument(arguments, "projectRoot");

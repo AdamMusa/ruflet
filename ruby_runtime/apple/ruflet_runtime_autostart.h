@@ -14,9 +14,16 @@
 // directory first -- which also removes the per-file extraction the Dart side
 // used to do before it could even call start().
 //
-// Autostart is opt-in through RufletRuntimeAutostart in Info.plist: a
-// server-driven app has no packaged project and must not boot a VM, and an app
-// that still wants to configure the runtime from Dart keeps start().
+// The packaged project is the opt-in: a self-contained build ships one and a
+// server-driven build does not, which is exactly the distinction that matters.
+// Nothing has to be configured for an application to get this, so it does not
+// depend on which version of the CLI generated the client. Setting
+// RufletRuntimeAutostart to false in Info.plist turns it off for an app that
+// wants to drive startup from Dart anyway.
+//
+// A client that still calls start() keeps working: start() mirrors the port
+// this already resolved into the file that client is polling, so it finds the
+// autostarted server rather than waiting for one that will never come.
 //
 // Header-only, with internal linkage, because each platform compiles exactly
 // one bridge translation unit. It mirrors how both bridges already share
@@ -195,8 +202,8 @@ static void ruflet_begin_autostart(void) {
                           @"The embedded Ruflet server did not publish a port.");
 }
 
-/// Call from the plugin class's +load. Records the timeline origin and, when
-/// the app opted in, kicks the VM off on a background queue.
+/// Call from the plugin class's +load. Records the timeline origin and, unless
+/// the app opted out, kicks the VM off on a background queue.
 static void ruflet_autostart_on_load(void) {
   mach_timebase_info(&ruflet_timebase);
   ruflet_load_ticks = mach_absolute_time();
@@ -204,7 +211,11 @@ static void ruflet_autostart_on_load(void) {
 
   NSNumber *enabled = [[NSBundle mainBundle]
       objectForInfoDictionaryKey:@"RufletRuntimeAutostart"];
-  if (![enabled isKindOfClass:[NSNumber class]] || !enabled.boolValue) {
+  if ([enabled isKindOfClass:[NSNumber class]] && !enabled.boolValue) {
+    return;
+  }
+  // No packaged project means a server-driven app, which must not boot a VM.
+  if (ruflet_packaged_project_root() == nil) {
     return;
   }
 
@@ -252,8 +263,39 @@ static void ruflet_autostart_resolve_url(FlutterResult result) {
 
 /// True when the platform owns the runtime, so a start() call cannot take
 /// effect. The VM boots once per process: ruflet_vm_start would see a running
-/// VM and return success without adopting any of the arguments, leaving the
-/// caller waiting on a port file nothing will write.
+/// VM and return success without adopting any of the arguments.
 static BOOL ruflet_autostart_owns_runtime(void) {
   return ruflet_autostart_attempted;
+}
+
+/// Copies the autostarted server's port into `path` once it is known.
+///
+/// A client generated before serverUrl() existed calls start() and then polls
+/// the file it named in RUFLET_RUNTIME_PORT_FILE. Its arguments cannot take
+/// effect, but the thing it is waiting for already exists, so hand it over
+/// there. That keeps those clients working -- and getting the parallel
+/// startup -- without them knowing anything about it.
+static void ruflet_autostart_mirror_port(NSString *path) {
+  if (path.length == 0) {
+    return;
+  }
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    [ruflet_autostart_signal lock];
+    while (ruflet_server_url == nil && ruflet_autostart_error == nil) {
+      [ruflet_autostart_signal wait];
+    }
+    NSString *url = ruflet_server_url;
+    [ruflet_autostart_signal unlock];
+    if (url == nil) {
+      return;
+    }
+    NSURLComponents *parts = [NSURLComponents componentsWithString:url];
+    if (parts.port == nil) {
+      return;
+    }
+    [[parts.port stringValue] writeToFile:path
+                               atomically:YES
+                                 encoding:NSUTF8StringEncoding
+                                    error:nil];
+  });
 }

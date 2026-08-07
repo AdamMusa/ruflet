@@ -31,7 +31,31 @@ ANDROID_CPP="${RUFLET_ANDROID_CPP:-$RUNTIME/android/src/main/cpp}"
 
 [ -d "$MRUBY/src" ] || { echo "third_party/mruby is empty; populate it first" >&2; exit 2; }
 
-sha_of() { shasum -a 256 "$1" | cut -d' ' -f1; }
+if command -v shasum >/dev/null 2>&1; then
+  sha_of() { shasum -a 256 "$1" | cut -d' ' -f1; }
+else
+  sha_of() { sha256sum "$1" | cut -d' ' -f1; }
+fi
+
+# mruby generates its presym table with gperf through MRuby.targets["host"], so
+# a build named exactly "host" has to exist even when the artifact being built
+# is something else. The platform configs only define their own target, which
+# goes unnoticed until a tree without a previous build regenerates presyms.
+# Emit a config that supplies the host build and then loads the real one.
+with_host_build() {
+  config="$1"
+  wrapper="$ROOT/build/vm/$(basename "$config" .rb)-with-host.rb"
+  mkdir -p "$(dirname "$wrapper")"
+  cat > "$wrapper" <<RUBY
+MRuby::Build.new do |conf|
+  conf.toolchain
+  conf.gem core: "mruby-bin-mrbc"
+end
+
+load "$config"
+RUBY
+  echo "$wrapper"
+}
 
 build_host_vm() {
   echo "==> host_vm (generated sources for the Android build)"
@@ -142,9 +166,65 @@ build_ios() {
   echo "    $(sha_of "$XC/ios-arm64_x86_64-simulator/libruflet_vm.a")  simulator"
 }
 
+build_linux() {
+  WORK="$ROOT/build/vm/linux"
+  mkdir -p "$WORK"
+  # The container's own architecture decides which slice this produces; run it
+  # once per platform (docker buildx / --platform) to fill both.
+  case "$(uname -m)" in
+    aarch64|arm64) arch=aarch64 ;;
+    *)             arch=x64 ;;
+  esac
+  build_name="desktop_linux_$arch"
+
+  echo "==> linux $arch"
+  (cd "$MRUBY" && RUFLET_VM_BUILD="$build_name" \
+    MRUBY_CONFIG="$(with_host_build "$RUNTIME/vm/build_config/desktop_linux.rb")" \
+    ./minirake >/dev/null)
+
+  # A shared object, not an archive: the Linux plugin links libruflet_vm.so.
+  g++ -O2 -c -std=c++17 -fPIC \
+    -I"$MRUBY/include" -I"$MRUBY/build/$build_name/include" -I"$RUNTIME/shared" \
+    "$RUNTIME/desktop/ruflet_vm_host.cpp" -o "$WORK/host_$arch.o"
+  g++ -shared -o "$RUNTIME/linux/lib/$arch/libruflet_vm.so" \
+    "$WORK/host_$arch.o" \
+    -Wl,--whole-archive "$MRUBY/build/$build_name/lib/libmruby.a" -Wl,--no-whole-archive \
+    -lm -lpthread
+  strip --strip-unneeded "$RUNTIME/linux/lib/$arch/libruflet_vm.so"
+  echo "    $(sha_of "$RUNTIME/linux/lib/$arch/libruflet_vm.so")  $arch"
+}
+
+build_windows() {
+  WORK="$ROOT/build/vm/windows"
+  mkdir -p "$WORK"
+  TRIPLE=x86_64-w64-mingw32
+
+  echo "==> host mrbc (cross builds compile Ruby with the host's mrbc)"
+  (cd "$MRUBY" && MRUBY_CONFIG="$RUNTIME/vm/build_config/host_mrbc.rb" ./minirake >/dev/null)
+
+  echo "==> windows x86_64 (mingw-w64 cross)"
+  (cd "$MRUBY" && RUFLET_MRBC="$MRUBY/build/host_mrbc/bin/mrbc" \
+    MRUBY_CONFIG="$(with_host_build "$RUNTIME/vm/build_config/desktop_windows.rb")" \
+    ./minirake >/dev/null)
+
+  "$TRIPLE-g++-posix" -O2 -c -std=c++17 \
+    -I"$MRUBY/include" -I"$MRUBY/build/desktop_windows/include" -I"$RUNTIME/shared" \
+    "$RUNTIME/desktop/ruflet_vm_host.cpp" -o "$WORK/host.o"
+  # -static-* so the DLL does not need the mingw runtime alongside it, and
+  # ws2_32 because mruby-socket pulls in Winsock.
+  "$TRIPLE-g++-posix" -shared -o "$RUNTIME/windows/bin/ruflet_vm.dll" \
+    "$WORK/host.o" \
+    -Wl,--whole-archive "$MRUBY/build/desktop_windows/lib/libmruby.a" -Wl,--no-whole-archive \
+    -static-libgcc -static-libstdc++ -static -lws2_32 -lm
+  "$TRIPLE-strip" --strip-unneeded "$RUNTIME/windows/bin/ruflet_vm.dll"
+  echo "    $(sha_of "$RUNTIME/windows/bin/ruflet_vm.dll")  ruflet_vm.dll"
+}
+
 case "$TARGET" in
   android) build_android ;;
   macos)   build_macos ;;
   ios)     build_ios ;;
-  *) echo "usage: $0 {android|macos|ios}" >&2; exit 2 ;;
+  linux)   build_linux ;;
+  windows) build_windows ;;
+  *) echo "usage: $0 {android|macos|ios|linux|windows}" >&2; exit 2 ;;
 esac

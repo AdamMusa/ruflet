@@ -65,6 +65,9 @@ internal object RufletRuntimeAutostart {
     fun beginIfEnabled(context: Context) {
         startedAtNanos = SystemClock.elapsedRealtimeNanos()
         if (!autostartEnabled(context)) return
+        // No packaged project means a server-driven app, which must not boot a
+        // VM. Checking for one here is what lets autostart be on by default.
+        if (runCatching { resolveProjectName(context) }.isFailure) return
 
         attempted = true
         val appContext = context.applicationContext
@@ -101,8 +104,28 @@ internal object RufletRuntimeAutostart {
         )
     }
 
+    /// On unless the application explicitly opts out. What actually decides it
+    /// is whether a packaged project exists -- see [beginIfEnabled].
     private fun autostartEnabled(context: Context): Boolean =
-        metaData(context)?.getBoolean(AUTOSTART_KEY, false) ?: false
+        metaData(context)?.getBoolean(AUTOSTART_KEY, true) ?: true
+
+    /**
+     * Copies the autostarted server's port into [path] once it is known.
+     *
+     * A client generated before serverUrl() existed calls start() and then
+     * polls the file it named in RUFLET_RUNTIME_PORT_FILE. Its arguments cannot
+     * take effect, but the thing it is waiting for already exists, so hand it
+     * over there. Those clients keep working -- and get the parallel startup --
+     * without knowing anything about it.
+     */
+    fun mirrorPort(path: String) {
+        if (path.isBlank()) return
+        Thread({
+            awaitUrl().getOrNull()?.substringAfterLast(':')?.let { port ->
+                runCatching { File(path).writeText(port) }
+            }
+        }, "ruflet-runtime-mirror").apply { isDaemon = true }.start()
+    }
 
     private fun metaData(context: Context) =
         try {

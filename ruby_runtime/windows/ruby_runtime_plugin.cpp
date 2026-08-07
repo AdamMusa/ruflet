@@ -190,19 +190,31 @@ void RubyRuntimePlugin::HandleMethodCall(
     result->NotImplemented();
     return;
   }
-  // The VM boots once per process. When autostart owns it, api.start would see
-  // a running VM and return success without adopting any of these arguments,
-  // leaving the caller waiting on a port file nothing will write.
-  if (ruflet_autostart::owns_runtime()) {
-    result->Error("autostart_owns_runtime",
-                  "The platform already started the runtime. Use serverUrl() "
-                  "instead of start(), or remove the autostart marker.");
-    return;
-  }
   const flutter::EncodableMap *arguments =
       std::get_if<flutter::EncodableMap>(method_call.arguments());
   if (arguments == nullptr) {
     result->Error("invalid_args", "Missing runtime arguments.");
+    return;
+  }
+  // The platform already started the runtime, so these arguments cannot take
+  // effect -- the VM boots once per process. Rather than fail, hand this caller
+  // the port that already exists through the file it is about to poll, so a
+  // client written against the older start() flow still finds the server and
+  // still gets the parallel startup.
+  if (ruflet_autostart::owns_runtime()) {
+    const flutter::EncodableValue *environment = lookup(*arguments, "environment");
+    if (environment != nullptr &&
+        std::holds_alternative<flutter::EncodableMap>(*environment)) {
+      for (const auto &entry : std::get<flutter::EncodableMap>(*environment)) {
+        if (std::holds_alternative<std::string>(entry.first) &&
+            std::get<std::string>(entry.first) == "RUFLET_RUNTIME_PORT_FILE" &&
+            std::holds_alternative<std::string>(entry.second)) {
+          ruflet_autostart::mirror_port(std::get<std::string>(entry.second));
+          break;
+        }
+      }
+    }
+    result->Success(status());
     return;
   }
   const std::string root = string_argument(*arguments, "projectRoot");
