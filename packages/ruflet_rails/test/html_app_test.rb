@@ -862,6 +862,80 @@ class RufletHtmlAppTest < Minitest::Test
     assert_equal "/search?q=ada", @fetcher.requests.last[:url]
   end
 
+  # --- media URLs ----------------------------------------------------------
+  #
+  # Screens are dispatched in-process, but the client loads media itself over
+  # HTTP, so those URLs — and only those — still need a real host.
+
+  def with_backend_url(url)
+    previous = Ruflet::Rails.config.backend_url
+    Ruflet::Rails.config.backend_url = url
+    yield
+  ensure
+    Ruflet::Rails.config.backend_url = previous
+  end
+
+  def render_and_find(markup, type)
+    @fetcher = StubFetcher.new("/native" => markup)
+    Ruflet::Rails.erb_to_native(@page, start_url: "/native", fetcher: @fetcher)
+    find(@page.views.first, type)
+  end
+
+  def test_a_rails_hosted_image_is_resolved_against_the_connection_host
+    with_backend_url("https://app.test") do
+      image = render_and_find('<img src="/assets/logo.png">', "image")
+
+      assert_equal "https://app.test/assets/logo.png", image.props["src"]
+    end
+  end
+
+  def test_an_avatar_image_is_resolved_too
+    with_backend_url("https://app.test") do
+      avatar = render_and_find('<avatar src="/me.png">AM</avatar>', "circleavatar")
+
+      assert_equal "https://app.test/me.png", avatar.props["foreground_image_src"]
+    end
+  end
+
+  def test_an_external_media_url_is_left_alone
+    with_backend_url("https://app.test") do
+      image = render_and_find('<img src="https://cdn.example.com/a.png">', "image")
+
+      assert_equal "https://cdn.example.com/a.png", image.props["src"]
+    end
+  end
+
+  def test_a_data_uri_and_a_bundled_asset_name_are_left_alone
+    with_backend_url("https://app.test") do
+      assert_equal "data:image/png;base64,AAAA",
+                   render_and_find('<img src="data:image/png;base64,AAAA">', "image").props["src"]
+      assert_equal "logo.png", render_and_find('<img src="logo.png">', "image").props["src"]
+      assert_equal "//cdn.example.com/a.png",
+                   render_and_find('<img src="//cdn.example.com/a.png">', "image").props["src"]
+    end
+  end
+
+  def test_media_urls_on_other_controls_are_resolved_by_attribute_name
+    with_backend_url("https://app.test") do
+      rive = render_and_find('<rive src="/anim.riv" url="/fallback.riv"></rive>', "rive")
+
+      assert_equal "https://app.test/anim.riv", rive.props["src"]
+      assert_equal "https://app.test/fallback.riv", rive.props["url"]
+    end
+  end
+
+  def test_navigation_hrefs_are_never_turned_into_media_urls
+    with_backend_url("https://app.test") do
+      @fetcher = StubFetcher.new("/native" => '<a href="/settings">Settings</a>',
+                                 "/settings" => "<text>prefs</text>")
+      Ruflet::Rails.erb_to_native(@page, start_url: "/native", fetcher: @fetcher)
+      find(@page.views.first, "textbutton").emit("click", nil)
+
+      assert_equal "/settings", @fetcher.requests.last[:url],
+                   "navigation stays a path — it is dispatched in-process, not fetched"
+    end
+  end
+
   def test_an_absolute_start_url_still_produces_absolute_screen_urls
     @fetcher = StubFetcher.new("/" => '<a href="/settings">Settings</a>',
                                "/settings" => "<text>prefs</text>")

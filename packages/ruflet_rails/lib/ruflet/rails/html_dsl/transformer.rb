@@ -70,8 +70,30 @@ module Ruflet
                                top left right bottom blur aspect_ratio clip_behavior gradient
                                visible animate].freeze
 
-        def initialize(handlers:)
+        # Attributes naming something the client fetches for itself (an image,
+        # a sound, a video poster) rather than something Ruby resolves.
+        ASSET_URL_ATTRIBUTE = /\A(?:src|url|poster)\z|-(?:src|url)\z/
+
+        def initialize(handlers:, asset_base_url: nil)
           @handlers = handlers
+          @asset_base_url = asset_base_url.to_s.sub(%r{/+\z}, "")
+        end
+
+        # Screens are dispatched in-process, but media is not: the client loads
+        # an image or a sound itself, over HTTP, so those URLs are the one place
+        # that still needs a real host. A root-relative path ("/assets/logo.png",
+        # which is what the Rails asset pipeline returns) is resolved against the
+        # host the client connected on. Anything already absolute — an external
+        # CDN, a data: URI, a protocol-relative "//host/x" — is left alone, and
+        # so is a bare name, which the client resolves against its bundled
+        # assets directory.
+        def resolve_asset_url(value)
+          return value unless value.is_a?(String)
+          return value if @asset_base_url.empty?
+          return value unless value.start_with?("/")
+          return value if value.start_with?("//")
+
+          "#{@asset_base_url}#{value}"
         end
 
         def transform(html)
@@ -266,7 +288,7 @@ module Ruflet
           props[:semantics_label] = element["alt"] if element["alt"]
           props.merge!(styles.slice(:width, :height, :border_radius, :fit, :opacity,
                                     :aspect_ratio, :rotate, :scale))
-          image(element["src"], **props)
+          image(resolve_asset_url(element["src"]), **props)
         end
 
         def build_list(element, styles, form:)
@@ -636,7 +658,7 @@ module Ruflet
         def build_avatar(element)
           styles = Styles.parse(element["class"])
           props = element_props(element, except: %w[src alt])
-          props[:foreground_image_src] = element["src"] if element["src"]
+          props[:foreground_image_src] = resolve_asset_url(element["src"]) if element["src"]
           props[:bgcolor] = styles[:bgcolor] if styles[:bgcolor]
           initials = collapse_whitespace(element.text)
           content = initials.empty? ? nil : text(initials, color: styles[:color] || "#ffffff", weight: "bold")
@@ -1068,6 +1090,7 @@ module Ruflet
             # Browser JS handlers (onclick, onchange, ...) are not DSL events.
             next if name.match?(/\Aon[a-z]+\z/)
 
+            value = resolve_asset_url(value) if name.match?(ASSET_URL_ATTRIBUTE)
             props[name.tr("-", "_").to_sym] = coerce_value(value)
           end
         end

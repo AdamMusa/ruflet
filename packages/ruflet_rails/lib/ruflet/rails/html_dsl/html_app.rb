@@ -1174,10 +1174,22 @@ module Ruflet
         end
 
         def transform(screen, body)
-          transformer = Transformer.new(handlers: ScreenHandlers.new(self, screen))
+          transformer = Transformer.new(handlers: ScreenHandlers.new(self, screen),
+                                        asset_base_url: asset_base_url)
           transformer.transform(body)
         rescue StandardError => e
           transformer.transform(error_markup(screen.url, e))
+        end
+
+        # Media is the one thing the client fetches for itself, so it is the one
+        # thing that still needs a host. Resolved per render, because the answer
+        # depends on the connection this session is running on.
+        def asset_base_url
+          return nil unless defined?(::Ruflet::Rails.backend_url)
+
+          ::Ruflet::Rails.backend_url
+        rescue StandardError
+          nil
         end
 
         # 422 is the Rails convention for re-rendering a form with validation

@@ -74,11 +74,24 @@ module Ruflet
         def absolute(url)
           url = url.to_s
           return url if url.empty?
-          return url if URI.parse(url).absolute?
+
+          uri = URI.parse(url)
+          # A host, not merely a scheme: "localhost:3000" parses as scheme
+          # "localhost" with opaque "3000" and no path, so treating it as
+          # absolute would dispatch it to "/" and quietly render the wrong
+          # screen. Say so instead.
+          return url if uri.host
+          raise ArgumentError, malformed_url_message(url) if uri.scheme && !url.start_with?("/")
 
           URI.join(base_url, url).to_s
         rescue URI::InvalidURIError, URI::BadURIError
           url
+        end
+
+        def malformed_url_message(url)
+          "Ruflet screen URL #{url.inspect} has no host. Use a path (\"/native\"), " \
+            "which takes its host from the client's connection, or a full URL " \
+            "including the scheme (\"http://localhost:3000/native\")."
         end
 
         def base_url

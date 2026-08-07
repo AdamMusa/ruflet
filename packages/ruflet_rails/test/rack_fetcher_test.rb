@@ -153,6 +153,18 @@ class RufletRackFetcherTest < Minitest::Test
     assert_equal "name=Ada+Lovelace", env["rack.input"].read
   end
 
+  # "localhost:3000" parses as scheme "localhost" with opaque "3000" and no
+  # path. Passed through as absolute it would dispatch to "/" and render
+  # whatever the root route is, which looks like the app ignoring start_url.
+  def test_a_host_less_scheme_is_rejected_instead_of_silently_becoming_root
+    error = assert_raises(ArgumentError) do
+      fetch(StubRackApp.new, "localhost:3000", env: ws_env("host.test"))
+    end
+
+    assert_includes error.message, "has no host"
+    assert_includes error.message, "/native"
+  end
+
   def test_it_marks_the_request_as_a_native_one
     app = StubRackApp.new
     fetch(app, "/native", env: ws_env("host.test"))
