@@ -1872,7 +1872,7 @@ module Ruflet
       # 0.0.13 is the first release where the platform layer starts the VM and
       # exposes serverUrl(); the client entrypoint calls it, so an older runtime
       # would not build.
-      PUBLISHED_RUBY_RUNTIME_CONSTRAINT = "^0.0.13"
+      PUBLISHED_RUBY_RUNTIME_CONSTRAINT = "^0.0.14"
 
       def ruby_runtime_dependency(current_dependency = nil)
         local_path = explicit_local_ruby_runtime_path || source_checkout_ruby_runtime_path

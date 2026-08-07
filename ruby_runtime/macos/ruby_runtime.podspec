@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'ruby_runtime'
-  s.version          = '0.0.13'
+  s.version          = '0.0.14'
   s.summary          = 'Embedded Ruby (mruby) VM for Flutter macOS.'
   s.description      = <<-DESC
 Links the packaged Ruflet mruby VM and exposes start/status/stop over a
