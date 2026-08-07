@@ -4,23 +4,28 @@
   "platform": "android",
   "minimum_sdk": 24,
   "library": "libruby_runtime.so",
-  "contains": ["mruby", "ruflet-framework", "onigmo", "native-gems"],
+  "contains": [
+    "mruby",
+    "ruflet-framework",
+    "onigmo",
+    "native-gems"
+  ],
   "ruflet_gems": {
     "ruflet_core": "0.0.21",
     "ruflet_server": "0.0.21"
   },
   "artifacts": {
     "arm64-v8a": {
-      "sha256": "b05c198cea0e8f08120ca4f01d06875f3427e0107479d43d5af9884ce5d92da9"
+      "sha256": "8b56777c85e33eb1275d6df098f96f8342af9b648ace5d8d0314d4c0fd846872"
     },
     "armeabi-v7a": {
-      "sha256": "dbdf24c22c17e13df15ae3693e0580d54e5b91f26d6c0939a4f845f7bc901787"
+      "sha256": "b638ef0ccadce25c8d9b3a1e04437ef6eeb876aee68da9467ca8ad346b29e44f"
     },
     "x86": {
-      "sha256": "bcae55a04a9dfea105144e36ebca16752be3fd4f1afc05dcb5ae792e21268669"
+      "sha256": "a94696a13cdf0f1789f9dcaeb07895251634c8f1bb85cab0539c8042e8e5bccf"
     },
     "x86_64": {
-      "sha256": "9b8ac14359f71f06fa9f23570c9ecb466eee7c3bf07e707ef662473127d41296"
+      "sha256": "dd63e3e94e7cf1aae42f8b12f82b1b9a33647e4100b269c9e57c2ff181e7dcc8"
     }
   }
 }
