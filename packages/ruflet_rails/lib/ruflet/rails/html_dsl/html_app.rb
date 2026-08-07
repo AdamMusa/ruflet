@@ -14,7 +14,7 @@ module Ruflet
       # field values and render the response.
       class HtmlApp
         Screen = Struct.new(:url, :view, :route, :root, :fields, :csrf_token, :title,
-                            :appbar_sig, :fab_sig, :nav_sig, :body, keyword_init: true)
+                            :appbar_sig, :fab_sig, :nav_sig, :body, :markup, keyword_init: true)
 
         # Event handlers stay bound to the screen whose markup declared them,
         # so a control on a covered screen still targets the right state.
@@ -1102,6 +1102,15 @@ module Ruflet
         # identical app bar / nav / FAB makes the client rebuild that widget
         # and flicker, so we diff each against the last render first.
         def rerender(screen, response)
+          # Re-rendering a screen means parsing its markup and rebuilding the
+          # whole control tree, which costs more than the ERB render that
+          # produced it. When an action leaves the screen byte-identical —
+          # a tap that changed nothing the screen shows — none of that work can
+          # change anything, and neither can the diff it feeds.
+          markup = response.body.to_s
+          return if screen.view&.wire_id && screen.markup && screen.markup == markup
+
+          screen.markup = markup
           result = render_result(screen, response)
           mount_services(result)
           unless screen.view&.wire_id
