@@ -12,6 +12,18 @@
 #   sh tools/build_vm_artifacts.sh android          # 4 ABIs
 #   sh tools/build_vm_artifacts.sh macos            # arm64 + x86_64 universal
 #   sh tools/build_vm_artifacts.sh ios              # device + simulator slices
+#   sh tools/build_vm_artifacts.sh linux            # the host's architecture
+#   sh tools/build_vm_artifacts.sh windows          # x86_64, cross-compiled
+#
+# android/macos/ios need a Mac with Xcode and the Android NDK. linux and
+# windows are built in a container, which is also how the second Linux
+# architecture is produced:
+#
+#   docker run --rm -v "$PWD:/work" -w /work IMAGE sh tools/build_vm_artifacts.sh linux
+#   docker run --rm --platform linux/amd64 -v "$PWD:/work" -w /work IMAGE \
+#     sh tools/build_vm_artifacts.sh linux
+#
+# where IMAGE has build-essential, ruby, rake, gperf, bison and mingw-w64.
 #
 # Needs ruby_runtime/third_party populated; run from a checkout that has it.
 set -eu
