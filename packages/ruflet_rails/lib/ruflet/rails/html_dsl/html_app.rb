@@ -438,9 +438,21 @@ module Ruflet
                               title: "Screen services failed")
         end
 
+        # Attributes the DSL consumes itself. Everything else on a service
+        # element becomes a native invoke argument, so anything that is really
+        # markup — the button's own styling, its icon, its variant, the
+        # `on-load` marker — has to be named here. It is not cosmetic: a `play`
+        # that arrives carrying `class`/`icon`/`variant` is a call the client
+        # cannot match to the control's method signature, which is exactly how
+        # the ERB audio buttons ended up doing nothing at all.
         SERVICE_META_KEYS = %w[
           service method target args toast timeout result-target capture-target preview-target id disabled
+          class icon variant on-load file-name output-path path configuration upload encoder
         ].freeze
+
+        # Declarative event wiring (`on-loaded-target`, `on-error-prefix`, …) is
+        # markup too, and there is one per event, so match them by shape.
+        DECLARED_EVENT_ATTRIBUTE = /\Aon-.+-(?:target|service|prefix|message|control|property|result-target)\z/
 
         STORAGE_PATH_METHODS = {
           "cache" => :get_application_cache_directory,
@@ -849,6 +861,7 @@ module Ruflet
           args = spec["args"].is_a?(Hash) ? spec["args"].dup : {}
           spec.each do |key, value|
             next if SERVICE_META_KEYS.include?(key)
+            next if DECLARED_EVENT_ATTRIBUTE.match?(key)
             next if value.nil?
 
             args[key.tr("-", "_")] = value
