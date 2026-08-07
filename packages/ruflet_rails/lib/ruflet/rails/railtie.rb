@@ -19,6 +19,21 @@ module Ruflet
         end
       end
 
+      # Screens resolve by convention instead of by declaration, so an app's
+      # routes.rb holds only its own routes plus the one WebSocket mount. The
+      # catch-all is appended (it runs after every declared route, never
+      # shadowing one) and is constrained to Ruflet sessions, so it adds no
+      # public surface: a browser on the same path still falls through to the
+      # app's own routing, normally a 404.
+      initializer "ruflet_rails.native_screens" do |app|
+        app.routes.append do
+          match "/*ruflet_screen",
+                to: Ruflet::Rails::NativeScreens::Dispatcher.new,
+                via: :all,
+                constraints: ->(request) { Ruflet::Rails::NativeScreens.native_request?(request) }
+        end
+      end
+
       initializer "ruflet_rails.desktop_launcher", after: :load_config_initializers do |_app|
         next unless defined?(::Rails.root)
 
