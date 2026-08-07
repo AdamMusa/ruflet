@@ -88,12 +88,16 @@ module Ruflet
           name = template_for(screen)
           raise "No template for #{screen[:controller]}##{screen[:action]}" unless name
 
-          # Partials in a screen ("render \"nav\"") resolve relative to the
-          # controller's own view folder, the way they do under a controller.
-          lookup_context.prefixes = [controller_path(screen[:controller])]
-          view = ActionView::Base
-                 .with_empty_template_cache
-                 .new(lookup_context, assigns_for(controller), nil)
+          # A fresh lookup context per render: partials in a screen
+          # ("render \"nav\"") resolve relative to the controller's own view
+          # folder, and a shared, mutated one leaks compiled partial methods
+          # between view instances.
+          lookup = build_lookup_context([controller_path(screen[:controller])])
+          view = view_class.new(lookup, assigns_for(controller), nil)
+          # The app's own helpers (ApplicationHelper and any controller-specific
+          # ones) are what a screen reaches for as readily as the DSL's tags.
+          helpers = screen[:controller].try(:_helpers)
+          view.extend(helpers) if helpers
           view.render(template: name, layout: @layout)
         end
 
@@ -125,8 +129,19 @@ module Ruflet
           end
         end
 
+        # One view class for the session: a template compiles its partials into
+        # the class that rendered it, so a fresh class per render leaves those
+        # methods behind on the previous one.
+        def view_class
+          @view_class ||= ActionView::Base.with_empty_template_cache
+        end
+
+        def build_lookup_context(prefixes = [])
+          ActionView::LookupContext.new(@view_paths || ::ActionController::Base.view_paths, {}, prefixes)
+        end
+
         def lookup_context
-          @lookup_context ||= ActionView::LookupContext.new(@view_paths || ::ActionController::Base.view_paths)
+          @lookup_context ||= build_lookup_context
         end
 
         def missing(url, path)
