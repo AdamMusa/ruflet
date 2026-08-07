@@ -1265,13 +1265,25 @@ module Ruflet
           HTML
         end
 
+        # Screens may be declared as paths ("/native") or as full URLs. A path
+        # stays a path: the fetcher supplies the host from the live WebSocket
+        # connection, so nothing here has to name one. Relative links still
+        # resolve against the current screen either way — done by borrowing a
+        # placeholder host, since URI.join needs an absolute base, and then
+        # dropping it again.
+        PATH_RESOLUTION_BASE = "http://ruflet.invalid"
+
         def absolute_url(url)
           url = url.to_s
           return "" if url.empty?
           return url if URI.parse(url).absolute?
 
-          URI.join(current_url, url).to_s
-        rescue URI::InvalidURIError
+          base = current_url
+          return URI.join(base, url).to_s if URI.parse(base).absolute?
+
+          resolved = URI.join("#{PATH_RESOLUTION_BASE}#{base}", url)
+          resolved.query ? "#{resolved.path}?#{resolved.query}" : resolved.path
+        rescue URI::InvalidURIError, URI::BadURIError
           url
         end
 

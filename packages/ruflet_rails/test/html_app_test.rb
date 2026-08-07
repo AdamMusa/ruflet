@@ -805,4 +805,69 @@ class RufletHtmlAppTest < Minitest::Test
     assert_includes texts, "1 items",
                     "server state written by one screen must be readable by the next"
   end
+
+  # --- path-only screens ---------------------------------------------------
+  #
+  # Nothing here travels over the network, so a screen can be named by path
+  # alone. The host, when one is needed at all, comes from the live WebSocket.
+
+  def test_a_path_start_url_renders_without_naming_a_host
+    @fetcher = StubFetcher.new("/native" => "<text>Native home</text>")
+    Ruflet::Rails.erb_to_native(@page, start_url: "/native", fetcher: @fetcher)
+
+    assert_equal "/native", @fetcher.requests.first[:url]
+    body = @page.views.first.props["controls"] || @page.views.first.children
+    assert_equal "Native home", find(body, "text").props["value"]
+  end
+
+  def test_a_path_start_url_resolves_absolute_and_relative_links
+    @fetcher = StubFetcher.new(
+      "/native" => '<a href="/native/counter">Counter</a>',
+      "/native/counter" => '<a href="detail">Detail</a>',
+      "/native/detail" => "<text>Detail screen</text>"
+    )
+    app = Ruflet::Rails.erb_to_native(@page, start_url: "/native", fetcher: @fetcher)
+
+    find(@page.views.first, "textbutton").emit("click", nil)
+    find(@page.views.last, "textbutton").emit("click", nil)
+
+    assert_equal %w[/native /native/counter /native/detail], @fetcher.requests.map { |r| r[:url] }
+    body = @page.views.last.props["controls"] || @page.views.last.children
+    assert_equal "Detail screen", find(body, "text").props["value"]
+    assert_equal 3, @page.views.length
+    app.pop
+  end
+
+  # Dot segments follow ordinary URI rules: the base directory of
+  # /native/counter is /native/, so ".." lands at the root.
+  def test_a_path_start_url_walks_up_a_relative_segment
+    @fetcher = StubFetcher.new(
+      "/native/counter" => '<a href="../form">Form</a>',
+      "/form" => "<text>Form screen</text>"
+    )
+    Ruflet::Rails.erb_to_native(@page, start_url: "/native/counter", fetcher: @fetcher)
+    find(@page.views.first, "textbutton").emit("click", nil)
+
+    assert_equal "/form", @fetcher.requests.last[:url]
+    body = @page.views.last.props["controls"] || @page.views.last.children
+    assert_equal "Form screen", find(body, "text").props["value"]
+  end
+
+  def test_a_path_start_url_keeps_query_strings_on_relative_links
+    @fetcher = StubFetcher.new("/native" => '<a href="search?q=ada">Search</a>',
+                               "/search" => "<text>Results</text>")
+    Ruflet::Rails.erb_to_native(@page, start_url: "/native", fetcher: @fetcher)
+    find(@page.views.first, "textbutton").emit("click", nil)
+
+    assert_equal "/search?q=ada", @fetcher.requests.last[:url]
+  end
+
+  def test_an_absolute_start_url_still_produces_absolute_screen_urls
+    @fetcher = StubFetcher.new("/" => '<a href="/settings">Settings</a>',
+                               "/settings" => "<text>prefs</text>")
+    Ruflet::Rails.erb_to_native(@page, start_url: "https://app.test/", fetcher: @fetcher)
+    find(@page.views.first, "textbutton").emit("click", nil)
+
+    assert_equal "https://app.test/settings", @fetcher.requests.last[:url]
+  end
 end

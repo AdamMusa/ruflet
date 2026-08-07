@@ -27,7 +27,15 @@ module Ruflet
     # controller.
     #
     #   # app/views/ruflet/main.rb  (runs in the /ws session)
-    #   Ruflet.run { |page| Ruflet::Rails.erb_to_native(page, start_url: "#{Ruflet::Rails.backend_url}/native") }
+    #   Ruflet.run { |page| Ruflet::Rails.erb_to_native(page, start_url: "/native") }
+    #
+    # `start_url` is a path, because there is no second connection to point at:
+    # the client dials one route (the WebSocket) and every screen after that is
+    # dispatched in-process. When a host is needed at all — Rails still checks
+    # the Host header — it is taken from the connection the client actually
+    # made, so a phone on the LAN and a browser on localhost both work without
+    # configuring anything. A full URL is still accepted, and then names the
+    # host verbatim.
     #
     # A `fetcher:` can be injected for tests; production uses the in-process
     # RackFetcher by default.
