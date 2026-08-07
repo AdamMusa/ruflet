@@ -1,3 +1,26 @@
+## 0.0.13
+
+- The platform layer now starts the VM itself, before the Flutter engine
+  exists: from `+load` on iOS and macOS, from an `androidx.startup` provider on
+  Android, and from plugin registration on Linux and Windows. The VM boots in
+  parallel with the engine instead of after it, so by the time Dart asks the
+  embedded server has usually already bound its port. Opt in with
+  `RufletRuntimeAutostart` (Info.plist) or `ruflet.runtime.autostart`
+  (AndroidManifest); desktop treats a packaged project as the opt-in.
+- Add `RufletRuntime.serverUrl()`, which reports where that runtime ended up.
+  Do not await it before `runApp` -- the VM is already booting alongside the
+  engine, and blocking startup on it gives back the time that buys.
+- `start()` now fails with `autostart_owns_runtime` when the platform owns the
+  runtime. The VM boots once per process, so the call could not take effect;
+  it previously reported success while silently doing nothing, leaving the
+  caller waiting on a port file nothing would write.
+- Android unpacks the packaged project out of the APK itself, once per install,
+  rather than having Dart copy it file by file on every launch.
+- Rebuild the VM artifacts. Icon tables are now built on demand instead of at
+  VM open, which was ~300ms of every cold start: macOS boots in 23ms (was
+  348ms) and Android in 41ms (was 466ms). The artifacts are also stripped,
+  roughly a 60% size reduction. Linux and Windows artifacts are unchanged.
+
 ## 0.0.12
 
 - Every platform plugin now bridges to the same four `ruflet_vm_*` entry points

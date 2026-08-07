@@ -1869,7 +1869,10 @@ module Ruflet
       # A self-contained build needs the embedded VM. Prefer a local checkout so
       # the runtime under development is the one packaged, and otherwise resolve
       # the published package.
-      PUBLISHED_RUBY_RUNTIME_CONSTRAINT = "^0.0.9"
+      # 0.0.13 is the first release where the platform layer starts the VM and
+      # exposes serverUrl(); the client entrypoint calls it, so an older runtime
+      # would not build.
+      PUBLISHED_RUBY_RUNTIME_CONSTRAINT = "^0.0.13"
 
       def ruby_runtime_dependency(current_dependency = nil)
         local_path = explicit_local_ruby_runtime_path || source_checkout_ruby_runtime_path
