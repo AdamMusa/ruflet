@@ -30,6 +30,8 @@ module Ruflet
           @view_paths = view_paths
           @layout = layout
           @controllers = {}
+          @templates = {}
+          @lookups = {}
         end
 
         def fetch(method, url, params: nil, headers: {})
@@ -84,30 +86,74 @@ module Ruflet
 
         # The screen a method belongs to. `counter_increment` has no template of
         # its own, so it re-renders `counter` — the screen the button was on.
+        # Rendering the compiled template directly, rather than through
+        # `view.render(template:)`, measures about four times faster: the long
+        # way re-resolves the template and fires the render instrumentation on
+        # every tap, and a screen re-renders on every tap.
         def render(screen, controller)
-          name = template_for(screen)
-          raise "No template for #{screen[:controller]}##{screen[:action]}" unless name
+          prefix = controller_path(screen[:controller])
+          action = template_action(screen)
+          raise "No template for #{screen[:controller]}##{screen[:action]}" unless action
 
-          # A fresh lookup context per render: partials in a screen
-          # ("render \"nav\"") resolve relative to the controller's own view
-          # folder, and a shared, mutated one leaks compiled partial methods
-          # between view instances.
-          lookup = build_lookup_context([controller_path(screen[:controller])])
-          view = view_class.new(lookup, assigns_for(controller), nil)
+          view = view_class.new(lookup_for(prefix), assigns_for(controller), nil)
           # The app's own helpers (ApplicationHelper and any controller-specific
           # ones) are what a screen reaches for as readily as the DSL's tags.
           helpers = screen[:controller].try(:_helpers)
           view.extend(helpers) if helpers
-          view.render(template: name, layout: @layout)
+
+          return view.render(template: "#{prefix}/#{action}", layout: @layout) if @layout
+
+          template_for_render(prefix, action).render(view, {})
         end
 
-        def template_for(screen)
-          prefix = controller_path(screen[:controller])
-          candidates_for(screen[:action]).each do |action|
-            name = "#{prefix}/#{action}"
-            return name if lookup_context.exists?(action, [prefix])
-          end
+        # Holding the compiled template would otherwise defeat template
+        # reloading, so re-resolve when the file changes. A stat costs a
+        # fraction of what resolving again does.
+        def template_for_render(prefix, action)
+          key = "#{prefix}/#{action}"
+          cached, stamp = @templates[key]
+          return cached if cached && (current = template_mtime(cached)) && current == stamp
+
+          # Only once the file has actually changed. Nothing here runs inside
+          # Rails' reloader, so an edited template is never invalidated for us,
+          # and the resolver caches process-wide — but discarding the view class
+          # on a first resolve would strand the partials already compiled into
+          # it, so this must not fire on the way in.
+          invalidate_templates! if cached
+
+          template = lookup_for(prefix).find_template(action, [prefix], false, [])
+          @templates[key] = [template, template_mtime(template)]
+          template
+        end
+
+        def invalidate_templates!
+          ActionView::LookupContext::DetailsKey.clear
+          @templates = {}
+          @lookups = {}
+          @template_actions = {}
+          @view_class = nil
+        end
+
+        def template_mtime(template)
+          return nil unless template
+
+          File.mtime(template.identifier)
+        rescue SystemCallError
           nil
+        end
+
+        # Partials in a screen ("render \"nav\"") resolve relative to the
+        # controller's own view folder, so each prefix gets its own context.
+        # Never mutated after creation.
+        def lookup_for(prefix)
+          @lookups[prefix] ||= build_lookup_context([prefix])
+        end
+
+        def template_action(screen)
+          prefix = controller_path(screen[:controller])
+          @template_actions ||= {}
+          @template_actions[[prefix, screen[:action]]] ||=
+            candidates_for(screen[:action]).find { |action| lookup_for(prefix).exists?(action, [prefix]) }
         end
 
         # counter_increment -> counter_increment, counter
