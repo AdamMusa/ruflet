@@ -44,6 +44,13 @@ module Ruflet
           assign_params(controller, params, screen[:params])
           invoke(controller, screen[:action])
 
+          # An action like #counter_increment changes state and then re-renders
+          # counter.html.erb, whose ivars only #counter assigns. Without running
+          # the screen's own action the template redraws from whatever the last
+          # visit left behind — the tap works and the screen never moves.
+          own = template_action(screen)
+          invoke(controller, own) if own && own != screen[:action].to_s
+
           Response.new(status: 200, body: render(screen, controller), url: url)
         rescue StandardError => e
           Response.new(status: 500, body: failure_markup(path, e), url: url)
