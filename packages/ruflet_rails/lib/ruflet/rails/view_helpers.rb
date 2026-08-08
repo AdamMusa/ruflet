@@ -221,9 +221,6 @@ module Ruflet
         JSON.generate(value)
       end
 
-      def ruflet_css_dimension(value)
-        value.is_a?(Numeric) ? "#{value}px" : value.to_s
-      end
 
       def ruflet_html_safe(string)
         string.respond_to?(:html_safe) ? string.html_safe : string

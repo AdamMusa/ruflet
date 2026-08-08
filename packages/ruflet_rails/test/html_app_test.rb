@@ -99,7 +99,7 @@ class RufletHtmlAppTest < Minitest::Test
     assert_equal "post", @fetcher.requests.last["method"] || @fetcher.requests.last[:method]
   end
 
-  def test_form_submits_tracked_field_values_with_csrf
+  def test_form_submits_tracked_field_values
     submitted = nil
     pages = {
       "/" => <<~HTML,
@@ -120,7 +120,6 @@ class RufletHtmlAppTest < Minitest::Test
     find(view, "filledbutton").emit("click", nil)
 
     assert_equal({ "email" => "new@x.y", "token" => "h1" }, submitted)
-    assert_equal "tok-1", @fetcher.requests.last[:headers]["X-CSRF-Token"]
     assert_equal "done", find(@page.views.first, "text").props["value"]
   end
 

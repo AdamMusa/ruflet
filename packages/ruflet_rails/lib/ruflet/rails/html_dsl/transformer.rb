@@ -16,8 +16,7 @@ module Ruflet
       # `handlers` is the running app (HtmlApp): it receives navigation,
       # actions, form submissions, and field changes.
       class Transformer
-        Result = Struct.new(:controls, :appbar, :fab, :bottom_nav, :services, :on_load, :title,
-                            :csrf_token, keyword_init: true)
+        Result = Struct.new(:controls, :appbar, :fab, :bottom_nav, :services, :on_load, :title, keyword_init: true)
 
         HEADING_STYLES = {
           "h1" => { size: 32, weight: "bold" },
@@ -99,7 +98,7 @@ module Ruflet
         def transform(html)
           nodes = Parser.parse(html)
           @result = Result.new(controls: [], appbar: nil, fab: nil, bottom_nav: nil, services: [],
-                               on_load: [], title: nil, csrf_token: nil)
+                               on_load: [], title: nil)
           scan_document_metadata(nodes)
 
           @result.controls = build_children(content_nodes(nodes), form: nil)
@@ -112,12 +111,7 @@ module Ruflet
 
         def scan_document_metadata(nodes)
           each_element(nodes) do |element|
-            case element.tag
-            when "title"
-              @result.title = element.text if @result.title.nil?
-            when "meta"
-              @result.csrf_token = element["content"] if element["name"] == "csrf-token"
-            end
+            @result.title = element.text if element.tag == "title" && @result.title.nil?
           end
         end
 

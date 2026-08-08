@@ -11,14 +11,6 @@ module Ruflet
         end
       end
 
-      # ruflet_native_request? / render_native in every controller, so an
-      # action can answer the native client in one cycle instead of two.
-      initializer "ruflet_rails.controller_helpers" do
-        ActiveSupport.on_load(:action_controller) do
-          include Ruflet::Rails::ControllerHelpers
-        end
-      end
-
       initializer "ruflet_rails.desktop_launcher", after: :load_config_initializers do |_app|
         next unless defined?(::Rails.root)
 

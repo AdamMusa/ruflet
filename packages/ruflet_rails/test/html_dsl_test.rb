@@ -272,7 +272,6 @@ class RufletHtmlDslTest < Minitest::Test
     HTML
 
     assert_equal "Inbox", result.title
-    assert_equal "tok123", result.csrf_token
     assert_equal 1, result.controls.length
     assert_equal "hello", result.controls.first.props["value"]
   end

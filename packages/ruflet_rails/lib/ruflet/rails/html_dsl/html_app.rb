@@ -13,7 +13,7 @@ module Ruflet
       # Rails and re-render the current screen in place, forms post their
       # field values and render the response.
       class HtmlApp
-        Screen = Struct.new(:url, :view, :route, :root, :fields, :csrf_token, :title,
+        Screen = Struct.new(:url, :view, :route, :root, :fields, :title,
                             :appbar_sig, :fab_sig, :nav_sig, :body, :markup, keyword_init: true)
 
         # Event handlers stay bound to the screen whose markup declared them,
@@ -1172,7 +1172,6 @@ module Ruflet
           # msgpack bin (byte arrays on the client); make sure we parse UTF-8.
           body = body.dup.force_encoding(Encoding::UTF_8) if body.encoding == Encoding::ASCII_8BIT
           result = transform(screen, body)
-          screen.csrf_token = result.csrf_token
           screen.title = result.title
           if result.controls.empty?
             message = response.status.to_i >= 400 ? "HTTP #{response.status} — #{screen.url}" : "Empty screen"
@@ -1267,10 +1266,7 @@ module Ruflet
         # --- HTTP -----------------------------------------------------------------
 
         def request(method, url, params: nil, screen: nil)
-          headers = {}
-          token = screen&.csrf_token || @screens.last&.csrf_token
-          headers["X-CSRF-Token"] = token if token && method.to_s.downcase != "get"
-          @fetcher.fetch(method, url, params: params, headers: headers)
+          @fetcher.fetch(method, url, params: params)
         rescue StandardError => e
           TemplateSource::Response.new(status: 0, body: error_markup(url, e), url: url)
         end
