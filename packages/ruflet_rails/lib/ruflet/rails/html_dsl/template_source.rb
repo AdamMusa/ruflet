@@ -101,9 +101,26 @@ module Ruflet
           helpers = screen[:controller].try(:_helpers)
           view.extend(helpers) if helpers
 
-          return view.render(template: "#{prefix}/#{action}", layout: @layout) if @layout
+          # Partials still go through view.render (that is how a template asks
+          # for one), and each announces itself to the log subscriber. A screen
+          # re-renders on every tap, so a partial-backed screen would narrate
+          # every tap into the log. Nothing here is a request; there is nothing
+          # for that line to tell anyone.
+          silence_view_logging do
+            next view.render(template: "#{prefix}/#{action}", layout: @layout) if @layout
 
-          template_for_render(prefix, action).render(view, {})
+            template_for_render(prefix, action).render(view, {})
+          end
+        end
+
+        # Per-thread, so a concurrent web request keeps its own logging.
+        def silence_view_logging(&block)
+          logger = defined?(ActionView::Base.logger) ? ActionView::Base.logger : nil
+          return yield unless logger.respond_to?(:silence)
+
+          logger.silence(::Logger::ERROR, &block)
+        rescue StandardError
+          yield
         end
 
         # Holding the compiled template would otherwise defeat template
