@@ -124,7 +124,7 @@ module Ruflet
         value
       end
 
-      def build_args_for_platform(platform, ruflet_url: nil)
+      def build_args_for_platform(platform)
         normalized = normalize_build_platform(platform)
         return [] if normalized.to_s.empty?
         [normalized]
@@ -138,7 +138,7 @@ module Ruflet
         %(match "#{mount_path}", to: Ruflet::Rails.#{helper}(Rails.root.join("#{entrypoint}")), via: :all)
       end
 
-      def install_next_steps(target:, entrypoint:, client:, mount_path: "/ws")
+      def install_next_steps(entrypoint:, client:, mount_path: "/ws")
         lines = [
           "Ruflet Rails installed.",
           "Generated entrypoint: #{entrypoint}",

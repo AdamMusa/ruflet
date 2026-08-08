@@ -152,7 +152,7 @@ module Ruflet
           control = build_element(element, form: form)
           return nil unless control
 
-          finalize(control, element, form: form)
+          finalize(control, element)
         rescue ArgumentError => e
           # One bad element must not take down the screen (a stray attribute,
           # an unknown icon, a page of plain web HTML): render a visible
@@ -189,7 +189,7 @@ module Ruflet
           when "img", "image" then build_image(element, styles)
           when "icon" then icon(element["name"] || element.text, **element_props(element, except: %w[name]))
           when "a" then build_link(element, styles, form: form)
-          when "button" then build_button(element, styles, form: form)
+          when "button" then build_button(element, form: form)
           when "input" then build_input(element, form: form)
           when "textarea" then build_textarea(element, form: form)
           when "select" then build_select(element, form: form)
@@ -210,7 +210,7 @@ module Ruflet
                                                               multiline: element.key?("multiline"))
           when "table" then build_table(element, form: form)
           when "avatar" then build_avatar(element)
-          when "chip" then build_chip(element, form: form)
+          when "chip" then build_chip(element)
           when "progress" then progress_bar(**element_props(element))
           else
             build_generic(element, form: form)
@@ -317,7 +317,7 @@ module Ruflet
           "outlined" => :outlined_button, "text" => :text_button, "elevated" => :button
         }.freeze
 
-        def build_button(element, styles, form:)
+        def build_button(element, form:)
           label = collapse_whitespace(element.text)
           icon = element["icon"]
           on_click =
@@ -636,7 +636,7 @@ module Ruflet
 
         # <chip label="Ruby"> or <chip>Ruby</chip> — Chip needs `label`, and
         # a bare `on-click` becomes its native click action.
-        def build_chip(element, form:)
+        def build_chip(element)
           props = element_props(element, except: %w[label icon])
           props[:label] = element["label"] || collapse_whitespace(element.text)
           props[:leading] = element["icon"] if element["icon"]
@@ -1063,7 +1063,7 @@ module Ruflet
         end
 
         # Generic `on-click` on non-interactive elements gets a tap wrapper.
-        def finalize(control, element, form: nil)
+        def finalize(control, element)
           spec = element["on-click"] || element["on-tap"]
           return control unless spec
           return control if SELF_CLICKING_TAGS.include?(element.tag)

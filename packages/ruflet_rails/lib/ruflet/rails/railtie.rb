@@ -26,9 +26,8 @@ module Ruflet
           task :build, [:platform] do |_task, args|
             platform = args[:platform].to_s.strip.downcase
 
-            cfg        = Ruflet::Rails.config
-            ruflet_url = cfg.backend_url.to_s.strip
-            build_args = Ruflet::Rails::InstallSupport.build_args_for_platform(platform, ruflet_url: ruflet_url)
+            cfg = Ruflet::Rails.config
+            build_args = Ruflet::Rails::InstallSupport.build_args_for_platform(platform)
 
             if build_args.empty?
               warn "Usage: rake ruflet:build[apk|android|ios|aab|desktop|macos|windows|linux]"

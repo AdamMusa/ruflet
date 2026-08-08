@@ -13,17 +13,13 @@ module Ruflet
     #   /native                    -> NativeController#home   (or #index)
     #   /native/counter            -> NativeController#counter
     #   /native/counter/increment  -> NativeController#counter_increment
-    #   /native/device/camera      -> NativeController#device, params[:id] = "camera"
+    #   /native/device_feature/camera -> NativeController#device_feature, params[:id]
     #
     # The last two show the rule for extra segments: they are first tried as
     # part of the action name, and otherwise become positional params. That is
     # what lets one convention cover both an action that happens to live under
     # another ("counter/increment") and a parameterised screen ("device/:id"),
     # which is the pair a per-screen routing table normally exists to express.
-    #
-    # Dispatch still goes through Rails' middleware and the controller itself,
-    # so `session`, `flash`, CSRF, `before_action` and layouts behave exactly as
-    # they do for a normal request. What is skipped is only the routing table.
     module NativeScreens
       # Actions to try for the root of a feature folder, in order.
       INDEX_ACTIONS = %w[home index show].freeze
@@ -91,7 +87,6 @@ module Ruflet
       rescue NameError
         nil
       end
-
     end
   end
 end

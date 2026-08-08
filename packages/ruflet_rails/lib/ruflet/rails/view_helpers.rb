@@ -5,16 +5,10 @@ require "json"
 
 module Ruflet
   module Rails
-    # ERB view helpers for dropping a Ruflet native UI into a server-rendered
-    # Rails page. Auto-included into ActionView (see Railtie), so they are
-    # available in any .erb template.
-    #
-    #   <%= ruflet_frame "/products", height: 640 %>
-    #   <%= ruflet_frame "/showcase", height: "80vh", width: "100%" %>
-    #
-    # The frame is same-origin by default (a relative path), so the Ruflet
-    # WebSocket and assets resolve against this host with no extra config. Pass a
-    # full URL to embed a Ruflet app on another host.
+    # Annotations for Ruflet::Rails.native_shell, where the body of a screen
+    # stays a Rails page in a WebView and Ruflet owns the native chrome around
+    # it. Auto-included into ActionView (see Railtie), so they are available in
+    # any .erb template.
     module ViewHelpers
       # --- Native annotations ------------------------------------------------
       #

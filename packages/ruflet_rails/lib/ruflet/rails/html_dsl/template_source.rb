@@ -33,7 +33,7 @@ module Ruflet
           @lookups = {}
         end
 
-        def fetch(method, url, params: nil, headers: {})
+        def fetch(_method, url, params: nil)
           path = URI.parse(url.to_s).path.to_s
           screen = NativeScreens.resolve(path)
           return missing(url, path) unless screen

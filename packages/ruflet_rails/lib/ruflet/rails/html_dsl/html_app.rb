@@ -7,11 +7,10 @@ require "json"
 module Ruflet
   module Rails
     module HtmlDsl
-      # HTML-over-the-wire native UI: Rails renders HTML DSL markup and this
-      # app turns each page into a screen of real Ruflet controls — no
-      # WebView. Links push native screens, `on-click` actions round-trip to
-      # Rails and re-render the current screen in place, forms post their
-      # field values and render the response.
+      # HTML-over-the-wire native UI: a Rails template renders HTML DSL markup
+      # and this app turns each screen into real Ruflet controls — no WebView.
+      # Links push native screens, `on-click` runs a controller method and
+      # re-renders the screen in place, forms hand their field values to one.
       class HtmlApp
         Screen = Struct.new(:url, :view, :route, :root, :fields, :title,
                             :appbar_sig, :fab_sig, :nav_sig, :body, :markup, keyword_init: true)
@@ -24,7 +23,7 @@ module Ruflet
             @screen = screen
           end
 
-          def navigate(url, mode) = @app.navigate(url, mode, from: @screen)
+          def navigate(url, mode) = @app.navigate(url, mode)
           def action(method:, url:) = @app.action(method: method, url: url, from: @screen)
           def submit_form(form) = @app.submit_form(form, from: @screen)
           def field_changed(name, value) = @screen.fields[name] = value
@@ -56,7 +55,7 @@ module Ruflet
 
         # --- navigation ---------------------------------------------------------
 
-        def navigate(url, mode, from: nil)
+        def navigate(url, mode)
           url = absolute_url(url)
           case mode.to_s
           when "back"
@@ -72,14 +71,13 @@ module Ruflet
           end
         end
 
-        # An `on-click` action: request the URL, then re-render the source
-        # screen in place with the returned markup (Rails redirects are
-        # followed by the fetcher, so `redirect_to` re-renders the target).
+        # An `on-click` action: run the method the URL names, then re-render
+        # the screen it was tapped on with the markup that comes back.
         def action(method:, url:, from: nil)
           screen = from || @screens.last
           return unless screen
 
-          response = request(method, absolute_url(url), screen: screen)
+          response = request(method, absolute_url(url))
           rerender(screen, response)
         end
 
@@ -91,7 +89,7 @@ module Ruflet
             value = screen.fields.key?(name) ? screen.fields[name] : form[:fields][name]
             collected[name] = value.nil? ? "" : value
           end
-          response = request(form[:method], absolute_url(form[:action]), params: params, screen: screen)
+          response = request(form[:method], absolute_url(form[:action]), params: params)
           rerender(screen, response)
         end
 
@@ -396,7 +394,7 @@ module Ruflet
           invalidate_pending_services
           screen = Screen.new(url: url, root: root, fields: {})
           screen.route = root ? "/" : "/screen/#{@route_seq += 1}"
-          response = request("get", url, screen: screen)
+          response = request("get", url)
           result = render_result(screen, response)
           screen.view = build_view(screen, result)
           remember_chrome(screen, result)
@@ -1265,7 +1263,7 @@ module Ruflet
 
         # --- HTTP -----------------------------------------------------------------
 
-        def request(method, url, params: nil, screen: nil)
+        def request(method, url, params: nil)
           @fetcher.fetch(method, url, params: params)
         rescue StandardError => e
           TemplateSource::Response.new(status: 0, body: error_markup(url, e), url: url)

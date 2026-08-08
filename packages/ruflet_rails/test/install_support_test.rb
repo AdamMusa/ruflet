@@ -81,7 +81,6 @@ class InstallSupportTest < Minitest::Test
 
   def test_ruflet_install_steps_include_essentials
     steps = Ruflet::Rails::InstallSupport.install_next_steps(
-      target: "ruflet",
       entrypoint: "app/views/ruflet/main.rb",
       client: "none"
     ).join("\n")
@@ -94,7 +93,6 @@ class InstallSupportTest < Minitest::Test
 
   def test_ruflet_install_steps_explain_desktop_support
     steps = Ruflet::Rails::InstallSupport.install_next_steps(
-      target: "ruflet",
       entrypoint: "app/views/ruflet/main.rb",
       client: "desktop"
     ).join("\n")

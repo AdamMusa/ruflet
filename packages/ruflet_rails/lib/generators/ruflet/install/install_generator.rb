@@ -54,7 +54,6 @@ module Ruflet
 
       def print_install_status
         Ruflet::Rails::InstallSupport.install_next_steps(
-          target: install_target,
           entrypoint: entrypoint_path,
           client: requested_client
         ).each { |line| say line }
@@ -87,9 +86,6 @@ module Ruflet
         %w[desktop all].include?(requested_client)
       end
 
-      def install_target
-        "ruflet"
-      end
 
       def install_desktop_client
         require "ruflet/cli"

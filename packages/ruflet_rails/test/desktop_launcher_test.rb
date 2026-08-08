@@ -37,14 +37,14 @@ class DesktopLauncherTest < Minitest::Test
 
   def test_desktop_enabled_by_env_or_flag_not_initializer_file
     Dir.mktmpdir do |dir|
-      refute Ruflet::Rails::DesktopLauncher.desktop_enabled?(root: dir, argv: ["server"], env: {})
+      refute Ruflet::Rails::DesktopLauncher.desktop_enabled?(argv: ["server"], env: {})
 
       FileUtils.mkdir_p(File.join(dir, "config", "initializers"))
       File.write(File.join(dir, "config", "initializers", "ruflet_desktop.rb"), "")
 
-      refute Ruflet::Rails::DesktopLauncher.desktop_enabled?(root: dir, argv: ["server"], env: {})
-      assert Ruflet::Rails::DesktopLauncher.desktop_enabled?(root: dir, argv: ["server"], env: { "RUFLET_RAILS_DESKTOP_SERVER" => "true" })
-      assert Ruflet::Rails::DesktopLauncher.desktop_enabled?(root: dir, argv: ["server", "--desktop"], env: {})
+      refute Ruflet::Rails::DesktopLauncher.desktop_enabled?(argv: ["server"], env: {})
+      assert Ruflet::Rails::DesktopLauncher.desktop_enabled?(argv: ["server"], env: { "RUFLET_RAILS_DESKTOP_SERVER" => "true" })
+      assert Ruflet::Rails::DesktopLauncher.desktop_enabled?(argv: ["server", "--desktop"], env: {})
     end
   end
 
