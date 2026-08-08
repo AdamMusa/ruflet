@@ -38,8 +38,8 @@ module Ruflet
     # host verbatim.
     #
     # A `fetcher:` can be injected for tests.
-    def erb_to_native(page, start_url: "/", layout: nil, **opts)
-      opts[:fetcher] ||= HtmlDsl::TemplateSource.new(layout: layout)
+    def erb_to_native(page, start_url: "/", **opts)
+      opts[:fetcher] ||= HtmlDsl::TemplateSource.new
       HtmlDsl::HtmlApp.new(page, start_url: start_url, **opts).start
     end
   end

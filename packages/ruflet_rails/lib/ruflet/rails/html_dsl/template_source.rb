@@ -24,9 +24,7 @@ module Ruflet
       class TemplateSource
         Response = Struct.new(:status, :body, :url, keyword_init: true)
 
-        def initialize(view_paths: nil, layout: nil)
-          @view_paths = view_paths
-          @layout = layout
+        def initialize
           @controllers = {}
           @session = indifferent({})
           @templates = {}
@@ -80,11 +78,10 @@ module Ruflet
         end
 
         # Params arrive from a form's fields and from trailing path segments
-        # (/native/device/camera), not from a Rack env.
+        # (/native/device_feature/camera -> id "camera"), not from a Rack env.
         def assign_params(controller, form_params, path_params)
           values = {}
           Array(path_params).each_with_index { |value, index| values[index.zero? ? "id" : "param#{index}"] = value }
-          values["feature"] = path_params.first if path_params.respond_to?(:first) && path_params.first
           (form_params || {}).each { |key, value| values[key.to_s] = value }
           controller.ruflet_screen_params = indifferent(values)
         end
@@ -117,11 +114,7 @@ module Ruflet
           # re-renders on every tap, so a partial-backed screen would narrate
           # every tap into the log. Nothing here is a request; there is nothing
           # for that line to tell anyone.
-          silence_view_logging do
-            next view.render(template: "#{prefix}/#{action}", layout: @layout) if @layout
-
-            template_for_render(prefix, action).render(view, {})
-          end
+          silence_view_logging { template_for_render(prefix, action).render(view, {}) }
         end
 
         # Per-thread, so a concurrent web request keeps its own logging.
@@ -221,7 +214,7 @@ module Ruflet
         def view_class = self.class.view_class
 
         def build_lookup_context(prefixes = [])
-          ActionView::LookupContext.new(@view_paths || ::ActionController::Base.view_paths, {}, prefixes)
+          ActionView::LookupContext.new(::ActionController::Base.view_paths, {}, prefixes)
         end
 
 
