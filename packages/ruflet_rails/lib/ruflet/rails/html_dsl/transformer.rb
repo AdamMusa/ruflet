@@ -325,7 +325,7 @@ module Ruflet
               register_on_load(element)
               service_handler(element)
             elsif element["on-click"]
-              action_handler(element["on-click"], default_method: "post")
+              action_handler(element["on-click"])
             elsif element["href"]
               navigation_handler(element["href"], element["nav"] || "push")
             elsif form
@@ -439,8 +439,7 @@ module Ruflet
         def build_form(element, styles)
           form = {
             action: element["action"].to_s,
-            method: (element["method"] || "post").downcase,
-            fields: {}
+                        fields: {}
           }
           children = build_children(element.children, form: form)
           wrap_in_box(column(children, **flex_props(styles, axis: "column")), styles)
@@ -546,7 +545,7 @@ module Ruflet
           props[:trailing] = element["trailing"] if element["trailing"]
           handler =
             if element["on-click"]
-              action_handler(element["on-click"], default_method: "post")
+              action_handler(element["on-click"])
             elsif element["href"]
               navigation_handler(element["href"], element["nav"] || "push")
             end
@@ -641,7 +640,7 @@ module Ruflet
           props[:label] = element["label"] || collapse_whitespace(element.text)
           props[:leading] = element["icon"] if element["icon"]
           if element["on-click"]
-            props[:on_click] = action_handler(element["on-click"], default_method: "post")
+            props[:on_click] = action_handler(element["on-click"])
           elsif element["href"]
             props[:on_click] = navigation_handler(element["href"], element["nav"] || "push")
           end
@@ -668,7 +667,7 @@ module Ruflet
           props[:content] = text(label) unless label.to_s.empty?
           handler =
             if element["on-click"]
-              action_handler(element["on-click"], default_method: "post")
+              action_handler(element["on-click"])
             elsif element["href"]
               navigation_handler(element["href"], element["nav"] || "push")
             end
@@ -1003,7 +1002,7 @@ module Ruflet
 
         def appbar_action_handler(action)
           if action["on-click"]
-            action_handler(action["on-click"], default_method: "post")
+            action_handler(action["on-click"])
           else
             navigation_handler(action["href"].to_s, action["nav"] || "push")
           end
@@ -1018,10 +1017,13 @@ module Ruflet
 
         # `on-click="post:/counter/increment"`, `on-click="/refresh"` (POST by
         # default), `on-click="get:/search"`.
-        def action_handler(spec, default_method:)
-          method, url = parse_action(spec, default_method)
+        # An on-click names the screen path whose method to run. It used to
+        # carry an HTTP verb ("post:/x"); nothing dispatches a request now, so
+        # a leading verb is stripped rather than obeyed.
+        def action_handler(spec)
+          url = spec.to_s.sub(%r{\A(?:get|post|put|patch|delete):}i, "")
           handlers = @handlers
-          ->(_event) { handlers.action(method: method, url: url) }
+          ->(_event) { handlers.action(url: url) }
         end
 
         def submit_handler(form)
@@ -1043,14 +1045,6 @@ module Ruflet
           @handlers.field_changed(name, initial) if @handlers.respond_to?(:field_changed)
         end
 
-        def parse_action(spec, default_method)
-          spec = spec.to_s
-          if spec =~ /\A(get|post|put|patch|delete):(.+)\z/i
-            [Regexp.last_match(1).downcase, Regexp.last_match(2)]
-          else
-            [default_method, spec]
-          end
-        end
 
         def event_value(event)
           data = event.respond_to?(:data) ? event.data : event
@@ -1068,7 +1062,7 @@ module Ruflet
           return control unless spec
           return control if SELF_CLICKING_TAGS.include?(element.tag)
 
-          gesture_detector(content: control, on_tap: action_handler(spec, default_method: "post"))
+          gesture_detector(content: control, on_tap: action_handler(spec))
         end
 
         # --- props & styling -------------------------------------------------------

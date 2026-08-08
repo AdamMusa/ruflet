@@ -22,7 +22,7 @@ module Ruflet
       # an ordinary `@count` survives from one tap to the next.
       #
       class TemplateSource
-        Response = Struct.new(:status, :body, :url, keyword_init: true)
+        Response = Struct.new(:body, :url, keyword_init: true)
 
         def initialize
           @controllers = {}
@@ -31,7 +31,7 @@ module Ruflet
           @lookups = {}
         end
 
-        def fetch(_method, url, params: nil)
+        def fetch(url, params: nil)
           path = URI.parse(url.to_s).path.to_s
           screen = NativeScreens.resolve(path)
           return missing(url, path) unless screen
@@ -47,9 +47,9 @@ module Ruflet
           own = template_action(screen)
           invoke(controller, own) if own && own != screen[:action].to_s
 
-          Response.new(status: 200, body: render(screen, controller), url: url)
+          Response.new(body: render(screen, controller), url: url)
         rescue StandardError => e
-          Response.new(status: 500, body: failure_markup(path, e), url: url)
+          Response.new(body: failure_markup(path, e), url: url)
         end
 
         private
@@ -219,7 +219,7 @@ module Ruflet
 
 
         def missing(url, path)
-          Response.new(status: 404, body: <<~HTML, url: url)
+          Response.new(body: <<~HTML, url: url)
             <column class="p-6 gap-2">
               <h3>No screen for #{ERB::Util.html_escape(path)}</h3>
               <text class="text-slate-500">No controller action matches this path.</text>

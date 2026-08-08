@@ -24,7 +24,7 @@ module Ruflet
           end
 
           def navigate(url, mode) = @app.navigate(url, mode)
-          def action(method:, url:) = @app.action(method: method, url: url, from: @screen)
+          def action(url:) = @app.action(url: url, from: @screen)
           def submit_form(form) = @app.submit_form(form, from: @screen)
           def field_changed(name, value) = @screen.fields[name] = value
           def service(spec) = @app.run_service(spec)
@@ -73,11 +73,11 @@ module Ruflet
 
         # An `on-click` action: run the method the URL names, then re-render
         # the screen it was tapped on with the markup that comes back.
-        def action(method:, url:, from: nil)
+        def action(url:, from: nil)
           screen = from || @screens.last
           return unless screen
 
-          response = request(method, absolute_url(url))
+          response = request(absolute_url(url))
           rerender(screen, response)
         end
 
@@ -89,7 +89,7 @@ module Ruflet
             value = screen.fields.key?(name) ? screen.fields[name] : form[:fields][name]
             collected[name] = value.nil? ? "" : value
           end
-          response = request(form[:method], absolute_url(form[:action]), params: params)
+          response = request(absolute_url(form[:action]), params: params)
           rerender(screen, response)
         end
 
@@ -394,7 +394,7 @@ module Ruflet
           invalidate_pending_services
           screen = Screen.new(url: url, root: root, fields: {})
           screen.route = root ? "/" : "/screen/#{@route_seq += 1}"
-          response = request("get", url)
+          response = request(url)
           result = render_result(screen, response)
           screen.view = build_view(screen, result)
           remember_chrome(screen, result)
@@ -1165,15 +1165,14 @@ module Ruflet
         def render_result(screen, response)
           screen.url = response.url.to_s unless response.url.to_s.empty?
           screen.fields = {}
-          body = error_status?(response.status) ? server_error_markup(response) : response.body.to_s
+          body = response.body.to_s
           # Strings sliced from a binary body would go over the wire as
           # msgpack bin (byte arrays on the client); make sure we parse UTF-8.
           body = body.dup.force_encoding(Encoding::UTF_8) if body.encoding == Encoding::ASCII_8BIT
           result = transform(screen, body)
           screen.title = result.title
           if result.controls.empty?
-            message = response.status.to_i >= 400 ? "HTTP #{response.status} — #{screen.url}" : "Empty screen"
-            result.controls = [container(content: text(message), alignment: { x: 0, y: 0 }, expand: true)]
+            result.controls = [container(content: text("Empty screen"), alignment: { x: 0, y: 0 }, expand: true)]
           end
           result
         end
@@ -1197,28 +1196,7 @@ module Ruflet
           nil
         end
 
-        # 422 is the Rails convention for re-rendering a form with validation
-        # errors — that body is a real screen. Other error statuses carry a
-        # Rails error page (dev exception pages are a full web document).
-        def error_status?(status)
-          status = status.to_i
-          status >= 400 && status != 422
-        end
 
-        # Surface the error page's title as a compact native screen instead of
-        # trying to render the page itself.
-        def server_error_markup(response)
-          title = response.body.to_s[%r{<title>(.*?)</title>}m, 1].to_s.strip
-          title = "Server error" if title.empty?
-          <<~HTML
-            <column class="p-6 gap-2">
-              <h3>HTTP #{response.status}</h3>
-              <text class="font-semibold text-red-600">#{ERB::Util.html_escape(title)}</text>
-              <text class="text-slate-500">#{ERB::Util.html_escape(response.url)}</text>
-              <text class="text-sm text-slate-400">Check the Rails server log for the full trace.</text>
-            </column>
-          HTML
-        end
 
         def build_view(screen, result)
           args = { route: screen.route }
@@ -1263,10 +1241,10 @@ module Ruflet
 
         # --- HTTP -----------------------------------------------------------------
 
-        def request(method, url, params: nil)
-          @fetcher.fetch(method, url, params: params)
+        def request(url, params: nil)
+          @fetcher.fetch(url, params: params)
         rescue StandardError => e
-          TemplateSource::Response.new(status: 0, body: error_markup(url, e), url: url)
+          TemplateSource::Response.new(body: error_markup(url, e), url: url)
         end
 
         def error_markup(url, error)

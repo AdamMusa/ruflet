@@ -20,7 +20,7 @@ class RufletHtmlDslHelpersTest < Minitest::Test
     end
 
     def navigate(url, mode) = @navigations << [url, mode]
-    def action(method:, url:) = @actions << [method, url]
+    def action(url:) = @actions << url
     def submit_form(form) = @submissions << form
     def field_changed(name, value); end
     def control_event(spec, event) = @control_events << [spec, event]
@@ -155,7 +155,7 @@ class RufletHtmlDslHelpersTest < Minitest::Test
     assert_equal 32, heading.props["size"]
 
     find(column, "filledbutton").emit("click", nil)
-    assert_equal [["post", "/inc"]], handlers.actions
+    assert_equal ["/inc"], handlers.actions
 
     find(column, "textbutton").emit("click", nil)
     assert_equal [["/settings", "push"]], handlers.navigations

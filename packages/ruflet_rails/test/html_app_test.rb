@@ -5,7 +5,7 @@ require_relative "test_helper"
 # HTML-over-the-wire native app: pages fetched from Rails become screens of
 # real Ruflet controls, links push native screens, actions re-render in place.
 class RufletHtmlAppTest < Minitest::Test
-  # Serves canned HTML per method+path and records every request.
+  # Serves canned HTML per path and records every screen asked for.
   class StubFetcher
     Response = Ruflet::Rails::HtmlDsl::TemplateSource::Response
 
@@ -16,12 +16,12 @@ class RufletHtmlAppTest < Minitest::Test
       @requests = []
     end
 
-    def fetch(method, url, params: nil, headers: {})
-      @requests << { method: method.to_s, url: url, params: params, headers: headers }
+    def fetch(url, params: nil)
+      @requests << { url: url, params: params }
       path = URI.parse(url).path
-      body = @pages.fetch("#{method} #{path}") { @pages.fetch(path, "<text>missing #{path}</text>") }
+      body = @pages.fetch(path, "<text>missing #{path}</text>")
       body = body.call(params) if body.respond_to?(:call)
-      Response.new(status: 200, body: body, url: url)
+      Response.new(body: body, url: url)
     end
   end
 
@@ -87,7 +87,7 @@ class RufletHtmlAppTest < Minitest::Test
     count = 0
     pages = {
       "/" => -> (_params) { "<text>count #{count}</text><button on-click=\"/inc\">+</button>" },
-      "post /inc" => -> (_params) { count += 1; "<text>count #{count}</text><button on-click=\"/inc\">+</button>" }
+      "/inc" => -> (_params) { count += 1; "<text>count #{count}</text><button on-click=\"/inc\">+</button>" }
     }
     start(pages)
 
@@ -96,7 +96,6 @@ class RufletHtmlAppTest < Minitest::Test
 
     assert_equal 1, @page.views.length
     assert_equal "count 1", find(@page.views.first, "text").props["value"]
-    assert_equal "post", @fetcher.requests.last["method"] || @fetcher.requests.last[:method]
   end
 
   def test_form_submits_tracked_field_values
@@ -111,7 +110,7 @@ class RufletHtmlAppTest < Minitest::Test
           </form>
         </body></html>
       HTML
-      "post /session" => ->(params) { submitted = params; "<text>done</text>" }
+      "/session" => ->(params) { submitted = params; "<text>done</text>" }
     }
     start(pages)
 
@@ -611,13 +610,13 @@ class RufletHtmlAppTest < Minitest::Test
     assert_equal "auto", body.props["scroll"]
   end
 
-  # Net::HTTP returns ASCII-8BIT bodies; binary text values would be packed
-  # as msgpack bin and render as byte arrays on the client.
+  # A template can hand back an ASCII-8BIT body; binary text values would be
+  # packed as msgpack bin and render as byte arrays on the client.
   def test_binary_response_bodies_become_utf8_text
     fetcher = Object.new
-    def fetcher.fetch(_m, url, params: nil, headers: {})
+    def fetcher.fetch(url, params: nil)
       body = "<text>Ruflet Native — démo</text>".dup.force_encoding(Encoding::ASCII_8BIT)
-      Ruflet::Rails::HtmlDsl::TemplateSource::Response.new(status: 200, body: body, url: url)
+      Ruflet::Rails::HtmlDsl::TemplateSource::Response.new(body: body, url: url)
     end
     Ruflet::Rails.erb_to_native(@page, start_url: "https://app.test/", fetcher: fetcher)
 
@@ -626,23 +625,6 @@ class RufletHtmlAppTest < Minitest::Test
     assert_equal "Ruflet Native — démo", value
   end
 
-  def test_server_error_pages_render_a_compact_error_screen
-    fetcher = Object.new
-    def fetcher.fetch(_m, url, params: nil, headers: {})
-      Ruflet::Rails::HtmlDsl::TemplateSource::Response.new(
-        status: 500,
-        body: "<html><head><title>ActionController::RoutingError</title></head>" \
-              '<body><header><button onclick="x()">rails page</button></header></body></html>',
-        url: url
-      )
-    end
-    Ruflet::Rails.erb_to_native(@page, start_url: "https://app.test/native", fetcher: fetcher)
-
-    texts = find_all_text_values(@page.views.first)
-    assert_includes texts.join(" "), "HTTP 500"
-    assert_includes texts.join(" "), "ActionController::RoutingError"
-    refute_includes texts.join(" "), "rails page"
-  end
 
   def find_all_text_values(node, values = [])
     case node
@@ -729,7 +711,7 @@ class RufletHtmlAppTest < Minitest::Test
     }
     start(
       "/" => markup,
-      "post /up" => lambda { |params|
+      "/up" => lambda { |params|
         count += 1
         markup.call(params)
       }
@@ -752,13 +734,13 @@ class RufletHtmlAppTest < Minitest::Test
     shape = "<column><text>one</text></column>"
     app = start(
       "/" => ->(_params) { shape },
-      "post /toggle" => lambda { |_params|
+      "/toggle" => lambda { |_params|
         shape = "<column><text>one</text><text>two</text></column>"
         shape
       }
     )
 
-    app.action(method: "post", url: "/toggle")
+    app.action(url: "/toggle")
 
     texts = []
     collect = lambda do |node|
@@ -779,7 +761,7 @@ class RufletHtmlAppTest < Minitest::Test
     store = []
     app = start(
       "/" => '<button on-click="post:/items">Add</button>',
-      "post /items" => lambda { |_params|
+      "/items" => lambda { |_params|
         store << "item"
         "<text>added</text>"
       },
