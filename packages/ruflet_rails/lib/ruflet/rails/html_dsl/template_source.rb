@@ -224,9 +224,6 @@ module Ruflet
           ActionView::LookupContext.new(@view_paths || ::ActionController::Base.view_paths, {}, prefixes)
         end
 
-        def lookup_context
-          @lookup_context ||= build_lookup_context
-        end
 
         def missing(url, path)
           Response.new(status: 404, body: <<~HTML, url: url)
@@ -262,10 +259,6 @@ module Ruflet
             @ruflet_screen_params ||= {}
           end
 
-          # There is no request, so a native screen is all there is.
-          def ruflet_native_request?
-            true
-          end
         end
       end
     end
