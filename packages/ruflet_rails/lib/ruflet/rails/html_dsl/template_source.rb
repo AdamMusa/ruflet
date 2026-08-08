@@ -30,6 +30,7 @@ module Ruflet
           @view_paths = view_paths
           @layout = layout
           @controllers = {}
+          @session = indifferent({})
           @templates = {}
           @lookups = {}
         end
@@ -60,6 +61,10 @@ module Ruflet
         def build_controller(klass)
           instance = klass.new
           instance.singleton_class.include(ScreenContext)
+          # One session for the connection, shared by every screen in it. A
+          # controller keeps `session[:count]` working with no request behind
+          # it, and screens can hand state to each other as they always have.
+          instance.ruflet_screen_session = @session
           instance
         end
 
@@ -76,12 +81,13 @@ module Ruflet
           Array(path_params).each_with_index { |value, index| values[index.zero? ? "id" : "param#{index}"] = value }
           values["feature"] = path_params.first if path_params.respond_to?(:first) && path_params.first
           (form_params || {}).each { |key, value| values[key.to_s] = value }
-          controller.ruflet_screen_params =
-            if defined?(::ActiveSupport::HashWithIndifferentAccess)
-              ::ActiveSupport::HashWithIndifferentAccess.new(values)
-            else
-              values
-            end
+          controller.ruflet_screen_params = indifferent(values)
+        end
+
+        def indifferent(values)
+          return values unless defined?(::ActiveSupport::HashWithIndifferentAccess)
+
+          ::ActiveSupport::HashWithIndifferentAccess.new(values)
         end
 
         # The screen a method belongs to. `counter_increment` has no template of
@@ -229,7 +235,13 @@ module Ruflet
         # Gives a plain controller instance the few things a screen needs
         # without a request behind it.
         module ScreenContext
-          attr_writer :ruflet_screen_params
+          attr_writer :ruflet_screen_params, :ruflet_screen_session
+
+          # Outlives the tap, like a Rails session, but held by the connection
+          # rather than a cookie.
+          def session
+            @ruflet_screen_session ||= {}
+          end
 
           def params
             @ruflet_screen_params ||= {}
