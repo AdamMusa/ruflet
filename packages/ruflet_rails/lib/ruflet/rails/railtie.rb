@@ -3,7 +3,7 @@
 module Ruflet
   module Rails
     class Railtie < ::Rails::Railtie
-      # Make ruflet_frame and friends available in every .erb template.
+      # Make the native view helpers available in every .erb template.
       initializer "ruflet_rails.view_helpers" do
         ActiveSupport.on_load(:action_view) do
           include Ruflet::Rails::ViewHelpers
@@ -16,21 +16,6 @@ module Ruflet
       initializer "ruflet_rails.controller_helpers" do
         ActiveSupport.on_load(:action_controller) do
           include Ruflet::Rails::ControllerHelpers
-        end
-      end
-
-      # Screens resolve by convention instead of by declaration, so an app's
-      # routes.rb holds only its own routes plus the one WebSocket mount. The
-      # catch-all is appended (it runs after every declared route, never
-      # shadowing one) and is constrained to Ruflet sessions, so it adds no
-      # public surface: a browser on the same path still falls through to the
-      # app's own routing, normally a 404.
-      initializer "ruflet_rails.native_screens" do |app|
-        app.routes.append do
-          match "/*ruflet_screen",
-                to: Ruflet::Rails::NativeScreens::Dispatcher.new,
-                via: :all,
-                constraints: ->(request) { Ruflet::Rails::NativeScreens.native_request?(request) }
         end
       end
 
@@ -48,11 +33,6 @@ module Ruflet
           desc "Build Ruflet native client for this Rails app. Usage: rake ruflet:build[platform]"
           task :build, [:platform] do |_task, args|
             platform = args[:platform].to_s.strip.downcase
-
-            if platform == "web"
-              warn "ruflet_rails does not build the web client. Install the prebuilt web client with: rake ruflet:web"
-              next
-            end
 
             cfg        = Ruflet::Rails.config
             ruflet_url = cfg.backend_url.to_s.strip
@@ -87,12 +67,6 @@ module Ruflet
               end
             end
             raise SystemExit, exit_code unless exit_code.to_i.zero?
-          end
-
-          desc "Install the prebuilt Ruflet web client into frontend/. Usage: rake ruflet:web"
-          task :web do
-            ok = Ruflet::Rails::WebInstaller.install!(root: ::Rails.root)
-            raise SystemExit, 1 unless ok
           end
 
           desc "Download/update prebuilt Ruflet clients from GitHub releases. Usage: rake ruflet:update[target]"

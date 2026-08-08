@@ -124,14 +124,9 @@ module Ruflet
         value
       end
 
-      # ruflet_rails builds only native clients. The web client is installed
-      # prebuilt (rake ruflet:web), never compiled, so "web" is not a build
-      # target here.
       def build_args_for_platform(platform, ruflet_url: nil)
         normalized = normalize_build_platform(platform)
         return [] if normalized.to_s.empty?
-        return [] if normalized == "web"
-
         [normalized]
       end
 
@@ -141,10 +136,6 @@ module Ruflet
 
       def route_snippet(entrypoint: default_entrypoint_path, mount_path: "/ws", helper: "native")
         %(match "#{mount_path}", to: Ruflet::Rails.#{helper}(Rails.root.join("#{entrypoint}")), via: :all)
-      end
-
-      def web_route_snippet(entrypoint: default_entrypoint_path, mount_path: "/ruflet")
-        %(mount Ruflet::Rails.web(app_file: Rails.root.join("#{entrypoint}")), at: "#{mount_path}")
       end
 
       def install_next_steps(target:, entrypoint:, client:, mount_path: "/ws")
@@ -164,13 +155,6 @@ module Ruflet
             "To launch desktop for a dev server run: bin/rails s --desktop or bin/dev --desktop",
             "To download the prebuilt desktop client: bin/rails ruflet:update[desktop]",
             "To build the host desktop client: bin/rails ruflet:build[desktop]"
-          ]
-        end
-
-        if %w[web all].include?(client.to_s)
-          lines += [
-            "Web client installed into frontend/.",
-            "Open the mounted Ruflet web app at http://localhost:3000/ruflet"
           ]
         end
 

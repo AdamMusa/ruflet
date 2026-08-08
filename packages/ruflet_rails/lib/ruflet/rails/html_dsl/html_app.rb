@@ -48,11 +48,10 @@ module Ruflet
           self
         end
 
-        # Screens run through Rails routing + controllers, dispatched in-process
-        # against the running app (a function call, not network HTTP), so the
-        # whole session stays on its single WebSocket thread.
+        # Screens are rendered in the session itself, with no request behind
+        # them, so the whole session stays on its single WebSocket thread.
         def default_fetcher
-          RackFetcher.new
+          TemplateSource.new
         end
 
         # --- navigation ---------------------------------------------------------
@@ -1273,7 +1272,7 @@ module Ruflet
           headers["X-CSRF-Token"] = token if token && method.to_s.downcase != "get"
           @fetcher.fetch(method, url, params: params, headers: headers)
         rescue StandardError => e
-          RackFetcher::Response.new(status: 0, body: error_markup(url, e), url: url)
+          TemplateSource::Response.new(status: 0, body: error_markup(url, e), url: url)
         end
 
         def error_markup(url, error)

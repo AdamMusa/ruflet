@@ -21,10 +21,8 @@ module Ruflet
       # the controller instance, which is held for the life of the session, so
       # an ordinary `@count` survives from one tap to the next.
       #
-      # It satisfies the same interface as RackFetcher, so HtmlApp's
-      # navigation, diffing, forms and services all work unchanged.
       class TemplateSource
-        Response = RackFetcher::Response
+        Response = Struct.new(:status, :body, :url, keyword_init: true)
 
         def initialize(view_paths: nil, layout: nil)
           @view_paths = view_paths
@@ -161,7 +159,7 @@ module Ruflet
           @templates = {}
           @lookups = {}
           @template_actions = {}
-          @view_class = nil
+          self.class.reset_view_class!
         end
 
         def template_mtime(template)
@@ -205,12 +203,22 @@ module Ruflet
           end
         end
 
-        # One view class for the session: a template compiles its partials into
-        # the class that rendered it, so a fresh class per render leaves those
-        # methods behind on the previous one.
-        def view_class
-          @view_class ||= ActionView::Base.with_empty_template_cache
+        # One view class for the whole process, not per session. ActionView
+        # caches compiled templates process-wide, and a template compiles its
+        # render method into the class that first rendered it — so a class per
+        # session hands the second connection a template that believes it is
+        # already compiled, and every screen it shares raises NoMethodError.
+        class << self
+          def view_class
+            @view_class ||= ActionView::Base.with_empty_template_cache
+          end
+
+          def reset_view_class!
+            @view_class = nil
+          end
         end
+
+        def view_class = self.class.view_class
 
         def build_lookup_context(prefixes = [])
           ActionView::LookupContext.new(@view_paths || ::ActionController::Base.view_paths, {}, prefixes)

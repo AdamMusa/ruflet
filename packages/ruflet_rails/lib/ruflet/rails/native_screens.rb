@@ -30,13 +30,6 @@ module Ruflet
 
       module_function
 
-      # Only a Ruflet session may reach a screen. A browser hitting the same
-      # path gets whatever the app's own routes say — normally a 404 — so
-      # screens are not a second, undeclared public surface.
-      def native_request?(request)
-        request.get_header("HTTP_X_RUFLET_NATIVE").to_s == "1"
-      end
-
       # "/native/counter/increment" -> ["native", ["counter", "increment"]]
       def split_path(path)
         segments = path.to_s.split("/").reject(&:empty?)
@@ -99,35 +92,6 @@ module Ruflet
         nil
       end
 
-      # Rack app the Railtie installs as a catch-all. Resolving here rather than
-      # in the routing table is the whole point: no screen needs declaring.
-      class Dispatcher
-        def call(env)
-          request = ::ActionDispatch::Request.new(env)
-          screen = NativeScreens.resolve(request.path)
-          return not_found(request.path) unless screen
-
-          assign_params(env, screen[:params])
-          screen[:controller].action(screen[:action]).call(env)
-        end
-
-        private
-
-        # Extra path segments arrive as params, so a screen can be
-        # parameterised without a route declaring the segment's name.
-        def assign_params(env, values)
-          return if values.empty?
-
-          params = env["action_dispatch.request.path_parameters"] || {}
-          params = params.merge(id: values.first, screen_params: values)
-          env["action_dispatch.request.path_parameters"] = params
-        end
-
-        def not_found(path)
-          body = "No Ruflet screen for #{path}"
-          [404, { "content-type" => "text/plain", "content-length" => body.bytesize.to_s }, [body]]
-        end
-      end
     end
   end
 end

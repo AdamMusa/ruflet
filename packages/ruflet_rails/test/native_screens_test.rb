@@ -103,14 +103,5 @@ class RufletNativeScreensTest < Minitest::Test
 
   # Rails' own Request is not loaded here (the gem's tests run without Rails),
   # and native_request? only ever asks for the header.
-  class StubRequest
-    def initialize(headers) = @headers = headers
-    def get_header(name) = @headers[name]
-  end
 
-  def test_only_a_ruflet_session_may_reach_a_screen
-    assert Ruflet::Rails::NativeScreens.native_request?(StubRequest.new("HTTP_X_RUFLET_NATIVE" => "1"))
-    refute Ruflet::Rails::NativeScreens.native_request?(StubRequest.new({}))
-    refute Ruflet::Rails::NativeScreens.native_request?(StubRequest.new("HTTP_X_RUFLET_NATIVE" => "0"))
-  end
 end

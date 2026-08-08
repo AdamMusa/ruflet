@@ -6,9 +6,8 @@ require "ruflet/rails/install_support"
 module Ruflet
   module Generators
     class InstallGenerator < ::Rails::Generators::Base
-      class_option :web, type: :boolean, default: false, desc: "Install the prebuilt Ruflet web client"
       class_option :desktop, type: :boolean, default: false, desc: "Download the server-driven desktop Ruflet client"
-      class_option :client, type: :string, default: nil, desc: "Install prebuilt clients: web, desktop, all, or none"
+      class_option :client, type: :string, default: nil, desc: "Install prebuilt clients: desktop or none"
 
       desc "Install Ruflet into a Rails app."
 
@@ -36,17 +35,6 @@ module Ruflet
         route Ruflet::Rails::InstallSupport.route_snippet(entrypoint: entrypoint_path)
       end
 
-      def mount_web_app
-        return unless web_requested?
-
-        routes = File.join(destination_root, "config", "routes.rb")
-        return unless File.file?(routes)
-        contents = File.read(routes)
-        return if contents.include?("Ruflet::Rails.web(")
-
-        route Ruflet::Rails::InstallSupport.web_route_snippet(entrypoint: entrypoint_path)
-      end
-
       def add_desktop_flag_to_binstubs
         return unless desktop_requested?
 
@@ -58,7 +46,6 @@ module Ruflet
         client = requested_client
         return if client == "none"
 
-        install_web_client if %w[web all].include?(client)
         install_desktop_client if %w[desktop all].include?(client)
       rescue StandardError => e
         @client_download_failed = true
@@ -86,13 +73,11 @@ module Ruflet
       def requested_client
         explicit = options[:client].to_s.strip.downcase
         unless explicit.empty?
-          raise Thor::Error, "--client must be web, desktop, all, or none" unless %w[web desktop all none].include?(explicit)
+          raise Thor::Error, "--client must be desktop or none" unless %w[desktop none].include?(explicit)
 
           return explicit
         end
 
-        return "all" if options[:web] && options[:desktop]
-        return "web" if options[:web]
         return "desktop" if options[:desktop]
 
         "none"
@@ -102,18 +87,8 @@ module Ruflet
         %w[desktop all].include?(requested_client)
       end
 
-      def web_requested?
-        %w[web all].include?(requested_client)
-      end
-
       def install_target
         "ruflet"
-      end
-
-      def install_web_client
-        return if Ruflet::Rails::WebInstaller.install!(root: destination_root)
-
-        client_download_failed("web")
       end
 
       def install_desktop_client

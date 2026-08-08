@@ -3,7 +3,6 @@
 require_relative "html_dsl/parser"
 require_relative "html_dsl/styles"
 require_relative "html_dsl/transformer"
-require_relative "html_dsl/rack_fetcher"
 require_relative "html_dsl/template_source"
 require_relative "html_dsl/control_diff"
 require_relative "html_dsl/html_app"
@@ -38,10 +37,9 @@ module Ruflet
     # configuring anything. A full URL is still accepted, and then names the
     # host verbatim.
     #
-    # A `fetcher:` can be injected for tests; production uses the in-process
-    # RackFetcher by default.
-    def erb_to_native(page, start_url: "/", template_mode: false, layout: nil, **opts)
-      opts[:fetcher] ||= HtmlDsl::TemplateSource.new(layout: layout) if template_mode
+    # A `fetcher:` can be injected for tests.
+    def erb_to_native(page, start_url: "/", layout: nil, **opts)
+      opts[:fetcher] ||= HtmlDsl::TemplateSource.new(layout: layout)
       HtmlDsl::HtmlApp.new(page, start_url: start_url, **opts).start
     end
   end

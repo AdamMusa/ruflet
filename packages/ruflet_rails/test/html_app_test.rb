@@ -7,7 +7,7 @@ require_relative "test_helper"
 class RufletHtmlAppTest < Minitest::Test
   # Serves canned HTML per method+path and records every request.
   class StubFetcher
-    Response = Ruflet::Rails::HtmlDsl::RackFetcher::Response
+    Response = Ruflet::Rails::HtmlDsl::TemplateSource::Response
 
     attr_reader :requests
 
@@ -618,7 +618,7 @@ class RufletHtmlAppTest < Minitest::Test
     fetcher = Object.new
     def fetcher.fetch(_m, url, params: nil, headers: {})
       body = "<text>Ruflet Native — démo</text>".dup.force_encoding(Encoding::ASCII_8BIT)
-      Ruflet::Rails::HtmlDsl::RackFetcher::Response.new(status: 200, body: body, url: url)
+      Ruflet::Rails::HtmlDsl::TemplateSource::Response.new(status: 200, body: body, url: url)
     end
     Ruflet::Rails.erb_to_native(@page, start_url: "https://app.test/", fetcher: fetcher)
 
@@ -630,7 +630,7 @@ class RufletHtmlAppTest < Minitest::Test
   def test_server_error_pages_render_a_compact_error_screen
     fetcher = Object.new
     def fetcher.fetch(_m, url, params: nil, headers: {})
-      Ruflet::Rails::HtmlDsl::RackFetcher::Response.new(
+      Ruflet::Rails::HtmlDsl::TemplateSource::Response.new(
         status: 500,
         body: "<html><head><title>ActionController::RoutingError</title></head>" \
               '<body><header><button onclick="x()">rails page</button></header></body></html>',

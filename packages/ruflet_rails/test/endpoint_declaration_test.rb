@@ -42,16 +42,4 @@ class RufletEndpointDeclarationTest < Minitest::Test
     end
   end
 
-  def test_web_app_entrypoint_for_app_file_loads_the_ruflet_app
-    Dir.mktmpdir do |dir|
-      file = File.join(dir, "main.rb")
-      File.write(file, "Ruflet.run { |page| page.instance_variable_set(:@rendered, true) }\n")
-
-      page = Ruflet::Page.new(session_id: "e", client_details: { "route" => "/" },
-                              sender: ->(_a, _p) {})
-      Ruflet::Rails.web_app_entrypoint(app_file: file).call(page, {})
-
-      assert_equal true, page.instance_variable_get(:@rendered)
-    end
-  end
 end
