@@ -68,6 +68,21 @@ class RufletHtmlDslTest < Minitest::Test
     assert_equal({ margin: { "left" => 16, "right" => 16 } }, parse.parse("mx-4"))
   end
 
+  # A fractional width is a share of the row. There is no percentage width to
+  # be literal about; the familiar class doing the familiar thing is the point.
+  def test_fractional_widths_split_a_row_by_flex_share
+    result, = transform(<<~HTML)
+      <row><column class="w-1/3"><text>a</text></column><column class="w-2/3"><text>b</text></column></row>
+    HTML
+
+    assert_equal [1, 2], result.controls.first.children.map { |c| c.props["expand"] }
+  end
+
+  # A fixed width is still a width.
+  def test_a_numeric_width_is_unaffected_by_the_fractional_rule
+    assert_equal({ width: 256 }, Ruflet::Rails::HtmlDsl::Styles.parse("w-64"))
+  end
+
   # Tailwind's grid is a ResponsiveRow: only the parent knows the column
   # count, so the slot each child gets cannot come from the style parser.
   def test_grid_cols_becomes_a_responsive_row_with_child_spans

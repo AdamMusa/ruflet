@@ -338,6 +338,12 @@ module Ruflet
           # as a fixed width rather than as a ceiling.
           when /\A(min|max)-(w|h)-(.+)\z/
             apply_constraint(props, Regexp.last_match(1), Regexp.last_match(2), Regexp.last_match(3))
+          # A fractional width is a share of the row, which is what a flex
+          # factor expresses: siblings written 1/3 and 2/3 become 1 and 2 and
+          # split the same way. There is no percentage width to be literal
+          # about, and the familiar class doing the familiar thing is the point.
+          when %r{\Aw-(\d+)/\d+\z}
+            props[:expand] = Regexp.last_match(1).to_i
           when /\Aw-(.+)\z/
             (value = length(Regexp.last_match(1))) && props[:width] = value
           when /\Ah-(.+)\z/
