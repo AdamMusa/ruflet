@@ -439,6 +439,9 @@ module Ruflet
           when "line-clamp-none" then props[:max_lines] = nil
           when /\Aline-clamp-(\d+)\z/
             props.merge!(max_lines: Regexp.last_match(1).to_i, overflow: "ellipsis")
+          # Wrapping is the same prop from either vocabulary.
+          when "break-words", "break-normal", "break-all" then props[:no_wrap] = false
+          when "break-keep" then props[:no_wrap] = true
           when "whitespace-nowrap", "text-nowrap" then props[:no_wrap] = true
           when "whitespace-normal", "text-wrap" then props[:no_wrap] = false
           when "select-none" then props[:selectable] = false
