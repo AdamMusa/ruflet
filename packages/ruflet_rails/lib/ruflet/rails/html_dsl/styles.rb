@@ -147,7 +147,32 @@ module Ruflet
           props
         end
 
+        # Tailwind writes opacity onto the colour itself — bg-slate-900/50,
+        # text-white/70 — and it is how most modern markup dims anything.
+        # Flutter reads the alpha from the front of the hex, so a resolved
+        # #rrggbb becomes #aarrggbb.
         def color_for(token)
+          return nil if token.nil? || token.empty?
+
+          base, alpha = token.split("/", 2)
+          color = opaque_color_for(base)
+          return color if alpha.nil? || color.nil?
+
+          with_alpha(color, alpha)
+        end
+
+        def with_alpha(color, alpha)
+          return color unless color.start_with?("#") && color.length == 7
+
+          return color unless alpha.match?(/\A\d+\z/)
+
+          percent = alpha.to_f
+          return color unless percent <= 100
+
+          "#%02x%s" % [(percent * 255 / 100).round.clamp(0, 255), color.delete_prefix("#")]
+        end
+
+        def opaque_color_for(token)
           return nil if token.nil? || token.empty?
 
           normalized = token.tr("-", "").downcase

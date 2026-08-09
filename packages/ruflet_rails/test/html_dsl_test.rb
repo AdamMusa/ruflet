@@ -59,6 +59,26 @@ class RufletHtmlDslTest < Minitest::Test
 
   # --- parser ---------------------------------------------------------------
 
+  # Tailwind writes opacity onto the colour: bg-slate-900/50, text-white/70.
+  # Flutter reads alpha from the front of the hex.
+  def test_colour_opacity_becomes_alpha_on_the_colour
+    parse = Ruflet::Rails::HtmlDsl::Styles
+
+    assert_equal({ bgcolor: "#800f172a" }, parse.parse("bg-slate-900/50"))
+    assert_equal({ color: "#b3ffffff" }, parse.parse("text-white/70"))
+    assert_equal({ bgcolor: "#00ffffff" }, parse.parse("bg-white/0"))
+    assert_equal({ bgcolor: "#ffffffff" }, parse.parse("bg-white/100"))
+  end
+
+  # An opacity that is not a plain percentage is left alone rather than guessed.
+  def test_a_colour_without_opacity_is_unchanged
+    parse = Ruflet::Rails::HtmlDsl::Styles
+
+    assert_equal({ bgcolor: "#8b5cf6" }, parse.parse("bg-violet-500"))
+    assert_equal({ bgcolor: "#ff0055" }, parse.parse("bg-[#ff0055]"))
+    assert_equal({ bgcolor: "#8b5cf6" }, parse.parse("bg-violet-500/abc"))
+  end
+
   def test_parser_builds_a_tree_with_attributes
     nodes = Parser.parse('<column class="p-4"><text bold>Hi &amp; bye</text><br><img src="/a.png"/></column>')
     column = nodes.first
