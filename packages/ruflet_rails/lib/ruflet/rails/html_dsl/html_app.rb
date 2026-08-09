@@ -443,9 +443,16 @@ module Ruflet
         # cannot match to the control's method signature, which is exactly how
         # the ERB audio buttons ended up doing nothing at all.
         SERVICE_META_KEYS = %w[
-          service method target args toast timeout result-target capture-target preview-target id disabled
+          service method target args toast timeout id disabled
           class icon variant on-load file-name output-path path configuration upload encoder
         ].freeze
+
+        # Anything naming a control to update — result-target, capture-target,
+        # indicator-target, record-target, … — is markup, and apps keep
+        # inventing new ones. Match the shape instead of listing them: an
+        # invented name that leaks becomes an argument the client cannot match
+        # to the method's signature, and the tap silently does nothing.
+        CONTROL_TARGET_ATTRIBUTE = /-target\z/
 
         # Declarative event wiring (`on-loaded-target`, `on-error-prefix`, …) is
         # markup too, and there is one per event, so match them by shape.
@@ -858,6 +865,7 @@ module Ruflet
           args = spec["args"].is_a?(Hash) ? spec["args"].dup : {}
           spec.each do |key, value|
             next if SERVICE_META_KEYS.include?(key)
+            next if CONTROL_TARGET_ATTRIBUTE.match?(key)
             next if DECLARED_EVENT_ATTRIBUTE.match?(key)
             next if value.nil?
 
