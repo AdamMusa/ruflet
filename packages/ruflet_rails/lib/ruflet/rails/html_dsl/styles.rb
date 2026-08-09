@@ -192,6 +192,9 @@ module Ruflet
           # --- spacing ---------------------------------------------------------
           when /\A(p|px|py|pt|pr|pb|pl)-(.+)\z/
             apply_edges(props, :padding, Regexp.last_match(1), Regexp.last_match(2))
+          # Ahead of the margin rule, which matches mx-auto and then discards it
+          # because "auto" is not a length.
+          when "mx-auto", "m-auto" then props[:alignment] = "center"
           when /\A-?(m|mx|my|mt|mr|mb|ml)-(.+)\z/
             apply_edges(props, :margin, Regexp.last_match(1), Regexp.last_match(2), negative: token.start_with?("-"))
           when /\A(?:gap-y|space-y)-(.+)\z/

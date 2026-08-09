@@ -59,6 +59,15 @@ class RufletHtmlDslTest < Minitest::Test
 
   # --- parser ---------------------------------------------------------------
 
+  # mx-auto has to be read before the margin rule, which matches it and then
+  # throws it away because "auto" is not a length.
+  def test_mx_auto_centres_rather_than_being_eaten_by_the_margin_rule
+    parse = Ruflet::Rails::HtmlDsl::Styles
+
+    assert_equal({ alignment: "center" }, parse.parse("mx-auto"))
+    assert_equal({ margin: { "left" => 16, "right" => 16 } }, parse.parse("mx-4"))
+  end
+
   # Tailwind writes opacity onto the colour: bg-slate-900/50, text-white/70.
   # Flutter reads alpha from the front of the hex.
   def test_colour_opacity_becomes_alpha_on_the_colour
