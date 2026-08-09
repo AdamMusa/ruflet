@@ -300,6 +300,29 @@ module Ruflet
         def ruflet_dsl_safe(string)
           string.respond_to?(:html_safe) ? string.html_safe : string
         end
+
+        # Every other control in the registry, reachable the same way.
+        #
+        # A screen is written with <%= %>, so a control without a helper here
+        # fell through to ruflet_core's builder — which returns a live control
+        # object, not markup, and raised inside a template. Naming them all
+        # keeps one way to write a screen: <%= alert_dialog … %>, not a raw tag
+        # for the long tail. The hand-written helpers above are defined first
+        # and are left alone; these only fill the gaps.
+        def self.define_registry_helpers!
+          return unless defined?(::Ruflet::UI::ControlFactory::CLASS_MAP)
+
+          ::Ruflet::UI::ControlFactory::CLASS_MAP.keys.map(&:to_s).uniq.each do |type|
+            name = type.to_sym
+            next if method_defined?(name) || private_method_defined?(name)
+
+            tag = type.tr("_", "-")
+            define_method(name) do |content = nil, **attrs, &block|
+              ruflet_dsl_tag(tag, content, attrs, &block)
+            end
+          end
+        end
+        define_registry_helpers!
       end
     end
   end
