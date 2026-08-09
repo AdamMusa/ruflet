@@ -867,6 +867,17 @@ class RufletHtmlAppTest < Minitest::Test
     assert_equal({ "interval" => "200" }, args)
   end
 
+  # A permission prompt waits on a person. A screen's own timeout says how
+  # patient to be with the hardware and must not cut the human short.
+  def test_an_interactive_timeout_is_never_shorter_than_the_human_floor
+    app = Ruflet::Rails::HtmlDsl::HtmlApp.allocate
+    floor = Ruflet::Rails::HtmlDsl::HtmlApp::INTERACTIVE_TIMEOUT
+
+    assert_equal floor, app.send(:interactive_timeout, { "timeout" => 5 })
+    assert_equal floor, app.send(:interactive_timeout, {})
+    assert_in_delta 180.0, app.send(:interactive_timeout, { "timeout" => 180 }), 0.001
+  end
+
   # --- media URLs ----------------------------------------------------------
   #
   # Screens are dispatched in-process, but the client loads media itself over

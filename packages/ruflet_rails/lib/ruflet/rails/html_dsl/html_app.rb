@@ -538,7 +538,11 @@ module Ruflet
                     next show_service_result("Start error: #{rec[1]}",
                                              title: "Audio recorder failed", target: target)
                   end
-                  unless rec[0]
+                  # A void native method answers with nil, which is not a
+                  # refusal: the recorder reports failure by returning false or
+                  # by raising. Treating nil as failure stopped a recording
+                  # that had in fact started.
+                  if rec[0] == false
                     next show_service_result("The recorder could not start.",
                                              title: "Audio recorder failed", target: target)
                   end
@@ -891,11 +895,16 @@ module Ruflet
         # genuinely needs longer.
         INTERACTIVE_TIMEOUT = 30
 
+        # An interactive call waits on a person answering a permission prompt,
+        # so a declared timeout may lengthen it but never shorten it below the
+        # human floor. A screen asking for 5s meant "the hardware should be
+        # quick", and it silently expired the camera prompt before anyone could
+        # reach it.
         def interactive_timeout(spec)
           declared = spec["timeout"]
-          return declared.to_f unless declared.nil? || declared.to_s.empty?
+          return INTERACTIVE_TIMEOUT if declared.nil? || declared.to_s.empty?
 
-          INTERACTIVE_TIMEOUT
+          [declared.to_f, INTERACTIVE_TIMEOUT].max
         end
 
         # HTML attributes are text, but the client's file APIs want bytes.
