@@ -870,9 +870,19 @@ module Ruflet
             next if DECLARED_EVENT_ATTRIBUTE.match?(key)
             next if value.nil?
 
-            args[key.tr("-", "_")] = value
+            args[key.tr("-", "_")] = coerce_service_value(value)
           end
           args
+        end
+
+        # Markup carries strings. A property being set on a control — open,
+        # modal, disabled — means the boolean, not the word.
+        def coerce_service_value(value)
+          case value
+          when "true" then true
+          when "false" then false
+          else value
+          end
         end
 
         def service_timeout(spec)
