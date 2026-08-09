@@ -816,8 +816,13 @@ module Ruflet
           args = service_args(spec)
           if method == "update"
             @page.update(control, **args.transform_keys(&:to_sym))
-            show_service_result(spec["toast"] || "#{service_label(target)} updated",
-                                title: "Extension", target: spec["result-target"])
+            # Setting a property is not news. Opening a picker announced
+            # "Demo Date Picker updated", and with nowhere to put it that
+            # became a dialog on top of the picker the tap had just opened.
+            # Report only what the screen asked to be told.
+            if spec["toast"] || spec["result-target"]
+              show_service_result(spec["toast"].to_s, title: "Extension", target: spec["result-target"])
+            end
           else
             @page.invoke(
               control, method, args: args.empty? ? nil : args,
