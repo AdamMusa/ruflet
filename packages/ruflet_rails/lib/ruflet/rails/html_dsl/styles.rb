@@ -70,6 +70,26 @@ module Ruflet
 
         BLURS = { "none" => 0, "sm" => 2, nil => 4, "md" => 8, "lg" => 16, "xl" => 24, "2xl" => 40, "3xl" => 64 }.freeze
 
+        # `drop-shadow-*` is CSS's filter spelling of the same effect. Flutter
+        # draws one BoxShadow either way, so both families share SHADOWS; only
+        # the size names differ (drop-shadow has no 3xl-style top end).
+        DROP_SHADOWS = {
+          nil => "sm", "sm" => "sm", "md" => nil, "lg" => "md", "xl" => "lg", "2xl" => "xl", "none" => "none"
+        }.freeze
+
+        # Tailwind blend-mode name → Flutter BlendMode name, which is what a
+        # container's `blend_mode` expects. CSS `normal` is Flutter's default
+        # `srcOver`; `plus-lighter` is the closest thing to Flutter's `plus`.
+        BLEND_MODES = {
+          "normal" => "srcOver", "multiply" => "multiply", "screen" => "screen",
+          "overlay" => "overlay", "darken" => "darken", "lighten" => "lighten",
+          "color-dodge" => "colorDodge", "color-burn" => "colorBurn",
+          "hard-light" => "hardLight", "soft-light" => "softLight",
+          "difference" => "difference", "exclusion" => "exclusion",
+          "hue" => "hue", "saturation" => "saturation", "color" => "color",
+          "luminosity" => "luminosity", "plus-lighter" => "plus"
+        }.freeze
+
         # Fixed rotation angles (degrees) Tailwind ships, → radians.
         ROTATIONS = %w[0 1 2 3 6 12 45 90 180].freeze
 
@@ -176,7 +196,9 @@ module Ruflet
         def parse(class_attr)
           props = {}
           class_attr.to_s.split(/\s+/).each { |token| apply_token(props, token) }
+          finalize_channel_opacity(props)
           finalize_border(props)
+          finalize_shadow(props)
           finalize_gradient(props)
           finalize_animate(props)
           props
@@ -210,9 +232,11 @@ module Ruflet
         def opaque_color_for(token)
           return nil if token.nil? || token.empty?
 
+          return arbitrary_color(Regexp.last_match(1)) if token =~ /\A\[(.+)\]\z/
+
           normalized = token.tr("-", "").downcase
           return NAMED_COLORS[normalized] if NAMED_COLORS.key?(normalized)
-          return token if token.start_with?("#")
+          return normalize_hex(token) if token.start_with?("#")
 
           family, shade = token.split("-", 2)
           shades = PALETTE[family]
@@ -220,6 +244,42 @@ module Ruflet
 
           index = SHADES.index(shade || "500")
           index && shades[index]
+        end
+
+        # Tailwind's arbitrary colour values — bg-[#0f172a], text-[rgb(15_23_42)],
+        # border-[rgba(0,0,0,0.5)]. Tailwind spells spaces as underscores, so
+        # both separators turn up in real markup. Notations Flutter cannot read
+        # (hsl, oklch, var()) are dropped rather than guessed at.
+        def arbitrary_color(body)
+          body = body.tr("_", " ").strip
+          return normalize_hex(body) if body.match?(/\A#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\z/)
+          return nil unless body =~ /\Argba?\(([^)]*)\)\z/i
+
+          parts = Regexp.last_match(1).split(%r{[\s,/]+}).reject(&:empty?)
+          return nil if parts.length < 3
+
+          hex = format("#%02x%02x%02x", *parts[0, 3].map { |part| channel_byte(part) })
+          return hex unless parts[3]
+
+          format("#%02x%s", alpha_byte(parts[3]), hex.delete_prefix("#"))
+        end
+
+        def channel_byte(part)
+          value = part.end_with?("%") ? part.to_f * 255 / 100 : part.to_f
+          value.round.clamp(0, 255)
+        end
+
+        def alpha_byte(part)
+          value = part.end_with?("%") ? part.to_f * 255 / 100 : part.to_f * 255
+          value.round.clamp(0, 255)
+        end
+
+        # Flutter reads #rrggbb and #aarrggbb. CSS's three-digit shorthand is
+        # neither, so expand it; six- and eight-digit forms pass through.
+        def normalize_hex(token)
+          return token unless token =~ /\A#([0-9a-fA-F]{3})\z/
+
+          "##{Regexp.last_match(1).chars.map { |digit| digit * 2 }.join}"
         end
 
         def apply_token(props, token)
@@ -232,10 +292,20 @@ module Ruflet
           when "mx-auto", "m-auto" then props[:alignment] = "center"
           when /\A-?(m|mx|my|mt|mr|mb|ml)-(.+)\z/
             apply_edges(props, :margin, Regexp.last_match(1), Regexp.last_match(2), negative: token.start_with?("-"))
+          # An axis-named gap is only "the" spacing when it runs along the flex's
+          # own axis: space-y-4 is a Column's spacing but a Row's run_spacing.
+          # The class list cannot see the axis, so both readings are recorded —
+          # the row-shaped one under the plain keys (a Row is Tailwind's default
+          # direction) and the axis under :spacing_x/:spacing_y, which the
+          # transformer resolves once it knows which way the parent flexes.
           when /\A(?:gap-y|space-y)-(.+)\z/
-            (value = length(Regexp.last_match(1))) && props[:run_spacing] = value
-          when /\A(?:gap-x|gap|space-x)-(.+)\z/
-            (value = length(Regexp.last_match(1))) && props[:spacing] = value
+            (value = length(Regexp.last_match(1))) && props.merge!(run_spacing: value, spacing_y: value)
+          when /\A(?:gap-x|space-x)-(.+)\z/
+            (value = length(Regexp.last_match(1))) && props.merge!(spacing: value, spacing_x: value)
+          # A bare gap sets both axes, so it needs no resolving: on a wrapping
+          # row it is the gap between items *and* between runs.
+          when /\Agap-(.+)\z/
+            (value = length(Regexp.last_match(1))) && props.merge!(spacing: value, run_spacing: value)
           # --- sizing ----------------------------------------------------------
           when "w-full", "h-full", "w-screen", "h-screen", "min-h-screen", "min-w-full",
                "flex-1", "grow", "expand", "flex-auto", "size-full"
@@ -252,8 +322,15 @@ module Ruflet
           # Tailwind's flex-direction defaults to row, so a fixed basis is a width.
           when /\Abasis-(.+)\z/
             (value = length(Regexp.last_match(1))) && props[:width] = value
-          when /\Aself-(start|center|end)\z/
+          # place-self / justify-self place a child inside its own grid area,
+          # which is the same 2-D Alignment `self-*` resolves to above.
+          when /\A(?:self|place-self|justify-self)-(start|center|end)\z/
             props[:align] = SELF_ALIGN[Regexp.last_match(1)]
+          # `fit` is "shrink to your content", which is MainAxisSize.min —
+          # Ruflet spells it `tight`. It is not a length, so it never becomes a
+          # width or a height. Ahead of the size-/w-/h- rules, which match these
+          # and then drop them.
+          when "w-fit", "h-fit", "size-fit" then props[:tight] = true
           when /\Asize-(.+)\z/
             (value = length(Regexp.last_match(1))) && props.merge!(width: value, height: value)
           # Ahead of the w-/h- rules below, which match `max-w-md` and then drop
@@ -267,25 +344,46 @@ module Ruflet
             (value = length(Regexp.last_match(1))) && props[:height] = value
           when "aspect-square" then props[:aspect_ratio] = 1.0
           when "aspect-video" then props[:aspect_ratio] = 16.0 / 9.0
-          when /\Aaspect-\[(\d+)\/(\d+)\]\z/
+          # Both spellings of a ratio: v3's aspect-[3/2] and v4's bare aspect-3/2.
+          when %r{\Aaspect-\[?(\d+)/(\d+)\]?\z}
             props[:aspect_ratio] = Regexp.last_match(1).to_f / Regexp.last_match(2).to_f
+          # --- flex direction --------------------------------------------------
+          # `horizontal` is what the scrollable list-likes call their axis, and
+          # it is also what tells `<div class="flex flex-row">` to build a Row
+          # rather than the column a div gets by default. Column/Row take their
+          # axis from the tag, so it is dropped there.
+          when /\Aflex-(row|col)(-reverse)?\z/
+            props[:horizontal] = Regexp.last_match(1) == "row"
+            # Only the list-likes (ListView, GridView) can run backwards; a
+            # Column has no `reverse`, so on a flex this is dropped.
+            props[:reverse] = true if Regexp.last_match(2)
           # --- flex alignment --------------------------------------------------
           when /\Aitems-(.+)\z/
             (value = CROSS_AXIS[Regexp.last_match(1)]) && props[:cross_alignment] = value
+          # align-content: how wrapped runs sit against each other.
+          when /\Acontent-(.+)\z/
+            (value = MAIN_AXIS[Regexp.last_match(1)]) && props[:run_alignment] = value
           when /\Ajustify-(.+)\z/
             (value = MAIN_AXIS[Regexp.last_match(1)]) && props[:main_alignment] = value
           # --- positioning (stack children) ------------------------------------
           when /\A-?(top|left|right|bottom)-(.+)\z/
             apply_position(props, Regexp.last_match(1), Regexp.last_match(2), negative: token.start_with?("-"))
-          when /\Ainset-x-(.+)\z/
-            %w[left right].each { |edge| apply_position(props, edge, Regexp.last_match(1)) }
-          when /\Ainset-y-(.+)\z/
-            %w[top bottom].each { |edge| apply_position(props, edge, Regexp.last_match(1)) }
-          when /\Ainset-(.+)\z/
-            %w[top left right bottom].each { |edge| apply_position(props, edge, Regexp.last_match(1)) }
+          when /\A(-)?inset-x-(.+)\z/
+            apply_inset(props, %w[left right], Regexp.last_match(2), negative: !Regexp.last_match(1).nil?)
+          when /\A(-)?inset-y-(.+)\z/
+            apply_inset(props, %w[top bottom], Regexp.last_match(2), negative: !Regexp.last_match(1).nil?)
+          when /\A(-)?inset-(.+)\z/
+            apply_inset(props, %w[top left right bottom], Regexp.last_match(2),
+                        negative: !Regexp.last_match(1).nil?)
           # --- container content alignment -------------------------------------
-          when "place-items-center", "place-content-center", "place-center", "grid-center"
+          when "place-center", "grid-center"
             props[:alignment] = { "x" => 0, "y" => 0 }
+          # place-items / place-content set both axes at once, which is exactly
+          # what a Container's 2-D `alignment` is. Only the three positional
+          # values convert; stretch and the space-* distributions have no
+          # single point to align to.
+          when /\A(?:place-items|place-content)-(start|center|end)\z/
+            props[:alignment] = SELF_ALIGN[Regexp.last_match(1)]
           # --- typography ------------------------------------------------------
           when "text-center", "text-left", "text-right", "text-justify"
             props[:text_align] = token.split("-").last
@@ -293,20 +391,45 @@ module Ruflet
           when "text-clip" then props[:overflow] = "clip"
           when /\Atext-(xs|sm|base|lg|[2-9]?xl)\z/
             props[:size] = TEXT_SIZES[Regexp.last_match(1)]
-          when /\Atext-\[(\d+)(?:px)?\]\z/
-            props[:size] = Regexp.last_match(1).to_i
+          # An arbitrary size — text-[13px], text-[1.125rem]. Deliberately
+          # digit-anchored so it cannot swallow an arbitrary colour
+          # (text-[#0f172a]), which the colour rule below owns.
+          when /\Atext-(\[\d[^\]]*\])\z/
+            (value = length(Regexp.last_match(1))) && props[:size] = value
+          # Legacy channel opacity (text-opacity-70), applied to :color once the
+          # whole class list has been read. Ahead of the text-colour rule, which
+          # matches it and then drops it because "opacity-70" is not a colour.
+          when /\Atext-opacity-(\d+)\z/
+            props[:_color_opacity] = Regexp.last_match(1)
           when /\Atext-(.+)\z/
             (value = color_for(Regexp.last_match(1))) && props[:color] = value
           when /\Afont-(mono|serif|sans)\z/
             props[:font_family] = FONT_FAMILIES[Regexp.last_match(1)]
+          # font-[Inter], font-['Fira Code'] — a named family, quotes and
+          # underscore-for-space undone the way Tailwind writes them.
+          when /\Afont-\[(.+)\]\z/
+            props[:font_family] = Regexp.last_match(1).tr("_", " ").delete("'\"")
           when /\Afont-(.+)\z/
             (value = FONT_WEIGHTS[Regexp.last_match(1)]) && props[:weight] = value
           when "italic" then props[:italic] = true
           when "not-italic" then props[:italic] = false
           when /\Atracking-(tighter|tight|normal|wide|wider|widest)\z/
             props[:letter_spacing] = LETTER_SPACING[Regexp.last_match(1)]
+          # tracking-[2px] / tracking-[0.5]. Flutter's letterSpacing is already
+          # in logical pixels, which is what Tailwind's arbitrary value is too.
+          when /\Atracking-\[(-?[\d.]+)(?:px)?\]\z/
+            props[:letter_spacing] = Regexp.last_match(1).to_f
           when /\Aleading-(none|tight|snug|normal|relaxed|loose)\z/
             props[:line_height] = LINE_HEIGHT[Regexp.last_match(1)]
+          # A unitless arbitrary leading is already a multiplier, which is
+          # exactly what Flutter's `height` is.
+          when /\Aleading-\[([\d.]+)\]\z/
+            props[:line_height] = Regexp.last_match(1).to_f
+          # leading-6 is a length (24px) and `height` is a multiple of the font
+          # size, so the two only meet once the size is known. Held until
+          # finalize, which divides by whatever :size the class list settled on.
+          when /\Aleading-(.+)\z/
+            (value = length(Regexp.last_match(1))) && props[:_leading_px] = value
           when "underline", "overline", "line-through"
             props[:decoration] = (props[:decoration] || 0) | DECORATIONS[token]
           when "no-underline" then props[:decoration] = 0
@@ -321,6 +444,15 @@ module Ruflet
           when "select-none" then props[:selectable] = false
           when "select-text", "select-all" then props[:selectable] = true
           # --- background / gradient ------------------------------------------
+          # A container has one blend_mode, so the two CSS families — blending
+          # the whole box against its backdrop (mix-blend) and blending the
+          # background against its own content (bg-blend) — land on the same
+          # prop. Ahead of the bg-colour rule, which would eat bg-blend-*.
+          when /\A(?:mix-blend|bg-blend)-(.+)\z/
+            (value = BLEND_MODES[Regexp.last_match(1)]) && props[:blend_mode] = value
+          # Legacy channel opacity, applied to :bgcolor in finalize.
+          when /\Abg-opacity-(\d+)\z/
+            props[:_bgcolor_opacity] = Regexp.last_match(1)
           when /\Abg-gradient-to-(tr|tl|br|bl|[trbl])\z/
             props[:_grad_dir] = Regexp.last_match(1)
           when /\Afrom-(.+)\z/
@@ -330,26 +462,64 @@ module Ruflet
           when /\Ato-(.+)\z/
             (value = color_for(Regexp.last_match(1))) && props[:_grad_to] = value
           when /\Abg-\[(#[0-9a-fA-F]+)\]\z/
-            props[:bgcolor] = Regexp.last_match(1)
+            props[:bgcolor] = normalize_hex(Regexp.last_match(1))
           when /\Abg-(.+)\z/
             (value = color_for(Regexp.last_match(1))) && props[:bgcolor] = value
           # --- borders & corners ----------------------------------------------
+          # Logical corners (rounded-s-lg, rounded-se-xl) resolved left-to-right.
+          # Ahead of the physical rule, which matches "rounded-s-lg" as a whole
+          # and then drops it because "s-lg" is neither a named nor a numeric
+          # radius. `s`/`e` cannot simply join that rule's character class:
+          # "rounded-sm" would then parse as a start-side corner plus junk.
+          when /\Arounded-(ss|se|es|ee|s|e)(?:-(.+))?\z/
+            apply_radius(props, "-#{Regexp.last_match(1)}", Regexp.last_match(2))
           when /\Arounded(-[trbl][trbl]?)?(?:-(.+))?\z/
             apply_radius(props, Regexp.last_match(1), Regexp.last_match(2))
+          # Ahead of every other border rule: border-none is a removal, and the
+          # colour rule below would otherwise swallow it and leave an earlier
+          # `border` standing.
+          when "border-none", "border-hidden" then props[:_border_off] = true
           when "border" then set_border(props, width: 1)
           when /\Aborder-(\d+)\z/ then set_border(props, width: Regexp.last_match(1).to_i)
-          when /\Aborder-(t|r|b|l|x|y)(?:-(\d+))?\z/
+          when /\Aborder-(t|r|b|l|x|y|s|e)(?:-(\d+))?\z/
             set_border(props, side: Regexp.last_match(1), width: (Regexp.last_match(2) || 1).to_i)
           when /\Aborder-(.+)\z/
+            (value = color_for(Regexp.last_match(1))) && set_border(props, color: value)
+          # A ring is a stroke drawn round the box and an outline is a stroke
+          # drawn just outside it; Flutter has one stroke per box, so both land
+          # on :border. ring-inset and ring-offset-* have no Flutter spelling
+          # and are dropped. Tailwind's bare `ring` is 3px wide, `outline` 1px.
+          when "ring-inset", "ring-offset-0", "outline-none", "outline-hidden", "outline-0"
+            nil
+          when /\Aring-offset-/ then nil
+          when "ring" then set_border(props, width: 3)
+          when "outline" then set_border(props, width: 1)
+          when /\A(?:ring|outline)-(\d+)\z/
+            width = Regexp.last_match(1).to_i
+            width.zero? ? props[:_border_off] = true : set_border(props, width: width)
+          when /\A(?:ring|outline)-(.+)\z/
             (value = color_for(Regexp.last_match(1))) && set_border(props, color: value)
           # --- effects ---------------------------------------------------------
           when /\Ashadow(?:-(sm|md|lg|xl|2xl|none))?\z/
             props[:shadow] = SHADOWS[Regexp.last_match(1)]
+          when /\Adrop-shadow(?:-(sm|md|lg|xl|2xl|none))?\z/
+            props[:shadow] = SHADOWS[DROP_SHADOWS[Regexp.last_match(1)]]
+          # Tinted shadows (shadow-indigo-500/40). Behind the size rules so it
+          # only sees names they rejected, and deferred to finalize so the pair
+          # composes whichever order the two tokens are written in.
+          when /\A(?:drop-)?shadow-(.+)\z/
+            (value = color_for(Regexp.last_match(1))) && props[:_shadow_color] = value
           when /\Aopacity-(\d+)\z/
             props[:opacity] = Regexp.last_match(1).to_i / 100.0
           when /\Ablur(?:-(none|sm|md|lg|xl|2xl|3xl))?\z/
             props[:blur] = BLURS[Regexp.last_match(1)]
           when /\Ablur-\[(\d+)(?:px)?\]\z/ then props[:blur] = Regexp.last_match(1).to_i
+          # A container's `blur` already *is* a backdrop filter — it blurs what
+          # shows through the box, not the box itself — so the two families
+          # share one prop and one scale.
+          when /\Abackdrop-blur(?:-(none|sm|md|lg|xl|2xl|3xl))?\z/
+            props[:blur] = BLURS[Regexp.last_match(1)]
+          when /\Abackdrop-blur-\[(\d+)(?:px)?\]\z/ then props[:blur] = Regexp.last_match(1).to_i
           # --- transforms ------------------------------------------------------
           when /\A(-?)rotate-(\d+)\z/
             if ROTATIONS.include?(Regexp.last_match(2))
@@ -377,9 +547,18 @@ module Ruflet
           when "wrap", "flex-wrap" then props[:wrap] = true
           when /\Acursor-(.+)\z/
             (value = CURSORS[Regexp.last_match(1)]) && props[:mouse_cursor] = value
+          when "pointer-events-none" then props[:ignore_interactions] = true
+          when "pointer-events-auto" then props[:ignore_interactions] = false
           # --- transitions / implicit animation --------------------------------
-          when /\Atransition(?:-(all|colors|opacity|transform|shadow))?\z/
-            props[:_anim_on] = true
+          # Tailwind names the properties that animate, and Ruflet has a
+          # separate switch per property, so the narrow spellings drive the
+          # narrow props instead of animating everything.
+          when "transition-none" then props[:_anim_off] = true
+          when "transition-opacity" then (props[:_anim_on] ||= []) << :animate_opacity
+          when "transition-transform"
+            (props[:_anim_on] ||= []).concat(%i[animate_offset animate_scale animate_rotation])
+          when /\Atransition(?:-(all|colors|shadow))?\z/
+            (props[:_anim_on] ||= []) << :animate
           when /\Aduration-(\d+)\z/
             props[:_anim_duration] = Regexp.last_match(1).to_i
           when /\Aease-(linear|in-out|in|out)\z/
@@ -391,10 +570,37 @@ module Ruflet
           on = props.delete(:_anim_on)
           duration = props.delete(:_anim_duration)
           curve = props.delete(:_anim_curve)
+          off = props.delete(:_anim_off)
+          return if off
           return unless on || duration || curve
 
           duration ||= 150
-          props[:animate] = curve ? { "duration" => duration, "curve" => curve } : duration
+          value = curve ? { "duration" => duration, "curve" => curve } : duration
+          keys = on.is_a?(Array) && !on.empty? ? on.uniq : [:animate]
+          keys.each { |key| props[key] = value }
+        end
+
+        # bg-opacity-70 / text-opacity-50 — Tailwind's pre-v3 spelling, still
+        # everywhere in real markup. The colour may be written either side of
+        # the opacity, so the two are only combined once the list is read.
+        def finalize_channel_opacity(props)
+          { _bgcolor_opacity: :bgcolor, _color_opacity: :color, _border_opacity: :_border_color }
+            .each do |source, target|
+              alpha = props.delete(source)
+              next unless alpha && props[target]
+
+              props[target] = with_alpha(props[target], alpha)
+            end
+        end
+
+        # shadow-indigo-500 recolours whatever shadow the size tokens chose,
+        # and stands alone as a default-sized shadow in that colour.
+        def finalize_shadow(props)
+          color = props.delete(:_shadow_color)
+          return unless color
+
+          base = props[:shadow] || SHADOWS[nil]
+          props[:shadow] = base.merge("color" => color)
         end
 
         # --- assembly helpers ---------------------------------------------------
@@ -451,6 +657,11 @@ module Ruflet
           return nil if denominator.nil? || denominator.zero?
 
           (numerator / denominator).round(4)
+        end
+
+        # inset-4 / -inset-x-2 — one length pinned to several edges at once.
+        def apply_inset(props, edges, raw, negative: false)
+          edges.each { |edge| apply_position(props, edge, raw, negative: negative) }
         end
 
         def apply_position(props, edge, raw, negative: false)
@@ -540,14 +751,32 @@ module Ruflet
           { "left" => value, "top" => value, "right" => value, "bottom" => value }
         end
 
-        # Tailwind scale (`4` => 16), fractions (`1/2` => 50% is unsupported, skipped),
-        # and arbitrary `[Npx]` values.
+        # A CSS root font size, which is what `rem` is a multiple of. Tailwind's
+        # own scale is built on 16 (`p-4` is 1rem is 16px), so the two agree.
+        ROOT_FONT_SIZE = 16
+
+        # Tailwind scale (`4` => 16), the one-pixel `px` step, and arbitrary
+        # `[…]` values in px/rem/em/pt. Fractions (`w-1/2`) are percentages of a
+        # parent Flutter never resolves at this level, so they stay unsupported.
         def length(raw)
           return nil if raw.nil?
-          return Regexp.last_match(1).to_i if raw =~ /\A\[(\d+)(?:px)?\]\z/
+          # `p-px`/`w-px`/`gap-px` — one physical pixel, not the spacing scale.
+          return 1 if raw == "px"
+          return arbitrary_length(Regexp.last_match(1), Regexp.last_match(2)) if raw =~ /\A\[(-?[\d.]+)(\D*)\]\z/
           return (raw.to_f * SPACING_UNIT).round if raw =~ /\A\d+(\.\d+)?\z/
 
           nil
+        end
+
+        # `w-[32rem]`, `p-[7px]`, `top-[2.5rem]`, `h-[40]`. Everything Flutter
+        # measures is a logical pixel, so relative units resolve against the
+        # root font size and anything else (%, vw, ch) is refused.
+        def arbitrary_length(number, unit)
+          case unit
+          when "", "px" then number.to_f.round
+          when "rem", "em" then (number.to_f * ROOT_FONT_SIZE).round
+          when "pt" then (number.to_f * 4 / 3).round
+          end
         end
       end
     end

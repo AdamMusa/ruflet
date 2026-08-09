@@ -64,7 +64,7 @@ module Ruflet
         # wrapper we build raises and the element renders as a placeholder.
         BOX_STYLE_KEYS = %i[padding margin bgcolor border_radius border shadow opacity
                             width height rotate scale top left right bottom blur
-                            aspect_ratio clip_behavior gradient visible alignment align animate
+                            aspect_ratio clip_behavior gradient visible alignment align animate blend_mode
                             offset animate_offset animate_opacity animate_scale
                             animate_rotation].freeze
         # Every style key a control may pick up when its schema allows it. Excludes
@@ -77,7 +77,7 @@ module Ruflet
                                text_align font_family max_lines no_wrap overflow selectable
                                padding margin border_radius border shadow opacity rotate scale
                                top left right bottom blur aspect_ratio clip_behavior gradient
-                               visible animate offset align mouse_cursor max_width max_height
+                               visible animate offset align blend_mode mouse_cursor max_width max_height
                                min_width min_height animate_offset animate_opacity
                                animate_scale animate_rotation].freeze
 
