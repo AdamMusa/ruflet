@@ -68,6 +68,27 @@ class RufletHtmlDslTest < Minitest::Test
     assert_equal({ margin: { "left" => 16, "right" => 16 } }, parse.parse("mx-4"))
   end
 
+  # Tailwind's grid is a ResponsiveRow: only the parent knows the column
+  # count, so the slot each child gets cannot come from the style parser.
+  def test_grid_cols_becomes_a_responsive_row_with_child_spans
+    result, = transform(<<~HTML)
+      <grid class="grid grid-cols-3 gap-3">
+        <text>a</text><text class="col-span-2">b</text><text>c</text>
+      </grid>
+    HTML
+    grid = result.controls.first
+
+    assert_equal "responsiverow", grid.type
+    assert_equal [4, 8, 4], grid.children.map { |c| c.props["col"] }
+  end
+
+  # A grid with no column count is still an ordinary GridView.
+  def test_a_grid_without_cols_stays_a_grid_view
+    result, = transform("<grid><text>a</text></grid>")
+
+    assert_equal "gridview", result.controls.first.type
+  end
+
   # Tailwind writes opacity onto the colour: bg-slate-900/50, text-white/70.
   # Flutter reads alpha from the front of the hex.
   def test_colour_opacity_becomes_alpha_on_the_colour
