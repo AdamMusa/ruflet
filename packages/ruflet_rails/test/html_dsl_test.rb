@@ -192,7 +192,7 @@ class RufletHtmlDslTest < Minitest::Test
     assert_equal({ width: 48, height: 48 }, Styles.parse("size-12").slice(:width, :height))
     assert_equal 12, Styles.parse("gap-x-3")[:spacing]
     assert_equal 8, Styles.parse("gap-y-2")[:run_spacing]
-    assert_equal 256, Styles.parse("max-w-64")[:width]
+    assert_equal 256, Styles.parse("max-w-64")[:max_width]
     assert_equal true, Styles.parse("w-screen")[:expand]
     assert_equal true, Styles.parse("min-h-screen")[:expand]
     assert_equal({ left: 16, right: 16 }, Styles.parse("inset-x-4").slice(:left, :right))
@@ -210,6 +210,79 @@ class RufletHtmlDslTest < Minitest::Test
     box = result.controls.first
     assert_equal 300, box.props["animate"]
     assert_equal({ "x" => 0, "y" => 0 }, box.props["alignment"])
+  end
+
+  def test_styles_map_min_and_max_constraints
+    assert_equal 448, Styles.parse("max-w-md")[:max_width]
+    assert_equal 1024, Styles.parse("max-w-screen-lg")[:max_width]
+    assert_equal 256, Styles.parse("min-w-64")[:min_width]
+    assert_equal 0, Styles.parse("min-w-0")[:min_width]
+    assert_equal 128, Styles.parse("min-h-32")[:min_height]
+    assert_equal 384, Styles.parse("max-h-96")[:max_height]
+    # Relative ceilings have no pixel value; better nothing than a guess.
+    assert_empty Styles.parse("max-w-full")
+
+    # A constraint is never a fixed size, and the plain w-/h- rules the
+    # constraint rule now precedes must still work.
+    refute Styles.parse("max-w-md").key?(:width)
+    assert_equal 256, Styles.parse("w-64")[:width]
+    assert_equal 128, Styles.parse("h-32")[:height]
+    assert_equal({ width: 48, height: 48 }, Styles.parse("size-12").slice(:width, :height))
+    assert_equal true, Styles.parse("min-h-screen")[:expand]
+    assert_equal 160, Styles.parse("max-w-lg w-40")[:width]
+  end
+
+  def test_styles_map_flex_child_sizing_and_self_alignment
+    assert_equal false, Styles.parse("shrink-0")[:expand]
+    assert_equal false, Styles.parse("flex-none")[:expand]
+    assert_equal false, Styles.parse("grow-0")[:expand]
+    assert_equal true, Styles.parse("flex-1")[:expand]
+
+    # A fractional basis becomes a flex factor: 1/3 and 2/3 split 1:2.
+    assert_equal 1, Styles.parse("basis-1/3")[:expand]
+    assert_equal 2, Styles.parse("basis-2/3")[:expand]
+    assert_equal true, Styles.parse("basis-full")[:expand]
+    assert_equal 256, Styles.parse("basis-64")[:width]
+
+    assert_equal({ "x" => 0, "y" => 0 }, Styles.parse("self-center")[:align])
+    assert_equal({ "x" => -1, "y" => -1 }, Styles.parse("self-start")[:align])
+    assert_equal({ "x" => 1, "y" => 1 }, Styles.parse("self-end")[:align])
+  end
+
+  def test_styles_map_fractional_translation_and_cursors
+    assert_equal({ "x" => 0.5, "y" => 0 }, Styles.parse("translate-x-1/2")[:offset])
+    assert_equal({ "x" => 0, "y" => 1.0 }, Styles.parse("translate-y-full")[:offset])
+    # Both axes share one Offset, so the second translate merges into the first.
+    assert_equal({ "x" => 0.5, "y" => -0.5 },
+                 Styles.parse("translate-x-1/2 -translate-y-1/2")[:offset])
+    # Spacing-scale translations are pixels; Offset is a fraction of the
+    # control's own size, so there is nothing honest to convert them to.
+    assert_empty Styles.parse("-translate-y-2")
+
+    assert_equal "click", Styles.parse("cursor-pointer")[:mouse_cursor]
+    assert_equal "forbidden", Styles.parse("cursor-not-allowed")[:mouse_cursor]
+    assert_equal "wait", Styles.parse("cursor-wait")[:mouse_cursor]
+    assert_equal "text", Styles.parse("cursor-text")[:mouse_cursor]
+    assert_equal "basic", Styles.parse("cursor-default")[:mouse_cursor]
+  end
+
+  def test_constraints_cursor_and_offset_reach_the_control
+    result, = transform('<text class="max-w-md">hi</text>')
+    assert_equal 448, find(result.controls, "text").props["max_width"]
+
+    result, = transform('<container class="translate-x-1/2 -translate-y-1/2">x</container>')
+    assert_equal({ "x" => 0.5, "y" => -0.5 }, result.controls.first.props["offset"])
+
+    result, = transform('<column class="shrink-0"><text>a</text></column>')
+    assert_equal false, find(result.controls, "column").props["expand"]
+
+    result, = transform('<list-tile class="min-h-32 cursor-pointer" title="T"></list-tile>')
+    tile = find(result.controls, "listtile")
+    assert_equal 128, tile.props["min_height"]
+    assert_equal "click", tile.props["mouse_cursor"]
+
+    result, = transform('<button icon="add" class="cursor-pointer"></button>')
+    assert_equal "click", find(result.controls, "iconbutton").props["mouse_cursor"]
   end
 
   def test_styles_map_text_truncation_and_fit

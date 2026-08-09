@@ -83,6 +83,41 @@ module Ruflet
           "none" => "none", "scale-down" => "scaleDown"
         }.freeze
 
+        # Tailwind's named max-width scale, in logical pixels. Numeric forms
+        # (`max-w-64`) go through the ordinary spacing scale instead. Relative
+        # ceilings — full, none, fit, min, max — have no pixel value and are
+        # dropped rather than guessed at.
+        NAMED_WIDTHS = {
+          "xs" => 320, "sm" => 384, "md" => 448, "lg" => 512, "xl" => 576,
+          "2xl" => 672, "3xl" => 768, "4xl" => 896, "5xl" => 1024,
+          "6xl" => 1152, "7xl" => 1280, "prose" => 672,
+          "screen-sm" => 640, "screen-md" => 768, "screen-lg" => 1024,
+          "screen-xl" => 1280, "screen-2xl" => 1536
+        }.freeze
+
+        # Tailwind cursor name → Flutter SystemMouseCursors name, which is what
+        # a control's `mouse_cursor` prop expects.
+        CURSORS = {
+          "pointer" => "click", "not-allowed" => "forbidden", "wait" => "wait",
+          "text" => "text", "default" => "basic", "auto" => "basic",
+          "progress" => "progress", "move" => "move", "grab" => "grab",
+          "grabbing" => "grabbing", "help" => "help", "none" => "none",
+          "copy" => "copy", "cell" => "cell", "alias" => "alias",
+          "no-drop" => "noDrop", "all-scroll" => "allScroll",
+          "crosshair" => "precise", "zoom-in" => "zoomIn", "zoom-out" => "zoomOut",
+          "col-resize" => "resizeColumn", "row-resize" => "resizeRow"
+        }.freeze
+
+        # `self-*` names a cross-axis position, but a control's `align` is a 2-D
+        # Alignment and a class list cannot see which way its parent flexes.
+        # Aligning on both axes is still right: on the main axis a flex child has
+        # no slack to move within, so only the cross-axis component shows.
+        SELF_ALIGN = {
+          "start" => { "x" => -1, "y" => -1 },
+          "center" => { "x" => 0, "y" => 0 },
+          "end" => { "x" => 1, "y" => 1 }
+        }.freeze
+
         # Tailwind gradient direction → begin/end alignment ({x,y} in -1..1).
         GRADIENT_DIRS = {
           "r" => [{ "x" => -1, "y" => 0 }, { "x" => 1, "y" => 0 }],
@@ -205,11 +240,30 @@ module Ruflet
           when "w-full", "h-full", "w-screen", "h-screen", "min-h-screen", "min-w-full",
                "flex-1", "grow", "expand", "flex-auto", "size-full"
             props[:expand] = true
+          # The opposite instruction: hold your natural size, don't take the slack.
+          when "shrink-0", "flex-none", "flex-initial", "grow-0", "basis-auto"
+            props[:expand] = false
+          when "basis-full" then props[:expand] = true
+          # A fractional basis is proportional and `expand` is a flex factor, so
+          # siblings written 1/3 and 2/3 become factors 1 and 2 — the same split.
+          # Only the numerator carries; the denominator is the siblings' concern.
+          when %r{\Abasis-(\d+)/\d+\z}
+            props[:expand] = Regexp.last_match(1).to_i
+          # Tailwind's flex-direction defaults to row, so a fixed basis is a width.
+          when /\Abasis-(.+)\z/
+            (value = length(Regexp.last_match(1))) && props[:width] = value
+          when /\Aself-(start|center|end)\z/
+            props[:align] = SELF_ALIGN[Regexp.last_match(1)]
           when /\Asize-(.+)\z/
             (value = length(Regexp.last_match(1))) && props.merge!(width: value, height: value)
-          when /\A(?:min-|max-)?w-(.+)\z/
+          # Ahead of the w-/h- rules below, which match `max-w-md` and then drop
+          # it (a named width is not a length), and which would file `max-w-64`
+          # as a fixed width rather than as a ceiling.
+          when /\A(min|max)-(w|h)-(.+)\z/
+            apply_constraint(props, Regexp.last_match(1), Regexp.last_match(2), Regexp.last_match(3))
+          when /\Aw-(.+)\z/
             (value = length(Regexp.last_match(1))) && props[:width] = value
-          when /\A(?:min-|max-)?h-(.+)\z/
+          when /\Ah-(.+)\z/
             (value = length(Regexp.last_match(1))) && props[:height] = value
           when "aspect-square" then props[:aspect_ratio] = 1.0
           when "aspect-video" then props[:aspect_ratio] = 16.0 / 9.0
@@ -307,6 +361,12 @@ module Ruflet
             props[:rotate] = (Regexp.last_match(1).to_f * Math::PI / 180).round(4)
           when /\Ascale-(\d+)\z/
             (value = SCALES[Regexp.last_match(1)]) && props[:scale] = value
+          # `offset` translates by a fraction of the control's own size, so only
+          # Tailwind's fractional translations convert exactly. The spacing-scale
+          # forms (`-translate-y-2` = 8px) are pixels and are left alone.
+          when %r{\A(-)?translate-(x|y)-(full|\d+/\d+)\z}
+            apply_translate(props, Regexp.last_match(2), Regexp.last_match(3),
+                            negative: !Regexp.last_match(1).nil?)
           # --- visibility / clipping / image fit -------------------------------
           when "hidden", "invisible" then props[:visible] = false
           when "visible" then props[:visible] = true
@@ -315,6 +375,8 @@ module Ruflet
           when /\Aobject-(contain|cover|fill|none|scale-down)\z/
             props[:fit] = OBJECT_FITS[Regexp.last_match(1)]
           when "wrap", "flex-wrap" then props[:wrap] = true
+          when /\Acursor-(.+)\z/
+            (value = CURSORS[Regexp.last_match(1)]) && props[:mouse_cursor] = value
           # --- transitions / implicit animation --------------------------------
           when /\Atransition(?:-(all|colors|opacity|transform|shadow))?\z/
             props[:_anim_on] = true
@@ -357,6 +419,38 @@ module Ruflet
             return
           end
           props[key] = edges
+        end
+
+        # min-w-64 / max-w-md / min-h-32. A ceiling is a different prop from a
+        # fixed size, so these never touch :width/:height. Only a handful of
+        # controls carry the constraint props (Text has max_width, Window has
+        # all four), which is why the transformer filters them by schema.
+        def apply_constraint(props, bound, axis, raw)
+          value = axis == "w" ? NAMED_WIDTHS[raw] : nil
+          value ||= length(raw)
+          return unless value
+
+          props[:"#{bound}_#{axis == 'w' ? 'width' : 'height'}"] = value
+        end
+
+        # translate-x-1/2, -translate-y-full. Both axes share one Offset, so a
+        # second translate merges into the first rather than replacing it.
+        def apply_translate(props, axis, raw, negative: false)
+          fraction = translate_fraction(raw)
+          return unless fraction
+
+          fraction = -fraction if negative
+          offset = props[:offset].is_a?(Hash) ? props[:offset] : { "x" => 0, "y" => 0 }
+          props[:offset] = offset.merge(axis => fraction)
+        end
+
+        def translate_fraction(raw)
+          return 1.0 if raw == "full"
+
+          numerator, denominator = raw.split("/").map(&:to_f)
+          return nil if denominator.nil? || denominator.zero?
+
+          (numerator / denominator).round(4)
         end
 
         def apply_position(props, edge, raw, negative: false)
