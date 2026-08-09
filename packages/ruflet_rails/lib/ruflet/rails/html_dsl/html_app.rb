@@ -1092,7 +1092,10 @@ module Ruflet
           return unless @service_dialog
 
           @service_request_token += 1
-          @page.update(@service_dialog, open: false)
+          # The dialog is opened with show_dialog, so it is dismissed with
+          # close_dialog. Setting open: false is the other mechanism, and it
+          # left the alert on screen with a Close button that did nothing.
+          @page.close_dialog(@service_dialog)
         rescue StandardError
           nil
         end
