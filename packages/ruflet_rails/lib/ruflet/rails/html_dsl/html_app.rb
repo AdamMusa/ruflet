@@ -538,15 +538,12 @@ module Ruflet
                     next show_service_result("Start error: #{rec[1]}",
                                              title: "Audio recorder failed", target: target)
                   end
-                  # A void native method answers with nil, which is not a
-                  # refusal: the recorder reports failure by returning false or
-                  # by raising. Treating nil as failure stopped a recording
-                  # that had in fact started.
-                  if rec[0] == false
-                    next show_service_result("The recorder could not start.",
-                                             title: "Audio recorder failed", target: target)
-                  end
-
+                  # Nothing else is asked of the return value. start_recording
+                  # is void, and what a void method answers with — nil, false,
+                  # an empty payload — is a property of the bridge, not of
+                  # whether the microphone is live. It reported "could not
+                  # start" while iOS showed the recording indicator. A failure
+                  # arrives as an error above, or not at all.
                   set_audio_recording_state(spec, recording: true)
                   show_service_result("Recording… Speak now.", title: "Audio recorder", target: target)
                 end

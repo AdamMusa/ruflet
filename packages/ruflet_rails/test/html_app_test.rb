@@ -400,7 +400,11 @@ class RufletHtmlAppTest < Minitest::Test
                  @page.get_control("recorder-status").props["value"]
   end
 
-  def test_audio_recorder_does_not_claim_recording_when_native_start_returns_false
+  # start_recording is void. What a void method answers with — nil, false, an
+  # empty payload — says something about the bridge, not about whether the
+  # microphone is live: on a device this returned false while iOS showed the
+  # recording indicator. A refusal has to arrive as an error.
+  def test_audio_recorder_trusts_the_error_channel_not_the_return_value
     @page.define_singleton_method(:get_application_documents_directory) do |on_result: nil, **_|
       on_result&.call("/device/Documents", nil)
     end
@@ -415,7 +419,29 @@ class RufletHtmlAppTest < Minitest::Test
     )
     find_all(@page.views.first, "button").first.emit("click", nil)
 
-    assert_equal "The recorder could not start.",
+    assert_equal "Recording… Speak now.", @page.get_control("recorder-status").props["value"]
+  end
+
+  def test_audio_recorder_reports_a_start_failure_that_arrives_as_an_error
+    @page.define_singleton_method(:get_application_documents_directory) do |on_result: nil, **_|
+      on_result&.call("/device/Documents", nil)
+    end
+    @page.define_singleton_method(:invoke) do |control, _method, args: nil, timeout: 10, on_result: nil|
+      if control.type == "permissionhandler"
+        on_result&.call("granted", nil)
+      else
+        on_result&.call(nil, "microphone is busy")
+      end
+    end
+
+    start(
+      "/" => '<audio-recorder></audio-recorder><permission-handler></permission-handler>' \
+             '<text id="recorder-status">Ready</text>' \
+             '<button service="audio-recorder-start" result-target="recorder-status">Record</button>'
+    )
+    find_all(@page.views.first, "button").first.emit("click", nil)
+
+    assert_equal "Start error: microphone is busy",
                  @page.get_control("recorder-status").props["value"]
   end
 
