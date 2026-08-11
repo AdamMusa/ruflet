@@ -19,7 +19,7 @@ class RufletHtmlDslTest < Minitest::Test
     end
 
     def navigate(url, mode) = @navigations << [url, mode]
-    def action(method:, url:) = @actions << [method, url]
+    def action(url:) = @actions << url
     def submit_form(form) = @submissions << form
     def field_changed(name, value) = @fields[name] = value
     def service(spec) = @services << spec
@@ -272,7 +272,6 @@ class RufletHtmlDslTest < Minitest::Test
     HTML
 
     assert_equal "Inbox", result.title
-    assert_equal "tok123", result.csrf_token
     assert_equal 1, result.controls.length
     assert_equal "hello", result.controls.first.props["value"]
   end
@@ -472,7 +471,7 @@ class RufletHtmlDslTest < Minitest::Test
 
     button = result.controls.first
     button.emit("click", nil)
-    assert_equal [["post", "/counter/increment"]], handlers.actions
+    assert_equal ["/counter/increment"], handlers.actions
   end
 
   def test_service_button_runs_a_native_service_on_tap
@@ -494,7 +493,7 @@ class RufletHtmlDslTest < Minitest::Test
     button = result.controls.first
     assert_equal "outlinedbutton", button.type
     button.emit("click", nil)
-    assert_equal [["delete", "/items/3"]], handlers.actions
+    assert_equal ["/items/3"], handlers.actions
   end
 
   def test_on_click_on_plain_elements_wraps_in_gesture_detector
@@ -503,7 +502,7 @@ class RufletHtmlDslTest < Minitest::Test
     detector = result.controls.first
     assert_equal "gesturedetector", detector.type
     detector.emit("tap", nil)
-    assert_equal [["post", "/open"]], handlers.actions
+    assert_equal ["/open"], handlers.actions
   end
 
   def test_class_styles_apply_to_non_container_controls
@@ -530,7 +529,7 @@ class RufletHtmlDslTest < Minitest::Test
     button = result.controls.first
     assert_equal "iconbutton", button.type
     button.emit("click", nil)
-    assert_equal [["post", "/send"]], handlers.actions
+    assert_equal ["/send"], handlers.actions
 
     # With a label it stays a Button (icon + content is valid).
     result, = transform('<button icon="add" variant="filled">New</button>')
@@ -557,7 +556,6 @@ class RufletHtmlDslTest < Minitest::Test
     submit.emit("click", nil)
     form = handlers.submissions.first
     assert_equal "/session", form[:action]
-    assert_equal "post", form[:method]
     assert_equal %w[email token], form[:fields].keys.sort
     assert_equal "t1", form[:fields]["token"]
   end
@@ -631,7 +629,7 @@ class RufletHtmlDslTest < Minitest::Test
     # `leading` is an icon slot — the name is normalized to its codepoint.
     refute_nil tile.props["leading"]
     tile.emit("click", nil)
-    assert_equal [["post", "/inbox"]], handlers.actions
+    assert_equal ["/inbox"], handlers.actions
   end
 
   def test_switch_slider_checkbox_as_standalone_tags

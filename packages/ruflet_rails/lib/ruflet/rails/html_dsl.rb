@@ -3,7 +3,7 @@
 require_relative "html_dsl/parser"
 require_relative "html_dsl/styles"
 require_relative "html_dsl/transformer"
-require_relative "html_dsl/rack_fetcher"
+require_relative "html_dsl/template_source"
 require_relative "html_dsl/control_diff"
 require_relative "html_dsl/html_app"
 require_relative "html_dsl/view_helpers"
@@ -27,12 +27,20 @@ module Ruflet
     # controller.
     #
     #   # app/views/ruflet/main.rb  (runs in the /ws session)
-    #   Ruflet.run { |page| Ruflet::Rails.erb_to_native(page, start_url: "#{Ruflet::Rails.backend_url}/native") }
+    #   Ruflet.run { |page| Ruflet::Rails.erb_to_native(page, start_url: "/native") }
     #
-    # A `fetcher:` can be injected for tests; production uses the in-process
-    # RackFetcher by default.
-    def erb_to_native(page, **opts)
-      HtmlDsl::HtmlApp.new(page, **opts).start
+    # `start_url` is a path, because there is no second connection to point at:
+    # the client dials one route (the WebSocket) and every screen after that is
+    # dispatched in-process. When a host is needed at all — Rails still checks
+    # the Host header — it is taken from the connection the client actually
+    # made, so a phone on the LAN and a browser on localhost both work without
+    # configuring anything. A full URL is still accepted, and then names the
+    # host verbatim.
+    #
+    # A `fetcher:` can be injected for tests.
+    def erb_to_native(page, start_url: "/", **opts)
+      opts[:fetcher] ||= HtmlDsl::TemplateSource.new
+      HtmlDsl::HtmlApp.new(page, start_url: start_url, **opts).start
     end
   end
 end

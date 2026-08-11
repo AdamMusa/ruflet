@@ -49,39 +49,5 @@ module Ruflet
       Protocol::Runner.new(&block).build_endpoint
     end
 
-    # Self-contained web frontend (the Flutter web build plus the Ruflet
-    # WebSocket on one mount), for browser clients. Serves the build with
-    # <base href> rewritten to the mount point; routes stay routing-only:
-    #
-    #   # a standalone Ruflet app file (MyApp.new.run), loaded per session:
-    #   mount Ruflet::Rails.web(app_file: "app/ruflet/showcase/main.rb"), at: "/showcase"
-    #
-    #   # or a custom block:
-    #   mount Ruflet::Rails.web { |page| MyHome.render(page) }, at: "/app"
-    #
-    # One of app_file: or a block is required.
-    def web(app_file: nil, build_dir: nil, &app_block)
-      sources = [app_file, app_block].compact
-      raise ArgumentError, "web accepts only one of app_file: or a block" if sources.length > 1
-      raise ArgumentError, "web requires one of app_file: or a block" if sources.empty?
-
-      Protocol::WebApp.new(
-        build_dir: build_dir,
-        entrypoint: web_app_entrypoint(app_file: app_file),
-        &app_block
-      )
-    end
-
-    def web_app_entrypoint(app_file: nil)
-      return unless app_file
-
-      absolute = app_file.to_s
-      lambda do |page, env|
-        loaded = Protocol::MobileLoader.new(File.expand_path(absolute)).load!
-        entry = loaded[:entrypoint]
-        entry.arity == 1 ? entry.call(page) : entry.call(page, env)
-      end
-    end
-
   end
 end

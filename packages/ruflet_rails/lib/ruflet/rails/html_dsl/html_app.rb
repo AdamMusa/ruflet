@@ -7,14 +7,13 @@ require "json"
 module Ruflet
   module Rails
     module HtmlDsl
-      # HTML-over-the-wire native UI: Rails renders HTML DSL markup and this
-      # app turns each page into a screen of real Ruflet controls — no
-      # WebView. Links push native screens, `on-click` actions round-trip to
-      # Rails and re-render the current screen in place, forms post their
-      # field values and render the response.
+      # HTML-over-the-wire native UI: a Rails template renders HTML DSL markup
+      # and this app turns each screen into real Ruflet controls — no WebView.
+      # Links push native screens, `on-click` runs a controller method and
+      # re-renders the screen in place, forms hand their field values to one.
       class HtmlApp
-        Screen = Struct.new(:url, :view, :route, :root, :fields, :csrf_token, :title,
-                            :appbar_sig, :fab_sig, :nav_sig, :body, keyword_init: true)
+        Screen = Struct.new(:url, :view, :route, :root, :fields, :title,
+                            :appbar_sig, :fab_sig, :nav_sig, :body, :markup, keyword_init: true)
 
         # Event handlers stay bound to the screen whose markup declared them,
         # so a control on a covered screen still targets the right state.
@@ -24,8 +23,8 @@ module Ruflet
             @screen = screen
           end
 
-          def navigate(url, mode) = @app.navigate(url, mode, from: @screen)
-          def action(method:, url:) = @app.action(method: method, url: url, from: @screen)
+          def navigate(url, mode) = @app.navigate(url, mode)
+          def action(url:) = @app.action(url: url, from: @screen)
           def submit_form(form) = @app.submit_form(form, from: @screen)
           def field_changed(name, value) = @screen.fields[name] = value
           def service(spec) = @app.run_service(spec)
@@ -48,16 +47,15 @@ module Ruflet
           self
         end
 
-        # Screens run through Rails routing + controllers, dispatched in-process
-        # against the running app (a function call, not network HTTP), so the
-        # whole session stays on its single WebSocket thread.
+        # Screens are rendered in the session itself, with no request behind
+        # them, so the whole session stays on its single WebSocket thread.
         def default_fetcher
-          RackFetcher.new
+          TemplateSource.new
         end
 
         # --- navigation ---------------------------------------------------------
 
-        def navigate(url, mode, from: nil)
+        def navigate(url, mode)
           url = absolute_url(url)
           case mode.to_s
           when "back"
@@ -73,14 +71,13 @@ module Ruflet
           end
         end
 
-        # An `on-click` action: request the URL, then re-render the source
-        # screen in place with the returned markup (Rails redirects are
-        # followed by the fetcher, so `redirect_to` re-renders the target).
-        def action(method:, url:, from: nil)
+        # An `on-click` action: run the method the URL names, then re-render
+        # the screen it was tapped on with the markup that comes back.
+        def action(url:, from: nil)
           screen = from || @screens.last
           return unless screen
 
-          response = request(method, absolute_url(url), screen: screen)
+          response = request(absolute_url(url))
           rerender(screen, response)
         end
 
@@ -92,7 +89,7 @@ module Ruflet
             value = screen.fields.key?(name) ? screen.fields[name] : form[:fields][name]
             collected[name] = value.nil? ? "" : value
           end
-          response = request(form[:method], absolute_url(form[:action]), params: params, screen: screen)
+          response = request(absolute_url(form[:action]), params: params)
           rerender(screen, response)
         end
 
@@ -397,7 +394,7 @@ module Ruflet
           invalidate_pending_services
           screen = Screen.new(url: url, root: root, fields: {})
           screen.route = root ? "/" : "/screen/#{@route_seq += 1}"
-          response = request("get", url, screen: screen)
+          response = request(url)
           result = render_result(screen, response)
           screen.view = build_view(screen, result)
           remember_chrome(screen, result)
@@ -438,9 +435,21 @@ module Ruflet
                               title: "Screen services failed")
         end
 
+        # Attributes the DSL consumes itself. Everything else on a service
+        # element becomes a native invoke argument, so anything that is really
+        # markup — the button's own styling, its icon, its variant, the
+        # `on-load` marker — has to be named here. It is not cosmetic: a `play`
+        # that arrives carrying `class`/`icon`/`variant` is a call the client
+        # cannot match to the control's method signature, which is exactly how
+        # the ERB audio buttons ended up doing nothing at all.
         SERVICE_META_KEYS = %w[
           service method target args toast timeout result-target capture-target preview-target id disabled
+          class icon variant on-load file-name output-path path configuration upload encoder
         ].freeze
+
+        # Declarative event wiring (`on-loaded-target`, `on-error-prefix`, …) is
+        # markup too, and there is one per event, so match them by shape.
+        DECLARED_EVENT_ATTRIBUTE = /\Aon-.+-(?:target|service|prefix|message|control|property|result-target)\z/
 
         STORAGE_PATH_METHODS = {
           "cache" => :get_application_cache_directory,
@@ -849,6 +858,7 @@ module Ruflet
           args = spec["args"].is_a?(Hash) ? spec["args"].dup : {}
           spec.each do |key, value|
             next if SERVICE_META_KEYS.include?(key)
+            next if DECLARED_EVENT_ATTRIBUTE.match?(key)
             next if value.nil?
 
             args[key.tr("-", "_")] = value
@@ -1089,6 +1099,15 @@ module Ruflet
         # identical app bar / nav / FAB makes the client rebuild that widget
         # and flicker, so we diff each against the last render first.
         def rerender(screen, response)
+          # Re-rendering a screen means parsing its markup and rebuilding the
+          # whole control tree, which costs more than the ERB render that
+          # produced it. When an action leaves the screen byte-identical —
+          # a tap that changed nothing the screen shows — none of that work can
+          # change anything, and neither can the diff it feeds.
+          markup = response.body.to_s
+          return if screen.view&.wire_id && screen.markup && screen.markup == markup
+
+          screen.markup = markup
           result = render_result(screen, response)
           mount_services(result)
           unless screen.view&.wire_id
@@ -1146,49 +1165,38 @@ module Ruflet
         def render_result(screen, response)
           screen.url = response.url.to_s unless response.url.to_s.empty?
           screen.fields = {}
-          body = error_status?(response.status) ? server_error_markup(response) : response.body.to_s
+          body = response.body.to_s
           # Strings sliced from a binary body would go over the wire as
           # msgpack bin (byte arrays on the client); make sure we parse UTF-8.
           body = body.dup.force_encoding(Encoding::UTF_8) if body.encoding == Encoding::ASCII_8BIT
           result = transform(screen, body)
-          screen.csrf_token = result.csrf_token
           screen.title = result.title
           if result.controls.empty?
-            message = response.status.to_i >= 400 ? "HTTP #{response.status} — #{screen.url}" : "Empty screen"
-            result.controls = [container(content: text(message), alignment: { x: 0, y: 0 }, expand: true)]
+            result.controls = [container(content: text("Empty screen"), alignment: { x: 0, y: 0 }, expand: true)]
           end
           result
         end
 
         def transform(screen, body)
-          transformer = Transformer.new(handlers: ScreenHandlers.new(self, screen))
+          transformer = Transformer.new(handlers: ScreenHandlers.new(self, screen),
+                                        asset_base_url: asset_base_url)
           transformer.transform(body)
         rescue StandardError => e
           transformer.transform(error_markup(screen.url, e))
         end
 
-        # 422 is the Rails convention for re-rendering a form with validation
-        # errors — that body is a real screen. Other error statuses carry a
-        # Rails error page (dev exception pages are a full web document).
-        def error_status?(status)
-          status = status.to_i
-          status >= 400 && status != 422
+        # Media is the one thing the client fetches for itself, so it is the one
+        # thing that still needs a host. Resolved per render, because the answer
+        # depends on the connection this session is running on.
+        def asset_base_url
+          return nil unless defined?(::Ruflet::Rails.backend_url)
+
+          ::Ruflet::Rails.backend_url
+        rescue StandardError
+          nil
         end
 
-        # Surface the error page's title as a compact native screen instead of
-        # trying to render the page itself.
-        def server_error_markup(response)
-          title = response.body.to_s[%r{<title>(.*?)</title>}m, 1].to_s.strip
-          title = "Server error" if title.empty?
-          <<~HTML
-            <column class="p-6 gap-2">
-              <h3>HTTP #{response.status}</h3>
-              <text class="font-semibold text-red-600">#{ERB::Util.html_escape(title)}</text>
-              <text class="text-slate-500">#{ERB::Util.html_escape(response.url)}</text>
-              <text class="text-sm text-slate-400">Check the Rails server log for the full trace.</text>
-            </column>
-          HTML
-        end
+
 
         def build_view(screen, result)
           args = { route: screen.route }
@@ -1233,13 +1241,10 @@ module Ruflet
 
         # --- HTTP -----------------------------------------------------------------
 
-        def request(method, url, params: nil, screen: nil)
-          headers = {}
-          token = screen&.csrf_token || @screens.last&.csrf_token
-          headers["X-CSRF-Token"] = token if token && method.to_s.downcase != "get"
-          @fetcher.fetch(method, url, params: params, headers: headers)
+        def request(url, params: nil)
+          @fetcher.fetch(url, params: params)
         rescue StandardError => e
-          RackFetcher::Response.new(status: 0, body: error_markup(url, e), url: url)
+          TemplateSource::Response.new(body: error_markup(url, e), url: url)
         end
 
         def error_markup(url, error)
@@ -1252,13 +1257,25 @@ module Ruflet
           HTML
         end
 
+        # Screens may be declared as paths ("/native") or as full URLs. A path
+        # stays a path: the fetcher supplies the host from the live WebSocket
+        # connection, so nothing here has to name one. Relative links still
+        # resolve against the current screen either way — done by borrowing a
+        # placeholder host, since URI.join needs an absolute base, and then
+        # dropping it again.
+        PATH_RESOLUTION_BASE = "http://ruflet.invalid"
+
         def absolute_url(url)
           url = url.to_s
           return "" if url.empty?
           return url if URI.parse(url).absolute?
 
-          URI.join(current_url, url).to_s
-        rescue URI::InvalidURIError
+          base = current_url
+          return URI.join(base, url).to_s if URI.parse(base).absolute?
+
+          resolved = URI.join("#{PATH_RESOLUTION_BASE}#{base}", url)
+          resolved.query ? "#{resolved.path}?#{resolved.query}" : resolved.path
+        rescue URI::InvalidURIError, URI::BadURIError
           url
         end
 

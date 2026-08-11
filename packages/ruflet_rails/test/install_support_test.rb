@@ -47,12 +47,6 @@ class InstallSupportTest < Minitest::Test
     assert_equal "app/views/ruflet/main.rb", Ruflet::Rails::InstallSupport.default_entrypoint_path
   end
 
-  def test_web_route_mounts_the_generated_entrypoint_at_ruflet
-    route = Ruflet::Rails::InstallSupport.web_route_snippet
-
-    assert_equal 'mount Ruflet::Rails.web(app_file: Rails.root.join("app/views/ruflet/main.rb")), at: "/ruflet"', route
-    refute_includes route, "/products"
-  end
 
   def test_app_template_uses_ruflet_run
     template = Ruflet::Rails::InstallSupport.default_app_template(app_title: "Demo")
@@ -84,13 +78,9 @@ class InstallSupportTest < Minitest::Test
     refute_includes args, "--self"
   end
 
-  def test_build_args_for_web_are_empty_because_web_is_not_built
-    assert_empty Ruflet::Rails::InstallSupport.build_args_for_platform("web")
-  end
 
   def test_ruflet_install_steps_include_essentials
     steps = Ruflet::Rails::InstallSupport.install_next_steps(
-      target: "ruflet",
       entrypoint: "app/views/ruflet/main.rb",
       client: "none"
     ).join("\n")
@@ -103,7 +93,6 @@ class InstallSupportTest < Minitest::Test
 
   def test_ruflet_install_steps_explain_desktop_support
     steps = Ruflet::Rails::InstallSupport.install_next_steps(
-      target: "ruflet",
       entrypoint: "app/views/ruflet/main.rb",
       client: "desktop"
     ).join("\n")

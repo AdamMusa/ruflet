@@ -8,7 +8,7 @@ module Ruflet
       module_function
 
       def launch_once(root:, argv: ARGV, env: ENV, wait: 1.0)
-        return false unless desktop_enabled?(root: root, argv: argv, env: env)
+        return false unless desktop_enabled?(argv: argv, env: env)
         return false unless env["RUFLET_RAILS_DESKTOP_SERVER"].to_s.downcase == "true" || rails_server_command?(argv)
         return false if env["RUFLET_RAILS_DESKTOP"].to_s.downcase == "false"
         return false if launched?
@@ -51,7 +51,7 @@ module Ruflet
         "http://localhost:#{env["PORT"].to_s.empty? ? 3000 : env["PORT"]}"
       end
 
-      def desktop_enabled?(root:, argv: ARGV, env: ENV)
+      def desktop_enabled?(argv: ARGV, env: ENV)
         return true if env["RUFLET_RAILS_DESKTOP_SERVER"].to_s.downcase == "true"
         return true if env["RUFLET_RAILS_DESKTOP"].to_s.downcase == "true"
         return true if Array(argv).map(&:to_s).include?("--desktop")

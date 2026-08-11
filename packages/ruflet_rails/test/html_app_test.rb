@@ -5,9 +5,9 @@ require_relative "test_helper"
 # HTML-over-the-wire native app: pages fetched from Rails become screens of
 # real Ruflet controls, links push native screens, actions re-render in place.
 class RufletHtmlAppTest < Minitest::Test
-  # Serves canned HTML per method+path and records every request.
+  # Serves canned HTML per path and records every screen asked for.
   class StubFetcher
-    Response = Ruflet::Rails::HtmlDsl::RackFetcher::Response
+    Response = Ruflet::Rails::HtmlDsl::TemplateSource::Response
 
     attr_reader :requests
 
@@ -16,12 +16,12 @@ class RufletHtmlAppTest < Minitest::Test
       @requests = []
     end
 
-    def fetch(method, url, params: nil, headers: {})
-      @requests << { method: method.to_s, url: url, params: params, headers: headers }
+    def fetch(url, params: nil)
+      @requests << { url: url, params: params }
       path = URI.parse(url).path
-      body = @pages.fetch("#{method} #{path}") { @pages.fetch(path, "<text>missing #{path}</text>") }
+      body = @pages.fetch(path, "<text>missing #{path}</text>")
       body = body.call(params) if body.respond_to?(:call)
-      Response.new(status: 200, body: body, url: url)
+      Response.new(body: body, url: url)
     end
   end
 
@@ -87,7 +87,7 @@ class RufletHtmlAppTest < Minitest::Test
     count = 0
     pages = {
       "/" => -> (_params) { "<text>count #{count}</text><button on-click=\"/inc\">+</button>" },
-      "post /inc" => -> (_params) { count += 1; "<text>count #{count}</text><button on-click=\"/inc\">+</button>" }
+      "/inc" => -> (_params) { count += 1; "<text>count #{count}</text><button on-click=\"/inc\">+</button>" }
     }
     start(pages)
 
@@ -96,10 +96,9 @@ class RufletHtmlAppTest < Minitest::Test
 
     assert_equal 1, @page.views.length
     assert_equal "count 1", find(@page.views.first, "text").props["value"]
-    assert_equal "post", @fetcher.requests.last["method"] || @fetcher.requests.last[:method]
   end
 
-  def test_form_submits_tracked_field_values_with_csrf
+  def test_form_submits_tracked_field_values
     submitted = nil
     pages = {
       "/" => <<~HTML,
@@ -111,7 +110,7 @@ class RufletHtmlAppTest < Minitest::Test
           </form>
         </body></html>
       HTML
-      "post /session" => ->(params) { submitted = params; "<text>done</text>" }
+      "/session" => ->(params) { submitted = params; "<text>done</text>" }
     }
     start(pages)
 
@@ -120,7 +119,6 @@ class RufletHtmlAppTest < Minitest::Test
     find(view, "filledbutton").emit("click", nil)
 
     assert_equal({ "email" => "new@x.y", "token" => "h1" }, submitted)
-    assert_equal "tok-1", @fetcher.requests.last[:headers]["X-CSRF-Token"]
     assert_equal "done", find(@page.views.first, "text").props["value"]
   end
 
@@ -612,13 +610,13 @@ class RufletHtmlAppTest < Minitest::Test
     assert_equal "auto", body.props["scroll"]
   end
 
-  # Net::HTTP returns ASCII-8BIT bodies; binary text values would be packed
-  # as msgpack bin and render as byte arrays on the client.
+  # A template can hand back an ASCII-8BIT body; binary text values would be
+  # packed as msgpack bin and render as byte arrays on the client.
   def test_binary_response_bodies_become_utf8_text
     fetcher = Object.new
-    def fetcher.fetch(_m, url, params: nil, headers: {})
+    def fetcher.fetch(url, params: nil)
       body = "<text>Ruflet Native — démo</text>".dup.force_encoding(Encoding::ASCII_8BIT)
-      Ruflet::Rails::HtmlDsl::RackFetcher::Response.new(status: 200, body: body, url: url)
+      Ruflet::Rails::HtmlDsl::TemplateSource::Response.new(body: body, url: url)
     end
     Ruflet::Rails.erb_to_native(@page, start_url: "https://app.test/", fetcher: fetcher)
 
@@ -627,23 +625,6 @@ class RufletHtmlAppTest < Minitest::Test
     assert_equal "Ruflet Native — démo", value
   end
 
-  def test_server_error_pages_render_a_compact_error_screen
-    fetcher = Object.new
-    def fetcher.fetch(_m, url, params: nil, headers: {})
-      Ruflet::Rails::HtmlDsl::RackFetcher::Response.new(
-        status: 500,
-        body: "<html><head><title>ActionController::RoutingError</title></head>" \
-              '<body><header><button onclick="x()">rails page</button></header></body></html>',
-        url: url
-      )
-    end
-    Ruflet::Rails.erb_to_native(@page, start_url: "https://app.test/native", fetcher: fetcher)
-
-    texts = find_all_text_values(@page.views.first)
-    assert_includes texts.join(" "), "HTTP 500"
-    assert_includes texts.join(" "), "ActionController::RoutingError"
-    refute_includes texts.join(" "), "rails page"
-  end
 
   def find_all_text_values(node, values = [])
     case node
@@ -730,7 +711,7 @@ class RufletHtmlAppTest < Minitest::Test
     }
     start(
       "/" => markup,
-      "post /up" => lambda { |params|
+      "/up" => lambda { |params|
         count += 1
         markup.call(params)
       }
@@ -753,13 +734,13 @@ class RufletHtmlAppTest < Minitest::Test
     shape = "<column><text>one</text></column>"
     app = start(
       "/" => ->(_params) { shape },
-      "post /toggle" => lambda { |_params|
+      "/toggle" => lambda { |_params|
         shape = "<column><text>one</text><text>two</text></column>"
         shape
       }
     )
 
-    app.action(method: "post", url: "/toggle")
+    app.action(url: "/toggle")
 
     texts = []
     collect = lambda do |node|
@@ -780,7 +761,7 @@ class RufletHtmlAppTest < Minitest::Test
     store = []
     app = start(
       "/" => '<button on-click="post:/items">Add</button>',
-      "post /items" => lambda { |_params|
+      "/items" => lambda { |_params|
         store << "item"
         "<text>added</text>"
       },
@@ -804,5 +785,144 @@ class RufletHtmlAppTest < Minitest::Test
 
     assert_includes texts, "1 items",
                     "server state written by one screen must be readable by the next"
+  end
+
+  # --- path-only screens ---------------------------------------------------
+  #
+  # Nothing here travels over the network, so a screen can be named by path
+  # alone. The host, when one is needed at all, comes from the live WebSocket.
+
+  def test_a_path_start_url_renders_without_naming_a_host
+    @fetcher = StubFetcher.new("/native" => "<text>Native home</text>")
+    Ruflet::Rails.erb_to_native(@page, start_url: "/native", fetcher: @fetcher)
+
+    assert_equal "/native", @fetcher.requests.first[:url]
+    body = @page.views.first.props["controls"] || @page.views.first.children
+    assert_equal "Native home", find(body, "text").props["value"]
+  end
+
+  def test_a_path_start_url_resolves_absolute_and_relative_links
+    @fetcher = StubFetcher.new(
+      "/native" => '<a href="/native/counter">Counter</a>',
+      "/native/counter" => '<a href="detail">Detail</a>',
+      "/native/detail" => "<text>Detail screen</text>"
+    )
+    app = Ruflet::Rails.erb_to_native(@page, start_url: "/native", fetcher: @fetcher)
+
+    find(@page.views.first, "textbutton").emit("click", nil)
+    find(@page.views.last, "textbutton").emit("click", nil)
+
+    assert_equal %w[/native /native/counter /native/detail], @fetcher.requests.map { |r| r[:url] }
+    body = @page.views.last.props["controls"] || @page.views.last.children
+    assert_equal "Detail screen", find(body, "text").props["value"]
+    assert_equal 3, @page.views.length
+    app.pop
+  end
+
+  # Dot segments follow ordinary URI rules: the base directory of
+  # /native/counter is /native/, so ".." lands at the root.
+  def test_a_path_start_url_walks_up_a_relative_segment
+    @fetcher = StubFetcher.new(
+      "/native/counter" => '<a href="../form">Form</a>',
+      "/form" => "<text>Form screen</text>"
+    )
+    Ruflet::Rails.erb_to_native(@page, start_url: "/native/counter", fetcher: @fetcher)
+    find(@page.views.first, "textbutton").emit("click", nil)
+
+    assert_equal "/form", @fetcher.requests.last[:url]
+    body = @page.views.last.props["controls"] || @page.views.last.children
+    assert_equal "Form screen", find(body, "text").props["value"]
+  end
+
+  def test_a_path_start_url_keeps_query_strings_on_relative_links
+    @fetcher = StubFetcher.new("/native" => '<a href="search?q=ada">Search</a>',
+                               "/search" => "<text>Results</text>")
+    Ruflet::Rails.erb_to_native(@page, start_url: "/native", fetcher: @fetcher)
+    find(@page.views.first, "textbutton").emit("click", nil)
+
+    assert_equal "/search?q=ada", @fetcher.requests.last[:url]
+  end
+
+  # --- media URLs ----------------------------------------------------------
+  #
+  # Screens are dispatched in-process, but the client loads media itself over
+  # HTTP, so those URLs — and only those — still need a real host.
+
+  def with_backend_url(url)
+    previous = Ruflet::Rails.config.backend_url
+    Ruflet::Rails.config.backend_url = url
+    yield
+  ensure
+    Ruflet::Rails.config.backend_url = previous
+  end
+
+  def render_and_find(markup, type)
+    @fetcher = StubFetcher.new("/native" => markup)
+    Ruflet::Rails.erb_to_native(@page, start_url: "/native", fetcher: @fetcher)
+    find(@page.views.first, type)
+  end
+
+  def test_a_rails_hosted_image_is_resolved_against_the_connection_host
+    with_backend_url("https://app.test") do
+      image = render_and_find('<img src="/assets/logo.png">', "image")
+
+      assert_equal "https://app.test/assets/logo.png", image.props["src"]
+    end
+  end
+
+  def test_an_avatar_image_is_resolved_too
+    with_backend_url("https://app.test") do
+      avatar = render_and_find('<avatar src="/me.png">AM</avatar>', "circleavatar")
+
+      assert_equal "https://app.test/me.png", avatar.props["foreground_image_src"]
+    end
+  end
+
+  def test_an_external_media_url_is_left_alone
+    with_backend_url("https://app.test") do
+      image = render_and_find('<img src="https://cdn.example.com/a.png">', "image")
+
+      assert_equal "https://cdn.example.com/a.png", image.props["src"]
+    end
+  end
+
+  def test_a_data_uri_and_a_bundled_asset_name_are_left_alone
+    with_backend_url("https://app.test") do
+      assert_equal "data:image/png;base64,AAAA",
+                   render_and_find('<img src="data:image/png;base64,AAAA">', "image").props["src"]
+      assert_equal "logo.png", render_and_find('<img src="logo.png">', "image").props["src"]
+      assert_equal "//cdn.example.com/a.png",
+                   render_and_find('<img src="//cdn.example.com/a.png">', "image").props["src"]
+    end
+  end
+
+  def test_media_urls_on_other_controls_are_resolved_by_attribute_name
+    with_backend_url("https://app.test") do
+      rive = render_and_find('<rive src="/anim.riv" url="/fallback.riv"></rive>', "rive")
+
+      assert_equal "https://app.test/anim.riv", rive.props["src"]
+      assert_equal "https://app.test/fallback.riv", rive.props["url"]
+    end
+  end
+
+  def test_navigation_hrefs_are_never_turned_into_media_urls
+    with_backend_url("https://app.test") do
+      @fetcher = StubFetcher.new("/native" => '<a href="/settings">Settings</a>',
+                                 "/settings" => "<text>prefs</text>")
+      Ruflet::Rails.erb_to_native(@page, start_url: "/native", fetcher: @fetcher)
+      find(@page.views.first, "textbutton").emit("click", nil)
+
+      assert_equal "/settings", @fetcher.requests.last[:url],
+                   "navigation stays a path — it is dispatched in-process, not fetched"
+    end
+  end
+
+  def test_an_absolute_start_url_still_produces_absolute_screen_urls
+    @fetcher = StubFetcher.new("/" => '<a href="/settings">Settings</a>',
+                               "/settings" => "<text>prefs</text>")
+    Ruflet::Rails.erb_to_native(@page, start_url: "https://app.test/", fetcher: @fetcher)
+    find(@page.views.first, "textbutton").emit("click", nil)
+
+    assert_equal "https://app.test/settings", @fetcher.requests.last[:url]
   end
 end

@@ -22,13 +22,19 @@ module Ruflet
         MAX_REDIRECTS = 5
         REDIRECT_STATUSES = [301, 302, 303, 307, 308].freeze
 
-        def initialize(app: nil)
+        # The base used for screens declared as plain paths. Only ever a
+        # stand-in for a host we could not learn from the connection.
+        FALLBACK_BASE_URL = "http://localhost"
+
+        def initialize(app: nil, base_url: nil)
           @app = app
+          @base_url = base_url
           @cookies = {}
         end
 
         def fetch(method, url, params: nil, headers: {})
           method = method.to_s.upcase
+          url = absolute(url)
           redirects = 0
 
           loop do
@@ -59,6 +65,70 @@ module Ruflet
           @app ||= ::Rails.application
         end
 
+        # Screens are normally declared as paths ("/native"), because none of
+        # this travels over the network and a host would be fiction. Rails still
+        # reads Host off the env though — `ActionDispatch::HostAuthorization`
+        # answers 403 for one it does not recognise — so the host has to be real
+        # even when the request is not. The host the client dialed on this very
+        # WebSocket is accepted by definition, which a hardcoded one is not.
+        def absolute(url)
+          url = url.to_s
+          return url if url.empty?
+
+          uri = URI.parse(url)
+          # A host, not merely a scheme: "localhost:3000" parses as scheme
+          # "localhost" with opaque "3000" and no path, so treating it as
+          # absolute would dispatch it to "/" and quietly render the wrong
+          # screen. Say so instead.
+          return url if uri.host
+          raise ArgumentError, malformed_url_message(url) if uri.scheme && !url.start_with?("/")
+
+          URI.join(base_url, url).to_s
+        rescue URI::InvalidURIError, URI::BadURIError
+          url
+        end
+
+        def malformed_url_message(url)
+          "Ruflet screen URL #{url.inspect} has no host. Use a path (\"/native\"), " \
+            "which takes its host from the client's connection, or a full URL " \
+            "including the scheme (\"http://localhost:3000/native\")."
+        end
+
+        def base_url
+          @base_url ||= websocket_base_url || configured_base_url || FALLBACK_BASE_URL
+        end
+
+        def websocket_base_url
+          env = websocket_env
+          return nil unless env
+
+          host = env["HTTP_X_FORWARDED_HOST"] || env["HTTP_HOST"]
+          return nil if host.to_s.strip.empty?
+
+          scheme = (env["HTTP_X_FORWARDED_PROTO"] || env["rack.url_scheme"] || "http").to_s.split(",").first.to_s.strip
+          scheme = "http" if scheme.empty?
+          "#{scheme}://#{host}"
+        end
+
+        # Loaded before Protocol in ruflet_rails.rb, and usable with no Rails at
+        # all (the gem's own tests do that), so resolve both lazily.
+        def websocket_env
+          return nil unless defined?(::Ruflet::Rails::Protocol::Context)
+
+          ::Ruflet::Rails::Protocol::Context.current_env
+        rescue StandardError
+          nil
+        end
+
+        def configured_base_url
+          return nil unless defined?(::Ruflet::Rails.config)
+
+          configured = ::Ruflet::Rails.config.backend_url.to_s.strip
+          configured.empty? ? nil : configured.sub(%r{/+\z}, "")
+        rescue StandardError
+          nil
+        end
+
         # A minimal-but-complete Rack env, built by hand so we don't depend on a
         # particular Rack version's Rack::MockRequest location.
         def build_env(method, url, params, headers)
@@ -84,7 +154,7 @@ module Ruflet
             "QUERY_STRING" => query.to_s,
             "SERVER_NAME" => uri.host || "localhost",
             "SERVER_PORT" => (uri.port || (uri.scheme == "https" ? 443 : 80)).to_s,
-            "HTTP_HOST" => [uri.host, uri.port].compact.join(":"),
+            "HTTP_HOST" => host_header(uri),
             # These renders happen in-process on the server itself — a loopback
             # request in every sense. Saying so keeps `request.remote_ip` sane and
             # quiets dev middleware (web-console) on every screen.
@@ -103,6 +173,16 @@ module Ruflet
           env["HTTP_COOKIE"] = cookie_header unless @cookies.empty?
           headers.each { |key, value| env["HTTP_#{key.to_s.upcase.tr('-', '_')}"] = value.to_s }
           env
+        end
+
+        # URI always fills in a port, but a browser omits the default one — and
+        # so must we: Rails echoes Host back in `url_for`, redirects and
+        # canonical links, where a stray ":443" would show up.
+        def host_header(uri)
+          return "localhost" if uri.host.to_s.empty?
+          return uri.host if uri.port.nil? || uri.port == uri.default_port
+
+          "#{uri.host}:#{uri.port}"
         end
 
         def read_body(body)

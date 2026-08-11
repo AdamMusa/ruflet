@@ -16,8 +16,7 @@ module Ruflet
       # `handlers` is the running app (HtmlApp): it receives navigation,
       # actions, form submissions, and field changes.
       class Transformer
-        Result = Struct.new(:controls, :appbar, :fab, :bottom_nav, :services, :on_load, :title,
-                            :csrf_token, keyword_init: true)
+        Result = Struct.new(:controls, :appbar, :fab, :bottom_nav, :services, :on_load, :title, keyword_init: true)
 
         HEADING_STYLES = {
           "h1" => { size: 32, weight: "bold" },
@@ -70,14 +69,36 @@ module Ruflet
                                top left right bottom blur aspect_ratio clip_behavior gradient
                                visible animate].freeze
 
-        def initialize(handlers:)
+        # Attributes naming something the client fetches for itself (an image,
+        # a sound, a video poster) rather than something Ruby resolves.
+        ASSET_URL_ATTRIBUTE = /\A(?:src|url|poster)\z|-(?:src|url)\z/
+
+        def initialize(handlers:, asset_base_url: nil)
           @handlers = handlers
+          @asset_base_url = asset_base_url.to_s.sub(%r{/+\z}, "")
+        end
+
+        # Screens are dispatched in-process, but media is not: the client loads
+        # an image or a sound itself, over HTTP, so those URLs are the one place
+        # that still needs a real host. A root-relative path ("/assets/logo.png",
+        # which is what the Rails asset pipeline returns) is resolved against the
+        # host the client connected on. Anything already absolute — an external
+        # CDN, a data: URI, a protocol-relative "//host/x" — is left alone, and
+        # so is a bare name, which the client resolves against its bundled
+        # assets directory.
+        def resolve_asset_url(value)
+          return value unless value.is_a?(String)
+          return value if @asset_base_url.empty?
+          return value unless value.start_with?("/")
+          return value if value.start_with?("//")
+
+          "#{@asset_base_url}#{value}"
         end
 
         def transform(html)
           nodes = Parser.parse(html)
           @result = Result.new(controls: [], appbar: nil, fab: nil, bottom_nav: nil, services: [],
-                               on_load: [], title: nil, csrf_token: nil)
+                               on_load: [], title: nil)
           scan_document_metadata(nodes)
 
           @result.controls = build_children(content_nodes(nodes), form: nil)
@@ -90,12 +111,7 @@ module Ruflet
 
         def scan_document_metadata(nodes)
           each_element(nodes) do |element|
-            case element.tag
-            when "title"
-              @result.title = element.text if @result.title.nil?
-            when "meta"
-              @result.csrf_token = element["content"] if element["name"] == "csrf-token"
-            end
+            @result.title = element.text if element.tag == "title" && @result.title.nil?
           end
         end
 
@@ -136,7 +152,7 @@ module Ruflet
           control = build_element(element, form: form)
           return nil unless control
 
-          finalize(control, element, form: form)
+          finalize(control, element)
         rescue ArgumentError => e
           # One bad element must not take down the screen (a stray attribute,
           # an unknown icon, a page of plain web HTML): render a visible
@@ -173,7 +189,7 @@ module Ruflet
           when "img", "image" then build_image(element, styles)
           when "icon" then icon(element["name"] || element.text, **element_props(element, except: %w[name]))
           when "a" then build_link(element, styles, form: form)
-          when "button" then build_button(element, styles, form: form)
+          when "button" then build_button(element, form: form)
           when "input" then build_input(element, form: form)
           when "textarea" then build_textarea(element, form: form)
           when "select" then build_select(element, form: form)
@@ -194,7 +210,7 @@ module Ruflet
                                                               multiline: element.key?("multiline"))
           when "table" then build_table(element, form: form)
           when "avatar" then build_avatar(element)
-          when "chip" then build_chip(element, form: form)
+          when "chip" then build_chip(element)
           when "progress" then progress_bar(**element_props(element))
           else
             build_generic(element, form: form)
@@ -266,7 +282,7 @@ module Ruflet
           props[:semantics_label] = element["alt"] if element["alt"]
           props.merge!(styles.slice(:width, :height, :border_radius, :fit, :opacity,
                                     :aspect_ratio, :rotate, :scale))
-          image(element["src"], **props)
+          image(resolve_asset_url(element["src"]), **props)
         end
 
         def build_list(element, styles, form:)
@@ -301,7 +317,7 @@ module Ruflet
           "outlined" => :outlined_button, "text" => :text_button, "elevated" => :button
         }.freeze
 
-        def build_button(element, styles, form:)
+        def build_button(element, form:)
           label = collapse_whitespace(element.text)
           icon = element["icon"]
           on_click =
@@ -309,7 +325,7 @@ module Ruflet
               register_on_load(element)
               service_handler(element)
             elsif element["on-click"]
-              action_handler(element["on-click"], default_method: "post")
+              action_handler(element["on-click"])
             elsif element["href"]
               navigation_handler(element["href"], element["nav"] || "push")
             elsif form
@@ -423,8 +439,7 @@ module Ruflet
         def build_form(element, styles)
           form = {
             action: element["action"].to_s,
-            method: (element["method"] || "post").downcase,
-            fields: {}
+                        fields: {}
           }
           children = build_children(element.children, form: form)
           wrap_in_box(column(children, **flex_props(styles, axis: "column")), styles)
@@ -530,7 +545,7 @@ module Ruflet
           props[:trailing] = element["trailing"] if element["trailing"]
           handler =
             if element["on-click"]
-              action_handler(element["on-click"], default_method: "post")
+              action_handler(element["on-click"])
             elsif element["href"]
               navigation_handler(element["href"], element["nav"] || "push")
             end
@@ -620,12 +635,12 @@ module Ruflet
 
         # <chip label="Ruby"> or <chip>Ruby</chip> — Chip needs `label`, and
         # a bare `on-click` becomes its native click action.
-        def build_chip(element, form:)
+        def build_chip(element)
           props = element_props(element, except: %w[label icon])
           props[:label] = element["label"] || collapse_whitespace(element.text)
           props[:leading] = element["icon"] if element["icon"]
           if element["on-click"]
-            props[:on_click] = action_handler(element["on-click"], default_method: "post")
+            props[:on_click] = action_handler(element["on-click"])
           elsif element["href"]
             props[:on_click] = navigation_handler(element["href"], element["nav"] || "push")
           end
@@ -636,7 +651,7 @@ module Ruflet
         def build_avatar(element)
           styles = Styles.parse(element["class"])
           props = element_props(element, except: %w[src alt])
-          props[:foreground_image_src] = element["src"] if element["src"]
+          props[:foreground_image_src] = resolve_asset_url(element["src"]) if element["src"]
           props[:bgcolor] = styles[:bgcolor] if styles[:bgcolor]
           initials = collapse_whitespace(element.text)
           content = initials.empty? ? nil : text(initials, color: styles[:color] || "#ffffff", weight: "bold")
@@ -652,7 +667,7 @@ module Ruflet
           props[:content] = text(label) unless label.to_s.empty?
           handler =
             if element["on-click"]
-              action_handler(element["on-click"], default_method: "post")
+              action_handler(element["on-click"])
             elsif element["href"]
               navigation_handler(element["href"], element["nav"] || "push")
             end
@@ -987,7 +1002,7 @@ module Ruflet
 
         def appbar_action_handler(action)
           if action["on-click"]
-            action_handler(action["on-click"], default_method: "post")
+            action_handler(action["on-click"])
           else
             navigation_handler(action["href"].to_s, action["nav"] || "push")
           end
@@ -1002,10 +1017,13 @@ module Ruflet
 
         # `on-click="post:/counter/increment"`, `on-click="/refresh"` (POST by
         # default), `on-click="get:/search"`.
-        def action_handler(spec, default_method:)
-          method, url = parse_action(spec, default_method)
+        # An on-click names the screen path whose method to run. It used to
+        # carry an HTTP verb ("post:/x"); nothing dispatches a request now, so
+        # a leading verb is stripped rather than obeyed.
+        def action_handler(spec)
+          url = spec.to_s.sub(%r{\A(?:get|post|put|patch|delete):}i, "")
           handlers = @handlers
-          ->(_event) { handlers.action(method: method, url: url) }
+          ->(_event) { handlers.action(url: url) }
         end
 
         def submit_handler(form)
@@ -1027,14 +1045,6 @@ module Ruflet
           @handlers.field_changed(name, initial) if @handlers.respond_to?(:field_changed)
         end
 
-        def parse_action(spec, default_method)
-          spec = spec.to_s
-          if spec =~ /\A(get|post|put|patch|delete):(.+)\z/i
-            [Regexp.last_match(1).downcase, Regexp.last_match(2)]
-          else
-            [default_method, spec]
-          end
-        end
 
         def event_value(event)
           data = event.respond_to?(:data) ? event.data : event
@@ -1047,12 +1057,12 @@ module Ruflet
         end
 
         # Generic `on-click` on non-interactive elements gets a tap wrapper.
-        def finalize(control, element, form: nil)
+        def finalize(control, element)
           spec = element["on-click"] || element["on-tap"]
           return control unless spec
           return control if SELF_CLICKING_TAGS.include?(element.tag)
 
-          gesture_detector(content: control, on_tap: action_handler(spec, default_method: "post"))
+          gesture_detector(content: control, on_tap: action_handler(spec))
         end
 
         # --- props & styling -------------------------------------------------------
@@ -1068,6 +1078,7 @@ module Ruflet
             # Browser JS handlers (onclick, onchange, ...) are not DSL events.
             next if name.match?(/\Aon[a-z]+\z/)
 
+            value = resolve_asset_url(value) if name.match?(ASSET_URL_ATTRIBUTE)
             props[name.tr("-", "_").to_sym] = coerce_value(value)
           end
         end
