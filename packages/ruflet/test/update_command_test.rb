@@ -66,7 +66,9 @@ class RufletCliUpdateCommandTest < Minitest::Test
         "ios/Runner.xcodeproj/project.pbxproj" => "ruflet apple package link\n",
         "apple_packages/ruflet_apple/Package.swift" => "native package\n",
         "apple_packages/ruflet_apple/Sources/RufletApple/RufletApple.swift" => "native renderer\n",
-        "apple_packages/ruflet_apple/.build/stale" => "generated\n"
+        "apple_packages/ruflet_apple/.build/stale" => "generated\n",
+        "apple_packages/ruflet_apple/.dart_tool/stale" => "generated\n",
+        "apple_packages/ruflet_apple/.swiftpm/stale" => "generated\n"
       }
       managed.each do |relative, content|
         path = File.join(template_dir, relative)
@@ -100,6 +102,10 @@ class RufletCliUpdateCommandTest < Minitest::Test
           client_dir, "apple_packages", "ruflet_apple", "Sources", "RufletApple",
           "RufletApple.swift")))
       refute_path_exists File.join(client_dir, "apple_packages", "ruflet_apple", ".build")
+      refute_path_exists File.join(client_dir, "apple_packages", "ruflet_apple", ".dart_tool")
+      refute_path_exists File.join(client_dir, "apple_packages", "ruflet_apple", ".swiftpm")
+      refute_path_exists File.join(
+        client_dir, "apple_packages", "ruflet_apple", "ruflet_apple")
     end
   end
 

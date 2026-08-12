@@ -2021,10 +2021,19 @@ module Ruflet
 
         destination = File.join(client_dir, relative_path)
         FileUtils.rm_rf(destination)
-        FileUtils.mkdir_p(File.dirname(destination))
-        FileUtils.cp_r(source, destination)
-        %w[.build .swiftpm .claude].each do |generated|
-          FileUtils.rm_rf(File.join(destination, generated))
+        FileUtils.mkdir_p(destination)
+        # SwiftPM and Dart create mutable caches directly inside the package.
+        # Copying the whole directory and deleting those caches afterwards is
+        # too late: framework resource symlinks inside `.build` can collide or
+        # escape while FileUtils is still traversing them. Treat only the
+        # package's source tree as managed template input from the outset.
+        generated_entries = %w[.build .swiftpm .dart_tool .claude]
+        Dir.children(source).each do |entry|
+          next if generated_entries.include?(entry)
+
+          FileUtils.cp_r(
+            File.join(source, entry), File.join(destination, entry),
+            preserve: true)
         end
         build_log(verbose, "refreshed template tree #{relative_path}")
       end
