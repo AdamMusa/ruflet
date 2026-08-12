@@ -51,6 +51,35 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  def test_invalid_nested_managed_client_is_repaired_before_build
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "build", "client")
+      nested = File.join(client_dir, "ruflet_flutter_template")
+      FileUtils.mkdir_p(File.join(nested, "lib"))
+      File.write(File.join(nested, "pubspec.yaml"), "name: nested\n")
+      File.write(File.join(nested, "lib", "main.dart"), "void main() {}\n")
+
+      previous_dir = Dir.pwd
+      Dir.chdir(dir)
+      Ruflet::CLI.stub(:copy_ruflet_client_template, lambda { |root|
+        FileUtils.rm_rf(File.join(root, "build", "client"))
+        repaired = File.join(root, "build", "client")
+        FileUtils.mkdir_p(File.join(repaired, "lib"))
+        File.write(File.join(repaired, "pubspec.yaml"), "name: repaired\n")
+        File.write(File.join(repaired, "lib", "main.dart"), "void main() {}\n")
+      }) do
+        assert_equal File.realpath(client_dir), File.realpath(builder.send(:ensure_flutter_client_dir))
+      end
+
+      assert File.file?(File.join(client_dir, "pubspec.yaml"))
+      refute File.exist?(nested)
+    ensure
+      Dir.chdir(previous_dir) if previous_dir
+    end
+  end
+
   def test_ios_build_refreshes_native_renderer_bootstrap_and_apple_package
     builder = DummyBuilder.new
 

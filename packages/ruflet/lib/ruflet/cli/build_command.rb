@@ -240,6 +240,15 @@ module Ruflet
       def ensure_flutter_client_dir(verbose: false)
         client_dir = detect_flutter_client_dir
         if client_dir
+          if File.expand_path(client_dir) == File.expand_path(hidden_flutter_client_dir) &&
+              !valid_flutter_client_root?(client_dir) &&
+              !File.file?(File.join(client_dir, ".metadata"))
+            if Ruflet::CLI.respond_to?(:copy_ruflet_client_template, true)
+              Ruflet::CLI.send(:copy_ruflet_client_template, Dir.pwd)
+              client_dir = hidden_flutter_client_dir
+              build_log(verbose, "repaired invalid managed Flutter client root")
+            end
+          end
           refresh_hidden_flutter_client_template(client_dir, verbose: verbose)
           return client_dir
         end
@@ -247,6 +256,11 @@ module Ruflet
         bootstrapped = bootstrap_flutter_client_template
         build_log(verbose, "bootstrapped client template at #{bootstrapped}") if bootstrapped
         bootstrapped
+      end
+
+      def valid_flutter_client_root?(path)
+        File.file?(File.join(path, "pubspec.yaml")) &&
+          File.file?(File.join(path, "lib", "main.dart"))
       end
 
       def refresh_hidden_flutter_client_template(client_dir, verbose: false)
