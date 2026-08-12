@@ -232,11 +232,19 @@ the import and the `Extension()` call from the package name, which every
 extension package follows. `branch` and `tag` work in place of `ref`, and `path`
 takes a local checkout instead of a repository.
 
+At build time the managed Flutter client keeps the core `flet` package plus
+only the local packages selected by `extensions:` and `services:`. Packages
+removed for one build are restored automatically from the client template if a
+later configuration declares them again.
+
 ### Protected capabilities are explicit
 
 Camera, microphone, location, and motion access are declared in
 `services.yaml`. Ruflet activates the required client integrations and writes
-the matching Android and iOS permission descriptions during the build.
+the matching Android and iOS permission descriptions during the build. Ruflet
+also removes its previously managed permissions when the capability is no
+longer declared, so stale camera, microphone, location, or motion access does
+not ship in the next build.
 
 ```yaml
 services:
@@ -396,6 +404,9 @@ ruflet build apk --self
 ruflet build ios --self
 ```
 
+`ruflet build ios --self` prepares both the physical-device and simulator app
+bundles. You do not need a separate simulator build command.
+
 Install the latest mobile build on a connected device:
 
 ```bash
@@ -403,6 +414,10 @@ ruflet devices
 ruflet install
 ruflet install --device DEVICE_ID
 ```
+
+With one compatible mobile target connected, plain `ruflet install` selects it
+automatically; `--device` remains available when several matching targets are
+connected.
 
 Ruflet uses the canonical external Flutter template, resolves packages,
 applies app identity, generates splash screens and launcher icons, prepares

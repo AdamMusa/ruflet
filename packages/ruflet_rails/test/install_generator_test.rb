@@ -30,29 +30,7 @@ class RufletInstallGeneratorTest < Minitest::Test
     refute generator.send(:desktop_requested?)
   end
 
-  def test_web_and_desktop_options_request_all_clients
-    generator = build_generator(web: true, desktop: true)
 
-    assert_equal "all", generator.send(:requested_client)
-    assert generator.send(:desktop_requested?)
-    assert generator.send(:web_requested?)
-  end
-
-  def test_web_option_installs_web_client_into_the_rails_app
-    generator = build_generator(web: true)
-    installed_root = nil
-    original = Ruflet::Rails::WebInstaller.method(:install!)
-    Ruflet::Rails::WebInstaller.define_singleton_method(:install!) do |root:, **|
-      installed_root = root
-      true
-    end
-
-    capture_io { generator.download_prebuilt_client }
-
-    assert_equal Dir.pwd, installed_root
-  ensure
-    Ruflet::Rails::WebInstaller.define_singleton_method(:install!, original)
-  end
 
   def test_install_generator_only_creates_the_ruflet_entrypoint
     generator = build_generator({})
@@ -70,7 +48,7 @@ class RufletInstallGeneratorTest < Minitest::Test
 
       routes = File.read(File.join(dir, "config", "routes.rb"))
       assert_includes routes,
-                      'match "/ws", to: Ruflet::Rails.app(Rails.root.join("app/views/ruflet/main.rb")), via: :all',
+                      'match "/ws", to: Ruflet::Rails.native(Rails.root.join("app/views/ruflet/main.rb")), via: :all',
                       "the generator should mount /ws explicitly — no Railtie auto-mount magic"
     end
   end
@@ -85,25 +63,10 @@ class RufletInstallGeneratorTest < Minitest::Test
       generator2 = Ruflet::Generators::InstallGenerator.new([], {}, destination_root: dir)
       capture_io { generator2.invoke_all }
 
-      assert_equal 1, File.read(File.join(dir, "config", "routes.rb")).scan("Ruflet::Rails.app(").length
+      assert_equal 1, File.read(File.join(dir, "config", "routes.rb")).scan("Ruflet::Rails.native(").length
     end
   end
 
-  def test_web_install_mounts_only_the_generated_app_at_ruflet
-    Dir.mktmpdir do |dir|
-      FileUtils.mkdir_p(File.join(dir, "config"))
-      File.write(File.join(dir, "config", "routes.rb"), "Rails.application.routes.draw do\nend\n")
-
-      generator = Ruflet::Generators::InstallGenerator.new([], { "web" => true }, destination_root: dir)
-      capture_io { generator.mount_websocket }
-      capture_io { generator.mount_web_app }
-
-      routes = File.read(File.join(dir, "config", "routes.rb"))
-      assert_includes routes,
-                      'mount Ruflet::Rails.web_app(app_file: Rails.root.join("app/views/ruflet/main.rb")), at: "/ruflet"'
-      refute_includes routes, "/products"
-    end
-  end
 
   def test_install_creates_ruflet_initializer_for_build_config
     Dir.mktmpdir do |dir|

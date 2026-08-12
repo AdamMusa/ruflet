@@ -281,7 +281,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
       ruby_runtime = YAML.safe_load(pubspec, aliases: true).dig("dependencies", "ruby_runtime")
       assert_equal File.expand_path("../../../ruby_runtime", __dir__), ruby_runtime["path"]
-      assert YAML.safe_load(pubspec, aliases: true).dig("dependencies", "flet_spinkit")
+      refute YAML.safe_load(pubspec, aliases: true).dig("dependencies", "flet_spinkit")
       refute_path_exists File.join(client_dir, "lib", "ruflet_spinkit.dart")
       assert_includes calls, client_dir
     end
@@ -876,7 +876,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
 
       assert_equal 0, code
       refute calls.first[:env].key?("BUNDLE_GEMFILE")
-    assert_equal ["flutter", "build", "ios", "--codesign", "--target", "lib/main.self.dart"], calls.first[:args]
+      assert_equal ["flutter", "build", "ios", "--codesign", "--target", "lib/main.self.dart"], calls.first[:args]
+      assert_equal ["flutter", "build", "ios", "--simulator", "--target", "lib/main.self.dart"], calls.last[:args]
       refute_includes calls.first[:env]["PATH"], "/Users/macbookpro/.gem/ruby/3.4.0/bin"
       assert_includes calls.first[:env]["PATH"], File.join(client_dir, ".ruflet", "bin")
       assert File.executable?(File.join(client_dir, ".ruflet", "bin", "pod"))
@@ -934,6 +935,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       ios_app_dir = File.join(dir, "build", "ios", "iphonesimulator", "Runner.app")
       FileUtils.mkdir_p(ios_app_dir)
       File.write(File.join(ios_app_dir, "Info.plist"), "plist")
+      File.write(File.join(ios_app_dir, "Runner"), "simulator executable")
 
       builder.define_singleton_method(:detect_flutter_client_dir) { client_dir }
       builder.define_singleton_method(:load_ruflet_config) { {} }
@@ -941,7 +943,6 @@ class RufletCliUpdateCommandTest < Minitest::Test
         { flutter: "flutter", dart: "dart", env: {} }
       end
       builder.define_singleton_method(:prepare_flutter_client) { |_client_dir, **_kwargs| flunk("install should not run build preparation") }
-
       calls = []
       builder.define_singleton_method(:system) do |_env, *_args, chdir: nil|
         calls << { env: _env, args: _args, chdir: chdir }
@@ -1005,6 +1006,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
     builder = DummyBuilder.new
 
     Dir.mktmpdir do |dir|
+      previous_dir = Dir.pwd
+      Dir.chdir(dir)
       client_dir = File.join(dir, "ruflet_client")
       FileUtils.mkdir_p(File.join(client_dir, "lib"))
       File.write(File.join(client_dir, "lib", "main.server.dart"), "void main() {}\n")
@@ -1027,6 +1030,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes err.string, "Could not find built app outputs under ./build"
     ensure
       $stderr = original_stderr
+      Dir.chdir(previous_dir) if previous_dir
     end
   end
 

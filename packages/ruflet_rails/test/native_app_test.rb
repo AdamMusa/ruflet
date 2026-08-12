@@ -60,7 +60,7 @@ class RufletNativeAppTest < Minitest::Test
   end
 
   def start(**opts)
-    Ruflet::Rails.native_app(@page, start_url: "https://myapp.com", **opts)
+    Ruflet::Rails.native_shell(@page, start_url: "https://myapp.com", **opts)
   end
 
   def wait_for_async_invokes
@@ -150,7 +150,7 @@ class RufletNativeAppTest < Minitest::Test
   end
 
   def test_page_ended_updates_screen_url_before_chrome_sync
-    Ruflet::Rails.native_app(@page, start_url: "https://myapp.com/company/sign_in")
+    Ruflet::Rails.native_shell(@page, start_url: "https://myapp.com/company/sign_in")
     post(%(ruflet:appbar:#{JSON.generate({ "title" => "T4U", "actions" => [{ "icon" => "language" }] })}))
     post(%(ruflet:bottomnav:#{JSON.generate({ "items" => [
       { "label" => "Features", "icon" => "inventory_2", "url" => "/" },

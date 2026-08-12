@@ -49,8 +49,10 @@ module Ruflet
   module Rails
     module_function
 
-    # Start a managed webview app. See NativeApp.
-    def native_app(page, **opts)
+    # Wrap your Rails web pages in a native shell: the body stays a WebView
+    # while Ruflet owns the native chrome (app bar, drawer, navigation, sheets,
+    # dialogs, services). See NativeApp.
+    def native_shell(page, **opts)
       NativeApp.new(page, **opts).start
     end
   end
