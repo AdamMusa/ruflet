@@ -20,6 +20,9 @@ class MockRufletRuntimePlatform
   }
 
   @override
+  Future<Uri> serverUrl() async => Uri.parse('http://127.0.0.1:8550');
+
+  @override
   Future<RufletRuntimeStatus> status() async {
     return const RufletRuntimeStatus(running: true, port: 8550, error: '');
   }
@@ -45,6 +48,7 @@ void main() {
     expect(started.running, true);
     expect(started.port, 8550);
     expect((await RufletRuntime.status()).error, '');
+    expect((await RufletRuntime.serverUrl()).port, 8550);
     await RufletRuntime.stop();
   });
 }

@@ -41,6 +41,11 @@ class RufletRuntime {
     );
   }
 
+  /// The URL of a runtime the platform layer started on its own.
+  static Future<Uri> serverUrl() {
+    return RufletRuntimePlatform.instance.serverUrl();
+  }
+
   static Future<RufletRuntimeStatus> status() {
     return RufletRuntimePlatform.instance.status();
   }

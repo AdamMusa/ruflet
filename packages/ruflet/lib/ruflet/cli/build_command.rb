@@ -134,7 +134,6 @@ module Ruflet
         build_args += ["--target", target_entrypoint] if target_entrypoint
         backend_url = configured_backend_url(config)
         if self_contained
-          build_args += ["--dart-define", "RUFLET_BACKEND_URL=#{backend_url}"] if backend_url
           # Pin the embedded project so main.self.dart extracts assets/<name>/
           # deterministically instead of inferring from a single main.rb — the
           # app tree now ships many main.rb files (standalone_apps/*/main.rb).
@@ -465,7 +464,8 @@ module Ruflet
       end
 
       def prepare_flutter_client(client_dir, platform:, tools:, config:, self_contained: false, verbose: false)
-        refresh_managed_client_template_files(client_dir, verbose: verbose)
+        refresh_managed_client_template_files(
+          client_dir, platform: platform, verbose: verbose)
         metadata = sync_client_metadata(client_dir, config, verbose: verbose)
         return false unless validate_mobile_app_identity(metadata, platform: platform)
 
@@ -474,6 +474,9 @@ module Ruflet
         apply_ios_signing_team(client_dir, config) if %w[ios ipa macos].include?(platform.to_s)
         configured = configure_client_runtime_mode(client_dir, self_contained: self_contained, verbose: verbose)
         return false if configured == false
+        configure_native_apple_runtime(
+          client_dir, platform: platform, self_contained: self_contained,
+          verbose: verbose)
         @ruflet_self_contained_build = self_contained
         apply_service_extension_config(client_dir, config)
         asset_flags = apply_build_config(client_dir, config)
@@ -1254,10 +1257,10 @@ module Ruflet
           android_application_id: normalize_bundle_identifier(
             first_present(app["android_application_id"], config["android_application_id"], bundle_identifier)
           ),
-          ios_bundle_identifier: normalize_bundle_identifier(
+          ios_bundle_identifier: normalize_apple_bundle_identifier(
             first_present(app["ios_bundle_identifier"], config["ios_bundle_identifier"], bundle_identifier)
           ),
-          macos_bundle_identifier: normalize_bundle_identifier(
+          macos_bundle_identifier: normalize_apple_bundle_identifier(
             first_present(app["macos_bundle_identifier"], config["macos_bundle_identifier"], bundle_identifier)
           ),
           linux_application_id: normalize_bundle_identifier(
@@ -1533,6 +1536,20 @@ module Ruflet
         end
         segments.reject!(&:empty?)
         segments = %w[com example ruflet_client] if segments.empty?
+        segments.join(".")
+      end
+
+      def normalize_apple_bundle_identifier(value)
+        segments = value.to_s.strip.downcase.split(".").map do |segment|
+          normalized = segment.gsub(/[^a-z0-9-]+/, "-")
+          normalized.gsub!(/\A-+|-+\z/, "")
+          normalized.gsub!(/-+/, "-")
+          normalized = "app" if normalized.empty?
+          normalized = "app-#{normalized}" if normalized.match?(/\A\d/)
+          normalized
+        end
+        segments.reject!(&:empty?)
+        segments = %w[com example app] if segments.empty?
         segments.join(".")
       end
 
@@ -1931,7 +1948,7 @@ module Ruflet
         nil
       end
 
-      def refresh_managed_client_template_files(client_dir, verbose: false)
+      def refresh_managed_client_template_files(client_dir, platform: nil, verbose: false)
         template_root =
           if Ruflet::CLI.respond_to?(:resolve_ruflet_client_template_root, true)
             Ruflet::CLI.send(:resolve_ruflet_client_template_root)
@@ -1942,6 +1959,7 @@ module Ruflet
           "lib/main.dart",
           "lib/main.self.dart",
           "lib/main.server.dart",
+          "lib/native_renderer.dart",
           "lib/connection_probe.dart",
           "lib/connection_probe_io.dart",
           "lib/connection_probe_stub.dart",
@@ -1957,6 +1975,25 @@ module Ruflet
           "android/app/build.gradle.kts"
         ]
 
+        case platform.to_s
+        when "ios", "ipa"
+          managed_files.concat(
+            [
+              "ios/Runner/AppDelegate.swift",
+              "ios/Runner/RufletEngineChoice.swift",
+              "ios/Runner.xcodeproj/project.pbxproj"
+            ]
+          )
+        when "macos"
+          managed_files.concat(
+            [
+              "macos/Runner/MainFlutterWindow.swift",
+              "macos/Runner/RufletEngineChoice.swift",
+              "macos/Runner.xcodeproj/project.pbxproj"
+            ]
+          )
+        end
+
         managed_files.each do |relative_path|
           source = File.join(template_root, relative_path)
           next unless File.file?(source)
@@ -1967,10 +2004,68 @@ module Ruflet
           build_log(verbose, "refreshed template file #{relative_path}")
         end
 
+        if %w[ios ipa macos].include?(platform.to_s)
+          sync_managed_template_tree(
+            template_root, client_dir, "apple_packages/ruflet_apple", verbose: verbose)
+        end
+
         # Older managed clients carried a macOS-only FilePicker override. Flet's
         # core service owns FilePicker now, so this duplicate must not survive a
         # template refresh.
         FileUtils.rm_f(File.join(client_dir, "lib", "ruflet_file_picker_service.dart"))
+      end
+
+      def sync_managed_template_tree(template_root, client_dir, relative_path, verbose: false)
+        source = File.join(template_root, relative_path)
+        return unless Dir.exist?(source)
+
+        destination = File.join(client_dir, relative_path)
+        FileUtils.rm_rf(destination)
+        FileUtils.mkdir_p(File.dirname(destination))
+        FileUtils.cp_r(source, destination)
+        %w[.build .swiftpm .claude].each do |generated|
+          FileUtils.rm_rf(File.join(destination, generated))
+        end
+        build_log(verbose, "refreshed template tree #{relative_path}")
+      end
+
+      def configure_native_apple_runtime(
+        client_dir, platform:, self_contained:, verbose: false
+      )
+        plist_paths = case platform.to_s
+        when "ios", "ipa"
+          [File.join(client_dir, "ios", "Runner", "Info.plist")]
+        when "macos"
+          [File.join(client_dir, "macos", "Runner", "Info.plist")]
+        else
+          []
+        end
+
+        plist_paths.each do |path|
+          next unless File.file?(path)
+
+          upsert_plist_string(
+            path, "RufletEmbeddedProject",
+            self_contained ? self_contained_project_name : "")
+          message = if self_contained
+            "native Apple runtime embeds #{self_contained_project_name}"
+          else
+            "native Apple runtime uses the server URL resolved by Dart"
+          end
+          build_log(verbose, message)
+        end
+      end
+
+      def upsert_plist_string(path, key, value)
+        content = read_text_file(path)
+        pair = "\t<key>#{key}</key>\n\t<string>#{xml_escape(value)}</string>"
+        pattern = %r{<key>#{Regexp.escape(key)}</key>\s*<string>.*?</string>}m
+        if content.match?(pattern)
+          content.sub!(pattern, pair.strip)
+        else
+          content.sub!(%r{</dict>\s*</plist>}m, "#{pair}\n</dict>\n</plist>")
+        end
+        write_text_file(path, content)
       end
 
       def write_pubspec_yaml(path, data)

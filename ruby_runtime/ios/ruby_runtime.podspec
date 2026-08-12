@@ -19,10 +19,12 @@ frameworks ship as plain gem file trees in app assets.
   s.source_files = [
     'Classes/MrubyRuntimePlugin.{h,m}'
   ]
-  s.preserve_paths = '../desktop/ruflet_vm_host.h'
+  s.preserve_paths = ['../desktop/ruflet_vm_host.h', '../apple/*.h']
   s.vendored_frameworks = 'Frameworks/RufletVM.xcframework'
 
-  s.public_header_files = 'Classes/**/*.h'
+  # vm_bootstrap.h is compiled into the vendored VM host and must not appear
+  # in CocoaPods' generated umbrella header.
+  s.public_header_files = 'Classes/MrubyRuntimePlugin.h'
 
   s.dependency 'Flutter'
   s.platform = :ios, '13.0'
@@ -35,6 +37,6 @@ frameworks ship as plain gem file trees in app assets.
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
-    'HEADER_SEARCH_PATHS' => '$(inherited) "$(PODS_TARGET_SRCROOT)/../desktop"'
+    'HEADER_SEARCH_PATHS' => '$(inherited) "$(PODS_TARGET_SRCROOT)/../desktop" "$(PODS_TARGET_SRCROOT)/../apple"'
   }
 end

@@ -28,6 +28,10 @@ abstract class RufletRuntimePlatform extends PlatformInterface {
     throw UnimplementedError('start() has not been implemented.');
   }
 
+  Future<Uri> serverUrl() {
+    throw UnimplementedError('serverUrl() has not been implemented.');
+  }
+
   Future<RufletRuntimeStatus> status() {
     throw UnimplementedError('status() has not been implemented.');
   }

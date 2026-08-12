@@ -51,6 +51,104 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  def test_ios_build_refreshes_native_renderer_bootstrap_and_apple_package
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      template_dir = File.join(dir, "template")
+      client_dir = File.join(dir, "client")
+      managed = {
+        "lib/main.dart" => "template main\n",
+        "lib/native_renderer.dart" => "dart native bridge\n",
+        "ios/Runner/Info.plist" => "template plist\n",
+        "ios/Runner/AppDelegate.swift" => "native app delegate\n",
+        "ios/Runner/RufletEngineChoice.swift" => "native engine choice\n",
+        "ios/Runner.xcodeproj/project.pbxproj" => "ruflet apple package link\n",
+        "apple_packages/ruflet_apple/Package.swift" => "native package\n",
+        "apple_packages/ruflet_apple/Sources/RufletApple/RufletApple.swift" => "native renderer\n",
+        "apple_packages/ruflet_apple/.build/stale" => "generated\n"
+      }
+      managed.each do |relative, content|
+        path = File.join(template_dir, relative)
+        FileUtils.mkdir_p(File.dirname(path))
+        File.write(path, content)
+      end
+      FileUtils.mkdir_p(File.join(client_dir, "ios", "Runner"))
+      File.write(File.join(client_dir, "ios", "Runner", "AppDelegate.swift"), "old flutter host\n")
+
+      Ruflet::CLI.stub(:resolve_ruflet_client_template_root, template_dir) do
+        builder.send(
+          :refresh_managed_client_template_files,
+          client_dir, platform: "ios")
+      end
+
+      assert_equal(
+        "native app delegate\n",
+        File.read(File.join(client_dir, "ios", "Runner", "AppDelegate.swift")))
+      assert_equal(
+        "dart native bridge\n",
+        File.read(File.join(client_dir, "lib", "native_renderer.dart")))
+      assert_equal(
+        "native engine choice\n",
+        File.read(File.join(client_dir, "ios", "Runner", "RufletEngineChoice.swift")))
+      assert_equal(
+        "ruflet apple package link\n",
+        File.read(File.join(client_dir, "ios", "Runner.xcodeproj", "project.pbxproj")))
+      assert_equal(
+        "native renderer\n",
+        File.read(File.join(
+          client_dir, "apple_packages", "ruflet_apple", "Sources", "RufletApple",
+          "RufletApple.swift")))
+      refute_path_exists File.join(client_dir, "apple_packages", "ruflet_apple", ".build")
+    end
+  end
+
+  def test_native_apple_runtime_configuration_uses_actual_embedded_project_name
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      plist = File.join(dir, "ios", "Runner", "Info.plist")
+      FileUtils.mkdir_p(File.dirname(plist))
+      File.write(plist, "<plist><dict></dict></plist>\n")
+      previous = Dir.pwd
+      project = File.join(dir, "my_explorer")
+      FileUtils.mkdir_p(project)
+      Dir.chdir(project) do
+        builder.send(
+          :configure_native_apple_runtime,
+          dir, platform: "ios", self_contained: true)
+      end
+
+      content = File.read(plist)
+      assert_includes content, "<key>RufletEmbeddedProject</key>"
+      assert_includes content, "<string>my_explorer</string>"
+    ensure
+      Dir.chdir(previous) if previous
+    end
+  end
+
+  def test_native_apple_runtime_configuration_leaves_server_url_to_dart
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      plist = File.join(dir, "macos", "Runner", "Info.plist")
+      FileUtils.mkdir_p(File.dirname(plist))
+      File.write(plist, <<~PLIST)
+        <plist><dict>
+        <key>RufletEmbeddedProject</key><string>stale</string>
+        <key>RufletBackendURL</key><string>must-not-be-used</string>
+        </dict></plist>
+      PLIST
+      builder.send(
+        :configure_native_apple_runtime,
+        dir, platform: "macos", self_contained: false)
+
+      content = File.read(plist)
+      assert_match(/<key>RufletEmbeddedProject<\/key>\s*<string><\/string>/, content)
+      assert_includes content, "<string>must-not-be-used</string>"
+    end
+  end
+
   def test_ruflet_yaml_identity_wins_over_services_yaml
     builder = DummyBuilder.new
 
@@ -96,7 +194,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
         assert_equal "com.legacy", config.dig("app", "organization")
         assert_equal "Legacy Name", metadata[:display_name]
         assert_equal "com.legacy.legacy_name", metadata[:android_application_id]
-        assert_equal "com.legacy.legacy_name", metadata[:ios_bundle_identifier]
+        assert_equal "com.legacy.legacy-name", metadata[:ios_bundle_identifier]
         assert_empty metadata[:mobile_identity_errors]
       end
 
@@ -648,8 +746,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes out.string, "[ruflet build] running flutter pub get"
       assert_includes out.string, "[ruflet build] mode=self"
       assert_includes out.string, "[ruflet build] target=lib/main.self.dart"
-    assert_includes out.string, "[ruflet build] command=flutter build apk --target lib/main.self.dart --dart-define RUFLET_BACKEND_URL=https://api.example.com --dart-define RUFLET_EMBEDDED_PROJECT=ruflet -v"
-    assert_equal ["flutter", "build", "apk", "--target", "lib/main.self.dart", "--dart-define", "RUFLET_BACKEND_URL=https://api.example.com", "--dart-define", "RUFLET_EMBEDDED_PROJECT=ruflet", "-v"], calls.first[:args]
+      assert_includes out.string, "[ruflet build] command=flutter build apk --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=ruflet -v"
+      assert_equal ["flutter", "build", "apk", "--target", "lib/main.self.dart", "--dart-define", "RUFLET_EMBEDDED_PROJECT=ruflet", "-v"], calls.first[:args]
       assert_equal client_dir, calls.first[:chdir]
     ensure
       $stdout = original_stdout
@@ -1850,7 +1948,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
 
       macos_info = File.read(File.join(client_dir, "macos", "Runner", "Configs", "AppInfo.xcconfig"))
       assert_includes macos_info, "PRODUCT_NAME = Test App"
-      assert_includes macos_info, "PRODUCT_BUNDLE_IDENTIFIER = com.acme.test_app"
+      assert_includes macos_info, "PRODUCT_BUNDLE_IDENTIFIER = com.acme.test-app"
 
       web_manifest = File.read(File.join(client_dir, "web", "manifest.json"))
       assert_includes web_manifest, '"name": "Test App"'

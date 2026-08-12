@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 
+#include "ruflet_runtime_autostart.h"
 #include "ruflet_vm_host.h"
 
 // Flutter bridge for the embedded Ruby VM.
@@ -12,11 +13,17 @@
 // RufletVM library behind four C entry points. Every platform bridges to those
 // same entry points, so releasing a runtime means replacing the built artifact
 // and nothing else; there is no host logic to keep in step across plugins.
+//
+// Startup itself is shared with macOS in apple/ruflet_runtime_autostart.h.
 
 @interface MrubyRuntimePlugin : NSObject <FlutterPlugin>
 @end
 
 @implementation MrubyRuntimePlugin
+
++ (void)load {
+  ruflet_autostart_on_load();
+}
 
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar> *)registrar {
   FlutterMethodChannel *channel =
@@ -94,6 +101,22 @@ static const char **borrow_utf8(NSArray<NSString *> *values,
     NSDictionary *arguments = [call.arguments isKindOfClass:[NSDictionary class]]
                                   ? (NSDictionary *)call.arguments
                                   : @{};
+    // The platform already started the runtime, so these arguments cannot take
+    // effect -- the VM boots once per process. Rather than fail, hand this
+    // caller the port that already exists through the file it is about to
+    // poll, so a client written against the older start() flow still finds the
+    // server and still gets the parallel startup.
+    if (ruflet_autostart_owns_runtime()) {
+      NSString *portPath = @"";
+      if ([arguments[@"environment"] isKindOfClass:[NSDictionary class]]) {
+        id value = ((NSDictionary *)arguments[@"environment"])[@"RUFLET_RUNTIME_PORT_FILE"];
+        portPath = [value isKindOfClass:[NSString class]] ? value : @"";
+      }
+      ruflet_autostart_mirror_port(portPath);
+      result(runtime_status());
+      return;
+    }
+
     NSString *projectRoot = string_argument(arguments, @"projectRoot");
     NSString *entrypoint = string_argument(arguments, @"entrypoint");
     NSString *stopPath = string_argument(arguments, @"stopSignalPath");
@@ -141,8 +164,20 @@ static const char **borrow_utf8(NSArray<NSString *> *values,
     return;
   }
 
+  if ([call.method isEqualToString:@"serverUrl"]) {
+    ruflet_autostart_resolve_url(result);
+    return;
+  }
+
   if ([call.method isEqualToString:@"status"]) {
     result(runtime_status());
+    return;
+  }
+
+  // Milliseconds since the plugin's dylib was loaded. Lets Dart place its own
+  // timestamps on a timeline that starts before the engine did.
+  if ([call.method isEqualToString:@"timeline"]) {
+    result(@{@"sinceLoadMs" : [NSNumber numberWithDouble:ruflet_ms_since_load()]});
     return;
   }
 

@@ -18,12 +18,12 @@ Flutter method channel. Application code ships as an app asset payload.
   s.source_files = [
     'Classes/RubyRuntimeMacosPlugin.{h,m}'
   ]
-  s.preserve_paths = '../desktop/ruflet_vm_host.h'
+  s.preserve_paths = ['../desktop/ruflet_vm_host.h', '../apple/*.h']
   s.vendored_libraries = 'Frameworks/libruflet_vm.a'
 
   s.dependency 'FlutterMacOS'
 
-  s.platform = :osx, '10.14'
+  s.platform = :osx, '10.15'
   # The VM host layer inside the archive is C++, so the bridge links libc++.
   s.libraries = 'm', 'c++'
   # The bridge only needs ruflet_vm_host.h. mruby, Onigmo and the native gems
@@ -31,6 +31,6 @@ Flutter method channel. Application code ships as an app asset payload.
   # required here and none of those sources ship in the package.
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
-    'HEADER_SEARCH_PATHS' => '$(inherited) "$(PODS_TARGET_SRCROOT)/../desktop"'
+    'HEADER_SEARCH_PATHS' => '$(inherited) "$(PODS_TARGET_SRCROOT)/../desktop" "$(PODS_TARGET_SRCROOT)/../apple"'
   }
 end

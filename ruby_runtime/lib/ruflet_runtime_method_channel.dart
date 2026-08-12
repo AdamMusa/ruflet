@@ -32,6 +32,22 @@ class MethodChannelRufletRuntime extends RufletRuntimePlatform {
   }
 
   @override
+  Future<Uri> serverUrl() async {
+    final value = await methodChannel.invokeMapMethod<Object?, Object?>(
+      'serverUrl',
+    );
+    final raw = value?['url']?.toString() ?? '';
+    final parsed = Uri.tryParse(raw);
+    if (parsed == null || parsed.host.isEmpty) {
+      throw PlatformException(
+        code: 'ruflet_runtime_bad_url',
+        message: 'Native Ruflet runtime returned an unusable URL: "$raw".',
+      );
+    }
+    return parsed;
+  }
+
+  @override
   Future<RufletRuntimeStatus> status() async {
     final value = await methodChannel.invokeMapMethod<Object?, Object?>(
       'status',
