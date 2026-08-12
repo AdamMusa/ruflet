@@ -72,7 +72,16 @@ module Ruflet
         target = hidden_flutter_client_dir(root)
         FileUtils.mkdir_p(File.dirname(target))
         FileUtils.rm_rf(target)
-        FileUtils.cp_r(template_root, target)
+        # `target` is the Flutter project root, not a directory that contains
+        # the template root. Copying a source directory onto a target that was
+        # already created by FileUtils can produce
+        # `build/client/ruflet_flutter_template/...`, leaving `build/client`
+        # without pubspec.yaml and making Flutter reject it as a project.
+        FileUtils.mkdir_p(target)
+        Dir.children(template_root).each do |entry|
+          copy_client_template_entry(
+            template_root, target, entry)
+        end
         prune_client_template(target)
         write_client_template_revision(target, installed_template_revision(template_root))
       end
@@ -259,6 +268,38 @@ module Ruflet
           full = File.join(target, path)
           FileUtils.rm_rf(full) if File.exist?(full)
         end
+      end
+
+      def copy_client_template_entry(template_root, target, relative)
+        return if generated_client_template_path?(relative)
+
+        source = File.join(template_root, relative)
+        destination = File.join(target, relative)
+        stat = File.lstat(source)
+        if stat.symlink?
+          FileUtils.mkdir_p(File.dirname(destination))
+          FileUtils.ln_s(File.readlink(source), destination)
+        elsif stat.directory?
+          FileUtils.mkdir_p(destination)
+          Dir.children(source).each do |entry|
+            copy_client_template_entry(
+              template_root, target, File.join(relative, entry))
+          end
+        else
+          FileUtils.mkdir_p(File.dirname(destination))
+          FileUtils.cp(source, destination, preserve: true)
+        end
+      end
+
+      def generated_client_template_path?(relative)
+        components = relative.split(File::SEPARATOR)
+        generated_components = %w[
+          .build .claude .dart_tool .git .idea .swiftpm .symlinks
+          build Pods
+        ]
+        return true if components.any? { |component| generated_components.include?(component) }
+
+        %w[Podfile.lock pubspec_overrides.yaml local.properties].include?(components.last)
       end
 
       def write_default_ruflet_config(root, app_name)

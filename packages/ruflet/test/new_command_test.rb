@@ -54,9 +54,41 @@ class RufletCliNewCommandTest < Minitest::Test
       assert File.file?(File.join(client_dir, "lib", "main.dart"))
       assert File.file?(File.join(client_dir, "lib", "main.self.dart"))
       assert File.file?(File.join(client_dir, "lib", "main.server.dart"))
+      assert File.file?(File.join(client_dir, "pubspec.yaml"))
+      refute File.exist?(File.join(client_dir, "ruflet_flutter_template"))
       refute File.exist?(File.join(client_dir, "ruflet.yaml"))
       refute File.exist?(File.join(client_dir, "services.yaml"))
       assert File.file?(File.join(client_dir, ".ruflet-template-revision"))
+    end
+  end
+
+  def test_copy_ruflet_client_template_excludes_nested_build_caches
+    Dir.mktmpdir do |dir|
+      template = File.join(dir, "template")
+      target_root = File.join(dir, "demo")
+      FileUtils.mkdir_p(File.join(template, "lib"))
+      FileUtils.mkdir_p(File.join(template, "apple_packages", "ruflet_apple", "Sources"))
+      FileUtils.mkdir_p(File.join(template, "apple_packages", "ruflet_apple", ".build"))
+      File.write(File.join(template, "pubspec.yaml"), "name: test\n")
+      File.write(File.join(template, "lib", "main.dart"), "void main() {}\n")
+      File.write(
+        File.join(template, "apple_packages", "ruflet_apple", "Sources", "Native.swift"),
+        "public struct Native {}\n")
+      File.write(
+        File.join(template, "apple_packages", "ruflet_apple", ".build", "stale"),
+        "generated\n")
+
+      Ruflet::CLI.stub(:resolve_ruflet_client_template_root, template) do
+        Ruflet::CLI.send(:copy_ruflet_client_template, target_root)
+      end
+
+      client = File.join(target_root, "build", "client")
+      assert File.file?(File.join(client, "pubspec.yaml"))
+      assert File.file?(File.join(
+        client, "apple_packages", "ruflet_apple", "Sources", "Native.swift"))
+      refute File.exist?(File.join(
+        client, "apple_packages", "ruflet_apple", ".build"))
+      refute File.exist?(File.join(client, "template"))
     end
   end
 
