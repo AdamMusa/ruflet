@@ -2073,9 +2073,11 @@ module Ruflet
         # too late: framework resource symlinks inside `.build` can collide or
         # escape while FileUtils is still traversing them. Treat only the
         # package's source tree as managed template input from the outset.
-        generated_entries = %w[.build .swiftpm .dart_tool .claude]
+        generated_entries = %w[
+          .swiftpm .dart_tool .claude DerivedData xcuserdata
+        ]
         Dir.children(source).each do |entry|
-          next if generated_entries.include?(entry)
+          next if generated_entries.include?(entry) || entry == ".build" || entry.start_with?(".build-")
 
           FileUtils.cp_r(
             File.join(source, entry), File.join(destination, entry),

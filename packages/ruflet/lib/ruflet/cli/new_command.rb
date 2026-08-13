@@ -296,11 +296,16 @@ module Ruflet
         components = relative.split(File::SEPARATOR)
         generated_components = %w[
           .build .claude .dart_tool .git .idea .swiftpm .symlinks
-          build Pods
+          build DerivedData Pods xcuserdata
         ]
         return true if components.any? { |component| generated_components.include?(component) }
+        return true if components.any? { |component| component.start_with?(".build-") }
 
-        %w[Podfile.lock pubspec_overrides.yaml local.properties].include?(components.last)
+        generated_files = %w[
+          .DS_Store Package.resolved Podfile.lock local.properties
+          pubspec_overrides.yaml
+        ]
+        generated_files.include?(components.last) || components.last.end_with?(".xcuserstate")
       end
 
       def write_default_ruflet_config(root, app_name)

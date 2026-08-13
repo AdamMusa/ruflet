@@ -172,9 +172,15 @@ class RufletCliUpdateCommandTest < Minitest::Test
       source = File.join(package, "Sources", "RufletAppExtensions")
       FileUtils.mkdir_p(source)
       FileUtils.mkdir_p(File.join(package, ".build"))
+      FileUtils.mkdir_p(File.join(package, ".build-ios-interaction"))
+      FileUtils.mkdir_p(File.join(package, "DerivedData"))
+      FileUtils.mkdir_p(File.join(package, "xcuserdata"))
       File.write(File.join(package, "Package.swift"), "// project package\n")
       File.write(File.join(source, "Extension.swift"), "struct ProjectExtension {}\n")
       File.write(File.join(package, ".build", "stale"), "generated\n")
+      File.write(File.join(package, ".build-ios-interaction", "stale"), "generated\n")
+      File.write(File.join(package, "DerivedData", "stale"), "generated\n")
+      File.write(File.join(package, "xcuserdata", "stale"), "generated\n")
 
       Dir.chdir(project) do
         builder.send(
@@ -187,6 +193,9 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert File.file?(File.join(
         destination, "Sources", "RufletAppExtensions", "Extension.swift"))
       refute_path_exists File.join(destination, ".build")
+      refute_path_exists File.join(destination, ".build-ios-interaction")
+      refute_path_exists File.join(destination, "DerivedData")
+      refute_path_exists File.join(destination, "xcuserdata")
     end
   end
 

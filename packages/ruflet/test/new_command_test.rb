@@ -74,6 +74,10 @@ class RufletCliNewCommandTest < Minitest::Test
       FileUtils.mkdir_p(File.join(template, "lib"))
       FileUtils.mkdir_p(File.join(template, "apple_packages", "ruflet_apple", "Sources"))
       FileUtils.mkdir_p(File.join(template, "apple_packages", "ruflet_apple", ".build"))
+      FileUtils.mkdir_p(File.join(template, "apple_packages", "ruflet_apple", ".build-ios-interaction"))
+      FileUtils.mkdir_p(File.join(template, "apple_packages", "ruflet_apple", "DerivedData"))
+      FileUtils.mkdir_p(File.join(template, "ios", "Runner.xcodeproj", "xcuserdata", "developer.xcuserdatad"))
+      FileUtils.mkdir_p(File.join(template, "ios", "Runner.xcworkspace", "xcshareddata", "swiftpm"))
       File.write(File.join(template, "pubspec.yaml"), "name: test\n")
       File.write(File.join(template, "lib", "main.dart"), "void main() {}\n")
       File.write(
@@ -81,6 +85,18 @@ class RufletCliNewCommandTest < Minitest::Test
         "public struct Native {}\n")
       File.write(
         File.join(template, "apple_packages", "ruflet_apple", ".build", "stale"),
+        "generated\n")
+      File.write(
+        File.join(template, "apple_packages", "ruflet_apple", ".build-ios-interaction", "stale"),
+        "generated\n")
+      File.write(
+        File.join(template, "apple_packages", "ruflet_apple", "DerivedData", "stale"),
+        "generated\n")
+      File.write(
+        File.join(template, "ios", "Runner.xcodeproj", "xcuserdata", "developer.xcuserdatad", "UserInterfaceState.xcuserstate"),
+        "generated\n")
+      File.write(
+        File.join(template, "ios", "Runner.xcworkspace", "xcshareddata", "swiftpm", "Package.resolved"),
         "generated\n")
 
       Ruflet::CLI.stub(:resolve_ruflet_client_template_root, template) do
@@ -93,6 +109,14 @@ class RufletCliNewCommandTest < Minitest::Test
         client, "apple_packages", "ruflet_apple", "Sources", "Native.swift"))
       refute File.exist?(File.join(
         client, "apple_packages", "ruflet_apple", ".build"))
+      refute File.exist?(File.join(
+        client, "apple_packages", "ruflet_apple", ".build-ios-interaction"))
+      refute File.exist?(File.join(
+        client, "apple_packages", "ruflet_apple", "DerivedData"))
+      refute File.exist?(File.join(
+        client, "ios", "Runner.xcodeproj", "xcuserdata"))
+      refute File.exist?(File.join(
+        client, "ios", "Runner.xcworkspace", "xcshareddata", "swiftpm", "Package.resolved"))
       refute File.exist?(File.join(client, "template"))
     end
   end
