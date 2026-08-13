@@ -33,6 +33,11 @@ class RufletCliNewCommandTest < Minitest::Test
         refute_includes out.string, "bundle exec ruflet"
         assert File.file?(File.join(dir, "demo_app", "assets", "icon.png"))
         assert File.file?(File.join(dir, "demo_app", "assets", "splash.png"))
+        assert File.file?(File.join(dir, "demo_app", "apple_extensions", "Package.swift"))
+        registry = File.read(File.join(
+          dir, "demo_app", "apple_extensions", "Sources", "RufletAppExtensions",
+          "RufletAppExtensionRegistry.swift"))
+        assert_includes registry, "RufletAppExtensionRegistry"
         refute File.exist?(File.join(dir, "demo_app", "ruflet_client"))
         refute File.exist?(File.join(dir, "demo_app", ".bundle", "config"))
       ensure

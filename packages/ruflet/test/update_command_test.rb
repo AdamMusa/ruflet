@@ -162,6 +162,65 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  def test_apple_build_copies_project_extensions_and_excludes_swift_caches
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      project = File.join(dir, "project")
+      client = File.join(project, "build", "client")
+      package = File.join(project, "apple_extensions")
+      source = File.join(package, "Sources", "RufletAppExtensions")
+      FileUtils.mkdir_p(source)
+      FileUtils.mkdir_p(File.join(package, ".build"))
+      File.write(File.join(package, "Package.swift"), "// project package\n")
+      File.write(File.join(source, "Extension.swift"), "struct ProjectExtension {}\n")
+      File.write(File.join(package, ".build", "stale"), "generated\n")
+
+      Dir.chdir(project) do
+        builder.send(
+          :sync_application_apple_extensions,
+          client, platform: "ios")
+      end
+
+      destination = File.join(client, "apple_extensions")
+      assert_equal "// project package\n", File.read(File.join(destination, "Package.swift"))
+      assert File.file?(File.join(
+        destination, "Sources", "RufletAppExtensions", "Extension.swift"))
+      refute_path_exists File.join(destination, ".build")
+    end
+  end
+
+  def test_existing_project_without_extensions_uses_empty_template_registry
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      project = File.join(dir, "project")
+      client = File.join(project, "build", "client")
+      template = File.join(dir, "template")
+      registry = File.join(
+        template, "apple_extensions", "Sources", "RufletAppExtensions",
+        "RufletAppExtensionRegistry.swift")
+      FileUtils.mkdir_p(project)
+      FileUtils.mkdir_p(File.dirname(registry))
+      File.write(File.join(template, "apple_extensions", "Package.swift"), "// default package\n")
+      File.write(registry, "public enum RufletAppExtensionRegistry {}\n")
+
+      Dir.chdir(project) do
+        Ruflet::CLI.stub(:resolve_ruflet_client_template_root, template) do
+          builder.send(
+            :sync_application_apple_extensions,
+            client, platform: "macos")
+        end
+      end
+
+      assert_equal(
+        "public enum RufletAppExtensionRegistry {}\n",
+        File.read(File.join(
+          client, "apple_extensions", "Sources", "RufletAppExtensions",
+          "RufletAppExtensionRegistry.swift")))
+    end
+  end
+
   def test_native_apple_runtime_configuration_leaves_server_url_to_dart
     builder = DummyBuilder.new
 

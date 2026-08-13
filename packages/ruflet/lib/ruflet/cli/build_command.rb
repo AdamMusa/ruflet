@@ -480,6 +480,8 @@ module Ruflet
       def prepare_flutter_client(client_dir, platform:, tools:, config:, self_contained: false, verbose: false)
         refresh_managed_client_template_files(
           client_dir, platform: platform, verbose: verbose)
+        sync_application_apple_extensions(
+          client_dir, platform: platform, verbose: verbose)
         metadata = sync_client_metadata(client_dir, config, verbose: verbose)
         return false unless validate_mobile_app_identity(metadata, platform: platform)
 
@@ -2034,6 +2036,36 @@ module Ruflet
         return unless Dir.exist?(source)
 
         destination = File.join(client_dir, relative_path)
+        sync_apple_source_tree(source, destination)
+        build_log(verbose, "refreshed template tree #{relative_path}")
+      end
+
+      # Application-defined RufletExtension implementations live outside the
+      # generated Flutter client. New projects own <project>/apple_extensions;
+      # existing projects receive the empty template registry until they opt
+      # in. Both server-driven and self-contained builds use the same package.
+      def sync_application_apple_extensions(client_dir, platform:, verbose: false)
+        return unless %w[ios ipa macos].include?(platform.to_s)
+
+        template_root = if Ruflet::CLI.respond_to?(:resolve_ruflet_client_template_root, true)
+          Ruflet::CLI.send(:resolve_ruflet_client_template_root)
+        end
+        project_source = File.join(Dir.pwd, "apple_extensions")
+        template_source = template_root && File.join(template_root, "apple_extensions")
+        source = if File.file?(File.join(project_source, "Package.swift"))
+          project_source
+        elsif template_source && File.file?(File.join(template_source, "Package.swift"))
+          template_source
+        end
+        return unless source
+
+        destination = File.join(client_dir, "apple_extensions")
+        sync_apple_source_tree(source, destination)
+        owner = source == project_source ? "project" : "template default"
+        build_log(verbose, "refreshed #{owner} Apple extensions")
+      end
+
+      def sync_apple_source_tree(source, destination)
         FileUtils.rm_rf(destination)
         FileUtils.mkdir_p(destination)
         # SwiftPM and Dart create mutable caches directly inside the package.
@@ -2049,7 +2081,6 @@ module Ruflet
             File.join(source, entry), File.join(destination, entry),
             preserve: true)
         end
-        build_log(verbose, "refreshed template tree #{relative_path}")
       end
 
       def configure_native_apple_runtime(

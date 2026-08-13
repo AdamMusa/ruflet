@@ -51,6 +51,7 @@ module Ruflet
         File.write(File.join(root, "README.md"), format(Ruflet::CLI::README_TEMPLATE, app_name: File.basename(root)))
         write_default_ruflet_config(root, File.basename(root))
         copy_default_project_assets(root)
+        copy_default_apple_extensions(root)
         project_name = File.basename(root)
         puts "Run:"
         puts "  cd #{project_name}"
@@ -357,6 +358,21 @@ module Ruflet
             FileUtils.cp(source, File.join(assets_dir, filename)) if File.file?(source)
           end
           return if File.file?(File.join(assets_dir, "icon.png")) && File.file?(File.join(assets_dir, "splash.png"))
+        end
+      end
+
+      def copy_default_apple_extensions(root)
+        template_root = resolve_ruflet_client_template_root || ensure_cached_ruflet_client_template!
+        source = template_root && File.join(template_root, "apple_extensions")
+        return unless source && File.file?(File.join(source, "Package.swift"))
+
+        destination = File.join(root, "apple_extensions")
+        FileUtils.mkdir_p(destination)
+        generated_entries = %w[.build .swiftpm .dart_tool .claude]
+        Dir.children(source).each do |entry|
+          next if generated_entries.include?(entry)
+
+          FileUtils.cp_r(File.join(source, entry), File.join(destination, entry), preserve: true)
         end
       end
 
