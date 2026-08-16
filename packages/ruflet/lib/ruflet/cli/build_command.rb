@@ -2103,8 +2103,9 @@ module Ruflet
           upsert_plist_string(
             path, "RufletEmbeddedProject",
             self_contained ? self_contained_project_name : "")
+          upsert_plist_boolean(path, "RufletRuntimeAutostart", self_contained)
           message = if self_contained
-            "native Apple runtime embeds #{self_contained_project_name}"
+            "native Apple runtime autostarts #{self_contained_project_name}"
           else
             "native Apple runtime uses the server URL resolved by Dart"
           end
@@ -2116,6 +2117,18 @@ module Ruflet
         content = read_text_file(path)
         pair = "\t<key>#{key}</key>\n\t<string>#{xml_escape(value)}</string>"
         pattern = %r{<key>#{Regexp.escape(key)}</key>\s*<string>.*?</string>}m
+        if content.match?(pattern)
+          content.sub!(pattern, pair.strip)
+        else
+          content.sub!(%r{</dict>\s*</plist>}m, "#{pair}\n</dict>\n</plist>")
+        end
+        write_text_file(path, content)
+      end
+
+      def upsert_plist_boolean(path, key, value)
+        content = read_text_file(path)
+        pair = "\t<key>#{key}</key>\n\t<#{value ? 'true' : 'false'}/>"
+        pattern = %r{<key>#{Regexp.escape(key)}</key>\s*<(?:true|false)\s*/>}m
         if content.match?(pattern)
           content.sub!(pattern, pair.strip)
         else

@@ -144,7 +144,11 @@ class RufletCliUpdateCommandTest < Minitest::Test
     Dir.mktmpdir do |dir|
       plist = File.join(dir, "ios", "Runner", "Info.plist")
       FileUtils.mkdir_p(File.dirname(plist))
-      File.write(plist, "<plist><dict></dict></plist>\n")
+      File.write(plist, <<~PLIST)
+        <plist><dict>
+        <key>RufletRuntimeAutostart</key><false/>
+        </dict></plist>
+      PLIST
       previous = Dir.pwd
       project = File.join(dir, "my_explorer")
       FileUtils.mkdir_p(project)
@@ -157,6 +161,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       content = File.read(plist)
       assert_includes content, "<key>RufletEmbeddedProject</key>"
       assert_includes content, "<string>my_explorer</string>"
+      assert_match(/<key>RufletRuntimeAutostart<\/key>\s*<true\s*\/>/, content)
     ensure
       Dir.chdir(previous) if previous
     end
@@ -239,6 +244,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       File.write(plist, <<~PLIST)
         <plist><dict>
         <key>RufletEmbeddedProject</key><string>stale</string>
+        <key>RufletRuntimeAutostart</key><true/>
         <key>RufletBackendURL</key><string>must-not-be-used</string>
         </dict></plist>
       PLIST
@@ -248,6 +254,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
 
       content = File.read(plist)
       assert_match(/<key>RufletEmbeddedProject<\/key>\s*<string><\/string>/, content)
+      assert_match(/<key>RufletRuntimeAutostart<\/key>\s*<false\s*\/>/, content)
       assert_includes content, "<string>must-not-be-used</string>"
     end
   end
