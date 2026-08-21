@@ -25,15 +25,31 @@ dependencies. Run Ruflet commands directly inside the generated project.
 
 ```bash
 ruflet new <appname>
-ruflet run [scriptname|path] [--web|--desktop] [--port PORT]
+ruflet run [scriptname|path] [--web|--desktop] [--experimental|--exp] [--port PORT]
 ruflet debug [scriptname|path]
 ruflet devices
 ruflet emulators
 ruflet doctor [--fix]
 ruflet update [web|desktop|all] [--check] [--force]
-ruflet build <apk|android|ios|aab|web|macos|windows|linux> [--self]
+ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--self] [--experimental|--exp]
 ruflet install [--device DEVICE_ID]
 ```
+
+`--experimental` is available only for iOS and macOS builds. It selects the
+native Apple renderer while the normal Ruflet build pipeline continues to
+resolve the declared services, extensions, permissions, assets, and runtime
+mode. Without it, Apple builds use only the Flutter renderer.
+
+Before Flutter resolves or bundles packages, Ruflet removes extension plugins
+that are not selected by the current services/extensions configuration. With
+the experimental Apple renderer, built-in declarations are registered as Swift
+extensions and their duplicate Dart/Flutter plugins are excluded entirely.
+
+On macOS, `ruflet run --experimental` (or `ruflet run --exp`) downloads the
+experimental Ruflet Explorer iOS Simulator prebuild the first time, reuses its
+versioned cache afterward, and launches it on the already-booted simulator
+with the current backend URL. Add `--desktop` to download and launch the native
+macOS prebuild instead: `ruflet run --desktop --exp`.
 
 Commands that create, diagnose, or build a Flutter client compare the cached
 template revision with `AdamMusa/ruflet-template` on GitHub. When `main`

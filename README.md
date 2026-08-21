@@ -119,13 +119,37 @@ ruflet run --web
 ruflet run --desktop
 ```
 
+On macOS, launch the prebuilt native Apple renderer in the already-booted iOS
+Simulator with either experimental spelling:
+
+```bash
+ruflet run --experimental
+ruflet run --exp
+```
+
+The first run downloads the experimental Ruflet Explorer simulator build from
+the selected client release channel. Later runs reuse the versioned local
+cache, install it on the currently booted simulator, and pass the Ruby
+backend URL at launch.
+
+To run the same experimental renderer as a native macOS desktop app, use:
+
+```bash
+ruflet run --desktop --exp
+```
+
+Its macOS prebuild is downloaded into a separate cache from the standard
+Flutter desktop client and receives the local Ruby backend URL at launch.
+
 ### Development targets
 
 | Target | Command | What happens |
 | --- | --- | --- |
 | Mobile | `ruflet run` | Starts the backend and prints a connection QR code. |
+| Experimental iOS | `ruflet run --experimental` | Downloads/reuses and launches the native Apple Explorer in the booted simulator. |
 | Web | `ruflet run --web` | Starts the backend and opens the Ruflet web client. |
 | Desktop | `ruflet run --desktop` | Starts the backend and launches the host desktop client. |
+| Experimental macOS | `ruflet run --desktop --exp` | Downloads/reuses and launches the native Apple desktop Explorer. |
 
 Hot reload is enabled by default. Press `r` for a manual Ruby UI reload or `R`
 for a complete backend restart. The current route survives a reload; in-memory
@@ -407,6 +431,24 @@ ruflet build ios --self
 `ruflet build ios --self` prepares both the physical-device and simulator app
 bundles. You do not need a separate simulator build command.
 
+On iOS and macOS, add `--experimental` to replace only the renderer with the
+native Apple engine. The ordinary build configuration still selects services,
+extensions, permissions, identity, assets, and runtime mode:
+
+```bash
+ruflet build ios --experimental
+ruflet build macos --self --exp
+```
+
+Without this flag, Apple builds contain the standard Flutter renderer and do
+not link the experimental Swift renderer package.
+
+The build resolves services and extensions before Flutter package resolution.
+Standard builds keep only the declared Flutter extension packages. Experimental
+Apple builds register those declarations with their Swift implementations and
+remove the equivalent Dart plugins, imports, local packages, and stale external
+extension registrations before `flutter pub get` and bundling.
+
 Install the latest mobile build on a connected device:
 
 ```bash
@@ -475,13 +517,13 @@ would not exist without it. Thank you.
 ```text
 ruflet --version
 ruflet new <appname>
-ruflet run [scriptname|path] [--web|--desktop] [--port PORT] [--no-reload]
+ruflet run [scriptname|path] [--web|--desktop] [--experimental|--exp] [--port PORT] [--no-reload]
 ruflet debug [scriptname|path]
 ruflet doctor [--fix] [--verbose]
 ruflet devices
 ruflet emulators
 ruflet update [web|desktop|all] [--check] [--force] [--platform PLATFORM]
-ruflet build <apk|android|ios|aab|web|macos|windows|linux> [--self] [--verbose]
+ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--self] [--experimental|--exp] [--verbose]
 ruflet install [--device DEVICE_ID] [--verbose]
 ```
 
@@ -500,6 +542,8 @@ ruflet install [--device DEVICE_ID] [--verbose]
   and live client connections.
 - [`ruflet_rails`](packages/ruflet_rails/README.md) — Rails mounting,
   generators, native builds, and WebView integration.
+- [`ruflet_record`](packages/ruflet_record/README.md) — a compact, lazy SQLite
+  ORM for CRuby and Ruflet's embedded mruby runtime.
 - `ruby_runtime` — embedded Ruby runtime for self-contained native builds.
 - [`ruflet_explorer`](https://github.com/AdamMusa/ruflet_explorer) — the preview
   client, written in Ruflet and built by this repository's release workflow.

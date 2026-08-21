@@ -20,7 +20,7 @@ on:
   release:
     types: [published]
   push:
-    branches: [main, prebuild]
+    branches: [main, prebuild, experimental]
     tags: ['v*']
     paths:
       - '.github/workflows/build-ruflet-client.yml'
@@ -42,6 +42,7 @@ concurrency:
 env:
   EXPLORER_REPOSITORY: AdamMusa/ruflet_explorer
   EXPLORER_REF: ${{ github.event.inputs.explorer_ref || 'main' }}
+  EXPERIMENTAL_TEMPLATE_REF: experimental
 
 jobs:
   verify-explorer:
@@ -399,8 +400,8 @@ jobs:
 
       - name: Package iOS simulator artifact
         run: |
-          app=$(find explorer/build -path '*iphonesimulator*' -name '*.app' -maxdepth 8 | head -n 1)
-          if [ -z "$app" ]; then
+          app=explorer/build/client/build/ios/iphonesimulator/Runner.app
+          if [ ! -d "$app" ]; then
             echo "No simulator .app produced"
             exit 1
           fi
@@ -429,6 +430,133 @@ jobs:
           overwrite_files: true
           files: ruflet_explorer-ios-simulator.zip
 
+  build-experimental-apple:
+    name: Build experimental ${{ matrix.target }}
+    needs: verify-explorer
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: macos
+            build_args: macos --exp --verbose
+            artifact: ruflet_explorer-macos-experimental-universal.zip
+          - target: ios
+            build_args: ios --self --exp --simulator --verbose
+            artifact: ruflet_explorer-ios-experimental-simulator.zip
+
+    steps:
+      - name: Checkout ruflet
+        uses: actions/checkout@v5
+        with:
+          path: ruflet
+
+      - name: Checkout Ruflet Explorer
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ env.EXPLORER_REPOSITORY }}
+          ref: ${{ env.EXPLORER_REF }}
+          path: explorer
+
+      - name: Checkout Ruflet template
+        uses: actions/checkout@v5
+        with:
+          repository: AdamMusa/ruflet-template
+          ref: ${{ env.EXPERIMENTAL_TEMPLATE_REF }}
+          path: ruflet-template
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Verify authoritative Apple renderer
+        working-directory: ruflet-template
+        run: |
+          git merge-base --is-ancestor fee87c9f7536cfc0bf0e937d8af14dfabd4e47fc HEAD
+          test -f templates/ruflet_flutter_template/apple_packages/ruflet_apple/Package.swift
+          test -f templates/ruflet_flutter_template/apple_packages/ruflet_apple/Sources/RufletEngine/RufletApp.swift
+
+      - name: Build experimental ${{ matrix.target }} client
+        working-directory: explorer
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          RUFLET_TEMPLATE_ROOT: ${{ github.workspace }}/ruflet-template
+          RUFLET_RUBY_RUNTIME_PATH: ${{ github.workspace }}/ruflet/ruby_runtime
+        run: ../ruflet/packages/ruflet/bin/ruflet build ${{ matrix.build_args }}
+
+      - name: Package experimental macOS artifact
+        if: matrix.target == 'macos'
+        run: |
+          app=$(find explorer/build/client/build/macos/Build/Products/Release -maxdepth 1 -name '*.app' | head -n 1)
+          if [ -z "$app" ]; then
+            echo "No experimental macOS .app produced"
+            exit 1
+          fi
+          ditto -c -k --sequesterRsrc --keepParent "$app" "${{ matrix.artifact }}"
+
+      - name: Package experimental iOS simulator artifact
+        if: matrix.target == 'ios'
+        run: |
+          app=explorer/build/client/build/ios/iphonesimulator/Runner.app
+          if [ ! -d "$app" ]; then
+            echo "No experimental iOS simulator .app produced"
+            exit 1
+          fi
+          ditto -c -k --sequesterRsrc --keepParent "$app" "${{ matrix.artifact }}"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: ruflet_explorer-${{ matrix.target }}-experimental
+          path: ${{ matrix.artifact }}
+
+      - name: Attach to GitHub release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.artifact }}
+
+      - name: Publish experimental Apple prebuild
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'prebuild'))
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name == 'prebuild' && 'prebuild' || 'prebuild-main' }}
+          name: ${{ github.ref_name == 'prebuild' && 'Ruflet Explorer Prebuild (prebuild)' || 'Ruflet Explorer Prebuild (main)' }}
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
+          files: ${{ matrix.artifact }}
+
+      - name: Publish experimental branch Apple prebuild
+        if: github.ref_name == 'experimental' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: prebuild-experimental
+          name: Ruflet Explorer Prebuild (experimental)
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
+          files: ${{ matrix.artifact }}
+
+      - name: Publish versioned experimental Apple client
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Ruflet Explorer ${{ github.ref_name }}
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
+          files: ${{ matrix.artifact }}
+
   publish-prebuild-manifest:
     name: Publish completed prebuild revision
     if: >-
@@ -436,11 +564,13 @@ jobs:
        (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'prebuild'))) &&
       needs.build-desktop-and-web.result == 'success' &&
       needs.build-ios-simulator.result == 'success' &&
-      needs.build-android.result == 'success'
+      needs.build-android.result == 'success' &&
+      needs.build-experimental-apple.result == 'success'
     needs:
       - build-desktop-and-web
       - build-ios-simulator
       - build-android
+      - build-experimental-apple
     runs-on: ubuntu-latest
     steps:
       - name: Write completed-build manifest
@@ -463,6 +593,41 @@ jobs:
         with:
           tag_name: ${{ github.ref_name == 'prebuild' && 'prebuild' || 'prebuild-main' }}
           name: ${{ github.ref_name == 'prebuild' && 'Ruflet Explorer Prebuild (prebuild)' || 'Ruflet Explorer Prebuild (main)' }}
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
+          files: ruflet_explorer-manifest.json
+
+  publish-experimental-prebuild-manifest:
+    name: Publish completed experimental prebuild revision
+    if: >-
+      github.ref_name == 'experimental' &&
+      (github.event_name == 'workflow_dispatch' || github.event_name == 'push') &&
+      needs.build-experimental-apple.result == 'success'
+    needs:
+      - build-experimental-apple
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write completed experimental build manifest
+        env:
+          RUFLET_REVISION: ${{ github.sha }}
+          RUFLET_RUN_ID: ${{ github.run_id }}
+          RUFLET_REF: ${{ github.ref_name }}
+          RUFLET_EXPLORER_REF: ${{ env.EXPLORER_REF }}
+        run: |
+          ruby -rjson -rtime -e 'File.write("ruflet_explorer-manifest.json", JSON.pretty_generate({schema: 1, revision: ENV.fetch("RUFLET_REVISION"), run_id: ENV.fetch("RUFLET_RUN_ID"), ref: ENV.fetch("RUFLET_REF"), explorer_ref: ENV.fetch("RUFLET_EXPLORER_REF"), completed_at: Time.now.utc.iso8601}))'
+
+      - name: Upload completed experimental manifest
+        uses: actions/upload-artifact@v5
+        with:
+          name: ruflet-client-experimental-prebuild-manifest
+          path: ruflet_explorer-manifest.json
+
+      - name: Mark experimental prebuild channel complete
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: prebuild-experimental
+          name: Ruflet Explorer Prebuild (experimental)
           prerelease: true
           make_latest: false
           overwrite_files: true

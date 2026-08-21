@@ -68,6 +68,114 @@ class RufletCliBuildPackagePruningTest < Minitest::Test
     end
   end
 
+  def test_experimental_apple_build_keeps_native_selection_but_removes_flutter_extension_plugins
+    builder = DummyBuilder.new
+    builder.instance_variable_set(:@ruflet_experimental_native_renderer, true)
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "client")
+      FileUtils.mkdir_p(File.join(client_dir, "lib"))
+      %w[flet flet_audio flet_audio_recorder flet_permission_handler flet_video].each do |name|
+        FileUtils.mkdir_p(File.join(client_dir, "flet_packages", name))
+      end
+      File.write(
+        File.join(client_dir, "pubspec.yaml"),
+        <<~YAML
+          dependencies:
+            flet:
+              path: flet_packages/flet
+            flet_audio:
+              path: flet_packages/flet_audio
+            flet_audio_recorder:
+              path: flet_packages/flet_audio_recorder
+            flet_permission_handler:
+              path: flet_packages/flet_permission_handler
+            flet_video:
+              path: flet_packages/flet_video
+        YAML
+      )
+      File.write(
+        File.join(client_dir, "lib", "main.self.dart"),
+        <<~DART
+          import 'package:flet/flet.dart';
+          import 'package:flet_audio/flet_audio.dart' as ruflet_audio;
+          import 'package:flet_audio_recorder/flet_audio_recorder.dart' as ruflet_audio_recorder;
+          import 'package:flet_permission_handler/flet_permission_handler.dart' as ruflet_permission_handler;
+          import 'package:flet_video/flet_video.dart' as ruflet_video;
+
+          final extensions = <FletExtension>[
+            ruflet_audio.Extension(),
+            ruflet_audio_recorder.Extension(),
+            ruflet_permission_handler.Extension(),
+            ruflet_video.Extension(),
+          ];
+        DART
+      )
+
+      native_keys = builder.send(
+        :apply_service_extension_config,
+        client_dir,
+        { "services" => ["microphone"], "extensions" => ["audio", "video"] }
+      )
+
+      assert_equal %w[audio video audio_recorder permission_handler microphone].sort, native_keys.sort
+      assert_equal %w[flet], package_directories(client_dir)
+      dependencies = YAML.safe_load(
+        File.read(File.join(client_dir, "pubspec.yaml")), aliases: true
+      ).fetch("dependencies")
+      assert_equal %w[flet], dependencies.keys
+      main = File.read(File.join(client_dir, "lib", "main.self.dart"))
+      refute_includes main, "flet_audio"
+      refute_includes main, "flet_video"
+      refute_includes main, "ruflet_permission_handler.Extension()"
+      assert builder.send(:validate_flutter_extension_selection, client_dir)
+    end
+  end
+
+  def test_removes_external_extension_left_by_an_earlier_build
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "client")
+      FileUtils.mkdir_p(File.join(client_dir, "lib"))
+      FileUtils.mkdir_p(File.join(client_dir, ".ruflet"))
+      File.write(
+        File.join(client_dir, "pubspec.yaml"),
+        <<~YAML
+          dependencies:
+            flet: any
+            old_extension:
+              git: https://example.test/old_extension.git
+        YAML
+      )
+      File.write(
+        File.join(client_dir, "lib", "main.server.dart"),
+        <<~DART
+          import 'package:flet/flet.dart';
+          import 'package:old_extension/old_extension.dart' as old_extension;
+          final extensions = <FletExtension>[
+            old_extension.Extension(),
+          ];
+        DART
+      )
+      File.write(
+        File.join(client_dir, ".ruflet", "extension_dependencies.json"),
+        JSON.generate("external_packages" => ["old_extension"])
+      )
+
+      builder.send(:apply_service_extension_config, client_dir, {})
+
+      dependencies = YAML.safe_load(
+        File.read(File.join(client_dir, "pubspec.yaml")), aliases: true
+      ).fetch("dependencies")
+      refute dependencies.key?("old_extension")
+      main = File.read(File.join(client_dir, "lib", "main.server.dart"))
+      refute_includes main, "package:old_extension"
+      refute_includes main, "old_extension.Extension()"
+      assert builder.send(:validate_flutter_extension_selection, client_dir)
+    end
+  end
+
   def test_native_permissions_are_replaced_by_current_service_declarations
     builder = DummyBuilder.new
 
