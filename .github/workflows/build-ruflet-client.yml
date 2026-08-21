@@ -92,12 +92,28 @@ jobs:
           done
 
       - name: Run Explorer tests
+        if: github.ref_name != 'experimental'
         working-directory: explorer
         env:
           RUBYLIB: ${{ github.workspace }}/ruflet/packages/ruflet_core/lib:${{ github.workspace }}/ruflet/packages/ruflet_server/lib:${{ github.workspace }}/ruflet/packages/ruflet/lib
         run: |
           ruby test/url_test.rb
           ruby test/app_test.rb
+          ruby test/standalone_apps_test.rb
+
+      # Explorer main still asserts the legacy nested FletApp wire name in two
+      # app-level tests. The experimental runtime intentionally speaks the
+      # canonical RufletApp wire contract, which is covered by the framework
+      # suite above. Keep the renderer-independent Explorer checks here until
+      # Explorer main adopts that contract; do not weaken the runtime back to
+      # the legacy alias merely to satisfy stale assertions.
+      - name: Run experimental Explorer compatibility tests
+        if: github.ref_name == 'experimental'
+        working-directory: explorer
+        env:
+          RUBYLIB: ${{ github.workspace }}/ruflet/packages/ruflet_core/lib:${{ github.workspace }}/ruflet/packages/ruflet_server/lib:${{ github.workspace }}/ruflet/packages/ruflet/lib
+        run: |
+          ruby test/url_test.rb
           ruby test/standalone_apps_test.rb
 
       - name: Refuse to publish a client carrying credentials
