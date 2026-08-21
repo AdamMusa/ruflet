@@ -484,9 +484,11 @@ jobs:
       - name: Verify authoritative Apple renderer
         working-directory: ruflet-template
         run: |
-          git merge-base --is-ancestor fee87c9f7536cfc0bf0e937d8af14dfabd4e47fc HEAD
+          git merge-base --is-ancestor c1fd2941c59f72af329a87580eab12f8c527ac81 HEAD
           test -f templates/ruflet_flutter_template/apple_packages/ruflet_apple/Package.swift
           test -f templates/ruflet_flutter_template/apple_packages/ruflet_apple/Sources/RufletEngine/RufletApp.swift
+          test -f templates/ruflet_flutter_template/flutter_hosts/ios/Runner/AppDelegate.swift
+          test -f templates/ruflet_flutter_template/flutter_hosts/macos/Runner/MainFlutterWindow.swift
 
       - name: Build experimental ${{ matrix.target }} client
         working-directory: explorer
