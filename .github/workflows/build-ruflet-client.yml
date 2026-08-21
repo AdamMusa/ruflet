@@ -43,6 +43,7 @@ env:
   EXPLORER_REPOSITORY: AdamMusa/ruflet_explorer
   EXPLORER_REF: ${{ github.event.inputs.explorer_ref || 'main' }}
   EXPERIMENTAL_TEMPLATE_REF: experimental
+  EXPERIMENTAL_FLUTTER_VERSION: 3.41.2
 
 jobs:
   verify-explorer:
@@ -495,6 +496,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: ${{ env.EXPERIMENTAL_FLUTTER_VERSION }}
           cache: true
 
       - name: Verify authoritative Apple renderer
