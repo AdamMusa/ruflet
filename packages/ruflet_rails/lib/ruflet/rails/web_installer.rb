@@ -14,7 +14,7 @@ module Ruflet
     #
     #   rake ruflet:web
     #
-    # The extracted build is what Ruflet::Rails.web_app serves (its default
+    # The extracted build is what Ruflet::Rails.native serves (its default
     # build dir is <Rails.root>/frontend).
     module WebInstaller
       module_function

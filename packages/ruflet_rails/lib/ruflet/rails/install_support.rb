@@ -13,7 +13,7 @@ module Ruflet
 
           # The home screen for this Ruflet app. You own this file; nothing is
           # auto-discovered. It is mounted explicitly in config/routes.rb:
-          #   match "/ws", to: Ruflet::Rails.app(Rails.root.join("app/views/ruflet/main.rb")), via: :all
+          #   match "/ws", to: Ruflet::Rails.native(Rails.root.join("app/views/ruflet/main.rb")), via: :all
           Ruflet.run do |page|
             page.title = #{app_title.inspect}
             page.add(
@@ -124,14 +124,9 @@ module Ruflet
         value
       end
 
-      # ruflet_rails builds only native clients. The web client is installed
-      # prebuilt (rake ruflet:web), never compiled, so "web" is not a build
-      # target here.
-      def build_args_for_platform(platform, ruflet_url: nil)
+      def build_args_for_platform(platform)
         normalized = normalize_build_platform(platform)
         return [] if normalized.to_s.empty?
-        return [] if normalized == "web"
-
         [normalized]
       end
 
@@ -139,15 +134,11 @@ module Ruflet
         File.join("app", "views", "ruflet", "main.rb")
       end
 
-      def route_snippet(entrypoint: default_entrypoint_path, mount_path: "/ws", helper: "app")
+      def route_snippet(entrypoint: default_entrypoint_path, mount_path: "/ws", helper: "native")
         %(match "#{mount_path}", to: Ruflet::Rails.#{helper}(Rails.root.join("#{entrypoint}")), via: :all)
       end
 
-      def web_route_snippet(entrypoint: default_entrypoint_path, mount_path: "/ruflet")
-        %(mount Ruflet::Rails.web_app(app_file: Rails.root.join("#{entrypoint}")), at: "#{mount_path}")
-      end
-
-      def install_next_steps(target:, entrypoint:, client:, mount_path: "/ws")
+      def install_next_steps(entrypoint:, client:, mount_path: "/ws")
         lines = [
           "Ruflet Rails installed.",
           "Generated entrypoint: #{entrypoint}",
@@ -164,13 +155,6 @@ module Ruflet
             "To launch desktop for a dev server run: bin/rails s --desktop or bin/dev --desktop",
             "To download the prebuilt desktop client: bin/rails ruflet:update[desktop]",
             "To build the host desktop client: bin/rails ruflet:build[desktop]"
-          ]
-        end
-
-        if %w[web all].include?(client.to_s)
-          lines += [
-            "Web client installed into frontend/.",
-            "Open the mounted Ruflet web app at http://localhost:3000/ruflet"
           ]
         end
 

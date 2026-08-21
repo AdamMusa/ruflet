@@ -10,10 +10,10 @@ class RufletAppControlTest < Minitest::Test
     assert_equal "ruflet_app", control.type
   end
 
-  def test_ruflet_app_keeps_the_upstream_wire_type
+  def test_ruflet_app_uses_the_ruflet_wire_type
     patch = Ruflet.control(:ruflet_app, url: "http://127.0.0.1:8550").to_patch
 
-    assert_equal "FletApp", patch["_c"]
+    assert_equal "RufletApp", patch["_c"]
     assert_equal "http://127.0.0.1:8550", patch["url"]
   end
 

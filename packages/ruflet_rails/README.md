@@ -60,7 +60,7 @@ bundle exec rake ruflet:web
 Mount the installed client and a developer-owned Ruflet entrypoint:
 
 ```ruby
-mount Ruflet::Rails.web_app(app_file: Rails.root.join("app/views/ruflet/main.rb")), at: "/app"
+mount Ruflet::Rails.web(app_file: Rails.root.join("app/views/ruflet/main.rb")), at: "/app"
 ```
 
 The install generator adds the same mount at `/ruflet` when `--web` is used.
@@ -120,11 +120,214 @@ bundle exec rake ruflet:install
 bundle exec rake ruflet:install[DEVICE_ID]
 ```
 
+## HTML as the UI DSL (no WebView)
+
+Beyond the WebView shell, Ruflet can treat HTML itself as the UI language:
+Rails views describe screens with markup, and `Ruflet::Rails.html_to_native`
+compiles each page into **real native Ruflet controls** — no WebView anywhere.
+This is HTML-over-the-wire for native UI: state lives in Rails, every
+interaction is a request, and the response markup re-renders the screen.
+
+```ruby
+# app/views/ruflet/main.rb
+Ruflet.run do |page|
+  Ruflet::Rails.html_to_native(page, start_url: "#{Ruflet::Rails.backend_url}/native")
+end
+```
+
+Screens are ordinary Rails views (ERB, controllers, sessions, and redirects
+all work — requests carry the Rails session cookie and CSRF token, plus an
+`X-Ruflet-Native: 1` header so a controller can render native markup and a
+browser page from the same action):
+
+```erb
+<%# app/views/counters/show.html.erb %>
+<appbar title="Counter"></appbar>
+
+<column class="p-6 gap-4 items-center justify-center flex-1">
+  <text class="text-5xl font-bold text-slate-900"><%= @count %></text>
+  <row class="gap-3">
+    <button variant="outlined" icon="remove" on-click="<%= counter_decrement_path %>">Down</button>
+    <button variant="filled" icon="add" on-click="<%= counter_increment_path %>">Up</button>
+  </row>
+  <a href="<%= settings_path %>">Settings</a>
+</column>
+```
+
+- **Layout** — `<column>`, `<row>`, `<stack>`, `<div>`/`<section>` (container),
+  `<card>`, `<center>`, `<spacer>`, `<list>`, `<grid>`.
+- **Content** — `<text>`, `<h1>`–`<h6>`, `<p>`, `<markdown>`, `<img>`, `<icon>`,
+  `<hr>`, `<ul>`/`<li>`.
+- **Styling** — a broad Tailwind-flavored `class` vocabulary that maps onto
+  each control's real props (only the ones a control accepts are applied):
+  - spacing & size: `p-4`, `px-6`, `m-2`, `-mt-2`, `gap-3`, `w-64`, `h-full`,
+    `flex-1`, `aspect-video`, `aspect-[4/3]`
+  - color: `bg-slate-100`, `text-emerald-600`, `bg-[#123456]`, theme tokens
+    (`bg-primary`, `text-on-surface`), gradients
+    (`bg-gradient-to-r from-blue-500 via-sky-400 to-cyan-300`)
+  - typography: `text-xl`, `text-[42]`, `font-bold`, `font-mono`, `italic`,
+    `text-center`, `tracking-wide`, `leading-relaxed`, `underline`,
+    `line-through`, `uppercase`/`lowercase`/`capitalize`, `truncate`,
+    `line-clamp-2`, `whitespace-nowrap`, `select-none`, `text-ellipsis`
+  - shape & borders: `rounded-2xl`, `rounded-t-lg`, `rounded-br-sm`, `border`,
+    `border-2`, `border-t`, `border-red-500`, `shadow-lg`, `opacity-75`, `blur-md`
+  - transforms & position: `rotate-45`, `-rotate-12`, `scale-95`, `top-4`,
+    `left-2`, `inset-0`/`inset-x-4` (Stack children)
+  - transitions: `transition`, `duration-300`, `ease-in-out` (implicit animation)
+  - layout & display: `items-center`, `justify-between`, `place-center`,
+    `flex-wrap`, `gap-x-3`/`gap-y-2`, `size-12`, `w-screen`, `min-h-screen`,
+    `scroll`, `overflow-hidden`, `object-cover` (image fit), `hidden`/`invisible`
+  Anything not mapped is ignored; the full native prop is always available as
+  an explicit attribute (`gradient='{…}'`, `blur="8"`, …).
+- **Navigation** — `<a href>` pushes a native screen; `nav="replace|root|back"`
+  change the mode. The native back button/gesture pops.
+- **Actions** — `on-click="/counter/increment"` posts to Rails and re-renders
+  the current screen in place with the response (`redirect_to` is followed).
+  Prefix a verb for other methods: `on-click="delete:/items/3"`.
+- **Forms** — `<form action method>` with named `<input>`, `<textarea>`,
+  `<select>` fields tracks values natively and submits them like a normal
+  Rails form, then renders the response.
+- **App chrome** — `<appbar title="Inbox" leading-icon="menu">` with
+  `<action icon="search" href="/search"/>` children becomes the native AppBar.
+- **The whole widget catalog** — any other tag falls through to the ruflet_core
+  control registry with its attributes as props:
+  `<progress-bar value="0.4">`, `<switch label="Dark mode">`,
+  `<chip label="New">`… kebab-case maps to the control name.
+
+**First-class components** — these have dedicated tags/helpers that map to the
+right native shape (some Ruflet "components" are *props* on another control,
+not controls of their own — the DSL handles that for you):
+
+| Tag | Helper | Notes |
+| --- | --- | --- |
+| `<badge label="3">…</badge>` | `badge` | wraps its child; badge is a prop on it |
+| `<tooltip message="…">…</tooltip>` | `tooltip` | prop on its child |
+| `<chip label="Ruby" icon="star">` | `chip` | text → `label`; `on-click`/`href` supported |
+| `<avatar src>` / `<avatar>AM</avatar>` | `avatar` | image or initials |
+| `<list-tile title subtitle leading href>` | `list_tile` | taps navigate/act natively |
+| `<expansion-tile title>…</expansion-tile>` | `expansion_tile` | collapsible section |
+| `<switch>` `<checkbox>` `<slider>` `<radio>` | same | standalone; `name` makes them form fields |
+| `<radio-group name value>…radios…</radio-group>` | `radio_group` | |
+| `<segmented-button name value>…<segment>…</segmented-button>` | `segmented_button` | |
+| `<tabs><tab label icon>…</tab></tabs>` | `tabs` / `tab` | native TabBar + panes |
+| `<table><thead><tr><th>…` | — | plain HTML tables → native `DataTable` |
+| `<fab icon href>` | `fab` | mounts as the screen's FloatingActionButton |
+| `<bottom-nav><nav-item icon label href selected>…` | `bottom_nav` / `nav_item` | screen's NavigationBar; a tab resets to that URL as root |
+
+**Every Ruflet control is reachable.** Any tag without a dedicated builder
+maps straight onto the ruflet_core control registry — the entire catalog
+(charts, canvas, cupertino_*, maps, sensors, list/menu/expansion controls, …)
+works from markup. The passthrough is schema-aware: a control's text and child
+elements are routed into whichever prop it actually accepts (`content`,
+`controls`, `label`, `title`), so `<filled-button>Save</filled-button>`,
+`<banner><text>…</text></banner>`, and `<responsive-row>…</responsive-row>`
+all build correctly. Use the raw tag (kebab-case → control name) or the
+`widget` helper:
+
+```erb
+<%= widget "bar-chart", expand: true do %>
+  <%= widget "bar-chart-group", x: 0 do %>
+    <%= widget "bar-chart-rod", from_y: 0, to_y: 10 %>
+  <% end %>
+<% end %>
+
+<cupertino-activity-indicator animating="true"></cupertino-activity-indicator>
+```
+
+**Services and extensions.** Non-visual platform services (`<geolocator>`,
+`<battery>`, `<clipboard>`, `<flashlight>`, `<permission-handler>`,
+`<secure-storage>`, `<shared-preferences>`, `<file-picker>`, `<wakelock>`,
+`<share>`, `<url-launcher>`, the sensors, …) are non-visual: declaring one
+mounts it on the screen's service registry rather than in the layout. Extension
+controls that *do* render (`<camera>`, `<audio>`, `<video>`, `<lottie>`,
+`<rive>`, `<map>`, `<code-editor>`, `<web-view>`, `<spinkit>`,
+`<color-picker>`, the charts) render inline like any other control. Each has a
+matching helper:
+
+```erb
+<%= geolocator %>
+<%= camera id: "camera-preview", preview_enabled: true %>
+<%= video src: "clip.mp4" %>
+<%= lottie src: "loader.json" %>
+<%= map do %><%= widget "tile-layer", url_template: "…" %><% end %>
+```
+
+Buttons can invoke native services without a request back to Rails. Common
+operations have short names, and the open-ended `method`/`args` form exposes
+new service methods without waiting for another `ruflet_rails` release:
+
+```erb
+<%= button "Copy", service: "copy", text: "Hello from Rails" %>
+<%= button "Locate", service: "location" %>
+<%= button "Allow camera",
+           service: "permission-handler",
+           method: "request",
+           args: { permission: "camera" } %>
+```
+
+An inline extension can also be controlled by its native ID:
+
+```erb
+<%= audio id: "player", src: "https://example.com/song.mp3" %>
+<%= button "Play", service: "control", target: "player", method: "play" %>
+<%= button "Seek", service: "control", target: "player",
+                   method: "seek", position: 2_000 %>
+```
+
+Service results and errors are reported in a native dialog by default. For a
+stream such as an accelerometer, pass `result_target: "status-control-id"` to
+update an inline Text control instead.
+
+```erb
+<%# a form, natively rendered %>
+<form action="<%= session_path %>" method="post">
+  <column class="p-6 gap-4">
+    <h2>Sign in</h2>
+    <input type="email" name="email" label="Email" placeholder="you@example.com">
+    <input type="password" name="password" label="Password">
+    <input type="checkbox" name="remember" label="Remember me" checked>
+    <input type="submit" value="Sign in">
+  </column>
+</form>
+```
+
+### Ruby helper DSL
+
+The same markup can be authored with Ruby helpers (auto-included into
+ActionView), and both styles mix freely in one template. Attribute keys are
+snake_case and become kebab-case attributes (`on_click:` → `on-click`);
+Hash/Array values serialize as JSON:
+
+```erb
+<%= appbar "Counter" %>
+
+<%= column class: "p-6 gap-6 items-center justify-center flex-1" do %>
+  <%= text @count, class: "text-[96] font-bold" %>
+  <%= row class: "gap-3" do %>
+    <%= button "Down", variant: "outlined", icon: "remove",
+               on_click: counter_decrement_path %>
+    <%= button "Up", variant: "filled", icon: "add",
+               on_click: counter_increment_path %>
+  <% end %>
+  <%= link "Settings", settings_path %>
+<% end %>
+```
+
+Available helpers: layout (`column`, `row`, `stack`, `card`, `center`,
+`list`, `grid`, `spacer`, `divider`), content (`text`, `h1`–`h6`/`heading`,
+`markdown`, `image`, `icon`), interaction (`button`, `link`), chrome
+(`appbar`, `appbar_action`), forms (`form`, `input`, `textarea`, `dropdown`,
+`submit`), and `widget("progress-bar", value: 0.4)` for anything else in the
+control registry.
+
+Pick the mode per app: `html_to_native` when HTML should *become* native controls,
+`native_shell` when you want the real web page in a WebView with native chrome.
+
 ## Native WebView shell
 
 Beyond the server-driven UI, Ruflet can wrap an existing Rails HTML app in a
 managed native WebView. This is an opt-in shell: calling
-`Ruflet::Rails.native_app` wraps web pages in a native Ruflet shell whose body is
+`Ruflet::Rails.native_shell` wraps web pages in a native Ruflet shell whose body is
 a WebView. Plain `Ruflet.run { |page| ... }` remains a normal Ruflet app with no
 WebView wrapper or HTML adapter.
 
@@ -136,7 +339,7 @@ promote page chrome.
 ```ruby
 # app/views/ruflet/main.rb
 Ruflet.run do |page|
-  Ruflet::Rails.native_app(
+  Ruflet::Rails.native_shell(
     page,
     start_url: "https://myapp.com",
     title: "My App",                       # opt into a native AppBar (tracks <title>)
@@ -290,13 +493,13 @@ Add `data-ruflet-close="false"` when a sheet link should not dismiss:
 <%= ruflet_haptic_button "Tap", style: "light" %>
 ```
 
-For a Fizzy-style web app, keep `Ruflet::Rails.native_app` simple and opt in from
+For a Fizzy-style web app, keep `Ruflet::Rails.native_shell` simple and opt in from
 the views that need native treatment:
 
 ```ruby
 # app/views/ruflet/main.rb
 Ruflet.run do |page|
-  Ruflet::Rails.native_app(page, start_url: "#{Ruflet::Rails.backend_url}/")
+  Ruflet::Rails.native_shell(page, start_url: "#{Ruflet::Rails.backend_url}/")
 end
 ```
 

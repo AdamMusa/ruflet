@@ -51,6 +51,7 @@ module Ruflet
         File.write(File.join(root, "README.md"), format(Ruflet::CLI::README_TEMPLATE, app_name: File.basename(root)))
         write_default_ruflet_config(root, File.basename(root))
         copy_default_project_assets(root)
+        copy_default_apple_extensions(root)
         project_name = File.basename(root)
         puts "Run:"
         puts "  cd #{project_name}"
@@ -72,7 +73,16 @@ module Ruflet
         target = hidden_flutter_client_dir(root)
         FileUtils.mkdir_p(File.dirname(target))
         FileUtils.rm_rf(target)
-        FileUtils.cp_r(template_root, target)
+        # `target` is the Flutter project root, not a directory that contains
+        # the template root. Copying a source directory onto a target that was
+        # already created by FileUtils can produce
+        # `build/client/ruflet_flutter_template/...`, leaving `build/client`
+        # without pubspec.yaml and making Flutter reject it as a project.
+        FileUtils.mkdir_p(target)
+        Dir.children(template_root).each do |entry|
+          copy_client_template_entry(
+            template_root, target, entry)
+        end
         prune_client_template(target)
         write_client_template_revision(target, installed_template_revision(template_root))
       end
@@ -261,6 +271,43 @@ module Ruflet
         end
       end
 
+      def copy_client_template_entry(template_root, target, relative)
+        return if generated_client_template_path?(relative)
+
+        source = File.join(template_root, relative)
+        destination = File.join(target, relative)
+        stat = File.lstat(source)
+        if stat.symlink?
+          FileUtils.mkdir_p(File.dirname(destination))
+          FileUtils.ln_s(File.readlink(source), destination)
+        elsif stat.directory?
+          FileUtils.mkdir_p(destination)
+          Dir.children(source).each do |entry|
+            copy_client_template_entry(
+              template_root, target, File.join(relative, entry))
+          end
+        else
+          FileUtils.mkdir_p(File.dirname(destination))
+          FileUtils.cp(source, destination, preserve: true)
+        end
+      end
+
+      def generated_client_template_path?(relative)
+        components = relative.split(File::SEPARATOR)
+        generated_components = %w[
+          .build .claude .dart_tool .git .idea .swiftpm .symlinks
+          build DerivedData Pods xcuserdata
+        ]
+        return true if components.any? { |component| generated_components.include?(component) }
+        return true if components.any? { |component| component.start_with?(".build-") }
+
+        generated_files = %w[
+          .DS_Store Package.resolved Podfile.lock local.properties
+          pubspec_overrides.yaml
+        ]
+        generated_files.include?(components.last) || components.last.end_with?(".xcuserstate")
+      end
+
       def write_default_ruflet_config(root, app_name)
         File.write(File.join(root, "ruflet.yaml"), <<~YAML)
           app:
@@ -316,6 +363,21 @@ module Ruflet
             FileUtils.cp(source, File.join(assets_dir, filename)) if File.file?(source)
           end
           return if File.file?(File.join(assets_dir, "icon.png")) && File.file?(File.join(assets_dir, "splash.png"))
+        end
+      end
+
+      def copy_default_apple_extensions(root)
+        template_root = resolve_ruflet_client_template_root || ensure_cached_ruflet_client_template!
+        source = template_root && File.join(template_root, "apple_extensions")
+        return unless source && File.file?(File.join(source, "Package.swift"))
+
+        destination = File.join(root, "apple_extensions")
+        FileUtils.mkdir_p(destination)
+        generated_entries = %w[.build .swiftpm .dart_tool .claude]
+        Dir.children(source).each do |entry|
+          next if generated_entries.include?(entry)
+
+          FileUtils.cp_r(File.join(source, entry), File.join(destination, entry), preserve: true)
         end
       end
 

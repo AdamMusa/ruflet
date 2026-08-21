@@ -8,17 +8,17 @@ module Ruflet
       require_relative "controls/ruflet_controls"
       require_relative "services/ruflet_services"
       # Controls whose Ruby name and wire name differ on purpose. The client
-      # widget is registered upstream as FletApp, so the wire type stays FletApp
-      # while the Ruby API is ruflet_app.
+      # Native Ruflet clients use RufletApp as the canonical wire type while
+      # the Ruby API remains ruflet_app.
       #
       # RufletAppControl::WIRE already says this, but that is only read when the
       # control resolves to its own class. Serialization otherwise derives the
-      # wire name from the type and would send RufletApp, which no client knows.
+      # wire name from the type and must still send the canonical RufletApp.
       # Map it here so both paths agree. to_patch also looks the type up with
       # underscores removed, so register that spelling too.
       SHARED_TYPE_MAP = {
-        "ruflet_app" => "FletApp",
-        "rufletapp" => "FletApp"
+        "ruflet_app" => "RufletApp",
+        "rufletapp" => "RufletApp"
       }.freeze
 
       TYPE_MAP = MaterialControlRegistry::TYPE_MAP
