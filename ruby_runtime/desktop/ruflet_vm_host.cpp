@@ -88,6 +88,39 @@ mrb_value runtime_getenv(mrb_state *mrb, mrb_value) {
   return value == nullptr ? mrb_nil_value() : mrb_str_new_cstr(mrb, value);
 }
 
+mrb_value runtime_bridge_read(mrb_state *mrb, mrb_value) {
+  uint8_t *bytes = nullptr;
+  size_t length = 0;
+  const int status = ruflet_bridge_receive_for_ruby(&bytes, &length);
+  if (status == RUFLET_BRIDGE_CLOSED)
+    return mrb_nil_value();
+  if (status != RUFLET_BRIDGE_MESSAGE)
+    mrb_raise(mrb, E_RUNTIME_ERROR,
+              "Unable to receive from the Ruflet in-process bridge");
+
+  mrb_value message =
+      mrb_str_new(mrb, reinterpret_cast<const char *>(bytes), length);
+  ruflet_bridge_free_message(bytes);
+  return message;
+}
+
+mrb_value runtime_bridge_write(mrb_state *mrb, mrb_value) {
+  mrb_value payload;
+  mrb_get_args(mrb, "S", &payload);
+  const int status = ruflet_bridge_send_to_renderer(
+      reinterpret_cast<const uint8_t *>(RSTRING_PTR(payload)),
+      RSTRING_LEN(payload));
+  if (status != RUFLET_BRIDGE_MESSAGE)
+    mrb_raise(mrb, E_RUNTIME_ERROR,
+              "Ruflet in-process bridge is closed");
+  return mrb_nil_value();
+}
+
+mrb_value runtime_bridge_close(mrb_state *, mrb_value) {
+  ruflet_bridge_close();
+  return mrb_nil_value();
+}
+
 void register_native_primitives(mrb_state *mrb) {
   RClass *runtime = mrb_define_module(mrb, "RubyRuntime");
   mrb_define_module_function(mrb, runtime, "__eval", runtime_eval,
@@ -96,6 +129,12 @@ void register_native_primitives(mrb_state *mrb) {
                              MRB_ARGS_REQ(1));
   mrb_define_module_function(mrb, runtime, "__getenv", runtime_getenv,
                              MRB_ARGS_REQ(1));
+  mrb_define_module_function(mrb, runtime, "__bridge_read",
+                             runtime_bridge_read, MRB_ARGS_NONE());
+  mrb_define_module_function(mrb, runtime, "__bridge_write",
+                             runtime_bridge_write, MRB_ARGS_REQ(1));
+  mrb_define_module_function(mrb, runtime, "__bridge_close",
+                             runtime_bridge_close, MRB_ARGS_NONE());
 }
 
 void set_process_environment(const std::string &key, const std::string &value) {
@@ -155,6 +194,15 @@ void set_error(std::string error) {
   g_error = std::move(error);
 }
 
+bool requests_in_process_transport(
+    const std::vector<std::pair<std::string, std::string>> &environment) {
+  for (const auto &entry : environment) {
+    if (entry.first == "RUFLET_RUNTIME_TRANSPORT")
+      return entry.second == "in_process";
+  }
+  return false;
+}
+
 } // namespace
 
 int ruflet_vm_start(const char *project_root, const char *entrypoint,
@@ -185,6 +233,9 @@ int ruflet_vm_start(const char *project_root, const char *entrypoint,
                                environment_values[index]);
     }
   }
+  const bool in_process_transport = requests_in_process_transport(environment);
+  if (in_process_transport)
+    ruflet_bridge_reset();
 
   {
     std::lock_guard<std::mutex> lock(g_state_mutex);
@@ -198,7 +249,7 @@ int ruflet_vm_start(const char *project_root, const char *entrypoint,
   }
 
   std::thread([root, main, paths = std::move(paths),
-               environment = std::move(environment)]() {
+               environment = std::move(environment), in_process_transport]() {
     for (const auto &entry : environment) {
       set_process_environment(entry.first, entry.second);
     }
@@ -242,6 +293,8 @@ int ruflet_vm_start(const char *project_root, const char *entrypoint,
       set_error(runtime_error);
       replace_file(error_file, runtime_error);
     }
+    if (in_process_transport)
+      ruflet_bridge_close();
     g_running = false;
   }).detach();
   return 0;
@@ -269,5 +322,6 @@ void ruflet_vm_stop(void) {
     std::lock_guard<std::mutex> lock(g_state_mutex);
     stop_file = g_stop_file;
   }
+  ruflet_bridge_close();
   replace_file(stop_file, "stop");
 }

@@ -18,7 +18,7 @@ Flutter method channel. Application code ships as an app asset payload.
   s.source_files = [
     'Classes/RubyRuntimeMacosPlugin.{h,m}'
   ]
-  s.preserve_paths = ['../desktop/ruflet_vm_host.h', '../apple/*.h']
+  s.preserve_paths = ['../desktop/*.h', '../apple/*.h']
   s.vendored_libraries = 'Frameworks/libruflet_vm.a'
 
   s.dependency 'FlutterMacOS'

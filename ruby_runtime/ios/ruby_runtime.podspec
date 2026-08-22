@@ -19,7 +19,7 @@ frameworks ship as plain gem file trees in app assets.
   s.source_files = [
     'Classes/MrubyRuntimePlugin.{h,m}'
   ]
-  s.preserve_paths = ['../desktop/ruflet_vm_host.h', '../apple/*.h']
+  s.preserve_paths = ['../desktop/*.h', '../apple/*.h']
   s.vendored_frameworks = 'Frameworks/RufletVM.xcframework'
 
   # vm_bootstrap.h is compiled into the vendored VM host and must not appear
