@@ -13,9 +13,16 @@ The runtime has three inputs:
 
 At startup the native plugin initializes mruby, installs the generic bootstrap,
 initializes the preloaded gems, and executes the entrypoint. The application
-loads Ruflet normally with `require`; Ruflet's gems own the
-HTTP/WebSocket server and all framework behavior. The Flutter client connects
-to that server and renders Ruflet protocol messages.
+loads Ruflet normally with `require`; Ruflet's gems own the protocol and all
+framework behavior.
+
+Packaged iOS and macOS applications exchange the binary Ruflet protocol through
+an in-process native queue. They do not bind a loopback port and do not create
+an HTTP or WebSocket connection. The renderer receives
+`inprocess://embedded`, which is a transport endpoint rather than a network
+URL. WebSockets remain the transport for an explicitly external Ruflet or Rails
+server. These are separate contracts: an unavailable in-process bridge is an
+error, not a signal to fall back to networking.
 
 The device runtime can execute packaged Ruby source or mruby bytecode. It does
 not compile gems or resolve dependencies on-device; `ruflet build --self`
@@ -63,12 +70,16 @@ final status = await RufletRuntime.start(
 );
 
 final current = await RufletRuntime.status();
+final endpoint = await RufletRuntime.serverUrl();
 await RufletRuntime.stop();
 ```
 
 `RufletRuntimeStatus` reports whether the VM is running and the last startup or
-runtime error. The application/framework configuration determines its server
-address.
+runtime error. In a packaged Apple application, `serverUrl()` returns the
+transport endpoint `inprocess://embedded`. The name is retained for API
+compatibility; it does not imply that a network server exists. The binary
+`sendToRuby()` and `receiveFromRuby()` APIs carry protocol frames between the
+native renderer and the embedded VM.
 
 ## Build Flow
 
