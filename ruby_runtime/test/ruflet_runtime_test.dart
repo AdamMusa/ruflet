@@ -24,7 +24,7 @@ class MockRufletRuntimePlatform
   }
 
   @override
-  Future<Uri> serverUrl() async => Uri.parse('http://127.0.0.1:8550');
+  Future<Uri> serverUrl() async => Uri.parse('inprocess://embedded');
 
   @override
   Future<RufletRuntimeStatus> status() async {
@@ -64,7 +64,7 @@ void main() {
     expect(started.running, true);
     expect(started.port, 8550);
     expect((await RufletRuntime.status()).error, '');
-    expect((await RufletRuntime.serverUrl()).port, 8550);
+    expect((await RufletRuntime.serverUrl()).scheme, 'inprocess');
     await RufletRuntime.sendToRuby(Uint8List.fromList([1, 2, 3]));
     expect(platform.sentMessage, [1, 2, 3]);
     expect(await RufletRuntime.receiveFromRuby(), [4, 5, 6]);

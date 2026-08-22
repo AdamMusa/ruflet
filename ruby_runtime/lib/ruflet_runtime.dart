@@ -43,7 +43,8 @@ class RufletRuntime {
     );
   }
 
-  /// The URL of a runtime the platform layer started on its own.
+  /// The endpoint of a runtime the platform layer started on its own.
+  /// Packaged Apple applications return `inprocess://embedded`.
   static Future<Uri> serverUrl() {
     return RufletRuntimePlatform.instance.serverUrl();
   }

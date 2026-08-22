@@ -23,7 +23,7 @@ void main() {
             return Uint8List.fromList([7, 8, 9]);
           }
           if (call.method == 'serverUrl') {
-            return <Object?, Object?>{'url': 'http://127.0.0.1:9182'};
+            return <Object?, Object?>{'url': 'inprocess://embedded'};
           }
           return <Object?, Object?>{'running': true, 'port': 8550, 'error': ''};
         });
@@ -64,7 +64,7 @@ void main() {
   });
 
   test('serverUrl uses the platform-owned embedded runtime endpoint', () async {
-    expect((await platform.serverUrl()).toString(), 'http://127.0.0.1:9182');
+    expect((await platform.serverUrl()).toString(), 'inprocess://embedded');
     expect(calls.single.method, 'serverUrl');
   });
 

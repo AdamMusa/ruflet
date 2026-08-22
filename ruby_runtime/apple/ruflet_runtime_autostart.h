@@ -283,35 +283,3 @@ static void ruflet_bridge_receive_for_flutter(FlutterResult result) {
 static BOOL ruflet_autostart_owns_runtime(void) {
   return ruflet_autostart_attempted;
 }
-
-/// Copies the autostarted server's port into `path` once it is known.
-///
-/// A client generated before serverUrl() existed calls start() and then polls
-/// the file it named in RUFLET_RUNTIME_PORT_FILE. Its arguments cannot take
-/// effect, but the thing it is waiting for already exists, so hand it over
-/// there. That keeps those clients working -- and getting the parallel
-/// startup -- without them knowing anything about it.
-static void ruflet_autostart_mirror_port(NSString *path) {
-  if (path.length == 0) {
-    return;
-  }
-  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-    [ruflet_autostart_signal lock];
-    while (ruflet_server_url == nil && ruflet_autostart_error == nil) {
-      [ruflet_autostart_signal wait];
-    }
-    NSString *url = ruflet_server_url;
-    [ruflet_autostart_signal unlock];
-    if (url == nil) {
-      return;
-    }
-    NSURLComponents *parts = [NSURLComponents componentsWithString:url];
-    if (parts.port == nil) {
-      return;
-    }
-    [[parts.port stringValue] writeToFile:path
-                               atomically:YES
-                                 encoding:NSUTF8StringEncoding
-                                    error:nil];
-  });
-}

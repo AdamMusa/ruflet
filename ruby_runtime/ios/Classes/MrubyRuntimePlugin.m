@@ -101,19 +101,16 @@ static const char **borrow_utf8(NSArray<NSString *> *values,
     NSDictionary *arguments = [call.arguments isKindOfClass:[NSDictionary class]]
                                   ? (NSDictionary *)call.arguments
                                   : @{};
-    // The platform already started the runtime, so these arguments cannot take
-    // effect -- the VM boots once per process. Rather than fail, hand this
-    // caller the port that already exists through the file it is about to
-    // poll, so a client written against the older start() flow still finds the
-    // server and still gets the parallel startup.
+    // A packaged Apple app is already using the in-process endpoint. A legacy
+    // start() caller expects a loopback port, which does not exist; fail
+    // explicitly instead of fabricating a network fallback.
     if (ruflet_autostart_owns_runtime()) {
-      NSString *portPath = @"";
-      if ([arguments[@"environment"] isKindOfClass:[NSDictionary class]]) {
-        id value = ((NSDictionary *)arguments[@"environment"])[@"RUFLET_RUNTIME_PORT_FILE"];
-        portPath = [value isKindOfClass:[NSString class]] ? value : @"";
-      }
-      ruflet_autostart_mirror_port(portPath);
-      result(runtime_status());
+      result([FlutterError
+          errorWithCode:@"in_process_runtime_owned"
+                message:@"The packaged Ruflet runtime already owns an "
+                        @"in-process endpoint. Use serverUrl() and the binary "
+                        @"bridge instead of start()."
+                details:nil]);
       return;
     }
 
