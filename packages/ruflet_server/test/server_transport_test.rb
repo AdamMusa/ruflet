@@ -10,7 +10,7 @@ class RufletServerTransportTest < Minitest::Test
       @written = []
     end
 
-    def __bridge_read
+    def __bridge_read_nonblock
       nil
     end
 

@@ -13,8 +13,8 @@ class RufletInProcessConnectionTest < Minitest::Test
       @close_count = 0
     end
 
-    def __bridge_read
-      @incoming.shift
+    def __bridge_read_nonblock
+      @incoming.empty? ? false : @incoming.shift
     end
 
     def __bridge_write(payload)
@@ -43,6 +43,14 @@ class RufletInProcessConnectionTest < Minitest::Test
     assert connection.closed?
   end
 
+  def test_waits_across_empty_reads_without_closing_the_connection
+    bridge = FakeBridge.new([false, false, "next frame".b])
+    connection = Ruflet::InProcessConnection.new(bridge: bridge)
+
+    assert_equal "next frame".b, connection.read_message
+    refute connection.closed?
+  end
+
   def test_close_is_idempotent
     bridge = FakeBridge.new
     connection = Ruflet::InProcessConnection.new(bridge: bridge)
@@ -58,7 +66,7 @@ class RufletInProcessConnectionTest < Minitest::Test
       Ruflet::InProcessConnection.new(bridge: Object.new)
     end
 
-    assert_includes error.message, "__bridge_read"
+    assert_includes error.message, "__bridge_read_nonblock"
     assert_includes error.message, "__bridge_write"
     assert_includes error.message, "__bridge_close"
   end

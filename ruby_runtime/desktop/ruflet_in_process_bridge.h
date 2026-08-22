@@ -16,6 +16,7 @@ extern "C" {
 // Return values for the receive functions below.
 #define RUFLET_BRIDGE_CLOSED 0
 #define RUFLET_BRIDGE_MESSAGE 1
+#define RUFLET_BRIDGE_EMPTY 2
 #define RUFLET_BRIDGE_ERROR -1
 
 // Starts a fresh single-client bridge. This is called before the embedded Ruby
@@ -29,6 +30,8 @@ RUFLET_BRIDGE_EXPORT int
 ruflet_bridge_send_to_ruby(const uint8_t *bytes, size_t length);
 RUFLET_BRIDGE_EXPORT int
 ruflet_bridge_receive_for_ruby(uint8_t **bytes, size_t *length);
+RUFLET_BRIDGE_EXPORT int
+ruflet_bridge_try_receive_for_ruby(uint8_t **bytes, size_t *length);
 
 RUFLET_BRIDGE_EXPORT int
 ruflet_bridge_send_to_renderer(const uint8_t *bytes, size_t length);

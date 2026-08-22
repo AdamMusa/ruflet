@@ -18,6 +18,7 @@ class BuildAppleVmArtifactsTest < Minitest::Test
 
     assert_includes source, "ruflet_vm_host.cpp"
     assert_includes source, "ruflet_in_process_bridge.cpp"
+    assert_includes source, "_ruflet_bridge_try_receive_for_ruby"
     assert_includes source, '"$WORK/$prefix-host.o" "$WORK/$prefix-bridge.o"'
   end
 

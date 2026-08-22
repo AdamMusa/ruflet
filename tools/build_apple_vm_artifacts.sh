@@ -93,6 +93,7 @@ verify_archive() {
   for symbol in \
     _ruflet_vm_start \
     _ruflet_bridge_send_to_ruby \
+    _ruflet_bridge_try_receive_for_ruby \
     _ruflet_bridge_receive_for_renderer \
     _ruflet_bridge_close; do
     nm -gU "$archive" | grep -q " $symbol$" || {

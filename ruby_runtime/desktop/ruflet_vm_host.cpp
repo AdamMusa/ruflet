@@ -104,6 +104,24 @@ mrb_value runtime_bridge_read(mrb_state *mrb, mrb_value) {
   return message;
 }
 
+mrb_value runtime_bridge_read_nonblock(mrb_state *mrb, mrb_value) {
+  uint8_t *bytes = nullptr;
+  size_t length = 0;
+  const int status = ruflet_bridge_try_receive_for_ruby(&bytes, &length);
+  if (status == RUFLET_BRIDGE_CLOSED)
+    return mrb_nil_value();
+  if (status == RUFLET_BRIDGE_EMPTY)
+    return mrb_false_value();
+  if (status != RUFLET_BRIDGE_MESSAGE)
+    mrb_raise(mrb, E_RUNTIME_ERROR,
+              "Unable to receive from the Ruflet in-process bridge");
+
+  mrb_value message =
+      mrb_str_new(mrb, reinterpret_cast<const char *>(bytes), length);
+  ruflet_bridge_free_message(bytes);
+  return message;
+}
+
 mrb_value runtime_bridge_write(mrb_state *mrb, mrb_value) {
   mrb_value payload;
   mrb_get_args(mrb, "S", &payload);
@@ -131,6 +149,8 @@ void register_native_primitives(mrb_state *mrb) {
                              MRB_ARGS_REQ(1));
   mrb_define_module_function(mrb, runtime, "__bridge_read",
                              runtime_bridge_read, MRB_ARGS_NONE());
+  mrb_define_module_function(mrb, runtime, "__bridge_read_nonblock",
+                             runtime_bridge_read_nonblock, MRB_ARGS_NONE());
   mrb_define_module_function(mrb, runtime, "__bridge_write",
                              runtime_bridge_write, MRB_ARGS_REQ(1));
   mrb_define_module_function(mrb, runtime, "__bridge_close",

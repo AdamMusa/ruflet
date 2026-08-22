@@ -35,7 +35,8 @@ int enqueue(std::deque<Message> &queue, const uint8_t *bytes, size_t length) {
   return RUFLET_BRIDGE_MESSAGE;
 }
 
-int dequeue(std::deque<Message> &queue, uint8_t **bytes, size_t *length) {
+int dequeue(std::deque<Message> &queue, uint8_t **bytes, size_t *length,
+            bool wait_for_message) {
   if (bytes == nullptr || length == nullptr)
     return RUFLET_BRIDGE_ERROR;
 
@@ -45,8 +46,12 @@ int dequeue(std::deque<Message> &queue, uint8_t **bytes, size_t *length) {
   Message message;
   {
     std::unique_lock<std::mutex> lock(g_bridge_mutex);
-    g_bridge_changed.wait(lock,
-                          [&queue] { return g_bridge_closed || !queue.empty(); });
+    if (wait_for_message) {
+      g_bridge_changed.wait(
+          lock, [&queue] { return g_bridge_closed || !queue.empty(); });
+    } else if (queue.empty() && !g_bridge_closed) {
+      return RUFLET_BRIDGE_EMPTY;
+    }
     if (queue.empty())
       return RUFLET_BRIDGE_CLOSED;
     message = std::move(queue.front());
@@ -95,7 +100,11 @@ int ruflet_bridge_send_to_ruby(const uint8_t *bytes, size_t length) {
 }
 
 int ruflet_bridge_receive_for_ruby(uint8_t **bytes, size_t *length) {
-  return dequeue(g_to_ruby, bytes, length);
+  return dequeue(g_to_ruby, bytes, length, true);
+}
+
+int ruflet_bridge_try_receive_for_ruby(uint8_t **bytes, size_t *length) {
+  return dequeue(g_to_ruby, bytes, length, false);
 }
 
 int ruflet_bridge_send_to_renderer(const uint8_t *bytes, size_t length) {
@@ -103,7 +112,7 @@ int ruflet_bridge_send_to_renderer(const uint8_t *bytes, size_t length) {
 }
 
 int ruflet_bridge_receive_for_renderer(uint8_t **bytes, size_t *length) {
-  return dequeue(g_to_renderer, bytes, length);
+  return dequeue(g_to_renderer, bytes, length, true);
 }
 
 void ruflet_bridge_free_message(uint8_t *bytes) { std::free(bytes); }

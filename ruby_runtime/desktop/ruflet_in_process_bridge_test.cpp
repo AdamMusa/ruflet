@@ -34,6 +34,13 @@ int main() {
   ruflet_bridge_reset();
   assert(ruflet_bridge_is_open() == 1);
 
+  uint8_t *empty_bytes = nullptr;
+  size_t empty_length = 0;
+  assert(ruflet_bridge_try_receive_for_ruby(&empty_bytes, &empty_length) ==
+         RUFLET_BRIDGE_EMPTY);
+  assert(empty_bytes == nullptr);
+  assert(empty_length == 0);
+
   auto waiting_ruby = std::async(std::launch::async, receive_for_ruby);
   assert(waiting_ruby.wait_for(std::chrono::milliseconds(10)) ==
          std::future_status::timeout);
@@ -42,6 +49,18 @@ int main() {
              reinterpret_cast<const uint8_t *>(renderer_message.data()),
              renderer_message.size()) == RUFLET_BRIDGE_MESSAGE);
   assert(waiting_ruby.get() == renderer_message);
+
+  const std::string immediate_message = "nonblocking-renderer-to-ruby";
+  assert(ruflet_bridge_send_to_ruby(
+             reinterpret_cast<const uint8_t *>(immediate_message.data()),
+             immediate_message.size()) == RUFLET_BRIDGE_MESSAGE);
+  uint8_t *immediate_bytes = nullptr;
+  size_t immediate_length = 0;
+  assert(ruflet_bridge_try_receive_for_ruby(
+             &immediate_bytes, &immediate_length) == RUFLET_BRIDGE_MESSAGE);
+  assert(std::string(reinterpret_cast<char *>(immediate_bytes),
+                     immediate_length) == immediate_message);
+  ruflet_bridge_free_message(immediate_bytes);
 
   const std::string first = "first";
   const std::string second = "second";

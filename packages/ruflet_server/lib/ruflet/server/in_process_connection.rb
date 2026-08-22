@@ -6,7 +6,10 @@ module Ruflet
   # transport-agnostic: only the bytes' path changes.
   class InProcessConnection
     MAX_MESSAGE_BYTES = 16 * 1024 * 1024
-    REQUIRED_BRIDGE_METHODS = %i[__bridge_read __bridge_write __bridge_close].freeze
+    TASK_PUMP_INTERVAL = 0.001
+    REQUIRED_BRIDGE_METHODS = %i[
+      __bridge_read_nonblock __bridge_write __bridge_close
+    ].freeze
 
     def initialize(bridge: nil)
       @bridge = bridge || default_bridge
@@ -25,7 +28,7 @@ module Ruflet
     def read_message
       return nil if closed?
 
-      payload = @bridge.__bridge_read
+      payload = wait_for_message
       if payload.nil?
         @closed = true
         return nil
@@ -64,6 +67,16 @@ module Ruflet
       return if missing.empty?
 
       raise RuntimeError, "Ruflet in-process bridge is missing: #{missing.join(', ')}"
+    end
+
+    def wait_for_message
+      loop do
+        payload = @bridge.__bridge_read_nonblock
+        return payload unless payload == false
+
+        Thread.pass if Thread.respond_to?(:cooperative?) && Thread.cooperative?
+        sleep TASK_PUMP_INTERVAL
+      end
     end
 
     def checked_bytes(payload)

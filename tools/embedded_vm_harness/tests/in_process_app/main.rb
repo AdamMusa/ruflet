@@ -2,6 +2,12 @@
 
 require "ruflet"
 
-Ruflet.app do
-  text("in-process bridge ready")
-end.run
+Ruflet.run do |page|
+  status = text(value: "in-process bridge ready")
+  page.add(status)
+
+  Thread.new do
+    sleep 0.02
+    page.update(status, value: "in-process background task advanced")
+  end
+end

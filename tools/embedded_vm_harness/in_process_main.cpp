@@ -2,9 +2,11 @@
 #include <chrono>
 #include <cstdint>
 #include <cstring>
+#include <future>
 #include <iostream>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "../../ruby_runtime/desktop/ruflet_vm_host.h"
@@ -71,6 +73,45 @@ int main(int argc, char **argv) {
     ruflet_bridge_free_message(response_bytes);
   }
 
+  if (receive_status != RUFLET_BRIDGE_MESSAGE || response.size() < 2 ||
+      response[0] != 0x92 || response[1] != 0x01) {
+    ruflet_vm_stop();
+    std::cerr << "Ruby did not return a register-client MessagePack frame\n";
+    return 1;
+  }
+  if (!contains(response, "in-process bridge ready")) {
+    ruflet_vm_stop();
+    std::cerr << "Ruby's rendered control tree was missing from the response\n";
+    return 1;
+  }
+
+  auto background_update = std::async(std::launch::async, [] {
+    uint8_t *bytes = nullptr;
+    size_t length = 0;
+    const int status =
+        ruflet_bridge_receive_for_renderer(&bytes, &length);
+    std::vector<uint8_t> message;
+    if (status == RUFLET_BRIDGE_MESSAGE) {
+      message.assign(bytes, bytes + length);
+      ruflet_bridge_free_message(bytes);
+    }
+    return std::make_pair(status, std::move(message));
+  });
+  if (background_update.wait_for(std::chrono::seconds(2)) !=
+      std::future_status::ready) {
+    ruflet_bridge_close();
+    background_update.wait();
+    std::cerr << "Ruby background tasks stopped while the bridge was idle\n";
+    return 1;
+  }
+  auto update_result = background_update.get();
+  if (update_result.first != RUFLET_BRIDGE_MESSAGE ||
+      !contains(update_result.second, "in-process background task advanced")) {
+    ruflet_vm_stop();
+    std::cerr << "Ruby background update did not cross the bridge\n";
+    return 1;
+  }
+
   ruflet_vm_stop();
   const auto deadline = std::chrono::steady_clock::now() +
                         std::chrono::seconds(5);
@@ -80,15 +121,6 @@ int main(int argc, char **argv) {
   const std::string error = runtime_error();
   if (!error.empty()) {
     std::cerr << error << "\n";
-    return 1;
-  }
-  if (receive_status != RUFLET_BRIDGE_MESSAGE || response.size() < 2 ||
-      response[0] != 0x92 || response[1] != 0x01) {
-    std::cerr << "Ruby did not return a register-client MessagePack frame\n";
-    return 1;
-  }
-  if (!contains(response, "in-process bridge ready")) {
-    std::cerr << "Ruby's rendered control tree was missing from the response\n";
     return 1;
   }
   if (ruflet_vm_is_running()) {
