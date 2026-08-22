@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ruby_runtime/ruflet_runtime_method_channel.dart';
@@ -14,7 +16,12 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
           calls.add(call);
-          if (call.method == 'stop') return null;
+          if (call.method == 'stop' || call.method == 'bridgeClose')
+            return null;
+          if (call.method == 'bridgeSend') return null;
+          if (call.method == 'bridgeReceive') {
+            return Uint8List.fromList([7, 8, 9]);
+          }
           if (call.method == 'serverUrl') {
             return <Object?, Object?>{'url': 'http://127.0.0.1:9182'};
           }
@@ -59,5 +66,19 @@ void main() {
   test('serverUrl uses the platform-owned embedded runtime endpoint', () async {
     expect((await platform.serverUrl()).toString(), 'http://127.0.0.1:9182');
     expect(calls.single.method, 'serverUrl');
+  });
+
+  test('bridge methods preserve binary protocol frames', () async {
+    await platform.sendToRuby(Uint8List.fromList([1, 2, 3]));
+    expect(await platform.receiveFromRuby(), [7, 8, 9]);
+    await platform.closeBridge();
+
+    expect(calls.map((call) => call.method), [
+      'bridgeSend',
+      'bridgeReceive',
+      'bridgeClose',
+    ]);
+    expect(calls.first.arguments, isA<Uint8List>());
+    expect(calls.first.arguments, [1, 2, 3]);
   });
 }

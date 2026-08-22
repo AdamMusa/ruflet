@@ -230,6 +230,53 @@ static void ruflet_autostart_resolve_url(FlutterResult result) {
   });
 }
 
+/// Sends one complete binary protocol message from the renderer to Ruby.
+static void ruflet_bridge_send_from_renderer(id arguments,
+                                             FlutterResult result) {
+  if (![arguments isKindOfClass:[FlutterStandardTypedData class]]) {
+    result([FlutterError errorWithCode:@"ruflet_bridge_bad_message"
+                               message:@"bridgeSend requires binary data."
+                               details:nil]);
+    return;
+  }
+  NSData *data = ((FlutterStandardTypedData *)arguments).data;
+  const int status = ruflet_bridge_send_to_ruby(
+      (const uint8_t *)data.bytes, (size_t)data.length);
+  if (status != RUFLET_BRIDGE_MESSAGE) {
+    result([FlutterError errorWithCode:@"ruflet_bridge_closed"
+                               message:@"The Ruflet in-process bridge is closed."
+                               details:nil]);
+    return;
+  }
+  result(nil);
+}
+
+/// Waits off the platform thread for one complete message from Ruby.
+static void ruflet_bridge_receive_for_flutter(FlutterResult result) {
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    uint8_t *bytes = NULL;
+    size_t length = 0;
+    const int status = ruflet_bridge_receive_for_renderer(&bytes, &length);
+    NSData *message = status == RUFLET_BRIDGE_MESSAGE
+                          ? [NSData dataWithBytes:bytes length:length]
+                          : nil;
+    ruflet_bridge_free_message(bytes);
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+      if (status == RUFLET_BRIDGE_MESSAGE) {
+        result([FlutterStandardTypedData typedDataWithBytes:message]);
+      } else if (status == RUFLET_BRIDGE_CLOSED) {
+        result(nil);
+      } else {
+        result([FlutterError
+            errorWithCode:@"ruflet_bridge_receive_failed"
+                  message:@"Unable to receive from the Ruflet in-process bridge."
+                  details:nil]);
+      }
+    });
+  });
+}
+
 /// True when the platform owns the runtime, so a start() call cannot take
 /// effect. The VM boots once per process: ruflet_vm_start would see a running
 /// VM and return success without adopting any of the arguments.

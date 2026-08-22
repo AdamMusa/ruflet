@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -53,6 +55,21 @@ class MethodChannelRufletRuntime extends RufletRuntimePlatform {
       'status',
     );
     return _statusFromNative(value, 'status');
+  }
+
+  @override
+  Future<void> sendToRuby(Uint8List message) async {
+    await methodChannel.invokeMethod<void>('bridgeSend', message);
+  }
+
+  @override
+  Future<Uint8List?> receiveFromRuby() {
+    return methodChannel.invokeMethod<Uint8List>('bridgeReceive');
+  }
+
+  @override
+  Future<void> closeBridge() async {
+    await methodChannel.invokeMethod<void>('bridgeClose');
   }
 
   @override

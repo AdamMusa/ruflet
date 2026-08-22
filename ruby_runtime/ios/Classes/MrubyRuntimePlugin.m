@@ -169,6 +169,22 @@ static const char **borrow_utf8(NSArray<NSString *> *values,
     return;
   }
 
+  if ([call.method isEqualToString:@"bridgeSend"]) {
+    ruflet_bridge_send_from_renderer(call.arguments, result);
+    return;
+  }
+
+  if ([call.method isEqualToString:@"bridgeReceive"]) {
+    ruflet_bridge_receive_for_flutter(result);
+    return;
+  }
+
+  if ([call.method isEqualToString:@"bridgeClose"]) {
+    ruflet_bridge_close();
+    result(nil);
+    return;
+  }
+
   if ([call.method isEqualToString:@"status"]) {
     result(runtime_status());
     return;

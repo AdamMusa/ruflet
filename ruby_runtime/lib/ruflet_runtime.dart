@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'ruflet_runtime_platform_interface.dart';
 
 class RufletRuntimeStatus {
@@ -48,6 +50,18 @@ class RufletRuntime {
 
   static Future<RufletRuntimeStatus> status() {
     return RufletRuntimePlatform.instance.status();
+  }
+
+  static Future<void> sendToRuby(Uint8List message) {
+    return RufletRuntimePlatform.instance.sendToRuby(message);
+  }
+
+  static Future<Uint8List?> receiveFromRuby() {
+    return RufletRuntimePlatform.instance.receiveFromRuby();
+  }
+
+  static Future<void> closeBridge() {
+    return RufletRuntimePlatform.instance.closeBridge();
   }
 
   static Future<void> stop() {
