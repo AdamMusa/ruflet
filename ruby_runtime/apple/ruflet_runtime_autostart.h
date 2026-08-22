@@ -6,8 +6,8 @@
 // The VM is started from the plugin class's +load, which runs when the dylib is
 // loaded -- before UIApplicationMain, before the Flutter engine exists and long
 // before Dart could ask for it. It boots on a background queue in parallel with
-// the engine, so by the time Dart calls serverUrl() the embedded server has
-// usually already bound its port.
+// the engine and exposes an in-process endpoint as soon as the VM owns its
+// protocol queues.
 //
 // The packaged Ruby project is read straight out of the app bundle. Flutter
 // assets are ordinary files there, so nothing has to be copied to a writable
@@ -20,10 +20,6 @@
 // depend on which version of the CLI generated the client. Setting
 // RufletRuntimeAutostart to false in Info.plist turns it off for an app that
 // wants to drive startup from Dart anyway.
-//
-// A client that still calls start() keeps working: start() mirrors the port
-// this already resolved into the file that client is polling, so it finds the
-// autostarted server rather than waiting for one that will never come.
 //
 // Header-only, with internal linkage, because each platform compiles exactly
 // one bridge translation unit. It mirrors how both bridges already share
@@ -148,10 +144,8 @@ static void ruflet_begin_autostart(void) {
                            withIntermediateDirectories:YES
                                             attributes:nil
                                                  error:nil];
-  NSString *portPath = [scratch stringByAppendingPathComponent:@"server.port"];
   NSString *errorPath = [scratch stringByAppendingPathComponent:@"server.error"];
   NSString *stopPath = [scratch stringByAppendingPathComponent:@"server.stop"];
-  [[NSFileManager defaultManager] removeItemAtPath:portPath error:nil];
   [[NSFileManager defaultManager] removeItemAtPath:errorPath error:nil];
   [[NSFileManager defaultManager] removeItemAtPath:stopPath error:nil];
 
@@ -160,46 +154,21 @@ static void ruflet_begin_autostart(void) {
 
   const char *loadPaths[] = {root.UTF8String};
   const char *environmentKeys[] = {
-      "RUFLET_PORT", "RUFLET_ASSETS_DIR", "RUFLET_RUNTIME_PORT_FILE",
-      "RUFLET_RUNTIME_ERROR_FILE", "RUFLET_SUPPRESS_SERVER_BANNER"};
-  const char *environmentValues[] = {"0", assetsDir.UTF8String,
-                                     portPath.UTF8String, errorPath.UTF8String,
-                                     "1"};
+      "RUFLET_ASSETS_DIR", "RUFLET_RUNTIME_ERROR_FILE",
+      "RUFLET_SUPPRESS_SERVER_BANNER", "RUFLET_RUNTIME_TRANSPORT"};
+  const char *environmentValues[] = {assetsDir.UTF8String, errorPath.UTF8String,
+                                     "1", "in_process"};
 
   const int status = ruflet_vm_start(
       root.UTF8String, entrypoint.UTF8String, loadPaths, 1, environmentKeys,
-      environmentValues, 5, stopPath.UTF8String, errorPath.UTF8String);
+      environmentValues, 4, stopPath.UTF8String, errorPath.UTF8String);
   if (status != 0) {
     ruflet_finish_autostart(
         nil, @"The packaged entrypoint was rejected by the VM; it must be a "
              @".rb or .mrb file inside the project root.");
     return;
   }
-
-  // Poll for the port the Ruby server publishes. Tight, because this runs off
-  // the main thread and the whole point is to have an answer ready early.
-  NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:30.0];
-  while ([deadline timeIntervalSinceNow] > 0) {
-    NSString *published = [NSString stringWithContentsOfFile:portPath
-                                                    encoding:NSUTF8StringEncoding
-                                                       error:nil];
-    const int port = published == nil ? 0 : published.intValue;
-    if (port > 0) {
-      ruflet_finish_autostart(
-          [NSString stringWithFormat:@"http://127.0.0.1:%d", port], nil);
-      return;
-    }
-    NSString *failure = [NSString stringWithContentsOfFile:errorPath
-                                                 encoding:NSUTF8StringEncoding
-                                                    error:nil];
-    if (failure.length > 0) {
-      ruflet_finish_autostart(nil, failure);
-      return;
-    }
-    usleep(1000);
-  }
-  ruflet_finish_autostart(nil,
-                          @"The embedded Ruflet server did not publish a port.");
+  ruflet_finish_autostart(@"inprocess://embedded", nil);
 }
 
 /// Call from the plugin class's +load. Records the timeline origin and, unless
