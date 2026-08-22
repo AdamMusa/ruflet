@@ -150,6 +150,11 @@ class RufletCliUpdateCommandTest < Minitest::Test
       File.write(plist, <<~PLIST)
         <plist><dict>
         <key>RufletRuntimeAutostart</key><false/>
+        <key>NSAppTransportSecurity</key><dict>
+          <key>NSAllowsLocalNetworking</key><true/>
+        </dict>
+        <key>NSLocalNetworkUsageDescription</key>
+        <string>Local network access is required.</string>
         </dict></plist>
       PLIST
       previous = Dir.pwd
@@ -166,6 +171,9 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes content, "<string>my_explorer</string>"
       assert_match(/<key>RufletRuntimeAutostart<\/key>\s*<true\s*\/>/, content)
       assert_match(/<key>RufletExperimentalNativeRenderer<\/key>\s*<true\s*\/>/, content)
+      refute_includes content, "NSAllowsLocalNetworking"
+      refute_includes content, "NSAppTransportSecurity"
+      refute_includes content, "NSLocalNetworkUsageDescription"
     ensure
       Dir.chdir(previous) if previous
     end
@@ -250,6 +258,11 @@ class RufletCliUpdateCommandTest < Minitest::Test
         <key>RufletEmbeddedProject</key><string>stale</string>
         <key>RufletRuntimeAutostart</key><true/>
         <key>RufletBackendURL</key><string>must-not-be-used</string>
+        <key>NSAppTransportSecurity</key><dict>
+          <key>NSAllowsLocalNetworking</key><true/>
+        </dict>
+        <key>NSLocalNetworkUsageDescription</key>
+        <string>Local network access is required.</string>
         </dict></plist>
       PLIST
       builder.send(
@@ -261,6 +274,40 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_match(/<key>RufletRuntimeAutostart<\/key>\s*<false\s*\/>/, content)
       assert_match(/<key>RufletExperimentalNativeRenderer<\/key>\s*<true\s*\/>/, content)
       assert_includes content, "<string>must-not-be-used</string>"
+      assert_includes content, "NSAllowsLocalNetworking"
+      assert_includes content, "NSLocalNetworkUsageDescription"
+    end
+  end
+
+  def test_self_contained_runtime_preserves_other_transport_security_settings
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      plist = File.join(dir, "ios", "Runner", "Info.plist")
+      FileUtils.mkdir_p(File.dirname(plist))
+      File.write(plist, <<~PLIST)
+        <plist><dict>
+        <key>NSAppTransportSecurity</key><dict>
+          <key>NSAllowsLocalNetworking</key><true/>
+          <key>NSExceptionDomains</key><dict>
+            <key>example.test</key><dict>
+              <key>NSIncludesSubdomains</key><true/>
+            </dict>
+          </dict>
+        </dict>
+        </dict></plist>
+      PLIST
+
+      builder.send(
+        :configure_native_apple_runtime,
+        dir, platform: "ios", self_contained: true)
+
+      content = File.read(plist)
+      refute_includes content, "NSAllowsLocalNetworking"
+      assert_includes content, "NSAppTransportSecurity"
+      assert_includes content, "NSExceptionDomains"
+      assert_includes content, "example.test"
+      assert_includes content, "NSIncludesSubdomains"
     end
   end
 

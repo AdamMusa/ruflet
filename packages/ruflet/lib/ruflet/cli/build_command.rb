@@ -2379,6 +2379,50 @@ module Ruflet
         write_text_file(path, content)
       end
 
+      def remove_plist_dictionary_boolean(path, dictionary_key, key)
+        content = read_text_file(path)
+        dictionary = content.match(
+          %r{<key>#{Regexp.escape(dictionary_key)}</key>\s*<dict>}m)
+        return unless dictionary
+
+        opening = content.index("<dict>", dictionary.begin(0))
+        return unless opening
+
+        depth = 0
+        closing = nil
+        content.to_enum(:scan, %r{</?dict>}).each do
+          token = Regexp.last_match
+          next if token.begin(0) < opening
+
+          depth += token[0] == "<dict>" ? 1 : -1
+          if depth.zero?
+            closing = token
+            break
+          end
+        end
+        return unless closing
+
+        body_start = opening + "<dict>".length
+        body = content[body_start...closing.begin(0)]
+        updated_body = body.gsub(
+          %r{\s*<key>#{Regexp.escape(key)}</key>\s*<(?:true|false)\s*/>}m,
+          ""
+        )
+        return if updated_body == body
+
+        if updated_body.strip.empty?
+          pair_start = dictionary.begin(0)
+          line_start = content.rindex("\n", pair_start - 1)
+          if line_start && content[(line_start + 1)...pair_start].strip.empty?
+            pair_start = line_start + 1
+          end
+          content[pair_start...closing.end(0)] = ""
+        else
+          content[body_start...closing.begin(0)] = updated_body
+        end
+        write_text_file(path, content)
+      end
+
       def apply_native_apple_extension_config(
         client_dir, platform:, extension_keys:, verbose: false
       )
@@ -2527,6 +2571,11 @@ module Ruflet
             self_contained ? self_contained_project_name : "")
           upsert_plist_boolean(path, "RufletRuntimeAutostart", self_contained)
           upsert_plist_boolean(path, "RufletExperimentalNativeRenderer", true)
+          if self_contained
+            remove_plist_value(path, "NSLocalNetworkUsageDescription")
+            remove_plist_dictionary_boolean(
+              path, "NSAppTransportSecurity", "NSAllowsLocalNetworking")
+          end
           message = if self_contained
             "native Apple runtime autostarts #{self_contained_project_name}"
           else
