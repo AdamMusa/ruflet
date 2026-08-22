@@ -43,6 +43,7 @@ void GENERATED_TMP_mrb_mruby_io_gem_init(mrb_state *mrb);
 void GENERATED_TMP_mrb_mruby_dir_gem_init(mrb_state *mrb);
 void GENERATED_TMP_mrb_mruby_socket_gem_init(mrb_state *mrb);
 void GENERATED_TMP_mrb_mruby_onig_regexp_gem_init(mrb_state *mrb);
+void GENERATED_TMP_mrb_ruflet_record_gem_init(mrb_state *mrb);
 void GENERATED_TMP_mrb_ruflet_framework_gem_init(mrb_state *mrb);
 void mrb_mruby_digest_gem_init(mrb_state *mrb);
 
@@ -92,5 +93,6 @@ mrb_init_mrbgems(mrb_state *mrb)
   GENERATED_TMP_mrb_mruby_socket_gem_init(mrb);
   mrb_mruby_digest_gem_init(mrb);
   GENERATED_TMP_mrb_mruby_onig_regexp_gem_init(mrb);
+  GENERATED_TMP_mrb_ruflet_record_gem_init(mrb);
   GENERATED_TMP_mrb_ruflet_framework_gem_init(mrb);
 }

@@ -69,7 +69,7 @@ CORE_GEMS = %w[
 CORE_SOURCE_GEMS = %w[mruby-bigint].freeze
 
 PRELOADED_RUBY_GEMS = %w[ruflet-framework].freeze
-NATIVE_RUBY_GEMS = %w[mruby-onig-regexp].freeze
+NATIVE_RUBY_GEMS = %w[mruby-onig-regexp ruflet-record].freeze
 
 HAL_GEMS = %w[hal-posix-io hal-posix-socket hal-posix-dir].freeze
 

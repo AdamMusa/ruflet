@@ -262,6 +262,15 @@ RubyRuntime.__ensure_primitives
 $LOAD_PATH ||= []
 $LOADED_FEATURES ||= []
 
+# RufletRecord is compiled into device VMs. Its mrbgem initializes before this
+# bootstrap, so expose it through the same require contract as the bundled
+# Ruflet framework gems.
+if Object.const_defined?(:RufletRecord)
+  $LOADED_FEATURES << "ruflet_record" unless $LOADED_FEATURES.include?("ruflet_record")
+  preloaded_record = "/__preloaded_gems__/ruflet_record.rb"
+  $LOADED_FEATURES << preloaded_record unless $LOADED_FEATURES.include?(preloaded_record)
+end
+
 # -- ENV ----------------------------------------------------------------------
 # Backed by the process environment through the native __getenv primitive.
 # Writes are process-local to the VM (they do not call setenv).

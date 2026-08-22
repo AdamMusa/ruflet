@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(MRUBY_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../../third_party/mruby")
 set(MRUBY_BUILD_ROOT "${MRUBY_ROOT}/build/host_vm")
 set(ONIG_REGEXP_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../../third_party/mruby-onig-regexp")
+set(RUFLET_RECORD_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../../vm/mrbgems/ruflet-record")
+set(SQLITE_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../../vm/vendor/sqlite")
 
 file(GLOB MRUBY_CORE_SOURCES "${MRUBY_ROOT}/src/*.c")
 set(MRUBY_GEM_SOURCES
@@ -76,6 +78,8 @@ add_library(
   ../../../../shared/mruby_gems_init.c
   ../../../../shared/mruby_digest_gem.c
   "${ONIG_REGEXP_ROOT}/mruby_onig_regexp.c"
+  "${RUFLET_RECORD_ROOT}/src/native_sqlite.c"
+  "${RUFLET_RECORD_ROOT}/src/sqlite_amalgamation.c"
   ${ONIGMO_SOURCES}
   ${MRUBY_CORE_SOURCES}
   ${MRUBY_GEM_SOURCES}
@@ -95,6 +99,7 @@ target_include_directories(
   "${ONIG_REGEXP_ROOT}/onigmo"
   "${ONIG_REGEXP_ROOT}/onigmo/enc/unicode"
   "${ONIG_REGEXP_ROOT}/onigmo/enc/jis"
+  "${SQLITE_ROOT}"
 )
 
 target_compile_definitions(
@@ -103,6 +108,11 @@ target_compile_definitions(
   HAVE_ONIGMO_H=1
   MRB_USE_BIGINT=1
   MRB_UTF8_STRING=1
+  SQLITE_THREADSAFE=1
+  SQLITE_OMIT_LOAD_EXTENSION=1
+  SQLITE_DEFAULT_FOREIGN_KEYS=1
+  SQLITE_ENABLE_FTS5=1
+  SQLITE_ENABLE_JSON1=1
 )
 
 # The VM executes a large precompiled framework during startup. Keep the

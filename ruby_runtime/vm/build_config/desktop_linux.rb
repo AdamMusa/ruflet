@@ -10,5 +10,6 @@ MRuby::Build.new(ENV.fetch("RUFLET_VM_BUILD", "desktop_linux")) do |conf|
   conf.gem core: "mruby-sleep"
   conf.gem File.join(VM_DIR, "mrbgems/mruby-digest")
   conf.gem File.join(VM_DIR, "mrbgems/mruby-onig-regexp")
+  conf.gem File.join(VM_DIR, "mrbgems/ruflet-record")
   conf.gem File.join(VM_DIR, "mrbgems/ruflet-framework")
 end
