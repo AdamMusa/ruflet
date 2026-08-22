@@ -5,7 +5,7 @@
   "minimum_os_version": "10.15",
   "architectures": ["arm64", "x86_64"],
   "library": "libruflet_vm.a",
-  "sha256": "1a8f5d6f1b7ca2d5727d9388ae04ad0f4019653dc3063256a7b1abcecdb0c008",
+  "sha256": "bf0eb36d1c837e5c8b1862cd87b0f7d87f108cc43e59e49ce188a51ca77236f2",
   "contains": ["mruby", "ruflet-framework", "onigmo", "native-gems"],
   "ruflet_gems": {
     "ruflet_core": "0.0.21",

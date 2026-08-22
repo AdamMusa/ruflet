@@ -11,10 +11,10 @@
   },
   "artifacts": {
     "ios-arm64": {
-      "sha256": "108e1eea0d6cd0bde43d0845c9ce3d27f36abbf3bba0350e5642fbdadc08d995"
+      "sha256": "41f12e9a89070923b4ccd229b96ba968f2105eec3eee213f6854de00677374bd"
     },
     "ios-arm64_x86_64-simulator": {
-      "sha256": "5c0be23a464933091d750c0d173ec6235cb12fd61927b5af65d472b2e3fe3577"
+      "sha256": "2cea226733e219b95c4004d83bd7e7ddbbc6ecb46868600131d015beff0f9dd4"
     }
   }
 }
