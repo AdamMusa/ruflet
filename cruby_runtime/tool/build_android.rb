@@ -243,8 +243,10 @@ module Ruflet
           run!(
             tool("#{compiler}#{ANDROID_API}-clang++"),
             "-std=c++17", "-Os", "-DNDEBUG", "-DRUFLET_CRUBY_STATIC_EXTENSIONS=1",
-            "-fPIC", "-shared", "-static-libstdc++",
+            "-fPIC", "-ffunction-sections", "-fdata-sections", "-fvisibility=hidden",
+            "-shared", "-static-libstdc++",
             "-Wl,-soname,libruby_runtime.so", "-Wl,--exclude-libs,ALL",
+            "-Wl,--gc-sections", "-Wl,--pack-dyn-relocs=android",
             "-Wl,-z,max-page-size=16384",
             "-I#{ruby_stage(abi).join('include/ruby-' + RUBY_ABI)}",
             "-I#{ruby_stage(abi).join('include/ruby-' + RUBY_ABI, ruby_arch)}",
@@ -342,13 +344,15 @@ module Ruflet
         ]
         run!(
           tool("#{compiler}#{ANDROID_API}-clang"),
-          "-Os", "-DNDEBUG", "-fPIC",
+          "-Os", "-DNDEBUG", "-fPIC", "-ffunction-sections", "-fdata-sections",
+          "-fvisibility=hidden",
           *includes,
           "-c", source_path.to_s, "-o", object_path.to_s
         )
         run!(
           tool("#{compiler}#{ANDROID_API}-clang"),
-          "-Os", "-DNDEBUG", "-fPIC",
+          "-Os", "-DNDEBUG", "-fPIC", "-ffunction-sections", "-fdata-sections",
+          "-fvisibility=hidden",
           *includes,
           "-c", encoding_source_path.to_s, "-o", encoding_object_path.to_s
         )
