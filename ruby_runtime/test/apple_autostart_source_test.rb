@@ -13,6 +13,11 @@ class AppleAutostartSourceTest < Minitest::Test
     assert_includes SOURCE, '@"inprocess://embedded"'
   end
 
+  def test_precompiled_entrypoint_is_preferred
+    assert_includes SOURCE, '@"main.mrb", @"main.rb"'
+    assert_includes SOURCE, "ruflet_entrypoint_at_root"
+  end
+
   def test_packaged_runtime_does_not_publish_or_poll_a_loopback_port
     refute_includes SOURCE, '"RUFLET_RUNTIME_PORT_FILE"'
     refute_includes SOURCE, '@"server.port"'

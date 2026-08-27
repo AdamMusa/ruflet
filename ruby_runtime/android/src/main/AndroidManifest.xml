@@ -1,3 +1,22 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
   package="com.izeesoft.ruby_runtime">
+
+  <application>
+    <!-- androidx.startup creates this provider before Application.onCreate and
+         long before the FlutterEngine exists, which is the only hook early
+         enough for the VM to boot in parallel with Flutter rather than after
+         it. Contributed here so applications get it through manifest merging
+         without changing any code; whether it starts anything is still the
+         application's decision, via the ruflet.runtime.autostart meta-data. -->
+    <provider
+      android:name="androidx.startup.InitializationProvider"
+      android:authorities="${applicationId}.androidx-startup"
+      android:exported="false"
+      tools:node="merge">
+      <meta-data
+        android:name="com.izeesoft.ruby_runtime.RufletRuntimeInitializer"
+        android:value="androidx.startup" />
+    </provider>
+  </application>
 </manifest>

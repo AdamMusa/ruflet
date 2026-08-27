@@ -26,6 +26,7 @@
 // desktop/ruflet_vm_host.h.
 
 #import <Foundation/Foundation.h>
+#import <TargetConditionals.h>
 
 #include <mach/mach_time.h>
 #include <stdlib.h>
@@ -56,6 +57,17 @@ static NSString *ruflet_server_url = nil;
 static NSString *ruflet_autostart_error = nil;
 static NSCondition *ruflet_autostart_signal = nil;
 static BOOL ruflet_autostart_attempted = NO;
+
+static NSString *ruflet_entrypoint_at_root(NSString *root) {
+  NSFileManager *files = [NSFileManager defaultManager];
+  for (NSString *name in @[@"main.mrb", @"main.rb"]) {
+    NSString *candidate = [root stringByAppendingPathComponent:name];
+    if ([files fileExistsAtPath:candidate]) {
+      return candidate;
+    }
+  }
+  return nil;
+}
 
 /// Where `flutter build` puts the asset bundle. iOS keeps flutter_assets at the
 /// root of App.framework; macOS nests it under Resources.
@@ -94,20 +106,14 @@ static NSString *ruflet_packaged_project_root(void) {
       [[NSBundle mainBundle] objectForInfoDictionaryKey:@"RufletEmbeddedProject"];
   if ([configured isKindOfClass:[NSString class]] && configured.length > 0) {
     NSString *candidate = [root stringByAppendingPathComponent:configured];
-    return [files
-               fileExistsAtPath:[candidate
-                                    stringByAppendingPathComponent:@"main.rb"]]
-               ? candidate
-               : nil;
+    return ruflet_entrypoint_at_root(candidate) != nil ? candidate : nil;
   }
 
   NSArray<NSString *> *entries = [files contentsOfDirectoryAtPath:root error:nil];
   NSString *found = nil;
   for (NSString *entry in entries) {
     NSString *candidate = [root stringByAppendingPathComponent:entry];
-    if (![files
-            fileExistsAtPath:[candidate
-                                 stringByAppendingPathComponent:@"main.rb"]]) {
+    if (ruflet_entrypoint_at_root(candidate) == nil) {
       continue;
     }
     if (found != nil) {
@@ -149,10 +155,33 @@ static void ruflet_begin_autostart(void) {
   [[NSFileManager defaultManager] removeItemAtPath:errorPath error:nil];
   [[NSFileManager defaultManager] removeItemAtPath:stopPath error:nil];
 
-  NSString *entrypoint = [root stringByAppendingPathComponent:@"main.rb"];
+  NSString *entrypoint = ruflet_entrypoint_at_root(root);
   NSString *assetsDir = [root stringByAppendingPathComponent:@"assets"];
 
+  // The full CRuby distribution carries its standard library as a CocoaPods
+  // resource. Keep the lite package's one-path fast path unchanged, while
+  // giving the ABI-compatible CRuby host both its Ruby and native-extension
+  // directories before it loads the application bundle.
+#if defined(RUFLET_CRUBY_RUNTIME)
+  NSString *pluginClassName = @"RubyRuntimeMacosPlugin";
+#if TARGET_OS_IOS
+  pluginClassName = @"MrubyRuntimePlugin";
+#endif
+  NSBundle *crubyBundle =
+      [NSBundle bundleForClass:NSClassFromString(pluginClassName)];
+  NSString *crubyRoot = [[crubyBundle resourcePath]
+      stringByAppendingPathComponent:@"ruflet_cruby"];
+  NSString *crubyLib = [[crubyRoot stringByAppendingPathComponent:@"lib/ruby"]
+      stringByAppendingPathComponent:RUFLET_CRUBY_ABI];
+  NSString *crubyArch =
+      [crubyLib stringByAppendingPathComponent:RUFLET_CRUBY_ARCH];
+  const char *loadPaths[] = {root.UTF8String, crubyLib.UTF8String,
+                             crubyArch.UTF8String};
+  const size_t loadPathCount = 3;
+#else
   const char *loadPaths[] = {root.UTF8String};
+  const size_t loadPathCount = 1;
+#endif
   const char *environmentKeys[] = {
       "RUFLET_ASSETS_DIR", "RUFLET_RUNTIME_ERROR_FILE",
       "RUFLET_SUPPRESS_SERVER_BANNER", "RUFLET_RUNTIME_TRANSPORT"};
@@ -160,7 +189,7 @@ static void ruflet_begin_autostart(void) {
                                      "1", "in_process"};
 
   const int status = ruflet_vm_start(
-      root.UTF8String, entrypoint.UTF8String, loadPaths, 1, environmentKeys,
+      root.UTF8String, entrypoint.UTF8String, loadPaths, loadPathCount, environmentKeys,
       environmentValues, 4, stopPath.UTF8String, errorPath.UTF8String);
   if (status != 0) {
     ruflet_finish_autostart(

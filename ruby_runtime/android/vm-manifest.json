@@ -7,20 +7,21 @@
   "contains": ["mruby", "ruflet-framework", "onigmo", "native-gems"],
   "ruflet_gems": {
     "ruflet_core": "0.0.21",
-    "ruflet_server": "0.0.21"
+    "ruflet_server": "0.0.21",
+    "ruflet_record": "0.0.1"
   },
   "artifacts": {
     "arm64-v8a": {
-      "sha256": "b05c198cea0e8f08120ca4f01d06875f3427e0107479d43d5af9884ce5d92da9"
+      "sha256": "a519c5116cbc33f39e8f198f729582556659b03a4ca159785aa63fa028114ee4"
     },
     "armeabi-v7a": {
-      "sha256": "dbdf24c22c17e13df15ae3693e0580d54e5b91f26d6c0939a4f845f7bc901787"
+      "sha256": "5ba57502bbdc489fc7d3448c587c84c720e00ae862b3d11cbc55d69279737620"
     },
     "x86": {
-      "sha256": "bcae55a04a9dfea105144e36ebca16752be3fd4f1afc05dcb5ae792e21268669"
+      "sha256": "a9bbc4945167c2c2107bf73c2efafd214bfce4b97784bd93cfef3430732cd3d1"
     },
     "x86_64": {
-      "sha256": "9b8ac14359f71f06fa9f23570c9ecb466eee7c3bf07e707ef662473127d41296"
+      "sha256": "48d32d4e07eab09ba88c7b5149da11b4bd750509efadac2fb9ac7d8ee95641ad"
     }
   }
 }
