@@ -8,6 +8,8 @@ class CrossPlatformAutostartSourceTest < Minitest::Test
     File.join(ROOT, "android/src/main/kotlin/com/izeesoft/ruby_runtime/RufletRuntimeAutostart.kt"))
   ANDROID_INITIALIZER = File.read(
     File.join(ROOT, "android/src/main/kotlin/com/izeesoft/ruby_runtime/RufletRuntimeInitializer.kt"))
+  ANDROID_PLUGIN = File.read(
+    File.join(ROOT, "android/src/main/kotlin/com/izeesoft/ruby_runtime/MrubyRuntimePlugin.kt"))
   ANDROID_MANIFEST = File.read(File.join(ROOT, "android/src/main/AndroidManifest.xml"))
   DESKTOP_AUTOSTART = File.read(File.join(ROOT, "desktop/ruflet_desktop_autostart.h"))
   LINUX_PLUGIN = File.read(File.join(ROOT, "linux/ruby_runtime_plugin.cc"))
@@ -29,6 +31,21 @@ class CrossPlatformAutostartSourceTest < Minitest::Test
     assert_includes DESKTOP_AUTOSTART, '"data" / "flutter_assets"'
     assert_includes DESKTOP_AUTOSTART, '{"main.mrb", "main.rb"}'
     refute_includes DESKTOP_AUTOSTART, "copy_file"
+  end
+
+  def test_android_full_uses_the_in_process_transport
+    assert_includes ANDROID_AUTOSTART, '"RUFLET_RUNTIME_TRANSPORT"'
+    assert_includes ANDROID_AUTOSTART, '"in_process"'
+    assert_includes ANDROID_AUTOSTART, 'profile == "full"'
+    assert_includes ANDROID_AUTOSTART, "supportsInProcessTransport(projectRoot)"
+    assert_includes ANDROID_AUTOSTART, 'gem.name.startsWith("ruflet_server-")'
+    assert_includes ANDROID_AUTOSTART, 'File(gem, "lib/ruflet/server/in_process_connection.rb").isFile'
+    assert_includes ANDROID_AUTOSTART, 'finish("inprocess://embedded", null)'
+    assert_includes ANDROID_AUTOSTART, "awaitPort(portFile, errorFile)"
+
+    %w[bridgeSend bridgeReceive bridgeClose].each do |method|
+      assert_includes ANDROID_PLUGIN, "\"#{method}\""
+    end
   end
 
   def test_startup_waits_run_off_platform_threads

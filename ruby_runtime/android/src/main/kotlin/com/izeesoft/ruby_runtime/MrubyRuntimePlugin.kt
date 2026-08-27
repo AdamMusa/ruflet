@@ -31,6 +31,9 @@ class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
     external fun nativeStop()
     external fun nativeIsRunning(): Boolean
     external fun nativeLastError(): String
+    external fun nativeBridgeSend(message: ByteArray): Boolean
+    external fun nativeBridgeReceive(): ByteArray?
+    external fun nativeBridgeClose()
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         System.loadLibrary("ruby_runtime")
@@ -121,6 +124,33 @@ class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
                 }
                 "timeline" ->
                     result.success(mapOf("sinceLoadMs" to RufletRuntimeAutostart.millisSinceLoad()))
+                "bridgeSend" -> {
+                    val message = call.arguments as? ByteArray
+                    if (message == null) {
+                        result.error(
+                            "ruflet_bridge_bad_message",
+                            "bridgeSend requires binary data.",
+                            null,
+                        )
+                    } else if (nativeBridgeSend(message)) {
+                        result.success(null)
+                    } else {
+                        result.error(
+                            "ruflet_bridge_closed",
+                            "The Ruflet in-process bridge is closed.",
+                            null,
+                        )
+                    }
+                }
+                "bridgeReceive" ->
+                    worker.execute {
+                        val message = nativeBridgeReceive()
+                        mainThread.post { result.success(message) }
+                    }
+                "bridgeClose" -> {
+                    nativeBridgeClose()
+                    result.success(null)
+                }
                 "status" -> result.success(status())
                 "stop" -> {
                     nativeStop()

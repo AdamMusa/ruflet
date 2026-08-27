@@ -253,6 +253,7 @@ module Ruflet
             "-I#{@lite_root.join('desktop')}",
             @source_root.join("native/ruflet_cruby_vm.cpp").to_s,
             @source_root.join("native/ruflet_cruby_jni.cpp").to_s,
+            @lite_root.join("android/src/main/cpp/ruflet_bridge_jni.cpp").to_s,
             @lite_root.join("desktop/ruflet_in_process_bridge.cpp").to_s,
             *extension_registry,
             "-Wl,--whole-archive", *static_extensions, "-Wl,--no-whole-archive",
