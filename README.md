@@ -44,7 +44,8 @@ no rebuild in between. It is itself written in Ruflet.
   Broken edits keep the last working interface visible while Ruflet reports the
   error in the terminal.
 - **Server-driven or self-contained.** Keep application logic on a Ruby server,
-  or embed the Ruby runtime and app into a native package with `--self`.
+  or embed either the small Ruflet VM (`--lite`) or a full CRuby distribution
+  with the project's locked gems (`--full`).
 - **Real device capabilities.** Work with camera, location, motion, storage,
   sharing, haptics, sensors, and protected native permissions through Ruby APIs.
 - **Targeted live updates.** Update mounted controls without rebuilding the
@@ -161,7 +162,8 @@ wanted.
 | Mode | Best for | How it works |
 | --- | --- | --- |
 | **Server-driven** | Connected applications, shared business logic, Rails, and centrally deployed updates | The Ruflet client connects to a Ruby backend and receives UI patches over its live connection. |
-| **Self-contained** | Native distribution and local or offline Ruby execution | Ruflet packages the Ruby runtime, application files, and the Ruflet client together with `ruflet build <target> --self`. |
+| **Self-contained lite** | Small native packages and Ruflet's supported embedded API | `--lite` packages precompiled application bytecode with the Ruflet mruby VM. |
+| **Self-contained full** | CRuby compatibility and project Gemfile dependencies | `--full` packages the locked bundle and selects a target-specific full CRuby runtime distribution. |
 
 Both modes use the same Ruby controls and event handlers.
 
@@ -358,7 +360,7 @@ accepted under `build`, which older projects use, and under a platform section
 that overrides it — see [Per-platform icon and splash](#per-platform-icon-and-splash).
 
 `backend_url` is required for server-driven production builds, and ignored when
-building with `--self`. Clients that are told which server to use at launch may
+building with `--lite`, `--full`, or the legacy `--self` alias. Clients that are told which server to use at launch may
 omit it: a web client resolves the origin it is served from, and a desktop
 client takes the URL its launcher passes. Baking one in would pin them to a
 single host and port.
@@ -421,14 +423,39 @@ ruflet build linux
 ruflet build web
 ```
 
-Add `--self` to package the Ruby runtime and application into a native build:
+Choose a self-contained runtime profile for a native build:
 
 ```bash
-ruflet build apk --self
-ruflet build ios --self
+ruflet build apk --lite
+ruflet build ios --lite
+ruflet build macos --full
 ```
 
-`ruflet build ios --self` prepares both the physical-device and simulator app
+`--lite` uses Ruflet's compact mruby VM and precompiles project Ruby to bytecode
+when the matching compiler is available. `--self` remains a compatibility alias
+for `--lite`.
+Use `--self --full` when you want the legacy self-contained flag together with
+the full profile; the explicit `--full` selection wins.
+
+`--full` uses CRuby and packages `Gemfile`, `Gemfile.lock`, and the locked
+production gem bundle. Full runtime binaries are platform-specific. Point
+`RUFLET_FULL_RUNTIME_PATH` (or `build.full_runtime_path` in `ruflet.yaml`) at a
+Flutter `ruby_runtime` package whose `ruflet-full-runtime.json` declares the
+target platform. Ruflet rejects a missing or mruby-only runtime instead of
+silently producing a build labeled CRuby.
+
+All embedded profiles write a content-addressed runtime manifest. Android
+extracts the project only once per installed build, while Apple and desktop
+read bundled files directly. The VM starts in parallel with Flutter: before
+`Application.onCreate` on Android, at dynamic-library load on Apple, and during
+plugin registration on Linux and Windows.
+
+The included CRuby builders currently produce tested Android and macOS
+distributions. See [runtime profile measurements](docs/runtime_profiles.md) for
+per-device mobile size, warm launch, and memory comparisons. Other full-runtime
+targets are rejected until a matching CRuby distribution is supplied.
+
+`ruflet build ios --lite` prepares both the physical-device and simulator app
 bundles. You do not need a separate simulator build command.
 
 On iOS and macOS, add `--experimental` to replace only the renderer with the
@@ -437,7 +464,7 @@ extensions, permissions, identity, assets, and runtime mode:
 
 ```bash
 ruflet build ios --experimental
-ruflet build macos --self --exp
+ruflet build macos --lite --exp
 ```
 
 Without this flag, Apple builds contain the standard Flutter renderer and do
@@ -523,7 +550,7 @@ ruflet doctor [--fix] [--verbose]
 ruflet devices
 ruflet emulators
 ruflet update [web|desktop|all] [--check] [--force] [--platform PLATFORM]
-ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--self] [--experimental|--exp] [--verbose]
+ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--lite|--full|--self] [--experimental|--exp] [--verbose]
 ruflet install [--device DEVICE_ID] [--verbose]
 ```
 

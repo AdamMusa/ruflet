@@ -31,7 +31,7 @@ ruflet devices
 ruflet emulators
 ruflet doctor [--fix]
 ruflet update [web|desktop|all] [--check] [--force]
-ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--self] [--experimental|--exp]
+ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--lite|--full|--self] [--experimental|--exp]
 ruflet install [--device DEVICE_ID]
 ```
 
@@ -39,6 +39,18 @@ ruflet install [--device DEVICE_ID]
 native Apple renderer while the normal Ruflet build pipeline continues to
 resolve the declared services, extensions, permissions, assets, and runtime
 mode. Without it, Apple builds use only the Flutter renderer.
+
+`--lite` creates the compact self-contained build: project Ruby is precompiled
+when the matching mruby compiler is available, and the bundled VM starts in
+parallel with Flutter. `--self` remains an alias for this profile.
+Combining `--self --full` selects the full profile; `--self` does not override
+an explicit `--full`.
+
+`--full` packages the locked production bundle from `Gemfile.lock` and selects
+a target-specific CRuby runtime. Set `RUFLET_FULL_RUNTIME_PATH`, or
+`build.full_runtime_path` in `ruflet.yaml`, to a Flutter package named
+`ruby_runtime` with a `ruflet-full-runtime.json` manifest for the target.
+Ruflet refuses to substitute the lite mruby engine for a requested full build.
 
 Before Flutter resolves or bundles packages, Ruflet removes extension plugins
 that are not selected by the current services/extensions configuration. With

@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "find"
+require "digest"
 require "json"
 require "open3"
 require "pathname"
@@ -116,15 +117,31 @@ module Ruflet
         "linux" => { splash: false, icon: false }
       }.freeze
 
+      EMBEDDED_RUNTIME_PROFILES = %i[lite full].freeze
+      FULL_RUNTIME_MANIFEST = "ruflet-full-runtime.json"
+      FULL_RUNTIME_BUNDLE_SCHEMA = 3
+
       def command_build(args)
-        self_contained = args.delete("--self")
+        self_contained_flag = args.delete("--self")
+        lite = args.delete("--lite")
+        full = args.delete("--full")
+        if lite && full
+          warn "build config error: --lite and --full are mutually exclusive"
+          return 1
+        end
+        # --self enables the embedded runtime and defaults its profile to lite.
+        # An explicit profile still wins, so --self --full selects full CRuby.
+        self_contained = self_contained_flag || lite || full
+        runtime_profile = full ? :full : :lite
+        @ruflet_runtime_profile = self_contained ? runtime_profile : :server
+        @ruflet_runtime_profile_explicit = !!(lite || full)
         experimental = args.delete("--experimental")
         experimental_alias = args.delete("--exp")
         experimental ||= experimental_alias
         verbose = args.delete("--verbose") || args.delete("-v")
         platform = (args.shift || "").downcase
         if platform.empty?
-          warn "Usage: ruflet build <apk|android|aab|ios|ipa|web|macos|windows|linux> [--self] [--experimental|--exp] [--verbose]"
+          warn "Usage: ruflet build <apk|android|aab|ios|ipa|web|macos|windows|linux> [--lite|--full|--self] [--experimental|--exp] [--verbose]"
           return 1
         end
 
@@ -143,13 +160,15 @@ module Ruflet
         # signing, icons, package name — is the same as a plain iOS build.
         requested_platform = platform
         platform = "ios" if platform == "ipa"
+        @ruflet_build_platform = platform
         @ruflet_experimental_native_renderer = !!experimental
 
         # The embedded Ruby VM is a native plugin with no browser
         # implementation, so a self-contained web build produces an app that
         # cannot start. Say so rather than shipping one that hangs.
         if self_contained && platform == "web"
-          warn "build config error: --self is not supported for web"
+          profile_flag = @ruflet_runtime_profile_explicit ? "--#{runtime_profile}" : "--self"
+          warn "build config error: #{profile_flag} is not supported for web"
           warn "A web client runs no embedded Ruby; build it with `ruflet build web`."
           return 1
         end
@@ -163,8 +182,12 @@ module Ruflet
         end
 
         renderer = experimental ? ", experimental native renderer" : ""
-        build_note("Preparing #{platform} build (#{self_contained ? 'self-contained' : 'server-driven'}#{renderer})")
+        mode = self_contained ? "self-contained #{runtime_profile}" : "server-driven"
+        build_note("Preparing #{platform} build (#{mode}#{renderer})")
         config = load_ruflet_config
+        if runtime_profile == :full && self_contained
+          return 1 unless configure_full_runtime_distribution(config, platform, verbose: !!verbose)
+        end
         tools = ensure_flutter!("build", client_dir: client_dir)
         command_env = build_tool_env(tools[:env], platform, client_dir)
         ok = prepare_flutter_client(
@@ -183,10 +206,13 @@ module Ruflet
         build_args += ["--target", target_entrypoint] if target_entrypoint
         backend_url = configured_backend_url(config)
         if self_contained
-          # Pin the embedded project so main.self.dart extracts assets/<name>/
-          # deterministically instead of inferring from a single main.rb — the
-          # app tree now ships many main.rb files (standalone_apps/*/main.rb).
+          # Pin the embedded project for platform autostart instead of asking
+          # the native layer to infer it from every main.rb/main.mrb in the
+          # bundled asset tree.
           build_args += ["--dart-define", "RUFLET_EMBEDDED_PROJECT=#{self_contained_project_name}"]
+          if @ruflet_runtime_profile_explicit
+            build_args += ["--dart-define", "RUFLET_RUNTIME_PROFILE=#{runtime_profile}"]
+          end
         elsif backend_url
           build_args += ["--dart-define", "RUFLET_BACKEND_URL=#{backend_url}"]
         elsif RUNTIME_RESOLVED_BACKEND_PLATFORMS.include?(platform)
@@ -206,7 +232,12 @@ module Ruflet
         build_args << "-v" if verbose
         stage_ios_simulator_ruby_runtime(client_dir, build_args, verbose: !!verbose) if self_contained
 
-        build_log(verbose, "mode=#{self_contained ? 'self' : 'server'}")
+        logged_mode = if self_contained
+          @ruflet_runtime_profile_explicit ? runtime_profile : "self"
+        else
+          "server"
+        end
+        build_log(verbose, "mode=#{logged_mode}")
         build_log(verbose, "client_dir=#{client_dir}")
         build_log(verbose, "flutter=#{tools[:flutter]}")
         build_log(verbose, "dart=#{tools[:dart]}")
@@ -221,7 +252,8 @@ module Ruflet
         # Keep both outputs behind the ordinary self-contained iOS build so the
         # following `ruflet install` can target whichever mobile device is
         # connected. An explicit --simulator remains a simulator-only build.
-        if ok && self_contained && requested_platform == "ios" && !build_args.include?("--simulator")
+        if ok && self_contained && requested_platform == "ios" &&
+            !build_args.include?("--simulator") && !full_runtime_device_only?
           simulator_args = build_args.dup
           simulator_args.delete("--codesign")
           simulator_args.insert(simulator_args.index("ios") + 1, "--simulator")
@@ -554,11 +586,12 @@ module Ruflet
         apply_ios_signing_team(client_dir, config) if %w[ios ipa macos].include?(platform.to_s)
         configured = configure_client_runtime_mode(client_dir, self_contained: self_contained, verbose: verbose)
         return false if configured == false
-        if experimental_native_renderer?
-          configure_native_apple_runtime(
-            client_dir, platform: platform, self_contained: self_contained,
-            verbose: verbose)
-        end
+        configure_native_apple_runtime(
+          client_dir, platform: platform, self_contained: self_contained,
+          experimental: experimental_native_renderer?, verbose: verbose)
+        configure_android_runtime(
+          client_dir, platform: platform, self_contained: self_contained,
+          verbose: verbose)
         @ruflet_self_contained_build = self_contained
         extension_keys = apply_service_extension_config(client_dir, config)
         if @ruflet_extension_selection_applied && !validate_flutter_extension_selection(client_dir)
@@ -722,7 +755,11 @@ module Ruflet
         return true unless build_args.include?("ios")
         return true unless build_args.include?("--simulator")
 
-        runtime_root = explicit_local_ruby_runtime_path || source_checkout_ruby_runtime_path
+        runtime_root = if embedded_runtime_profile == :full
+          @ruflet_full_runtime_path
+        else
+          explicit_local_ruby_runtime_path || source_checkout_ruby_runtime_path
+        end
         return true unless runtime_root
 
         source = File.join(
@@ -2092,18 +2129,48 @@ module Ruflet
       end
 
       def clear_stale_platform_outputs(client_dir, platform, verbose: false)
-        return unless platform == "ios"
-
-        stale_paths = %w[
-          build/ios/Debug-iphonesimulator
-          build/ios/iphonesimulator
-        ]
+        stale_paths = case platform
+        when "ios"
+          %w[
+            build/ios/Debug-iphonesimulator
+            build/ios/iphonesimulator
+          ]
+        when "android", "apk", "aab"
+          # Flutter and Gradle merge assets incrementally. When a build switches
+          # from full to lite, removed project gems can otherwise survive in the
+          # next APK even though pubspec.yaml and the source asset tree are clean.
+          %w[
+            build/app/intermediates/flutter
+            build/app/intermediates/assets
+            build/app/intermediates/compressed_assets
+            build/app/intermediates/incremental/mergeReleaseAssets
+          ]
+        else
+          []
+        end
 
         stale_paths.each do |relative_path|
           path = File.join(client_dir, relative_path)
           next unless Dir.exist?(path)
 
           FileUtils.rm_rf(path)
+          build_log(verbose, "cleared stale #{relative_path}")
+        end
+
+        return unless platform == "ios"
+
+        # Xcode's incremental App.framework copy does not remove files that
+        # disappeared from a Flutter asset directory. Clear only the generated
+        # embedded project tree so a removed gem/archive cannot survive the
+        # next signed build; native compilation outputs remain reusable.
+        asset_pattern = File.join(
+          client_dir, "build", "ios", "**", "flutter_assets", "assets",
+          self_contained_project_name)
+        Dir.glob(asset_pattern).each do |asset_root|
+          next unless Dir.exist?(asset_root)
+
+          FileUtils.rm_rf(asset_root)
+          relative_path = Pathname.new(asset_root).relative_path_from(Pathname.new(client_dir))
           build_log(verbose, "cleared stale #{relative_path}")
         end
       end
@@ -2116,14 +2183,14 @@ module Ruflet
 
       def configure_client_runtime_mode(client_dir, self_contained:, verbose: false)
         build_log(verbose, "configuring #{self_contained ? 'self-contained' : 'server-driven'} runtime")
-        sync_client_pubspec_for_runtime_mode(client_dir, self_contained: self_contained)
         if self_contained
-          sync_self_contained_project_assets(client_dir, verbose: verbose)
+          return false unless sync_self_contained_project_assets(client_dir, verbose: verbose)
           remove_local_ruby_runtime_override(client_dir, verbose: verbose)
         else
           remove_self_contained_project_assets(client_dir, verbose: verbose)
           remove_local_ruby_runtime_override(client_dir, verbose: verbose)
         end
+        sync_client_pubspec_for_runtime_mode(client_dir, self_contained: self_contained)
         true
       end
 
@@ -2137,19 +2204,22 @@ module Ruflet
         flutter = data["flutter"]
         flutter = data["flutter"] = {} unless flutter.is_a?(Hash)
         assets = Array(flutter["assets"]).map(&:to_s)
+        project_prefix = "assets/#{self_contained_project_name}/"
+        # The exact directory list changes between lite and full (most notably
+        # vendor/bundle). Remove the previous profile's generated entries
+        # before adding the directories that exist in this build.
+        assets.reject! { |asset| asset == project_prefix || asset.start_with?(project_prefix) }
 
         if self_contained
           dependencies["ruby_runtime"] = ruby_runtime_dependency(dependencies["ruby_runtime"])
           # Flutter does not recurse into asset directories, so every subdirectory
           # of the embedded project (e.g. standalone_apps/<slug>/) must be listed
           # explicitly or its files never reach the bundle/manifest on device.
-          self_contained_project_asset_dirs.each do |dir_entry|
+          self_contained_project_asset_dirs(client_dir).each do |dir_entry|
             assets << dir_entry unless assets.include?(dir_entry)
           end
         else
           dependencies.delete("ruby_runtime")
-          project_prefix = "assets/#{self_contained_project_name}/"
-          assets.reject! { |a| a.to_s == project_prefix || a.to_s.start_with?(project_prefix) }
         end
 
         flutter["assets"] = assets unless assets.empty?
@@ -2163,10 +2233,67 @@ module Ruflet
       PUBLISHED_RUBY_RUNTIME_CONSTRAINT = "^0.0.9"
 
       def ruby_runtime_dependency(current_dependency = nil)
+        if embedded_runtime_profile == :full && @ruflet_full_runtime_path
+          return { "path" => @ruflet_full_runtime_path }
+        end
+
         local_path = explicit_local_ruby_runtime_path || source_checkout_ruby_runtime_path
         return { "path" => local_path } if local_path
 
         current_dependency || PUBLISHED_RUBY_RUNTIME_CONSTRAINT
+      end
+
+      def configure_full_runtime_distribution(config, platform, verbose: false)
+        configured = ENV["RUFLET_FULL_RUNTIME_PATH"].to_s.strip
+        build_config = config["build"].is_a?(Hash) ? config["build"] : {}
+        configured = build_config["full_runtime_path"].to_s.strip if configured.empty?
+        candidates = []
+        candidates << File.expand_path(configured, Dir.pwd) unless configured.empty?
+        local_runtime = explicit_local_ruby_runtime_path || source_checkout_ruby_runtime_path
+        candidates << local_runtime if local_runtime
+
+        candidates.compact.uniq.each do |root|
+          manifest_path = File.join(root, FULL_RUNTIME_MANIFEST)
+          pubspec_path = File.join(root, "pubspec.yaml")
+          next unless File.file?(manifest_path) && File.file?(pubspec_path)
+
+          manifest = JSON.parse(read_text_file(manifest_path))
+          next unless manifest["engine"] == "cruby"
+          platforms = Array(manifest["platforms"]).map(&:to_s)
+          target = normalized_runtime_platform(platform)
+          next unless platforms.include?(target)
+
+          pubspec = YAML.safe_load(read_text_file(pubspec_path), aliases: true) || {}
+          next unless pubspec["name"] == "ruby_runtime"
+
+          @ruflet_full_runtime_path = File.expand_path(root)
+          @ruflet_full_runtime_manifest = manifest
+          build_log(
+            verbose,
+            "full CRuby runtime=#{@ruflet_full_runtime_path} ruby=#{manifest['ruby_version']}"
+          )
+          return true
+        rescue JSON::ParserError, Psych::SyntaxError => e
+          build_log(verbose, "ignored invalid full runtime at #{root}: #{e.message}")
+        end
+
+        warn "build config error: --full needs a CRuby runtime distribution for #{normalized_runtime_platform(platform)}"
+        warn "Set RUFLET_FULL_RUNTIME_PATH to a ruby_runtime Flutter package containing #{FULL_RUNTIME_MANIFEST}."
+        warn "The bundled ruby_runtime is the lite mruby engine and will not be mislabeled as CRuby."
+        false
+      end
+
+      def full_runtime_device_only?
+        embedded_runtime_profile == :full &&
+          @ruflet_full_runtime_manifest.is_a?(Hash) &&
+          @ruflet_full_runtime_manifest["device_only"] == true
+      end
+
+      def normalized_runtime_platform(platform)
+        return "android" if %w[apk android aab appbundle].include?(platform.to_s)
+        return "ios" if %w[ios ipa].include?(platform.to_s)
+
+        platform.to_s
       end
 
       def explicit_local_ruby_runtime_path
@@ -2306,8 +2433,6 @@ module Ruflet
         FileUtils.rm_rf(File.join(client_dir, "apple_extensions"))
         configure_ios_scene_delegate(client_dir, native: false) if apple_platform == "ios"
         apple_info_plist_paths(client_dir).each do |path|
-          remove_plist_value(path, "RufletEmbeddedProject")
-          remove_plist_value(path, "RufletRuntimeAutostart")
           remove_plist_value(path, "RufletExperimentalNativeRenderer")
           remove_plist_value(path, "GADApplicationIdentifier")
         end
@@ -2355,9 +2480,9 @@ module Ruflet
         return unless File.file?(path)
 
         content = read_text_file(path)
-        delegate = native ? "RufletSceneDelegate" : "FlutterSceneDelegate"
+        delegate = native ? "RufletSceneDelegate" : "SceneDelegate"
         content.gsub!(
-          %r{(<key>UISceneDelegateClassName</key>\s*<string>)\$\(PRODUCT_MODULE_NAME\)\.(?:Ruflet|Flutter)SceneDelegate(</string>)}m,
+          %r{(<key>UISceneDelegateClassName</key>\s*<string>)\$\(PRODUCT_MODULE_NAME\)\.(?:RufletSceneDelegate|FlutterSceneDelegate|SceneDelegate)(</string>)}m,
           "\\1$(PRODUCT_MODULE_NAME).#{delegate}\\2"
         )
         write_text_file(path, content)
@@ -2552,7 +2677,7 @@ module Ruflet
       end
 
       def configure_native_apple_runtime(
-        client_dir, platform:, self_contained:, verbose: false
+        client_dir, platform:, self_contained:, experimental: true, verbose: false
       )
         plist_paths = case platform.to_s
         when "ios", "ipa"
@@ -2570,7 +2695,12 @@ module Ruflet
             path, "RufletEmbeddedProject",
             self_contained ? self_contained_project_name : "")
           upsert_plist_boolean(path, "RufletRuntimeAutostart", self_contained)
-          upsert_plist_boolean(path, "RufletExperimentalNativeRenderer", true)
+          upsert_plist_string(
+            path, "RufletRuntimeProfile",
+            self_contained ? embedded_runtime_profile.to_s : "")
+          upsert_plist_boolean(
+            path, "RufletExperimentalNativeRenderer",
+            experimental)
           if self_contained
             remove_plist_value(path, "NSLocalNetworkUsageDescription")
             remove_plist_dictionary_boolean(
@@ -2583,6 +2713,38 @@ module Ruflet
           end
           build_log(verbose, message)
         end
+      end
+
+      def configure_android_runtime(client_dir, platform:, self_contained:, verbose: false)
+        return unless %w[apk android aab appbundle].include?(platform.to_s)
+
+        path = File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")
+        return unless File.file?(path)
+
+        upsert_android_metadata(path, "ruflet.runtime.autostart", self_contained.to_s)
+        upsert_android_metadata(
+          path, "ruflet.runtime.project",
+          self_contained ? self_contained_project_name : "")
+        upsert_android_metadata(
+          path, "ruflet.runtime.profile",
+          self_contained ? embedded_runtime_profile.to_s : "")
+        build_log(
+          verbose,
+          self_contained ? "android runtime autostarts #{self_contained_project_name} (#{embedded_runtime_profile})" : "android embedded runtime autostart disabled"
+        )
+      end
+
+      def upsert_android_metadata(path, name, value)
+        content = read_text_file(path)
+        escaped_value = xml_escape(value)
+        tag = %(        <meta-data android:name="#{name}" android:value="#{escaped_value}" />)
+        pattern = %r{\s*<meta-data\s+android:name=["']#{Regexp.escape(name)}["'][^>]*/>}m
+        if content.match?(pattern)
+          content.sub!(pattern, "\n#{tag}")
+        else
+          content.sub!(%r{(<application\b[^>]*>)}, "\\1\n#{tag}")
+        end
+        write_text_file(path, content)
       end
 
       def upsert_plist_string(path, key, value)
@@ -2634,11 +2796,24 @@ module Ruflet
       # Flutter asset directory entries for every folder of the embedded project
       # that contains packaged files. Derived from the exact copy list so the
       # pubspec asset dirs match what sync_self_contained_project_assets writes.
-      def self_contained_project_asset_dirs
+      def self_contained_project_asset_dirs(client_dir = nil)
         prefix = "assets/#{self_contained_project_name}"
         dirs = project_asset_relative_paths.map { |rel| File.dirname(rel) }.uniq
+        if client_dir
+          packaged_root = File.join(client_dir, prefix)
+          if Dir.exist?(packaged_root)
+            Find.find(packaged_root) do |path|
+              next unless File.file?(path)
+
+              relative = Pathname.new(path).relative_path_from(Pathname.new(packaged_root)).to_s
+              dirs << File.dirname(relative)
+            end
+          end
+        end
         project_dirs = dirs.map { |dir| dir == "." ? "#{prefix}/" : "#{prefix}/#{dir}/" }
-        project_dirs.sort
+        manifest = File.join(client_dir.to_s, prefix, ".ruflet-runtime.json")
+        project_dirs << "#{prefix}/.ruflet-runtime.json" if client_dir && File.file?(manifest)
+        project_dirs.uniq.sort
       end
 
       def sync_self_contained_project_assets(client_dir, verbose: false)
@@ -2659,7 +2834,305 @@ module Ruflet
           copied += 1
         end
 
+        profile = embedded_runtime_profile
+        if profile == :full
+          return false unless package_full_runtime_gems(
+            project_root, destination_root, client_dir, verbose: verbose)
+        else
+          return false unless precompile_lite_runtime_project(
+            destination_root, verbose: verbose)
+        end
+        write_embedded_runtime_manifest(
+          project_root, destination_root, profile: profile,
+          platform: @ruflet_build_platform)
+
         build_log(verbose, "copied #{copied} project file#{copied == 1 ? '' : 's'} to assets/#{self_contained_project_name}")
+        true
+      end
+
+      def precompile_lite_runtime_project(destination_root, verbose: false)
+        compiler = embedded_mrbc_path
+        unless compiler
+          build_log(verbose, "mrbc unavailable; packaging lite Ruby source")
+          return true
+        end
+
+        sources = Dir.glob(File.join(destination_root, "**", "*.rb")).sort
+        compiled = []
+        sources.each do |source|
+          output = source.sub(/\.rb\z/, ".mrb")
+          ok = run_external_command(
+            {}, compiler, "-g", "-o", output, source,
+            chdir: destination_root, unbundled: true)
+          unless ok
+            warn "Could not precompile #{Pathname.new(source).relative_path_from(Pathname.new(destination_root))} for --lite"
+            return false
+          end
+          compiled << [source, output]
+        end
+        compiled.each { |source, _output| FileUtils.rm_f(source) }
+        build_log(verbose, "precompiled #{compiled.length} Ruby file#{compiled.length == 1 ? '' : 's'} for fast lite startup")
+        true
+      end
+
+      def embedded_mrbc_path
+        explicit = ENV["RUFLET_MRBC"].to_s.strip
+        return explicit if !explicit.empty? && File.executable?(explicit)
+
+        runtime_root = explicit_local_ruby_runtime_path || source_checkout_ruby_runtime_path
+        candidates = []
+        if runtime_root
+          candidates.concat(
+            %w[host_vm host].map do |build|
+              File.join(runtime_root, "third_party", "mruby", "build", build, "bin", "mrbc")
+            end
+          )
+          candidates << File.join(runtime_root, "bin", "mrbc")
+        end
+        candidates.find { |path| File.executable?(path) }
+      end
+
+      def embedded_runtime_profile
+        profile = @ruflet_runtime_profile
+        EMBEDDED_RUNTIME_PROFILES.include?(profile) ? profile : :lite
+      end
+
+      # A full build carries the locked application bundle alongside the
+      # project. Bundler is isolated under build/client so this never creates or
+      # rewrites .bundle state in the user's project. The cache key makes repeat
+      # builds cheap: unchanged locks reuse the installed bundle and only copy
+      # it into the Flutter asset tree.
+      def package_full_runtime_gems(project_root, destination_root, client_dir, verbose: false)
+        gemfile = project_root.join("Gemfile")
+        return true unless gemfile.file?
+
+        lockfile = project_root.join("Gemfile.lock")
+        unless lockfile.file?
+          warn "full runtime build requires Gemfile.lock"
+          warn "Run `bundle install` once so Ruflet can package a reproducible gem set."
+          return false
+        end
+
+        cache_key = Digest::SHA256.hexdigest(
+          [
+            gemfile.read,
+            lockfile.read,
+            RUBY_ENGINE,
+            RUBY_VERSION,
+            @ruflet_build_platform.to_s,
+            FULL_RUNTIME_BUNDLE_SCHEMA,
+            JSON.generate(@ruflet_full_runtime_manifest || {})
+          ].join("\0")
+        )
+        cache_root = File.join(client_dir, ".ruflet", "full-bundle", cache_key)
+        bundle_path = File.join(cache_root, "vendor", "bundle")
+        complete_marker = File.join(cache_root, ".complete")
+
+        unless File.file?(complete_marker) && Dir.exist?(bundle_path)
+          FileUtils.rm_rf(cache_root)
+          FileUtils.mkdir_p(cache_root)
+          bundle_env = {
+            "BUNDLE_GEMFILE" => gemfile.to_s,
+            "BUNDLE_PATH" => bundle_path,
+            "BUNDLE_APP_CONFIG" => File.join(cache_root, "config"),
+            "BUNDLE_WITHOUT" => "development:test",
+            "BUNDLE_FROZEN" => "true",
+            "BUNDLE_DEPLOYMENT" => "true"
+          }
+          build_note("Packaging locked project gems for the full CRuby runtime")
+          build_log(verbose, "bundle cache=#{cache_root}")
+          ok = run_full_runtime_gem_packager(
+            bundle_env, gemfile: gemfile, lockfile: lockfile,
+            bundle_path: bundle_path, project_root: project_root)
+          unless ok
+            warn "Could not package the locked project gems for --full"
+            return false
+          end
+          unless vendor_full_runtime_path_gems(
+            bundle_env, bundle_path: bundle_path, project_root: project_root)
+            return false
+          end
+          prune_full_runtime_bundle_cache(bundle_path)
+          File.write(complete_marker, "#{cache_key}\n")
+        else
+          build_log(verbose, "reusing full runtime gem cache #{cache_key[0, 12]}")
+        end
+
+        packaged_bundle = File.join(destination_root, "vendor", "bundle")
+        FileUtils.mkdir_p(File.dirname(packaged_bundle))
+        FileUtils.cp_r(bundle_path, packaged_bundle)
+        FileUtils.cp(gemfile.to_s, File.join(destination_root, "Gemfile"))
+        FileUtils.cp(lockfile.to_s, File.join(destination_root, "Gemfile.lock"))
+        true
+      rescue StandardError => e
+        warn "Could not package project gems for --full: #{e.class}: #{e.message}"
+        false
+      end
+
+      def run_full_runtime_gem_packager(bundle_env, gemfile:, lockfile:, bundle_path:, project_root:)
+        packager = @ruflet_full_runtime_manifest && @ruflet_full_runtime_manifest["gem_packager"]
+        unless packager.to_s.strip.empty?
+          executable = File.expand_path(packager.to_s, @ruflet_full_runtime_path)
+          unless File.executable?(executable)
+            warn "Full runtime gem packager is not executable: #{executable}"
+            return false
+          end
+          return run_external_command(
+            bundle_env,
+            executable,
+            "--gemfile", gemfile.to_s,
+            "--lockfile", lockfile.to_s,
+            "--path", bundle_path,
+            "--platform", normalized_runtime_platform(@ruflet_build_platform),
+            chdir: project_root.to_s,
+            unbundled: true
+          )
+        end
+
+        run_external_command(
+          bundle_env, RbConfig.ruby, "-S", "bundle", "install",
+          "--jobs", "4", "--retry", "3",
+          chdir: project_root.to_s, unbundled: true
+        )
+      end
+
+      # Bundler intentionally leaves `path:` gems at their source location,
+      # even when BUNDLE_PATH is set. A self-contained app cannot retain those
+      # workstation paths. Materialize every resolved spec that sits outside
+      # vendor/bundle so the runtime sees the exact locked source tree.
+      def vendor_full_runtime_path_gems(bundle_env, bundle_path:, project_root:)
+        script = <<~'RUBY'
+          require "bundler"
+          require "json"
+          puts JSON.generate(Bundler.load.specs.map { |spec|
+            {
+              "full_name" => spec.full_name,
+              "full_gem_path" => spec.full_gem_path,
+              "extension_dir" => spec.extension_dir,
+              "source_type" => spec.source.class.name,
+              "files" => spec.files,
+              "gemspec" => spec.to_ruby
+            }
+          })
+        RUBY
+        stdout, stderr, status = Open3.capture3(
+          bundle_env, RbConfig.ruby, "-e", script,
+          chdir: project_root.to_s)
+        unless status.success?
+          warn "Could not inspect locked project gems for --full"
+          warn stderr unless stderr.to_s.strip.empty?
+          return false
+        end
+
+        ruby_abi = (@ruflet_full_runtime_manifest || {})["ruby_abi"].to_s
+        ruby_abi = RbConfig::CONFIG.fetch("ruby_version") if ruby_abi.empty?
+        installed_root = File.expand_path(bundle_path)
+        specs = JSON.parse(stdout)
+        specs.each do |spec|
+          next unless spec.fetch("source_type") == "Bundler::Source::Path"
+
+          source = File.expand_path(spec.fetch("full_gem_path"))
+          next if source == installed_root || source.start_with?("#{installed_root}#{File::SEPARATOR}")
+
+          full_name = spec.fetch("full_name")
+          destination = File.join(bundle_path, "ruby", ruby_abi, "gems", full_name)
+          FileUtils.rm_rf(destination)
+          FileUtils.mkdir_p(File.dirname(destination))
+          unless copy_full_runtime_gem_files(
+            source, destination, spec.fetch("files"), full_name: full_name)
+            return false
+          end
+
+          specifications = File.join(bundle_path, "ruby", ruby_abi, "specifications")
+          FileUtils.mkdir_p(specifications)
+          File.write(File.join(specifications, "#{full_name}.gemspec"), spec.fetch("gemspec"))
+
+          extension_source = spec["extension_dir"].to_s
+          next unless !extension_source.empty? && Dir.exist?(extension_source)
+
+          extension_destination = File.join(
+            bundle_path, "ruby", ruby_abi, "extensions", "ruflet", full_name)
+          FileUtils.rm_rf(extension_destination)
+          FileUtils.mkdir_p(File.dirname(extension_destination))
+          FileUtils.cp_r(extension_source, extension_destination)
+        end
+        true
+      rescue JSON::ParserError, KeyError, SystemCallError => e
+        warn "Could not vendor path gems for --full: #{e.class}: #{e.message}"
+        false
+      end
+
+      # Downloaded .gem archives are installation inputs, not runtime inputs.
+      # Keeping them would duplicate every registry gem in the application.
+      def prune_full_runtime_bundle_cache(bundle_path)
+        Dir.glob(File.join(bundle_path, "ruby", "*", "cache")).each do |cache_dir|
+          FileUtils.rm_rf(cache_dir)
+        end
+      end
+
+      # A path gem is a source checkout, not an installable payload. Copy only
+      # the files declared by its gemspec so build products, tests, caches and
+      # other workstation state cannot leak into a mobile application bundle.
+      def copy_full_runtime_gem_files(source, destination, files, full_name:)
+        source_root = File.expand_path(source)
+        destination_root = File.expand_path(destination)
+        declared_files = Array(files).map(&:to_s).reject(&:empty?).uniq.sort
+        if declared_files.empty?
+          warn "Could not vendor path gem #{full_name}: its gemspec declares no files"
+          return false
+        end
+
+        declared_files.each do |relative_path|
+          pathname = Pathname.new(relative_path)
+          clean_path = pathname.cleanpath
+          if pathname.absolute? || clean_path.each_filename.include?("..")
+            warn "Could not vendor path gem #{full_name}: unsafe file path #{relative_path.inspect}"
+            return false
+          end
+
+          source_file = File.expand_path(clean_path.to_s, source_root)
+          unless source_file.start_with?("#{source_root}#{File::SEPARATOR}") && File.file?(source_file)
+            warn "Could not vendor path gem #{full_name}: declared file is missing: #{relative_path}"
+            return false
+          end
+
+          destination_file = File.expand_path(clean_path.to_s, destination_root)
+          FileUtils.mkdir_p(File.dirname(destination_file))
+          FileUtils.cp(source_file, destination_file, preserve: true)
+        end
+        true
+      rescue SystemCallError => e
+        warn "Could not vendor path gem #{full_name}: #{e.class}: #{e.message}"
+        false
+      end
+
+      def write_embedded_runtime_manifest(project_root, destination_root, profile:, platform:)
+        paths = Dir.glob(File.join(destination_root, "**", "*"), File::FNM_DOTMATCH)
+          .select { |path| File.file?(path) }
+          .reject { |path| File.basename(path) == ".ruflet-runtime.json" }
+          .sort
+        digest = Digest::SHA256.new
+        paths.each do |path|
+          relative = Pathname.new(path).relative_path_from(Pathname.new(destination_root)).to_s
+          digest << relative << "\0" << File.binread(path) << "\0"
+        end
+
+        manifest = {
+          "schema" => 1,
+          "profile" => profile.to_s,
+          "engine" => profile == :full ? "cruby" : "mruby",
+          "platform" => platform.to_s,
+          "project" => project_root.basename.to_s,
+          "entrypoint" => File.file?(File.join(destination_root, "main.mrb")) ? "main.mrb" : "main.rb",
+          "bundle_gemfile" => profile == :full && File.file?(File.join(destination_root, "Gemfile")) ? "Gemfile" : nil,
+          "bundle_path" => profile == :full && Dir.exist?(File.join(destination_root, "vendor", "bundle")) ? "vendor/bundle" : nil,
+          "cache_key" => digest.hexdigest,
+          "warm_launch" => true
+        }.compact
+        File.write(
+          File.join(destination_root, ".ruflet-runtime.json"),
+          "#{JSON.pretty_generate(manifest)}\n"
+        )
       end
 
       def remove_self_contained_project_assets(client_dir, verbose: false)
@@ -2751,11 +3224,13 @@ module Ruflet
       # the entrypoint, the Ruby under lib/, and the assets that code loads by
       # path (image(src: "assets/logo.png"), lottie(...), fonts, audio).
       #
-      # Everything else is already consumed by the time the app runs. The gems
-      # are compiled into the VM, ruflet.yaml and services.yaml have been turned
-      # into native configuration, and lockfiles, tests, CI and store artwork
-      # were never runtime inputs. Listing what belongs in rather than guessing
-      # what to leave out keeps unexpected directories from being shipped --
+      # Everything else is already consumed by the time the app runs. Lite gems
+      # are compiled into the VM; full-profile gems and lockfiles are staged by
+      # package_full_runtime_gems instead of copied from the working tree.
+      # ruflet.yaml and services.yaml have been turned into native configuration,
+      # while tests, CI and store artwork were never runtime inputs. Listing
+      # what belongs in rather than guessing what to leave out keeps unexpected
+      # directories from being shipped --
       # release artwork once carried a lockfile that Apple read as an unsigned
       # code object and rejected the whole upload over.
       SELF_CONTAINED_PROJECT_ENTRYPOINT = "main.rb"

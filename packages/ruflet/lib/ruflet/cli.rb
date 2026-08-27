@@ -69,11 +69,16 @@ module Ruflet
           ruflet run [scriptname|path] [--web|--desktop] [--experimental|--exp] [--port PORT] [--no-reload]
           ruflet update [web|desktop|all] [--check] [--force] [--platform PLATFORM]
           ruflet debug [scriptname|path]
-          ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--self] [--experimental|--exp] [--verbose]
+          ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--lite|--full|--self] [--experimental|--exp] [--verbose]
           ruflet install [--device DEVICE_ID] [--verbose]
           ruflet devices
           ruflet emulators
           ruflet doctor [--fix] [--verbose]
+
+        Build profiles:
+          --self           Self-contained lite build (default profile)
+          --self --full    Self-contained full CRuby build with locked project gems
+          --full           Also implies --self
       HELP
     end
 

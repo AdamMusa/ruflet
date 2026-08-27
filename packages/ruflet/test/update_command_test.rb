@@ -364,7 +364,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
       refute_path_exists File.join(client, "apple_extensions")
       refute_includes File.read(File.join(client, "ios", "Runner.xcodeproj", "project.pbxproj")), "Ruflet"
       plist = File.read(File.join(client, "ios", "Runner", "Info.plist"))
-      assert_includes plist, "FlutterSceneDelegate"
+      assert_includes plist, "$(PRODUCT_MODULE_NAME).SceneDelegate"
+      refute_includes plist, "RufletSceneDelegate"
       refute_includes plist, "RufletExperimentalNativeRenderer"
     end
   end
