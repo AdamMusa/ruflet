@@ -118,7 +118,32 @@ target_compile_definitions(
 # The VM executes a large precompiled framework during startup. Keep the
 # native runtime optimized even when the surrounding Flutter app is a debug
 # build so device behavior matches a distribution build.
-target_compile_options(ruby_runtime PRIVATE -O2)
+target_compile_options(
+  ruby_runtime
+  PRIVATE
+  -O2
+  -ffunction-sections
+  -fdata-sections
+)
+
+# Only the JNI entry points form Android's public ABI. Hiding mruby, Onigmo,
+# and SQLite internals lets lld bind those calls locally instead of emitting a
+# dynamic symbol and relocation for every native helper. Section collection
+# then removes code and constants that no registered VM feature can reach.
+set_target_properties(
+  ruby_runtime
+  PROPERTIES
+  C_VISIBILITY_PRESET hidden
+  CXX_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN YES
+)
+target_link_options(
+  ruby_runtime
+  PRIVATE
+  "-Wl,--exclude-libs,ALL"
+  "-Wl,--gc-sections"
+  "-Wl,--pack-dyn-relocs=android"
+)
 
 target_link_libraries(
   ruby_runtime
