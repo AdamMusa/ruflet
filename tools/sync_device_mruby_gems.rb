@@ -69,7 +69,8 @@ CORE_GEMS = %w[
 CORE_SOURCE_GEMS = %w[mruby-bigint].freeze
 
 PRELOADED_RUBY_GEMS = %w[ruflet-framework].freeze
-NATIVE_RUBY_GEMS = %w[mruby-onig-regexp ruflet-record].freeze
+GENERATED_RUBY_GEMS = %w[mruby-onig-regexp].freeze
+NATIVE_C_GEMS = %w[ruflet-record].freeze
 
 HAL_GEMS = %w[hal-posix-io hal-posix-socket hal-posix-dir].freeze
 
@@ -113,7 +114,8 @@ def gems_init_source
   lines << ""
   HAL_GEMS.each { |gem| lines << "void mrb_#{gem.tr('-', '_')}_gem_init(mrb_state *mrb);" }
   CORE_GEMS.each { |gem| lines << "void #{gem_init_symbol(gem)}(mrb_state *mrb);" }
-  NATIVE_RUBY_GEMS.each { |gem| lines << "void #{gem_init_symbol(gem)}(mrb_state *mrb);" }
+  GENERATED_RUBY_GEMS.each { |gem| lines << "void #{gem_init_symbol(gem)}(mrb_state *mrb);" }
+  NATIVE_C_GEMS.each { |gem| lines << "void mrb_#{gem.tr('-', '_')}_gem_init(mrb_state *mrb);" }
   PRELOADED_RUBY_GEMS.each { |gem| lines << "void #{gem_init_symbol(gem)}(mrb_state *mrb);" }
   lines << "void mrb_mruby_digest_gem_init(mrb_state *mrb);"
   lines << ""
@@ -123,7 +125,8 @@ def gems_init_source
   HAL_GEMS.each { |gem| lines << "  mrb_#{gem.tr('-', '_')}_gem_init(mrb);" }
   CORE_GEMS.each { |gem| lines << "  #{gem_init_symbol(gem)}(mrb);" }
   lines << "  mrb_mruby_digest_gem_init(mrb);"
-  NATIVE_RUBY_GEMS.each { |gem| lines << "  #{gem_init_symbol(gem)}(mrb);" }
+  GENERATED_RUBY_GEMS.each { |gem| lines << "  #{gem_init_symbol(gem)}(mrb);" }
+  NATIVE_C_GEMS.each { |gem| lines << "  mrb_#{gem.tr('-', '_')}_gem_init(mrb);" }
   PRELOADED_RUBY_GEMS.each { |gem| lines << "  #{gem_init_symbol(gem)}(mrb);" }
   lines << "}"
   lines.join("\n") + "\n"
@@ -141,7 +144,7 @@ PLATFORM_TARGETS.each do |platform, mruby_src|
 
   (CORE_GEMS + CORE_SOURCE_GEMS + HAL_GEMS).each { |gem| sync_gem_sources(gem, mruby_src) }
   CORE_GEMS.each { |gem| sync_gem_init(gem, mruby_src) }
-  NATIVE_RUBY_GEMS.each { |gem| sync_gem_init(gem, mruby_src) }
+  GENERATED_RUBY_GEMS.each { |gem| sync_gem_init(gem, mruby_src) }
   PRELOADED_RUBY_GEMS.each { |gem| sync_gem_init(gem, mruby_src) }
 
   init_file = mruby_src.parent.join(platform == "macos" ? "Classes/mruby_gems_init.c" : "Classes/mruby_gems_init.c")
@@ -156,4 +159,4 @@ puts "Wrote #{shared_init.relative_path_from(ROOT)}"
 puts "\nPodspec source globs needed:"
 puts "  mruby_src/mrbgems/{#{(CORE_GEMS + HAL_GEMS).join(',')}}/src/*.c"
 puts "  mruby_src/mrbgems/mruby-bigint/core/*.c"
-puts "  mruby_src/build_host/mrbgems/{#{(CORE_GEMS + NATIVE_RUBY_GEMS + PRELOADED_RUBY_GEMS).join(',')}}/gem_init.c"
+puts "  mruby_src/build_host/mrbgems/{#{(CORE_GEMS + GENERATED_RUBY_GEMS + PRELOADED_RUBY_GEMS).join(',')}}/gem_init.c"
