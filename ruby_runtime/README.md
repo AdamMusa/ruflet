@@ -40,9 +40,10 @@ initializes the preloaded gems, and executes the entrypoint. The application
 loads Ruflet normally with `require`; Ruflet's gems own the protocol and all
 framework behavior.
 
-Packaged iOS and macOS applications exchange the binary Ruflet protocol through
-an in-process native queue. They do not bind a loopback port and do not create
-an HTTP or WebSocket connection. The renderer receives
+Every self-contained native application exchanges the binary Ruflet protocol
+through an in-process native queue on Android, iOS, macOS, Linux, and Windows.
+It does not bind a loopback port or create an HTTP or WebSocket connection. The
+renderer receives
 `inprocess://embedded`, which is a transport endpoint rather than a network
 URL. WebSockets remain the transport for an explicitly external Ruflet or Rails
 server. These are separate contracts: an unavailable in-process bridge is an
@@ -100,8 +101,8 @@ await RufletRuntime.stop();
 ```
 
 `RufletRuntimeStatus` reports whether the VM is running and the last startup or
-runtime error. In a packaged Apple application, `serverUrl()` returns the
-transport endpoint `inprocess://embedded`. The name is retained for API
+runtime error. In a self-contained native application, `serverUrl()` returns
+the transport endpoint `inprocess://embedded`. The name is retained for API
 compatibility; it does not imply that a network server exists. The binary
 `sendToRuby()` and `receiveFromRuby()` APIs carry protocol frames between the
 native renderer and the embedded VM.

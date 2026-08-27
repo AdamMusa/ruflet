@@ -12,16 +12,16 @@
   },
   "artifacts": {
     "arm64-v8a": {
-      "sha256": "a519c5116cbc33f39e8f198f729582556659b03a4ca159785aa63fa028114ee4"
+      "sha256": "13d84ff2acffce0eb1630f26327d95b133f7a3ed60c24feb32fbc35aee9bde8e"
     },
     "armeabi-v7a": {
-      "sha256": "5ba57502bbdc489fc7d3448c587c84c720e00ae862b3d11cbc55d69279737620"
+      "sha256": "3ecec591eefbd4391cf1e8951ea9c592e8cd230249b8fd60499f072f66a24a13"
     },
     "x86": {
-      "sha256": "a9bbc4945167c2c2107bf73c2efafd214bfce4b97784bd93cfef3430732cd3d1"
+      "sha256": "254a7a891c24f61bc37d5a9c500c1cec121a54b4ba460371af7a14cd009eec6d"
     },
     "x86_64": {
-      "sha256": "48d32d4e07eab09ba88c7b5149da11b4bd750509efadac2fb9ac7d8ee95641ad"
+      "sha256": "a244292ed3d80c6ee550212f1fc0111dbbf64057183cf4e7cbe24adeff062fd7"
     }
   }
 }

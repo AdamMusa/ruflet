@@ -26,7 +26,6 @@
 // ruflet_vm_host.h.
 
 #include <atomic>
-#include <chrono>
 #include <condition_variable>
 #include <cstdlib>
 #include <filesystem>
@@ -91,6 +90,37 @@ inline bool autostart_enabled() {
   return !packaged_project_root().empty();
 }
 
+inline bool full_runtime_profile(const std::filesystem::path &root) {
+  std::ifstream manifest(root / ".ruflet-runtime.json");
+  if (!manifest)
+    return false;
+  const std::string contents((std::istreambuf_iterator<char>(manifest)),
+                             std::istreambuf_iterator<char>());
+  const std::size_t profile = contents.find("\"profile\"");
+  return profile != std::string::npos &&
+         contents.find("\"full\"", profile) != std::string::npos;
+}
+
+inline bool supports_in_process_transport(
+    const std::filesystem::path &root) {
+  const std::filesystem::path ruby_root = root / "vendor" / "bundle" / "ruby";
+  std::error_code error;
+  for (const auto &abi : std::filesystem::directory_iterator(ruby_root, error)) {
+    const std::filesystem::path gems = abi.path() / "gems";
+    for (const auto &gem : std::filesystem::directory_iterator(gems, error)) {
+      const std::string name = gem.path().filename().string();
+      if (name.rfind("ruflet_server-", 0) == 0 &&
+          std::filesystem::exists(
+              gem.path() / "lib" / "ruflet" / "server" /
+                  "in_process_connection.rb",
+              error)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 /// The packaged project is the single directory under flutter_assets/assets
 /// holding a main.rb. RUFLET_EMBEDDED_PROJECT names it when an app packages
 /// more than one.
@@ -145,66 +175,46 @@ inline void begin(StartFunction start) {
                "RUFLET_EMBEDDED_PROJECT.");
     return;
   }
+  if (full_runtime_profile(root) && !supports_in_process_transport(root)) {
+    finish({}, "The locked ruflet_server gem does not support port-free self "
+               "builds. Update the application's Gemfile.lock.");
+    return;
+  }
 
   // The bundle may be read-only, so the runtime's scratch files live in the
   // system temporary directory rather than beside the sources.
   const std::filesystem::path scratch =
       std::filesystem::temp_directory_path(error) / "ruflet-runtime";
   std::filesystem::create_directories(scratch, error);
-  const std::filesystem::path port_path = scratch / "server.port";
   const std::filesystem::path error_path = scratch / "server.error";
   const std::filesystem::path stop_path = scratch / "server.stop";
-  std::filesystem::remove(port_path, error);
   std::filesystem::remove(error_path, error);
   std::filesystem::remove(stop_path, error);
 
   const std::string root_text = root.string();
   const std::string entrypoint = entrypoint_at(root).string();
   const std::string assets_dir = (root / "assets").string();
-  const std::string port_text = port_path.string();
   const std::string error_text = error_path.string();
   const std::string stop_text = stop_path.string();
 
   const char *load_paths[] = {root_text.c_str()};
   const char *environment_keys[] = {
-      "RUFLET_PORT", "RUFLET_ASSETS_DIR", "RUFLET_RUNTIME_PORT_FILE",
-      "RUFLET_RUNTIME_ERROR_FILE", "RUFLET_SUPPRESS_SERVER_BANNER"};
-  const char *environment_values[] = {"0", assets_dir.c_str(),
-                                      port_text.c_str(), error_text.c_str(),
-                                      "1"};
+      "RUFLET_ASSETS_DIR", "RUFLET_RUNTIME_ERROR_FILE",
+      "RUFLET_SUPPRESS_SERVER_BANNER", "RUFLET_RUNTIME_TRANSPORT"};
+  const char *environment_values[] = {assets_dir.c_str(), error_text.c_str(),
+                                      "1", "in_process"};
 
   if (start(root_text.c_str(), entrypoint.c_str(), load_paths, 1,
-            environment_keys, environment_values, 5, stop_text.c_str(),
+            environment_keys, environment_values, 4, stop_text.c_str(),
             error_text.c_str()) != 0) {
     finish({}, "The packaged entrypoint was rejected by the VM; it must be a "
                ".rb or .mrb file inside the project root.");
     return;
   }
 
-  const auto deadline =
-      std::chrono::steady_clock::now() + std::chrono::seconds(30);
-  while (std::chrono::steady_clock::now() < deadline) {
-    std::ifstream port_file(port_path);
-    if (port_file) {
-      int port = 0;
-      port_file >> port;
-      if (port > 0) {
-        finish("http://127.0.0.1:" + std::to_string(port), {});
-        return;
-      }
-    }
-    std::ifstream error_file(error_path);
-    if (error_file) {
-      std::string reported((std::istreambuf_iterator<char>(error_file)),
-                           std::istreambuf_iterator<char>());
-      if (!reported.empty()) {
-        finish({}, std::move(reported));
-        return;
-      }
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  }
-  finish({}, "The embedded Ruflet server did not publish a port.");
+  // The VM resets the native bridge synchronously before starting its Ruby
+  // thread, so the renderer can safely enqueue its first protocol message now.
+  finish("inprocess://embedded", {});
 }
 
 /// Call from the plugin's registration. Starts the VM on a detached thread when
@@ -242,33 +252,5 @@ inline bool await_url(std::string *url, std::string *error) {
 /// effect. The VM boots once per process: ruflet_vm_start would see a running
 /// VM and return success without adopting any of the arguments.
 inline bool owns_runtime() { return attempted(); }
-
-/// Copies the autostarted server's port into `path` once it is known.
-///
-/// A client generated before serverUrl() existed calls start() and then polls
-/// the file it named in RUFLET_RUNTIME_PORT_FILE. Its arguments cannot take
-/// effect, but the thing it is waiting for already exists, so hand it over
-/// there. That keeps those clients working -- and getting the parallel
-/// startup -- without them knowing anything about it.
-inline void mirror_port(const std::string &path) {
-  if (path.empty()) {
-    return;
-  }
-  std::thread([path]() {
-    std::string url;
-    std::string error;
-    if (!await_url(&url, &error)) {
-      return;
-    }
-    const std::size_t colon = url.rfind(':');
-    if (colon == std::string::npos) {
-      return;
-    }
-    std::ofstream out(path, std::ios::trunc);
-    if (out) {
-      out << url.substr(colon + 1);
-    }
-  }).detach();
-}
 
 } // namespace ruflet_autostart

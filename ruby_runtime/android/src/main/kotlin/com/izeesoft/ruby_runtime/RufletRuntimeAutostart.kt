@@ -15,8 +15,9 @@ import java.util.concurrent.TimeUnit
  * Runs from an androidx.startup initializer, which Android creates as a
  * ContentProvider before Application.onCreate and long before the FlutterEngine
  * exists. The VM boots on a background thread in parallel with the engine.
- * Full CRuby builds exchange protocol frames through the native in-process
- * bridge; Lite keeps the bundled mruby framework's loopback transport.
+ * Every self-contained build exchanges protocol frames through the native
+ * in-process bridge. No HTTP server, WebSocket, or loopback port participates
+ * in application startup.
  *
  * Unlike Apple platforms, Android assets are entries inside the APK rather than
  * files on disk, so the packaged project has to be unpacked before mruby can
@@ -40,7 +41,7 @@ internal object RufletRuntimeAutostart {
     private const val ASSET_ROOT = "flutter_assets/assets"
     private const val CRUBY_ASSET_ROOT = "ruflet_cruby"
     private const val CRUBY_ABI = "4.0.0"
-    private const val BIND_TIMEOUT_MS = 30_000L
+    private const val READY_TIMEOUT_MS = 30_000L
 
     /**
      * The JNI entry points are bound to MrubyRuntimePlugin's exact class and
@@ -97,9 +98,9 @@ internal object RufletRuntimeAutostart {
                 ),
             )
         }
-        if (!ready.await(BIND_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+        if (!ready.await(READY_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
             return Result.failure(
-                IllegalStateException("The embedded Ruflet server did not publish a port."),
+                IllegalStateException("The embedded Ruflet runtime did not publish its endpoint."),
             )
         }
         serverUrl?.let { return Result.success(it) }
@@ -112,26 +113,6 @@ internal object RufletRuntimeAutostart {
     /// is whether a packaged project exists -- see [beginIfEnabled].
     private fun autostartEnabled(context: Context): Boolean =
         metaData(context)?.getBoolean(AUTOSTART_KEY, true) ?: true
-
-    /**
-     * Copies the autostarted server's port into [path] once it is known.
-     *
-     * A client generated before serverUrl() existed calls start() and then
-     * polls the file it named in RUFLET_RUNTIME_PORT_FILE. Its arguments cannot
-     * take effect, but the thing it is waiting for already exists, so hand it
-     * over there. Those clients keep working -- and get the parallel startup --
-     * without knowing anything about it.
-     */
-    fun mirrorPort(path: String) {
-        if (path.isBlank()) return
-        Thread({
-            awaitUrl()
-                .getOrNull()
-                ?.takeIf { it.startsWith("http://") }
-                ?.substringAfterLast(':')
-                ?.let { port -> runCatching { File(path).writeText(port) } }
-        }, "ruflet-runtime-mirror").apply { isDaemon = true }.start()
-    }
 
     private fun metaData(context: Context) =
         try {
@@ -152,13 +133,15 @@ internal object RufletRuntimeAutostart {
 
             val loadPaths = mutableListOf(projectRoot.absolutePath)
             val profile = runtimeProfile(context)
-            // Older locked ruflet_server releases only implement the socket
-            // transport. Keep those applications working exactly as locked;
-            // newer Full bundles opt into the faster native bridge when their
-            // packaged server gem declares support for it.
-            val inProcessTransport =
-                profile == "full" && supportsInProcessTransport(projectRoot)
             if (profile == "full") {
+                if (!supportsInProcessTransport(projectRoot)) {
+                    finish(
+                        null,
+                        "The locked ruflet_server gem does not support port-free self builds. " +
+                            "Update the application's Gemfile.lock.",
+                    )
+                    return
+                }
                 val runtimeRoot = unpackCRuby(context)
                 val rubyLib = File(runtimeRoot, "lib/ruby/$CRUBY_ABI")
                 loadPaths += rubyLib.absolutePath
@@ -175,43 +158,34 @@ internal object RufletRuntimeAutostart {
             // The unpacked tree is reused across launches, so scratch files live
             // beside it and are cleared here rather than accumulating.
             val scratch = File(context.filesDir, "ruflet/runtime").apply { mkdirs() }
-            val portFile = File(scratch, "server.port")
             val errorFile = File(scratch, "server.error")
             val stopFile = File(scratch, "server.stop")
-            listOf(portFile, errorFile, stopFile).forEach { it.delete() }
+            listOf(errorFile, stopFile).forEach { it.delete() }
 
             bridge.nativeStart(
                 projectRoot.absolutePath,
                 entrypoint.absolutePath,
                 loadPaths.toTypedArray(),
                 arrayOf(
-                    "RUFLET_PORT",
                     "RUFLET_ASSETS_DIR",
-                    "RUFLET_RUNTIME_PORT_FILE",
                     "RUFLET_RUNTIME_ERROR_FILE",
                     "RUFLET_SUPPRESS_SERVER_BANNER",
                     "RUFLET_RUNTIME_TRANSPORT",
                 ),
                 arrayOf(
-                    "0",
                     File(projectRoot, "assets").absolutePath,
-                    portFile.absolutePath,
                     errorFile.absolutePath,
                     "1",
-                    if (inProcessTransport) "in_process" else "socket",
+                    "in_process",
                 ),
                 errorFile.absolutePath,
                 stopFile.absolutePath,
             )
 
-            if (inProcessTransport) {
-                // The bridge is reset synchronously by nativeStart, before the
-                // VM thread begins. Frames queue safely until Ruby reaches its
-                // in-process server loop.
-                finish("inprocess://embedded", null)
-            } else {
-                awaitPort(portFile, errorFile)
-            }
+            // The bridge is reset synchronously by nativeStart, before the VM
+            // thread begins. Frames queue safely until Ruby reaches its
+            // in-process server loop.
+            finish("inprocess://embedded", null)
 
             // Cheap, and the only way to separate library loading, cached
             // extraction, and bridge publication on a real device.
@@ -227,24 +201,6 @@ internal object RufletRuntimeAutostart {
         } catch (error: Throwable) {
             finish(null, "${error.javaClass.simpleName}: ${error.message}")
         }
-    }
-
-    private fun awaitPort(portFile: File, errorFile: File) {
-        val deadline = SystemClock.elapsedRealtime() + BIND_TIMEOUT_MS
-        while (SystemClock.elapsedRealtime() < deadline) {
-            val port = portFile.takeIf { it.isFile }?.readText()?.trim()?.toIntOrNull() ?: 0
-            if (port > 0) {
-                finish("http://127.0.0.1:$port", null)
-                return
-            }
-            val reported = errorFile.takeIf { it.isFile }?.readText()?.trim()
-            if (!reported.isNullOrEmpty()) {
-                finish(null, reported)
-                return
-            }
-            Thread.sleep(1)
-        }
-        finish(null, "The embedded Ruflet server did not publish a port.")
     }
 
     private fun supportsInProcessTransport(projectRoot: File): Boolean {

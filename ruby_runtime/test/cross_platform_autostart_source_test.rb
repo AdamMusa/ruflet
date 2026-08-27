@@ -10,8 +10,12 @@ class CrossPlatformAutostartSourceTest < Minitest::Test
     File.join(ROOT, "android/src/main/kotlin/com/izeesoft/ruby_runtime/RufletRuntimeInitializer.kt"))
   ANDROID_PLUGIN = File.read(
     File.join(ROOT, "android/src/main/kotlin/com/izeesoft/ruby_runtime/MrubyRuntimePlugin.kt"))
+  ANDROID_CMAKE = File.read(File.join(ROOT, "android/src/main/cpp/CMakeLists.txt"))
+  ANDROID_MRUBY = File.read(File.join(ROOT, "android/src/main/cpp/ruby_runtime_jni.cpp"))
   ANDROID_MANIFEST = File.read(File.join(ROOT, "android/src/main/AndroidManifest.xml"))
+  APPLE_AUTOSTART = File.read(File.join(ROOT, "apple/ruflet_runtime_autostart.h"))
   DESKTOP_AUTOSTART = File.read(File.join(ROOT, "desktop/ruflet_desktop_autostart.h"))
+  LINUX_BUILD = File.read(File.join(ROOT, "vm/build_config/desktop_linux.rb"))
   LINUX_PLUGIN = File.read(File.join(ROOT, "linux/ruby_runtime_plugin.cc"))
   WINDOWS_PLUGIN = File.read(File.join(ROOT, "windows/ruby_runtime_plugin.cpp"))
 
@@ -33,19 +37,51 @@ class CrossPlatformAutostartSourceTest < Minitest::Test
     refute_includes DESKTOP_AUTOSTART, "copy_file"
   end
 
-  def test_android_full_uses_the_in_process_transport
+  def test_android_self_builds_use_the_in_process_transport
     assert_includes ANDROID_AUTOSTART, '"RUFLET_RUNTIME_TRANSPORT"'
     assert_includes ANDROID_AUTOSTART, '"in_process"'
-    assert_includes ANDROID_AUTOSTART, 'profile == "full"'
     assert_includes ANDROID_AUTOSTART, "supportsInProcessTransport(projectRoot)"
     assert_includes ANDROID_AUTOSTART, 'gem.name.startsWith("ruflet_server-")'
     assert_includes ANDROID_AUTOSTART, 'File(gem, "lib/ruflet/server/in_process_connection.rb").isFile'
     assert_includes ANDROID_AUTOSTART, 'finish("inprocess://embedded", null)'
-    assert_includes ANDROID_AUTOSTART, "awaitPort(portFile, errorFile)"
+    refute_includes ANDROID_AUTOSTART, "awaitPort"
+    refute_includes ANDROID_AUTOSTART, '"socket"'
+    refute_includes ANDROID_AUTOSTART, '"RUFLET_PORT"'
+    refute_includes ANDROID_AUTOSTART, '"RUFLET_RUNTIME_PORT_FILE"'
 
     %w[bridgeSend bridgeReceive bridgeClose].each do |method|
       assert_includes ANDROID_PLUGIN, "\"#{method}\""
     end
+
+    assert_includes ANDROID_CMAKE, "ruflet_bridge_jni.cpp"
+    assert_includes ANDROID_CMAKE, "ruflet_in_process_bridge.cpp"
+    %w[__bridge_read_nonblock __bridge_write __bridge_close].each do |method|
+      assert_includes ANDROID_MRUBY, "\"#{method}\""
+    end
+  end
+
+  def test_every_native_self_build_is_port_free
+    [ANDROID_AUTOSTART, APPLE_AUTOSTART, DESKTOP_AUTOSTART].each do |source|
+      assert_includes source, '"RUFLET_RUNTIME_TRANSPORT"'
+      assert_includes source, '"in_process"'
+      assert_includes source, 'inprocess://embedded'
+      refute_includes source, 'server.port'
+      refute_includes source, '"RUFLET_PORT"'
+      refute_includes source, '"RUFLET_RUNTIME_PORT_FILE"'
+      refute_includes source, 'http://127.0.0.1'
+    end
+
+    [LINUX_PLUGIN, WINDOWS_PLUGIN].each do |source|
+      %w[bridgeSend bridgeReceive bridgeClose].each do |method|
+        assert_includes source, "\"#{method}\""
+      end
+      refute_includes source, "mirror_port"
+    end
+  end
+
+  def test_linux_vm_uses_the_verified_clang_toolchain
+    assert_includes LINUX_BUILD, "conf.toolchain :clang"
+    refute_includes LINUX_BUILD, "conf.toolchain :gcc"
   end
 
   def test_startup_waits_run_off_platform_threads

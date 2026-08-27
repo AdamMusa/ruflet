@@ -75,6 +75,8 @@ add_library(
   ruby_runtime
   SHARED
   ruby_runtime_jni.cpp
+  ruflet_bridge_jni.cpp
+  ../../../../desktop/ruflet_in_process_bridge.cpp
   ../../../../shared/mruby_gems_init.c
   ../../../../shared/mruby_digest_gem.c
   "${ONIG_REGEXP_ROOT}/mruby_onig_regexp.c"
@@ -90,6 +92,7 @@ target_include_directories(
   ruby_runtime
   PRIVATE
   "${MRUBY_BUILD_ROOT}/include"
+  "${CMAKE_CURRENT_LIST_DIR}/../../../../desktop"
   "${MRUBY_ROOT}/include"
   "${MRUBY_ROOT}/src"
   "${MRUBY_ROOT}/mrbgems/mruby-io/include"

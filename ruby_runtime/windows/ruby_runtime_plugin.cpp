@@ -36,6 +36,13 @@ using StartFunction = int (*)(const char *, const char *, const char *const *,
 using IsRunningFunction = int (*)();
 using CopyErrorFunction = size_t (*)(char *, size_t);
 using StopFunction = void (*)();
+using BridgeSendFunction = int (*)(const uint8_t *, size_t);
+using BridgeReceiveFunction = int (*)(uint8_t **, size_t *);
+using BridgeCloseFunction = void (*)();
+using BridgeFreeFunction = void (*)(uint8_t *);
+
+constexpr int kBridgeClosed = 0;
+constexpr int kBridgeMessage = 1;
 
 struct VmApi {
   HMODULE library = nullptr;
@@ -43,6 +50,10 @@ struct VmApi {
   IsRunningFunction is_running = nullptr;
   CopyErrorFunction copy_error = nullptr;
   StopFunction stop = nullptr;
+  BridgeSendFunction bridge_send = nullptr;
+  BridgeReceiveFunction bridge_receive = nullptr;
+  BridgeCloseFunction bridge_close = nullptr;
+  BridgeFreeFunction bridge_free = nullptr;
 };
 
 VmApi &vm_api() {
@@ -67,6 +78,14 @@ VmApi &vm_api() {
       GetProcAddress(api.library, "ruflet_vm_copy_error"));
   api.stop = reinterpret_cast<StopFunction>(
       GetProcAddress(api.library, "ruflet_vm_stop"));
+  api.bridge_send = reinterpret_cast<BridgeSendFunction>(
+      GetProcAddress(api.library, "ruflet_bridge_send_to_ruby"));
+  api.bridge_receive = reinterpret_cast<BridgeReceiveFunction>(
+      GetProcAddress(api.library, "ruflet_bridge_receive_for_renderer"));
+  api.bridge_close = reinterpret_cast<BridgeCloseFunction>(
+      GetProcAddress(api.library, "ruflet_bridge_close"));
+  api.bridge_free = reinterpret_cast<BridgeFreeFunction>(
+      GetProcAddress(api.library, "ruflet_bridge_free_message"));
   return api;
 }
 
@@ -153,7 +172,9 @@ void RubyRuntimePlugin::HandleMethodCall(
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
   VmApi &api = vm_api();
   if (api.start == nullptr || api.is_running == nullptr ||
-      api.copy_error == nullptr || api.stop == nullptr) {
+      api.copy_error == nullptr || api.stop == nullptr ||
+      api.bridge_send == nullptr || api.bridge_receive == nullptr ||
+      api.bridge_close == nullptr || api.bridge_free == nullptr) {
     result->Error("ruflet_runtime_missing",
                   "The packaged ruflet_vm.dll could not be loaded.");
     return;
@@ -177,6 +198,53 @@ void RubyRuntimePlugin::HandleMethodCall(
     }).detach();
     return;
   }
+  if (method_call.method_name() == "bridgeSend") {
+    const std::vector<uint8_t> *bytes =
+        std::get_if<std::vector<uint8_t>>(method_call.arguments());
+    if (bytes == nullptr) {
+      result->Error("ruflet_bridge_bad_message",
+                    "bridgeSend requires binary data.");
+      return;
+    }
+    const int bridge_status = api.bridge_send(
+        bytes->empty() ? nullptr : bytes->data(), bytes->size());
+    if (bridge_status != kBridgeMessage) {
+      result->Error("ruflet_bridge_closed",
+                    "The Ruflet in-process bridge is closed.");
+      return;
+    }
+    result->Success();
+    return;
+  }
+  if (method_call.method_name() == "bridgeReceive") {
+    std::shared_ptr<flutter::MethodResult<flutter::EncodableValue>> shared(
+        result.release());
+    std::thread([shared]() {
+      VmApi &thread_api = vm_api();
+      uint8_t *bytes = nullptr;
+      size_t length = 0;
+      const int bridge_status = thread_api.bridge_receive(&bytes, &length);
+      std::vector<uint8_t> message;
+      if (bridge_status == kBridgeMessage && length > 0) {
+        message.assign(bytes, bytes + length);
+      }
+      thread_api.bridge_free(bytes);
+      if (bridge_status == kBridgeMessage) {
+        shared->Success(flutter::EncodableValue(message));
+      } else if (bridge_status == kBridgeClosed) {
+        shared->Success();
+      } else {
+        shared->Error("ruflet_bridge_receive_failed",
+                      "Unable to receive from the Ruflet in-process bridge.");
+      }
+    }).detach();
+    return;
+  }
+  if (method_call.method_name() == "bridgeClose") {
+    api.bridge_close();
+    result->Success();
+    return;
+  }
   if (method_call.method_name() == "status") {
     result->Success(status());
     return;
@@ -196,25 +264,13 @@ void RubyRuntimePlugin::HandleMethodCall(
     result->Error("invalid_args", "Missing runtime arguments.");
     return;
   }
-  // The platform already started the runtime, so these arguments cannot take
-  // effect -- the VM boots once per process. Rather than fail, hand this caller
-  // the port that already exists through the file it is about to poll, so a
-  // client written against the older start() flow still finds the server and
-  // still gets the parallel startup.
+  // A packaged runtime already owns its port-free endpoint. A legacy start()
+  // call cannot replace it with a second transport.
   if (ruflet_autostart::owns_runtime()) {
-    const flutter::EncodableValue *environment = lookup(*arguments, "environment");
-    if (environment != nullptr &&
-        std::holds_alternative<flutter::EncodableMap>(*environment)) {
-      for (const auto &entry : std::get<flutter::EncodableMap>(*environment)) {
-        if (std::holds_alternative<std::string>(entry.first) &&
-            std::get<std::string>(entry.first) == "RUFLET_RUNTIME_PORT_FILE" &&
-            std::holds_alternative<std::string>(entry.second)) {
-          ruflet_autostart::mirror_port(std::get<std::string>(entry.second));
-          break;
-        }
-      }
-    }
-    result->Success(status());
+    result->Error(
+        "in_process_runtime_owned",
+        "The packaged Ruflet runtime already owns an in-process endpoint. "
+        "Use serverUrl() and the binary bridge instead of start().");
     return;
   }
   const std::string root = string_argument(*arguments, "projectRoot");

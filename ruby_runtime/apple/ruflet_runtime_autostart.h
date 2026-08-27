@@ -124,6 +124,31 @@ static NSString *ruflet_packaged_project_root(void) {
   return found;
 }
 
+static BOOL ruflet_full_runtime_profile(NSString *root) {
+  NSString *path = [root stringByAppendingPathComponent:@".ruflet-runtime.json"];
+  NSData *data = [NSData dataWithContentsOfFile:path];
+  if (data == nil) {
+    return NO;
+  }
+  NSDictionary *manifest = [NSJSONSerialization JSONObjectWithData:data
+                                                            options:0
+                                                              error:nil];
+  return [manifest[@"profile"] isEqualToString:@"full"];
+}
+
+static BOOL ruflet_supports_in_process_transport(NSString *root) {
+  NSString *ruby = [root stringByAppendingPathComponent:@"vendor/bundle/ruby"];
+  NSDirectoryEnumerator<NSString *> *entries =
+      [[NSFileManager defaultManager] enumeratorAtPath:ruby];
+  for (NSString *entry in entries) {
+    if ([entry hasSuffix:@"/lib/ruflet/server/in_process_connection.rb"] &&
+        [entry containsString:@"/gems/ruflet_server-"]) {
+      return YES;
+    }
+  }
+  return NO;
+}
+
 static void ruflet_finish_autostart(NSString *url, NSString *error) {
   [ruflet_autostart_signal lock];
   ruflet_server_url = url;
@@ -139,6 +164,13 @@ static void ruflet_begin_autostart(void) {
         nil, @"No packaged Ruby project was found in the app bundle. Build with "
              @"`ruflet build --self`, or name the project with "
              @"RufletEmbeddedProject in Info.plist.");
+    return;
+  }
+  if (ruflet_full_runtime_profile(root) &&
+      !ruflet_supports_in_process_transport(root)) {
+    ruflet_finish_autostart(
+        nil, @"The locked ruflet_server gem does not support port-free self "
+             @"builds. Update the application's Gemfile.lock.");
     return;
   }
 

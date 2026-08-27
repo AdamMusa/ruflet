@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "../desktop/ruflet_desktop_autostart.h"
+#include "../desktop/ruflet_in_process_bridge.h"
 #include "../desktop/ruflet_vm_host.h"
 
 namespace ruflet_autostart {
@@ -108,22 +109,14 @@ FlMethodResponse *status_response() {
 }
 
 FlMethodResponse *start(FlValue *arguments) {
-  // The platform already started the runtime, so these arguments cannot take
-  // effect -- the VM boots once per process. Rather than fail, hand this caller
-  // the port that already exists through the file it is about to poll, so a
-  // client written against the older start() flow still finds the server and
-  // still gets the parallel startup.
+  // A packaged runtime already owns its port-free endpoint. A legacy start()
+  // call cannot replace it with a second transport.
   if (ruflet_autostart::owns_runtime()) {
-    std::vector<std::string> keys;
-    std::vector<std::string> values;
-    environment_argument(arguments, &keys, &values);
-    for (size_t index = 0; index < keys.size(); ++index) {
-      if (keys[index] == "RUFLET_RUNTIME_PORT_FILE") {
-        ruflet_autostart::mirror_port(values[index]);
-        break;
-      }
-    }
-    return status_response();
+    return FL_METHOD_RESPONSE(fl_method_error_response_new(
+        "in_process_runtime_owned",
+        "The packaged Ruflet runtime already owns an in-process endpoint. "
+        "Use serverUrl() and the binary bridge instead of start().",
+        nullptr));
   }
 
   const std::string root = string_argument(arguments, "projectRoot");
@@ -155,6 +148,23 @@ FlMethodResponse *start(FlValue *arguments) {
   return status_response();
 }
 
+FlMethodResponse *bridge_send(FlValue *arguments) {
+  if (arguments == nullptr ||
+      fl_value_get_type(arguments) != FL_VALUE_TYPE_UINT8_LIST) {
+    return FL_METHOD_RESPONSE(fl_method_error_response_new(
+        "ruflet_bridge_bad_message", "bridgeSend requires binary data.",
+        nullptr));
+  }
+  const int status = ruflet_bridge_send_to_ruby(
+      fl_value_get_uint8_list(arguments), fl_value_get_length(arguments));
+  if (status != RUFLET_BRIDGE_MESSAGE) {
+    return FL_METHOD_RESPONSE(fl_method_error_response_new(
+        "ruflet_bridge_closed", "The Ruflet in-process bridge is closed.",
+        nullptr));
+  }
+  return FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));
+}
+
 // Carries a resolved URL back to the main context. The wait happens on a worker
 // thread so the platform thread never blocks on the VM finishing, but the reply
 // itself is posted through g_idle_add: GLib objects belong to the main context
@@ -164,6 +174,12 @@ struct PendingUrl {
   std::string url;
   std::string error;
   bool ok;
+};
+
+struct PendingBridgeMessage {
+  FlMethodCall *method_call;
+  std::vector<uint8_t> bytes;
+  int status;
 };
 
 gboolean respond_with_url(gpointer data) {
@@ -195,6 +211,44 @@ void resolve_server_url(FlMethodCall *method_call) {
   }).detach();
 }
 
+gboolean respond_with_bridge_message(gpointer data) {
+  std::unique_ptr<PendingBridgeMessage> pending(
+      static_cast<PendingBridgeMessage *>(data));
+  g_autoptr(FlMethodResponse) response = nullptr;
+  if (pending->status == RUFLET_BRIDGE_MESSAGE) {
+    const uint8_t *bytes =
+        pending->bytes.empty() ? nullptr : pending->bytes.data();
+    g_autoptr(FlValue) value =
+        fl_value_new_uint8_list(bytes, pending->bytes.size());
+    response = FL_METHOD_RESPONSE(fl_method_success_response_new(value));
+  } else if (pending->status == RUFLET_BRIDGE_CLOSED) {
+    response = FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));
+  } else {
+    response = FL_METHOD_RESPONSE(fl_method_error_response_new(
+        "ruflet_bridge_receive_failed",
+        "Unable to receive from the Ruflet in-process bridge.", nullptr));
+  }
+  fl_method_call_respond(pending->method_call, response, nullptr);
+  g_object_unref(pending->method_call);
+  return G_SOURCE_REMOVE;
+}
+
+void receive_bridge_message(FlMethodCall *method_call) {
+  g_object_ref(method_call);
+  std::thread([method_call]() {
+    auto pending = std::make_unique<PendingBridgeMessage>();
+    pending->method_call = method_call;
+    uint8_t *bytes = nullptr;
+    size_t length = 0;
+    pending->status = ruflet_bridge_receive_for_renderer(&bytes, &length);
+    if (pending->status == RUFLET_BRIDGE_MESSAGE && length > 0) {
+      pending->bytes.assign(bytes, bytes + length);
+    }
+    ruflet_bridge_free_message(bytes);
+    g_idle_add(respond_with_bridge_message, pending.release());
+  }).detach();
+}
+
 void handle_method_call(RubyRuntimePlugin *, FlMethodCall *method_call) {
   const gchar *method = fl_method_call_get_name(method_call);
   g_autoptr(FlMethodResponse) response = nullptr;
@@ -203,6 +257,14 @@ void handle_method_call(RubyRuntimePlugin *, FlMethodCall *method_call) {
     return; // Responded from the worker thread.
   } else if (strcmp(method, "start") == 0) {
     response = start(fl_method_call_get_args(method_call));
+  } else if (strcmp(method, "bridgeSend") == 0) {
+    response = bridge_send(fl_method_call_get_args(method_call));
+  } else if (strcmp(method, "bridgeReceive") == 0) {
+    receive_bridge_message(method_call);
+    return;
+  } else if (strcmp(method, "bridgeClose") == 0) {
+    ruflet_bridge_close();
+    response = FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));
   } else if (strcmp(method, "status") == 0) {
     response = status_response();
   } else if (strcmp(method, "stop") == 0) {

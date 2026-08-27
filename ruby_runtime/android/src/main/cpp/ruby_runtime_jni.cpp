@@ -18,6 +18,7 @@ extern "C" {
 }
 
 #include "vm_bootstrap.h"
+#include "ruflet_in_process_bridge.h"
 
 namespace {
 std::mutex g_vm_mutex;
@@ -109,11 +110,61 @@ mrb_value rr_getenv(mrb_state* mrb, mrb_value) {
   return value ? mrb_str_new_cstr(mrb, value) : mrb_nil_value();
 }
 
+mrb_value rr_bridge_read_nonblock(mrb_state* mrb, mrb_value) {
+  uint8_t* bytes = nullptr;
+  size_t length = 0;
+  const int status = ruflet_bridge_try_receive_for_ruby(&bytes, &length);
+  if (status == RUFLET_BRIDGE_CLOSED) return mrb_nil_value();
+  if (status == RUFLET_BRIDGE_EMPTY) return mrb_false_value();
+  if (status != RUFLET_BRIDGE_MESSAGE) {
+    mrb_raise(mrb, E_RUNTIME_ERROR,
+              "Unable to receive from the Ruflet in-process bridge");
+  }
+
+  mrb_value message = mrb_str_new(
+      mrb, reinterpret_cast<const char*>(bytes), static_cast<mrb_int>(length));
+  ruflet_bridge_free_message(bytes);
+  return message;
+}
+
+mrb_value rr_bridge_write(mrb_state* mrb, mrb_value) {
+  mrb_value payload;
+  mrb_get_args(mrb, "S", &payload);
+  const int status = ruflet_bridge_send_to_renderer(
+      reinterpret_cast<const uint8_t*>(RSTRING_PTR(payload)),
+      static_cast<size_t>(RSTRING_LEN(payload)));
+  if (status != RUFLET_BRIDGE_MESSAGE) {
+    mrb_raise(mrb, E_RUNTIME_ERROR, "Ruflet in-process bridge is closed");
+  }
+  return mrb_nil_value();
+}
+
+mrb_value rr_bridge_close(mrb_state*, mrb_value) {
+  ruflet_bridge_close();
+  return mrb_nil_value();
+}
+
 void register_primitives(mrb_state* mrb) {
   struct RClass* runtime = mrb_define_module(mrb, "RubyRuntime");
   mrb_define_module_function(mrb, runtime, "__eval", rr_eval, MRB_ARGS_ARG(1, 1));
   mrb_define_module_function(mrb, runtime, "__load_irep", rr_load_irep, MRB_ARGS_REQ(1));
   mrb_define_module_function(mrb, runtime, "__getenv", rr_getenv, MRB_ARGS_REQ(1));
+  mrb_define_module_function(mrb, runtime, "__bridge_read_nonblock",
+                             rr_bridge_read_nonblock, MRB_ARGS_NONE());
+  mrb_define_module_function(mrb, runtime, "__bridge_write", rr_bridge_write,
+                             MRB_ARGS_REQ(1));
+  mrb_define_module_function(mrb, runtime, "__bridge_close", rr_bridge_close,
+                             MRB_ARGS_NONE());
+}
+
+bool requests_in_process_transport(const std::vector<std::string>& keys,
+                                   const std::vector<std::string>& values) {
+  for (size_t i = 0; i < keys.size(); ++i) {
+    if (keys[i] == "RUFLET_RUNTIME_TRANSPORT") {
+      return values[i] == "in_process";
+    }
+  }
+  return false;
 }
 
 void set_finished(const std::string& error) {
@@ -141,6 +192,7 @@ Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeStart(
     return;
   }
   if (keys.size() != values.size()) { fail(env, "invalid environment"); return; }
+  const bool in_process_transport = requests_in_process_transport(keys, values);
   {
     std::lock_guard<std::mutex> lock(g_state_mutex);
     if (g_running) return;
@@ -151,13 +203,18 @@ Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeStart(
   }
   std::remove(stop_path.c_str());
   if (!error_path.empty()) std::remove(error_path.c_str());
+  if (in_process_transport) ruflet_bridge_reset();
 
-  std::thread([root, entrypoint, load_paths, keys, values]() {
+  std::thread([root, entrypoint, load_paths, keys, values, in_process_transport]() {
     for (size_t i = 0; i < keys.size(); ++i) setenv(keys[i].c_str(), values[i].c_str(), 1);
     std::lock_guard<std::mutex> vm_lock(g_vm_mutex);
     if (g_mrb) mrb_close(g_mrb);
     g_mrb = mrb_open();
-    if (!g_mrb) { set_finished("Unable to initialize mruby."); return; }
+    if (!g_mrb) {
+      if (in_process_transport) ruflet_bridge_close();
+      set_finished("Unable to initialize mruby.");
+      return;
+    }
     register_primitives(g_mrb);
     mrb_load_irep(g_mrb, kRubyRuntimeVmBootstrapIrep);
     if (!g_mrb->exc) {
@@ -171,12 +228,14 @@ Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeStart(
     std::string error = g_mrb->exc ? exception_text(g_mrb) : "";
     mrb_close(g_mrb);
     g_mrb = nullptr;
+    if (in_process_transport) ruflet_bridge_close();
     set_finished(error);
   }).detach();
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_izeesoft_ruby_1runtime_MrubyRuntimePlugin_nativeStop(JNIEnv*, jobject) {
+  ruflet_bridge_close();
   std::string path;
   { std::lock_guard<std::mutex> lock(g_state_mutex); path = g_stop_path; }
   if (!path.empty()) { std::ofstream output(path); output << "stop"; }

@@ -10,10 +10,10 @@
   },
   "artifacts": {
     "aarch64": {
-      "sha256": "5d64d7db92a9f809d3acc8da6330dec48453163c195f9c523c7174aa4d475e3e"
+      "sha256": "2aa1b19b492d4393ddb3f28f1212d4d6d66a37fafd0ac708a049f79aef185c7b"
     },
     "x64": {
-      "sha256": "d6f07f7c86674c39a7dda45830e56bdeadd6583eca0b40dc8d1b505cf25cf5f9"
+      "sha256": "e2315ef796af134d4ee6b0b9a52a8a473130fa922629a46c16d5fef015af1783"
     }
   }
 }

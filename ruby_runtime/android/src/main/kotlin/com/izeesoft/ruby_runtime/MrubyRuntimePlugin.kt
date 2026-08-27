@@ -58,19 +58,15 @@ class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
         try {
             when (call.method) {
                 "start" -> {
-                    // The platform already started the runtime, so these
-                    // arguments cannot take effect -- the VM boots once per
-                    // process. Rather than fail, hand this caller the port that
-                    // already exists through the file it is about to poll, so a
-                    // client written against the older start() flow still finds
-                    // the server and still gets the parallel startup.
+                    // A self-contained runtime already owns its port-free
+                    // endpoint. A legacy start() call cannot replace it.
                     if (RufletRuntimeAutostart.attempted) {
-                        val environment =
-                            call.argument<Map<String, String>>("environment") ?: emptyMap()
-                        RufletRuntimeAutostart.mirrorPort(
-                            environment["RUFLET_RUNTIME_PORT_FILE"].orEmpty(),
+                        result.error(
+                            "in_process_runtime_owned",
+                            "The packaged Ruflet runtime already owns an in-process endpoint. " +
+                                "Use serverUrl() and the binary bridge instead of start().",
+                            null,
                         )
-                        result.success(status())
                         return
                     }
 
