@@ -246,6 +246,26 @@ module Ruflet
       def polygonmarker(**props) = polygon_marker(**props)
       def simple_attribution(**props) = build_widget(:simpleattribution, **props)
       def simpleattribution(**props) = simple_attribution(**props)
+      def map_layer(**props) = build_widget(:maplayer, **props)
+      def maplayer(**props) = map_layer(**props)
+      def rich_attribution(attributions = nil, **props)
+        mapped = props.dup
+        mapped[:attributions] = attributions unless attributions.nil?
+        build_widget(:richattribution, **mapped)
+      end
+      def richattribution(attributions = nil, **props) = rich_attribution(attributions, **props)
+      def image_source_attribution(image = nil, **props)
+        mapped = props.dup
+        mapped[:image] = image unless image.nil?
+        build_widget(:imagesourceattribution, **mapped)
+      end
+      def imagesourceattribution(image = nil, **props) = image_source_attribution(image, **props)
+      def text_source_attribution(text = nil, **props)
+        mapped = props.dup
+        mapped[:text] = text unless text.nil?
+        build_widget(:textsourceattribution, **mapped)
+      end
+      def textsourceattribution(text = nil, **props) = text_source_attribution(text, **props)
       def list_view(children = nil, **props)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
