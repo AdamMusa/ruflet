@@ -58,4 +58,15 @@ class MapExtensionCompatibilityTest < Minitest::Test
     assert text.has_handler?(:click)
     assert_equal "MapLayer", Ruflet.map_layer.to_patch["_c"]
   end
+
+  def test_every_map_component_is_registered_with_the_control_factory
+    %i[
+      map map_layer tile_layer marker marker_layer circle_marker circle_layer
+      polyline_marker polyline_layer polygon_marker polygon_layer
+      simple_attribution rich_attribution image_source_attribution
+      text_source_attribution
+    ].each do |type|
+      assert Ruflet::UI::ControlFactory.known_control?(type), type
+    end
+  end
 end

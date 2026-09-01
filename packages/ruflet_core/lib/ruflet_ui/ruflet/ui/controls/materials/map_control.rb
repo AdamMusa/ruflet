@@ -93,6 +93,86 @@ module Ruflet
             end
           end
         end
+
+        class MapExtensionControl < Ruflet::Control
+          KEYWORDS = [].freeze
+
+          def initialize(type:, id: nil, **props)
+            compact = {}
+            props.each { |key, value| compact[key] = value unless value.nil? }
+            super(type: type, id: id, **compact)
+          end
+        end
+
+        class MapLayerControl < MapExtensionControl
+          WIRE = "MapLayer".freeze
+          def initialize(id: nil, **props) = super(type: "map_layer", id: id, **props)
+        end
+
+        class TileLayerControl < MapExtensionControl
+          WIRE = "TileLayer".freeze
+          def initialize(id: nil, **props) = super(type: "tile_layer", id: id, **props)
+        end
+
+        class MarkerControl < MapExtensionControl
+          WIRE = "Marker".freeze
+          def initialize(id: nil, **props) = super(type: "marker", id: id, **props)
+        end
+
+        class MarkerLayerControl < MapExtensionControl
+          WIRE = "MarkerLayer".freeze
+          def initialize(id: nil, **props) = super(type: "marker_layer", id: id, **props)
+        end
+
+        class CircleMarkerControl < MapExtensionControl
+          WIRE = "CircleMarker".freeze
+          def initialize(id: nil, **props) = super(type: "circle_marker", id: id, **props)
+        end
+
+        class CircleLayerControl < MapExtensionControl
+          WIRE = "CircleLayer".freeze
+          def initialize(id: nil, **props) = super(type: "circle_layer", id: id, **props)
+        end
+
+        class PolylineMarkerControl < MapExtensionControl
+          WIRE = "PolylineMarker".freeze
+          def initialize(id: nil, **props) = super(type: "polyline_marker", id: id, **props)
+        end
+
+        class PolylineLayerControl < MapExtensionControl
+          WIRE = "PolylineLayer".freeze
+          def initialize(id: nil, **props) = super(type: "polyline_layer", id: id, **props)
+        end
+
+        class PolygonMarkerControl < MapExtensionControl
+          WIRE = "PolygonMarker".freeze
+          def initialize(id: nil, **props) = super(type: "polygon_marker", id: id, **props)
+        end
+
+        class PolygonLayerControl < MapExtensionControl
+          WIRE = "PolygonLayer".freeze
+          def initialize(id: nil, **props) = super(type: "polygon_layer", id: id, **props)
+        end
+
+        class SimpleAttributionControl < MapExtensionControl
+          WIRE = "SimpleAttribution".freeze
+          def initialize(id: nil, **props) = super(type: "simple_attribution", id: id, **props)
+        end
+
+        class RichAttributionControl < MapExtensionControl
+          WIRE = "RichAttribution".freeze
+          def initialize(id: nil, **props) = super(type: "rich_attribution", id: id, **props)
+        end
+
+        class ImageSourceAttributionControl < MapExtensionControl
+          WIRE = "ImageSourceAttribution".freeze
+          def initialize(id: nil, **props) = super(type: "image_source_attribution", id: id, **props)
+        end
+
+        class TextSourceAttributionControl < MapExtensionControl
+          WIRE = "TextSourceAttribution".freeze
+          def initialize(id: nil, **props) = super(type: "text_source_attribution", id: id, **props)
+        end
       end
     end
   end

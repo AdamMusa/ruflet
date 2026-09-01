@@ -42,6 +42,7 @@ require_relative "filledtonaliconbutton_control"
 require_relative "floatingactionbutton_control"
 require_relative "iconbutton_control"
 require_relative "listtile_control"
+require_relative "map_control"
 require_relative "menubar_control"
 require_relative "menuitembutton_control"
 require_relative "navigationbar_control"
@@ -192,6 +193,34 @@ module Ruflet
             "linechartdatapoint" => RufletComponents::LineChartDataPointControl,
             "list_tile" => RufletComponents::ListTileControl,
             "listtile" => RufletComponents::ListTileControl,
+            "map" => RufletComponents::MapControl,
+            "map_layer" => RufletComponents::MapLayerControl,
+            "maplayer" => RufletComponents::MapLayerControl,
+            "tile_layer" => RufletComponents::TileLayerControl,
+            "tilelayer" => RufletComponents::TileLayerControl,
+            "marker" => RufletComponents::MarkerControl,
+            "marker_layer" => RufletComponents::MarkerLayerControl,
+            "markerlayer" => RufletComponents::MarkerLayerControl,
+            "circle_marker" => RufletComponents::CircleMarkerControl,
+            "circlemarker" => RufletComponents::CircleMarkerControl,
+            "circle_layer" => RufletComponents::CircleLayerControl,
+            "circlelayer" => RufletComponents::CircleLayerControl,
+            "polyline_marker" => RufletComponents::PolylineMarkerControl,
+            "polylinemarker" => RufletComponents::PolylineMarkerControl,
+            "polyline_layer" => RufletComponents::PolylineLayerControl,
+            "polylinelayer" => RufletComponents::PolylineLayerControl,
+            "polygon_marker" => RufletComponents::PolygonMarkerControl,
+            "polygonmarker" => RufletComponents::PolygonMarkerControl,
+            "polygon_layer" => RufletComponents::PolygonLayerControl,
+            "polygonlayer" => RufletComponents::PolygonLayerControl,
+            "simple_attribution" => RufletComponents::SimpleAttributionControl,
+            "simpleattribution" => RufletComponents::SimpleAttributionControl,
+            "rich_attribution" => RufletComponents::RichAttributionControl,
+            "richattribution" => RufletComponents::RichAttributionControl,
+            "image_source_attribution" => RufletComponents::ImageSourceAttributionControl,
+            "imagesourceattribution" => RufletComponents::ImageSourceAttributionControl,
+            "text_source_attribution" => RufletComponents::TextSourceAttributionControl,
+            "textsourceattribution" => RufletComponents::TextSourceAttributionControl,
             "menu_bar" => RufletComponents::MenuBarControl,
             "menu_item_button" => RufletComponents::MenuItemButtonControl,
             "material_picker" => RufletComponents::MaterialPickerControl,
