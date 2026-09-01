@@ -25,6 +25,7 @@ require_relative "ruflet/storagepaths_control"
 require_relative "ruflet/urllauncher_control"
 require_relative "ruflet/useraccelerometer_control"
 require_relative "ruflet/wakelock_control"
+require_relative "current_service_methods"
 
 module Ruflet
   module UI
