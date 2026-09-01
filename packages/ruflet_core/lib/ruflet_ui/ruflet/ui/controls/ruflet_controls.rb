@@ -40,6 +40,7 @@ require_relative "materials/card_control"
 require_relative "materials/checkbox_control"
 require_relative "materials/chip_control"
 require_relative "materials/circleavatar_control"
+require_relative "materials/code_editor_control"
 require_relative "materials/color_picker_controls"
 require_relative "materials/container_control"
 require_relative "materials/contextmenu_control"
@@ -215,6 +216,8 @@ module Ruflet
           "circle" => RufletComponents::CircleControl,
           "circle_avatar" => RufletComponents::CircleAvatarControl,
           "circleavatar" => RufletComponents::CircleAvatarControl,
+          "code_editor" => RufletComponents::CodeEditorControl,
+          "codeeditor" => RufletComponents::CodeEditorControl,
           "block_picker" => RufletComponents::BlockPickerControl,
           "blockpicker" => RufletComponents::BlockPickerControl,
           "color_picker" => RufletComponents::ColorPickerControl,
