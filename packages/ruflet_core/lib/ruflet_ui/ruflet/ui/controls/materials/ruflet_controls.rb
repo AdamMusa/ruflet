@@ -16,6 +16,7 @@ require_relative "card_control"
 require_relative "checkbox_control"
 require_relative "chip_control"
 require_relative "circleavatar_control"
+require_relative "color_picker_controls"
 require_relative "container_control"
 require_relative "contextmenu_control"
 require_relative "datacell_control"
@@ -124,6 +125,10 @@ module Ruflet
             "chip" => RufletComponents::ChipControl,
             "circle_avatar" => RufletComponents::CircleAvatarControl,
             "circleavatar" => RufletComponents::CircleAvatarControl,
+            "block_picker" => RufletComponents::BlockPickerControl,
+            "blockpicker" => RufletComponents::BlockPickerControl,
+            "color_picker" => RufletComponents::ColorPickerControl,
+            "colorpicker" => RufletComponents::ColorPickerControl,
             "container" => RufletComponents::ContainerControl,
             "context_menu" => RufletComponents::ContextMenuControl,
             "contextmenu" => RufletComponents::ContextMenuControl,
@@ -162,6 +167,8 @@ module Ruflet
             "floating_action_button" => RufletComponents::FloatingActionButtonControl,
             "floatingactionbutton" => RufletComponents::FloatingActionButtonControl,
             "icon_button" => RufletComponents::IconButtonControl,
+            "hue_ring_picker" => RufletComponents::HueRingPickerControl,
+            "hueringpicker" => RufletComponents::HueRingPickerControl,
             "interstitial_ad" => RufletComponents::InterstitialAdControl,
             "interstitialad" => RufletComponents::InterstitialAdControl,
             "iconbutton" => RufletComponents::IconButtonControl,
@@ -175,6 +182,10 @@ module Ruflet
             "listtile" => RufletComponents::ListTileControl,
             "menu_bar" => RufletComponents::MenuBarControl,
             "menu_item_button" => RufletComponents::MenuItemButtonControl,
+            "material_picker" => RufletComponents::MaterialPickerControl,
+            "materialpicker" => RufletComponents::MaterialPickerControl,
+            "multiple_choice_block_picker" => RufletComponents::MultipleChoiceBlockPickerControl,
+            "multiplechoiceblockpicker" => RufletComponents::MultipleChoiceBlockPickerControl,
             "menubar" => RufletComponents::MenuBarControl,
             "menuitembutton" => RufletComponents::MenuItemButtonControl,
             "navigation_bar" => RufletComponents::NavigationBarControl,
@@ -236,6 +247,8 @@ module Ruflet
             "scatterchart" => RufletComponents::ScatterChartControl,
             "scatterchartspot" => RufletComponents::ScatterChartSpotControl,
             "slider" => RufletComponents::SliderControl,
+            "slide_picker" => RufletComponents::SlidePickerControl,
+            "slidepicker" => RufletComponents::SlidePickerControl,
             "snack_bar" => RufletComponents::SnackBarControl,
             "snack_bar_action" => RufletComponents::SnackBarActionControl,
             "snackbaraction" => RufletComponents::SnackBarActionControl,
