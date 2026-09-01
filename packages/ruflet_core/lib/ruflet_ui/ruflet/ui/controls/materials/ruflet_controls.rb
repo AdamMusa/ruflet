@@ -23,6 +23,7 @@ require_relative "datacell_control"
 require_relative "datacolumn_control"
 require_relative "datarow_control"
 require_relative "datatable_control"
+require_relative "datatable2_controls"
 require_relative "datepicker_control"
 require_relative "daterangepicker_control"
 require_relative "divider_control"
@@ -136,6 +137,12 @@ module Ruflet
             "data_column" => RufletComponents::DataColumnControl,
             "data_row" => RufletComponents::DataRowControl,
             "data_table" => RufletComponents::DataTableControl,
+            "data_column2" => RufletComponents::DataColumn2Control,
+            "datacolumn2" => RufletComponents::DataColumn2Control,
+            "data_row2" => RufletComponents::DataRow2Control,
+            "datarow2" => RufletComponents::DataRow2Control,
+            "data_table2" => RufletComponents::DataTable2Control,
+            "datatable2" => RufletComponents::DataTable2Control,
             "datacell" => RufletComponents::DataCellControl,
             "datacolumn" => RufletComponents::DataColumnControl,
             "datarow" => RufletComponents::DataRowControl,

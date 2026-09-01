@@ -313,6 +313,24 @@ module Ruflet
         build_widget(:datacell, **mapped)
       end
       def datacell(content = nil, **props) = data_cell(content, **props)
+      def data_table2(columns = nil, **props)
+        mapped = props.dup
+        mapped[:columns] = columns unless columns.nil?
+        build_widget(:data_table2, **mapped)
+      end
+      def datatable2(columns = nil, **props) = data_table2(columns, **props)
+      def data_column2(label = nil, **props)
+        mapped = props.dup
+        mapped[:label] = label unless label.nil?
+        build_widget(:data_column2, **mapped)
+      end
+      def datacolumn2(label = nil, **props) = data_column2(label, **props)
+      def data_row2(cells = nil, **props)
+        mapped = props.dup
+        mapped[:cells] = cells unless cells.nil?
+        build_widget(:data_row2, **mapped)
+      end
+      def datarow2(cells = nil, **props) = data_row2(cells, **props)
       def expansion_tile(children = nil, **props)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
