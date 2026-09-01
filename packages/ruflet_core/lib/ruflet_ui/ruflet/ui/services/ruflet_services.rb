@@ -4,6 +4,7 @@ require_relative "ruflet/accelerometer_control"
 require_relative "ruflet/audio_recorder_control"
 require_relative "ruflet/barometer_control"
 require_relative "ruflet/battery_control"
+require_relative "../controls/shared/browsercontextmenu_control"
 require_relative "ruflet/camera_control"
 require_relative "ruflet/clipboard_control"
 require_relative "ruflet/connectivity_control"
@@ -37,6 +38,8 @@ module Ruflet
           "audiorecorder" => RufletServicesComponents::AudioRecorderControl,
           "barometer" => RufletServicesComponents::BarometerControl,
           "battery" => RufletServicesComponents::BatteryControl,
+          "browser_context_menu" => Ruflet::UI::Controls::RufletComponents::BrowserContextMenuControl,
+          "browsercontextmenu" => Ruflet::UI::Controls::RufletComponents::BrowserContextMenuControl,
           "camera" => RufletServicesComponents::CameraControl,
           "clipboard" => RufletServicesComponents::ClipboardControl,
           "connectivity" => RufletServicesComponents::ConnectivityControl,
