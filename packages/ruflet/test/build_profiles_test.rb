@@ -160,6 +160,27 @@ class RufletCliBuildProfilesTest < Minitest::Test
     end
   end
 
+  def test_full_profile_rejects_old_ruflet_server_before_building_the_app
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      server_root = File.join(
+        dir, "ruby", "4.0.0", "gems", "ruflet_server-0.0.21")
+      FileUtils.mkdir_p(File.join(server_root, "lib", "ruflet", "server"))
+
+      err = capture_stderr do
+        refute builder.send(:validate_full_runtime_in_process_transport, dir)
+      end
+      assert_includes err, "does not support port-free --self --full builds"
+
+      File.write(
+        File.join(server_root, "lib", "ruflet", "server", "in_process_connection.rb"),
+        "module Ruflet; class InProcessConnection; end; end\n"
+      )
+      assert builder.send(:validate_full_runtime_in_process_transport, dir)
+    end
+  end
+
   def test_full_profile_requires_a_matching_cruby_runtime_distribution
     builder = DummyBuilder.new
     err = capture_stderr do

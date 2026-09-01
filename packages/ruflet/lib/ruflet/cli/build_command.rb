@@ -2953,9 +2953,11 @@ module Ruflet
             return false
           end
           prune_full_runtime_bundle_cache(bundle_path)
+          return false unless validate_full_runtime_in_process_transport(bundle_path)
           File.write(complete_marker, "#{cache_key}\n")
         else
           build_log(verbose, "reusing full runtime gem cache #{cache_key[0, 12]}")
+          return false unless validate_full_runtime_in_process_transport(bundle_path)
         end
 
         packaged_bundle = File.join(destination_root, "vendor", "bundle")
@@ -3068,6 +3070,28 @@ module Ruflet
         Dir.glob(File.join(bundle_path, "ruby", "*", "cache")).each do |cache_dir|
           FileUtils.rm_rf(cache_dir)
         end
+      end
+
+      # Full self builds cannot fall back to a local socket: the embedded
+      # renderer and CRuby VM communicate only through the native in-memory
+      # bridge. Reject an older locked ruflet_server while the app is still
+      # being built instead of shipping a bundle that fails on first launch.
+      def validate_full_runtime_in_process_transport(bundle_path)
+        server_roots = Dir.glob(
+          File.join(bundle_path, "ruby", "*", "gems", "ruflet_server-*")
+        ).select { |path| Dir.exist?(path) }
+        return true if server_roots.empty?
+
+        supported = server_roots.any? do |root|
+          File.file?(
+            File.join(root, "lib", "ruflet", "server", "in_process_connection.rb")
+          )
+        end
+        return true if supported
+
+        warn "The locked ruflet_server gem does not support port-free --self --full builds."
+        warn "Update the application's Gemfile.lock to a Ruflet release with in-process transport."
+        false
       end
 
       # A path gem is a source checkout, not an installable payload. Copy only
