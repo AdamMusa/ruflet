@@ -7,6 +7,7 @@ module Ruflet
         class BrowserContextMenuControl < Ruflet::Control
           TYPE = "browsercontextmenu".freeze
           WIRE = "BrowserContextMenu".freeze
+          KEYWORDS = [:data, :key].freeze
 
           def initialize(id: nil, data: nil, key: nil)
             @disabled = false
