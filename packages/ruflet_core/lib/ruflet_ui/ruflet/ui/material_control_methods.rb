@@ -696,6 +696,12 @@ module Ruflet
       def web_view(**props) = build_widget(:webview, **props)
       def webview(**props) = web_view(**props)
       def video(**props) = build_widget(:video, **props)
+      def banner_ad(**props) = build_widget(:banner_ad, **props)
+      def bannerad(**props) = banner_ad(**props)
+      def interstitial_ad(**props) = build_widget(:interstitial_ad, **props)
+      def interstitialad(**props) = interstitial_ad(**props)
+      def native_ad(**props) = build_widget(:native_ad, **props)
+      def nativead(**props) = native_ad(**props)
       def code_editor(value = nil, **props)
         mapped = props.dup
         mapped[:value] = value unless value.nil?

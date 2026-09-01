@@ -25,6 +25,7 @@ require_relative "cupertinos/cupertinotextfield_control"
 require_relative "cupertinos/cupertinotimerpicker_control"
 require_relative "cupertinos/cupertinotintedbutton_control"
 require_relative "materials/alertdialog_control"
+require_relative "materials/ad_controls"
 require_relative "materials/audio_control"
 require_relative "materials/appbar_control"
 require_relative "materials/autocomplete_control"
@@ -162,6 +163,8 @@ module Ruflet
         module_function
 
         CLASS_MAP = {
+          "banner_ad" => RufletComponents::BannerAdControl,
+          "bannerad" => RufletComponents::BannerAdControl,
           "alert_dialog" => RufletComponents::AlertDialogControl,
           "alertdialog" => RufletComponents::AlertDialogControl,
           "audio" => RufletComponents::AudioControl,
@@ -310,6 +313,8 @@ module Ruflet
           "hero" => RufletComponents::HeroControl,
           "icon" => RufletComponents::IconControl,
           "icon_button" => RufletComponents::IconButtonControl,
+          "interstitial_ad" => RufletComponents::InterstitialAdControl,
+          "interstitialad" => RufletComponents::InterstitialAdControl,
           "iconbutton" => RufletComponents::IconButtonControl,
           "image" => RufletComponents::ImageControl,
           "interactive_viewer" => RufletComponents::InteractiveViewerControl,
@@ -341,6 +346,8 @@ module Ruflet
           "navigation_drawer_destination" => RufletComponents::NavigationDrawerDestinationControl,
           "navigation_rail" => RufletComponents::NavigationRailControl,
           "navigation_rail_destination" => RufletComponents::NavigationRailDestinationControl,
+          "native_ad" => RufletComponents::NativeAdControl,
+          "nativead" => RufletComponents::NativeAdControl,
           "navigationbar" => RufletComponents::NavigationBarControl,
           "navigationbardestination" => RufletComponents::NavigationBarDestinationControl,
           "navigationdrawer" => RufletComponents::NavigationDrawerControl,

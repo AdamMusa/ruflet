@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "alertdialog_control"
+require_relative "ad_controls"
 require_relative "audio_control"
 require_relative "appbar_control"
 require_relative "autocomplete_control"
@@ -84,6 +85,8 @@ module Ruflet
           module_function
 
           CLASS_MAP = {
+            "banner_ad" => RufletComponents::BannerAdControl,
+            "bannerad" => RufletComponents::BannerAdControl,
             "alert_dialog" => RufletComponents::AlertDialogControl,
             "alertdialog" => RufletComponents::AlertDialogControl,
             "audio" => RufletComponents::AudioControl,
@@ -159,6 +162,8 @@ module Ruflet
             "floating_action_button" => RufletComponents::FloatingActionButtonControl,
             "floatingactionbutton" => RufletComponents::FloatingActionButtonControl,
             "icon_button" => RufletComponents::IconButtonControl,
+            "interstitial_ad" => RufletComponents::InterstitialAdControl,
+            "interstitialad" => RufletComponents::InterstitialAdControl,
             "iconbutton" => RufletComponents::IconButtonControl,
             "line_chart" => RufletComponents::LineChartControl,
             "line_chart_data" => RufletComponents::LineChartDataControl,
@@ -178,6 +183,8 @@ module Ruflet
             "navigation_drawer_destination" => RufletComponents::NavigationDrawerDestinationControl,
             "navigation_rail" => RufletComponents::NavigationRailControl,
             "navigation_rail_destination" => RufletComponents::NavigationRailDestinationControl,
+            "native_ad" => RufletComponents::NativeAdControl,
+            "nativead" => RufletComponents::NativeAdControl,
             "navigationbar" => RufletComponents::NavigationBarControl,
             "navigationbardestination" => RufletComponents::NavigationBarDestinationControl,
             "navigationdrawer" => RufletComponents::NavigationDrawerControl,
