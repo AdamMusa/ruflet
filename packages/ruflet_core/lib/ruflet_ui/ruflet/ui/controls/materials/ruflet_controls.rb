@@ -2,6 +2,7 @@
 
 require_relative "alertdialog_control"
 require_relative "ad_controls"
+require_relative "animation_extension_controls"
 require_relative "audio_control"
 require_relative "appbar_control"
 require_relative "autocomplete_control"
@@ -181,6 +182,7 @@ module Ruflet
             "hueringpicker" => RufletComponents::HueRingPickerControl,
             "interstitial_ad" => RufletComponents::InterstitialAdControl,
             "interstitialad" => RufletComponents::InterstitialAdControl,
+            "lottie" => RufletComponents::LottieControl,
             "iconbutton" => RufletComponents::IconButtonControl,
             "line_chart" => RufletComponents::LineChartControl,
             "line_chart_data" => RufletComponents::LineChartDataControl,
@@ -232,6 +234,7 @@ module Ruflet
             "spinkit" => RufletComponents::SpinkitControl,
             "radio" => RufletComponents::RadioControl,
             "radio_group" => RufletComponents::RadioGroupControl,
+            "rive" => RufletComponents::RiveControl,
             "radiogroup" => RufletComponents::RadioGroupControl,
             "radar_chart" => RufletComponents::RadarChartControl,
             "radar_chart_title" => RufletComponents::RadarChartTitleControl,

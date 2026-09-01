@@ -26,6 +26,7 @@ require_relative "cupertinos/cupertinotimerpicker_control"
 require_relative "cupertinos/cupertinotintedbutton_control"
 require_relative "materials/alertdialog_control"
 require_relative "materials/ad_controls"
+require_relative "materials/animation_extension_controls"
 require_relative "materials/audio_control"
 require_relative "materials/appbar_control"
 require_relative "materials/autocomplete_control"
@@ -332,6 +333,7 @@ module Ruflet
           "hueringpicker" => RufletComponents::HueRingPickerControl,
           "interstitial_ad" => RufletComponents::InterstitialAdControl,
           "interstitialad" => RufletComponents::InterstitialAdControl,
+          "lottie" => RufletComponents::LottieControl,
           "iconbutton" => RufletComponents::IconButtonControl,
           "image" => RufletComponents::ImageControl,
           "interactive_viewer" => RufletComponents::InteractiveViewerControl,
@@ -404,6 +406,7 @@ module Ruflet
           "spinkit" => RufletComponents::SpinkitControl,
           "radio" => RufletComponents::RadioControl,
           "radio_group" => RufletComponents::RadioGroupControl,
+          "rive" => RufletComponents::RiveControl,
           "radiogroup" => RufletComponents::RadioGroupControl,
           "radar_chart" => RufletComponents::RadarChartControl,
           "radar_chart_title" => RufletComponents::RadarChartTitleControl,

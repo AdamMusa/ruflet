@@ -23,37 +23,12 @@ module Ruflet
         class WebViewControl < Ruflet::Control
           TYPE = "WebView".freeze
           WIRE = "WebView".freeze
+          KEYWORDS = [].freeze
 
-          def initialize(id: nil, bgcolor: nil, data: nil, enable_javascript: nil, expand: nil,
-                         height: nil, key: nil, method: nil, opacity: nil, prevent_links: nil,
-                         rtl: nil, tooltip: nil, url: nil, visible: nil, width: nil,
-                         on_page_ended: nil, on_page_started: nil, on_web_resource_error: nil,
-                         on_progress: nil, on_url_change: nil, on_scroll: nil,
-                         on_console_message: nil, on_javascript_alert_dialog: nil)
-            props = {}
-            props[:bgcolor] = bgcolor unless bgcolor.nil?
-            props[:data] = data unless data.nil?
-            props[:enable_javascript] = enable_javascript unless enable_javascript.nil?
-            props[:expand] = expand unless expand.nil?
-            props[:height] = height unless height.nil?
-            props[:key] = key unless key.nil?
-            props[:method] = method unless method.nil?
-            props[:opacity] = opacity unless opacity.nil?
-            props[:prevent_links] = prevent_links unless prevent_links.nil?
-            props[:rtl] = rtl unless rtl.nil?
-            props[:tooltip] = tooltip unless tooltip.nil?
-            props[:url] = url unless url.nil?
-            props[:visible] = visible unless visible.nil?
-            props[:width] = width unless width.nil?
-            props[:on_page_ended] = on_page_ended unless on_page_ended.nil?
-            props[:on_page_started] = on_page_started unless on_page_started.nil?
-            props[:on_web_resource_error] = on_web_resource_error unless on_web_resource_error.nil?
-            props[:on_progress] = on_progress unless on_progress.nil?
-            props[:on_url_change] = on_url_change unless on_url_change.nil?
-            props[:on_scroll] = on_scroll unless on_scroll.nil?
-            props[:on_console_message] = on_console_message unless on_console_message.nil?
-            props[:on_javascript_alert_dialog] = on_javascript_alert_dialog unless on_javascript_alert_dialog.nil?
-            super(type: TYPE, id: id, **props)
+          def initialize(id: nil, **props)
+            compact = {}
+            props.each { |key, value| compact[key] = value unless value.nil? }
+            super(type: TYPE, id: id, **compact)
           end
 
           # --- Navigation --------------------------------------------------

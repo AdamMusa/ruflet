@@ -131,6 +131,7 @@ module Ruflet
         "codeeditor" => "CodeEditor",
         "code_editor" => "CodeEditor",
         "lottie" => "Lottie",
+        "rive" => "Rive",
         "flashlight" => "Flashlight",
         "barchart" => "BarChart",
         "barchartgroup" => "BarChartGroup",
