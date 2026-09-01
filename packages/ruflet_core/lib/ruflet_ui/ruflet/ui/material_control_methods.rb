@@ -19,6 +19,28 @@ module Ruflet
         Array(value).map { |coordinates| map_coordinates(coordinates) }
       end
 
+      def base_page(**props, &block) = build_widget(:base_page, **props, &block)
+      def basepage(**props, &block) = base_page(**props, &block)
+      def dialogs(controls = nil, **props)
+        mapped = props.dup
+        mapped[:controls] = controls unless controls.nil?
+        build_widget(:dialogs, **mapped)
+      end
+      def pagelet(content = nil, **props, &block)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:pagelet, **mapped, &block)
+      end
+      def ruflet_app(**props) = build_widget(:ruflet_app, **props)
+      def rufletapp(**props) = ruflet_app(**props)
+      def service_registry(services = nil, **props)
+        mapped = props.dup
+        mapped[:services] = services unless services.nil?
+        build_widget(:service_registry, **mapped)
+      end
+      def serviceregistry(services = nil, **props) = service_registry(services, **props)
+      def window(**props) = build_widget(:window, **props)
+
       def view(children = nil, **props, &block)
         mapped = props.dup
         mapped[:controls] = children unless children.nil?
@@ -333,6 +355,11 @@ module Ruflet
         build_widget(:datacell, **mapped)
       end
       def datacell(content = nil, **props) = data_cell(content, **props)
+      def option(key = nil, **props)
+        mapped = props.dup
+        mapped[:key] = key unless key.nil?
+        build_widget(:option, **mapped)
+      end
       def data_table2(columns = nil, **props)
         mapped = props.dup
         mapped[:columns] = columns unless columns.nil?

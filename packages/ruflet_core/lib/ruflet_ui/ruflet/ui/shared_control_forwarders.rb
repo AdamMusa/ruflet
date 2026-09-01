@@ -6,6 +6,15 @@ module Ruflet
       def control(type, **props, &block) = control_delegate.control(type, **props, &block)
       def widget(type, **props, &block) = control_delegate.widget(type, **props, &block)
       def service(type, **props, &block) = control_delegate.service(type, **props, &block)
+      def base_page(**props, &block) = control_delegate.base_page(**props, &block)
+      def basepage(**props, &block) = control_delegate.basepage(**props, &block)
+      def dialogs(controls = nil, **props) = control_delegate.dialogs(controls, **props)
+      def pagelet(content = nil, **props, &block) = control_delegate.pagelet(content, **props, &block)
+      def ruflet_app(**props) = control_delegate.ruflet_app(**props)
+      def rufletapp(**props) = control_delegate.rufletapp(**props)
+      def service_registry(services = nil, **props) = control_delegate.service_registry(services, **props)
+      def serviceregistry(services = nil, **props) = control_delegate.serviceregistry(services, **props)
+      def window(**props) = control_delegate.window(**props)
       def view(children = nil, **props, &block)
         mapped = props.dup
         mapped[:controls] = children unless children.nil?
@@ -128,6 +137,7 @@ module Ruflet
       def datarow(cells = nil, **props) = control_delegate.datarow(cells, **props)
       def data_cell(content = nil, **props) = control_delegate.data_cell(content, **props)
       def datacell(content = nil, **props) = control_delegate.datacell(content, **props)
+      def option(key = nil, **props) = control_delegate.option(key, **props)
       def data_table2(columns = nil, **props) = control_delegate.data_table2(columns, **props)
       def datatable2(columns = nil, **props) = control_delegate.datatable2(columns, **props)
       def data_column2(label = nil, **props) = control_delegate.data_column2(label, **props)
