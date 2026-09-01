@@ -20,7 +20,7 @@ class RufletCupertinoAlertDialogCompatibilityTest < Minitest::Test
 
     patch = dialog.to_patch
 
-    assert_equal "CupertinoAlertDialog", patch["_c"]
+    assert_equal "AlertDialog", patch["_c"]
     assert_equal "Text", patch["title"]["_c"]
     assert_equal "Text", patch["content"]["_c"]
     assert_equal "#112233", patch["barrier_color"]
@@ -28,7 +28,7 @@ class RufletCupertinoAlertDialogCompatibilityTest < Minitest::Test
     assert_equal true, patch["modal"]
     assert_equal true, patch["open"]
     assert_equal true, patch["on_dismiss"]
-    assert_equal %w[CupertinoDialogAction CupertinoDialogAction], patch["actions"].map { |action| action["_c"] }
+    assert_equal %w[Button Button], patch["actions"].map { |action| action["_c"] }
     assert_equal "Yes", patch["actions"].first["content"]
     assert_equal true, patch["actions"].first["destructive"]
     assert_equal({ "weight" => "bold" }, patch["actions"].first["text_style"])
@@ -38,15 +38,15 @@ class RufletCupertinoAlertDialogCompatibilityTest < Minitest::Test
   end
 
   def test_compact_aliases_use_same_controls
-    assert_equal "CupertinoAlertDialog", Ruflet.cupertinoalertdialog(title: "Title").to_patch["_c"]
-    assert_equal "CupertinoDialogAction", Ruflet.cupertinodialogaction(content: "OK").to_patch["_c"]
+    assert_equal "AlertDialog", Ruflet.cupertinoalertdialog(title: "Title").to_patch["_c"]
+    assert_equal "Button", Ruflet.cupertinodialogaction(content: "OK").to_patch["_c"]
   end
 
   def test_cupertino_alert_dialog_serializes_without_visible_content_like_flet
     empty = Ruflet.cupertino_alert_dialog.to_patch
     hidden = Ruflet.cupertino_alert_dialog(actions: [Ruflet.container(visible: false)]).to_patch
 
-    assert_equal "CupertinoAlertDialog", empty["_c"]
+    assert_equal "AlertDialog", empty["_c"]
     refute empty.key?("title")
     refute empty.key?("content")
     assert_equal false, hidden["actions"].first["visible"]

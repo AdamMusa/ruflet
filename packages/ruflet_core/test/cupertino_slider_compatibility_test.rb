@@ -20,7 +20,7 @@ class RufletCupertinoSliderCompatibilityTest < Minitest::Test
 
     patch = slider.to_patch
 
-    assert_equal "CupertinoSlider", patch["_c"]
+    assert_equal "Slider", patch["_c"]
     assert_equal 0.6, patch["value"]
     assert_equal 0, patch["min"]
     assert_equal 100, patch["max"]
@@ -75,6 +75,6 @@ class RufletCupertinoSliderCompatibilityTest < Minitest::Test
   end
 
   def test_compact_alias_uses_same_control
-    assert_equal "CupertinoSlider", Ruflet.cupertinoslider.to_patch["_c"]
+    assert_equal "Slider", Ruflet.cupertinoslider.to_patch["_c"]
   end
 end

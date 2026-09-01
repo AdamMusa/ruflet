@@ -37,7 +37,7 @@ class RufletControlCoverageTest < Minitest::Test
     )
     patch = control.to_patch
 
-    assert_equal "DropdownM2", patch["_c"]
+    assert_equal "Dropdown", patch["_c"]
     assert_equal "one", patch["value"]
     assert_equal "Pick", patch["label"]
     assert_equal "DropdownOption", patch["options"].first["_c"]

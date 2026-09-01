@@ -20,7 +20,7 @@ class RufletCupertinoNavigationBarCompatibilityTest < Minitest::Test
 
     patch = bar.to_patch
 
-    assert_equal "CupertinoNavigationBar", patch["_c"]
+    assert_equal "NavigationBar", patch["_c"]
     assert_equal "#abcdef", patch["active_color"]
     assert_equal "#112233", patch["bgcolor"]
     assert_equal({ "top" => { "width" => 1 } }, patch["border"])
@@ -44,7 +44,7 @@ class RufletCupertinoNavigationBarCompatibilityTest < Minitest::Test
       Ruflet.navigation_bar_destination(icon: "search")
     ]
 
-    assert_equal "CupertinoNavigationBar", Ruflet.cupertinonavigationbar(destinations: destinations).to_patch["_c"]
+    assert_equal "NavigationBar", Ruflet.cupertinonavigationbar(destinations: destinations).to_patch["_c"]
   end
 
   def test_cupertino_navigation_bar_defaults_match_flet

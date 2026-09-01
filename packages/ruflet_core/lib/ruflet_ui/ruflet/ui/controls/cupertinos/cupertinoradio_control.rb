@@ -6,7 +6,7 @@ module Ruflet
       module RufletComponents
         class CupertinoRadioControl < Ruflet::Control
           TYPE = "cupertinoradio".freeze
-          WIRE = "CupertinoRadio".freeze
+          WIRE = "Radio".freeze
 
           KEYWORDS = [:active_color, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :autofocus, :badge, :bottom, :col, :data, :disabled, :expand, :expand_loose, :fill_color, :focus_color, :height, :inactive_color, :key, :label, :label_position, :left, :margin, :mouse_cursor, :offset, :opacity, :right, :rotate, :rtl, :scale, :size_change_interval, :toggleable, :tooltip, :top, :use_checkmark_style, :value, :visible, :width, :on_animation_end, :on_blur, :on_focus, :on_size_change].freeze
 

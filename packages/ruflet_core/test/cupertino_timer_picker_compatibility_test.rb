@@ -17,7 +17,7 @@ class RufletCupertinoTimerPickerCompatibilityTest < Minitest::Test
 
     patch = picker.to_patch
 
-    assert_equal "CupertinoTimerPicker", patch["_c"]
+    assert_equal "TimerPicker", patch["_c"]
     assert_equal 300, patch["value"]
     assert_equal "center", patch["alignment"]
     assert_equal "#abcdef", patch["bgcolor"]
@@ -66,6 +66,6 @@ class RufletCupertinoTimerPickerCompatibilityTest < Minitest::Test
   end
 
   def test_compact_alias_uses_same_control
-    assert_equal "CupertinoTimerPicker", Ruflet.cupertinotimerpicker.to_patch["_c"]
+    assert_equal "TimerPicker", Ruflet.cupertinotimerpicker.to_patch["_c"]
   end
 end

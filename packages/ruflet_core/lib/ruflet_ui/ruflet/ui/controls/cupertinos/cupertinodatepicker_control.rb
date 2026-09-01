@@ -6,7 +6,7 @@ module Ruflet
       module RufletComponents
         class CupertinoDatePickerControl < Ruflet::Control
           TYPE = "cupertinodatepicker".freeze
-          WIRE = "CupertinoDatePicker".freeze
+          WIRE = "DatePicker".freeze
 
           KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :bottom, :col, :data, :date_order, :date_picker_mode, :disabled, :expand, :expand_loose, :first_date, :height, :item_extent, :key, :last_date, :left, :locale, :margin, :maximum_year, :minimum_year, :minute_interval, :offset, :opacity, :right, :rotate, :rtl, :scale, :show_day_of_week, :size_change_interval, :tooltip, :top, :use_24h_format, :value, :visible, :width, :on_animation_end, :on_change, :on_size_change].freeze
 

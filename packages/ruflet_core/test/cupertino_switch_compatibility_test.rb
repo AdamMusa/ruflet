@@ -26,7 +26,7 @@ class RufletCupertinoSwitchCompatibilityTest < Minitest::Test
 
     patch = switch.to_patch
 
-    assert_equal "CupertinoSwitch", patch["_c"]
+    assert_equal "Switch", patch["_c"]
     assert_equal "Wi-Fi", patch["label"]
     assert_equal true, patch["value"]
     assert_equal "on.png", patch["active_thumb_image_src"]
@@ -64,6 +64,6 @@ class RufletCupertinoSwitchCompatibilityTest < Minitest::Test
   end
 
   def test_compact_alias_uses_same_control
-    assert_equal "CupertinoSwitch", Ruflet.cupertinoswitch.to_patch["_c"]
+    assert_equal "Switch", Ruflet.cupertinoswitch.to_patch["_c"]
   end
 end

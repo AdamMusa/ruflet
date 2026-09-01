@@ -7,6 +7,7 @@ module Ruflet
       require_relative "cupertino_control_registry"
       require_relative "controls/ruflet_controls"
       require_relative "services/ruflet_services"
+      require_relative "platform_control_contracts"
       # Controls whose Ruby name and wire name differ on purpose. The client
       # Native Ruflet clients use RufletApp as the canonical wire type while
       # the Ruby API remains ruflet_app.
@@ -24,6 +25,7 @@ module Ruflet
       TYPE_MAP = MaterialControlRegistry::TYPE_MAP
                  .merge(CupertinoControlRegistry::TYPE_MAP)
                  .merge(SHARED_TYPE_MAP)
+                 .merge(PlatformControlContracts::TYPE_MAP)
                  .freeze
       SCHEMA_EVENT_PROPS =
         Controls::RufletControls::CLASS_MAP

@@ -2,6 +2,7 @@
 
 require_relative "controls/ruflet_controls"
 require_relative "services/ruflet_services"
+require_relative "platform_control_contracts"
 require_relative "../control"
 
 module Ruflet
@@ -12,6 +13,7 @@ module Ruflet
       CLASS_MAP =
         Services::RufletServices::CLASS_MAP
           .merge(Controls::RufletControls::CLASS_MAP)
+          .merge(PlatformControlContracts::CLASS_MAP)
           .freeze
       EXTENSION_CLASS_MAP = {}
       CONSTRUCTOR_KEYWORDS_CACHE = {}

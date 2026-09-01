@@ -16,7 +16,7 @@ class RufletCupertinoBottomSheetCompatibilityTest < Minitest::Test
 
     patch = sheet.to_patch
 
-    assert_equal "CupertinoBottomSheet", patch["_c"]
+    assert_equal "BottomSheet", patch["_c"]
     assert_equal "Text", patch["content"]["_c"]
     assert_equal "Sheet", patch["content"]["value"]
     assert_equal "#abcdef", patch["bgcolor"]
@@ -37,6 +37,6 @@ class RufletCupertinoBottomSheetCompatibilityTest < Minitest::Test
   end
 
   def test_compact_alias_uses_same_control
-    assert_equal "CupertinoBottomSheet", Ruflet.cupertinobottomsheet(Ruflet.text("Sheet")).to_patch["_c"]
+    assert_equal "BottomSheet", Ruflet.cupertinobottomsheet(Ruflet.text("Sheet")).to_patch["_c"]
   end
 end

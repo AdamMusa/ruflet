@@ -428,9 +428,7 @@ module Ruflet
       end
       def dropdownoption(key = nil, **props) = dropdown_option(key, **props)
       def dropdown_m2(options = nil, **props)
-        mapped = props.dup
-        mapped[:options] = options unless options.nil?
-        build_widget(:dropdownm2, **mapped)
+        dropdown(options, **props)
       end
       def dropdownm2(options = nil, **props) = dropdown_m2(options, **props)
       def progress_bar(**props) = build_widget(:progressbar, **props)

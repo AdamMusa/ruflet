@@ -21,7 +21,7 @@ class RufletCupertinoCheckboxCompatibilityTest < Minitest::Test
 
     patch = checkbox.to_patch
 
-    assert_equal "CupertinoCheckbox", patch["_c"]
+    assert_equal "Checkbox", patch["_c"]
     assert_equal "Accept", patch["label"]
     assert_equal true, patch["value"]
     assert_equal "#abcdef", patch["active_color"]
@@ -47,6 +47,6 @@ class RufletCupertinoCheckboxCompatibilityTest < Minitest::Test
   end
 
   def test_compact_alias_uses_same_control
-    assert_equal "CupertinoCheckbox", Ruflet.cupertinocheckbox.to_patch["_c"]
+    assert_equal "Checkbox", Ruflet.cupertinocheckbox.to_patch["_c"]
   end
 end

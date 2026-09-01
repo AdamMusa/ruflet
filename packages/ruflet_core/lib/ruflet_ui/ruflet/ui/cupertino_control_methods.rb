@@ -3,6 +3,8 @@
 module Ruflet
   module UI
     module CupertinoControlMethods
+      # Deprecated compatibility spellings. Platform selection now happens in
+      # Flet and every method below forwards to a canonical control entrypoint.
       def cupertino_button(content = nil, **props)
         mapped = props.dup
         mapped[:content] = content unless content.nil?

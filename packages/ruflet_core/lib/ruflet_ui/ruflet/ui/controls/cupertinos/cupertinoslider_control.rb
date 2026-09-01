@@ -6,7 +6,7 @@ module Ruflet
       module RufletComponents
         class CupertinoSliderControl < Ruflet::Control
           TYPE = "cupertinoslider".freeze
-          WIRE = "CupertinoSlider".freeze
+          WIRE = "Slider".freeze
 
           KEYWORDS = [:active_color, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bottom, :col, :data, :disabled, :divisions, :expand, :expand_loose, :height, :key, :left, :margin, :max, :min, :offset, :opacity, :right, :rotate, :rtl, :scale, :size_change_interval, :thumb_color, :tooltip, :top, :value, :visible, :width, :on_animation_end, :on_blur, :on_change, :on_change_end, :on_change_start, :on_focus, :on_size_change].freeze
 

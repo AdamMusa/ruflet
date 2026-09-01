@@ -23,7 +23,7 @@ class RufletCupertinoAppBarCompatibilityTest < Minitest::Test
 
     patch = app_bar.to_patch
 
-    assert_equal "CupertinoAppBar", patch["_c"]
+    assert_equal "AppBar", patch["_c"]
     assert_equal false, patch["automatic_background_visibility"]
     assert_equal true, patch["automatically_imply_leading"]
     assert_equal true, patch["automatically_imply_title"]
@@ -48,6 +48,6 @@ class RufletCupertinoAppBarCompatibilityTest < Minitest::Test
   end
 
   def test_compact_alias_uses_same_control
-    assert_equal "CupertinoAppBar", Ruflet.cupertinoappbar.to_patch["_c"]
+    assert_equal "AppBar", Ruflet.cupertinoappbar.to_patch["_c"]
   end
 end

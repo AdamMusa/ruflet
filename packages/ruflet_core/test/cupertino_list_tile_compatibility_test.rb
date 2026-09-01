@@ -23,7 +23,7 @@ class RufletCupertinoListTileCompatibilityTest < Minitest::Test
 
     patch = tile.to_patch
 
-    assert_equal "CupertinoListTile", patch["_c"]
+    assert_equal "ListTile", patch["_c"]
     assert_equal "Text", patch["title"]["_c"]
     assert_equal "Enabled", patch["subtitle"]
     assert_equal "Text", patch["additional_info"]["_c"]
@@ -41,7 +41,7 @@ class RufletCupertinoListTileCompatibilityTest < Minitest::Test
   end
 
   def test_compact_alias_uses_same_control
-    assert_equal "CupertinoListTile", Ruflet.cupertinolisttile(title: "Title").to_patch["_c"]
+    assert_equal "ListTile", Ruflet.cupertinolisttile(title: "Title").to_patch["_c"]
   end
 
   def test_cupertino_list_tile_defaults_match_flet

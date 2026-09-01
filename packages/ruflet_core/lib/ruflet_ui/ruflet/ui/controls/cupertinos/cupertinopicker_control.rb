@@ -6,7 +6,7 @@ module Ruflet
       module RufletComponents
         class CupertinoPickerControl < Ruflet::Control
           TYPE = "cupertinopicker".freeze
-          WIRE = "CupertinoPicker".freeze
+          WIRE = "Picker".freeze
 
           KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :bottom, :col, :controls, :data, :default_selection_overlay_bgcolor, :diameter_ratio, :disabled, :expand, :expand_loose, :height, :item_extent, :key, :left, :looping, :magnification, :margin, :off_axis_fraction, :offset, :opacity, :right, :rotate, :rtl, :scale, :selected_index, :selection_overlay, :size_change_interval, :squeeze, :tooltip, :top, :use_magnifier, :visible, :width, :on_animation_end, :on_change, :on_size_change].freeze
 

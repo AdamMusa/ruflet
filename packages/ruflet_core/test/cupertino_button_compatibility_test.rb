@@ -20,7 +20,7 @@ class RufletCupertinoButtonCompatibilityTest < Minitest::Test
 
     patch = button.to_patch
 
-    assert_equal "CupertinoButton", patch["_c"]
+    assert_equal "Button", patch["_c"]
     assert_equal "Text", patch["content"]["_c"]
     assert_equal "Tap me", patch["content"]["value"]
     assert_equal "#abcdef", patch["bgcolor"]
@@ -53,20 +53,20 @@ class RufletCupertinoButtonCompatibilityTest < Minitest::Test
     filled = Ruflet.cupertino_filled_button("Fill", opacity_on_click: 0.2)
     tinted = Ruflet.cupertino_tinted_button("Tint", opacity_on_click: 0.3)
 
-    assert_equal "CupertinoFilledButton", filled.to_patch["_c"]
+    assert_equal "FilledButton", filled.to_patch["_c"]
     assert_equal "Fill", filled.to_patch["content"]
     assert_equal "center", filled.props["alignment"]
     assert_equal 0.2, filled.props["opacity_on_click"]
 
-    assert_equal "CupertinoTintedButton", tinted.to_patch["_c"]
+    assert_equal "FilledTonalButton", tinted.to_patch["_c"]
     assert_equal "Tint", tinted.to_patch["content"]
     assert_equal "large", tinted.props["size"]
     assert_equal 0.3, tinted.props["opacity_on_click"]
   end
 
   def test_compact_aliases_use_same_controls
-    assert_equal "CupertinoButton", Ruflet.cupertinobutton.to_patch["_c"]
-    assert_equal "CupertinoFilledButton", Ruflet.cupertinofilledbutton.to_patch["_c"]
-    assert_equal "CupertinoTintedButton", Ruflet.cupertinotintedbutton.to_patch["_c"]
+    assert_equal "Button", Ruflet.cupertinobutton.to_patch["_c"]
+    assert_equal "FilledButton", Ruflet.cupertinofilledbutton.to_patch["_c"]
+    assert_equal "FilledTonalButton", Ruflet.cupertinotintedbutton.to_patch["_c"]
   end
 end
