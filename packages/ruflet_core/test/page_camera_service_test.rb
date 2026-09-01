@@ -29,6 +29,36 @@ class PageCameraServiceTest < Minitest::Test
     assert_equal [], services_patch[3]["_services"]
   end
 
+  def test_camera_exposes_the_complete_current_flet_method_surface
+    sent = []
+    page = build_page(sent)
+    camera = page.camera
+    page.add(camera)
+
+    camera.initialize_camera(
+      { name: "Back", lens_direction: :back, sensor_orientation: 90 },
+      :high,
+      fps: 30,
+      image_format_group: :jpeg
+    )
+    initialize_payload = sent.last[1]
+    assert_equal "initialize", initialize_payload["name"]
+    assert_equal "back", initialize_payload.dig("args", "description", "lens_direction")
+    assert_equal "high", initialize_payload.dig("args", "resolution_preset")
+    assert_equal "jpeg", initialize_payload.dig("args", "image_format_group")
+
+    camera.lock_capture_orientation(:portrait_up)
+    assert_equal "lock_capture_orientation", sent.last[1]["name"]
+    assert_equal({ "orientation" => "portrait_up" }, sent.last[1]["args"])
+
+    camera.set_zoom_level(2.5)
+    assert_equal "set_zoom_level", sent.last[1]["name"]
+    assert_equal({ "zoom" => 2.5 }, sent.last[1]["args"])
+
+    camera.take_picture
+    assert_equal "take_picture", sent.last[1]["name"]
+  end
+
   private
 
   def build_page(sent)
