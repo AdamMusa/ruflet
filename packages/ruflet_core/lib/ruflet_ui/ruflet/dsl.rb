@@ -51,6 +51,7 @@ module Ruflet
     def control(type, **props, &block) = _pending_app.control(type, **props, &block)
     def widget(type, **props, &block) = _pending_app.widget(type, **props, &block)
     def service(type, **props, &block) = _pending_app.service(type, **props, &block)
+    def view(children = nil, **props, &block) = _pending_app.view(children, **props, &block)
     def base_page(**props, &block) = _pending_app.base_page(**props, &block)
     def basepage(**props, &block) = _pending_app.basepage(**props, &block)
     def dialogs(controls = nil, **props) = _pending_app.dialogs(controls, **props)

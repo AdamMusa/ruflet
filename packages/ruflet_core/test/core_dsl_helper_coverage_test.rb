@@ -17,5 +17,6 @@ class CoreDslHelperCoverageTest < Minitest::Test
     assert_equal %w[BasePage Dialogs Pagelet RufletApp ServiceRegistry Window Option],
                  controls.map { |control| control.to_patch["_c"] }
     assert_equal "ruby", controls.last.to_patch["key"]
+    assert_respond_to Ruflet::DSL, :view
   end
 end
