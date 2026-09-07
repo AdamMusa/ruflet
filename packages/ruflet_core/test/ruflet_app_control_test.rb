@@ -60,4 +60,11 @@ class RufletAppControlTest < Minitest::Test
       Ruflet::UI::Controls::RufletComponents::RufletAppControl.new(not_a_real_prop: 1)
     end
   end
+
+  def test_dsl_emits_the_ruflet_renderer_entrypoint
+    patch = Ruflet.ruflet_app(url: "https://example.invalid/app", args: ["demo"]).to_patch
+    assert_equal "RufletApp", patch.fetch("_c")
+    assert_equal "https://example.invalid/app", patch.fetch("url")
+    assert_equal ["demo"], patch.fetch("args")
+  end
 end
