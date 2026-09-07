@@ -1,3 +1,20 @@
+## 0.0.23
+
+- Packaged apps reach their runtime over an in-process binary bridge instead of
+  a loopback socket. `serverUrl()` returns `inprocess://embedded` on a
+  self-contained native build, and `sendToRuby`, `receiveFromRuby` and
+  `closeBridge` carry the protocol.
+- `start()` now fails with `in_process_runtime_owned` when the platform already
+  owns the runtime. 0.0.14 mirrored the autostarted port into the file such a
+  caller polls; there is no port to mirror once the socket is gone, so the call
+  reports that rather than appearing to succeed. Clients written against the
+  older `start()` flow must move to `serverUrl()` and the bridge.
+- The embedded VM ships RufletRecord, backed by a vendored SQLite.
+- Versions now track the Ruflet gems, so 0.0.14 is followed by 0.0.23. The
+  bridge API above was added while the version still read 0.0.14, which left
+  the published 0.0.14 and this source disagreeing about what that number
+  meant; this bump ends that.
+
 ## 0.0.14
 
 - Autostart no longer needs configuring. The packaged project is the opt-in: a
