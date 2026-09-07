@@ -3,8 +3,8 @@
 `ruflet_rails` is the Rails-first integration package for Ruflet.
 
 It mounts Ruby-driven Ruflet interfaces in a Rails application, makes Rails
-views able to opt into native WebView chrome, and connects web, mobile, and
-desktop clients to the same application entrypoint.
+views able to opt into native WebView chrome, and connects Ruflet clients to
+the same application entrypoint.
 
 ## Add The Gem
 
@@ -17,18 +17,15 @@ gem "ruflet_rails"
 
 ```bash
 bin/rails generate ruflet:install
-bin/rails generate ruflet:install --web
 bin/rails generate ruflet:install --desktop
-bin/rails generate ruflet:install --web --desktop
 ```
 
 This generator will:
 - create `app/views/ruflet/main.rb`
 - create `config/initializers/ruflet.rb`
 - add the Ruflet WebSocket route to `config/routes.rb`
-- add a `/ruflet` web mount when `--web` is used
-- download prebuilt clients from GitHub releases when `--web`, `--desktop`, or
-  `--client=web|desktop|all` is used
+- download the prebuilt desktop client when `--desktop` or
+  `--client=desktop` is used
 
 Generated `config/initializers/ruflet.rb`:
 
@@ -48,24 +45,17 @@ At build time `ruflet_rails` serializes this Rails config into the Ruflet CLI
 config shape, so the initializer remains the source of truth for app name,
 backend URL, services, assets, and build colors.
 
-## Web client
+## Connect a Ruflet client
 
-Rails installs the prebuilt web client into `frontend/`; it does not need
-Flutter source or a Flutter web build:
-
-```bash
-bundle exec rake ruflet:web
-```
-
-Mount the installed client and a developer-owned Ruflet entrypoint:
+The generator adds an explicit WebSocket endpoint backed by the application
+entrypoint:
 
 ```ruby
-mount Ruflet::Rails.web(app_file: Rails.root.join("app/views/ruflet/main.rb")), at: "/app"
+match "/ws", to: Ruflet::Rails.native(Rails.root.join("app/views/ruflet/main.rb")), via: :all
 ```
 
-The install generator adds the same mount at `/ruflet` when `--web` is used.
-The mount serves the static client and its WebSocket endpoint together. The
-same `main.rb` also drives native clients through the generated `/ws` route.
+Start Rails, then connect a Ruflet mobile or desktop client to that endpoint.
+The Rails gem does not install or serve a second static web application.
 
 ## Build native clients from Rails
 
@@ -100,12 +90,11 @@ bin/rails server --desktop
 bin/rails s --desktop
 ```
 
-## Update prebuilt clients
+## Update the prebuilt desktop client
 
-Reinstall web or update native desktop clients:
+Update the native desktop client:
 
 ```bash
-bundle exec rake ruflet:web
 bundle exec rake ruflet:update[desktop]
 ```
 
@@ -123,7 +112,7 @@ bundle exec rake ruflet:install[DEVICE_ID]
 ## HTML as the UI DSL (no WebView)
 
 Beyond the WebView shell, Ruflet can treat HTML itself as the UI language:
-Rails views describe screens with markup, and `Ruflet::Rails.html_to_native`
+Rails views describe screens with markup, and `Ruflet::Rails.erb_to_native`
 compiles each page into **real native Ruflet controls** — no WebView anywhere.
 This is HTML-over-the-wire for native UI: state lives in Rails, every
 interaction is a request, and the response markup re-renders the screen.
@@ -131,7 +120,7 @@ interaction is a request, and the response markup re-renders the screen.
 ```ruby
 # app/views/ruflet/main.rb
 Ruflet.run do |page|
-  Ruflet::Rails.html_to_native(page, start_url: "#{Ruflet::Rails.backend_url}/native")
+  Ruflet::Rails.erb_to_native(page, start_url: "/native")
 end
 ```
 
@@ -320,7 +309,7 @@ Available helpers: layout (`column`, `row`, `stack`, `card`, `center`,
 `submit`), and `widget("progress-bar", value: 0.4)` for anything else in the
 control registry.
 
-Pick the mode per app: `html_to_native` when HTML should *become* native controls,
+Pick the mode per app: `erb_to_native` when HTML should *become* native controls,
 `native_shell` when you want the real web page in a WebView with native chrome.
 
 ## Native WebView shell
@@ -518,7 +507,7 @@ end
 Mount it in Rails:
 
 ```ruby
-match "/ws", to: Ruflet::Rails.app(Rails.root.join("app/views/ruflet/main.rb")), via: :all
+match "/ws", to: Ruflet::Rails.native(Rails.root.join("app/views/ruflet/main.rb")), via: :all
 ```
 
 The same mounted Ruby entrypoint drives mobile, web, and desktop clients.
