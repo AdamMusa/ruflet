@@ -15,32 +15,35 @@ class RufletCliBuildPackagePruningTest < Minitest::Test
       template_root = File.join(dir, "template")
       client_dir = File.join(dir, "client")
       package_names = %w[
-        flet flet_audio_recorder flet_permission_handler flet_spinkit flet_video
+        ruflet ruflet_audio_recorder ruflet_permission_handler ruflet_spinkit ruflet_video
       ]
       package_names.each do |name|
-        FileUtils.mkdir_p(File.join(template_root, "flet_packages", name))
-        File.write(File.join(template_root, "flet_packages", name, "marker"), name)
-        FileUtils.mkdir_p(File.join(client_dir, "flet_packages", name))
+        FileUtils.mkdir_p(File.join(template_root, "ruflet_packages", name))
+        File.write(File.join(template_root, "ruflet_packages", name, "marker"), name)
+        FileUtils.mkdir_p(File.join(client_dir, "ruflet_packages", name))
       end
-      FileUtils.mkdir_p(File.join(client_dir, "flet_packages", "flet_ads"))
+      FileUtils.mkdir_p(File.join(client_dir, "ruflet_packages", "ruflet_ads"))
+      File.write(File.join(client_dir, "ruflet_packages", "ruflet", "obsolete"), "stale")
+      FileUtils.mkdir_p(File.join(template_root, "ruflet_packages", "ruflet", ".cache"))
+      File.write(File.join(template_root, "ruflet_packages", "ruflet", ".cache", "developer-cache"), "not distributable")
       FileUtils.mkdir_p(File.join(client_dir, "lib"))
       File.write(
         File.join(template_root, "pubspec.yaml"),
         <<~YAML
           dependencies:
-            flet_audio_recorder:
-              path: flet_packages/flet_audio_recorder
-            flet_permission_handler:
-              path: flet_packages/flet_permission_handler
-            flet_spinkit:
-              path: flet_packages/flet_spinkit
-            flet_video:
-              path: flet_packages/flet_video
+            ruflet_audio_recorder:
+              path: ruflet_packages/ruflet_audio_recorder
+            ruflet_permission_handler:
+              path: ruflet_packages/ruflet_permission_handler
+            ruflet_spinkit:
+              path: ruflet_packages/ruflet_spinkit
+            ruflet_video:
+              path: ruflet_packages/ruflet_video
         YAML
       )
       File.write(
         File.join(client_dir, "pubspec.yaml"),
-        "dependencies:\n  flet:\n    path: flet_packages/flet\n"
+        "dependencies:\n  ruflet:\n    path: ruflet_packages/ruflet\n"
       )
 
       Ruflet::CLI.stub(:resolve_ruflet_client_template_root, template_root) do
@@ -51,9 +54,12 @@ class RufletCliBuildPackagePruningTest < Minitest::Test
         )
 
         assert_equal(
-          %w[flet flet_audio_recorder flet_permission_handler flet_spinkit],
+          %w[ruflet ruflet_audio_recorder ruflet_permission_handler ruflet_spinkit],
           package_directories(client_dir)
         )
+        assert_equal "ruflet", File.read(File.join(client_dir, "ruflet_packages", "ruflet", "marker"))
+        refute File.exist?(File.join(client_dir, "ruflet_packages", "ruflet", "obsolete"))
+        refute Dir.exist?(File.join(client_dir, "ruflet_packages", "ruflet", ".cache"))
 
         # A later build with a different declaration restores its package from
         # the immutable template before pruning packages no longer selected.
@@ -62,8 +68,8 @@ class RufletCliBuildPackagePruningTest < Minitest::Test
           client_dir,
           { "extensions" => ["video"] }
         )
-        assert_equal %w[flet flet_video], package_directories(client_dir)
-        assert_equal "flet_video", File.read(File.join(client_dir, "flet_packages", "flet_video", "marker"))
+        assert_equal %w[ruflet ruflet_video], package_directories(client_dir)
+        assert_equal "ruflet_video", File.read(File.join(client_dir, "ruflet_packages", "ruflet_video", "marker"))
       end
     end
   end
@@ -75,35 +81,35 @@ class RufletCliBuildPackagePruningTest < Minitest::Test
     Dir.mktmpdir do |dir|
       client_dir = File.join(dir, "client")
       FileUtils.mkdir_p(File.join(client_dir, "lib"))
-      %w[flet flet_audio flet_audio_recorder flet_permission_handler flet_video].each do |name|
-        FileUtils.mkdir_p(File.join(client_dir, "flet_packages", name))
+      %w[ruflet ruflet_audio ruflet_audio_recorder ruflet_permission_handler ruflet_video].each do |name|
+        FileUtils.mkdir_p(File.join(client_dir, "ruflet_packages", name))
       end
       File.write(
         File.join(client_dir, "pubspec.yaml"),
         <<~YAML
           dependencies:
-            flet:
-              path: flet_packages/flet
-            flet_audio:
-              path: flet_packages/flet_audio
-            flet_audio_recorder:
-              path: flet_packages/flet_audio_recorder
-            flet_permission_handler:
-              path: flet_packages/flet_permission_handler
-            flet_video:
-              path: flet_packages/flet_video
+            ruflet:
+              path: ruflet_packages/ruflet
+            ruflet_audio:
+              path: ruflet_packages/ruflet_audio
+            ruflet_audio_recorder:
+              path: ruflet_packages/ruflet_audio_recorder
+            ruflet_permission_handler:
+              path: ruflet_packages/ruflet_permission_handler
+            ruflet_video:
+              path: ruflet_packages/ruflet_video
         YAML
       )
       File.write(
         File.join(client_dir, "lib", "main.self.dart"),
         <<~DART
-          import 'package:flet/flet.dart';
-          import 'package:flet_audio/flet_audio.dart' as ruflet_audio;
-          import 'package:flet_audio_recorder/flet_audio_recorder.dart' as ruflet_audio_recorder;
-          import 'package:flet_permission_handler/flet_permission_handler.dart' as ruflet_permission_handler;
-          import 'package:flet_video/flet_video.dart' as ruflet_video;
+          import 'package:ruflet/ruflet.dart';
+          import 'package:ruflet_audio/ruflet_audio.dart' as ruflet_audio;
+          import 'package:ruflet_audio_recorder/ruflet_audio_recorder.dart' as ruflet_audio_recorder;
+          import 'package:ruflet_permission_handler/ruflet_permission_handler.dart' as ruflet_permission_handler;
+          import 'package:ruflet_video/ruflet_video.dart' as ruflet_video;
 
-          final extensions = <FletExtension>[
+          final extensions = <RufletExtension>[
             ruflet_audio.Extension(),
             ruflet_audio_recorder.Extension(),
             ruflet_permission_handler.Extension(),
@@ -119,14 +125,14 @@ class RufletCliBuildPackagePruningTest < Minitest::Test
       )
 
       assert_equal %w[audio video audio_recorder permission_handler microphone].sort, native_keys.sort
-      assert_equal %w[flet], package_directories(client_dir)
+      assert_equal %w[ruflet], package_directories(client_dir)
       dependencies = YAML.safe_load(
         File.read(File.join(client_dir, "pubspec.yaml")), aliases: true
       ).fetch("dependencies")
-      assert_equal %w[flet], dependencies.keys
+      assert_equal %w[ruflet], dependencies.keys
       main = File.read(File.join(client_dir, "lib", "main.self.dart"))
-      refute_includes main, "flet_audio"
-      refute_includes main, "flet_video"
+      refute_includes main, "ruflet_audio"
+      refute_includes main, "ruflet_video"
       refute_includes main, "ruflet_permission_handler.Extension()"
       assert builder.send(:validate_flutter_extension_selection, client_dir)
     end
@@ -143,7 +149,7 @@ class RufletCliBuildPackagePruningTest < Minitest::Test
         File.join(client_dir, "pubspec.yaml"),
         <<~YAML
           dependencies:
-            flet: any
+            ruflet: any
             old_extension:
               git: https://example.test/old_extension.git
         YAML
@@ -151,9 +157,9 @@ class RufletCliBuildPackagePruningTest < Minitest::Test
       File.write(
         File.join(client_dir, "lib", "main.server.dart"),
         <<~DART
-          import 'package:flet/flet.dart';
+          import 'package:ruflet/ruflet.dart';
           import 'package:old_extension/old_extension.dart' as old_extension;
-          final extensions = <FletExtension>[
+          final extensions = <RufletExtension>[
             old_extension.Extension(),
           ];
         DART
@@ -234,8 +240,8 @@ class RufletCliBuildPackagePruningTest < Minitest::Test
   private
 
   def package_directories(client_dir)
-    Dir.children(File.join(client_dir, "flet_packages"))
-      .select { |entry| Dir.exist?(File.join(client_dir, "flet_packages", entry)) }
+    Dir.children(File.join(client_dir, "ruflet_packages"))
+      .select { |entry| Dir.exist?(File.join(client_dir, "ruflet_packages", entry)) }
       .sort
   end
 end

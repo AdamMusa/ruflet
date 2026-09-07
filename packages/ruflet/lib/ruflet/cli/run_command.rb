@@ -95,7 +95,7 @@ module Ruflet
           return status.success? ? 0 : (status.exitstatus || 1) unless run_state[:restart]
 
           # Full restart requested ("R"): respawn the backend; connected
-          # clients reconnect and re-register on their own (Flet-style).
+          # clients reconnect and re-register on their own (Ruflet-style).
           run_state[:restart] = false
           puts "Restarting app..."
           started = Process.clock_gettime(Process::CLOCK_MONOTONIC)

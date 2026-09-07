@@ -518,14 +518,14 @@ class RufletCliUpdateCommandTest < Minitest::Test
       FileUtils.mkdir_p(File.join(client_dir, "lib"))
       File.write(
         File.join(client_dir, "pubspec.yaml"),
-        "dependencies:\n  flutter:\n    sdk: flutter\n  flet: any\n"
+        "dependencies:\n  flutter:\n    sdk: flutter\n  ruflet: any\n"
       )
       File.write(
         File.join(client_dir, "lib", "main.self.dart"),
         <<~DART
-          import 'package:flet/flet.dart';
+          import 'package:ruflet/ruflet.dart';
           void main() {
-            final extensions = <FletExtension>[
+            final extensions = <RufletExtension>[
             ];
           }
         DART
@@ -536,11 +536,11 @@ class RufletCliUpdateCommandTest < Minitest::Test
 
       pubspec = YAML.safe_load(File.read(File.join(client_dir, "pubspec.yaml")), aliases: true)
       dependencies = pubspec.fetch("dependencies")
-      assert dependencies.key?("flet_audio_recorder")
-      assert dependencies.key?("flet_geolocator")
-      assert dependencies.key?("flet_permission_handler")
-      refute dependencies.key?("flet_camera")
-      refute dependencies.key?("flet_video")
+      assert dependencies.key?("ruflet_audio_recorder")
+      assert dependencies.key?("ruflet_geolocator")
+      assert dependencies.key?("ruflet_permission_handler")
+      refute dependencies.key?("ruflet_camera")
+      refute dependencies.key?("ruflet_video")
 
       main = File.read(File.join(client_dir, "lib", "main.self.dart"))
       assert_includes main, "ruflet_audio_recorder.Extension(),"
@@ -560,10 +560,10 @@ class RufletCliUpdateCommandTest < Minitest::Test
       FileUtils.mkdir_p(File.join(client_dir, "lib"))
       FileUtils.mkdir_p(File.dirname(manifest))
       FileUtils.mkdir_p(File.dirname(plist))
-      File.write(File.join(client_dir, "pubspec.yaml"), "dependencies:\n  flet: any\n")
+      File.write(File.join(client_dir, "pubspec.yaml"), "dependencies:\n  ruflet: any\n")
       File.write(
         File.join(client_dir, "lib", "main.self.dart"),
-        "import 'package:flet/flet.dart';\nfinal extensions = <FletExtension>[\n];\n"
+        "import 'package:ruflet/ruflet.dart';\nfinal extensions = <RufletExtension>[\n];\n"
       )
       File.write(manifest, "<manifest><application/></manifest>\n")
       File.write(plist, "<plist><dict></dict></plist>\n")
@@ -678,7 +678,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
       ruby_runtime = YAML.safe_load(pubspec, aliases: true).dig("dependencies", "ruby_runtime")
       assert_equal File.expand_path("../../../ruby_runtime", __dir__), ruby_runtime["path"]
-      refute YAML.safe_load(pubspec, aliases: true).dig("dependencies", "flet_spinkit")
+      refute YAML.safe_load(pubspec, aliases: true).dig("dependencies", "ruflet_spinkit")
       refute_path_exists File.join(client_dir, "lib", "ruflet_spinkit.dart")
       assert_includes calls, client_dir
     end
@@ -843,9 +843,9 @@ class RufletCliUpdateCommandTest < Minitest::Test
           dependencies:
             flutter:
               sdk: flutter
-            flet: any
-            flet_audio: any
-            flet_webview: any
+            ruflet: any
+            ruflet_audio: any
+            ruflet_webview: any
           flutter:
             assets:
               - assets/demo/
@@ -857,8 +857,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
       pubspec = File.read(path)
       assert_includes pubspec, "  assets:\n    - assets/demo/"
       refute_includes pubspec, "  assets:\n- assets/demo/"
-      refute_includes pubspec, "flet_audio:"
-      refute_includes pubspec, "flet_webview:"
+      refute_includes pubspec, "ruflet_audio:"
+      refute_includes pubspec, "ruflet_webview:"
     end
   end
 
@@ -877,18 +877,18 @@ class RufletCliUpdateCommandTest < Minitest::Test
           dependencies:
             flutter:
               sdk: flutter
-            flet: any
-            flet_webview: any
+            ruflet: any
+            ruflet_webview: any
         YAML
       )
       File.write(
         File.join(template_dir, "lib", "main.self.dart"),
         <<~DART
-          import 'package:flet/flet.dart';
-          import 'package:flet_webview/flet_webview.dart' as ruflet_webview;
+          import 'package:ruflet/ruflet.dart';
+          import 'package:ruflet_webview/ruflet_webview.dart' as ruflet_webview;
 
           void main() {
-            final extensions = <FletExtension>[
+            final extensions = <RufletExtension>[
               ruflet_webview.Extension(),
             ];
           }
@@ -900,16 +900,16 @@ class RufletCliUpdateCommandTest < Minitest::Test
           dependencies:
             flutter:
               sdk: flutter
-            flet: any
+            ruflet: any
         YAML
       )
       File.write(
         File.join(client_dir, "lib", "main.self.dart"),
         <<~DART
-          import 'package:flet/flet.dart';
+          import 'package:ruflet/ruflet.dart';
 
           void main() {
-            final extensions = <FletExtension>[
+            final extensions = <RufletExtension>[
             ];
           }
         DART
@@ -924,10 +924,10 @@ class RufletCliUpdateCommandTest < Minitest::Test
         builder.send(:apply_service_extension_config, client_dir, config, self_contained: true)
 
         pubspec = YAML.safe_load(File.read(File.join(client_dir, "pubspec.yaml")), aliases: true)
-        assert_equal "any", pubspec.dig("dependencies", "flet_webview")
+        assert_equal "any", pubspec.dig("dependencies", "ruflet_webview")
 
         main = File.read(File.join(client_dir, "lib", "main.self.dart"))
-        assert_includes main, "import 'package:flet_webview/flet_webview.dart' as ruflet_webview;"
+        assert_includes main, "import 'package:ruflet_webview/ruflet_webview.dart' as ruflet_webview;"
         assert_includes main, "ruflet_webview.Extension(),"
       ensure
         Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root, original_method)
@@ -1915,7 +1915,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       )
       File.write(
         File.join(client_dir, "lib", "main.self.dart"),
-        "import 'package:flet/flet.dart';\n\nvoid main() {\n  final extensions = <FletExtension>[\n  ];\n}\n"
+        "import 'package:ruflet/ruflet.dart';\n\nvoid main() {\n  final extensions = <RufletExtension>[\n  ];\n}\n"
       )
 
       config = {
@@ -2496,16 +2496,16 @@ class RufletCliUpdateCommandTest < Minitest::Test
       File.write(
         main_path,
         <<~DART
-          import 'package:flet/flet.dart';
-          import 'package:flet_audio_recorder/flet_audio_recorder.dart'
+          import 'package:ruflet/ruflet.dart';
+          import 'package:ruflet_audio_recorder/ruflet_audio_recorder.dart'
               as ruflet_audio_recorder;
-          import 'package:flet_color_pickers/flet_color_pickers.dart'
+          import 'package:ruflet_color_pickers/ruflet_color_pickers.dart'
               as ruflet_color_picker;
-          import 'package:flet_secure_storage/flet_secure_storage.dart'
+          import 'package:ruflet_secure_storage/ruflet_secure_storage.dart'
               as ruflet_secure_storage;
           import 'ruflet_webview.dart' as ruflet_webview;
 
-          final extensions = <FletExtension>[
+          final extensions = <RufletExtension>[
             ruflet_audio_recorder.Extension(),
             ruflet_color_picker.Extension(),
             ruflet_secure_storage.Extension(),
@@ -2517,15 +2517,15 @@ class RufletCliUpdateCommandTest < Minitest::Test
       builder.send(:prune_client_main, main_path, [])
 
       content = File.read(main_path)
-      refute_includes content, "flet_audio_recorder"
-      refute_includes content, "flet_color_pickers"
-      refute_includes content, "flet_secure_storage"
+      refute_includes content, "ruflet_audio_recorder"
+      refute_includes content, "ruflet_color_pickers"
+      refute_includes content, "ruflet_secure_storage"
       refute_includes content, "ruflet_webview.dart"
       refute_includes content, "ruflet_audio_recorder.Extension()"
       refute_includes content, "ruflet_color_picker.Extension()"
       refute_includes content, "ruflet_secure_storage.Extension()"
       refute_includes content, "ruflet_webview.RufletWebViewExtension()"
-      assert_includes content, "import 'package:flet/flet.dart';"
+      assert_includes content, "import 'package:ruflet/ruflet.dart';"
     end
   end
 

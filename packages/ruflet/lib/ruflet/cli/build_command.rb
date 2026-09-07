@@ -15,27 +15,27 @@ module Ruflet
     module BuildCommand
       include FlutterSdk
       CLIENT_EXTENSION_MAP = {
-        "ads" => { package: "flet_ads", alias: "ruflet_ads" },
-        "audio" => { package: "flet_audio", alias: "ruflet_audio" },
-        "audio_recorder" => { package: "flet_audio_recorder", alias: "ruflet_audio_recorder" },
-        "camera" => { package: "flet_camera", alias: "ruflet_camera" },
-        "charts" => { package: "flet_charts", alias: "ruflet_charts" },
-        "code_editor" => { package: "flet_code_editor", alias: "ruflet_code_editor" },
-        "color_pickers" => { package: "flet_color_pickers", alias: "ruflet_color_picker" },
-        "datatable2" => { package: "flet_datatable2", alias: "ruflet_datatable2" },
-        "flashlight" => { package: "flet_flashlight", alias: "ruflet_flashlight" },
-        "geolocator" => { package: "flet_geolocator", alias: "ruflet_geolocator" },
-        "lottie" => { package: "flet_lottie", alias: "ruflet_lottie" },
-        "map" => { package: "flet_map", alias: "ruflet_map" },
-        "permission_handler" => { package: "flet_permission_handler", alias: "ruflet_permission_handler" },
+        "ads" => { package: "ruflet_ads", alias: "ruflet_ads" },
+        "audio" => { package: "ruflet_audio", alias: "ruflet_audio" },
+        "audio_recorder" => { package: "ruflet_audio_recorder", alias: "ruflet_audio_recorder" },
+        "camera" => { package: "ruflet_camera", alias: "ruflet_camera" },
+        "charts" => { package: "ruflet_charts", alias: "ruflet_charts" },
+        "code_editor" => { package: "ruflet_code_editor", alias: "ruflet_code_editor" },
+        "color_pickers" => { package: "ruflet_color_pickers", alias: "ruflet_color_picker" },
+        "datatable2" => { package: "ruflet_datatable2", alias: "ruflet_datatable2" },
+        "flashlight" => { package: "ruflet_flashlight", alias: "ruflet_flashlight" },
+        "geolocator" => { package: "ruflet_geolocator", alias: "ruflet_geolocator" },
+        "lottie" => { package: "ruflet_lottie", alias: "ruflet_lottie" },
+        "map" => { package: "ruflet_map", alias: "ruflet_map" },
+        "permission_handler" => { package: "ruflet_permission_handler", alias: "ruflet_permission_handler" },
         "qrcode_scanner" => { package: "ruflet_qrcode_scanner", alias: "ruflet_qrcode_scanner" },
-        "rive" => { package: "flet_rive", alias: "ruflet_rive" },
-        "secure_storage" => { package: "flet_secure_storage", alias: "ruflet_secure_storage" },
-        "spinkit" => { package: "flet_spinkit", alias: "ruflet_spinkit" },
-        "video" => { package: "flet_video", alias: "ruflet_video" },
-        "webview" => { package: "flet_webview", alias: "ruflet_webview" }
+        "rive" => { package: "ruflet_rive", alias: "ruflet_rive" },
+        "secure_storage" => { package: "ruflet_secure_storage", alias: "ruflet_secure_storage" },
+        "spinkit" => { package: "ruflet_spinkit", alias: "ruflet_spinkit" },
+        "video" => { package: "ruflet_video", alias: "ruflet_video" },
+        "webview" => { package: "ruflet_webview", alias: "ruflet_webview" }
       }.freeze
-      # Native Swift products matching the Flet extensions selected by the
+      # Native Swift products matching the Ruflet extensions selected by the
       # ordinary Ruflet build configuration. The same resolved extension keys
       # drive Dart imports, Swift imports/registration, and Xcode linkage.
       NATIVE_APPLE_EXTENSION_MAP = {
@@ -617,6 +617,9 @@ module Ruflet
         build_log(verbose, "running flutter pub get")
         unless run_external_command(tools[:env], tools[:flutter], "pub", "get", chdir: client_dir, unbundled: true)
           warn "flutter pub get failed"
+          return false
+        end
+        if @ruflet_extension_selection_applied && !validate_local_ruflet_packages(client_dir)
           return false
         end
 
@@ -1904,7 +1907,7 @@ module Ruflet
         false
       end
 
-      # Flet extension packages expose an Extension class from a library named
+      # Ruflet extension packages expose an Extension class from a library named
       # after the package, so the import and registration can be derived.
       def sync_external_extension_registrations(path, entries)
         return if entries.empty?
@@ -2379,7 +2382,7 @@ module Ruflet
             template_root, client_dir, "apple_packages/ruflet_apple", verbose: verbose)
         end
 
-        # Older managed clients carried a macOS-only FilePicker override. Flet's
+        # Older managed clients carried a macOS-only FilePicker override. Ruflet's
         # core service owns FilePicker now, so this duplicate must not survive a
         # template refresh.
         FileUtils.rm_f(File.join(client_dir, "lib", "ruflet_file_picker_service.dart"))
@@ -3308,7 +3311,7 @@ module Ruflet
         return nil if key.empty?
 
         key.tr!("-", "_")
-        key.gsub!(/\A(flet_)+/, "")
+        key.gsub!(/\A(flet_)+/, "") # Compatibility for existing application configuration.
         key.gsub!(/\A(ruflet_)+/, "")
         key.gsub!(/\Aservice_/, "")
         key
@@ -3331,29 +3334,30 @@ module Ruflet
       end
 
       def sync_client_package_directories(client_dir, selected_packages)
-        packages_root = File.join(client_dir, "flet_packages")
-        return unless Dir.exist?(packages_root)
+        packages_root = File.join(client_dir, "ruflet_packages")
 
-        kept_packages = (["flet"] + selected_packages).uniq
+        kept_packages = (["ruflet"] + selected_packages).uniq
         template_root =
           if Ruflet::CLI.respond_to?(:resolve_ruflet_client_template_root, true)
             Ruflet::CLI.send(:resolve_ruflet_client_template_root)
           end
-        template_packages_root = template_root && File.join(template_root, "flet_packages")
+        template_packages_root = template_root && File.join(template_root, "ruflet_packages")
 
-        # A declaration can change between builds. Restore newly selected local
-        # packages from the immutable template before pruning the old selection.
+        # These are disposable client sources, not application files. Refresh
+        # even existing packages so a rebuild cannot keep an older engine fork.
         kept_packages.each do |package_name|
           destination = File.join(packages_root, package_name)
-          next if Dir.exist?(destination)
           next unless template_packages_root
 
           source = File.join(template_packages_root, package_name)
           next unless Dir.exist?(source)
           next if File.expand_path(source) == File.expand_path(destination)
 
-          FileUtils.cp_r(source, destination)
+          FileUtils.rm_rf(destination) if File.exist?(destination)
+          Ruflet::CLI.send(:copy_client_template_entry, template_packages_root, packages_root, package_name)
         end
+
+        return unless Dir.exist?(packages_root)
 
         Dir.children(packages_root).each do |entry|
           path = File.join(packages_root, entry)
@@ -3365,19 +3369,61 @@ module Ruflet
       end
 
       def sync_client_extension_dependencies(path, selected_packages)
-        return if selected_packages.empty?
-
         template_deps = template_client_pubspec_dependencies
         return if template_deps.empty?
 
         data = YAML.safe_load(read_text_file(path), aliases: true) || {}
         deps = (data["dependencies"] || {}).dup
-        selected_packages.each do |package_name|
+        deps.delete_if { |name, _| name == "flet" || name.start_with?("flet_") }
+        (["ruflet"] + selected_packages).each do |package_name|
           deps[package_name] = template_deps[package_name] if template_deps.key?(package_name)
         end
 
         data["dependencies"] = deps
         write_pubspec_yaml(path, data)
+      end
+
+      # Check Pub's actual result, including transitive local forks. Merely
+      # declaring a path dependency is insufficient: an override can replace it.
+      def validate_local_ruflet_packages(client_dir)
+        config_path = File.join(client_dir, ".dart_tool", "package_config.json")
+        resolved = JSON.parse(File.read(config_path)).fetch("packages")
+        legacy = resolved.map { |entry| entry.fetch("name") }.select { |name| name == "flet" || name.start_with?("flet_") }
+        raise "legacy Flet packages resolved: #{legacy.join(', ')}" unless legacy.empty?
+
+        expected = (["ruflet"] + Array(@ruflet_selected_flutter_extension_packages)).to_h do |name|
+          [name, File.join(client_dir, "ruflet_packages", name)]
+        end
+        # The core/extension manifests also select local decoupled vendor forks.
+        queue = expected.values.dup
+        until queue.empty?
+          root = queue.shift
+          manifest = YAML.safe_load(File.read(File.join(root, "pubspec.yaml")), aliases: true)
+          (manifest["dependencies"] || {}).each do |name, dependency|
+            next unless dependency.is_a?(Hash) && dependency["path"]
+            next if expected.key?(name)
+
+            local = File.expand_path(dependency.fetch("path"), root)
+            expected[name] = local
+            queue << local
+          end
+        end
+        base = "file://#{URI::DEFAULT_PARSER.escape(File.expand_path(config_path))}"
+        expected.each do |name, root|
+          entry = resolved.find { |package| package["name"] == name }
+          raise "missing local package #{name}" unless entry
+
+          uri = URI.join(base, entry.fetch("rootUri"))
+          actual = URI::DEFAULT_PARSER.unescape(uri.path)
+          unless uri.scheme == "file" && File.realpath(actual) == File.realpath(root)
+            raise "#{name} must resolve to the bundled Ruflet source at #{root}, got #{uri}"
+          end
+        end
+        build_note("Verified #{expected.length} local Ruflet engine, extension and vendor packages")
+        true
+      rescue StandardError => e
+        warn "build config error: local Ruflet package verification failed: #{e.message}"
+        false
       end
 
       def template_client_pubspec_dependencies
@@ -3447,7 +3493,7 @@ module Ruflet
         if marker_index
           lines.insert(marker_index, extension_line)
         else
-          list_index = lines.index { |line| line.include?("final extensions = <FletExtension>[") }
+          list_index = lines.index { |line| line.include?("final extensions = <RufletExtension>[") }
           lines.insert(list_index ? list_index + 1 : lines.length, extension_line)
         end
         lines.join
