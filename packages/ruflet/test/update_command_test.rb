@@ -80,67 +80,6 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
-  def test_ios_build_refreshes_native_renderer_bootstrap_and_apple_package
-    builder = DummyBuilder.new
-    builder.instance_variable_set(:@ruflet_experimental_native_renderer, true)
-
-    Dir.mktmpdir do |dir|
-      template_dir = File.join(dir, "template")
-      client_dir = File.join(dir, "client")
-      managed = {
-        "lib/main.dart" => "template main\n",
-        "lib/native_renderer.dart" => "dart native bridge\n",
-        "ios/Runner/Info.plist" => "template plist\n",
-        "ios/Runner/AppDelegate.swift" => "native app delegate\n",
-        "ios/Runner/RufletEngineChoice.swift" => "native engine choice\n",
-        "ios/Runner.xcodeproj/project.pbxproj" => "ruflet apple package link\n",
-        "apple_packages/ruflet_apple/Package.swift" => "native package\n",
-        "apple_packages/ruflet_apple/Sources/RufletApple/RufletApple.swift" => "native renderer\n",
-        "apple_packages/ruflet_apple/.build/stale" => "generated\n",
-        "apple_packages/ruflet_apple/.dart_tool/stale" => "generated\n",
-        "apple_packages/ruflet_apple/.swiftpm/stale" => "generated\n"
-      }
-      managed.each do |relative, content|
-        path = File.join(template_dir, relative)
-        FileUtils.mkdir_p(File.dirname(path))
-        File.write(path, content)
-      end
-      FileUtils.mkdir_p(File.join(client_dir, "ios", "Runner"))
-      File.write(File.join(client_dir, "ios", "Runner", "AppDelegate.swift"), "old flutter host\n")
-
-      Ruflet::CLI.stub(:resolve_ruflet_client_template_root, template_dir) do
-        builder.stub(:validate_native_apple_renderer_distribution, true) do
-          builder.send(
-            :refresh_managed_client_template_files,
-            client_dir, platform: "ios")
-        end
-      end
-
-      assert_equal(
-        "native app delegate\n",
-        File.read(File.join(client_dir, "ios", "Runner", "AppDelegate.swift")))
-      assert_equal(
-        "dart native bridge\n",
-        File.read(File.join(client_dir, "lib", "native_renderer.dart")))
-      assert_equal(
-        "native engine choice\n",
-        File.read(File.join(client_dir, "ios", "Runner", "RufletEngineChoice.swift")))
-      assert_equal(
-        "ruflet apple package link\n",
-        File.read(File.join(client_dir, "ios", "Runner.xcodeproj", "project.pbxproj")))
-      assert_equal(
-        "native renderer\n",
-        File.read(File.join(
-          client_dir, "apple_packages", "ruflet_apple", "Sources", "RufletApple",
-          "RufletApple.swift")))
-      refute_path_exists File.join(client_dir, "apple_packages", "ruflet_apple", ".build")
-      refute_path_exists File.join(client_dir, "apple_packages", "ruflet_apple", ".dart_tool")
-      refute_path_exists File.join(client_dir, "apple_packages", "ruflet_apple", ".swiftpm")
-      refute_path_exists File.join(
-        client_dir, "apple_packages", "ruflet_apple", "ruflet_apple")
-    end
-  end
-
   def test_native_apple_runtime_configuration_uses_actual_embedded_project_name
     builder = DummyBuilder.new
 
@@ -170,80 +109,12 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes content, "<key>RufletEmbeddedProject</key>"
       assert_includes content, "<string>my_explorer</string>"
       assert_match(/<key>RufletRuntimeAutostart<\/key>\s*<true\s*\/>/, content)
-      assert_match(/<key>RufletExperimentalNativeRenderer<\/key>\s*<true\s*\/>/, content)
+      refute_includes content, "RufletExperimentalNativeRenderer"
       refute_includes content, "NSAllowsLocalNetworking"
       refute_includes content, "NSAppTransportSecurity"
       refute_includes content, "NSLocalNetworkUsageDescription"
     ensure
       Dir.chdir(previous) if previous
-    end
-  end
-
-  def test_apple_build_copies_project_extensions_and_excludes_swift_caches
-    builder = DummyBuilder.new
-
-    Dir.mktmpdir do |dir|
-      project = File.join(dir, "project")
-      client = File.join(project, "build", "client")
-      package = File.join(project, "apple_extensions")
-      source = File.join(package, "Sources", "RufletAppExtensions")
-      FileUtils.mkdir_p(source)
-      FileUtils.mkdir_p(File.join(package, ".build"))
-      FileUtils.mkdir_p(File.join(package, ".build-ios-interaction"))
-      FileUtils.mkdir_p(File.join(package, "DerivedData"))
-      FileUtils.mkdir_p(File.join(package, "xcuserdata"))
-      File.write(File.join(package, "Package.swift"), "// project package\n")
-      File.write(File.join(source, "Extension.swift"), "struct ProjectExtension {}\n")
-      File.write(File.join(package, ".build", "stale"), "generated\n")
-      File.write(File.join(package, ".build-ios-interaction", "stale"), "generated\n")
-      File.write(File.join(package, "DerivedData", "stale"), "generated\n")
-      File.write(File.join(package, "xcuserdata", "stale"), "generated\n")
-
-      Dir.chdir(project) do
-        builder.send(
-          :sync_application_apple_extensions,
-          client, platform: "ios")
-      end
-
-      destination = File.join(client, "apple_extensions")
-      assert_equal "// project package\n", File.read(File.join(destination, "Package.swift"))
-      assert File.file?(File.join(
-        destination, "Sources", "RufletAppExtensions", "Extension.swift"))
-      refute_path_exists File.join(destination, ".build")
-      refute_path_exists File.join(destination, ".build-ios-interaction")
-      refute_path_exists File.join(destination, "DerivedData")
-      refute_path_exists File.join(destination, "xcuserdata")
-    end
-  end
-
-  def test_existing_project_without_extensions_uses_empty_template_registry
-    builder = DummyBuilder.new
-
-    Dir.mktmpdir do |dir|
-      project = File.join(dir, "project")
-      client = File.join(project, "build", "client")
-      template = File.join(dir, "template")
-      registry = File.join(
-        template, "apple_extensions", "Sources", "RufletAppExtensions",
-        "RufletAppExtensionRegistry.swift")
-      FileUtils.mkdir_p(project)
-      FileUtils.mkdir_p(File.dirname(registry))
-      File.write(File.join(template, "apple_extensions", "Package.swift"), "// default package\n")
-      File.write(registry, "public enum RufletAppExtensionRegistry {}\n")
-
-      Dir.chdir(project) do
-        Ruflet::CLI.stub(:resolve_ruflet_client_template_root, template) do
-          builder.send(
-            :sync_application_apple_extensions,
-            client, platform: "macos")
-        end
-      end
-
-      assert_equal(
-        "public enum RufletAppExtensionRegistry {}\n",
-        File.read(File.join(
-          client, "apple_extensions", "Sources", "RufletAppExtensions",
-          "RufletAppExtensionRegistry.swift")))
     end
   end
 
@@ -272,7 +143,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       content = File.read(plist)
       assert_match(/<key>RufletEmbeddedProject<\/key>\s*<string><\/string>/, content)
       assert_match(/<key>RufletRuntimeAutostart<\/key>\s*<false\s*\/>/, content)
-      assert_match(/<key>RufletExperimentalNativeRenderer<\/key>\s*<true\s*\/>/, content)
+      refute_includes content, "RufletExperimentalNativeRenderer"
       assert_includes content, "<string>must-not-be-used</string>"
       assert_includes content, "NSAllowsLocalNetworking"
       assert_includes content, "NSLocalNetworkUsageDescription"
@@ -354,8 +225,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
 
       Ruflet::CLI.stub(:resolve_ruflet_client_template_root, template) do
         assert builder.send(
-          :configure_apple_renderer_integration,
-          client, platform: "ios", enabled: false)
+          :remove_native_apple_renderer_integration,
+          client, platform: "ios")
       end
 
       assert_equal "flutter-only host\n", File.read(File.join(client, "ios", "Runner", "AppDelegate.swift"))
@@ -367,55 +238,6 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes plist, "$(PRODUCT_MODULE_NAME).SceneDelegate"
       refute_includes plist, "RufletSceneDelegate"
       refute_includes plist, "RufletExperimentalNativeRenderer"
-    end
-  end
-
-  def test_experimental_apple_extensions_are_generated_from_build_config
-    builder = DummyBuilder.new
-
-    Dir.mktmpdir do |dir|
-      choice = File.join(dir, "ios", "Runner", "RufletEngineChoice.swift")
-      project = File.join(dir, "ios", "Runner.xcodeproj", "project.pbxproj")
-      plist = File.join(dir, "ios", "Runner", "Info.plist")
-      FileUtils.mkdir_p(File.dirname(choice))
-      FileUtils.mkdir_p(File.dirname(project))
-      File.write(choice, "stale\n")
-      File.write(plist, "<plist><dict><key>GADApplicationIdentifier</key><string>sample</string></dict></plist>\n")
-      File.write(
-        project,
-        <<~PBX
-          A1 /* RufletCamera in Frameworks */,
-          A2 /* RufletPermissionHandler in Frameworks */,
-          A3 /* RufletVideo in Frameworks */,
-          A4 /* RufletAudio in Frameworks */,
-          B1 /* RufletCamera */,
-          B2 /* RufletPermissionHandler */,
-          B3 /* RufletVideo */,
-          B4 /* RufletAudio */,
-        PBX
-      )
-
-      extension_keys = builder.send(
-        :configured_extension_keys,
-        { "services" => ["camera"], "extensions" => ["video"] })
-      builder.send(
-        :apply_native_apple_extension_config,
-        dir, platform: "ios", extension_keys: extension_keys)
-
-      swift = File.read(choice)
-      assert_includes swift, "import RufletCamera"
-      assert_includes swift, "import RufletPermissionHandler"
-      assert_includes swift, "import RufletVideo"
-      assert_includes swift, "RufletCameraExtension()"
-      assert_includes swift, "RufletPermissionHandlerExtension()"
-      assert_includes swift, "RufletVideoExtension()"
-      refute_includes swift, "canImport"
-      pbx = File.read(project)
-      assert_includes pbx, "RufletCamera"
-      assert_includes pbx, "RufletPermissionHandler"
-      assert_includes pbx, "RufletVideo"
-      refute_includes pbx, "RufletAudio"
-      refute_includes File.read(plist), "GADApplicationIdentifier"
     end
   end
 
@@ -1139,46 +961,6 @@ class RufletCliUpdateCommandTest < Minitest::Test
     assert_includes err.string, "--experimental is supported only for ios and macos"
   ensure
     $stderr = original_stderr
-  end
-
-  def test_command_build_passes_experimental_renderer_to_apple_pipeline
-    builder = DummyBuilder.new
-
-    Dir.mktmpdir do |dir|
-      client_dir = File.join(dir, "ruflet_client")
-      FileUtils.mkdir_p(File.join(client_dir, "lib"))
-      File.write(File.join(client_dir, "lib", "main.server.dart"), "void main() {}\n")
-
-      builder.define_singleton_method(:detect_flutter_client_dir) { client_dir }
-      builder.define_singleton_method(:load_ruflet_config) do
-        { "app" => { "backend_url" => "https://api.example.com" } }
-      end
-      builder.define_singleton_method(:ensure_flutter!) do |_command_name, client_dir: nil, auto_install: true|
-        { flutter: "flutter", dart: "dart", env: {} }
-      end
-      test = self
-      builder.define_singleton_method(:prepare_flutter_client) do |_client_dir, **_kwargs|
-        test.assert send(:experimental_native_renderer?)
-        true
-      end
-      calls = []
-      builder.define_singleton_method(:system) do |_env, *_args, chdir: nil|
-        calls << _args
-        true
-      end
-
-      ["--experimental", "--exp"].each do |flag|
-        assert_equal 0, builder.command_build(["ios", flag])
-        assert_equal(
-          [
-            "flutter", "build", "ios", "--codesign", "--target", "lib/main.server.dart",
-            "--dart-define", "RUFLET_BACKEND_URL=https://api.example.com",
-            "--dart-define", "RUFLET_EXPERIMENTAL_NATIVE_RENDERER=true"
-          ],
-          calls.last
-        )
-      end
-    end
   end
 
   def test_command_build_runs_full_first_time_setup_before_prepare

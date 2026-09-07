@@ -5,46 +5,46 @@ require_relative "../icon_constant_names"
 require_relative "../cupertino_icon_lookup"
 
 module Ruflet
+  # Cupertino icon names, exposed as constants. Materialized on demand for the
+  # same reason as Ruflet::MaterialIcons -- see the note there.
   module CupertinoIcons
     module_function
 
-    ICONS = begin
-      source = Ruflet::CupertinoIconLookup.icon_map
-      if source.empty?
-        {
-          HOME: "house",
-          SEARCH: "search",
-          SETTINGS: "gear",
-          ADD: "add",
-          CLOSE: "clear"
-        }
-      else
-        source.keys.each_with_object({}) do |name, result|
-          text = Ruflet::IconNames.constant_for(name)
-          result[text.upcase.to_sym] = name
-        end
-      end.freeze
-    end
+    FALLBACK_ICONS = {
+      HOME: "house",
+      SEARCH: "search",
+      SETTINGS: "gear",
+      ADD: "add",
+      CLOSE: "clear"
+    }.freeze
 
-    ICONS.each do |const_name, icon_name|
-      next if const_defined?(const_name, false)
-
-      const_set(const_name, icon_name.to_s.downcase)
+    def icons
+      @icons ||= begin
+        source = Ruflet::CupertinoIconLookup.icon_map
+        if source.empty?
+          FALLBACK_ICONS
+        else
+          source.keys.each_with_object({}) do |name, result|
+            text = Ruflet::IconNames.constant_for(name)
+            result[text.upcase.to_sym] = name
+          end
+        end.freeze
+      end
     end
 
     def [](name)
-      key = name.to_s.upcase.to_sym
-      return const_get(key) if const_defined?(key, false)
+      icon = icons[name.to_s.upcase.to_sym]
+      return icon.to_s.downcase unless icon.nil?
 
       Ruflet::CupertinoIconLookup.canonical_name_for(name) || name.to_s
     end
 
     def constants(_inherit = true)
-      ICONS.keys
+      icons.keys
     end
 
     def all
-      ICONS.keys.map { |k| const_get(k) }
+      icons.values.map { |name| name.to_s.downcase }
     end
 
     def random
@@ -52,7 +52,27 @@ module Ruflet
     end
 
     def names
-      ICONS.values
+      icons.values
+    end
+
+    class << self
+      # See Ruflet::MaterialIcons.resolve_constant.
+      def resolve_constant(name)
+        return const_get(name) if const_defined?(name, false)
+        return const_set(:ICONS, icons) if name == :ICONS
+
+        key = name.to_s
+        source = Ruflet::CupertinoIconLookup.icon_map
+        return const_set(name, key.downcase) if source.key?(key)
+
+        icon = icons[name]
+        icon.nil? ? nil : const_set(name, icon.to_s.downcase)
+      end
+
+      def const_missing(name)
+        resolved = resolve_constant(name)
+        resolved.nil? ? super : resolved
+      end
     end
   end
 end

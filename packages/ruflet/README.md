@@ -36,9 +36,9 @@ ruflet install [--device DEVICE_ID]
 ```
 
 `--experimental` is available only for iOS and macOS builds. It selects the
-native Apple renderer while the normal Ruflet build pipeline continues to
-resolve the declared services, extensions, permissions, assets, and runtime
-mode. Without it, Apple builds use only the Flutter renderer.
+experimental Apple release channel; the normal Ruflet build pipeline still
+resolves the declared services, extensions, permissions, assets, and runtime
+mode. Every platform renders through the Ruflet Flutter engine.
 
 `--lite` creates the compact self-contained build: project Ruby is precompiled
 when the matching mruby compiler is available, and the bundled VM starts in
@@ -53,9 +53,7 @@ a target-specific CRuby runtime. Set `RUFLET_FULL_RUNTIME_PATH`, or
 Ruflet refuses to substitute the lite mruby engine for a requested full build.
 
 Before Flutter resolves or bundles packages, Ruflet removes extension plugins
-that are not selected by the current services/extensions configuration. With
-the experimental Apple renderer, built-in declarations are registered as Swift
-extensions and their duplicate Dart/Flutter plugins are excluded entirely.
+that are not selected by the current services/extensions configuration.
 
 On macOS, `ruflet run --experimental` (or `ruflet run --exp`) downloads the
 experimental Ruflet Explorer iOS Simulator prebuild the first time, reuses its

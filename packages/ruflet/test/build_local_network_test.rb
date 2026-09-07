@@ -9,7 +9,7 @@ class RufletBuildLocalNetworkTest < Minitest::Test
   end
 
   def test_self_profiles_can_explicitly_use_lan_without_changing_runtime_mode
-    %i[lite full].product(%w[ios ipa macos], [true, false]).each do |profile, platform, experimental|
+    %i[lite full].product(%w[ios ipa macos]).each do |profile, platform|
       Dir.mktmpdir do |dir|
         apple_platform = platform == "ipa" ? "ios" : platform
         plist = File.join(dir, apple_platform, "Runner", "Info.plist")
@@ -29,7 +29,7 @@ class RufletBuildLocalNetworkTest < Minitest::Test
           "local_network_usage_description" => "Connect to Ruby & LAN apps."}}
         2.times do
           builder.send(:configure_native_apple_runtime, dir, platform: platform,
-            self_contained: true, config: config, experimental: experimental)
+            self_contained: true, config: config)
         end
         content = File.read(plist)
         assert_equal 1, content.scan("<key>NSAllowsLocalNetworking</key>").length

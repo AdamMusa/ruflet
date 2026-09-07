@@ -44,7 +44,22 @@ class RufletRuntime {
   }
 
   /// The endpoint of a runtime the platform layer started on its own.
-  /// Self-contained native applications return `inprocess://embedded`.
+  ///
+  /// Platforms that can boot the VM before the Flutter engine exists do so, and
+  /// this completes as soon as that runtime is reachable — immediately, when the
+  /// VM finished booting while the engine was still starting. Self-contained
+  /// native applications return `inprocess://embedded`: the runtime is reached
+  /// over the binary bridge, not a loopback socket. Apps using this do not call
+  /// [start]; the platform owns the runtime's lifecycle and reads its
+  /// configuration from the app bundle.
+  ///
+  /// Do not await this before `runApp`. The VM is already booting in parallel
+  /// with the engine, and blocking startup on it hands back the time that
+  /// parallelism was there to save. Request it from the widget tree and show a
+  /// splash until it resolves.
+  ///
+  /// Throws a [PlatformException] if the platform has no autostarted runtime,
+  /// or if the runtime failed before it became reachable.
   static Future<Uri> serverUrl() {
     return RufletRuntimePlatform.instance.serverUrl();
   }

@@ -843,6 +843,30 @@ class RufletHtmlAppTest < Minitest::Test
     assert_equal "/search?q=ada", @fetcher.requests.last[:url]
   end
 
+  # A service tap invokes a native method, so anything that is not one of its
+  # arguments must be filtered out: the client matches the call against the
+  # method signature and a stray key makes the whole tap do nothing.
+  def test_control_targets_are_never_sent_as_service_arguments
+    app = Ruflet::Rails::HtmlDsl::HtmlApp.allocate
+    spec = {
+      "service" => "audio-recorder-start", "icon" => "mic", "variant" => "outlined",
+      "result-target" => "recorder-status", "indicator-target" => "recorder-pulse",
+      "record-target" => "recorder-record", "stop-target" => "recorder-stop",
+      "on-error-target" => "recorder-status", "output-path" => "/tmp/take.wav"
+    }
+
+    assert_empty app.send(:service_args, spec)
+  end
+
+  # …while a real argument still reaches the device.
+  def test_service_arguments_that_are_not_markup_survive
+    app = Ruflet::Rails::HtmlDsl::HtmlApp.allocate
+    args = app.send(:service_args, { "service" => "gyroscope-start", "interval" => "200",
+                                     "result-target" => "readout" })
+
+    assert_equal({ "interval" => "200" }, args)
+  end
+
   # --- media URLs ----------------------------------------------------------
   #
   # Screens are dispatched in-process, but the client loads media itself over

@@ -1,3 +1,42 @@
+## 0.0.14
+
+- Autostart no longer needs configuring. The packaged project is the opt-in: a
+  self-contained build ships one and a server-driven build does not, which is
+  the distinction the flag encoded anyway. It therefore does not matter which
+  version of the CLI generated the client.
+  `RufletRuntimeAutostart` / `ruflet.runtime.autostart` still turn it off.
+- `start()` keeps working when the platform owns the runtime. Its arguments
+  cannot take effect -- the VM boots once per process -- so instead of failing,
+  the port is written into the file the caller is polling. A client generated
+  before `serverUrl()` existed finds the server and gets the parallel startup
+  without changing a line. On macOS that takes such a client from 350ms to a
+  bound server and 435ms to a rendered page, down to 104ms and 154ms.
+- Rebuild the Linux and Windows VM artifacts, which 0.0.13 left with the eager
+  icon tables. All five platforms now build them on demand.
+
+## 0.0.13
+
+- The platform layer now starts the VM itself, before the Flutter engine
+  exists: from `+load` on iOS and macOS, from an `androidx.startup` provider on
+  Android, and from plugin registration on Linux and Windows. The VM boots in
+  parallel with the engine instead of after it, so by the time Dart asks the
+  embedded server has usually already bound its port. Opt in with
+  `RufletRuntimeAutostart` (Info.plist) or `ruflet.runtime.autostart`
+  (AndroidManifest); desktop treats a packaged project as the opt-in.
+- Add `RufletRuntime.serverUrl()`, which reports where that runtime ended up.
+  Do not await it before `runApp` -- the VM is already booting alongside the
+  engine, and blocking startup on it gives back the time that buys.
+- `start()` now fails with `autostart_owns_runtime` when the platform owns the
+  runtime. The VM boots once per process, so the call could not take effect;
+  it previously reported success while silently doing nothing, leaving the
+  caller waiting on a port file nothing would write.
+- Android unpacks the packaged project out of the APK itself, once per install,
+  rather than having Dart copy it file by file on every launch.
+- Rebuild the VM artifacts. Icon tables are now built on demand instead of at
+  VM open, which was ~300ms of every cold start: macOS boots in 23ms (was
+  348ms) and Android in 41ms (was 466ms). The artifacts are also stripped,
+  roughly a 60% size reduction. Linux and Windows artifacts are unchanged.
+
 ## 0.0.12
 
 - Every platform plugin now bridges to the same four `ruflet_vm_*` entry points

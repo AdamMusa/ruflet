@@ -241,8 +241,8 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           name: Ruflet Explorer ${{ github.ref_name }}
-          prerelease: true
-          make_latest: false
+          prerelease: false
+          make_latest: true
           overwrite_files: true
           files: ${{ matrix.artifact }}
 
@@ -354,6 +354,19 @@ jobs:
             ruflet_explorer-android-apk.apk
             ruflet_explorer-android-appbundle.aab
 
+      - name: Publish Android to versioned client release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Ruflet Explorer ${{ github.ref_name }}
+          prerelease: false
+          make_latest: true
+          overwrite_files: true
+          files: |
+            ruflet_explorer-android-apk.apk
+            ruflet_explorer-android-appbundle.aab
+
   build-ios-simulator:
     name: Build iOS Simulator
     needs: verify-explorer
@@ -430,6 +443,17 @@ jobs:
           overwrite_files: true
           files: ruflet_explorer-ios-simulator.zip
 
+      - name: Publish iOS simulator to versioned client release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Ruflet Explorer ${{ github.ref_name }}
+          prerelease: false
+          make_latest: true
+          overwrite_files: true
+          files: ruflet_explorer-ios-simulator.zip
+
   build-experimental-apple:
     name: Build experimental ${{ matrix.target }}
     needs: verify-explorer
@@ -475,13 +499,6 @@ jobs:
         with:
           channel: stable
           cache: true
-
-      - name: Verify authoritative Apple renderer
-        working-directory: ruflet-template
-        run: |
-          git merge-base --is-ancestor fee87c9f7536cfc0bf0e937d8af14dfabd4e47fc HEAD
-          test -f templates/ruflet_flutter_template/apple_packages/ruflet_apple/Package.swift
-          test -f templates/ruflet_flutter_template/apple_packages/ruflet_apple/Sources/RufletEngine/RufletApp.swift
 
       - name: Build experimental ${{ matrix.target }} client
         working-directory: explorer
@@ -561,7 +578,8 @@ jobs:
     name: Publish completed prebuild revision
     if: >-
       (github.event_name == 'workflow_dispatch' ||
-       (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'prebuild'))) &&
+       (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'prebuild' ||
+        startsWith(github.ref, 'refs/tags/v')))) &&
       needs.build-desktop-and-web.result == 'success' &&
       needs.build-ios-simulator.result == 'success' &&
       needs.build-android.result == 'success' &&
@@ -589,12 +607,24 @@ jobs:
           path: ruflet_explorer-manifest.json
 
       - name: Mark prebuild channel complete
+        if: "!startsWith(github.ref, 'refs/tags/v')"
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name == 'prebuild' && 'prebuild' || 'prebuild-main' }}
           name: ${{ github.ref_name == 'prebuild' && 'Ruflet Explorer Prebuild (prebuild)' || 'Ruflet Explorer Prebuild (main)' }}
           prerelease: true
           make_latest: false
+          overwrite_files: true
+          files: ruflet_explorer-manifest.json
+
+      - name: Mark versioned client release complete
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Ruflet Explorer ${{ github.ref_name }}
+          prerelease: false
+          make_latest: true
           overwrite_files: true
           files: ruflet_explorer-manifest.json
 

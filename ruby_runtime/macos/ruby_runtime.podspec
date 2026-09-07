@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'ruby_runtime'
-  s.version          = '0.0.8'
+  s.version          = '0.0.14'
   s.summary          = 'Embedded Ruby (mruby) VM for Flutter macOS.'
   s.description      = <<-DESC
 Links the packaged Ruflet mruby VM and exposes start/status/stop over a
@@ -18,7 +18,9 @@ Flutter method channel. Application code ships as an app asset payload.
   s.source_files = [
     'Classes/RubyRuntimeMacosPlugin.{h,m}'
   ]
-  s.preserve_paths = ['../desktop/*.h', '../apple/*.h']
+  # apple/ holds the platform-side startup shared with iOS; desktop/ holds the
+  # VM entry points shared with every platform.
+  s.preserve_paths = ['../desktop/ruflet_vm_host.h', '../apple/*.h']
   s.vendored_libraries = 'Frameworks/libruflet_vm.a'
 
   s.dependency 'FlutterMacOS'

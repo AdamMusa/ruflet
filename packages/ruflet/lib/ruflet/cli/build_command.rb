@@ -35,30 +35,6 @@ module Ruflet
         "video" => { package: "ruflet_video", alias: "ruflet_video" },
         "webview" => { package: "ruflet_webview", alias: "ruflet_webview" }
       }.freeze
-      # Native Swift products matching the Ruflet extensions selected by the
-      # ordinary Ruflet build configuration. The same resolved extension keys
-      # drive Dart imports, Swift imports/registration, and Xcode linkage.
-      NATIVE_APPLE_EXTENSION_MAP = {
-        "ads" => { module: "RufletAds", initializer: "RufletAds.Extension()" },
-        "audio" => { module: "RufletAudio", initializer: "RufletAudioExtension()" },
-        "audio_recorder" => { module: "RufletAudioRecorder", initializer: "RufletAudioRecorderExtension()" },
-        "camera" => { module: "RufletCamera", initializer: "RufletCameraExtension()" },
-        "charts" => { module: "RufletCharts", initializer: "RufletChartsExtension()" },
-        "code_editor" => { module: "RufletCodeEditor", initializer: "RufletCodeEditorExtension()" },
-        "color_pickers" => { module: "RufletColorPickers", initializer: "RufletColorPickersExtension()" },
-        "datatable2" => { module: "RufletDataTable2", initializer: "RufletDataTable2Extension()" },
-        "flashlight" => { module: "RufletFlashlight", initializer: "RufletFlashlightExtension()" },
-        "geolocator" => { module: "RufletGeolocator", initializer: "RufletGeolocatorExtension()" },
-        "lottie" => { module: "RufletLottie", initializer: "RufletLottieExtension()" },
-        "map" => { module: "RufletMap", initializer: "RufletMap.Extension()" },
-        "permission_handler" => { module: "RufletPermissionHandler", initializer: "RufletPermissionHandlerExtension()" },
-        "qrcode_scanner" => { module: "RufletQRScanner", initializer: "RufletQRScannerExtension()" },
-        "rive" => { module: "RufletRive", initializer: "RufletRiveExtension()" },
-        "secure_storage" => { module: "RufletSecureStorage", initializer: "RufletSecureStorageExtension()" },
-        "spinkit" => { module: "RufletSpinKit", initializer: "RufletSpinKitExtension()" },
-        "video" => { module: "RufletVideo", initializer: "RufletVideoExtension()" },
-        "webview" => { module: "RufletWebView", initializer: "RufletWebViewExtension()" }
-      }.freeze
       PROTECTED_SERVICE_EXTENSIONS = {
         "camera" => %w[camera permission_handler],
         "microphone" => %w[audio_recorder permission_handler],
@@ -178,7 +154,6 @@ module Ruflet
         requested_platform = platform
         platform = "ios" if platform == "ipa"
         @ruflet_build_platform = platform
-        @ruflet_experimental_native_renderer = !!experimental
 
         # The embedded Ruby VM is a native plugin with no browser
         # implementation, so a self-contained web build produces an app that
@@ -198,7 +173,7 @@ module Ruflet
           return 1
         end
 
-        renderer = experimental ? ", experimental native renderer" : ""
+        renderer = experimental ? ", experimental Flutter channel" : ""
         mode = self_contained ? "self-contained #{runtime_profile}" : "server-driven"
         build_note("Preparing #{platform} build (#{mode}#{renderer})")
         config = load_ruflet_config
@@ -230,6 +205,9 @@ module Ruflet
           if @ruflet_runtime_profile_explicit
             build_args += ["--dart-define", "RUFLET_RUNTIME_PROFILE=#{runtime_profile}"]
           end
+          # The platform layer starts the VM before Flutter exists, so the app
+          # bundle -- not a Dart define -- has to carry the same decision.
+          configure_platform_autostart(client_dir, platform, verbose: !!verbose)
         elsif backend_url
           build_args += ["--dart-define", "RUFLET_BACKEND_URL=#{backend_url}"]
         elsif RUNTIME_RESOLVED_BACKEND_PLATFORMS.include?(platform)
@@ -242,9 +220,6 @@ module Ruflet
           warn "build config error: backend_url is required for server-driven builds"
           warn "Set app.backend_url or backend_url in ruflet.yaml"
           return 1
-        end
-        if experimental
-          build_args += ["--dart-define", "RUFLET_EXPERIMENTAL_NATIVE_RENDERER=true"]
         end
         build_args << "-v" if verbose
         stage_ios_simulator_ruby_runtime(client_dir, build_args, verbose: !!verbose) if self_contained
@@ -325,10 +300,6 @@ module Ruflet
       end
 
       private
-
-      def experimental_native_renderer?
-        @ruflet_experimental_native_renderer == true
-      end
 
       def extract_option_value!(args, *flags)
         flags.each do |flag|
@@ -586,14 +557,9 @@ module Ruflet
         refreshed = refresh_managed_client_template_files(
           client_dir, platform: platform, verbose: verbose)
         return false if refreshed == false
-        unless configure_apple_renderer_integration(
-          client_dir, platform: platform, enabled: experimental_native_renderer?,
-          verbose: verbose)
+        unless remove_native_apple_renderer_integration(
+          client_dir, platform: platform, verbose: verbose)
           return false
-        end
-        if experimental_native_renderer?
-          sync_application_apple_extensions(
-            client_dir, platform: platform, verbose: verbose)
         end
         metadata = sync_client_metadata(client_dir, config, verbose: verbose)
         return false unless validate_mobile_app_identity(metadata, platform: platform)
@@ -605,7 +571,7 @@ module Ruflet
         return false if configured == false
         configure_native_apple_runtime(
           client_dir, platform: platform, self_contained: self_contained,
-          config: config, experimental: experimental_native_renderer?, verbose: verbose)
+          config: config, verbose: verbose)
         configure_android_runtime(
           client_dir, platform: platform, self_contained: self_contained,
           verbose: verbose)
@@ -613,11 +579,6 @@ module Ruflet
         extension_keys = apply_service_extension_config(client_dir, config)
         if @ruflet_extension_selection_applied && !validate_flutter_extension_selection(client_dir)
           return false
-        end
-        if experimental_native_renderer?
-          apply_native_apple_extension_config(
-            client_dir, platform: platform, extension_keys: extension_keys,
-            verbose: verbose)
         end
         asset_flags = apply_build_config(client_dir, config)
         if asset_flags[:error]
@@ -1731,15 +1692,12 @@ module Ruflet
 
       def apply_service_extension_config(client_dir, config = {}, self_contained: @ruflet_self_contained_build)
         extension_keys = configured_extension_keys(config)
-        # The experimental Apple host renders these extensions in Swift. Keep
-        # the resolved keys for native registration, but do not also ship the
-        # equivalent Dart plugins and their native Flutter frameworks.
-        flutter_extension_keys = experimental_native_renderer? ? [] : extension_keys
+        flutter_extension_keys = extension_keys
         extension_packages = flutter_extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:package) }.uniq
         extension_aliases = flutter_extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:alias) }.uniq
 
         configured_external = external_extension_entries(config)
-        external = experimental_native_renderer? ? [] : configured_external
+        external = configured_external
         previous_external_names = managed_external_extension_names(client_dir)
         discovered_external_names = discover_registered_external_extension_names(client_dir)
         removable_external_names = (
@@ -1773,9 +1731,6 @@ module Ruflet
         @ruflet_selected_external_extension_packages = external.map { |entry| entry[:name] }
         @ruflet_managed_external_extension_packages = removable_external_names
         @ruflet_extension_selection_applied = true
-        if experimental_native_renderer? && (!extension_keys.empty? || !configured_external.empty?)
-          build_note("Native Apple extensions selected; excluded equivalent Flutter plugins from the app bundle")
-        end
         extension_keys
       end
 
@@ -2249,7 +2204,10 @@ module Ruflet
       # A self-contained build needs the embedded VM. Prefer a local checkout so
       # the runtime under development is the one packaged, and otherwise resolve
       # the published package.
-      PUBLISHED_RUBY_RUNTIME_CONSTRAINT = "^0.0.9"
+      # 0.0.13 is the first release where the platform layer starts the VM and
+      # exposes serverUrl(); the client entrypoint calls it, so an older runtime
+      # would not build.
+      PUBLISHED_RUBY_RUNTIME_CONSTRAINT = "^0.0.14"
 
       def ruby_runtime_dependency(current_dependency = nil)
         if embedded_runtime_profile == :full && @ruflet_full_runtime_path
@@ -2341,16 +2299,10 @@ module Ruflet
         return false unless validate_template_ruflet_source_integrity(
           template_root, verbose: verbose)
 
-        if experimental_native_renderer? && %w[ios ipa macos].include?(platform.to_s)
-          return false unless validate_native_apple_renderer_distribution(
-            template_root, verbose: verbose)
-        end
-
         managed_files = [
           "lib/main.dart",
           "lib/main.self.dart",
           "lib/main.server.dart",
-          "lib/native_renderer.dart",
           "lib/connection_probe.dart",
           "lib/connection_probe_io.dart",
           "lib/connection_probe_stub.dart",
@@ -2371,7 +2323,6 @@ module Ruflet
           managed_files.concat(
             [
               "ios/Runner/AppDelegate.swift",
-              "ios/Runner/RufletEngineChoice.swift",
               "ios/Runner.xcodeproj/project.pbxproj"
             ]
           )
@@ -2379,7 +2330,6 @@ module Ruflet
           managed_files.concat(
             [
               "macos/Runner/MainFlutterWindow.swift",
-              "macos/Runner/RufletEngineChoice.swift",
               "macos/Runner.xcodeproj/project.pbxproj"
             ]
           )
@@ -2393,11 +2343,6 @@ module Ruflet
           FileUtils.mkdir_p(File.dirname(destination))
           FileUtils.cp(source, destination)
           build_log(verbose, "refreshed template file #{relative_path}")
-        end
-
-        if experimental_native_renderer? && %w[ios ipa macos].include?(platform.to_s)
-          sync_managed_template_tree(
-            template_root, client_dir, "apple_packages/ruflet_apple", verbose: verbose)
         end
 
         # Older managed clients carried a macOS-only FilePicker override. Ruflet's
@@ -2475,43 +2420,16 @@ module Ruflet
         false
       end
 
-      # The standalone client template owns the editable Apple renderer. Build
-      # clients receive an exact managed copy from that package; there is no
-      # second renderer in this repository and no fallback implementation.
-      def validate_native_apple_renderer_distribution(template_root, verbose: false)
-        package_root = File.join(template_root, "apple_packages", "ruflet_apple")
-        required = [
-          "Package.swift",
-          "Sources/RufletEngine/RufletApp.swift",
-          "Sources/RufletEngine/RufletAppView.swift"
-        ]
-        missing = required.reject { |relative| File.file?(File.join(package_root, relative)) }
-        return true if missing.empty?
-
-        warn "build config error: the authoritative Apple renderer is incomplete"
-        missing.each { |relative| warn "  missing: apple_packages/ruflet_apple/#{relative}" }
-        false
-      end
-
-      def configure_apple_renderer_integration(client_dir, platform:, enabled:, verbose: false)
+      # Ruflet had a second, Swift-rendered Apple host. It is gone: every
+      # platform renders through the Ruflet Flutter engine. A client generated
+      # while it existed still carries the Swift package, the engine-choice
+      # shim and the Xcode references, so a rebuild strips them.
+      def remove_native_apple_renderer_integration(client_dir, platform:, verbose: false)
         apple_platform = case platform.to_s
         when "ios", "ipa" then "ios"
         when "macos" then "macos"
         end
         return true unless apple_platform
-
-        if enabled
-          package = File.join(client_dir, "apple_packages", "ruflet_apple", "Package.swift")
-          choice = File.join(client_dir, apple_platform, "Runner", "RufletEngineChoice.swift")
-          unless File.file?(package) && File.file?(choice)
-            warn "build config error: the Ruflet client template does not contain the native Apple renderer"
-            warn "Refresh the Ruflet template, then run the build again."
-            return false
-          end
-          configure_ios_scene_delegate(client_dir, native: true) if apple_platform == "ios"
-          build_log(verbose, "enabled experimental native Apple renderer")
-          return true
-        end
 
         unless restore_flutter_apple_host(client_dir, apple_platform, verbose: verbose)
           return false
@@ -2520,12 +2438,12 @@ module Ruflet
         FileUtils.rm_f(File.join(client_dir, apple_platform, "Runner", "RufletEngineChoice.swift"))
         FileUtils.rm_rf(File.join(client_dir, "apple_packages"))
         FileUtils.rm_rf(File.join(client_dir, "apple_extensions"))
-        configure_ios_scene_delegate(client_dir, native: false) if apple_platform == "ios"
+        configure_ios_scene_delegate(client_dir) if apple_platform == "ios"
         apple_info_plist_paths(client_dir).each do |path|
           remove_plist_value(path, "RufletExperimentalNativeRenderer")
           remove_plist_value(path, "GADApplicationIdentifier")
         end
-        build_log(verbose, "using Flutter renderer; removed native Apple package integration")
+        build_log(verbose, "removed native Apple renderer integration")
         true
       end
 
@@ -2564,15 +2482,17 @@ module Ruflet
         write_text_file(path, content)
       end
 
-      def configure_ios_scene_delegate(client_dir, native:)
+      # Only the Flutter host remains, so the scene delegate is always Flutter's.
+      # A client built against the Swift renderer names RufletSceneDelegate here
+      # and would launch into a class its bundle no longer contains.
+      def configure_ios_scene_delegate(client_dir)
         path = File.join(client_dir, "ios", "Runner", "Info.plist")
         return unless File.file?(path)
 
         content = read_text_file(path)
-        delegate = native ? "RufletSceneDelegate" : "SceneDelegate"
         content.gsub!(
           %r{(<key>UISceneDelegateClassName</key>\s*<string>)\$\(PRODUCT_MODULE_NAME\)\.(?:RufletSceneDelegate|FlutterSceneDelegate|SceneDelegate)(</string>)}m,
-          "\\1$(PRODUCT_MODULE_NAME).#{delegate}\\2"
+          "\\1$(PRODUCT_MODULE_NAME).SceneDelegate\\2"
         )
         write_text_file(path, content)
       end
@@ -2637,136 +2557,8 @@ module Ruflet
         write_text_file(path, content)
       end
 
-      def apply_native_apple_extension_config(
-        client_dir, platform:, extension_keys:, verbose: false
-      )
-        apple_platform = %w[ios ipa].include?(platform.to_s) ? "ios" : platform.to_s
-        return unless %w[ios macos].include?(apple_platform)
-
-        selected = Array(extension_keys).filter_map do |key|
-          spec = NATIVE_APPLE_EXTENSION_MAP[key]
-          [key, spec] if spec
-        end
-        selected_modules = selected.map { |_key, spec| spec.fetch(:module) }
-        unselected_modules = NATIVE_APPLE_EXTENSION_MAP.values
-          .map { |spec| spec.fetch(:module) }
-          .uniq - selected_modules
-
-        choice_path = File.join(client_dir, apple_platform, "Runner", "RufletEngineChoice.swift")
-        if File.file?(choice_path)
-          imports = selected_modules.map { |name| "import #{name}" }.join("\n")
-          registrations = selected.map do |_key, spec|
-            "    result.append(#{spec.fetch(:initializer)})"
-          end.join("\n")
-          source = <<~SWIFT
-            import Foundation
-            import RufletApple
-            import RufletAppExtensions
-            #{imports}
-
-            /// Generated by `ruflet build --experimental` from the same
-            /// services/extensions configuration used by the Flutter client.
-            enum RufletEngineChoice {
-              static var usesNativeRenderer: Bool {
-                let value = Bundle.main.object(
-                  forInfoDictionaryKey: "RufletExperimentalNativeRenderer")
-                if let flag = value as? Bool { return flag }
-                if let flag = value as? NSNumber { return flag.boolValue }
-                return false
-              }
-
-              static func pageURL(from raw: String) -> URL? {
-                RufletPageAddress.parse(raw)
-              }
-
-              @MainActor static var extensions: [any RufletExtension] {
-                var result = RufletAppExtensionRegistry.extensions
-            #{registrations}
-                return result
-              }
-            }
-          SWIFT
-          write_text_file(choice_path, source)
-        end
-
-        pbxproj = File.join(client_dir, apple_platform, "Runner.xcodeproj", "project.pbxproj")
-        if File.file?(pbxproj)
-          content = read_text_file(pbxproj)
-          content = content.lines.reject do |line|
-            unselected_modules.any? do |name|
-              line.match?(/\/\* #{Regexp.escape(name)}(?: in Frameworks)? \*\//)
-            end
-          end.join
-          write_text_file(pbxproj, content)
-        end
-
-        unless selected_modules.include?("RufletAds")
-          remove_plist_value(
-            File.join(client_dir, "ios", "Runner", "Info.plist"),
-            "GADApplicationIdentifier") if apple_platform == "ios"
-        end
-        build_log(
-          verbose,
-          "native Apple extensions=#{selected.empty? ? 'core only' : selected.map(&:first).join(',')}"
-        )
-      end
-
-      def sync_managed_template_tree(template_root, client_dir, relative_path, verbose: false)
-        source = File.join(template_root, relative_path)
-        return unless Dir.exist?(source)
-
-        destination = File.join(client_dir, relative_path)
-        sync_apple_source_tree(source, destination)
-        build_log(verbose, "refreshed template tree #{relative_path}")
-      end
-
-      # Application-defined RufletExtension implementations live outside the
-      # generated Flutter client. New projects own <project>/apple_extensions;
-      # existing projects receive the empty template registry until they opt
-      # in. Both server-driven and self-contained builds use the same package.
-      def sync_application_apple_extensions(client_dir, platform:, verbose: false)
-        return unless %w[ios ipa macos].include?(platform.to_s)
-
-        template_root = if Ruflet::CLI.respond_to?(:resolve_ruflet_client_template_root, true)
-          Ruflet::CLI.send(:resolve_ruflet_client_template_root)
-        end
-        project_source = File.join(Dir.pwd, "apple_extensions")
-        template_source = template_root && File.join(template_root, "apple_extensions")
-        source = if File.file?(File.join(project_source, "Package.swift"))
-          project_source
-        elsif template_source && File.file?(File.join(template_source, "Package.swift"))
-          template_source
-        end
-        return unless source
-
-        destination = File.join(client_dir, "apple_extensions")
-        sync_apple_source_tree(source, destination)
-        owner = source == project_source ? "project" : "template default"
-        build_log(verbose, "refreshed #{owner} Apple extensions")
-      end
-
-      def sync_apple_source_tree(source, destination)
-        FileUtils.rm_rf(destination)
-        FileUtils.mkdir_p(destination)
-        # SwiftPM and Dart create mutable caches directly inside the package.
-        # Copying the whole directory and deleting those caches afterwards is
-        # too late: framework resource symlinks inside `.build` can collide or
-        # escape while FileUtils is still traversing them. Treat only the
-        # package's source tree as managed template input from the outset.
-        generated_entries = %w[
-          .swiftpm .dart_tool .claude DerivedData xcuserdata
-        ]
-        Dir.children(source).each do |entry|
-          next if generated_entries.include?(entry) || entry == ".build" || entry.start_with?(".build-")
-
-          FileUtils.cp_r(
-            File.join(source, entry), File.join(destination, entry),
-            preserve: true)
-        end
-      end
-
       def configure_native_apple_runtime(
-        client_dir, platform:, self_contained:, config: {}, experimental: true, verbose: false
+        client_dir, platform:, self_contained:, config: {}, verbose: false
       )
         plist_paths = case platform.to_s
         when "ios", "ipa"
@@ -2787,9 +2579,7 @@ module Ruflet
           upsert_plist_string(
             path, "RufletRuntimeProfile",
             self_contained ? embedded_runtime_profile.to_s : "")
-          upsert_plist_boolean(
-            path, "RufletExperimentalNativeRenderer",
-            experimental)
+          remove_plist_value(path, "RufletExperimentalNativeRenderer")
           apple_platform = platform.to_s == "ipa" ? "ios" : platform.to_s
           platform_config = platform_build_config(config, apple_platform)
           if platform_config["local_network"] == true
@@ -3315,6 +3105,62 @@ module Ruflet
         name = File.basename(Dir.pwd.to_s)
         name = "app" if name.to_s.strip.empty?
         name
+      end
+
+      # Tells the platform layer to start the embedded runtime, and which
+      # packaged project to run.
+      #
+      # This is platform configuration rather than a dart-define because the VM
+      # starts before Dart does: on Apple platforms from the plugin's +load, on
+      # Android from an androidx.startup provider. Neither can read a value that
+      # only exists inside the Dart isolate.
+      #
+      # Desktop needs nothing here -- it has no manifest to carry a flag, and
+      # treats the presence of a packaged project as the opt-in, which is the
+      # same distinction this flag draws on the other platforms.
+      def configure_platform_autostart(client_dir, platform, verbose: false)
+        project = self_contained_project_name
+        case platform
+        when "ios", "macos"
+          plist = File.join(client_dir, platform, "Runner", "Info.plist")
+          return unless File.file?(plist)
+
+          set_plist_value(plist, "RufletRuntimeAutostart", "bool", "true")
+          set_plist_value(plist, "RufletEmbeddedProject", "string", project)
+          build_log(verbose, "enabled runtime autostart in #{platform}/Runner/Info.plist")
+        when "apk", "appbundle", "android"
+          manifest = File.join(
+            client_dir, "android", "app", "src", "main", "AndroidManifest.xml"
+          )
+          return unless File.file?(manifest)
+
+          set_android_meta_data(manifest, "ruflet.runtime.autostart", "true")
+          set_android_meta_data(manifest, "ruflet.runtime.project", project)
+          build_log(verbose, "enabled runtime autostart in AndroidManifest.xml")
+        end
+      end
+
+      def set_plist_value(plist, key, type, value)
+        # Delete first: PlistBuddy's Add fails on an existing key, and a rebuild
+        # after renaming the project would otherwise keep the stale name.
+        system("/usr/libexec/PlistBuddy", "-c", "Delete :#{key}", plist,
+               out: File::NULL, err: File::NULL)
+        system("/usr/libexec/PlistBuddy", "-c", "Add :#{key} #{type} #{value}",
+               plist, out: File::NULL, err: File::NULL)
+      end
+
+      def set_android_meta_data(manifest, name, value)
+        contents = File.read(manifest)
+        entry = %(<meta-data android:name="#{name}" android:value="#{value}" />)
+        existing = /<meta-data\s+android:name="#{Regexp.escape(name)}"[^>]*\/>/
+
+        contents =
+          if contents.match?(existing)
+            contents.sub(existing, entry)
+          else
+            contents.sub(%r{(\n(\s*)</application>)}) { "\n#{$2}    #{entry}#{$1}" }
+          end
+        File.write(manifest, contents)
       end
 
       def skip_project_asset_directory?(relative)

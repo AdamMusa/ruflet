@@ -120,8 +120,8 @@ ruflet run --web
 ruflet run --desktop
 ```
 
-On macOS, launch the prebuilt native Apple renderer in the already-booted iOS
-Simulator with either experimental spelling:
+On macOS, launch the prebuilt experimental client in the already-booted iOS
+Simulator with either spelling:
 
 ```bash
 ruflet run --experimental
@@ -133,7 +133,7 @@ the selected client release channel. Later runs reuse the versioned local
 cache, install it on the currently booted simulator, and pass the Ruby
 backend URL at launch.
 
-To run the same experimental renderer as a native macOS desktop app, use:
+To run the same experimental client as a native macOS desktop app, use:
 
 ```bash
 ruflet run --desktop --exp
@@ -458,8 +458,8 @@ targets are rejected until a matching CRuby distribution is supplied.
 `ruflet build ios --lite` prepares both the physical-device and simulator app
 bundles. You do not need a separate simulator build command.
 
-On iOS and macOS, add `--experimental` to replace only the renderer with the
-native Apple engine. The ordinary build configuration still selects services,
+On iOS and macOS, add `--experimental` to build from the experimental Apple
+release channel. The ordinary build configuration still selects services,
 extensions, permissions, identity, assets, and runtime mode:
 
 ```bash
@@ -467,14 +467,9 @@ ruflet build ios --experimental
 ruflet build macos --lite --exp
 ```
 
-Without this flag, Apple builds contain the standard Flutter renderer and do
-not link the experimental Swift renderer package.
-
-The build resolves services and extensions before Flutter package resolution.
-Standard builds keep only the declared Flutter extension packages. Experimental
-Apple builds register those declarations with their Swift implementations and
-remove the equivalent Dart plugins, imports, local packages, and stale external
-extension registrations before `flutter pub get` and bundling.
+The build resolves services and extensions before Flutter package resolution,
+keeping only the declared Flutter extension packages and removing stale
+external extension registrations before `flutter pub get` and bundling.
 
 Install the latest mobile build on a connected device:
 

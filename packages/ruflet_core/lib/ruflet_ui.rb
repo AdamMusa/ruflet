@@ -90,9 +90,8 @@ module Ruflet
       end
 
       def const_missing(name)
-        return @icon_module.const_get(name) if @icon_module.const_defined?(name, false)
-
-        super
+        resolved = @icon_module.resolve_constant(name)
+        resolved.nil? ? super : resolved
       end
     end
 
@@ -106,13 +105,11 @@ module Ruflet
       end
 
       def const_missing(name)
-        if Ruflet::MaterialIcons.const_defined?(name, false)
-          return Ruflet::MaterialIcons.const_get(name)
-        end
+        resolved = Ruflet::MaterialIcons.resolve_constant(name)
+        return resolved unless resolved.nil?
 
-        if Ruflet::CupertinoIcons.const_defined?(name, false)
-          return Ruflet::CupertinoIcons.const_get(name)
-        end
+        resolved = Ruflet::CupertinoIcons.resolve_constant(name)
+        return resolved unless resolved.nil?
 
         super
       end

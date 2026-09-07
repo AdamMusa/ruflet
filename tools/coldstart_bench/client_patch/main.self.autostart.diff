@@ -1,0 +1,116 @@
+--- /private/tmp/claude-501/-Users-macbookpro-Documents-Izeesoft-FlutterApp-ruflet--claude-worktrees-ruflet-hotreload-brainstorm-a5add2/d400b500-ab53-4762-9133-a47c634f5104/scratchpad/democlient/lib/main.self.dart	2026-07-31 12:04:57
++++ /private/tmp/claude-501/-Users-macbookpro-Documents-Izeesoft-FlutterApp-ruflet--claude-worktrees-ruflet-hotreload-brainstorm-a5add2/d400b500-ab53-4762-9133-a47c634f5104/scratchpad/democlient/lib/main.self.autostart.dart	2026-08-06 15:05:09
+@@ -118,17 +118,13 @@
+     extension.ensureInitialized();
+   }
+ 
+-  EmbeddedRufletRuntime? embeddedRuntime;
+-  var pageUrl = resolveBackendUrl();
+-  if (!kIsWeb && kConfiguredClientUrl.trim().isEmpty) {
+-    embeddedRuntime = await EmbeddedRufletRuntime.start();
+-    pageUrl = embeddedRuntime.pageUrl;
+-  }
+-
++  // The platform started the VM from +load, in parallel with the engine, so
++  // there is nothing to extract and nothing to wait for here. Going straight to
++  // runApp is the point: awaiting the runtime would hand back the time that
++  // starting it early was meant to save.
+   runApp(
+     TemplateApp(
+-      pageUrl: pageUrl,
+-      embeddedRuntime: embeddedRuntime,
++      pageUrl: resolveBackendUrl(),
+       extensions: extensions,
+     ),
+   );
+@@ -139,51 +135,60 @@
+     super.key,
+     required this.pageUrl,
+     required this.extensions,
+-    this.embeddedRuntime,
+   });
+ 
+   final String pageUrl;
+   final List<FletExtension> extensions;
+-  final EmbeddedRufletRuntime? embeddedRuntime;
+ 
+   @override
+   State<TemplateApp> createState() => _TemplateAppState();
+ }
+ 
+ class _TemplateAppState extends State<TemplateApp> {
+-  Timer? _serverErrorPoller;
+-  String? _lastEmbeddedServerError;
++  String _pageUrl = '';
++  String? _startupError;
+ 
+   @override
+   void initState() {
+     super.initState();
+-    if (widget.embeddedRuntime != null) {
+-      _serverErrorPoller = Timer.periodic(const Duration(seconds: 1), (
+-        _,
+-      ) async {
+-        final status = await RufletRuntime.status();
+-        final serverError = status.error;
+-        if (!mounted ||
+-            serverError.isEmpty ||
+-            serverError == _lastEmbeddedServerError) {
+-          return;
+-        }
+-        _lastEmbeddedServerError = serverError;
+-        debugPrint('Embedded server error: $serverError');
+-      });
++    _pageUrl = widget.pageUrl;
++    if (_pageUrl.isEmpty) {
++      _resolveEmbeddedServer();
+     }
+   }
+ 
++  /// Asks the platform where the runtime it started ended up. Requested here
++  /// rather than awaited before runApp, so the first frame renders while the
++  /// VM is still finishing.
++  Future<void> _resolveEmbeddedServer() async {
++    try {
++      final url = await RufletRuntime.serverUrl();
++      if (!mounted) return;
++      setState(() => _pageUrl = normalizePageUrlForPlatform(url.toString()));
++    } catch (error) {
++      if (!mounted) return;
++      setState(() => _startupError = 'Failed to start embedded Ruflet.\n$error');
++    }
++  }
++
+   @override
+   void dispose() {
+-    _serverErrorPoller?.cancel();
+-    unawaited(widget.embeddedRuntime?.dispose());
++    unawaited(RufletRuntime.stop());
+     super.dispose();
+   }
+ 
+   @override
+   Widget build(BuildContext context) {
+-    final error = widget.embeddedRuntime?.error;
++    final error = _startupError;
++    if (error == null && _pageUrl.isEmpty) {
++      // The runtime has not reported its URL yet. FletApp cannot be built
++      // without one, so hold the startup screen rather than block startup.
++      return const MaterialApp(
++        debugShowCheckedModeBanner: false,
++        home: Scaffold(body: Center(child: CircularProgressIndicator())),
++      );
++    }
++
+     if (error != null) {
+       return MaterialApp(
+         debugShowCheckedModeBanner: false,
+@@ -199,7 +204,7 @@
+ 
+     return FletApp(
+       title: 'Ruflet',
+-      pageUrl: widget.pageUrl,
++      pageUrl: _pageUrl,
+       assetsDir: '',
+       errorsHandler: FletAppErrorsHandler(),
+       showAppStartupScreen: true,
