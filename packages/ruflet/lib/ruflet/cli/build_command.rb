@@ -3357,13 +3357,13 @@ module Ruflet
             queue << local
           end
         end
-        base = "file://#{URI::DEFAULT_PARSER.escape(File.expand_path(config_path))}"
+        base = file_uri_for(File.expand_path(config_path))
         expected.each do |name, root|
           entry = resolved.find { |package| package["name"] == name }
           raise "missing local package #{name}" unless entry
 
           uri = URI.join(base, entry.fetch("rootUri"))
-          actual = URI::DEFAULT_PARSER.unescape(uri.path)
+          actual = path_from_file_uri(uri)
           unless uri.scheme == "file" && File.realpath(actual) == File.realpath(root)
             raise "#{name} must resolve to the bundled Ruflet source at #{root}, got #{uri}"
           end
@@ -3373,6 +3373,21 @@ module Ruflet
       rescue StandardError => e
         warn "build config error: local Ruflet package verification failed: #{e.message}"
         false
+      end
+
+      # A POSIX path already starts with "/", so "file://" + path gives the
+      # three slashes a file URI needs. A Windows path starts with the drive
+      # ("D:/..."), and without the extra slash "D:" is parsed as the URI's
+      # host -- which is why this read every bundled package as missing there.
+      def file_uri_for(path)
+        escaped = URI::DEFAULT_PARSER.escape(path.tr("\\", "/"))
+        escaped.start_with?("/") ? "file://#{escaped}" : "file:///#{escaped}"
+      end
+
+      # And back: URI#path keeps that leading slash, so a Windows path returns
+      # as "/D:/..." which no file API accepts.
+      def path_from_file_uri(uri)
+        URI::DEFAULT_PARSER.unescape(uri.path).sub(%r{\A/(?=[A-Za-z]:)}, "")
       end
 
       def template_client_pubspec_dependencies
