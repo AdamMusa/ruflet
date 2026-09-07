@@ -11,6 +11,7 @@ Ruflet's Ruby packages are released independently:
 - `ruflet_server`
 - `ruflet`
 - `ruflet_rails`
+- `ruflet_record`
 
 Update each package version in its own `lib/ruflet/version.rb`. When several
 packages are released together, publish dependencies before dependents:
@@ -19,6 +20,9 @@ packages are released together, publish dependencies before dependents:
 2. `ruflet_server`
 3. `ruflet`
 4. `ruflet_rails`
+
+`ruflet_record` has no Ruflet package dependency and can be published at any
+point in that sequence.
 
 Run the package tests before building:
 
