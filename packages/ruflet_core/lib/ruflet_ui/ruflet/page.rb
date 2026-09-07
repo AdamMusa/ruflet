@@ -2079,7 +2079,7 @@ module Ruflet
     end
 
     def assign_split_prop(key, value)
-      if key == "vertical_alignment" || key == "horizontal_alignment"
+      if key == "vertical_alignment" || key == "horizontal_alignment" || key == "scroll"
         @page_props[key] = value
         @view_props[key] = value
       elsif DIALOG_PROP_KEYS.include?(key)

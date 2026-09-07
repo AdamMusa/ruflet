@@ -225,6 +225,7 @@ class RufletPageCompatibilityTest < Minitest::Test
       floating_action_button_location: "center_float",
       foreground_decoration: { border_radius: 4 },
       padding: 12,
+      scroll: "auto",
       spacing: 8
     }
 
