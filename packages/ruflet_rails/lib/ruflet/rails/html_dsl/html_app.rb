@@ -443,9 +443,16 @@ module Ruflet
         # cannot match to the control's method signature, which is exactly how
         # the ERB audio buttons ended up doing nothing at all.
         SERVICE_META_KEYS = %w[
-          service method target args toast timeout result-target capture-target preview-target id disabled
+          service method target args toast timeout id disabled
           class icon variant on-load file-name output-path path configuration upload encoder
         ].freeze
+
+        # Anything naming a control to update — result-target, capture-target,
+        # indicator-target, record-target, … — is markup, and apps keep
+        # inventing new ones. Match the shape instead of listing them: an
+        # invented name that leaks becomes an argument the client cannot match
+        # to the method's signature, and the tap silently does nothing.
+        CONTROL_TARGET_ATTRIBUTE = /-target\z/
 
         # Declarative event wiring (`on-loaded-target`, `on-error-prefix`, …) is
         # markup too, and there is one per event, so match them by shape.
@@ -808,8 +815,13 @@ module Ruflet
           args = service_args(spec)
           if method == "update"
             @page.update(control, **args.transform_keys(&:to_sym))
-            show_service_result(spec["toast"] || "#{service_label(target)} updated",
-                                title: "Extension", target: spec["result-target"])
+            # Setting a property is not news. Opening a picker announced
+            # "Demo Date Picker updated", and with nowhere to put it that
+            # became a dialog on top of the picker the tap had just opened.
+            # Report only what the screen asked to be told.
+            if spec["toast"] || spec["result-target"]
+              show_service_result(spec["toast"].to_s, title: "Extension", target: spec["result-target"])
+            end
           else
             @page.invoke(
               control, method, args: args.empty? ? nil : args,
@@ -858,12 +870,23 @@ module Ruflet
           args = spec["args"].is_a?(Hash) ? spec["args"].dup : {}
           spec.each do |key, value|
             next if SERVICE_META_KEYS.include?(key)
+            next if CONTROL_TARGET_ATTRIBUTE.match?(key)
             next if DECLARED_EVENT_ATTRIBUTE.match?(key)
             next if value.nil?
 
-            args[key.tr("-", "_")] = value
+            args[key.tr("-", "_")] = coerce_service_value(value)
           end
           args
+        end
+
+        # Markup carries strings. A property being set on a control — open,
+        # modal, disabled — means the boolean, not the word.
+        def coerce_service_value(value)
+          case value
+          when "true" then true
+          when "false" then false
+          else value
+          end
         end
 
         def service_timeout(spec)
@@ -883,11 +906,16 @@ module Ruflet
         # genuinely needs longer.
         INTERACTIVE_TIMEOUT = 30
 
+        # An interactive call waits on a person answering a permission prompt,
+        # so a declared timeout may lengthen it but never shorten it below the
+        # human floor. A screen asking for 5s meant "the hardware should be
+        # quick", and it silently expired the camera prompt before anyone could
+        # reach it.
         def interactive_timeout(spec)
           declared = spec["timeout"]
-          return declared.to_f unless declared.nil? || declared.to_s.empty?
+          return INTERACTIVE_TIMEOUT if declared.nil? || declared.to_s.empty?
 
-          INTERACTIVE_TIMEOUT
+          [declared.to_f, INTERACTIVE_TIMEOUT].max
         end
 
         # HTML attributes are text, but the client's file APIs want bytes.
@@ -1063,7 +1091,10 @@ module Ruflet
           return unless @service_dialog
 
           @service_request_token += 1
-          @page.update(@service_dialog, open: false)
+          # The dialog is opened with show_dialog, so it is dismissed with
+          # close_dialog. Setting open: false is the other mechanism, and it
+          # left the alert on screen with a Close button that did nothing.
+          @page.close_dialog(@service_dialog)
         rescue StandardError
           nil
         end
