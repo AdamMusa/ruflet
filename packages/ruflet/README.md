@@ -25,20 +25,15 @@ dependencies. Run Ruflet commands directly inside the generated project.
 
 ```bash
 ruflet new <appname>
-ruflet run [scriptname|path] [--web|--desktop] [--experimental|--exp] [--port PORT]
+ruflet run [scriptname|path] [--web|--desktop] [--port PORT]
 ruflet debug [scriptname|path]
 ruflet devices
 ruflet emulators
 ruflet doctor [--fix]
 ruflet update [web|desktop|all] [--check] [--force]
-ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--lite|--full|--self] [--experimental|--exp]
+ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--lite|--full|--self]
 ruflet install [--device DEVICE_ID]
 ```
-
-`--experimental` is available only for iOS and macOS builds. It selects the
-experimental Apple release channel; the normal Ruflet build pipeline still
-resolves the declared services, extensions, permissions, assets, and runtime
-mode. Every platform renders through the Ruflet Flutter engine.
 
 `--lite` creates the compact self-contained build: project Ruby is precompiled
 when the matching mruby compiler is available, and the bundled VM starts in
@@ -55,11 +50,9 @@ Ruflet refuses to substitute the lite mruby engine for a requested full build.
 Before Flutter resolves or bundles packages, Ruflet removes extension plugins
 that are not selected by the current services/extensions configuration.
 
-On macOS, `ruflet run --experimental` (or `ruflet run --exp`) downloads the
-experimental Ruflet Explorer iOS Simulator prebuild the first time, reuses its
-versioned cache afterward, and launches it on the already-booted simulator
-with the current backend URL. Add `--desktop` to download and launch the native
-macOS prebuild instead: `ruflet run --desktop --exp`.
+`ruflet run --desktop` downloads the Ruflet Explorer prebuild for the host the
+first time, reuses its versioned cache afterward, and launches it with the
+current backend URL.
 
 Commands that create, diagnose, or build a Flutter client compare the cached
 template revision with `AdamMusa/ruflet-template` on GitHub. When `main`

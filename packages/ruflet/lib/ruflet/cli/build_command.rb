@@ -128,18 +128,10 @@ module Ruflet
         runtime_profile = full ? :full : :lite
         @ruflet_runtime_profile = self_contained ? runtime_profile : :server
         @ruflet_runtime_profile_explicit = !!(lite || full)
-        experimental = args.delete("--experimental")
-        experimental_alias = args.delete("--exp")
-        experimental ||= experimental_alias
         verbose = args.delete("--verbose") || args.delete("-v")
         platform = (args.shift || "").downcase
         if platform.empty?
-          warn "Usage: ruflet build <apk|android|aab|ios|ipa|web|macos|windows|linux> [--lite|--full|--self] [--experimental|--exp] [--verbose]"
-          return 1
-        end
-
-        if experimental && !%w[ios ipa macos].include?(platform)
-          warn "build config error: --experimental is supported only for ios and macos"
+          warn "Usage: ruflet build <apk|android|aab|ios|ipa|web|macos|windows|linux> [--lite|--full|--self] [--verbose]"
           return 1
         end
 
@@ -173,9 +165,8 @@ module Ruflet
           return 1
         end
 
-        renderer = experimental ? ", experimental Flutter channel" : ""
         mode = self_contained ? "self-contained #{runtime_profile}" : "server-driven"
-        build_note("Preparing #{platform} build (#{mode}#{renderer})")
+        build_note("Preparing #{platform} build (#{mode})")
         config = load_ruflet_config
         if runtime_profile == :full && self_contained
           return 1 unless configure_full_runtime_distribution(config, platform, verbose: !!verbose)

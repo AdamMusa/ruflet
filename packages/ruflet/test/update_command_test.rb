@@ -955,18 +955,6 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
-  def test_command_build_rejects_experimental_renderer_on_non_apple_targets
-    builder = DummyBuilder.new
-    err = StringIO.new
-    original_stderr = $stderr
-    $stderr = err
-
-    assert_equal 1, builder.command_build(["apk", "--experimental"])
-    assert_includes err.string, "--experimental is supported only for ios and macos"
-  ensure
-    $stderr = original_stderr
-  end
-
   def test_command_build_runs_full_first_time_setup_before_prepare
     builder = DummyBuilder.new
 

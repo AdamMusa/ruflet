@@ -66,10 +66,10 @@ module Ruflet
           ruflet --version
           ruflet create <appname>
           ruflet new <appname>
-          ruflet run [scriptname|path] [--web|--desktop] [--experimental|--exp] [--port PORT] [--no-reload]
+          ruflet run [scriptname|path] [--web|--desktop] [--port PORT] [--no-reload]
           ruflet update [web|desktop|all] [--check] [--force] [--platform PLATFORM]
           ruflet debug [scriptname|path]
-          ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--lite|--full|--self] [--experimental|--exp] [--verbose]
+          ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--lite|--full|--self] [--verbose]
           ruflet install [--device DEVICE_ID] [--verbose]
           ruflet devices
           ruflet emulators

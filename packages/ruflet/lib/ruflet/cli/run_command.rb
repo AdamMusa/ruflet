@@ -24,8 +24,6 @@ module Ruflet
       LEGACY_ASSET_PREFIX = "ruflet_client"
       CLIENT_CHANNEL_MANIFEST = "#{ASSET_PREFIX}-manifest.json"
       LEGACY_CLIENT_CHANNEL_MANIFEST = "#{LEGACY_ASSET_PREFIX}-manifest.json"
-      EXPERIMENTAL_IOS_SIMULATOR_ASSET = "#{ASSET_PREFIX}-ios-experimental-simulator.zip"
-      EXPERIMENTAL_MACOS_ASSET = "#{ASSET_PREFIX}-macos-experimental-universal.zip"
       DEFAULT_CLIENT_UPDATE_INTERVAL = 6 * 60 * 60
 
       def command_run(args)
@@ -38,9 +36,6 @@ module Ruflet
           warn "Expected: ./#{script_token}.rb, ./#{script_token}, or explicit file path."
           return 1
         end
-
-        experimental_client = prepare_experimental_run_client(options)
-        return 1 if options[:experimental] && !experimental_client
 
         selected_port = resolve_backend_port(options[:target], requested_port: options[:requested_port])
         return 1 unless selected_port
@@ -75,10 +70,7 @@ module Ruflet
 
         run_state = { child_pid: Process.spawn(env, *cmd, pgroup: true), restart: false }
         reload_input_thread = options[:reload] ? start_reload_input_thread(run_state) : nil
-        launched_client_pids = launch_target_client(
-          options[:target], selected_port,
-          experimental_client: experimental_client
-        )
+        launched_client_pids = launch_target_client(options[:target], selected_port)
         forward_signal = lambda do |signal|
           begin
             Process.kill(signal, -run_state[:child_pid])
@@ -134,69 +126,15 @@ module Ruflet
       private
 
       def parse_run_options(args)
-        options = { target: "mobile", requested_port: 8550, reload: true, experimental: false }
+        options = { target: "mobile", requested_port: 8550, reload: true }
         parser = OptionParser.new do |o|
           o.on("--web") { options[:target] = "web" }
           o.on("--desktop") { options[:target] = "desktop" }
           o.on("--port PORT", Integer) { |v| options[:requested_port] = v }
           o.on("--no-reload") { options[:reload] = false }
-          o.on("--experimental", "--exp") { options[:experimental] = true }
         end
         parser.parse!(args)
         options
-      end
-
-      def prepare_experimental_run_client(options)
-        return nil unless options[:experimental]
-
-        if options[:target] == "web"
-          warn "run config error: --experimental/--exp is supported only for iOS and macOS"
-          return nil
-        end
-        unless host_platform_name == "macos"
-          warn "run config error: the experimental Apple client requires macOS"
-          return nil
-        end
-
-        if options[:target] == "desktop"
-          root = ensure_prebuilt_client(desktop_experimental: true, platform: "macos")
-          unless root
-            warn "Experimental macOS client is unavailable."
-            warn "The release must contain #{EXPERIMENTAL_MACOS_ASSET}."
-            return nil
-          end
-
-          return { kind: :desktop, root: root }
-        end
-
-        root = ensure_prebuilt_client(ios_experimental: true, platform: "macos")
-        unless root
-          warn "Experimental iOS Simulator client is unavailable."
-          warn "The release must contain #{EXPERIMENTAL_IOS_SIMULATOR_ASSET}."
-          return nil
-        end
-
-        app_bundle = experimental_ios_app_bundle(root)
-        simulator = booted_ios_simulator
-        unless simulator
-          warn "No booted iOS Simulator was found."
-          warn "Start the simulator you want to use, then run the command again."
-          return nil
-        end
-
-        bundle_identifier = ios_bundle_identifier(app_bundle)
-        if bundle_identifier.to_s.empty?
-          warn "Experimental client has no CFBundleIdentifier: #{app_bundle}"
-          return nil
-        end
-
-        {
-          kind: :ios_simulator,
-          app_bundle: app_bundle,
-          bundle_identifier: bundle_identifier,
-          simulator_udid: simulator.fetch("udid"),
-          simulator_name: simulator.fetch("name", simulator.fetch("udid"))
-        }
       end
 
       def build_runtime_command(script_path, gemfile_path:, env:, reload: false)
@@ -361,19 +299,8 @@ module Ruflet
         end
       end
 
-      def launch_target_client(target, port, experimental_client: nil)
+      def launch_target_client(target, port)
         wait_for_server_boot(port)
-
-        if experimental_client
-          if experimental_client[:kind] == :desktop
-            return launch_desktop_client(
-              "http://localhost:#{port}",
-              root: experimental_client.fetch(:root), experimental: true)
-          end
-
-          return launch_experimental_mobile_client(
-            "http://#{best_lan_host}:#{port}", client: experimental_client)
-        end
 
         case target
         when "web"
@@ -383,33 +310,6 @@ module Ruflet
         else
           []
         end
-      end
-
-      def launch_experimental_mobile_client(url, client:)
-        udid = client.fetch(:simulator_udid)
-        app_bundle = client.fetch(:app_bundle)
-        bundle_identifier = client.fetch(:bundle_identifier)
-
-        unless system("xcrun", "simctl", "install", udid, app_bundle)
-          warn "Failed to install the experimental client on #{client[:simulator_name] || udid}."
-          return []
-        end
-
-        launched = system(
-          { "SIMCTL_CHILD_RUFLET_URL" => url },
-          "xcrun", "simctl", "launch", "--terminate-running-process", udid, bundle_identifier
-        )
-        unless launched
-          warn "Failed to launch the experimental client on #{client[:simulator_name] || udid}."
-          return []
-        end
-
-        puts "Ruflet experimental client: #{client[:simulator_name] || udid}"
-        puts "Ruflet experimental backend: #{url}"
-        []
-      rescue StandardError => e
-        warn "Failed to launch experimental client: #{e.class}: #{e.message}"
-        []
       end
 
       # The backend serves the web client on its own port, so the client reads
@@ -511,8 +411,8 @@ module Ruflet
         nil
       end
 
-      def launch_desktop_client(url, root: nil, experimental: false)
-        cmd = detect_desktop_client_command(url, root: root, experimental: experimental)
+      def launch_desktop_client(url, root: nil)
+        cmd = detect_desktop_client_command(url, root: root)
         unless cmd
           warn "Desktop client executable not found."
           warn "Set RUFLET_CLIENT_DIR to your client path."
@@ -568,7 +468,7 @@ module Ruflet
           .find { |path| executable_file?(path) }
       end
 
-      def detect_desktop_client_command(url, root: nil, experimental: false)
+      def detect_desktop_client_command(url, root: nil)
         unless root
           root = ENV["RUFLET_CLIENT_DIR"]
           root = File.expand_path("ruflet_client", Dir.pwd) if root.to_s.strip.empty?
@@ -581,7 +481,7 @@ module Ruflet
         client_build_roots(root).each do |base|
           if host_os.match?(/darwin/i)
             search = %w[Release Debug].map { |config| File.join(base, "build", "macos", "Build", "Products", config) }
-            search << File.join(base, experimental ? "desktop-experimental" : "desktop")
+            search << File.join(base, "desktop")
             search.each do |dir|
               next unless Dir.exist?(dir)
 
@@ -636,10 +536,7 @@ module Ruflet
         nil
       end
 
-      def ensure_prebuilt_client(
-        web: false, desktop: false, desktop_experimental: false,
-        ios_experimental: false, platform: nil, force: false
-      )
+      def ensure_prebuilt_client(web: false, desktop: false, platform: nil, force: false)
         platform ||= host_platform_name
         return nil if platform.nil?
 
@@ -653,31 +550,8 @@ module Ruflet
           return nil if desktop_asset.nil?
           wanted_assets << { kind: :desktop, name: desktop_asset, platform: platform }
         end
-        if desktop_experimental
-          return nil unless platform == "macos"
-
-          wanted_assets << {
-            kind: :desktop_experimental,
-            name: EXPERIMENTAL_MACOS_ASSET,
-            platform: platform
-          }
-        end
-        if ios_experimental
-          return nil unless platform == "macos"
-
-          wanted_assets << {
-            kind: :ios_experimental,
-            name: EXPERIMENTAL_IOS_SIMULATOR_ASSET,
-            platform: platform
-          }
-        end
         cache_ready = wanted_assets.empty? || prebuilt_assets_present?(
-          cache_root,
-          web: web,
-          desktop: desktop,
-          desktop_experimental: desktop_experimental,
-          ios_experimental: ios_experimental,
-          platform: platform
+          cache_root, web: web, desktop: desktop, platform: platform
         )
         release = nil
         if !force && cache_ready
@@ -718,8 +592,6 @@ module Ruflet
             subdir = case wanted[:kind]
             when :web then "web"
             when :desktop then "desktop"
-            when :desktop_experimental then "desktop-experimental"
-            when :ios_experimental then "ios-experimental"
             end
             target = File.join(cache_root, subdir)
             FileUtils.rm_rf(target) if force && Dir.exist?(target)
@@ -739,12 +611,7 @@ module Ruflet
         end
 
         if prebuilt_assets_present?(
-          cache_root,
-          web: web,
-          desktop: desktop,
-          desktop_experimental: desktop_experimental,
-          ios_experimental: ios_experimental,
-          platform: platform
+          cache_root, web: web, desktop: desktop, platform: platform
         )
           write_client_manifest(cache_root, platform: platform, release: release, assets: installed_assets)
           return cache_root
@@ -761,61 +628,10 @@ module Ruflet
       # will actually accept later, or a half-extracted cache reports success
       # here and then fails to launch -- and, because a present cache short
       # circuits the download, never repairs itself without --force.
-      def prebuilt_assets_present?(
-        root, web:, desktop:, desktop_experimental: false,
-        ios_experimental: false, platform: nil
-      )
+      def prebuilt_assets_present?(root, web:, desktop:, platform: nil)
         ok_web = !web || built_web_client_dir?(File.join(root, "web"))
         ok_desktop = !desktop || prebuilt_desktop_present?(root, platform: platform)
-        ok_desktop_experimental = !desktop_experimental ||
-          prebuilt_experimental_desktop_present?(root, platform: platform)
-        ok_ios_experimental = !ios_experimental || !experimental_ios_app_bundle(root).nil?
-        ok_web && ok_desktop && ok_desktop_experimental && ok_ios_experimental
-      end
-
-      def experimental_ios_app_bundle(root)
-        ios_root = File.join(root, "ios-experimental")
-        return nil unless Dir.exist?(ios_root)
-
-        Dir.glob(File.join(ios_root, "*.app")).sort.find do |app_bundle|
-          File.file?(File.join(app_bundle, "Info.plist")) && ios_app_executable(app_bundle)
-        end
-      end
-
-      def ios_app_executable(app_bundle)
-        return nil unless Dir.exist?(app_bundle)
-
-        Dir.children(app_bundle)
-          .map { |entry| File.join(app_bundle, entry) }
-          .find { |path| executable_file?(path) }
-      end
-
-      def booted_ios_simulator
-        output, status = Open3.capture2e("xcrun", "simctl", "list", "devices", "booted", "--json")
-        return nil unless status.success?
-
-        devices = JSON.parse(output).fetch("devices", {})
-        devices.each do |runtime, candidates|
-          next unless runtime.to_s.include?("SimRuntime.iOS")
-
-          match = Array(candidates).find do |device|
-            device["state"] == "Booted" && device.fetch("isAvailable", true)
-          end
-          return match if match
-        end
-        nil
-      rescue StandardError
-        nil
-      end
-
-      def ios_bundle_identifier(app_bundle)
-        plist = File.join(app_bundle, "Info.plist")
-        output, status = Open3.capture2e(
-          "/usr/bin/plutil", "-extract", "CFBundleIdentifier", "raw", "-o", "-", plist
-        )
-        status.success? ? output.strip : nil
-      rescue StandardError
-        nil
+        ok_web && ok_desktop
       end
 
       # The prebuilt client is whatever `ruflet build` produced from Ruflet
@@ -838,17 +654,6 @@ module Ruflet
           Dir.glob(File.join(desktop, "*.exe")).any? { |path| File.file?(path) }
         else
           false
-        end
-      end
-
-      def prebuilt_experimental_desktop_present?(root, platform: nil)
-        return false unless (platform || host_platform_name) == "macos"
-
-        desktop = File.join(root, "desktop-experimental")
-        return false unless Dir.exist?(desktop)
-
-        Dir.glob(File.join(desktop, "*.app")).any? do |app_bundle|
-          macos_app_executable(app_bundle)
         end
       end
 
@@ -887,9 +692,7 @@ module Ruflet
       end
 
       def client_release_channel(wanted_assets: [])
-        default_channel = wanted_assets.any? do |wanted|
-          %i[desktop_experimental ios_experimental].include?(wanted[:kind])
-        end ? "prebuild-experimental" : "prebuild-main"
+        default_channel = "prebuild-main"
         value = ENV.fetch("RUFLET_CLIENT_CHANNEL", default_channel).to_s.strip
         value.empty? ? default_channel : value
       end
@@ -982,16 +785,11 @@ module Ruflet
           return n.include?("web") && (n.end_with?(".tar.gz") || n.end_with?(".zip"))
         end
 
-        if kind == :ios_experimental
-          return n.include?("ios") && n.include?("experimental") && n.include?("simulator") && n.end_with?(".zip")
-        end
-
-        if kind == :desktop_experimental
-          return n.include?("macos") && n.include?("experimental") && n.end_with?(".zip")
-        end
-
         case platform
         when "macos"
+          # Releases cut before the experimental channel was retired still carry
+          # ruflet_explorer-macos-experimental-universal.zip. Installing that as
+          # the desktop client would hand back the wrong app, so skip it.
           n.include?("macos") && !n.include?("experimental") && n.end_with?(".zip")
         when "linux"
           n.include?("linux") && (n.end_with?(".tar.gz") || n.end_with?(".tgz"))
@@ -1071,12 +869,6 @@ module Ruflet
         assets << { "kind" => "web", "platform" => platform, "asset_name" => nil } if built_web_client_dir?(File.join(root, "web"))
         if prebuilt_desktop_present?(root, platform: platform)
           assets << { "kind" => "desktop", "platform" => platform, "asset_name" => nil }
-        end
-        if prebuilt_experimental_desktop_present?(root, platform: platform)
-          assets << { "kind" => "desktop_experimental", "platform" => platform, "asset_name" => nil }
-        end
-        if experimental_ios_app_bundle(root)
-          assets << { "kind" => "ios_experimental", "platform" => platform, "asset_name" => nil }
         end
         return if assets.empty?
 
