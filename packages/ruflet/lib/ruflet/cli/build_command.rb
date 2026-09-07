@@ -2482,17 +2482,19 @@ module Ruflet
         write_text_file(path, content)
       end
 
-      # Only the Flutter host remains, so the scene delegate is always Flutter's.
-      # A client built against the Swift renderer names RufletSceneDelegate here
-      # and would launch into a class its bundle no longer contains.
+      # Only the Flutter host remains, so the scene delegate is Flutter's own.
+      # A client built against the Swift renderer names RufletSceneDelegate,
+      # which lived in the deleted package -- launching it would trap on a
+      # missing class. FlutterSceneDelegate comes from the Flutter framework,
+      # so it carries no $(PRODUCT_MODULE_NAME) prefix.
       def configure_ios_scene_delegate(client_dir)
         path = File.join(client_dir, "ios", "Runner", "Info.plist")
         return unless File.file?(path)
 
         content = read_text_file(path)
         content.gsub!(
-          %r{(<key>UISceneDelegateClassName</key>\s*<string>)\$\(PRODUCT_MODULE_NAME\)\.(?:RufletSceneDelegate|FlutterSceneDelegate|SceneDelegate)(</string>)}m,
-          "\\1$(PRODUCT_MODULE_NAME).SceneDelegate\\2"
+          %r{(<key>UISceneDelegateClassName</key>\s*<string>)(?:\$\(PRODUCT_MODULE_NAME\)\.)?(?:RufletSceneDelegate|FlutterSceneDelegate|SceneDelegate)(</string>)}m,
+          "\\1FlutterSceneDelegate\\2"
         )
         write_text_file(path, content)
       end

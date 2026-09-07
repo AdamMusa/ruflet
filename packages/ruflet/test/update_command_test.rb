@@ -235,7 +235,11 @@ class RufletCliUpdateCommandTest < Minitest::Test
       refute_path_exists File.join(client, "apple_extensions")
       refute_includes File.read(File.join(client, "ios", "Runner.xcodeproj", "project.pbxproj")), "Ruflet"
       plist = File.read(File.join(client, "ios", "Runner", "Info.plist"))
-      assert_includes plist, "$(PRODUCT_MODULE_NAME).SceneDelegate"
+      # FlutterSceneDelegate ships in the Flutter framework, so it takes no
+      # $(PRODUCT_MODULE_NAME) prefix. Naming a class in the Runner module here
+      # traps at launch, because the deleted package is where that class lived.
+      assert_includes plist, "<string>FlutterSceneDelegate</string>"
+      refute_includes plist, "PRODUCT_MODULE_NAME).SceneDelegate"
       refute_includes plist, "RufletSceneDelegate"
       refute_includes plist, "RufletExperimentalNativeRenderer"
     end
