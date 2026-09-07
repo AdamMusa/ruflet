@@ -149,7 +149,7 @@ module Ruflet
 
       if page
         attach_sender(page, ws)
-        reset_mount_state(page)
+        page.prepare_for_reconnect!
       else
         page = Page.new(
           session_id: session_id,
@@ -249,12 +249,6 @@ module Ruflet
 
     def attach_sender(page, ws)
       page.instance_variable_set(:@sender, sender_for(ws))
-    end
-
-    def reset_mount_state(page)
-      page.instance_variable_set(:@overlay_container_mounted, false)
-      page.instance_variable_set(:@dialogs_container_mounted, false)
-      page.instance_variable_set(:@services_container_mounted, false)
     end
 
     def disconnect_error?(error)

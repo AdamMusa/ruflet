@@ -75,6 +75,30 @@ class PageUpdateSerializationTest < Minitest::Test
     refute page_patch.any? { |op| op[2] == "_services" }
   end
 
+  def test_reconnect_republishes_page_shell_and_internal_roots
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+
+    page.add(Ruflet.text(value: "Still here"))
+    page.show_dialog(Ruflet.alert_dialog(title: Ruflet.text("Still open")))
+
+    sent.clear
+    page.prepare_for_reconnect!
+    page.update
+
+    assert_equal 1, sent.length
+    payload = sent.first[1]
+    assert_equal 1, payload["id"]
+    assert payload["patch"].any? { |op| op[2] == "views" }
+    assert payload["patch"].any? { |op| op[2] == "_overlay" }
+    assert payload["patch"].any? { |op| op[2] == "_dialogs" }
+    assert payload["patch"].any? { |op| op[2] == "_services" }
+  end
+
   def test_update_serializes_embedded_controls
     sent = []
     page = Ruflet::Page.new(

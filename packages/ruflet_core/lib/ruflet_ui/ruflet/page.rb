@@ -231,6 +231,18 @@ module Ruflet
       @page_props["route"] = value
     end
 
+    # A resumed Page keeps its Ruby controls and event handlers, but a newly
+    # connected client has not mounted any of that state yet. Invalidate only
+    # the client-side publication snapshot so the next update sends the full
+    # page shell, including the internal overlay, dialog, and service roots.
+    def prepare_for_reconnect!
+      @overlay_container_mounted = false
+      @dialogs_container_mounted = false
+      @services_container_mounted = false
+      @published_shell_state = nil
+      self
+    end
+
     def vertical_alignment
       @page_props["vertical_alignment"] || @view_props["vertical_alignment"]
     end
