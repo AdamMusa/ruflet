@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "fileutils"
+require "minitest/mock"
 
 $LOAD_PATH.unshift(File.expand_path("../../ruflet_core/lib", __dir__))
 require "ruflet/hot_reload"
@@ -131,6 +132,56 @@ class RufletHotReloadTest < Minitest::Test
 
     error = assert_raises(Ruflet::HotReload::Error) { runner.run }
     assert_match(/never called Ruflet.run/, error.message)
+  end
+
+  def test_excluded_trees_are_not_traversed
+    write_main
+    ignored = %w[build vendor .cache node_modules].map { |name| File.join(@dir, name) }
+    ignored.each do |path|
+      FileUtils.mkdir_p(File.join(path, "deep"))
+      File.write(File.join(path, "deep", "generated.rb"), "# ignored")
+    end
+    entered = []
+    each_child = Dir.method(:each_child)
+    Dir.stub(:each_child, ->(path, &block) { entered << path; each_child.call(path, &block) }) do
+      runner = Ruflet::HotReload::Runner.new(script: @script)
+      assert_equal [@script], runner.watched_files
+    end
+    assert_equal [@dir], entered
+  end
+
+  def test_nested_files_and_file_symlinks_are_watched_without_following_directory_links
+    write_main
+    nested = File.join(@dir, "lib", "widget.rb")
+    FileUtils.mkdir_p(File.dirname(nested))
+    File.write(nested, "# widget")
+    alias_path = File.join(@dir, "alias.rb")
+    File.symlink(nested, alias_path)
+    File.symlink(@dir, File.join(@dir, "loop"))
+    runner = Ruflet::HotReload::Runner.new(script: @script)
+    assert_equal [@script, nested, alias_path].sort, runner.watched_files
+  end
+
+  def test_explicit_entrypoint_is_kept_when_outside_watch_root
+    write_main
+    root = File.join(@dir, "lib")
+    FileUtils.mkdir_p(root)
+    runner = Ruflet::HotReload::Runner.new(script: @script, watch_root: root)
+    assert_equal [@script], runner.watched_files
+  end
+
+  def test_directory_removed_during_snapshot_does_not_stop_watcher
+    write_main
+    removed = File.join(@dir, "removed")
+    FileUtils.mkdir_p(removed)
+    each_child = Dir.method(:each_child)
+    Dir.stub(:each_child, lambda { |path, &block|
+      raise Errno::ENOENT, path if path == removed
+      each_child.call(path, &block)
+    }) do
+      runner = Ruflet::HotReload::Runner.new(script: @script)
+      assert_equal [@script], runner.watched_files
+    end
   end
 
   private
