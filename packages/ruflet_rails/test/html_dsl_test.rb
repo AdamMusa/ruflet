@@ -163,10 +163,48 @@ class RufletHtmlDslTest < Minitest::Test
     assert_equal({ width: 48, height: 48 }, Styles.parse("size-12").slice(:width, :height))
     assert_equal 12, Styles.parse("gap-x-3")[:spacing]
     assert_equal 8, Styles.parse("gap-y-2")[:run_spacing]
-    assert_equal 256, Styles.parse("max-w-64")[:width]
+    assert_equal 256, Styles.parse("max-w-64")[:max_width]
     assert_equal true, Styles.parse("w-screen")[:expand]
     assert_equal true, Styles.parse("min-h-screen")[:expand]
     assert_equal({ left: 16, right: 16 }, Styles.parse("inset-x-4").slice(:left, :right))
+  end
+
+  def test_styles_map_modern_colors_lengths_and_offsets
+    props = Styles.parse("bg-slate-900/50 text-[1.125rem] p-px translate-x-1/2 -inset-y-2")
+
+    assert_equal "#800f172a", props[:bgcolor]
+    assert_equal 18, props[:size]
+    assert_equal 1, props[:padding]
+    assert_equal({ "x" => 0.5, "y" => 0 }, props[:offset])
+    assert_equal(-8, props[:top])
+    assert_equal(-8, props[:bottom])
+  end
+
+  def test_false_utility_values_reach_the_built_controls
+    result, = transform('<column class="shrink-0"><text class="select-none">Fixed</text></column>')
+
+    column = result.controls.first
+    assert_equal false, column.props["expand"]
+    assert_equal false, column.children.first.props["selectable"]
+  end
+
+  def test_schema_filtered_styles_reach_list_tiles
+    result, = transform('<list-tile title="Inbox" class="min-h-12 cursor-pointer bg-slate-100"></list-tile>')
+    tile = result.controls.first
+
+    assert_equal 48, tile.props["min_height"]
+    assert_equal "click", tile.props["mouse_cursor"]
+    assert_equal "#f1f5f9", tile.props["bgcolor"]
+  end
+
+  def test_transition_transform_uses_only_transform_animation_properties
+    props = Styles.parse("transition-transform duration-200 ease-in-out")
+    animation = { "duration" => 200, "curve" => "easeInOut" }
+
+    assert_equal animation, props[:animate_offset]
+    assert_equal animation, props[:animate_scale]
+    assert_equal animation, props[:animate_rotation]
+    refute props.key?(:animate)
   end
 
   def test_grid_columns_and_spans_map_to_responsive_row_slots
