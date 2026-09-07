@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ruby_runtime/ruflet_runtime_method_channel.dart';
@@ -16,8 +14,9 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
           calls.add(call);
-          if (call.method == 'stop' || call.method == 'bridgeClose')
+          if (call.method == 'stop' || call.method == 'bridgeClose') {
             return null;
+          }
           if (call.method == 'bridgeSend') return null;
           if (call.method == 'bridgeReceive') {
             return Uint8List.fromList([7, 8, 9]);
