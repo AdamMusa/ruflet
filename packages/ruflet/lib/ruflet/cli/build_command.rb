@@ -588,7 +588,7 @@ module Ruflet
         return false if configured == false
         configure_native_apple_runtime(
           client_dir, platform: platform, self_contained: self_contained,
-          experimental: experimental_native_renderer?, verbose: verbose)
+          config: config, experimental: experimental_native_renderer?, verbose: verbose)
         configure_android_runtime(
           client_dir, platform: platform, self_contained: self_contained,
           verbose: verbose)
@@ -2680,7 +2680,7 @@ module Ruflet
       end
 
       def configure_native_apple_runtime(
-        client_dir, platform:, self_contained:, experimental: true, verbose: false
+        client_dir, platform:, self_contained:, config: {}, experimental: true, verbose: false
       )
         plist_paths = case platform.to_s
         when "ios", "ipa"
@@ -2704,7 +2704,17 @@ module Ruflet
           upsert_plist_boolean(
             path, "RufletExperimentalNativeRenderer",
             experimental)
-          if self_contained
+          apple_platform = platform.to_s == "ipa" ? "ios" : platform.to_s
+          platform_config = platform_build_config(config, apple_platform)
+          if platform_config["local_network"] == true
+            # The embedded VM is in-process, but the application can still
+            # explicitly connect to LAN services (for example RufletApp).
+            description = platform_config["local_network_usage_description"].to_s.strip
+            description = "Connect to Ruflet applications and services on your local network." if description.empty?
+            upsert_plist_string(path, "NSLocalNetworkUsageDescription", description)
+            upsert_plist_dictionary_boolean(
+              path, "NSAppTransportSecurity", "NSAllowsLocalNetworking", true)
+          elsif self_contained
             remove_plist_value(path, "NSLocalNetworkUsageDescription")
             remove_plist_dictionary_boolean(
               path, "NSAppTransportSecurity", "NSAllowsLocalNetworking")
@@ -2770,6 +2780,20 @@ module Ruflet
           content.sub!(pattern, pair.strip)
         else
           content.sub!(%r{</dict>\s*</plist>}m, "#{pair}\n</dict>\n</plist>")
+        end
+        write_text_file(path, content)
+      end
+
+      def upsert_plist_dictionary_boolean(path, dictionary_key, key, value)
+        remove_plist_dictionary_boolean(path, dictionary_key, key)
+        content = read_text_file(path)
+        entry = "<key>#{key}</key>\n\t\t<#{value ? 'true' : 'false'}/>"
+        opening = %r{(<key>#{Regexp.escape(dictionary_key)}</key>\s*<dict>)}m
+        if content.match?(opening)
+          content.sub!(opening) { "#{Regexp.last_match(1)}\n\t\t#{entry}" }
+        else
+          pair = "\t<key>#{dictionary_key}</key>\n\t<dict>\n\t\t#{entry}\n\t</dict>\n"
+          content.sub!(%r{</dict>\s*</plist>}m, "#{pair}</dict>\n</plist>")
         end
         write_text_file(path, content)
       end

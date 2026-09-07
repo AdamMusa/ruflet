@@ -11,6 +11,23 @@ Ruflet has two explicit self-contained build profiles:
 so `--self --full` produces the full CRuby build. `--full` also implies
 `--self`; `--lite --full` is rejected.
 
+The embedded runtime communicates in-process; it does not require a local
+server. An app may independently connect to another machine, for example a
+`RufletApp` opening a development server from a QR code. To retain Apple's LAN
+permission declarations in either self-contained profile, declare the
+capability in the project's `ruflet.yaml`:
+
+```yaml
+ios:
+  local_network: true
+  local_network_usage_description: Connect to Ruflet apps on your local network.
+```
+
+The same keys are supported under `macos:`. This only enables outbound LAN
+access with the user's OS permission; it does not start a listener, change the
+embedded transport, or disable transport security for public hosts. Ordinary
+self-contained apps omit these keys and do not request local-network access.
+
 The CRuby distribution builders currently supplied and launch-tested in this
 repository target Android and macOS. Ruflet validates the distribution manifest
 against the requested target instead of silently falling back to mruby.
