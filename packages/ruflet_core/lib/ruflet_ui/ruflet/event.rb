@@ -30,9 +30,10 @@ module Ruflet
 
     def parse_data(raw)
       return raw unless raw.is_a?(String)
+      return raw unless Object.const_defined?(:JSON)
 
-      JSON.parse(raw)
-    rescue JSON::ParserError
+      Object.const_get(:JSON).parse(raw)
+    rescue StandardError
       raw
     end
 
