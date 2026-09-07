@@ -66,6 +66,10 @@ module Ruflet
         "motion" => %w[permission_handler]
       }.freeze
       EXTENSION_REQUIRED_SERVICES = {
+        "audio_recorder" => %w[microphone],
+        "camera" => %w[camera],
+        "flashlight" => %w[camera],
+        "geolocator" => %w[location],
         "qrcode_scanner" => %w[camera]
       }.freeze
       MANAGED_EXTENSION_STATE_PATH = File.join(".ruflet", "extension_dependencies.json")
@@ -87,8 +91,12 @@ module Ruflet
       IOS_SERVICE_USAGE_KEYS = {
         "camera" => "NSCameraUsageDescription",
         "microphone" => "NSMicrophoneUsageDescription",
-        "location" => "NSLocationWhenInUseUsageDescription",
-        "motion" => "NSMotionUsageDescription"
+        "location" => %w[
+          NSLocationWhenInUseUsageDescription
+          NSLocationAlwaysAndWhenInUseUsageDescription
+        ],
+        "motion" => "NSMotionUsageDescription",
+        "photo_library" => "NSPhotoLibraryUsageDescription"
       }.freeze
       MACOS_SERVICE_USAGE_KEYS = {
         "camera" => "NSCameraUsageDescription",
@@ -106,7 +114,7 @@ module Ruflet
         %w[android.permission.FLASHLIGHT android.permission.MODIFY_AUDIO_SETTINGS]
       ).uniq.freeze
       MANAGED_IOS_USAGE_KEYS = (
-        IOS_SERVICE_USAGE_KEYS.values +
+        IOS_SERVICE_USAGE_KEYS.values.flatten +
         %w[NSLocationAlwaysAndWhenInUseUsageDescription NSPhotoLibraryUsageDescription]
       ).uniq.freeze
       MANAGED_MACOS_USAGE_KEYS = MACOS_SERVICE_USAGE_KEYS.values.uniq.freeze
@@ -2115,18 +2123,17 @@ module Ruflet
           )
         end
         entries.each do |entry|
-          key = usage_keys[entry[:name]]
-          next unless key
-
           description = entry[:description]
           description = "This app uses #{entry[:name]} access for its Ruflet features." if description.empty?
           escaped_description = xml_escape(description)
-          pair = "\t<key>#{key}</key>\n\t<string>#{escaped_description}</string>\n"
+          Array(usage_keys[entry[:name]]).each do |key|
+            pair = "\t<key>#{key}</key>\n\t<string>#{escaped_description}</string>\n"
 
-          if content.match?(%r{<key>#{Regexp.escape(key)}</key>})
-            content.sub!(%r{<key>#{Regexp.escape(key)}</key>\s*<string>.*?</string>}m, "<key>#{key}</key>\n\t<string>#{escaped_description}</string>")
-          else
-            content.sub!(%r{</dict>\s*</plist>}m, "#{pair}</dict>\n</plist>")
+            if content.match?(%r{<key>#{Regexp.escape(key)}</key>})
+              content.sub!(%r{<key>#{Regexp.escape(key)}</key>\s*<string>.*?</string>}m, "<key>#{key}</key>\n\t<string>#{escaped_description}</string>")
+            else
+              content.sub!(%r{</dict>\s*</plist>}m, "#{pair}</dict>\n</plist>")
+            end
           end
         end
         write_text_file(path, content)

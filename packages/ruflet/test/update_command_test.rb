@@ -506,6 +506,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes ios, "NSMicrophoneUsageDescription"
       assert_includes ios, "Record voice notes."
       assert_includes ios, "NSLocationWhenInUseUsageDescription"
+      assert_includes ios, "NSLocationAlwaysAndWhenInUseUsageDescription"
       assert_includes ios, "NSMotionUsageDescription"
     end
   end
@@ -577,6 +578,36 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes File.read(File.join(client_dir, "lib", "main.self.dart")), "ruflet_qrcode_scanner.Extension(),"
       assert_includes File.read(manifest), "android.permission.CAMERA"
       assert_includes File.read(plist), "NSCameraUsageDescription"
+    end
+  end
+
+  def test_extensions_and_photo_library_service_add_required_ios_purpose_strings
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "client")
+      manifest = File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")
+      plist = File.join(client_dir, "ios", "Runner", "Info.plist")
+      FileUtils.mkdir_p(File.dirname(manifest))
+      FileUtils.mkdir_p(File.dirname(plist))
+      File.write(manifest, "<manifest><application/></manifest>\n")
+      File.write(plist, "<plist><dict></dict></plist>\n")
+
+      config = {
+        "extensions" => %w[audio_recorder camera geolocator],
+        "services" => [
+          { "photo_library" => { "description" => "Choose media to preview in the app." } }
+        ]
+      }
+      builder.send(:apply_native_service_permissions, client_dir, config)
+
+      ios = File.read(plist)
+      assert_includes ios, "NSCameraUsageDescription"
+      assert_includes ios, "NSMicrophoneUsageDescription"
+      assert_includes ios, "NSLocationWhenInUseUsageDescription"
+      assert_includes ios, "NSLocationAlwaysAndWhenInUseUsageDescription"
+      assert_includes ios, "NSPhotoLibraryUsageDescription"
+      assert_includes ios, "Choose media to preview in the app."
     end
   end
 
