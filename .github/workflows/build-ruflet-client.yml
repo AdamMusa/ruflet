@@ -46,6 +46,9 @@ env:
 jobs:
   verify-explorer:
     name: Verify Ruflet Explorer
+    outputs:
+      release_tag: ${{ steps.release.outputs.tag }}
+      cut_release: ${{ steps.release.outputs.cut }}
     # macOS: parts of the CLI branch on the host being darwin — the Apple pod
     # shim and the install platform it infers — so the suites assume a macOS
     # host and fail on Linux for reasons unrelated to the code under test.
@@ -109,6 +112,47 @@ jobs:
             echo "$found"
             exit 1
           fi
+
+      # A push to main cuts the release its version.rb names. The tag is made
+      # by the release step in this same run rather than pushed back to the
+      # repository first: a tag pushed with GITHUB_TOKEN does not start another
+      # workflow run, so waiting for the tags: trigger would never build.
+      #
+      # Re-running main without bumping the version must not republish, so an
+      # existing release or tag for that version stops the release here and
+      # leaves the prebuild-main channel as the only thing this run refreshes.
+      - name: Resolve the release this run publishes
+        id: release
+        working-directory: ruflet
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          version=$(ruby -e 'print File.read("packages/ruflet/lib/ruflet/version.rb")[/VERSION\s*=\s*"([^"]+)"/, 1]')
+          if [ -z "$version" ]; then
+            echo "Could not read the ruflet version"
+            exit 1
+          fi
+          tag="v$version"
+          cut=false
+
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ startsWith(github.ref, 'refs/tags/v') }}" = "true" ]; then
+            tag="${{ github.ref_name }}"
+            cut=true
+            echo "Tag push: publishing $tag"
+          elif [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref_name }}" = "main" ]; then
+            if gh release view "$tag" >/dev/null 2>&1; then
+              echo "Release $tag already exists; refreshing the prebuild channel only"
+            elif gh api "repos/$GH_REPO/git/ref/tags/$tag" >/dev/null 2>&1; then
+              echo "Tag $tag already exists without a release; not cutting it again"
+            else
+              cut=true
+              echo "New version $version on main: cutting $tag"
+            fi
+          fi
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "cut=$cut" >> "$GITHUB_OUTPUT"
 
   build-desktop-and-web:
     name: Build ${{ matrix.target }}
@@ -235,11 +279,12 @@ jobs:
           files: ${{ matrix.artifact }}
 
       - name: Publish versioned client release
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        if: needs.verify-explorer.outputs.cut_release == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Ruflet Explorer ${{ github.ref_name }}
+          tag_name: ${{ needs.verify-explorer.outputs.release_tag }}
+          target_commitish: ${{ github.sha }}
+          name: Ruflet Explorer ${{ needs.verify-explorer.outputs.release_tag }}
           prerelease: false
           make_latest: true
           overwrite_files: true
@@ -354,11 +399,12 @@ jobs:
             ruflet_explorer-android-appbundle.aab
 
       - name: Publish Android to versioned client release
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        if: needs.verify-explorer.outputs.cut_release == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Ruflet Explorer ${{ github.ref_name }}
+          tag_name: ${{ needs.verify-explorer.outputs.release_tag }}
+          target_commitish: ${{ github.sha }}
+          name: Ruflet Explorer ${{ needs.verify-explorer.outputs.release_tag }}
           prerelease: false
           make_latest: true
           overwrite_files: true
@@ -443,11 +489,12 @@ jobs:
           files: ruflet_explorer-ios-simulator.zip
 
       - name: Publish iOS simulator to versioned client release
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        if: needs.verify-explorer.outputs.cut_release == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Ruflet Explorer ${{ github.ref_name }}
+          tag_name: ${{ needs.verify-explorer.outputs.release_tag }}
+          target_commitish: ${{ github.sha }}
+          name: Ruflet Explorer ${{ needs.verify-explorer.outputs.release_tag }}
           prerelease: false
           make_latest: true
           overwrite_files: true
@@ -464,6 +511,7 @@ jobs:
       needs.build-ios-simulator.result == 'success' &&
       needs.build-android.result == 'success'
     needs:
+      - verify-explorer
       - build-desktop-and-web
       - build-ios-simulator
       - build-android
@@ -496,11 +544,12 @@ jobs:
           files: ruflet_explorer-manifest.json
 
       - name: Mark versioned client release complete
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: needs.verify-explorer.outputs.cut_release == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Ruflet Explorer ${{ github.ref_name }}
+          tag_name: ${{ needs.verify-explorer.outputs.release_tag }}
+          target_commitish: ${{ github.sha }}
+          name: Ruflet Explorer ${{ needs.verify-explorer.outputs.release_tag }}
           prerelease: false
           make_latest: true
           overwrite_files: true
