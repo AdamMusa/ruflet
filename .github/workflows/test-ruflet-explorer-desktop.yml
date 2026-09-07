@@ -84,6 +84,11 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
+          # Pinned, not floating. `channel: stable` silently follows every
+          # Flutter release, and 3.47 removed CupertinoPageTransitionsBuilder,
+          # which the template's theme.dart constructs -- so an untouched tree
+          # stopped compiling. Raise this deliberately, with the template.
+          flutter-version: 3.41.2
           channel: stable
           cache: true
 
