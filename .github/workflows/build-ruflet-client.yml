@@ -73,9 +73,13 @@ jobs:
           path: ruflet-template
 
       - name: Set up Ruby
+        # Follow .ruby-version. A pin here drifts from the version the tests are
+        # written against, and the suite then fails on formatting differences
+        # that have nothing to do with the change under test.
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.3'
+          ruby-version: .ruby-version
+          working-directory: ruflet
 
       - name: Run framework tests
         working-directory: ruflet
@@ -206,9 +210,13 @@ jobs:
           path: ruflet-template
 
       - name: Set up Ruby
+        # Follow .ruby-version. A pin here drifts from the version the tests are
+        # written against, and the suite then fails on formatting differences
+        # that have nothing to do with the change under test.
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.3'
+          ruby-version: .ruby-version
+          working-directory: ruflet
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -321,9 +329,13 @@ jobs:
           path: ruflet-template
 
       - name: Set up Ruby
+        # Follow .ruby-version. A pin here drifts from the version the tests are
+        # written against, and the suite then fails on formatting differences
+        # that have nothing to do with the change under test.
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.3'
+          ruby-version: .ruby-version
+          working-directory: ruflet
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -437,9 +449,13 @@ jobs:
           path: ruflet-template
 
       - name: Set up Ruby
+        # Follow .ruby-version. A pin here drifts from the version the tests are
+        # written against, and the suite then fails on formatting differences
+        # that have nothing to do with the change under test.
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.3'
+          ruby-version: .ruby-version
+          working-directory: ruflet
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2

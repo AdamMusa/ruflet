@@ -60,9 +60,10 @@ jobs:
             gstreamer1.0-plugins-base gstreamer1.0-plugins-good
 
       - name: Set up Ruby
+        # Follow .ruby-version; see the note in build-ruflet-client.yml.
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.3"
+          ruby-version: .ruby-version
 
       - name: Use the checked-out Ruflet gems
         shell: bash

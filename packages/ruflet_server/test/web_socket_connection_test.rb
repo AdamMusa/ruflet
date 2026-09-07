@@ -27,7 +27,10 @@ class RufletWebSocketConnectionTest < Minitest::Test
 
     assert_equal 1, output.scan(/client->ruby conn=\d+/).length
     assert_includes output, "action=3"
-    assert_includes output, '"target" => 9'
+    # Ruby 3.4 put spaces around => in Hash#inspect. The trace is a debugging
+    # aid, not a wire format, so match either spelling rather than pinning the
+    # suite to one Ruby -- these gems support 3.1 and up.
+    assert_match(/"target"\s*=>\s*9/, output)
   ensure
     ENV["RUFLET_PROTOCOL_TRACE"] = previous
   end
