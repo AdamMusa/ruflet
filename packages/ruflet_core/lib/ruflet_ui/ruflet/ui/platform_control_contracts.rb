@@ -18,6 +18,7 @@ module Ruflet
             props.each do |key, value|
               raise ArgumentError, "unknown keyword: :#{key}" unless self.class::KEYWORDS.include?(key)
 
+              value = normalize_platform_prop(key, value)
               compact[key] = value unless value.nil?
             end
             super(type: self.class::TYPE, id: id, **compact)
@@ -27,6 +28,7 @@ module Ruflet
 
           def platform_defaults = {}
           def validate_platform_props!(_props); end
+          def normalize_platform_prop(_key, value) = value
 
           def require_control_prop!(props, name)
             value = props[name]
@@ -288,6 +290,14 @@ module Ruflet
             Controls::RufletComponents::DatePickerControl::KEYWORDS +
             Controls::RufletComponents::CupertinoDatePickerControl::KEYWORDS
           ).uniq.freeze
+
+          private
+
+          def normalize_platform_prop(key, value)
+            return value unless %i[value first_date last_date current_date].include?(key)
+
+            Ruflet::Protocol.date_time(value)
+          end
         end
 
         class PickerControl < PlatformControl
