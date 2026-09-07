@@ -27,6 +27,30 @@ class RufletCliRunCommandTest < Minitest::Test
     executable
   end
 
+  def build_ios_app(root, app_name = "Ruflet Explorer")
+    app_bundle = File.join(root, "ios-experimental", "#{app_name}.app")
+    FileUtils.mkdir_p(app_bundle)
+    File.write(File.join(app_bundle, "Info.plist"), "plist")
+    executable = File.join(app_bundle, app_name)
+    File.write(executable, "binary")
+    FileUtils.chmod(0o755, executable)
+    app_bundle
+  end
+
+  def test_run_options_accept_experimental_and_exp_aliases
+    runner = DummyRunner.new
+
+    args = ["--experimental", "main"]
+    options = runner.send(:parse_run_options, args)
+    assert options[:experimental]
+    assert_equal ["main"], args
+
+    args = ["--exp", "main"]
+    options = runner.send(:parse_run_options, args)
+    assert options[:experimental]
+    assert_equal ["main"], args
+  end
+
   def test_detect_desktop_client_finds_a_ruflet_app_client_by_its_own_name
     skip "macOS layout" unless RbConfig::CONFIG["host_os"].match?(/darwin/i)
 
@@ -81,6 +105,62 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
+  def test_experimental_macos_prebuilt_uses_a_separate_complete_bundle
+    skip "macOS layout" unless RbConfig::CONFIG["host_os"].match?(/darwin/i)
+
+    Dir.mktmpdir do |dir|
+      expected = build_macos_app(
+        File.join(dir, "desktop-experimental"), "Ruflet Explorer")
+
+      assert DummyRunner.new.send(
+        :prebuilt_experimental_desktop_present?, dir, platform: "macos")
+      command = DummyRunner.new.send(
+        :detect_desktop_client_command,
+        "http://127.0.0.1:8550", root: dir, experimental: true)
+      assert_equal [expected, "http://127.0.0.1:8550"], command
+    end
+  end
+
+  def test_prepare_experimental_desktop_selects_macos_prebuilt
+    runner = DummyRunner.new
+    requested = nil
+    runner.define_singleton_method(:host_platform_name) { "macos" }
+    runner.define_singleton_method(:ensure_prebuilt_client) do |**options|
+      requested = options
+      "/tmp/ruflet-experimental"
+    end
+
+    client = runner.send(
+      :prepare_experimental_run_client,
+      target: "desktop", experimental: true)
+
+    assert_equal({ desktop_experimental: true, platform: "macos" }, requested)
+    assert_equal({ kind: :desktop, root: "/tmp/ruflet-experimental" }, client)
+  end
+
+  def test_experimental_desktop_launch_uses_downloaded_native_client
+    runner = DummyRunner.new
+    launched = nil
+    runner.define_singleton_method(:wait_for_server_boot) { |_port| true }
+    runner.define_singleton_method(:launch_desktop_client) do |url, root: nil, experimental: false|
+      launched = { url: url, root: root, experimental: experimental }
+      [321]
+    end
+
+    result = runner.send(
+      :launch_target_client, "desktop", 8550,
+      experimental_client: { kind: :desktop, root: "/tmp/ruflet-experimental" })
+
+    assert_equal [321], result
+    assert_equal(
+      {
+        url: "http://localhost:8550",
+        root: "/tmp/ruflet-experimental",
+        experimental: true
+      },
+      launched)
+  end
+
   def test_prebuilt_desktop_present_rejects_a_bundle_without_an_executable
     skip "macOS layout" unless RbConfig::CONFIG["host_os"].match?(/darwin/i)
 
@@ -121,6 +201,23 @@ class RufletCliRunCommandTest < Minitest::Test
       File.write(File.join(dir, "web", "flutter_bootstrap.js"), "// built")
 
       assert DummyRunner.new.send(:prebuilt_assets_present?, dir, web: true, desktop: false)
+    end
+  end
+
+  def test_prebuilt_assets_present_requires_a_complete_experimental_ios_app
+    Dir.mktmpdir do |dir|
+      refute DummyRunner.new.send(
+        :prebuilt_assets_present?, dir,
+        web: false, desktop: false, ios_experimental: true, platform: "macos"
+      )
+
+      expected = build_ios_app(dir)
+
+      assert_equal expected, DummyRunner.new.send(:experimental_ios_app_bundle, dir)
+      assert DummyRunner.new.send(
+        :prebuilt_assets_present?, dir,
+        web: false, desktop: false, ios_experimental: true, platform: "macos"
+      )
     end
   end
 
@@ -254,8 +351,24 @@ class RufletCliRunCommandTest < Minitest::Test
     assert runner.send(:release_asset_matches?, "ruflet_explorer-macos-universal.zip", :desktop, "macos")
     assert runner.send(:release_asset_matches?, "ruflet_explorer-linux-x64.tar.gz", :desktop, "linux")
     assert runner.send(:release_asset_matches?, "ruflet_explorer-windows-x64.zip", :desktop, "windows")
+    assert runner.send(
+      :release_asset_matches?,
+      "ruflet_explorer-ios-experimental-simulator.zip", :ios_experimental, "macos"
+    )
+    assert runner.send(
+      :release_asset_matches?,
+      "ruflet_explorer-macos-experimental-universal.zip", :desktop_experimental, "macos"
+    )
+    refute runner.send(
+      :release_asset_matches?,
+      "ruflet_explorer-macos-experimental-universal.zip", :desktop, "macos"
+    )
 
     refute runner.send(:release_asset_matches?, "some_other_explorer-web.tar.gz", :web, nil)
+    refute runner.send(
+      :release_asset_matches?,
+      "ruflet_explorer-ios-simulator.zip", :ios_experimental, "macos"
+    )
   end
 
   def test_wanted_asset_names_use_the_explorer_prefix
@@ -264,6 +377,8 @@ class RufletCliRunCommandTest < Minitest::Test
     assert_equal "ruflet_explorer-macos-universal.zip", runner.send(:desktop_asset_name_for, "macos")
     assert_equal "ruflet_explorer-linux-x64.tar.gz", runner.send(:desktop_asset_name_for, "linux")
     assert_equal "ruflet_explorer-windows-x64.zip", runner.send(:desktop_asset_name_for, "windows")
+    assert_equal "ruflet_explorer-ios-experimental-simulator.zip", Ruflet::CLI::RunCommand::EXPERIMENTAL_IOS_SIMULATOR_ASSET
+    assert_equal "ruflet_explorer-macos-experimental-universal.zip", Ruflet::CLI::RunCommand::EXPERIMENTAL_MACOS_ASSET
   end
 
   # The manifest is uploaded last, so it is how a run is judged complete. A
@@ -301,6 +416,112 @@ class RufletCliRunCommandTest < Minitest::Test
       assert_equal dir, runner.send(:ensure_prebuilt_client, web: true, platform: "macos")
       assert File.file?(File.join(dir, "web", "flutter_bootstrap.js"))
     end
+  end
+
+  def test_prebuilt_client_installs_experimental_ios_simulator_asset
+    runner = DummyRunner.new
+
+    Dir.mktmpdir do |dir|
+      release = {
+        "tag_name" => "prebuild-main",
+        "assets" => [
+          { "name" => "ruflet_explorer-manifest.json", "id" => 8, "updated_at" => "2026-08-20T00:00:00Z" },
+          {
+            "name" => "ruflet_explorer-ios-experimental-simulator.zip",
+            "browser_download_url" => "https://example.test/ios-experimental.zip"
+          }
+        ]
+      }
+      runner.define_singleton_method(:ruflet_version) { "0.0.21" }
+      runner.define_singleton_method(:client_cache_root_for) { |_platform| dir }
+      runner.define_singleton_method(:fetch_release_for_version) { |wanted_assets:| release }
+      runner.define_singleton_method(:download_file) { |_url, destination, limit: 5| File.write(destination, "archive") }
+      runner.define_singleton_method(:extract_archive) do |_archive, destination|
+        app_bundle = File.join(destination, "Ruflet Explorer.app")
+        FileUtils.mkdir_p(app_bundle)
+        File.write(File.join(app_bundle, "Info.plist"), "plist")
+        executable = File.join(app_bundle, "Ruflet Explorer")
+        File.write(executable, "binary")
+        FileUtils.chmod(0o755, executable)
+        true
+      end
+
+      root = runner.send(:ensure_prebuilt_client, ios_experimental: true, platform: "macos")
+      manifest = JSON.parse(File.read(File.join(dir, "manifest.json")))
+
+      assert_equal dir, root
+      assert runner.send(
+        :prebuilt_assets_present?, dir,
+        web: false, desktop: false, ios_experimental: true, platform: "macos"
+      )
+      assert_equal "ios_experimental", manifest.fetch("targets").last.fetch("kind")
+    end
+  end
+
+  def test_prebuilt_client_installs_experimental_macos_asset_separately
+    runner = DummyRunner.new
+    app_builder = method(:build_macos_app)
+
+    Dir.mktmpdir do |dir|
+      release = {
+        "tag_name" => "prebuild-main",
+        "assets" => [
+          { "name" => "ruflet_explorer-manifest.json", "id" => 9, "updated_at" => "2026-08-20T00:00:00Z" },
+          {
+            "name" => "ruflet_explorer-macos-experimental-universal.zip",
+            "browser_download_url" => "https://example.test/macos-experimental.zip"
+          }
+        ]
+      }
+      runner.define_singleton_method(:ruflet_version) { "0.0.21" }
+      runner.define_singleton_method(:client_cache_root_for) { |_platform| dir }
+      runner.define_singleton_method(:fetch_release_for_version) { |wanted_assets:| release }
+      runner.define_singleton_method(:download_file) { |_url, destination, limit: 5| File.write(destination, "archive") }
+      runner.define_singleton_method(:extract_archive) do |_archive, destination|
+        app_builder.call(destination, "Ruflet Explorer")
+        true
+      end
+
+      root = runner.send(
+        :ensure_prebuilt_client,
+        desktop_experimental: true, platform: "macos")
+      manifest = JSON.parse(File.read(File.join(dir, "manifest.json")))
+
+      assert_equal dir, root
+      assert runner.send(
+        :prebuilt_assets_present?, dir,
+        web: false, desktop: false, desktop_experimental: true, platform: "macos")
+      assert_equal "desktop_experimental", manifest.fetch("targets").last.fetch("kind")
+      refute Dir.exist?(File.join(dir, "desktop"))
+    end
+  end
+
+  def test_experimental_mobile_launch_installs_and_passes_backend_to_simulator
+    runner = DummyRunner.new
+    calls = []
+    runner.define_singleton_method(:system) do |*args|
+      calls << args
+      true
+    end
+    client = {
+      app_bundle: "/tmp/Ruflet Explorer.app",
+      bundle_identifier: "com.izeesoft.rufletExplorer",
+      simulator_udid: "SIM-123",
+      simulator_name: "iPhone 17 Pro Max"
+    }
+
+    result = runner.send(
+      :launch_experimental_mobile_client,
+      "http://192.168.1.226:8550",
+      client: client
+    )
+
+    assert_equal [], result
+    assert_equal ["xcrun", "simctl", "install", "SIM-123", "/tmp/Ruflet Explorer.app"], calls[0]
+    assert_equal({ "SIMCTL_CHILD_RUFLET_URL" => "http://192.168.1.226:8550" }, calls[1][0])
+    assert_equal [
+      "xcrun", "simctl", "launch", "--terminate-running-process", "SIM-123", "com.izeesoft.rufletExplorer"
+    ], calls[1][1..]
   end
 
   def test_build_runtime_command_without_gemfile_runs_script_directly
@@ -406,6 +627,34 @@ class RufletCliRunCommandTest < Minitest::Test
     )
 
     assert_equal "prebuild-main", release["tag_name"]
+  end
+
+  def test_fetch_release_uses_experimental_channel_for_exp_assets
+    runner = DummyRunner.new
+    releases = {
+      "prebuild-experimental" => {
+        "tag_name" => "prebuild-experimental",
+        "assets" => [
+          { "name" => "ruflet_client-manifest.json", "id" => 11, "updated_at" => "2026-08-21T12:00:00Z" },
+          { "name" => "ruflet_explorer-ios-experimental-simulator.zip" }
+        ]
+      }
+    }
+    runner.define_singleton_method(:release_by_tag) { |tag| releases[tag] }
+    runner.define_singleton_method(:release_latest) { nil }
+
+    release = runner.send(
+      :fetch_release_for_version,
+      wanted_assets: [
+        {
+          kind: :ios_experimental,
+          name: "ruflet_explorer-ios-experimental-simulator.zip",
+          platform: "macos"
+        }
+      ]
+    )
+
+    assert_equal "prebuild-experimental", release["tag_name"]
   end
 
   def test_fetch_release_ignores_prebuild_until_completion_manifest_exists

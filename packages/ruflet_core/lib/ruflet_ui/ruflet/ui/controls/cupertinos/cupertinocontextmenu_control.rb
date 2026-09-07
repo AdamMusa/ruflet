@@ -6,7 +6,7 @@ module Ruflet
       module RufletComponents
         class CupertinoContextMenuControl < Ruflet::Control
           TYPE = "cupertinocontextmenu".freeze
-          WIRE = "CupertinoContextMenu".freeze
+          WIRE = "ContextMenu".freeze
 
           def initialize(id: nil, actions: nil, adaptive: nil, badge: nil, col: nil, content: nil, data: nil, disabled: nil, enable_haptic_feedback: nil, expand: nil, expand_loose: nil, key: nil, opacity: nil, rtl: nil, tooltip: nil, visible: nil)
             enable_haptic_feedback = true if enable_haptic_feedback.nil?

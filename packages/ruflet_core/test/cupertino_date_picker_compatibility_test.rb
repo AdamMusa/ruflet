@@ -23,7 +23,7 @@ class RufletCupertinoDatePickerCompatibilityTest < Minitest::Test
 
     patch = picker.to_patch
 
-    assert_equal "CupertinoDatePicker", patch["_c"]
+    assert_equal "DatePicker", patch["_c"]
     assert_equal "2026-05-15T09:30:00", patch["value"]
     assert_equal "2026-01-01T00:00:00", patch["first_date"]
     assert_equal "2026-12-31T23:59:00", patch["last_date"]
@@ -78,6 +78,6 @@ class RufletCupertinoDatePickerCompatibilityTest < Minitest::Test
   end
 
   def test_compact_alias_uses_same_control
-    assert_equal "CupertinoDatePicker", Ruflet.cupertinodatepicker.to_patch["_c"]
+    assert_equal "DatePicker", Ruflet.cupertinodatepicker.to_patch["_c"]
   end
 end

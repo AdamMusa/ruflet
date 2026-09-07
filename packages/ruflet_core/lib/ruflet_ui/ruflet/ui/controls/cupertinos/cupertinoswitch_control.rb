@@ -6,7 +6,7 @@ module Ruflet
       module RufletComponents
         class CupertinoSwitchControl < Ruflet::Control
           TYPE = "cupertinoswitch".freeze
-          WIRE = "CupertinoSwitch".freeze
+          WIRE = "Switch".freeze
 
           KEYWORDS = [:active_thumb_image, :active_thumb_image_src, :active_track_color, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :autofocus, :badge, :bottom, :col, :data, :disabled, :expand, :expand_loose, :focus_color, :height, :inactive_thumb_color, :inactive_thumb_image, :inactive_thumb_image_src, :inactive_track_color, :key, :label, :label_position, :left, :margin, :off_label_color, :offset, :opacity, :right, :rotate, :rtl, :scale, :size_change_interval, :thumb_color, :thumb_icon, :tooltip, :top, :track_outline_color, :track_outline_width, :value, :visible, :width, :on_animation_end, :on_blur, :on_change, :on_focus, :on_image_error, :on_label_color, :on_size_change].freeze
 

@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "find"
+require "digest"
 require "json"
 require "open3"
 require "pathname"
@@ -14,24 +15,25 @@ module Ruflet
     module BuildCommand
       include FlutterSdk
       CLIENT_EXTENSION_MAP = {
-        "audio" => { package: "flet_audio", alias: "ruflet_audio" },
-        "audio_recorder" => { package: "flet_audio_recorder", alias: "ruflet_audio_recorder" },
-        "camera" => { package: "flet_camera", alias: "ruflet_camera" },
-        "charts" => { package: "flet_charts", alias: "ruflet_charts" },
-        "code_editor" => { package: "flet_code_editor", alias: "ruflet_code_editor" },
-        "color_pickers" => { package: "flet_color_pickers", alias: "ruflet_color_picker" },
-        "datatable2" => { package: "flet_datatable2", alias: "ruflet_datatable2" },
-        "flashlight" => { package: "flet_flashlight", alias: "ruflet_flashlight" },
-        "geolocator" => { package: "flet_geolocator", alias: "ruflet_geolocator" },
-        "lottie" => { package: "flet_lottie", alias: "ruflet_lottie" },
-        "map" => { package: "flet_map", alias: "ruflet_map" },
-        "permission_handler" => { package: "flet_permission_handler", alias: "ruflet_permission_handler" },
+        "ads" => { package: "ruflet_ads", alias: "ruflet_ads" },
+        "audio" => { package: "ruflet_audio", alias: "ruflet_audio" },
+        "audio_recorder" => { package: "ruflet_audio_recorder", alias: "ruflet_audio_recorder" },
+        "camera" => { package: "ruflet_camera", alias: "ruflet_camera" },
+        "charts" => { package: "ruflet_charts", alias: "ruflet_charts" },
+        "code_editor" => { package: "ruflet_code_editor", alias: "ruflet_code_editor" },
+        "color_pickers" => { package: "ruflet_color_pickers", alias: "ruflet_color_picker" },
+        "datatable2" => { package: "ruflet_datatable2", alias: "ruflet_datatable2" },
+        "flashlight" => { package: "ruflet_flashlight", alias: "ruflet_flashlight" },
+        "geolocator" => { package: "ruflet_geolocator", alias: "ruflet_geolocator" },
+        "lottie" => { package: "ruflet_lottie", alias: "ruflet_lottie" },
+        "map" => { package: "ruflet_map", alias: "ruflet_map" },
+        "permission_handler" => { package: "ruflet_permission_handler", alias: "ruflet_permission_handler" },
         "qrcode_scanner" => { package: "ruflet_qrcode_scanner", alias: "ruflet_qrcode_scanner" },
-        "rive" => { package: "flet_rive", alias: "ruflet_rive" },
-        "secure_storage" => { package: "flet_secure_storage", alias: "ruflet_secure_storage" },
-        "spinkit" => { package: "flet_spinkit", alias: "ruflet_spinkit" },
-        "video" => { package: "flet_video", alias: "ruflet_video" },
-        "webview" => { package: "flet_webview", alias: "ruflet_webview" }
+        "rive" => { package: "ruflet_rive", alias: "ruflet_rive" },
+        "secure_storage" => { package: "ruflet_secure_storage", alias: "ruflet_secure_storage" },
+        "spinkit" => { package: "ruflet_spinkit", alias: "ruflet_spinkit" },
+        "video" => { package: "ruflet_video", alias: "ruflet_video" },
+        "webview" => { package: "ruflet_webview", alias: "ruflet_webview" }
       }.freeze
       PROTECTED_SERVICE_EXTENSIONS = {
         "camera" => %w[camera permission_handler],
@@ -40,8 +42,22 @@ module Ruflet
         "motion" => %w[permission_handler]
       }.freeze
       EXTENSION_REQUIRED_SERVICES = {
+        "audio_recorder" => %w[microphone],
+        "camera" => %w[camera],
+        "flashlight" => %w[camera],
+        "geolocator" => %w[location],
         "qrcode_scanner" => %w[camera]
       }.freeze
+      MANAGED_EXTENSION_STATE_PATH = File.join(".ruflet", "extension_dependencies.json")
+      RUFLET_SOURCE_INTEGRITY_PATH = File.join(
+        "tool", "conformance", "ruflet_source_integrity.json"
+      ).freeze
+      RUFLET_SOURCE_IGNORED_DIRECTORIES = %w[
+        .git .dart_tool .cache build .pub-cache .idea .vscode coverage
+      ].freeze
+      RUFLET_SOURCE_IGNORED_FILES = %w[
+        pubspec.lock .DS_Store .flutter-plugins .flutter-plugins-dependencies
+      ].freeze
       ANDROID_SERVICE_PERMISSIONS = {
         "camera" => %w[android.permission.CAMERA],
         "microphone" => %w[android.permission.RECORD_AUDIO],
@@ -51,17 +67,34 @@ module Ruflet
       IOS_SERVICE_USAGE_KEYS = {
         "camera" => "NSCameraUsageDescription",
         "microphone" => "NSMicrophoneUsageDescription",
-        "location" => "NSLocationWhenInUseUsageDescription",
+        "location" => %w[
+          NSLocationWhenInUseUsageDescription
+          NSLocationAlwaysAndWhenInUseUsageDescription
+        ],
+        "motion" => "NSMotionUsageDescription",
+        "photo_library" => "NSPhotoLibraryUsageDescription"
+      }.freeze
+      MACOS_SERVICE_USAGE_KEYS = {
+        "camera" => "NSCameraUsageDescription",
+        "microphone" => "NSMicrophoneUsageDescription",
+        "location" => "NSLocationUsageDescription",
         "motion" => "NSMotionUsageDescription"
+      }.freeze
+      MACOS_SERVICE_ENTITLEMENTS = {
+        "camera" => "com.apple.security.device.camera",
+        "microphone" => "com.apple.security.device.audio-input",
+        "location" => "com.apple.security.personal-information.location"
       }.freeze
       MANAGED_ANDROID_PERMISSIONS = (
         ANDROID_SERVICE_PERMISSIONS.values.flatten +
         %w[android.permission.FLASHLIGHT android.permission.MODIFY_AUDIO_SETTINGS]
       ).uniq.freeze
       MANAGED_IOS_USAGE_KEYS = (
-        IOS_SERVICE_USAGE_KEYS.values +
+        IOS_SERVICE_USAGE_KEYS.values.flatten +
         %w[NSLocationAlwaysAndWhenInUseUsageDescription NSPhotoLibraryUsageDescription]
       ).uniq.freeze
+      MANAGED_MACOS_USAGE_KEYS = MACOS_SERVICE_USAGE_KEYS.values.uniq.freeze
+      MANAGED_MACOS_SERVICE_ENTITLEMENTS = MACOS_SERVICE_ENTITLEMENTS.values.uniq.freeze
       # Clients that are told which server to use at launch rather than at build
       # time, so they may be built without a configured backend_url.
       RUNTIME_RESOLVED_BACKEND_PLATFORMS = %w[web macos windows linux].freeze
@@ -77,12 +110,36 @@ module Ruflet
         "linux" => { splash: false, icon: false }
       }.freeze
 
+      EMBEDDED_RUNTIME_PROFILES = %i[lite full].freeze
+      FULL_RUNTIME_MANIFEST = "ruflet-full-runtime.json"
+      FULL_RUNTIME_BUNDLE_SCHEMA = 3
+
       def command_build(args)
-        self_contained = args.delete("--self")
+        self_contained_flag = args.delete("--self")
+        lite = args.delete("--lite")
+        full = args.delete("--full")
+        if lite && full
+          warn "build config error: --lite and --full are mutually exclusive"
+          return 1
+        end
+        # --self enables the embedded runtime and defaults its profile to lite.
+        # An explicit profile still wins, so --self --full selects full CRuby.
+        self_contained = self_contained_flag || lite || full
+        runtime_profile = full ? :full : :lite
+        @ruflet_runtime_profile = self_contained ? runtime_profile : :server
+        @ruflet_runtime_profile_explicit = !!(lite || full)
+        experimental = args.delete("--experimental")
+        experimental_alias = args.delete("--exp")
+        experimental ||= experimental_alias
         verbose = args.delete("--verbose") || args.delete("-v")
         platform = (args.shift || "").downcase
         if platform.empty?
-          warn "Usage: ruflet build <apk|android|aab|ios|ipa|web|macos|windows|linux> [--self] [--verbose]"
+          warn "Usage: ruflet build <apk|android|aab|ios|ipa|web|macos|windows|linux> [--lite|--full|--self] [--experimental|--exp] [--verbose]"
+          return 1
+        end
+
+        if experimental && !%w[ios ipa macos].include?(platform)
+          warn "build config error: --experimental is supported only for ios and macos"
           return 1
         end
 
@@ -96,12 +153,14 @@ module Ruflet
         # signing, icons, package name — is the same as a plain iOS build.
         requested_platform = platform
         platform = "ios" if platform == "ipa"
+        @ruflet_build_platform = platform
 
         # The embedded Ruby VM is a native plugin with no browser
         # implementation, so a self-contained web build produces an app that
         # cannot start. Say so rather than shipping one that hangs.
         if self_contained && platform == "web"
-          warn "build config error: --self is not supported for web"
+          profile_flag = @ruflet_runtime_profile_explicit ? "--#{runtime_profile}" : "--self"
+          warn "build config error: #{profile_flag} is not supported for web"
           warn "A web client runs no embedded Ruby; build it with `ruflet build web`."
           return 1
         end
@@ -114,8 +173,13 @@ module Ruflet
           return 1
         end
 
-        build_note("Preparing #{platform} build (#{self_contained ? 'self-contained' : 'server-driven'})")
+        renderer = experimental ? ", experimental Flutter channel" : ""
+        mode = self_contained ? "self-contained #{runtime_profile}" : "server-driven"
+        build_note("Preparing #{platform} build (#{mode}#{renderer})")
         config = load_ruflet_config
+        if runtime_profile == :full && self_contained
+          return 1 unless configure_full_runtime_distribution(config, platform, verbose: !!verbose)
+        end
         tools = ensure_flutter!("build", client_dir: client_dir)
         command_env = build_tool_env(tools[:env], platform, client_dir)
         ok = prepare_flutter_client(
@@ -134,11 +198,15 @@ module Ruflet
         build_args += ["--target", target_entrypoint] if target_entrypoint
         backend_url = configured_backend_url(config)
         if self_contained
-          build_args += ["--dart-define", "RUFLET_BACKEND_URL=#{backend_url}"] if backend_url
-          # The platform layer starts the VM before Flutter exists, so it -- not
-          # Dart -- needs to know that it should and which project to run. Pin
-          # the project rather than let it infer from a single main.rb: the app
-          # tree ships many (standalone_apps/*/main.rb).
+          # Pin the embedded project for platform autostart instead of asking
+          # the native layer to infer it from every main.rb/main.mrb in the
+          # bundled asset tree.
+          build_args += ["--dart-define", "RUFLET_EMBEDDED_PROJECT=#{self_contained_project_name}"]
+          if @ruflet_runtime_profile_explicit
+            build_args += ["--dart-define", "RUFLET_RUNTIME_PROFILE=#{runtime_profile}"]
+          end
+          # The platform layer starts the VM before Flutter exists, so the app
+          # bundle -- not a Dart define -- has to carry the same decision.
           configure_platform_autostart(client_dir, platform, verbose: !!verbose)
         elsif backend_url
           build_args += ["--dart-define", "RUFLET_BACKEND_URL=#{backend_url}"]
@@ -156,7 +224,12 @@ module Ruflet
         build_args << "-v" if verbose
         stage_ios_simulator_ruby_runtime(client_dir, build_args, verbose: !!verbose) if self_contained
 
-        build_log(verbose, "mode=#{self_contained ? 'self' : 'server'}")
+        logged_mode = if self_contained
+          @ruflet_runtime_profile_explicit ? runtime_profile : "self"
+        else
+          "server"
+        end
+        build_log(verbose, "mode=#{logged_mode}")
         build_log(verbose, "client_dir=#{client_dir}")
         build_log(verbose, "flutter=#{tools[:flutter]}")
         build_log(verbose, "dart=#{tools[:dart]}")
@@ -171,7 +244,8 @@ module Ruflet
         # Keep both outputs behind the ordinary self-contained iOS build so the
         # following `ruflet install` can target whichever mobile device is
         # connected. An explicit --simulator remains a simulator-only build.
-        if ok && self_contained && requested_platform == "ios" && !build_args.include?("--simulator")
+        if ok && self_contained && requested_platform == "ios" &&
+            !build_args.include?("--simulator") && !full_runtime_device_only?
           simulator_args = build_args.dup
           simulator_args.delete("--codesign")
           simulator_args.insert(simulator_args.index("ios") + 1, "--simulator")
@@ -242,6 +316,15 @@ module Ruflet
       def ensure_flutter_client_dir(verbose: false)
         client_dir = detect_flutter_client_dir
         if client_dir
+          if File.expand_path(client_dir) == File.expand_path(hidden_flutter_client_dir) &&
+              !valid_flutter_client_root?(client_dir) &&
+              !File.file?(File.join(client_dir, ".metadata"))
+            if Ruflet::CLI.respond_to?(:copy_ruflet_client_template, true)
+              Ruflet::CLI.send(:copy_ruflet_client_template, Dir.pwd)
+              client_dir = hidden_flutter_client_dir
+              build_log(verbose, "repaired invalid managed Flutter client root")
+            end
+          end
           refresh_hidden_flutter_client_template(client_dir, verbose: verbose)
           return client_dir
         end
@@ -249,6 +332,11 @@ module Ruflet
         bootstrapped = bootstrap_flutter_client_template
         build_log(verbose, "bootstrapped client template at #{bootstrapped}") if bootstrapped
         bootstrapped
+      end
+
+      def valid_flutter_client_root?(path)
+        File.file?(File.join(path, "pubspec.yaml")) &&
+          File.file?(File.join(path, "lib", "main.dart"))
       end
 
       def refresh_hidden_flutter_client_template(client_dir, verbose: false)
@@ -466,7 +554,13 @@ module Ruflet
       end
 
       def prepare_flutter_client(client_dir, platform:, tools:, config:, self_contained: false, verbose: false)
-        refresh_managed_client_template_files(client_dir, verbose: verbose)
+        refreshed = refresh_managed_client_template_files(
+          client_dir, platform: platform, verbose: verbose)
+        return false if refreshed == false
+        unless remove_native_apple_renderer_integration(
+          client_dir, platform: platform, verbose: verbose)
+          return false
+        end
         metadata = sync_client_metadata(client_dir, config, verbose: verbose)
         return false unless validate_mobile_app_identity(metadata, platform: platform)
 
@@ -475,8 +569,17 @@ module Ruflet
         apply_ios_signing_team(client_dir, config) if %w[ios ipa macos].include?(platform.to_s)
         configured = configure_client_runtime_mode(client_dir, self_contained: self_contained, verbose: verbose)
         return false if configured == false
+        configure_native_apple_runtime(
+          client_dir, platform: platform, self_contained: self_contained,
+          config: config, verbose: verbose)
+        configure_android_runtime(
+          client_dir, platform: platform, self_contained: self_contained,
+          verbose: verbose)
         @ruflet_self_contained_build = self_contained
-        apply_service_extension_config(client_dir, config)
+        extension_keys = apply_service_extension_config(client_dir, config)
+        if @ruflet_extension_selection_applied && !validate_flutter_extension_selection(client_dir)
+          return false
+        end
         asset_flags = apply_build_config(client_dir, config)
         if asset_flags[:error]
           warn asset_flags[:error]
@@ -492,6 +595,9 @@ module Ruflet
         build_log(verbose, "running flutter pub get")
         unless run_external_command(tools[:env], tools[:flutter], "pub", "get", chdir: client_dir, unbundled: true)
           warn "flutter pub get failed"
+          return false
+        end
+        if @ruflet_extension_selection_applied && !validate_local_ruflet_packages(client_dir)
           return false
         end
 
@@ -630,7 +736,11 @@ module Ruflet
         return true unless build_args.include?("ios")
         return true unless build_args.include?("--simulator")
 
-        runtime_root = explicit_local_ruby_runtime_path || source_checkout_ruby_runtime_path
+        runtime_root = if embedded_runtime_profile == :full
+          @ruflet_full_runtime_path
+        else
+          explicit_local_ruby_runtime_path || source_checkout_ruby_runtime_path
+        end
         return true unless runtime_root
 
         source = File.join(
@@ -1255,10 +1365,10 @@ module Ruflet
           android_application_id: normalize_bundle_identifier(
             first_present(app["android_application_id"], config["android_application_id"], bundle_identifier)
           ),
-          ios_bundle_identifier: normalize_bundle_identifier(
+          ios_bundle_identifier: normalize_apple_bundle_identifier(
             first_present(app["ios_bundle_identifier"], config["ios_bundle_identifier"], bundle_identifier)
           ),
-          macos_bundle_identifier: normalize_bundle_identifier(
+          macos_bundle_identifier: normalize_apple_bundle_identifier(
             first_present(app["macos_bundle_identifier"], config["macos_bundle_identifier"], bundle_identifier)
           ),
           linux_application_id: normalize_bundle_identifier(
@@ -1537,6 +1647,20 @@ module Ruflet
         segments.join(".")
       end
 
+      def normalize_apple_bundle_identifier(value)
+        segments = value.to_s.strip.downcase.split(".").map do |segment|
+          normalized = segment.gsub(/[^a-z0-9-]+/, "-")
+          normalized.gsub!(/\A-+|-+\z/, "")
+          normalized.gsub!(/-+/, "-")
+          normalized = "app" if normalized.empty?
+          normalized = "app-#{normalized}" if normalized.match?(/\A\d/)
+          normalized
+        end
+        segments.reject!(&:empty?)
+        segments = %w[com example app] if segments.empty?
+        segments.join(".")
+      end
+
       def humanize_name(name)
         name.to_s.gsub(/[_-]+/, " ").split.map(&:capitalize).join(" ")
       end
@@ -1567,20 +1691,28 @@ module Ruflet
       end
 
       def apply_service_extension_config(client_dir, config = {}, self_contained: @ruflet_self_contained_build)
-        services = configured_service_entries(config).map { |entry| entry[:name] }
-        requested_extensions = Array(config["extensions"]).map { |value| normalize_extension_key(value) }.compact
-        protected_extensions = services.flat_map { |name| PROTECTED_SERVICE_EXTENSIONS.fetch(name, []) }
-        extension_keys = (requested_extensions + protected_extensions + services).uniq
-        extension_packages = extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:package) }.uniq
-        extension_aliases = extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:alias) }.uniq
+        extension_keys = configured_extension_keys(config)
+        flutter_extension_keys = extension_keys
+        extension_packages = flutter_extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:package) }.uniq
+        extension_aliases = flutter_extension_keys.filter_map { |key| CLIENT_EXTENSION_MAP[key]&.fetch(:alias) }.uniq
 
-        external = external_extension_entries(config)
+        configured_external = external_extension_entries(config)
+        external = configured_external
+        previous_external_names = managed_external_extension_names(client_dir)
+        discovered_external_names = discover_registered_external_extension_names(client_dir)
+        removable_external_names = (
+          previous_external_names + discovered_external_names + configured_external.map { |entry| entry[:name] }
+        ).uniq
 
         pubspec_path = File.join(client_dir, "pubspec.yaml")
         if File.file?(pubspec_path)
           sync_client_extension_dependencies(pubspec_path, extension_packages)
           prune_client_pubspec(pubspec_path, extension_packages)
-          sync_external_extension_dependencies(pubspec_path, external)
+          sync_external_extension_dependencies(
+            pubspec_path,
+            external,
+            managed_names: removable_external_names
+          )
         end
         sync_client_package_directories(client_dir, extension_packages)
         client_entrypoint_paths(client_dir).each do |entrypoint|
@@ -1588,8 +1720,18 @@ module Ruflet
 
           sync_client_main_extensions(entrypoint, extension_aliases)
           prune_client_main(entrypoint, extension_aliases)
+          prune_external_extension_registrations(
+            entrypoint,
+            removable_external_names - external.map { |entry| entry[:name] }
+          )
           sync_external_extension_registrations(entrypoint, external)
         end
+        write_managed_external_extension_names(client_dir, external.map { |entry| entry[:name] })
+        @ruflet_selected_flutter_extension_packages = extension_packages
+        @ruflet_selected_external_extension_packages = external.map { |entry| entry[:name] }
+        @ruflet_managed_external_extension_packages = removable_external_names
+        @ruflet_extension_selection_applied = true
+        extension_keys
       end
 
       # An extension may name a package the template does not bundle, declared
@@ -1647,18 +1789,97 @@ module Ruflet
         nil
       end
 
-      def sync_external_extension_dependencies(pubspec_path, entries)
-        return if entries.empty?
-
+      def sync_external_extension_dependencies(pubspec_path, entries, managed_names: [])
         data = YAML.safe_load(read_text_file(pubspec_path), aliases: true) || {}
         dependencies = (data["dependencies"] || {}).dup
+        selected_names = entries.map { |entry| entry[:name] }
+        Array(managed_names).each do |name|
+          dependencies.delete(name) unless selected_names.include?(name)
+        end
         entries.each { |entry| dependencies[entry[:name]] = entry[:dependency] }
         data["dependencies"] = dependencies
         write_pubspec_yaml(pubspec_path, data)
-        build_note("Added #{entries.map { |e| e[:name] }.join(', ')} from the extension configuration")
+        build_note("Added #{selected_names.join(', ')} from the extension configuration") unless selected_names.empty?
       end
 
-      # Flet extension packages expose an Extension class from a library named
+      def managed_extension_state_path(client_dir)
+        File.join(client_dir, MANAGED_EXTENSION_STATE_PATH)
+      end
+
+      def managed_external_extension_names(client_dir)
+        path = managed_extension_state_path(client_dir)
+        return [] unless File.file?(path)
+
+        data = JSON.parse(read_text_file(path))
+        Array(data["external_packages"]).map(&:to_s).reject(&:empty?).uniq
+      rescue StandardError
+        []
+      end
+
+      def write_managed_external_extension_names(client_dir, names)
+        path = managed_extension_state_path(client_dir)
+        FileUtils.mkdir_p(File.dirname(path))
+        write_text_file(path, JSON.pretty_generate("external_packages" => Array(names).map(&:to_s).uniq.sort))
+      end
+
+      def discover_registered_external_extension_names(client_dir)
+        known_packages = CLIENT_EXTENSION_MAP.values.map { |entry| entry.fetch(:package) }.uniq
+        client_entrypoint_paths(client_dir).flat_map do |path|
+          next [] unless File.file?(path)
+
+          content = read_text_file(path)
+          content.scan(%r{import 'package:([^/]+)/[^']+'\s+as\s+([A-Za-z0-9_]+);}).filter_map do |package, import_alias|
+            next if known_packages.include?(package)
+            next unless content.match?(/^\s*#{Regexp.escape(import_alias)}\.Extension\(\),\s*$/)
+
+            package
+          end
+        end.uniq
+      end
+
+      def prune_external_extension_registrations(path, package_names)
+        return if package_names.empty?
+
+        content = read_text_file(path)
+        original = content.dup
+        package_names.each do |package|
+          escaped = Regexp.escape(package)
+          aliases = content.scan(%r{^import 'package:#{escaped}/[^']+'\s+as\s+([A-Za-z0-9_]+);\s*$}).flatten
+          content.gsub!(%r{^import 'package:#{escaped}/[^']+'\s+as\s+[A-Za-z0-9_]+;\s*\n}, "")
+          aliases.each do |import_alias|
+            content.gsub!(/^\s*#{Regexp.escape(import_alias)}\.Extension\(\),\s*\n/, "")
+          end
+        end
+        write_text_file(path, content) unless content == original
+      end
+
+      def validate_flutter_extension_selection(client_dir)
+        selected = Array(@ruflet_selected_flutter_extension_packages)
+        selected_external = Array(@ruflet_selected_external_extension_packages)
+        pubspec_path = File.join(client_dir, "pubspec.yaml")
+        return true unless File.file?(pubspec_path)
+
+        data = YAML.safe_load(read_text_file(pubspec_path), aliases: true) || {}
+        dependencies = data["dependencies"].is_a?(Hash) ? data["dependencies"].keys.map(&:to_s) : []
+        optional = CLIENT_EXTENSION_MAP.values.map { |entry| entry.fetch(:package) }.uniq
+        unexpected = (dependencies & optional) - selected
+        missing = selected - dependencies
+        managed_external = Array(@ruflet_managed_external_extension_packages)
+        unexpected_external = (dependencies & managed_external) - selected_external
+        errors = []
+        errors << "unused Flutter extensions remain: #{unexpected.join(', ')}" unless unexpected.empty?
+        errors << "selected Flutter extensions are missing: #{missing.join(', ')}" unless missing.empty?
+        errors << "unused external Flutter extensions remain: #{unexpected_external.join(', ')}" unless unexpected_external.empty?
+        return true if errors.empty?
+
+        errors.each { |message| warn "build config error: #{message}" }
+        false
+      rescue StandardError => e
+        warn "build config error: could not verify Flutter extension pruning: #{e.message}"
+        false
+      end
+
+      # Ruflet extension packages expose an Extension class from a library named
       # after the package, so the import and registration can be derived.
       def sync_external_extension_registrations(path, entries)
         return if entries.empty?
@@ -1693,6 +1914,28 @@ module Ruflet
             { name: key, description: "" } if key
           end
         end
+      end
+
+      def configured_service_entries_with_requirements(config)
+        entries = configured_service_entries(config)
+        configured_extensions = Array(config["extensions"]).filter_map do |entry|
+          normalize_extension_key(entry) unless entry.is_a?(Hash)
+        end
+        configured_extensions.flat_map do |extension|
+          EXTENSION_REQUIRED_SERVICES.fetch(extension, [])
+        end.each do |service|
+          entries << { name: service, description: "" } unless entries.any? { |entry| entry[:name] == service }
+        end
+        entries
+      end
+
+      def configured_extension_keys(config)
+        services = configured_service_entries(config).map { |entry| entry[:name] }
+        requested_extensions = Array(config["extensions"]).filter_map do |value|
+          normalize_extension_key(value) unless value.is_a?(Hash)
+        end
+        protected_extensions = services.flat_map { |name| PROTECTED_SERVICE_EXTENSIONS.fetch(name, []) }
+        (requested_extensions + protected_extensions + services).uniq
       end
 
       ANDROID_SIGNING_KEYS = {
@@ -1769,16 +2012,10 @@ module Ruflet
       end
 
       def apply_native_service_permissions(client_dir, config)
-        entries = configured_service_entries(config)
-        configured_extensions = Array(config["extensions"]).filter_map { |entry| normalize_extension_key(entry) }
-        extension_services = configured_extensions.flat_map do |extension|
-          EXTENSION_REQUIRED_SERVICES.fetch(extension, [])
-        end
-        extension_services.each do |service|
-          entries << { name: service, description: "" } unless entries.any? { |entry| entry[:name] == service }
-        end
+        entries = configured_service_entries_with_requirements(config)
         apply_android_service_permissions(client_dir, entries)
         apply_ios_service_usage_descriptions(client_dir, entries)
+        apply_macos_service_permissions(client_dir, entries)
       end
 
       def apply_android_service_permissions(client_dir, entries)
@@ -1802,28 +2039,56 @@ module Ruflet
 
       def apply_ios_service_usage_descriptions(client_dir, entries)
         path = File.join(client_dir, "ios", "Runner", "Info.plist")
+        apply_apple_service_usage_descriptions(
+          path, entries, IOS_SERVICE_USAGE_KEYS, MANAGED_IOS_USAGE_KEYS)
+      end
+
+      def apply_macos_service_permissions(client_dir, entries)
+        plist = File.join(client_dir, "macos", "Runner", "Info.plist")
+        apply_apple_service_usage_descriptions(
+          plist, entries, MACOS_SERVICE_USAGE_KEYS, MANAGED_MACOS_USAGE_KEYS)
+
+        %w[DebugProfile.entitlements Release.entitlements].each do |name|
+          path = File.join(client_dir, "macos", "Runner", name)
+          next unless File.file?(path)
+
+          content = read_text_file(path)
+          MANAGED_MACOS_SERVICE_ENTITLEMENTS.each do |key|
+            content.gsub!(
+              %r{\s*<key>#{Regexp.escape(key)}</key>\s*<(?:true|false)\s*/>}m,
+              ""
+            )
+          end
+          entries.filter_map { |entry| MACOS_SERVICE_ENTITLEMENTS[entry[:name]] }.uniq.each do |key|
+            pair = "\t<key>#{key}</key>\n\t<true/>\n"
+            content.sub!(%r{</dict>\s*</plist>}m, "#{pair}</dict>\n</plist>")
+          end
+          write_text_file(path, content)
+        end
+      end
+
+      def apply_apple_service_usage_descriptions(path, entries, usage_keys, managed_keys)
         return unless File.file?(path)
 
         content = read_text_file(path)
-        MANAGED_IOS_USAGE_KEYS.each do |key|
+        managed_keys.each do |key|
           content.gsub!(
             %r{\s*<key>#{Regexp.escape(key)}</key>\s*<string>.*?</string>}m,
             ""
           )
         end
         entries.each do |entry|
-          key = IOS_SERVICE_USAGE_KEYS[entry[:name]]
-          next unless key
-
           description = entry[:description]
           description = "This app uses #{entry[:name]} access for its Ruflet features." if description.empty?
           escaped_description = xml_escape(description)
-          pair = "\t<key>#{key}</key>\n\t<string>#{escaped_description}</string>\n"
+          Array(usage_keys[entry[:name]]).each do |key|
+            pair = "\t<key>#{key}</key>\n\t<string>#{escaped_description}</string>\n"
 
-          if content.match?(%r{<key>#{Regexp.escape(key)}</key>})
-            content.sub!(%r{<key>#{Regexp.escape(key)}</key>\s*<string>.*?</string>}m, "<key>#{key}</key>\n\t<string>#{escaped_description}</string>")
-          else
-            content.sub!(%r{</dict>\s*</plist>}m, "#{pair}</dict>\n</plist>")
+            if content.match?(%r{<key>#{Regexp.escape(key)}</key>})
+              content.sub!(%r{<key>#{Regexp.escape(key)}</key>\s*<string>.*?</string>}m, "<key>#{key}</key>\n\t<string>#{escaped_description}</string>")
+            else
+              content.sub!(%r{</dict>\s*</plist>}m, "#{pair}</dict>\n</plist>")
+            end
           end
         end
         write_text_file(path, content)
@@ -1838,18 +2103,48 @@ module Ruflet
       end
 
       def clear_stale_platform_outputs(client_dir, platform, verbose: false)
-        return unless platform == "ios"
-
-        stale_paths = %w[
-          build/ios/Debug-iphonesimulator
-          build/ios/iphonesimulator
-        ]
+        stale_paths = case platform
+        when "ios"
+          %w[
+            build/ios/Debug-iphonesimulator
+            build/ios/iphonesimulator
+          ]
+        when "android", "apk", "aab"
+          # Flutter and Gradle merge assets incrementally. When a build switches
+          # from full to lite, removed project gems can otherwise survive in the
+          # next APK even though pubspec.yaml and the source asset tree are clean.
+          %w[
+            build/app/intermediates/flutter
+            build/app/intermediates/assets
+            build/app/intermediates/compressed_assets
+            build/app/intermediates/incremental/mergeReleaseAssets
+          ]
+        else
+          []
+        end
 
         stale_paths.each do |relative_path|
           path = File.join(client_dir, relative_path)
           next unless Dir.exist?(path)
 
           FileUtils.rm_rf(path)
+          build_log(verbose, "cleared stale #{relative_path}")
+        end
+
+        return unless platform == "ios"
+
+        # Xcode's incremental App.framework copy does not remove files that
+        # disappeared from a Flutter asset directory. Clear only the generated
+        # embedded project tree so a removed gem/archive cannot survive the
+        # next signed build; native compilation outputs remain reusable.
+        asset_pattern = File.join(
+          client_dir, "build", "ios", "**", "flutter_assets", "assets",
+          self_contained_project_name)
+        Dir.glob(asset_pattern).each do |asset_root|
+          next unless Dir.exist?(asset_root)
+
+          FileUtils.rm_rf(asset_root)
+          relative_path = Pathname.new(asset_root).relative_path_from(Pathname.new(client_dir))
           build_log(verbose, "cleared stale #{relative_path}")
         end
       end
@@ -1862,14 +2157,14 @@ module Ruflet
 
       def configure_client_runtime_mode(client_dir, self_contained:, verbose: false)
         build_log(verbose, "configuring #{self_contained ? 'self-contained' : 'server-driven'} runtime")
-        sync_client_pubspec_for_runtime_mode(client_dir, self_contained: self_contained)
         if self_contained
-          sync_self_contained_project_assets(client_dir, verbose: verbose)
+          return false unless sync_self_contained_project_assets(client_dir, verbose: verbose)
           remove_local_ruby_runtime_override(client_dir, verbose: verbose)
         else
           remove_self_contained_project_assets(client_dir, verbose: verbose)
           remove_local_ruby_runtime_override(client_dir, verbose: verbose)
         end
+        sync_client_pubspec_for_runtime_mode(client_dir, self_contained: self_contained)
         true
       end
 
@@ -1883,19 +2178,22 @@ module Ruflet
         flutter = data["flutter"]
         flutter = data["flutter"] = {} unless flutter.is_a?(Hash)
         assets = Array(flutter["assets"]).map(&:to_s)
+        project_prefix = "assets/#{self_contained_project_name}/"
+        # The exact directory list changes between lite and full (most notably
+        # vendor/bundle). Remove the previous profile's generated entries
+        # before adding the directories that exist in this build.
+        assets.reject! { |asset| asset == project_prefix || asset.start_with?(project_prefix) }
 
         if self_contained
           dependencies["ruby_runtime"] = ruby_runtime_dependency(dependencies["ruby_runtime"])
           # Flutter does not recurse into asset directories, so every subdirectory
           # of the embedded project (e.g. standalone_apps/<slug>/) must be listed
           # explicitly or its files never reach the bundle/manifest on device.
-          self_contained_project_asset_dirs.each do |dir_entry|
+          self_contained_project_asset_dirs(client_dir).each do |dir_entry|
             assets << dir_entry unless assets.include?(dir_entry)
           end
         else
           dependencies.delete("ruby_runtime")
-          project_prefix = "assets/#{self_contained_project_name}/"
-          assets.reject! { |a| a.to_s == project_prefix || a.to_s.start_with?(project_prefix) }
         end
 
         flutter["assets"] = assets unless assets.empty?
@@ -1912,10 +2210,67 @@ module Ruflet
       PUBLISHED_RUBY_RUNTIME_CONSTRAINT = "^0.0.14"
 
       def ruby_runtime_dependency(current_dependency = nil)
+        if embedded_runtime_profile == :full && @ruflet_full_runtime_path
+          return { "path" => @ruflet_full_runtime_path }
+        end
+
         local_path = explicit_local_ruby_runtime_path || source_checkout_ruby_runtime_path
         return { "path" => local_path } if local_path
 
         current_dependency || PUBLISHED_RUBY_RUNTIME_CONSTRAINT
+      end
+
+      def configure_full_runtime_distribution(config, platform, verbose: false)
+        configured = ENV["RUFLET_FULL_RUNTIME_PATH"].to_s.strip
+        build_config = config["build"].is_a?(Hash) ? config["build"] : {}
+        configured = build_config["full_runtime_path"].to_s.strip if configured.empty?
+        candidates = []
+        candidates << File.expand_path(configured, Dir.pwd) unless configured.empty?
+        local_runtime = explicit_local_ruby_runtime_path || source_checkout_ruby_runtime_path
+        candidates << local_runtime if local_runtime
+
+        candidates.compact.uniq.each do |root|
+          manifest_path = File.join(root, FULL_RUNTIME_MANIFEST)
+          pubspec_path = File.join(root, "pubspec.yaml")
+          next unless File.file?(manifest_path) && File.file?(pubspec_path)
+
+          manifest = JSON.parse(read_text_file(manifest_path))
+          next unless manifest["engine"] == "cruby"
+          platforms = Array(manifest["platforms"]).map(&:to_s)
+          target = normalized_runtime_platform(platform)
+          next unless platforms.include?(target)
+
+          pubspec = YAML.safe_load(read_text_file(pubspec_path), aliases: true) || {}
+          next unless pubspec["name"] == "ruby_runtime"
+
+          @ruflet_full_runtime_path = File.expand_path(root)
+          @ruflet_full_runtime_manifest = manifest
+          build_log(
+            verbose,
+            "full CRuby runtime=#{@ruflet_full_runtime_path} ruby=#{manifest['ruby_version']}"
+          )
+          return true
+        rescue JSON::ParserError, Psych::SyntaxError => e
+          build_log(verbose, "ignored invalid full runtime at #{root}: #{e.message}")
+        end
+
+        warn "build config error: --full needs a CRuby runtime distribution for #{normalized_runtime_platform(platform)}"
+        warn "Set RUFLET_FULL_RUNTIME_PATH to a ruby_runtime Flutter package containing #{FULL_RUNTIME_MANIFEST}."
+        warn "The bundled ruby_runtime is the lite mruby engine and will not be mislabeled as CRuby."
+        false
+      end
+
+      def full_runtime_device_only?
+        embedded_runtime_profile == :full &&
+          @ruflet_full_runtime_manifest.is_a?(Hash) &&
+          @ruflet_full_runtime_manifest["device_only"] == true
+      end
+
+      def normalized_runtime_platform(platform)
+        return "android" if %w[apk android aab appbundle].include?(platform.to_s)
+        return "ios" if %w[ios ipa].include?(platform.to_s)
+
+        platform.to_s
       end
 
       def explicit_local_ruby_runtime_path
@@ -1935,12 +2290,14 @@ module Ruflet
         nil
       end
 
-      def refresh_managed_client_template_files(client_dir, verbose: false)
+      def refresh_managed_client_template_files(client_dir, platform: nil, verbose: false)
         template_root =
           if Ruflet::CLI.respond_to?(:resolve_ruflet_client_template_root, true)
             Ruflet::CLI.send(:resolve_ruflet_client_template_root)
           end
         return unless template_root && Dir.exist?(template_root)
+        return false unless validate_template_ruflet_source_integrity(
+          template_root, verbose: verbose)
 
         managed_files = [
           "lib/main.dart",
@@ -1961,6 +2318,23 @@ module Ruflet
           "android/app/build.gradle.kts"
         ]
 
+        case platform.to_s
+        when "ios", "ipa"
+          managed_files.concat(
+            [
+              "ios/Runner/AppDelegate.swift",
+              "ios/Runner.xcodeproj/project.pbxproj"
+            ]
+          )
+        when "macos"
+          managed_files.concat(
+            [
+              "macos/Runner/MainFlutterWindow.swift",
+              "macos/Runner.xcodeproj/project.pbxproj"
+            ]
+          )
+        end
+
         managed_files.each do |relative_path|
           source = File.join(template_root, relative_path)
           next unless File.file?(source)
@@ -1971,10 +2345,333 @@ module Ruflet
           build_log(verbose, "refreshed template file #{relative_path}")
         end
 
-        # Older managed clients carried a macOS-only FilePicker override. Flet's
+        # Older managed clients carried a macOS-only FilePicker override. Ruflet's
         # core service owns FilePicker now, so this duplicate must not survive a
         # template refresh.
         FileUtils.rm_f(File.join(client_dir, "lib", "ruflet_file_picker_service.dart"))
+        true
+      end
+
+      # Every application build copies its engine and extension packages out of
+      # the template. Validate the pinned inventory before that copy so a stale,
+      # partially updated, or locally contaminated template can never become an
+      # application dependency by accident.
+      def validate_template_ruflet_source_integrity(template_root, verbose: false)
+        packages_root = File.join(template_root, "ruflet_packages")
+        return true unless Dir.exist?(packages_root)
+
+        manifest_path = File.join(template_root, RUFLET_SOURCE_INTEGRITY_PATH)
+        raise "missing #{RUFLET_SOURCE_INTEGRITY_PATH}" unless File.file?(manifest_path)
+
+        manifest = JSON.parse(read_text_file(manifest_path))
+        raise "unsupported source manifest version" unless manifest["manifest_version"] == 5
+        raise "unexpected source package" unless manifest["package_name"] == "ruflet-engine"
+        raise "invalid source revision" unless manifest["source_ref"].to_s.match?(/\A[0-9a-f]{40}\z/)
+
+        files = manifest.fetch("files")
+        raise "empty source inventory" unless files.is_a?(Hash) && !files.empty?
+
+        actual = []
+        Find.find(packages_root) do |path|
+          next if path == packages_root
+
+          relative = path.delete_prefix("#{packages_root}#{File::SEPARATOR}")
+          if RUFLET_SOURCE_IGNORED_DIRECTORIES.include?(File.basename(path))
+            Find.prune if File.directory?(path)
+            next
+          end
+          next if RUFLET_SOURCE_IGNORED_FILES.include?(File.basename(path))
+          next if File.directory?(path)
+          raise "symbolic link in engine source: #{path}" if File.symlink?(path)
+
+          actual << relative
+        end
+        expected = files.keys.sort
+        unless actual.sort == expected
+          missing = expected - actual
+          unexpected = actual - expected
+          details = []
+          details << "missing: #{missing.first(5).join(', ')}" unless missing.empty?
+          details << "unexpected: #{unexpected.first(5).join(', ')}" unless unexpected.empty?
+          raise "source inventory mismatch (#{details.join('; ')})"
+        end
+
+        files.each do |relative, entry|
+          path = File.expand_path(relative, packages_root)
+          prefix = "#{File.expand_path(packages_root)}#{File::SEPARATOR}"
+          raise "unsafe source path: #{relative}" unless path.start_with?(prefix)
+          raise "source path mismatch: #{relative}" unless entry["source_path"] == relative
+          raise "non-exact source entry: #{relative}" unless entry["classification"] == "exact_source"
+
+          expected_sha = entry["vendored_sha256"].to_s
+          raise "invalid source digest: #{relative}" unless expected_sha.match?(/\A[0-9a-f]{64}\z/)
+          actual_sha = Digest::SHA256.file(path).hexdigest
+          raise "source content drift: #{relative}" unless actual_sha == expected_sha
+        end
+
+        build_note(
+          "Verified #{files.length} pinned Ruflet engine and extension source files " \
+          "at #{manifest.fetch('source_ref')}"
+        )
+        true
+      rescue StandardError => e
+        warn "build config error: Ruflet template source verification failed: #{e.message}"
+        build_log(verbose, "template source integrity failure at #{template_root}")
+        false
+      end
+
+      # Ruflet had a second, Swift-rendered Apple host. It is gone: every
+      # platform renders through the Ruflet Flutter engine. A client generated
+      # while it existed still carries the Swift package, the engine-choice
+      # shim and the Xcode references, so a rebuild strips them.
+      def remove_native_apple_renderer_integration(client_dir, platform:, verbose: false)
+        apple_platform = case platform.to_s
+        when "ios", "ipa" then "ios"
+        when "macos" then "macos"
+        end
+        return true unless apple_platform
+
+        unless restore_flutter_apple_host(client_dir, apple_platform, verbose: verbose)
+          return false
+        end
+        strip_native_apple_xcode_project(client_dir, apple_platform)
+        FileUtils.rm_f(File.join(client_dir, apple_platform, "Runner", "RufletEngineChoice.swift"))
+        FileUtils.rm_rf(File.join(client_dir, "apple_packages"))
+        FileUtils.rm_rf(File.join(client_dir, "apple_extensions"))
+        configure_ios_scene_delegate(client_dir) if apple_platform == "ios"
+        apple_info_plist_paths(client_dir).each do |path|
+          remove_plist_value(path, "RufletExperimentalNativeRenderer")
+          remove_plist_value(path, "GADApplicationIdentifier")
+        end
+        build_log(verbose, "removed native Apple renderer integration")
+        true
+      end
+
+      def restore_flutter_apple_host(client_dir, platform, verbose: false)
+        template_root = if Ruflet::CLI.respond_to?(:resolve_ruflet_client_template_root, true)
+          Ruflet::CLI.send(:resolve_ruflet_client_template_root)
+        end
+        filename = platform == "ios" ? "AppDelegate.swift" : "MainFlutterWindow.swift"
+        source = template_root && File.join(template_root, "flutter_hosts", platform, "Runner", filename)
+        unless source && File.file?(source)
+          warn "build config error: the Ruflet client template is missing the Flutter-only #{platform} host"
+          return false
+        end
+
+        destination = File.join(client_dir, platform, "Runner", filename)
+        FileUtils.mkdir_p(File.dirname(destination))
+        FileUtils.cp(source, destination)
+        build_log(verbose, "restored Flutter-only #{platform} host")
+        true
+      end
+
+      def strip_native_apple_xcode_project(client_dir, platform)
+        path = File.join(client_dir, platform, "Runner.xcodeproj", "project.pbxproj")
+        return unless File.file?(path)
+
+        content = read_text_file(path)
+        content.gsub!(
+          %r{^\s*[A-F0-9]+ /\* XCLocalSwiftPackageReference "\.\./apple_(?:extensions|packages/ruflet_apple)" \*/ = \{.*?^\s*\};\n}m,
+          ""
+        )
+        content = content.lines.reject do |line|
+          line.include?("Ruflet") ||
+            line.include?("../apple_extensions") ||
+            line.include?("../apple_packages/ruflet_apple")
+        end.join
+        write_text_file(path, content)
+      end
+
+      # Only the Flutter host remains, so the scene delegate is always Flutter's.
+      # A client built against the Swift renderer names RufletSceneDelegate here
+      # and would launch into a class its bundle no longer contains.
+      def configure_ios_scene_delegate(client_dir)
+        path = File.join(client_dir, "ios", "Runner", "Info.plist")
+        return unless File.file?(path)
+
+        content = read_text_file(path)
+        content.gsub!(
+          %r{(<key>UISceneDelegateClassName</key>\s*<string>)\$\(PRODUCT_MODULE_NAME\)\.(?:RufletSceneDelegate|FlutterSceneDelegate|SceneDelegate)(</string>)}m,
+          "\\1$(PRODUCT_MODULE_NAME).SceneDelegate\\2"
+        )
+        write_text_file(path, content)
+      end
+
+      def apple_info_plist_paths(client_dir)
+        [
+          File.join(client_dir, "ios", "Runner", "Info.plist"),
+          File.join(client_dir, "macos", "Runner", "Info.plist")
+        ].select { |path| File.file?(path) }
+      end
+
+      def remove_plist_value(path, key)
+        content = read_text_file(path)
+        content.gsub!(
+          %r{\s*<key>#{Regexp.escape(key)}</key>\s*(?:<string>.*?</string>|<(?:true|false)\s*/>)}m,
+          ""
+        )
+        write_text_file(path, content)
+      end
+
+      def remove_plist_dictionary_boolean(path, dictionary_key, key)
+        content = read_text_file(path)
+        dictionary = content.match(
+          %r{<key>#{Regexp.escape(dictionary_key)}</key>\s*<dict>}m)
+        return unless dictionary
+
+        opening = content.index("<dict>", dictionary.begin(0))
+        return unless opening
+
+        depth = 0
+        closing = nil
+        content.to_enum(:scan, %r{</?dict>}).each do
+          token = Regexp.last_match
+          next if token.begin(0) < opening
+
+          depth += token[0] == "<dict>" ? 1 : -1
+          if depth.zero?
+            closing = token
+            break
+          end
+        end
+        return unless closing
+
+        body_start = opening + "<dict>".length
+        body = content[body_start...closing.begin(0)]
+        updated_body = body.gsub(
+          %r{\s*<key>#{Regexp.escape(key)}</key>\s*<(?:true|false)\s*/>}m,
+          ""
+        )
+        return if updated_body == body
+
+        if updated_body.strip.empty?
+          pair_start = dictionary.begin(0)
+          line_start = content.rindex("\n", pair_start - 1)
+          if line_start && content[(line_start + 1)...pair_start].strip.empty?
+            pair_start = line_start + 1
+          end
+          content[pair_start...closing.end(0)] = ""
+        else
+          content[body_start...closing.begin(0)] = updated_body
+        end
+        write_text_file(path, content)
+      end
+
+      def configure_native_apple_runtime(
+        client_dir, platform:, self_contained:, config: {}, verbose: false
+      )
+        plist_paths = case platform.to_s
+        when "ios", "ipa"
+          [File.join(client_dir, "ios", "Runner", "Info.plist")]
+        when "macos"
+          [File.join(client_dir, "macos", "Runner", "Info.plist")]
+        else
+          []
+        end
+
+        plist_paths.each do |path|
+          next unless File.file?(path)
+
+          upsert_plist_string(
+            path, "RufletEmbeddedProject",
+            self_contained ? self_contained_project_name : "")
+          upsert_plist_boolean(path, "RufletRuntimeAutostart", self_contained)
+          upsert_plist_string(
+            path, "RufletRuntimeProfile",
+            self_contained ? embedded_runtime_profile.to_s : "")
+          remove_plist_value(path, "RufletExperimentalNativeRenderer")
+          apple_platform = platform.to_s == "ipa" ? "ios" : platform.to_s
+          platform_config = platform_build_config(config, apple_platform)
+          if platform_config["local_network"] == true
+            # The embedded VM is in-process, but the application can still
+            # explicitly connect to LAN services (for example RufletApp).
+            description = platform_config["local_network_usage_description"].to_s.strip
+            description = "Connect to Ruflet applications and services on your local network." if description.empty?
+            upsert_plist_string(path, "NSLocalNetworkUsageDescription", description)
+            upsert_plist_dictionary_boolean(
+              path, "NSAppTransportSecurity", "NSAllowsLocalNetworking", true)
+          elsif self_contained
+            remove_plist_value(path, "NSLocalNetworkUsageDescription")
+            remove_plist_dictionary_boolean(
+              path, "NSAppTransportSecurity", "NSAllowsLocalNetworking")
+          end
+          message = if self_contained
+            "native Apple runtime autostarts #{self_contained_project_name}"
+          else
+            "native Apple runtime uses the server URL resolved by Dart"
+          end
+          build_log(verbose, message)
+        end
+      end
+
+      def configure_android_runtime(client_dir, platform:, self_contained:, verbose: false)
+        return unless %w[apk android aab appbundle].include?(platform.to_s)
+
+        path = File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")
+        return unless File.file?(path)
+
+        upsert_android_metadata(path, "ruflet.runtime.autostart", self_contained.to_s)
+        upsert_android_metadata(
+          path, "ruflet.runtime.project",
+          self_contained ? self_contained_project_name : "")
+        upsert_android_metadata(
+          path, "ruflet.runtime.profile",
+          self_contained ? embedded_runtime_profile.to_s : "")
+        build_log(
+          verbose,
+          self_contained ? "android runtime autostarts #{self_contained_project_name} (#{embedded_runtime_profile})" : "android embedded runtime autostart disabled"
+        )
+      end
+
+      def upsert_android_metadata(path, name, value)
+        content = read_text_file(path)
+        escaped_value = xml_escape(value)
+        tag = %(        <meta-data android:name="#{name}" android:value="#{escaped_value}" />)
+        pattern = %r{\s*<meta-data\s+android:name=["']#{Regexp.escape(name)}["'][^>]*/>}m
+        if content.match?(pattern)
+          content.sub!(pattern, "\n#{tag}")
+        else
+          content.sub!(%r{(<application\b[^>]*>)}, "\\1\n#{tag}")
+        end
+        write_text_file(path, content)
+      end
+
+      def upsert_plist_string(path, key, value)
+        content = read_text_file(path)
+        pair = "\t<key>#{key}</key>\n\t<string>#{xml_escape(value)}</string>"
+        pattern = %r{<key>#{Regexp.escape(key)}</key>\s*<string>.*?</string>}m
+        if content.match?(pattern)
+          content.sub!(pattern, pair.strip)
+        else
+          content.sub!(%r{</dict>\s*</plist>}m, "#{pair}\n</dict>\n</plist>")
+        end
+        write_text_file(path, content)
+      end
+
+      def upsert_plist_boolean(path, key, value)
+        content = read_text_file(path)
+        pair = "\t<key>#{key}</key>\n\t<#{value ? 'true' : 'false'}/>"
+        pattern = %r{<key>#{Regexp.escape(key)}</key>\s*<(?:true|false)\s*/>}m
+        if content.match?(pattern)
+          content.sub!(pattern, pair.strip)
+        else
+          content.sub!(%r{</dict>\s*</plist>}m, "#{pair}\n</dict>\n</plist>")
+        end
+        write_text_file(path, content)
+      end
+
+      def upsert_plist_dictionary_boolean(path, dictionary_key, key, value)
+        remove_plist_dictionary_boolean(path, dictionary_key, key)
+        content = read_text_file(path)
+        entry = "<key>#{key}</key>\n\t\t<#{value ? 'true' : 'false'}/>"
+        opening = %r{(<key>#{Regexp.escape(dictionary_key)}</key>\s*<dict>)}m
+        if content.match?(opening)
+          content.sub!(opening) { "#{Regexp.last_match(1)}\n\t\t#{entry}" }
+        else
+          pair = "\t<key>#{dictionary_key}</key>\n\t<dict>\n\t\t#{entry}\n\t</dict>\n"
+          content.sub!(%r{</dict>\s*</plist>}m, "#{pair}</dict>\n</plist>")
+        end
+        write_text_file(path, content)
       end
 
       def write_pubspec_yaml(path, data)
@@ -2002,11 +2699,24 @@ module Ruflet
       # Flutter asset directory entries for every folder of the embedded project
       # that contains packaged files. Derived from the exact copy list so the
       # pubspec asset dirs match what sync_self_contained_project_assets writes.
-      def self_contained_project_asset_dirs
+      def self_contained_project_asset_dirs(client_dir = nil)
         prefix = "assets/#{self_contained_project_name}"
         dirs = project_asset_relative_paths.map { |rel| File.dirname(rel) }.uniq
+        if client_dir
+          packaged_root = File.join(client_dir, prefix)
+          if Dir.exist?(packaged_root)
+            Find.find(packaged_root) do |path|
+              next unless File.file?(path)
+
+              relative = Pathname.new(path).relative_path_from(Pathname.new(packaged_root)).to_s
+              dirs << File.dirname(relative)
+            end
+          end
+        end
         project_dirs = dirs.map { |dir| dir == "." ? "#{prefix}/" : "#{prefix}/#{dir}/" }
-        project_dirs.sort
+        manifest = File.join(client_dir.to_s, prefix, ".ruflet-runtime.json")
+        project_dirs << "#{prefix}/.ruflet-runtime.json" if client_dir && File.file?(manifest)
+        project_dirs.uniq.sort
       end
 
       def sync_self_contained_project_assets(client_dir, verbose: false)
@@ -2027,7 +2737,329 @@ module Ruflet
           copied += 1
         end
 
+        profile = embedded_runtime_profile
+        if profile == :full
+          return false unless package_full_runtime_gems(
+            project_root, destination_root, client_dir, verbose: verbose)
+        else
+          return false unless precompile_lite_runtime_project(
+            destination_root, verbose: verbose)
+        end
+        write_embedded_runtime_manifest(
+          project_root, destination_root, profile: profile,
+          platform: @ruflet_build_platform)
+
         build_log(verbose, "copied #{copied} project file#{copied == 1 ? '' : 's'} to assets/#{self_contained_project_name}")
+        true
+      end
+
+      def precompile_lite_runtime_project(destination_root, verbose: false)
+        compiler = embedded_mrbc_path
+        unless compiler
+          build_log(verbose, "mrbc unavailable; packaging lite Ruby source")
+          return true
+        end
+
+        sources = Dir.glob(File.join(destination_root, "**", "*.rb")).sort
+        compiled = []
+        sources.each do |source|
+          output = source.sub(/\.rb\z/, ".mrb")
+          ok = run_external_command(
+            {}, compiler, "-g", "-o", output, source,
+            chdir: destination_root, unbundled: true)
+          unless ok
+            warn "Could not precompile #{Pathname.new(source).relative_path_from(Pathname.new(destination_root))} for --lite"
+            return false
+          end
+          compiled << [source, output]
+        end
+        compiled.each { |source, _output| FileUtils.rm_f(source) }
+        build_log(verbose, "precompiled #{compiled.length} Ruby file#{compiled.length == 1 ? '' : 's'} for fast lite startup")
+        true
+      end
+
+      def embedded_mrbc_path
+        explicit = ENV["RUFLET_MRBC"].to_s.strip
+        return explicit if !explicit.empty? && File.executable?(explicit)
+
+        runtime_root = explicit_local_ruby_runtime_path || source_checkout_ruby_runtime_path
+        candidates = []
+        if runtime_root
+          candidates.concat(
+            %w[host_vm host].map do |build|
+              File.join(runtime_root, "third_party", "mruby", "build", build, "bin", "mrbc")
+            end
+          )
+          candidates << File.join(runtime_root, "bin", "mrbc")
+        end
+        candidates.find { |path| File.executable?(path) }
+      end
+
+      def embedded_runtime_profile
+        profile = @ruflet_runtime_profile
+        EMBEDDED_RUNTIME_PROFILES.include?(profile) ? profile : :lite
+      end
+
+      # A full build carries the locked application bundle alongside the
+      # project. Bundler is isolated under build/client so this never creates or
+      # rewrites .bundle state in the user's project. The cache key makes repeat
+      # builds cheap: unchanged locks reuse the installed bundle and only copy
+      # it into the Flutter asset tree.
+      def package_full_runtime_gems(project_root, destination_root, client_dir, verbose: false)
+        gemfile = project_root.join("Gemfile")
+        return true unless gemfile.file?
+
+        lockfile = project_root.join("Gemfile.lock")
+        unless lockfile.file?
+          warn "full runtime build requires Gemfile.lock"
+          warn "Run `bundle install` once so Ruflet can package a reproducible gem set."
+          return false
+        end
+
+        cache_key = Digest::SHA256.hexdigest(
+          [
+            gemfile.read,
+            lockfile.read,
+            RUBY_ENGINE,
+            RUBY_VERSION,
+            @ruflet_build_platform.to_s,
+            FULL_RUNTIME_BUNDLE_SCHEMA,
+            JSON.generate(@ruflet_full_runtime_manifest || {})
+          ].join("\0")
+        )
+        cache_root = File.join(client_dir, ".ruflet", "full-bundle", cache_key)
+        bundle_path = File.join(cache_root, "vendor", "bundle")
+        complete_marker = File.join(cache_root, ".complete")
+
+        unless File.file?(complete_marker) && Dir.exist?(bundle_path)
+          FileUtils.rm_rf(cache_root)
+          FileUtils.mkdir_p(cache_root)
+          bundle_env = {
+            "BUNDLE_GEMFILE" => gemfile.to_s,
+            "BUNDLE_PATH" => bundle_path,
+            "BUNDLE_APP_CONFIG" => File.join(cache_root, "config"),
+            "BUNDLE_WITHOUT" => "development:test",
+            "BUNDLE_FROZEN" => "true",
+            "BUNDLE_DEPLOYMENT" => "true"
+          }
+          build_note("Packaging locked project gems for the full CRuby runtime")
+          build_log(verbose, "bundle cache=#{cache_root}")
+          ok = run_full_runtime_gem_packager(
+            bundle_env, gemfile: gemfile, lockfile: lockfile,
+            bundle_path: bundle_path, project_root: project_root)
+          unless ok
+            warn "Could not package the locked project gems for --full"
+            return false
+          end
+          unless vendor_full_runtime_path_gems(
+            bundle_env, bundle_path: bundle_path, project_root: project_root)
+            return false
+          end
+          prune_full_runtime_bundle_cache(bundle_path)
+          return false unless validate_full_runtime_in_process_transport(bundle_path)
+          File.write(complete_marker, "#{cache_key}\n")
+        else
+          build_log(verbose, "reusing full runtime gem cache #{cache_key[0, 12]}")
+          return false unless validate_full_runtime_in_process_transport(bundle_path)
+        end
+
+        packaged_bundle = File.join(destination_root, "vendor", "bundle")
+        FileUtils.mkdir_p(File.dirname(packaged_bundle))
+        FileUtils.cp_r(bundle_path, packaged_bundle)
+        FileUtils.cp(gemfile.to_s, File.join(destination_root, "Gemfile"))
+        FileUtils.cp(lockfile.to_s, File.join(destination_root, "Gemfile.lock"))
+        true
+      rescue StandardError => e
+        warn "Could not package project gems for --full: #{e.class}: #{e.message}"
+        false
+      end
+
+      def run_full_runtime_gem_packager(bundle_env, gemfile:, lockfile:, bundle_path:, project_root:)
+        packager = @ruflet_full_runtime_manifest && @ruflet_full_runtime_manifest["gem_packager"]
+        unless packager.to_s.strip.empty?
+          executable = File.expand_path(packager.to_s, @ruflet_full_runtime_path)
+          unless File.executable?(executable)
+            warn "Full runtime gem packager is not executable: #{executable}"
+            return false
+          end
+          return run_external_command(
+            bundle_env,
+            executable,
+            "--gemfile", gemfile.to_s,
+            "--lockfile", lockfile.to_s,
+            "--path", bundle_path,
+            "--platform", normalized_runtime_platform(@ruflet_build_platform),
+            chdir: project_root.to_s,
+            unbundled: true
+          )
+        end
+
+        run_external_command(
+          bundle_env, RbConfig.ruby, "-S", "bundle", "install",
+          "--jobs", "4", "--retry", "3",
+          chdir: project_root.to_s, unbundled: true
+        )
+      end
+
+      # Bundler intentionally leaves `path:` gems at their source location,
+      # even when BUNDLE_PATH is set. A self-contained app cannot retain those
+      # workstation paths. Materialize every resolved spec that sits outside
+      # vendor/bundle so the runtime sees the exact locked source tree.
+      def vendor_full_runtime_path_gems(bundle_env, bundle_path:, project_root:)
+        script = <<~'RUBY'
+          require "bundler"
+          require "json"
+          puts JSON.generate(Bundler.load.specs.map { |spec|
+            {
+              "full_name" => spec.full_name,
+              "full_gem_path" => spec.full_gem_path,
+              "extension_dir" => spec.extension_dir,
+              "source_type" => spec.source.class.name,
+              "files" => spec.files,
+              "gemspec" => spec.to_ruby
+            }
+          })
+        RUBY
+        stdout, stderr, status = Open3.capture3(
+          bundle_env, RbConfig.ruby, "-e", script,
+          chdir: project_root.to_s)
+        unless status.success?
+          warn "Could not inspect locked project gems for --full"
+          warn stderr unless stderr.to_s.strip.empty?
+          return false
+        end
+
+        ruby_abi = (@ruflet_full_runtime_manifest || {})["ruby_abi"].to_s
+        ruby_abi = RbConfig::CONFIG.fetch("ruby_version") if ruby_abi.empty?
+        installed_root = File.expand_path(bundle_path)
+        specs = JSON.parse(stdout)
+        specs.each do |spec|
+          next unless spec.fetch("source_type") == "Bundler::Source::Path"
+
+          source = File.expand_path(spec.fetch("full_gem_path"))
+          next if source == installed_root || source.start_with?("#{installed_root}#{File::SEPARATOR}")
+
+          full_name = spec.fetch("full_name")
+          destination = File.join(bundle_path, "ruby", ruby_abi, "gems", full_name)
+          FileUtils.rm_rf(destination)
+          FileUtils.mkdir_p(File.dirname(destination))
+          unless copy_full_runtime_gem_files(
+            source, destination, spec.fetch("files"), full_name: full_name)
+            return false
+          end
+
+          specifications = File.join(bundle_path, "ruby", ruby_abi, "specifications")
+          FileUtils.mkdir_p(specifications)
+          File.write(File.join(specifications, "#{full_name}.gemspec"), spec.fetch("gemspec"))
+
+          extension_source = spec["extension_dir"].to_s
+          next unless !extension_source.empty? && Dir.exist?(extension_source)
+
+          extension_destination = File.join(
+            bundle_path, "ruby", ruby_abi, "extensions", "ruflet", full_name)
+          FileUtils.rm_rf(extension_destination)
+          FileUtils.mkdir_p(File.dirname(extension_destination))
+          FileUtils.cp_r(extension_source, extension_destination)
+        end
+        true
+      rescue JSON::ParserError, KeyError, SystemCallError => e
+        warn "Could not vendor path gems for --full: #{e.class}: #{e.message}"
+        false
+      end
+
+      # Downloaded .gem archives are installation inputs, not runtime inputs.
+      # Keeping them would duplicate every registry gem in the application.
+      def prune_full_runtime_bundle_cache(bundle_path)
+        Dir.glob(File.join(bundle_path, "ruby", "*", "cache")).each do |cache_dir|
+          FileUtils.rm_rf(cache_dir)
+        end
+      end
+
+      # Full self builds cannot fall back to a local socket: the embedded
+      # renderer and CRuby VM communicate only through the native in-memory
+      # bridge. Reject an older locked ruflet_server while the app is still
+      # being built instead of shipping a bundle that fails on first launch.
+      def validate_full_runtime_in_process_transport(bundle_path)
+        server_roots = Dir.glob(
+          File.join(bundle_path, "ruby", "*", "gems", "ruflet_server-*")
+        ).select { |path| Dir.exist?(path) }
+        return true if server_roots.empty?
+
+        supported = server_roots.any? do |root|
+          File.file?(
+            File.join(root, "lib", "ruflet", "server", "in_process_connection.rb")
+          )
+        end
+        return true if supported
+
+        warn "The locked ruflet_server gem does not support port-free --self --full builds."
+        warn "Update the application's Gemfile.lock to a Ruflet release with in-process transport."
+        false
+      end
+
+      # A path gem is a source checkout, not an installable payload. Copy only
+      # the files declared by its gemspec so build products, tests, caches and
+      # other workstation state cannot leak into a mobile application bundle.
+      def copy_full_runtime_gem_files(source, destination, files, full_name:)
+        source_root = File.expand_path(source)
+        destination_root = File.expand_path(destination)
+        declared_files = Array(files).map(&:to_s).reject(&:empty?).uniq.sort
+        if declared_files.empty?
+          warn "Could not vendor path gem #{full_name}: its gemspec declares no files"
+          return false
+        end
+
+        declared_files.each do |relative_path|
+          pathname = Pathname.new(relative_path)
+          clean_path = pathname.cleanpath
+          if pathname.absolute? || clean_path.each_filename.include?("..")
+            warn "Could not vendor path gem #{full_name}: unsafe file path #{relative_path.inspect}"
+            return false
+          end
+
+          source_file = File.expand_path(clean_path.to_s, source_root)
+          unless source_file.start_with?("#{source_root}#{File::SEPARATOR}") && File.file?(source_file)
+            warn "Could not vendor path gem #{full_name}: declared file is missing: #{relative_path}"
+            return false
+          end
+
+          destination_file = File.expand_path(clean_path.to_s, destination_root)
+          FileUtils.mkdir_p(File.dirname(destination_file))
+          FileUtils.cp(source_file, destination_file, preserve: true)
+        end
+        true
+      rescue SystemCallError => e
+        warn "Could not vendor path gem #{full_name}: #{e.class}: #{e.message}"
+        false
+      end
+
+      def write_embedded_runtime_manifest(project_root, destination_root, profile:, platform:)
+        paths = Dir.glob(File.join(destination_root, "**", "*"), File::FNM_DOTMATCH)
+          .select { |path| File.file?(path) }
+          .reject { |path| File.basename(path) == ".ruflet-runtime.json" }
+          .sort
+        digest = Digest::SHA256.new
+        paths.each do |path|
+          relative = Pathname.new(path).relative_path_from(Pathname.new(destination_root)).to_s
+          digest << relative << "\0" << File.binread(path) << "\0"
+        end
+
+        manifest = {
+          "schema" => 1,
+          "profile" => profile.to_s,
+          "engine" => profile == :full ? "cruby" : "mruby",
+          "platform" => platform.to_s,
+          "project" => project_root.basename.to_s,
+          "entrypoint" => File.file?(File.join(destination_root, "main.mrb")) ? "main.mrb" : "main.rb",
+          "bundle_gemfile" => profile == :full && File.file?(File.join(destination_root, "Gemfile")) ? "Gemfile" : nil,
+          "bundle_path" => profile == :full && Dir.exist?(File.join(destination_root, "vendor", "bundle")) ? "vendor/bundle" : nil,
+          "cache_key" => digest.hexdigest,
+          "warm_launch" => true
+        }.compact
+        File.write(
+          File.join(destination_root, ".ruflet-runtime.json"),
+          "#{JSON.pretty_generate(manifest)}\n"
+        )
       end
 
       def remove_self_contained_project_assets(client_dir, verbose: false)
@@ -2175,11 +3207,13 @@ module Ruflet
       # the entrypoint, the Ruby under lib/, and the assets that code loads by
       # path (image(src: "assets/logo.png"), lottie(...), fonts, audio).
       #
-      # Everything else is already consumed by the time the app runs. The gems
-      # are compiled into the VM, ruflet.yaml and services.yaml have been turned
-      # into native configuration, and lockfiles, tests, CI and store artwork
-      # were never runtime inputs. Listing what belongs in rather than guessing
-      # what to leave out keeps unexpected directories from being shipped --
+      # Everything else is already consumed by the time the app runs. Lite gems
+      # are compiled into the VM; full-profile gems and lockfiles are staged by
+      # package_full_runtime_gems instead of copied from the working tree.
+      # ruflet.yaml and services.yaml have been turned into native configuration,
+      # while tests, CI and store artwork were never runtime inputs. Listing
+      # what belongs in rather than guessing what to leave out keeps unexpected
+      # directories from being shipped --
       # release artwork once carried a lockfile that Apple read as an unsigned
       # code object and rejected the whole upload over.
       SELF_CONTAINED_PROJECT_ENTRYPOINT = "main.rb"
@@ -2233,7 +3267,7 @@ module Ruflet
         return nil if key.empty?
 
         key.tr!("-", "_")
-        key.gsub!(/\A(flet_)+/, "")
+        key.gsub!(/\A(flet_)+/, "") # Compatibility for existing application configuration.
         key.gsub!(/\A(ruflet_)+/, "")
         key.gsub!(/\Aservice_/, "")
         key
@@ -2256,29 +3290,30 @@ module Ruflet
       end
 
       def sync_client_package_directories(client_dir, selected_packages)
-        packages_root = File.join(client_dir, "flet_packages")
-        return unless Dir.exist?(packages_root)
+        packages_root = File.join(client_dir, "ruflet_packages")
 
-        kept_packages = (["flet"] + selected_packages).uniq
+        kept_packages = (["ruflet"] + selected_packages).uniq
         template_root =
           if Ruflet::CLI.respond_to?(:resolve_ruflet_client_template_root, true)
             Ruflet::CLI.send(:resolve_ruflet_client_template_root)
           end
-        template_packages_root = template_root && File.join(template_root, "flet_packages")
+        template_packages_root = template_root && File.join(template_root, "ruflet_packages")
 
-        # A declaration can change between builds. Restore newly selected local
-        # packages from the immutable template before pruning the old selection.
+        # These are disposable client sources, not application files. Refresh
+        # even existing packages so a rebuild cannot keep an older engine fork.
         kept_packages.each do |package_name|
           destination = File.join(packages_root, package_name)
-          next if Dir.exist?(destination)
           next unless template_packages_root
 
           source = File.join(template_packages_root, package_name)
           next unless Dir.exist?(source)
           next if File.expand_path(source) == File.expand_path(destination)
 
-          FileUtils.cp_r(source, destination)
+          FileUtils.rm_rf(destination) if File.exist?(destination)
+          Ruflet::CLI.send(:copy_client_template_entry, template_packages_root, packages_root, package_name)
         end
+
+        return unless Dir.exist?(packages_root)
 
         Dir.children(packages_root).each do |entry|
           path = File.join(packages_root, entry)
@@ -2290,19 +3325,61 @@ module Ruflet
       end
 
       def sync_client_extension_dependencies(path, selected_packages)
-        return if selected_packages.empty?
-
         template_deps = template_client_pubspec_dependencies
         return if template_deps.empty?
 
         data = YAML.safe_load(read_text_file(path), aliases: true) || {}
         deps = (data["dependencies"] || {}).dup
-        selected_packages.each do |package_name|
+        deps.delete_if { |name, _| name == "flet" || name.start_with?("flet_") }
+        (["ruflet"] + selected_packages).each do |package_name|
           deps[package_name] = template_deps[package_name] if template_deps.key?(package_name)
         end
 
         data["dependencies"] = deps
         write_pubspec_yaml(path, data)
+      end
+
+      # Check Pub's actual result, including transitive local forks. Merely
+      # declaring a path dependency is insufficient: an override can replace it.
+      def validate_local_ruflet_packages(client_dir)
+        config_path = File.join(client_dir, ".dart_tool", "package_config.json")
+        resolved = JSON.parse(File.read(config_path)).fetch("packages")
+        legacy = resolved.map { |entry| entry.fetch("name") }.select { |name| name == "flet" || name.start_with?("flet_") }
+        raise "legacy Flet packages resolved: #{legacy.join(', ')}" unless legacy.empty?
+
+        expected = (["ruflet"] + Array(@ruflet_selected_flutter_extension_packages)).to_h do |name|
+          [name, File.join(client_dir, "ruflet_packages", name)]
+        end
+        # The core/extension manifests also select local decoupled vendor forks.
+        queue = expected.values.dup
+        until queue.empty?
+          root = queue.shift
+          manifest = YAML.safe_load(File.read(File.join(root, "pubspec.yaml")), aliases: true)
+          (manifest["dependencies"] || {}).each do |name, dependency|
+            next unless dependency.is_a?(Hash) && dependency["path"]
+            next if expected.key?(name)
+
+            local = File.expand_path(dependency.fetch("path"), root)
+            expected[name] = local
+            queue << local
+          end
+        end
+        base = "file://#{URI::DEFAULT_PARSER.escape(File.expand_path(config_path))}"
+        expected.each do |name, root|
+          entry = resolved.find { |package| package["name"] == name }
+          raise "missing local package #{name}" unless entry
+
+          uri = URI.join(base, entry.fetch("rootUri"))
+          actual = URI::DEFAULT_PARSER.unescape(uri.path)
+          unless uri.scheme == "file" && File.realpath(actual) == File.realpath(root)
+            raise "#{name} must resolve to the bundled Ruflet source at #{root}, got #{uri}"
+          end
+        end
+        build_note("Verified #{expected.length} local Ruflet engine, extension and vendor packages")
+        true
+      rescue StandardError => e
+        warn "build config error: local Ruflet package verification failed: #{e.message}"
+        false
       end
 
       def template_client_pubspec_dependencies
@@ -2372,7 +3449,7 @@ module Ruflet
         if marker_index
           lines.insert(marker_index, extension_line)
         else
-          list_index = lines.index { |line| line.include?("final extensions = <FletExtension>[") }
+          list_index = lines.index { |line| line.include?("final extensions = <RufletExtension>[") }
           lines.insert(list_index ? list_index + 1 : lines.length, extension_line)
         end
         lines.join

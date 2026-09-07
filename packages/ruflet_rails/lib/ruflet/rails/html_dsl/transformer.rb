@@ -55,19 +55,31 @@ module Ruflet
                                    contenteditable autocapitalize autocorrect autocomplete
                                    spellcheck xmlns accept-charset enctype novalidate].freeze
 
+        # `max_width` is the one min/max box constraint Text itself carries; the
+        # rest live only on Window, so they stay out of the unfiltered lists.
         TEXT_STYLE_KEYS = %i[size weight color italic text_align font_family
-                             max_lines no_wrap overflow selectable].freeze
+                             max_lines no_wrap overflow selectable max_width].freeze
         # Box/visual styles applied to a control (or its wrapping container).
+        # Unfiltered — everything here must be a Container keyword, or the
+        # wrapper we build raises and the element renders as a placeholder.
         BOX_STYLE_KEYS = %i[padding margin bgcolor border_radius border shadow opacity
                             width height rotate scale top left right bottom blur
-                            aspect_ratio clip_behavior gradient visible alignment animate].freeze
+                            aspect_ratio clip_behavior gradient visible alignment align animate blend_mode
+                            offset animate_offset animate_opacity animate_scale
+                            animate_rotation].freeze
         # Every style key a control may pick up when its schema allows it. Excludes
         # :alignment (which is {x,y} for boxes but a main-axis string for flex).
+        # Unlike the two lists above this one is filtered against the target's
+        # schema, so keys only a few controls accept (mouse_cursor, the min/max
+        # constraints) are safe to list: they reach those controls and are
+        # dropped everywhere else.
         SCHEMA_STYLE_KEYS = %i[expand width height spacing fit bgcolor color size weight italic
                                text_align font_family max_lines no_wrap overflow selectable
                                padding margin border_radius border shadow opacity rotate scale
                                top left right bottom blur aspect_ratio clip_behavior gradient
-                               visible animate].freeze
+                               visible animate offset align blend_mode mouse_cursor max_width max_height
+                               min_width min_height animate_offset animate_opacity
+                               animate_scale animate_rotation].freeze
 
         # Attributes naming something the client fetches for itself (an image,
         # a sound, a video poster) rather than something Ruby resolves.
@@ -179,8 +191,7 @@ module Ruflet
           when "stack" then stack(build_children(element.children, form: form), **control_props(element, "stack"))
           when "list", "list-view" then list_view(build_children(element.children, form: form),
                                                   **control_props(element, "listview"))
-          when "grid", "grid-view" then grid_view(build_children(element.children, form: form),
-                                                  **control_props(element, "gridview"))
+          when "grid", "grid-view" then build_grid(element, form: form)
           when "card" then build_card(element, styles, form: form)
           when "center" then center_of(element, form: form)
           when "spacer" then container(expand: true)
@@ -220,7 +231,7 @@ module Ruflet
         def build_text(element, styles)
           props = { value: apply_text_transform(collapse_whitespace(element.text), styles[:text_transform]) }
           props.merge!(HEADING_STYLES[element.tag] || {})
-          props.merge!(styles.slice(*TEXT_STYLE_KEYS))
+          props.merge!(style_slice(styles, TEXT_STYLE_KEYS))
           style = text_style_map(styles)
           props[:style] = style unless style.empty?
           props.merge!(element_props(element))
@@ -280,9 +291,32 @@ module Ruflet
         def build_image(element, styles)
           props = element_props(element, except: %w[src alt])
           props[:semantics_label] = element["alt"] if element["alt"]
-          props.merge!(styles.slice(:width, :height, :border_radius, :fit, :opacity,
-                                    :aspect_ratio, :rotate, :scale))
+          props.merge!(style_slice(styles, %i[width height border_radius fit opacity
+                                              aspect_ratio rotate scale]))
           image(resolve_asset_url(element["src"]), **props)
+        end
+
+        # Tailwind's grid is a responsive row here: `grid grid-cols-3` gives each
+        # child a quarter-width slot in Ruflet's twelve-column system, and
+        # `col-span-2` on a child widens it. Only the parent knows how many
+        # columns there are, which is why this cannot live in the style parser.
+        GRID_COLUMNS = 12
+
+        def build_grid(element, form:)
+          cols = element["class"].to_s[/grid-cols-(\d+)/, 1].to_i
+          return grid_view(build_children(element.children, form: form),
+                           **control_props(element, "gridview")) if cols.zero?
+
+          slot = (GRID_COLUMNS.to_f / cols).round
+          children = element.elements.map do |child|
+            span = child["class"].to_s[/col-span-(\d+)/, 1].to_i
+            control = build_node(child, form: form)
+            next nil unless control.respond_to?(:props)
+
+            control.props["col"] = span.zero? ? slot : [slot * span, GRID_COLUMNS].min
+            control
+          end.compact
+          responsive_row(children, **control_props(element, "responsiverow"))
         end
 
         def build_list(element, styles, form:)
@@ -303,7 +337,7 @@ module Ruflet
           nested = element.elements
 
           if nested.empty?
-            props = styles.slice(*TEXT_STYLE_KEYS)
+            props = style_slice(styles, TEXT_STYLE_KEYS)
             text_button(content: text(collapse_whitespace(element.text), **props), on_click: on_click)
           else
             children = build_children(label_nodes, form: form)
@@ -537,7 +571,10 @@ module Ruflet
 
         # <list-tile title="Inbox" subtitle="12 unread" leading="mail" href="/inbox">
         def build_list_tile(element)
-          props = element_props(element, except: %w[title subtitle leading trailing icon])
+          # control_props, not element_props: ListTile has a rich schema of its
+          # own (bgcolor, min_height, mouse_cursor, …) and a tile authored with
+          # a class list should reach it like any other schema'd control.
+          props = control_props(element, "listtile", except: %w[title subtitle leading trailing icon])
           props[:title] = element["title"] if element["title"]
           props[:subtitle] = element["subtitle"] if element["subtitle"]
           leading = element["leading"] || element["icon"]
@@ -581,7 +618,8 @@ module Ruflet
           end
           props = element_props(element)
           props[:expand] = true unless props.key?(:expand)
-          props[:expand] = true if styles[:expand]
+          # A class list gets the last word, including when it says "don't".
+          copy_style(props, styles, :expand)
           tabs(
             column([tab_bar(labels), tab_bar_view(panes, expand: true)], spacing: 0, expand: true),
             length: tab_elements.length,
@@ -1092,7 +1130,7 @@ module Ruflet
           return {} if styles.empty?
 
           allowed = registry_props(type)
-          styles.slice(*SCHEMA_STYLE_KEYS).select { |key, _| allowed.nil? || allowed.include?(key.to_s) }
+          style_slice(styles, SCHEMA_STYLE_KEYS).select { |key, _| allowed.nil? || allowed.include?(key.to_s) }
         end
 
         # element_props plus the schema-valid style props for `type`.
@@ -1119,24 +1157,20 @@ module Ruflet
 
         def flex_props(styles, axis: "column")
           props = {}
-          props[:spacing] = styles[:spacing] if styles[:spacing]
-          props[:run_spacing] = styles[:run_spacing] if styles[:run_spacing]
-          props[:scroll] = styles[:scroll] if styles[:scroll]
-          props[:expand] = true if styles[:expand]
-          props[:wrap] = true if styles[:wrap]
-          if styles[:main_alignment]
-            props[:alignment] = styles[:main_alignment]
-          end
-          if styles[:cross_alignment]
-            key = axis == "row" ? :vertical_alignment : :horizontal_alignment
-            props[key] = styles[:cross_alignment]
-          end
+          copy_style(props, styles, :spacing)
+          copy_style(props, styles, :run_spacing)
+          copy_style(props, styles, :scroll)
+          copy_style(props, styles, :expand)
+          copy_style(props, styles, :wrap)
+          copy_style(props, styles, :main_alignment, as: :alignment)
+          copy_style(props, styles, :cross_alignment,
+                     as: axis == "row" ? :vertical_alignment : :horizontal_alignment)
           props
         end
 
         def box_props(styles)
-          props = styles.slice(*BOX_STYLE_KEYS)
-          props[:expand] = true if styles[:expand]
+          props = style_slice(styles, BOX_STYLE_KEYS)
+          copy_style(props, styles, :expand)
           props
         end
 
@@ -1147,8 +1181,24 @@ module Ruflet
           boxed.delete(:expand)
           return control if boxed.empty?
 
-          boxed[:expand] = true if styles[:expand]
+          copy_style(boxed, styles, :expand)
           container(content: control, **boxed)
+        end
+
+        # Style values move by presence, never by truthiness. Every Tailwind
+        # utility that means "off" — shrink-0, not-italic, no-underline,
+        # select-none — parses to `false`, and `if styles[key]` discards exactly
+        # those, leaving them unreachable however well they parse. A key that
+        # was never set stays absent; an explicit nil ("unset this", from
+        # shadow-none / line-clamp-none) is dropped too, since absent is what
+        # unset means on the wire.
+        def copy_style(props, styles, key, as: key)
+          value = styles[key]
+          props[as] = value unless value.nil?
+        end
+
+        def style_slice(styles, keys)
+          styles.slice(*keys).reject { |_, value| value.nil? }
         end
 
         def collapse_whitespace(text)

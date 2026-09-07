@@ -6,7 +6,7 @@ module Ruflet
       module RufletComponents
         class CupertinoSlidingSegmentedButtonControl < Ruflet::Control
           TYPE = "cupertinoslidingsegmentedbutton".freeze
-          WIRE = "CupertinoSlidingSegmentedButton".freeze
+          WIRE = "SegmentedButton".freeze
 
           KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :bottom, :col, :controls, :data, :disabled, :expand, :expand_loose, :height, :key, :left, :margin, :offset, :opacity, :padding, :proportional_width, :right, :rotate, :rtl, :scale, :selected_index, :size_change_interval, :thumb_color, :tooltip, :top, :visible, :width, :on_animation_end, :on_change, :on_size_change].freeze
 

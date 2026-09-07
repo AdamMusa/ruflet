@@ -95,6 +95,12 @@ class GestureEventsTypedTest < Minitest::Test
     assert_equal "hello", evt.value
   end
 
+  def test_change_event_preserves_false_value
+    evt = build_event("change", { "value" => false })
+
+    assert_equal false, evt.value
+  end
+
   def test_unknown_event_has_nil_typed_data
     evt = build_event("totally_unknown", { "x" => 1 })
     assert_nil evt.typed_data

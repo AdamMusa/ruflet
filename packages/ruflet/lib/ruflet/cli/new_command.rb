@@ -13,23 +13,25 @@ module Ruflet
       RUNTIME_REPO_URL = ENV.fetch("RUFLET_RUNTIME_REPO_URL", "https://github.com/AdamMusa/ruflet.git")
 
       CLIENT_EXTENSION_MAP = {
-        "audio" => { package: "flet_audio", alias: "ruflet_audio" },
-        "audio_recorder" => { package: "flet_audio_recorder", alias: "ruflet_audio_recorder" },
-        "camera" => { package: "flet_camera", alias: "ruflet_camera" },
-        "charts" => { package: "flet_charts", alias: "ruflet_charts" },
-        "code_editor" => { package: "flet_code_editor", alias: "ruflet_code_editor" },
-        "color_pickers" => { package: "flet_color_pickers", alias: "ruflet_color_picker" },
-        "datatable2" => { package: "flet_datatable2", alias: "ruflet_datatable2" },
-        "flashlight" => { package: "flet_flashlight", alias: "ruflet_flashlight" },
-        "geolocator" => { package: "flet_geolocator", alias: "ruflet_geolocator" },
-        "lottie" => { package: "flet_lottie", alias: "ruflet_lottie" },
-        "map" => { package: "flet_map", alias: "ruflet_map" },
-        "permission_handler" => { package: "flet_permission_handler", alias: "ruflet_permission_handler" },
+        "ads" => { package: "ruflet_ads", alias: "ruflet_ads" },
+        "audio" => { package: "ruflet_audio", alias: "ruflet_audio" },
+        "audio_recorder" => { package: "ruflet_audio_recorder", alias: "ruflet_audio_recorder" },
+        "camera" => { package: "ruflet_camera", alias: "ruflet_camera" },
+        "charts" => { package: "ruflet_charts", alias: "ruflet_charts" },
+        "code_editor" => { package: "ruflet_code_editor", alias: "ruflet_code_editor" },
+        "color_pickers" => { package: "ruflet_color_pickers", alias: "ruflet_color_picker" },
+        "datatable2" => { package: "ruflet_datatable2", alias: "ruflet_datatable2" },
+        "flashlight" => { package: "ruflet_flashlight", alias: "ruflet_flashlight" },
+        "geolocator" => { package: "ruflet_geolocator", alias: "ruflet_geolocator" },
+        "lottie" => { package: "ruflet_lottie", alias: "ruflet_lottie" },
+        "map" => { package: "ruflet_map", alias: "ruflet_map" },
+        "permission_handler" => { package: "ruflet_permission_handler", alias: "ruflet_permission_handler" },
         "qrcode_scanner" => { package: "ruflet_qrcode_scanner", alias: "ruflet_qrcode_scanner" },
-        "rive" => { package: "flet_rive", alias: "ruflet_rive" },
-        "secure_storage" => { package: "flet_secure_storage", alias: "ruflet_secure_storage" },
-        "video" => { package: "flet_video", alias: "ruflet_video" },
-        "webview" => { package: "flet_webview", alias: "ruflet_webview" }
+        "rive" => { package: "ruflet_rive", alias: "ruflet_rive" },
+        "secure_storage" => { package: "ruflet_secure_storage", alias: "ruflet_secure_storage" },
+        "spinkit" => { package: "ruflet_spinkit", alias: "ruflet_spinkit" },
+        "video" => { package: "ruflet_video", alias: "ruflet_video" },
+        "webview" => { package: "ruflet_webview", alias: "ruflet_webview" }
       }.freeze
 
       def command_new(args)
@@ -72,7 +74,16 @@ module Ruflet
         target = hidden_flutter_client_dir(root)
         FileUtils.mkdir_p(File.dirname(target))
         FileUtils.rm_rf(target)
-        FileUtils.cp_r(template_root, target)
+        # `target` is the Flutter project root, not a directory that contains
+        # the template root. Copying a source directory onto a target that was
+        # already created by FileUtils can produce
+        # `build/client/ruflet_flutter_template/...`, leaving `build/client`
+        # without pubspec.yaml and making Flutter reject it as a project.
+        FileUtils.mkdir_p(target)
+        Dir.children(template_root).each do |entry|
+          copy_client_template_entry(
+            template_root, target, entry)
+        end
         prune_client_template(target)
         write_client_template_revision(target, installed_template_revision(template_root))
       end
@@ -259,6 +270,43 @@ module Ruflet
           full = File.join(target, path)
           FileUtils.rm_rf(full) if File.exist?(full)
         end
+      end
+
+      def copy_client_template_entry(template_root, target, relative)
+        return if generated_client_template_path?(relative)
+
+        source = File.join(template_root, relative)
+        destination = File.join(target, relative)
+        stat = File.lstat(source)
+        if stat.symlink?
+          FileUtils.mkdir_p(File.dirname(destination))
+          FileUtils.ln_s(File.readlink(source), destination)
+        elsif stat.directory?
+          FileUtils.mkdir_p(destination)
+          Dir.children(source).each do |entry|
+            copy_client_template_entry(
+              template_root, target, File.join(relative, entry))
+          end
+        else
+          FileUtils.mkdir_p(File.dirname(destination))
+          FileUtils.cp(source, destination, preserve: true)
+        end
+      end
+
+      def generated_client_template_path?(relative)
+        components = relative.split(File::SEPARATOR)
+        generated_components = %w[
+          .build .cache .claude .dart_tool .git .idea .swiftpm .symlinks
+          build DerivedData Pods xcuserdata
+        ]
+        return true if components.any? { |component| generated_components.include?(component) }
+        return true if components.any? { |component| component.start_with?(".build-") }
+
+        generated_files = %w[
+          .DS_Store Package.resolved Podfile.lock local.properties
+          pubspec_overrides.yaml
+        ]
+        generated_files.include?(components.last) || components.last.end_with?(".xcuserstate")
       end
 
       def write_default_ruflet_config(root, app_name)

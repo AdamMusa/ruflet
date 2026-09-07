@@ -111,7 +111,29 @@ module Ruflet
       end
 
       def watched_files
-        files = Dir.glob(File.join(@watch_root, "**", "*.rb")).reject { |path| excluded_path?(path) }
+        files = []
+        directories = [@watch_root]
+        until directories.empty?
+          directory = directories.pop
+          begin
+            Dir.each_child(directory) do |name|
+              # Prune before descending: generated Flutter/build trees can
+              # contain thousands of files and are never reload inputs.
+              next if name.start_with?(".") || EXCLUDED_DIRECTORIES.include?(name)
+
+              path = File.join(directory, name)
+              if File.directory?(path)
+                directories << path unless File.symlink?(path)
+              elsif name.end_with?(".rb") && File.file?(path)
+                files << path
+              end
+            end
+          rescue Errno::ENOENT, Errno::ENOTDIR, Errno::EACCES
+            # Editors/build tools may remove a directory during a snapshot.
+            next
+          end
+        end
+        files.sort!
         files << @script unless files.include?(@script) || !File.file?(@script)
         files
       end
@@ -156,15 +178,6 @@ module Ruflet
           end
         end
         $LOADED_FEATURES.reject! { |feature| watched.key?(feature) }
-      end
-
-      def excluded_path?(path)
-        relative = path.delete_prefix("#{@watch_root}#{File::SEPARATOR}")
-        return false if relative == path
-
-        relative.split(File::SEPARATOR).any? do |component|
-          component.start_with?(".") || EXCLUDED_DIRECTORIES.include?(component)
-        end
       end
 
       def file_snapshot

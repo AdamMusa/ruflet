@@ -21,7 +21,7 @@ class RufletCupertinoRadioCompatibilityTest < Minitest::Test
 
     patch = radio.to_patch
 
-    assert_equal "CupertinoRadio", patch["_c"]
+    assert_equal "Radio", patch["_c"]
     assert_equal "red", patch["value"]
     assert_equal "Red", patch["label"]
     assert_equal "#ff0000", patch["active_color"]
@@ -47,6 +47,6 @@ class RufletCupertinoRadioCompatibilityTest < Minitest::Test
   end
 
   def test_compact_alias_uses_same_control
-    assert_equal "CupertinoRadio", Ruflet.cupertinoradio.to_patch["_c"]
+    assert_equal "Radio", Ruflet.cupertinoradio.to_patch["_c"]
   end
 end

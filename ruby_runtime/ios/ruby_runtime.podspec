@@ -24,7 +24,9 @@ frameworks ship as plain gem file trees in app assets.
   s.preserve_paths = ['../desktop/ruflet_vm_host.h', '../apple/*.h']
   s.vendored_frameworks = 'Frameworks/RufletVM.xcframework'
 
-  s.public_header_files = 'Classes/**/*.h'
+  # vm_bootstrap.h is compiled into the vendored VM host and must not appear
+  # in CocoaPods' generated umbrella header.
+  s.public_header_files = 'Classes/MrubyRuntimePlugin.h'
 
   s.dependency 'Flutter'
   s.platform = :ios, '13.0'

@@ -51,6 +51,225 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  def test_invalid_nested_managed_client_is_repaired_before_build
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "build", "client")
+      nested = File.join(client_dir, "ruflet_flutter_template")
+      FileUtils.mkdir_p(File.join(nested, "lib"))
+      File.write(File.join(nested, "pubspec.yaml"), "name: nested\n")
+      File.write(File.join(nested, "lib", "main.dart"), "void main() {}\n")
+
+      previous_dir = Dir.pwd
+      Dir.chdir(dir)
+      Ruflet::CLI.stub(:copy_ruflet_client_template, lambda { |root|
+        FileUtils.rm_rf(File.join(root, "build", "client"))
+        repaired = File.join(root, "build", "client")
+        FileUtils.mkdir_p(File.join(repaired, "lib"))
+        File.write(File.join(repaired, "pubspec.yaml"), "name: repaired\n")
+        File.write(File.join(repaired, "lib", "main.dart"), "void main() {}\n")
+      }) do
+        assert_equal File.realpath(client_dir), File.realpath(builder.send(:ensure_flutter_client_dir))
+      end
+
+      assert File.file?(File.join(client_dir, "pubspec.yaml"))
+      refute File.exist?(nested)
+    ensure
+      Dir.chdir(previous_dir) if previous_dir
+    end
+  end
+
+  def test_native_apple_runtime_configuration_uses_actual_embedded_project_name
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      plist = File.join(dir, "ios", "Runner", "Info.plist")
+      FileUtils.mkdir_p(File.dirname(plist))
+      File.write(plist, <<~PLIST)
+        <plist><dict>
+        <key>RufletRuntimeAutostart</key><false/>
+        <key>NSAppTransportSecurity</key><dict>
+          <key>NSAllowsLocalNetworking</key><true/>
+        </dict>
+        <key>NSLocalNetworkUsageDescription</key>
+        <string>Local network access is required.</string>
+        </dict></plist>
+      PLIST
+      previous = Dir.pwd
+      project = File.join(dir, "my_explorer")
+      FileUtils.mkdir_p(project)
+      Dir.chdir(project) do
+        builder.send(
+          :configure_native_apple_runtime,
+          dir, platform: "ios", self_contained: true)
+      end
+
+      content = File.read(plist)
+      assert_includes content, "<key>RufletEmbeddedProject</key>"
+      assert_includes content, "<string>my_explorer</string>"
+      assert_match(/<key>RufletRuntimeAutostart<\/key>\s*<true\s*\/>/, content)
+      refute_includes content, "RufletExperimentalNativeRenderer"
+      refute_includes content, "NSAllowsLocalNetworking"
+      refute_includes content, "NSAppTransportSecurity"
+      refute_includes content, "NSLocalNetworkUsageDescription"
+    ensure
+      Dir.chdir(previous) if previous
+    end
+  end
+
+  def test_native_apple_runtime_configuration_leaves_server_url_to_dart
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      plist = File.join(dir, "macos", "Runner", "Info.plist")
+      FileUtils.mkdir_p(File.dirname(plist))
+      File.write(plist, <<~PLIST)
+        <plist><dict>
+        <key>RufletEmbeddedProject</key><string>stale</string>
+        <key>RufletRuntimeAutostart</key><true/>
+        <key>RufletBackendURL</key><string>must-not-be-used</string>
+        <key>NSAppTransportSecurity</key><dict>
+          <key>NSAllowsLocalNetworking</key><true/>
+        </dict>
+        <key>NSLocalNetworkUsageDescription</key>
+        <string>Local network access is required.</string>
+        </dict></plist>
+      PLIST
+      builder.send(
+        :configure_native_apple_runtime,
+        dir, platform: "macos", self_contained: false)
+
+      content = File.read(plist)
+      assert_match(/<key>RufletEmbeddedProject<\/key>\s*<string><\/string>/, content)
+      assert_match(/<key>RufletRuntimeAutostart<\/key>\s*<false\s*\/>/, content)
+      refute_includes content, "RufletExperimentalNativeRenderer"
+      assert_includes content, "<string>must-not-be-used</string>"
+      assert_includes content, "NSAllowsLocalNetworking"
+      assert_includes content, "NSLocalNetworkUsageDescription"
+    end
+  end
+
+  def test_self_contained_runtime_preserves_other_transport_security_settings
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      plist = File.join(dir, "ios", "Runner", "Info.plist")
+      FileUtils.mkdir_p(File.dirname(plist))
+      File.write(plist, <<~PLIST)
+        <plist><dict>
+        <key>NSAppTransportSecurity</key><dict>
+          <key>NSAllowsLocalNetworking</key><true/>
+          <key>NSExceptionDomains</key><dict>
+            <key>example.test</key><dict>
+              <key>NSIncludesSubdomains</key><true/>
+            </dict>
+          </dict>
+        </dict>
+        </dict></plist>
+      PLIST
+
+      builder.send(
+        :configure_native_apple_runtime,
+        dir, platform: "ios", self_contained: true)
+
+      content = File.read(plist)
+      refute_includes content, "NSAllowsLocalNetworking"
+      assert_includes content, "NSAppTransportSecurity"
+      assert_includes content, "NSExceptionDomains"
+      assert_includes content, "example.test"
+      assert_includes content, "NSIncludesSubdomains"
+    end
+  end
+
+  def test_standard_apple_build_removes_native_renderer_integration
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      template = File.join(dir, "template")
+      client = File.join(dir, "client")
+      flutter_host = File.join(template, "flutter_hosts", "ios", "Runner", "AppDelegate.swift")
+      FileUtils.mkdir_p(File.dirname(flutter_host))
+      File.write(flutter_host, "flutter-only host\n")
+      FileUtils.mkdir_p(File.join(client, "ios", "Runner.xcodeproj"))
+      FileUtils.mkdir_p(File.join(client, "ios", "Runner"))
+      FileUtils.mkdir_p(File.join(client, "apple_packages", "ruflet_apple"))
+      FileUtils.mkdir_p(File.join(client, "apple_extensions"))
+      File.write(File.join(client, "ios", "Runner", "AppDelegate.swift"), "native host\n")
+      File.write(File.join(client, "ios", "Runner", "RufletEngineChoice.swift"), "choice\n")
+      File.write(
+        File.join(client, "ios", "Runner", "Info.plist"),
+        <<~PLIST
+          <plist><dict>
+          <key>RufletExperimentalNativeRenderer</key><true/>
+          <key>UISceneDelegateClassName</key>
+          <string>$(PRODUCT_MODULE_NAME).RufletSceneDelegate</string>
+          </dict></plist>
+        PLIST
+      )
+      File.write(
+        File.join(client, "ios", "Runner.xcodeproj", "project.pbxproj"),
+        <<~PBX
+          packageProductDependencies = (
+            ABC /* RufletApple */,
+          );
+          packageReferences = (
+            DEF /* XCLocalSwiftPackageReference "../apple_packages/ruflet_apple" */,
+          );
+          DEF /* XCLocalSwiftPackageReference "../apple_packages/ruflet_apple" */ = {
+            isa = XCLocalSwiftPackageReference;
+            relativePath = ../apple_packages/ruflet_apple;
+          };
+        PBX
+      )
+
+      Ruflet::CLI.stub(:resolve_ruflet_client_template_root, template) do
+        assert builder.send(
+          :remove_native_apple_renderer_integration,
+          client, platform: "ios")
+      end
+
+      assert_equal "flutter-only host\n", File.read(File.join(client, "ios", "Runner", "AppDelegate.swift"))
+      refute_path_exists File.join(client, "ios", "Runner", "RufletEngineChoice.swift")
+      refute_path_exists File.join(client, "apple_packages")
+      refute_path_exists File.join(client, "apple_extensions")
+      refute_includes File.read(File.join(client, "ios", "Runner.xcodeproj", "project.pbxproj")), "Ruflet"
+      plist = File.read(File.join(client, "ios", "Runner", "Info.plist"))
+      assert_includes plist, "$(PRODUCT_MODULE_NAME).SceneDelegate"
+      refute_includes plist, "RufletSceneDelegate"
+      refute_includes plist, "RufletExperimentalNativeRenderer"
+    end
+  end
+
+  def test_macos_service_permissions_follow_declared_services
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      runner = File.join(dir, "macos", "Runner")
+      FileUtils.mkdir_p(runner)
+      File.write(File.join(runner, "Info.plist"), "<plist><dict></dict></plist>\n")
+      %w[DebugProfile.entitlements Release.entitlements].each do |name|
+        File.write(File.join(runner, name), "<plist><dict><key>com.apple.security.app-sandbox</key><true/></dict></plist>\n")
+      end
+
+      builder.send(
+        :apply_native_service_permissions,
+        dir,
+        { "services" => [{ "microphone" => { "description" => "Record a note." } }] }
+      )
+
+      plist = File.read(File.join(runner, "Info.plist"))
+      assert_includes plist, "NSMicrophoneUsageDescription"
+      assert_includes plist, "Record a note."
+      refute_includes plist, "NSCameraUsageDescription"
+      %w[DebugProfile.entitlements Release.entitlements].each do |name|
+        entitlements = File.read(File.join(runner, name))
+        assert_includes entitlements, "com.apple.security.device.audio-input"
+        refute_includes entitlements, "com.apple.security.device.camera"
+      end
+    end
+  end
+
   def test_ruflet_yaml_identity_wins_over_services_yaml
     builder = DummyBuilder.new
 
@@ -96,7 +315,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
         assert_equal "com.legacy", config.dig("app", "organization")
         assert_equal "Legacy Name", metadata[:display_name]
         assert_equal "com.legacy.legacy_name", metadata[:android_application_id]
-        assert_equal "com.legacy.legacy_name", metadata[:ios_bundle_identifier]
+        assert_equal "com.legacy.legacy-name", metadata[:ios_bundle_identifier]
         assert_empty metadata[:mobile_identity_errors]
       end
 
@@ -109,6 +328,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes ios, "NSMicrophoneUsageDescription"
       assert_includes ios, "Record voice notes."
       assert_includes ios, "NSLocationWhenInUseUsageDescription"
+      assert_includes ios, "NSLocationAlwaysAndWhenInUseUsageDescription"
       assert_includes ios, "NSMotionUsageDescription"
     end
   end
@@ -121,14 +341,14 @@ class RufletCliUpdateCommandTest < Minitest::Test
       FileUtils.mkdir_p(File.join(client_dir, "lib"))
       File.write(
         File.join(client_dir, "pubspec.yaml"),
-        "dependencies:\n  flutter:\n    sdk: flutter\n  flet: any\n"
+        "dependencies:\n  flutter:\n    sdk: flutter\n  ruflet: any\n"
       )
       File.write(
         File.join(client_dir, "lib", "main.self.dart"),
         <<~DART
-          import 'package:flet/flet.dart';
+          import 'package:ruflet/ruflet.dart';
           void main() {
-            final extensions = <FletExtension>[
+            final extensions = <RufletExtension>[
             ];
           }
         DART
@@ -139,11 +359,11 @@ class RufletCliUpdateCommandTest < Minitest::Test
 
       pubspec = YAML.safe_load(File.read(File.join(client_dir, "pubspec.yaml")), aliases: true)
       dependencies = pubspec.fetch("dependencies")
-      assert dependencies.key?("flet_audio_recorder")
-      assert dependencies.key?("flet_geolocator")
-      assert dependencies.key?("flet_permission_handler")
-      refute dependencies.key?("flet_camera")
-      refute dependencies.key?("flet_video")
+      assert dependencies.key?("ruflet_audio_recorder")
+      assert dependencies.key?("ruflet_geolocator")
+      assert dependencies.key?("ruflet_permission_handler")
+      refute dependencies.key?("ruflet_camera")
+      refute dependencies.key?("ruflet_video")
 
       main = File.read(File.join(client_dir, "lib", "main.self.dart"))
       assert_includes main, "ruflet_audio_recorder.Extension(),"
@@ -163,10 +383,10 @@ class RufletCliUpdateCommandTest < Minitest::Test
       FileUtils.mkdir_p(File.join(client_dir, "lib"))
       FileUtils.mkdir_p(File.dirname(manifest))
       FileUtils.mkdir_p(File.dirname(plist))
-      File.write(File.join(client_dir, "pubspec.yaml"), "dependencies:\n  flet: any\n")
+      File.write(File.join(client_dir, "pubspec.yaml"), "dependencies:\n  ruflet: any\n")
       File.write(
         File.join(client_dir, "lib", "main.self.dart"),
-        "import 'package:flet/flet.dart';\nfinal extensions = <FletExtension>[\n];\n"
+        "import 'package:ruflet/ruflet.dart';\nfinal extensions = <RufletExtension>[\n];\n"
       )
       File.write(manifest, "<manifest><application/></manifest>\n")
       File.write(plist, "<plist><dict></dict></plist>\n")
@@ -180,6 +400,36 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes File.read(File.join(client_dir, "lib", "main.self.dart")), "ruflet_qrcode_scanner.Extension(),"
       assert_includes File.read(manifest), "android.permission.CAMERA"
       assert_includes File.read(plist), "NSCameraUsageDescription"
+    end
+  end
+
+  def test_extensions_and_photo_library_service_add_required_ios_purpose_strings
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      client_dir = File.join(dir, "client")
+      manifest = File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")
+      plist = File.join(client_dir, "ios", "Runner", "Info.plist")
+      FileUtils.mkdir_p(File.dirname(manifest))
+      FileUtils.mkdir_p(File.dirname(plist))
+      File.write(manifest, "<manifest><application/></manifest>\n")
+      File.write(plist, "<plist><dict></dict></plist>\n")
+
+      config = {
+        "extensions" => %w[audio_recorder camera geolocator],
+        "services" => [
+          { "photo_library" => { "description" => "Choose media to preview in the app." } }
+        ]
+      }
+      builder.send(:apply_native_service_permissions, client_dir, config)
+
+      ios = File.read(plist)
+      assert_includes ios, "NSCameraUsageDescription"
+      assert_includes ios, "NSMicrophoneUsageDescription"
+      assert_includes ios, "NSLocationWhenInUseUsageDescription"
+      assert_includes ios, "NSLocationAlwaysAndWhenInUseUsageDescription"
+      assert_includes ios, "NSPhotoLibraryUsageDescription"
+      assert_includes ios, "Choose media to preview in the app."
     end
   end
 
@@ -281,7 +531,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       pubspec = File.read(File.join(client_dir, "pubspec.yaml"))
       ruby_runtime = YAML.safe_load(pubspec, aliases: true).dig("dependencies", "ruby_runtime")
       assert_equal File.expand_path("../../../ruby_runtime", __dir__), ruby_runtime["path"]
-      refute YAML.safe_load(pubspec, aliases: true).dig("dependencies", "flet_spinkit")
+      refute YAML.safe_load(pubspec, aliases: true).dig("dependencies", "ruflet_spinkit")
       refute_path_exists File.join(client_dir, "lib", "ruflet_spinkit.dart")
       assert_includes calls, client_dir
     end
@@ -446,9 +696,9 @@ class RufletCliUpdateCommandTest < Minitest::Test
           dependencies:
             flutter:
               sdk: flutter
-            flet: any
-            flet_audio: any
-            flet_webview: any
+            ruflet: any
+            ruflet_audio: any
+            ruflet_webview: any
           flutter:
             assets:
               - assets/demo/
@@ -460,8 +710,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
       pubspec = File.read(path)
       assert_includes pubspec, "  assets:\n    - assets/demo/"
       refute_includes pubspec, "  assets:\n- assets/demo/"
-      refute_includes pubspec, "flet_audio:"
-      refute_includes pubspec, "flet_webview:"
+      refute_includes pubspec, "ruflet_audio:"
+      refute_includes pubspec, "ruflet_webview:"
     end
   end
 
@@ -480,18 +730,18 @@ class RufletCliUpdateCommandTest < Minitest::Test
           dependencies:
             flutter:
               sdk: flutter
-            flet: any
-            flet_webview: any
+            ruflet: any
+            ruflet_webview: any
         YAML
       )
       File.write(
         File.join(template_dir, "lib", "main.self.dart"),
         <<~DART
-          import 'package:flet/flet.dart';
-          import 'package:flet_webview/flet_webview.dart' as ruflet_webview;
+          import 'package:ruflet/ruflet.dart';
+          import 'package:ruflet_webview/ruflet_webview.dart' as ruflet_webview;
 
           void main() {
-            final extensions = <FletExtension>[
+            final extensions = <RufletExtension>[
               ruflet_webview.Extension(),
             ];
           }
@@ -503,16 +753,16 @@ class RufletCliUpdateCommandTest < Minitest::Test
           dependencies:
             flutter:
               sdk: flutter
-            flet: any
+            ruflet: any
         YAML
       )
       File.write(
         File.join(client_dir, "lib", "main.self.dart"),
         <<~DART
-          import 'package:flet/flet.dart';
+          import 'package:ruflet/ruflet.dart';
 
           void main() {
-            final extensions = <FletExtension>[
+            final extensions = <RufletExtension>[
             ];
           }
         DART
@@ -527,10 +777,10 @@ class RufletCliUpdateCommandTest < Minitest::Test
         builder.send(:apply_service_extension_config, client_dir, config, self_contained: true)
 
         pubspec = YAML.safe_load(File.read(File.join(client_dir, "pubspec.yaml")), aliases: true)
-        assert_equal "any", pubspec.dig("dependencies", "flet_webview")
+        assert_equal "any", pubspec.dig("dependencies", "ruflet_webview")
 
         main = File.read(File.join(client_dir, "lib", "main.self.dart"))
-        assert_includes main, "import 'package:flet_webview/flet_webview.dart' as ruflet_webview;"
+        assert_includes main, "import 'package:ruflet_webview/ruflet_webview.dart' as ruflet_webview;"
         assert_includes main, "ruflet_webview.Extension(),"
       ensure
         Ruflet::CLI.define_singleton_method(:resolve_ruflet_client_template_root, original_method)
@@ -648,8 +898,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
       assert_includes out.string, "[ruflet build] running flutter pub get"
       assert_includes out.string, "[ruflet build] mode=self"
       assert_includes out.string, "[ruflet build] target=lib/main.self.dart"
-    assert_includes out.string, "[ruflet build] command=flutter build apk --target lib/main.self.dart --dart-define RUFLET_BACKEND_URL=https://api.example.com -v"
-    assert_equal ["flutter", "build", "apk", "--target", "lib/main.self.dart", "--dart-define", "RUFLET_BACKEND_URL=https://api.example.com", "-v"], calls.first[:args]
+      assert_includes out.string, "[ruflet build] command=flutter build apk --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=ruflet -v"
+      assert_equal ["flutter", "build", "apk", "--target", "lib/main.self.dart", "--dart-define", "RUFLET_EMBEDDED_PROJECT=ruflet", "-v"], calls.first[:args]
       assert_equal client_dir, calls.first[:chdir]
     ensure
       $stdout = original_stdout
@@ -699,6 +949,18 @@ class RufletCliUpdateCommandTest < Minitest::Test
       Ruflet::CLI.singleton_class.send(:private, :copy_ruflet_client_template) if original_copy_method
       Dir.chdir(previous_dir)
     end
+  end
+
+  def test_command_build_rejects_experimental_renderer_on_non_apple_targets
+    builder = DummyBuilder.new
+    err = StringIO.new
+    original_stderr = $stderr
+    $stderr = err
+
+    assert_equal 1, builder.command_build(["apk", "--experimental"])
+    assert_includes err.string, "--experimental is supported only for ios and macos"
+  ensure
+    $stderr = original_stderr
   end
 
   def test_command_build_runs_full_first_time_setup_before_prepare
@@ -876,8 +1138,8 @@ class RufletCliUpdateCommandTest < Minitest::Test
 
       assert_equal 0, code
       refute calls.first[:env].key?("BUNDLE_GEMFILE")
-      assert_equal ["flutter", "build", "ios", "--codesign", "--target", "lib/main.self.dart"], calls.first[:args]
-      assert_equal ["flutter", "build", "ios", "--simulator", "--target", "lib/main.self.dart"], calls.last[:args]
+      assert_equal ["flutter", "build", "ios", "--codesign", "--target", "lib/main.self.dart", "--dart-define", "RUFLET_EMBEDDED_PROJECT=ruflet"], calls.first[:args]
+      assert_equal ["flutter", "build", "ios", "--simulator", "--target", "lib/main.self.dart", "--dart-define", "RUFLET_EMBEDDED_PROJECT=ruflet"], calls.last[:args]
       refute_includes calls.first[:env]["PATH"], "/Users/macbookpro/.gem/ruby/3.4.0/bin"
       assert_includes calls.first[:env]["PATH"], File.join(client_dir, ".ruflet", "bin")
       assert File.executable?(File.join(client_dir, ".ruflet", "bin", "pod"))
@@ -1466,7 +1728,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
       )
       File.write(
         File.join(client_dir, "lib", "main.self.dart"),
-        "import 'package:flet/flet.dart';\n\nvoid main() {\n  final extensions = <FletExtension>[\n  ];\n}\n"
+        "import 'package:ruflet/ruflet.dart';\n\nvoid main() {\n  final extensions = <RufletExtension>[\n  ];\n}\n"
       )
 
       config = {
@@ -1850,7 +2112,7 @@ class RufletCliUpdateCommandTest < Minitest::Test
 
       macos_info = File.read(File.join(client_dir, "macos", "Runner", "Configs", "AppInfo.xcconfig"))
       assert_includes macos_info, "PRODUCT_NAME = Test App"
-      assert_includes macos_info, "PRODUCT_BUNDLE_IDENTIFIER = com.acme.test_app"
+      assert_includes macos_info, "PRODUCT_BUNDLE_IDENTIFIER = com.acme.test-app"
 
       web_manifest = File.read(File.join(client_dir, "web", "manifest.json"))
       assert_includes web_manifest, '"name": "Test App"'
@@ -2047,16 +2309,16 @@ class RufletCliUpdateCommandTest < Minitest::Test
       File.write(
         main_path,
         <<~DART
-          import 'package:flet/flet.dart';
-          import 'package:flet_audio_recorder/flet_audio_recorder.dart'
+          import 'package:ruflet/ruflet.dart';
+          import 'package:ruflet_audio_recorder/ruflet_audio_recorder.dart'
               as ruflet_audio_recorder;
-          import 'package:flet_color_pickers/flet_color_pickers.dart'
+          import 'package:ruflet_color_pickers/ruflet_color_pickers.dart'
               as ruflet_color_picker;
-          import 'package:flet_secure_storage/flet_secure_storage.dart'
+          import 'package:ruflet_secure_storage/ruflet_secure_storage.dart'
               as ruflet_secure_storage;
           import 'ruflet_webview.dart' as ruflet_webview;
 
-          final extensions = <FletExtension>[
+          final extensions = <RufletExtension>[
             ruflet_audio_recorder.Extension(),
             ruflet_color_picker.Extension(),
             ruflet_secure_storage.Extension(),
@@ -2068,101 +2330,16 @@ class RufletCliUpdateCommandTest < Minitest::Test
       builder.send(:prune_client_main, main_path, [])
 
       content = File.read(main_path)
-      refute_includes content, "flet_audio_recorder"
-      refute_includes content, "flet_color_pickers"
-      refute_includes content, "flet_secure_storage"
+      refute_includes content, "ruflet_audio_recorder"
+      refute_includes content, "ruflet_color_pickers"
+      refute_includes content, "ruflet_secure_storage"
       refute_includes content, "ruflet_webview.dart"
       refute_includes content, "ruflet_audio_recorder.Extension()"
       refute_includes content, "ruflet_color_picker.Extension()"
       refute_includes content, "ruflet_secure_storage.Extension()"
       refute_includes content, "ruflet_webview.RufletWebViewExtension()"
-      assert_includes content, "import 'package:flet/flet.dart';"
+      assert_includes content, "import 'package:ruflet/ruflet.dart';"
     end
   end
 
-end
-
-# The platform layer starts the embedded VM before Flutter exists, so it -- not
-# Dart -- has to be told to, and which project to run. These assert that a
-# self-contained build writes that configuration where each platform reads it.
-class RufletCliPlatformAutostartTest < Minitest::Test
-  class DummyBuilder
-    include Ruflet::CLI::BuildCommand
-
-    def build_log(*); end
-    def self_contained_project_name = "demo"
-  end
-
-  def setup
-    @dir = Dir.mktmpdir("ruflet_autostart")
-    FileUtils.mkdir_p(File.join(@dir, "macos", "Runner"))
-    FileUtils.mkdir_p(File.join(@dir, "android", "app", "src", "main"))
-    File.write(plist_path, <<~PLIST)
-      <?xml version="1.0" encoding="UTF-8"?>
-      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-      <plist version="1.0">
-      <dict>
-      \t<key>CFBundleName</key>
-      \t<string>Demo</string>
-      </dict>
-      </plist>
-    PLIST
-    File.write(manifest_path, <<~XML)
-      <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-          <application android:label="Demo">
-              <activity android:name=".MainActivity" />
-          </application>
-      </manifest>
-    XML
-  end
-
-  def teardown
-    FileUtils.remove_entry(@dir)
-  end
-
-  def plist_path = File.join(@dir, "macos", "Runner", "Info.plist")
-  def manifest_path = File.join(@dir, "android", "app", "src", "main", "AndroidManifest.xml")
-
-  def plist_value(key)
-    `/usr/libexec/PlistBuddy -c "Print :#{key}" #{plist_path} 2>/dev/null`.strip
-  end
-
-  def test_apple_builds_record_autostart_and_project
-    DummyBuilder.new.send(:configure_platform_autostart, @dir, "macos")
-
-    assert_equal "true", plist_value("RufletRuntimeAutostart")
-    assert_equal "demo", plist_value("RufletEmbeddedProject")
-  end
-
-  def test_android_builds_record_autostart_and_project
-    DummyBuilder.new.send(:configure_platform_autostart, @dir, "apk")
-
-    manifest = File.read(manifest_path)
-    assert_includes manifest, 'android:name="ruflet.runtime.autostart" android:value="true"'
-    assert_includes manifest, 'android:name="ruflet.runtime.project" android:value="demo"'
-    assert_includes manifest, "</application>"
-  end
-
-  # Rebuilding must not duplicate the entries, and PlistBuddy's Add fails on an
-  # existing key, so the writers have to be idempotent.
-  def test_configuration_is_idempotent_across_rebuilds
-    builder = DummyBuilder.new
-    2.times do
-      builder.send(:configure_platform_autostart, @dir, "macos")
-      builder.send(:configure_platform_autostart, @dir, "apk")
-    end
-
-    assert_equal "true", plist_value("RufletRuntimeAutostart")
-    assert_equal 1, File.read(manifest_path).scan("ruflet.runtime.autostart").length
-    assert_equal 1, File.read(manifest_path).scan("ruflet.runtime.project").length
-  end
-
-  # Desktop has no manifest to carry a flag; it treats the presence of a
-  # packaged project as the opt-in, so there is nothing to write.
-  def test_desktop_builds_need_no_configuration
-    before = File.read(manifest_path)
-    DummyBuilder.new.send(:configure_platform_autostart, @dir, "macos-desktop-unknown")
-
-    assert_equal before, File.read(manifest_path)
-  end
 end

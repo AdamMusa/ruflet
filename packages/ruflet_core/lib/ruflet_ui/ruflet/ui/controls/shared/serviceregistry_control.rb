@@ -8,8 +8,12 @@ module Ruflet
           TYPE = "serviceregistry".freeze
           WIRE = "ServiceRegistry".freeze
 
-          def initialize(id: nil, data: nil, key: nil)
+          KEYWORDS = [:_services, :services, :data, :key].freeze
+
+          def initialize(id: nil, _services: nil, services: nil, data: nil, key: nil)
             props = {}
+            mounted_services = _services.nil? ? services : _services
+            props[:_services] = mounted_services unless mounted_services.nil?
             props[:data] = data unless data.nil?
             props[:key] = key unless key.nil?
             super(type: TYPE, id: id, **props)

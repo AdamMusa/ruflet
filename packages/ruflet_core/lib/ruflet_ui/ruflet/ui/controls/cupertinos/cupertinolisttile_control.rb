@@ -6,7 +6,7 @@ module Ruflet
       module RufletComponents
         class CupertinoListTileControl < Ruflet::Control
           TYPE = "cupertinolisttile".freeze
-          WIRE = "CupertinoListTile".freeze
+          WIRE = "ListTile".freeze
 
           KEYWORDS = [:additional_info, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :bgcolor_activated, :bottom, :col, :data, :disabled, :expand, :expand_loose, :height, :key, :leading, :leading_size, :leading_to_title, :left, :margin, :notched, :offset, :opacity, :padding, :right, :rotate, :rtl, :scale, :size_change_interval, :subtitle, :title, :toggle_inputs, :tooltip, :top, :trailing, :url, :visible, :width, :on_animation_end, :on_click, :on_size_change].freeze
 

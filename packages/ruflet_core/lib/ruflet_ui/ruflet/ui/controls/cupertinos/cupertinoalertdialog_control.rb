@@ -6,7 +6,7 @@ module Ruflet
       module RufletComponents
         class CupertinoAlertDialogControl < Ruflet::Control
           TYPE = "cupertinoalertdialog".freeze
-          WIRE = "CupertinoAlertDialog".freeze
+          WIRE = "AlertDialog".freeze
 
           def initialize(id: nil, actions: nil, adaptive: nil, badge: nil, barrier_color: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, inset_animation: nil, key: nil, modal: nil, opacity: nil, open: nil, rtl: nil, title: nil, tooltip: nil, visible: nil, on_dismiss: nil)
             actions = [] if actions.nil?

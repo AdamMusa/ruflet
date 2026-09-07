@@ -815,8 +815,13 @@ module Ruflet
           args = service_args(spec)
           if method == "update"
             @page.update(control, **args.transform_keys(&:to_sym))
-            show_service_result(spec["toast"] || "#{service_label(target)} updated",
-                                title: "Extension", target: spec["result-target"])
+            # Setting a property is not news. Opening a picker announced
+            # "Demo Date Picker updated", and with nowhere to put it that
+            # became a dialog on top of the picker the tap had just opened.
+            # Report only what the screen asked to be told.
+            if spec["toast"] || spec["result-target"]
+              show_service_result(spec["toast"].to_s, title: "Extension", target: spec["result-target"])
+            end
           else
             @page.invoke(
               control, method, args: args.empty? ? nil : args,
@@ -869,9 +874,19 @@ module Ruflet
             next if DECLARED_EVENT_ATTRIBUTE.match?(key)
             next if value.nil?
 
-            args[key.tr("-", "_")] = value
+            args[key.tr("-", "_")] = coerce_service_value(value)
           end
           args
+        end
+
+        # Markup carries strings. A property being set on a control — open,
+        # modal, disabled — means the boolean, not the word.
+        def coerce_service_value(value)
+          case value
+          when "true" then true
+          when "false" then false
+          else value
+          end
         end
 
         def service_timeout(spec)
@@ -891,11 +906,16 @@ module Ruflet
         # genuinely needs longer.
         INTERACTIVE_TIMEOUT = 30
 
+        # An interactive call waits on a person answering a permission prompt,
+        # so a declared timeout may lengthen it but never shorten it below the
+        # human floor. A screen asking for 5s meant "the hardware should be
+        # quick", and it silently expired the camera prompt before anyone could
+        # reach it.
         def interactive_timeout(spec)
           declared = spec["timeout"]
-          return declared.to_f unless declared.nil? || declared.to_s.empty?
+          return INTERACTIVE_TIMEOUT if declared.nil? || declared.to_s.empty?
 
-          INTERACTIVE_TIMEOUT
+          [declared.to_f, INTERACTIVE_TIMEOUT].max
         end
 
         # HTML attributes are text, but the client's file APIs want bytes.
@@ -1071,7 +1091,10 @@ module Ruflet
           return unless @service_dialog
 
           @service_request_token += 1
-          @page.update(@service_dialog, open: false)
+          # The dialog is opened with show_dialog, so it is dismissed with
+          # close_dialog. Setting open: false is the other mechanism, and it
+          # left the alert on screen with a Close button that did nothing.
+          @page.close_dialog(@service_dialog)
         rescue StandardError
           nil
         end

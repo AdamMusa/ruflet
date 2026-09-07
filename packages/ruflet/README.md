@@ -25,15 +25,41 @@ dependencies. Run Ruflet commands directly inside the generated project.
 
 ```bash
 ruflet new <appname>
-ruflet run [scriptname|path] [--web|--desktop] [--port PORT]
+ruflet run [scriptname|path] [--web|--desktop] [--experimental|--exp] [--port PORT]
 ruflet debug [scriptname|path]
 ruflet devices
 ruflet emulators
 ruflet doctor [--fix]
 ruflet update [web|desktop|all] [--check] [--force]
-ruflet build <apk|android|ios|aab|web|macos|windows|linux> [--self]
+ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--lite|--full|--self] [--experimental|--exp]
 ruflet install [--device DEVICE_ID]
 ```
+
+`--experimental` is available only for iOS and macOS builds. It selects the
+experimental Apple release channel; the normal Ruflet build pipeline still
+resolves the declared services, extensions, permissions, assets, and runtime
+mode. Every platform renders through the Ruflet Flutter engine.
+
+`--lite` creates the compact self-contained build: project Ruby is precompiled
+when the matching mruby compiler is available, and the bundled VM starts in
+parallel with Flutter. `--self` remains an alias for this profile.
+Combining `--self --full` selects the full profile; `--self` does not override
+an explicit `--full`.
+
+`--full` packages the locked production bundle from `Gemfile.lock` and selects
+a target-specific CRuby runtime. Set `RUFLET_FULL_RUNTIME_PATH`, or
+`build.full_runtime_path` in `ruflet.yaml`, to a Flutter package named
+`ruby_runtime` with a `ruflet-full-runtime.json` manifest for the target.
+Ruflet refuses to substitute the lite mruby engine for a requested full build.
+
+Before Flutter resolves or bundles packages, Ruflet removes extension plugins
+that are not selected by the current services/extensions configuration.
+
+On macOS, `ruflet run --experimental` (or `ruflet run --exp`) downloads the
+experimental Ruflet Explorer iOS Simulator prebuild the first time, reuses its
+versioned cache afterward, and launches it on the already-booted simulator
+with the current backend URL. Add `--desktop` to download and launch the native
+macOS prebuild instead: `ruflet run --desktop --exp`.
 
 Commands that create, diagnose, or build a Flutter client compare the cached
 template revision with `AdamMusa/ruflet-template` on GitHub. When `main`

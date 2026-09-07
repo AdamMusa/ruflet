@@ -48,7 +48,8 @@ module Ruflet
         raw = data.is_a?(Hash) ? stringify_keys(data) : data
         value =
           if raw.is_a?(Hash)
-            raw["value"] || raw["v"] || raw["data"] || raw["state"] || raw["route"]
+            key = %w[value v data state route].find { |candidate| raw.key?(candidate) }
+            key.nil? ? nil : raw[key]
           else
             raw
           end

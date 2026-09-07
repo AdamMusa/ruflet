@@ -6,7 +6,7 @@ module Ruflet
       module RufletComponents
         class CupertinoActionSheetActionControl < Ruflet::Control
           TYPE = "cupertinoactionsheetaction".freeze
-          WIRE = "CupertinoActionSheetAction".freeze
+          WIRE = "ActionSheetAction".freeze
 
           KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bottom, :col, :content, :data, :default, :destructive, :disabled, :expand, :expand_loose, :height, :key, :left, :margin, :mouse_cursor, :offset, :opacity, :right, :rotate, :rtl, :scale, :size_change_interval, :tooltip, :top, :visible, :width, :on_animation_end, :on_click, :on_size_change].freeze
 

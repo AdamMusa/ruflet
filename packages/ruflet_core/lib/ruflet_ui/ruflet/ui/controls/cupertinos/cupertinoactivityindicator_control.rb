@@ -6,7 +6,7 @@ module Ruflet
       module RufletComponents
         class CupertinoActivityIndicatorControl < Ruflet::Control
           TYPE = "cupertinoactivityindicator".freeze
-          WIRE = "CupertinoActivityIndicator".freeze
+          WIRE = "ProgressRing".freeze
 
           KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :animating, :aspect_ratio, :badge, :bottom, :col, :color, :data, :disabled, :expand, :expand_loose, :height, :key, :left, :margin, :offset, :opacity, :progress, :radius, :right, :rotate, :rtl, :scale, :size_change_interval, :tooltip, :top, :visible, :width, :on_animation_end, :on_size_change].freeze
 

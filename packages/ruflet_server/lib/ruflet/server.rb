@@ -5,6 +5,7 @@ require "socket"
 require "thread"
 
 require "ruflet_core"
+require_relative "server/in_process_connection"
 require_relative "server/wire_codec"
 require_relative "server/web_socket_connection"
 
@@ -15,9 +16,10 @@ module Ruflet
     WEBSOCKET_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
     TASK_IO_POLL_INTERVAL = 0.01
 
-    def initialize(host: "0.0.0.0", port: 8550, &app_block)
+    def initialize(host: "0.0.0.0", port: 8550, in_process_bridge: nil, &app_block)
       @host = host
       @port = port
+      @in_process_bridge = in_process_bridge
       @app_block = app_block
       @sessions = {}
       @sessions_mutex = Mutex.new
@@ -44,10 +46,14 @@ module Ruflet
       end
 
       previous_signals = trap_stop_signals
-      bind_server_socket!
-      @running = true
-      print_server_banner
-      accept_loop
+      if in_process_transport_requested?
+        start_in_process_transport
+      else
+        bind_server_socket!
+        @running = true
+        print_server_banner
+        accept_loop
+      end
     rescue Interrupt
       nil
     ensure
@@ -174,6 +180,16 @@ module Ruflet
     end
 
     private
+
+    def in_process_transport_requested?
+      ENV["RUFLET_RUNTIME_TRANSPORT"] == "in_process"
+    end
+
+    def start_in_process_transport
+      connection = Ruflet::InProcessConnection.new(bridge: @in_process_bridge)
+      @running = true
+      run_connection(connection)
+    end
 
     def trap_stop_signals
       {

@@ -8,12 +8,11 @@ module Ruflet
           TYPE = "video".freeze
           WIRE = "Video".freeze
 
-          KEYWORDS = [:alignment, :aspect_ratio, :autoplay, :configuration, :data, :fill_color, :filter_quality, :fit, :fullscreen, :height, :key, :muted, :opacity, :pause_upon_entering_background_mode, :pitch, :playlist, :playlist_mode, :playback_rate, :resume_upon_entering_foreground_mode, :rtl, :show_controls, :shuffle_playlist, :subtitle_configuration, :title, :tooltip, :visible, :volume, :wakelock, :width, :on_completed, :on_complete, :on_enter_fullscreen, :on_error, :on_exit_fullscreen, :on_load, :on_loaded, :on_state_change, :on_track_change, :on_track_changed].freeze
+          KEYWORDS = [].freeze
 
           def initialize(id: nil, **props)
             compact = {}
             props.each do |key, value|
-              raise ArgumentError, "unknown keyword: :#{key}" unless KEYWORDS.include?(key)
               compact[key] = value unless value.nil?
             end
             super(type: TYPE, id: id, **compact)

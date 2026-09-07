@@ -25,7 +25,7 @@ Flutter method channel. Application code ships as an app asset payload.
 
   s.dependency 'FlutterMacOS'
 
-  s.platform = :osx, '10.14'
+  s.platform = :osx, '10.15'
   # The VM host layer inside the archive is C++, so the bridge links libc++.
   s.libraries = 'm', 'c++'
   # The bridge only needs ruflet_vm_host.h. mruby, Onigmo and the native gems

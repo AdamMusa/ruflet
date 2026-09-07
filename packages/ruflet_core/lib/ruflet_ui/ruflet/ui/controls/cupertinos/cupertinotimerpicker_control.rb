@@ -6,7 +6,7 @@ module Ruflet
       module RufletComponents
         class CupertinoTimerPickerControl < Ruflet::Control
           TYPE = "cupertinotimerpicker".freeze
-          WIRE = "CupertinoTimerPicker".freeze
+          WIRE = "TimerPicker".freeze
 
           KEYWORDS = [:align, :alignment, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :bottom, :col, :data, :disabled, :expand, :expand_loose, :height, :item_extent, :key, :left, :margin, :minute_interval, :mode, :offset, :opacity, :right, :rotate, :rtl, :scale, :second_interval, :size_change_interval, :tooltip, :top, :value, :visible, :width, :on_animation_end, :on_change, :on_size_change].freeze
 

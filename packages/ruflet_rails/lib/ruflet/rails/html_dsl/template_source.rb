@@ -31,7 +31,11 @@ module Ruflet
           @lookups = {}
         end
 
-        def fetch(url, params: nil)
+        # A redirect is followed by rendering the screen it names, so a chain
+        # cannot run away.
+        MAX_REDIRECTS = 5
+
+        def fetch(url, params: nil, redirects: 0)
           path = URI.parse(url.to_s).path.to_s
           screen = NativeScreens.resolve(path)
           return missing(url, path) unless screen
@@ -40,12 +44,21 @@ module Ruflet
           assign_params(controller, params, screen[:params])
           invoke(controller, screen[:action])
 
+          # `redirect_to` means "this is not the screen to show". Follow it and
+          # render the one it names, which is what a browser would arrive at.
+          if (target = controller.ruflet_redirect_target)
+            controller.ruflet_redirect_target = nil
+            raise "Too many redirects from #{path}" if redirects >= MAX_REDIRECTS
+
+            return fetch(target, redirects: redirects + 1)
+          end
+
           # An action like #counter_increment changes state and then re-renders
           # counter.html.erb, whose ivars only #counter assigns. Without running
           # the screen's own action the template redraws from whatever the last
           # visit left behind — the tap works and the screen never moves.
           own = template_action(screen)
-          invoke(controller, own) if own && own != screen[:action].to_s
+          invoke(controller, own) if own && own != screen[:action].to_s && controller.ruflet_render_target.nil?
 
           Response.new(body: render(screen, controller), url: url)
         rescue StandardError => e
@@ -100,7 +113,11 @@ module Ruflet
         # every tap, and a screen re-renders on every tap.
         def render(screen, controller)
           prefix = controller_path(screen[:controller])
-          action = template_action(screen)
+          # A controller that asked for a particular template gets it. This is
+          # how `render :form_result` reaches the screen the action means to
+          # show, rather than the one its own name implies.
+          action = controller.ruflet_render_target || template_action(screen)
+          controller.ruflet_render_target = nil
           raise "No template for #{screen[:controller]}##{screen[:action]}" unless action
 
           view = view_class.new(lookup_for(prefix), assigns_for(controller), nil)
@@ -241,6 +258,22 @@ module Ruflet
         # without a request behind it.
         module ScreenContext
           attr_writer :ruflet_screen_params, :ruflet_screen_session
+          attr_accessor :ruflet_render_target, :ruflet_redirect_target
+
+          # `render :form_result` and `redirect_to "/whatsapp"` are how a Rails
+          # action says which screen it means. Neither can do its usual job with
+          # no response to write to, so each records the intent and the session
+          # acts on it.
+          def render(*args, **options)
+            target = args.first || options[:template] || options[:action] || options[:partial]
+            self.ruflet_render_target = target.to_s.sub(%r{\A.*/}, "") if target
+            nil
+          end
+
+          def redirect_to(target, **_options)
+            self.ruflet_redirect_target = target.to_s
+            nil
+          end
 
           # Outlives the tap, like a Rails session, but held by the connection
           # rather than a cookie.

@@ -4,7 +4,7 @@
 # preloaded Ruflet gems through the same require entry point applications use.
 require "ruflet"
 
-raise "unexpected Ruflet version: #{Ruflet::VERSION}" unless Ruflet::VERSION == "0.0.19"
+raise "unexpected Ruflet version: #{Ruflet::VERSION}" unless Ruflet::VERSION == "0.0.22"
 raise "Ruflet::Page is unavailable" unless Ruflet.const_defined?(:Page)
 raise "show_snackbar is unavailable" unless Ruflet::Page.method_defined?(:show_snackbar)
 

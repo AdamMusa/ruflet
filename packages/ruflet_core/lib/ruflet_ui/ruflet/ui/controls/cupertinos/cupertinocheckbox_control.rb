@@ -6,7 +6,7 @@ module Ruflet
       module RufletComponents
         class CupertinoCheckboxControl < Ruflet::Control
           TYPE = "cupertinocheckbox".freeze
-          WIRE = "CupertinoCheckbox".freeze
+          WIRE = "Checkbox".freeze
 
           KEYWORDS = [:active_color, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :autofocus, :badge, :border_side, :bottom, :check_color, :col, :data, :disabled, :expand, :expand_loose, :fill_color, :focus_color, :height, :key, :label, :label_position, :left, :margin, :mouse_cursor, :offset, :opacity, :right, :rotate, :rtl, :scale, :semantics_label, :shape, :size_change_interval, :spacing, :tooltip, :top, :tristate, :value, :visible, :width, :on_animation_end, :on_blur, :on_change, :on_focus, :on_size_change].freeze
 

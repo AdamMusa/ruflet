@@ -14,7 +14,16 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
           calls.add(call);
-          if (call.method == 'stop') return null;
+          if (call.method == 'stop' || call.method == 'bridgeClose') {
+            return null;
+          }
+          if (call.method == 'bridgeSend') return null;
+          if (call.method == 'bridgeReceive') {
+            return Uint8List.fromList([7, 8, 9]);
+          }
+          if (call.method == 'serverUrl') {
+            return <Object?, Object?>{'url': 'inprocess://embedded'};
+          }
           return <Object?, Object?>{'running': true, 'port': 8550, 'error': ''};
         });
   });
@@ -51,5 +60,24 @@ void main() {
     expect((await platform.status()).port, 8550);
     await platform.stop();
     expect(calls.map((call) => call.method), ['status', 'stop']);
+  });
+
+  test('serverUrl uses the platform-owned embedded runtime endpoint', () async {
+    expect((await platform.serverUrl()).toString(), 'inprocess://embedded');
+    expect(calls.single.method, 'serverUrl');
+  });
+
+  test('bridge methods preserve binary protocol frames', () async {
+    await platform.sendToRuby(Uint8List.fromList([1, 2, 3]));
+    expect(await platform.receiveFromRuby(), [7, 8, 9]);
+    await platform.closeBridge();
+
+    expect(calls.map((call) => call.method), [
+      'bridgeSend',
+      'bridgeReceive',
+      'bridgeClose',
+    ]);
+    expect(calls.first.arguments, isA<Uint8List>());
+    expect(calls.first.arguments, [1, 2, 3]);
   });
 }

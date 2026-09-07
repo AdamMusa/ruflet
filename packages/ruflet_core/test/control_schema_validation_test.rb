@@ -77,6 +77,28 @@ class ControlSchemaValidationTest < Minitest::Test
     assert_equal({ "interval" => 10 }, chart.to_patch["horizontal_grid_lines"])
   end
 
+  def test_chart_controls_accept_current_flet_extension_properties_and_wire_names
+    rod = Ruflet.bar_chart_rod(to_y: 20, bgcolor: "#202020", selected: true)
+    group = Ruflet.bar_chart_group(x: 1, rods: [rod], group_vertically: true, spacing: 6)
+    axis = Ruflet.chart_axis(show_min: false, show_max: true, label_spacing: 8)
+    chart = Ruflet.bar_chart(
+      groups: [group],
+      group_alignment: :space_around,
+      group_spacing: 12,
+      animation: { duration: 150 },
+      interactive: true,
+      bottom_axis: axis,
+      baseline_y: 0
+    )
+
+    patch = chart.to_patch
+    assert_equal "BarChartGroup", patch["groups"].first["_c"]
+    assert_equal "BarChartRod", patch["groups"].first["rods"].first["_c"]
+    assert_equal "ChartAxis", patch["bottom_axis"]["_c"]
+    assert_equal "space_around", patch["group_alignment"]
+    assert_equal true, patch["groups"].first["group_vertically"]
+  end
+
   def test_common_attributes_are_supported_with_children
     child = Ruflet.text("Child")
     parent = Ruflet.column(

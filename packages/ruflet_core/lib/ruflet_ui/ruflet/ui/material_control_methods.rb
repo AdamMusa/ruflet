@@ -19,6 +19,28 @@ module Ruflet
         Array(value).map { |coordinates| map_coordinates(coordinates) }
       end
 
+      def base_page(**props, &block) = build_widget(:base_page, **props, &block)
+      def basepage(**props, &block) = base_page(**props, &block)
+      def dialogs(controls = nil, **props)
+        mapped = props.dup
+        mapped[:controls] = controls unless controls.nil?
+        build_widget(:dialogs, **mapped)
+      end
+      def pagelet(content = nil, **props, &block)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:pagelet, **mapped, &block)
+      end
+      def ruflet_app(**props) = build_widget(:ruflet_app, **props)
+      def rufletapp(**props) = ruflet_app(**props)
+      def service_registry(services = nil, **props)
+        mapped = props.dup
+        mapped[:services] = services unless services.nil?
+        build_widget(:service_registry, **mapped)
+      end
+      def serviceregistry(services = nil, **props) = service_registry(services, **props)
+      def window(**props) = build_widget(:window, **props)
+
       def view(children = nil, **props, &block)
         mapped = props.dup
         mapped[:controls] = children unless children.nil?
@@ -77,7 +99,31 @@ module Ruflet
         Ruflet::Animation.new(duration: duration, **props)
       end
       def animation_style(**props) = Ruflet::AnimationStyle.new(**props)
-      def audio(**props) = build_widget(:audio, **props)
+      def accelerometer(**props) = build_service(:accelerometer, **props)
+      def audio(**props) = build_service(:audio, **props)
+      def audio_recorder(**props) = build_service(:audio_recorder, **props)
+      def barometer(**props) = build_service(:barometer, **props)
+      def battery(**props) = build_service(:battery, **props)
+      def browser_context_menu(**props) = build_service(:browser_context_menu, **props)
+      def camera(**props) = build_widget(:camera, **props)
+      def connectivity(**props) = build_service(:connectivity, **props)
+      def file_picker(**props) = build_service(:file_picker, **props)
+      def flashlight(**props) = build_service(:flashlight, **props)
+      def geolocator(**props) = build_service(:geolocator, **props)
+      def gyroscope(**props) = build_service(:gyroscope, **props)
+      def haptic_feedback(**props) = build_service(:haptic_feedback, **props)
+      def magnetometer(**props) = build_service(:magnetometer, **props)
+      def permission_handler(**props) = build_service(:permission_handler, **props)
+      def screen_brightness(**props) = build_service(:screen_brightness, **props)
+      def secure_storage(**props) = build_service(:secure_storage, **props)
+      def semantics_service(**props) = build_service(:semantics_service, **props)
+      def shake_detector(**props) = build_service(:shake_detector, **props)
+      def share(**props) = build_service(:share, **props)
+      def shared_preferences(**props) = build_service(:shared_preferences, **props)
+      def storage_paths(**props) = build_service(:storage_paths, **props)
+      def url_launcher(**props) = build_service(:url_launcher, **props)
+      def user_accelerometer(**props) = build_service(:user_accelerometer, **props)
+      def wakelock(**props) = build_service(:wakelock, **props)
       def auto_complete(suggestions = nil, **props)
         mapped = props.dup
         mapped[:suggestions] = suggestions unless suggestions.nil?
@@ -246,6 +292,26 @@ module Ruflet
       def polygonmarker(**props) = polygon_marker(**props)
       def simple_attribution(**props) = build_widget(:simpleattribution, **props)
       def simpleattribution(**props) = simple_attribution(**props)
+      def map_layer(**props) = build_widget(:maplayer, **props)
+      def maplayer(**props) = map_layer(**props)
+      def rich_attribution(attributions = nil, **props)
+        mapped = props.dup
+        mapped[:attributions] = attributions unless attributions.nil?
+        build_widget(:richattribution, **mapped)
+      end
+      def richattribution(attributions = nil, **props) = rich_attribution(attributions, **props)
+      def image_source_attribution(image = nil, **props)
+        mapped = props.dup
+        mapped[:image] = image unless image.nil?
+        build_widget(:imagesourceattribution, **mapped)
+      end
+      def imagesourceattribution(image = nil, **props) = image_source_attribution(image, **props)
+      def text_source_attribution(text = nil, **props)
+        mapped = props.dup
+        mapped[:text] = text unless text.nil?
+        build_widget(:textsourceattribution, **mapped)
+      end
+      def textsourceattribution(text = nil, **props) = text_source_attribution(text, **props)
       def list_view(children = nil, **props)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
@@ -313,6 +379,29 @@ module Ruflet
         build_widget(:datacell, **mapped)
       end
       def datacell(content = nil, **props) = data_cell(content, **props)
+      def option(key = nil, **props)
+        mapped = props.dup
+        mapped[:key] = key unless key.nil?
+        build_widget(:option, **mapped)
+      end
+      def data_table2(columns = nil, **props)
+        mapped = props.dup
+        mapped[:columns] = columns unless columns.nil?
+        build_widget(:data_table2, **mapped)
+      end
+      def datatable2(columns = nil, **props) = data_table2(columns, **props)
+      def data_column2(label = nil, **props)
+        mapped = props.dup
+        mapped[:label] = label unless label.nil?
+        build_widget(:data_column2, **mapped)
+      end
+      def datacolumn2(label = nil, **props) = data_column2(label, **props)
+      def data_row2(cells = nil, **props)
+        mapped = props.dup
+        mapped[:cells] = cells unless cells.nil?
+        build_widget(:data_row2, **mapped)
+      end
+      def datarow2(cells = nil, **props) = data_row2(cells, **props)
       def expansion_tile(children = nil, **props)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
@@ -339,9 +428,7 @@ module Ruflet
       end
       def dropdownoption(key = nil, **props) = dropdown_option(key, **props)
       def dropdown_m2(options = nil, **props)
-        mapped = props.dup
-        mapped[:options] = options unless options.nil?
-        build_widget(:dropdownm2, **mapped)
+        dropdown(options, **props)
       end
       def dropdownm2(options = nil, **props) = dropdown_m2(options, **props)
       def progress_bar(**props) = build_widget(:progressbar, **props)
@@ -611,8 +698,7 @@ module Ruflet
 
       def app_bar(**props) = build_widget(:appbar, **props)
       def appbar(**props) = app_bar(**props)
-      def url_launcher(**props) = build_widget(:url_launcher, **props)
-      def clipboard(**props) = build_widget(:clipboard, **props)
+      def clipboard(**props) = build_service(:clipboard, **props)
       def floating_action_button(**props) = build_widget(:floatingactionbutton, **props)
       def floatingactionbutton(**props) = floating_action_button(**props)
       def tabs(content = nil, **props, &block)
@@ -696,6 +782,24 @@ module Ruflet
       def web_view(**props) = build_widget(:webview, **props)
       def webview(**props) = web_view(**props)
       def video(**props) = build_widget(:video, **props)
+      def block_picker(**props) = build_widget(:block_picker, **props)
+      def blockpicker(**props) = block_picker(**props)
+      def color_picker(**props) = build_widget(:color_picker, **props)
+      def colorpicker(**props) = color_picker(**props)
+      def hue_ring_picker(**props) = build_widget(:hue_ring_picker, **props)
+      def hueringpicker(**props) = hue_ring_picker(**props)
+      def material_picker(**props) = build_widget(:material_picker, **props)
+      def materialpicker(**props) = material_picker(**props)
+      def multiple_choice_block_picker(**props) = build_widget(:multiple_choice_block_picker, **props)
+      def multiplechoiceblockpicker(**props) = multiple_choice_block_picker(**props)
+      def slide_picker(**props) = build_widget(:slide_picker, **props)
+      def slidepicker(**props) = slide_picker(**props)
+      def banner_ad(**props) = build_widget(:banner_ad, **props)
+      def bannerad(**props) = banner_ad(**props)
+      def interstitial_ad(**props) = build_widget(:interstitial_ad, **props)
+      def interstitialad(**props) = interstitial_ad(**props)
+      def native_ad(**props) = build_widget(:native_ad, **props)
+      def nativead(**props) = native_ad(**props)
       def code_editor(value = nil, **props)
         mapped = props.dup
         mapped[:value] = value unless value.nil?

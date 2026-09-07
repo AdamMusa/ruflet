@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "stringio"
 
 class RufletServerWireCodecTest < Minitest::Test
   def test_pack_unpack_round_trip_for_nested_payload
@@ -51,5 +52,62 @@ class RufletServerWireCodecTest < Minitest::Test
     assert_instance_of Ruflet::Protocol::TimeOfDayValue, decoded["time"]
     assert_equal date, decoded["date"]
     assert_equal time, decoded["time"]
+  end
+
+  def test_summary_trace_prints_compact_timestamped_metadata
+    message = [3, { "target" => 4, "name" => "change", "data" => { "value" => "Ruby" } }]
+    encoded = Ruflet::WireCodec.pack(message)
+    previous = ENV["RUFLET_PROTOCOL_TRACE"]
+    ENV["RUFLET_PROTOCOL_TRACE"] = "summary"
+
+    output, = capture_io { Ruflet::WireCodec.trace("client->ruby", encoded) }
+
+    assert_match(/\[RUFLET_PROTOCOL\] t=\d+\.\d+ client->ruby/, output)
+    assert_includes output, "bytes=#{encoded.bytesize}"
+    assert_includes output, "action=3"
+    assert_includes output, "target=4"
+    assert_includes output, 'name="change"'
+    refute_includes output, "hex="
+  ensure
+    ENV["RUFLET_PROTOCOL_TRACE"] = previous
+  end
+
+  def test_full_trace_prints_exact_bytes_and_decoded_data
+    message = [3, { "target" => 4, "name" => "change", "data" => { "value" => "Ruby" } }]
+    encoded = Ruflet::WireCodec.pack(message)
+    previous = ENV["RUFLET_PROTOCOL_TRACE"]
+    ENV["RUFLET_PROTOCOL_TRACE"] = "1"
+
+    output, = capture_io { Ruflet::WireCodec.trace("client->ruby", encoded) }
+
+    assert_includes output, "hex=#{encoded.unpack("H*").first}"
+    assert_includes output, '"target" => 4'
+    assert_includes output, '"value" => "Ruby"'
+  ensure
+    ENV["RUFLET_PROTOCOL_TRACE"] = previous
+  end
+
+  def test_trace_can_be_disabled
+    encoded = Ruflet::WireCodec.pack([0, {}])
+    previous = ENV["RUFLET_PROTOCOL_TRACE"]
+    ENV["RUFLET_PROTOCOL_TRACE"] = "0"
+
+    output, = capture_io { Ruflet::WireCodec.trace("ruby->client", encoded) }
+
+    assert_empty output
+  ensure
+    ENV["RUFLET_PROTOCOL_TRACE"] = previous
+  end
+
+  def test_trace_is_disabled_by_default
+    encoded = Ruflet::WireCodec.pack([0, {}])
+    previous = ENV["RUFLET_PROTOCOL_TRACE"]
+    ENV.delete("RUFLET_PROTOCOL_TRACE")
+
+    output, = capture_io { Ruflet::WireCodec.trace("ruby->client", encoded) }
+
+    assert_empty output
+  ensure
+    ENV["RUFLET_PROTOCOL_TRACE"] = previous
   end
 end

@@ -30,7 +30,7 @@ class RufletCupertinoTextFieldCompatibilityTest < Minitest::Test
 
     patch = field.to_patch
 
-    assert_equal "CupertinoTextField", patch["_c"]
+    assert_equal "TextField", patch["_c"]
     assert_equal "42", patch["value"]
     assert_equal "Amount", patch["placeholder_text"]
     assert_equal({ "color" => "#AAAAAA" }, patch["placeholder_style"])
@@ -83,6 +83,6 @@ class RufletCupertinoTextFieldCompatibilityTest < Minitest::Test
   end
 
   def test_compact_alias_uses_same_control
-    assert_equal "CupertinoTextField", Ruflet.cupertinotextfield.to_patch["_c"]
+    assert_equal "TextField", Ruflet.cupertinotextfield.to_patch["_c"]
   end
 end

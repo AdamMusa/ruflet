@@ -20,6 +20,7 @@ MRuby::Build.new("host_vm") do |conf|
 
   conf.gem File.join(VM_DIR, "mrbgems/mruby-digest")
   conf.gem File.join(VM_DIR, "mrbgems/mruby-onig-regexp")
+  conf.gem File.join(VM_DIR, "mrbgems/ruflet-record")
   conf.gem File.join(VM_DIR, "mrbgems/ruflet-framework")
 
   conf.enable_debug

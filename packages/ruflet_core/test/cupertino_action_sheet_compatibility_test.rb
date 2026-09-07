@@ -17,29 +17,29 @@ class RufletCupertinoActionSheetCompatibilityTest < Minitest::Test
 
     patch = sheet.to_patch
 
-    assert_equal "CupertinoActionSheet", patch["_c"]
+    assert_equal "ActionSheet", patch["_c"]
     assert_equal "Text", patch["title"]["_c"]
     assert_equal "Select an action", patch["message"]
-    assert_equal %w[CupertinoActionSheetAction CupertinoActionSheetAction], patch["actions"].map { |action| action["_c"] }
+    assert_equal %w[ActionSheetAction ActionSheetAction], patch["actions"].map { |action| action["_c"] }
     assert_equal "Text", patch["actions"].first["content"]["_c"]
     assert_equal true, patch["actions"].first["default"]
     assert_equal "Delete", patch["actions"].last["content"]
     assert_equal true, patch["actions"].last["destructive"]
     assert_equal "click", patch["actions"].last["mouse_cursor"]
     assert_equal true, patch["actions"].last["on_click"]
-    assert_equal "CupertinoActionSheetAction", patch["cancel"]["_c"]
+    assert_equal "ActionSheetAction", patch["cancel"]["_c"]
   end
 
   def test_compact_aliases_use_same_controls
-    assert_equal "CupertinoActionSheet", Ruflet.cupertinoactionsheet(title: "Title").to_patch["_c"]
-    assert_equal "CupertinoActionSheetAction", Ruflet.cupertinoactionsheetaction(content: "Save").to_patch["_c"]
+    assert_equal "ActionSheet", Ruflet.cupertinoactionsheet(title: "Title").to_patch["_c"]
+    assert_equal "ActionSheetAction", Ruflet.cupertinoactionsheetaction(content: "Save").to_patch["_c"]
   end
 
   def test_action_sheet_serializes_without_visible_content_like_flet
     empty = Ruflet.cupertino_action_sheet.to_patch
     hidden = Ruflet.cupertino_action_sheet(actions: [Ruflet.container(visible: false)]).to_patch
 
-    assert_equal "CupertinoActionSheet", empty["_c"]
+    assert_equal "ActionSheet", empty["_c"]
     refute empty.key?("actions")
     assert_equal false, hidden["actions"].first["visible"]
   end

@@ -31,6 +31,9 @@ class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
     external fun nativeStop()
     external fun nativeIsRunning(): Boolean
     external fun nativeLastError(): String
+    external fun nativeBridgeSend(message: ByteArray): Boolean
+    external fun nativeBridgeReceive(): ByteArray?
+    external fun nativeBridgeClose()
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         System.loadLibrary("ruby_runtime")
@@ -55,19 +58,15 @@ class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
         try {
             when (call.method) {
                 "start" -> {
-                    // The platform already started the runtime, so these
-                    // arguments cannot take effect -- the VM boots once per
-                    // process. Rather than fail, hand this caller the port that
-                    // already exists through the file it is about to poll, so a
-                    // client written against the older start() flow still finds
-                    // the server and still gets the parallel startup.
+                    // A self-contained runtime already owns its port-free
+                    // endpoint. A legacy start() call cannot replace it.
                     if (RufletRuntimeAutostart.attempted) {
-                        val environment =
-                            call.argument<Map<String, String>>("environment") ?: emptyMap()
-                        RufletRuntimeAutostart.mirrorPort(
-                            environment["RUFLET_RUNTIME_PORT_FILE"].orEmpty(),
+                        result.error(
+                            "in_process_runtime_owned",
+                            "The packaged Ruflet runtime already owns an in-process endpoint. " +
+                                "Use serverUrl() and the binary bridge instead of start().",
+                            null,
                         )
-                        result.success(status())
                         return
                     }
 
@@ -121,6 +120,33 @@ class MrubyRuntimePlugin : FlutterPlugin, MethodCallHandler {
                 }
                 "timeline" ->
                     result.success(mapOf("sinceLoadMs" to RufletRuntimeAutostart.millisSinceLoad()))
+                "bridgeSend" -> {
+                    val message = call.arguments as? ByteArray
+                    if (message == null) {
+                        result.error(
+                            "ruflet_bridge_bad_message",
+                            "bridgeSend requires binary data.",
+                            null,
+                        )
+                    } else if (nativeBridgeSend(message)) {
+                        result.success(null)
+                    } else {
+                        result.error(
+                            "ruflet_bridge_closed",
+                            "The Ruflet in-process bridge is closed.",
+                            null,
+                        )
+                    }
+                }
+                "bridgeReceive" ->
+                    worker.execute {
+                        val message = nativeBridgeReceive()
+                        mainThread.post { result.success(message) }
+                    }
+                "bridgeClose" -> {
+                    nativeBridgeClose()
+                    result.success(null)
+                }
                 "status" -> result.success(status())
                 "stop" -> {
                     nativeStop()

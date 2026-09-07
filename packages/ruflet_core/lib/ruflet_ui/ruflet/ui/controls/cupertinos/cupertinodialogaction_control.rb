@@ -6,7 +6,7 @@ module Ruflet
       module RufletComponents
         class CupertinoDialogActionControl < Ruflet::Control
           TYPE = "cupertinodialogaction".freeze
-          WIRE = "CupertinoDialogAction".freeze
+          WIRE = "Button".freeze
 
           def initialize(id: nil, badge: nil, col: nil, content: nil, data: nil, default: nil, destructive: nil, disabled: nil, expand: nil, expand_loose: nil, key: nil, opacity: nil, rtl: nil, text_style: nil, tooltip: nil, visible: nil, on_click: nil)
             raise ArgumentError, "cupertino_dialog_action requires content" if content.nil?

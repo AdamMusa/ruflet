@@ -20,10 +20,10 @@ class RufletCupertinoContextMenuCompatibilityTest < Minitest::Test
 
     patch = menu.to_patch
 
-    assert_equal "CupertinoContextMenu", patch["_c"]
+    assert_equal "ContextMenu", patch["_c"]
     assert_equal "Image", patch["content"]["_c"]
     assert_equal false, patch["enable_haptic_feedback"]
-    assert_equal ["CupertinoContextMenuAction"], patch["actions"].map { |item| item["_c"] }
+    assert_equal ["ContextMenuAction"], patch["actions"].map { |item| item["_c"] }
     assert_equal "Copy", patch["actions"].first["content"]
     assert_equal true, patch["actions"].first["default"]
     assert_equal false, patch["actions"].first["destructive"]
@@ -34,8 +34,8 @@ class RufletCupertinoContextMenuCompatibilityTest < Minitest::Test
   def test_compact_aliases_use_same_controls
     action = Ruflet.cupertinocontextmenuaction(content: "Copy")
 
-    assert_equal "CupertinoContextMenuAction", action.to_patch["_c"]
-    assert_equal "CupertinoContextMenu", Ruflet.cupertinocontextmenu(content: Ruflet.text("Photo"), actions: [action]).to_patch["_c"]
+    assert_equal "ContextMenuAction", action.to_patch["_c"]
+    assert_equal "ContextMenu", Ruflet.cupertinocontextmenu(content: Ruflet.text("Photo"), actions: [action]).to_patch["_c"]
   end
 
   def test_context_menu_requires_content_and_allows_hidden_content_or_empty_actions_like_flet

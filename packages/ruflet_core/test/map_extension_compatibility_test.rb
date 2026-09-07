@@ -45,4 +45,28 @@ class MapExtensionCompatibilityTest < Minitest::Test
     map.zoom_in
     assert_equal "zoom_in", @sent.last[1]["name"]
   end
+
+  def test_rich_attribution_family_uses_current_flet_wire_types
+    image = Ruflet.image_source_attribution(Ruflet.image(src: "logo.png"), height: 24)
+    text = Ruflet.text_source_attribution("OpenStreetMap", prepend_copyright: true, on_click: ->(_event) {})
+    attribution = Ruflet.rich_attribution([image, text], alignment: :bottom_right)
+
+    patch = attribution.to_patch
+    assert_equal "RichAttribution", patch["_c"]
+    assert_equal %w[ImageSourceAttribution TextSourceAttribution], patch["attributions"].map { |item| item["_c"] }
+    assert_equal "bottom_right", patch["alignment"]
+    assert text.has_handler?(:click)
+    assert_equal "MapLayer", Ruflet.map_layer.to_patch["_c"]
+  end
+
+  def test_every_map_component_is_registered_with_the_control_factory
+    %i[
+      map map_layer tile_layer marker marker_layer circle_marker circle_layer
+      polyline_marker polyline_layer polygon_marker polygon_layer
+      simple_attribution rich_attribution image_source_attribution
+      text_source_attribution
+    ].each do |type|
+      assert Ruflet::UI::ControlFactory.known_control?(type), type
+    end
+  end
 end

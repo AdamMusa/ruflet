@@ -5,7 +5,7 @@ set -eu
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 MRUBY="$ROOT/ruby_runtime/third_party/mruby"
-VM_LIBRARY="$ROOT/ruby_runtime/macos/Frameworks/libruflet_vm.a"
+VM_LIBRARY="${RUFLET_VM_LIBRARY:-$ROOT/ruby_runtime/macos/Frameworks/libruflet_vm.a}"
 OUT_DIR="$ROOT/tools/embedded_vm_harness/build"
 mkdir -p "$OUT_DIR"
 

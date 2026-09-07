@@ -10,10 +10,10 @@ class RufletAppControlTest < Minitest::Test
     assert_equal "ruflet_app", control.type
   end
 
-  def test_ruflet_app_keeps_the_upstream_wire_type
+  def test_ruflet_app_uses_the_ruflet_wire_type
     patch = Ruflet.control(:ruflet_app, url: "http://127.0.0.1:8550").to_patch
 
-    assert_equal "FletApp", patch["_c"]
+    assert_equal "RufletApp", patch["_c"]
     assert_equal "http://127.0.0.1:8550", patch["url"]
   end
 
@@ -59,5 +59,12 @@ class RufletAppControlTest < Minitest::Test
     assert_raises(ArgumentError) do
       Ruflet::UI::Controls::RufletComponents::RufletAppControl.new(not_a_real_prop: 1)
     end
+  end
+
+  def test_dsl_emits_the_ruflet_renderer_entrypoint
+    patch = Ruflet.ruflet_app(url: "https://example.invalid/app", args: ["demo"]).to_patch
+    assert_equal "RufletApp", patch.fetch("_c")
+    assert_equal "https://example.invalid/app", patch.fetch("url")
+    assert_equal ["demo"], patch.fetch("args")
   end
 end

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'ruflet_runtime.dart';
@@ -34,6 +36,18 @@ abstract class RufletRuntimePlatform extends PlatformInterface {
 
   Future<RufletRuntimeStatus> status() {
     throw UnimplementedError('status() has not been implemented.');
+  }
+
+  Future<void> sendToRuby(Uint8List message) {
+    throw UnimplementedError('sendToRuby() has not been implemented.');
+  }
+
+  Future<Uint8List?> receiveFromRuby() {
+    throw UnimplementedError('receiveFromRuby() has not been implemented.');
+  }
+
+  Future<void> closeBridge() {
+    throw UnimplementedError('closeBridge() has not been implemented.');
   }
 
   Future<void> stop() {

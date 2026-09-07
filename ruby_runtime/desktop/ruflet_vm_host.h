@@ -2,6 +2,8 @@
 
 #include <stddef.h>
 
+#include "ruflet_in_process_bridge.h"
+
 #if defined(_WIN32)
 #define RUFLET_VM_EXPORT __declspec(dllexport)
 #else

@@ -194,6 +194,12 @@ class RufletHtmlDslHelpersTest < Minitest::Test
     assert_equal 0.4, result.controls.first.props["value"]
   end
 
+  def test_registry_controls_are_available_as_named_view_helpers
+    markup = @view.alert_dialog(modal: true) { @view.text("Saved") }
+
+    assert_equal '<alert-dialog modal><text>Saved</text></alert-dialog>', markup
+  end
+
   def test_rich_component_helpers_round_trip
     markup = @view.column do
       [

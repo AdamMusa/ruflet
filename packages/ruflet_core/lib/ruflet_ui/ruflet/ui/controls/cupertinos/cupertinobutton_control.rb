@@ -6,7 +6,7 @@ module Ruflet
       module RufletComponents
         class CupertinoButtonControl < Ruflet::Control
           TYPE = "cupertinobutton".freeze
-          WIRE = "CupertinoButton".freeze
+          WIRE = "Button".freeze
 
           KEYWORDS = [:align, :alignment, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :autofocus, :badge, :bgcolor, :border_radius, :bottom, :col, :color, :content, :data, :disabled, :disabled_bgcolor, :expand, :expand_loose, :focus_color, :height, :icon, :icon_color, :key, :left, :margin, :min_size, :mouse_cursor, :offset, :opacity, :opacity_on_click, :padding, :right, :rotate, :rtl, :scale, :size, :size_change_interval, :tooltip, :top, :url, :visible, :width, :on_animation_end, :on_blur, :on_click, :on_focus, :on_long_press, :on_size_change].freeze
 

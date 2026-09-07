@@ -56,6 +56,21 @@ class MethodChannelRufletRuntime extends RufletRuntimePlatform {
   }
 
   @override
+  Future<void> sendToRuby(Uint8List message) async {
+    await methodChannel.invokeMethod<void>('bridgeSend', message);
+  }
+
+  @override
+  Future<Uint8List?> receiveFromRuby() {
+    return methodChannel.invokeMethod<Uint8List>('bridgeReceive');
+  }
+
+  @override
+  Future<void> closeBridge() async {
+    await methodChannel.invokeMethod<void>('bridgeClose');
+  }
+
+  @override
   Future<void> stop() async {
     await methodChannel.invokeMethod<void>('stop');
   }

@@ -24,7 +24,7 @@ class RufletCupertinoPickerCompatibilityTest < Minitest::Test
 
     patch = picker.to_patch
 
-    assert_equal "CupertinoPicker", patch["_c"]
+    assert_equal "Picker", patch["_c"]
     assert_equal children, picker.children
     refute picker.props.key?("controls")
     assert_equal %w[Apple Mango], patch["controls"].map { |control| control["value"] }
@@ -59,7 +59,7 @@ class RufletCupertinoPickerCompatibilityTest < Minitest::Test
     picker = Ruflet.cupertinopicker([Ruflet.text("Apple")])
 
     assert_equal "cupertinopicker", picker.type
-    assert_equal "CupertinoPicker", picker.to_patch["_c"]
+    assert_equal "Picker", picker.to_patch["_c"]
   end
 
   def test_cupertino_picker_defaults_match_flet

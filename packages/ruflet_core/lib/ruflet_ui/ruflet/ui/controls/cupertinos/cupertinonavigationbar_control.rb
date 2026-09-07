@@ -6,7 +6,7 @@ module Ruflet
       module RufletComponents
         class CupertinoNavigationBarControl < Ruflet::Control
           TYPE = "cupertinonavigationbar".freeze
-          WIRE = "CupertinoNavigationBar".freeze
+          WIRE = "NavigationBar".freeze
 
           KEYWORDS = [:active_color, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :border, :bottom, :col, :data, :destinations, :disabled, :expand, :expand_loose, :height, :icon_size, :inactive_color, :key, :left, :margin, :offset, :opacity, :right, :rotate, :rtl, :scale, :selected_index, :size_change_interval, :tooltip, :top, :visible, :width, :on_animation_end, :on_change, :on_size_change].freeze
 

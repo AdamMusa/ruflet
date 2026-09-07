@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "date"
 
 class RufletPickerCompatibilityTest < Minitest::Test
   def test_date_picker_serializes_current_flet_props
@@ -60,6 +61,21 @@ class RufletPickerCompatibilityTest < Minitest::Test
     assert_equal true, patch["on_change"]
     assert_equal true, patch["on_dismiss"]
     assert_equal true, patch["on_entry_mode_change"]
+  end
+
+  def test_canonical_date_picker_preserves_typed_protocol_dates
+    picker = Ruflet.date_picker(
+      value: DateTime.new(2026, 5, 14, 19, 30, 0),
+      first_date: Date.new(2026, 1, 1),
+      last_date: Date.new(2026, 12, 31),
+      current_date: Date.new(2026, 5, 1)
+    )
+
+    %w[value first_date last_date current_date].each do |property|
+      assert_instance_of Ruflet::Protocol::DateTimeValue, picker.to_patch.fetch(property)
+    end
+    assert_equal "2026-05-14T19:30:00+00:00", picker.to_patch.fetch("value")
+    assert_equal "2026-01-01", picker.to_patch.fetch("first_date")
   end
 
   def test_date_range_picker_serializes_current_flet_props

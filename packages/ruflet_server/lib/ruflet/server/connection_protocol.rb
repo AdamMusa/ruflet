@@ -96,6 +96,11 @@ module Ruflet
         on_update_control(ws, payload)
       when Protocol::ACTIONS[:invoke_control_method]
         on_invoke_control_method(ws, payload)
+      when Protocol::ACTIONS[:python_output]
+        # Flet clients can emit this legacy diagnostic action. It carries no
+        # server-side state, but it is a valid wire message and must not be
+        # treated as a protocol error or tear down host-adapter connections.
+        nil
       else
         raise "Unknown action: #{action.inspect}"
       end
@@ -149,7 +154,7 @@ module Ruflet
 
       if page
         attach_sender(page, ws)
-        reset_mount_state(page)
+        page.prepare_for_reconnect!
       else
         page = Page.new(
           session_id: session_id,
@@ -249,12 +254,6 @@ module Ruflet
 
     def attach_sender(page, ws)
       page.instance_variable_set(:@sender, sender_for(ws))
-    end
-
-    def reset_mount_state(page)
-      page.instance_variable_set(:@overlay_container_mounted, false)
-      page.instance_variable_set(:@dialogs_container_mounted, false)
-      page.instance_variable_set(:@services_container_mounted, false)
     end
 
     def disconnect_error?(error)

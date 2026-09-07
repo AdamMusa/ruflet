@@ -4,6 +4,7 @@ require_relative "ruflet/accelerometer_control"
 require_relative "ruflet/audio_recorder_control"
 require_relative "ruflet/barometer_control"
 require_relative "ruflet/battery_control"
+require_relative "../controls/shared/browsercontextmenu_control"
 require_relative "ruflet/camera_control"
 require_relative "ruflet/clipboard_control"
 require_relative "ruflet/connectivity_control"
@@ -24,6 +25,7 @@ require_relative "ruflet/storagepaths_control"
 require_relative "ruflet/urllauncher_control"
 require_relative "ruflet/useraccelerometer_control"
 require_relative "ruflet/wakelock_control"
+require_relative "current_service_methods"
 
 module Ruflet
   module UI
@@ -37,6 +39,8 @@ module Ruflet
           "audiorecorder" => RufletServicesComponents::AudioRecorderControl,
           "barometer" => RufletServicesComponents::BarometerControl,
           "battery" => RufletServicesComponents::BatteryControl,
+          "browser_context_menu" => Ruflet::UI::Controls::RufletComponents::BrowserContextMenuControl,
+          "browsercontextmenu" => Ruflet::UI::Controls::RufletComponents::BrowserContextMenuControl,
           "camera" => RufletServicesComponents::CameraControl,
           "clipboard" => RufletServicesComponents::ClipboardControl,
           "connectivity" => RufletServicesComponents::ConnectivityControl,

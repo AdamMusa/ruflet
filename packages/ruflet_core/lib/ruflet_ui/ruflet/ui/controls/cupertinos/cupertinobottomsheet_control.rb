@@ -6,7 +6,7 @@ module Ruflet
       module RufletComponents
         class CupertinoBottomSheetControl < Ruflet::Control
           TYPE = "cupertinobottomsheet".freeze
-          WIRE = "CupertinoBottomSheet".freeze
+          WIRE = "BottomSheet".freeze
 
           def initialize(id: nil, adaptive: nil, badge: nil, bgcolor: nil, col: nil, content: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, height: nil, key: nil, modal: nil, opacity: nil, open: nil, padding: nil, rtl: nil, tooltip: nil, visible: nil, on_dismiss: nil)
             raise ArgumentError, "cupertino_bottom_sheet content is required" if content.nil?

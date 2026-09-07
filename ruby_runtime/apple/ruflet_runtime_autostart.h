@@ -6,8 +6,8 @@
 // The VM is started from the plugin class's +load, which runs when the dylib is
 // loaded -- before UIApplicationMain, before the Flutter engine exists and long
 // before Dart could ask for it. It boots on a background queue in parallel with
-// the engine, so by the time Dart calls serverUrl() the embedded server has
-// usually already bound its port.
+// the engine and exposes an in-process endpoint as soon as the VM owns its
+// protocol queues.
 //
 // The packaged Ruby project is read straight out of the app bundle. Flutter
 // assets are ordinary files there, so nothing has to be copied to a writable
@@ -21,15 +21,12 @@
 // RufletRuntimeAutostart to false in Info.plist turns it off for an app that
 // wants to drive startup from Dart anyway.
 //
-// A client that still calls start() keeps working: start() mirrors the port
-// this already resolved into the file that client is polling, so it finds the
-// autostarted server rather than waiting for one that will never come.
-//
 // Header-only, with internal linkage, because each platform compiles exactly
 // one bridge translation unit. It mirrors how both bridges already share
 // desktop/ruflet_vm_host.h.
 
 #import <Foundation/Foundation.h>
+#import <TargetConditionals.h>
 
 #include <mach/mach_time.h>
 #include <stdlib.h>
@@ -60,6 +57,17 @@ static NSString *ruflet_server_url = nil;
 static NSString *ruflet_autostart_error = nil;
 static NSCondition *ruflet_autostart_signal = nil;
 static BOOL ruflet_autostart_attempted = NO;
+
+static NSString *ruflet_entrypoint_at_root(NSString *root) {
+  NSFileManager *files = [NSFileManager defaultManager];
+  for (NSString *name in @[@"main.mrb", @"main.rb"]) {
+    NSString *candidate = [root stringByAppendingPathComponent:name];
+    if ([files fileExistsAtPath:candidate]) {
+      return candidate;
+    }
+  }
+  return nil;
+}
 
 /// Where `flutter build` puts the asset bundle. iOS keeps flutter_assets at the
 /// root of App.framework; macOS nests it under Resources.
@@ -98,20 +106,14 @@ static NSString *ruflet_packaged_project_root(void) {
       [[NSBundle mainBundle] objectForInfoDictionaryKey:@"RufletEmbeddedProject"];
   if ([configured isKindOfClass:[NSString class]] && configured.length > 0) {
     NSString *candidate = [root stringByAppendingPathComponent:configured];
-    return [files
-               fileExistsAtPath:[candidate
-                                    stringByAppendingPathComponent:@"main.rb"]]
-               ? candidate
-               : nil;
+    return ruflet_entrypoint_at_root(candidate) != nil ? candidate : nil;
   }
 
   NSArray<NSString *> *entries = [files contentsOfDirectoryAtPath:root error:nil];
   NSString *found = nil;
   for (NSString *entry in entries) {
     NSString *candidate = [root stringByAppendingPathComponent:entry];
-    if (![files
-            fileExistsAtPath:[candidate
-                                 stringByAppendingPathComponent:@"main.rb"]]) {
+    if (ruflet_entrypoint_at_root(candidate) == nil) {
       continue;
     }
     if (found != nil) {
@@ -120,6 +122,31 @@ static NSString *ruflet_packaged_project_root(void) {
     found = candidate;
   }
   return found;
+}
+
+static BOOL ruflet_full_runtime_profile(NSString *root) {
+  NSString *path = [root stringByAppendingPathComponent:@".ruflet-runtime.json"];
+  NSData *data = [NSData dataWithContentsOfFile:path];
+  if (data == nil) {
+    return NO;
+  }
+  NSDictionary *manifest = [NSJSONSerialization JSONObjectWithData:data
+                                                            options:0
+                                                              error:nil];
+  return [manifest[@"profile"] isEqualToString:@"full"];
+}
+
+static BOOL ruflet_supports_in_process_transport(NSString *root) {
+  NSString *ruby = [root stringByAppendingPathComponent:@"vendor/bundle/ruby"];
+  NSDirectoryEnumerator<NSString *> *entries =
+      [[NSFileManager defaultManager] enumeratorAtPath:ruby];
+  for (NSString *entry in entries) {
+    if ([entry hasSuffix:@"/lib/ruflet/server/in_process_connection.rb"] &&
+        [entry containsString:@"/gems/ruflet_server-"]) {
+      return YES;
+    }
+  }
+  return NO;
 }
 
 static void ruflet_finish_autostart(NSString *url, NSString *error) {
@@ -139,6 +166,13 @@ static void ruflet_begin_autostart(void) {
              @"RufletEmbeddedProject in Info.plist.");
     return;
   }
+  if (ruflet_full_runtime_profile(root) &&
+      !ruflet_supports_in_process_transport(root)) {
+    ruflet_finish_autostart(
+        nil, @"The locked ruflet_server gem does not support port-free self "
+             @"builds. Update the application's Gemfile.lock.");
+    return;
+  }
 
   // The bundle is read-only, so the runtime's scratch files live in the app's
   // temporary directory rather than beside the sources.
@@ -148,58 +182,54 @@ static void ruflet_begin_autostart(void) {
                            withIntermediateDirectories:YES
                                             attributes:nil
                                                  error:nil];
-  NSString *portPath = [scratch stringByAppendingPathComponent:@"server.port"];
   NSString *errorPath = [scratch stringByAppendingPathComponent:@"server.error"];
   NSString *stopPath = [scratch stringByAppendingPathComponent:@"server.stop"];
-  [[NSFileManager defaultManager] removeItemAtPath:portPath error:nil];
   [[NSFileManager defaultManager] removeItemAtPath:errorPath error:nil];
   [[NSFileManager defaultManager] removeItemAtPath:stopPath error:nil];
 
-  NSString *entrypoint = [root stringByAppendingPathComponent:@"main.rb"];
+  NSString *entrypoint = ruflet_entrypoint_at_root(root);
   NSString *assetsDir = [root stringByAppendingPathComponent:@"assets"];
 
+  // The full CRuby distribution carries its standard library as a CocoaPods
+  // resource. Keep the lite package's one-path fast path unchanged, while
+  // giving the ABI-compatible CRuby host both its Ruby and native-extension
+  // directories before it loads the application bundle.
+#if defined(RUFLET_CRUBY_RUNTIME)
+  NSString *pluginClassName = @"RubyRuntimeMacosPlugin";
+#if TARGET_OS_IOS
+  pluginClassName = @"MrubyRuntimePlugin";
+#endif
+  NSBundle *crubyBundle =
+      [NSBundle bundleForClass:NSClassFromString(pluginClassName)];
+  NSString *crubyRoot = [[crubyBundle resourcePath]
+      stringByAppendingPathComponent:@"ruflet_cruby"];
+  NSString *crubyLib = [[crubyRoot stringByAppendingPathComponent:@"lib/ruby"]
+      stringByAppendingPathComponent:RUFLET_CRUBY_ABI];
+  NSString *crubyArch =
+      [crubyLib stringByAppendingPathComponent:RUFLET_CRUBY_ARCH];
+  const char *loadPaths[] = {root.UTF8String, crubyLib.UTF8String,
+                             crubyArch.UTF8String};
+  const size_t loadPathCount = 3;
+#else
   const char *loadPaths[] = {root.UTF8String};
+  const size_t loadPathCount = 1;
+#endif
   const char *environmentKeys[] = {
-      "RUFLET_PORT", "RUFLET_ASSETS_DIR", "RUFLET_RUNTIME_PORT_FILE",
-      "RUFLET_RUNTIME_ERROR_FILE", "RUFLET_SUPPRESS_SERVER_BANNER"};
-  const char *environmentValues[] = {"0", assetsDir.UTF8String,
-                                     portPath.UTF8String, errorPath.UTF8String,
-                                     "1"};
+      "RUFLET_ASSETS_DIR", "RUFLET_RUNTIME_ERROR_FILE",
+      "RUFLET_SUPPRESS_SERVER_BANNER", "RUFLET_RUNTIME_TRANSPORT"};
+  const char *environmentValues[] = {assetsDir.UTF8String, errorPath.UTF8String,
+                                     "1", "in_process"};
 
   const int status = ruflet_vm_start(
-      root.UTF8String, entrypoint.UTF8String, loadPaths, 1, environmentKeys,
-      environmentValues, 5, stopPath.UTF8String, errorPath.UTF8String);
+      root.UTF8String, entrypoint.UTF8String, loadPaths, loadPathCount, environmentKeys,
+      environmentValues, 4, stopPath.UTF8String, errorPath.UTF8String);
   if (status != 0) {
     ruflet_finish_autostart(
         nil, @"The packaged entrypoint was rejected by the VM; it must be a "
              @".rb or .mrb file inside the project root.");
     return;
   }
-
-  // Poll for the port the Ruby server publishes. Tight, because this runs off
-  // the main thread and the whole point is to have an answer ready early.
-  NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:30.0];
-  while ([deadline timeIntervalSinceNow] > 0) {
-    NSString *published = [NSString stringWithContentsOfFile:portPath
-                                                    encoding:NSUTF8StringEncoding
-                                                       error:nil];
-    const int port = published == nil ? 0 : published.intValue;
-    if (port > 0) {
-      ruflet_finish_autostart(
-          [NSString stringWithFormat:@"http://127.0.0.1:%d", port], nil);
-      return;
-    }
-    NSString *failure = [NSString stringWithContentsOfFile:errorPath
-                                                 encoding:NSUTF8StringEncoding
-                                                    error:nil];
-    if (failure.length > 0) {
-      ruflet_finish_autostart(nil, failure);
-      return;
-    }
-    usleep(1000);
-  }
-  ruflet_finish_autostart(nil,
-                          @"The embedded Ruflet server did not publish a port.");
+  ruflet_finish_autostart(@"inprocess://embedded", nil);
 }
 
 /// Call from the plugin class's +load. Records the timeline origin and, unless
@@ -261,41 +291,56 @@ static void ruflet_autostart_resolve_url(FlutterResult result) {
   });
 }
 
+/// Sends one complete binary protocol message from the renderer to Ruby.
+static void ruflet_bridge_send_from_renderer(id arguments,
+                                             FlutterResult result) {
+  if (![arguments isKindOfClass:[FlutterStandardTypedData class]]) {
+    result([FlutterError errorWithCode:@"ruflet_bridge_bad_message"
+                               message:@"bridgeSend requires binary data."
+                               details:nil]);
+    return;
+  }
+  NSData *data = ((FlutterStandardTypedData *)arguments).data;
+  const int status = ruflet_bridge_send_to_ruby(
+      (const uint8_t *)data.bytes, (size_t)data.length);
+  if (status != RUFLET_BRIDGE_MESSAGE) {
+    result([FlutterError errorWithCode:@"ruflet_bridge_closed"
+                               message:@"The Ruflet in-process bridge is closed."
+                               details:nil]);
+    return;
+  }
+  result(nil);
+}
+
+/// Waits off the platform thread for one complete message from Ruby.
+static void ruflet_bridge_receive_for_flutter(FlutterResult result) {
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    uint8_t *bytes = NULL;
+    size_t length = 0;
+    const int status = ruflet_bridge_receive_for_renderer(&bytes, &length);
+    NSData *message = status == RUFLET_BRIDGE_MESSAGE
+                          ? [NSData dataWithBytes:bytes length:length]
+                          : nil;
+    ruflet_bridge_free_message(bytes);
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+      if (status == RUFLET_BRIDGE_MESSAGE) {
+        result([FlutterStandardTypedData typedDataWithBytes:message]);
+      } else if (status == RUFLET_BRIDGE_CLOSED) {
+        result(nil);
+      } else {
+        result([FlutterError
+            errorWithCode:@"ruflet_bridge_receive_failed"
+                  message:@"Unable to receive from the Ruflet in-process bridge."
+                  details:nil]);
+      }
+    });
+  });
+}
+
 /// True when the platform owns the runtime, so a start() call cannot take
 /// effect. The VM boots once per process: ruflet_vm_start would see a running
 /// VM and return success without adopting any of the arguments.
 static BOOL ruflet_autostart_owns_runtime(void) {
   return ruflet_autostart_attempted;
-}
-
-/// Copies the autostarted server's port into `path` once it is known.
-///
-/// A client generated before serverUrl() existed calls start() and then polls
-/// the file it named in RUFLET_RUNTIME_PORT_FILE. Its arguments cannot take
-/// effect, but the thing it is waiting for already exists, so hand it over
-/// there. That keeps those clients working -- and getting the parallel
-/// startup -- without them knowing anything about it.
-static void ruflet_autostart_mirror_port(NSString *path) {
-  if (path.length == 0) {
-    return;
-  }
-  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-    [ruflet_autostart_signal lock];
-    while (ruflet_server_url == nil && ruflet_autostart_error == nil) {
-      [ruflet_autostart_signal wait];
-    }
-    NSString *url = ruflet_server_url;
-    [ruflet_autostart_signal unlock];
-    if (url == nil) {
-      return;
-    }
-    NSURLComponents *parts = [NSURLComponents componentsWithString:url];
-    if (parts.port == nil) {
-      return;
-    }
-    [[parts.port stringValue] writeToFile:path
-                               atomically:YES
-                                 encoding:NSUTF8StringEncoding
-                                    error:nil];
-  });
 }

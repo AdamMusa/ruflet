@@ -21,7 +21,7 @@ class RufletCupertinoSegmentedCompatibilityTest < Minitest::Test
 
     patch = control.to_patch
 
-    assert_equal "CupertinoSegmentedButton", patch["_c"]
+    assert_equal "SegmentedButton", patch["_c"]
     assert_equal children, control.children
     refute control.props.key?("controls")
     assert_equal %w[One Two], patch["controls"].map { |child| child["value"] }
@@ -51,7 +51,7 @@ class RufletCupertinoSegmentedCompatibilityTest < Minitest::Test
 
     patch = control.to_patch
 
-    assert_equal "CupertinoSlidingSegmentedButton", patch["_c"]
+    assert_equal "SegmentedButton", patch["_c"]
     assert_equal children, control.children
     refute control.props.key?("controls")
     assert_equal %w[One Two], patch["controls"].map { |child| child["value"] }
@@ -85,8 +85,8 @@ class RufletCupertinoSegmentedCompatibilityTest < Minitest::Test
   def test_compact_aliases_use_same_controls
     children = [Ruflet.text("One"), Ruflet.text("Two")]
 
-    assert_equal "CupertinoSegmentedButton", Ruflet.cupertinosegmentedbutton(children).to_patch["_c"]
-    assert_equal "CupertinoSlidingSegmentedButton", Ruflet.cupertinoslidingsegmentedbutton(children).to_patch["_c"]
+    assert_equal "SegmentedButton", Ruflet.cupertinosegmentedbutton(children).to_patch["_c"]
+    assert_equal "SegmentedButton", Ruflet.cupertinoslidingsegmentedbutton(children).to_patch["_c"]
   end
 
   def test_defaults_match_flet
