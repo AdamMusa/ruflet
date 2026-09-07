@@ -28,6 +28,52 @@ class PageStoragePathsServiceTest < Minitest::Test
     assert_nil invoke_payload["args"]
   end
 
+  def test_get_application_documents_directory_returns_native_path_to_callback
+    sent = []
+    page = build_page(sent)
+    callback_values = nil
+
+    call_id = page.get_application_documents_directory(
+      timeout: nil,
+      on_result: ->(directory, error) { callback_values = [directory, error] }
+    )
+
+    invoke_payload = sent.reverse.map(&:last).find do |payload|
+      payload["name"] == "get_application_documents_directory"
+    end
+    refute_nil invoke_payload
+    assert_equal call_id, invoke_payload["call_id"]
+
+    handled = page.handle_invoke_method_result(
+      "call_id" => call_id,
+      "result" => "/data/user/0/example/app_flutter",
+      "error" => nil
+    )
+
+    assert handled
+    assert_equal ["/data/user/0/example/app_flutter", nil], callback_values
+  end
+
+  def test_get_application_documents_directory_returns_native_error_to_callback
+    sent = []
+    page = build_page(sent)
+    callback_values = nil
+
+    call_id = page.get_application_documents_directory(
+      timeout: nil,
+      on_result: ->(directory, error) { callback_values = [directory, error] }
+    )
+
+    handled = page.handle_invoke_method_result(
+      "call_id" => call_id,
+      "result" => nil,
+      "error" => "documents directory unavailable"
+    )
+
+    assert handled
+    assert_equal [nil, "documents directory unavailable"], callback_values
+  end
+
   private
 
   def build_page(sent)
