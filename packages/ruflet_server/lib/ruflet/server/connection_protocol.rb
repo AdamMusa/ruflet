@@ -96,6 +96,11 @@ module Ruflet
         on_update_control(ws, payload)
       when Protocol::ACTIONS[:invoke_control_method]
         on_invoke_control_method(ws, payload)
+      when Protocol::ACTIONS[:python_output]
+        # Flet clients can emit this legacy diagnostic action. It carries no
+        # server-side state, but it is a valid wire message and must not be
+        # treated as a protocol error or tear down host-adapter connections.
+        nil
       else
         raise "Unknown action: #{action.inspect}"
       end
