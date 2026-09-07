@@ -1336,6 +1336,17 @@ module Ruflet
     end
 
     def apply_client_update(control_or_id, props)
+      if page_control_target?(control_or_id)
+        patch = normalize_props(props || {})
+        @client_details.merge!(patch)
+        # These are live client measurements. Keep the page getters current as
+        # well, without consuming route changes before their event is dispatched.
+        %w[width height platform_brightness media].each do |key|
+          @page_props[key] = patch[key] if patch.key?(key)
+        end
+        return self
+      end
+
       control = resolve_control(control_or_id)
       return self unless control
 
