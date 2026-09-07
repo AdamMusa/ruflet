@@ -22,7 +22,9 @@ module Ruflet
     end
 
     def send_binary(payload)
-      send_frame(0x2, payload.to_s.b)
+      bytes = payload.to_s.b
+      Ruflet::WireCodec.trace("ruby->client conn=#{session_key}", bytes)
+      send_frame(0x2, bytes)
     end
 
     def send_text(payload)
@@ -46,7 +48,7 @@ module Ruflet
       when 0xA
         read_message
       when 0x1, 0x2
-        return payload if frame[:fin]
+        return traced_incoming(payload) if frame[:fin]
 
         message = payload.dup
         loop do
@@ -61,7 +63,7 @@ module Ruflet
             next
           when 0x0
             message << continuation[:payload]
-            return message if continuation[:fin]
+            return traced_incoming(message) if continuation[:fin]
             return nil if message.bytesize > MAX_FRAME_PAYLOAD_BYTES
           else
             return nil
@@ -83,6 +85,11 @@ module Ruflet
     end
 
     private
+
+    def traced_incoming(payload)
+      Ruflet::WireCodec.trace("client->ruby conn=#{session_key}", payload)
+      payload
+    end
 
     def read_frame
       header = read_exact(2)

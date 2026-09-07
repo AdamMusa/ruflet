@@ -3,6 +3,30 @@
 module Ruflet
   class WireCodec
     class << self
+      # Transport tracing is opt-in. Even compact summaries decode every frame
+      # and write to stdout, so enabling them by default would distort the
+      # renderer performance they are intended to diagnose.
+      #
+      #   RUFLET_PROTOCOL_TRACE=summary  compact frame metadata
+      #   RUFLET_PROTOCOL_TRACE=1        exact bytes and decoded value
+      #   RUFLET_PROTOCOL_TRACE=0        disabled (default)
+      def trace(direction, bytes)
+        mode = ENV.fetch("RUFLET_PROTOCOL_TRACE", "0")
+        return if mode == "0"
+
+        raw = bytes.to_s.b
+        decoded = unpack(raw)
+        action = decoded.is_a?(Array) ? decoded[0] : nil
+        prefix = "[RUFLET_PROTOCOL] t=#{format("%.6f", Process.clock_gettime(Process::CLOCK_MONOTONIC))} #{direction} bytes=#{raw.bytesize} action=#{action.inspect}"
+        if mode == "1" || mode == "full"
+          puts "#{prefix} hex=#{raw.unpack("H*").first} data=#{decoded.inspect}"
+        else
+          puts "#{prefix} #{trace_summary(action, decoded.is_a?(Array) ? decoded[1] : nil)}".rstrip
+        end
+      rescue StandardError => error
+        puts "[RUFLET_PROTOCOL] t=#{format("%.6f", Process.clock_gettime(Process::CLOCK_MONOTONIC))} #{direction} bytes=#{raw&.bytesize || 0} decode_error=#{error.class}: #{error.message}"
+      end
+
       def pack(value)
         case value
         when Ruflet::Protocol::DateTimeValue
@@ -40,6 +64,27 @@ module Ruflet
       end
 
       private
+
+      def trace_summary(action, payload)
+        return "payload=#{payload.class}" unless payload.is_a?(Hash)
+
+        case action
+        when 1
+          "session_id=#{payload["session_id"].inspect} page_name=#{payload["page_name"].inspect}"
+        when 2
+          patch = payload["patch"]
+          "target=#{payload["id"].inspect} patch_items=#{patch.is_a?(Array) ? patch.length : 0}"
+        when 3
+          "target=#{payload["target"].inspect} name=#{payload["name"].inspect} data_type=#{payload["data"].class}"
+        when 4
+          properties = payload["props"]
+          "target=#{payload["id"].inspect} properties=#{properties.is_a?(Hash) ? properties.keys.sort.join(",") : ""}"
+        when 5
+          "target=#{payload["control_id"].inspect} name=#{payload["name"].inspect}"
+        else
+          "keys=#{payload.keys.map(&:to_s).sort.join(",")}"
+        end
+      end
 
       def pack_extension(type, value)
         bytes = value.to_s.b
