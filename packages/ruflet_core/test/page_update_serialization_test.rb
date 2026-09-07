@@ -216,4 +216,91 @@ class PageUpdateSerializationTest < Minitest::Test
     assert_equal true, fab["on_click"]
   end
 
+  def test_bare_update_patches_only_the_nested_control_whose_children_changed
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    list = Ruflet.column(children: [Ruflet.text("First")])
+    page.add(Ruflet.container(content: list))
+
+    sent.clear
+    list.children.replace([Ruflet.text("Second"), Ruflet.text("Third")])
+    page.update
+
+    assert_equal 1, sent.length
+    payload = sent.first[1]
+    assert_equal list.wire_id, payload["id"]
+    refute payload["patch"].any? { |op| op[2] == "views" }
+    controls_patch = payload["patch"].find { |op| op[2] == "controls" }
+    assert_equal %w[Second Third], controls_patch[3].map { |control| control["value"] }
+  end
+
+  def test_bare_update_patches_a_mutated_leaf_without_replacing_ancestors
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    label = Ruflet.text("Before")
+    page.add(Ruflet.container(content: Ruflet.column(children: [label])))
+
+    sent.clear
+    label.props["value"] = "After"
+    page.update
+
+    assert_equal 1, sent.length
+    payload = sent.first[1]
+    assert_equal label.wire_id, payload["id"]
+    assert_equal [[0], [0, 0, "value", "After"]], payload["patch"]
+  end
+
+  def test_client_value_is_not_echoed_by_a_later_bare_update
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    label = Ruflet.text("Waiting")
+    field = Ruflet.text_field(
+      on_change: ->(event) do
+        label.props["value"] = event.value
+        page.update
+      end
+    )
+    page.add(Ruflet.column(children: [field, label]))
+
+    sent.clear
+    page.dispatch_event(target: field.wire_id, name: "change", data: "Typed")
+
+    assert_equal 1, sent.length
+    payload = sent.first[1]
+    assert_equal label.wire_id, payload["id"]
+    assert_equal [[0], [0, 0, "value", "Typed"]], payload["patch"]
+  end
+
+  def test_targeted_update_accepts_the_controls_own_children_array
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    list = Ruflet.column(children: [Ruflet.text("First")])
+    page.add(list)
+    second = Ruflet.text("Second")
+    list.children << second
+
+    page.update(list, controls: list.children)
+
+    assert_equal 2, list.children.length
+    assert_same second, list.children.last
+    controls_patch = sent.last[1]["patch"].find { |op| op[2] == "controls" }
+    assert_equal %w[First Second], controls_patch[3].map { |control| control["value"] }
+  end
+
 end

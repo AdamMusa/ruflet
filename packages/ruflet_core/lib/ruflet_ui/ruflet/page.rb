@@ -178,6 +178,8 @@ module Ruflet
       @page_event_handlers = {}
       @view_props = {}
       @page_props = { "route" => (client_details["route"] || "/") }
+      @published_control_states = {}
+      @published_shell_state = nil
       @window = build_client_window(client_details["window"])
       @page_props["window"] = @window
       @overlay_container = Ruflet::Control.new(
@@ -313,6 +315,7 @@ module Ruflet
       @overlay_container_mounted = true if @overlay_container.wire_id
       @dialogs_container_mounted = true if @dialogs_container.wire_id
       @services_container_mounted = true if @services_container.wire_id
+      capture_published_wire_state!
       patch
     end
 
@@ -1281,7 +1284,7 @@ module Ruflet
 
     def update(control_or_id = nil, **props)
       if control_or_id.nil? && props.empty?
-        send_view_patch
+        send_changed_control_patches
         return self
       end
 
@@ -1310,8 +1313,10 @@ module Ruflet
 
       # Keep runtime control tree aligned with incremental patches.
       if patch.key?("controls")
+        replacement_controls = Array(patch["controls"]).dup
         control.children.clear
-        Array(patch["controls"]).each { |child| control.children << child if child.is_a?(Control) }
+        replacement_controls.each { |child| control.children << child if child.is_a?(Control) }
+        patch["controls"] = replacement_controls
       end
 
       visited = Set.new
@@ -1323,6 +1328,7 @@ module Ruflet
         "id" => wire_id,
         "patch" => [[0], *patch_ops]
       })
+      capture_published_control_tree!(control)
 
       self
     end
@@ -1344,6 +1350,7 @@ module Ruflet
         %w[width height platform_brightness media].each do |key|
           @page_props[key] = patch[key] if patch.key?(key)
         end
+        capture_published_shell_state!
         return self
       end
 
@@ -1352,6 +1359,7 @@ module Ruflet
 
       patch = normalize_props(props || {})
       patch.each { |k, v| control.props[k] = v }
+      capture_published_control_tree!(control)
 
       remove_dialog_tracking(control) if patch.key?("open") && patch["open"] == false
 
@@ -1364,6 +1372,7 @@ module Ruflet
           route_from_event = extract_route(data)
           return if route_from_event && route_from_event == @page_props["route"]
           @page_props["route"] = route_from_event if route_from_event
+          capture_published_shell_state!
         end
         dispatch_page_event(name: name, data: data)
         return
@@ -1373,7 +1382,13 @@ module Ruflet
       return unless control
 
       event = Event.new(name: name, target: target, raw_data: data, page: self, control: control)
-      apply_event_value_to_control(control, event) if %w[change select select_change].include?(name.to_s)
+      if %w[change select select_change].include?(name.to_s)
+        apply_event_value_to_control(control, event)
+        # The client already owns this value. Treat it as published before the
+        # handler runs so a later bare page.update only sends application-side
+        # mutations, not the value that originated on the client.
+        capture_published_control_tree!(control)
+      end
       control.emit(name, event)
 
       if name.to_s == "dismiss" && remove_dialog_tracking(control)
@@ -1544,6 +1559,202 @@ module Ruflet
       @sender.call(action, payload)
     end
 
+    # Bare page.update is the public commit point for direct mutations such as
+    # `list.children.replace(...)`. Keep a shallow, immutable wire snapshot of
+    # every mounted control so the commit can target only controls whose own
+    # properties or child references changed. Descendant contents are tracked
+    # independently: changing a Text value patches the Text, while replacing a
+    # Column's children patches the Column.
+    def send_changed_control_patches
+      refresh_control_indexes!
+      current = build_wire_state_snapshot
+
+      # Navigation, root controls, and page/view chrome are page-owned rather
+      # than regular mounted controls. Retain the complete view patch as the
+      # safe fallback whenever that shell changes.
+      if @published_shell_state.nil? || current[:shell] != @published_shell_state
+        send_view_patch
+        return
+      end
+
+      dirty_ids = current[:controls].each_with_object(Set.new) do |(wire_id, entry), dirty|
+        prior = @published_control_states[wire_id]
+        dirty << wire_id if prior && prior != entry[:state]
+      end
+
+      # A changed parent patch serializes its newly referenced children, so a
+      # second patch for a dirty descendant would be redundant and can race the
+      # parent's replacement on the client.
+      targets = dirty_ids.reject do |wire_id|
+        ancestor = current[:parents][wire_id]
+        found = false
+        while ancestor
+          if dirty_ids.include?(ancestor)
+            found = true
+            break
+          end
+          ancestor = current[:parents][ancestor]
+        end
+        found
+      end
+
+      targets.each do |wire_id|
+        entry = current[:controls][wire_id]
+        patch_ops = changed_control_patch_ops(
+          entry[:control],
+          @published_control_states.fetch(wire_id),
+          entry[:state]
+        )
+        next if patch_ops.empty?
+
+        send_message(Protocol::ACTIONS[:patch_control], {
+          "id" => wire_id,
+          "patch" => [[0], *patch_ops]
+        })
+      end
+
+      publish_wire_state_snapshot!(current)
+    end
+
+    def changed_control_patch_ops(control, prior, current)
+      operations = []
+      prior_props = prior.fetch("props")
+      current_props = current.fetch("props")
+
+      (prior_props.keys | current_props.keys).each do |key|
+        next if prior_props[key] == current_props[key]
+
+        value = control.props.key?(key) ? control.props[key] : nil
+        operations << [0, 0, key, serialize_patch_value(value)]
+      end
+
+      if prior.fetch("children") != current.fetch("children")
+        operations << [0, 0, "controls", serialize_patch_value(control.children)]
+      end
+      operations
+    end
+
+    def build_wire_state_snapshot
+      controls = {}
+      parents = {}
+      visited = Set.new
+
+      roots = @views.any? ? @views : @root_controls
+      roots.each { |control| collect_control_wire_state(control, nil, controls, parents, visited) }
+      unless @views.any?
+        @view_props.each_value do |value|
+          collect_embedded_wire_state(value, nil, controls, parents, visited)
+        end
+      end
+      @page_props.each_value do |value|
+        collect_embedded_wire_state(value, nil, controls, parents, visited)
+      end
+
+      {
+        controls: controls,
+        parents: parents,
+        shell: current_shell_wire_state
+      }
+    end
+
+    def collect_control_wire_state(control, parent_id, controls, parents, visited)
+      return unless control
+      return if visited.include?(control.object_id)
+
+      visited << control.object_id
+      wire_id = control.wire_id
+      return unless wire_id
+
+      parents[wire_id] = parent_id if parent_id
+      controls[wire_id] = {
+        control: control,
+        state: control_local_wire_state(control)
+      }
+      control.children.each do |child|
+        collect_control_wire_state(child, wire_id, controls, parents, visited)
+      end
+      control.props.each_value do |value|
+        collect_embedded_wire_state(value, wire_id, controls, parents, visited)
+      end
+    end
+
+    def collect_embedded_wire_state(value, parent_id, controls, parents, visited)
+      case value
+      when Control
+        collect_control_wire_state(value, parent_id, controls, parents, visited)
+      when Array
+        value.each do |entry|
+          collect_embedded_wire_state(entry, parent_id, controls, parents, visited)
+        end
+      when Hash
+        value.each_value do |entry|
+          collect_embedded_wire_state(entry, parent_id, controls, parents, visited)
+        end
+      end
+    end
+
+    def control_local_wire_state(control)
+      {
+        "type" => control.type,
+        "props" => comparison_wire_value(control.props),
+        "children" => control.children.map(&:wire_id)
+      }
+    end
+
+    def current_shell_wire_state
+      {
+        "mode" => (@views.any? ? "views" : "implicit_view"),
+        "roots" => (@views.any? ? @views : @root_controls).map(&:wire_id),
+        "view_props" => comparison_wire_value(@view_props),
+        "page_props" => comparison_wire_value(@page_props)
+      }
+    end
+
+    # Controls are references in their parent's local state. Their contents
+    # are deliberately excluded and tracked under their own wire IDs.
+    def comparison_wire_value(value)
+      case value
+      when Control
+        [Control, value.wire_id]
+      when Array
+        value.map { |entry| comparison_wire_value(entry) }
+      when Hash
+        value.each_with_object({}) do |(key, entry), result|
+          result[key] = comparison_wire_value(entry)
+        end
+      when String
+        value.dup
+      else
+        begin
+          value.dup
+        rescue TypeError
+          value
+        end
+      end
+    end
+
+    def capture_published_wire_state!
+      publish_wire_state_snapshot!(build_wire_state_snapshot)
+    end
+
+    def publish_wire_state_snapshot!(snapshot)
+      @published_control_states = snapshot[:controls].transform_values { |entry| entry[:state] }
+      @published_shell_state = snapshot[:shell]
+    end
+
+    def capture_published_control_tree!(control)
+      controls = {}
+      parents = {}
+      collect_control_wire_state(control, nil, controls, parents, Set.new)
+      controls.each do |wire_id, entry|
+        @published_control_states[wire_id] = entry[:state]
+      end
+    end
+
+    def capture_published_shell_state!
+      @published_shell_state = current_shell_wire_state if @published_shell_state
+    end
+
     def replace_root_controls(controls)
       visited = Set.new
       controls.each { |control| register_control_tree(control, visited) }
@@ -1570,6 +1781,7 @@ module Ruflet
       @overlay_container_mounted = true if @overlay_container.wire_id
       @dialogs_container_mounted = true if @dialogs_container.wire_id
       @services_container_mounted = true if @services_container.wire_id
+      capture_published_wire_state!
     end
 
     def register_control_tree(control, visited = Set.new)
@@ -1789,6 +2001,7 @@ module Ruflet
           "id" => @overlay_container.wire_id,
           "patch" => [[0], [0, 0, "controls", serialize_patch_value(@overlay_container.children)]]
         })
+        capture_published_control_tree!(@overlay_container)
       else
         send_view_patch
       end
@@ -1806,6 +2019,7 @@ module Ruflet
           "id" => @services_container.wire_id,
           "patch" => [[0], [0, 0, "_services", serialize_patch_value(@services_container.props["_services"])]]
         })
+        capture_published_control_tree!(@services_container)
       else
         send_view_patch
       end
@@ -1819,6 +2033,7 @@ module Ruflet
           "id" => @dialogs_container.wire_id,
           "patch" => [[0], [0, 0, "controls", serialize_patch_value(@dialogs_container.props["controls"])]]
         })
+        capture_published_control_tree!(@dialogs_container)
       else
         send_view_patch
       end
