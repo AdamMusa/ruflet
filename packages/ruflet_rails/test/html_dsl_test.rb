@@ -169,6 +169,19 @@ class RufletHtmlDslTest < Minitest::Test
     assert_equal({ left: 16, right: 16 }, Styles.parse("inset-x-4").slice(:left, :right))
   end
 
+  def test_grid_columns_and_spans_map_to_responsive_row_slots
+    result, = transform(<<~HTML)
+      <grid class="grid-cols-3">
+        <container><text>One</text></container>
+        <container class="col-span-2"><text>Two</text></container>
+      </grid>
+    HTML
+
+    grid = result.controls.first
+    assert_equal "responsiverow", grid.type
+    assert_equal [4, 8], grid.children.map { |child| child.props["col"] }
+  end
+
   def test_text_style_details_reach_the_control
     result, = transform('<text class="tracking-wide leading-loose underline uppercase">hi there</text>')
     text = find(result.controls, "text")

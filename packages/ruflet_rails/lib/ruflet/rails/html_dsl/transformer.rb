@@ -179,8 +179,7 @@ module Ruflet
           when "stack" then stack(build_children(element.children, form: form), **control_props(element, "stack"))
           when "list", "list-view" then list_view(build_children(element.children, form: form),
                                                   **control_props(element, "listview"))
-          when "grid", "grid-view" then grid_view(build_children(element.children, form: form),
-                                                  **control_props(element, "gridview"))
+          when "grid", "grid-view" then build_grid(element, form: form)
           when "card" then build_card(element, styles, form: form)
           when "center" then center_of(element, form: form)
           when "spacer" then container(expand: true)
@@ -283,6 +282,29 @@ module Ruflet
           props.merge!(styles.slice(:width, :height, :border_radius, :fit, :opacity,
                                     :aspect_ratio, :rotate, :scale))
           image(resolve_asset_url(element["src"]), **props)
+        end
+
+        # Tailwind's grid is a responsive row here: `grid grid-cols-3` gives each
+        # child a quarter-width slot in Ruflet's twelve-column system, and
+        # `col-span-2` on a child widens it. Only the parent knows how many
+        # columns there are, which is why this cannot live in the style parser.
+        GRID_COLUMNS = 12
+
+        def build_grid(element, form:)
+          cols = element["class"].to_s[/grid-cols-(\d+)/, 1].to_i
+          return grid_view(build_children(element.children, form: form),
+                           **control_props(element, "gridview")) if cols.zero?
+
+          slot = (GRID_COLUMNS.to_f / cols).round
+          children = element.elements.map do |child|
+            span = child["class"].to_s[/col-span-(\d+)/, 1].to_i
+            control = build_node(child, form: form)
+            next nil unless control.respond_to?(:props)
+
+            control.props["col"] = span.zero? ? slot : [slot * span, GRID_COLUMNS].min
+            control
+          end.compact
+          responsive_row(children, **control_props(element, "responsiverow"))
         end
 
         def build_list(element, styles, form:)
