@@ -10,13 +10,14 @@ class RufletHtmlDslHelpersTest < Minitest::Test
   end
 
   class RecordingHandlers
-    attr_reader :navigations, :actions, :submissions, :control_events
+    attr_reader :navigations, :actions, :submissions, :control_events, :services
 
     def initialize
       @navigations = []
       @actions = []
       @submissions = []
       @control_events = []
+      @services = []
     end
 
     def navigate(url, mode) = @navigations << [url, mode]
@@ -24,6 +25,7 @@ class RufletHtmlDslHelpersTest < Minitest::Test
     def submit_form(form) = @submissions << form
     def field_changed(name, value); end
     def control_event(spec, event) = @control_events << [spec, event]
+    def service(spec) = @services << spec
   end
 
   def setup
@@ -47,6 +49,17 @@ class RufletHtmlDslHelpersTest < Minitest::Test
     when Array
       node.each { |v| (f = find(v, type)) and return f }
       nil
+    end
+  end
+
+  def without_wire_ids(value)
+    case value
+    when Hash
+      value.reject { |key, _| key == "_i" }.transform_values { |nested| without_wire_ids(nested) }
+    when Array
+      value.map { |nested| without_wire_ids(nested) }
+    else
+      value
     end
   end
 
@@ -198,6 +211,84 @@ class RufletHtmlDslHelpersTest < Minitest::Test
     markup = @view.alert_dialog(modal: true) { @view.text("Saved") }
 
     assert_equal '<alert-dialog modal><text>Saved</text></alert-dialog>', markup
+
+    Ruflet::UI::ControlFactory::CLASS_MAP.keys.map(&:to_s).uniq.each do |type|
+      assert_respond_to @view, type
+    end
+  end
+
+  def test_alert_dialog_helper_preserves_title_content_and_action_slots
+    markup = @view.alert_dialog(
+      id: "demo-dialog",
+      modal: true,
+      title: @view.text("Dialog"),
+      content: @view.text("Hello world from a Ruflet dialog."),
+      actions: [
+        @view.text_button(
+          @view.text("Close"), service: "control", target: "demo-dialog",
+                               method: "update", open: "false"
+        )
+      ]
+    )
+
+    result, handlers = transform(markup)
+    dialog = result.controls.first
+    assert_equal "alertdialog", dialog.type
+    assert_equal "Dialog", dialog.props["title"].props["value"]
+    assert_equal "Hello world from a Ruflet dialog.", dialog.props["content"].props["value"]
+    assert_equal ["textbutton"], dialog.props["actions"].map(&:type)
+    assert_equal "text", dialog.props["actions"].first.props["content"].type
+    assert_equal "Close", dialog.props["actions"].first.props["content"].props["value"]
+    assert_empty dialog.children
+
+    core_dialog = Ruflet::UI::ControlFactory.build(
+      "alert_dialog",
+      modal: true,
+      title: Ruflet::UI::ControlFactory.build("text", value: "Dialog"),
+      content: Ruflet::UI::ControlFactory.build("text", value: "Hello world from a Ruflet dialog."),
+      actions: [
+        Ruflet::UI::ControlFactory.build(
+          "text_button",
+          content: Ruflet::UI::ControlFactory.build("text", value: "Close"),
+          on_click: ->(_event) {}
+        )
+      ]
+    )
+    assert_equal without_wire_ids(core_dialog.to_patch), without_wire_ids(dialog.to_patch)
+
+    dialog.props["actions"].first.emit("click", nil)
+    assert_equal "control", handlers.services.first["service"]
+    assert_equal "demo-dialog", handlers.services.first["target"]
+    assert_equal false, handlers.services.first["open"]
+  end
+
+  def test_control_valued_keywords_work_for_the_full_registry
+    markup = @view.list_tile(
+      title: @view.text("Inbox"),
+      subtitle: @view.text("12 unread"),
+      leading: @view.icon("mail")
+    )
+
+    result, = transform(markup)
+    tile = result.controls.first
+    assert_equal "listtile", tile.type
+    assert_equal "Inbox", tile.props["title"].props["value"]
+    assert_equal "12 unread", tile.props["subtitle"].props["value"]
+    assert_equal "icon", tile.props["leading"].type
+  end
+
+  def test_appbar_accepts_core_control_valued_keywords
+    markup = @view.appbar(
+      @view.text("Inbox"),
+      leading: @view.icon_button(icon: "menu"),
+      actions: [@view.icon_button(icon: "search")]
+    )
+    markup += @view.text("body")
+
+    result, = transform(markup)
+    assert_equal "Inbox", result.appbar.props["title"].props["value"]
+    assert_equal "iconbutton", result.appbar.props["leading"].type
+    assert_equal ["iconbutton"], result.appbar.props["actions"].map(&:type)
   end
 
   def test_rich_component_helpers_round_trip

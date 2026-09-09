@@ -22,6 +22,18 @@ module Ruflet
       # kebab-case (`on_click:` -> `on-click`); Hash/Array values serialize
       # as JSON; `true` renders a bare attribute and nil/false are dropped.
       module ViewHelpers
+        # Marks markup produced by a Ruflet control helper. The marker lets a
+        # helper used as another control's keyword value keep the same shape as
+        # ruflet_core:
+        #
+        #   list_tile(title: text("Inbox"), leading: icon("mail"))
+        #
+        # Plain strings remain ordinary scalar attributes; only actual control
+        # markup becomes a named control slot.
+        module ControlMarkup
+          def ruflet_control_markup? = true
+        end
+
         # --- layout -----------------------------------------------------------
 
         def column(content = nil, **attrs, &block) = ruflet_dsl_tag("column", content, attrs, &block)
@@ -115,6 +127,22 @@ module Ruflet
         def checkbox(**attrs) = ruflet_dsl_tag("checkbox", nil, attrs)
         def slider(**attrs) = ruflet_dsl_tag("slider", nil, attrs)
         def radio(**attrs) = ruflet_dsl_tag("radio", nil, attrs)
+
+        # AlertDialog owns three named control slots. Keeping them as named
+        # properties is important on iOS, where the action list is rendered as
+        # the native separated button row rather than ordinary dialog content.
+        # The block form remains available as a shorthand for content-only
+        # dialogs.
+        def alert_dialog(title: nil, content: nil, actions: nil, **attrs, &block)
+          return ruflet_dsl_tag("alert-dialog", nil, attrs, &block) if title.nil? && content.nil? && actions.nil?
+
+          content = [content, (capture(&block) if block)].compact.join
+          slots = +""
+          slots << ruflet_dsl_slot("title", title) unless title.nil?
+          slots << ruflet_dsl_slot("content", content) unless content.empty?
+          slots << ruflet_dsl_slot("actions", Array(actions).join, multiple: true) unless actions.nil?
+          ruflet_dsl_tag("alert-dialog", slots, attrs, raw: true)
+        end
 
         # list_tile title: "Inbox", subtitle: "12 unread", leading: "mail", href: "/inbox"
         def list_tile(**attrs, &block) = ruflet_dsl_tag("list-tile", nil, attrs, &block)
@@ -267,8 +295,9 @@ module Ruflet
 
         def ruflet_dsl_tag(tag_name, content, attrs, raw: false, &block)
           inner = raw ? content : ruflet_dsl_content(content, &block)
+          slot_attrs, scalar_attrs = attrs.partition { |_key, value| ruflet_dsl_control_value?(value) }
           markup = +"<#{tag_name}"
-          attrs.each do |key, value|
+          scalar_attrs.each do |key, value|
             next if value.nil? || value == false
 
             name = key.to_s.tr("_", "-")
@@ -281,6 +310,10 @@ module Ruflet
           end
           markup << ">"
           markup << inner.to_s
+          slot_attrs.each do |key, value|
+            values = value.is_a?(Array) ? value : [value]
+            markup << ruflet_dsl_slot(key, values.join, multiple: value.is_a?(Array)).to_s
+          end
           markup << "</#{tag_name}>"
           ruflet_dsl_safe(markup)
         end
@@ -288,6 +321,8 @@ module Ruflet
         def ruflet_dsl_content(content, &block)
           if block
             respond_to?(:capture) ? capture(&block) : block.call
+          elsif content.respond_to?(:ruflet_control_markup?) && content.ruflet_control_markup?
+            content
           elsif content.respond_to?(:html_safe?) && content.html_safe?
             content
           elsif content.nil?
@@ -298,7 +333,24 @@ module Ruflet
         end
 
         def ruflet_dsl_safe(string)
-          string.respond_to?(:html_safe) ? string.html_safe : string
+          safe = string.respond_to?(:html_safe) ? string.html_safe : string
+          safe.extend(ControlMarkup) unless safe.respond_to?(:ruflet_control_markup?)
+          safe
+        end
+
+        def ruflet_dsl_control_value?(value)
+          return value.ruflet_control_markup? if value.respond_to?(:ruflet_control_markup?)
+
+          value.is_a?(Array) && !value.empty? && value.all? do |item|
+            item.respond_to?(:ruflet_control_markup?) && item.ruflet_control_markup?
+          end
+        end
+
+        def ruflet_dsl_slot(name, value, multiple: false)
+          # Slot values are control markup returned by this helper module
+          # (`text`, `button`, and friends), just like control objects passed to
+          # the regular Ruby DSL. Those helpers already escape their leaf text.
+          ruflet_dsl_tag("ruflet-slot", value.to_s, { name: name, multiple: multiple }, raw: true)
         end
 
         # Every other control in the registry, reachable the same way.

@@ -184,6 +184,8 @@ module Ruflet
 
         def build_element(element, form:)
           styles = Styles.parse(element["class"])
+          return build_slotted_control(element, form: form) if control_slot_elements(element).any?
+
           case element.tag
           when *TEXT_TAGS then build_text(element, styles)
           when *CONTAINER_TAGS then build_container(element, styles, form: form)
@@ -390,7 +392,11 @@ module Ruflet
           props = control_props(element, "filledbutton", except: skip)
           props[:icon] = icon if icon
           props[:on_click] = on_click if on_click
-          send(builder, label.empty? ? nil : label, **props)
+          # Match ruflet_core's button shape exactly: button content is a Text
+          # control, not a raw String. This matters for adaptive rendering —
+          # Cupertino dialog actions inherit the app's Ruflet text styling only
+          # when their content is the same nested control the Ruby DSL builds.
+          send(builder, label.empty? ? nil : text(label), **props)
         end
 
         # `<button service="copy" text="…">` — tapping runs a native platform
@@ -699,10 +705,17 @@ module Ruflet
         # <fab icon="add" href="/items/new"> — mounts as the screen's
         # FloatingActionButton, like <appbar>.
         def extract_fab(element)
-          props = element_props(element, except: %w[icon label])
-          props[:icon] = element["icon"] if element["icon"]
+          props = control_props(element, "floatingactionbutton", except: %w[label])
+          props.merge!(control_slot_props(element, form: nil))
+          props[:icon] ||= element["icon"] if element["icon"]
+
+          ordinary_children = element.children.reject do |child|
+            child.element? && child.tag == "ruflet-slot"
+          end
+          content = build_children(ordinary_children, form: nil)
           label = element["label"] || collapse_whitespace(element.text)
-          props[:content] = text(label) unless label.to_s.empty?
+          props[:content] ||= content.one? ? content.first : column(content, tight: true) unless content.empty?
+          props[:content] ||= text(label) unless label.to_s.empty?
           handler =
             if element["on-click"]
               action_handler(element["on-click"])
@@ -721,27 +734,32 @@ module Ruflet
         # Mounts as the screen's NavigationBar; a destination tap resets to that
         # URL as a new root (tab semantics), like the WebView shell's bottomnav.
         def extract_bottom_nav(element)
+          slots = control_slot_props(element, form: nil)
           items = element.elements.select { |el| el.tag == "nav-item" }
-          return nil if items.length < 2
+          return nil if items.length < 2 && !slots[:destinations]
 
-          destinations = items.filter_map do |item|
+          declarative_destinations = items.filter_map do |item|
             icon = item["icon"].to_s
             next if icon.empty?
 
             navigation_bar_destination(icon: icon, label: item["label"].to_s)
           end
+          destinations = slots[:destinations] || declarative_destinations
           return nil if destinations.length < 2
 
           urls = items.map { |item| item["href"].to_s }
           handlers = @handlers
-          @result.bottom_nav = navigation_bar(
-            destinations: destinations,
-            selected_index: items.index { |item| item.key?("selected") } || 0,
-            on_change: lambda do |event|
+          props = control_props(element, "navigationbar").merge(slots)
+          props[:destinations] = destinations
+          props[:selected_index] ||= items.index { |item| item.key?("selected") } || 0
+          if urls.any? { |url| !url.empty? }
+            props[:on_change] = lambda do |event|
               url = urls[nav_event_index(event)].to_s
               handlers.navigate(url, "root") unless url.empty?
             end
-          )
+          end
+          attach_declared_events(element, props, registry_props("navigationbar"))
+          @result.bottom_nav = navigation_bar(**props)
           nil
         end
 
@@ -835,6 +853,48 @@ module Ruflet
         # `marker(content: icon(...))` does.
         CONTENT_CHILD_TYPES = %w[marker].to_set.freeze
 
+        # Any ruflet_core control can own control-valued keyword properties in
+        # ERB. View helpers encode those values as internal named slots; this
+        # restores them before the same ControlFactory constructor runs. It is
+        # deliberately generic so dialogs, list tiles, app bars and the
+        # long-tail registry all share one mapping instead of per-widget glue.
+        def build_slotted_control(element, form:)
+          type = element.tag.tr("-", "_")
+          allowed = registry_props(type)
+          props = generic_element_props(element, type).merge(schema_style_props(element, type))
+          attach_declared_events(element, props, allowed)
+          attach_primary_action(element, props, allowed)
+
+          props.merge!(control_slot_props(element, form: form))
+
+          ordinary_children = element.children.reject do |child|
+            child.element? && child.tag == "ruflet-slot"
+          end
+          children = build_children(ordinary_children, form: form)
+          return Ruflet::UI::ControlFactory.build(type, **props) if children.empty?
+
+          assign_child_content(type, props, allowed, children)
+        end
+
+        def control_slot_elements(element)
+          element.elements.select { |child| child.tag == "ruflet-slot" }
+        end
+
+        def control_slot_props(element, form:)
+          control_slot_elements(element).group_by { |slot| slot["name"] }.each_with_object({}) do |(name, slots), props|
+            values = slots.flat_map { |slot| build_children(slot.children, form: form) }
+            multiple = slots.any? { |slot| coerce_value(slot["multiple"]) == true }
+            props[name.to_sym] = multiple ? values : collapse_control_slot(values)
+          end
+        end
+
+        def collapse_control_slot(controls)
+          return nil if controls.empty?
+          return controls.first if controls.one?
+
+          column(controls, tight: true)
+        end
+
         # Props that hold a `[lat, lng]` pair. Studio's `marker`/`circle_marker`/
         # `map` builders normalise these to `{latitude:, longitude:}`; the Map
         # control constructor does it for `initial_center` but the layer controls
@@ -845,10 +905,11 @@ module Ruflet
         def build_generic(element, form:)
           type = element.tag.tr("-", "_")
           allowed = registry_props(type)
-          props = element_props(element).merge(schema_style_props(element, type))
+          props = generic_element_props(element, type).merge(schema_style_props(element, type))
           apply_chart_defaults(type, props)
           normalize_map_coordinates(props)
           attach_declared_events(element, props, allowed)
+          attach_primary_action(element, props, allowed)
           child_elements = element.elements
 
           if child_elements.empty?
@@ -901,6 +962,43 @@ module Ruflet
             handlers = @handlers
             props[prop_name.to_sym] = ->(event) { handlers.control_event(spec, event) }
           end
+        end
+
+        # ERB cannot carry a Proc through markup, so its action/navigation and
+        # native service declarations become the same callback property that
+        # ruflet_core receives directly. This lets registry helpers such as
+        # `text_button` work naturally instead of requiring a generic button
+        # stand-in.
+        def attach_primary_action(element, props, allowed)
+          handler =
+            if element["service"]
+              register_on_load(element)
+              service_handler(element)
+            elsif element["on-click"]
+              action_handler(element["on-click"])
+            elsif element["href"]
+              navigation_handler(element["href"], element["nav"] || "push")
+            end
+          return unless handler
+
+          event = if allowed.nil? || allowed.include?("on_click")
+                    :on_click
+                  elsif allowed.include?("on_tap")
+                    :on_tap
+                  end
+          props[event] = handler if event
+        end
+
+        # Native service attributes are method arguments, not control schema
+        # properties. Keep only attributes accepted by the control itself while
+        # the complete declaration remains available to `service_handler`.
+        def generic_element_props(element, type)
+          return element_props(element) unless element["service"]
+
+          allowed = registry_props(type)
+          accepted = Array(allowed).map { |name| name.tr("_", "-") } + %w[id]
+          ignored = element.attrs.keys - accepted
+          element_props(element, except: ignored)
         end
 
         def apply_chart_defaults(type, props)
@@ -1012,7 +1110,8 @@ module Ruflet
         # `<action icon="search" href="/search"/>` children becomes the native
         # AppBar of the screen.
         def extract_appbar(element)
-          actions = element.elements.select { |child| child.tag == "action" }.filter_map do |action|
+          slots = control_slot_props(element, form: nil)
+          declarative_actions = element.elements.select { |child| child.tag == "action" }.filter_map do |action|
             next if action["icon"].to_s.empty?
 
             icon_button(action["icon"], on_click: appbar_action_handler(action))
@@ -1026,14 +1125,17 @@ module Ruflet
                                                                              leading_mode))
           end
 
-          args = {}
-          args[:title] = text(element["title"].to_s)
-          if leading
+          args = control_props(
+            element,
+            "appbar",
+            except: %w[title leading-icon leading-nav leading-href]
+          ).merge(slots)
+          args[:title] ||= text(element["title"].to_s)
+          if leading && !args[:leading]
             args[:leading] = leading
             args[:automatically_imply_leading] = false
           end
-          args[:actions] = actions unless actions.empty?
-          args[:bgcolor] = Styles.color_for(element["bgcolor"]) || element["bgcolor"] if element["bgcolor"]
+          args[:actions] ||= declarative_actions unless declarative_actions.empty?
           @result.appbar = appbar(**args)
           nil
         end
@@ -1099,6 +1201,7 @@ module Ruflet
           spec = element["on-click"] || element["on-tap"]
           return control unless spec
           return control if SELF_CLICKING_TAGS.include?(element.tag)
+          return control if control.has_handler?("click") || control.has_handler?("tap")
 
           gesture_detector(content: control, on_tap: action_handler(spec))
         end

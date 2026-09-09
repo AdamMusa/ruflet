@@ -309,6 +309,21 @@ Available helpers: layout (`column`, `row`, `stack`, `card`, `center`,
 `submit`), and `widget("progress-bar", value: 0.4)` for anything else in the
 control registry.
 
+Every registry helper accepts the same scalar and control-valued keyword
+properties as the Ruby DSL. Nested controls are written as ordinary helper
+calls, including arrays such as dialog actions:
+
+```erb
+<%= alert_dialog(
+      id: "welcome-dialog",
+      modal: true,
+      title: text("Welcome"),
+      content: text("Ruflet is ready."),
+      actions: [text_button(text("Close"), service: "control",
+                                          target: "welcome-dialog", method: "update", open: "false")]
+    ) %>
+```
+
 Pick the mode per app: `erb_to_native` when HTML should *become* native controls,
 `native_shell` when you want the real web page in a WebView with native chrome.
 
