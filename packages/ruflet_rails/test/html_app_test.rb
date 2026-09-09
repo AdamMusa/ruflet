@@ -200,33 +200,6 @@ class RufletHtmlAppTest < Minitest::Test
     assert_includes calls, [:dialog]
   end
 
-  def test_declared_dialog_is_presented_only_as_a_page_overlay
-    start(
-      "/" => <<~HTML
-        <text>The dialog is closed.</text>
-        <button service="dialog" title="Dialog"
-                content="Hello world from a Ruflet dialog.">Open dialog</button>
-      HTML
-    )
-
-    assert_nil find(@page.views.first, "alertdialog"),
-               "a closed dialog must not render as inline page content"
-
-    find(@page.views.first, "button").emit("click", nil)
-
-    dialogs = @page.instance_variable_get(:@dialogs)
-    assert_equal 1, dialogs.length
-    dialog = dialogs.first
-    assert_equal "alertdialog", dialog.type
-    assert_equal true, dialog.props["adaptive"]
-    assert_equal true, dialog.props["open"]
-    assert_equal "Dialog", dialog.props["title"].props["value"]
-    assert_equal "Hello world from a Ruflet dialog.", dialog.props["content"].props["value"]
-
-    find(dialog, "textbutton").emit("click", nil)
-    assert_equal false, dialog.props["open"]
-  end
-
   # Query services report the returned value in a native result dialog.
   def test_service_button_reports_a_query_result_in_a_dialog
     dialogs = []

@@ -120,16 +120,6 @@ module Ruflet
           @service_result_target = spec["result-target"]
           name = spec["service"].to_s.downcase.tr("_", "-")
           case name
-          # --- overlays ---------------------------------------------------------
-          # A declared dialog follows the same lifecycle as a dialog created in
-          # a Ruby Ruflet app: it is added to the page overlay only when the
-          # button is pressed. It must never be rendered as a child of the
-          # screen, where clients would build both an inline card and a modal.
-          when "dialog", "show-dialog"
-            show_service_result(
-              spec["content"] || spec["message"] || spec["text"],
-              title: spec["title"] || "Dialog"
-            )
           # --- clipboard --------------------------------------------------------
           when "copy", "clipboard", "clipboard-set"
             @page.set_clipboard(spec["text"].to_s)

@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module Ruflet
-  VERSION = "0.0.24" unless const_defined?(:VERSION)
+  VERSION = "0.0.23" unless const_defined?(:VERSION)
 end

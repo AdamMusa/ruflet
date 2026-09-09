@@ -1,28 +1,28 @@
 PATH
   remote: ../ruflet_core
   specs:
-    ruflet_core (0.0.23)
+    ruflet_core (0.0.22)
 
 PATH
   remote: ../ruflet_server
   specs:
-    ruflet_server (0.0.23)
-      ruflet_core (= 0.0.23)
+    ruflet_server (0.0.22)
+      ruflet_core (= 0.0.22)
 
 PATH
   remote: ../ruflet
   specs:
-    ruflet (0.0.23)
+    ruflet (0.0.22)
       rqrcode (~> 2.2)
 
 PATH
   remote: .
   specs:
-    ruflet_rails (0.0.24)
+    ruflet_rails (0.0.22)
       rails (>= 7.0)
-      ruflet (>= 0.0.23)
-      ruflet_core (>= 0.0.23)
-      ruflet_server (>= 0.0.23)
+      ruflet (>= 0.0.22)
+      ruflet_core (>= 0.0.22)
+      ruflet_server (>= 0.0.22)
 
 GEM
   remote: https://rubygems.org/
@@ -319,10 +319,10 @@ CHECKSUMS
   reline (0.6.3) sha256=1198b04973565b36ec0f11542ab3f5cfeeec34823f4e54cebde90968092b1835
   rqrcode (2.2.0) sha256=23eea88bb44c7ee6d6cab9354d08c287f7ebcdc6112e1fe7bcc2d010d1ffefc1
   rqrcode_core (1.2.0) sha256=cf4989dc82d24e2877984738c4ee569308625fed2a810960f1b02d68d0308d1a
-  ruflet (0.0.23)
-  ruflet_core (0.0.23)
-  ruflet_rails (0.0.24)
-  ruflet_server (0.0.23)
+  ruflet (0.0.22)
+  ruflet_core (0.0.22)
+  ruflet_rails (0.0.22)
+  ruflet_server (0.0.22)
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
   thor (1.5.0) sha256=e3a9e55fe857e44859ce104a84675ab6e8cd59c650a49106a05f55f136425e73
   timeout (0.6.1) sha256=78f57368a7e7bbadec56971f78a3f5ecbcfb59b7fcbb0a3ed6ddc08a5094accb
