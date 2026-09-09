@@ -252,7 +252,13 @@ new service methods without waiting for another `ruflet_rails` release:
            service: "permission-handler",
            method: "request",
            args: { permission: "camera" } %>
+<%= button "Open dialog", service: "dialog", title: "Welcome",
+                          content: "This is a native adaptive dialog." %>
 ```
+
+A `dialog` (or `show-dialog`) button presents its content in the page overlay.
+It is not inserted into the screen body, so it uses the normal adaptive dialog
+layout and lifecycle on every platform.
 
 An inline extension can also be controlled by its native ID:
 
