@@ -19,6 +19,7 @@ require_relative "gridview_control"
 require_relative "hero_control"
 require_relative "icon_control"
 require_relative "image_control"
+require_relative "indexedstack_control"
 require_relative "interactiveviewer_control"
 require_relative "keyboardlistener_control"
 require_relative "line_control"
@@ -88,6 +89,8 @@ module Ruflet
             "hero" => RufletComponents::HeroControl,
             "icon" => RufletComponents::IconControl,
             "image" => RufletComponents::ImageControl,
+            "indexed_stack" => RufletComponents::IndexedStackControl,
+            "indexedstack" => RufletComponents::IndexedStackControl,
             "interactive_viewer" => RufletComponents::InteractiveViewerControl,
             "interactiveviewer" => RufletComponents::InteractiveViewerControl,
             "keyboard_listener" => RufletComponents::KeyboardListenerControl,
