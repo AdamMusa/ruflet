@@ -58,6 +58,7 @@ module Ruflet
       end
 
       def run
+        @ready_io = claim_ready_fd
         unless Ruflet.respond_to?(:with_run_interceptor)
           log "installed ruflet_core does not support run interceptors; running without hot reload"
           return load_script!
@@ -70,6 +71,7 @@ module Ruflet
           @snapshot = file_snapshot
           start_watcher
           install_manual_reload_trap
+          signal_ready
           @server.start
         end
       end
@@ -220,6 +222,35 @@ module Ruflet
 
         Signal.trap("USR1") { @force_reload = true }
       rescue ArgumentError, NotImplementedError
+        nil
+      end
+
+      # Takes the fd `ruflet run` passed in RUFLET_READY_FD before any app code
+      # runs. It arrives without close-on-exec, so marking it and clearing the
+      # variable keeps processes the app spawns while booting from inheriting
+      # the pipe or seeing the variable; one of them could otherwise report
+      # "ready" early and let a reload kill the booting app.
+      def claim_ready_fd
+        fd = ENV.delete("RUFLET_READY_FD").to_s
+        return nil if fd.empty?
+
+        io = IO.for_fd(Integer(fd), autoclose: true)
+        io.close_on_exec = true
+        io
+      rescue ArgumentError, SystemCallError, IOError
+        nil
+      end
+
+      # `ruflet run` holds "r" (USR1) until this byte arrives: before the trap
+      # above exists, USR1 would kill the booting app.
+      def signal_ready
+        io = @ready_io
+        @ready_io = nil
+        return unless io
+
+        io.write(".")
+        io.close
+      rescue SystemCallError, IOError
         nil
       end
 
