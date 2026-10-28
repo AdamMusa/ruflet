@@ -67,13 +67,18 @@ module Ruflet
       self
     end
 
+    # The control type the client renders, e.g. "AlertDialog" for both
+    # alert_dialog and cupertino_alert_dialog.
+    def wire_type
+      wire = schema_wire_type_for_class
+      return wire unless wire.nil?
+
+      compact_type_key = type.delete("_")
+      wire = type_map[type] || type_map[compact_type_key]
+      wire || type.split("_").map { |part| part[0].to_s.upcase + part[1..].to_s }.join
+    end
+
     def to_patch
-      wire_type = schema_wire_type_for_class
-      if wire_type.nil?
-        compact_type_key = type.delete("_")
-        wire_type = type_map[type] || type_map[compact_type_key]
-        wire_type ||= type.split("_").map { |part| part[0].to_s.upcase + part[1..].to_s }.join
-      end
       patch = {
         "_c" => wire_type,
         "_i" => wire_id

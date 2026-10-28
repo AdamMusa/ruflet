@@ -33,19 +33,14 @@ module Ruflet
         CONTAINER_TAGS = %w[div section article main header footer aside container].freeze
         SKIPPED_TAGS = %w[head meta link title base br template].freeze
 
-        # Non-visual platform services (sensors, storage, permissions, …). Declared in
+        # Non-visual platform services (sensors, storage, permissions, audio, …)
+        # are the controls the engine registers with createService
+        # (Ruflet::UI::ServiceTypes, generated from the engine). Declared in
         # markup, they mount on the page's service registry rather than in the
-        # visible control tree. Audio is also a service in the Explorer client
-        # (it has no createWidget implementation); video/charts remain ordinary
-        # inline controls.
-        SERVICE_TAGS = %w[
-          audio audio-recorder barometer battery clipboard connectivity
-          file-picker flashlight geolocator gyroscope accelerometer magnetometer
-          haptic-feedback permission-handler screen-brightness secure-storage
-          shake-detector share shared-preferences storage-paths url-launcher
-          user-accelerometer wakelock semantics-service
-        ].freeze
-        SERVICE_TYPES = SERVICE_TAGS.map { |tag| tag.tr("-", "_") }.to_set.freeze
+        # visible control tree. Camera, video and charts render inline.
+        def self.service_tag?(tag)
+          Ruflet::UI::ServiceTypes.service_name?(tag.tr("-", "_"))
+        end
 
         # Attributes consumed by the DSL itself, never forwarded as props.
         RESERVED_ATTRIBUTES = %w[class href nav].freeze
@@ -159,7 +154,7 @@ module Ruflet
           return extract_appbar(element) if element.tag == "appbar"
           return extract_fab(element) if element.tag == "fab"
           return extract_bottom_nav(element) if element.tag == "bottom-nav"
-          return extract_service(element) if SERVICE_TYPES.include?(element.tag.tr("-", "_"))
+          return extract_service(element) if Transformer.service_tag?(element.tag)
 
           control = build_element(element, form: form)
           return nil unless control
