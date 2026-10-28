@@ -8,7 +8,7 @@ module Ruflet
           TYPE = "spinkit".freeze
           WIRE = "RufletSpinKit".freeze
 
-          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bottom, :col, :color, :data, :disabled, :duration, :expand, :expand_loose, :height, :key, :left, :margin, :offset, :opacity, :padding, :right, :rotate, :rtl, :scale, :size, :size_change_interval, :tooltip, :top, :variant, :visible, :width].freeze
+          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :border_width, :bottom, :col, :color, :data, :disabled, :duration, :expand, :expand_loose, :height, :item_count, :key, :left, :line_width, :margin, :offset, :opacity, :padding, :right, :rotate, :rtl, :scale, :size, :size_change_interval, :tooltip, :top, :variant, :visible, :wave_type, :width].freeze
 
           def initialize(id: nil, **props)
             compact = {}
