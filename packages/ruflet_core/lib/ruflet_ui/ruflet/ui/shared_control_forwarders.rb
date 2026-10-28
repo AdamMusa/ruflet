@@ -76,6 +76,8 @@ module Ruflet
       def textspan(text = nil, **props) = control_delegate.textspan(text, **props)
       def keyboard_listener(content = nil, **props) = control_delegate.keyboard_listener(content, **props)
       def keyboardlistener(content = nil, **props) = control_delegate.keyboardlistener(content, **props)
+      def form_row(content = nil, **props) = control_delegate.form_row(content, **props)
+      def formrow(content = nil, **props) = control_delegate.formrow(content, **props)
       def gesture_detector(**props, &block) = control_delegate.gesture_detector(**props, &block)
       def gesturedetector(**props, &block) = control_delegate.gesturedetector(**props, &block)
       def canvas(shapes = nil, **props) = control_delegate.canvas(shapes, **props)

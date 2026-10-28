@@ -182,6 +182,12 @@ module Ruflet
         build_widget(:keyboardlistener, **mapped)
       end
       def keyboardlistener(content = nil, **props) = keyboard_listener(content, **props)
+      def form_row(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:formrow, **mapped)
+      end
+      def formrow(content = nil, **props) = form_row(content, **props)
       def gesture_detector(**props, &block) = build_widget(:gesturedetector, **props, &block)
       def gesturedetector(**props, &block) = gesture_detector(**props, &block)
       def canvas(shapes = nil, **props)

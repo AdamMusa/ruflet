@@ -117,6 +117,8 @@ module Ruflet
     def textspan(text = nil, **props) = _pending_app.textspan(text, **props)
     def keyboard_listener(content = nil, **props) = _pending_app.keyboard_listener(content, **props)
     def keyboardlistener(content = nil, **props) = _pending_app.keyboardlistener(content, **props)
+    def form_row(content = nil, **props) = _pending_app.form_row(content, **props)
+    def formrow(content = nil, **props) = _pending_app.formrow(content, **props)
     def gesture_detector(**props, &block) = _pending_app.gesture_detector(**props, &block)
     def gesturedetector(**props, &block) = _pending_app.gesturedetector(**props, &block)
     def canvas(shapes = nil, **props) = _pending_app.canvas(shapes, **props)
