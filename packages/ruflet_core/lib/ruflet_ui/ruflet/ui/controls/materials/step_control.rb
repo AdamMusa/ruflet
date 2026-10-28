@@ -5,7 +5,9 @@ module Ruflet
     module Controls
       module RufletComponents
         class StepControl < Ruflet::Control
-          TYPE = "step".freeze
+          # TYPE is the registry key used for lookups; it is deliberately not
+          # "step" (D-6). The wire type stays "Step".
+          TYPE = "stepper_step".freeze
           WIRE = "Step".freeze
 
           KEYWORDS = [:content, :data, :is_active, :key, :label, :state, :subtitle, :title, :visible].freeze

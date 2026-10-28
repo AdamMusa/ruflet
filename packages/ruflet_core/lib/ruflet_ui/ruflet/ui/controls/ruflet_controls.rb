@@ -488,7 +488,6 @@ module Ruflet
           "snackbaraction" => RufletComponents::SnackBarActionControl,
           "snackbar" => RufletComponents::SnackBarControl,
           "stack" => RufletComponents::StackControl,
-          "step" => RufletComponents::StepControl,
           "stepper" => RufletComponents::StepperControl,
           "stepper_step" => RufletComponents::StepControl,
           "stepperstep" => RufletComponents::StepControl,

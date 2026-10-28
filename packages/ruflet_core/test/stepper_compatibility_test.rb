@@ -82,23 +82,50 @@ class RufletStepperCompatibilityTest < Minitest::Test
     refute patch.key?("steps")
   end
 
-  def test_compact_aliases_and_generic_step_type
+  def test_compact_aliases_and_generic_stepper_step_type
     assert_equal "Stepper", Ruflet.stepper([]).to_patch["_c"]
     assert_equal "Stepper", Ruflet.control(:stepper).to_patch["_c"]
     assert_equal "Step", Ruflet.stepperstep(title: "Alias").to_patch["_c"]
-    assert_equal "Step", Ruflet.control(:step, title: "Generic").to_patch["_c"]
     assert_equal "Step", Ruflet.control(:stepper_step, title: "Generic").to_patch["_c"]
+    assert_equal "Step", Ruflet.control(:stepperstep, title: "Generic").to_patch["_c"]
+    assert_equal "stepper_step", Ruflet.stepper_step(title: "Type").type
     assert_respond_to Ruflet::DSL, :stepper
     assert_respond_to Ruflet::DSL, :stepper_step
     assert_respond_to Ruflet::DSL, :stepperstep
   end
 
-  def test_no_public_step_helper_is_defined
-    # D-6: forwarders are included into Kernel; a public `step` would shadow
-    # user code. Only stepper_step is a helper.
+  def test_keyword_steps_serialize_with_the_step_wire_type
+    wizard = Ruflet.stepper(steps: [Ruflet.stepper_step(title: "Account", content: Ruflet.text("Email")),
+                                    Ruflet.stepper_step(title: "Done", state: "complete")])
+
+    steps = wizard.to_patch["steps"]
+    assert_equal %w[Step Step], steps.map { |step| step["_c"] }
+    assert_equal %w[Account Done], steps.map { |step| step["title"] }
+    assert_equal "Email", steps.first["content"]["value"]
+    assert_equal "complete", steps.last["state"]
+    refute wizard.to_patch.key?("controls")
+  end
+
+  def test_step_is_not_a_public_name_anywhere
+    # D-6: the step child is reachable only as stepper_step/stepperstep. The
+    # forwarders are included into Kernel and ruflet_rails turns every
+    # registry key into a view helper, so `step` must be neither.
     refute Ruflet::UI::SharedControlForwarders.instance_methods.include?(:step)
+    refute Ruflet::UI::SharedControlForwarders.private_instance_methods.include?(:step)
     refute Ruflet::UI::MaterialControlMethods.instance_methods.include?(:step)
     refute Ruflet::DSL.respond_to?(:step)
+    refute Ruflet::UI::ControlFactory::CLASS_MAP.key?("step")
+    refute Ruflet::UI::Controls::RufletControls::CLASS_MAP.key?("step")
+    refute Ruflet::UI::ControlFactory.known_control?(:step)
+    assert Ruflet::UI::ControlFactory.known_control?(:stepper_step)
+  end
+
+  def test_loading_ruflet_does_not_give_objects_a_step_method
+    refute Object.new.respond_to?(:step)
+    refute Object.new.respond_to?(:step, true)
+    # Kernel#method_missing must not turn an ordinary object's `step` call
+    # into a control.
+    assert_raises(NoMethodError) { Object.new.instance_eval { step(title: "x") } }
   end
 
   def test_events_are_registered

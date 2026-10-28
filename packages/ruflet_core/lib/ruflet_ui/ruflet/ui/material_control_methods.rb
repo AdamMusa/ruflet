@@ -499,9 +499,10 @@ module Ruflet
         mapped[:steps] = steps unless steps.nil?
         build_widget(:stepper, **mapped, &block)
       end
-      # Deliberately no bare `step` helper: these methods are forwarded into
-      # Kernel, where a public `step` would shadow user code (SPEC D-6).
-      def stepper_step(**props) = build_widget(:step, **props)
+      # Deliberately no bare `step` helper or registry key: these methods are
+      # forwarded into Kernel and every registry key becomes a Rails view
+      # helper, so a `step` name would shadow user code (SPEC D-6).
+      def stepper_step(**props) = build_widget(:stepper_step, **props)
       def stepperstep(**props) = stepper_step(**props)
       def selection_area(content = nil, **props)
         mapped = props.dup
