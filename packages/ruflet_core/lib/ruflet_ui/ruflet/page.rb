@@ -567,6 +567,9 @@ module Ruflet
       name = event_name.to_s
       name = name[3..-1] if name.start_with?("on_")
       @page_event_handlers[name] = block
+      # View events are only sent by the client when the default page View
+      # has the flag; page events (route_change, ...) need none.
+      @view_props["on_#{name}"] = true if block && view_event?(name)
       self
     end
 
@@ -790,29 +793,33 @@ module Ruflet
       target
     end
 
+    # Drawers and scrolling belong to a View on the client (the Page control
+    # does not answer these methods). Like Flet, drawers target the top view
+    # and scroll_to the root view; without explicit views that is the
+    # implicit page view.
     def show_drawer(timeout: 10, on_result: nil)
-      raise ArgumentError, "No drawer defined" unless drawer
+      raise ArgumentError, "No drawer defined" unless top_view_prop("drawer")
 
-      invoke(:page, "show_drawer", timeout: timeout, on_result: on_result)
+      invoke(:top_view, "show_drawer", timeout: timeout, on_result: on_result)
     end
 
     def close_drawer(timeout: 10, on_result: nil)
-      invoke(:page, "close_drawer", timeout: timeout, on_result: on_result)
+      invoke(:top_view, "close_drawer", timeout: timeout, on_result: on_result)
     end
 
     def show_end_drawer(timeout: 10, on_result: nil)
-      raise ArgumentError, "No end_drawer defined" unless end_drawer
+      raise ArgumentError, "No end_drawer defined" unless top_view_prop("end_drawer")
 
-      invoke(:page, "show_end_drawer", timeout: timeout, on_result: on_result)
+      invoke(:top_view, "show_end_drawer", timeout: timeout, on_result: on_result)
     end
 
     def close_end_drawer(timeout: 10, on_result: nil)
-      invoke(:page, "close_end_drawer", timeout: timeout, on_result: on_result)
+      invoke(:top_view, "close_end_drawer", timeout: timeout, on_result: on_result)
     end
 
     def scroll_to(offset: nil, delta: nil, scroll_key: nil, duration: nil, curve: nil, timeout: 10, on_result: nil)
       invoke(
-        :page,
+        :root_view,
         "scroll_to",
         args: {
           "offset" => offset,
@@ -830,6 +837,8 @@ module Ruflet
       control_id =
         if page_control_target?(control_or_id)
           1
+        elsif control_or_id == :root_view || control_or_id == :top_view
+          view_wire_id(control_or_id)
         else
           control = resolve_control(control_or_id)
           return nil unless control
@@ -1390,6 +1399,17 @@ module Ruflet
         return
       end
 
+      if @views.empty? && target.to_i == @view_id
+        # The implicit page View is not a registered control: its events go
+        # to the page handlers (page.on_refresh = ...), acknowledged like A1.
+        begin
+          dispatch_page_event(name: name, data: data)
+        ensure
+          invoke(:root_view, "end_refresh") if name.to_s == "refresh"
+        end
+        return
+      end
+
       control = @wire_index[target.to_i] || @control_index[target.to_s]
       return unless control
 
@@ -1401,7 +1421,13 @@ module Ruflet
         # mutations, not the value that originated on the client.
         capture_published_control_tree!(control)
       end
-      control.emit(name, event)
+      begin
+        control.emit(name, event)
+      ensure
+        # Ruby handlers are synchronous: once on_refresh returns (or raises),
+        # its patches are already sent, so stop the client's refresh spinner.
+        invoke(control, "end_refresh") if name.to_s == "refresh"
+      end
 
       if name.to_s == "dismiss" && remove_dialog_tracking(control)
         push_dialogs_update!
@@ -1972,6 +1998,20 @@ module Ruflet
       control.props[prop_name] = value
     end
 
+    # Wire id of the root (first) or top (last) View, or of the implicit page
+    # View when the app has no explicit views.
+    def view_wire_id(which)
+      view = which == :root_view ? @views.first : @views.last
+      return @view_id unless view
+
+      refresh_control_indexes! if view.wire_id.nil?
+      view.wire_id
+    end
+
+    def top_view_prop(name)
+      @views.empty? ? public_send(name) : @views.last.props[name]
+    end
+
     def page_control_target?(control_or_id)
       control_or_id == 1 || control_or_id.to_s == "1" || control_or_id.to_s == "page"
     end
@@ -2079,7 +2119,11 @@ module Ruflet
     end
 
     def assign_split_prop(key, value)
-      if key == "vertical_alignment" || key == "horizontal_alignment" || key == "scroll"
+      # Every page/view prop entry point (page.on_x =, set_view_props, the DSL
+      # page(...), update(:page, ...)) lands here, so no handler reaches a patch.
+      if key.start_with?("on_") && (value.nil? || value.respond_to?(:call))
+        assign_page_handler(key, value)
+      elsif key == "vertical_alignment" || key == "horizontal_alignment" || key == "scroll"
         @page_props[key] = value
         @view_props[key] = value
       elsif DIALOG_PROP_KEYS.include?(key)
@@ -2090,6 +2134,26 @@ module Ruflet
       else
         @view_props[key] = value
       end
+    end
+
+    # page.on_scroll = ->(e) {} keeps the handler on the Ruby side and sends
+    # only `on_scroll: true`: on the implicit View for View events, otherwise
+    # on the Page. nil removes both.
+    def assign_page_handler(prop_name, handler)
+      event_name = prop_name.delete_prefix("on_")
+      flags = view_event?(event_name) ? @view_props : @page_props
+      if handler.nil?
+        @page_event_handlers.delete(event_name)
+        flags.delete(prop_name)
+      else
+        @page_event_handlers[event_name] = handler
+        flags[prop_name] = true
+      end
+    end
+
+    # Events the client fires on a View (the View's on_* keywords).
+    def view_event?(event_name)
+      Ruflet::UI::Controls::RufletComponents::ViewControl::KEYWORDS.include?("on_#{event_name}".to_sym)
     end
 
     def build_view_patches
