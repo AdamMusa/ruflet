@@ -14,6 +14,7 @@ require_relative "dismissible_control"
 require_relative "draggable_control"
 require_relative "dragtarget_control"
 require_relative "fill_control"
+require_relative "fittedbox_control"
 require_relative "gesturedetector_control"
 require_relative "gridview_control"
 require_relative "hero_control"
@@ -81,6 +82,8 @@ module Ruflet
             "draggable" => RufletComponents::DraggableControl,
             "dragtarget" => RufletComponents::DragTargetControl,
             "fill" => RufletComponents::FillControl,
+            "fitted_box" => RufletComponents::FittedBoxControl,
+            "fittedbox" => RufletComponents::FittedBoxControl,
             "gesture_detector" => RufletComponents::GestureDetectorControl,
             "gesturedetector" => RufletComponents::GestureDetectorControl,
             "grid_view" => RufletComponents::GridViewControl,

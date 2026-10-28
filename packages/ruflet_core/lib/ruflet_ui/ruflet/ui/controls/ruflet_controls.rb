@@ -120,6 +120,7 @@ require_relative "shared/dismissible_control"
 require_relative "shared/draggable_control"
 require_relative "shared/dragtarget_control"
 require_relative "shared/fill_control"
+require_relative "shared/fittedbox_control"
 require_relative "shared/gesturedetector_control"
 require_relative "shared/gridview_control"
 require_relative "shared/hero_control"
@@ -320,6 +321,8 @@ module Ruflet
           "fillediconbutton" => RufletComponents::FilledIconButtonControl,
           "filledtonalbutton" => RufletComponents::FilledTonalButtonControl,
           "filledtonaliconbutton" => RufletComponents::FilledTonalIconButtonControl,
+          "fitted_box" => RufletComponents::FittedBoxControl,
+          "fittedbox" => RufletComponents::FittedBoxControl,
           "floating_action_button" => RufletComponents::FloatingActionButtonControl,
           "floatingactionbutton" => RufletComponents::FloatingActionButtonControl,
           "gesture_detector" => RufletComponents::GestureDetectorControl,
