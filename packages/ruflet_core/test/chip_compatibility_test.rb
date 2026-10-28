@@ -80,6 +80,16 @@ class RufletChipCompatibilityTest < Minitest::Test
     assert_equal true, patch["on_blur"]
   end
 
+  def test_chip_accepts_mouse_cursor
+    patch = Ruflet.chip("Filter", mouse_cursor: "click").to_patch
+    symbol_patch = Ruflet.chip("Filter", mouse_cursor: :forbidden).to_patch
+
+    assert_equal "Chip", patch["_c"]
+    assert_equal "click", patch["mouse_cursor"]
+    assert_equal "forbidden", symbol_patch["mouse_cursor"]
+    refute Ruflet.chip("Filter").to_patch.key?("mouse_cursor")
+  end
+
   def test_chip_serializes_on_click_and_on_select_together_like_flet
     patch = Ruflet.chip("Filter", on_click: ->(_event) {}, on_select: ->(_event) {}).to_patch
 
