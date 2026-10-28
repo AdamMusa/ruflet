@@ -452,6 +452,138 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
+  # Records reload signals (and still sends them) so a test can prove which
+  # child, if any, a reload was delivered to.
+  class SignalSpyRunner < DummyRunner
+    def reload_signals = (@reload_signals ||= [])
+
+    def send_reload_signal(pid)
+      reload_signals << pid
+      super
+    end
+  end
+
+  # One BOOT_GATED_APP child spawned the way `ruflet run` does, held mid-boot
+  # until #release.
+  class GatedApp
+    attr_reader :progress
+
+    def initialize(runner, run_state, env, cmd, dir)
+      runner.send(:spawn_app_child, env, cmd, run_state, out: File::NULL, err: File::NULL)
+      @pid = run_state[:child_pid]
+      @gate = File.open(File.join(dir, "gate"), "w") # the app runs user code
+      @progress = File.open(File.join(dir, "progress"), "r")
+    end
+
+    def release
+      @gate.write(".")
+      @gate.close
+    end
+
+    def close
+      @gate.close unless @gate.closed?
+      @progress.close
+    end
+  end
+
+  def with_gated_app_session(runner)
+    skip "needs USR1 and FIFOs" unless Signal.list.key?("USR1") && File.respond_to?(:mkfifo)
+
+    Dir.mktmpdir("ruflet-reload-restart-") do |dir|
+      script = File.join(dir, "main.rb")
+      File.write(script, BOOT_GATED_APP)
+      File.mkfifo(File.join(dir, "gate"))
+      File.mkfifo(File.join(dir, "progress"))
+      env = {
+        "RUFLET_SUPPRESS_SERVER_BANNER" => "1",
+        "RUBYLIB" => runner.send(:local_ruflet_dev_lib_paths).join(File::PATH_SEPARATOR),
+        "TEST_GATE_FIFO" => File.join(dir, "gate"),
+        "TEST_PROGRESS_FIFO" => File.join(dir, "progress")
+      }
+      cmd = runner.send(:build_runtime_command, script, gemfile_path: nil, env: env, reload: true)
+      env.delete("RUFLET_BOOTSNAP_DIR") # keep the test out of ~/.ruflet
+      run_state = runner.send(:new_run_state, track_ready: true)
+      spawned = []
+      begin
+        Timeout.timeout(120) do # guards a broken build only; nothing waits on time
+          yield run_state, -> { GatedApp.new(runner, run_state, env, cmd, dir).tap { |app| spawned << app } }
+        end
+      ensure
+        spawned.each(&:close)
+        if run_state[:child_pid]
+          begin
+            Process.kill("KILL", -run_state[:child_pid])
+            Process.wait(run_state[:child_pid])
+          rescue Errno::ESRCH, Errno::ECHILD, Errno::EPERM
+            nil
+          end
+        end
+      end
+    end
+  end
+
+  # What the run loop does after "R": reap the old app, respawn.
+  def restart_app(run_state, spawn_app)
+    Process.wait(run_state[:child_pid])
+    run_state[:restart] = false
+    spawn_app.call
+  end
+
+  def test_restart_drops_a_reload_queued_during_boot
+    runner = SignalSpyRunner.new
+    with_gated_app_session(runner) do |run_state, spawn_app|
+      first = spawn_app.call
+      assert_equal "L1", first.progress.read(2)
+      capture_io { assert runner.send(:handle_reload_command, "r", run_state) }
+      assert run_state[:reload_pending], "r during boot is queued"
+
+      capture_io { assert runner.send(:handle_reload_command, "R", run_state) }
+      second = restart_app(run_state, spawn_app)
+      refute run_state[:reload_pending], "the restarted app loads the current code"
+      assert_equal "L1", second.progress.read(2)
+      second.release
+      run_state[:ready_thread].join # the CLI has seen the new app's ready byte
+
+      assert run_state[:ready]
+      assert_empty runner.reload_signals, "the stale reload must not reach the new app"
+      capture_io { assert runner.send(:handle_reload_command, "r", run_state) }
+      assert_equal [run_state[:child_pid]], runner.reload_signals
+      assert_equal "L2", second.progress.read(2), "a fresh r still reloads the restarted app"
+    end
+  end
+
+  # Pre-existing: once the app had reported ready, "r" between "R" and the
+  # respawn signalled the reaped app, got ESRCH and stopped the key reader,
+  # so no further key worked for the rest of the session.
+  def test_r_between_restart_and_respawn_keeps_the_key_reader_alive
+    runner = SignalSpyRunner.new
+    with_gated_app_session(runner) do |run_state, spawn_app|
+      first = spawn_app.call
+      assert_equal "L1", first.progress.read(2)
+      first.release
+      run_state[:ready_thread].join
+      assert run_state[:ready]
+
+      capture_io { assert runner.send(:handle_reload_command, "R", run_state) }
+      refute run_state[:ready], "R marks the app not ready until the respawn reports"
+      Process.wait(run_state[:child_pid]) # the old app is gone, no respawn yet
+      out, = capture_io do
+        assert runner.send(:handle_reload_command, "r", run_state),
+               "r during a restart must not end the key reader"
+      end
+      assert_match(/restart/i, out)
+      assert_empty runner.reload_signals, "nothing may be signalled while no app is up"
+
+      run_state[:restart] = false
+      second = spawn_app.call
+      assert_equal "L1", second.progress.read(2)
+      second.release
+      run_state[:ready_thread].join
+      capture_io { assert runner.send(:handle_reload_command, "r", run_state) }
+      assert_equal "L2", second.progress.read(2), "r works again once the app is back"
+    end
+  end
+
   def test_handle_reload_command_reports_dead_child
     runner = DummyRunner.new
     child = Process.spawn(RbConfig.ruby, "-e", "exit 0", pgroup: true)
