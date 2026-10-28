@@ -102,6 +102,8 @@ module Ruflet
       def path_sub_path(**props) = control_delegate.path_sub_path(**props)
       def path_close(**props) = control_delegate.path_close(**props)
       def draggable(content = nil, **props, &block) = control_delegate.draggable(content, **props, &block)
+      def draggable_scrollable_sheet(children = nil, **props, &block) = control_delegate.draggable_scrollable_sheet(children, **props, &block)
+      def draggablescrollablesheet(children = nil, **props, &block) = control_delegate.draggablescrollablesheet(children, **props, &block)
       def dismissible(content = nil, **props) = control_delegate.dismissible(content, **props)
       def drag_target(content = nil, **props, &block) = control_delegate.drag_target(content, **props, &block)
       def dragtarget(content = nil, **props, &block) = control_delegate.dragtarget(content, **props, &block)

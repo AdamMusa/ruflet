@@ -143,6 +143,8 @@ module Ruflet
     def path_sub_path(**props) = _pending_app.path_sub_path(**props)
     def path_close(**props) = _pending_app.path_close(**props)
     def draggable(content = nil, **props, &block) = _pending_app.draggable(content, **props, &block)
+    def draggable_scrollable_sheet(children = nil, **props, &block) = _pending_app.draggable_scrollable_sheet(children, **props, &block)
+    def draggablescrollablesheet(children = nil, **props, &block) = _pending_app.draggablescrollablesheet(children, **props, &block)
     def dismissible(content = nil, **props) = _pending_app.dismissible(content, **props)
     def drag_target(content = nil, **props, &block) = _pending_app.drag_target(content, **props, &block)
     def dragtarget(content = nil, **props, &block) = _pending_app.dragtarget(content, **props, &block)

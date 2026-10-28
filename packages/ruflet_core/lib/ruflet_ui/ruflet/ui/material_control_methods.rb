@@ -216,6 +216,12 @@ module Ruflet
         mapped[:content] = content unless content.nil?
         build_widget(:draggable, **mapped, &block)
       end
+      def draggable_scrollable_sheet(children = nil, **props, &block)
+        mapped = props.dup
+        mapped[:children] = children unless children.nil?
+        build_widget(:draggablescrollablesheet, **mapped, &block)
+      end
+      def draggablescrollablesheet(children = nil, **props, &block) = draggable_scrollable_sheet(children, **props, &block)
       def dismissible(content = nil, **props)
         mapped = props.dup
         mapped[:content] = content unless content.nil?

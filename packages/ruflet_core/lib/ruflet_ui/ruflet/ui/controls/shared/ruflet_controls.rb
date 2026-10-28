@@ -12,6 +12,7 @@ require_relative "column_control"
 require_relative "dialogs_control"
 require_relative "dismissible_control"
 require_relative "draggable_control"
+require_relative "draggablescrollablesheet_control"
 require_relative "dragtarget_control"
 require_relative "fill_control"
 require_relative "gesturedetector_control"
@@ -79,6 +80,8 @@ module Ruflet
             "dismissible" => RufletComponents::DismissibleControl,
             "drag_target" => RufletComponents::DragTargetControl,
             "draggable" => RufletComponents::DraggableControl,
+            "draggable_scrollable_sheet" => RufletComponents::DraggableScrollableSheetControl,
+            "draggablescrollablesheet" => RufletComponents::DraggableScrollableSheetControl,
             "dragtarget" => RufletComponents::DragTargetControl,
             "fill" => RufletComponents::FillControl,
             "gesture_detector" => RufletComponents::GestureDetectorControl,

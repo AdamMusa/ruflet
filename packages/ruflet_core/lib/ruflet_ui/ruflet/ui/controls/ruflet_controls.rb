@@ -118,6 +118,7 @@ require_relative "shared/column_control"
 require_relative "shared/dialogs_control"
 require_relative "shared/dismissible_control"
 require_relative "shared/draggable_control"
+require_relative "shared/draggablescrollablesheet_control"
 require_relative "shared/dragtarget_control"
 require_relative "shared/fill_control"
 require_relative "shared/gesturedetector_control"
@@ -299,6 +300,8 @@ module Ruflet
           "divider" => RufletComponents::DividerControl,
           "drag_target" => RufletComponents::DragTargetControl,
           "draggable" => RufletComponents::DraggableControl,
+          "draggable_scrollable_sheet" => RufletComponents::DraggableScrollableSheetControl,
+          "draggablescrollablesheet" => RufletComponents::DraggableScrollableSheetControl,
           "dragtarget" => RufletComponents::DragTargetControl,
           "dropdown" => RufletComponents::DropdownControl,
           "dropdown_m2" => RufletComponents::Dropdown2Control,
