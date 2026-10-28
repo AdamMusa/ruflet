@@ -103,6 +103,36 @@ class RufletHotReloadTest < Minitest::Test
     assert_equal ["v1"], render
   end
 
+  def test_reports_ready_on_the_cli_fd_once_reload_is_armed
+    write_widgets("v1")
+    write_main
+    reader, writer = IO.pipe
+    writer.autoclose = false # the runner owns and closes this fd
+    ENV["RUFLET_READY_FD"] = writer.fileno.to_s
+
+    start_runner
+
+    # The limit only stops a runner that never reports from hanging the suite.
+    assert IO.select([reader], nil, nil, 10), "the runner must report ready to `ruflet run`"
+    assert_equal ".", reader.read(1), "the runner must report ready to `ruflet run`"
+    assert_nil reader.read(1), "the ready fd must be closed after reporting"
+    assert_nil ENV["RUFLET_READY_FD"], "the fd number must not leak to app subprocesses"
+    assert @runner.watching?, "ready means the watcher and USR1 trap are armed"
+  ensure
+    ENV.delete("RUFLET_READY_FD")
+    reader&.close
+  end
+
+  def test_without_the_cli_fd_nothing_is_reported
+    write_widgets("v1")
+    write_main
+    ENV.delete("RUFLET_READY_FD")
+
+    start_runner
+
+    assert_equal ["v1"], render
+  end
+
   def test_watched_files_excludes_vendored_and_hidden_paths
     write_widgets("v1")
     write_main
