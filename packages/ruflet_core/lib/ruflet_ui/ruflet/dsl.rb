@@ -2,6 +2,8 @@
 
 require_relative "ui/control_methods"
 require_relative "ui/control_factory"
+require_relative "ui/prop_controls"
+require_relative "ui/build_scope"
 
 module Ruflet
   module DSL
@@ -39,7 +41,7 @@ module Ruflet
     def app(host: nil, port: nil, &block)
       host ||= default_host
       port ||= default_port
-      return App.new(host: host, port: port).tap { |a| a.instance_eval(&block) } if block
+      return App.new(host: host, port: port).tap { |a| UI::BuildScope.within(a) { a.instance_eval(&block) } } if block
 
       pending = _pending_app
       pending.set_endpoint!(host: host, port: port)
@@ -471,8 +473,9 @@ module Ruflet
       end
 
       def page(**props, &block)
+        Ruflet::UI::PropControls.reclaim(props)
         @page_props.merge!(normalize_props(props))
-        instance_eval(&block) if block
+        UI::BuildScope.within(self) { instance_eval(&block) } if block
         self
       end
 
@@ -486,12 +489,16 @@ module Ruflet
 
         id = mapped_props.delete(:id)&.to_s || next_id(type)
         c = Ruflet::UI::ControlFactory.build(type.to_s, id: id, **normalize_props(mapped_props))
+        Ruflet::UI::PropControls.reclaim(props)
         attach(c)
 
         if block
           @stack.push(c)
-          instance_eval(&block)
-          @stack.pop
+          begin
+            UI::BuildScope.within(self) { instance_eval(&block) }
+          ensure
+            @stack.pop
+          end
         end
 
         if prop_children
@@ -505,6 +512,7 @@ module Ruflet
         mapped_props = props.dup
         id = mapped_props.delete(:id)&.to_s || next_id(type)
         svc = Ruflet::UI::ControlFactory.build(type.to_s, id: id, **normalize_props(mapped_props))
+        Ruflet::UI::PropControls.reclaim(props)
         @services << svc unless @services.include?(svc)
         svc
       end
@@ -530,12 +538,13 @@ module Ruflet
       def build_widget(type, **props, &block) = control(type.to_s, **props, &block)
       def build_service(type, **props, &block) = service(type.to_s, **props, &block)
 
+      # Every helper attaches the control it builds, so a control created as
+      # an argument (`list_tile(title: text("T"))`, `page(appbar: app_bar(...))`)
+      # is attached before the control or page that consumes it.
+      # PropControls.reclaim takes it back from this list.
       def attach(control)
-        if @stack.empty?
-          @roots << control
-        else
-          @stack.last.children << control
-        end
+        target = @stack.empty? ? @roots : @stack.last.children
+        Ruflet::UI::PropControls.attach(target, control)
       end
 
       def normalize_props(hash)

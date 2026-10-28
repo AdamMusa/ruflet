@@ -2,6 +2,8 @@
 
 require_relative "control_methods"
 require_relative "control_factory"
+require_relative "prop_controls"
+require_relative "build_scope"
 
 module Ruflet
   class WidgetBuilder
@@ -26,9 +28,10 @@ module Ruflet
       prop_children = extract_children_prop(mapped_props)
 
       node = UI::ControlFactory.build(type, **mapped_props)
+      UI::PropControls.reclaim(props)
       if block
         nested = WidgetBuilder.new
-        block_result = nested.instance_eval(&block)
+        block_result = UI::BuildScope.within(nested) { nested.instance_eval(&block) }
         if block_result.is_a?(Control) && !nested.children.any? { |c| c.object_id == block_result.object_id }
           nested.children << block_result
         end
@@ -41,14 +44,14 @@ module Ruflet
         end
       end
 
-      @children << node
-      node
+      UI::PropControls.attach(@children, node)
     end
 
     def build_widget(type, **props, &block) = control(type, **props, &block)
     def build_service(type, **props, &block)
       mapped_props = props.dup
       node = UI::ControlFactory.build(type, **mapped_props)
+      UI::PropControls.reclaim(props)
       node
     end
 

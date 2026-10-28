@@ -783,6 +783,18 @@ class RufletHtmlDslTest < Minitest::Test
     assert_equal 1, result.controls.length
   end
 
+  def test_service_tags_follow_the_engine_service_registrations
+    result, = transform(<<~HTML)
+      <interstitial-ad></interstitial-ad>
+      <browser-context-menu></browser-context-menu>
+      <audio-recorder></audio-recorder>
+      <picker><text>One</text></picker>
+    HTML
+
+    assert_equal %w[InterstitialAd BrowserContextMenu AudioRecorder], result.services.map(&:wire_type)
+    assert_equal "picker", find(result.controls, "picker").type
+  end
+
   def test_non_visual_services_route_to_the_service_slot_while_camera_renders_inline
     result, = transform(<<~HTML)
       <camera></camera>

@@ -5,6 +5,7 @@ require "ruflet_protocol"
 require_relative "control"
 require_relative "ui/widget_builder"
 require_relative "ui/control_factory"
+require_relative "ui/service_types"
 require_relative "icons/material_icon_lookup"
 require_relative "icons/cupertino_icon_lookup"
 require "set"
@@ -151,6 +152,29 @@ module Ruflet
 
     PAGE_PROP_KEYS = %w[dark_theme fonts route rtl show_semantics_debugger theme theme_mode theme_animation_style title vertical_alignment horizontal_alignment scroll].freeze
     DIALOG_PROP_KEYS = %w[dialog snack_bar bottom_sheet].freeze
+    # RufletServices entries that render in the layout (compact DSL names).
+    # The engine registers Camera with createWidget, not createService.
+    VISUAL_SERVICE_TYPES = %w[camera].freeze
+    # Overlays the page presents with page.open / show_dialog / dialog= /
+    # snack_bar= / bottom_sheet= rather than laying them out. Picker,
+    # TimerPicker and ActionSheet are not here: the engine renders them inline.
+    PRESENTED_OVERLAY_TYPES = %w[
+      AboutDialog AlertDialog Banner BottomSheet DatePicker DateRangePicker SnackBar TimePicker
+    ].freeze
+    # Wire types that are never laid out as children: the overlays above plus
+    # every wire type the engine registers as a service
+    # (Ruflet::UI::ServiceTypes::ENGINE_SERVICE_TYPES, generated from the
+    # engine's createService registrations, extensions included). DSL blocks do
+    # not capture these implicitly (see Ruflet::UI::PropControls.attach).
+    # Explicit children (controls:/children:) and a block's return value still
+    # place one in a layout. Keyed on wire type, so Cupertino aliases such as
+    # cupertino_alert_dialog (wire "AlertDialog") are covered.
+    PRESENTED_TYPES = (PRESENTED_OVERLAY_TYPES + Ruflet::UI::ServiceTypes::ENGINE_SERVICE_TYPES.keys)
+      .each_with_object({}) { |wire, types| types[wire] = true }.freeze
+
+    def self.presented_control?(control)
+      PRESENTED_TYPES.key?(control.wire_type)
+    end
     PAGE_ADD_RESERVED_KEYS = %i[appbar bottom_appbar floating_action_button navigation_bar dialog snack_bar bottom_sheet].freeze
     WIDGET_HELPER_METHODS = (
       Ruflet::UI::MaterialControlMethods.instance_methods(false) +
@@ -572,7 +596,7 @@ module Ruflet
 
     def mount(&block)
       builder = WidgetBuilder.new
-      builder.instance_eval(&block)
+      UI::BuildScope.within(builder) { builder.instance_eval(&block) }
       builder.children.each { |control| add(control) }
     end
 
@@ -1546,15 +1570,15 @@ module Ruflet
     end
 
     def visual_service_type?(type)
-      type.to_s.delete("_") == "camera"
+      VISUAL_SERVICE_TYPES.include?(type.to_s.delete("_"))
     end
 
     def service_control_type?(type)
       normalized = type.to_s.downcase
       compact = normalized.delete("_")
-      compact == "audio" ||
-        Ruflet::UI::Services::RufletServices::CLASS_MAP.key?(normalized) ||
-        Ruflet::UI::Services::RufletServices::CLASS_MAP.key?(compact)
+      Ruflet::UI::Services::RufletServices::CLASS_MAP.key?(normalized) ||
+        Ruflet::UI::Services::RufletServices::CLASS_MAP.key?(compact) ||
+        Ruflet::UI::ServiceTypes.service_name?(normalized)
     end
 
     def text_maps_to_content?(control, patch)

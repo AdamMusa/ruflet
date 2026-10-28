@@ -133,8 +133,10 @@ module Ruflet
 
     private
 
+    # Inside a builder block, append to that builder like the bare helpers
+    # do; outside every block, build a standalone control.
     def control_delegate
-      WidgetBuilder.new
+      UI::BuildScope.current || WidgetBuilder.new
     end
   end
 

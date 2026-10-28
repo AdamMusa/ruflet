@@ -17,6 +17,10 @@ module Ruflet
 
     attr_reader :type, :id, :props, :children
     attr_accessor :wire_id, :runtime_page
+    # Internal to the DSL builders: the children list a builder appended this
+    # control to implicitly, so a later prop use can take it back from there
+    # (see Ruflet::UI::PropControls). Never serialized.
+    attr_accessor :dsl_owner
 
     def initialize(type:, id: nil, **props)
       @type = type.to_s.downcase
@@ -63,13 +67,18 @@ module Ruflet
       self
     end
 
+    # The control type the client renders, e.g. "AlertDialog" for both
+    # alert_dialog and cupertino_alert_dialog.
+    def wire_type
+      wire = schema_wire_type_for_class
+      return wire unless wire.nil?
+
+      compact_type_key = type.delete("_")
+      wire = type_map[type] || type_map[compact_type_key]
+      wire || type.split("_").map { |part| part[0].to_s.upcase + part[1..].to_s }.join
+    end
+
     def to_patch
-      wire_type = schema_wire_type_for_class
-      if wire_type.nil?
-        compact_type_key = type.delete("_")
-        wire_type = type_map[type] || type_map[compact_type_key]
-        wire_type ||= type.split("_").map { |part| part[0].to_s.upcase + part[1..].to_s }.join
-      end
       patch = {
         "_c" => wire_type,
         "_i" => wire_id
