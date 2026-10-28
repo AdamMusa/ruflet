@@ -71,4 +71,20 @@ class RufletContainerCompatibilityTest < Minitest::Test
     assert_equal [:click], clicked
     assert_equal [[10, 4]], tapped
   end
+
+  def test_container_accepts_opacity_on_click_for_the_ink_press_effect
+    container = Ruflet.container(
+      content: Ruflet.text("Tap"),
+      ink: true,
+      opacity_on_click: 0.6,
+      on_click: ->(_event) {}
+    )
+    patch = container.to_patch
+
+    assert_equal "Container", patch["_c"]
+    assert_equal true, patch["ink"]
+    assert_equal 0.6, patch["opacity_on_click"]
+    assert_equal 1, Ruflet.container(opacity_on_click: 1).to_patch["opacity_on_click"]
+    refute Ruflet.container(ink: true).to_patch.key?("opacity_on_click")
+  end
 end
