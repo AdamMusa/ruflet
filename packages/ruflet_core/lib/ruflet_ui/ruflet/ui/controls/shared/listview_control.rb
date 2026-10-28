@@ -12,7 +12,7 @@ module Ruflet
           TYPE = "listview".freeze
           WIRE = "ListView".freeze
 
-          KEYWORDS = [:adaptive, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :auto_scroll, :badge, :bottom, :build_controls_on_demand, :cache_extent, :clip_behavior, :col, :controls, :data, :disabled, :divider_thickness, :end_reached_threshold, :expand, :expand_loose, :first_item_prototype, :height, :horizontal, :item_extent, :key, :keyboard_dismiss_behavior, :left, :margin, :offset, :opacity, :padding, :prototype_item, :refresh_bgcolor, :refresh_color, :refresh_displacement, :refresh_timeout, :refresh_trigger_distance, :reverse, :right, :rotate, :rtl, :scale, :scroll, :scroll_interval, :semantic_child_count, :size_change_interval, :spacing, :tooltip, :top, :visible, :width, :on_animation_end, :on_end_reached, :on_refresh, :on_scroll, :on_size_change].freeze
+          KEYWORDS = [:adaptive, :align, :animate_align, :animate_changes, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :auto_scroll, :badge, :bottom, :build_controls_on_demand, :cache_extent, :clip_behavior, :col, :controls, :data, :disabled, :divider_thickness, :end_reached_threshold, :expand, :expand_loose, :first_item_prototype, :height, :horizontal, :item_animation, :item_extent, :key, :keyboard_dismiss_behavior, :left, :margin, :offset, :opacity, :padding, :prototype_item, :refresh_bgcolor, :refresh_color, :refresh_displacement, :refresh_timeout, :refresh_trigger_distance, :reverse, :right, :rotate, :rtl, :scale, :scroll, :scroll_interval, :semantic_child_count, :size_change_interval, :spacing, :tooltip, :top, :visible, :width, :on_animation_end, :on_end_reached, :on_refresh, :on_scroll, :on_size_change].freeze
 
           def initialize(id: nil, **props)
             unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
@@ -20,6 +20,7 @@ module Ruflet
             adaptive = props[:adaptive]
             align = props[:align]
             animate_align = props[:animate_align]
+            animate_changes = props[:animate_changes]
             animate_margin = props[:animate_margin]
             animate_offset = props[:animate_offset]
             animate_opacity = props[:animate_opacity]
@@ -45,6 +46,7 @@ module Ruflet
             first_item_prototype = props[:first_item_prototype]
             height = props[:height]
             horizontal = props[:horizontal]
+            item_animation = props[:item_animation]
             item_extent = props[:item_extent]
             key = props[:key]
             keyboard_dismiss_behavior = props[:keyboard_dismiss_behavior]
@@ -89,6 +91,7 @@ module Ruflet
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
+            props[:animate_changes] = animate_changes unless animate_changes.nil?
             props[:animate_margin] = animate_margin unless animate_margin.nil?
             props[:animate_offset] = animate_offset unless animate_offset.nil?
             props[:animate_opacity] = animate_opacity unless animate_opacity.nil?
@@ -114,6 +117,7 @@ module Ruflet
             props[:first_item_prototype] = first_item_prototype unless first_item_prototype.nil?
             props[:height] = height unless height.nil?
             props[:horizontal] = horizontal unless horizontal.nil?
+            props[:item_animation] = item_animation unless item_animation.nil?
             props[:item_extent] = item_extent unless item_extent.nil?
             props[:key] = key unless key.nil?
             props[:keyboard_dismiss_behavior] = keyboard_dismiss_behavior unless keyboard_dismiss_behavior.nil?
