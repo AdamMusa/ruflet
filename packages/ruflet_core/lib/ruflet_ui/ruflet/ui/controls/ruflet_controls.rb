@@ -24,6 +24,7 @@ require_relative "cupertinos/cupertinoswitch_control"
 require_relative "cupertinos/cupertinotextfield_control"
 require_relative "cupertinos/cupertinotimerpicker_control"
 require_relative "cupertinos/cupertinotintedbutton_control"
+require_relative "materials/aboutdialog_control"
 require_relative "materials/alertdialog_control"
 require_relative "materials/ad_controls"
 require_relative "materials/animation_extension_controls"
@@ -169,6 +170,8 @@ module Ruflet
         CLASS_MAP = {
           "banner_ad" => RufletComponents::BannerAdControl,
           "bannerad" => RufletComponents::BannerAdControl,
+          "about_dialog" => RufletComponents::AboutDialogControl,
+          "aboutdialog" => RufletComponents::AboutDialogControl,
           "alert_dialog" => RufletComponents::AlertDialogControl,
           "alertdialog" => RufletComponents::AlertDialogControl,
           "audio" => RufletComponents::AudioControl,

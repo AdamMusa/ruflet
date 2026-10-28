@@ -303,6 +303,8 @@ module Ruflet
     def radio(**props) = _pending_app.radio(**props)
     def radio_group(content = nil, **props) = _pending_app.radio_group(content, **props)
     def radiogroup(content = nil, **props) = _pending_app.radiogroup(content, **props)
+    def about_dialog(**props) = _pending_app.about_dialog(**props)
+    def aboutdialog(**props) = _pending_app.aboutdialog(**props)
     def alert_dialog(**props) = _pending_app.alert_dialog(**props)
     def alertdialog(**props) = _pending_app.alertdialog(**props)
     def snack_bar(content = nil, **props) = _pending_app.snack_bar(content, **props)
