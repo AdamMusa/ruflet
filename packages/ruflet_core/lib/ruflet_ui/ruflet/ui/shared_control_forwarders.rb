@@ -106,6 +106,8 @@ module Ruflet
       def drag_target(content = nil, **props, &block) = control_delegate.drag_target(content, **props, &block)
       def dragtarget(content = nil, **props, &block) = control_delegate.dragtarget(content, **props, &block)
       def card(content = nil, **props) = control_delegate.card(content, **props)
+      def carousel_view(children = nil, **props, &block) = control_delegate.carousel_view(children, **props, &block)
+      def carouselview(children = nil, **props, &block) = control_delegate.carouselview(children, **props, &block)
       def list_tile(**props) = control_delegate.list_tile(**props)
       def listtile(**props) = control_delegate.listtile(**props)
       def map(layers = nil, **props) = control_delegate.map(layers, **props)

@@ -38,6 +38,7 @@ require_relative "materials/bottomappbar_control"
 require_relative "materials/bottomsheet_control"
 require_relative "materials/button_control"
 require_relative "materials/card_control"
+require_relative "materials/carouselview_control"
 require_relative "materials/checkbox_control"
 require_relative "materials/chip_control"
 require_relative "materials/circleavatar_control"
@@ -204,6 +205,8 @@ module Ruflet
           "button" => RufletComponents::ButtonControl,
           "canvas" => RufletComponents::CanvasControl,
           "card" => RufletComponents::CardControl,
+          "carousel_view" => RufletComponents::CarouselViewControl,
+          "carouselview" => RufletComponents::CarouselViewControl,
           "candlestick_chart" => RufletComponents::CandlestickChartControl,
           "candlestick_chart_spot" => RufletComponents::CandlestickChartSpotControl,
           "candlestickchart" => RufletComponents::CandlestickChartControl,

@@ -147,6 +147,8 @@ module Ruflet
     def drag_target(content = nil, **props, &block) = _pending_app.drag_target(content, **props, &block)
     def dragtarget(content = nil, **props, &block) = _pending_app.dragtarget(content, **props, &block)
     def card(content = nil, **props) = _pending_app.card(content, **props)
+    def carousel_view(children = nil, **props, &block) = _pending_app.carousel_view(children, **props, &block)
+    def carouselview(children = nil, **props, &block) = _pending_app.carouselview(children, **props, &block)
     def list_tile(**props) = _pending_app.list_tile(**props)
     def listtile(**props) = _pending_app.listtile(**props)
     def map(layers = nil, **props) = _pending_app.map(layers, **props)
