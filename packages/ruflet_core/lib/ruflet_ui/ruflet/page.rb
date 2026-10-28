@@ -567,6 +567,9 @@ module Ruflet
       name = event_name.to_s
       name = name[3..-1] if name.start_with?("on_")
       @page_event_handlers[name] = block
+      # View events are only sent by the client when the default page View
+      # has the flag; page events (route_change, ...) need none.
+      @view_props["on_#{name}"] = true if block && view_event?(name)
       self
     end
 
@@ -1396,6 +1399,17 @@ module Ruflet
         return
       end
 
+      if @views.empty? && target.to_i == @view_id
+        # The implicit page View is not a registered control: its events go
+        # to the page handlers (page.on_refresh = ...), acknowledged like A1.
+        begin
+          dispatch_page_event(name: name, data: data)
+        ensure
+          invoke(:root_view, "end_refresh") if name.to_s == "refresh"
+        end
+        return
+      end
+
       control = @wire_index[target.to_i] || @control_index[target.to_s]
       return unless control
 
@@ -2105,7 +2119,11 @@ module Ruflet
     end
 
     def assign_split_prop(key, value)
-      if key == "vertical_alignment" || key == "horizontal_alignment" || key == "scroll"
+      # Every page/view prop entry point (page.on_x =, set_view_props, the DSL
+      # page(...), update(:page, ...)) lands here, so no handler reaches a patch.
+      if key.start_with?("on_") && (value.nil? || value.respond_to?(:call))
+        assign_page_handler(key, value)
+      elsif key == "vertical_alignment" || key == "horizontal_alignment" || key == "scroll"
         @page_props[key] = value
         @view_props[key] = value
       elsif DIALOG_PROP_KEYS.include?(key)
@@ -2116,6 +2134,26 @@ module Ruflet
       else
         @view_props[key] = value
       end
+    end
+
+    # page.on_scroll = ->(e) {} keeps the handler on the Ruby side and sends
+    # only `on_scroll: true`: on the implicit View for View events, otherwise
+    # on the Page. nil removes both.
+    def assign_page_handler(prop_name, handler)
+      event_name = prop_name.delete_prefix("on_")
+      flags = view_event?(event_name) ? @view_props : @page_props
+      if handler.nil?
+        @page_event_handlers.delete(event_name)
+        flags.delete(prop_name)
+      else
+        @page_event_handlers[event_name] = handler
+        flags[prop_name] = true
+      end
+    end
+
+    # Events the client fires on a View (the View's on_* keywords).
+    def view_event?(event_name)
+      Ruflet::UI::Controls::RufletComponents::ViewControl::KEYWORDS.include?("on_#{event_name}".to_sym)
     end
 
     def build_view_patches
