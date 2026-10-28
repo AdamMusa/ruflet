@@ -572,7 +572,7 @@ module Ruflet
 
     def mount(&block)
       builder = WidgetBuilder.new
-      builder.instance_eval(&block)
+      UI::BuildScope.within(builder) { builder.instance_eval(&block) }
       builder.children.each { |control| add(control) }
     end
 

@@ -3,6 +3,7 @@
 require_relative "ui/control_methods"
 require_relative "ui/control_factory"
 require_relative "ui/prop_controls"
+require_relative "ui/build_scope"
 
 module Ruflet
   module DSL
@@ -40,7 +41,7 @@ module Ruflet
     def app(host: nil, port: nil, &block)
       host ||= default_host
       port ||= default_port
-      return App.new(host: host, port: port).tap { |a| a.instance_eval(&block) } if block
+      return App.new(host: host, port: port).tap { |a| UI::BuildScope.within(a) { a.instance_eval(&block) } } if block
 
       pending = _pending_app
       pending.set_endpoint!(host: host, port: port)
@@ -474,7 +475,7 @@ module Ruflet
       def page(**props, &block)
         Ruflet::UI::PropControls.reclaim(props)
         @page_props.merge!(normalize_props(props))
-        instance_eval(&block) if block
+        UI::BuildScope.within(self) { instance_eval(&block) } if block
         self
       end
 
@@ -493,8 +494,11 @@ module Ruflet
 
         if block
           @stack.push(c)
-          instance_eval(&block)
-          @stack.pop
+          begin
+            UI::BuildScope.within(self) { instance_eval(&block) }
+          ensure
+            @stack.pop
+          end
         end
 
         if prop_children

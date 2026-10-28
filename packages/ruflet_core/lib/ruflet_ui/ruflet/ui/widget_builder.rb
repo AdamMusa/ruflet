@@ -3,6 +3,7 @@
 require_relative "control_methods"
 require_relative "control_factory"
 require_relative "prop_controls"
+require_relative "build_scope"
 
 module Ruflet
   class WidgetBuilder
@@ -30,7 +31,7 @@ module Ruflet
       UI::PropControls.reclaim(props)
       if block
         nested = WidgetBuilder.new
-        block_result = nested.instance_eval(&block)
+        block_result = UI::BuildScope.within(nested) { nested.instance_eval(&block) }
         if block_result.is_a?(Control) && !nested.children.any? { |c| c.object_id == block_result.object_id }
           nested.children << block_result
         end
