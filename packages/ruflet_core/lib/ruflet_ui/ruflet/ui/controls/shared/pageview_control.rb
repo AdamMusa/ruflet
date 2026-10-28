@@ -116,6 +116,36 @@ module Ruflet
             props[:on_size_change] = on_size_change unless on_size_change.nil?
             super(type: TYPE, id: id, **props)
           end
+
+          def go_to_page(index, duration: nil, curve: nil, timeout: 10, on_result: nil)
+            invoke_page_animation("go_to_page", { "index" => index }, duration, curve, timeout, on_result)
+          end
+
+          def jump_to_page(index, timeout: 10, on_result: nil)
+            runtime_page&.invoke(self, "jump_to_page", args: { "index" => index }, timeout: timeout, on_result: on_result)
+          end
+
+          def jump_to(value, timeout: 10, on_result: nil)
+            runtime_page&.invoke(self, "jump_to", args: { "value" => value }, timeout: timeout, on_result: on_result)
+          end
+
+          def next_page(duration: nil, curve: nil, timeout: 10, on_result: nil)
+            invoke_page_animation("next_page", {}, duration, curve, timeout, on_result)
+          end
+
+          def previous_page(duration: nil, curve: nil, timeout: 10, on_result: nil)
+            invoke_page_animation("previous_page", {}, duration, curve, timeout, on_result)
+          end
+
+          private
+
+          # duration is in milliseconds; curve is a Flutter curve name such as
+          # "easeInOut". Both default to animation_duration/animation_curve.
+          def invoke_page_animation(name, args, duration, curve, timeout, on_result)
+            args["duration"] = duration unless duration.nil?
+            args["curve"] = curve.to_s unless curve.nil?
+            runtime_page&.invoke(self, name, args: args, timeout: timeout, on_result: on_result)
+          end
         end
       end
     end
