@@ -153,6 +153,7 @@ require_relative "shared/serviceregistry_control"
 require_relative "shared/shadermask_control"
 require_relative "shared/shadow_control"
 require_relative "shared/shimmer_control"
+require_relative "shared/sliverappbar_control"
 require_relative "shared/sliverfillremaining_control"
 require_relative "shared/slivergrid_control"
 require_relative "shared/sliverlist_control"
@@ -488,10 +489,12 @@ module Ruflet
           "slider" => RufletComponents::SliderControl,
           "slide_picker" => RufletComponents::SlidePickerControl,
           "slidepicker" => RufletComponents::SlidePickerControl,
+          "sliver_app_bar" => RufletComponents::SliverAppBarControl,
           "sliver_fill_remaining" => RufletComponents::SliverFillRemainingControl,
           "sliver_grid" => RufletComponents::SliverGridControl,
           "sliver_list" => RufletComponents::SliverListControl,
           "sliver_to_box_adapter" => RufletComponents::SliverToBoxAdapterControl,
+          "sliverappbar" => RufletComponents::SliverAppBarControl,
           "sliverfillremaining" => RufletComponents::SliverFillRemainingControl,
           "slivergrid" => RufletComponents::SliverGridControl,
           "sliverlist" => RufletComponents::SliverListControl,

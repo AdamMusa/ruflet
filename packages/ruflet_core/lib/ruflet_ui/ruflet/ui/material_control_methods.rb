@@ -348,6 +348,8 @@ module Ruflet
         build_widget(:sliverfillremaining, **mapped)
       end
       def sliverfillremaining(content = nil, **props) = sliver_fill_remaining(content, **props)
+      def sliver_app_bar(**props) = build_widget(:sliverappbar, **props)
+      def sliverappbar(**props) = sliver_app_bar(**props)
       def menu_bar(children = nil, **props)
         mapped = props.dup
         mapped[:children] = children unless children.nil?

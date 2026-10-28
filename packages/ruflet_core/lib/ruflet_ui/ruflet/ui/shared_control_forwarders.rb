@@ -148,6 +148,8 @@ module Ruflet
       def slivertoboxadapter(content = nil, **props) = control_delegate.slivertoboxadapter(content, **props)
       def sliver_fill_remaining(content = nil, **props) = control_delegate.sliver_fill_remaining(content, **props)
       def sliverfillremaining(content = nil, **props) = control_delegate.sliverfillremaining(content, **props)
+      def sliver_app_bar(**props) = control_delegate.sliver_app_bar(**props)
+      def sliverappbar(**props) = control_delegate.sliverappbar(**props)
       def menu_bar(children = nil, **props) = control_delegate.menu_bar(children, **props)
       def menubar(children = nil, **props) = control_delegate.menubar(children, **props)
       def menu_item_button(content = nil, **props) = control_delegate.menu_item_button(content, **props)
