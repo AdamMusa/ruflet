@@ -17,6 +17,10 @@ module Ruflet
 
     attr_reader :type, :id, :props, :children
     attr_accessor :wire_id, :runtime_page
+    # Internal to the DSL builders: the children list a builder appended this
+    # control to implicitly, so a later prop use can take it back from there
+    # (see Ruflet::UI::PropControls). Never serialized.
+    attr_accessor :dsl_owner
 
     def initialize(type:, id: nil, **props)
       @type = type.to_s.downcase

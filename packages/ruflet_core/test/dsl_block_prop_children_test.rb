@@ -74,6 +74,35 @@ class RufletDslBlockPropChildrenTest < Minitest::Test
     assert_equal ["a"], row.children.map { |child| child.props["value"] }
   end
 
+  def test_builder_reclaims_a_prop_from_the_parent_block_one_level_deeper
+    column = Ruflet.column do
+      t = text("x")
+      row { container(content: t) }
+    end
+
+    assert_equal ["Row"], wire_types(column.children)
+    row = column.children.first
+    assert_equal ["Container"], wire_types(row.children)
+    assert_equal "x", row.children.first.props["content"].props["value"]
+  end
+
+  def test_builder_reclaims_a_prop_from_an_ancestor_block_two_levels_deeper
+    column = Ruflet.column do
+      t = text("x")
+      text("kept")
+      row do
+        text("row child")
+        stack { container(content: t) }
+      end
+    end
+
+    assert_equal %w[Text Row], wire_types(column.children)
+    assert_equal "kept", column.children.first.props["value"]
+    row = column.children.last
+    assert_equal %w[Text Stack], wire_types(row.children)
+    assert_equal ["Container"], wire_types(row.children.last.children)
+  end
+
   def test_builder_block_keeps_real_children_in_order
     column = Ruflet.column do
       text("one")
@@ -152,6 +181,42 @@ class RufletDslBlockPropChildrenTest < Minitest::Test
     assert_equal ["Text"], wire_types(app.instance_variable_get(:@roots))
     assert_equal "AppBar", app.page_props["appbar"].to_patch["_c"]
     assert_equal "FloatingActionButton", app.page_props["floating_action_button"].to_patch["_c"]
+  end
+
+  def test_app_reclaims_a_prop_from_the_parent_block_one_level_deeper
+    app = Ruflet::DSL.app
+    column = app.column do
+      t = text("x")
+      row { container(content: t) }
+    end
+
+    assert_equal ["Row"], wire_types(column.children)
+    assert_equal ["Container"], wire_types(column.children.first.children)
+  end
+
+  def test_app_reclaims_a_prop_from_an_ancestor_block_two_levels_deeper
+    app = Ruflet::DSL.app
+    top = app.text("top")
+    column = app.column do
+      t = text("x")
+      row { stack { container(content: t, data: { label: top }) } }
+    end
+
+    assert_equal ["Row"], wire_types(column.children)
+    assert_equal ["Stack"], wire_types(column.children.first.children)
+    assert_equal ["Container"], wire_types(column.children.first.children.first.children)
+    assert_equal ["Column"], wire_types(app.instance_variable_get(:@roots))
+  end
+
+  def test_a_nested_widget_builder_reclaims_from_an_enclosing_app_block
+    app = Ruflet::DSL.app
+    column = app.column do
+      t = text("x")
+      center { container(content: t) }
+    end
+
+    assert_equal ["Container"], wire_types(column.children)
+    assert_equal "Container", column.children.first.to_patch["content"]["_c"]
   end
 
   def test_app_block_keeps_real_children_in_order

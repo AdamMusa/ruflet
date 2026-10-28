@@ -462,10 +462,6 @@ module Ruflet
         @roots = []
         @services = []
         @stack = []
-        # object_id => the list (@roots or a parent's children) this app
-        # attached the control to, so a control later passed as a prop can be
-        # taken back from exactly that list.
-        @attached = {}
         @page_props = { "route" => "/" }
         @seq = 0
       end
@@ -476,7 +472,7 @@ module Ruflet
       end
 
       def page(**props, &block)
-        detach_prop_controls(props)
+        Ruflet::UI::PropControls.reclaim(props)
         @page_props.merge!(normalize_props(props))
         instance_eval(&block) if block
         self
@@ -492,7 +488,7 @@ module Ruflet
 
         id = mapped_props.delete(:id)&.to_s || next_id(type)
         c = Ruflet::UI::ControlFactory.build(type.to_s, id: id, **normalize_props(mapped_props))
-        detach_prop_controls(props)
+        Ruflet::UI::PropControls.reclaim(props)
         attach(c)
 
         if block
@@ -512,7 +508,7 @@ module Ruflet
         mapped_props = props.dup
         id = mapped_props.delete(:id)&.to_s || next_id(type)
         svc = Ruflet::UI::ControlFactory.build(type.to_s, id: id, **normalize_props(mapped_props))
-        detach_prop_controls(props)
+        Ruflet::UI::PropControls.reclaim(props)
         @services << svc unless @services.include?(svc)
         svc
       end
@@ -538,26 +534,13 @@ module Ruflet
       def build_widget(type, **props, &block) = control(type.to_s, **props, &block)
       def build_service(type, **props, &block) = service(type.to_s, **props, &block)
 
-      def attach(control)
-        target = @stack.empty? ? @roots : @stack.last.children
-        target << control
-        @attached[control.object_id] = target
-      end
-
       # Every helper attaches the control it builds, so a control created as
       # an argument (`list_tile(title: text("T"))`, `page(appbar: app_bar(...))`)
-      # was attached before the control or page that consumes it. Take it back
-      # so it is not also a sibling or an extra root control.
-      def detach_prop_controls(props)
-        return if @attached.empty?
-
-        Ruflet::UI::PropControls.each_control(props) do |control|
-          target = @attached.delete(control.object_id)
-          next unless target
-
-          index = target.rindex { |child| child.equal?(control) }
-          target.delete_at(index) if index
-        end
+      # is attached before the control or page that consumes it.
+      # PropControls.reclaim takes it back from this list.
+      def attach(control)
+        target = @stack.empty? ? @roots : @stack.last.children
+        Ruflet::UI::PropControls.attach(target, control)
       end
 
       def normalize_props(hash)
