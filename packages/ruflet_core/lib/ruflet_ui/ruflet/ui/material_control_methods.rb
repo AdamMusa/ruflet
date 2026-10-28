@@ -494,6 +494,16 @@ module Ruflet
         build_widget(:segmentedbutton, **mapped)
       end
       def segmentedbutton(segments = nil, **props) = segmented_button(segments, **props)
+      def stepper(steps = nil, **props, &block)
+        mapped = props.dup
+        mapped[:steps] = steps unless steps.nil?
+        build_widget(:stepper, **mapped, &block)
+      end
+      # Deliberately no bare `step` helper or registry key: these methods are
+      # forwarded into Kernel and every registry key becomes a Rails view
+      # helper, so a `step` name would shadow user code (SPEC D-6).
+      def stepper_step(**props) = build_widget(:stepper_step, **props)
+      def stepperstep(**props) = stepper_step(**props)
       def selection_area(content = nil, **props)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
