@@ -643,6 +643,7 @@ module Ruflet
         "hover" => PointerEvent,
         "enter" => PointerEvent,
         "exit" => PointerEvent,
+        "refresh" => GenericEvent,
         "scroll" => ScrollEvent
       }.freeze
 
