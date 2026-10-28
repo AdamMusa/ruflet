@@ -70,6 +70,7 @@ module Ruflet
           @snapshot = file_snapshot
           start_watcher
           install_manual_reload_trap
+          signal_ready
           @server.start
         end
       end
@@ -220,6 +221,21 @@ module Ruflet
 
         Signal.trap("USR1") { @force_reload = true }
       rescue ArgumentError, NotImplementedError
+        nil
+      end
+
+      # `ruflet run` holds "r" (USR1) until this byte arrives on the fd it
+      # passed in RUFLET_READY_FD: before the trap above exists, USR1 would
+      # kill the booting app. Closing the fd also keeps it from leaking into
+      # the app's own child processes.
+      def signal_ready
+        fd = ENV.delete("RUFLET_READY_FD").to_s
+        return if fd.empty?
+
+        io = IO.for_fd(Integer(fd), autoclose: true)
+        io.write(".")
+        io.close
+      rescue ArgumentError, SystemCallError, IOError
         nil
       end
 

@@ -25,6 +25,9 @@ module Ruflet
       CLIENT_CHANNEL_MANIFEST = "#{ASSET_PREFIX}-manifest.json"
       LEGACY_CLIENT_CHANNEL_MANIFEST = "#{LEGACY_ASSET_PREFIX}-manifest.json"
       DEFAULT_CLIENT_UPDATE_INTERVAL = 6 * 60 * 60
+      # Child fd on which the hot-reload harness reports that its USR1 trap is
+      # installed (see Ruflet::HotReload::Runner#signal_ready).
+      READY_FD = 3
 
       def command_run(args)
         options = parse_run_options(args)
@@ -68,7 +71,8 @@ module Ruflet
         cmd = build_runtime_command(script_path, gemfile_path: gemfile_path, env: env, reload: options[:reload])
         return 1 unless cmd
 
-        run_state = { child_pid: Process.spawn(env, *cmd, pgroup: true), restart: false }
+        run_state = new_run_state(track_ready: options[:reload] && manual_reload_supported?)
+        spawn_app_child(env, cmd, run_state)
         reload_input_thread = options[:reload] ? start_reload_input_thread(run_state) : nil
         launched_client_pids = launch_target_client(options[:target], selected_port)
         forward_signal = lambda do |signal|
@@ -91,7 +95,7 @@ module Ruflet
           run_state[:restart] = false
           puts "Restarting app..."
           started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-          run_state[:child_pid] = Process.spawn(env, *cmd, pgroup: true)
+          spawn_app_child(env, cmd, run_state)
           wait_for_server_boot(selected_port)
           elapsed_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
           puts "Restarted in #{elapsed_ms}ms"
@@ -204,11 +208,75 @@ module Ruflet
         nil
       end
 
+      # With manual reload, the app child reports through a pipe once its USR1
+      # trap is installed. Until then "r" is queued: USR1 delivered earlier
+      # meets Ruby's default action and kills the booting app, which ends the
+      # whole session.
+      def new_run_state(track_ready:)
+        state = { child_pid: nil, restart: false }
+        state.merge!(lock: Mutex.new, ready: false, reload_pending: false) if track_ready
+        state
+      end
+
+      def spawn_app_child(env, cmd, run_state, **spawn_options)
+        unless run_state[:lock]
+          return run_state[:child_pid] = Process.spawn(env, *cmd, pgroup: true, **spawn_options)
+        end
+
+        reader, writer = IO.pipe
+        child_env = env.merge("RUFLET_READY_FD" => READY_FD.to_s)
+        pid = run_state[:lock].synchronize do
+          # A fresh process loads the current code, so a reload queued for
+          # the previous one is moot.
+          run_state[:ready] = false
+          run_state[:reload_pending] = false
+          run_state[:child_pid] = Process.spawn(child_env, *cmd, pgroup: true, READY_FD => writer, **spawn_options)
+        end
+        writer.close
+        watch_child_ready(reader, pid, run_state)
+        pid
+      end
+
+      def watch_child_ready(reader, pid, run_state)
+        Thread.new do
+          signalled = reader.read(1)
+          reader.close
+          next unless signalled
+
+          deliver = run_state[:lock].synchronize do
+            next false unless run_state[:child_pid] == pid
+
+            run_state[:ready] = true
+            pending = run_state[:reload_pending]
+            run_state[:reload_pending] = false
+            pending
+          end
+          Process.kill("USR1", pid) if deliver
+        rescue Errno::ESRCH, IOError
+          nil
+        end
+      end
+
+      # True when "r" was queued because the app has not finished booting.
+      def queue_reload_until_ready(run_state)
+        return false unless run_state[:lock]
+
+        run_state[:lock].synchronize do
+          next false if run_state[:ready]
+
+          run_state[:reload_pending] = true
+        end
+      end
+
       # Returns false when the child process is gone and the thread should end.
       def handle_reload_command(command, run_state)
         case command
         when "r"
-          Process.kill("USR1", run_state[:child_pid])
+          if queue_reload_until_ready(run_state)
+            puts "Reload queued: the app is still starting and will reload once it is up"
+          else
+            Process.kill("USR1", run_state[:child_pid])
+          end
         when "R"
           run_state[:restart] = true
           Process.kill("TERM", -run_state[:child_pid])

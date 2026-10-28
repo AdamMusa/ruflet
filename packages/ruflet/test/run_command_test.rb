@@ -4,6 +4,7 @@ require_relative "test_helper"
 require "tmpdir"
 require "fileutils"
 require "rbconfig"
+require "timeout"
 
 class RufletCliRunCommandTest < Minitest::Test
   class DummyRunner
@@ -377,6 +378,77 @@ class RufletCliRunCommandTest < Minitest::Test
     rescue Errno::ESRCH, Errno::EPERM
       # ESRCH: already reaped. EPERM: the runner denies signalling the group.
       nil
+    end
+  end
+
+  # "r" pressed while the app is still booting used to deliver USR1 before
+  # the hot-reload harness had trapped it, so Ruby's default action killed
+  # the app and ended the `ruflet run` session. The app here is the real
+  # harness with an app script that blocks mid-boot on a FIFO the test holds,
+  # so "r" lands in that window every time; FIFOs also carry the progress
+  # back, so the test waits on events only.
+  BOOT_GATED_APP = <<~RUBY
+    gate = File.open(ENV.fetch("TEST_GATE_FIFO"), "r") unless $ruflet_test_loads
+    $ruflet_test_progress ||= File.open(ENV.fetch("TEST_PROGRESS_FIFO"), "w")
+    $ruflet_test_loads = ($ruflet_test_loads || 0) + 1
+    $ruflet_test_progress.write("L\#{$ruflet_test_loads}")
+    $ruflet_test_progress.flush
+    if gate
+      gate.read(1) # boot stays here until the test opens the gate
+      gate.close
+    end
+    Ruflet.run(host: "127.0.0.1", port: 0) { |_page| }
+  RUBY
+
+  def test_reload_pressed_during_boot_is_applied_once_the_app_is_up
+    skip "needs USR1 and FIFOs" unless Signal.list.key?("USR1") && File.respond_to?(:mkfifo)
+
+    Dir.mktmpdir("ruflet-reload-boot-") do |dir|
+      script = File.join(dir, "main.rb")
+      File.write(script, BOOT_GATED_APP)
+      gate_fifo = File.join(dir, "gate")
+      progress_fifo = File.join(dir, "progress")
+      File.mkfifo(gate_fifo)
+      File.mkfifo(progress_fifo)
+
+      runner = DummyRunner.new
+      env = {
+        "RUFLET_SUPPRESS_SERVER_BANNER" => "1",
+        "RUBYLIB" => runner.send(:local_ruflet_dev_lib_paths).join(File::PATH_SEPARATOR),
+        "TEST_GATE_FIFO" => gate_fifo,
+        "TEST_PROGRESS_FIFO" => progress_fifo
+      }
+      cmd = runner.send(:build_runtime_command, script, gemfile_path: nil, env: env, reload: true)
+      env.delete("RUFLET_BOOTSNAP_DIR") # keep the test out of ~/.ruflet
+      run_state = runner.send(:new_run_state, track_ready: true)
+
+      Timeout.timeout(120) do # guards a broken build only; nothing waits on time
+        runner.send(:spawn_app_child, env, cmd, run_state, out: File::NULL, err: File::NULL)
+        gate = File.open(gate_fifo, "w")         # the app is running user code
+        progress = File.open(progress_fifo, "r")
+        assert_equal "L1", progress.read(2), "the app must be mid-boot"
+
+        out, = capture_io { assert runner.send(:handle_reload_command, "r", run_state) }
+        assert_match(/queued/i, out, "r during boot must be queued, not delivered")
+
+        gate.write(".")
+        gate.close
+        assert_equal "L2", progress.read(2), "the queued reload must run once the app is up"
+        assert_nil Process.waitpid(run_state[:child_pid], Process::WNOHANG),
+                   "the session's app must survive r pressed during boot"
+      ensure
+        progress&.close
+        gate&.close unless gate.nil? || gate.closed?
+      end
+    ensure
+      if run_state && run_state[:child_pid]
+        begin
+          Process.kill("KILL", -run_state[:child_pid])
+          Process.wait(run_state[:child_pid])
+        rescue Errno::ESRCH, Errno::ECHILD, Errno::EPERM
+          nil
+        end
+      end
     end
   end
 
