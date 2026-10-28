@@ -9,6 +9,7 @@ require_relative "canvas_control"
 require_relative "circle_control"
 require_relative "color_control"
 require_relative "column_control"
+require_relative "customscrollview_control"
 require_relative "dialogs_control"
 require_relative "dismissible_control"
 require_relative "draggable_control"
@@ -46,6 +47,10 @@ require_relative "serviceregistry_control"
 require_relative "shadermask_control"
 require_relative "shadow_control"
 require_relative "shimmer_control"
+require_relative "sliverfillremaining_control"
+require_relative "slivergrid_control"
+require_relative "sliverlist_control"
+require_relative "slivertoboxadapter_control"
 require_relative "stack_control"
 require_relative "text_control"
 require_relative "textspan_control"
@@ -75,6 +80,8 @@ module Ruflet
             "circle" => RufletComponents::CircleControl,
             "color" => RufletComponents::ColorControl,
             "column" => RufletComponents::ColumnControl,
+            "custom_scroll_view" => RufletComponents::CustomScrollViewControl,
+            "customscrollview" => RufletComponents::CustomScrollViewControl,
             "dialogs" => RufletComponents::DialogsControl,
             "dismissible" => RufletComponents::DismissibleControl,
             "drag_target" => RufletComponents::DragTargetControl,
@@ -127,6 +134,14 @@ module Ruflet
             "shadermask" => RufletComponents::ShaderMaskControl,
             "shadow" => RufletComponents::ShadowControl,
             "shimmer" => RufletComponents::ShimmerControl,
+            "sliver_fill_remaining" => RufletComponents::SliverFillRemainingControl,
+            "sliver_grid" => RufletComponents::SliverGridControl,
+            "sliver_list" => RufletComponents::SliverListControl,
+            "sliver_to_box_adapter" => RufletComponents::SliverToBoxAdapterControl,
+            "sliverfillremaining" => RufletComponents::SliverFillRemainingControl,
+            "slivergrid" => RufletComponents::SliverGridControl,
+            "sliverlist" => RufletComponents::SliverListControl,
+            "slivertoboxadapter" => RufletComponents::SliverToBoxAdapterControl,
             "stack" => RufletComponents::StackControl,
             "text" => RufletComponents::TextControl,
             "text_span" => RufletComponents::TextSpanControl,

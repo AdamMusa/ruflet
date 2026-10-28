@@ -318,6 +318,36 @@ module Ruflet
         build_widget(:listview, **mapped)
       end
       def listview(children = nil, **props) = list_view(children, **props)
+      def custom_scroll_view(slivers = nil, **props, &block)
+        mapped = props.dup
+        mapped[:slivers] = slivers unless slivers.nil?
+        build_widget(:customscrollview, **mapped, &block)
+      end
+      def customscrollview(slivers = nil, **props, &block) = custom_scroll_view(slivers, **props, &block)
+      def sliver_list(children = nil, **props, &block)
+        mapped = props.dup
+        mapped[:children] = children unless children.nil?
+        build_widget(:sliverlist, **mapped, &block)
+      end
+      def sliverlist(children = nil, **props, &block) = sliver_list(children, **props, &block)
+      def sliver_grid(children = nil, **props, &block)
+        mapped = props.dup
+        mapped[:children] = children unless children.nil?
+        build_widget(:slivergrid, **mapped, &block)
+      end
+      def slivergrid(children = nil, **props, &block) = sliver_grid(children, **props, &block)
+      def sliver_to_box_adapter(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:slivertoboxadapter, **mapped)
+      end
+      def slivertoboxadapter(content = nil, **props) = sliver_to_box_adapter(content, **props)
+      def sliver_fill_remaining(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:sliverfillremaining, **mapped)
+      end
+      def sliverfillremaining(content = nil, **props) = sliver_fill_remaining(content, **props)
       def menu_bar(children = nil, **props)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
