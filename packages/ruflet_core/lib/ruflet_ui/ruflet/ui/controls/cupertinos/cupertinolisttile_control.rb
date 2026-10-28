@@ -8,7 +8,7 @@ module Ruflet
           TYPE = "cupertinolisttile".freeze
           WIRE = "ListTile".freeze
 
-          KEYWORDS = [:additional_info, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :bgcolor_activated, :bottom, :col, :data, :disabled, :expand, :expand_loose, :height, :key, :leading, :leading_size, :leading_to_title, :left, :margin, :notched, :offset, :opacity, :padding, :right, :rotate, :rtl, :scale, :size_change_interval, :subtitle, :title, :toggle_inputs, :tooltip, :top, :trailing, :url, :visible, :width, :on_animation_end, :on_click, :on_size_change].freeze
+          KEYWORDS = [:additional_info, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :bgcolor_activated, :bottom, :chevron, :col, :data, :disabled, :expand, :expand_loose, :height, :key, :leading, :leading_size, :leading_to_title, :left, :margin, :notched, :offset, :opacity, :padding, :right, :rotate, :rtl, :scale, :size_change_interval, :subtitle, :title, :toggle_inputs, :tooltip, :top, :trailing, :url, :visible, :width, :on_animation_end, :on_click, :on_size_change].freeze
 
           def initialize(id: nil, **props)
             unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
@@ -28,6 +28,7 @@ module Ruflet
             bgcolor = props[:bgcolor]
             bgcolor_activated = props[:bgcolor_activated]
             bottom = props[:bottom]
+            chevron = props[:chevron]
             col = props[:col]
             data = props[:data]
             disabled = props[:disabled]
@@ -82,6 +83,7 @@ module Ruflet
             props[:bgcolor] = bgcolor unless bgcolor.nil?
             props[:bgcolor_activated] = bgcolor_activated unless bgcolor_activated.nil?
             props[:bottom] = bottom unless bottom.nil?
+            props[:chevron] = chevron unless chevron.nil?
             props[:col] = col unless col.nil?
             props[:data] = data unless data.nil?
             props[:disabled] = disabled unless disabled.nil?
