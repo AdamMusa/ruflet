@@ -94,6 +94,8 @@ require_relative "materials/selectionarea_control"
 require_relative "materials/slider_control"
 require_relative "materials/snackbar_control"
 require_relative "materials/snackbaraction_control"
+require_relative "materials/step_control"
+require_relative "materials/stepper_control"
 require_relative "materials/submenubutton_control"
 require_relative "materials/switch_control"
 require_relative "materials/tab_control"
@@ -486,6 +488,10 @@ module Ruflet
           "snackbaraction" => RufletComponents::SnackBarActionControl,
           "snackbar" => RufletComponents::SnackBarControl,
           "stack" => RufletComponents::StackControl,
+          "step" => RufletComponents::StepControl,
+          "stepper" => RufletComponents::StepperControl,
+          "stepper_step" => RufletComponents::StepControl,
+          "stepperstep" => RufletComponents::StepControl,
           "submenu_button" => RufletComponents::SubmenuButtonControl,
           "submenubutton" => RufletComponents::SubmenuButtonControl,
           "switch" => RufletComponents::SwitchControl,
