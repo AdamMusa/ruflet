@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 
+require_relative "scrollable_methods"
+
 module Ruflet
   module UI
     module Controls
       module RufletComponents
         class ViewControl < Ruflet::Control
+          include ScrollableMethods
+
           TYPE = "view".freeze
           WIRE = "View".freeze
 
