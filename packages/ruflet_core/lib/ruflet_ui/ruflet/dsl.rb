@@ -199,6 +199,8 @@ module Ruflet
     def slivertoboxadapter(content = nil, **props) = _pending_app.slivertoboxadapter(content, **props)
     def sliver_fill_remaining(content = nil, **props) = _pending_app.sliver_fill_remaining(content, **props)
     def sliverfillremaining(content = nil, **props) = _pending_app.sliverfillremaining(content, **props)
+    def sliver_app_bar(**props) = _pending_app.sliver_app_bar(**props)
+    def sliverappbar(**props) = _pending_app.sliverappbar(**props)
     def menu_bar(children = nil, **props) = _pending_app.menu_bar(children, **props)
     def menubar(children = nil, **props) = _pending_app.menubar(children, **props)
     def menu_item_button(content = nil, **props) = _pending_app.menu_item_button(content, **props)

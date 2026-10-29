@@ -53,6 +53,7 @@ require_relative "serviceregistry_control"
 require_relative "shadermask_control"
 require_relative "shadow_control"
 require_relative "shimmer_control"
+require_relative "sliverappbar_control"
 require_relative "sliverfillremaining_control"
 require_relative "slivergrid_control"
 require_relative "sliverlist_control"
@@ -152,10 +153,12 @@ module Ruflet
             "shadermask" => RufletComponents::ShaderMaskControl,
             "shadow" => RufletComponents::ShadowControl,
             "shimmer" => RufletComponents::ShimmerControl,
+            "sliver_app_bar" => RufletComponents::SliverAppBarControl,
             "sliver_fill_remaining" => RufletComponents::SliverFillRemainingControl,
             "sliver_grid" => RufletComponents::SliverGridControl,
             "sliver_list" => RufletComponents::SliverListControl,
             "sliver_to_box_adapter" => RufletComponents::SliverToBoxAdapterControl,
+            "sliverappbar" => RufletComponents::SliverAppBarControl,
             "sliverfillremaining" => RufletComponents::SliverFillRemainingControl,
             "slivergrid" => RufletComponents::SliverGridControl,
             "sliverlist" => RufletComponents::SliverListControl,
