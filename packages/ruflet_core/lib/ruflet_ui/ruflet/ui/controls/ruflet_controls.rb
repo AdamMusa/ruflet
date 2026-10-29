@@ -38,6 +38,7 @@ require_relative "materials/bottomappbar_control"
 require_relative "materials/bottomsheet_control"
 require_relative "materials/button_control"
 require_relative "materials/card_control"
+require_relative "materials/carouselview_control"
 require_relative "materials/checkbox_control"
 require_relative "materials/chip_control"
 require_relative "materials/circleavatar_control"
@@ -120,14 +121,18 @@ require_relative "shared/dismissible_control"
 require_relative "shared/draggable_control"
 require_relative "shared/dragtarget_control"
 require_relative "shared/fill_control"
+require_relative "shared/fittedbox_control"
+require_relative "shared/formrow_control"
 require_relative "shared/gesturedetector_control"
 require_relative "shared/gridview_control"
 require_relative "shared/hero_control"
 require_relative "shared/icon_control"
 require_relative "shared/image_control"
+require_relative "shared/indexedstack_control"
 require_relative "shared/interactiveviewer_control"
 require_relative "shared/keyboardlistener_control"
 require_relative "shared/line_control"
+require_relative "shared/listsection_control"
 require_relative "shared/listview_control"
 require_relative "shared/markdown_control"
 require_relative "shared/mergesemantics_control"
@@ -153,6 +158,8 @@ require_relative "shared/shadermask_control"
 require_relative "shared/shadow_control"
 require_relative "shared/shimmer_control"
 require_relative "shared/stack_control"
+require_relative "shared/table_control"
+require_relative "shared/tablerow_control"
 require_relative "shared/text_control"
 require_relative "shared/textspan_control"
 require_relative "shared/transparentpointer_control"
@@ -204,6 +211,8 @@ module Ruflet
           "button" => RufletComponents::ButtonControl,
           "canvas" => RufletComponents::CanvasControl,
           "card" => RufletComponents::CardControl,
+          "carousel_view" => RufletComponents::CarouselViewControl,
+          "carouselview" => RufletComponents::CarouselViewControl,
           "candlestick_chart" => RufletComponents::CandlestickChartControl,
           "candlestick_chart_spot" => RufletComponents::CandlestickChartSpotControl,
           "candlestickchart" => RufletComponents::CandlestickChartControl,
@@ -320,8 +329,12 @@ module Ruflet
           "fillediconbutton" => RufletComponents::FilledIconButtonControl,
           "filledtonalbutton" => RufletComponents::FilledTonalButtonControl,
           "filledtonaliconbutton" => RufletComponents::FilledTonalIconButtonControl,
+          "fitted_box" => RufletComponents::FittedBoxControl,
+          "fittedbox" => RufletComponents::FittedBoxControl,
           "floating_action_button" => RufletComponents::FloatingActionButtonControl,
           "floatingactionbutton" => RufletComponents::FloatingActionButtonControl,
+          "form_row" => RufletComponents::FormRowControl,
+          "formrow" => RufletComponents::FormRowControl,
           "gesture_detector" => RufletComponents::GestureDetectorControl,
           "gesturedetector" => RufletComponents::GestureDetectorControl,
           "grid_view" => RufletComponents::GridViewControl,
@@ -336,6 +349,8 @@ module Ruflet
           "lottie" => RufletComponents::LottieControl,
           "iconbutton" => RufletComponents::IconButtonControl,
           "image" => RufletComponents::ImageControl,
+          "indexed_stack" => RufletComponents::IndexedStackControl,
+          "indexedstack" => RufletComponents::IndexedStackControl,
           "interactive_viewer" => RufletComponents::InteractiveViewerControl,
           "interactiveviewer" => RufletComponents::InteractiveViewerControl,
           "keyboard_listener" => RufletComponents::KeyboardListenerControl,
@@ -347,8 +362,10 @@ module Ruflet
           "linechart" => RufletComponents::LineChartControl,
           "linechartdata" => RufletComponents::LineChartDataControl,
           "linechartdatapoint" => RufletComponents::LineChartDataPointControl,
+          "list_section" => RufletComponents::ListSectionControl,
           "list_tile" => RufletComponents::ListTileControl,
           "list_view" => RufletComponents::ListViewControl,
+          "listsection" => RufletComponents::ListSectionControl,
           "listtile" => RufletComponents::ListTileControl,
           "map" => RufletComponents::MapControl,
           "map_layer" => RufletComponents::MapLayerControl,
@@ -494,6 +511,9 @@ module Ruflet
           "tab_bar_view" => RufletComponents::TabBarViewControl,
           "tabbar" => RufletComponents::TabBarControl,
           "tabbarview" => RufletComponents::TabBarViewControl,
+          "table" => RufletComponents::TableControl,
+          "table_row" => RufletComponents::TableRowControl,
+          "tablerow" => RufletComponents::TableRowControl,
           "tabs" => RufletComponents::TabsControl,
           "text" => RufletComponents::TextControl,
           "text_button" => RufletComponents::TextButtonControl,

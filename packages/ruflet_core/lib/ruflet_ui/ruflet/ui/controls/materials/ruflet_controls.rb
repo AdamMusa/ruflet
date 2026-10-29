@@ -14,6 +14,7 @@ require_relative "bottomappbar_control"
 require_relative "bottomsheet_control"
 require_relative "button_control"
 require_relative "card_control"
+require_relative "carouselview_control"
 require_relative "checkbox_control"
 require_relative "chip_control"
 require_relative "circleavatar_control"
@@ -117,6 +118,8 @@ module Ruflet
             "barchartrodstackitem" => RufletComponents::BarChartRodStackItemControl,
             "button" => RufletComponents::ButtonControl,
             "card" => RufletComponents::CardControl,
+            "carousel_view" => RufletComponents::CarouselViewControl,
+            "carouselview" => RufletComponents::CarouselViewControl,
             "candlestick_chart" => RufletComponents::CandlestickChartControl,
             "candlestick_chart_spot" => RufletComponents::CandlestickChartSpotControl,
             "candlestickchart" => RufletComponents::CandlestickChartControl,
