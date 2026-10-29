@@ -12,7 +12,7 @@ module Ruflet
           TYPE = "gridview".freeze
           WIRE = "GridView".freeze
 
-          KEYWORDS = [:adaptive, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :auto_scroll, :badge, :bottom, :build_controls_on_demand, :cache_extent, :child_aspect_ratio, :clip_behavior, :col, :controls, :data, :disabled, :end_reached_threshold, :expand, :expand_loose, :height, :horizontal, :key, :left, :margin, :max_extent, :offset, :opacity, :padding, :refresh_bgcolor, :refresh_color, :refresh_displacement, :refresh_timeout, :refresh_trigger_distance, :reverse, :right, :rotate, :rtl, :run_spacing, :runs_count, :scale, :scroll, :scroll_interval, :semantic_child_count, :size_change_interval, :spacing, :tooltip, :top, :visible, :width, :on_animation_end, :on_end_reached, :on_refresh, :on_scroll, :on_size_change].freeze
+          KEYWORDS = [:adaptive, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :auto_scroll, :badge, :bottom, :build_controls_on_demand, :cache_extent, :child_aspect_ratio, :clip_behavior, :col, :controls, :data, :disabled, :end_reached_threshold, :expand, :expand_loose, :height, :horizontal, :key, :keyboard_dismiss_behavior, :left, :margin, :max_extent, :offset, :opacity, :padding, :refresh_bgcolor, :refresh_color, :refresh_displacement, :refresh_timeout, :refresh_trigger_distance, :reverse, :right, :rotate, :rtl, :run_spacing, :runs_count, :scale, :scroll, :scroll_interval, :semantic_child_count, :size_change_interval, :spacing, :tooltip, :top, :visible, :width, :on_animation_end, :on_end_reached, :on_refresh, :on_scroll, :on_size_change].freeze
 
           def initialize(id: nil, **props)
             unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
@@ -45,6 +45,7 @@ module Ruflet
             height = props[:height]
             horizontal = props[:horizontal]
             key = props[:key]
+            keyboard_dismiss_behavior = props[:keyboard_dismiss_behavior]
             left = props[:left]
             margin = props[:margin]
             max_extent = props[:max_extent]
@@ -114,6 +115,7 @@ module Ruflet
             props[:height] = height unless height.nil?
             props[:horizontal] = horizontal unless horizontal.nil?
             props[:key] = key unless key.nil?
+            props[:keyboard_dismiss_behavior] = keyboard_dismiss_behavior unless keyboard_dismiss_behavior.nil?
             props[:left] = left unless left.nil?
             props[:margin] = margin unless margin.nil?
             props[:max_extent] = max_extent unless max_extent.nil?

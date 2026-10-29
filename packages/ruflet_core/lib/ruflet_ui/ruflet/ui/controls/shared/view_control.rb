@@ -12,7 +12,7 @@ module Ruflet
           TYPE = "view".freeze
           WIRE = "View".freeze
 
-          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :appbar, :aspect_ratio, :auto_scroll, :badge, :bgcolor, :bottom, :bottom_appbar, :bottom_sheet, :can_pop, :col, :controls, :data, :decoration, :disabled, :drawer, :end_drawer, :expand, :expand_loose, :floating_action_button, :floating_action_button_location, :foreground_decoration, :fullscreen_dialog, :height, :horizontal_alignment, :key, :left, :margin, :navigation_bar, :offset, :opacity, :padding, :right, :rotate, :route, :rtl, :scale, :scroll, :scroll_interval, :services, :size_change_interval, :spacing, :tooltip, :top, :vertical_alignment, :visible, :width, :on_animation_end, :on_confirm_pop, :on_scroll, :on_size_change].freeze
+          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :appbar, :aspect_ratio, :auto_scroll, :badge, :bgcolor, :bottom, :bottom_appbar, :bottom_sheet, :can_pop, :col, :controls, :data, :decoration, :disabled, :drawer, :end_drawer, :expand, :expand_loose, :floating_action_button, :floating_action_button_location, :foreground_decoration, :fullscreen_dialog, :height, :horizontal_alignment, :key, :keyboard_dismiss_behavior, :left, :margin, :navigation_bar, :offset, :opacity, :padding, :right, :rotate, :route, :rtl, :scale, :scroll, :scroll_interval, :services, :size_change_interval, :spacing, :tooltip, :top, :vertical_alignment, :visible, :width, :on_animation_end, :on_confirm_pop, :on_scroll, :on_size_change].freeze
 
           def initialize(id: nil, **props)
             unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
@@ -51,6 +51,7 @@ module Ruflet
             height = props[:height]
             horizontal_alignment = props[:horizontal_alignment]
             key = props[:key]
+            keyboard_dismiss_behavior = props[:keyboard_dismiss_behavior]
             left = props[:left]
             margin = props[:margin]
             navigation_bar = props[:navigation_bar]
@@ -119,6 +120,7 @@ module Ruflet
             props[:height] = height unless height.nil?
             props[:horizontal_alignment] = horizontal_alignment unless horizontal_alignment.nil?
             props[:key] = key unless key.nil?
+            props[:keyboard_dismiss_behavior] = keyboard_dismiss_behavior unless keyboard_dismiss_behavior.nil?
             props[:left] = left unless left.nil?
             props[:margin] = margin unless margin.nil?
             props[:navigation_bar] = navigation_bar unless navigation_bar.nil?
