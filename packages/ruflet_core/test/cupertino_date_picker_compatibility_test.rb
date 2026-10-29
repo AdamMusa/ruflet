@@ -80,4 +80,15 @@ class RufletCupertinoDatePickerCompatibilityTest < Minitest::Test
   def test_compact_alias_uses_same_control
     assert_equal "DatePicker", Ruflet.cupertinodatepicker.to_patch["_c"]
   end
+
+  def test_inline_variant_declares_itself_on_the_canonical_wire_type
+    inline = Ruflet.cupertino_date_picker.to_patch
+    dialog = Ruflet.date_picker.to_patch
+
+    assert_equal "DatePicker", inline["_c"]
+    assert_equal true, inline["inline"]
+    refute dialog.key?("inline")
+    assert_equal false, Ruflet.cupertino_date_picker(inline: false).to_patch["inline"]
+    assert_equal true, Ruflet.date_picker(inline: true).to_patch["inline"]
+  end
 end

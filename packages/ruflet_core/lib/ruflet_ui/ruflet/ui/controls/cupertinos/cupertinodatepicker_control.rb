@@ -8,7 +8,7 @@ module Ruflet
           TYPE = "cupertinodatepicker".freeze
           WIRE = "DatePicker".freeze
 
-          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :bottom, :col, :data, :date_order, :date_picker_mode, :disabled, :expand, :expand_loose, :first_date, :height, :item_extent, :key, :last_date, :left, :locale, :margin, :maximum_year, :minimum_year, :minute_interval, :offset, :opacity, :right, :rotate, :rtl, :scale, :show_day_of_week, :size_change_interval, :tooltip, :top, :use_24h_format, :value, :visible, :width, :on_animation_end, :on_change, :on_size_change].freeze
+          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :bottom, :col, :data, :date_order, :date_picker_mode, :disabled, :expand, :expand_loose, :first_date, :height, :inline, :item_extent, :key, :last_date, :left, :locale, :margin, :maximum_year, :minimum_year, :minute_interval, :offset, :opacity, :right, :rotate, :rtl, :scale, :show_day_of_week, :size_change_interval, :tooltip, :top, :use_24h_format, :value, :visible, :width, :on_animation_end, :on_change, :on_size_change].freeze
 
           def initialize(id: nil, **props)
             unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
@@ -35,6 +35,7 @@ module Ruflet
             expand_loose = props[:expand_loose]
             first_date = props[:first_date]
             height = props[:height]
+            inline = props[:inline]
             item_extent = props[:item_extent]
             key = props[:key]
             last_date = props[:last_date]
@@ -62,6 +63,8 @@ module Ruflet
             on_change = props[:on_change]
             on_size_change = props[:on_size_change]
             date_picker_mode = "date_and_time" if date_picker_mode.nil?
+            # The canonical DatePicker renders this one in place, not as a dialog.
+            inline = true if inline.nil?
             item_extent = 32.0 if item_extent.nil?
             minimum_year = 1 if minimum_year.nil?
             minute_interval = 1 if minute_interval.nil?
@@ -91,6 +94,7 @@ module Ruflet
             props[:expand_loose] = expand_loose unless expand_loose.nil?
             props[:first_date] = first_date unless first_date.nil?
             props[:height] = height unless height.nil?
+            props[:inline] = inline unless inline.nil?
             props[:item_extent] = item_extent unless item_extent.nil?
             props[:key] = key unless key.nil?
             props[:last_date] = last_date unless last_date.nil?
