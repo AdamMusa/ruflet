@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 
+require_relative "../shared/focusable_methods"
+
 module Ruflet
   module UI
     module Controls
       module RufletComponents
         class FilledIconButtonControl < Ruflet::Control
+          include FocusableMethods
+
           TYPE = "fillediconbutton".freeze
           WIRE = "FilledIconButton".freeze
 

@@ -13,16 +13,21 @@ require_relative "customscrollview_control"
 require_relative "dialogs_control"
 require_relative "dismissible_control"
 require_relative "draggable_control"
+require_relative "draggablescrollablesheet_control"
 require_relative "dragtarget_control"
 require_relative "fill_control"
+require_relative "fittedbox_control"
+require_relative "formrow_control"
 require_relative "gesturedetector_control"
 require_relative "gridview_control"
 require_relative "hero_control"
 require_relative "icon_control"
 require_relative "image_control"
+require_relative "indexedstack_control"
 require_relative "interactiveviewer_control"
 require_relative "keyboardlistener_control"
 require_relative "line_control"
+require_relative "listsection_control"
 require_relative "listview_control"
 require_relative "markdown_control"
 require_relative "mergesemantics_control"
@@ -42,6 +47,7 @@ require_relative "rotatedbox_control"
 require_relative "ruflet_app_control"
 require_relative "safearea_control"
 require_relative "screenshot_control"
+require_relative "scrollable_methods"
 require_relative "semantics_control"
 require_relative "serviceregistry_control"
 require_relative "shadermask_control"
@@ -53,6 +59,8 @@ require_relative "slivergrid_control"
 require_relative "sliverlist_control"
 require_relative "slivertoboxadapter_control"
 require_relative "stack_control"
+require_relative "table_control"
+require_relative "tablerow_control"
 require_relative "text_control"
 require_relative "textspan_control"
 require_relative "transparentpointer_control"
@@ -87,8 +95,14 @@ module Ruflet
             "dismissible" => RufletComponents::DismissibleControl,
             "drag_target" => RufletComponents::DragTargetControl,
             "draggable" => RufletComponents::DraggableControl,
+            "draggable_scrollable_sheet" => RufletComponents::DraggableScrollableSheetControl,
+            "draggablescrollablesheet" => RufletComponents::DraggableScrollableSheetControl,
             "dragtarget" => RufletComponents::DragTargetControl,
             "fill" => RufletComponents::FillControl,
+            "fitted_box" => RufletComponents::FittedBoxControl,
+            "fittedbox" => RufletComponents::FittedBoxControl,
+            "form_row" => RufletComponents::FormRowControl,
+            "formrow" => RufletComponents::FormRowControl,
             "gesture_detector" => RufletComponents::GestureDetectorControl,
             "gesturedetector" => RufletComponents::GestureDetectorControl,
             "grid_view" => RufletComponents::GridViewControl,
@@ -96,12 +110,16 @@ module Ruflet
             "hero" => RufletComponents::HeroControl,
             "icon" => RufletComponents::IconControl,
             "image" => RufletComponents::ImageControl,
+            "indexed_stack" => RufletComponents::IndexedStackControl,
+            "indexedstack" => RufletComponents::IndexedStackControl,
             "interactive_viewer" => RufletComponents::InteractiveViewerControl,
             "interactiveviewer" => RufletComponents::InteractiveViewerControl,
             "keyboard_listener" => RufletComponents::KeyboardListenerControl,
             "keyboardlistener" => RufletComponents::KeyboardListenerControl,
             "line" => RufletComponents::LineControl,
+            "list_section" => RufletComponents::ListSectionControl,
             "list_view" => RufletComponents::ListViewControl,
+            "listsection" => RufletComponents::ListSectionControl,
             "listview" => RufletComponents::ListViewControl,
             "markdown" => RufletComponents::MarkdownControl,
             "merge_semantics" => RufletComponents::MergeSemanticsControl,
@@ -146,6 +164,9 @@ module Ruflet
             "sliverlist" => RufletComponents::SliverListControl,
             "slivertoboxadapter" => RufletComponents::SliverToBoxAdapterControl,
             "stack" => RufletComponents::StackControl,
+            "table" => RufletComponents::TableControl,
+            "table_row" => RufletComponents::TableRowControl,
+            "tablerow" => RufletComponents::TableRowControl,
             "text" => RufletComponents::TextControl,
             "text_span" => RufletComponents::TextSpanControl,
             "textspan" => RufletComponents::TextSpanControl,
