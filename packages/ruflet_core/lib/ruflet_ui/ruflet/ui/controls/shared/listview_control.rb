@@ -1,14 +1,18 @@
 # frozen_string_literal: true
 
+require_relative "scrollable_methods"
+
 module Ruflet
   module UI
     module Controls
       module RufletComponents
         class ListViewControl < Ruflet::Control
+          include ScrollableMethods
+
           TYPE = "listview".freeze
           WIRE = "ListView".freeze
 
-          KEYWORDS = [:adaptive, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :auto_scroll, :badge, :bottom, :build_controls_on_demand, :cache_extent, :clip_behavior, :col, :controls, :data, :disabled, :divider_thickness, :expand, :expand_loose, :first_item_prototype, :height, :horizontal, :item_extent, :key, :left, :margin, :offset, :opacity, :padding, :prototype_item, :reverse, :right, :rotate, :rtl, :scale, :scroll, :scroll_interval, :semantic_child_count, :size_change_interval, :spacing, :tooltip, :top, :visible, :width, :on_animation_end, :on_scroll, :on_size_change].freeze
+          KEYWORDS = [:adaptive, :align, :animate_align, :animate_changes, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :auto_scroll, :badge, :bottom, :build_controls_on_demand, :cache_extent, :clip_behavior, :col, :controls, :data, :disabled, :divider_thickness, :end_reached_threshold, :expand, :expand_loose, :first_item_prototype, :height, :horizontal, :item_animation, :item_extent, :key, :keyboard_dismiss_behavior, :left, :margin, :offset, :opacity, :padding, :prototype_item, :refresh_bgcolor, :refresh_color, :refresh_displacement, :refresh_timeout, :refresh_trigger_distance, :reverse, :right, :rotate, :rtl, :scale, :scroll, :scroll_interval, :semantic_child_count, :size_change_interval, :spacing, :tooltip, :top, :visible, :width, :on_animation_end, :on_end_reached, :on_refresh, :on_scroll, :on_size_change].freeze
 
           def initialize(id: nil, **props)
             unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
@@ -16,6 +20,7 @@ module Ruflet
             adaptive = props[:adaptive]
             align = props[:align]
             animate_align = props[:animate_align]
+            animate_changes = props[:animate_changes]
             animate_margin = props[:animate_margin]
             animate_offset = props[:animate_offset]
             animate_opacity = props[:animate_opacity]
@@ -35,19 +40,27 @@ module Ruflet
             data = props[:data]
             disabled = props[:disabled]
             divider_thickness = props[:divider_thickness]
+            end_reached_threshold = props[:end_reached_threshold]
             expand = props[:expand]
             expand_loose = props[:expand_loose]
             first_item_prototype = props[:first_item_prototype]
             height = props[:height]
             horizontal = props[:horizontal]
+            item_animation = props[:item_animation]
             item_extent = props[:item_extent]
             key = props[:key]
+            keyboard_dismiss_behavior = props[:keyboard_dismiss_behavior]
             left = props[:left]
             margin = props[:margin]
             offset = props[:offset]
             opacity = props[:opacity]
             padding = props[:padding]
             prototype_item = props[:prototype_item]
+            refresh_bgcolor = props[:refresh_bgcolor]
+            refresh_color = props[:refresh_color]
+            refresh_displacement = props[:refresh_displacement]
+            refresh_timeout = props[:refresh_timeout]
+            refresh_trigger_distance = props[:refresh_trigger_distance]
             reverse = props[:reverse]
             right = props[:right]
             rotate = props[:rotate]
@@ -63,6 +76,8 @@ module Ruflet
             visible = props[:visible]
             width = props[:width]
             on_animation_end = props[:on_animation_end]
+            on_end_reached = props[:on_end_reached]
+            on_refresh = props[:on_refresh]
             on_scroll = props[:on_scroll]
             on_size_change = props[:on_size_change]
             build_controls_on_demand = true if build_controls_on_demand.nil?
@@ -76,6 +91,7 @@ module Ruflet
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
+            props[:animate_changes] = animate_changes unless animate_changes.nil?
             props[:animate_margin] = animate_margin unless animate_margin.nil?
             props[:animate_offset] = animate_offset unless animate_offset.nil?
             props[:animate_opacity] = animate_opacity unless animate_opacity.nil?
@@ -95,19 +111,27 @@ module Ruflet
             props[:data] = data unless data.nil?
             props[:disabled] = disabled unless disabled.nil?
             props[:divider_thickness] = divider_thickness unless divider_thickness.nil?
+            props[:end_reached_threshold] = end_reached_threshold unless end_reached_threshold.nil?
             props[:expand] = expand unless expand.nil?
             props[:expand_loose] = expand_loose unless expand_loose.nil?
             props[:first_item_prototype] = first_item_prototype unless first_item_prototype.nil?
             props[:height] = height unless height.nil?
             props[:horizontal] = horizontal unless horizontal.nil?
+            props[:item_animation] = item_animation unless item_animation.nil?
             props[:item_extent] = item_extent unless item_extent.nil?
             props[:key] = key unless key.nil?
+            props[:keyboard_dismiss_behavior] = keyboard_dismiss_behavior unless keyboard_dismiss_behavior.nil?
             props[:left] = left unless left.nil?
             props[:margin] = margin unless margin.nil?
             props[:offset] = offset unless offset.nil?
             props[:opacity] = opacity unless opacity.nil?
             props[:padding] = padding unless padding.nil?
             props[:prototype_item] = prototype_item unless prototype_item.nil?
+            props[:refresh_bgcolor] = refresh_bgcolor unless refresh_bgcolor.nil?
+            props[:refresh_color] = refresh_color unless refresh_color.nil?
+            props[:refresh_displacement] = refresh_displacement unless refresh_displacement.nil?
+            props[:refresh_timeout] = refresh_timeout unless refresh_timeout.nil?
+            props[:refresh_trigger_distance] = refresh_trigger_distance unless refresh_trigger_distance.nil?
             props[:reverse] = reverse unless reverse.nil?
             props[:right] = right unless right.nil?
             props[:rotate] = rotate unless rotate.nil?
@@ -123,6 +147,8 @@ module Ruflet
             props[:visible] = visible unless visible.nil?
             props[:width] = width unless width.nil?
             props[:on_animation_end] = on_animation_end unless on_animation_end.nil?
+            props[:on_end_reached] = on_end_reached unless on_end_reached.nil?
+            props[:on_refresh] = on_refresh unless on_refresh.nil?
             props[:on_scroll] = on_scroll unless on_scroll.nil?
             props[:on_size_change] = on_size_change unless on_size_change.nil?
             super(type: TYPE, id: id, **props)

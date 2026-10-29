@@ -790,29 +790,33 @@ module Ruflet
       target
     end
 
+    # Drawers and scrolling belong to a View on the client (the Page control
+    # does not answer these methods). Like Flet, drawers target the top view
+    # and scroll_to the root view; without explicit views that is the
+    # implicit page view.
     def show_drawer(timeout: 10, on_result: nil)
-      raise ArgumentError, "No drawer defined" unless drawer
+      raise ArgumentError, "No drawer defined" unless top_view_prop("drawer")
 
-      invoke(:page, "show_drawer", timeout: timeout, on_result: on_result)
+      invoke(:top_view, "show_drawer", timeout: timeout, on_result: on_result)
     end
 
     def close_drawer(timeout: 10, on_result: nil)
-      invoke(:page, "close_drawer", timeout: timeout, on_result: on_result)
+      invoke(:top_view, "close_drawer", timeout: timeout, on_result: on_result)
     end
 
     def show_end_drawer(timeout: 10, on_result: nil)
-      raise ArgumentError, "No end_drawer defined" unless end_drawer
+      raise ArgumentError, "No end_drawer defined" unless top_view_prop("end_drawer")
 
-      invoke(:page, "show_end_drawer", timeout: timeout, on_result: on_result)
+      invoke(:top_view, "show_end_drawer", timeout: timeout, on_result: on_result)
     end
 
     def close_end_drawer(timeout: 10, on_result: nil)
-      invoke(:page, "close_end_drawer", timeout: timeout, on_result: on_result)
+      invoke(:top_view, "close_end_drawer", timeout: timeout, on_result: on_result)
     end
 
     def scroll_to(offset: nil, delta: nil, scroll_key: nil, duration: nil, curve: nil, timeout: 10, on_result: nil)
       invoke(
-        :page,
+        :root_view,
         "scroll_to",
         args: {
           "offset" => offset,
@@ -830,6 +834,8 @@ module Ruflet
       control_id =
         if page_control_target?(control_or_id)
           1
+        elsif control_or_id == :root_view || control_or_id == :top_view
+          view_wire_id(control_or_id)
         else
           control = resolve_control(control_or_id)
           return nil unless control
@@ -1401,7 +1407,13 @@ module Ruflet
         # mutations, not the value that originated on the client.
         capture_published_control_tree!(control)
       end
-      control.emit(name, event)
+      begin
+        control.emit(name, event)
+      ensure
+        # Ruby handlers are synchronous: once on_refresh returns (or raises),
+        # its patches are already sent, so stop the client's refresh spinner.
+        invoke(control, "end_refresh") if name.to_s == "refresh"
+      end
 
       if name.to_s == "dismiss" && remove_dialog_tracking(control)
         push_dialogs_update!
@@ -1970,6 +1982,20 @@ module Ruflet
           "value"
         end
       control.props[prop_name] = value
+    end
+
+    # Wire id of the root (first) or top (last) View, or of the implicit page
+    # View when the app has no explicit views.
+    def view_wire_id(which)
+      view = which == :root_view ? @views.first : @views.last
+      return @view_id unless view
+
+      refresh_control_indexes! if view.wire_id.nil?
+      view.wire_id
+    end
+
+    def top_view_prop(name)
+      @views.empty? ? public_send(name) : @views.last.props[name]
     end
 
     def page_control_target?(control_or_id)
