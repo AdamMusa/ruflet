@@ -157,6 +157,8 @@ require_relative "shared/shadermask_control"
 require_relative "shared/shadow_control"
 require_relative "shared/shimmer_control"
 require_relative "shared/stack_control"
+require_relative "shared/table_control"
+require_relative "shared/tablerow_control"
 require_relative "shared/text_control"
 require_relative "shared/textspan_control"
 require_relative "shared/transparentpointer_control"
@@ -506,6 +508,9 @@ module Ruflet
           "tab_bar_view" => RufletComponents::TabBarViewControl,
           "tabbar" => RufletComponents::TabBarControl,
           "tabbarview" => RufletComponents::TabBarViewControl,
+          "table" => RufletComponents::TableControl,
+          "table_row" => RufletComponents::TableRowControl,
+          "tablerow" => RufletComponents::TableRowControl,
           "tabs" => RufletComponents::TabsControl,
           "text" => RufletComponents::TextControl,
           "text_button" => RufletComponents::TextButtonControl,

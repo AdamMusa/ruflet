@@ -397,6 +397,17 @@ module Ruflet
         build_widget(:datacell, **mapped)
       end
       def datacell(content = nil, **props) = data_cell(content, **props)
+      def table(rows = nil, **props, &block)
+        mapped = props.dup
+        mapped[:rows] = rows unless rows.nil?
+        build_widget(:table, **mapped, &block)
+      end
+      def table_row(children = nil, **props, &block)
+        mapped = props.dup
+        mapped[:children] = children unless children.nil?
+        build_widget(:tablerow, **mapped, &block)
+      end
+      def tablerow(children = nil, **props, &block) = table_row(children, **props, &block)
       def option(key = nil, **props)
         mapped = props.dup
         mapped[:key] = key unless key.nil?

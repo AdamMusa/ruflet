@@ -51,6 +51,8 @@ require_relative "shadermask_control"
 require_relative "shadow_control"
 require_relative "shimmer_control"
 require_relative "stack_control"
+require_relative "table_control"
+require_relative "tablerow_control"
 require_relative "text_control"
 require_relative "textspan_control"
 require_relative "transparentpointer_control"
@@ -140,6 +142,9 @@ module Ruflet
             "shadow" => RufletComponents::ShadowControl,
             "shimmer" => RufletComponents::ShimmerControl,
             "stack" => RufletComponents::StackControl,
+            "table" => RufletComponents::TableControl,
+            "table_row" => RufletComponents::TableRowControl,
+            "tablerow" => RufletComponents::TableRowControl,
             "text" => RufletComponents::TextControl,
             "text_span" => RufletComponents::TextSpanControl,
             "textspan" => RufletComponents::TextSpanControl,
