@@ -232,6 +232,12 @@ module Ruflet
         mapped[:content] = content unless content.nil?
         build_widget(:card, **mapped)
       end
+      def list_section(children = nil, **props, &block)
+        mapped = props.dup
+        mapped[:children] = children unless children.nil?
+        build_widget(:listsection, **mapped, &block)
+      end
+      def listsection(children = nil, **props, &block) = list_section(children, **props, &block)
       def list_tile(**props) = build_widget(:listtile, **props)
       def listtile(**props) = list_tile(**props)
       def map(layers = nil, **props)
