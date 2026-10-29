@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "controls/ruflet_controls"
+require_relative "controls/shared/focusable_methods"
 
 module Ruflet
   module UI
@@ -37,6 +38,8 @@ module Ruflet
         end
 
         class ButtonControl < PlatformControl
+          include Controls::FocusableMethods
+
           TYPE = "button".freeze
           WIRE = "Button".freeze
           KEYWORDS = (
@@ -48,6 +51,8 @@ module Ruflet
         end
 
         class FilledButtonControl < PlatformControl
+          include Controls::FocusableMethods
+
           TYPE = "filledbutton".freeze
           WIRE = "FilledButton".freeze
           KEYWORDS = (
@@ -61,6 +66,8 @@ module Ruflet
         end
 
         class FilledTonalButtonControl < PlatformControl
+          include Controls::FocusableMethods
+
           TYPE = "filledtonalbutton".freeze
           WIRE = "FilledTonalButton".freeze
           KEYWORDS = (
@@ -74,6 +81,8 @@ module Ruflet
         end
 
         class OutlinedButtonControl < PlatformControl
+          include Controls::FocusableMethods
+
           TYPE = "outlinedbutton".freeze
           WIRE = "OutlinedButton".freeze
           KEYWORDS = (
@@ -87,6 +96,8 @@ module Ruflet
         end
 
         class TextButtonControl < PlatformControl
+          include Controls::FocusableMethods
+
           TYPE = "textbutton".freeze
           WIRE = "TextButton".freeze
           KEYWORDS = (
@@ -100,6 +111,8 @@ module Ruflet
         end
 
         class TextFieldControl < PlatformControl
+          include Controls::TextInputMethods
+
           TYPE = "textfield".freeze
           WIRE = "TextField".freeze
           KEYWORDS = (
@@ -313,6 +326,8 @@ module Ruflet
         end
 
         class DropdownControl < PlatformControl
+          include Controls::FocusableMethods
+
           TYPE = "dropdown".freeze
           WIRE = "Dropdown".freeze
           KEYWORDS = (
