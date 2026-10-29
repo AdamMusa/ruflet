@@ -33,7 +33,10 @@ class RufletControlCoverageTest < Minitest::Test
     control = Ruflet.dropdown_m2(
       [Ruflet.dropdown_option("one", text: "One")],
       value: "one",
-      label: "Pick"
+      label: "Pick",
+      hint_content: Ruflet.text("Choose"),
+      max_menu_height: 240,
+      on_change: ->(_event) {}
     )
     patch = control.to_patch
 
@@ -41,6 +44,10 @@ class RufletControlCoverageTest < Minitest::Test
     assert_equal "one", patch["value"]
     assert_equal "Pick", patch["label"]
     assert_equal "DropdownOption", patch["options"].first["_c"]
+    assert_equal "Text", patch["hint_content"]["_c"]
+    assert_equal 240, patch["menu_height"]
+    assert_equal true, patch["on_select"]
+    assert control.has_handler?(:change)
   end
 
   def test_gesture_detector_serializes_content_and_events
