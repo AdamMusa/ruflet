@@ -248,12 +248,16 @@ class RufletPageCompatibilityTest < Minitest::Test
       sender: ->(action, payload) { sent << [action, payload] }
     )
 
+    page.add(Ruflet.text("Body"))
+    view_id = sent.last[1]["patch"].find { |op| op[2] == "views" }[3].first["_i"]
+
     call_id = page.scroll_to(offset: 100, duration: 500, curve: "ease_in", timeout: 3)
 
     assert_match(/\Acall_/, call_id)
     action, payload = sent.last
     assert_equal Ruflet::Protocol::ACTIONS[:invoke_control_method], action
-    assert_equal 1, payload["control_id"]
+    assert_equal view_id, payload["control_id"]
+    refute_equal 1, payload["control_id"]
     assert_equal "scroll_to", payload["name"]
     assert_equal(
       {

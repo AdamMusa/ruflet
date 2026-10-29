@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 
+require_relative "../shared/focusable_methods"
+
 module Ruflet
   module UI
     module Controls
       module RufletComponents
         class CupertinoButtonControl < Ruflet::Control
+          include FocusableMethods
+
           TYPE = "cupertinobutton".freeze
           WIRE = "Button".freeze
 
