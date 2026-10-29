@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "controls/ruflet_controls"
+require_relative "controls/shared/focusable_methods"
 
 module Ruflet
   module UI
@@ -37,6 +38,8 @@ module Ruflet
         end
 
         class ButtonControl < PlatformControl
+          include Controls::FocusableMethods
+
           TYPE = "button".freeze
           WIRE = "Button".freeze
           KEYWORDS = (
@@ -48,6 +51,8 @@ module Ruflet
         end
 
         class FilledButtonControl < PlatformControl
+          include Controls::FocusableMethods
+
           TYPE = "filledbutton".freeze
           WIRE = "FilledButton".freeze
           KEYWORDS = (
@@ -61,6 +66,8 @@ module Ruflet
         end
 
         class FilledTonalButtonControl < PlatformControl
+          include Controls::FocusableMethods
+
           TYPE = "filledtonalbutton".freeze
           WIRE = "FilledTonalButton".freeze
           KEYWORDS = (
@@ -74,6 +81,8 @@ module Ruflet
         end
 
         class OutlinedButtonControl < PlatformControl
+          include Controls::FocusableMethods
+
           TYPE = "outlinedbutton".freeze
           WIRE = "OutlinedButton".freeze
           KEYWORDS = (
@@ -87,6 +96,8 @@ module Ruflet
         end
 
         class TextButtonControl < PlatformControl
+          include Controls::FocusableMethods
+
           TYPE = "textbutton".freeze
           WIRE = "TextButton".freeze
           KEYWORDS = (
@@ -100,6 +111,8 @@ module Ruflet
         end
 
         class TextFieldControl < PlatformControl
+          include Controls::TextInputMethods
+
           TYPE = "textfield".freeze
           WIRE = "TextField".freeze
           KEYWORDS = (
@@ -313,12 +326,58 @@ module Ruflet
         end
 
         class DropdownControl < PlatformControl
+          include Controls::FocusableMethods
+
           TYPE = "dropdown".freeze
           WIRE = "Dropdown".freeze
           KEYWORDS = (
             Controls::RufletComponents::DropdownControl::KEYWORDS +
             Controls::RufletComponents::Dropdown2Control::KEYWORDS
           ).uniq.freeze
+
+          # dropdown_m2 is a protocol alias of Dropdown, so its Material 2
+          # spellings are renamed onto the Dropdown keys both renderers read.
+          MATERIAL2_RENAMES = {
+            on_change: :on_select,
+            max_menu_height: :menu_height,
+            prefix_icon: :leading_icon,
+            select_icon: :trailing_icon
+          }.freeze
+
+          # Material 2 keywords with no Dropdown equivalent. They are still
+          # accepted and sent so dropdown_m2 code keeps loading, but neither
+          # Dropdown renderer draws them (or fires on_click).
+          MATERIAL2_UNSUPPORTED_KEYWORDS = %i[
+            align_label_with_hint alignment collapsed counter counter_style
+            disabled_hint_content enable_feedback error error_max_lines fit_parent_size
+            focus_color focused_bgcolor focused_color helper helper_max_lines hint_content
+            hint_fade_duration hint_max_lines icon item_height options_fill_horizontally
+            padding prefix prefix_icon_size_constraints prefix_style
+            select_icon_disabled_color select_icon_enabled_color select_icon_size
+            size_constraints suffix suffix_icon suffix_icon_size_constraints suffix_style
+            text_vertical_align on_click
+          ].freeze
+
+          private
+
+          def preprocess_props(props)
+            mapped = props.dup
+            MATERIAL2_RENAMES.each do |legacy, canonical|
+              next unless mapped.key?(legacy)
+              if mapped.key?(canonical)
+                raise ArgumentError, "#{TYPE} accepts :#{canonical} or its Material 2 spelling :#{legacy}, not both"
+              end
+
+              mapped[canonical] = mapped.delete(legacy)
+            end
+            mapped
+          end
+
+          # Covers handlers attached after construction, e.g. on(:change).
+          def normalized_event_name(event_name)
+            name = super
+            name == "change" ? "select" : name
+          end
         end
       end
 

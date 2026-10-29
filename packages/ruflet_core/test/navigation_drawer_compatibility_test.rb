@@ -155,6 +155,7 @@ class RufletNavigationDrawerCompatibilityTest < Minitest::Test
     page.drawer = Ruflet.navigation_drawer([Ruflet.navigation_drawer_destination(icon: "home")])
     page.end_drawer = Ruflet.navigation_drawer([Ruflet.navigation_drawer_destination(icon: "search")])
     page.add(Ruflet.text("Body"))
+    view_id = sent.last[1]["patch"].find { |op| op[2] == "views" }[3].first["_i"]
     sent.clear
 
     page.show_drawer
@@ -163,7 +164,9 @@ class RufletNavigationDrawerCompatibilityTest < Minitest::Test
     page.close_end_drawer
 
     assert_equal ["show_drawer", "close_drawer", "show_end_drawer", "close_end_drawer"], sent.map { |(_action, payload)| payload["name"] }
-    assert sent.all? { |(_action, payload)| payload["control_id"] == 1 }
+    # The drawers belong to the page View (Flet: page.__top_view()), not the
+    # Page control, whose client listener does not know these methods.
+    assert sent.all? { |(_action, payload)| payload["control_id"] == view_id }
   end
 
   def test_show_drawer_requires_matching_page_drawer_like_flet
