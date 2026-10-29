@@ -25,6 +25,14 @@ module Ruflet
           args["curve"] = curve unless curve.nil?
           runtime_page&.invoke(self, "scroll_to", args: args, timeout: timeout, on_result: on_result)
         end
+
+        # Stops the pull-to-refresh spinner of a control with `on_refresh`.
+        # Page dispatch already calls it when the `on_refresh` handler returns
+        # (or raises); call it yourself only when the refresh finishes later,
+        # e.g. after background work.
+        def end_refresh(timeout: 10, on_result: nil)
+          runtime_page&.invoke(self, "end_refresh", timeout: timeout, on_result: on_result)
+        end
       end
     end
   end

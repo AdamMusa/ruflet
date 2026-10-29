@@ -1407,7 +1407,13 @@ module Ruflet
         # mutations, not the value that originated on the client.
         capture_published_control_tree!(control)
       end
-      control.emit(name, event)
+      begin
+        control.emit(name, event)
+      ensure
+        # Ruby handlers are synchronous: once on_refresh returns (or raises),
+        # its patches are already sent, so stop the client's refresh spinner.
+        invoke(control, "end_refresh") if name.to_s == "refresh"
+      end
 
       if name.to_s == "dismiss" && remove_dialog_tracking(control)
         push_dialogs_update!
