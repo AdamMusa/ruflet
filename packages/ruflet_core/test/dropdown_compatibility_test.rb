@@ -158,4 +158,101 @@ class RufletDropdownCompatibilityTest < Minitest::Test
     assert_equal "blue", dropdown.props["value"]
     assert_equal [["blue", "blue"]], observed
   end
+
+  def test_dropdown_m2_on_change_fires_on_the_canonical_select_event
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+
+    observed = []
+    dropdown = Ruflet.dropdownm2(
+      [Ruflet.dropdown_option("red"), Ruflet.dropdown_option("blue")],
+      value: "red",
+      on_change: ->(event) { observed << [event.name, event.value] }
+    )
+    page.add(dropdown)
+    patch = dropdown.to_patch
+
+    assert_equal "Dropdown", patch["_c"]
+    assert_equal true, patch["on_select"]
+    refute patch.key?("on_change")
+    assert dropdown.has_handler?(:on_change)
+
+    page.dispatch_event(target: dropdown.wire_id, name: "select", data: { "value" => "blue" })
+
+    assert_equal "blue", dropdown.props["value"]
+    assert_equal [["select", "blue"]], observed
+  end
+
+  def test_dropdown_m2_change_handler_attached_later_fires_on_select
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+
+    observed = []
+    dropdown = Ruflet.dropdown_m2([Ruflet.dropdown_option("red"), Ruflet.dropdown_option("blue")], value: "red")
+    dropdown.on(:change) { |event| observed << event.value }
+    page.add(dropdown)
+
+    assert_equal true, dropdown.to_patch["on_select"]
+    page.dispatch_event(target: dropdown.wire_id, name: "select", data: { "value" => "blue" })
+
+    assert_equal ["blue"], observed
+  end
+
+  def test_dropdown_m2_renames_material2_keys_onto_the_dropdown_contract
+    patch = Ruflet.dropdownm2(
+      [Ruflet.dropdown_option("red")],
+      max_menu_height: 240,
+      prefix_icon: "palette",
+      select_icon: "arrow_drop_down"
+    ).to_patch
+    canonical = Ruflet.dropdown(
+      [Ruflet.dropdown_option("red")],
+      menu_height: 240,
+      leading_icon: "palette",
+      trailing_icon: "arrow_drop_down"
+    ).to_patch
+
+    assert_equal 240, patch["menu_height"]
+    assert_equal canonical["leading_icon"], patch["leading_icon"]
+    assert_equal canonical["trailing_icon"], patch["trailing_icon"]
+    %w[max_menu_height prefix_icon select_icon].each { |key| refute patch.key?(key), key }
+  end
+
+  def test_dropdown_m2_rejects_a_material2_key_together_with_its_dropdown_spelling
+    error = assert_raises(ArgumentError) do
+      Ruflet.dropdownm2([], on_change: ->(_event) {}, on_select: ->(_event) {})
+    end
+    assert_includes error.message, "on_change"
+
+    assert_raises(ArgumentError) { Ruflet.dropdownm2([], max_menu_height: 1, menu_height: 2) }
+  end
+
+  def test_dropdown_m2_documents_every_material2_keyword_without_a_dropdown_equivalent
+    contract = Ruflet::UI::PlatformControlContracts::Components::DropdownControl
+    components = Ruflet::UI::Controls::RufletComponents
+    material2_only = components::Dropdown2Control::KEYWORDS - components::DropdownControl::KEYWORDS
+
+    assert_equal material2_only.sort,
+                 (contract::MATERIAL2_RENAMES.keys + contract::MATERIAL2_UNSUPPORTED_KEYWORDS).sort
+    assert_empty contract::MATERIAL2_RENAMES.values - components::DropdownControl::KEYWORDS
+
+    patch = Ruflet.dropdownm2(
+      [],
+      hint_content: Ruflet.text("Pick"),
+      disabled_hint_content: Ruflet.text("Locked"),
+      item_height: 48,
+      enable_feedback: false
+    ).to_patch
+
+    assert_equal "Text", patch["hint_content"]["_c"]
+    assert_equal "Text", patch["disabled_hint_content"]["_c"]
+    assert_equal 48, patch["item_height"]
+    assert_equal false, patch["enable_feedback"]
+  end
 end

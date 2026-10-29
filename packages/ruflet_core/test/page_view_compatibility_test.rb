@@ -75,6 +75,30 @@ class RufletPageViewCompatibilityTest < Minitest::Test
     assert_equal 1.0, page_view.props["viewport_fraction"]
   end
 
+  def test_page_view_accepts_animation_curve_and_duration
+    page_view = Ruflet.page_view(
+      [Ruflet.text("One"), Ruflet.text("Two")],
+      animation_curve: "easeInOut",
+      animation_duration: 300
+    )
+    patch = page_view.to_patch
+
+    assert_equal "PageView", patch["_c"]
+    assert_equal "easeInOut", patch["animation_curve"]
+    assert_equal 300, patch["animation_duration"]
+
+    symbol_patch = Ruflet.page_view(animation_curve: :decelerate, animation_duration: { seconds: 2 }).to_patch
+    assert_equal "decelerate", symbol_patch["animation_curve"]
+    assert_equal({ "seconds" => 2 }, symbol_patch["animation_duration"])
+  end
+
+  def test_page_view_leaves_animation_defaults_to_the_renderer
+    patch = Ruflet.page_view.to_patch
+
+    refute patch.key?("animation_curve")
+    refute patch.key?("animation_duration")
+  end
+
   def test_page_view_serializes_invalid_numeric_props_like_flet
     selected_patch = Ruflet.page_view(selected_index: -1).to_patch
     zero_viewport_patch = Ruflet.page_view(viewport_fraction: 0).to_patch

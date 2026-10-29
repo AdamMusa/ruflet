@@ -17,6 +17,33 @@ class RufletSpinkitCompatibilityTest < Minitest::Test
     end
   end
 
+  def test_spinkit_accepts_variant_specific_renderer_options
+    wave = Ruflet.spinkit(wave: { item_count: 7, wave_type: "center" }).to_patch
+    piano = Ruflet.spinkit(piano_wave: { item_count: 4 }).to_patch
+    ring = Ruflet.spinkit(ring: { line_width: 3.5 }).to_patch
+    dual_ring = Ruflet.spinkit(dual_ring: { line_width: 2 }).to_patch
+    spinning_lines = Ruflet.spinkit(spinning_lines: { line_width: 1.5 }).to_patch
+    ripple = Ruflet.spinkit(ripple: { border_width: 2 }).to_patch
+
+    assert_equal "RufletSpinKit", wave["_c"]
+    assert_equal 7, wave["item_count"]
+    assert_equal "center", wave["wave_type"]
+    assert_equal 4, piano["item_count"]
+    assert_equal 3.5, ring["line_width"]
+    assert_equal 2, dual_ring["line_width"]
+    assert_equal 1.5, spinning_lines["line_width"]
+    assert_equal 2, ripple["border_width"]
+    assert_equal "end", Ruflet.spinkit(wave: { wave_type: :end }).to_patch["wave_type"]
+  end
+
+  def test_spinkit_leaves_variant_option_defaults_to_the_renderer
+    patch = Ruflet.spinkit(wave: {}).to_patch
+
+    %w[border_width item_count line_width wave_type].each do |key|
+      refute patch.key?(key), "#{key} should fall back to the renderer default"
+    end
+  end
+
   def test_spinkit_rejects_missing_unknown_or_multiple_variants
     assert_raises(ArgumentError) { Ruflet.spinkit }
     assert_raises(ArgumentError) { Ruflet.spinkit(unknown: {}) }

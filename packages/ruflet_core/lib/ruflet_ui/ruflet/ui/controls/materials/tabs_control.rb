@@ -18,6 +18,14 @@ module Ruflet
             end
             super(type: TYPE, id: id, **compact)
           end
+
+          # A negative index counts from the end (-1 is the last tab).
+          def move_to(index, duration: nil, curve: nil, timeout: 10, on_result: nil)
+            args = { "index" => index }
+            args["duration"] = duration unless duration.nil?
+            args["curve"] = curve.to_s unless curve.nil?
+            runtime_page&.invoke(self, "move_to", args: args, timeout: timeout, on_result: on_result)
+          end
         end
       end
     end
