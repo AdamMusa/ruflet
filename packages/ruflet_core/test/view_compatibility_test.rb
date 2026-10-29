@@ -67,6 +67,31 @@ class RufletViewCompatibilityTest < Minitest::Test
     assert_equal "start", view.props["vertical_alignment"]
   end
 
+  def test_view_accepts_persistent_bottom_sheet_slot
+    clicked = []
+    checkout = Ruflet.text_button("Checkout", on_click: ->(event) { clicked << event.name })
+    sheet = Ruflet.container(content: checkout, padding: 12, bgcolor: "#FFFFFF")
+    view = Ruflet.view([Ruflet.text("Cart")], route: "/cart", bottom_sheet: sheet)
+
+    patch = view.to_patch
+
+    assert_equal "View", patch["_c"]
+    assert_equal "Container", patch["bottom_sheet"]["_c"]
+    assert_equal "TextButton", patch["bottom_sheet"]["content"]["_c"]
+    assert_equal ["Cart"], patch["controls"].map { |control| control["value"] }
+    refute Ruflet.view.to_patch.key?("bottom_sheet")
+
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+    page.add(view)
+    page.dispatch_event(target: checkout.wire_id, name: "click", data: nil)
+
+    assert_equal ["click"], clicked
+  end
+
   def test_confirm_pop_event_dispatches
     observed = nil
     view = Ruflet.view(on_confirm_pop: ->(event) { observed = [event.name, event.target] })

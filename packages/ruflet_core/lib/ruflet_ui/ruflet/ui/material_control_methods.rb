@@ -81,6 +81,12 @@ module Ruflet
         mapped[:children] = children unless children.nil?
         build_widget(:stack, **mapped, &block)
       end
+      def indexed_stack(children = nil, **props, &block)
+        mapped = props.dup
+        mapped[:children] = children unless children.nil?
+        build_widget(:indexedstack, **mapped, &block)
+      end
+      def indexedstack(children = nil, **props, &block) = indexed_stack(children, **props, &block)
       def grid_view(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
@@ -182,6 +188,12 @@ module Ruflet
         build_widget(:keyboardlistener, **mapped)
       end
       def keyboardlistener(content = nil, **props) = keyboard_listener(content, **props)
+      def form_row(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:formrow, **mapped)
+      end
+      def formrow(content = nil, **props) = form_row(content, **props)
       def gesture_detector(**props, &block) = build_widget(:gesturedetector, **props, &block)
       def gesturedetector(**props, &block) = gesture_detector(**props, &block)
       def canvas(shapes = nil, **props)
@@ -238,6 +250,12 @@ module Ruflet
         build_widget(:carouselview, **mapped, &block)
       end
       def carouselview(children = nil, **props, &block) = carousel_view(children, **props, &block)
+      def list_section(children = nil, **props, &block)
+        mapped = props.dup
+        mapped[:children] = children unless children.nil?
+        build_widget(:listsection, **mapped, &block)
+      end
+      def listsection(children = nil, **props, &block) = list_section(children, **props, &block)
       def list_tile(**props) = build_widget(:listtile, **props)
       def listtile(**props) = list_tile(**props)
       def map(layers = nil, **props)
@@ -385,6 +403,17 @@ module Ruflet
         build_widget(:datacell, **mapped)
       end
       def datacell(content = nil, **props) = data_cell(content, **props)
+      def table(rows = nil, **props, &block)
+        mapped = props.dup
+        mapped[:rows] = rows unless rows.nil?
+        build_widget(:table, **mapped, &block)
+      end
+      def table_row(children = nil, **props, &block)
+        mapped = props.dup
+        mapped[:children] = children unless children.nil?
+        build_widget(:tablerow, **mapped, &block)
+      end
+      def tablerow(children = nil, **props, &block) = table_row(children, **props, &block)
       def option(key = nil, **props)
         mapped = props.dup
         mapped[:key] = key unless key.nil?
@@ -649,6 +678,12 @@ module Ruflet
         build_widget(:rotatedbox, **mapped)
       end
       def rotatedbox(content = nil, **props) = rotated_box(content, **props)
+      def fitted_box(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:fittedbox, **mapped)
+      end
+      def fittedbox(content = nil, **props) = fitted_box(content, **props)
       def screenshot(content = nil, **props)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
