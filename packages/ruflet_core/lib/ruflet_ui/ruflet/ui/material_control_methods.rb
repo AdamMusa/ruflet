@@ -661,6 +661,12 @@ module Ruflet
         build_widget(:rotatedbox, **mapped)
       end
       def rotatedbox(content = nil, **props) = rotated_box(content, **props)
+      def fitted_box(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:fittedbox, **mapped)
+      end
+      def fittedbox(content = nil, **props) = fitted_box(content, **props)
       def screenshot(content = nil, **props)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
