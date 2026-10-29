@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 
+require_relative "../shared/scrollable_methods"
+
 module Ruflet
   module UI
     module Controls
       module RufletComponents
         class ReorderableListViewControl < Ruflet::Control
+          include ScrollableMethods
+
           TYPE = "reorderablelistview".freeze
           WIRE = "ReorderableListView".freeze
 
