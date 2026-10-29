@@ -23,6 +23,7 @@ require_relative "image_control"
 require_relative "interactiveviewer_control"
 require_relative "keyboardlistener_control"
 require_relative "line_control"
+require_relative "listsection_control"
 require_relative "listview_control"
 require_relative "markdown_control"
 require_relative "mergesemantics_control"
@@ -96,7 +97,9 @@ module Ruflet
             "keyboard_listener" => RufletComponents::KeyboardListenerControl,
             "keyboardlistener" => RufletComponents::KeyboardListenerControl,
             "line" => RufletComponents::LineControl,
+            "list_section" => RufletComponents::ListSectionControl,
             "list_view" => RufletComponents::ListViewControl,
+            "listsection" => RufletComponents::ListSectionControl,
             "listview" => RufletComponents::ListViewControl,
             "markdown" => RufletComponents::MarkdownControl,
             "merge_semantics" => RufletComponents::MergeSemanticsControl,

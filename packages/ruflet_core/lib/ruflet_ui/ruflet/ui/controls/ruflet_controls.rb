@@ -129,6 +129,7 @@ require_relative "shared/image_control"
 require_relative "shared/interactiveviewer_control"
 require_relative "shared/keyboardlistener_control"
 require_relative "shared/line_control"
+require_relative "shared/listsection_control"
 require_relative "shared/listview_control"
 require_relative "shared/markdown_control"
 require_relative "shared/mergesemantics_control"
@@ -350,8 +351,10 @@ module Ruflet
           "linechart" => RufletComponents::LineChartControl,
           "linechartdata" => RufletComponents::LineChartDataControl,
           "linechartdatapoint" => RufletComponents::LineChartDataPointControl,
+          "list_section" => RufletComponents::ListSectionControl,
           "list_tile" => RufletComponents::ListTileControl,
           "list_view" => RufletComponents::ListViewControl,
+          "listsection" => RufletComponents::ListSectionControl,
           "listtile" => RufletComponents::ListTileControl,
           "map" => RufletComponents::MapControl,
           "map_layer" => RufletComponents::MapLayerControl,
