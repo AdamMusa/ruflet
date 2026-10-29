@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 
+require_relative "../shared/focusable_methods"
+
 module Ruflet
   module UI
     module Controls
       module RufletComponents
         class OutlinedIconButtonControl < Ruflet::Control
+          include FocusableMethods
+
           TYPE = "outlinediconbutton".freeze
           WIRE = "OutlinedIconButton".freeze
 
