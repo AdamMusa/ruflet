@@ -12,7 +12,7 @@ module Ruflet
           TYPE = "view".freeze
           WIRE = "View".freeze
 
-          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :appbar, :aspect_ratio, :auto_scroll, :badge, :bgcolor, :bottom, :bottom_appbar, :bottom_sheet, :can_pop, :col, :controls, :data, :decoration, :disabled, :drawer, :end_drawer, :expand, :expand_loose, :floating_action_button, :floating_action_button_location, :foreground_decoration, :fullscreen_dialog, :height, :horizontal_alignment, :key, :keyboard_dismiss_behavior, :left, :margin, :navigation_bar, :offset, :opacity, :padding, :right, :rotate, :route, :rtl, :scale, :scroll, :scroll_interval, :services, :size_change_interval, :spacing, :tooltip, :top, :vertical_alignment, :visible, :width, :on_animation_end, :on_confirm_pop, :on_scroll, :on_size_change].freeze
+          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :appbar, :aspect_ratio, :auto_scroll, :badge, :bgcolor, :bottom, :bottom_appbar, :bottom_sheet, :can_pop, :col, :controls, :data, :decoration, :disabled, :drawer, :end_drawer, :end_reached_threshold, :expand, :expand_loose, :floating_action_button, :floating_action_button_location, :foreground_decoration, :fullscreen_dialog, :height, :horizontal_alignment, :key, :keyboard_dismiss_behavior, :left, :margin, :navigation_bar, :offset, :opacity, :padding, :refresh_bgcolor, :refresh_color, :refresh_displacement, :refresh_timeout, :refresh_trigger_distance, :right, :rotate, :route, :rtl, :scale, :scroll, :scroll_interval, :services, :size_change_interval, :spacing, :tooltip, :top, :vertical_alignment, :visible, :width, :on_animation_end, :on_confirm_pop, :on_end_reached, :on_refresh, :on_scroll, :on_size_change].freeze
 
           def initialize(id: nil, **props)
             unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
@@ -42,6 +42,7 @@ module Ruflet
             disabled = props[:disabled]
             drawer = props[:drawer]
             end_drawer = props[:end_drawer]
+            end_reached_threshold = props[:end_reached_threshold]
             expand = props[:expand]
             expand_loose = props[:expand_loose]
             floating_action_button = props[:floating_action_button]
@@ -58,6 +59,11 @@ module Ruflet
             offset = props[:offset]
             opacity = props[:opacity]
             padding = props[:padding]
+            refresh_bgcolor = props[:refresh_bgcolor]
+            refresh_color = props[:refresh_color]
+            refresh_displacement = props[:refresh_displacement]
+            refresh_timeout = props[:refresh_timeout]
+            refresh_trigger_distance = props[:refresh_trigger_distance]
             right = props[:right]
             rotate = props[:rotate]
             route = props[:route]
@@ -75,6 +81,8 @@ module Ruflet
             width = props[:width]
             on_animation_end = props[:on_animation_end]
             on_confirm_pop = props[:on_confirm_pop]
+            on_end_reached = props[:on_end_reached]
+            on_refresh = props[:on_refresh]
             on_scroll = props[:on_scroll]
             on_size_change = props[:on_size_change]
             can_pop = true if can_pop.nil?
@@ -111,6 +119,7 @@ module Ruflet
             props[:disabled] = disabled unless disabled.nil?
             props[:drawer] = drawer unless drawer.nil?
             props[:end_drawer] = end_drawer unless end_drawer.nil?
+            props[:end_reached_threshold] = end_reached_threshold unless end_reached_threshold.nil?
             props[:expand] = expand unless expand.nil?
             props[:expand_loose] = expand_loose unless expand_loose.nil?
             props[:floating_action_button] = floating_action_button unless floating_action_button.nil?
@@ -127,6 +136,11 @@ module Ruflet
             props[:offset] = offset unless offset.nil?
             props[:opacity] = opacity unless opacity.nil?
             props[:padding] = padding unless padding.nil?
+            props[:refresh_bgcolor] = refresh_bgcolor unless refresh_bgcolor.nil?
+            props[:refresh_color] = refresh_color unless refresh_color.nil?
+            props[:refresh_displacement] = refresh_displacement unless refresh_displacement.nil?
+            props[:refresh_timeout] = refresh_timeout unless refresh_timeout.nil?
+            props[:refresh_trigger_distance] = refresh_trigger_distance unless refresh_trigger_distance.nil?
             props[:right] = right unless right.nil?
             props[:rotate] = rotate unless rotate.nil?
             props[:route] = route unless route.nil?
@@ -144,6 +158,8 @@ module Ruflet
             props[:width] = width unless width.nil?
             props[:on_animation_end] = on_animation_end unless on_animation_end.nil?
             props[:on_confirm_pop] = on_confirm_pop unless on_confirm_pop.nil?
+            props[:on_end_reached] = on_end_reached unless on_end_reached.nil?
+            props[:on_refresh] = on_refresh unless on_refresh.nil?
             props[:on_scroll] = on_scroll unless on_scroll.nil?
             props[:on_size_change] = on_size_change unless on_size_change.nil?
             super(type: TYPE, id: id, **props)
