@@ -65,6 +65,8 @@ module Ruflet
     def center(**props, &block) = _pending_app.center(**props, &block)
     def row(children = nil, **props, &block) = _pending_app.row(children, **props, &block)
     def stack(children = nil, **props, &block) = _pending_app.stack(children, **props, &block)
+    def indexed_stack(children = nil, **props, &block) = _pending_app.indexed_stack(children, **props, &block)
+    def indexedstack(children = nil, **props, &block) = _pending_app.indexedstack(children, **props, &block)
     def grid_view(children = nil, **props, &block) = _pending_app.grid_view(children, **props, &block)
     def gridview(children = nil, **props, &block) = _pending_app.gridview(children, **props, &block)
     def container(**props, &block) = _pending_app.container(**props, &block)

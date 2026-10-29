@@ -81,6 +81,12 @@ module Ruflet
         mapped[:children] = children unless children.nil?
         build_widget(:stack, **mapped, &block)
       end
+      def indexed_stack(children = nil, **props, &block)
+        mapped = props.dup
+        mapped[:children] = children unless children.nil?
+        build_widget(:indexedstack, **mapped, &block)
+      end
+      def indexedstack(children = nil, **props, &block) = indexed_stack(children, **props, &block)
       def grid_view(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?

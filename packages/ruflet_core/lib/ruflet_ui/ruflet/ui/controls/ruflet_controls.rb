@@ -126,6 +126,7 @@ require_relative "shared/gridview_control"
 require_relative "shared/hero_control"
 require_relative "shared/icon_control"
 require_relative "shared/image_control"
+require_relative "shared/indexedstack_control"
 require_relative "shared/interactiveviewer_control"
 require_relative "shared/keyboardlistener_control"
 require_relative "shared/line_control"
@@ -340,6 +341,8 @@ module Ruflet
           "lottie" => RufletComponents::LottieControl,
           "iconbutton" => RufletComponents::IconButtonControl,
           "image" => RufletComponents::ImageControl,
+          "indexed_stack" => RufletComponents::IndexedStackControl,
+          "indexedstack" => RufletComponents::IndexedStackControl,
           "interactive_viewer" => RufletComponents::InteractiveViewerControl,
           "interactiveviewer" => RufletComponents::InteractiveViewerControl,
           "keyboard_listener" => RufletComponents::KeyboardListenerControl,
