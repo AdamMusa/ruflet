@@ -120,14 +120,18 @@ require_relative "shared/dismissible_control"
 require_relative "shared/draggable_control"
 require_relative "shared/dragtarget_control"
 require_relative "shared/fill_control"
+require_relative "shared/fittedbox_control"
+require_relative "shared/formrow_control"
 require_relative "shared/gesturedetector_control"
 require_relative "shared/gridview_control"
 require_relative "shared/hero_control"
 require_relative "shared/icon_control"
 require_relative "shared/image_control"
+require_relative "shared/indexedstack_control"
 require_relative "shared/interactiveviewer_control"
 require_relative "shared/keyboardlistener_control"
 require_relative "shared/line_control"
+require_relative "shared/listsection_control"
 require_relative "shared/listview_control"
 require_relative "shared/markdown_control"
 require_relative "shared/mergesemantics_control"
@@ -322,8 +326,12 @@ module Ruflet
           "fillediconbutton" => RufletComponents::FilledIconButtonControl,
           "filledtonalbutton" => RufletComponents::FilledTonalButtonControl,
           "filledtonaliconbutton" => RufletComponents::FilledTonalIconButtonControl,
+          "fitted_box" => RufletComponents::FittedBoxControl,
+          "fittedbox" => RufletComponents::FittedBoxControl,
           "floating_action_button" => RufletComponents::FloatingActionButtonControl,
           "floatingactionbutton" => RufletComponents::FloatingActionButtonControl,
+          "form_row" => RufletComponents::FormRowControl,
+          "formrow" => RufletComponents::FormRowControl,
           "gesture_detector" => RufletComponents::GestureDetectorControl,
           "gesturedetector" => RufletComponents::GestureDetectorControl,
           "grid_view" => RufletComponents::GridViewControl,
@@ -338,6 +346,8 @@ module Ruflet
           "lottie" => RufletComponents::LottieControl,
           "iconbutton" => RufletComponents::IconButtonControl,
           "image" => RufletComponents::ImageControl,
+          "indexed_stack" => RufletComponents::IndexedStackControl,
+          "indexedstack" => RufletComponents::IndexedStackControl,
           "interactive_viewer" => RufletComponents::InteractiveViewerControl,
           "interactiveviewer" => RufletComponents::InteractiveViewerControl,
           "keyboard_listener" => RufletComponents::KeyboardListenerControl,
@@ -349,8 +359,10 @@ module Ruflet
           "linechart" => RufletComponents::LineChartControl,
           "linechartdata" => RufletComponents::LineChartDataControl,
           "linechartdatapoint" => RufletComponents::LineChartDataPointControl,
+          "list_section" => RufletComponents::ListSectionControl,
           "list_tile" => RufletComponents::ListTileControl,
           "list_view" => RufletComponents::ListViewControl,
+          "listsection" => RufletComponents::ListSectionControl,
           "listtile" => RufletComponents::ListTileControl,
           "map" => RufletComponents::MapControl,
           "map_layer" => RufletComponents::MapLayerControl,
