@@ -18,6 +18,21 @@ module Ruflet
             end
             super(type: TYPE, id: id, **compact)
           end
+
+          def capture(pixel_ratio: nil, timeout: 10, on_result: nil)
+            args = {}
+            args["pixel_ratio"] = pixel_ratio unless pixel_ratio.nil?
+            runtime_page&.invoke(self, "capture", args: args, timeout: timeout, on_result: on_result)
+          end
+
+          # on_result receives the last capture as PNG bytes (nil before capture).
+          def get_capture(timeout: 10, on_result: nil)
+            runtime_page&.invoke(self, "get_capture", args: {}, timeout: timeout, on_result: on_result)
+          end
+
+          def clear_capture(timeout: 10, on_result: nil)
+            runtime_page&.invoke(self, "clear_capture", args: {}, timeout: timeout, on_result: on_result)
+          end
         end
       end
     end

@@ -15,14 +15,17 @@ require_relative "draggable_control"
 require_relative "dragtarget_control"
 require_relative "fill_control"
 require_relative "fittedbox_control"
+require_relative "formrow_control"
 require_relative "gesturedetector_control"
 require_relative "gridview_control"
 require_relative "hero_control"
 require_relative "icon_control"
 require_relative "image_control"
+require_relative "indexedstack_control"
 require_relative "interactiveviewer_control"
 require_relative "keyboardlistener_control"
 require_relative "line_control"
+require_relative "listsection_control"
 require_relative "listview_control"
 require_relative "markdown_control"
 require_relative "mergesemantics_control"
@@ -84,6 +87,8 @@ module Ruflet
             "fill" => RufletComponents::FillControl,
             "fitted_box" => RufletComponents::FittedBoxControl,
             "fittedbox" => RufletComponents::FittedBoxControl,
+            "form_row" => RufletComponents::FormRowControl,
+            "formrow" => RufletComponents::FormRowControl,
             "gesture_detector" => RufletComponents::GestureDetectorControl,
             "gesturedetector" => RufletComponents::GestureDetectorControl,
             "grid_view" => RufletComponents::GridViewControl,
@@ -91,12 +96,16 @@ module Ruflet
             "hero" => RufletComponents::HeroControl,
             "icon" => RufletComponents::IconControl,
             "image" => RufletComponents::ImageControl,
+            "indexed_stack" => RufletComponents::IndexedStackControl,
+            "indexedstack" => RufletComponents::IndexedStackControl,
             "interactive_viewer" => RufletComponents::InteractiveViewerControl,
             "interactiveviewer" => RufletComponents::InteractiveViewerControl,
             "keyboard_listener" => RufletComponents::KeyboardListenerControl,
             "keyboardlistener" => RufletComponents::KeyboardListenerControl,
             "line" => RufletComponents::LineControl,
+            "list_section" => RufletComponents::ListSectionControl,
             "list_view" => RufletComponents::ListViewControl,
+            "listsection" => RufletComponents::ListSectionControl,
             "listview" => RufletComponents::ListViewControl,
             "markdown" => RufletComponents::MarkdownControl,
             "merge_semantics" => RufletComponents::MergeSemanticsControl,
