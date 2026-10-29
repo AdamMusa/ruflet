@@ -8,7 +8,7 @@ module Ruflet
           TYPE = "pageview".freeze
           WIRE = "PageView".freeze
 
-          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bottom, :clip_behavior, :col, :controls, :data, :disabled, :expand, :expand_loose, :height, :horizontal, :implicit_scrolling, :keep_page, :key, :left, :margin, :offset, :opacity, :pad_ends, :reverse, :right, :rotate, :rtl, :scale, :selected_index, :size_change_interval, :snap, :tooltip, :top, :viewport_fraction, :visible, :width, :on_animation_end, :on_change, :on_size_change].freeze
+          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :animation_curve, :animation_duration, :aspect_ratio, :badge, :bottom, :clip_behavior, :col, :controls, :data, :disabled, :expand, :expand_loose, :height, :horizontal, :implicit_scrolling, :keep_page, :key, :left, :margin, :offset, :opacity, :pad_ends, :reverse, :right, :rotate, :rtl, :scale, :selected_index, :size_change_interval, :snap, :tooltip, :top, :viewport_fraction, :visible, :width, :on_animation_end, :on_change, :on_size_change].freeze
 
           def initialize(id: nil, **props)
             unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
@@ -22,6 +22,8 @@ module Ruflet
             animate_rotation = props[:animate_rotation]
             animate_scale = props[:animate_scale]
             animate_size = props[:animate_size]
+            animation_curve = props[:animation_curve]
+            animation_duration = props[:animation_duration]
             aspect_ratio = props[:aspect_ratio]
             badge = props[:badge]
             bottom = props[:bottom]
@@ -78,6 +80,8 @@ module Ruflet
             props[:animate_rotation] = animate_rotation unless animate_rotation.nil?
             props[:animate_scale] = animate_scale unless animate_scale.nil?
             props[:animate_size] = animate_size unless animate_size.nil?
+            props[:animation_curve] = animation_curve unless animation_curve.nil?
+            props[:animation_duration] = animation_duration unless animation_duration.nil?
             props[:aspect_ratio] = aspect_ratio unless aspect_ratio.nil?
             props[:badge] = badge unless badge.nil?
             props[:bottom] = bottom unless bottom.nil?
