@@ -702,6 +702,8 @@ module Ruflet
         build_widget(:radiogroup, **mapped)
       end
       def radiogroup(content = nil, **props) = radio_group(content, **props)
+      def about_dialog(**props) = build_widget(:aboutdialog, **props)
+      def aboutdialog(**props) = about_dialog(**props)
       def alert_dialog(**props) = build_widget(:alertdialog, **props)
       def alertdialog(**props) = alert_dialog(**props)
       def snack_bar(content = nil, **props)

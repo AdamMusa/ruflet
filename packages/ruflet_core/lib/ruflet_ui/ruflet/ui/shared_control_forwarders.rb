@@ -270,6 +270,8 @@ module Ruflet
       def radio(**props) = control_delegate.radio(**props)
       def radio_group(content = nil, **props) = control_delegate.radio_group(content, **props)
       def radiogroup(content = nil, **props) = control_delegate.radiogroup(content, **props)
+      def about_dialog(**props) = control_delegate.about_dialog(**props)
+      def aboutdialog(**props) = control_delegate.aboutdialog(**props)
       def alert_dialog(**props) = control_delegate.alert_dialog(**props)
       def alertdialog(**props) = control_delegate.alertdialog(**props)
       def snack_bar(content = nil, **props) = control_delegate.snack_bar(content, **props)
