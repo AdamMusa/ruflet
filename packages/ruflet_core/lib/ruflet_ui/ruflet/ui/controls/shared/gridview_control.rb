@@ -12,7 +12,7 @@ module Ruflet
           TYPE = "gridview".freeze
           WIRE = "GridView".freeze
 
-          KEYWORDS = [:adaptive, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :auto_scroll, :badge, :bottom, :build_controls_on_demand, :cache_extent, :child_aspect_ratio, :clip_behavior, :col, :controls, :data, :disabled, :expand, :expand_loose, :height, :horizontal, :key, :left, :margin, :max_extent, :offset, :opacity, :padding, :refresh_bgcolor, :refresh_color, :refresh_displacement, :refresh_timeout, :refresh_trigger_distance, :reverse, :right, :rotate, :rtl, :run_spacing, :runs_count, :scale, :scroll, :scroll_interval, :semantic_child_count, :size_change_interval, :spacing, :tooltip, :top, :visible, :width, :on_animation_end, :on_refresh, :on_scroll, :on_size_change].freeze
+          KEYWORDS = [:adaptive, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :auto_scroll, :badge, :bottom, :build_controls_on_demand, :cache_extent, :child_aspect_ratio, :clip_behavior, :col, :controls, :data, :disabled, :end_reached_threshold, :expand, :expand_loose, :height, :horizontal, :key, :left, :margin, :max_extent, :offset, :opacity, :padding, :refresh_bgcolor, :refresh_color, :refresh_displacement, :refresh_timeout, :refresh_trigger_distance, :reverse, :right, :rotate, :rtl, :run_spacing, :runs_count, :scale, :scroll, :scroll_interval, :semantic_child_count, :size_change_interval, :spacing, :tooltip, :top, :visible, :width, :on_animation_end, :on_end_reached, :on_refresh, :on_scroll, :on_size_change].freeze
 
           def initialize(id: nil, **props)
             unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
@@ -39,6 +39,7 @@ module Ruflet
             controls = props[:controls]
             data = props[:data]
             disabled = props[:disabled]
+            end_reached_threshold = props[:end_reached_threshold]
             expand = props[:expand]
             expand_loose = props[:expand_loose]
             height = props[:height]
@@ -72,6 +73,7 @@ module Ruflet
             visible = props[:visible]
             width = props[:width]
             on_animation_end = props[:on_animation_end]
+            on_end_reached = props[:on_end_reached]
             on_refresh = props[:on_refresh]
             on_scroll = props[:on_scroll]
             on_size_change = props[:on_size_change]
@@ -106,6 +108,7 @@ module Ruflet
             props[:controls] = controls unless controls.nil?
             props[:data] = data unless data.nil?
             props[:disabled] = disabled unless disabled.nil?
+            props[:end_reached_threshold] = end_reached_threshold unless end_reached_threshold.nil?
             props[:expand] = expand unless expand.nil?
             props[:expand_loose] = expand_loose unless expand_loose.nil?
             props[:height] = height unless height.nil?
@@ -139,6 +142,7 @@ module Ruflet
             props[:visible] = visible unless visible.nil?
             props[:width] = width unless width.nil?
             props[:on_animation_end] = on_animation_end unless on_animation_end.nil?
+            props[:on_end_reached] = on_end_reached unless on_end_reached.nil?
             props[:on_refresh] = on_refresh unless on_refresh.nil?
             props[:on_scroll] = on_scroll unless on_scroll.nil?
             props[:on_size_change] = on_size_change unless on_size_change.nil?
