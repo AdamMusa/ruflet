@@ -117,6 +117,7 @@ require_relative "shared/canvas_control"
 require_relative "shared/circle_control"
 require_relative "shared/color_control"
 require_relative "shared/column_control"
+require_relative "shared/customscrollview_control"
 require_relative "shared/dialogs_control"
 require_relative "shared/dismissible_control"
 require_relative "shared/draggable_control"
@@ -159,6 +160,10 @@ require_relative "shared/serviceregistry_control"
 require_relative "shared/shadermask_control"
 require_relative "shared/shadow_control"
 require_relative "shared/shimmer_control"
+require_relative "shared/sliverfillremaining_control"
+require_relative "shared/slivergrid_control"
+require_relative "shared/sliverlist_control"
+require_relative "shared/slivertoboxadapter_control"
 require_relative "shared/stack_control"
 require_relative "shared/table_control"
 require_relative "shared/tablerow_control"
@@ -289,6 +294,8 @@ module Ruflet
           "cupertinotextfield" => RufletComponents::CupertinoTextFieldControl,
           "cupertinotimerpicker" => RufletComponents::CupertinoTimerPickerControl,
           "cupertinotintedbutton" => RufletComponents::CupertinoTintedButtonControl,
+          "custom_scroll_view" => RufletComponents::CustomScrollViewControl,
+          "customscrollview" => RufletComponents::CustomScrollViewControl,
           "data_cell" => RufletComponents::DataCellControl,
           "data_column" => RufletComponents::DataColumnControl,
           "data_row" => RufletComponents::DataRowControl,
@@ -504,6 +511,14 @@ module Ruflet
           "slider" => RufletComponents::SliderControl,
           "slide_picker" => RufletComponents::SlidePickerControl,
           "slidepicker" => RufletComponents::SlidePickerControl,
+          "sliver_fill_remaining" => RufletComponents::SliverFillRemainingControl,
+          "sliver_grid" => RufletComponents::SliverGridControl,
+          "sliver_list" => RufletComponents::SliverListControl,
+          "sliver_to_box_adapter" => RufletComponents::SliverToBoxAdapterControl,
+          "sliverfillremaining" => RufletComponents::SliverFillRemainingControl,
+          "slivergrid" => RufletComponents::SliverGridControl,
+          "sliverlist" => RufletComponents::SliverListControl,
+          "slivertoboxadapter" => RufletComponents::SliverToBoxAdapterControl,
           "snack_bar" => RufletComponents::SnackBarControl,
           "snack_bar_action" => RufletComponents::SnackBarActionControl,
           "snackbaraction" => RufletComponents::SnackBarActionControl,
