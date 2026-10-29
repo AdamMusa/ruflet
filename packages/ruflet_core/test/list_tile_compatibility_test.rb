@@ -78,6 +78,16 @@ class RufletListTileCompatibilityTest < Minitest::Test
     assert_equal true, patch["on_long_press"]
   end
 
+  def test_list_tile_accepts_material_focus_color
+    patch = Ruflet.list_tile(title: "Jane Doe", focus_color: "#ABCDEF").to_patch
+
+    assert_equal "ListTile", patch["_c"]
+    assert_equal "#abcdef", patch["focus_color"]
+    assert_includes Ruflet::UI::Controls::RufletComponents::ListTileControl::KEYWORDS, :focus_color
+    assert_equal "#abcdef", Ruflet.listtile(title: "One", focus_color: "#ABCDEF").to_patch["focus_color"]
+    refute Ruflet.list_tile(title: "Jane Doe").to_patch.key?("focus_color")
+  end
+
   def test_listtile_alias_uses_same_control
     assert_equal "ListTile", Ruflet.listtile(title: "One").to_patch["_c"]
   end
