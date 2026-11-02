@@ -726,6 +726,42 @@ module Ruflet
         build_widget(:rotatedbox, **mapped)
       end
       def rotatedbox(content = nil, **props) = rotated_box(content, **props)
+      def absorb_pointer(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:absorbpointer, **mapped)
+      end
+      def absorbpointer(content = nil, **props) = absorb_pointer(content, **props)
+      def fractionally_sized_box(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:fractionallysizedbox, **mapped)
+      end
+      def fractionallysizedbox(content = nil, **props) = fractionally_sized_box(content, **props)
+      def ignore_pointer(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:ignorepointer, **mapped)
+      end
+      def ignorepointer(content = nil, **props) = ignore_pointer(content, **props)
+      def intrinsic_height(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:intrinsicheight, **mapped)
+      end
+      def intrinsicheight(content = nil, **props) = intrinsic_height(content, **props)
+      def intrinsic_width(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:intrinsicwidth, **mapped)
+      end
+      def intrinsicwidth(content = nil, **props) = intrinsic_width(content, **props)
+      def sliver_padding(slivers = nil, **props, &block)
+        mapped = props.dup
+        mapped[:slivers] = slivers unless slivers.nil?
+        build_widget(:sliverpadding, **mapped, &block)
+      end
+      def sliverpadding(slivers = nil, **props, &block) = sliver_padding(slivers, **props, &block)
       def fitted_box(content = nil, **props)
         mapped = props.dup
         mapped[:content] = content unless content.nil?

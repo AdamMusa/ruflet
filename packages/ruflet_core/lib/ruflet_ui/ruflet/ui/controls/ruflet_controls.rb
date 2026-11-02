@@ -127,6 +127,12 @@ require_relative "shared/draggablescrollablesheet_control"
 require_relative "shared/dragtarget_control"
 require_relative "shared/fill_control"
 require_relative "shared/fittedbox_control"
+require_relative "shared/absorbpointer_control"
+require_relative "shared/fractionallysizedbox_control"
+require_relative "shared/ignorepointer_control"
+require_relative "shared/intrinsicheight_control"
+require_relative "shared/intrinsicwidth_control"
+require_relative "shared/sliverpadding_control"
 require_relative "shared/formrow_control"
 require_relative "shared/gesturedetector_control"
 require_relative "shared/gridview_control"
@@ -345,6 +351,18 @@ module Ruflet
           "fillediconbutton" => RufletComponents::FilledIconButtonControl,
           "filledtonalbutton" => RufletComponents::FilledTonalButtonControl,
           "filledtonaliconbutton" => RufletComponents::FilledTonalIconButtonControl,
+          "absorb_pointer" => RufletComponents::AbsorbPointerControl,
+          "absorbpointer" => RufletComponents::AbsorbPointerControl,
+          "fractionally_sized_box" => RufletComponents::FractionallySizedBoxControl,
+          "fractionallysizedbox" => RufletComponents::FractionallySizedBoxControl,
+          "ignore_pointer" => RufletComponents::IgnorePointerControl,
+          "ignorepointer" => RufletComponents::IgnorePointerControl,
+          "intrinsic_height" => RufletComponents::IntrinsicHeightControl,
+          "intrinsicheight" => RufletComponents::IntrinsicHeightControl,
+          "intrinsic_width" => RufletComponents::IntrinsicWidthControl,
+          "intrinsicwidth" => RufletComponents::IntrinsicWidthControl,
+          "sliver_padding" => RufletComponents::SliverPaddingControl,
+          "sliverpadding" => RufletComponents::SliverPaddingControl,
           "fitted_box" => RufletComponents::FittedBoxControl,
           "fittedbox" => RufletComponents::FittedBoxControl,
           "floating_action_button" => RufletComponents::FloatingActionButtonControl,

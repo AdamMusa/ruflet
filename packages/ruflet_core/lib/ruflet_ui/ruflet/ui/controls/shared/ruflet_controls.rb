@@ -17,6 +17,12 @@ require_relative "draggablescrollablesheet_control"
 require_relative "dragtarget_control"
 require_relative "fill_control"
 require_relative "fittedbox_control"
+require_relative "absorbpointer_control"
+require_relative "fractionallysizedbox_control"
+require_relative "ignorepointer_control"
+require_relative "intrinsicheight_control"
+require_relative "intrinsicwidth_control"
+require_relative "sliverpadding_control"
 require_relative "formrow_control"
 require_relative "gesturedetector_control"
 require_relative "gridview_control"
@@ -99,6 +105,18 @@ module Ruflet
             "draggablescrollablesheet" => RufletComponents::DraggableScrollableSheetControl,
             "dragtarget" => RufletComponents::DragTargetControl,
             "fill" => RufletComponents::FillControl,
+            "absorb_pointer" => RufletComponents::AbsorbPointerControl,
+            "absorbpointer" => RufletComponents::AbsorbPointerControl,
+            "fractionally_sized_box" => RufletComponents::FractionallySizedBoxControl,
+            "fractionallysizedbox" => RufletComponents::FractionallySizedBoxControl,
+            "ignore_pointer" => RufletComponents::IgnorePointerControl,
+            "ignorepointer" => RufletComponents::IgnorePointerControl,
+            "intrinsic_height" => RufletComponents::IntrinsicHeightControl,
+            "intrinsicheight" => RufletComponents::IntrinsicHeightControl,
+            "intrinsic_width" => RufletComponents::IntrinsicWidthControl,
+            "intrinsicwidth" => RufletComponents::IntrinsicWidthControl,
+            "sliver_padding" => RufletComponents::SliverPaddingControl,
+            "sliverpadding" => RufletComponents::SliverPaddingControl,
             "fitted_box" => RufletComponents::FittedBoxControl,
             "fittedbox" => RufletComponents::FittedBoxControl,
             "form_row" => RufletComponents::FormRowControl,
