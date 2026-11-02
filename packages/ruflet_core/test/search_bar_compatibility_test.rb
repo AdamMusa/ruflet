@@ -171,4 +171,24 @@ class RufletSearchBarCompatibilityTest < Minitest::Test
     assert_equal ["open_view", "close_view", "focus"], messages.map { |_action, payload| payload["name"] }
     assert_equal({ "text" => "chosen" }, messages[1].last["args"])
   end
+  # Flet 1.0's SearchBar.on_tap_outside_view: taps outside the open view
+  # (on_tap_outside_bar stays the closed, focused bar's event).
+  def test_search_bar_on_tap_outside_view_dispatches
+    page = Ruflet::Page.new(session_id: "s1", client_details: { "route" => "/" }, sender: ->(_action, _payload) {})
+    events = []
+    search_bar = Ruflet.search_bar(
+      on_tap_outside_bar: ->(event) { events << event.name },
+      on_tap_outside_view: ->(event) { events << event.name }
+    )
+    page.add(search_bar)
+    patch = search_bar.to_patch
+
+    page.dispatch_event(target: search_bar.wire_id, name: "tap_outside_view", data: nil)
+    page.dispatch_event(target: search_bar.wire_id, name: "tap_outside_bar", data: nil)
+
+    assert_equal true, patch["on_tap_outside_view"]
+    assert_equal true, patch["on_tap_outside_bar"]
+    assert_equal %w[tap_outside_view tap_outside_bar], events
+    assert Ruflet.search_bar.on(:tap_outside_view) { nil }.props["on_tap_outside_view"]
+  end
 end
