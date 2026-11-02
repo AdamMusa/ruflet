@@ -762,6 +762,48 @@ module Ruflet
         build_widget(:sliverpadding, **mapped, &block)
       end
       def sliverpadding(slivers = nil, **props, &block) = sliver_padding(slivers, **props, &block)
+      def clip_oval(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:clipoval, **mapped)
+      end
+      def clipoval(content = nil, **props) = clip_oval(content, **props)
+      def clip_rsuperellipse(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:cliprsuperellipse, **mapped)
+      end
+      def cliprsuperellipse(content = nil, **props) = clip_rsuperellipse(content, **props)
+      def fade_transition(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:fadetransition, **mapped)
+      end
+      def fadetransition(content = nil, **props) = fade_transition(content, **props)
+      def rotation_transition(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:rotationtransition, **mapped)
+      end
+      def rotationtransition(content = nil, **props) = rotation_transition(content, **props)
+      def scale_transition(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:scaletransition, **mapped)
+      end
+      def scaletransition(content = nil, **props) = scale_transition(content, **props)
+      def size_transition(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:sizetransition, **mapped)
+      end
+      def sizetransition(content = nil, **props) = size_transition(content, **props)
+      def slide_transition(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:slidetransition, **mapped)
+      end
+      def slidetransition(content = nil, **props) = slide_transition(content, **props)
       def fitted_box(content = nil, **props)
         mapped = props.dup
         mapped[:content] = content unless content.nil?

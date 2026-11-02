@@ -23,6 +23,13 @@ require_relative "ignorepointer_control"
 require_relative "intrinsicheight_control"
 require_relative "intrinsicwidth_control"
 require_relative "sliverpadding_control"
+require_relative "clipoval_control"
+require_relative "cliprsuperellipse_control"
+require_relative "fadetransition_control"
+require_relative "rotationtransition_control"
+require_relative "scaletransition_control"
+require_relative "sizetransition_control"
+require_relative "slidetransition_control"
 require_relative "formrow_control"
 require_relative "gesturedetector_control"
 require_relative "gridview_control"
@@ -117,6 +124,20 @@ module Ruflet
             "intrinsicwidth" => RufletComponents::IntrinsicWidthControl,
             "sliver_padding" => RufletComponents::SliverPaddingControl,
             "sliverpadding" => RufletComponents::SliverPaddingControl,
+            "clip_oval" => RufletComponents::ClipOvalControl,
+            "clipoval" => RufletComponents::ClipOvalControl,
+            "clip_rsuperellipse" => RufletComponents::ClipRSuperellipseControl,
+            "cliprsuperellipse" => RufletComponents::ClipRSuperellipseControl,
+            "fade_transition" => RufletComponents::FadeTransitionControl,
+            "fadetransition" => RufletComponents::FadeTransitionControl,
+            "rotation_transition" => RufletComponents::RotationTransitionControl,
+            "rotationtransition" => RufletComponents::RotationTransitionControl,
+            "scale_transition" => RufletComponents::ScaleTransitionControl,
+            "scaletransition" => RufletComponents::ScaleTransitionControl,
+            "size_transition" => RufletComponents::SizeTransitionControl,
+            "sizetransition" => RufletComponents::SizeTransitionControl,
+            "slide_transition" => RufletComponents::SlideTransitionControl,
+            "slidetransition" => RufletComponents::SlideTransitionControl,
             "fitted_box" => RufletComponents::FittedBoxControl,
             "fittedbox" => RufletComponents::FittedBoxControl,
             "form_row" => RufletComponents::FormRowControl,
