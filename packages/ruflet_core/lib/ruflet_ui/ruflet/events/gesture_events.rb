@@ -58,6 +58,27 @@ module Ruflet
       end
     end
 
+    # page.on_views_pop_until: the destination route, the result passed to
+    # page.pop_views_until and the View left on top (server-side calls only;
+    # the client can send the route alone). value stays the route.
+    class ViewsPopUntilEvent < GenericEvent
+      attr_reader :route, :result, :view
+
+      def initialize(raw:, value: nil, route: nil, result: nil, view: nil)
+        super(raw: raw, value: value)
+        @route = route
+        @result = result
+        @view = view
+      end
+
+      def self.from_data(data)
+        raw = data.is_a?(Hash) ? stringify_keys(data) : data
+        return new(raw: raw, value: raw, route: raw) unless raw.is_a?(Hash)
+
+        new(raw: raw, value: raw["route"], route: raw["route"], result: raw["result"], view: raw["view"])
+      end
+    end
+
     class ChangeEvent < GenericEvent; end
     class FocusEvent < GenericEvent; end
     class BlurEvent < GenericEvent; end
@@ -560,6 +581,7 @@ module Ruflet
         "confirm_pop" => GenericEvent,
         "route_change" => GenericEvent,
         "view_pop" => GenericEvent,
+        "views_pop_until" => ViewsPopUntilEvent,
         "animation_end" => GenericEvent,
         "size_change" => GenericEvent,
         "selection_change" => GenericEvent,

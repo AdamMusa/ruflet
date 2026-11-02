@@ -597,6 +597,32 @@ module Ruflet
       @page_event_handlers["views_pop_until"] = handler
     end
 
+    # Pops every view above the first view whose route is +route+, makes that
+    # route current and calls on_views_pop_until with the route, +result+ and
+    # the destination view (Flet's Page.pop_views_until). route_change follows
+    # when the route changed, then one view patch updates the client.
+    # Raises ArgumentError, leaving the stack alone, when no view matches.
+    def pop_views_until(route, result: nil)
+      route = route.to_s
+      target_index = nil
+      @views.each_with_index do |view, index|
+        next unless view.props["route"].to_s == route
+
+        target_index = index
+        break
+      end
+      raise ArgumentError, "No view found with route '#{route}' in page.views" if target_index.nil?
+
+      target_view = @views[target_index]
+      @views.pop while @views.length > target_index + 1
+      route_changed = @page_props["route"] != route
+      @page_props["route"] = route
+      dispatch_page_event(name: "views_pop_until", data: { "route" => route, "result" => result, "view" => target_view })
+      dispatch_page_event(name: "route_change", data: route) if route_changed
+      send_view_patch
+      self
+    end
+
     def on(event_name, &block)
       name = event_name.to_s
       name = name[3..-1] if name.start_with?("on_")
