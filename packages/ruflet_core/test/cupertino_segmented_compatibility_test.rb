@@ -99,6 +99,36 @@ class RufletCupertinoSegmentedCompatibilityTest < Minitest::Test
     assert_equal false, sliding.props["proportional_width"]
   end
 
+  def test_sliding_variant_declares_itself_on_the_canonical_wire_type
+    children = [Ruflet.text("One"), Ruflet.text("Two")]
+
+    sliding = Ruflet.cupertino_sliding_segmented_button(children).to_patch
+    plain = Ruflet.cupertino_segmented_button(children).to_patch
+
+    assert_equal "SegmentedButton", sliding["_c"]
+    assert_equal true, sliding["sliding"]
+    refute plain.key?("sliding")
+    assert_equal false,
+                 Ruflet.cupertino_sliding_segmented_button(children, sliding: false).to_patch["sliding"]
+  end
+
+  def test_sliding_is_a_canonical_segmented_button_keyword
+    patch = Ruflet.segmented_button(
+      controls: [Ruflet.text("One"), Ruflet.text("Two")],
+      selected_index: 0,
+      sliding: true
+    ).to_patch
+
+    assert_equal "SegmentedButton", patch["_c"]
+    assert_equal true, patch["sliding"]
+  end
+
+  def test_segments_accept_a_tooltip
+    patch = Ruflet.segment(value: "a", label: "A", tooltip: "First").to_patch
+
+    assert_equal "First", patch["tooltip"]
+  end
+
   def test_rejects_invalid_children_and_selected_index_like_flet
     child = Ruflet.text("One")
     children = [Ruflet.text("One"), Ruflet.text("Two")]
