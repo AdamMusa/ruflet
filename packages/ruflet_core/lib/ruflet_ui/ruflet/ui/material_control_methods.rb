@@ -58,7 +58,7 @@ module Ruflet
 
         if block
           nested = WidgetBuilder.new
-          block_result = nested.instance_eval(&block)
+          block_result = Ruflet::UI::BuildScope.within(nested) { nested.instance_eval(&block) }
           child =
             if nested.children.any?
               nested.children.first
