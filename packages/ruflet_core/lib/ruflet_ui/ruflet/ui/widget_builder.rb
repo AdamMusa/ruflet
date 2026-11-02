@@ -45,6 +45,9 @@ module Ruflet
       node
     end
 
+    # Ruflet.duration(...) delegates here; it is milliseconds, not a control.
+    def duration(**parts) = DSL.duration(**parts)
+
     def build_widget(type, **props, &block) = control(type, **props, &block)
     def build_service(type, **props, &block)
       mapped_props = props.dup
