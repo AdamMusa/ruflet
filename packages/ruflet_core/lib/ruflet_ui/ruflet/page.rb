@@ -391,6 +391,9 @@ module Ruflet
       @snack_bar = nil
       @bottom_sheet = nil
       @route_change_seen_since_reset = false
+      # The reloaded app block registers its page handlers again; one it no
+      # longer sets must stop running, like the chrome it no longer sets.
+      @page_event_handlers.clear
 
       @reload_prior_page_prop_keys = @page_props.keys - RELOAD_PRESERVED_PAGE_PROPS
       @view_props = {}
@@ -2215,7 +2218,13 @@ module Ruflet
       flags = view_event?(event_name) ? @view_props : @page_props
       if handler.nil?
         @page_event_handlers.delete(event_name)
-        flags.delete(prop_name)
+        # Page props merge on the client, so a flag that was on needs an
+        # explicit nil there; the View is rebuilt from @view_props each time.
+        if flags.equal?(@page_props)
+          flags[prop_name] = nil if flags.key?(prop_name)
+        else
+          flags.delete(prop_name)
+        end
       else
         @page_event_handlers[event_name] = handler
         flags[prop_name] = true
