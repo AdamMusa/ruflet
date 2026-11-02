@@ -200,6 +200,37 @@ class RufletHtmlDslHelpersTest < Minitest::Test
     assert_equal '<alert-dialog modal><text>Saved</text></alert-dialog>', markup
   end
 
+  # D-6: define_registry_helpers! turns every ControlFactory::CLASS_MAP key
+  # into a view helper, so the Stepper's child must never be registered as a
+  # bare `step` (it would shadow `step` from wizard gems in every view).
+  def test_stepper_step_helper_exists_without_a_step_helper
+    registry_names = Ruflet::UI::ControlFactory::CLASS_MAP.keys.map(&:to_s)
+    helpers = Ruflet::Rails::HtmlDsl::ViewHelpers
+
+    refute_includes registry_names, "step"
+    refute helpers.method_defined?(:step)
+    refute helpers.private_method_defined?(:step)
+    refute_respond_to @view, :step
+    %w[stepper stepper_step stepperstep].each do |name|
+      assert_includes registry_names, name
+      assert helpers.method_defined?(name.to_sym), name
+    end
+  end
+
+  def test_stepper_helpers_round_trip_to_step_wire_types
+    markup = @view.stepper(current_step: 0) do
+      @view.stepper_step(title: "Account") + @view.stepper_step(title: "Confirm")
+    end
+
+    assert_equal '<stepper current-step="0"><stepper-step title="Account"></stepper-step>' \
+                 '<stepper-step title="Confirm"></stepper-step></stepper>', markup
+    result, = transform(markup)
+    patch = result.controls.first.to_patch
+    assert_equal "Stepper", patch["_c"]
+    assert_equal %w[Step Step], patch["controls"].map { |step| step["_c"] }
+    assert_equal %w[Account Confirm], patch["controls"].map { |step| step["title"] }
+  end
+
   def test_rich_component_helpers_round_trip
     markup = @view.column do
       [
