@@ -131,6 +131,27 @@ class RufletDslBlockPropChildrenTest < Minitest::Test
     assert_equal 500, column.children.last.children.length
   end
 
+  # Page chrome assigned inside a block belongs to the page, not to the block.
+  def test_page_chrome_assigned_inside_mount_is_not_also_a_body_control
+    page = Ruflet::Page.new(session_id: "s1", client_details: { "route" => "/" }, sender: ->(_action, _payload) {})
+    page.mount do
+      page.appbar = Ruflet.app_bar(title: Ruflet.text("Home"))
+      page.floating_action_button = floating_action_button(icon: "add")
+      page.navigation_bar = Ruflet.navigation_bar(destinations: [Ruflet.navigation_bar_destination(label: "A", icon: "home")])
+      page.drawer = navigation_drawer
+      page.end_drawer = Ruflet.navigation_drawer
+      page.bottom_appbar = bottom_app_bar
+      page.set_view_props(decoration: nil, appbar: app_bar(title: text("Replaced")))
+      column { text("Body") }
+    end
+
+    assert_equal ["Column"], wire_types(page.controls)
+    assert_equal "AppBar", page.appbar.wire_type
+    assert_equal "Replaced", page.appbar.to_patch["title"]["value"]
+    assert_equal "FloatingActionButton", page.floating_action_button.wire_type
+    assert_equal "NavigationBar", page.navigation_bar.wire_type
+  end
+
   def test_builder_block_keeps_real_children_in_order
     column = Ruflet.column do
       text("one")

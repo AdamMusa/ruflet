@@ -94,6 +94,54 @@ class RufletDslPresentedControlsTest < Minitest::Test
     assert_equal ["Text"], wire_types(app_column.children)
   end
 
+  # Engine services built through control()/widget() or a widget-style helper
+  # (interstitial_ad) are not laid out; where the block has somewhere to put
+  # services (a DSL app, Page#mount) they are registered there instead of
+  # being lost.
+  def test_app_blocks_register_engine_services_built_as_controls
+    app = Ruflet::DSL.app do
+      page do
+        audio(src: "a.mp3")
+        interstitial_ad(unit_id: "ad")
+        control(:audio_recorder)
+        column do
+          widget(:flashlight)
+          text("in column")
+        end
+        text("body")
+      end
+    end
+
+    assert_equal %w[Column Text], wire_types(app.instance_variable_get(:@roots))
+    assert_equal %w[Audio InterstitialAd AudioRecorder Flashlight], wire_types(app.instance_variable_get(:@services))
+    assert_equal ["Text"], wire_types(app.instance_variable_get(:@roots).first.children)
+  end
+
+  def test_page_mount_registers_engine_services_on_the_page
+    page = new_page
+    page.mount do
+      audio(src: "a.mp3")
+      control(:audio_recorder)
+      Ruflet.interstitial_ad(unit_id: "ad")
+      column { widget(:flashlight) }
+      text("body")
+    end
+
+    assert_equal %w[Column Text], wire_types(page.controls)
+    assert_equal %w[Audio AudioRecorder InterstitialAd Flashlight], wire_types(page.services)
+  end
+
+  def test_standalone_builder_blocks_leave_services_to_the_caller
+    audio = nil
+    column = Ruflet.column do
+      audio = control(:audio, src: "track.mp3")
+      text("kept")
+    end
+
+    assert_equal ["Text"], wire_types(column.children)
+    assert_equal "Audio", audio.wire_type
+  end
+
   def test_page_service_accepts_engine_services_without_a_hand_list
     page = new_page
 

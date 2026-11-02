@@ -634,8 +634,11 @@ module Ruflet
     end
 
     def mount(&block)
-      builder = WidgetBuilder.new
+      mounted_services = []
+      builder = WidgetBuilder.new(services: mounted_services)
       UI::BuildScope.within(builder) { builder.instance_eval(&block) }
+      new_services = mounted_services.reject { |service| services.include?(service) }
+      add_service(*new_services) if new_services.any?
       builder.children.each { |control| add(control) }
     end
 
@@ -644,7 +647,7 @@ module Ruflet
     end
 
     def appbar=(value)
-      @view_props["appbar"] = value
+      @view_props["appbar"] = claim_prop_control(value)
     end
 
     def bottom_appbar
@@ -652,7 +655,7 @@ module Ruflet
     end
 
     def bottom_appbar=(value)
-      @view_props["bottom_appbar"] = value
+      @view_props["bottom_appbar"] = claim_prop_control(value)
     end
 
     def bottomappbar=(value)
@@ -664,7 +667,7 @@ module Ruflet
     end
 
     def floating_action_button=(value)
-      @view_props["floating_action_button"] = value
+      @view_props["floating_action_button"] = claim_prop_control(value)
     end
 
     def navigation_bar
@@ -672,7 +675,7 @@ module Ruflet
     end
 
     def navigation_bar=(value)
-      @view_props["navigation_bar"] = value
+      @view_props["navigation_bar"] = claim_prop_control(value)
     end
 
     def auto_scroll
@@ -736,7 +739,7 @@ module Ruflet
     end
 
     def drawer=(value)
-      @view_props["drawer"] = value
+      @view_props["drawer"] = claim_prop_control(value)
     end
 
     def end_drawer
@@ -744,7 +747,7 @@ module Ruflet
     end
 
     def end_drawer=(value)
-      @view_props["end_drawer"] = value
+      @view_props["end_drawer"] = claim_prop_control(value)
     end
 
     def dialog = @dialog
@@ -2192,8 +2195,16 @@ module Ruflet
       elsif PAGE_PROP_KEYS.include?(key)
         @page_props[key] = value
       else
-        @view_props[key] = value
+        @view_props[key] = claim_prop_control(value)
       end
+    end
+
+    # A control assigned as page chrome (page.appbar = ..., set_view_props)
+    # inside a DSL block was attached to that block when it was built; take
+    # it back so it is not also laid out as a body control.
+    def claim_prop_control(value)
+      UI::PropControls.reclaim(value)
+      value
     end
 
     # page.on_scroll = ->(e) {} keeps the handler on the Ruby side and sends

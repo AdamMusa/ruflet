@@ -4,6 +4,7 @@ require_relative "ui/control_methods"
 require_relative "ui/control_factory"
 require_relative "ui/prop_controls"
 require_relative "ui/build_scope"
+require_relative "ui/service_types"
 
 module Ruflet
   module DSL
@@ -522,7 +523,13 @@ module Ruflet
         id = mapped_props.delete(:id)&.to_s || next_id(type)
         c = Ruflet::UI::ControlFactory.build(type.to_s, id: id, **normalize_props(mapped_props))
         Ruflet::UI::PropControls.reclaim(props)
-        attach(c)
+        # An engine service built as a control (control(:audio_recorder),
+        # interstitial_ad(...)) runs as a page service, not in the layout.
+        if Ruflet::UI::ServiceTypes.service_wire_type?(c.wire_type)
+          @services << c unless @services.include?(c)
+        else
+          attach(c)
+        end
 
         if block
           @stack.push(c)
