@@ -6,6 +6,7 @@ module Ruflet
   module UI
     module Controls
       module RufletComponents
+        # floating_action_button_location: *_docked locations float above the navigation bar on iOS/macOS (no notched tab bar).
         class ViewControl < Ruflet::Control
           include ScrollableMethods
 
