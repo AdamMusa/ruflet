@@ -362,20 +362,44 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
+  # The app child and a grandchild in its process group each write one byte
+  # once they run user code. Signalling earlier races Ruby's own boot: a Ruby
+  # process that gets TERM while still loading (gem prelude, -r files) exits
+  # with status 1 instead of dying by the signal, which is what made this
+  # test flaky under load. Both processes inherit the pipe's write end, so
+  # EOF on the read end proves the whole group is gone. (The sleeps only
+  # bound a broken R; nothing waits on them.)
+  RELOAD_CHILD_SCRIPT = <<~RUBY
+    fork { $stdout.write("g"); $stdout.flush; sleep 120 }
+    $stdout.write("c"); $stdout.flush
+    sleep 120
+  RUBY
+
   def test_handle_reload_command_big_r_requests_full_restart
     runner = DummyRunner.new
-    child = Process.spawn(RbConfig.ruby, "-e", "sleep 30", pgroup: true)
+    reader, writer = IO.pipe
+    child = Process.spawn(RbConfig.ruby, "-e", RELOAD_CHILD_SCRIPT, pgroup: true, out: writer)
+    writer.close
+    assert_equal 2, reader.read(2).to_s.bytesize, "child and grandchild must both be running"
     run_state = { child_pid: child, restart: false }
 
     assert runner.send(:handle_reload_command, "R", run_state)
     assert run_state[:restart], "R must flag a full restart before terminating the child"
     _pid, status = Process.wait2(child)
-    assert status.signaled?, "R must terminate the child process group"
+    reaped = true
+    assert status.signaled?, "R must terminate the child by a signal"
+    # Waits on EOF, not on time; the limit only stops a broken R from hanging.
+    assert IO.select([reader], nil, nil, 60), "the grandchild outlived R"
+    assert_nil reader.read(1), "R must terminate the child's whole process group"
+    group_gone = true
   ensure
+    reader&.close
+    writer&.close unless writer&.closed?
     begin
-      Process.kill("KILL", -child) if child
-    rescue Errno::ESRCH, Errno::EPERM
-      # ESRCH: already reaped. EPERM: the runner denies signalling the group.
+      Process.kill("KILL", -child) if child && !group_gone
+      Process.wait(child) if child && !reaped
+    rescue Errno::ESRCH, Errno::EPERM, Errno::ECHILD
+      # ESRCH: already gone. EPERM: the runner denies signalling the group.
       nil
     end
   end
