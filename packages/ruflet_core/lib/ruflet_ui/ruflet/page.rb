@@ -173,7 +173,17 @@ module Ruflet
       .each_with_object({}) { |wire, types| types[wire] = true }.freeze
 
     def self.presented_control?(control)
-      PRESENTED_TYPES.key?(control.wire_type)
+      return false unless PRESENTED_TYPES.key?(control.wire_type)
+
+      !inline_overlay?(control)
+    end
+
+    # An overlay built with inline: true renders in place instead of being
+    # presented, so it is laid out like any other control. Today that is the
+    # DatePicker: cupertino_date_picker sends inline: true by default and
+    # date_picker(inline: true) opts in; a plain date_picker stays the dialog.
+    def self.inline_overlay?(control)
+      control.props["inline"] == true && PRESENTED_OVERLAY_TYPES.include?(control.wire_type)
     end
     PAGE_ADD_RESERVED_KEYS = %i[appbar bottom_appbar floating_action_button navigation_bar dialog snack_bar bottom_sheet].freeze
     WIDGET_HELPER_METHODS = (

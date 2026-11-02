@@ -16,8 +16,9 @@ module Ruflet
       # Appends +control+ to +list+ as an implicit DSL child and remembers the
       # list as its owner. Explicit children (`children:`/`controls:`, a
       # block's return value) are appended directly and are never reclaimed.
-      # Overlays and services (Ruflet::Page::PRESENTED_TYPES) are presented by
-      # the page, not laid out, so they are never captured implicitly.
+      # Overlays and services (Ruflet::Page.presented_control?) are presented
+      # by the page, not laid out, so they are never captured implicitly. An
+      # inline date picker renders in place and is captured like any control.
       def attach(list, control)
         return control if Ruflet::Page.presented_control?(control)
 
