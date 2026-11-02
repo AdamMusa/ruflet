@@ -358,6 +358,11 @@ module Ruflet
             text_vertical_align on_click
           ].freeze
 
+          # Material 2 keywords that every Dropdown renderer draws under the
+          # same name. menu_border_radius (Flet 1.0's DropdownM2) rounds the
+          # open menu, while border_radius keeps rounding the field.
+          MATERIAL2_SHARED_KEYWORDS = %i[menu_border_radius].freeze
+
           private
 
           def preprocess_props(props)
