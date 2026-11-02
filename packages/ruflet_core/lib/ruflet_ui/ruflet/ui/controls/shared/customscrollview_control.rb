@@ -8,7 +8,7 @@ module Ruflet
           TYPE = "customscrollview".freeze
           WIRE = "CustomScrollView".freeze
 
-          KEYWORDS = [:align, :anchor, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :auto_scroll, :badge, :bottom, :cache_extent, :clip_behavior, :col, :controls, :data, :disabled, :expand, :expand_loose, :height, :horizontal, :key, :keyboard_dismiss_behavior, :left, :margin, :offset, :opacity, :reverse, :right, :rotate, :rtl, :scale, :scroll, :scroll_interval, :semantic_child_count, :size_change_interval, :slivers, :tooltip, :top, :visible, :width, :on_animation_end, :on_scroll, :on_size_change].freeze
+          KEYWORDS = [:align, :anchor, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :auto_scroll, :auto_scroll_animation, :badge, :bottom, :cache_extent, :clip_behavior, :col, :controls, :data, :disabled, :expand, :expand_loose, :height, :horizontal, :key, :keyboard_dismiss_behavior, :left, :margin, :offset, :opacity, :reverse, :right, :rotate, :rtl, :scale, :scroll, :scroll_interval, :semantic_child_count, :size_change_interval, :slivers, :tooltip, :top, :visible, :width, :on_animation_end, :on_scroll, :on_size_change].freeze
 
           def initialize(id: nil, **props)
             unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
@@ -25,6 +25,7 @@ module Ruflet
             animate_size = props[:animate_size]
             aspect_ratio = props[:aspect_ratio]
             auto_scroll = props[:auto_scroll]
+            auto_scroll_animation = props[:auto_scroll_animation]
             badge = props[:badge]
             bottom = props[:bottom]
             cache_extent = props[:cache_extent]
@@ -76,6 +77,7 @@ module Ruflet
             props[:animate_size] = animate_size unless animate_size.nil?
             props[:aspect_ratio] = aspect_ratio unless aspect_ratio.nil?
             props[:auto_scroll] = auto_scroll unless auto_scroll.nil?
+            props[:auto_scroll_animation] = auto_scroll_animation unless auto_scroll_animation.nil?
             props[:badge] = badge unless badge.nil?
             props[:bottom] = bottom unless bottom.nil?
             props[:cache_extent] = cache_extent unless cache_extent.nil?

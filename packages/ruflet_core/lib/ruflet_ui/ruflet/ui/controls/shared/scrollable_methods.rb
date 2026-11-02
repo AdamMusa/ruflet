@@ -4,7 +4,8 @@ module Ruflet
   module UI
     module Controls
       # Imperative methods shared by every control whose Flutter renderer is a
-      # scroll view (ListView, GridView, Column, Row, View, ReorderableListView).
+      # scroll view (ListView, GridView, Column, Row, View, ReorderableListView,
+      # ResponsiveRow, ExpansionPanelList).
       # They invoke the method of the same name on the client; a control that is
       # not mounted on a page yet has no client and the call returns nil.
       module ScrollableMethods
