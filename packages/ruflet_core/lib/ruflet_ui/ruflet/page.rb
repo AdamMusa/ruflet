@@ -1686,29 +1686,26 @@ module Ruflet
         dirty << wire_id if prior && prior != entry[:state]
       end
 
-      # A changed parent patch serializes its newly referenced children, so a
-      # second patch for a dirty descendant would be redundant and can race the
-      # parent's replacement on the client.
-      targets = dirty_ids.reject do |wire_id|
-        ancestor = current[:parents][wire_id]
-        found = false
-        while ancestor
-          if dirty_ids.include?(ancestor)
-            found = true
-            break
-          end
-          ancestor = current[:parents][ancestor]
+      # A changed control's patch re-sends only the props (or children list)
+      # that changed, serialized in full. A dirty descendant inside one of
+      # those values is already covered, and a second patch for it could race
+      # that replacement on the client; any other dirty descendant (its
+      # parent only changed `spacing`, say) still needs its own patch.
+      patches = {}
+      resent = {}
+      dirty_ids.each do |wire_id|
+        entry = current[:controls][wire_id]
+        prior = @published_control_states.fetch(wire_id)
+        patches[wire_id] = changed_control_patch_ops(entry[:control], prior, entry[:state])
+        changed_control_values(entry[:control], prior, entry[:state]).each do |value|
+          collect_subtree_wire_ids(value, resent, {})
         end
-        found
       end
 
-      targets.each do |wire_id|
-        entry = current[:controls][wire_id]
-        patch_ops = changed_control_patch_ops(
-          entry[:control],
-          @published_control_states.fetch(wire_id),
-          entry[:state]
-        )
+      dirty_ids.each do |wire_id|
+        next if resent[wire_id]
+
+        patch_ops = patches[wire_id]
         next if patch_ops.empty?
 
         send_message(Protocol::ACTIONS[:patch_control], {
@@ -1718,6 +1715,35 @@ module Ruflet
       end
 
       publish_wire_state_snapshot!(current)
+    end
+
+    # The values a changed_control_patch_ops patch re-sends in full.
+    def changed_control_values(control, prior, current)
+      prior_props = prior.fetch("props")
+      current_props = current.fetch("props")
+      values = (prior_props.keys | current_props.keys).filter_map do |key|
+        next if prior_props[key] == current_props[key]
+
+        control.props[key]
+      end
+      values << control.children if prior.fetch("children") != current.fetch("children")
+      values
+    end
+
+    def collect_subtree_wire_ids(value, ids, visited)
+      case value
+      when Control
+        return if visited[value.object_id]
+
+        visited[value.object_id] = true
+        ids[value.wire_id] = true if value.wire_id
+        value.children.each { |child| collect_subtree_wire_ids(child, ids, visited) }
+        value.props.each_value { |entry| collect_subtree_wire_ids(entry, ids, visited) }
+      when Array
+        value.each { |entry| collect_subtree_wire_ids(entry, ids, visited) }
+      when Hash
+        value.each_value { |entry| collect_subtree_wire_ids(entry, ids, visited) }
+      end
     end
 
     def changed_control_patch_ops(control, prior, current)
