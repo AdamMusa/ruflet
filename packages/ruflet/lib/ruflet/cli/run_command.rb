@@ -230,6 +230,7 @@ module Ruflet
           # the previous one is moot.
           run_state[:ready] = false
           run_state[:reload_pending] = false
+          run_state[:retired_pid] = nil
           run_state[:child_pid] = Process.spawn(child_env, *cmd, pgroup: true, READY_FD => writer, **spawn_options)
         end
         writer.close
@@ -244,7 +245,9 @@ module Ruflet
           next unless signalled
 
           deliver = run_state[:lock].synchronize do
-            next false unless run_state[:child_pid] == pid
+            # A byte from the app "R" retired (it reported just after the
+            # TERM) must not mark it ready: it is about to be reaped.
+            next false unless run_state[:child_pid] == pid && run_state[:retired_pid] != pid
 
             run_state[:ready] = true
             pending = run_state[:reload_pending]
@@ -266,6 +269,7 @@ module Ruflet
         run_state[:lock].synchronize do
           run_state[:ready] = false
           run_state[:reload_pending] = false
+          run_state[:retired_pid] = run_state[:child_pid]
         end
       end
 
