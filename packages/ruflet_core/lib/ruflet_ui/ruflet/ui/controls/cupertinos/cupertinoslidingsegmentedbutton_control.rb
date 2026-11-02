@@ -8,7 +8,7 @@ module Ruflet
           TYPE = "cupertinoslidingsegmentedbutton".freeze
           WIRE = "SegmentedButton".freeze
 
-          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :bottom, :col, :controls, :data, :disabled, :expand, :expand_loose, :height, :key, :left, :margin, :offset, :opacity, :padding, :proportional_width, :right, :rotate, :rtl, :scale, :selected_index, :size_change_interval, :thumb_color, :tooltip, :top, :visible, :width, :on_animation_end, :on_change, :on_size_change].freeze
+          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :bottom, :col, :controls, :data, :disabled, :expand, :expand_loose, :height, :key, :left, :margin, :offset, :opacity, :padding, :proportional_width, :right, :rotate, :rtl, :scale, :selected_index, :size_change_interval, :sliding, :thumb_color, :tooltip, :top, :visible, :width, :on_animation_end, :on_change, :on_size_change].freeze
 
           def initialize(id: nil, **props)
             unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
@@ -46,6 +46,7 @@ module Ruflet
             scale = props[:scale]
             selected_index = props[:selected_index]
             size_change_interval = props[:size_change_interval]
+            sliding = props[:sliding]
             thumb_color = props[:thumb_color]
             tooltip = props[:tooltip]
             top = props[:top]
@@ -55,6 +56,8 @@ module Ruflet
             on_change = props[:on_change]
             on_size_change = props[:on_size_change]
             proportional_width = false if proportional_width.nil?
+            # The canonical SegmentedButton renders the iOS sliding control.
+            sliding = true if sliding.nil?
             selected_index = 0 if selected_index.nil?
 
             props = {}
@@ -91,6 +94,7 @@ module Ruflet
             props[:scale] = scale unless scale.nil?
             props[:selected_index] = selected_index unless selected_index.nil?
             props[:size_change_interval] = size_change_interval unless size_change_interval.nil?
+            props[:sliding] = sliding unless sliding.nil?
             props[:thumb_color] = thumb_color unless thumb_color.nil?
             props[:tooltip] = tooltip unless tooltip.nil?
             props[:top] = top unless top.nil?
