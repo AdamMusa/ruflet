@@ -13,6 +13,7 @@ require_relative "ruflet/flashlight_control"
 require_relative "ruflet/geolocator_control"
 require_relative "ruflet/gyroscope_control"
 require_relative "ruflet/hapticfeedback_control"
+require_relative "ruflet/localauthentication_control"
 require_relative "ruflet/magnetometer_control"
 require_relative "ruflet/permissionhandler_control"
 require_relative "ruflet/screenbrightness_control"
@@ -51,6 +52,8 @@ module Ruflet
           "gyroscope" => RufletServicesComponents::GyroscopeControl,
           "haptic_feedback" => RufletServicesComponents::HapticFeedbackControl,
           "hapticfeedback" => RufletServicesComponents::HapticFeedbackControl,
+          "local_authentication" => RufletServicesComponents::LocalAuthenticationControl,
+          "localauthentication" => RufletServicesComponents::LocalAuthenticationControl,
           "magnetometer" => RufletServicesComponents::MagnetometerControl,
           "permission_handler" => RufletServicesComponents::PermissionHandlerControl,
           "permissionhandler" => RufletServicesComponents::PermissionHandlerControl,

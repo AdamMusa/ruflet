@@ -23,6 +23,7 @@ module Ruflet
         "datatable2" => { package: "ruflet_datatable2", alias: "ruflet_datatable2" },
         "flashlight" => { package: "ruflet_flashlight", alias: "ruflet_flashlight" },
         "geolocator" => { package: "ruflet_geolocator", alias: "ruflet_geolocator" },
+        "local_auth" => { package: "ruflet_local_auth", alias: "ruflet_local_auth" },
         "lottie" => { package: "ruflet_lottie", alias: "ruflet_lottie" },
         "map" => { package: "ruflet_map", alias: "ruflet_map" },
         "permission_handler" => { package: "ruflet_permission_handler", alias: "ruflet_permission_handler" },
@@ -347,7 +348,7 @@ module Ruflet
 
           # Native capabilities that require platform permissions. Ruflet activates
           # the matching client extensions and writes Android/iOS permissions.
-          # Supported services: camera, microphone, location, motion
+          # Supported services: camera, microphone, location, motion, biometrics
           services: []
         YAML
       end

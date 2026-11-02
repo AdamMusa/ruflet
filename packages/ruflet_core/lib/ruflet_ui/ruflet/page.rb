@@ -1174,6 +1174,15 @@ module Ruflet
       service(:secure_storage, **props)
     end
 
+    # Biometric / device-credential authentication (the local_auth extension).
+    def local_authentication(**props)
+      service(:local_authentication, **props)
+    end
+
+    def local_auth(**props)
+      local_authentication(**props)
+    end
+
     def shake_detector(**props)
       service(:shake_detector, **props)
     end

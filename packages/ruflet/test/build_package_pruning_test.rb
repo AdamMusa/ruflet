@@ -173,6 +173,137 @@ class RufletCliBuildPackagePruningTest < Minitest::Test
     end
   end
 
+  def test_local_auth_is_selected_by_extension_or_biometrics_service
+    builder = DummyBuilder.new
+
+    assert_equal(
+      { package: "ruflet_local_auth", alias: "ruflet_local_auth" },
+      Ruflet::CLI::BuildCommand::CLIENT_EXTENSION_MAP["local_auth"]
+    )
+    assert_equal(
+      Ruflet::CLI::BuildCommand::CLIENT_EXTENSION_MAP["local_auth"],
+      Ruflet::CLI::NewCommand::CLIENT_EXTENSION_MAP["local_auth"]
+    )
+    assert_includes builder.send(:configured_extension_keys, { "extensions" => ["local_auth"] }), "local_auth"
+    assert_includes builder.send(:configured_extension_keys, { "services" => ["biometrics"] }), "local_auth"
+
+    Dir.mktmpdir do |dir|
+      template_root = File.join(dir, "template")
+      client_dir = File.join(dir, "client")
+      %w[ruflet ruflet_local_auth].each do |name|
+        FileUtils.mkdir_p(File.join(template_root, "ruflet_packages", name))
+        File.write(File.join(template_root, "ruflet_packages", name, "marker"), name)
+      end
+      FileUtils.mkdir_p(File.join(template_root, "lib"))
+      File.write(
+        File.join(template_root, "pubspec.yaml"),
+        "dependencies:\n  ruflet_local_auth:\n    path: ruflet_packages/ruflet_local_auth\n"
+      )
+      File.write(
+        File.join(template_root, "lib", "main.server.dart"),
+        <<~DART
+          import 'package:ruflet/ruflet.dart';
+          import 'package:ruflet_local_auth/ruflet_local_auth.dart' as ruflet_local_auth;
+          final extensions = <RufletExtension>[
+            ruflet_local_auth.Extension(),
+          ];
+        DART
+      )
+      FileUtils.mkdir_p(File.join(client_dir, "lib"))
+      File.write(File.join(client_dir, "pubspec.yaml"), "dependencies:\n  ruflet:\n    path: ruflet_packages/ruflet\n")
+      File.write(
+        File.join(client_dir, "lib", "main.server.dart"),
+        "import 'package:ruflet/ruflet.dart';\nfinal extensions = <RufletExtension>[\n];\n"
+      )
+
+      Ruflet::CLI.stub(:resolve_ruflet_client_template_root, template_root) do
+        builder.send(:apply_service_extension_config, client_dir, { "services" => ["biometrics"] })
+      end
+
+      assert_equal %w[ruflet ruflet_local_auth], package_directories(client_dir)
+      dependencies = YAML.safe_load(File.read(File.join(client_dir, "pubspec.yaml")), aliases: true).fetch("dependencies")
+      assert_equal({ "path" => "ruflet_packages/ruflet_local_auth" }, dependencies["ruflet_local_auth"])
+      main = File.read(File.join(client_dir, "lib", "main.server.dart"))
+      assert_includes main, "import 'package:ruflet_local_auth/ruflet_local_auth.dart' as ruflet_local_auth;"
+      assert_includes main, "ruflet_local_auth.Extension(),"
+      assert builder.send(:validate_flutter_extension_selection, client_dir)
+    end
+  end
+
+  def test_local_auth_adds_the_face_id_usage_description
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      plist = File.join(dir, "ios", "Runner", "Info.plist")
+      FileUtils.mkdir_p(File.dirname(plist))
+      File.write(plist, "<plist><dict>\n</dict></plist>\n")
+
+      builder.send(:apply_native_service_permissions, dir, { "extensions" => ["local_auth"] })
+      assert_includes File.read(plist), "<key>NSFaceIDUsageDescription</key>"
+
+      builder.send(
+        :apply_native_service_permissions, dir,
+        { "services" => [{ "biometrics" => { "description" => "Unlock your notes with Face ID." } }] }
+      )
+      ios = File.read(plist)
+      assert_includes ios, "<key>NSFaceIDUsageDescription</key>\n\t<string>Unlock your notes with Face ID.</string>"
+      assert_equal 1, ios.scan("NSFaceIDUsageDescription").length
+
+      builder.send(:apply_native_service_permissions, dir, {})
+      refute_includes File.read(plist), "NSFaceIDUsageDescription"
+    end
+  end
+
+  def test_local_auth_switches_the_android_activity_to_a_fragment_activity
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      kotlin = File.join(dir, "android", "app", "src", "main", "kotlin", "com", "example", "app", "MainActivity.kt")
+      java = File.join(dir, "android", "app", "src", "main", "java", "com", "example", "legacy", "MainActivity.java")
+      custom = File.join(dir, "android", "app", "src", "main", "kotlin", "com", "example", "custom", "MainActivity.kt")
+      [kotlin, java, custom].each { |path| FileUtils.mkdir_p(File.dirname(path)) }
+      kotlin_source = <<~KOTLIN
+        package com.example.app
+
+        import io.flutter.embedding.android.FlutterActivity
+
+        class MainActivity : FlutterActivity()
+      KOTLIN
+      java_source = <<~JAVA
+        package com.example.legacy;
+
+        import io.flutter.embedding.android.FlutterActivity;
+
+        public class MainActivity extends FlutterActivity {
+        }
+      JAVA
+      custom_source = <<~KOTLIN
+        package com.example.custom
+
+        import io.flutter.embedding.android.FlutterActivity
+
+        class MainActivity : MyBaseActivity()
+      KOTLIN
+      File.write(kotlin, kotlin_source)
+      File.write(java, java_source)
+      File.write(custom, custom_source)
+
+      builder.send(:apply_android_activity_base, dir, %w[charts local_auth])
+
+      assert_equal kotlin_source.gsub("FlutterActivity", "FlutterFragmentActivity"), File.read(kotlin)
+      assert_equal java_source.gsub("FlutterActivity", "FlutterFragmentActivity"), File.read(java)
+      assert_equal custom_source, File.read(custom)
+
+      # Idempotent, then reverted once local_auth is no longer selected.
+      builder.send(:apply_android_activity_base, dir, %w[local_auth])
+      assert_equal kotlin_source.gsub("FlutterActivity", "FlutterFragmentActivity"), File.read(kotlin)
+      builder.send(:apply_android_activity_base, dir, %w[charts])
+      assert_equal kotlin_source, File.read(kotlin)
+      assert_equal java_source, File.read(java)
+      assert_equal custom_source, File.read(custom)
+    end
+  end
+
   private
 
   def package_directories(client_dir)

@@ -46,6 +46,8 @@ module Ruflet
       def geolocator(**props) = control_delegate.geolocator(**props)
       def gyroscope(**props) = control_delegate.gyroscope(**props)
       def haptic_feedback(**props) = control_delegate.haptic_feedback(**props)
+      def local_auth(**props) = control_delegate.local_auth(**props)
+      def local_authentication(**props) = control_delegate.local_authentication(**props)
       def magnetometer(**props) = control_delegate.magnetometer(**props)
       def permission_handler(**props) = control_delegate.permission_handler(**props)
       def screen_brightness(**props) = control_delegate.screen_brightness(**props)

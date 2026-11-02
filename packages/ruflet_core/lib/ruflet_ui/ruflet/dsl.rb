@@ -90,6 +90,8 @@ module Ruflet
     def geolocator(**props) = _pending_app.geolocator(**props)
     def gyroscope(**props) = _pending_app.gyroscope(**props)
     def haptic_feedback(**props) = _pending_app.haptic_feedback(**props)
+    def local_auth(**props) = _pending_app.local_auth(**props)
+    def local_authentication(**props) = _pending_app.local_authentication(**props)
     def magnetometer(**props) = _pending_app.magnetometer(**props)
     def permission_handler(**props) = _pending_app.permission_handler(**props)
     def screen_brightness(**props) = _pending_app.screen_brightness(**props)
