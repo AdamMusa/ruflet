@@ -6,6 +6,7 @@ require_relative "control"
 require_relative "ui/widget_builder"
 require_relative "ui/control_factory"
 require_relative "ui/service_types"
+require_relative "types/device_info"
 require_relative "icons/material_icon_lookup"
 require_relative "icons/cupertino_icon_lookup"
 require "set"
@@ -940,6 +941,51 @@ module Ruflet
     # before continuing (e.g. picker selection, camera discovery/init).
     def invoke_sync(control_or_id, method_name, args: nil, timeout: 10)
       invoke_and_wait(control_or_id, method_name, args: args, timeout: timeout)
+    end
+
+    # Flet's page.get_device_info(): asks the client for its device record
+    # (device_info_plus) and calls on_result with a Ruflet::DeviceInfo, or nil
+    # on a platform the client has no record for, and the error (nil on
+    # success). Returns the call id; see get_device_info_sync to wait instead.
+    #
+    #   page.get_device_info(on_result: ->(info, error) { puts info&.model })
+    def get_device_info(on_result: nil, timeout: 10)
+      callback =
+        if on_result.respond_to?(:call)
+          ->(result, error) { on_result.call(device_info_from(result), error) }
+        end
+      invoke(:page, "get_device_info", timeout: timeout, on_result: callback)
+    end
+
+    # get_device_info that waits for the answer (like invoke_sync): returns
+    # the Ruflet::DeviceInfo (nil when the platform has none), raises the
+    # client's error as a RuntimeError and Timeout::Error after `timeout`.
+    def get_device_info_sync(timeout: 10)
+      device_info_from(invoke_sync(:page, "get_device_info", timeout: timeout))
+    end
+
+    # Flet's page.set_allowed_device_orientations(): the orientations a mobile
+    # app may rotate to, as Ruflet::DeviceOrientation values or their names
+    # (:portrait_up, :portrait_down, :landscape_left, :landscape_right); []
+    # restores the system default. An unknown name raises ArgumentError, and
+    # a client known not to be a native iOS/Android app (web, desktop, or
+    # android_tv) raises Ruflet::UnsupportedPlatformError, both before
+    # anything is sent. Returns the call id.
+    #
+    #   page.set_allowed_device_orientations(%i[portrait_up landscape_left])
+    def set_allowed_device_orientations(orientations, timeout: 10, on_result: nil)
+      values = Array(orientations).map { |orientation| DeviceOrientation.wire_value(orientation) }.uniq
+      unless orientation_lock_supported?
+        raise UnsupportedPlatformError, "set_allowed_device_orientations is only supported on mobile platforms"
+      end
+
+      invoke(
+        :page,
+        "set_allowed_device_orientations",
+        args: { "orientations" => values },
+        timeout: timeout,
+        on_result: on_result
+      )
     end
 
     def launch_url(url, mode: nil, web_view_configuration: nil, browser_configuration: nil, web_only_window_name: nil, timeout: 10, on_result: nil)
@@ -2106,6 +2152,31 @@ module Ruflet
 
     def page_control_target?(control_or_id)
       control_or_id == 1 || control_or_id.to_s == "1" || control_or_id.to_s == "page"
+    end
+
+    # The client platform a device record describes: "web" in a browser
+    # (Flet picks WebDeviceInfo whenever page.web), else the registered one.
+    def device_info_platform
+      return "web" if web
+
+      platform = @client_details["platform"]
+      platform.nil? ? nil : platform.to_s
+    end
+
+    def device_info_from(result)
+      return nil unless result.is_a?(Hash) && !result.empty?
+
+      DeviceInfo.new(platform: device_info_platform, data: result)
+    end
+
+    # Like Flet's PagePlatform.is_mobile (ios, android) and native only: a
+    # browser cannot lock orientation. A client that did not report its
+    # platform is left to answer for itself.
+    def orientation_lock_supported?
+      return false if web
+
+      platform = @client_details["platform"]
+      platform.nil? || platform.to_s == "ios" || platform.to_s == "android"
     end
 
     def serialize_patch_value(value)
