@@ -8,7 +8,7 @@ module Ruflet
           TYPE = "semantics".freeze
           WIRE = "Semantics".freeze
 
-          KEYWORDS = [:badge, :button, :checked, :col, :container, :content, :current_value_length, :data, :decreased_value, :disabled, :exclude_semantics, :expand, :expand_loose, :expanded, :focus, :focusable, :header, :heading_level, :hidden, :hint_text, :image, :increased_value, :key, :label, :link, :live_region, :max_value_length, :mixed, :multiline, :obscured, :opacity, :read_only, :rtl, :selected, :slider, :textfield, :toggled, :tooltip, :value, :visible, :on_copy, :on_cut, :on_decrease, :on_did_gain_accessibility_focus, :on_did_lose_accessibility_focus, :on_dismiss, :on_double_tap, :on_increase, :on_long_press, :on_long_press_hint_text, :on_move_cursor_backward_by_character, :on_move_cursor_forward_by_character, :on_paste, :on_scroll_down, :on_scroll_left, :on_scroll_right, :on_scroll_up, :on_set_text, :on_tap, :on_tap_hint_text].freeze
+          KEYWORDS = [:badge, :button, :checked, :col, :container, :content, :current_value_length, :data, :decreased_value, :disabled, :exclude_semantics, :expand, :expand_loose, :expanded, :focus, :focusable, :header, :heading_level, :hidden, :hint_text, :identifier, :image, :increased_value, :key, :label, :link, :live_region, :max_value_length, :mixed, :multiline, :obscured, :opacity, :read_only, :rtl, :selected, :slider, :textfield, :toggled, :tooltip, :value, :visible, :on_copy, :on_cut, :on_decrease, :on_did_gain_accessibility_focus, :on_did_lose_accessibility_focus, :on_dismiss, :on_double_tap, :on_increase, :on_long_press, :on_long_press_hint_text, :on_move_cursor_backward_by_character, :on_move_cursor_forward_by_character, :on_paste, :on_scroll_down, :on_scroll_left, :on_scroll_right, :on_scroll_up, :on_set_text, :on_tap, :on_tap_hint_text].freeze
 
           def initialize(id: nil, **props)
             unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
@@ -33,6 +33,7 @@ module Ruflet
             heading_level = props[:heading_level]
             hidden = props[:hidden]
             hint_text = props[:hint_text]
+            identifier = props[:identifier]
             image = props[:image]
             increased_value = props[:increased_value]
             key = props[:key]
@@ -96,6 +97,7 @@ module Ruflet
             props[:heading_level] = heading_level unless heading_level.nil?
             props[:hidden] = hidden unless hidden.nil?
             props[:hint_text] = hint_text unless hint_text.nil?
+            props[:identifier] = identifier unless identifier.nil?
             props[:image] = image unless image.nil?
             props[:increased_value] = increased_value unless increased_value.nil?
             props[:key] = key unless key.nil?
