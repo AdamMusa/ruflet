@@ -6,7 +6,7 @@ class ServiceDslHelperCoverageTest < Minitest::Test
   SERVICE_HELPERS = %i[
     accelerometer audio audio_recorder barometer battery browser_context_menu
     clipboard connectivity file_picker flashlight geolocator gyroscope
-    haptic_feedback magnetometer permission_handler screen_brightness
+    haptic_feedback local_auth local_authentication magnetometer permission_handler screen_brightness
     secure_storage semantics_service shake_detector share shared_preferences
     storage_paths url_launcher user_accelerometer wakelock
   ].freeze

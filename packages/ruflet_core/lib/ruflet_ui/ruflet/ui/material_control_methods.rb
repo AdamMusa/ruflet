@@ -118,6 +118,8 @@ module Ruflet
       def geolocator(**props) = build_service(:geolocator, **props)
       def gyroscope(**props) = build_service(:gyroscope, **props)
       def haptic_feedback(**props) = build_service(:haptic_feedback, **props)
+      def local_auth(**props) = build_service(:local_authentication, **props)
+      def local_authentication(**props) = build_service(:local_authentication, **props)
       def magnetometer(**props) = build_service(:magnetometer, **props)
       def permission_handler(**props) = build_service(:permission_handler, **props)
       def screen_brightness(**props) = build_service(:screen_brightness, **props)
