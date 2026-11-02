@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "fileutils"
+require "rbconfig"
 require "minitest/mock"
 
 $LOAD_PATH.unshift(File.expand_path("../../ruflet_core/lib", __dir__))
@@ -118,6 +119,44 @@ class RufletHotReloadTest < Minitest::Test
     assert_nil reader.read(1), "the ready fd must be closed after reporting"
     assert_nil ENV["RUFLET_READY_FD"], "the fd number must not leak to app subprocesses"
     assert @runner.watching?, "ready means the watcher and USR1 trap are armed"
+  ensure
+    ENV.delete("RUFLET_READY_FD")
+    reader&.close
+  end
+
+  # The CLI's readiness fd reaches the app child without close-on-exec (spawn
+  # maps it in), so anything the app spawned while loading inherited the pipe
+  # and saw RUFLET_READY_FD; such a process could report "ready" early and
+  # let a reload kill the booting app. The probe is a real subprocess that
+  # the app script runs during load and that reports what it inherited.
+  def test_processes_spawned_while_the_app_loads_do_not_inherit_the_ready_fd
+    reader, writer = IO.pipe
+    writer.autoclose = false # the runner owns and closes this fd
+    writer.close_on_exec = false # as `ruflet run` hands it to the app child
+    probe = File.join(@dir, "probe.rb")
+    File.write(probe, <<~RUBY)
+      begin
+        IO.for_fd(Integer(ARGV[0]), autoclose: false)
+        print "inherited"
+      rescue Errno::EBADF
+        print "closed"
+      end
+      print " env=", ENV["RUFLET_READY_FD"].inspect
+    RUBY
+    write_widgets("v1")
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require_relative "widgets"
+      $ready_fd_probe = `\#{RbConfig.ruby.inspect} \#{#{probe.inspect}.inspect} #{writer.fileno}`
+      Ruflet.run { |page| page.add(WIDGET_LABEL) }
+    RUBY
+    ENV["RUFLET_READY_FD"] = writer.fileno.to_s
+
+    start_runner
+
+    assert IO.select([reader], nil, nil, 10), "the runner must still report ready"
+    assert_equal ".", reader.read(1)
+    assert_equal "closed env=nil", $ready_fd_probe
   ensure
     ENV.delete("RUFLET_READY_FD")
     reader&.close

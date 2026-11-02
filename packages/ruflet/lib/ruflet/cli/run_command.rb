@@ -233,7 +233,7 @@ module Ruflet
           run_state[:child_pid] = Process.spawn(child_env, *cmd, pgroup: true, READY_FD => writer, **spawn_options)
         end
         writer.close
-        watch_child_ready(reader, pid, run_state)
+        run_state[:ready_thread] = watch_child_ready(reader, pid, run_state)
         pid
       end
 
@@ -251,10 +251,26 @@ module Ruflet
             run_state[:reload_pending] = false
             pending
           end
-          Process.kill("USR1", pid) if deliver
+          send_reload_signal(pid) if deliver
         rescue Errno::ESRCH, IOError
           nil
         end
+      end
+
+      # "R" kills the app, so until the respawned one reports ready it must not
+      # be treated as up: "r" in that gap would signal a reaped pid, get ESRCH
+      # and end the key reader for the rest of the session.
+      def mark_restarting(run_state)
+        return unless run_state[:lock]
+
+        run_state[:lock].synchronize do
+          run_state[:ready] = false
+          run_state[:reload_pending] = false
+        end
+      end
+
+      def send_reload_signal(pid)
+        Process.kill("USR1", pid)
       end
 
       # True when "r" was queued because the app has not finished booting.
@@ -272,12 +288,15 @@ module Ruflet
       def handle_reload_command(command, run_state)
         case command
         when "r"
-          if queue_reload_until_ready(run_state)
+          if run_state[:restart]
+            puts "Restart in progress: the restarted app loads the current code"
+          elsif queue_reload_until_ready(run_state)
             puts "Reload queued: the app is still starting and will reload once it is up"
           else
-            Process.kill("USR1", run_state[:child_pid])
+            send_reload_signal(run_state[:child_pid])
           end
         when "R"
+          mark_restarting(run_state)
           run_state[:restart] = true
           Process.kill("TERM", -run_state[:child_pid])
           escalate_child_shutdown(run_state[:child_pid])
