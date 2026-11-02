@@ -103,6 +103,34 @@ class RufletDslBlockPropChildrenTest < Minitest::Test
     assert_equal ["Container"], wire_types(row.children.last.children)
   end
 
+  # Reclaim takes prop controls back last-first (so long lists stay linear);
+  # props that are not at the tail of the owner list, or out of order, must
+  # still come back and leave the other children in place.
+  def test_builder_reclaims_props_that_are_out_of_order_or_not_at_the_tail
+    kept = nil
+    column = Ruflet.column do
+      a = text("a")
+      kept = text("kept")
+      c = text("c")
+      d = text("d")
+      row(controls: [d, a, c])
+    end
+
+    assert_equal %w[Text Row], wire_types(column.children)
+    assert_same kept, column.children.first
+    assert_equal %w[d a c], column.children.last.children.map { |child| child.props["value"] }
+  end
+
+  def test_builder_reclaims_a_long_list_of_props
+    column = Ruflet.column do
+      text("header")
+      list_view(controls: (1..500).map { |i| text(i.to_s) })
+    end
+
+    assert_equal %w[Text ListView], wire_types(column.children)
+    assert_equal 500, column.children.last.children.length
+  end
+
   def test_builder_block_keeps_real_children_in_order
     column = Ruflet.column do
       text("one")

@@ -29,9 +29,15 @@ module Ruflet
 
       # Takes every control found in +props+ back out of the list that
       # implicitly attached it, whichever builder or enclosing block that was.
-      # Matching is by identity.
+      # Matching is by identity. Prop controls were attached in argument
+      # order, so they sit at the tail of their owner list; taking them back
+      # last-first makes each lookup stop at the end of the list instead of
+      # scanning it (`list_view(controls: items.map { text(...) })` was
+      # quadratic).
       def reclaim(props)
-        each_control(props) do |control|
+        owned = []
+        each_control(props) { |control| owned << control if control.dsl_owner }
+        owned.reverse_each do |control|
           owner = control.dsl_owner
           next unless owner
 
