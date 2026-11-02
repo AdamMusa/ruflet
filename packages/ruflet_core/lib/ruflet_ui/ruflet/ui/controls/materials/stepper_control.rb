@@ -1,0 +1,125 @@
+# frozen_string_literal: true
+
+module Ruflet
+  module UI
+    module Controls
+      module RufletComponents
+        class StepperControl < Ruflet::Control
+          TYPE = "stepper".freeze
+          WIRE = "Stepper".freeze
+
+          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bottom, :cancel_text, :clip_behavior, :col, :connector_color, :connector_thickness, :continue_text, :controls, :current_step, :data, :disabled, :elevation, :expand, :expand_loose, :height, :key, :left, :margin, :offset, :opacity, :right, :rotate, :rtl, :scale, :show_controls, :size_change_interval, :steps, :tooltip, :top, :type, :visible, :width, :on_animation_end, :on_size_change, :on_step_cancel, :on_step_continue, :on_step_tap].freeze
+
+          def initialize(id: nil, **props)
+            unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
+            raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
+            align = props[:align]
+            animate_align = props[:animate_align]
+            animate_margin = props[:animate_margin]
+            animate_offset = props[:animate_offset]
+            animate_opacity = props[:animate_opacity]
+            animate_position = props[:animate_position]
+            animate_rotation = props[:animate_rotation]
+            animate_scale = props[:animate_scale]
+            animate_size = props[:animate_size]
+            aspect_ratio = props[:aspect_ratio]
+            badge = props[:badge]
+            bottom = props[:bottom]
+            cancel_text = props[:cancel_text]
+            clip_behavior = props[:clip_behavior]
+            col = props[:col]
+            connector_color = props[:connector_color]
+            connector_thickness = props[:connector_thickness]
+            continue_text = props[:continue_text]
+            controls = props[:controls]
+            current_step = props[:current_step]
+            data = props[:data]
+            disabled = props[:disabled]
+            elevation = props[:elevation]
+            expand = props[:expand]
+            expand_loose = props[:expand_loose]
+            height = props[:height]
+            key = props[:key]
+            left = props[:left]
+            margin = props[:margin]
+            offset = props[:offset]
+            opacity = props[:opacity]
+            right = props[:right]
+            rotate = props[:rotate]
+            rtl = props[:rtl]
+            scale = props[:scale]
+            show_controls = props[:show_controls]
+            size_change_interval = props[:size_change_interval]
+            steps = props[:steps]
+            tooltip = props[:tooltip]
+            top = props[:top]
+            type = props[:type]
+            visible = props[:visible]
+            width = props[:width]
+            on_animation_end = props[:on_animation_end]
+            on_size_change = props[:on_size_change]
+            on_step_cancel = props[:on_step_cancel]
+            on_step_continue = props[:on_step_continue]
+            on_step_tap = props[:on_step_tap]
+            current_step = 0 if current_step.nil?
+            type = "vertical" if type.nil?
+
+            props = {}
+            props[:align] = align unless align.nil?
+            props[:animate_align] = animate_align unless animate_align.nil?
+            props[:animate_margin] = animate_margin unless animate_margin.nil?
+            props[:animate_offset] = animate_offset unless animate_offset.nil?
+            props[:animate_opacity] = animate_opacity unless animate_opacity.nil?
+            props[:animate_position] = animate_position unless animate_position.nil?
+            props[:animate_rotation] = animate_rotation unless animate_rotation.nil?
+            props[:animate_scale] = animate_scale unless animate_scale.nil?
+            props[:animate_size] = animate_size unless animate_size.nil?
+            props[:aspect_ratio] = aspect_ratio unless aspect_ratio.nil?
+            props[:badge] = badge unless badge.nil?
+            props[:bottom] = bottom unless bottom.nil?
+            props[:cancel_text] = cancel_text unless cancel_text.nil?
+            props[:clip_behavior] = clip_behavior unless clip_behavior.nil?
+            props[:col] = col unless col.nil?
+            props[:connector_color] = connector_color unless connector_color.nil?
+            props[:connector_thickness] = connector_thickness unless connector_thickness.nil?
+            props[:continue_text] = continue_text unless continue_text.nil?
+            props[:controls] = controls unless controls.nil?
+            props[:current_step] = current_step unless current_step.nil?
+            props[:data] = data unless data.nil?
+            props[:disabled] = disabled unless disabled.nil?
+            props[:elevation] = elevation unless elevation.nil?
+            props[:expand] = expand unless expand.nil?
+            props[:expand_loose] = expand_loose unless expand_loose.nil?
+            props[:height] = height unless height.nil?
+            props[:key] = key unless key.nil?
+            props[:left] = left unless left.nil?
+            props[:margin] = margin unless margin.nil?
+            props[:offset] = offset unless offset.nil?
+            props[:opacity] = opacity unless opacity.nil?
+            props[:right] = right unless right.nil?
+            props[:rotate] = rotate unless rotate.nil?
+            props[:rtl] = rtl unless rtl.nil?
+            props[:scale] = scale unless scale.nil?
+            props[:show_controls] = show_controls unless show_controls.nil?
+            props[:size_change_interval] = size_change_interval unless size_change_interval.nil?
+            props[:steps] = steps unless steps.nil?
+            props[:tooltip] = tooltip unless tooltip.nil?
+            props[:top] = top unless top.nil?
+            props[:visible] = visible unless visible.nil?
+            props[:width] = width unless width.nil?
+            props[:on_animation_end] = on_animation_end unless on_animation_end.nil?
+            props[:on_size_change] = on_size_change unless on_size_change.nil?
+            props[:on_step_cancel] = on_step_cancel unless on_step_cancel.nil?
+            props[:on_step_continue] = on_step_continue unless on_step_continue.nil?
+            props[:on_step_tap] = on_step_tap unless on_step_tap.nil?
+            super(type: TYPE, id: id, **props)
+            # `type` (vertical/horizontal) is also Ruflet::Control's own
+            # control-type keyword, so it cannot travel through super's
+            # **props: it would replace TYPE. Store the wire prop afterwards.
+            @props["type"] = normalize_props(type: type)["type"]
+          end
+        end
+      end
+    end
+  end
+end
