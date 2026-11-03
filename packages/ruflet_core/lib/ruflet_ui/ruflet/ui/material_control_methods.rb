@@ -762,6 +762,14 @@ module Ruflet
         build_widget(:sliverpadding, **mapped, &block)
       end
       def sliverpadding(slivers = nil, **props, &block) = sliver_padding(slivers, **props, &block)
+      # A group of fields validated, reset and saved together (Flutter's
+      # Form), laid out like a column: form([fields], on_submit: ...) or
+      # form(...) { text_field(validator: ...) }.
+      def form(controls = nil, **props, &block)
+        mapped = props.dup
+        mapped[:controls] = controls unless controls.nil?
+        build_widget(:form, **mapped, &block)
+      end
       def fitted_box(content = nil, **props)
         mapped = props.dup
         mapped[:content] = content unless content.nil?

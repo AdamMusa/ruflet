@@ -291,6 +291,7 @@ module Ruflet
       def intrinsicwidth(content = nil, **props) = control_delegate.intrinsicwidth(content, **props)
       def sliver_padding(slivers = nil, **props, &block) = control_delegate.sliver_padding(slivers, **props, &block)
       def sliverpadding(slivers = nil, **props, &block) = control_delegate.sliverpadding(slivers, **props, &block)
+      def form(controls = nil, **props, &block) = control_delegate.form(controls, **props, &block)
       def fitted_box(content = nil, **props) = control_delegate.fitted_box(content, **props)
       def fittedbox(content = nil, **props) = control_delegate.fittedbox(content, **props)
       def screenshot(content = nil, **props) = control_delegate.screenshot(content, **props)

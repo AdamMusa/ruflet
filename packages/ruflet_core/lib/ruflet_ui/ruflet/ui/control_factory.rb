@@ -61,6 +61,15 @@ module Ruflet
 
       def build(type, id: nil, **props)
         normalized_type = type.to_s.downcase
+        # validator:/on_saved:/autovalidate_mode: are Ruby-only form options:
+        # no control class declares them, and they never reach the wire.
+        form_options = FormFields.extract_options!(props)
+        control = build_control(normalized_type, id, props)
+        control.apply_form_options!(form_options) unless form_options.empty?
+        control
+      end
+
+      def build_control(normalized_type, id, props)
         if ENV["RUFLET_DEBUG"] == "1" && normalized_type == "floatingactionbutton"
           Kernel.warn("[factory] type=#{normalized_type} id=#{id.inspect} props=#{props.inspect}")
         end

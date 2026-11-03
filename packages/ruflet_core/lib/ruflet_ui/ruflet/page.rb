@@ -200,6 +200,7 @@ module Ruflet
       @sender = sender
       @control_index = {}
       @wire_index = {}
+      @mounted_forms = []
       @next_wire_id = 100
       @view_id = 20
       @root_controls = []
@@ -1383,6 +1384,17 @@ module Ruflet
 
       control = resolve_control(control_or_id)
       return self unless control
+
+      # validator:/on_saved:/autovalidate_mode: stay in Ruby. The bare update
+      # sends what they change on the wire: the event flags the form asks
+      # the client for, and the errors an "always" form shows.
+      form_options = FormFields.extract_options!(props)
+      unless form_options.empty?
+        control.apply_form_options!(form_options)
+        update(control, **props) unless props.empty?
+        return update
+      end
+
       wire_id = control.wire_id
       if wire_id.nil?
         # Events can race with navigation/disposal; never emit patch_control with nil id.
@@ -1408,6 +1420,9 @@ module Ruflet
 
       visited = Set.new
       patch.each_value { |value| register_embedded_value(value, visited) }
+      # Fields this patch adds (new `controls` of a form or of a container
+      # inside one) need their form's event flags before they are sent.
+      sync_mounted_forms! if patch.values.any? { |value| value.is_a?(Control) || value.is_a?(Array) || value.is_a?(Hash) }
 
       patch_ops = patch.map { |k, v| [0, 0, k, serialize_patch_value(v)] }
 
@@ -1494,6 +1509,9 @@ module Ruflet
         # its patches are already sent, so stop the client's refresh spinner.
         invoke(control, "end_refresh") if name.to_s == "refresh"
       end
+      # A form field's events then reach its Form: autovalidation after a
+      # change or blur, and the form's on_submit/on_change.
+      control.form_owner&.handle_field_event(control, name.to_s, event)
 
       if name.to_s == "dismiss" && remove_dialog_tracking(control)
         push_dialogs_update!
@@ -1923,6 +1941,13 @@ module Ruflet
       control.runtime_page = self if control.respond_to?(:runtime_page=)
       @control_index[control.id.to_s] = control
       @wire_index[control.wire_id] = control
+      # A Form links its fields before they are registered and serialized:
+      # the event flags it needs go out with them, and its autovalidation
+      # runs on every page refresh like a Flutter Form on rebuild.
+      if control.respond_to?(:sync_form_fields!)
+        @mounted_forms << control unless @mounted_forms.any? { |form| form.equal?(control) }
+        control.sync_form_fields!
+      end
       control.children.each { |child| register_control_tree(child, visited) }
       control.props.each_value { |value| register_embedded_value(value, visited) }
     end
@@ -1944,6 +1969,7 @@ module Ruflet
     def refresh_control_indexes!
       @control_index.clear
       @wire_index.clear
+      @mounted_forms.clear
       visited = Set.new
 
       if @views.any?
@@ -1953,6 +1979,10 @@ module Ruflet
         @view_props.each_value { |value| register_embedded_value(value, visited) }
       end
       @page_props.each_value { |value| register_embedded_value(value, visited) }
+    end
+
+    def sync_mounted_forms!
+      @mounted_forms.each(&:sync_form_fields!)
     end
 
     def register_embedded_value(value, visited)

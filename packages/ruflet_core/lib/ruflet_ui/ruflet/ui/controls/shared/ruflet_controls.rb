@@ -23,6 +23,7 @@ require_relative "ignorepointer_control"
 require_relative "intrinsicheight_control"
 require_relative "intrinsicwidth_control"
 require_relative "sliverpadding_control"
+require_relative "form_control"
 require_relative "formrow_control"
 require_relative "gesturedetector_control"
 require_relative "gridview_control"
@@ -119,6 +120,7 @@ module Ruflet
             "sliverpadding" => RufletComponents::SliverPaddingControl,
             "fitted_box" => RufletComponents::FittedBoxControl,
             "fittedbox" => RufletComponents::FittedBoxControl,
+            "form" => RufletComponents::FormControl,
             "form_row" => RufletComponents::FormRowControl,
             "formrow" => RufletComponents::FormRowControl,
             "gesture_detector" => RufletComponents::GestureDetectorControl,
