@@ -5,6 +5,7 @@ require_relative "ruflet_ui/ruflet/colors"
 require_relative "ruflet_ui/ruflet/icon_data"
 require_relative "ruflet_ui/ruflet/types/text_style"
 require_relative "ruflet_ui/ruflet/types/geometry"
+require_relative "ruflet_ui/ruflet/client_action"
 require_relative "ruflet_ui/ruflet/control"
 require_relative "ruflet_ui/ruflet/ui/control_registry"
 require_relative "ruflet_ui/ruflet/ui/widget_builder"
@@ -129,6 +130,12 @@ module Ruflet
 
     def app(host: nil, port: nil, &block)
       DSL.app(host: host, port: port, &block)
+    end
+
+    # A Ruflet::ClientAction for a control's `action:` keyword, e.g.
+    # Ruflet.client_action(:copy_to_clipboard, text: "token").
+    def client_action(type, **options)
+      ClientAction.new(type, **options)
     end
 
     private
