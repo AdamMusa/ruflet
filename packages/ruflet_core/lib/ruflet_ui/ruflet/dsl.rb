@@ -342,6 +342,8 @@ module Ruflet
     def intrinsicwidth(content = nil, **props) = _pending_app.intrinsicwidth(content, **props)
     def sliver_padding(slivers = nil, **props, &block) = _pending_app.sliver_padding(slivers, **props, &block)
     def sliverpadding(slivers = nil, **props, &block) = _pending_app.sliverpadding(slivers, **props, &block)
+    def nested_scroll_view(header_slivers = nil, **props, &block) = _pending_app.nested_scroll_view(header_slivers, **props, &block)
+    def nestedscrollview(header_slivers = nil, **props, &block) = _pending_app.nestedscrollview(header_slivers, **props, &block)
     def fitted_box(content = nil, **props) = _pending_app.fitted_box(content, **props)
     def fittedbox(content = nil, **props) = _pending_app.fittedbox(content, **props)
     def screenshot(content = nil, **props) = _pending_app.screenshot(content, **props)

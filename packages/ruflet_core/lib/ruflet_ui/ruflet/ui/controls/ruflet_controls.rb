@@ -133,6 +133,7 @@ require_relative "shared/ignorepointer_control"
 require_relative "shared/intrinsicheight_control"
 require_relative "shared/intrinsicwidth_control"
 require_relative "shared/sliverpadding_control"
+require_relative "shared/nestedscrollview_control"
 require_relative "shared/formrow_control"
 require_relative "shared/gesturedetector_control"
 require_relative "shared/gridview_control"
@@ -363,6 +364,8 @@ module Ruflet
           "intrinsicwidth" => RufletComponents::IntrinsicWidthControl,
           "sliver_padding" => RufletComponents::SliverPaddingControl,
           "sliverpadding" => RufletComponents::SliverPaddingControl,
+          "nested_scroll_view" => RufletComponents::NestedScrollViewControl,
+          "nestedscrollview" => RufletComponents::NestedScrollViewControl,
           "fitted_box" => RufletComponents::FittedBoxControl,
           "fittedbox" => RufletComponents::FittedBoxControl,
           "floating_action_button" => RufletComponents::FloatingActionButtonControl,

@@ -23,6 +23,7 @@ require_relative "ignorepointer_control"
 require_relative "intrinsicheight_control"
 require_relative "intrinsicwidth_control"
 require_relative "sliverpadding_control"
+require_relative "nestedscrollview_control"
 require_relative "formrow_control"
 require_relative "gesturedetector_control"
 require_relative "gridview_control"
@@ -117,6 +118,8 @@ module Ruflet
             "intrinsicwidth" => RufletComponents::IntrinsicWidthControl,
             "sliver_padding" => RufletComponents::SliverPaddingControl,
             "sliverpadding" => RufletComponents::SliverPaddingControl,
+            "nested_scroll_view" => RufletComponents::NestedScrollViewControl,
+            "nestedscrollview" => RufletComponents::NestedScrollViewControl,
             "fitted_box" => RufletComponents::FittedBoxControl,
             "fittedbox" => RufletComponents::FittedBoxControl,
             "form_row" => RufletComponents::FormRowControl,

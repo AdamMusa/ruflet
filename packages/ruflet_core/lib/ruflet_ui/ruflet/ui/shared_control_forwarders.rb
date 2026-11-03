@@ -291,6 +291,8 @@ module Ruflet
       def intrinsicwidth(content = nil, **props) = control_delegate.intrinsicwidth(content, **props)
       def sliver_padding(slivers = nil, **props, &block) = control_delegate.sliver_padding(slivers, **props, &block)
       def sliverpadding(slivers = nil, **props, &block) = control_delegate.sliverpadding(slivers, **props, &block)
+      def nested_scroll_view(header_slivers = nil, **props, &block) = control_delegate.nested_scroll_view(header_slivers, **props, &block)
+      def nestedscrollview(header_slivers = nil, **props, &block) = control_delegate.nestedscrollview(header_slivers, **props, &block)
       def fitted_box(content = nil, **props) = control_delegate.fitted_box(content, **props)
       def fittedbox(content = nil, **props) = control_delegate.fittedbox(content, **props)
       def screenshot(content = nil, **props) = control_delegate.screenshot(content, **props)
