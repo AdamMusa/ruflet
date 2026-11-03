@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "animation_values"
+
 module Ruflet
   module UI
     module MaterialControlMethods
@@ -102,9 +104,9 @@ module Ruflet
       def animatedswitcher(content = nil, **props) = animated_switcher(content, **props)
       def animation(duration = nil, **props)
         duration = props.delete(:duration) if duration.nil? && props.key?(:duration)
-        Ruflet::Animation.new(duration: duration, **props)
+        AnimationValues.animation(duration, **props)
       end
-      def animation_style(**props) = Ruflet::AnimationStyle.new(**props)
+      def animation_style(**props) = AnimationValues.animation_style(**props)
       def accelerometer(**props) = build_service(:accelerometer, **props)
       def audio(**props) = build_service(:audio, **props)
       def audio_recorder(**props) = build_service(:audio_recorder, **props)
@@ -712,7 +714,7 @@ module Ruflet
         mapped[:value] = value unless value.nil?
         build_widget(:textfield, **mapped)
       end
-      def textfield(**props) = text_field(**props)
+      def textfield(value = nil, **props) = text_field(value, **props)
       def checkbox(**props) = build_widget(:checkbox, **props)
       def switch(**props) = build_widget(:switch, **props)
       def slider(**props) = build_widget(:slider, **props)
