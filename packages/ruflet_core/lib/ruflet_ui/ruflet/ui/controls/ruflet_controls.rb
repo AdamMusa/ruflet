@@ -140,6 +140,7 @@ require_relative "shared/rotationtransition_control"
 require_relative "shared/scaletransition_control"
 require_relative "shared/sizetransition_control"
 require_relative "shared/slidetransition_control"
+require_relative "shared/form_control"
 require_relative "shared/formrow_control"
 require_relative "shared/gesturedetector_control"
 require_relative "shared/gridview_control"
@@ -388,6 +389,7 @@ module Ruflet
           "fittedbox" => RufletComponents::FittedBoxControl,
           "floating_action_button" => RufletComponents::FloatingActionButtonControl,
           "floatingactionbutton" => RufletComponents::FloatingActionButtonControl,
+          "form" => RufletComponents::FormControl,
           "form_row" => RufletComponents::FormRowControl,
           "formrow" => RufletComponents::FormRowControl,
           "gesture_detector" => RufletComponents::GestureDetectorControl,

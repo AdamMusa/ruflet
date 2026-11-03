@@ -358,6 +358,7 @@ module Ruflet
     def sizetransition(content = nil, **props) = _pending_app.sizetransition(content, **props)
     def slide_transition(content = nil, **props) = _pending_app.slide_transition(content, **props)
     def slidetransition(content = nil, **props) = _pending_app.slidetransition(content, **props)
+    def form(controls = nil, **props, &block) = _pending_app.form(controls, **props, &block)
     def fitted_box(content = nil, **props) = _pending_app.fitted_box(content, **props)
     def fittedbox(content = nil, **props) = _pending_app.fittedbox(content, **props)
     def screenshot(content = nil, **props) = _pending_app.screenshot(content, **props)

@@ -307,6 +307,7 @@ module Ruflet
       def sizetransition(content = nil, **props) = control_delegate.sizetransition(content, **props)
       def slide_transition(content = nil, **props) = control_delegate.slide_transition(content, **props)
       def slidetransition(content = nil, **props) = control_delegate.slidetransition(content, **props)
+      def form(controls = nil, **props, &block) = control_delegate.form(controls, **props, &block)
       def fitted_box(content = nil, **props) = control_delegate.fitted_box(content, **props)
       def fittedbox(content = nil, **props) = control_delegate.fittedbox(content, **props)
       def screenshot(content = nil, **props) = control_delegate.screenshot(content, **props)
