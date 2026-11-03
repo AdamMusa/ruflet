@@ -104,6 +104,55 @@ module Ruflet
     class UploadEvent < GenericEvent; end
     class ErrorEvent < GenericEvent; end
     class ActionEvent < GenericEvent; end
+
+    # A control's on_action_result: the outcome of one of its client actions
+    # (Ruflet::ClientAction), once the client has performed it. A control
+    # with several actions gets one event per action; `index` says which.
+    # `value` is the result: the picked files for :pick_files (an empty list
+    # when the user cancelled), the share status for the :share_* actions,
+    # nil for :launch_url and :copy_to_clipboard. `error` is the client's
+    # message when the action failed.
+    class ActionResultEvent < GenericEvent
+      attr_reader :index, :service, :method_name, :action, :result, :error
+
+      def initialize(raw:, value: nil, index: nil, service: nil, method_name: nil, action: nil, result: nil, error: nil)
+        super(raw: raw, value: value)
+        @index = index
+        @service = service
+        @method_name = method_name
+        @action = action
+        @result = result
+        @error = error
+      end
+
+      def self.from_data(data)
+        raw = data.is_a?(Hash) ? stringify_keys(data) : {}
+        service = raw["service"]
+        method_name = raw["method"]
+        result = raw["result"]
+        new(
+          raw: raw,
+          value: result,
+          index: raw["index"],
+          service: service,
+          method_name: method_name,
+          action: Ruflet::ClientAction.type_for(service, method_name),
+          result: result,
+          error: raw["error"]
+        )
+      end
+
+      def ok? = error.nil?
+      def error? = !error.nil?
+
+      # :pick_files only: each picked file as { "id", "name", "path", "size",
+      # "bytes" } ("path" is nil on the web, "bytes" needs with_data: true).
+      def files
+        return nil unless action == "pick_files"
+
+        Array(result).map { |file| file.is_a?(Hash) ? self.class.stringify_keys(file) : file }
+      end
+    end
     class AutoCompleteSelectEvent < GenericEvent
       attr_reader :selection
 
@@ -574,6 +623,7 @@ module Ruflet
         "upload" => UploadEvent,
         "error" => ErrorEvent,
         "action" => ActionEvent,
+        "action_result" => ActionResultEvent,
         "reorder" => ReorderEvent,
         "reorder_start" => ReorderEvent,
         "reorder_end" => ReorderEvent,

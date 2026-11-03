@@ -1392,6 +1392,9 @@ module Ruflet
       return self if wire_id.nil?
 
       patch = normalize_props(props)
+      if patch.key?("action") && control.is_a?(UI::Controls::ClientActionProps)
+        patch["action"] = Ruflet::ClientAction.wire(patch["action"])
+      end
       if text_maps_to_content?(control, patch)
         patch["content"] = patch.delete("text")
       end

@@ -1,22 +1,25 @@
 # frozen_string_literal: true
 
 require_relative "../shared/focusable_methods"
+require_relative "../shared/client_action_props"
 
 module Ruflet
   module UI
     module Controls
       module RufletComponents
         class CupertinoButtonControl < Ruflet::Control
+          include ClientActionProps
           include FocusableMethods
 
           TYPE = "cupertinobutton".freeze
           WIRE = "Button".freeze
 
-          KEYWORDS = [:align, :alignment, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :autofocus, :badge, :bgcolor, :border_radius, :bottom, :col, :color, :content, :data, :disabled, :disabled_bgcolor, :expand, :expand_loose, :focus_color, :height, :icon, :icon_color, :key, :left, :margin, :min_size, :mouse_cursor, :offset, :opacity, :opacity_on_click, :padding, :right, :rotate, :rtl, :scale, :size, :size_change_interval, :tooltip, :top, :url, :visible, :width, :on_animation_end, :on_blur, :on_click, :on_focus, :on_long_press, :on_size_change].freeze
+          KEYWORDS = [:action, :align, :alignment, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :autofocus, :badge, :bgcolor, :border_radius, :bottom, :col, :color, :content, :data, :disabled, :disabled_bgcolor, :expand, :expand_loose, :focus_color, :height, :icon, :icon_color, :key, :left, :margin, :min_size, :mouse_cursor, :offset, :opacity, :opacity_on_click, :padding, :right, :rotate, :rtl, :scale, :size, :size_change_interval, :tooltip, :top, :url, :visible, :width, :on_action_result, :on_animation_end, :on_blur, :on_click, :on_focus, :on_long_press, :on_size_change].freeze
 
           def initialize(id: nil, **props)
             unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
             raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
+            action = props[:action]
             align = props[:align]
             alignment = props[:alignment]
             animate_align = props[:animate_align]
@@ -65,6 +68,7 @@ module Ruflet
             url = props[:url]
             visible = props[:visible]
             width = props[:width]
+            on_action_result = props[:on_action_result]
             on_animation_end = props[:on_animation_end]
             on_blur = props[:on_blur]
             on_click = props[:on_click]
@@ -78,6 +82,7 @@ module Ruflet
             size = "large" if size.nil?
 
             props = {}
+            props[:action] = action unless action.nil?
             props[:align] = align unless align.nil?
             props[:alignment] = alignment unless alignment.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -126,6 +131,7 @@ module Ruflet
             props[:url] = url unless url.nil?
             props[:visible] = visible unless visible.nil?
             props[:width] = width unless width.nil?
+            props[:on_action_result] = on_action_result unless on_action_result.nil?
             props[:on_animation_end] = on_animation_end unless on_animation_end.nil?
             props[:on_blur] = on_blur unless on_blur.nil?
             props[:on_click] = on_click unless on_click.nil?

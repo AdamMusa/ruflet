@@ -1,19 +1,24 @@
 # frozen_string_literal: true
 
+require_relative "../shared/client_action_props"
+
 module Ruflet
   module UI
     module Controls
       module RufletComponents
         class CupertinoDialogActionControl < Ruflet::Control
+          include ClientActionProps
+
           TYPE = "cupertinodialogaction".freeze
           WIRE = "Button".freeze
 
-          def initialize(id: nil, badge: nil, col: nil, content: nil, data: nil, default: nil, destructive: nil, disabled: nil, expand: nil, expand_loose: nil, key: nil, opacity: nil, rtl: nil, text_style: nil, tooltip: nil, visible: nil, on_click: nil)
+          def initialize(id: nil, action: nil, badge: nil, col: nil, content: nil, data: nil, default: nil, destructive: nil, disabled: nil, expand: nil, expand_loose: nil, key: nil, opacity: nil, rtl: nil, text_style: nil, tooltip: nil, visible: nil, on_action_result: nil, on_click: nil)
             raise ArgumentError, "cupertino_dialog_action requires content" if content.nil?
             default = false if default.nil?
             destructive = false if destructive.nil?
 
             props = {}
+            props[:action] = action unless action.nil?
             props[:badge] = badge unless badge.nil?
             props[:col] = col unless col.nil?
             props[:content] = content unless content.nil?
@@ -29,6 +34,7 @@ module Ruflet
             props[:text_style] = text_style unless text_style.nil?
             props[:tooltip] = tooltip unless tooltip.nil?
             props[:visible] = visible unless visible.nil?
+            props[:on_action_result] = on_action_result unless on_action_result.nil?
             props[:on_click] = on_click unless on_click.nil?
             super(type: TYPE, id: id, **props)
           end

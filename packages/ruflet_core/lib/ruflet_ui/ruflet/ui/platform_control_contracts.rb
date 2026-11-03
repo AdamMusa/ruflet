@@ -2,6 +2,7 @@
 
 require_relative "controls/ruflet_controls"
 require_relative "controls/shared/focusable_methods"
+require_relative "controls/shared/client_action_props"
 
 module Ruflet
   module UI
@@ -38,6 +39,7 @@ module Ruflet
         end
 
         class ButtonControl < PlatformControl
+          include Controls::ClientActionProps
           include Controls::FocusableMethods
 
           TYPE = "button".freeze
@@ -51,6 +53,7 @@ module Ruflet
         end
 
         class FilledButtonControl < PlatformControl
+          include Controls::ClientActionProps
           include Controls::FocusableMethods
 
           TYPE = "filledbutton".freeze
@@ -66,6 +69,7 @@ module Ruflet
         end
 
         class FilledTonalButtonControl < PlatformControl
+          include Controls::ClientActionProps
           include Controls::FocusableMethods
 
           TYPE = "filledtonalbutton".freeze
@@ -81,6 +85,7 @@ module Ruflet
         end
 
         class OutlinedButtonControl < PlatformControl
+          include Controls::ClientActionProps
           include Controls::FocusableMethods
 
           TYPE = "outlinedbutton".freeze
@@ -96,6 +101,7 @@ module Ruflet
         end
 
         class TextButtonControl < PlatformControl
+          include Controls::ClientActionProps
           include Controls::FocusableMethods
 
           TYPE = "textbutton".freeze
@@ -194,6 +200,8 @@ module Ruflet
         end
 
         class ListTileControl < PlatformControl
+          include Controls::ClientActionProps
+
           TYPE = "listtile".freeze
           WIRE = "ListTile".freeze
           KEYWORDS = (

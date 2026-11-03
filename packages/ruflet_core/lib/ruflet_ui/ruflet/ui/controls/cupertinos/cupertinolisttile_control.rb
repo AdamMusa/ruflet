@@ -1,18 +1,23 @@
 # frozen_string_literal: true
 
+require_relative "../shared/client_action_props"
+
 module Ruflet
   module UI
     module Controls
       module RufletComponents
         class CupertinoListTileControl < Ruflet::Control
+          include ClientActionProps
+
           TYPE = "cupertinolisttile".freeze
           WIRE = "ListTile".freeze
 
-          KEYWORDS = [:additional_info, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :bgcolor_activated, :bottom, :chevron, :col, :data, :disabled, :expand, :expand_loose, :height, :key, :leading, :leading_size, :leading_to_title, :left, :margin, :notched, :offset, :opacity, :padding, :right, :rotate, :rtl, :scale, :size_change_interval, :subtitle, :title, :toggle_inputs, :tooltip, :top, :trailing, :url, :visible, :width, :on_animation_end, :on_click, :on_size_change].freeze
+          KEYWORDS = [:action, :additional_info, :align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bgcolor, :bgcolor_activated, :bottom, :chevron, :col, :data, :disabled, :expand, :expand_loose, :height, :key, :leading, :leading_size, :leading_to_title, :left, :margin, :notched, :offset, :opacity, :padding, :right, :rotate, :rtl, :scale, :size_change_interval, :subtitle, :title, :toggle_inputs, :tooltip, :top, :trailing, :url, :visible, :width, :on_action_result, :on_animation_end, :on_click, :on_size_change].freeze
 
           def initialize(id: nil, **props)
             unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
             raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
+            action = props[:action]
             additional_info = props[:additional_info]
             align = props[:align]
             animate_align = props[:animate_align]
@@ -59,6 +64,7 @@ module Ruflet
             url = props[:url]
             visible = props[:visible]
             width = props[:width]
+            on_action_result = props[:on_action_result]
             on_animation_end = props[:on_animation_end]
             on_click = props[:on_click]
             on_size_change = props[:on_size_change]
@@ -68,6 +74,7 @@ module Ruflet
             leading_to_title = notched ? 12.0 : 16.0 if leading_to_title.nil?
             toggle_inputs = false if toggle_inputs.nil?
             props = {}
+            props[:action] = action unless action.nil?
             props[:additional_info] = additional_info unless additional_info.nil?
             props[:align] = align unless align.nil?
             props[:animate_align] = animate_align unless animate_align.nil?
@@ -114,6 +121,7 @@ module Ruflet
             props[:url] = url unless url.nil?
             props[:visible] = visible unless visible.nil?
             props[:width] = width unless width.nil?
+            props[:on_action_result] = on_action_result unless on_action_result.nil?
             props[:on_animation_end] = on_animation_end unless on_animation_end.nil?
             props[:on_click] = on_click unless on_click.nil?
             props[:on_size_change] = on_size_change unless on_size_change.nil?
