@@ -308,6 +308,8 @@ module Ruflet
       def slide_transition(content = nil, **props) = control_delegate.slide_transition(content, **props)
       def slidetransition(content = nil, **props) = control_delegate.slidetransition(content, **props)
       def form(controls = nil, **props, &block) = control_delegate.form(controls, **props, &block)
+      def nested_scroll_view(header_slivers = nil, **props, &block) = control_delegate.nested_scroll_view(header_slivers, **props, &block)
+      def nestedscrollview(header_slivers = nil, **props, &block) = control_delegate.nestedscrollview(header_slivers, **props, &block)
       def fitted_box(content = nil, **props) = control_delegate.fitted_box(content, **props)
       def fittedbox(content = nil, **props) = control_delegate.fittedbox(content, **props)
       def screenshot(content = nil, **props) = control_delegate.screenshot(content, **props)

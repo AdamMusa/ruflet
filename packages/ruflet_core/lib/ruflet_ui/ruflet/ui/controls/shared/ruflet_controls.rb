@@ -31,6 +31,7 @@ require_relative "scaletransition_control"
 require_relative "sizetransition_control"
 require_relative "slidetransition_control"
 require_relative "form_control"
+require_relative "nestedscrollview_control"
 require_relative "formrow_control"
 require_relative "gesturedetector_control"
 require_relative "gridview_control"
@@ -139,6 +140,8 @@ module Ruflet
             "sizetransition" => RufletComponents::SizeTransitionControl,
             "slide_transition" => RufletComponents::SlideTransitionControl,
             "slidetransition" => RufletComponents::SlideTransitionControl,
+            "nested_scroll_view" => RufletComponents::NestedScrollViewControl,
+            "nestedscrollview" => RufletComponents::NestedScrollViewControl,
             "fitted_box" => RufletComponents::FittedBoxControl,
             "fittedbox" => RufletComponents::FittedBoxControl,
             "form" => RufletComponents::FormControl,

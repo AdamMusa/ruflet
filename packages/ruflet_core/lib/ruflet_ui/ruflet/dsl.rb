@@ -359,6 +359,8 @@ module Ruflet
     def slide_transition(content = nil, **props) = _pending_app.slide_transition(content, **props)
     def slidetransition(content = nil, **props) = _pending_app.slidetransition(content, **props)
     def form(controls = nil, **props, &block) = _pending_app.form(controls, **props, &block)
+    def nested_scroll_view(header_slivers = nil, **props, &block) = _pending_app.nested_scroll_view(header_slivers, **props, &block)
+    def nestedscrollview(header_slivers = nil, **props, &block) = _pending_app.nestedscrollview(header_slivers, **props, &block)
     def fitted_box(content = nil, **props) = _pending_app.fitted_box(content, **props)
     def fittedbox(content = nil, **props) = _pending_app.fittedbox(content, **props)
     def screenshot(content = nil, **props) = _pending_app.screenshot(content, **props)

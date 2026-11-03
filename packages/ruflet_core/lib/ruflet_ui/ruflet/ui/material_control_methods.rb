@@ -814,6 +814,12 @@ module Ruflet
         mapped[:controls] = controls unless controls.nil?
         build_widget(:form, **mapped, &block)
       end
+      def nested_scroll_view(header_slivers = nil, **props, &block)
+        mapped = props.dup
+        mapped[:header_slivers] = header_slivers unless header_slivers.nil?
+        build_widget(:nestedscrollview, **mapped, &block)
+      end
+      def nestedscrollview(header_slivers = nil, **props, &block) = nested_scroll_view(header_slivers, **props, &block)
       def fitted_box(content = nil, **props)
         mapped = props.dup
         mapped[:content] = content unless content.nil?

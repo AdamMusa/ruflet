@@ -141,6 +141,7 @@ require_relative "shared/scaletransition_control"
 require_relative "shared/sizetransition_control"
 require_relative "shared/slidetransition_control"
 require_relative "shared/form_control"
+require_relative "shared/nestedscrollview_control"
 require_relative "shared/formrow_control"
 require_relative "shared/gesturedetector_control"
 require_relative "shared/gridview_control"
@@ -385,6 +386,8 @@ module Ruflet
           "sizetransition" => RufletComponents::SizeTransitionControl,
           "slide_transition" => RufletComponents::SlideTransitionControl,
           "slidetransition" => RufletComponents::SlideTransitionControl,
+          "nested_scroll_view" => RufletComponents::NestedScrollViewControl,
+          "nestedscrollview" => RufletComponents::NestedScrollViewControl,
           "fitted_box" => RufletComponents::FittedBoxControl,
           "fittedbox" => RufletComponents::FittedBoxControl,
           "floating_action_button" => RufletComponents::FloatingActionButtonControl,
