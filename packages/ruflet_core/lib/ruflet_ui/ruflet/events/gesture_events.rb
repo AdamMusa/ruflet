@@ -244,6 +244,55 @@ module Ruflet
       end
     end
 
+    # One file of a TextField on_paste_files event (Flet's PastedFile): the
+    # file name ("image.png" for a pasted screenshot), the MIME type the
+    # platform reported (can be empty) and the contents as a binary String.
+    class PastedFile
+      attr_reader :name, :mime_type, :bytes
+
+      def initialize(name:, mime_type:, bytes:)
+        @name = name
+        @mime_type = mime_type
+        @bytes = bytes
+      end
+
+      def self.from_data(data)
+        raw = BasePayload.stringify_keys(data)
+        new(name: raw["name"].to_s, mime_type: raw["mime_type"].to_s, bytes: binary(raw["bytes"]))
+      end
+
+      # Wire strings arrive UTF-8 tagged; the contents are bytes.
+      def self.binary(value)
+        bytes = value.is_a?(Array) ? value.pack("C*") : value.to_s
+        bytes.respond_to?(:b) ? bytes.b : bytes
+      end
+
+      def size
+        bytes.bytesize
+      end
+
+      def to_h
+        { "name" => name, "mime_type" => mime_type, "bytes" => bytes }
+      end
+    end
+
+    # TextField on_paste_files (Flet's TextFieldPasteFilesEvent): `files` is
+    # the list of PastedFile values, also returned by `value`.
+    class PasteFilesEvent < GenericEvent
+      attr_reader :files
+
+      def initialize(raw:, files:)
+        super(raw: raw, value: files)
+        @files = files
+      end
+
+      def self.from_data(data)
+        raw = data.is_a?(Hash) ? stringify_keys(data) : {}
+        entries = raw["files"].is_a?(Array) ? raw["files"] : []
+        new(raw: raw, files: entries.map { |entry| PastedFile.from_data(entry) })
+      end
+    end
+
     class TapEvent < BasePayload
       attr_reader :kind, :local_position, :global_position
 
@@ -635,6 +684,7 @@ module Ruflet
         "animation_end" => GenericEvent,
         "size_change" => GenericEvent,
         "selection_change" => GenericEvent,
+        "paste_files" => PasteFilesEvent,
         "entry_mode_change" => GenericEvent,
         "media_change" => GenericEvent,
         "resize" => GenericEvent,
