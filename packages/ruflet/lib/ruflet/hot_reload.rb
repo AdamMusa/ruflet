@@ -11,9 +11,57 @@ module Ruflet
   # those gems. The framework already exposes the two hooks hot reload needs:
   # Ruflet.with_run_interceptor to capture the app entrypoint block, and
   # Ruflet::Server#reload_app! to repaint live sessions over their open
-  # WebSocket connections.
+  # WebSocket connections. Apps that start Ruflet::Server themselves
+  # (`Ruflet.app { ... }.run`, or a ruflet_core whose Ruflet.run predates run
+  # interceptors) are captured by ServerStartCapture below instead.
   module HotReload
     Error = Class.new(StandardError)
+
+    # Bytes the runner writes on the fd `ruflet run` passes in RUFLET_READY_FD
+    # (see Ruflet::CLI::RunCommand). TRAP_ARMED: USR1 is trapped, so a reload
+    # signal can no longer kill the app. READY: the app is captured and the
+    # watcher runs, so a reload takes effect at once; the fd is then closed.
+    TRAP_ARMED = "t"
+    READY = "."
+
+    # Prepended to Ruflet::Server: while a runner is active, Server#start is
+    # captured the way Ruflet.run is, so the server the app built is never
+    # started and the runner serves its block instead. Outside a runner, and
+    # for the runner's own server, start is untouched.
+    module ServerStartCapture
+      def start
+        capture = HotReload.server_start_capture
+        return super unless capture && @app_block && @in_process_bridge.nil?
+
+        result = capture.call(server: self, host: @host, port: @port, entrypoint: @app_block)
+        result == :pass ? super : result
+      end
+    end
+
+    @server_start_captures = []
+    @server_start_captures_mutex = Mutex.new
+
+    # True once Ruflet::Server can be captured. Loads ruflet_server early for
+    # that: an app that starts the server itself references Ruflet::Server.
+    def self.install_server_start_hook
+      require "ruflet_server"
+      server_class = Ruflet::Server
+      server_class.prepend(ServerStartCapture) unless server_class.ancestors.include?(ServerStartCapture)
+      true
+    rescue LoadError, NameError
+      false
+    end
+
+    def self.server_start_capture
+      @server_start_captures_mutex.synchronize { @server_start_captures.last }
+    end
+
+    def self.with_server_start_capture(capture)
+      @server_start_captures_mutex.synchronize { @server_start_captures << capture }
+      yield
+    ensure
+      @server_start_captures_mutex.synchronize { @server_start_captures.delete(capture) }
+    end
 
     DEFAULT_POLL_INTERVAL = 0.25
     EXCLUDED_DIRECTORIES = %w[
@@ -59,12 +107,12 @@ module Ruflet
 
       def run
         @ready_io = claim_ready_fd
-        unless Ruflet.respond_to?(:with_run_interceptor)
-          log "installed ruflet_core does not support run interceptors; running without hot reload"
-          return load_script!
-        end
+        # Before any app code: a reload signal that arrives while the app
+        # loads is kept for the watcher instead of killing the app.
+        install_manual_reload_trap
+        report(TRAP_ARMED)
 
-        Ruflet.with_run_interceptor(run_interceptor) do
+        capture_app_start do
           load_script!
           raise Error, "#{@script} never called Ruflet.run" unless @server
 
@@ -142,11 +190,36 @@ module Ruflet
 
       private
 
+      # Captures the app however it starts its server: Ruflet.run (and
+      # Ruflet::App#run) through the run interceptor, anything that calls
+      # Ruflet::Server#start itself through ServerStartCapture.
+      def capture_app_start(&block)
+        interceptable = Ruflet.respond_to?(:with_run_interceptor)
+        server_hooked = HotReload.install_server_start_hook
+        unless interceptable || server_hooked
+          log "installed ruflet_core does not support run interceptors; running without hot reload"
+          return load_script!
+        end
+
+        body = interceptable ? -> { Ruflet.with_run_interceptor(run_interceptor, &block) } : block
+        return body.call unless server_hooked
+
+        HotReload.with_server_start_capture(server_start_capture) { body.call }
+      end
+
       def run_interceptor
         @run_interceptor ||= lambda do |entrypoint:, host:, port:|
           @current_block = entrypoint
           @server ||= create_server(host: host, port: port)
           :ruflet_hot_reload
+        end
+      end
+
+      def server_start_capture
+        @server_start_capture ||= lambda do |server:, entrypoint:, host:, port:|
+          next :pass if server.equal?(@server)
+
+          run_interceptor.call(entrypoint: entrypoint, host: host, port: port)
         end
       end
 
@@ -236,20 +309,30 @@ module Ruflet
 
         io = IO.for_fd(Integer(fd), autoclose: true)
         io.close_on_exec = true
+        io.sync = true
         io
       rescue ArgumentError, SystemCallError, IOError
         nil
       end
 
-      # `ruflet run` holds "r" (USR1) until this byte arrives: before the trap
-      # above exists, USR1 would kill the booting app.
+      # `ruflet run` holds "r" (USR1) until the app is up, and holds it
+      # unconditionally until TRAP_ARMED: before the trap exists, USR1 would
+      # kill the booting app.
+      def report(byte)
+        @ready_io&.write(byte)
+      rescue SystemCallError, IOError
+        close_ready_io
+      end
+
       def signal_ready
+        report(READY)
+        close_ready_io
+      end
+
+      def close_ready_io
         io = @ready_io
         @ready_io = nil
-        return unless io
-
-        io.write(".")
-        io.close
+        io&.close
       rescue SystemCallError, IOError
         nil
       end

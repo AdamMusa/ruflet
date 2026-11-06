@@ -6,6 +6,9 @@ require "rbconfig"
 require "minitest/mock"
 
 $LOAD_PATH.unshift(File.expand_path("../../ruflet_core/lib", __dir__))
+# The runner hooks Ruflet::Server#start; keep it on this checkout's server,
+# not an installed ruflet_server gem.
+$LOAD_PATH.unshift(File.expand_path("../../ruflet_server/lib", __dir__))
 require "ruflet/hot_reload"
 
 class RufletHotReloadTest < Minitest::Test
@@ -40,6 +43,13 @@ class RufletHotReloadTest < Minitest::Test
 
     def add(value)
       @added << value
+    end
+
+    # What a DSL app's block calls on the page before adding its roots.
+    def set_view_props(_props); end
+
+    def labels
+      @added.map { |item| item.respond_to?(:props) ? item.props["value"] : item }
     end
   end
 
@@ -115,8 +125,7 @@ class RufletHotReloadTest < Minitest::Test
 
     # The limit only stops a runner that never reports from hanging the suite.
     assert IO.select([reader], nil, nil, 10), "the runner must report ready to `ruflet run`"
-    assert_equal ".", reader.read(1), "the runner must report ready to `ruflet run`"
-    assert_nil reader.read(1), "the ready fd must be closed after reporting"
+    assert_equal "t.", reader.read, "the runner reports its USR1 trap, then ready, then closes the fd"
     assert_nil ENV["RUFLET_READY_FD"], "the fd number must not leak to app subprocesses"
     assert @runner.watching?, "ready means the watcher and USR1 trap are armed"
   ensure
@@ -155,11 +164,130 @@ class RufletHotReloadTest < Minitest::Test
     start_runner
 
     assert IO.select([reader], nil, nil, 10), "the runner must still report ready"
-    assert_equal ".", reader.read(1)
+    assert_equal "t.", reader.read
     assert_equal "closed env=nil", $ready_fd_probe
   ensure
     ENV.delete("RUFLET_READY_FD")
     reader&.close
+  end
+
+  # `ruflet run` holds "r" until the app reports, and falls back to sending
+  # USR1 if the app is armed but never reports ready. That fallback is only
+  # safe because the trap exists before any app code runs, which "t" says.
+  def test_reports_the_usr1_trap_before_the_app_script_runs
+    reader, writer = IO.pipe
+    writer.autoclose = false # the runner owns and closes this fd
+    $ready_reader = reader
+    write_widgets("v1")
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require_relative "widgets"
+      $ready_bytes_at_load = $ready_reader.read_nonblock(8, exception: false)
+      Ruflet.run { |page| page.add(WIDGET_LABEL) }
+    RUBY
+    ENV["RUFLET_READY_FD"] = writer.fileno.to_s
+
+    start_runner
+
+    assert_equal "t", $ready_bytes_at_load, "the trap must be reported before the app loads, and ready only after"
+    assert IO.select([reader], nil, nil, 10), "the runner must report ready once the app is up"
+    assert_equal ".", reader.read
+  ensure
+    ENV.delete("RUFLET_READY_FD")
+    $ready_reader = nil
+    reader&.close
+  end
+
+  # `Ruflet.app { ... }.run` starts Ruflet::Server directly instead of going
+  # through Ruflet.run. The runner never saw it, so the app never reported
+  # ready (`ruflet run` queued "r" forever) and file changes never reloaded.
+  def test_dsl_app_run_is_captured_like_ruflet_run
+    write_widgets("v1")
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "widgets"
+
+      Ruflet.app(host: "127.0.0.1", port: 0) { text(WIDGET_LABEL) }.run
+    RUBY
+    reader, writer = IO.pipe
+    writer.autoclose = false # the runner owns and closes this fd
+    ENV["RUFLET_READY_FD"] = writer.fileno.to_s
+
+    start_runner
+
+    assert_instance_of FakeServer, @runner.server, "the app's own server must not start"
+    assert_equal ["v1"], render_labels
+    assert IO.select([reader], nil, nil, 10), "a DSL app must report ready to `ruflet run`"
+    assert_equal "t.", reader.read
+
+    write_widgets("v2")
+    wait_until("DSL reload") { @runner.reload_count >= 1 }
+    assert_equal ["v2"], render_labels
+    assert_equal 1, @runner.server.reload_count
+  ensure
+    ENV.delete("RUFLET_READY_FD")
+    reader&.close
+  end
+
+  # A ruflet_core without Ruflet.with_run_interceptor starts the server from
+  # Ruflet.run itself. The runner used to give up on hot reload there and
+  # never report ready; Server#start is captured instead. With no
+  # interceptor registered, this checkout's Ruflet.run takes that same path.
+  def test_server_start_is_captured_when_ruflet_core_has_no_run_interceptors
+    write_widgets("v1")
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require_relative "widgets"
+
+      Ruflet.run(host: "127.0.0.1", port: 0) { |page| page.add(WIDGET_LABEL) }
+    RUBY
+    without_run_interceptors do
+      start_runner # the runner looks for run interceptors as it starts
+    end
+
+    assert_instance_of FakeServer, @runner.server
+    assert_equal ["v1"], render
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+    assert_equal ["v2"], render
+  end
+
+  # The runner's own server is a Ruflet::Server too; capturing its start
+  # would leave the app with no server at all.
+  def test_the_runners_own_server_still_starts
+    require "ruflet_server"
+    write_widgets("v1")
+    write_main
+    with_server_banner_suppressed do
+      @runner = Ruflet::HotReload::Runner.new(
+        script: @script,
+        poll_interval: 0.05,
+        server_factory: ->(host:, port:, &block) { Ruflet::Server.new(host: "127.0.0.1", port: 0, &block) },
+        logger: ->(msg) { @logs << msg }
+      )
+      @thread = Thread.new { @runner.run }
+      wait_until("own server bound") { @runner.server&.port.to_i.positive? }
+    end
+    assert @runner.watching?
+  ensure
+    @runner&.server&.stop
+    @thread&.join(2)
+    @runner&.stop
+    @runner = nil # teardown's FakeServer#shutdown does not apply
+  end
+
+  def test_server_start_outside_a_runner_is_untouched
+    require "ruflet_server"
+    Ruflet::HotReload.install_server_start_hook
+    with_server_banner_suppressed do
+      server = Ruflet::Server.new(host: "127.0.0.1", port: 0) { |_page| nil }
+      thread = Thread.new { server.start }
+      wait_until("server bound") { server.port.to_i.positive? }
+    ensure
+      server&.stop
+      thread&.join(2)
+    end
   end
 
   def test_without_the_cli_fd_nothing_is_reported
@@ -285,6 +413,31 @@ class RufletHotReloadTest < Minitest::Test
     page = RecorderPage.new
     @runner.server.app_block.call(page)
     page.added
+  end
+
+  def render_labels
+    page = RecorderPage.new
+    @runner.server.app_block.call(page)
+    page.labels
+  end
+
+  def with_server_banner_suppressed
+    previous = ENV["RUFLET_SUPPRESS_SERVER_BANNER"]
+    ENV["RUFLET_SUPPRESS_SERVER_BANNER"] = "1"
+    yield
+  ensure
+    previous.nil? ? ENV.delete("RUFLET_SUPPRESS_SERVER_BANNER") : ENV["RUFLET_SUPPRESS_SERVER_BANNER"] = previous
+  end
+
+  # Simulates a ruflet_core from before Ruflet.with_run_interceptor existed.
+  def without_run_interceptors
+    singleton = Ruflet.singleton_class
+    singleton.send(:alias_method, :__test_with_run_interceptor, :with_run_interceptor)
+    singleton.send(:remove_method, :with_run_interceptor)
+    yield
+  ensure
+    singleton.send(:alias_method, :with_run_interceptor, :__test_with_run_interceptor)
+    singleton.send(:remove_method, :__test_with_run_interceptor)
   end
 
   def wait_until(what, timeout: 5)
