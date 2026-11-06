@@ -52,8 +52,8 @@ module Ruflet
 
         # SERVICE_TYPES is what 0.0.23's transformer checked a tag against
         # (`SERVICE_TYPES.include?(tag.tr("-", "_"))`), so it keeps every
-        # spelling service_tag? accepts: SERVICE_TAGS in underscored form, in
-        # the same order, then the compact spellings.
+        # registered spelling service_tag? accepts: SERVICE_TAGS in underscored
+        # form, in the same order, then the compact spellings.
         types = tags.map { |tag| tag.tr("-", "_") } + service_names
 
         SERVICE_TAGS = tags.map(&:freeze).freeze
