@@ -802,6 +802,30 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
+  # After "R" and before the respawn, child_pid is still the old app's. Its
+  # fallback (or a late ready report) used to mark the session up then, so
+  # "r" in that gap signalled the reaped app, got ESRCH and ended the key
+  # reader for the rest of the session.
+  def test_a_ready_report_from_the_app_being_restarted_does_not_mark_the_session_up
+    runner = SignalRecorder.new
+    watch_ready_pipe(runner, child_pid: 4242, ready_fallback_seconds: 0) do |run_state, writer, thread|
+      runner.send(:mark_restarting, run_state) # what "R" does before it kills the app
+      run_state[:restart] = true
+      writer.write("t") # the old app's fallback runs out during the restart
+      assert_equal 4242, runner.marked_ready.pop
+      refute run_state[:ready], "the app being replaced must not mark the session up"
+
+      run_state[:restart] = false # the run loop has reaped the old app, no respawn yet
+      out, = capture_io do
+        assert runner.send(:handle_reload_command, "r", run_state), "r must not end the key reader"
+      end
+      assert_match(/restart/i, out)
+      assert_empty runner.reload_signals, "nothing may be signalled before the respawn"
+      writer.close
+      thread.join
+    end
+  end
+
   def test_handle_reload_command_reports_dead_child
     runner = DummyRunner.new
     child = Process.spawn(RbConfig.ruby, "-e", "exit 0", pgroup: true)

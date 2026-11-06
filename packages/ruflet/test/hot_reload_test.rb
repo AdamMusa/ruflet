@@ -4,11 +4,14 @@ require_relative "test_helper"
 require "fileutils"
 require "rbconfig"
 require "minitest/mock"
+require "timeout"
 
-$LOAD_PATH.unshift(File.expand_path("../../ruflet_core/lib", __dir__))
+CORE_LIB = File.expand_path("../../ruflet_core/lib", __dir__)
 # The runner hooks Ruflet::Server#start; keep it on this checkout's server,
 # not an installed ruflet_server gem.
-$LOAD_PATH.unshift(File.expand_path("../../ruflet_server/lib", __dir__))
+SERVER_LIB = File.expand_path("../../ruflet_server/lib", __dir__)
+$LOAD_PATH.unshift(CORE_LIB)
+$LOAD_PATH.unshift(SERVER_LIB)
 require "ruflet/hot_reload"
 
 class RufletHotReloadTest < Minitest::Test
@@ -279,7 +282,7 @@ class RufletHotReloadTest < Minitest::Test
 
   def test_server_start_outside_a_runner_is_untouched
     require "ruflet_server"
-    Ruflet::HotReload.install_server_start_hook
+    Ruflet::HotReload.hook_server_start
     with_server_banner_suppressed do
       server = Ruflet::Server.new(host: "127.0.0.1", port: 0) { |_page| nil }
       thread = Thread.new { server.start }
@@ -287,6 +290,183 @@ class RufletHotReloadTest < Minitest::Test
     ensure
       server&.stop
       thread&.join(2)
+    end
+  end
+
+  # Only a start the app script makes synchronously while the runner loads it
+  # is the app's: without the runner that call blocks the load. A server the
+  # app starts on a thread of its own, while its script goes on running, was
+  # captured too and so never served.
+  def test_a_server_the_app_starts_on_its_own_thread_is_served_by_the_app
+    $thread_app_gate = Queue.new
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+
+      $thread_app_server = Ruflet::Server.new(host: "127.0.0.1", port: 0) { |_page| nil }
+      Thread.new { $thread_app_server.start }
+      $thread_app_gate.pop # the script goes on, like `loop { sleep 1 }`
+    RUBY
+    with_server_banner_suppressed do
+      @runner = new_runner
+      @thread = Thread.new do
+        Thread.current.report_on_exception = false
+        @runner.run
+      rescue Ruflet::HotReload::Error
+        nil # no Ruflet.run once the gate opens; only the app's server matters
+      end
+      wait_until("the app's own server is bound") { $thread_app_server&.port.to_i.positive? }
+    end
+    assert_nil @runner.server, "a start on the app's own thread must not be captured"
+  ensure
+    $thread_app_server&.stop
+    $thread_app_gate&.push(:done)
+    @thread&.join(5)
+    $thread_app_server = $thread_app_gate = nil
+  end
+
+  def test_a_thread_server_and_the_apps_main_server_are_both_served
+    write_widgets("v1")
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "widgets"
+
+      unless $side_server
+        $side_server = Ruflet::Server.new(host: "127.0.0.1", port: 0) { |_page| nil }
+        Thread.new { $side_server.start }
+      end
+      Ruflet.app(host: "127.0.0.1", port: 0) { text(WIDGET_LABEL) }.run
+    RUBY
+    with_server_banner_suppressed do
+      start_runner
+      wait_until("the thread's server is bound") { $side_server&.port.to_i.positive? }
+    end
+
+    assert_instance_of FakeServer, @runner.server, "the main thread's start is the app's"
+    assert_equal ["v1"], render_labels
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+    assert_equal ["v2"], render_labels
+  ensure
+    $side_server&.stop
+    $side_server = nil
+  end
+
+  # Without the runner the first start blocks, so the script never reaches a
+  # second one; under the runner the first one stays the app's.
+  def test_a_later_server_start_in_the_same_load_does_not_replace_the_app
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+
+      Ruflet.app(host: "127.0.0.1", port: 0) { text("first") }.run
+      Ruflet.app(host: "127.0.0.1", port: 0) { text("second") }.run
+    RUBY
+    start_runner
+
+    assert_equal ["first"], render_labels
+    assert(@logs.any? { |line| line.include?("ignoring another Ruflet::Server#start") })
+    @runner.request_reload
+    wait_until("reload") { @runner.reload_count >= 1 }
+    assert_equal ["first"], render_labels
+  end
+
+  # A child the app forks while it loads runs the script's code in another
+  # process; a server it starts is that process's, as without the runner.
+  def test_a_server_started_in_a_child_the_app_forks_is_served_by_the_child
+    skip "needs fork" unless Process.respond_to?(:fork)
+
+    write_widgets("v1")
+    reader, writer = IO.pipe
+    $fork_report = writer
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "widgets"
+
+      $forked_child = fork do
+        begin
+          server = Ruflet::Server.new(host: "127.0.0.1", port: 0) { |_page| nil }
+          Thread.new do
+            sleep 0.01 until server.port.to_i.positive?
+            $fork_report.write("bound")
+            $fork_report.flush
+          end
+          server.start
+          $fork_report.write("start returned")
+        ensure
+          exit!(0) # never run the test process's at_exit hooks in the child
+        end
+      end
+      Ruflet.run { |page| page.add(WIDGET_LABEL) }
+    RUBY
+    with_server_banner_suppressed { start_runner }
+    writer.close
+
+    assert IO.select([reader], nil, nil, 30), "the forked child must report"
+    assert_equal "bound", reader.read(5), "the child's server must start, not be captured"
+    assert_equal ["v1"], render
+  ensure
+    if $forked_child
+      begin
+        Process.kill("KILL", $forked_child)
+        Process.wait($forked_child)
+      rescue Errno::ESRCH, Errno::ECHILD
+        nil
+      end
+    end
+    reader&.close
+    writer&.close unless writer.nil? || writer.closed?
+    $forked_child = $fork_report = nil
+  end
+
+  # `ruflet run` sends a queued "r" (USR1) once the app reports its trap, so
+  # an app that could not trap USR1 must report nothing: USR1 would kill it.
+  def test_nothing_is_reported_when_usr1_cannot_be_trapped
+    write_widgets("v1")
+    write_main
+    reader, writer = IO.pipe
+    writer.autoclose = false # the runner owns and closes this fd
+    ENV["RUFLET_READY_FD"] = writer.fileno.to_s
+    trap = Signal.method(:trap)
+    refuse_usr1 = lambda do |signal, *rest, &handler|
+      raise ArgumentError, "can't trap reserved signal: SIGUSR1" if signal.to_s == "USR1"
+
+      trap.call(signal, *rest, &handler)
+    end
+
+    Signal.stub(:trap, refuse_usr1) do
+      start_runner
+      # Both trap attempts happen before the runner closes the fd.
+      assert IO.select([reader], nil, nil, 10), "the runner must still close the fd"
+      assert_equal "", reader.read, "no trap, no report"
+    end
+    assert_equal ["v1"], render, "the app itself still runs"
+  ensure
+    ENV.delete("RUFLET_READY_FD")
+    reader&.close
+  end
+
+  # The runner must not load ruflet_server for the app: a DSL app that
+  # never requires it fails the same way under the runner as under ruby.
+  def test_the_runner_leaves_loading_ruflet_server_to_the_app
+    File.write(@script, <<~RUBY)
+      $stdout.write(defined?(Ruflet::Server).inspect)
+      $stdout.flush
+      require "ruflet"
+      Ruflet.app { text("hi") }.run
+    RUBY
+    env = { "RUBYLIB" => [CORE_LIB, SERVER_LIB].join(File::PATH_SEPARATOR), "RUFLET_PORT" => "0" }
+    harness = File.expand_path("../lib/ruflet/hot_reload/harness.rb", __dir__)
+
+    reloaded = run_ruby(env.merge("RUFLET_APP_SCRIPT" => @script), harness)
+    plain = run_ruby(env, @script)
+
+    [["ruby", plain], ["the runner", reloaded]].each do |label, (out, err, status)|
+      assert_equal "nil", out, "Ruflet::Server must not be loaded before the app under #{label}"
+      assert_match(/uninitialized constant Ruflet::Server/, err, label)
+      refute status.success?, label
     end
   end
 
@@ -398,15 +578,38 @@ class RufletHotReloadTest < Minitest::Test
     File.write(File.join(@dir, "widgets.rb"), "WIDGET_LABEL = #{label.inspect}\n")
   end
 
-  def start_runner
-    @runner = Ruflet::HotReload::Runner.new(
+  def new_runner
+    Ruflet::HotReload::Runner.new(
       script: @script,
       poll_interval: 0.05,
       server_factory: ->(host:, port:, &block) { FakeServer.new(&block) },
       logger: ->(msg) { @logs << msg }
     )
+  end
+
+  def start_runner
+    @runner = new_runner
     @thread = Thread.new { @runner.run }
     wait_until("runner start") { @runner.watching? }
+  end
+
+  # [stdout, stderr, status] of a fresh Ruby; the limit only stops a
+  # regression (an app that ends up served) from hanging the suite.
+  def run_ruby(env, *args, timeout: 60)
+    out_reader, out_writer = IO.pipe
+    err_reader, err_writer = IO.pipe
+    pid = Process.spawn(env, RbConfig.ruby, *args, out: out_writer, err: err_writer, pgroup: true)
+    [out_writer, err_writer].each(&:close)
+    out = Thread.new { out_reader.read }
+    err = Thread.new { err_reader.read }
+    status = Timeout.timeout(timeout) { Process.wait2(pid).last }
+    [out.value, err.value, status]
+  rescue Timeout::Error
+    Process.kill("KILL", -pid)
+    Process.wait(pid)
+    flunk "#{args.last} never exited"
+  ensure
+    [out_reader, err_reader].each { |io| io&.close }
   end
 
   def render
