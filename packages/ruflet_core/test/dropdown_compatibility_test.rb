@@ -183,7 +183,9 @@ class RufletDropdownCompatibilityTest < Minitest::Test
     page.dispatch_event(target: dropdown.wire_id, name: "select", data: { "value" => "blue" })
 
     assert_equal "blue", dropdown.props["value"]
-    assert_equal [["select", "blue"]], observed
+    # The handler was registered as on_change, so it sees "change" even though
+    # the Dropdown renderer fires "select".
+    assert_equal [["change", "blue"]], observed
   end
 
   def test_dropdown_m2_change_handler_attached_later_fires_on_select
@@ -195,13 +197,132 @@ class RufletDropdownCompatibilityTest < Minitest::Test
 
     observed = []
     dropdown = Ruflet.dropdown_m2([Ruflet.dropdown_option("red"), Ruflet.dropdown_option("blue")], value: "red")
-    dropdown.on(:change) { |event| observed << event.value }
+    dropdown.on(:change) { |event| observed << [event.name, event.value] }
     page.add(dropdown)
 
     assert_equal true, dropdown.to_patch["on_select"]
     page.dispatch_event(target: dropdown.wire_id, name: "select", data: { "value" => "blue" })
 
-    assert_equal ["blue"], observed
+    assert_equal [["change", "blue"]], observed
+  end
+
+  def test_material2_change_handlers_see_change_while_on_select_handlers_see_select
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+
+    observed = []
+    record = ->(label) { ->(event) { observed << [label, event.name] } }
+    options = -> { [Ruflet.dropdown_option("red"), Ruflet.dropdown_option("blue")] }
+    controls = {
+      "dropdown_m2(on_change:)" => Ruflet.dropdown_m2(options.call, on_change: record.call("dropdown_m2(on_change:)")),
+      "dropdownm2(on_change:)" => Ruflet.dropdownm2(options.call, on_change: record.call("dropdownm2(on_change:)")),
+      "dropdown(on_change:)" => Ruflet.dropdown(options.call, on_change: record.call("dropdown(on_change:)")),
+      "dropdown(on_select:)" => Ruflet.dropdown(options.call, on_select: record.call("dropdown(on_select:)")),
+      "dropdown_m2(on_select:)" => Ruflet.dropdown_m2(options.call, on_select: record.call("dropdown_m2(on_select:)")),
+      "on(:change)" => Ruflet.dropdown(options.call).on(:change, &record.call("on(:change)")),
+      "on(:on_change)" => Ruflet.dropdown(options.call).on(:on_change, &record.call("on(:on_change)")),
+      "on(\"change\")" => Ruflet.dropdown(options.call).on("change", &record.call("on(\"change\")")),
+      "on(:select)" => Ruflet.dropdown(options.call).on(:select, &record.call("on(:select)")),
+      "attach_handler(:on_change)" => Ruflet.dropdown(options.call).attach_handler(:on_change, record.call("attach_handler(:on_change)")),
+      "attach_handler(\"change\")" => Ruflet.dropdown(options.call).attach_handler("change", record.call("attach_handler(\"change\")")),
+      "attach_handler(:select)" => Ruflet.dropdown(options.call).attach_handler(:select, record.call("attach_handler(:select)"))
+    }
+    controls.each_value { |control| page.add(control) }
+
+    controls.each_value do |control|
+      assert_equal true, control.to_patch["on_select"]
+      refute control.to_patch.key?("on_change")
+      page.dispatch_event(target: control.wire_id, name: "select", data: "blue")
+    end
+
+    expected = controls.keys.map do |label|
+      [label, label.include?("change") ? "change" : "select"]
+    end
+    assert_equal expected, observed
+  end
+
+  def test_material2_change_handler_gets_the_same_event_data_as_an_on_select_handler
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+
+    received = {}
+    legacy = Ruflet.dropdown_m2(
+      [Ruflet.dropdown_option("red"), Ruflet.dropdown_option("blue")],
+      value: "red",
+      on_change: ->(event) { received[:legacy] = event }
+    )
+    canonical = Ruflet.dropdown(
+      [Ruflet.dropdown_option("red"), Ruflet.dropdown_option("blue")],
+      value: "red",
+      on_select: ->(event) { received[:canonical] = event }
+    )
+    page.add(legacy)
+    page.add(canonical)
+
+    payload = { "value" => "blue", "selection" => { "value" => "blue" } }
+    page.dispatch_event(target: legacy.wire_id, name: "select", data: payload)
+    page.dispatch_event(target: canonical.wire_id, name: "select", data: payload)
+
+    old_style = received.fetch(:legacy)
+    new_style = received.fetch(:canonical)
+    assert_equal "change", old_style.name
+    assert_equal "select", new_style.name
+    assert_kind_of Ruflet::Event, old_style
+    assert_same legacy, old_style.control
+    assert_same page, old_style.page
+    assert_equal legacy.wire_id, old_style.target
+    assert_equal new_style.raw_data, old_style.raw_data
+    assert_equal new_style.data, old_style.data
+    assert_equal new_style.value, old_style.value
+    assert_equal new_style.typed_data.class, old_style.typed_data.class
+    assert_equal({ "value" => "blue" }, old_style.selection)
+    assert_equal "blue", legacy.props["value"]
+    assert_equal "blue", canonical.props["value"]
+  end
+
+  def test_material2_change_handler_still_sees_change_when_the_client_sends_change
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+
+    observed = []
+    dropdown = Ruflet.dropdown_m2(
+      [Ruflet.dropdown_option("red"), Ruflet.dropdown_option("blue")],
+      on_change: ->(event) { observed << [event.name, event.value] }
+    )
+    page.add(dropdown)
+
+    page.dispatch_event(target: dropdown.wire_id, name: "change", data: { "value" => "blue" })
+
+    assert_equal [["change", "blue"]], observed
+  end
+
+  def test_replacing_a_material2_change_handler_with_on_select_delivers_select
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+
+    observed = []
+    dropdown = Ruflet.dropdown_m2(
+      [Ruflet.dropdown_option("red"), Ruflet.dropdown_option("blue")],
+      on_change: ->(event) { observed << [:legacy, event.name] }
+    )
+    dropdown.on(:select) { |event| observed << [:canonical, event.name] }
+    page.add(dropdown)
+
+    page.dispatch_event(target: dropdown.wire_id, name: "select", data: "blue")
+
+    assert_equal [[:canonical, "select"]], observed
   end
 
   def test_dropdown_m2_renames_material2_keys_onto_the_dropdown_contract
@@ -224,13 +345,73 @@ class RufletDropdownCompatibilityTest < Minitest::Test
     %w[max_menu_height prefix_icon select_icon].each { |key| refute patch.key?(key), key }
   end
 
-  def test_dropdown_m2_rejects_a_material2_key_together_with_its_dropdown_spelling
-    error = assert_raises(ArgumentError) do
-      Ruflet.dropdownm2([], on_change: ->(_event) {}, on_select: ->(_event) {})
-    end
-    assert_includes error.message, "on_change"
+  def test_dropdown_m2_warns_and_keeps_the_dropdown_key_when_both_spellings_are_given
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+    calls = []
+    dropdown = nil
 
-    assert_raises(ArgumentError) { Ruflet.dropdownm2([], max_menu_height: 1, menu_height: 2) }
+    _out, err = capture_warnings do
+      dropdown = Ruflet.dropdownm2(
+        [Ruflet.dropdown_option("red"), Ruflet.dropdown_option("blue")],
+        value: "red",
+        on_change: ->(_event) { calls << :on_change },
+        on_select: ->(_event) { calls << :on_select }
+      )
+    end
+
+    assert_equal 1, err.lines.size, err
+    assert_includes err, ":on_select"
+    assert_includes err, ":on_change"
+    patch = dropdown.to_patch
+    assert_equal true, patch["on_select"]
+    refute patch.key?("on_change")
+
+    page.add(dropdown)
+    page.dispatch_event(target: dropdown.wire_id, name: "select", data: "blue")
+    page.dispatch_event(target: dropdown.wire_id, name: "change", data: "blue")
+
+    assert_equal %i[on_select on_select], calls
+  end
+
+  def test_every_material2_key_given_with_its_dropdown_spelling_warns_and_the_dropdown_key_wins
+    builders = {
+      "dropdown" => ->(**props) { Ruflet.dropdown([], **props) },
+      "dropdown_m2" => ->(**props) { Ruflet.dropdown_m2([], **props) },
+      "dropdownm2" => ->(**props) { Ruflet.dropdownm2([], **props) }
+    }
+    canonical = Ruflet.dropdown([], menu_height: 2, leading_icon: "palette", trailing_icon: "arrow_drop_down").to_patch
+
+    builders.each do |name, build|
+      control = nil
+      _out, err = capture_warnings do
+        control = build.call(
+          max_menu_height: 1, menu_height: 2,
+          prefix_icon: "search", leading_icon: "palette",
+          select_icon: "check", trailing_icon: "arrow_drop_down"
+        )
+      end
+      patch = control.to_patch
+
+      assert_equal 3, err.lines.size, "#{name}: #{err}"
+      [%w[menu_height max_menu_height], %w[leading_icon prefix_icon], %w[trailing_icon select_icon]].each do |key, legacy|
+        assert_equal canonical[key], patch[key], "#{name} #{key}"
+        refute patch.key?(legacy), "#{name} #{legacy}"
+        assert_match(/:#{key}\b.*:#{legacy}\b/, err, "#{name} warning names :#{key} and :#{legacy}")
+      end
+    end
+  end
+
+  def test_a_lone_material2_key_or_dropdown_key_does_not_warn
+    _out, err = capture_warnings do
+      Ruflet.dropdownm2([], on_change: ->(_event) {}, max_menu_height: 1, prefix_icon: "search", select_icon: "check")
+      Ruflet.dropdown([], on_select: ->(_event) {}, menu_height: 1, leading_icon: "search", trailing_icon: "check")
+    end
+
+    assert_empty err
   end
 
   def test_dropdown_m2_documents_every_material2_keyword_without_a_dropdown_equivalent
@@ -254,5 +435,16 @@ class RufletDropdownCompatibilityTest < Minitest::Test
     assert_equal "Text", patch["disabled_hint_content"]["_c"]
     assert_equal 48, patch["item_height"]
     assert_equal false, patch["enable_feedback"]
+  end
+
+  private
+
+  # Kernel.warn output, kept even when the suite runs with warnings disabled.
+  def capture_warnings(&block)
+    verbose = $VERBOSE
+    $VERBOSE = false
+    capture_io(&block)
+  ensure
+    $VERBOSE = verbose
   end
 end
