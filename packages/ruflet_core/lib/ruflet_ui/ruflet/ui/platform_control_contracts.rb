@@ -358,6 +358,22 @@ module Ruflet
             text_vertical_align on_click
           ].freeze
 
+          # Material 2 event spellings and the Dropdown event the client fires
+          # for them. A handler registered under one still sees its own name.
+          MATERIAL2_EVENTS = { "change" => "select" }.freeze
+
+          def on(event_name, &block)
+            legacy = material2_event(event_name)
+            return super if legacy.nil? || block.nil?
+
+            super(event_name, &material2_handler(legacy, block))
+          end
+
+          def attach_handler(event_name, handler)
+            legacy = material2_event(event_name)
+            super(event_name, legacy.nil? ? handler : material2_handler(legacy, handler))
+          end
+
           private
 
           def preprocess_props(props)
@@ -368,7 +384,7 @@ module Ruflet
                 raise ArgumentError, "#{TYPE} accepts :#{canonical} or its Material 2 spelling :#{legacy}, not both"
               end
 
-              mapped[canonical] = mapped.delete(legacy)
+              mapped[canonical] = material2_value(legacy, mapped.delete(legacy))
             end
             mapped
           end
@@ -376,7 +392,35 @@ module Ruflet
           # Covers handlers attached after construction, e.g. on(:change).
           def normalized_event_name(event_name)
             name = super
-            name == "change" ? "select" : name
+            MATERIAL2_EVENTS.fetch(name, name)
+          end
+
+          def material2_value(key, value)
+            legacy = material2_event(key)
+            legacy.nil? ? value : material2_handler(legacy, value)
+          end
+
+          # The legacy event name (e.g. "change") when event_name is spelled the
+          # Material 2 way (:change, "change", :on_change), otherwise nil.
+          def material2_event(event_name)
+            name = event_name.to_s
+            name = name[3..-1] if name.start_with?("on_")
+            MATERIAL2_EVENTS.key?(name) ? name : nil
+          end
+
+          # The handler is stored under the Dropdown event ("select"), so it
+          # runs for the event the renderer fires; it is called with that event
+          # renamed back to the spelling it was registered with, so legacy code
+          # checking event.name == "change" keeps matching. Data is unchanged.
+          def material2_handler(legacy, handler)
+            return handler unless handler.respond_to?(:call)
+
+            lambda do |event|
+              if event.is_a?(Ruflet::Event) && event.name.to_s != legacy
+                event = event.with_name(legacy)
+              end
+              handler.call(event)
+            end
           end
         end
       end

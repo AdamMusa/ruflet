@@ -183,7 +183,9 @@ class RufletDropdownCompatibilityTest < Minitest::Test
     page.dispatch_event(target: dropdown.wire_id, name: "select", data: { "value" => "blue" })
 
     assert_equal "blue", dropdown.props["value"]
-    assert_equal [["select", "blue"]], observed
+    # The handler was registered as on_change, so it sees "change" even though
+    # the Dropdown renderer fires "select".
+    assert_equal [["change", "blue"]], observed
   end
 
   def test_dropdown_m2_change_handler_attached_later_fires_on_select
@@ -195,13 +197,132 @@ class RufletDropdownCompatibilityTest < Minitest::Test
 
     observed = []
     dropdown = Ruflet.dropdown_m2([Ruflet.dropdown_option("red"), Ruflet.dropdown_option("blue")], value: "red")
-    dropdown.on(:change) { |event| observed << event.value }
+    dropdown.on(:change) { |event| observed << [event.name, event.value] }
     page.add(dropdown)
 
     assert_equal true, dropdown.to_patch["on_select"]
     page.dispatch_event(target: dropdown.wire_id, name: "select", data: { "value" => "blue" })
 
-    assert_equal ["blue"], observed
+    assert_equal [["change", "blue"]], observed
+  end
+
+  def test_material2_change_handlers_see_change_while_on_select_handlers_see_select
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+
+    observed = []
+    record = ->(label) { ->(event) { observed << [label, event.name] } }
+    options = -> { [Ruflet.dropdown_option("red"), Ruflet.dropdown_option("blue")] }
+    controls = {
+      "dropdown_m2(on_change:)" => Ruflet.dropdown_m2(options.call, on_change: record.call("dropdown_m2(on_change:)")),
+      "dropdownm2(on_change:)" => Ruflet.dropdownm2(options.call, on_change: record.call("dropdownm2(on_change:)")),
+      "dropdown(on_change:)" => Ruflet.dropdown(options.call, on_change: record.call("dropdown(on_change:)")),
+      "dropdown(on_select:)" => Ruflet.dropdown(options.call, on_select: record.call("dropdown(on_select:)")),
+      "dropdown_m2(on_select:)" => Ruflet.dropdown_m2(options.call, on_select: record.call("dropdown_m2(on_select:)")),
+      "on(:change)" => Ruflet.dropdown(options.call).on(:change, &record.call("on(:change)")),
+      "on(:on_change)" => Ruflet.dropdown(options.call).on(:on_change, &record.call("on(:on_change)")),
+      "on(\"change\")" => Ruflet.dropdown(options.call).on("change", &record.call("on(\"change\")")),
+      "on(:select)" => Ruflet.dropdown(options.call).on(:select, &record.call("on(:select)")),
+      "attach_handler(:on_change)" => Ruflet.dropdown(options.call).attach_handler(:on_change, record.call("attach_handler(:on_change)")),
+      "attach_handler(\"change\")" => Ruflet.dropdown(options.call).attach_handler("change", record.call("attach_handler(\"change\")")),
+      "attach_handler(:select)" => Ruflet.dropdown(options.call).attach_handler(:select, record.call("attach_handler(:select)"))
+    }
+    controls.each_value { |control| page.add(control) }
+
+    controls.each_value do |control|
+      assert_equal true, control.to_patch["on_select"]
+      refute control.to_patch.key?("on_change")
+      page.dispatch_event(target: control.wire_id, name: "select", data: "blue")
+    end
+
+    expected = controls.keys.map do |label|
+      [label, label.include?("change") ? "change" : "select"]
+    end
+    assert_equal expected, observed
+  end
+
+  def test_material2_change_handler_gets_the_same_event_data_as_an_on_select_handler
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+
+    received = {}
+    legacy = Ruflet.dropdown_m2(
+      [Ruflet.dropdown_option("red"), Ruflet.dropdown_option("blue")],
+      value: "red",
+      on_change: ->(event) { received[:legacy] = event }
+    )
+    canonical = Ruflet.dropdown(
+      [Ruflet.dropdown_option("red"), Ruflet.dropdown_option("blue")],
+      value: "red",
+      on_select: ->(event) { received[:canonical] = event }
+    )
+    page.add(legacy)
+    page.add(canonical)
+
+    payload = { "value" => "blue", "selection" => { "value" => "blue" } }
+    page.dispatch_event(target: legacy.wire_id, name: "select", data: payload)
+    page.dispatch_event(target: canonical.wire_id, name: "select", data: payload)
+
+    old_style = received.fetch(:legacy)
+    new_style = received.fetch(:canonical)
+    assert_equal "change", old_style.name
+    assert_equal "select", new_style.name
+    assert_kind_of Ruflet::Event, old_style
+    assert_same legacy, old_style.control
+    assert_same page, old_style.page
+    assert_equal legacy.wire_id, old_style.target
+    assert_equal new_style.raw_data, old_style.raw_data
+    assert_equal new_style.data, old_style.data
+    assert_equal new_style.value, old_style.value
+    assert_equal new_style.typed_data.class, old_style.typed_data.class
+    assert_equal({ "value" => "blue" }, old_style.selection)
+    assert_equal "blue", legacy.props["value"]
+    assert_equal "blue", canonical.props["value"]
+  end
+
+  def test_material2_change_handler_still_sees_change_when_the_client_sends_change
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+
+    observed = []
+    dropdown = Ruflet.dropdown_m2(
+      [Ruflet.dropdown_option("red"), Ruflet.dropdown_option("blue")],
+      on_change: ->(event) { observed << [event.name, event.value] }
+    )
+    page.add(dropdown)
+
+    page.dispatch_event(target: dropdown.wire_id, name: "change", data: { "value" => "blue" })
+
+    assert_equal [["change", "blue"]], observed
+  end
+
+  def test_replacing_a_material2_change_handler_with_on_select_delivers_select
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+
+    observed = []
+    dropdown = Ruflet.dropdown_m2(
+      [Ruflet.dropdown_option("red"), Ruflet.dropdown_option("blue")],
+      on_change: ->(event) { observed << [:legacy, event.name] }
+    )
+    dropdown.on(:select) { |event| observed << [:canonical, event.name] }
+    page.add(dropdown)
+
+    page.dispatch_event(target: dropdown.wire_id, name: "select", data: "blue")
+
+    assert_equal [[:canonical, "select"]], observed
   end
 
   def test_dropdown_m2_renames_material2_keys_onto_the_dropdown_contract
