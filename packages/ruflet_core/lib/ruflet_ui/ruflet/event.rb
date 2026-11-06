@@ -26,6 +26,16 @@ module Ruflet
       Events::GenericEvent.from_data(data).value
     end
 
+    # This event under another name. Everything else (target, control, page,
+    # raw_data, data, typed_data and so value) is the same as on the original,
+    # so a handler registered under a legacy spelling of a client event can
+    # see the name it was registered with.
+    def with_name(name)
+      copy = dup
+      copy.instance_variable_set(:@name, name)
+      copy
+    end
+
     private
 
     def parse_data(raw)
