@@ -126,6 +126,7 @@ module Ruflet
 
   class << self
     include UI::SharedControlForwarders
+    include UI::ScopedControlForwarders
 
     def app(host: nil, port: nil, &block)
       DSL.app(host: host, port: port, &block)
@@ -143,6 +144,7 @@ module Ruflet
   module UI
     class << self
       include SharedControlForwarders
+      include ScopedControlForwarders
 
       def app(**opts, &block) = Ruflet.app(**opts, &block)
       def page(**props, &block) = Ruflet::DSL.page(**props, &block)
@@ -156,6 +158,9 @@ module Ruflet
   end
 end
 
+# Every method Kernel gets here is a method of every object in the process,
+# so the set is the one v0.0.23 shipped; helpers added since live in
+# Ruflet::UI::ScopedControlForwarders and are reached through method_missing.
 module Kernel
   include Ruflet::UI::SharedControlForwarders
 
@@ -177,7 +182,15 @@ module Kernel
   # Only build a control for a name the framework actually knows, or for calls
   # written at the top level of a script, where an unregistered extension
   # helper is still expected to work.
+  #
+  # A helper added after v0.0.23 (`stepper`, `table`, ...) is not a Kernel
+  # method, so an object with its own method_missing builder keeps the name; a
+  # bare call that reaches this point goes to the same Ruflet::DSL helper the
+  # Kernel method would have called.
   def method_missing(name, *args, **props, &block)
+    if Ruflet::UI::ScopedControlForwarders.bare_call?(self, name, args, props, block)
+      return Ruflet::DSL.public_send(name, *args, **props, &block)
+    end
     return super if name.to_s.end_with?("=") || (args.empty? && props.empty? && !block)
     unless Ruflet::UI::ControlFactory.known_control?(name) || Ruflet::UI::ControlFactory.dsl_receiver?(self)
       return super
