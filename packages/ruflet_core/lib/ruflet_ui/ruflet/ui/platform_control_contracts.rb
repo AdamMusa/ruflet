@@ -381,7 +381,11 @@ module Ruflet
             MATERIAL2_RENAMES.each do |legacy, canonical|
               next unless mapped.key?(legacy)
               if mapped.key?(canonical)
-                raise ArgumentError, "#{TYPE} accepts :#{canonical} or its Material 2 spelling :#{legacy}, not both"
+                # Code written before the rename may pass both; it used to
+                # load, so keep it loading. The Dropdown key wins.
+                Kernel.warn("#{TYPE}: both :#{canonical} and its Material 2 spelling :#{legacy} were given; using :#{canonical} and ignoring :#{legacy}")
+                mapped.delete(legacy)
+                next
               end
 
               mapped[canonical] = material2_value(legacy, mapped.delete(legacy))
