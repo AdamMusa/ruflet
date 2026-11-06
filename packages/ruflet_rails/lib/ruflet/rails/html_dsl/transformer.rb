@@ -42,6 +42,23 @@ module Ruflet
           Ruflet::UI::ServiceTypes.service_name?(tag.tr("-", "_"))
         end
 
+        # Deprecated: use Transformer.service_tag?. Kept for code written
+        # against ruflet_rails 0.0.23, which listed the service tags here by
+        # hand. Both are now derived from the registry service_tag? reads: every
+        # registered control name (canonical and compact spellings) that mounts
+        # as a service when this file loads, as tags (`audio-recorder`) and as
+        # underscored names (`audio_recorder`). An extension registered later is
+        # answered by service_tag? but not listed here.
+        SERVICE_TYPES = (Ruflet::UI::ControlFactory::CLASS_MAP.keys +
+                         Ruflet::UI::ControlFactory::EXTENSION_CLASS_MAP.keys)
+                        .uniq
+                        .select { |name| Ruflet::UI::ServiceTypes.service_name?(name) }
+                        .sort
+                        .to_set
+                        .freeze
+        SERVICE_TAGS = SERVICE_TYPES.map { |name| name.tr("_", "-").freeze }.freeze
+        deprecate_constant :SERVICE_TAGS, :SERVICE_TYPES
+
         # Attributes consumed by the DSL itself, never forwarded as props.
         RESERVED_ATTRIBUTES = %w[class href nav].freeze
         FIELD_ATTRIBUTES = %w[type name value label placeholder checked rows min max].freeze
