@@ -415,8 +415,13 @@ module Ruflet
       # in the same Ruby DSL without VM or application-specific methods.
       # See Kernel#method_missing: this module is included into Kernel, so it
       # must decline the same calls Ruby expects to raise on.
+      #
+      # A scoped helper name (ScopedControlForwarders) is decided by
+      # Kernel#method_missing before it gets here; it reaches this point only
+      # when that call is to raise, so it is declined as an unknown name.
       def method_missing(name, *args, **props, &block)
         return super if name.to_s.end_with?("=") || (args.empty? && props.empty? && !block)
+        return super if Ruflet::UI::ScopedControlForwarders.helper?(name)
         unless Ruflet::UI::ControlFactory.known_control?(name) || Ruflet::UI::ControlFactory.dsl_receiver?(self)
           return super
         end
@@ -446,11 +451,13 @@ module Ruflet
     # shipped (test/fixtures/kernel_helpers_v0_0_23.txt); a new helper goes
     # here instead.
     #
-    # These are included into Ruflet and Ruflet::UI, builder blocks reach them
-    # through UI::ControlMethods, and a bare call (`stepper(...)` in a
-    # Ruflet.run block, an app's view or a component) reaches the same
-    # Ruflet::DSL helper through Kernel#method_missing. An object with a
-    # method_missing of its own is asked first and keeps the name.
+    # These are included into Ruflet and Ruflet::UI, below
+    # SharedControlForwarders so an extension registered under one of these
+    # names wins there, as everywhere else. Builder blocks reach them through
+    # UI::ControlMethods, and a bare call (`stepper(...)` in a Ruflet.run
+    # block, an app's view or a component) reaches the same Ruflet::DSL helper
+    # through Kernel#method_missing. An object with a method_missing of its own
+    # is asked first and keeps the name.
     module ScopedControlForwarders
       def indexed_stack(children = nil, **props, &block) = control_delegate.indexed_stack(children, **props, &block)
       def indexedstack(children = nil, **props, &block) = control_delegate.indexedstack(children, **props, &block)
@@ -498,15 +505,56 @@ module Ruflet
         table_row: true, tablerow: true
       }.freeze
 
-      # Whether Kernel#method_missing builds `name` for `receiver`. Without
-      # arguments it is a helper call only at a script's top level or inside an
-      # object the framework owns, such as a Ruflet::App's view; anywhere else
-      # (`record.table`) Ruby raises, as it did before these helpers existed.
-      def self.bare_call?(receiver, name, args, props, block)
-        return false unless HELPERS.key?(name)
-        return true if block || !args.empty? || !props.empty?
+      # Whether Kernel#method_missing decides `name` here. An extension
+      # registered under the same name is a Kernel method again (it lives in
+      # SharedControlForwarders), so whatever still misses for it takes the
+      # path every extension helper takes.
+      def self.helper?(name)
+        HELPERS.key?(name) && !ControlFactory::EXTENSION_CLASS_MAP.key?(name.to_s)
+      end
 
-        receiver.equal?(SCRIPT_MAIN) || receiver.is_a?(Ruflet::App) || ControlFactory.dsl_receiver?(receiver)
+      # What Kernel#method_missing does with a call to `name` on `receiver`:
+      #
+      # :build    - build it. A script's top level and objects the framework
+      #             owns (Ruflet::*), where v0.0.23 already built a generic
+      #             control for an unknown name called with arguments.
+      # :implicit - build it only if the call had no explicit receiver, which
+      #             is when a private Kernel method would have been called:
+      #             `stepper(...)` in an app's view or a component builds,
+      #             `record.stepper(...)` raises. In a Ruflet::App that holds
+      #             without arguments too (`about_dialog` in a view).
+      # :missing  - raise. A bare word elsewhere (`table` in a model) is not
+      #             a helper call, as before these helpers existed.
+      # nil       - not a scoped helper; the generic path decides.
+      def self.dispatch(receiver, name, args, props, block)
+        return nil unless helper?(name)
+        return :build if receiver.equal?(SCRIPT_MAIN) || ControlFactory.dsl_receiver?(receiver)
+        return :implicit if block || !args.empty? || !props.empty? || receiver.is_a?(Ruflet::App)
+
+        :missing
+      end
+
+      # Whether the call behind `error`, the NameError Ruby raised for a
+      # missing `name` on `receiver`, was written without an explicit
+      # receiver. CRuby raises a plain NameError for a bare word and records
+      # the form of any other call on NoMethodError#private_call?.
+      #
+      # The embedded VM records neither. There, a call with an explicit
+      # receiver never reaches Kernel#method_missing on its own, because that
+      # method is private (the VM raises "private method called" first); it
+      # can only arrive through another class's method_missing calling super.
+      # So the call is implicit when Kernel#method_missing is the receiver's
+      # own, and is treated as explicit otherwise, as v0.0.23 would have.
+      def self.implicit_call?(error, receiver, name)
+        return false unless error.name == name
+        return true unless error.is_a?(NoMethodError)
+        return error.private_call? if error.respond_to?(:private_call?)
+
+        begin
+          receiver.method(:method_missing).owner.equal?(Kernel)
+        rescue StandardError
+          true
+        end
       end
 
       private

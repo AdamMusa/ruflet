@@ -11,7 +11,8 @@ require_relative "test_helper"
 #
 # Helpers added after v0.0.23 are reached through Kernel#method_missing
 # instead, which every builder with its own method_missing takes precedence
-# over.
+# over, and only by calls a private Kernel method would have answered: ones
+# without an explicit receiver.
 class KernelHelperShadowingTest < Minitest::Test
   LIB_ROOT = "#{File.expand_path('../lib', __dir__)}/".freeze
   V0_0_23_NAMES = File.readlines(File.expand_path("fixtures/kernel_helpers_v0_0_23.txt", __dir__), chomp: true)
@@ -48,6 +49,19 @@ class KernelHelperShadowingTest < Minitest::Test
 
     def respond_to_missing?(_name, _include_private = false)
       true
+    end
+  end
+
+  # A method_missing that handles some names and passes the rest up.
+  class PartialMissing
+    def method_missing(name, *args, &block)
+      return :handled if name == :handled
+
+      super
+    end
+
+    def respond_to_missing?(name, include_private = false)
+      name == :handled || super
     end
   end
 
@@ -113,6 +127,65 @@ class KernelHelperShadowingTest < Minitest::Test
     assert_raises(NoMethodError) { Object.new.instance_eval { table() } }
     assert_raises(NoMethodError) { Object.new.instance_eval { stepper() } }
     assert_raises(NoMethodError) { Object.new.about_dialog }
+  end
+
+  # v0.0.23 did not have these names, so `record.table(1)` raised
+  # NoMethodError. A private Kernel helper could not have been called that way
+  # either; only a call without a receiver is a helper call.
+  def test_explicit_receivers_raise_as_on_v0_0_23
+    app = Class.new(Ruflet::App) { def view(_page) = nil }.new
+    receivers = [Object.new, Struct.new(:n).new(1), nil, 1, app, PartialMissing.new]
+    calls = {
+      "stepper([1])" => ->(receiver) { receiver.stepper([1]) },
+      "table(1)" => ->(receiver) { receiver.table(1) },
+      "table(rows: [])" => ->(receiver) { receiver.table(rows: []) },
+      "stepper { }" => ->(receiver) { receiver.stepper {} },
+      "list_section([])" => ->(receiver) { receiver.list_section([]) },
+      "public_send(:table, rows: [])" => ->(receiver) { receiver.public_send(:table, rows: []) }
+    }
+
+    receivers.each do |receiver|
+      calls.each do |label, call|
+        error = assert_raises(NoMethodError, "#{receiver.class}##{label}") { call.call(receiver) }
+        assert_match(/undefined method .(stepper|table|list_section)'/, error.message)
+        refute error.private_call?
+      end
+    end
+
+    assert_raises(NoMethodError) { app.about_dialog }
+    assert_raises(NoMethodError) { app.stepper([Ruflet.stepper_step(title: "A")]) }
+  end
+
+  def test_calls_without_a_receiver_still_build_in_ordinary_objects
+    object = Object.new
+
+    assert_equal "Table", object.instance_eval { table(rows: []) }.to_patch["_c"]
+    assert_equal "Table", object.instance_eval { table([]) }.to_patch["_c"]
+    assert_equal "Stepper", object.instance_eval { stepper { stepper_step(title: "A") } }.to_patch["_c"]
+    assert_equal "Table", object.send(:table, rows: []).to_patch["_c"]
+    assert_equal "FittedBox", PartialMissing.new.instance_eval { fitted_box(text("x")) }.to_patch["_c"]
+    assert_equal :handled, PartialMissing.new.handled
+
+    component = Class.new do
+      def own = self.stepper([stepper_step(title: "A")])
+      def in_block = [1].map { |index| sliver_list([text(index.to_s)]) }.first
+    end
+
+    assert_equal "Stepper", component.new.own.to_patch["_c"]
+    assert_equal "SliverList", component.new.in_block.to_patch["_c"]
+  end
+
+  # Ruflet::Extensions puts a registered helper on SharedControlForwarders;
+  # an extension under one of the scoped names must win on Ruflet and
+  # Ruflet::UI too (see extension_helper_collision_test.rb).
+  def test_shared_forwarders_rank_above_scoped_forwarders
+    shared = Ruflet::UI::SharedControlForwarders
+    scoped = Ruflet::UI::ScopedControlForwarders
+
+    [Ruflet, Ruflet::UI].each do |namespace|
+      ancestors = namespace.singleton_class.ancestors
+      assert_operator ancestors.index(shared), :<, ancestors.index(scoped), "#{namespace} lookup order"
+    end
   end
 
   def test_bare_new_helpers_build_controls_inside_ruflet_run
