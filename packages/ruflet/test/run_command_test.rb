@@ -5,6 +5,7 @@ require "tmpdir"
 require "fileutils"
 require "rbconfig"
 require "timeout"
+require "socket"
 
 class RufletCliRunCommandTest < Minitest::Test
   class DummyRunner
@@ -713,6 +714,43 @@ class RufletCliRunCommandTest < Minitest::Test
       assert_nil Process.waitpid(run_state[:child_pid], Process::WNOHANG)
     ensure
       [core_gate, gate, progress].each { |io| io.close if io && !io.closed? }
+    end
+  end
+
+  # An app that serves from a thread of its own while its main script goes
+  # on, like `Thread.new { server.start }; loop { sleep 1 }`. Nothing in it is
+  # the runner's to capture, so it serves exactly as without the runner and
+  # never reports ready. On v0.0.23 "r" killed it; it must stay up, and "r"
+  # reaches only the USR1 trap the harness reported.
+  THREAD_SERVER_APP = <<~RUBY
+    gate = File.open(ENV.fetch("TEST_GATE_FIFO"), "r")
+    progress = File.open(ENV.fetch("TEST_PROGRESS_FIFO"), "w")
+    require "ruflet"
+    require "ruflet_server"
+    server = Ruflet::Server.new(host: "127.0.0.1", port: 0) { |_page| }
+    Thread.new { server.start }
+    sleep 0.01 until server.port.to_i.positive?
+    progress.puts(server.port)
+    progress.flush
+    gate.read(1) # the script goes on with its own work
+    progress.puts("still running")
+    progress.flush
+    sleep
+  RUBY
+
+  def test_an_app_serving_from_its_own_thread_stays_served_and_survives_r
+    runner = SignalSpyRunner.new
+    with_gated_app_session(runner, app: THREAD_SERVER_APP, ready_fallback_seconds: 0) do |run_state, spawn_app|
+      app = spawn_app.call
+      port = Integer(app.progress.gets)
+      TCPSocket.new("127.0.0.1", port).close # the app's own thread serves it
+
+      capture_io { assert runner.send(:handle_reload_command, "r", run_state) }
+      assert_equal run_state[:child_pid], runner.delivered.pop, "r reaches the app once its trap is reported"
+      app.release
+      assert_equal "still running\n", app.progress.gets, "USR1 is trapped, so r cannot kill the app"
+      TCPSocket.new("127.0.0.1", port).close
+      assert_nil Process.waitpid(run_state[:child_pid], Process::WNOHANG)
     end
   end
 

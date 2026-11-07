@@ -13,7 +13,7 @@ module Ruflet
   # Ruflet::Server#reload_app! to repaint live sessions over their open
   # WebSocket connections. Apps that start Ruflet::Server themselves
   # (`Ruflet.app { ... }.run`, or a ruflet_core whose Ruflet.run predates run
-  # interceptors) are captured by ServerStartCapture below instead.
+  # interceptors) are served through ServerStartCapture below instead.
   module HotReload
     Error = Class.new(StandardError)
 
@@ -26,24 +26,52 @@ module Ruflet
     TRAP_ARMED = "t"
     READY = "."
 
-    # Fiber-local slot that holds the capture while a Runner loads the app
-    # script (see Runner#load_script!).
+    # Fiber-local slot that holds the ScriptLoad of the app script a Runner
+    # is loading on that fiber (see Runner#load_script!).
     SERVER_START_CAPTURE = :__ruflet_hot_reload_server_start_capture
 
-    # Prepended to Ruflet::Server. A Server#start made synchronously by the
-    # app script while the runner loads it is the one that would block that
-    # load forever, like Ruflet.run does without the runner, so it is
-    # captured the way Ruflet.run is: the server the app built is never
-    # started and the runner serves its block instead. Every other start (on
-    # a thread or fiber the app made, in a child it forked, after the load,
-    # outside a runner, and the runner's own server) is untouched.
+    # One load of the app script by a Runner. ServerStartCapture finds it in
+    # the fiber-local slot above, so only a Server#start the script makes
+    # synchronously, on the fiber that loads it, ever reaches the runner.
+    class ScriptLoad
+      # pid: the process that loads; verbose: $VERBOSE as it was before the
+      # load silenced it.
+      attr_reader :pid, :verbose
+      # What handed this load's entrypoint over first: :run (Ruflet.run,
+      # through the run interceptor), :server (Server#start), or nil.
+      attr_accessor :entrypoint
+
+      def initialize(runner, reloading:, verbose:)
+        @runner = runner
+        @reloading = reloading
+        @verbose = verbose
+        @pid = Process.pid
+        @entrypoint = nil
+      end
+
+      def reloading?
+        @reloading
+      end
+
+      def server_start(server, app_block, start)
+        @runner.send(:capture_server_start, self, server, app_block, start)
+      end
+    end
+
+    # Prepended to Ruflet::Server. Without the runner, a Server#start that
+    # the app script makes while it loads (`Ruflet.app { ... }.run`, or
+    # Ruflet.run on a ruflet_core without run interceptors) serves the app
+    # and blocks the script there. Under the runner it still does, with the
+    # app's own server object, and the runner arms hot reload around it (see
+    # Runner#capture_server_start). Every other start (on a thread or fiber
+    # the app made, in a child it forked, outside a runner, or with an
+    # in-process bridge) is not touched.
     module ServerStartCapture
       def start
-        capture = Thread.current[SERVER_START_CAPTURE]
-        return super unless capture && @app_block && @in_process_bridge.nil?
+        script_load = Thread.current[SERVER_START_CAPTURE]
+        return super unless script_load && @app_block && @in_process_bridge.nil?
 
-        result = capture.call(server: self, host: @host, port: @port, entrypoint: @app_block)
-        result == :pass ? super : result
+        script_load.server_start(self, @app_block, -> { super() })
       end
     end
 
@@ -57,11 +85,16 @@ module Ruflet
 
         # A :class event fires as `class Server` opens, before its body runs.
         @server_class_watch = TracePoint.new(:class) do |trace|
-          server_class = trace.self
-          next unless server_class.is_a?(Class) && server_class.name == "Ruflet::Server"
+          begin
+            server_class = trace.self
+            # Module#name itself: an app class may define its own `name`.
+            next unless Class === server_class && MODULE_NAME.bind_call(server_class) == "Ruflet::Server"
 
-          trace.disable
-          server_class.prepend(ServerStartCapture) unless server_class.include?(ServerStartCapture)
+            trace.disable
+            server_class.prepend(ServerStartCapture) unless server_class.include?(ServerStartCapture)
+          rescue StandardError
+            nil # never fail the class definition that is being opened
+          end
         end
         @server_class_watch.enable
       end
@@ -79,6 +112,8 @@ module Ruflet
     end
     private_class_method :hook_server_class
 
+    MODULE_NAME = Module.instance_method(:name)
+    private_constant :MODULE_NAME
     @server_hook_mutex = Mutex.new
     @server_class_watch = nil
 
@@ -122,6 +157,7 @@ module Ruflet
         @reload_count = 0
         @force_reload = false
         @reload_mutex = Mutex.new
+        @served_from_script = false
       end
 
       def run
@@ -153,7 +189,7 @@ module Ruflet
           started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           begin
             prune_watched_features!
-            load_script!
+            load_script!(reloading: true)
             if @server.respond_to?(:reload_app!)
               @server.reload_app!
             else
@@ -202,12 +238,16 @@ module Ruflet
       private
 
       # Loads the app, which hands its entrypoint over by calling Ruflet.run
-      # (and Ruflet::App#run) through the run interceptor, or by starting
-      # Ruflet::Server itself through ServerStartCapture; then watches it and
-      # serves it. A ruflet_core without run interceptors can only be caught
-      # the second way; if it is not, the app just runs, without hot reload.
+      # (and Ruflet::App#run) through the run interceptor, then serves it
+      # here; or by starting Ruflet::Server itself, which ServerStartCapture
+      # serves from inside the script (see capture_server_start). A ruflet_core
+      # without run interceptors can only be caught the second way; if it is
+      # not, the app just runs, without hot reload.
       def serve_app(interceptable:)
         loaded = load_script!
+        # The app's own server was served from its script and has stopped.
+        return loaded if @served_from_script
+
         unless @server
           raise Error, "#{@script} never called Ruflet.run" if interceptable
 
@@ -216,38 +256,78 @@ module Ruflet
           return loaded
         end
 
+        arm_reload
+        @server.start
+      end
+
+      # Watches the app's files and tells `ruflet run` the app is up.
+      def arm_reload
         @snapshot = file_snapshot
         start_watcher
         # Again after the app code, which may have replaced the trap. Without
         # it, `ruflet run` must never send "r": USR1 would kill the app.
         install_manual_reload_trap ? signal_ready : close_ready_io
-        @server.start
       end
 
       def run_interceptor
         @run_interceptor ||= lambda do |entrypoint:, host:, port:|
+          script_load = Thread.current[SERVER_START_CAPTURE]
+          script_load.entrypoint ||= :run if script_load.is_a?(ScriptLoad)
           @current_block = entrypoint
-          @entrypoint_loaded = true
           @server ||= create_server(host: host, port: port)
           :ruflet_hot_reload
         end
       end
 
-      # Called by ServerStartCapture for a Server#start the app script makes
-      # while load_script! runs it. Only the first one of a load is the app's:
-      # without the runner it blocks there, so the script never reaches a
-      # later one. A start in a process the app forked passes through.
-      def server_start_capture
-        @server_start_capture ||= lambda do |server:, entrypoint:, host:, port:|
-          next :pass if server.equal?(@server) || Process.pid != @loading_pid
+      # A Server#start the app script makes while load_script! runs it, on
+      # the fiber that loads it (from ServerStartCapture; `start` starts that
+      # server for real). Without the runner such a start serves the app and
+      # blocks the script there, so:
+      #
+      # - On the first load it still does, with the app's own server object
+      #   (its class, host and port). The runner only arms hot reload around
+      #   it and makes that server serve the latest block. Code after the
+      #   start runs once the server stops, as without the runner.
+      # - On a reload the app is served already: the start hands the new
+      #   block over and the load ends there, the way it blocked there the
+      #   first time. Only the load's first entrypoint is the app's.
+      # - A start in a process the app forked, and, on the first load, one
+      #   after an intercepted Ruflet.run (a server Ruflet.run did not start
+      #   and that ran on v0.0.23 as is), runs as without the runner.
+      def capture_server_start(script_load, server, app_block, start)
+        return start.call unless Process.pid == script_load.pid
 
-          if @entrypoint_loaded
-            log "ignoring another Ruflet::Server#start (port #{port}) while the app loads: " \
-                "only the app's first server is served"
-            next :ruflet_hot_reload
-          end
+        if script_load.reloading?
+          @current_block = app_block unless script_load.entrypoint || server.equal?(@server)
+          script_load.entrypoint ||= :server
+          throw script_load
+        end
+        return start.call if script_load.entrypoint || @server
 
-          run_interceptor.call(entrypoint: entrypoint, host: host, port: port)
+        script_load.entrypoint = :server
+        serve_from_script(script_load, server, app_block, start)
+      end
+
+      # Serves the app's own server from inside its script, the way it
+      # serves without the runner, with hot reload armed around it.
+      def serve_from_script(script_load, server, app_block, start)
+        runner = self
+        @current_block = app_block
+        # The server calls this for each new session and on reload_app!, so
+        # it always renders the block the latest load handed over.
+        server.instance_variable_set(:@app_block, proc { |page| runner.current_block.call(page) })
+        @server = server
+        # Serving is not loading: warnings show again, and the app's own code
+        # on this fiber (once the server stops) is no longer captured. Done
+        # before the watcher starts, whose reloads save and restore $VERBOSE.
+        Thread.current[SERVER_START_CAPTURE] = nil
+        $VERBOSE = script_load.verbose
+        arm_reload
+        begin
+          start.call
+        ensure
+          @served_from_script = true
+          stop
         end
       end
 
@@ -262,16 +342,16 @@ module Ruflet
         Ruflet::Server.new(host: host, port: port, &app_block)
       end
 
-      # Fiber-local, so ServerStartCapture only sees starts the script makes
-      # synchronously, never ones on threads or fibers it creates.
-      def load_script!
+      # The ScriptLoad is fiber-local, so ServerStartCapture only sees starts
+      # the script makes synchronously, never ones on threads or fibers it
+      # creates. On a reload a captured start ends the load (throw).
+      def load_script!(reloading: false)
         previous_verbose = $VERBOSE
         $VERBOSE = nil
         previous_capture = Thread.current[SERVER_START_CAPTURE]
-        @loading_pid = Process.pid
-        @entrypoint_loaded = false
-        Thread.current[SERVER_START_CAPTURE] = server_start_capture
-        Kernel.load(@script)
+        script_load = ScriptLoad.new(self, reloading: reloading, verbose: previous_verbose)
+        Thread.current[SERVER_START_CAPTURE] = script_load
+        catch(script_load) { Kernel.load(@script) }
       ensure
         Thread.current[SERVER_START_CAPTURE] = previous_capture
         $VERBOSE = previous_verbose

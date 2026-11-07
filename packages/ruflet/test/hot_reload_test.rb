@@ -60,14 +60,18 @@ class RufletHotReloadTest < Minitest::Test
     @dir = Dir.mktmpdir("ruflet-hot-reload-")
     @script = File.join(@dir, "main.rb")
     @logs = []
+    # Several tests serve the app's own Ruflet::Server.
+    @previous_banner = ENV["RUFLET_SUPPRESS_SERVER_BANNER"]
+    ENV["RUFLET_SUPPRESS_SERVER_BANNER"] = "1"
   end
 
   def teardown
-    @runner&.server&.shutdown
+    stop_served_runner
     @thread&.join(2)
     @thread&.kill
     @runner&.stop
     FileUtils.remove_entry(@dir) if @dir && File.directory?(@dir)
+    @previous_banner.nil? ? ENV.delete("RUFLET_SUPPRESS_SERVER_BANNER") : ENV["RUFLET_SUPPRESS_SERVER_BANNER"] = @previous_banner
   end
 
   def test_captures_app_block_without_starting_a_real_server
@@ -204,40 +208,78 @@ class RufletHotReloadTest < Minitest::Test
   # `Ruflet.app { ... }.run` starts Ruflet::Server directly instead of going
   # through Ruflet.run. The runner never saw it, so the app never reported
   # ready (`ruflet run` queued "r" forever) and file changes never reloaded.
-  def test_dsl_app_run_is_captured_like_ruflet_run
+  # It is now served the way it is without the runner: by its own server,
+  # from inside its script, which goes on past `.run` only once that server
+  # stops. Hot reload is armed around it.
+  def test_a_dsl_app_is_served_by_its_own_server_with_hot_reload
     write_widgets("v1")
     File.write(@script, <<~RUBY)
       require "ruflet"
       require "ruflet_server"
       require_relative "widgets"
 
+      $dsl_loads = ($dsl_loads || 0) + 1
       Ruflet.app(host: "127.0.0.1", port: 0) { text(WIDGET_LABEL) }.run
+      $dsl_after_run = true
     RUBY
     reader, writer = IO.pipe
     writer.autoclose = false # the runner owns and closes this fd
     ENV["RUFLET_READY_FD"] = writer.fileno.to_s
 
-    start_runner
+    start_served_runner
 
-    assert_instance_of FakeServer, @runner.server, "the app's own server must not start"
+    assert_instance_of Ruflet::Server, @runner.server, "the app's own server serves it"
     assert_equal ["v1"], render_labels
     assert IO.select([reader], nil, nil, 10), "a DSL app must report ready to `ruflet run`"
     assert_equal "t.", reader.read
+    assert_nil $dsl_after_run, "code after .run waits for the server, as without the runner"
 
     write_widgets("v2")
     wait_until("DSL reload") { @runner.reload_count >= 1 }
-    assert_equal ["v2"], render_labels
-    assert_equal 1, @runner.server.reload_count
+    assert_equal ["v2"], render_labels, "the app's server serves the reloaded block"
+    assert_equal 2, $dsl_loads
+    assert_nil $dsl_after_run, "a reload ends at .run, where the first load is still serving"
+
+    stop_served_runner
+    assert $dsl_after_run, "once its server stops, the script goes on as without the runner"
+    refute @runner.watching?, "nothing reloads the app once its server has stopped"
   ensure
     ENV.delete("RUFLET_READY_FD")
     reader&.close
+    $dsl_loads = $dsl_after_run = nil
+  end
+
+  # Code after `.run` that blocks (joining a thread, a loop) is never
+  # reached while the app is served, as without the runner. If the start
+  # returned at once instead, that code would hold the load and the app
+  # would never be served.
+  def test_blocking_code_after_a_dsl_run_does_not_keep_the_app_from_being_served
+    $after_run_gate = Queue.new
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+
+      Ruflet.app(host: "127.0.0.1", port: 0) { text("served") }.run
+      $after_run_gate.pop # like `worker.join` or `loop { sleep 1 }`
+    RUBY
+
+    start_served_runner
+
+    assert_equal ["served"], render_labels
+    @runner.request_reload
+    wait_until("reload") { @runner.reload_count >= 1 }
+    assert_equal ["served"], render_labels, "the reload must not block in the code after .run either"
+  ensure
+    $after_run_gate&.push(:done)
+    stop_served_runner
+    $after_run_gate = nil
   end
 
   # A ruflet_core without Ruflet.with_run_interceptor starts the server from
   # Ruflet.run itself. The runner used to give up on hot reload there and
-  # never report ready; Server#start is captured instead. With no
-  # interceptor registered, this checkout's Ruflet.run takes that same path.
-  def test_server_start_is_captured_when_ruflet_core_has_no_run_interceptors
+  # never report ready; that server is served with hot reload instead. With
+  # no interceptor registered, this checkout's Ruflet.run takes that path.
+  def test_ruflet_run_on_a_ruflet_core_without_run_interceptors_gets_hot_reload
     write_widgets("v1")
     File.write(@script, <<~RUBY)
       require "ruflet"
@@ -246,14 +288,65 @@ class RufletHotReloadTest < Minitest::Test
       Ruflet.run(host: "127.0.0.1", port: 0) { |page| page.add(WIDGET_LABEL) }
     RUBY
     without_run_interceptors do
-      start_runner # the runner looks for run interceptors as it starts
+      start_served_runner # the runner looks for run interceptors as it starts
     end
 
-    assert_instance_of FakeServer, @runner.server
+    assert_instance_of Ruflet::Server, @runner.server
     assert_equal ["v1"], render
     write_widgets("v2")
     wait_until("reload") { @runner.reload_count >= 1 }
     assert_equal ["v2"], render
+  end
+
+  # The server the app built is the one that serves: a subclass keeps its
+  # own behaviour, as without the runner.
+  def test_an_app_server_subclass_serves_the_app
+    write_widgets("v1")
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "widgets"
+
+      class HotReloadTestAppServer < Ruflet::Server
+        def app_marker = :custom
+      end
+      HotReloadTestAppServer.new(host: "127.0.0.1", port: 0) { |page| page.add(WIDGET_LABEL) }.start
+    RUBY
+
+    start_served_runner
+
+    assert_equal "HotReloadTestAppServer", @runner.server.class.name
+    assert_equal :custom, @runner.server.app_marker
+    assert_equal ["v1"], render
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+    assert_equal ["v2"], render
+  end
+
+  # A script that keeps its server across loads (`$server ||= ...`) starts
+  # the very server that serves it again on a reload: nothing to hand over,
+  # and the block it serves must not end up calling itself.
+  def test_a_reload_that_starts_the_serving_server_again_keeps_serving_it
+    write_widgets("v1")
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "widgets"
+
+      $kept_server ||= Ruflet::Server.new(host: "127.0.0.1", port: 0) { |page| page.add(WIDGET_LABEL) }
+      $kept_server.start
+    RUBY
+
+    start_served_runner
+
+    assert_same $kept_server, @runner.server
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+    assert_equal ["v2"], render, "the kept block reads the reloaded constant"
+    assert_same $kept_server, @runner.server
+  ensure
+    stop_served_runner
+    $kept_server = nil
   end
 
   # The runner's own server is a Ruflet::Server too; capturing its start
@@ -262,67 +355,64 @@ class RufletHotReloadTest < Minitest::Test
     require "ruflet_server"
     write_widgets("v1")
     write_main
-    with_server_banner_suppressed do
-      @runner = Ruflet::HotReload::Runner.new(
-        script: @script,
-        poll_interval: 0.05,
-        server_factory: ->(host:, port:, &block) { Ruflet::Server.new(host: "127.0.0.1", port: 0, &block) },
-        logger: ->(msg) { @logs << msg }
-      )
-      @thread = Thread.new { @runner.run }
-      wait_until("own server bound") { @runner.server&.port.to_i.positive? }
-    end
+    @runner = Ruflet::HotReload::Runner.new(
+      script: @script,
+      poll_interval: 0.05,
+      server_factory: ->(host:, port:, &block) { Ruflet::Server.new(host: "127.0.0.1", port: 0, &block) },
+      logger: ->(msg) { @logs << msg }
+    )
+    @thread = Thread.new { @runner.run }
+    wait_until("own server bound") { @runner.server&.port.to_i.positive? }
     assert @runner.watching?
   ensure
     @runner&.server&.stop
     @thread&.join(2)
     @runner&.stop
-    @runner = nil # teardown's FakeServer#shutdown does not apply
+    @runner = nil # already stopped
   end
 
   def test_server_start_outside_a_runner_is_untouched
     require "ruflet_server"
     Ruflet::HotReload.hook_server_start
-    with_server_banner_suppressed do
-      server = Ruflet::Server.new(host: "127.0.0.1", port: 0) { |_page| nil }
-      thread = Thread.new { server.start }
-      wait_until("server bound") { server.port.to_i.positive? }
-    ensure
-      server&.stop
-      thread&.join(2)
-    end
+    server = Ruflet::Server.new(host: "127.0.0.1", port: 0) { |_page| nil }
+    thread = Thread.new { server.start }
+    wait_until("server bound") { server.port.to_i.positive? }
+  ensure
+    server&.stop
+    thread&.join(2)
   end
 
   # Only a start the app script makes synchronously while the runner loads it
-  # is the app's: without the runner that call blocks the load. A server the
-  # app starts on a thread of its own, while its script goes on running, was
-  # captured too and so never served.
-  def test_a_server_the_app_starts_on_its_own_thread_is_served_by_the_app
+  # is the app's: without the runner that call blocks the load. Servers the
+  # app starts on threads of its own, while its script goes on running, were
+  # captured too and so never served. As on v0.0.23 they are the app's.
+  def test_servers_the_app_starts_on_its_own_threads_are_served_by_the_app
     $thread_app_gate = Queue.new
     File.write(@script, <<~RUBY)
       require "ruflet"
       require "ruflet_server"
 
-      $thread_app_server = Ruflet::Server.new(host: "127.0.0.1", port: 0) { |_page| nil }
-      Thread.new { $thread_app_server.start }
+      $thread_app_servers = Array.new(2) { Ruflet::Server.new(host: "127.0.0.1", port: 0) { |_page| nil } }
+      $thread_app_servers.each { |server| Thread.new { server.start } }
       $thread_app_gate.pop # the script goes on, like `loop { sleep 1 }`
     RUBY
-    with_server_banner_suppressed do
-      @runner = new_runner
-      @thread = Thread.new do
-        Thread.current.report_on_exception = false
-        @runner.run
-      rescue Ruflet::HotReload::Error
-        nil # no Ruflet.run once the gate opens; only the app's server matters
-      end
-      wait_until("the app's own server is bound") { $thread_app_server&.port.to_i.positive? }
+    @runner = new_runner
+    @thread = Thread.new do
+      Thread.current.report_on_exception = false
+      @runner.run
+    rescue Ruflet::HotReload::Error
+      nil # no Ruflet.run once the gate opens; only the app's servers matter
+    end
+    wait_until("the app's own servers are bound") do
+      $thread_app_servers&.all? { |server| server.port.to_i.positive? }
     end
     assert_nil @runner.server, "a start on the app's own thread must not be captured"
+    refute @runner.watching?
   ensure
-    $thread_app_server&.stop
+    Array($thread_app_servers).each(&:stop)
     $thread_app_gate&.push(:done)
     @thread&.join(5)
-    $thread_app_server = $thread_app_gate = nil
+    $thread_app_servers = $thread_app_gate = nil
   end
 
   def test_a_thread_server_and_the_apps_main_server_are_both_served
@@ -338,38 +428,76 @@ class RufletHotReloadTest < Minitest::Test
       end
       Ruflet.app(host: "127.0.0.1", port: 0) { text(WIDGET_LABEL) }.run
     RUBY
-    with_server_banner_suppressed do
-      start_runner
-      wait_until("the thread's server is bound") { $side_server&.port.to_i.positive? }
-    end
+    start_served_runner
+    wait_until("the thread's server is bound") { $side_server&.port.to_i.positive? }
 
-    assert_instance_of FakeServer, @runner.server, "the main thread's start is the app's"
+    refute_same $side_server, @runner.server, "the main thread's start is the app's"
     assert_equal ["v1"], render_labels
     write_widgets("v2")
     wait_until("reload") { @runner.reload_count >= 1 }
     assert_equal ["v2"], render_labels
   ensure
+    stop_served_runner
     $side_server&.stop
     $side_server = nil
   end
 
-  # Without the runner the first start blocks, so the script never reaches a
-  # second one; under the runner the first one stays the app's.
-  def test_a_later_server_start_in_the_same_load_does_not_replace_the_app
+  # Without the runner the first start blocks, so the script reaches a
+  # second one only once the first server stops; under the runner too. A
+  # reload ends at the first start, so the second is not reached then either.
+  def test_a_second_server_start_in_the_script_runs_once_the_first_server_stops
     File.write(@script, <<~RUBY)
       require "ruflet"
       require "ruflet_server"
 
       Ruflet.app(host: "127.0.0.1", port: 0) { text("first") }.run
-      Ruflet.app(host: "127.0.0.1", port: 0) { text("second") }.run
+      $second_server = Ruflet::Server.new(host: "127.0.0.1", port: 0) { |page| page.add("second") }
+      $second_server.start
     RUBY
-    start_runner
+    start_served_runner
+    first = @runner.server
 
     assert_equal ["first"], render_labels
-    assert(@logs.any? { |line| line.include?("ignoring another Ruflet::Server#start") })
     @runner.request_reload
     wait_until("reload") { @runner.reload_count >= 1 }
     assert_equal ["first"], render_labels
+    assert_nil $second_server, "the second start is not reached while the first server serves"
+
+    first.stop
+    wait_until("the second server is bound") { $second_server&.port.to_i.positive? }
+    assert_same first, @runner.server, "the second server is the script's own again"
+  ensure
+    $second_server&.stop
+    stop_served_runner
+    $second_server = nil
+  end
+
+  # On v0.0.23 a server the script starts itself after an intercepted
+  # Ruflet.run blocked the load and served as is; the runner's own server
+  # came up only once that one stopped. It still does.
+  def test_a_server_started_after_an_intercepted_ruflet_run_runs_as_before
+    write_widgets("v1")
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "widgets"
+
+      Ruflet.run { |page| page.add(WIDGET_LABEL) }
+      $direct_server = Ruflet::Server.new(host: "127.0.0.1", port: 0) { |page| page.add("direct") }
+      $direct_server.start
+    RUBY
+    @runner = new_runner
+    @thread = Thread.new { @runner.run }
+    wait_until("the script's server is bound") { $direct_server&.port.to_i.positive? }
+    assert_instance_of FakeServer, @runner.server
+    refute @runner.watching?, "the script's own server holds the load, as on v0.0.23"
+
+    $direct_server.stop
+    wait_until("runner start") { @runner.watching? }
+    assert_equal ["v1"], render
+  ensure
+    $direct_server&.stop
+    $direct_server = nil
   end
 
   # A child the app forks while it loads runs the script's code in another
@@ -401,7 +529,7 @@ class RufletHotReloadTest < Minitest::Test
       end
       Ruflet.run { |page| page.add(WIDGET_LABEL) }
     RUBY
-    with_server_banner_suppressed { start_runner }
+    start_runner
     writer.close
 
     assert IO.select([reader], nil, nil, 30), "the forked child must report"
@@ -468,6 +596,29 @@ class RufletHotReloadTest < Minitest::Test
       assert_match(/uninitialized constant Ruflet::Server/, err, label)
       refute status.success?, label
     end
+  end
+
+  # In a fresh process the hook waits for the app to define Ruflet::Server,
+  # and leaves alone the app classes it sees open on the way, even one that
+  # defines its own `name`.
+  def test_the_server_hook_waits_for_the_app_to_load_ruflet_server
+    code = <<~RUBY
+      require "ruflet/hot_reload"
+      Ruflet::HotReload.hook_server_start
+      print defined?(Ruflet::Server).inspect, " "
+      class HookTestOddName
+        def self.name(_required) = "odd"
+      end
+      class HookTestOddName; end # opened again, now with that `name`
+      require "ruflet_server"
+      print Ruflet::Server.ancestors.first(2).inspect
+    RUBY
+    env = { "RUBYLIB" => [File.expand_path("../lib", __dir__), CORE_LIB, SERVER_LIB].join(File::PATH_SEPARATOR) }
+
+    out, err, status = run_ruby(env, "-e", code)
+
+    assert status.success?, err
+    assert_equal "nil [Ruflet::HotReload::ServerStartCapture, Ruflet::Server]", out
   end
 
   def test_without_the_cli_fd_nothing_is_reported
@@ -612,24 +763,37 @@ class RufletHotReloadTest < Minitest::Test
     [out_reader, err_reader].each { |io| io&.close }
   end
 
+  # Starts the runner for an app its own Ruflet::Server serves, and waits
+  # until that server is bound.
+  def start_served_runner
+    start_runner
+    wait_until("the app's server is bound") { @runner.server.port.to_i.positive? }
+  end
+
+  # Stops the server serving the app; the script then goes on and the
+  # runner returns, as without the runner.
+  def stop_served_runner
+    server = @runner&.server
+    server.is_a?(FakeServer) ? server.shutdown : server&.stop
+    @thread&.join(10)
+  end
+
+  # What the server serving the app calls for each session.
+  def served_block
+    server = @runner.server
+    server.is_a?(FakeServer) ? server.app_block : server.instance_variable_get(:@app_block)
+  end
+
   def render
     page = RecorderPage.new
-    @runner.server.app_block.call(page)
+    served_block.call(page)
     page.added
   end
 
   def render_labels
     page = RecorderPage.new
-    @runner.server.app_block.call(page)
+    served_block.call(page)
     page.labels
-  end
-
-  def with_server_banner_suppressed
-    previous = ENV["RUFLET_SUPPRESS_SERVER_BANNER"]
-    ENV["RUFLET_SUPPRESS_SERVER_BANNER"] = "1"
-    yield
-  ensure
-    previous.nil? ? ENV.delete("RUFLET_SUPPRESS_SERVER_BANNER") : ENV["RUFLET_SUPPRESS_SERVER_BANNER"] = previous
   end
 
   # Simulates a ruflet_core from before Ruflet.with_run_interceptor existed.
