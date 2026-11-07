@@ -59,9 +59,9 @@ module Ruflet
         SERVICE_TAGS = tags.map(&:freeze).freeze
         SERVICE_TYPES = types.map(&:freeze).to_set.freeze
         # Deprecated here, after the assignment, and not next to the autoload
-        # in transformer.rb: older Rubies (2.6, at least) drop the flag of an
-        # autoloaded constant once its file defines it, and flagging it in
-        # both places makes Ruby 4.0 warn twice on the first read.
+        # in transformer.rb: a constant flagged before its autoload has run
+        # warns twice on the first read (checked on Ruby 3.2 and 4.0), and
+        # flagged here it warns once, like any other deprecated constant.
         deprecate_constant :SERVICE_TAGS, :SERVICE_TYPES
       end
     end

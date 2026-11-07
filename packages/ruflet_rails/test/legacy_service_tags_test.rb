@@ -129,6 +129,32 @@ class RufletLegacyServiceTagsTest < Minitest::Test
     Warning[:deprecated] = previous
   end
 
+  # The first read is the one that runs the autoload. It warns once, like any
+  # later read, and only when deprecation warnings are on.
+  def test_first_read_warns_once_per_constant
+    script = lambda do |deprecated, first, second|
+      <<~RUBY
+        require "json"
+        require "ruflet_rails"
+        warnings = []
+        Warning.singleton_class.prepend(Module.new do
+          define_method(:warn) { |message, *, **| warnings << message if message.include?("SERVICE_T") }
+        end)
+        Warning[:deprecated] = #{deprecated}
+        transformer = Ruflet::Rails::HtmlDsl::Transformer
+        transformer.const_get(:#{first})
+        first = warnings.length
+        transformer.const_get(:#{second})
+        puts JSON.generate("first" => first, "second" => warnings.length - first)
+      RUBY
+    end
+
+    # Whichever constant is read first runs the autoload for both.
+    assert_equal({ "first" => 1, "second" => 1 }, run_ruby(script.call(true, "SERVICE_TAGS", "SERVICE_TYPES")))
+    assert_equal({ "first" => 1, "second" => 1 }, run_ruby(script.call(true, "SERVICE_TYPES", "SERVICE_TAGS")))
+    assert_equal({ "first" => 0, "second" => 0 }, run_ruby(script.call(false, "SERVICE_TAGS", "SERVICE_TYPES")))
+  end
+
   # 0.0.23's transformer.rb loaded without ruflet_core, so the HTML DSL could
   # be required before it. The constants must not change that.
   def test_html_dsl_still_loads_before_ruflet_core
