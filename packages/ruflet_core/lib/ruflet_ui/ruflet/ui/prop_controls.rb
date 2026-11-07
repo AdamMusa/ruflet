@@ -11,6 +11,11 @@ module Ruflet
     # and call `reclaim` with the props of every control they build, so each
     # control ends up only where it was passed.
     module PropControls
+      # data: is the application's own payload (`button(data: { target: t })`):
+      # a control referenced from it is never a child of the control that
+      # carries it.
+      OPAQUE_PROP_KEYS = { "data" => true }.freeze
+
       module_function
 
       # Appends +control+ to +list+ as an implicit DSL child and remembers the
@@ -27,9 +32,10 @@ module Ruflet
         control
       end
 
-      # Takes every control found in +props+ back out of the list that
-      # implicitly attached it, whichever builder or enclosing block that was.
-      # Matching is by identity. Prop controls were attached in argument
+      # Takes every control passed in a child slot of +props+ back out of the
+      # list that implicitly attached it, whichever builder or enclosing block
+      # that was. Matching is by identity. A control already mounted on a page
+      # stays in its mounted parent. Prop controls were attached in argument
       # order, so they sit at the tail of their owner list; taking them back
       # last-first makes each lookup stop at the end of the list instead of
       # scanning it (`list_view(controls: items.map { text(...) })` was
@@ -40,6 +46,7 @@ module Ruflet
         owned.reverse_each do |control|
           owner = control.dsl_owner
           next unless owner
+          next if control.runtime_page
 
           control.dsl_owner = nil
           index = owner.rindex { |child| child.equal?(control) }
@@ -47,18 +54,31 @@ module Ruflet
         end
       end
 
-      # Yields the controls passed as property values: `content:`, `title:`,
-      # `actions: [...]`, `children:`/`controls:`, and controls nested anywhere
-      # inside Hash and Array values. The walk stops at controls: a control's
-      # own props were handled when it was built.
+      # Ends implicit ownership when the block that filled +list+ returns:
+      # what a finished block laid out is final, so a later prop use of one of
+      # its controls (often after the parent is mounted) leaves it in place.
+      def release(list)
+        list.each { |control| control.dsl_owner = nil if control.dsl_owner.equal?(list) }
+        list
+      end
 
-      def each_control(value, &block)
-        if value.is_a?(Ruflet::Control)
-          yield value
-        elsif value.is_a?(Hash)
-          value.each_value { |item| each_control(item, &block) }
-        elsif value.is_a?(Array)
-          value.each { |item| each_control(item, &block) }
+      # Yields the controls passed in child slots: a prop whose value is a
+      # control (`content:`, `title:`, `leading:`, `appbar:`, ...) or a list of
+      # controls (`actions:`, `children:`/`controls:`, `tabs:`, `rows:`, and
+      # extension lists such as `markers:` or `rods:`). That is the shape of
+      # every child-control prop on the wire, whatever its name, so no list of
+      # slot names is kept. A Hash value (style, theme, border, ...) is a value
+      # object, not a child slot, and data: is opaque, so a control referenced
+      # from either stays where its block put it.
+      def each_control(props)
+        props.each do |key, value|
+          next if OPAQUE_PROP_KEYS.key?(key.to_s)
+
+          if value.is_a?(Ruflet::Control)
+            yield value
+          elsif value.is_a?(Array)
+            value.each { |item| yield item if item.is_a?(Ruflet::Control) }
+          end
         end
       end
     end

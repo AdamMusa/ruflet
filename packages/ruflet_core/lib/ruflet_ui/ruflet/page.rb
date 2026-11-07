@@ -158,7 +158,8 @@ module Ruflet
     VISUAL_SERVICE_TYPES = %w[camera].freeze
     # Overlays the page presents with page.open / show_dialog / dialog= /
     # snack_bar= / bottom_sheet= rather than laying them out. Picker,
-    # TimerPicker and ActionSheet are not here: the engine renders them inline.
+    # TimerPicker and ActionSheet are not here: the engine renders them inline,
+    # as it does a DatePicker sent with inline: true (see presented_control?).
     PRESENTED_OVERLAY_TYPES = %w[
       AboutDialog AlertDialog Banner BottomSheet DatePicker DateRangePicker SnackBar TimePicker
     ].freeze
@@ -173,6 +174,9 @@ module Ruflet
     PRESENTED_TYPES = (PRESENTED_OVERLAY_TYPES + Ruflet::UI::ServiceTypes::ENGINE_SERVICE_TYPES.keys)
       .each_with_object({}) { |wire, types| types[wire] = true }.freeze
 
+    # A DatePicker sent with inline: true (cupertino_date_picker, which
+    # defaults to it, or date_picker(inline: true)) is drawn in place by the
+    # engine, so it is laid out like any other control, not presented.
     def self.presented_control?(control)
       return false unless PRESENTED_TYPES.key?(control.wire_type)
 
@@ -2345,7 +2349,8 @@ module Ruflet
     # inside a DSL block was attached to that block when it was built; take
     # it back so it is not also laid out as a body control.
     def claim_prop_control(value)
-      UI::PropControls.reclaim(value)
+      # reclaim reads props: a control or a list of controls in a slot.
+      UI::PropControls.reclaim("value" => value)
       value
     end
 

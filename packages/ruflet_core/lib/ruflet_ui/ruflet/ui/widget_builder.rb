@@ -40,7 +40,7 @@ module Ruflet
         if block_result.is_a?(Control) && !nested.children.any? { |c| c.object_id == block_result.object_id }
           nested.children << block_result
         end
-        node.children.concat(nested.children)
+        node.children.concat(UI::PropControls.release(nested.children))
       end
 
       if prop_children

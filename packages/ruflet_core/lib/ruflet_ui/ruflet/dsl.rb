@@ -568,6 +568,7 @@ module Ruflet
             UI::BuildScope.within(self) { instance_eval(&block) }
           ensure
             @stack.pop
+            Ruflet::UI::PropControls.release(c.children)
           end
         end
 
