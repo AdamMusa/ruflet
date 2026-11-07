@@ -2,8 +2,8 @@
 
 require_relative "test_helper"
 
-# A control passed as a property (content:, title:, actions: [...], a nested
-# hash, children:/controls:) belongs to the control that receives it. Inside a
+# A control passed as a property (content:, title:, actions: [...],
+# children:/controls:) belongs to the control that receives it. Inside a
 # builder block the helper that created it has already attached it to the
 # enclosing builder, so the builder must take it back instead of also keeping
 # it as a sibling of the control that consumed it.
@@ -43,15 +43,15 @@ class RufletDslBlockPropChildrenTest < Minitest::Test
     assert_equal %w[IconButton TextButton], column.children.first.to_patch["actions"].map { |action| action["_c"] }
   end
 
-  def test_builder_block_does_not_duplicate_controls_in_a_deeply_nested_hash
+  def test_builder_block_keeps_a_control_referenced_from_a_nested_data_hash
     deep = nil
     column = Ruflet.column do
       deep = text("deep")
       container(content: text("x"), data: { rows: [{ cells: [{ value: deep }] }] })
     end
 
-    assert_equal ["Container"], wire_types(column.children)
-    refute(column.children.any? { |child| child.equal?(deep) })
+    assert_equal %w[Text Container], wire_types(column.children)
+    assert_same deep, column.children.first
   end
 
   def test_builder_block_does_not_duplicate_children_and_controls_props
@@ -196,10 +196,9 @@ class RufletDslBlockPropChildrenTest < Minitest::Test
 
   def test_app_reclaims_a_prop_from_an_ancestor_block_two_levels_deeper
     app = Ruflet::DSL.app
-    top = app.text("top")
     column = app.column do
       t = text("x")
-      row { stack { container(content: t, data: { label: top }) } }
+      row { stack { container(content: t) } }
     end
 
     assert_equal ["Row"], wire_types(column.children)
