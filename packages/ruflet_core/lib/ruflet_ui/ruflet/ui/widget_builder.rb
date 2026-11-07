@@ -4,15 +4,20 @@ require_relative "control_methods"
 require_relative "control_factory"
 require_relative "prop_controls"
 require_relative "build_scope"
+require_relative "service_types"
 
 module Ruflet
   class WidgetBuilder
     include UI::ControlMethods
 
-    attr_reader :children
+    attr_reader :children, :services
 
-    def initialize
+    # +services+ is where engine services built in the block go (Page#mount
+    # passes one and adds them to the page). Without it they are returned to
+    # the caller and placed nowhere, like every service a builder builds.
+    def initialize(services: nil)
       @children = []
+      @services = services
     end
 
     def widget(type, **props, &block)
@@ -30,7 +35,7 @@ module Ruflet
       node = UI::ControlFactory.build(type, **mapped_props)
       UI::PropControls.reclaim(props)
       if block
-        nested = WidgetBuilder.new
+        nested = WidgetBuilder.new(services: @services)
         block_result = UI::BuildScope.within(nested) { nested.instance_eval(&block) }
         if block_result.is_a?(Control) && !nested.children.any? { |c| c.object_id == block_result.object_id }
           nested.children << block_result
@@ -44,6 +49,8 @@ module Ruflet
         end
       end
 
+      return collect_service(node) if UI::ServiceTypes.service_wire_type?(node.wire_type)
+
       UI::PropControls.attach(@children, node)
     end
 
@@ -55,10 +62,15 @@ module Ruflet
       mapped_props = props.dup
       node = UI::ControlFactory.build(type, **mapped_props)
       UI::PropControls.reclaim(props)
-      node
+      collect_service(node)
     end
 
     private
+
+    def collect_service(node)
+      @services << node if @services && !@services.include?(node)
+      node
+    end
 
     def extract_children_prop(props)
       props.delete(:children) ||

@@ -58,6 +58,27 @@ module Ruflet
       end
     end
 
+    # page.on_views_pop_until: the destination route, the result passed to
+    # page.pop_views_until and the View left on top (server-side calls only;
+    # the client can send the route alone). value stays the route.
+    class ViewsPopUntilEvent < GenericEvent
+      attr_reader :route, :result, :view
+
+      def initialize(raw:, value: nil, route: nil, result: nil, view: nil)
+        super(raw: raw, value: value)
+        @route = route
+        @result = result
+        @view = view
+      end
+
+      def self.from_data(data)
+        raw = data.is_a?(Hash) ? stringify_keys(data) : data
+        return new(raw: raw, value: raw, route: raw) unless raw.is_a?(Hash)
+
+        new(raw: raw, value: raw["route"], route: raw["route"], result: raw["result"], view: raw["view"])
+      end
+    end
+
     class ChangeEvent < GenericEvent; end
     class FocusEvent < GenericEvent; end
     class BlurEvent < GenericEvent; end
@@ -83,6 +104,55 @@ module Ruflet
     class UploadEvent < GenericEvent; end
     class ErrorEvent < GenericEvent; end
     class ActionEvent < GenericEvent; end
+
+    # A control's on_action_result: the outcome of one of its client actions
+    # (Ruflet::ClientAction), once the client has performed it. A control
+    # with several actions gets one event per action; `index` says which.
+    # `value` is the result: the picked files for :pick_files (an empty list
+    # when the user cancelled), the share status for the :share_* actions,
+    # nil for :launch_url and :copy_to_clipboard. `error` is the client's
+    # message when the action failed.
+    class ActionResultEvent < GenericEvent
+      attr_reader :index, :service, :method_name, :action, :result, :error
+
+      def initialize(raw:, value: nil, index: nil, service: nil, method_name: nil, action: nil, result: nil, error: nil)
+        super(raw: raw, value: value)
+        @index = index
+        @service = service
+        @method_name = method_name
+        @action = action
+        @result = result
+        @error = error
+      end
+
+      def self.from_data(data)
+        raw = data.is_a?(Hash) ? stringify_keys(data) : {}
+        service = raw["service"]
+        method_name = raw["method"]
+        result = raw["result"]
+        new(
+          raw: raw,
+          value: result,
+          index: raw["index"],
+          service: service,
+          method_name: method_name,
+          action: Ruflet::ClientAction.type_for(service, method_name),
+          result: result,
+          error: raw["error"]
+        )
+      end
+
+      def ok? = error.nil?
+      def error? = !error.nil?
+
+      # :pick_files only: each picked file as { "id", "name", "path", "size",
+      # "bytes" } ("path" is nil on the web, "bytes" needs with_data: true).
+      def files
+        return nil unless action == "pick_files"
+
+        Array(result).map { |file| file.is_a?(Hash) ? self.class.stringify_keys(file) : file }
+      end
+    end
     class AutoCompleteSelectEvent < GenericEvent
       attr_reader :selection
 
@@ -171,6 +241,55 @@ module Ruflet
         raw = data.is_a?(Hash) ? stringify_keys(data) : {}
         state = raw["state"] || raw["value"] || raw["v"] || data
         new(raw: raw, value: state, state: state)
+      end
+    end
+
+    # One file of a TextField on_paste_files event (Flet's PastedFile): the
+    # file name ("image.png" for a pasted screenshot), the MIME type the
+    # platform reported (can be empty) and the contents as a binary String.
+    class PastedFile
+      attr_reader :name, :mime_type, :bytes
+
+      def initialize(name:, mime_type:, bytes:)
+        @name = name
+        @mime_type = mime_type
+        @bytes = bytes
+      end
+
+      def self.from_data(data)
+        raw = BasePayload.stringify_keys(data)
+        new(name: raw["name"].to_s, mime_type: raw["mime_type"].to_s, bytes: binary(raw["bytes"]))
+      end
+
+      # Wire strings arrive UTF-8 tagged; the contents are bytes.
+      def self.binary(value)
+        bytes = value.is_a?(Array) ? value.pack("C*") : value.to_s
+        bytes.respond_to?(:b) ? bytes.b : bytes
+      end
+
+      def size
+        bytes.bytesize
+      end
+
+      def to_h
+        { "name" => name, "mime_type" => mime_type, "bytes" => bytes }
+      end
+    end
+
+    # TextField on_paste_files (Flet's TextFieldPasteFilesEvent): `files` is
+    # the list of PastedFile values, also returned by `value`.
+    class PasteFilesEvent < GenericEvent
+      attr_reader :files
+
+      def initialize(raw:, files:)
+        super(raw: raw, value: files)
+        @files = files
+      end
+
+      def self.from_data(data)
+        raw = data.is_a?(Hash) ? stringify_keys(data) : {}
+        entries = raw["files"].is_a?(Array) ? raw["files"] : []
+        new(raw: raw, files: entries.map { |entry| PastedFile.from_data(entry) })
       end
     end
 
@@ -553,6 +672,7 @@ module Ruflet
         "upload" => UploadEvent,
         "error" => ErrorEvent,
         "action" => ActionEvent,
+        "action_result" => ActionResultEvent,
         "reorder" => ReorderEvent,
         "reorder_start" => ReorderEvent,
         "reorder_end" => ReorderEvent,
@@ -560,9 +680,11 @@ module Ruflet
         "confirm_pop" => GenericEvent,
         "route_change" => GenericEvent,
         "view_pop" => GenericEvent,
+        "views_pop_until" => ViewsPopUntilEvent,
         "animation_end" => GenericEvent,
         "size_change" => GenericEvent,
         "selection_change" => GenericEvent,
+        "paste_files" => PasteFilesEvent,
         "entry_mode_change" => GenericEvent,
         "media_change" => GenericEvent,
         "resize" => GenericEvent,

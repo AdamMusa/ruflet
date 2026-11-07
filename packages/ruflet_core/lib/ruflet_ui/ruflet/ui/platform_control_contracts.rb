@@ -2,6 +2,7 @@
 
 require_relative "controls/ruflet_controls"
 require_relative "controls/shared/focusable_methods"
+require_relative "controls/shared/client_action_props"
 
 module Ruflet
   module UI
@@ -38,6 +39,7 @@ module Ruflet
         end
 
         class ButtonControl < PlatformControl
+          include Controls::ClientActionProps
           include Controls::FocusableMethods
 
           TYPE = "button".freeze
@@ -51,6 +53,7 @@ module Ruflet
         end
 
         class FilledButtonControl < PlatformControl
+          include Controls::ClientActionProps
           include Controls::FocusableMethods
 
           TYPE = "filledbutton".freeze
@@ -66,6 +69,7 @@ module Ruflet
         end
 
         class FilledTonalButtonControl < PlatformControl
+          include Controls::ClientActionProps
           include Controls::FocusableMethods
 
           TYPE = "filledtonalbutton".freeze
@@ -81,6 +85,7 @@ module Ruflet
         end
 
         class OutlinedButtonControl < PlatformControl
+          include Controls::ClientActionProps
           include Controls::FocusableMethods
 
           TYPE = "outlinedbutton".freeze
@@ -96,6 +101,7 @@ module Ruflet
         end
 
         class TextButtonControl < PlatformControl
+          include Controls::ClientActionProps
           include Controls::FocusableMethods
 
           TYPE = "textbutton".freeze
@@ -194,6 +200,8 @@ module Ruflet
         end
 
         class ListTileControl < PlatformControl
+          include Controls::ClientActionProps
+
           TYPE = "listtile".freeze
           WIRE = "ListTile".freeze
           KEYWORDS = (
@@ -357,6 +365,11 @@ module Ruflet
             size_constraints suffix suffix_icon suffix_icon_size_constraints suffix_style
             text_vertical_align on_click
           ].freeze
+
+          # Material 2 keywords that every Dropdown renderer draws under the
+          # same name. menu_border_radius (Flet 1.0's DropdownM2) rounds the
+          # open menu, while border_radius keeps rounding the field.
+          MATERIAL2_SHARED_KEYWORDS = %i[menu_border_radius].freeze
 
           # Material 2 event spellings and the Dropdown event the client fires
           # for them. A handler registered under one still sees its own name.

@@ -8,11 +8,12 @@ end
 require_relative "icon_data"
 require_relative "icons/material_icon_lookup"
 require_relative "icons/cupertino_icon_lookup"
+require_relative "form_fields"
 require "set"
 
 module Ruflet
   class Control
-    HOST_EXPANDED_TYPES = %w[view row column].freeze
+    HOST_EXPANDED_TYPES = %w[view row column form].freeze
     SCHEMA_METADATA_CACHE = {}
 
     attr_reader :type, :id, :props, :children
@@ -21,6 +22,15 @@ module Ruflet
     # control to implicitly, so a later prop use can take it back from there
     # (see Ruflet::UI::PropControls). Never serialized.
     attr_accessor :dsl_owner
+    # Form field options (see Ruflet::FormFields). Like event handlers they
+    # stay in Ruby: a validator runs here and is never serialized.
+    attr_reader :validator, :on_saved
+    # The message of the field's last failed validation, nil when valid. Set
+    # by its Form; shown in the field's error prop when it has one.
+    attr_accessor :validation_error
+    # The Form this field belongs to, linked by the form. Internal: the page
+    # routes the field's events through it (autovalidation, on_submit).
+    attr_accessor :form_owner
 
     def initialize(type:, id: nil, **props)
       @type = type.to_s.downcase
@@ -28,7 +38,47 @@ module Ruflet
       @children = []
       @handlers = {}
       @wire_id = nil
+      form_options = FormFields.extract_options!(props)
       @props = normalize_props(extract_handlers(preprocess_props(props)))
+      apply_form_options!(form_options) unless form_options.empty?
+    end
+
+    # validator:, on_saved: and autovalidate_mode:, given at construction,
+    # through page.update(field, validator: ...) or set directly.
+    def apply_form_options!(options)
+      options.each do |key, value|
+        case key.to_s
+        when "validator" then self.validator = value
+        when "on_saved" then self.on_saved = value
+        when "autovalidate_mode" then self.autovalidate_mode = value
+        end
+      end
+      self
+    end
+
+    def validator=(callable)
+      FormFields.require_field!(self, "validator")
+      FormFields.require_callable!("validator", callable)
+      @validator = callable
+    end
+
+    def on_saved=(callable)
+      FormFields.require_field!(self, "on_saved")
+      FormFields.require_callable!("on_saved", callable)
+      @on_saved = callable
+    end
+
+    def autovalidate_mode
+      @autovalidate_mode || "disabled"
+    end
+
+    def autovalidate_mode=(mode)
+      FormFields.require_field!(self, "autovalidate_mode") unless FormFields.form?(self)
+      @autovalidate_mode = FormFields.normalize_mode(mode)
+    end
+
+    def form_field?
+      FormFields.field?(self)
     end
 
     def on(event_name, &block)
@@ -62,8 +112,11 @@ module Ruflet
     # are long-lived in Flet's ServiceRegistry, so revisiting a view must update
     # both their configuration and their Ruby event handlers.
     def merge_props(values = {})
+      values = values.dup
+      form_options = FormFields.extract_options!(values)
       normalized = normalize_props(extract_handlers(preprocess_props(values)))
       @props.merge!(normalized)
+      apply_form_options!(form_options) unless form_options.empty?
       self
     end
 

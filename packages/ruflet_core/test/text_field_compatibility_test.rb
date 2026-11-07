@@ -112,4 +112,45 @@ class RufletTextFieldCompatibilityTest < Minitest::Test
 
     assert_equal "keyword", field.to_patch["value"]
   end
+  # Flet 1.0.3's TextField.on_paste_files: files pasted into the field.
+  def test_text_field_on_paste_files_delivers_pasted_files
+    page = Ruflet::Page.new(session_id: "s1", client_details: { "route" => "/" }, sender: ->(_action, _payload) {})
+    png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0xFF].pack("C*")
+    received = []
+    material = Ruflet.text_field(on_paste_files: ->(event) { received << event })
+    cupertino = Ruflet.cupertino_text_field(on_paste_files: ->(event) { received << event })
+    page.add(Ruflet.column([material, cupertino]))
+
+    assert_equal true, material.to_patch["on_paste_files"]
+    assert_equal true, cupertino.to_patch["on_paste_files"]
+    assert_equal "TextField", cupertino.to_patch["_c"]
+
+    files = [
+      # Wire strings arrive UTF-8 tagged, the way the server decodes them.
+      { "name" => "image.png", "mime_type" => "image/png", "bytes" => png.dup.force_encoding("UTF-8") },
+      { "name" => "notes.txt", "mime_type" => "", "bytes" => [104, 105] }
+    ]
+    page.dispatch_event(target: material.wire_id, name: "paste_files", data: { "files" => files })
+    page.dispatch_event(target: cupertino.wire_id, name: "paste_files", data: { "files" => [] })
+
+    event = received.first
+    assert_equal "paste_files", event.name
+    assert_equal %w[image.png notes.txt], event.files.map(&:name)
+    assert_equal ["image/png", ""], event.files.map(&:mime_type)
+    assert_equal png.b, event.files.first.bytes
+    assert_equal Encoding::BINARY, event.files.first.bytes.encoding
+    assert_equal 9, event.files.first.size
+    assert_equal "hi", event.files.last.bytes
+    assert_equal event.files, event.value
+    assert_equal({ "name" => "notes.txt", "mime_type" => "", "bytes" => "hi" }, event.files.last.to_h)
+    assert_equal [], received.last.files
+  end
+
+  def test_text_field_on_paste_files_attaches_after_construction
+    field = Ruflet.text_field
+    field.on(:paste_files) { |_event| nil }
+
+    assert_equal true, field.props["on_paste_files"]
+    assert_equal true, Ruflet.cupertino_text_field.on(:paste_files) { |_event| nil }.props["on_paste_files"]
+  end
 end

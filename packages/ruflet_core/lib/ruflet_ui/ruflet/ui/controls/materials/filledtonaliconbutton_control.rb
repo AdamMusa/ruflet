@@ -1,22 +1,25 @@
 # frozen_string_literal: true
 
 require_relative "../shared/focusable_methods"
+require_relative "../shared/client_action_props"
 
 module Ruflet
   module UI
     module Controls
       module RufletComponents
         class FilledTonalIconButtonControl < Ruflet::Control
+          include ClientActionProps
           include FocusableMethods
 
           TYPE = "filledtonaliconbutton".freeze
           WIRE = "FilledTonalIconButton".freeze
 
-          KEYWORDS = [:adaptive, :align, :alignment, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :autofocus, :badge, :bgcolor, :bottom, :col, :data, :disabled, :disabled_color, :enable_feedback, :expand, :expand_loose, :focus_color, :height, :highlight_color, :hover_color, :icon, :icon_color, :icon_size, :key, :left, :margin, :mouse_cursor, :offset, :opacity, :padding, :right, :rotate, :rtl, :scale, :selected, :selected_icon, :selected_icon_color, :size_change_interval, :size_constraints, :splash_color, :splash_radius, :style, :tooltip, :top, :url, :visible, :visual_density, :width, :on_animation_end, :on_blur, :on_click, :on_focus, :on_hover, :on_long_press, :on_size_change].freeze
+          KEYWORDS = [:action, :adaptive, :align, :alignment, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :autofocus, :badge, :bgcolor, :bottom, :col, :data, :disabled, :disabled_color, :enable_feedback, :expand, :expand_loose, :focus_color, :height, :highlight_color, :hover_color, :icon, :icon_color, :icon_size, :key, :left, :margin, :mouse_cursor, :offset, :opacity, :padding, :right, :rotate, :rtl, :scale, :selected, :selected_icon, :selected_icon_color, :size_change_interval, :size_constraints, :splash_color, :splash_radius, :style, :tooltip, :top, :url, :visible, :visual_density, :width, :on_action_result, :on_animation_end, :on_blur, :on_click, :on_focus, :on_hover, :on_long_press, :on_size_change].freeze
 
           def initialize(id: nil, **props)
             unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
             raise ArgumentError, "unknown keywords: #{unknown.join(', ')}" unless unknown.empty?
+            action = props[:action]
             adaptive = props[:adaptive]
             align = props[:align]
             alignment = props[:alignment]
@@ -72,6 +75,7 @@ module Ruflet
             visible = props[:visible]
             visual_density = props[:visual_density]
             width = props[:width]
+            on_action_result = props[:on_action_result]
             on_animation_end = props[:on_animation_end]
             on_blur = props[:on_blur]
             on_click = props[:on_click]
@@ -84,6 +88,7 @@ module Ruflet
             icon_size = 24 if icon_size.nil?
             padding = { "all" => 8 } if padding.nil?
             props = {}
+            props[:action] = action unless action.nil?
             props[:adaptive] = adaptive unless adaptive.nil?
             props[:align] = align unless align.nil?
             props[:alignment] = alignment unless alignment.nil?
@@ -139,6 +144,7 @@ module Ruflet
             props[:visible] = visible unless visible.nil?
             props[:visual_density] = visual_density unless visual_density.nil?
             props[:width] = width unless width.nil?
+            props[:on_action_result] = on_action_result unless on_action_result.nil?
             props[:on_animation_end] = on_animation_end unless on_animation_end.nil?
             props[:on_blur] = on_blur unless on_blur.nil?
             props[:on_click] = on_click unless on_click.nil?
