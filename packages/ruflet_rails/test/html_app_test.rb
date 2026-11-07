@@ -419,6 +419,27 @@ class RufletHtmlAppTest < Minitest::Test
                  @page.get_control("recorder-status").props["value"]
   end
 
+  # AudioRecorder declares `configuration`, `data` and `key` properties. They
+  # are not recorder actions, and must keep reporting an unknown action.
+  def test_audio_recorder_property_names_are_still_unknown_actions
+    invoked = []
+    @page.define_singleton_method(:invoke) do |control, method, **|
+      invoked << [control.type, method]
+    end
+
+    %w[data key configuration].each do |action|
+      start(
+        "/" => '<audio-recorder></audio-recorder><text id="recorder-status">Ready</text>' \
+               "<button service=\"audio-recorder-#{action}\" result-target=\"recorder-status\">Go</button>"
+      )
+      find_all(@page.views.first, "button").first.emit("click", nil)
+
+      assert_equal "unknown recorder action #{action.inspect}",
+                   @page.get_control("recorder-status").props["value"], action
+    end
+    assert_empty invoked
+  end
+
   def test_audio_recorder_animates_while_recording_and_autoplays_after_stop
     recording_paths = []
     documents_requests = 0
