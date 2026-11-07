@@ -511,18 +511,11 @@ module Ruflet
             recorder.is_supported_encoder(spec["encoder"], on_result: callback)
           else
             method = "#{action.tr('-', '_')}_recording"
-            method = action.tr("-", "_") if recorder_action?(recorder, action.tr("-", "_"))
-            raise ArgumentError, "unknown recorder action #{action.inspect}" unless recorder_action?(recorder, method)
+            method = action.tr("-", "_") if recorder.respond_to?(action.tr("-", "_"))
+            raise ArgumentError, "unknown recorder action #{action.inspect}" unless recorder.respond_to?(method)
 
             recorder.public_send(method, on_result: callback)
           end
-        end
-
-        # Actions are the recorder's own methods. Its declared properties
-        # (configuration, data, key) also answer respond_to? as readers, but
-        # they are not actions.
-        def recorder_action?(recorder, name)
-          recorder.singleton_class.public_method_defined?(name)
         end
 
         # Recording needs a writable file path *on the device*, and the mic

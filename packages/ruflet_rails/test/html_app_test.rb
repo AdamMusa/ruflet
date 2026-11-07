@@ -419,8 +419,8 @@ class RufletHtmlAppTest < Minitest::Test
                  @page.get_control("recorder-status").props["value"]
   end
 
-  # AudioRecorder declares `configuration`, `data` and `key` properties, which
-  # controls can read (recorder.data). They are not recorder actions.
+  # AudioRecorder declares `configuration`, `data` and `key` properties. They
+  # are not recorder actions, and must keep reporting an unknown action.
   def test_audio_recorder_property_names_are_still_unknown_actions
     invoked = []
     @page.define_singleton_method(:invoke) do |control, method, **|

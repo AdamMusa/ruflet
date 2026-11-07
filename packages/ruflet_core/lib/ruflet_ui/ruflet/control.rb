@@ -97,46 +97,7 @@ module Ruflet
       patch
     end
 
-    # Read access to the properties a control declares, as the docs use it:
-    # `event.control.value` in a handler, `field.value` later on. Only a bare
-    # call (no arguments, no block) naming a property in the control's own
-    # KEYWORDS is answered here; events (`on_*`) are not properties. A public
-    # method of the same name always wins, because Ruby never reaches
-    # method_missing for it (Stepper declares `type`; Control#type stays), and
-    # every other call goes on to the previous method_missing unchanged. The
-    # value is the current one: Page applies page.update patches and client
-    # changes (update_control, change/select events) to props before handlers
-    # run. There are no setters.
-    def method_missing(name, *args, **kwargs, &block)
-      if args.empty? && kwargs.empty? && block.nil? && declared_property?(name)
-        return declared_property_value(name.to_s)
-      end
-
-      super
-    end
-
-    def respond_to_missing?(name, include_private = false)
-      declared_property?(name) || super
-    end
-
     private
-
-    def declared_property?(name)
-      return false if @props.nil? || @type.nil?
-
-      property_name_lookup.key?(name.to_s)
-    rescue StandardError
-      false
-    end
-
-    def declared_property_value(key)
-      # Builders keep child controls in `children`, the list to_patch sends.
-      if key == "controls" && (!children.empty? || !props.key?("controls"))
-        return children
-      end
-
-      props[key]
-    end
 
     class << self
       def generate_id

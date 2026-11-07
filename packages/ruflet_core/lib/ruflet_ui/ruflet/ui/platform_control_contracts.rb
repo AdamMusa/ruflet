@@ -343,9 +343,6 @@ module Ruflet
             prefix_icon: :leading_icon,
             select_icon: :trailing_icon
           }.freeze
-          MATERIAL2_STORED_KEYS = MATERIAL2_RENAMES.each_with_object({}) do |(legacy, canonical), keys|
-            keys[legacy.to_s] = canonical.to_s
-          end.freeze
 
           # Material 2 keywords with no Dropdown equivalent. They are still
           # accepted and sent so dropdown_m2 code keeps loading, but neither
@@ -428,11 +425,6 @@ module Ruflet
               end
               handler.call(event)
             end
-          end
-
-          # A Material 2 spelling reads the Dropdown key it was stored under.
-          def declared_property_value(key)
-            super(MATERIAL2_STORED_KEYS.fetch(key, key))
           end
         end
       end
