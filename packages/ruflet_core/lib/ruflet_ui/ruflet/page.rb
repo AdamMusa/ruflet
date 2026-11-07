@@ -157,7 +157,8 @@ module Ruflet
     VISUAL_SERVICE_TYPES = %w[camera].freeze
     # Overlays the page presents with page.open / show_dialog / dialog= /
     # snack_bar= / bottom_sheet= rather than laying them out. Picker,
-    # TimerPicker and ActionSheet are not here: the engine renders them inline.
+    # TimerPicker and ActionSheet are not here: the engine renders them inline,
+    # as it does a DatePicker sent with inline: true (see presented_control?).
     PRESENTED_OVERLAY_TYPES = %w[
       AboutDialog AlertDialog Banner BottomSheet DatePicker DateRangePicker SnackBar TimePicker
     ].freeze
@@ -172,8 +173,14 @@ module Ruflet
     PRESENTED_TYPES = (PRESENTED_OVERLAY_TYPES + Ruflet::UI::ServiceTypes::ENGINE_SERVICE_TYPES.keys)
       .each_with_object({}) { |wire, types| types[wire] = true }.freeze
 
+    # A DatePicker sent with inline: true (cupertino_date_picker, which
+    # defaults to it, or date_picker(inline: true)) is drawn in place by the
+    # engine, so it is laid out like any other control, not presented.
     def self.presented_control?(control)
-      PRESENTED_TYPES.key?(control.wire_type)
+      wire = control.wire_type
+      return false if wire == "DatePicker" && control.props["inline"] == true
+
+      PRESENTED_TYPES.key?(wire)
     end
     PAGE_ADD_RESERVED_KEYS = %i[appbar bottom_appbar floating_action_button navigation_bar dialog snack_bar bottom_sheet].freeze
     WIDGET_HELPER_METHODS = (
