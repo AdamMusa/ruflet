@@ -125,6 +125,11 @@ module Ruflet
   end
 
   class << self
+    # SharedControlForwarders is included last so it is looked up first. It is
+    # where Ruflet::Extensions defines a registered helper, and an extension
+    # registered under one of the scoped names (`stepper`, `table`, ...) must
+    # win over the built-in one, as it did before those were built in.
+    include UI::ScopedControlForwarders
     include UI::SharedControlForwarders
 
     def app(host: nil, port: nil, &block)
@@ -142,6 +147,8 @@ module Ruflet
 
   module UI
     class << self
+      # Same order as Ruflet: an extension's helper beats a scoped built-in.
+      include ScopedControlForwarders
       include SharedControlForwarders
 
       def app(**opts, &block) = Ruflet.app(**opts, &block)
@@ -156,6 +163,9 @@ module Ruflet
   end
 end
 
+# Every method Kernel gets here is a method of every object in the process,
+# so the set is the one v0.0.23 shipped; helpers added since live in
+# Ruflet::UI::ScopedControlForwarders and are reached through method_missing.
 module Kernel
   include Ruflet::UI::SharedControlForwarders
 
@@ -177,7 +187,28 @@ module Kernel
   # Only build a control for a name the framework actually knows, or for calls
   # written at the top level of a script, where an unregistered extension
   # helper is still expected to work.
+  #
+  # A helper added after v0.0.23 (`stepper`, `table`, ...) is not a Kernel
+  # method, so an object with its own method_missing builder keeps the name.
+  # A call that reaches this point goes to the same Ruflet::DSL helper the
+  # Kernel method would have called, but only where a private Kernel method
+  # could have been called: with no explicit receiver (`record.table(1)` raises
+  # NoMethodError, as it did when the name did not exist).
   def method_missing(name, *args, **props, &block)
+    scoped = Ruflet::UI::ScopedControlForwarders
+    case scoped.dispatch(self, name, args, props, block)
+    when :build
+      return Ruflet::DSL.public_send(name, *args, **props, &block)
+    when :implicit
+      begin
+        return super
+      rescue NameError => error
+        raise error unless scoped.implicit_call?(error, self, name)
+      end
+      return Ruflet::DSL.public_send(name, *args, **props, &block)
+    when :missing
+      return super
+    end
     return super if name.to_s.end_with?("=") || (args.empty? && props.empty? && !block)
     unless Ruflet::UI::ControlFactory.known_control?(name) || Ruflet::UI::ControlFactory.dsl_receiver?(self)
       return super
