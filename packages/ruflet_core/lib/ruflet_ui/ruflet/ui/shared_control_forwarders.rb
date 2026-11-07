@@ -539,12 +539,14 @@ module Ruflet
       # receiver. CRuby raises a plain NameError for a bare word and records
       # the form of any other call on NoMethodError#private_call?.
       #
-      # The embedded VM records neither. There, a call with an explicit
-      # receiver never reaches Kernel#method_missing on its own, because that
-      # method is private (the VM raises "private method called" first); it
-      # can only arrive through another class's method_missing calling super.
-      # So the call is implicit when Kernel#method_missing is the receiver's
-      # own, and is treated as explicit otherwise, as v0.0.23 would have.
+      # The embedded VM records neither. There, `record.table(1)` never
+      # reaches Kernel#method_missing: that method is private, so the VM
+      # raises "private method called" first, as it did at v0.0.23. A call
+      # can still arrive through another class's method_missing calling
+      # super, which is treated as explicit (v0.0.23 raised there too), or
+      # through send/public_send, which the VM hands to method_missing like a
+      # call without a receiver: `record.public_send(:table, rows: [])` builds
+      # on the embedded VM, where CRuby raises.
       def self.implicit_call?(error, receiver, name)
         return false unless error.name == name
         return true unless error.is_a?(NoMethodError)
