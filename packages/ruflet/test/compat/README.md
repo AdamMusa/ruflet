@@ -12,6 +12,7 @@ ruby test/compat/compat.rb                          # same check, prints diffs
 ruby test/compat/compat.rb --only build-ios         # a subset (substring of the golden path)
 ruby test/compat/compat.rb --regenerate             # rewrite goldens from this checkout
 ruby test/compat/compat.rb --list
+ruby test/compat/compat.rb docs-check --docs ../ruflet_site/app/content/docs   # docs vs docs_coverage.rb
 RUFLET_COMPAT_KEEP=1 ruby test/compat/compat.rb --only run.txt   # keep the sandboxes to inspect
 ```
 
@@ -21,23 +22,50 @@ intended, review the diff, and list it under "Behavior changes" in the PR.
 ## What is pinned
 
 * `goldens/cli/<fixture>/<invocation>.txt`, one per entry in `corpus.rb`:
-  * every `flutter`, `dart`, `pod`, `git`, `mrbc`, `codesign` and PlistBuddy
-    command the CLI runs, in order, with its working directory and the
-    environment it passes;
-  * every HTTP request it attempts (all answered 503; nothing is downloaded);
+  * every `flutter`, `dart`, `pod`, `git`, `fvm`, `mrbc`, `codesign`,
+    PlistBuddy, `tar` and `unzip` command the CLI runs, in order, with its
+    working directory and the environment it passes;
+  * every HTTP request it makes, with the status it got when the entry uses
+    the release fixture (below);
   * its exit status and its stdout/stderr, in order;
   * every file it creates, changes or deletes: `build/client` (shown relative
     to the frozen template: identical copies are counted, edits are diffed,
     pruned template files are listed), exported outputs under `build/`, the
-    template cache under `~/.ruflet`, and anything else in the sandbox.
+    template and prebuilt-client caches under `~/.ruflet`, a
+    `RUFLET_CLIENT_DIR` outside the project, and anything else in the sandbox.
 * `goldens/page/<fixture>.json`: the messages a client receives in reply to
   `register_client` for each fixture app, i.e. the initial page patch.
 
-The corpus covers every invocation documented in the docs' CLI reference (and
-the other guides), each build target server-driven and `--self`, the build
-profiles, verbose and pass-through flags, rebuilds, flags that later work
-packages will change (`run -d`, `--device`, unknown flags, `--release apk`,
-path flags), and the Rails rake tasks.
+### What the corpus covers
+
+* Every invocation the published docs show. `docs_coverage.rb` maps each of
+  the 84 forms in AdamMusa/ruflet_site `content/docs` at 05dde18 (fenced shell
+  blocks and inline code: `ruflet ...`, `rake ruflet:...`, `rails generate
+  ruflet:install ...`) to the goldens that pin it. The test checks that each
+  listed golden exists; `compat.rb docs-check --docs <dir>` checks that every
+  form a docs checkout shows is listed, so it is the command to run when the
+  docs change.
+* Every documented environment variable that affects the CLI
+  (`RUFLET_CONFIG` and the `ruflet.yml` fallback, `RUFLET_PORT`,
+  `RUFLET_CLIENT_DIR`, `RUFLET_FLUTTER_VERSION` with and without FVM, and the
+  project `.fvmrc`), plus `RUFLET_IOS_TEAM_ID`, the Android signing variables,
+  `RUFLET_RUBY_RUNTIME_PATH`, `RUFLET_TEMPLATE_ROOT`, `RUFLET_CLIENT_CHANNEL`
+  and `RUFLET_CLIENT_UPDATE_INTERVAL`. `RUFLET_HOST` is read only by the app's
+  own server, never by the CLI, so no CLI golden can pin it.
+* Each build target server-driven and `--self`, the build profiles, the
+  undocumented `appbundle` alias, upper-case targets and commands, short and
+  long verbose flags (`-v`/`--verbose` on build, install, debug, doctor and
+  emulators), `--flag=value` forms, pass-through flags, and rebuilds.
+* Flags that later work packages will change (`run -d`, `--device`, unknown
+  flags, `--release apk`, path flags).
+* The Rails rake tasks: every `ruflet:build` target the docs list, an
+  initializer without build metadata, `ruflet:install` with a device,
+  without one (after an Android build and after an iOS build) and with
+  nothing built, `ruflet:update` with each target, `rake --tasks`, and the
+  documented `ruflet:web`, which does not exist (its golden pins rake's
+  "Don't know how to build task").
+* `rails generate ruflet:install` with the documented `--web`/`--desktop`,
+  and `--client`.
 
 ## Fixtures
 
@@ -52,6 +80,8 @@ path flags), and the Rails rake tasks.
   `ruflet.yaml` of its own. The `rake ruflet:*` goldens run the real Railtie
   task bodies against a minimal Rails stub (`lib/rails_stub.rb`); no Rails gem
   is needed. `ruflet_rails_demo` is not used.
+* `rails_new_app`: the files of a fresh `rails new` app (railties 8.1
+  templates) that the install generator reads and edits.
 * `docs/<id>.rb`: whole-app examples copied verbatim from the published docs
   (AdamMusa/ruflet_site), each the `main.rb` of a default app.
 * `ruby_runtime`: a stand-in local runtime checkout for `RUFLET_RUBY_RUNTIME_PATH`.
@@ -76,8 +106,9 @@ path flags), and the Rails rake tasks.
 `ruflet_rails` gems from this checkout into a temporary GEM_HOME, using each
 gemspec's file list, so the code under test is what ships and nothing resolves
 to a sibling checkout. Each invocation gets its own project copy, HOME and
-TMPDIR, and runs the installed `bin/ruflet` in a fresh Ruby process
-(`lib/cli_child.rb`) with a clean environment.
+TMPDIR, and runs in a fresh Ruby process (`lib/cli_child.rb`) with a clean
+environment: the installed `bin/ruflet`, a Railtie task body (`rake`), or a
+Rails generator class (`rails generate`).
 
 Inside that process only the process and network boundaries are replaced:
 
@@ -86,27 +117,59 @@ Inside that process only the process and network boundaries are replaced:
   `.dart_tool/package_config.json` the CLI verifies, `flutter build` writes a
   placeholder output the CLI exports, the icon/splash generators write the
   Android resources the CLI checks for, `git clone` checks out the frozen
-  template, `git ls-remote`/`rev-parse` answer a fixed commit, and `pod`,
-  `codesign`, `bundle` and `open` succeed. Files the stubs write are listed
-  separately and are not counted as CLI output. Long-running children (the app
-  backend, browsers, desktop clients) are recorded and replaced by a process
-  that exits at once. `/usr/libexec/PlistBuddy` is the one tool that really
-  runs: it rewrites Info.plist, and that rewrite is what users get.
-* HTTP is answered 503 and recorded; local TCP probes succeed; the LAN address
-  is fixed.
-* The host is a fixed profile: an Apple-silicon Mac with Homebrew CocoaPods and
-  no Chrome. The clock is frozen at 2026-01-01T12:00:00Z.
+  template, `git ls-remote`/`rev-parse` answer a fixed commit, `fvm use`
+  (only where an entry puts fvm on PATH) links the project's
+  `.fvm/flutter_sdk`, and `pod`, `codesign`, `bundle` and `open` succeed.
+  Files the stubs write are listed by name and are not counted as CLI output,
+  unless the CLI then changes or removes them: that is reported as an `M` or
+  `D` line with a diff from what the stub wrote. Long-running children (the
+  app backend, browsers, desktop clients) are recorded and replaced by a
+  process that exits at once.
+* Some host tools really run, because their output is what users get:
+  `/usr/libexec/PlistBuddy` rewrites Info.plist, and `/usr/bin/tar`,
+  `/usr/bin/unzip` and `/usr/bin/ditto` extract downloaded prebuilt clients.
+  What they print reaches the golden unless the CLI redirected it.
+* The network is offline by default: every HTTP request is recorded and
+  answered 503, so nothing is downloaded and each `ruflet update` form pins
+  its failure. Entries with `network: "release"` instead talk to a fake
+  GitHub release (`lib/release_fixture.rb`): the rolling `prebuild-main`
+  release with its completion manifest, `latest`, 404 for the version tags,
+  and download redirects to a CDN, serving small web, macOS, Linux and
+  Windows client archives in the layout the release workflow publishes. Those
+  goldens pin the download, extract, manifest and cache-reuse paths of
+  `ruflet update`, an uncached `ruflet run --web/--desktop`, `rake
+  ruflet:update` and the generator's `--desktop`. Local TCP probes succeed;
+  the LAN address is fixed.
+* The host is a fixed profile: an Apple-silicon Mac with Homebrew CocoaPods,
+  no Chrome and no FVM. The clock is frozen at 2026-01-01T12:00:00Z.
 * `rqrcode` is replaced by `lib/stub_lib/rqrcode.rb`, so the QR banner does not
   depend on the installed rqrcode version.
 
+Rake goldens use `lib/rails_stub.rb`: the Railtie's own task bodies run, and
+only rake's command line is stood in for (`name[args]` parsing, `rake
+--tasks`, and the unknown-task error, worded as rake 13 words them).
+
+Generator goldens use `lib/generator_stub/rails/generators.rb`, a small
+stand-in for railties' `Rails::Generators::Base` and the Thor parts it needs
+(option parsing, steps in definition order, `create_file`,
+`insert_into_file`, `route`, and the status lines). The app is not booted;
+the generator class runs the way `Rails::Generators.invoke` runs it. CI has no
+rails gem, so where railties 8.1 or later (the line the stub follows) is
+installed, `compat_goldens_test.rb` also runs every generator golden against
+the real railties and requires identical output; it skips otherwise.
+
 Page goldens (`lib/page_child.rb`) run the fixture app with the real
 `Ruflet::Server` against a fake WebSocket, through the public
-`Ruflet.with_run_interceptor` hook; generated ids are counters and wire ids are
-renumbered in order of appearance.
+`Ruflet.with_run_interceptor` hook and the server's private
+`on_register_client` (there is no public entry point that takes a socket; if
+it is renamed, every page golden fails with a message saying so). Generated
+ids are counters and wire ids are renumbered in order of appearance.
 
 Goldens are normalized: sandbox paths become `<PROJECT>`, `<HOME>`, `<TMP>`,
-`<GEM_HOME>`, `<FLUTTER_SDK>`; the Ruby executable becomes `<RUBY>`; the Ruby
-and Ruflet versions become `<RUBY_VERSION>` and `<RUFLET_VERSION>` (so a
-release bump alone changes nothing); temp-dir suffixes are masked. They are
-identical on Ruby 3.4 and 4.0. The tests need macOS (the CI host) because of
-PlistBuddy, and skip elsewhere.
+`<GEM_HOME>`, `<FLUTTER_SDK>`, `<FVM_BIN>`; the Ruby executable becomes
+`<RUBY>`; the Ruby and Ruflet versions become `<RUBY_VERSION>` and
+`<RUFLET_VERSION>`, in file contents and in file paths (so a release bump
+alone changes nothing); temp-dir suffixes are masked. They are identical on
+Ruby 3.4 and 4.0. The tests need macOS (the CI host) because of the real host
+tools, and skip elsewhere. Golden names are compared case-insensitively, as
+macOS file systems are.

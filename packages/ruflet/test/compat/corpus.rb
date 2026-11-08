@@ -3,10 +3,23 @@
 # The compatibility corpus: which projects the goldens are taken from and which
 # `ruflet` invocations run against them. Pure data, read by lib/harness.rb.
 #
-# Every CLI invocation documented in the docs (cli_reference.md first, then the
-# other guides) appears here at least once, so a change to any of them shows up
-# as a golden diff. Add new invocations at the end of a section; never change
-# an existing entry's argv, or its golden stops proving anything.
+# Every invocation documented in the published docs (AdamMusa/ruflet_site
+# content/docs at 05dde18: cli_reference.md, the other guides, and the Rails
+# guides' rake tasks and generator) appears here at least once, so a change to
+# any of them shows up as a golden diff. Add new invocations at the end of a
+# section; never change an existing entry's argv, or its golden stops proving
+# anything.
+#
+# Entry options: `id:` names the golden; `env:` adds environment variables
+# (`<PROJECT>` and `<SANDBOX>` expand to the sandbox paths); `files:` adds
+# project files (nil removes one); `before:` runs `ruflet` steps first;
+# `seed: "prebuilt_clients"` installs a current prebuilt client cache;
+# `network: "release"` serves a fake GitHub release (lib/release_fixture.rb)
+# instead of answering every request 503; `runtime: true` provides a local
+# ruby_runtime; `template: "explicit"` sets RUFLET_TEMPLATE_ROOT;
+# `client_copy: true` copies the template to <SANDBOX>/client; `host_fvm:
+# true` puts an (emulated) fvm on PATH; `rake: true`
+# runs a Railtie task; `generator: true` runs a Rails generator.
 module RufletCompat
   module Corpus
     # Projects. `generated` fixtures are produced by the CLI itself on every run
@@ -17,7 +30,9 @@ module RufletCompat
       "empty" => { "kind" => "empty" },
       "default_app" => { "kind" => "generated", "argv" => %w[new default_app] },
       "services_app" => { "kind" => "dir", "path" => "fixtures/services_app" },
-      "rails_app" => { "kind" => "dir", "path" => "fixtures/rails_app", "rails" => true }
+      "rails_app" => { "kind" => "dir", "path" => "fixtures/rails_app", "rails" => true },
+      # A fresh `rails new` app before `rails generate ruflet:install`.
+      "rails_new_app" => { "kind" => "dir", "path" => "fixtures/rails_new_app", "rails" => true }
     }
 
     # Whole-app examples from the published docs (AdamMusa/ruflet_site
@@ -61,12 +76,20 @@ module RufletCompat
       INVOCATIONS << entry
     end
 
+    # `rails generate ruflet:install ARGV` in a Rails app.
+    def self.generate(fixture, *argv, **options)
+      cli(fixture, "ruflet:install", *argv, generator: true, **options)
+    end
+
     BUILD_TARGETS = %w[apk android aab ios ipa web macos windows linux].freeze
 
     # --- top level ------------------------------------------------------------
     cli "empty", id: "no-arguments"
     %w[--version -v version help --help -h].each { |flag| cli "empty", flag }
     cli "empty", "bogus-command"
+    # Commands are matched case-insensitively. (Golden names differing only in
+    # case would collide on macOS, hence the explicit ids.)
+    cli "empty", "VERSION", id: "uppercase-command-VERSION"
 
     # --- create a project -----------------------------------------------------
     cli "empty", "new", "my_app"
@@ -101,6 +124,10 @@ module RufletCompat
     cli "default_app", "build", "ios", "--self", id: "build-ios--self-biometrics", files: biometrics
     cli "default_app", "build", "apk", "--self", id: "rebuild-apk--self", before: [%w[build apk --self]]
     cli "default_app", "build", "ios", "--self", id: "build-ios--self-after-apk", before: [%w[build apk --self]]
+    # The target table beyond the documented names: `appbundle` is accepted
+    # beside `aab`, and targets are matched case-insensitively.
+    cli "default_app", "build", "appbundle", "--self"
+    cli "default_app", "build", "APK", "--self", id: "build-uppercase-target-APK--self"
 
     # --- run ------------------------------------------------------------------
     run_files = { "apps/admin.rb" => "require \"ruflet\"\n\nRuflet.run { |page| page.add(text(\"Admin\")) }\n" }
@@ -115,6 +142,17 @@ module RufletCompat
     cli "default_app", "run", "main.rb", "--no-reload"
     cli "default_app", "run", "main.rb", "--web", id: "run-main.rb--web-offline"
     cli "default_app", "run", "missing.rb"
+    cli "default_app", "run", "main.rb", "--port=9000"
+    # RUFLET_PORT in the developer's environment (configuration_reference.md).
+    cli "default_app", "run", "main.rb", id: "run-main.rb-with-RUFLET_PORT", env: { "RUFLET_PORT" => "9100" }
+    # RUFLET_CLIENT_DIR names an existing client; its built web/ is served.
+    cli "default_app", "run", "main.rb", "--web", id: "run-main.rb--web-with-RUFLET_CLIENT_DIR",
+                                                  env: { "RUFLET_CLIENT_DIR" => "<PROJECT>/my_client" },
+                                                  files: { "my_client/build/web/index.html" => "<!doctype html>\n",
+                                                           "my_client/build/web/main.dart.js" => "// my client\n" }
+    # Without a prebuilt cache, against a release to download from.
+    cli "default_app", "run", "main.rb", "--web", id: "run-main.rb--web-release", network: "release"
+    cli "default_app", "run", "main.rb", "--desktop", id: "run-main.rb--desktop-release", network: "release"
 
     # --- update ---------------------------------------------------------------
     cli "default_app", "update", "--check"
@@ -127,6 +165,23 @@ module RufletCompat
     cli "default_app", "update", "all"
     cli "default_app", "update", "all", "--force"
     cli "default_app", "update", "bogus"
+    # The same commands against a release to download from: download,
+    # extract (the real tar/ditto), manifest, and the cache checks.
+    cli "default_app", "update", id: "update-release", network: "release"
+    cli "default_app", "update", "all", id: "update-all-release", network: "release"
+    cli "default_app", "update", "all", "--force", id: "update-all--force-release-seeded", network: "release",
+                                                  seed: "prebuilt_clients"
+    cli "default_app", "update", "all", id: "update-all-release-seeded-current", network: "release", seed: "prebuilt_clients"
+    cli "default_app", "update", "all", id: "update-all-release-seeded-due", network: "release", seed: "prebuilt_clients",
+                                        env: { "RUFLET_CLIENT_UPDATE_INTERVAL" => "0" }
+    cli "default_app", "update", "desktop", id: "update-desktop-release", network: "release"
+    cli "default_app", "update", "desktop", "--platform", "macos", id: "update-desktop--platform-macos-release", network: "release"
+    cli "default_app", "update", "desktop", "--platform", "linux", id: "update-desktop--platform-linux-release", network: "release"
+    cli "default_app", "update", "desktop", "--platform=windows", id: "update-desktop--platform-windows-release", network: "release"
+    cli "default_app", "update", "web", id: "update-web-release-stable-channel", network: "release",
+                                        env: { "RUFLET_CLIENT_CHANNEL" => "stable" }
+    cli "default_app", "update", "web", "--check", id: "update-web--check-after-update", network: "release",
+                                                   before: [%w[update web]]
 
     # --- debug ----------------------------------------------------------------
     cli "default_app", "debug", id: "debug-without-client"
@@ -136,6 +191,13 @@ module RufletCompat
     cli "default_app", "debug", "--device-id", "chrome", before: [%w[build web]]
     cli "default_app", "debug", "android", "--device-id", "emulator-5554", "--release", "-v", before: [%w[build web]]
     cli "default_app", "debug", "--platform", "macos", "--web-renderer", "canvaskit", before: [%w[build web]]
+    cli "default_app", "debug", "web", "--verbose", before: [%w[build web]]
+    # RUFLET_CLIENT_DIR selects the client for debug (configuration_reference.md),
+    # and ./ruflet_client is the fallback after build/client.
+    cli "default_app", "debug", "web", id: "debug-web-with-RUFLET_CLIENT_DIR",
+                                       env: { "RUFLET_CLIENT_DIR" => "<PROJECT>/my_client" },
+                                       files: { "my_client/pubspec.yaml" => "name: my_client\n" }
+    cli "default_app", "debug", "web", id: "debug-web-with-ruflet_client-dir", files: { "ruflet_client/pubspec.yaml" => "name: ruflet_client\n" }
 
     # --- install --------------------------------------------------------------
     cli "default_app", "install", id: "install-without-build"
@@ -145,6 +207,9 @@ module RufletCompat
     cli "default_app", "install", "-d", "9FE7A9DF-85B7-4F12-91DB-0868ECEC72B8", id: "install-simulator-after-ios--self--no-codesign",
                                   before: [%w[build ios --self --no-codesign]]
     cli "default_app", "install", "--device", "emulator-5554", before: [%w[build apk --self]]
+    cli "default_app", "install", "--verbose", id: "install--verbose-after-ios--self", before: [%w[build ios --self]]
+    cli "default_app", "install", "--device", "emulator-5554", "--verbose", before: [%w[build apk --self]]
+    cli "default_app", "install", "--device=emulator-5554", before: [%w[build apk --self]]
 
     # --- devices, emulators, doctor -------------------------------------------
     cli "default_app", "devices"
@@ -158,6 +223,11 @@ module RufletCompat
     cli "default_app", "doctor"
     cli "default_app", "doctor", "-v"
     cli "default_app", "doctor", "--fix"
+    cli "default_app", "emulators", "--verbose"
+    cli "default_app", "emulators", "--start", "--emulator", "Pixel_8_API_35", "--verbose"
+    cli "default_app", "doctor", "--verbose"
+    cli "default_app", "doctor", "--fix", "--verbose"
+    cli "default_app", "doctor", id: "doctor-with-RUFLET_FLUTTER_VERSION", env: { "RUFLET_FLUTTER_VERSION" => "3.38.9" }
 
     # --- services/extensions-heavy project -------------------------------------
     BUILD_TARGETS.each do |target|
@@ -173,6 +243,8 @@ module RufletCompat
     cli "services_app", "build", "apk", id: "rebuild-apk-server-after-self", before: [%w[build apk --self]]
     cli "services_app", "build", "apk", id: "rebuild-apk-server", before: [%w[build apk]]
     cli "services_app", "build", "macos", "--self", id: "rebuild-macos--self-after-ios", before: [%w[build ios --self]]
+    cli "services_app", "build", "apk", "--verbose"
+    cli "services_app", "build", "appbundle"
 
     # --- Rails project: rake tasks and the plain CLI in Rails.root ------------
     cli "rails_app", "ruflet:build[apk]", rake: true
@@ -182,6 +254,60 @@ module RufletCompat
     cli "rails_app", "ruflet:build[]", id: "rake-ruflet-build-without-platform", rake: true
     cli "rails_app", "build", "apk"
     cli "rails_app", "build", "web"
+    # Every target rails_api_reference.md lists for ruflet:build, plus case
+    # and an unknown target.
+    %w[aab android macos windows linux bogus].each { |target| cli "rails_app", "ruflet:build[#{target}]", rake: true }
+    cli "rails_app", "ruflet:build[APK]", id: "rake-ruflet_build-uppercase-target-APK", rake: true
+    # An initializer with no build metadata: the task builds from ruflet.yaml.
+    cli "rails_app", "ruflet:build[apk]", id: "rake-ruflet_build_apk-initializer-without-build-metadata", rake: true,
+                                          files: { "config/initializers/ruflet.rb" => "Ruflet::Rails.configure { |config| }\n" }
+    cli "rails_app", "ruflet:install[emulator-5554]", rake: true, before: [%w[build apk]]
+    cli "rails_app", "ruflet:install[]", id: "rake-ruflet-install-without-device", rake: true, before: [%w[build apk]]
+    # Without a device, install looks for iOS outputs on a Mac.
+    cli "rails_app", "ruflet:install[]", id: "rake-ruflet-install-without-device-after-ios", rake: true, before: [%w[build ios]]
+    cli "rails_app", "ruflet:install[]", id: "rake-ruflet-install-without-build", rake: true
+    # A current cache, so only the task's own argv decides whether it downloads.
+    cli "rails_app", "ruflet:update[desktop]", rake: true, network: "release", seed: "prebuilt_clients"
+    cli "rails_app", "ruflet:update[all]", rake: true, network: "release"
+    cli "rails_app", "ruflet:update[]", id: "rake-ruflet-update-without-target", rake: true
+    # Documented in rails_integration.md and rails_api_reference.md, but the
+    # Railtie defines no such task.
+    cli "rails_app", "ruflet:web", rake: true
+    cli "rails_app", "--tasks", id: "rake--tasks", rake: true
+
+    # --- `rails generate ruflet:install [--web] [--desktop]` -----------------
+    # The generator declares --desktop and --client; Rails ignores --web.
+    generate "rails_new_app"
+    generate "rails_new_app", "--desktop"
+    generate "rails_new_app", "--desktop", id: "generate-ruflet_install--desktop-release", network: "release"
+    generate "rails_new_app", "--client", "desktop", network: "release"
+    generate "rails_new_app", "--client", "none"
+    generate "rails_new_app", "--client", "bogus"
+    generate "rails_new_app", "--web"
+    generate "rails_new_app", "--web", "--desktop"
+    generate "rails_new_app", "--desktop", id: "generate-ruflet_install--desktop-shell-bin-dev",
+                                           files: { "bin/dev" => "#!/usr/bin/env sh\n\nexec foreman start -f Procfile.dev \"$@\"\n" }
+    generate "rails_app" # already installed: every step is skipped
+
+    # --- documented environment variables (configuration_reference.md) -------
+    # RUFLET_PORT, RUFLET_CLIENT_DIR (run, debug) and RUFLET_FLUTTER_VERSION
+    # (doctor) are in their command sections above.
+    alt_config = "app:\n  name: Alt App\n  package_name: alt_app\n  organization: com.compat.alt\n" \
+                 "  backend_url: https://alt.example.com\n"
+    cli "default_app", "build", "apk", id: "build-apk-with-RUFLET_CONFIG", env: { "RUFLET_CONFIG" => "config/alt.yaml" },
+                                       files: { "config/alt.yaml" => alt_config }
+    cli "default_app", "build", "apk", id: "build-apk-with-ruflet.yml", files: { "ruflet.yaml" => nil, "ruflet.yml" => alt_config }
+    cli "default_app", "build", "apk", "--self", id: "build-apk--self-with-RUFLET_FLUTTER_VERSION",
+                                                 env: { "RUFLET_FLUTTER_VERSION" => "3.41.2" }
+    # The same with FVM installed, and the project's .fvmrc it falls back to.
+    cli "default_app", "build", "apk", "--self", id: "build-apk--self-with-RUFLET_FLUTTER_VERSION-and-fvm", host_fvm: true,
+                                                 env: { "RUFLET_FLUTTER_VERSION" => "3.41.2" }
+    cli "default_app", "build", "apk", "--self", id: "build-apk--self-with-fvmrc-and-fvm", host_fvm: true,
+                                                 files: { ".fvmrc" => "{\"flutter\": \"3.38.9\"}\n" }
+    cli "default_app", "build", "apk", "--self", id: "build-apk--self-with-RUFLET_CLIENT_DIR", client_copy: true,
+                                                 env: { "RUFLET_CLIENT_DIR" => "<SANDBOX>/client" }
+    cli "default_app", "build", "apk", "--self", id: "build-apk--self-with-missing-RUFLET_CLIENT_DIR",
+                                                 env: { "RUFLET_CLIENT_DIR" => "<PROJECT>/no_such_client" }
 
     # --- docs example apps: the embedded (self-contained) project ------------
     DOCS_APPS.each { |id| cli "docs_#{id}", "build", "apk", "--self" }

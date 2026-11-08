@@ -15,8 +15,20 @@
 #   dart, pod, mrbc, codesign, bundle, open: succeed (mrbc writes a placeholder .mrb).
 #   git      ls-remote / rev-parse answer a fixed commit; clone checks out the
 #            frozen fixture template.
-# Only /usr/libexec/PlistBuddy runs for real: it rewrites Info.plist and its
-# output is what users get. Any other command is recorded and fails.
+#   fvm      (only on PATH with `host_fvm: true`) install succeeds; use links
+#            the project's .fvm/flutter_sdk to the fake Flutter SDK.
+# A few host tools run for real, because their output is what users get:
+# /usr/libexec/PlistBuddy rewrites Info.plist, and /usr/bin/tar,
+# /usr/bin/unzip and /usr/bin/ditto extract downloaded prebuilt clients. Any
+# other command is recorded and fails.
+#
+# Modes (spec "mode"): `cli` loads the installed bin/ruflet; `rake` runs a
+# Railtie task body through lib/rails_stub.rb; `generator` runs a Rails
+# generator class against lib/generator_stub (or real railties, for the
+# cross-check in compat_goldens_test.rb).
+#
+# Network (spec "network"): `offline` answers every HTTP request 503;
+# `release` serves lib/release_fixture.rb, a fake GitHub release.
 
 Encoding.default_external = Encoding::UTF_8
 
@@ -29,6 +41,7 @@ require "pathname"
 require "rbconfig"
 require "socket"
 require "stringio"
+require "tmpdir"
 require "uri"
 require "yaml"
 
@@ -37,12 +50,25 @@ module CompatChild
   OUTPUT = []
   COMMANDS = []
   STUB_WRITES = []
+  # path => what the stub last wrote there, so the harness can tell when the
+  # CLI later changes or removes a stub's file.
+  STUB_CONTENTS = {}
   NETWORK = []
+  NETWORK_MODE = SPEC.fetch("network", "offline")
   FAKE_COMMIT = SPEC.fetch("fake_commit")
   # Only host tool locations the CLI probes; Ruby's own install is never masked.
   HOST_PROBE_PREFIXES = %w[/opt/homebrew/bin/ /usr/local/bin/ /Applications/].freeze
   HOST_EXECUTABLES = SPEC.fetch("host_executables")
-  PASSTHROUGH = %w[/usr/libexec/PlistBuddy].freeze
+  # Host tools that run for real: the name the CLI calls => the binary run.
+  REAL_TOOLS = {
+    "/usr/libexec/PlistBuddy" => "/usr/libexec/PlistBuddy",
+    "tar" => "/usr/bin/tar",
+    "/usr/bin/tar" => "/usr/bin/tar",
+    "ditto" => "/usr/bin/ditto",
+    "/usr/bin/ditto" => "/usr/bin/ditto",
+    "unzip" => "/usr/bin/unzip",
+    "/usr/bin/unzip" => "/usr/bin/unzip"
+  }.freeze
 
   class Stream < StringIO
     def initialize(tag)
@@ -115,6 +141,7 @@ module CompatChild
       when "dart" then dart(args, cwd)
       when "pod" then tool_result(args.first == "install")
       when "git" then git(args, cwd)
+      when "fvm" then fvm(args, cwd)
       when "mrbc" then mrbc(args, cwd)
       when "codesign", "open", "xdg-open" then tool_result(true)
       else
@@ -258,6 +285,19 @@ module CompatChild
       end
     end
 
+    # `fvm use` points .fvm/flutter_sdk at the selected SDK; here, copies of
+    # the fake SDK's executables, which the CLI then runs (emulated).
+    def fvm(args, cwd)
+      if args.first == "use"
+        %w[flutter dart].each do |tool|
+          path = File.join(cwd, ".fvm", "flutter_sdk", "bin", tool)
+          stub_write(path, File.read(File.join(SPEC.fetch("flutter_sdk"), "bin", tool)))
+          File.chmod(0o755, path)
+        end
+      end
+      tool_result(true)
+    end
+
     def mrbc(args, cwd)
       output = args[args.index("-o") + 1]
       source = args.last
@@ -271,6 +311,26 @@ module CompatChild
       FileUtils.mkdir_p(File.dirname(path))
       File.write(path, content)
       STUB_WRITES << File.expand_path(path)
+      STUB_CONTENTS[File.expand_path(path)] = content.to_s.dup.force_encoding(Encoding::UTF_8)
+    end
+
+    # A host tool that really runs. What it prints reaches the golden's output
+    # unless the CLI redirected that stream, as it would reach the terminal.
+    def run_real_tool(entry, real, args, options)
+      passed = options.key?(:chdir) ? { chdir: options[:chdir] } : {}
+      base = File.join(Dir.tmpdir, "compat-tool-#{COMMANDS.length}")
+      ok = REAL_SYSTEM.bind_call(Kernel, real, *args, out: "#{base}.out", err: "#{base}.err", **passed)
+      { out: $stdout, err: $stderr }.each do |stream, io|
+        captured = File.read("#{base}.#{stream}")
+        File.delete("#{base}.#{stream}")
+        io.write(captured) unless captured.empty? || redirected?(options, stream)
+      end
+      entry["result"] = ok ? 0 : 1
+      ok
+    end
+
+    def redirected?(options, stream)
+      options.any? { |key, _| key == stream || (key.is_a?(Array) && key.include?(stream)) }
     end
 
     # --- interception entry points ---------------------------------------------
@@ -278,11 +338,8 @@ module CompatChild
     def system_call(args, kwargs)
       env, argv, options = split_command(args, kwargs)
       entry = record("system", env, argv, options)
-      if PASSTHROUGH.include?(argv.first.to_s)
-        ok = REAL_SYSTEM.bind_call(Kernel, *argv, out: File::NULL, err: File::NULL)
-        entry["result"] = ok ? 0 : 1
-        return ok
-      end
+      real = REAL_TOOLS[argv.first.to_s]
+      return run_real_tool(entry, real, argv.drop(1).map(&:to_s), options) if real
       result = run_tool(env, argv, options)
       $stdout.write(result[:stdout]) unless result[:stdout].empty? || options.key?(:out)
       $stderr.write(result[:stderr]) unless result[:stderr].empty? || options.key?(:err)
@@ -430,7 +487,8 @@ Time.singleton_class.prepend(Module.new do
 end)
 
 # No real network. Local server probes succeed (the "server" is up); every
-# HTTP request is recorded and answered 503.
+# HTTP request is recorded and answered 503, or, with the "release" network,
+# from the fake GitHub release in lib/release_fixture.rb.
 class CompatFakeSocket
   def write(data) = data.to_s.bytesize
   def close = nil
@@ -466,11 +524,33 @@ class CompatFakeHTTP
     @port = port
   end
 
+  REASONS = { 200 => "OK", 302 => "Found", 404 => "Not Found", 503 => "Service Unavailable" }.freeze
+
+  # Lets `res.read_body { |chunk| ... }` stream the canned body once.
+  module CannedBody
+    def read_body(dest = nil, &block)
+      return super() unless dest || block
+
+      block ? yield(@body) : dest << @body
+      @body
+    end
+  end
+
   def request(req, _body = nil)
-    CompatChild::NETWORK << "#{req.method} #{req.uri || "https://#{@address}:#{@port}#{req.path}"}"
-    response = Net::HTTPServiceUnavailable.new("1.1", "503", "Service Unavailable")
-    response.instance_variable_set(:@body, "")
+    url = "#{req.uri || "https://#{@address}:#{@port}#{req.path}"}"
+    if CompatChild::NETWORK_MODE == "release"
+      status, headers, body = RufletCompat::ReleaseFixture.respond(url)
+      CompatChild::NETWORK << "#{req.method} #{url} -> #{status}"
+    else
+      status, headers, body = 503, {}, ""
+      CompatChild::NETWORK << "#{req.method} #{url}"
+    end
+    klass = Net::HTTPResponse::CODE_TO_OBJ.fetch(status.to_s)
+    response = klass.new("1.1", status.to_s, REASONS.fetch(status))
+    headers.each { |key, value| response[key] = value }
+    response.instance_variable_set(:@body, body)
     response.instance_variable_set(:@read, true)
+    response.extend(CannedBody)
     yield response if block_given?
     response
   end
@@ -508,11 +588,23 @@ end
 $stdout = CompatChild::Stream.new("out")
 $stderr = CompatChild::Stream.new("err")
 
+require_relative "release_fixture" if CompatChild::NETWORK_MODE == "release"
+
 exit_code = begin
-  if CompatChild::SPEC["mode"] == "rake"
+  case CompatChild::SPEC["mode"]
+  when "rake"
     require_relative "rails_stub"
     CompatRails.boot(CompatChild::SPEC.fetch("project"))
-    CompatRails.invoke_rake(CompatChild::SPEC.fetch("argv").first)
+    CompatRails.invoke_rake(CompatChild::SPEC.fetch("argv"))
+  when "generator"
+    # `rails generate NAMESPACE:NAME ARGS`: what Rails::Generators.invoke does
+    # once the app has booted. The app itself is not booted.
+    require "rails/generators"
+    namespace, name = CompatChild::SPEC.fetch("argv").first.split(":", 2)
+    require "generators/#{namespace}/#{name}/#{name}_generator"
+    generator = Object.const_get("#{namespace.capitalize}::Generators::#{name.capitalize}Generator")
+    generator.start(CompatChild::SPEC.fetch("argv").drop(1), destination_root: CompatChild::SPEC.fetch("project"))
+    0
   else
     # The installed executable itself, exactly as `ruflet ...` runs it.
     ARGV.replace(CompatChild::SPEC.fetch("argv"))
@@ -535,7 +627,8 @@ File.write(
     "output" => CompatChild.output_events,
     "commands" => CompatChild::COMMANDS,
     "network" => CompatChild::NETWORK,
-    "stub_writes" => CompatChild::STUB_WRITES.uniq
+    "stub_writes" => CompatChild::STUB_WRITES.uniq,
+    "stub_contents" => CompatChild::STUB_CONTENTS
   )
 )
 exit!(0)

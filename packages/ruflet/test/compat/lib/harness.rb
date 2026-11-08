@@ -18,6 +18,7 @@ module RufletCompat
   FIXTURE_ROOT = File.join(COMPAT_ROOT, "fixtures")
   TEMPLATE_ARCHIVE = File.join(FIXTURE_ROOT, "template", "ruflet_flutter_template.tar")
   STUB_LIB = File.join(__dir__, "stub_lib")
+  GENERATOR_STUB_LIB = File.join(__dir__, "generator_stub")
   CLI_CHILD = File.join(__dir__, "cli_child.rb")
   PAGE_CHILD = File.join(__dir__, "page_child.rb")
 
@@ -48,8 +49,20 @@ module RufletCompat
   end
 
   def invocation_id(invocation)
-    id = invocation["id"] || slug(invocation["argv"])
-    invocation["rake"] && !invocation["id"] ? "rake-#{id}" : id
+    return invocation["id"] if invocation["id"]
+
+    id = slug(invocation["argv"])
+    return "rake-#{id}" if invocation["rake"]
+    return "generate-#{id}" if invocation["generator"]
+
+    id
+  end
+
+  def invocation_mode(invocation)
+    return "rake" if invocation["rake"]
+    return "generator" if invocation["generator"]
+
+    "cli"
   end
 
   def cli_golden_path(invocation)
@@ -64,8 +77,13 @@ module RufletCompat
     seen = {}
     Corpus::INVOCATIONS.each do |invocation|
       raise "unknown fixture #{invocation['fixture']}" unless Corpus::FIXTURES.key?(invocation["fixture"])
+      if (invocation["rake"] || invocation["generator"]) && !Corpus::FIXTURES[invocation["fixture"]]["rails"]
+        raise "#{invocation_id(invocation)} needs a Rails fixture"
+      end
+      raise "unknown network #{invocation['network']}" unless [nil, "offline", "release"].include?(invocation["network"])
 
-      path = cli_golden_path(invocation)
+      # Case-insensitively: macOS file systems are.
+      path = cli_golden_path(invocation).downcase
       raise "duplicate golden #{path}" if seen[path]
 
       seen[path] = true
@@ -120,7 +138,7 @@ module RufletCompat
   # Everything shared by one test run: the frozen template, the simulated gem
   # installation and the fake Flutter SDK. Built once, in a temp directory.
   class Workspace
-    attr_reader :dir, :template_dir, :template_index, :gem_home, :gem_libs, :gem_bin, :flutter_sdk, :ruflet_version
+    attr_reader :dir, :template_dir, :template_index, :gem_home, :gem_libs, :gem_bin, :flutter_sdk, :fvm_bin, :ruflet_version
 
     @mutex = Mutex.new
 
@@ -201,12 +219,14 @@ module RufletCompat
     end
 
     # `which flutter` must find something; these never run (the child
-    # emulates them in-process) and fail loudly if they ever do.
+    # emulates them in-process) and fail loudly if they ever do. `fvm` is only
+    # on PATH for entries with `host_fvm: true`.
     def write_flutter_sdk
       @flutter_sdk = File.join(@dir, "flutter")
-      %w[flutter dart].each do |tool|
-        path = File.join(@flutter_sdk, "bin", tool)
-        FileUtils.mkdir_p(File.dirname(path))
+      @fvm_bin = File.join(@dir, "fvm", "bin")
+      [[File.join(@flutter_sdk, "bin"), "flutter"], [File.join(@flutter_sdk, "bin"), "dart"], [@fvm_bin, "fvm"]].each do |dir, tool|
+        path = File.join(dir, tool)
+        FileUtils.mkdir_p(dir)
         File.write(path, "#!/bin/sh\necho 'ruflet compat: #{tool} must be emulated, never executed' >&2\nexit 97\n")
         File.chmod(0o755, path)
       end
@@ -269,12 +289,18 @@ module RufletCompat
 
     def runtime_dir = File.join(@root, "ruby_runtime")
     def template_checkout = File.join(@root, "ruflet-template")
+    def client_copy_dir = File.join(@root, "client")
 
     def prepare(invocation)
       (invocation["files"] || {}).each do |relative, content|
         path = File.join(@project, relative)
+        if content.nil?
+          FileUtils.rm_rf(path)
+          next
+        end
         FileUtils.mkdir_p(File.dirname(path))
         File.write(path, content)
+        File.chmod(0o755, path) if content.start_with?("#!")
       end
       if invocation["runtime"]
         FileUtils.cp_r(File.join(FIXTURE_ROOT, "ruby_runtime"), runtime_dir, preserve: true)
@@ -284,15 +310,19 @@ module RufletCompat
         FileUtils.mkdir_p(File.dirname(target))
         FileUtils.cp_r(workspace.template_dir, target, preserve: true)
       end
+      # A Flutter client outside the project, for RUFLET_CLIENT_DIR.
+      FileUtils.cp_r(workspace.template_dir, client_copy_dir, preserve: true) if invocation["client_copy"]
       seed_prebuilt_clients if invocation["seed"] == "prebuilt_clients"
     end
 
     # A prebuilt Explorer cache that is current at the frozen clock, so the
-    # CLI launches it instead of checking GitHub.
+    # CLI launches it instead of checking GitHub. The stale file is one no
+    # release archive carries: it shows whether a re-download wipes the cache.
     def seed_prebuilt_clients
       root = File.join(@home, ".ruflet", "client", workspace.ruflet_version, "macos")
       { "web/index.html" => "<!doctype html>\n", "web/main.dart.js" => "// compat\n",
-        "web/flutter_bootstrap.js" => "// compat\n" }.each do |relative, content|
+        "web/flutter_bootstrap.js" => "// compat\n",
+        "web/assets/stale_from_an_older_release.js" => "// compat: not in any release archive\n" }.each do |relative, content|
         FileUtils.mkdir_p(File.dirname(File.join(root, relative)))
         File.write(File.join(root, relative), content)
       end
@@ -315,8 +345,10 @@ module RufletCompat
     end
 
     def env_for(invocation)
+      tool_dirs = [File.join(workspace.flutter_sdk, "bin")]
+      tool_dirs << workspace.fvm_bin if invocation["host_fvm"]
       env = {
-        "PATH" => ([File.join(workspace.flutter_sdk, "bin")] + SYSTEM_PATH).join(File::PATH_SEPARATOR),
+        "PATH" => (tool_dirs + SYSTEM_PATH).join(File::PATH_SEPARATOR),
         "HOME" => @home,
         "TMPDIR" => @tmp,
         "TZ" => "UTC",
@@ -327,16 +359,22 @@ module RufletCompat
       }
       env["RUFLET_RUBY_RUNTIME_PATH"] = runtime_dir if invocation["runtime"]
       env["RUFLET_TEMPLATE_ROOT"] = template_checkout if invocation["template"] == "explicit"
-      env.merge((invocation["env"] || {}).transform_values(&:to_s))
+      # Corpus env values may name the sandbox as <PROJECT> and <SANDBOX>.
+      env.merge((invocation["env"] || {}).transform_values do |value|
+        value.to_s.gsub("<PROJECT>", @project).gsub("<SANDBOX>", @root)
+      end)
     end
 
     def run_step(invocation, argv: invocation["argv"])
       @steps += 1
       base = File.join(@specs, "#{File.basename(@root)}-#{@steps}")
-      rake = invocation["rake"]
-      libs = rake ? GEM_PACKAGES.map { |name| workspace.gem_libs.fetch(name) } : [workspace.gem_libs.fetch("ruflet")]
+      mode = RufletCompat.invocation_mode(invocation)
+      libs = mode == "cli" ? [workspace.gem_libs.fetch("ruflet")] : GEM_PACKAGES.map { |name| workspace.gem_libs.fetch(name) }
+      stubs = [STUB_LIB]
+      stubs.unshift(GENERATOR_STUB_LIB) if mode == "generator" && !invocation["real_rails"]
       spec = {
-        "mode" => rake ? "rake" : "cli",
+        "mode" => mode,
+        "network" => invocation["network"] || "offline",
         "argv" => argv,
         "bin" => workspace.gem_bin,
         "project" => @project,
@@ -344,12 +382,17 @@ module RufletCompat
         "template_source" => workspace.template_dir,
         "explicit_template_checkout" => invocation["template"] == "explicit" ? template_checkout : nil,
         "fake_commit" => FAKE_COMMIT,
+        "flutter_sdk" => workspace.flutter_sdk,
         "frozen_epoch" => FROZEN_EPOCH,
         "host_executables" => HOST_EXECUTABLES
       }
       File.write("#{base}.json", JSON.generate(spec))
-      command = [RbConfig.ruby, "-I", STUB_LIB, *libs.flat_map { |lib| ["-I", lib] }, CLI_CHILD, "#{base}.json"]
-      stdout, stderr, = RufletCompat.run_process(env_for(invocation), command, chdir: @project)
+      command = [RbConfig.ruby, *(stubs + libs).flat_map { |lib| ["-I", lib] }, CLI_CHILD, "#{base}.json"]
+      env = env_for(invocation)
+      # The railties cross-check (compat_goldens_test.rb) loads the installed
+      # rails gems as well as the sandboxed Ruflet gems.
+      env["GEM_PATH"] = [workspace.gem_home, *Gem.path].uniq.join(File::PATH_SEPARATOR) if invocation["real_rails"]
+      stdout, stderr, = RufletCompat.run_process(env, command, chdir: @project)
       unless File.file?(spec["result_path"])
         raise "compat child produced no result for #{argv.join(' ')}:\n#{stdout}\n#{stderr}"
       end
@@ -387,6 +430,7 @@ module RufletCompat
           @root => "<SANDBOX>",
           workspace.template_dir => "<TEMPLATE>",
           workspace.flutter_sdk => "<FLUTTER_SDK>",
+          workspace.fvm_bin => "<FVM_BIN>",
           workspace.gem_home => "<GEM_HOME>",
           workspace.dir => "<WORK>",
           COMPAT_ROOT => "<COMPAT>",
@@ -425,11 +469,17 @@ module RufletCompat
       states
     end
 
+    # A sandbox file as goldens name it. The Ruflet version is masked here as
+    # in file contents: the prebuilt client cache lives under it.
     def display(path)
-      return "<PROJECT>#{path.delete_prefix(@project)}" if path.start_with?("#{@project}/")
-      return "<HOME>#{path.delete_prefix(@home)}" if path.start_with?("#{@home}/")
-
-      "<SANDBOX>#{path.delete_prefix(@root)}"
+      shown = if path.start_with?("#{@project}/")
+                "<PROJECT>#{path.delete_prefix(@project)}"
+              elsif path.start_with?("#{@home}/")
+                "<HOME>#{path.delete_prefix(@home)}"
+              else
+                "<SANDBOX>#{path.delete_prefix(@root)}"
+              end
+      shown.gsub(%r{/#{Regexp.escape(workspace.ruflet_version)}/}, "/<RUFLET_VERSION>/")
     end
   end
 
@@ -441,31 +491,40 @@ module RufletCompat
     sandbox = Sandbox.new(workspace, invocation["fixture"], invocation_id(invocation))
     sandbox.prepare(invocation)
     (invocation["before"] || []).each do |argv|
-      setup = sandbox.run_step(invocation.reject { |key, _| key == "rake" }, argv: argv)
+      setup = sandbox.run_step(invocation.reject { |key, _| %w[rake generator].include?(key) }, argv: argv)
       raise "setup step `ruflet #{argv.join(' ')}` failed (exit #{setup['exit']})" unless setup["exit"].zero?
     end
     before = sandbox.snapshot
     result = sandbox.run_step(invocation)
     after = sandbox.snapshot
     stub_paths = result["stub_writes"].map { |path| sandbox.display(path) }
-    render_cli_golden(invocation, sandbox, result, before, after, stub_paths)
+    stub_contents = result["stub_contents"].to_h do |path, text|
+      [sandbox.display(path), { sha: Digest::SHA256.hexdigest(text.b), text: sandbox.normalize(text) }]
+    end
+    render_cli_golden(invocation, sandbox, result, before, after, stub_paths, stub_contents)
   ensure
     FileUtils.rm_rf(sandbox.root) if sandbox && !keep_sandboxes?
   end
 
-  def render_cli_golden(invocation, sandbox, result, before, after, stub_paths)
-
+  def render_cli_golden(invocation, sandbox, result, before, after, stub_paths, stub_contents = {})
     out = +HEADER
     out << "fixture: #{invocation['fixture']}\n"
     words = invocation["argv"].map { |word| display_word(word) }
-    command = invocation["rake"] ? "rake #{words.join(' ')}" : "ruflet #{words.join(' ')}".rstrip
+    command = case invocation_mode(invocation)
+              when "rake" then "rake #{words.join(' ')}"
+              when "generator" then "rails generate #{words.join(' ')}"
+              else "ruflet #{words.join(' ')}".rstrip
+              end
     out << "command: #{command}\n"
     (sandbox.env_for(invocation).to_a - sandbox.env_for({}).to_a).sort.each do |key, value|
       out << "env: #{key}=#{sandbox.normalize(value)}\n"
     end
     (invocation["before"] || []).each { |argv| out << "before: ruflet #{argv.map { |word| display_word(word) }.join(' ')}\n" }
     out << "seed: #{invocation['seed']}\n" if invocation["seed"]
-    (invocation["files"] || {}).keys.sort.each { |relative| out << "added file: #{relative}\n" }
+    out << "network: release fixture (lib/release_fixture.rb)\n" if invocation["network"] == "release"
+    (invocation["files"] || {}).sort.each do |relative, content|
+      out << (content.nil? ? "removed file: #{relative}\n" : "added file: #{relative}\n")
+    end
     out << "exit: #{result['exit']}\n"
 
     out << "\n## commands (#{result['commands'].length})\n"
@@ -489,7 +548,7 @@ module RufletCompat
       sandbox.normalize(result[key], runtime_values: true).each_line { |line| out << "#{line.chomp}\n" }
     end
 
-    out << render_files(before, after, stub_paths, sandbox.workspace)
+    out << render_files(before, after, stub_paths, sandbox.workspace, stub_contents)
     out
   end
 
@@ -514,7 +573,10 @@ module RufletCompat
     word.match?(%r{\A[A-Za-z0-9_@%+=:,./<>\[\]-]+\z}) ? word : word.inspect
   end
 
-  def render_files(before, after, stub_paths, workspace)
+  # Files a stub wrote (package_config.json, the generators' resources, build
+  # outputs) are not CLI output and are only listed by name, unless the CLI
+  # then changed or removed them: that is CLI behavior and is shown.
+  def render_files(before, after, stub_paths, workspace, stub_contents = {})
     template = workspace.template_index
     listed = []
     identical = Hash.new(0)
@@ -523,7 +585,16 @@ module RufletCompat
     end
 
     (before.keys | after.keys).sort.each do |path|
-      next if stub_paths.include?(path)
+      if stub_paths.include?(path)
+        stub = stub_contents[path]
+        final = after[path]
+        if final.nil?
+          listed << [:deleted_stub, path, nil]
+        elsif stub && Digest::SHA256.hexdigest(File.binread(final.path)) != stub[:sha]
+          listed << [:modified_stub, path, final, stub]
+        end
+        next
+      end
 
       old = before[path]
       new = after[path]
@@ -562,6 +633,10 @@ module RufletCompat
         out << "A #{path}  #{describe(state)}  (#{origin})\n"
       when :deleted
         out << "D #{path}\n"
+      when :deleted_stub
+        out << "D #{path}  (removed after a stub wrote it)\n"
+      when :modified_stub
+        out << "M #{path}  stub output -> #{describe(state)}  (changed after a stub wrote it)\n"
       when :modified
         out << "M #{path}  #{describe(other)} -> #{describe(state)}\n"
       end
@@ -610,7 +685,7 @@ module RufletCompat
   NEW_FILE_LINE_LIMIT = 400
 
   def render_diff(kind, path, state, other = nil, relative = nil)
-    return nil if kind == :deleted
+    return nil if %i[deleted deleted_stub].include?(kind)
     return "Binary #{path}: sha256:#{state.sha[0, 16]}\n" unless state.text
 
     case kind
@@ -631,6 +706,8 @@ module RufletCompat
       return "Binary #{path}: changed\n" unless other.text
 
       TextDiff.unified(other.text, state.text, old_label: "before:#{path}", new_label: path)
+    when :modified_stub
+      TextDiff.unified(other[:text], state.text, old_label: "stub:#{path}", new_label: path)
     end
   end
 
