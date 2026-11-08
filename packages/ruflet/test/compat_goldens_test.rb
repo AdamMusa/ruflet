@@ -1,0 +1,116 @@
+# frozen_string_literal: true
+
+require_relative "test_helper"
+require_relative "compat/lib/harness"
+
+# WP-00 H1: compatibility goldens for everything a developer touches today.
+#
+# For every corpus invocation (test/compat/corpus.rb) the installed `ruflet`
+# runs against a sandboxed project with Flutter, pod, git and the network
+# replaced by recorders, and the result is compared with the committed golden:
+# the flutter/pod/git argv, the CLI's output, and every file it writes
+# (build/client relative to the frozen template, plus exports and caches).
+# Page goldens hold each fixture app's initial page patch.
+#
+# A difference means behavior changed. If that is intended, regenerate with
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+# review the golden diff, and list it under "Behavior changes" in the PR.
+class RufletCompatGoldensTest < Minitest::Test
+  parallelize_me!
+
+  HINT = "If intended: ruby packages/ruflet/test/compat/compat.rb --regenerate, " \
+         "review the golden diff, and list it under \"Behavior changes\" in the PR."
+
+  # The goldens describe a macOS developer machine (and the CI host): self-
+  # contained Apple builds run the real /usr/libexec/PlistBuddy.
+  SUPPORTED_HOST = RbConfig::CONFIG["host_os"].match?(/darwin/i) && File.executable?("/usr/libexec/PlistBuddy")
+
+  RufletCompat.validate_corpus!
+
+  def self.golden_test_name(path)
+    "test_golden_#{path.delete_prefix("#{RufletCompat::GOLDEN_ROOT}/").sub(/\.(txt|json)\z/, '')}"
+  end
+
+  RufletCompat::Corpus::INVOCATIONS.each do |invocation|
+    path = RufletCompat.cli_golden_path(invocation)
+    define_method(golden_test_name(path)) { check_golden(path) { RufletCompat.render_cli(invocation) } }
+  end
+
+  RufletCompat::Corpus::PAGES.each do |page|
+    path = RufletCompat.page_golden_path(page)
+    define_method(golden_test_name(path)) { check_golden(path) { RufletCompat.render_page(page) } }
+  end
+
+  def test_every_golden_belongs_to_a_corpus_entry
+    assert_empty RufletCompat.stale_golden_paths.map { |path| path.delete_prefix("#{RufletCompat::GOLDEN_ROOT}/") },
+                 "goldens without a corpus entry; run compat.rb --regenerate to remove them"
+  end
+
+  def test_vendored_template_matches_its_source_manifest
+    source = JSON.parse(File.read(File.join(RufletCompat::FIXTURE_ROOT, "template", "SOURCE.json")))
+    archive = File.open(RufletCompat::TEMPLATE_ARCHIVE, "rb") { |io| RufletCompat::Tar.read(io) }
+    actual = archive.to_h do |entry|
+      [entry.path.delete_prefix("ruflet_flutter_template/"), Digest::SHA256.hexdigest(entry.data)]
+    end
+
+    assert_match(/\A[0-9a-f]{40}\z/, source.fetch("commit"))
+    assert_equal source.fetch("files").transform_values { |file| file.fetch("sha256") }, actual
+  end
+
+  # The comparison must notice a changed flutter argv, a new file and changed
+  # output. Probes are added through the public Ruflet::CLI.command_build and
+  # Page#title= so they keep working however the CLI is reorganized.
+  def test_harness_detects_cli_and_page_changes
+    skip "compat goldens run on macOS hosts" unless SUPPORTED_HOST
+
+    probed = RufletCompat::Workspace.new
+    File.open(File.join(probed.gem_libs.fetch("ruflet"), "ruflet_cli.rb"), "a") do |file|
+      file.write(<<~RUBY)
+        Ruflet::CLI.singleton_class.prepend(Module.new do
+          def command_build(args)
+            status = super(args + ["--compat-probe"])
+            File.write(File.join("build", "client", "compat-probe.txt"), "probe\\n")
+            puts "compat probe"
+            status
+          end
+        end)
+      RUBY
+    end
+    File.open(File.join(probed.gem_libs.fetch("ruflet_core"), "ruflet.rb"), "a") do |file|
+      file.write("Ruflet::Page.prepend(Module.new { def title=(value); super(\"\#{value} (probe)\"); end })\n")
+    end
+
+    invocation = RufletCompat::Corpus::INVOCATIONS.find do |entry|
+      entry["fixture"] == "default_app" && entry["argv"] == %w[build apk --self] && !entry["id"]
+    end
+    actual = RufletCompat.render_cli(invocation, workspace: probed)
+    golden = File.read(RufletCompat.cli_golden_path(invocation), encoding: Encoding::UTF_8)
+    refute_equal golden, actual
+    assert_includes actual, "--compat-probe"
+    assert_includes actual, "A <PROJECT>/build/client/compat-probe.txt"
+    assert_includes actual, "out| compat probe"
+
+    page = RufletCompat::Corpus::PAGES.find { |entry| entry["fixture"] == "default_app" }
+    page_actual = RufletCompat.render_page(page, workspace: probed)
+    refute_equal File.read(RufletCompat.page_golden_path(page), encoding: Encoding::UTF_8), page_actual
+    assert_includes page_actual, "Counter Demo (probe)"
+  end
+
+  private
+
+  def check_golden(path)
+    skip "compat goldens run on macOS hosts" unless SUPPORTED_HOST
+
+    actual = yield
+    relative = path.delete_prefix("#{RufletCompat::GOLDEN_ROOT}/")
+    assert File.file?(path), "missing golden #{relative}. #{HINT}"
+    expected = File.read(path, encoding: Encoding::UTF_8)
+    return pass if expected == actual
+
+    diff = RufletCompat::TextDiff.unified(expected, actual, old_label: "golden/#{relative}", new_label: "actual")
+    lines = diff.lines
+    shown = lines.first(120).join
+    shown << "... (#{lines.length - 120} more diff lines)\n" if lines.length > 120
+    flunk "#{relative} changed.\n#{HINT}\n#{shown}"
+  end
+end
