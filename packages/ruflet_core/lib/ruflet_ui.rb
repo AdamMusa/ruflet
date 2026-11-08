@@ -16,6 +16,7 @@ require_relative "ruflet_ui/ruflet/app"
 require_relative "ruflet_ui/ruflet/dsl"
 require_relative "ruflet_ui/ruflet/extensions"
 require_relative "ruflet_ui/ruflet/extensions/qrcode_scanner"
+require_relative "ruflet_ui/ruflet/ui/client_state_readers"
 
 module Ruflet
   # Icon tables are large (the material set alone parses a ~234KB map and
@@ -201,3 +202,7 @@ module Kernel
     private(*Ruflet::UI::SharedControlForwarders.instance_methods(false))
   end
 end
+
+# After the Kernel helpers above, so a reader never replaces one of them
+# (see Ruflet::UI::ClientStateReaders).
+Ruflet::UI::ClientStateReaders.install!
