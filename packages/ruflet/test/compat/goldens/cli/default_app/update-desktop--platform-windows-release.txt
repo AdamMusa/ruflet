@@ -1,0 +1,80 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet update desktop --platform=windows
+network: release fixture (lib/release_fixture.rb)
+exit: 0
+
+## commands (5)
+1. capture3 exit=0
+   git ls-remote https://github.com/AdamMusa/ruflet-template.git refs/heads/main
+   env: GIT_TERMINAL_PROMPT=0
+2. system exit=0
+   git clone --depth 1 --branch main --filter=blob:none --sparse https://github.com/AdamMusa/ruflet-template.git <TMP>/ruflet-assetsXXXXXXXX/Ruflet
+   env: GIT_TERMINAL_PROMPT=0
+   options: err out
+3. system exit=0
+   git -C <TMP>/ruflet-assetsXXXXXXXX/Ruflet sparse-checkout set templates/ruflet_flutter_template
+   env: GIT_TERMINAL_PROMPT=0
+   options: err out
+4. capture3 exit=0
+   git -C <TMP>/ruflet-assetsXXXXXXXX/Ruflet rev-parse HEAD
+5. system exit=0
+   unzip -oq <TMP>/ruflet-prebuilt-XXXXXXXX/ruflet_explorer-windows-x64.zip -d <HOME>/.ruflet/client/<RUFLET_VERSION>/windows/desktop
+
+## network (6)
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/prebuild-main -> 200
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/v<RUFLET_VERSION> -> 404
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/<RUFLET_VERSION> -> 404
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/latest -> 200
+GET https://github.com/AdamMusa/Ruflet/releases/download/prebuild-main/ruflet_explorer-windows-x64.zip -> 302
+GET https://release-assets.githubusercontent.com/compat/ruflet_explorer-windows-x64.zip -> 200
+
+## output
+out| Downloading prebuilt client asset: ruflet_explorer-windows-x64.zip
+out| Updated desktop client for windows at <HOME>/.ruflet/client/<RUFLET_VERSION>/windows (prebuild-main)
+
+## files
+<HOME>/.ruflet/templates/ruflet_flutter_template/ created from the template: 208 files identical, 0 template files absent
+A <HOME>/.ruflet/client/<RUFLET_VERSION>/windows/desktop/flutter_windows.dll  sha256:5037518985e9af82 36b  (new)
+A <HOME>/.ruflet/client/<RUFLET_VERSION>/windows/desktop/ruflet_explorer.exe  sha256:7c1feca710db2b89 36b  (new)
+A <HOME>/.ruflet/client/<RUFLET_VERSION>/windows/manifest.json  sha256:1e0ddc0bf8206047 615b  (new)
+A <HOME>/.ruflet/templates/ruflet_flutter_template.revision  sha256:9d4a95b50d07fadc 41b  (new)
+
+## diffs
+--- /dev/null
++++ <HOME>/.ruflet/client/<RUFLET_VERSION>/windows/desktop/flutter_windows.dll
+@@ -0,0 +1,1 @@
++compat release: flutter_windows.dll
+--- /dev/null
++++ <HOME>/.ruflet/client/<RUFLET_VERSION>/windows/desktop/ruflet_explorer.exe
+@@ -0,0 +1,1 @@
++compat release: ruflet_explorer.exe
+--- /dev/null
++++ <HOME>/.ruflet/client/<RUFLET_VERSION>/windows/manifest.json
+@@ -0,0 +1,19 @@
++{
++  "schema": 2,
++  "ruflet_version": "<RUFLET_VERSION>",
++  "platform": "windows",
++  "release_tag": "prebuild-main",
++  "release_revision": "705:2025-12-31T09:00:00Z:188",
++  "released_at": "2025-12-31T09:00:00Z",
++  "checked_at": "2026-01-01T12:00:00Z",
++  "installed_at": "2026-01-01T12:00:00Z",
++  "targets": [
++    {
++      "kind": "desktop",
++      "platform": "windows",
++      "asset_name": "ruflet_explorer-windows-x64.zip",
++      "download_url": "https://github.com/AdamMusa/Ruflet/releases/download/prebuild-main/ruflet_explorer-windows-x64.zip",
++      "release_revision": "705:2025-12-31T09:00:00Z:188"
++    }
++  ]
++}
+\ No newline at end of file
+--- /dev/null
++++ <HOME>/.ruflet/templates/ruflet_flutter_template.revision
+@@ -0,0 +1,1 @@
++c0ffee00c0ffee00c0ffee00c0ffee00c0ffee00

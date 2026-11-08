@@ -1,0 +1,113 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: services_app
+command: ruflet build apk
+before: ruflet build apk --self
+exit: 0
+
+## commands (7)
+1. capture3 exit=0
+   git ls-remote https://github.com/AdamMusa/ruflet-template.git refs/heads/main
+   env: GIT_TERMINAL_PROMPT=0
+2. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/flutter precache --android
+   env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
+3. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/flutter pub get
+   env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
+4. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/dart run change_app_package_name:main com.compat.compat_services --android
+   env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
+5. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/dart run flutter_native_splash:create
+   env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
+6. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/dart run flutter_launcher_icons
+   env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
+7. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/flutter build apk --target lib/main.server.dart --dart-define RUFLET_BACKEND_URL=https://api.example.com
+   env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+## output
+out| [ruflet build] Preparing apk build (server-driven)
+out| [ruflet build] Verified 45 pinned Ruflet engine and extension source files at 98377b7ffd4f87c13b6443ceb173ca25170f6115
+out| [ruflet build] No Android signing configured; the release build will use the debug key
+out| [ruflet build] Added compat_git_ext, compat_local_ext from the extension configuration
+out| [ruflet build] Splash screen is configured
+out| [ruflet build] Launcher icons are configured
+out| [ruflet build] Preparing Flutter apk platform artifacts
+out| [ruflet build] Resolving Flutter packages
+out| [ruflet build] Verified 23 local Ruflet engine, extension and vendor packages
+out| [ruflet build] Applying android package name com.compat.compat_services
+out| [ruflet build] Generating splash screen with flutter_native_splash
+out| [ruflet build] Generating launcher icons with flutter_launcher_icons
+out| [ruflet build] Android launcher icon and splash resources verified
+out| [ruflet build] Running Flutter build apk --target lib/main.server.dart --dart-define RUFLET_BACKEND_URL=https://api.example.com
+
+## files
+M <PROJECT>/build/client/android/app/src/main/AndroidManifest.xml  sha256:d8ade87a516eb0f7 3232b -> sha256:d4d8603f32220a83 3213b
+D <PROJECT>/build/client/assets/services_app/.ruflet-runtime.json
+D <PROJECT>/build/client/assets/services_app/assets/animation.json
+D <PROJECT>/build/client/assets/services_app/assets/icon.png
+D <PROJECT>/build/client/assets/services_app/assets/icon_android.png
+D <PROJECT>/build/client/assets/services_app/assets/icon_foreground.png
+D <PROJECT>/build/client/assets/services_app/assets/icon_ios.png
+D <PROJECT>/build/client/assets/services_app/assets/splash.png
+D <PROJECT>/build/client/assets/services_app/assets/splash_android_12.png
+D <PROJECT>/build/client/assets/services_app/assets/splash_dark.png
+D <PROJECT>/build/client/assets/services_app/lib/compat_helpers.rb
+D <PROJECT>/build/client/assets/services_app/main.rb
+M <PROJECT>/build/client/pubspec.yaml  sha256:f4fc295bb3067542 3190b -> sha256:682f28fce8f6ed2a 3015b
+
+## stub side effects (not CLI output)
+  <PROJECT>/build/client/.dart_tool/package_config.json
+  <PROJECT>/build/client/android/app/src/main/res/drawable/launch_background.xml
+  <PROJECT>/build/client/android/app/src/main/res/mipmap-anydpi-v26/launcher_icon.xml
+  <PROJECT>/build/client/android/app/src/main/res/values-v31/styles.xml
+  <PROJECT>/build/client/build/app/outputs/flutter-apk/app-release.apk
+
+## diffs
+--- before:<PROJECT>/build/client/android/app/src/main/AndroidManifest.xml
++++ <PROJECT>/build/client/android/app/src/main/AndroidManifest.xml
+@@ -1,5 +1,5 @@
+ <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+-                            <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS"/>
++                        <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS"/>
+ <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION"/>
+ <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+ <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+@@ -12,11 +12,11 @@
+         android:icon="@mipmap/launcher_icon"
+         android:enableOnBackInvokedCallback="true"
+         android:usesCleartextTraffic="true">
+-        <meta-data android:name="ruflet.runtime.profile" android:value="lite" />
+-        <meta-data android:name="ruflet.runtime.project" android:value="services_app" />
++        <meta-data android:name="ruflet.runtime.profile" android:value="" />
++        <meta-data android:name="ruflet.runtime.project" android:value="" />
+         <!-- Match Apple and desktop self-contained startup: the platform owns
+              the embedded Ruflet engine and Dart only asks for serverUrl(). -->
+-        <meta-data android:name="ruflet.runtime.autostart" android:value="true" />
++        <meta-data android:name="ruflet.runtime.autostart" android:value="false" />
+         <activity
+             android:name=".MainActivity"
+             android:exported="true"
+--- before:<PROJECT>/build/client/pubspec.yaml
++++ <PROJECT>/build/client/pubspec.yaml
+@@ -49,7 +49,6 @@
+     path: ruflet_packages/ruflet_webview
+   ruflet_qrcode_scanner:
+     path: ruflet_packages/ruflet_qrcode_scanner
+-  ruby_runtime: "^0.0.13"
+   flutter_native_splash: "^2.4.7"
+   compat_git_ext:
+     git:
+@@ -108,8 +107,3 @@
+   image_path_ios: "assets/icon_ios.png"
+ flutter:
+   uses-material-design: true
+-  assets:
+-    - assets/services_app/
+-    - assets/services_app/.ruflet-runtime.json
+-    - assets/services_app/assets/
+-    - assets/services_app/lib/

@@ -1,0 +1,182 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: rails_new_app
+command: rails generate ruflet:install --desktop
+network: release fixture (lib/release_fixture.rb)
+exit: 0
+
+## commands (5)
+1. capture3 exit=0
+   git ls-remote https://github.com/AdamMusa/ruflet-template.git refs/heads/main
+   env: GIT_TERMINAL_PROMPT=0
+2. system exit=0
+   git clone --depth 1 --branch main --filter=blob:none --sparse https://github.com/AdamMusa/ruflet-template.git <TMP>/ruflet-assetsXXXXXXXX/Ruflet
+   env: GIT_TERMINAL_PROMPT=0
+   options: err out
+3. system exit=0
+   git -C <TMP>/ruflet-assetsXXXXXXXX/Ruflet sparse-checkout set templates/ruflet_flutter_template
+   env: GIT_TERMINAL_PROMPT=0
+   options: err out
+4. capture3 exit=0
+   git -C <TMP>/ruflet-assetsXXXXXXXX/Ruflet rev-parse HEAD
+5. system exit=0
+   unzip -oq <TMP>/ruflet-prebuilt-XXXXXXXX/ruflet_explorer-macos-universal.zip -d <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop
+
+## network (6)
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/prebuild-main -> 200
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/v<RUFLET_VERSION> -> 404
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/<RUFLET_VERSION> -> 404
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/latest -> 200
+GET https://github.com/AdamMusa/Ruflet/releases/download/prebuild-main/ruflet_explorer-macos-universal.zip -> 302
+GET https://release-assets.githubusercontent.com/compat/ruflet_explorer-macos-universal.zip -> 200
+
+## output
+out|       create  app/views/ruflet/main.rb
+out|       create  config/initializers/ruflet.rb
+out|        route  match "/ws", to: Ruflet::Rails.native(Rails.root.join("app/views/ruflet/main.rb")), via: :all
+out|       insert  bin/rails
+out|       insert  bin/dev
+out| Downloading prebuilt client asset: ruflet_explorer-macos-universal.zip
+out| Updated desktop client for macos at <HOME>/.ruflet/client/<RUFLET_VERSION>/macos (prebuild-main)
+out| Ruflet Rails installed.
+out| Generated entrypoint: app/views/ruflet/main.rb
+out| Added WebSocket route /ws to config/routes.rb
+out| Next steps:
+out|   1. Start Rails: bin/rails server
+out|   2. Connect your Ruflet app to ws://localhost:3000/ws
+out| Desktop clients are server-driven and connect to this Rails app.
+out| Plain bin/dev, bin/rails server, and bin/rails s do not launch desktop.
+out| To launch desktop for a dev server run: bin/rails s --desktop or bin/dev --desktop
+out| To download the prebuilt desktop client: bin/rails ruflet:update[desktop]
+out| To build the host desktop client: bin/rails ruflet:build[desktop]
+
+## files
+<HOME>/.ruflet/templates/ruflet_flutter_template/ created from the template: 208 files identical, 0 template files absent
+A <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop/Ruflet Explorer.app/Contents/Info.plist  sha256:45da0c64ba7d1e02 45b  (new)
+A <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop/Ruflet Explorer.app/Contents/MacOS/Ruflet Explorer  sha256:7baf45490adcf98a 41b mode=755  (new)
+A <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/manifest.json  sha256:78be9b21d11ca13d 619b  (new)
+A <HOME>/.ruflet/templates/ruflet_flutter_template.revision  sha256:9d4a95b50d07fadc 41b  (new)
+A <PROJECT>/app/views/ruflet/main.rb  sha256:1fbcdd02a56d7d1f 666b  (new)
+M <PROJECT>/bin/dev  sha256:bdf0071bfce9a25b 56b mode=755 -> sha256:6dddc51fdac99120 203b mode=755
+M <PROJECT>/bin/rails  sha256:0862d7bc09d5ed61 141b mode=755 -> sha256:3a11e5adf35e3c8a 485b mode=755
+A <PROJECT>/config/initializers/ruflet.rb  sha256:83948208dadc968b 422b  (new)
+M <PROJECT>/config/routes.rb  sha256:f8c50cb3ec4441fb 685b -> sha256:1c5b57fe93d1235e 781b
+
+## diffs
+--- /dev/null
++++ <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop/Ruflet Explorer.app/Contents/Info.plist
+@@ -0,0 +1,2 @@
++<?xml version="1.0"?>
++<plist><dict/></plist>
+--- /dev/null
++++ <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop/Ruflet Explorer.app/Contents/MacOS/Ruflet Explorer
+@@ -0,0 +1,2 @@
++#!/bin/sh
++# compat release: macOS client
+--- /dev/null
++++ <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/manifest.json
+@@ -0,0 +1,19 @@
++{
++  "schema": 2,
++  "ruflet_version": "<RUFLET_VERSION>",
++  "platform": "macos",
++  "release_tag": "prebuild-main",
++  "release_revision": "705:2025-12-31T09:00:00Z:188",
++  "released_at": "2025-12-31T09:00:00Z",
++  "checked_at": "2026-01-01T12:00:00Z",
++  "installed_at": "2026-01-01T12:00:00Z",
++  "targets": [
++    {
++      "kind": "desktop",
++      "platform": "macos",
++      "asset_name": "ruflet_explorer-macos-universal.zip",
++      "download_url": "https://github.com/AdamMusa/Ruflet/releases/download/prebuild-main/ruflet_explorer-macos-universal.zip",
++      "release_revision": "705:2025-12-31T09:00:00Z:188"
++    }
++  ]
++}
+\ No newline at end of file
+--- /dev/null
++++ <HOME>/.ruflet/templates/ruflet_flutter_template.revision
+@@ -0,0 +1,1 @@
++c0ffee00c0ffee00c0ffee00c0ffee00c0ffee00
+--- /dev/null
++++ <PROJECT>/app/views/ruflet/main.rb
+@@ -0,0 +1,24 @@
++# frozen_string_literal: true
++
++# The home screen for this Ruflet app. You own this file; nothing is
++# auto-discovered. It is mounted explicitly in config/routes.rb:
++#   match "/ws", to: Ruflet::Rails.native(Rails.root.join("app/views/ruflet/main.rb")), via: :all
++Ruflet.run do |page|
++  page.title = "Rails New App"
++  page.add(
++    safe_area(
++      container(
++        expand: true,
++        padding: 24,
++        content: column(
++          spacing: 12,
++          controls: [
++            text("Rails New App", size: 24, weight: "bold"),
++            text("Edit app/views/ruflet/main.rb to build your app.")
++          ]
++        )
++      ),
++      expand: true
++    )
++  )
++end
+--- before:<PROJECT>/bin/dev
++++ <PROJECT>/bin/dev
+@@ -1,2 +1,9 @@
+ #!/usr/bin/env ruby
++# ruflet_rails desktop flag
++if ARGV.delete("--desktop")
++  ENV["RUFLET_RAILS_DESKTOP"] = "true"
++  ENV["RUFLET_RAILS_DESKTOP_SERVER"] = "true"
++end
++
++
+ exec "./bin/rails", "server", *ARGV
+--- before:<PROJECT>/bin/rails
++++ <PROJECT>/bin/rails
+@@ -1,4 +1,14 @@
+ #!/usr/bin/env ruby
++# ruflet_rails desktop flag
++ruflet_rails_desktop = ARGV.include?("--desktop")
++ruflet_rails_command = ARGV.find { |value| !value.to_s.start_with?("-") }
++if ruflet_rails_desktop && %w[server s].include?(ruflet_rails_command.to_s)
++  ENV["RUFLET_RAILS_DESKTOP"] = "true"
++  ENV["RUFLET_RAILS_DESKTOP_SERVER"] = "true"
++end
++ARGV.delete("--desktop")
++
++
+ APP_PATH = File.expand_path("../config/application", __dir__)
+ require_relative "../config/boot"
+ require "rails/commands"
+--- /dev/null
++++ <PROJECT>/config/initializers/ruflet.rb
+@@ -0,0 +1,12 @@
++# frozen_string_literal: true
++
++Ruflet::Rails.configure do |config|
++  config.app_name = "Rails New App"
++  config.backend_url = ENV.fetch("RUFLET_BACKEND_URL", "http://localhost:3000")
++
++  config.services = []
++
++  # Build assets. Replace these with your app artwork when ready.
++  config.splash_screen = Rails.root.join("app/assets/images/splash.png")
++  config.icon_launcher = Rails.root.join("app/assets/images/icon.png")
++end
+--- before:<PROJECT>/config/routes.rb
++++ <PROJECT>/config/routes.rb
+@@ -1,4 +1,5 @@
+ Rails.application.routes.draw do
++  match "/ws", to: Ruflet::Rails.native(Rails.root.join("app/views/ruflet/main.rb")), via: :all
+   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
+ 
+   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
