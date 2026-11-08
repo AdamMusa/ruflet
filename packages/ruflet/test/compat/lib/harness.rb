@@ -316,11 +316,13 @@ module RufletCompat
     end
 
     # A prebuilt Explorer cache that is current at the frozen clock, so the
-    # CLI launches it instead of checking GitHub.
+    # CLI launches it instead of checking GitHub. The stale file is one no
+    # release archive carries: it shows whether a re-download wipes the cache.
     def seed_prebuilt_clients
       root = File.join(@home, ".ruflet", "client", workspace.ruflet_version, "macos")
       { "web/index.html" => "<!doctype html>\n", "web/main.dart.js" => "// compat\n",
-        "web/flutter_bootstrap.js" => "// compat\n" }.each do |relative, content|
+        "web/flutter_bootstrap.js" => "// compat\n",
+        "web/assets/stale_from_an_older_release.js" => "// compat: not in any release archive\n" }.each do |relative, content|
         FileUtils.mkdir_p(File.dirname(File.join(root, relative)))
         File.write(File.join(root, relative), content)
       end

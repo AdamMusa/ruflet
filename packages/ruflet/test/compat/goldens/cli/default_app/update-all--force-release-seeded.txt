@@ -61,6 +61,7 @@ out| Updated desktop client for macos at <HOME>/.ruflet/client/<RUFLET_VERSION>/
 A <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop/Ruflet Explorer.app/Contents/Info.plist  sha256:45da0c64ba7d1e02 45b  (new)
 M <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop/Ruflet Explorer.app/Contents/MacOS/Ruflet Explorer  sha256:306c6ca740756034 17b mode=755 -> sha256:7baf45490adcf98a 41b mode=755
 M <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/manifest.json  sha256:e0222449bf2fbb98 597b -> sha256:d2043966c1e022e0 906b
+D <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/web/assets/stale_from_an_older_release.js
 M <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/web/flutter_bootstrap.js  sha256:36e6757f8509d079 10b -> sha256:ed045839003e5c06 40b
 M <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/web/index.html  sha256:335fca8574f060ee 16b -> sha256:1fb0bac07d8fca4c 64b
 M <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/web/main.dart.js  sha256:36e6757f8509d079 10b -> sha256:ad18450ead95cba7 32b
