@@ -13,7 +13,7 @@ module Ruflet
           TYPE = "view".freeze
           WIRE = "View".freeze
 
-          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :appbar, :aspect_ratio, :auto_scroll, :badge, :bgcolor, :bottom, :bottom_appbar, :bottom_sheet, :can_pop, :col, :controls, :data, :decoration, :disabled, :drawer, :end_drawer, :end_reached_threshold, :expand, :expand_loose, :floating_action_button, :floating_action_button_location, :foreground_decoration, :fullscreen_dialog, :height, :horizontal_alignment, :key, :keyboard_dismiss_behavior, :left, :margin, :navigation_bar, :offset, :opacity, :padding, :refresh_bgcolor, :refresh_color, :refresh_displacement, :refresh_timeout, :refresh_trigger_distance, :right, :rotate, :route, :rtl, :scale, :scroll, :scroll_interval, :services, :size_change_interval, :spacing, :tooltip, :top, :vertical_alignment, :visible, :width, :on_animation_end, :on_confirm_pop, :on_end_reached, :on_refresh, :on_scroll, :on_size_change].freeze
+          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :appbar, :aspect_ratio, :auto_scroll, :auto_scroll_animation, :badge, :bgcolor, :bottom, :bottom_appbar, :bottom_sheet, :can_pop, :col, :controls, :data, :decoration, :disabled, :drawer, :end_drawer, :end_reached_threshold, :expand, :expand_loose, :floating_action_button, :floating_action_button_location, :foreground_decoration, :fullscreen_dialog, :height, :horizontal_alignment, :key, :keyboard_dismiss_behavior, :left, :margin, :navigation_bar, :offset, :opacity, :padding, :refresh_bgcolor, :refresh_color, :refresh_displacement, :refresh_timeout, :refresh_trigger_distance, :right, :rotate, :route, :rtl, :scale, :scroll, :scroll_interval, :services, :size_change_interval, :spacing, :tooltip, :top, :vertical_alignment, :visible, :width, :on_animation_end, :on_confirm_pop, :on_end_reached, :on_refresh, :on_scroll, :on_size_change].freeze
 
           def initialize(id: nil, **props)
             unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
@@ -30,6 +30,7 @@ module Ruflet
             appbar = props[:appbar]
             aspect_ratio = props[:aspect_ratio]
             auto_scroll = props[:auto_scroll]
+            auto_scroll_animation = props[:auto_scroll_animation]
             badge = props[:badge]
             bgcolor = props[:bgcolor]
             bottom = props[:bottom]
@@ -107,6 +108,7 @@ module Ruflet
             props[:appbar] = appbar unless appbar.nil?
             props[:aspect_ratio] = aspect_ratio unless aspect_ratio.nil?
             props[:auto_scroll] = auto_scroll unless auto_scroll.nil?
+            props[:auto_scroll_animation] = auto_scroll_animation unless auto_scroll_animation.nil?
             props[:badge] = badge unless badge.nil?
             props[:bgcolor] = bgcolor unless bgcolor.nil?
             props[:bottom] = bottom unless bottom.nil?

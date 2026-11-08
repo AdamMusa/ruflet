@@ -21,8 +21,9 @@ module Ruflet
       # Appends +control+ to +list+ as an implicit DSL child and remembers the
       # list as its owner. Explicit children (`children:`/`controls:`, a
       # block's return value) are appended directly and are never reclaimed.
-      # Overlays and services (Ruflet::Page::PRESENTED_TYPES) are presented by
-      # the page, not laid out, so they are never captured implicitly.
+      # Overlays and services (Ruflet::Page.presented_control?) are presented
+      # by the page, not laid out, so they are never captured implicitly. An
+      # inline date picker renders in place and is captured like any control.
       def attach(list, control)
         return control if Ruflet::Page.presented_control?(control)
 
@@ -34,9 +35,15 @@ module Ruflet
       # Takes every control passed in a child slot of +props+ back out of the
       # list that implicitly attached it, whichever builder or enclosing block
       # that was. Matching is by identity. A control already mounted on a page
-      # stays in its mounted parent.
+      # stays in its mounted parent. Prop controls were attached in argument
+      # order, so they sit at the tail of their owner list; taking them back
+      # last-first makes each lookup stop at the end of the list instead of
+      # scanning it (`list_view(controls: items.map { text(...) })` was
+      # quadratic).
       def reclaim(props)
-        each_control(props) do |control|
+        owned = []
+        each_control(props) { |control| owned << control if control.dsl_owner }
+        owned.reverse_each do |control|
           owner = control.dsl_owner
           next unless owner
           next if control.runtime_page

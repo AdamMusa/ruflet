@@ -25,6 +25,7 @@ module Ruflet
         "datatable2" => { package: "ruflet_datatable2", alias: "ruflet_datatable2" },
         "flashlight" => { package: "ruflet_flashlight", alias: "ruflet_flashlight" },
         "geolocator" => { package: "ruflet_geolocator", alias: "ruflet_geolocator" },
+        "local_auth" => { package: "ruflet_local_auth", alias: "ruflet_local_auth" },
         "lottie" => { package: "ruflet_lottie", alias: "ruflet_lottie" },
         "map" => { package: "ruflet_map", alias: "ruflet_map" },
         "permission_handler" => { package: "ruflet_permission_handler", alias: "ruflet_permission_handler" },
@@ -36,6 +37,7 @@ module Ruflet
         "webview" => { package: "ruflet_webview", alias: "ruflet_webview" }
       }.freeze
       PROTECTED_SERVICE_EXTENSIONS = {
+        "biometrics" => %w[local_auth],
         "camera" => %w[camera permission_handler],
         "microphone" => %w[audio_recorder permission_handler],
         "location" => %w[geolocator permission_handler],
@@ -46,8 +48,12 @@ module Ruflet
         "camera" => %w[camera],
         "flashlight" => %w[camera],
         "geolocator" => %w[location],
+        "local_auth" => %w[biometrics],
         "qrcode_scanner" => %w[camera]
       }.freeze
+      # local_auth shows its Android prompt with androidx.biometric, which
+      # requires the host activity to be a FragmentActivity.
+      FRAGMENT_ACTIVITY_EXTENSIONS = %w[local_auth].freeze
       MANAGED_EXTENSION_STATE_PATH = File.join(".ruflet", "extension_dependencies.json")
       RUFLET_SOURCE_INTEGRITY_PATH = File.join(
         "tool", "conformance", "ruflet_source_integrity.json"
@@ -65,6 +71,7 @@ module Ruflet
         "motion" => %w[android.permission.ACTIVITY_RECOGNITION android.permission.HIGH_SAMPLING_RATE_SENSORS]
       }.freeze
       IOS_SERVICE_USAGE_KEYS = {
+        "biometrics" => "NSFaceIDUsageDescription",
         "camera" => "NSCameraUsageDescription",
         "microphone" => "NSMicrophoneUsageDescription",
         "location" => %w[
@@ -1718,6 +1725,7 @@ module Ruflet
           sync_external_extension_registrations(entrypoint, external)
         end
         write_managed_external_extension_names(client_dir, external.map { |entry| entry[:name] })
+        apply_android_activity_base(client_dir, extension_keys)
         @ruflet_selected_flutter_extension_packages = extension_packages
         @ruflet_selected_external_extension_packages = external.map { |entry| entry[:name] }
         @ruflet_managed_external_extension_packages = removable_external_names
@@ -1888,6 +1896,28 @@ module Ruflet
         end
 
         write_text_file(path, content) unless content == original
+      end
+
+      # The template's MainActivity extends FlutterActivity. Switch it to
+      # FlutterFragmentActivity while an extension that needs one (local_auth)
+      # is selected, and back once none is, so the activity always matches the
+      # build's extensions. An activity that extends anything else is left alone.
+      def apply_android_activity_base(client_dir, extension_keys)
+        fragment = Array(extension_keys).any? { |key| FRAGMENT_ACTIVITY_EXTENSIONS.include?(key) }
+        from, to = fragment ? %w[FlutterActivity FlutterFragmentActivity] : %w[FlutterFragmentActivity FlutterActivity]
+
+        android_main_activity_paths(client_dir).each do |path|
+          content = read_text_file(path)
+          updated = content.sub(/^((?:public\s+)?class MainActivity\s*(?::|extends)\s*)#{from}\b/, "\\1#{to}")
+          next if updated == content
+
+          updated = updated.sub(/^import io\.flutter\.embedding\.android\.#{from}(;?)$/, "import io.flutter.embedding.android.#{to}\\1")
+          write_text_file(path, updated)
+        end
+      end
+
+      def android_main_activity_paths(client_dir)
+        Dir.glob(File.join(client_dir, "android", "app", "src", "main", "{kotlin,java}", "**", "MainActivity.{kt,java}")).sort
       end
 
       def configured_service_entries(config)

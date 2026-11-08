@@ -245,12 +245,12 @@ later configuration declares them again.
 
 ### Protected capabilities are explicit
 
-Camera, microphone, location, and motion access are declared in
+Camera, microphone, location, motion, and biometrics access are declared in
 `services.yaml`. Ruflet activates the required client integrations and writes
 the matching Android and iOS permission descriptions during the build. Ruflet
 also removes its previously managed permissions when the capability is no
-longer declared, so stale camera, microphone, location, or motion access does
-not ship in the next build.
+longer declared, so stale camera, microphone, location, motion, or Face ID
+access does not ship in the next build.
 
 ```yaml
 services:
@@ -258,7 +258,36 @@ services:
       description: Scan QR codes and capture photos.
   - location:
       description: Show nearby places.
+  - biometrics:
+      description: Unlock your notes with Face ID.
 ```
+
+`biometrics` selects the `local_auth` extension, writes the iOS
+`NSFaceIDUsageDescription`, and makes the Android `MainActivity` a
+`FlutterFragmentActivity`, which the biometric prompt requires. Application
+code then authenticates through `page.local_auth`:
+
+```ruby
+page.local_auth.authenticate(
+  localized_reason: "Unlock your notes",
+  biometric_only: false,
+  on_result: ->(ok, error) {
+    if error
+      page.update(status, value: "Locked (#{Ruflet::LocalAuthError.from_error(error).code})")
+    else
+      page.update(status, value: ok ? "Unlocked" : "Try again")
+    end
+  }
+)
+```
+
+`can_check_biometrics`, `is_device_supported` (`device_supported?`),
+`get_available_biometrics` (`["face", "fingerprint", ...]`) and
+`stop_authentication` follow the same `on_result:` pattern. Each method also has
+a blocking `*_sync` form (`authenticate_sync(localized_reason: ...)`) that
+returns the result or raises `Ruflet::LocalAuthError` with its `code`; call it
+from a background thread, because event handlers run on the thread that
+receives the client's answer.
 
 ## Project configuration
 

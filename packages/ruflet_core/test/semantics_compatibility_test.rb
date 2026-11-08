@@ -57,4 +57,11 @@ class RufletSemanticsCompatibilityTest < Minitest::Test
 
     assert_equal [["tap", "semantics"]], events
   end
+  # Flet 1.0.2's Semantics.identifier (Flutter Semantics.identifier).
+  def test_semantics_identifier_serializes
+    control = Ruflet.semantics(Ruflet.text("Save"), identifier: "save-button", label: "Save")
+
+    assert_equal "save-button", control.to_patch["identifier"]
+    refute Ruflet.semantics.to_patch.key?("identifier")
+  end
 end

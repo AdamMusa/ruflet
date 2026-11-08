@@ -9,7 +9,8 @@
 # The ruflet repo owns this contract. The engine's control-core contract test
 # reads a checked-in copy to prove each shared core declares exactly what
 # Ruby can send (engine: tool/sync_ruby_surface.rb), and the template's
-# conformance check can read the same file.
+# conformance check can read the same file. An entry (and a wire type) with
+# "open_keywords": true accepts any key; its "keywords" list is not a limit.
 #
 #   ruby tools/control_surface.rb              # print JSON
 #   ruby tools/control_surface.rb --out PATH   # write PATH
@@ -49,6 +50,16 @@ module RufletControlSurface
     names.map(&:to_s).uniq.sort
   end
 
+  # A class with no keyword list of its own that takes **props (charts, map,
+  # media, ads, ...): ControlFactory.build passes every key through to it, so
+  # its empty "keywords" means "any key", not "none".
+  def open_keywords?(dsl_name, klass)
+    return false unless factory.constructor_keywords(klass).empty?
+    return false if factory::ATTRIBUTE_OVERRIDES.key?(dsl_name)
+
+    klass.instance_method(:initialize).parameters.any? { |kind, _| kind == :keyrest }
+  end
+
   def snake_case(name)
     name.gsub(/([a-z\d])([A-Z])/, "\\1_\\2").downcase
   end
@@ -62,7 +73,8 @@ module RufletControlSurface
         "family" => family,
         "ruby_class" => klass.name,
         "wire_type" => wire_type(klass),
-        "keywords" => keywords(name, klass)
+        "keywords" => keywords(name, klass),
+        "open_keywords" => open_keywords?(name, klass)
       }
     end
   end
@@ -92,7 +104,8 @@ module RufletControlSurface
         "canonical" => canonical.fetch(wire),
         "family" => group.any? { |e| e.fetch("family") == "visual" } ? "visual" : "service",
         "dsl_names" => group.map { |e| e.fetch("dsl_name") }.uniq.sort,
-        "keywords" => group.flat_map { |e| e.fetch("keywords") }.uniq.sort
+        "keywords" => group.flat_map { |e| e.fetch("keywords") }.uniq.sort,
+        "open_keywords" => group.any? { |e| e.fetch("open_keywords") }
       }]
     end
 
@@ -117,11 +130,20 @@ module RufletControlSurface
     "#{JSON.pretty_generate(build)}\n"
   end
 
+  # Compares content, not text: json versions format the same data
+  # differently (pretty_generate and empty arrays, for one).
+  def current_surface?(path)
+    return false unless File.file?(path)
+
+    JSON.parse(File.read(path)) == JSON.parse(JSON.generate(build))
+  rescue JSON::ParserError
+    false
+  end
+
   def run(argv, out: $stdout)
     if (index = argv.index("--check"))
       path = argv.fetch(index + 1) { abort "usage: --check PATH" }
-      current = File.file?(path) ? File.read(path) : nil
-      return true if current == generate
+      return true if current_surface?(path)
 
       warn "#{path} is stale. Regenerate it with: ruby #{__FILE__} --out #{path}"
       false

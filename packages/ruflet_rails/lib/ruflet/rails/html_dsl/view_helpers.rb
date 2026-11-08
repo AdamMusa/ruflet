@@ -188,9 +188,9 @@ module Ruflet
         SERVICE_HELPERS = %w[
           audio audio_recorder barometer battery clipboard connectivity
           file_picker flashlight geolocator gyroscope accelerometer magnetometer
-          haptic_feedback permission_handler screen_brightness secure_storage
-          shake_detector share shared_preferences storage_paths url_launcher
-          user_accelerometer wakelock semantics_service
+          haptic_feedback local_authentication permission_handler screen_brightness
+          secure_storage shake_detector share shared_preferences storage_paths
+          url_launcher user_accelerometer wakelock semantics_service
         ].freeze
 
         # Visible extension controls — they render inline like any other control.

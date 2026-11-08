@@ -262,6 +262,7 @@ class RufletHtmlDslHelpersTest < Minitest::Test
   def test_service_and_extension_helpers
     assert_equal "<camera></camera>", @view.camera
     assert_equal "<geolocator></geolocator>", @view.geolocator
+    assert_equal "<local-authentication></local-authentication>", @view.local_authentication
     assert_equal '<lottie src="loader.json"></lottie>', @view.lottie(src: "loader.json")
     assert_equal '<web-view url="https://x.test"></web-view>', @view.web_view(url: "https://x.test")
 

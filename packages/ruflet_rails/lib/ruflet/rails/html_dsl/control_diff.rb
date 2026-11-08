@@ -87,10 +87,22 @@ module Ruflet
         end
 
         def rebind_handlers(old_node, new_node)
+          rebind_form_options(old_node, new_node)
           handlers = new_node.instance_variable_get(:@handlers)
           return if handlers.nil? || handlers.empty?
 
           old_node.instance_variable_set(:@handlers, handlers)
+        end
+
+        # A form field's validator and on_saved close over the render the
+        # same way, and live server-side like handlers: the fresh tree's
+        # (or their absence) replace the mounted control's.
+        FORM_OPTION_IVARS = %i[@validator @on_saved @autovalidate_mode].freeze
+
+        def rebind_form_options(old_node, new_node)
+          FORM_OPTION_IVARS.each do |ivar|
+            old_node.instance_variable_set(ivar, new_node.instance_variable_get(ivar))
+          end
         end
 
         def control?(node)
