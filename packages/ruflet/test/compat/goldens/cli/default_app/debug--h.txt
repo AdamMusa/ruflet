@@ -1,0 +1,24 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet debug -h
+exit: 0
+
+## commands (0)
+
+## output
+out| Usage: ruflet debug [platform] [--platform NAME] [--device ID] [--release] [-v|--verbose] [--web-renderer NAME]
+out| 
+out| Run the Flutter client in build/client with `flutter run`.
+out| 
+out| Options:
+out|   --platform NAME               web, ios, android, macos, windows or linux
+out|   --device ID, --device-id ID   Flutter device to run on
+out|   --release                     Run a release build
+out|   -v, --verbose                 Run Flutter with -v
+out|   --web-renderer NAME           Passed to flutter run as --web-renderer
+out|   -h, --help                    Show this help
+
+## files
+(no files changed)

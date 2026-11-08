@@ -1,0 +1,1034 @@
+{
+  "repository": "AdamMusa/ruflet-template",
+  "commit": "e32c873de2b4d3112939f74414c58b98430a6e7d",
+  "subdirectory": "templates/ruflet_flutter_template",
+  "regenerate": "ruby packages/ruflet/test/compat/compat.rb vendor-template --repo <ruflet-template clone> --ref e32c873de2b4d3112939f74414c58b98430a6e7d",
+  "transformations": [
+    "ruflet_packages/: only each package's pubspec.yaml and lib/<package>.dart are kept (the CLI copies, prunes and verifies these trees but never reads Dart sources)",
+    "tool/conformance/ruflet_source_integrity.json: \"files\" is restricted to the kept ruflet_packages files; every kept entry and every other key is unchanged, so the CLI's integrity check still passes",
+    "binary files (NUL byte or invalid UTF-8) are replaced by a one-line text placeholder naming the original sha256 and size (the CLI only copies them; the icon/splash generators that would read them are stubbed)"
+  ],
+  "files": {
+    ".gitignore": {
+      "mode": "644",
+      "sha256": "722772a99e85a74c2bd4b9f9b8cb6435ce40e6e34dd2372223eed9c442e7ee2d"
+    },
+    ".metadata": {
+      "mode": "644",
+      "sha256": "c5dcdc88db44ea94909a7536fe3209b8943cca0a6bc76a3e604287e04cba433e"
+    },
+    "README.md": {
+      "mode": "644",
+      "sha256": "5dd65ecc5c67e816a1e4926399254a814adb9dd422a9d0612dad2ebe9df47189"
+    },
+    "analysis_options.yaml": {
+      "mode": "644",
+      "sha256": "e0ea485cfdbc3e12b93efb8679a5ea73ebfe20ea4ca0c473dc594fc2fb274ed5"
+    },
+    "android/.gitignore": {
+      "mode": "644",
+      "sha256": "b027c9de1011765c015e5819bf857c0d75bfcd0886fb01721c091159012e50f1"
+    },
+    "android/app/build.gradle.kts": {
+      "mode": "644",
+      "sha256": "f03a7a79e00e56ea763b2d1e6a929e9265312ebf31d1cb7296e7b99b642bc634"
+    },
+    "android/app/src/debug/AndroidManifest.xml": {
+      "mode": "644",
+      "sha256": "30b0832ed8b92dfbd6ae2abfa939ccf26333d37600056b1572bd4a397a18a74b"
+    },
+    "android/app/src/main/AndroidManifest.xml": {
+      "mode": "644",
+      "sha256": "ffaecc85bebd7c49ab2a83e4dce7caf7b23e72e1ba46d64d366ffe1007897330"
+    },
+    "android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java": {
+      "mode": "644",
+      "sha256": "417cb583c2af3bbdb57b3dbfeecfb09ee7f4dff255974b53bf7d9b390ee5d030"
+    },
+    "android/app/src/main/kotlin/com/example/ruflet_client/MainActivity.kt": {
+      "mode": "644",
+      "sha256": "5939dac09dcfa3a2f4c09799c26eee9cf03bd1119f685cb1de87c04fd45a84e5"
+    },
+    "android/app/src/main/res/drawable-v21/launch_background.xml": {
+      "mode": "644",
+      "sha256": "596e6c8de90145ad3de550a9c6356c70cfa1e317cf7fe2923f4920bf97d01c8d"
+    },
+    "android/app/src/main/res/drawable/launch_background.xml": {
+      "mode": "644",
+      "sha256": "596e6c8de90145ad3de550a9c6356c70cfa1e317cf7fe2923f4920bf97d01c8d"
+    },
+    "android/app/src/main/res/mipmap-hdpi/ic_launcher.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "6a7c8f0d703e3682108f9662f813302236240d3f8f638bb391e32bfb96055fef",
+        "size": 544
+      },
+      "sha256": "806cdc36ced8aa83d5c2636667ec50dc86eca6239246303e496388a2ecfa40a7"
+    },
+    "android/app/src/main/res/mipmap-hdpi/launcher_icon.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "2bc4465b01feead28c3d8437a6c1797b14139859db2817060f3370be95460f91",
+        "size": 6251
+      },
+      "sha256": "472036f687ab7b1585d6d0e11855ef738e0f1f6421b7814766a31cbc6702bec2"
+    },
+    "android/app/src/main/res/mipmap-mdpi/ic_launcher.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "c7c0c0189145e4e32a401c61c9bdc615754b0264e7afae24e834bb81049eaf81",
+        "size": 442
+      },
+      "sha256": "6c886d3098b553c4326f6f5d4a4307b459e252b4f93cbe29a35fc5de6805176c"
+    },
+    "android/app/src/main/res/mipmap-mdpi/launcher_icon.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "fc5993bee2832b5b83a484c078401c66ca8bd20dccb3b4eaf034aca030474e79",
+        "size": 3281
+      },
+      "sha256": "d2524a6fdbb969d28fe53399d1895f3e943a8012c1d69d7c5eaa81331f35524d"
+    },
+    "android/app/src/main/res/mipmap-xhdpi/ic_launcher.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "e14aa40904929bf313fded22cf7e7ffcbf1d1aac4263b5ef1be8bfce650397aa",
+        "size": 721
+      },
+      "sha256": "3e19853aaecdfdd1d854317dc76cf60ef1b418742de7a77875a8d0858634432a"
+    },
+    "android/app/src/main/res/mipmap-xhdpi/launcher_icon.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "a5d5cfbe455837de8c91bc7f5028972c49528c9829addcb5fbb97b61dc1c1323",
+        "size": 10187
+      },
+      "sha256": "211cc9ec82f0e4a996f4b394bcd735ff6ac3d10942917428bbe10a0661b3c230"
+    },
+    "android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "4d470bf22d5c17d84edc5f82516d1ba8a1c09559cd761cefb792f86d9f52b540",
+        "size": 1031
+      },
+      "sha256": "4c61622b2c621a4259bd1211fe909211ddc928bcff22285e4e46f0fc3d20ee4b"
+    },
+    "android/app/src/main/res/mipmap-xxhdpi/launcher_icon.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "9c647245e3cd5e999adbaa35242e16c68c399dde4c2f0c2cca4ace187bb5f3b6",
+        "size": 20590
+      },
+      "sha256": "a0ff07e58bc7afe21551065fa589c0cdab17a2d99f2ced30c28aa1be0a6bdaf9"
+    },
+    "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "3c34e1f298d0c9ea3455d46db6b7759c8211a49e9ec6e44b635fc5c87dfb4180",
+        "size": 1443
+      },
+      "sha256": "6cc6fe2e8541da5910c17537e6caf9cc6a345ffe336e94f6d981f1a80b5ff5dd"
+    },
+    "android/app/src/main/res/mipmap-xxxhdpi/launcher_icon.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "c41cd76a21252cbe3bdae551b15601c8045f8290f1c02ac4e78c9fc58ed437d2",
+        "size": 35627
+      },
+      "sha256": "4ee8a88554a44a9256d4f276e747f38c78a33d609f6d1cfe0d691f492a43108f"
+    },
+    "android/app/src/main/res/values-night-v31/styles.xml": {
+      "mode": "644",
+      "sha256": "3468b94d860b055cf55a37d745d7cee14debe63dba0899a02409c83ea51963d3"
+    },
+    "android/app/src/main/res/values-night/styles.xml": {
+      "mode": "644",
+      "sha256": "359b76f252fe3d3a32950c2ba219d91e5fe07c10bed8365830add0648956d738"
+    },
+    "android/app/src/main/res/values-v31/styles.xml": {
+      "mode": "644",
+      "sha256": "bfeec2a9c51d505a576e1c5a0e277b8b842b8eebc9c25029331f400a9656c422"
+    },
+    "android/app/src/main/res/values/styles.xml": {
+      "mode": "644",
+      "sha256": "92577b5b03b0092dcf299293386819ae5a63ba605f8dbc2c70954cda9dc12f2e"
+    },
+    "android/app/src/profile/AndroidManifest.xml": {
+      "mode": "644",
+      "sha256": "30b0832ed8b92dfbd6ae2abfa939ccf26333d37600056b1572bd4a397a18a74b"
+    },
+    "android/build.gradle.kts": {
+      "mode": "644",
+      "sha256": "6a26dba2cb8dfba1e74f540b0d17a89d96c1301d3c3bfda14348bed257fddcba"
+    },
+    "android/gradle.properties": {
+      "mode": "644",
+      "sha256": "20c411ebbe5162992d16d170656ee19a9ffe0571e6c4d4c5a5314bb06da0a672"
+    },
+    "android/gradle/wrapper/gradle-wrapper.jar": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "16caeaf66d57a0d1d2087fef6a97efa62de8da69afa5b908f40db35afc4342da",
+        "size": 53636
+      },
+      "sha256": "d2aa9f8981a91e2413256c3f6d66be176360e97507834e3b52f8f13b7af074e6"
+    },
+    "android/gradle/wrapper/gradle-wrapper.properties": {
+      "mode": "644",
+      "sha256": "4f0df93978f8c53f8995c6afcdecd9d290b5df35fa08f236163e8e5df8557c8e"
+    },
+    "android/gradlew": {
+      "mode": "755",
+      "sha256": "ec56c02543666d92d9ac5ae7fcc48f88ce4de0deb8b7f9b39928ca46f68c1b2b"
+    },
+    "android/gradlew.bat": {
+      "mode": "644",
+      "sha256": "c13c6e91b9a517783976de213d46398c661ea9e17651376d7301e839eaedcc62"
+    },
+    "android/settings.gradle.kts": {
+      "mode": "644",
+      "sha256": "f822f8653a25b632ea3334473d8e9964e7d7da73e3ec33448f17e8600834b063"
+    },
+    "assets/icon.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "5400ed13bc6cedf06409213f18255a796bf581147c011c91827ec286ee653da8",
+        "size": 1414816
+      },
+      "sha256": "eacaf3408193c7966568d662c87a95c7527abf8129d286c072f9f5fe04d8a15b"
+    },
+    "assets/splash.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "e567fa1060783534047571490e80a6f0c3842ca2d4d813f18a0e071e44d96278",
+        "size": 936866
+      },
+      "sha256": "8aa8742cc27195276d04b9f565e4dbd284099064d9e0fd60481897f41e139c1f"
+    },
+    "devtools_options.yaml": {
+      "mode": "644",
+      "sha256": "e8ba6877169885107d577db47d3e9eb10b32b7aded5959dfc52cae8022a5de84"
+    },
+    "flutter_hosts/ios/Runner/AppDelegate.swift": {
+      "mode": "644",
+      "sha256": "9c29984464321f1475aa52dd826d28e576658da49febb3302de0c7c4bae41267"
+    },
+    "flutter_hosts/macos/Runner/MainFlutterWindow.swift": {
+      "mode": "644",
+      "sha256": "65c9613c11bcedfa51416b16c975d8ba6ff12b405fc19d60db8755d92e86d9fe"
+    },
+    "ios/.gitignore": {
+      "mode": "644",
+      "sha256": "37380775aeb2499662b7aca80f4ac4c95ae827c3ba2bfa179aa3e9af4812c623"
+    },
+    "ios/Flutter/AppFrameworkInfo.plist": {
+      "mode": "644",
+      "sha256": "da12038f9b2688a8a26160fea2609fa8fcb11421448c109f09c0f573efe7698d"
+    },
+    "ios/Flutter/Debug.xcconfig": {
+      "mode": "644",
+      "sha256": "690b8a8b1ae15ddd29b241429963e971bbc6720ab22f154cf8cf6b085b6d4925"
+    },
+    "ios/Flutter/Release.xcconfig": {
+      "mode": "644",
+      "sha256": "75abb819a9de1e0e41c835e7307bc64a506cac25a9a5c0b0d8253fa1c3d5d422"
+    },
+    "ios/Podfile": {
+      "mode": "644",
+      "sha256": "1bfc4b1ef35b7fe48b0a3e3f25e3d5d6e918cbcb5a15b76b15d41014a5148261"
+    },
+    "ios/Runner.xcodeproj/project.pbxproj": {
+      "mode": "644",
+      "sha256": "0b496a760cce693cd2dca72b39974fc3ea05e7c3ee4fbdbaa74c4cedb9b34c1c"
+    },
+    "ios/Runner.xcodeproj/project.xcworkspace/contents.xcworkspacedata": {
+      "mode": "644",
+      "sha256": "7f3b00b5c3fdb45242d7b87e1e5c4e25d1fa8129a16c94295ecc4e8ea2235c5f"
+    },
+    "ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist": {
+      "mode": "644",
+      "sha256": "dfa0f9bb85b95ccba9c6811adadf8cb407fb5d52088e89db83ebc308ec448542"
+    },
+    "ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings": {
+      "mode": "644",
+      "sha256": "11b247bc6796892d67c9a821d18604db4dd6a880981b34f38460b9866e6b247f"
+    },
+    "ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme": {
+      "mode": "644",
+      "sha256": "2dd28b879e66081e28a3324cf2bee7ab2f70be9a3e50e08926b7366dadff7d6e"
+    },
+    "ios/Runner.xcworkspace/contents.xcworkspacedata": {
+      "mode": "644",
+      "sha256": "465e6de5660384eb6832e8078920ba6cd5305c445cb29a24a86a2fda4aa6b67e"
+    },
+    "ios/Runner.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist": {
+      "mode": "644",
+      "sha256": "dfa0f9bb85b95ccba9c6811adadf8cb407fb5d52088e89db83ebc308ec448542"
+    },
+    "ios/Runner.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings": {
+      "mode": "644",
+      "sha256": "11b247bc6796892d67c9a821d18604db4dd6a880981b34f38460b9866e6b247f"
+    },
+    "ios/Runner/AppDelegate.swift": {
+      "mode": "644",
+      "sha256": "451c6d9ba0a2b3ff43092ea349c60fa79a91f1158b915eb29dbdd357cb95d7b8"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json": {
+      "mode": "644",
+      "sha256": "59aee64f32dab46ad775da6ea2f3fc4efe6e8a78289a9185cd0d2d7e055845dd"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "3d0f21803d8ac44f5150da1ab48da61276a8b53cb8e68f8a53a05d031a6d3deb",
+        "size": 1369143
+      },
+      "sha256": "2f0652646d66156ecff8ccd27b743fb4a13e5b8c3c1a1be27a338c329890cf26"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@1x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "edcf685ab4b770e9381ccef09e78951c8fe44bc0e9d612fbc7c2455f5ebefd15",
+        "size": 910
+      },
+      "sha256": "5494ede7ba5def2538a99864bff79171f6f711d8118783f3d89e4f4db1cadd5d"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@2x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "b24b47d64758591b3af63df0b3d91bae3c10dbdad3f564c6ef3c391c2852c913",
+        "size": 2439
+      },
+      "sha256": "e6a2a78ae6955aa19a6b697069647e5aeea83fd98bc19d1483d660135fc3f4ce"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@3x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "55a017df34043829b6c2ac97721dcfdee254de1499acf575b4d8f350441cfeea",
+        "size": 4703
+      },
+      "sha256": "83e56f5595886cdf77e5801ad4c0cc8581d628b866db40cdbec02a65baa1f61d"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@1x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "7a8ac4162b86a788582a893dc1f5d76c3d41b331ecad54277a32dd82749277b8",
+        "size": 1495
+      },
+      "sha256": "3ff927bfebf8ce9e7cc71d7abedd4d9cac1de31237cf77b7b231fb09f95a4149"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@2x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "6650060915425d00943e7dd631c78b4036a9c4dba0e1bb5dd0e472ff9ab003c5",
+        "size": 4439
+      },
+      "sha256": "7749a515e5428426f2af917b78de71df11c6854835455fd4209f38397d6dbc91"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@3x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "3617a9d3e4f7e6aa20b11c27ac4e74fd0e0e82133a924d14f5ba9686df269d09",
+        "size": 8488
+      },
+      "sha256": "22e2aa628be17c44f8d67ac7c38caa8a33273e108c24eea36cc4406d9a04e32c"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@1x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "b24b47d64758591b3af63df0b3d91bae3c10dbdad3f564c6ef3c391c2852c913",
+        "size": 2439
+      },
+      "sha256": "cd9d2586de2471b979c623e1058d4eb189270761241430dc8e69b8bb28cb097e"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@2x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "ee7d47501c54a2d690293845ed8d571e9421f87ac09c9c439ed0fe6c6e80fe0a",
+        "size": 7410
+      },
+      "sha256": "256a42c0072bbbf62171ff890fdcf641d17cd9cbc2e48b4231cf5ad429251090"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@3x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "6381f6cfa227a513eb7bfdac352491ad6ff469b3f3a73d1a951e133e3aae2fa4",
+        "size": 14863
+      },
+      "sha256": "f7e21028df415750bd8098b0d1f55155bb73cae8ffccbbc22355aad1f91dad07"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@1x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "33ecf0035a7bf79e993161a47321251629898b1d1d036b8e2f1302fee18244f9",
+        "size": 3412
+      },
+      "sha256": "2a2cf35fe41b628687e9290c579a3c729b66a0ed5fbe3870dfe057e49ac98634"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@2x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "27cc6f8e2d452741fc2b25278a2bad990b05c00ed6f6a434d0f9c054a821b49c",
+        "size": 10858
+      },
+      "sha256": "00190d302df8338e959a50a72519a3299511e60e0b6d4dc40807c621f5f6815b"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@1x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "70e32636d250fcb1eba641d9590d2178c5c443f21788c94c18ed9aa0112a3509",
+        "size": 4316
+      },
+      "sha256": "ba0d71e6ca3a8e2cef84ab5c5e91f6ca4f83bca31905370bbdfc5500f71036df"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@2x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "99e5465f1825a69eccf6396ec890a48153ee29baba20e34c07b8ec274dca2dec",
+        "size": 13670
+      },
+      "sha256": "a0d0133539272d367e720f7c141c78cac3eab5cc63b5a8afa025987fc03c3124"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@2x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "6381f6cfa227a513eb7bfdac352491ad6ff469b3f3a73d1a951e133e3aae2fa4",
+        "size": 14863
+      },
+      "sha256": "6baf2a9923099ccdb32d6b5838d40ea53030519e584001a111151a5bb361dd74"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@3x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "9db846b9d463d2dfeae581c27226df5d78344a33ae23fc586c6ec43d1acab732",
+        "size": 31028
+      },
+      "sha256": "26403b02d1ed3acc68c3d09443aa2111eeeb1751e35e238cb32172701d2a82a2"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@1x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "2bc4465b01feead28c3d8437a6c1797b14139859db2817060f3370be95460f91",
+        "size": 6251
+      },
+      "sha256": "e6d1a3e648e7bc2023a037b0e74663e558b973fe1c4b219f5e4ed51e3a93f05a"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@2x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "9c647245e3cd5e999adbaa35242e16c68c399dde4c2f0c2cca4ace187bb5f3b6",
+        "size": 20590
+      },
+      "sha256": "33863b7e28a2688753e8d7ef4b57048e1f7a97b50b8b0fcb71a2f999c4c7a040"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@1x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "39b510605975c7071ed4c07dd5cf863d09d2cf4f536d5918d5eefb7f9546246b",
+        "size": 6873
+      },
+      "sha256": "3ad9b1d5b8bd179e42ca42e5a1299abbde84ea7be9c9b205a4b8056a19b2730d"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@2x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "0bbcc5d0633c81cd5bdd8741a022d8280c5e01832396c8233969e24b1c2675d2",
+        "size": 22834
+      },
+      "sha256": "985d3dc484813a19c52dfc2e7474c32657cc61c25abc52862801676b4da50589"
+    },
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-83.5x83.5@2x.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "2dfe411aec40d4476b94a600f79d248abcab05cc5b24895b1739b4f9ddd3b695",
+        "size": 27226
+      },
+      "sha256": "8a7a817f71279294c745717de7d17d4e08212d4b5182c0f0d0eef2d9419da9c8"
+    },
+    "ios/Runner/Base.lproj/LaunchScreen.storyboard": {
+      "mode": "644",
+      "sha256": "50540f4463fa145ed84dc8a00c8187ae422f84a24a1c12d997ee9d549749afc3"
+    },
+    "ios/Runner/Base.lproj/Main.storyboard": {
+      "mode": "644",
+      "sha256": "fd367b6c43006d61b730f674970dd48b9f662c8f2264e52ffc1558102a2c9f2d"
+    },
+    "ios/Runner/Info.plist": {
+      "mode": "644",
+      "sha256": "b45de4bbf032c25da50ea732cbff10e66ee6ea475c3b2bcdba91b4aec6642565"
+    },
+    "ios/Runner/Runner-Bridging-Header.h": {
+      "mode": "644",
+      "sha256": "1a8d11d01d1cc92c650c9c9ed35299240052d4683a15a719a2315ef44185e074"
+    },
+    "ios/RunnerTests/RunnerTests.swift": {
+      "mode": "644",
+      "sha256": "5e8f4908dacea6f29b2a790e4d38bf5fded69096063f9a27a2f21584d62b30c0"
+    },
+    "lib/connection_probe.dart": {
+      "mode": "644",
+      "sha256": "751073f983f010bdec66578a83cb84b3683e02daf0cc1d4ae473cde20ae4530e"
+    },
+    "lib/connection_probe_io.dart": {
+      "mode": "644",
+      "sha256": "50177410b37ca107fc1a29ebef85bb1fcb96fc9843c960891024a78375e0d936"
+    },
+    "lib/connection_probe_stub.dart": {
+      "mode": "644",
+      "sha256": "15c55d56df23f1d7fed5de0af9ea4d289c97dbedf70fb66dd0d841751adb2948"
+    },
+    "lib/main.dart": {
+      "mode": "644",
+      "sha256": "abd020642fd49a952955ee26652dd1a56565f9acc79ade138ac04b4efb79bf7b"
+    },
+    "lib/main.self.dart": {
+      "mode": "644",
+      "sha256": "9cb95f839e1b0ba8e84488c1570f7cb3014903185eb615e8e9102c69ded2c8d9"
+    },
+    "lib/main.server.dart": {
+      "mode": "644",
+      "sha256": "da927acbfd811aa5ff2e959b93bff6921944b203388ee59a72a7fbd466ec4777"
+    },
+    "linux/.gitignore": {
+      "mode": "644",
+      "sha256": "5ded4f1a9d10d34bf6ee5beb0711d88ee2ef07b0f07ace9ed77935a246e8eb82"
+    },
+    "linux/CMakeLists.txt": {
+      "mode": "644",
+      "sha256": "ae0f85284db0f0104de13ca0fdd631b668bf25ba3046d9485a6e5d295105bc06"
+    },
+    "linux/flutter/CMakeLists.txt": {
+      "mode": "644",
+      "sha256": "787189e2623313cfee590a0b553338eb9fc68b3af922ddd77c5d39c75f989aeb"
+    },
+    "linux/flutter/generated_plugin_registrant.cc": {
+      "mode": "644",
+      "sha256": "67b8cfbfddbdf8dd824ff41e69db89abb953d7f96192ad45eed4ada973737380"
+    },
+    "linux/flutter/generated_plugin_registrant.h": {
+      "mode": "644",
+      "sha256": "00f93bb5b1faefdede8f6065df327522900fb0b8efee86bacf424fd947ed14bb"
+    },
+    "linux/flutter/generated_plugins.cmake": {
+      "mode": "644",
+      "sha256": "01f268f911fb665a468751ddbb43e174a600595a2b80dac043d349781b19ba90"
+    },
+    "linux/runner/CMakeLists.txt": {
+      "mode": "644",
+      "sha256": "8cdcfd911e770fd7d511c97c7bce6559486a815352a47c953f7ef632e236d2cc"
+    },
+    "linux/runner/main.cc": {
+      "mode": "644",
+      "sha256": "ea23f7cdf74091d63bba29ef60486370b766157b848f0cfe62bd8b1c1695a0c1"
+    },
+    "linux/runner/my_application.cc": {
+      "mode": "644",
+      "sha256": "a971974b96f72c41991eece7d696fa24ef15afae14ba628983159eb357082d7e"
+    },
+    "linux/runner/my_application.h": {
+      "mode": "644",
+      "sha256": "a044da4b485c93d0e1a79c62356b22c8856dd2bab537ffb6a9446fc905131316"
+    },
+    "macos/.gitignore": {
+      "mode": "644",
+      "sha256": "ffec1a0bbd70547186b82ad4e49089bafab2de309b89de97c776d70debb179fa"
+    },
+    "macos/Flutter/Flutter-Debug.xcconfig": {
+      "mode": "644",
+      "sha256": "802714a37a8fd3065fb3d8e21cbcfbb3147c7ad25f25934b64590085aa9f5b28"
+    },
+    "macos/Flutter/Flutter-Release.xcconfig": {
+      "mode": "644",
+      "sha256": "d575f436f8bab30d7096792396e73b65db242edc01913c4123d2c29e713b3a6d"
+    },
+    "macos/Flutter/GeneratedPluginRegistrant.swift": {
+      "mode": "644",
+      "sha256": "d6d86b0e157e94594e9ce3c60d9b3034ab7ac08f7deafb355e1c2c6180631c1e"
+    },
+    "macos/Podfile": {
+      "mode": "644",
+      "sha256": "46afee587c4ce12f5ea80942d379c6d6dc07037149e307fc30ade39a44132bb3"
+    },
+    "macos/Runner.xcodeproj/project.pbxproj": {
+      "mode": "644",
+      "sha256": "abde6c53e91d6e1f84a04e19abe67b2495e64c910bd77a1dda9f743b4db393ba"
+    },
+    "macos/Runner.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist": {
+      "mode": "644",
+      "sha256": "dfa0f9bb85b95ccba9c6811adadf8cb407fb5d52088e89db83ebc308ec448542"
+    },
+    "macos/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme": {
+      "mode": "644",
+      "sha256": "d3719f353cec6c3fbf1bbe644c245ccbc65ea42c9f1a938cb71b348d7b95f970"
+    },
+    "macos/Runner.xcworkspace/contents.xcworkspacedata": {
+      "mode": "644",
+      "sha256": "465e6de5660384eb6832e8078920ba6cd5305c445cb29a24a86a2fda4aa6b67e"
+    },
+    "macos/Runner.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist": {
+      "mode": "644",
+      "sha256": "dfa0f9bb85b95ccba9c6811adadf8cb407fb5d52088e89db83ebc308ec448542"
+    },
+    "macos/Runner/AppDelegate.swift": {
+      "mode": "644",
+      "sha256": "ce9dbe45a57c59e85519da50a26c471615b9c8cdd85a8f4a39d2e480e62a4af4"
+    },
+    "macos/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json": {
+      "mode": "644",
+      "sha256": "2f6d47350f39cde7d3fabf1dc8109e0ed6638d0ca353c20d3f70b0ad43e5c102"
+    },
+    "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_1024.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "3d0f21803d8ac44f5150da1ab48da61276a8b53cb8e68f8a53a05d031a6d3deb",
+        "size": 1369143
+      },
+      "sha256": "75222d0ffa47d439d681d0f713566e23d59276a5b3915c4b2fc007f05836ca6f"
+    },
+    "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_128.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "6fa50619b9c93b796c645fb6a1144efd83681b038f738c949cfbc4aac8c2191b",
+        "size": 16761
+      },
+      "sha256": "ef56ac71eb269227ded17633e1267ee4f71bcaa4372916b30720431f24293658"
+    },
+    "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_16.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "b6f0edea6a648166986573c6b4ffa0b460403ee1b24fb6eeb8a1f9949346cb60",
+        "size": 670
+      },
+      "sha256": "c493cdb4c9801f0bd0462115bddb55dab975bc0a3bb80a2f9840a601d754697d"
+    },
+    "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_256.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "9ae1c408f0082bf75ef163077d1156a3f18bbca6595fcce15cb3dc713913be25",
+        "size": 62509
+      },
+      "sha256": "3b1568a7abe7cbc220103c9223186cec751176d23fd53ce9a422a9593ed107f2"
+    },
+    "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_32.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "2fe4f117f5dbeac9606474983b81a8212abd118716272d66bd3496754be14064",
+        "size": 1778
+      },
+      "sha256": "b539a5e6633ecfc99b12bff112f9979ea7e83ee6685160a35f1ec1387ecd5202"
+    },
+    "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_512.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "15e530446d007c5c563e3d12134faf3add53404f101ff8a7276d78d1e1555dc7",
+        "size": 269039
+      },
+      "sha256": "03a876813e8e6b7c792d9a2c4f133cc7a2675454fe1a767e8b04889161f95f1e"
+    },
+    "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_64.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "4ff7cb6bf04f0928dc32156c76e0a41a52e0781c02858771ce17766f6a85c147",
+        "size": 5207
+      },
+      "sha256": "1d61f86bec04e10829b134e6ed4b4cbd7327220ec51eff4feaa86eaa2da5fda3"
+    },
+    "macos/Runner/Base.lproj/MainMenu.xib": {
+      "mode": "644",
+      "sha256": "be9e9ef8469d3262370e0f0b855ed163cbf9c8362c59e330b2ffe63b86fa42f4"
+    },
+    "macos/Runner/Configs/AppInfo.xcconfig": {
+      "mode": "644",
+      "sha256": "c80ab1b825d3ab9d6a87021fc1c09381b274cabd8574e45fc3a9a12970ad4713"
+    },
+    "macos/Runner/Configs/Debug.xcconfig": {
+      "mode": "644",
+      "sha256": "8067d533ef6593760baad9a9855a786a7a77470fcc3f0925ec04fe43bc1ac4b0"
+    },
+    "macos/Runner/Configs/Release.xcconfig": {
+      "mode": "644",
+      "sha256": "7a6a4b4d973a23052fa0a0388dd261e32d311d7b66ba1bfc3b914b361808ac61"
+    },
+    "macos/Runner/Configs/Warnings.xcconfig": {
+      "mode": "644",
+      "sha256": "0e341a392b16ad302d12890aa3dac9257a6c10ece685437604259a85341645a3"
+    },
+    "macos/Runner/DebugProfile.entitlements": {
+      "mode": "644",
+      "sha256": "4a4eb36ebec785aaf0c6cb9dbc07ea21e0a74808d2845b94e76ff1bcad30f15f"
+    },
+    "macos/Runner/Info.plist": {
+      "mode": "644",
+      "sha256": "583fbd0a005135e85412474c5ab5e5a6930db87802862d0da2f7173617188004"
+    },
+    "macos/Runner/MainFlutterWindow.swift": {
+      "mode": "644",
+      "sha256": "65c9613c11bcedfa51416b16c975d8ba6ff12b405fc19d60db8755d92e86d9fe"
+    },
+    "macos/Runner/Release.entitlements": {
+      "mode": "644",
+      "sha256": "0ea7097a596c66b25b324eb5941e63129208b2f8abf4270543a6a44d319ca2e3"
+    },
+    "macos/RunnerTests/RunnerTests.swift": {
+      "mode": "644",
+      "sha256": "6bc180bc77c7def7a21d197233e25dff42cc493ab9d294632edafc18fdf0ac44"
+    },
+    "pubspec.yaml": {
+      "mode": "644",
+      "sha256": "699b177f594d4808e8aeb135356044209265ab082016402c49ab431799c76ddb"
+    },
+    "ruflet_packages/ruflet/lib/ruflet.dart": {
+      "mode": "644",
+      "sha256": "25337eba7da61b0f26186bca6ac5063667f4040921cee3f90067b990777d5f0c"
+    },
+    "ruflet_packages/ruflet/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "f4386701be8d522f49e0858abf2ba68ec88eb21fd7c06d82bad996d09539def7"
+    },
+    "ruflet_packages/ruflet/vendor/flutter_markdown_plus/lib/flutter_markdown_plus.dart": {
+      "mode": "644",
+      "sha256": "89c7fcababe71cebcf3941b17cb8be9bbfd6139c689d8a2e943aad3184571eb4"
+    },
+    "ruflet_packages/ruflet/vendor/flutter_markdown_plus/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "a951592d07b0c98161c17e8b2a7a61e56df9a75fe63600d7ba39f37a3c8e4430"
+    },
+    "ruflet_packages/ruflet/vendor/flutter_math_fork/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "daab6a35ead26e40ff21268c50f477210c7a6f4d90c1d2efbf2fc51a4e4abb57"
+    },
+    "ruflet_packages/ruflet_ads/lib/ruflet_ads.dart": {
+      "mode": "644",
+      "sha256": "a17a8bebbc45add08a7eb36f90cd3f7bf11e896147cbd74420784005b3af600c"
+    },
+    "ruflet_packages/ruflet_ads/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "ccd2b23f20f26ba094fe7f93b2ef1525ad5e560efdb14644c7aedc46867a59d9"
+    },
+    "ruflet_packages/ruflet_audio/lib/ruflet_audio.dart": {
+      "mode": "644",
+      "sha256": "65c03a880eebd78de7075b0442833a3e3ee350d8a6037017d149827bd5879192"
+    },
+    "ruflet_packages/ruflet_audio/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "9c01f1aeadf67f7c269c0e4364c7cc919f75e498a7cb3d191e2f5e014d6e0c9d"
+    },
+    "ruflet_packages/ruflet_audio_recorder/lib/ruflet_audio_recorder.dart": {
+      "mode": "644",
+      "sha256": "b16566dce74cba6566845563089b33e058ed2f3b2e8f21ea0bcd132e2677b0eb"
+    },
+    "ruflet_packages/ruflet_audio_recorder/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "cf9ad64e0691b2531273b69d57b944670302696045e0984a87f349077edc881d"
+    },
+    "ruflet_packages/ruflet_camera/lib/ruflet_camera.dart": {
+      "mode": "644",
+      "sha256": "28e3dd9843d4db3fcf50eb61305152cbb93ecdcdae1d76a61cac619ed5211190"
+    },
+    "ruflet_packages/ruflet_camera/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "2039915b12f14cb9c644afd000233260862e76bc992a0e4b0d9700ef0c294395"
+    },
+    "ruflet_packages/ruflet_charts/lib/ruflet_charts.dart": {
+      "mode": "644",
+      "sha256": "46db1027d6c6b524e7ca025043ed4f542e9198dae8ec371950f221a0339f6983"
+    },
+    "ruflet_packages/ruflet_charts/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "fd8f378b2a393783344f0d2857417b0da3fc4781b91c3f5430f2cfa55e288804"
+    },
+    "ruflet_packages/ruflet_code_editor/lib/ruflet_code_editor.dart": {
+      "mode": "644",
+      "sha256": "324e2470640c60cbdd55d72aed3c1e782b5c47ff971dfb81a5857307700fdd80"
+    },
+    "ruflet_packages/ruflet_code_editor/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "4663b11cfd7fb0941bf970bf6ca8ec31e9998f2ea043d5293f33c6ac5fdeadd5"
+    },
+    "ruflet_packages/ruflet_color_pickers/lib/ruflet_color_pickers.dart": {
+      "mode": "644",
+      "sha256": "31868430b302625b92308bab7ecdcc35e0f0a02e364a4a47c56d0addba56bedc"
+    },
+    "ruflet_packages/ruflet_color_pickers/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "42ddb6751067902d5e28b292d63fbfc4d77e6ab9f8b115973a99deece9435f29"
+    },
+    "ruflet_packages/ruflet_datatable2/lib/ruflet_datatable2.dart": {
+      "mode": "644",
+      "sha256": "0ff3eb37c2eecce7bb3205fa13fce6d6db0a6e5b2c56a5c52829e4348e153c2c"
+    },
+    "ruflet_packages/ruflet_datatable2/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "ac37fe77e138d7edd2cee13f1da274bb2149e236cf6b7e73b4ee450bcbdd14a9"
+    },
+    "ruflet_packages/ruflet_flashlight/lib/ruflet_flashlight.dart": {
+      "mode": "644",
+      "sha256": "46db1027d6c6b524e7ca025043ed4f542e9198dae8ec371950f221a0339f6983"
+    },
+    "ruflet_packages/ruflet_flashlight/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "de641a1d9afe8c9c4b1d759f30e9c51442b2b2a6a1863537d25eec9a5d9a1d99"
+    },
+    "ruflet_packages/ruflet_geolocator/lib/ruflet_geolocator.dart": {
+      "mode": "644",
+      "sha256": "2ac66682923346289111cfbabea2cc96b1abd2f66355c18c2a74152734f46a2d"
+    },
+    "ruflet_packages/ruflet_geolocator/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "ef90e2183c9a6b9da1f114edeca0f065d50f58944f2a7db410ca86936578c2be"
+    },
+    "ruflet_packages/ruflet_lottie/lib/ruflet_lottie.dart": {
+      "mode": "644",
+      "sha256": "87142fd804f448efaf42e1c0447798438c4980c41a45c5820ec550f52d52dbde"
+    },
+    "ruflet_packages/ruflet_lottie/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "67cac5354bf7f5cec64bc6453ba2b6a6315553bbb0c88ec7564a7e15dff70c0c"
+    },
+    "ruflet_packages/ruflet_map/lib/ruflet_map.dart": {
+      "mode": "644",
+      "sha256": "f7f17f170a7ceec44831f1a65648ecce540d8cfb7cddd93c1dd1e2ff7c2c61d5"
+    },
+    "ruflet_packages/ruflet_map/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "6740208aa7c6696ac0f3137816eb9ae9c95fbdb6d4d5df9aaa6f660fecb63208"
+    },
+    "ruflet_packages/ruflet_permission_handler/lib/ruflet_permission_handler.dart": {
+      "mode": "644",
+      "sha256": "4e55c8d56e863f0b25ad278a9869dd75e39e59a5b10a164909c190f314e944dc"
+    },
+    "ruflet_packages/ruflet_permission_handler/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "5dcbc3580feb492779212cefccec7dad2608970ec2d0bf2c84eb08e1cda507df"
+    },
+    "ruflet_packages/ruflet_qrcode_scanner/lib/ruflet_qrcode_scanner.dart": {
+      "mode": "644",
+      "sha256": "7a4b47d6c1da535501a2c5c218f63d168e0a5f6c904eac04bb615564ac504184"
+    },
+    "ruflet_packages/ruflet_qrcode_scanner/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "6d288938fb11f7ca60a6e6c4202f82cef7089a9827b7727a91663123dbe78746"
+    },
+    "ruflet_packages/ruflet_rive/lib/ruflet_rive.dart": {
+      "mode": "644",
+      "sha256": "e634cfb3daed3b799eb8f589a4c89d40800eb875e3fd726df164c7052ed16f1d"
+    },
+    "ruflet_packages/ruflet_rive/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "631fbe8bf4100136a2fdf84233c853b89e31574672cb684940ee69f7503e52f4"
+    },
+    "ruflet_packages/ruflet_secure_storage/lib/ruflet_secure_storage.dart": {
+      "mode": "644",
+      "sha256": "6f3558f0041b54dfe327950b4d388c2d7930f90e074366da5020caee5b85bd8f"
+    },
+    "ruflet_packages/ruflet_secure_storage/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "5d8c9fdc33627161d0a8d973f4fa624dca1a2edaeae15816b0fbdaf087b51625"
+    },
+    "ruflet_packages/ruflet_spinkit/lib/ruflet_spinkit.dart": {
+      "mode": "644",
+      "sha256": "7a4b47d6c1da535501a2c5c218f63d168e0a5f6c904eac04bb615564ac504184"
+    },
+    "ruflet_packages/ruflet_spinkit/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "2a238d6186e6b119898c6075c51018d1edc1f764bfa2847ec856a762b1fd575e"
+    },
+    "ruflet_packages/ruflet_video/lib/ruflet_video.dart": {
+      "mode": "644",
+      "sha256": "b16566dce74cba6566845563089b33e058ed2f3b2e8f21ea0bcd132e2677b0eb"
+    },
+    "ruflet_packages/ruflet_video/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "1788da8204bdba689950bab91a0c05a0f61bc54a2d19bbb35c501585cdf4987a"
+    },
+    "ruflet_packages/ruflet_video/vendor/media_kit_video/lib/media_kit_video.dart": {
+      "mode": "644",
+      "sha256": "4ea6d06788b4b6f4ace41a489b4f92fed2b682e7e756a67c6814e03b10d7e3be"
+    },
+    "ruflet_packages/ruflet_video/vendor/media_kit_video/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "93c8b2624065e975f9b6ab984e063ac0b6d156b3ef4663bd32d1099cb4a30ef5"
+    },
+    "ruflet_packages/ruflet_webview/lib/ruflet_webview.dart": {
+      "mode": "644",
+      "sha256": "baa0d3cfe6ba6e36cfa998a83eb1cd338a3ef1d7236ff5988074bb33b6243410"
+    },
+    "ruflet_packages/ruflet_webview/pubspec.yaml": {
+      "mode": "644",
+      "sha256": "75fe5f1489ef3971b94bbc1f38734b945450a0dd7b2945291870f38ae39c54b3"
+    },
+    "test/ruflet_namespace_test.dart": {
+      "mode": "644",
+      "sha256": "ba7cd934f0b2d3115895ead8d06d888f663955a13df92089a9a72532ddfc2125"
+    },
+    "test/widget_test.dart": {
+      "mode": "644",
+      "sha256": "b386d61cc0b39bfb76def1cd068b7ccf4f8ed7c5d959cc185a19ade7ef2af88a"
+    },
+    "tool/RUFLET_SOURCE_SYNC.md": {
+      "mode": "644",
+      "sha256": "5979fedf9eabf47760aded39fcc9ed5ad2a9f87fef72c9b8b24c9cfb23f78280"
+    },
+    "tool/conformance/generate_ruflet_control_surface.rb": {
+      "mode": "644",
+      "sha256": "0f113a2ed3b35475796551a2d2a82ed83d465822e93ddfa61ad574a707588783"
+    },
+    "tool/conformance/generate_ruflet_source_integrity.rb": {
+      "mode": "644",
+      "sha256": "eebadfe9b81dff9dfad29c3005912fad851059f94af207cddd25f996b85605c6"
+    },
+    "tool/conformance/ruflet_control_surface.json": {
+      "mode": "644",
+      "sha256": "0a731f758a7ded31cfb84dad074f95790fdc6ebca4d460d8e8f5eb6443df2cf4"
+    },
+    "tool/conformance/ruflet_source_integrity.json": {
+      "mode": "644",
+      "restricted_from_sha256": "b8bbb6f266fb8d6d9c2a42aa7a108bdccba194e0ae5f2156f7c7b0d3095f8994",
+      "sha256": "7eb26d42bed338c6db83109b71f76d79d73e7f95a0cc3ac0f37bf1bf71bc6ee7"
+    },
+    "tool/conformance/test_ruflet_control_surface.rb": {
+      "mode": "644",
+      "sha256": "9250536cc51152534d7b7b80c763dc28fe44b23057c3b7a90185f13f728932fd"
+    },
+    "tool/conformance/test_ruflet_source_integrity.rb": {
+      "mode": "644",
+      "sha256": "640f34eb80a52cbc1cd739e5f2d2031b3dc59b75063587f2ba27a6b52286b234"
+    },
+    "tool/conformance/test_self_contained_runtime_contract.rb": {
+      "mode": "644",
+      "sha256": "017c63a4c5efa7d466e560afc5ab468c4cd49531ccb92c8b5483f680f2f42ed1"
+    },
+    "tool/sync_ruflet_source.rb": {
+      "mode": "644",
+      "sha256": "f4f9aa9acaa38effa7c7a22cd4db88b10498b2cd0e05e236b369f54014704a42"
+    },
+    "tool/test_sync_ruflet_source.rb": {
+      "mode": "644",
+      "sha256": "34c4c47d3475f386921a727301e0559b935f4c9351a4e7491c7f55268571e111"
+    },
+    "web/favicon.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "b6f0edea6a648166986573c6b4ffa0b460403ee1b24fb6eeb8a1f9949346cb60",
+        "size": 670
+      },
+      "sha256": "2fccf9b2f55dedf67f7e4ae014bd8c56009eaead07cb236ae758cc5950ddaa7a"
+    },
+    "web/icons/Icon-192.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "c41cd76a21252cbe3bdae551b15601c8045f8290f1c02ac4e78c9fc58ed437d2",
+        "size": 35627
+      },
+      "sha256": "c8923f7725f34ee27fda1232c0131b0c2862cb38b911eaaa0ecfe94f2c3715fc"
+    },
+    "web/icons/Icon-512.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "15e530446d007c5c563e3d12134faf3add53404f101ff8a7276d78d1e1555dc7",
+        "size": 269039
+      },
+      "sha256": "209242ab03d0450a0487ff5db43e00b0885aa48e1993c59abe27a42b5c5a48cb"
+    },
+    "web/icons/Icon-maskable-192.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "c41cd76a21252cbe3bdae551b15601c8045f8290f1c02ac4e78c9fc58ed437d2",
+        "size": 35627
+      },
+      "sha256": "96054c017cac4389351f07aca9888c8029dc772917ce64a24e1ac28918a2c266"
+    },
+    "web/icons/Icon-maskable-512.png": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "15e530446d007c5c563e3d12134faf3add53404f101ff8a7276d78d1e1555dc7",
+        "size": 269039
+      },
+      "sha256": "14960b01fa4478729b44720fd5f76c9636976440799ad98fa1b11d9a434a2b4c"
+    },
+    "web/index.html": {
+      "mode": "644",
+      "sha256": "171565c72df012cf6d6b88780962dc934db374f54924696565d90284d3f57c4e"
+    },
+    "web/manifest.json": {
+      "mode": "644",
+      "sha256": "5aebb2fa64043c202949f475d66c48e8887e37cfb82d3ddcba0c4acef0f6bc06"
+    },
+    "windows/.gitignore": {
+      "mode": "644",
+      "sha256": "96345475f1a3c66bd32d28178fba151ab1506b35b1f7857b8f7651863093ea11"
+    },
+    "windows/CMakeLists.txt": {
+      "mode": "644",
+      "sha256": "1c2fed1428865023bc07607c40e09747ea70a9fea9bfb8e1aec1db411acd1bc3"
+    },
+    "windows/flutter/CMakeLists.txt": {
+      "mode": "644",
+      "sha256": "1fe418971b6f41bb35ceb3d64113a835f3f6f171ecaa707bf232492b57a588d6"
+    },
+    "windows/flutter/generated_plugin_registrant.cc": {
+      "mode": "644",
+      "sha256": "e96973ceb3520e32581db01758f20567f402ec984f176bce49def2dd107797ab"
+    },
+    "windows/flutter/generated_plugin_registrant.h": {
+      "mode": "644",
+      "sha256": "dbc11635d7b1ba1887adf40df5b83d634e9c3ab0bee34510c71528bb4d73602a"
+    },
+    "windows/flutter/generated_plugins.cmake": {
+      "mode": "644",
+      "sha256": "3c4c58f09533c7774a52ecdbd18ea5b844632763f289d5624268a9e9ac1979b1"
+    },
+    "windows/runner/CMakeLists.txt": {
+      "mode": "644",
+      "sha256": "34119ec122e36940235ef4bc245fcfb43b6960ed443e28af1a8d833a81209b9e"
+    },
+    "windows/runner/Runner.rc": {
+      "mode": "644",
+      "sha256": "6d794ac2ad49cc191a3cc4e636082fb1031a22b819d12611fa3c97c088ce4567"
+    },
+    "windows/runner/flutter_window.cpp": {
+      "mode": "644",
+      "sha256": "dd185884c0b5301d400b58f12ebb36b1c8b326531597e531b40e44a6eeb0e943"
+    },
+    "windows/runner/flutter_window.h": {
+      "mode": "644",
+      "sha256": "38e0fcd3a0b83895852ec295cb70d90179c0dcd40d58f065eb5232a4ecd84898"
+    },
+    "windows/runner/main.cpp": {
+      "mode": "644",
+      "sha256": "db835d47cab23409da0c36e6539c98bc5efa386bdfd136314d0dfb5e37f2084e"
+    },
+    "windows/runner/resource.h": {
+      "mode": "644",
+      "sha256": "1fa98588b04561590ba1cf0521ab86a9db4a878312f21c9d5861d965ddd8d1ae"
+    },
+    "windows/runner/resources/app_icon.ico": {
+      "mode": "644",
+      "placeholder_for": {
+        "sha256": "fa3ee7b92612378f17fd8e0048e8f2550691b394e0ab548a877b4583cf47a853",
+        "size": 3303
+      },
+      "sha256": "36528a22a34fd64c262e9b5d0f253b1dc20d8b9ad8b2c2a6eb5c203c869efce9"
+    },
+    "windows/runner/runner.exe.manifest": {
+      "mode": "644",
+      "sha256": "825d243e9fa1542619909c1b72d09b3ed7c1f3b225bb8367c125835e5dc3f8aa"
+    },
+    "windows/runner/utils.cpp": {
+      "mode": "644",
+      "sha256": "dc2ee94d43116f959a4abd42557f71d07acc631abbffe03b11489dbeed35bedb"
+    },
+    "windows/runner/utils.h": {
+      "mode": "644",
+      "sha256": "95a7f7dddb832997cefa937a96f89472332277e75734a5de553610760b744b03"
+    },
+    "windows/runner/win32_window.cpp": {
+      "mode": "644",
+      "sha256": "9065f31ccf746cf8b390121f958f9e959033af864aed779597066625ed56bc36"
+    },
+    "windows/runner/win32_window.h": {
+      "mode": "644",
+      "sha256": "7dd03746b19dcf3542829b2f6e8ed40a2714ce5f2cb3b0e23f0118a2fcf62d62"
+    }
+  }
+}
