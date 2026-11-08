@@ -934,8 +934,8 @@ class RufletHotReloadTest < Minitest::Test
   end
 
   # A file in flight is loaded where the script requires it, as `require`
-  # would: once per load. Here the start moves from app.rb to main.rb, which
-  # requires app.rb twice.
+  # would: once per load, returning true and then false. Here the start
+  # moves from app.rb to main.rb, which requires app.rb twice.
   def test_a_file_in_flight_is_loaded_once_per_reload
     write_file("app.rb", <<~RUBY)
       $app_loads = ($app_loads || 0) + 1
@@ -944,9 +944,10 @@ class RufletHotReloadTest < Minitest::Test
     File.write(@script, <<~RUBY)
       require "ruflet"
       require "ruflet_server"
-      require_relative "app"
-      require_relative "app"
-      Ruflet.app(host: "127.0.0.1", port: 0) { text("from main") }.run
+      $app_required = [require_relative("app")]
+      $app_required << require_relative("app")
+      $main_server = Ruflet::Server.new(host: "127.0.0.1", port: 0) { |page| page.add("from main") }
+      $main_server.start
     RUBY
 
     start_served_runner
@@ -954,10 +955,20 @@ class RufletHotReloadTest < Minitest::Test
     write_file("app.rb", "$app_loads = ($app_loads || 0) + 1\n")
     wait_until("reload") { @runner.reload_count >= 1 }
 
-    assert_equal ["from main"], render_labels
+    assert_equal ["from main"], render
     assert_equal 2, $app_loads, "the second require of app.rb in the reload must not load it again"
+    assert_equal [true, false], $app_required, "as require reports it: loaded, then already loaded"
+
+    # Once app.rb's server stops, the first load goes on to main.rb's own
+    # start, which then runs as is; stopped here, so the runner returns.
+    @runner.server.stop
+    wait_until("main.rb's own server is bound") { $main_server&.port.to_i.positive? }
+    $main_server.stop
+    @thread.join(5)
+    refute @thread.alive?
   ensure
-    $app_loads = nil
+    $main_server&.stop
+    $app_loads = $app_required = $main_server = nil
   end
 
   # As with `require`, a file in flight whose load raised is loaded again by
@@ -1086,6 +1097,198 @@ class RufletHotReloadTest < Minitest::Test
 
     assert status.success?, err
     assert_equal "true true 2", out
+    refute_match(/reload failed/, err)
+  end
+
+  # Only the reloading fiber loads the files in flight. A `require` or
+  # `require_relative` of one on any other thread during the reload goes to
+  # Kernel's own, which waits on that file's require lock, as it always has,
+  # until the app's own server stops.
+  def test_a_require_on_another_thread_during_such_a_reload_goes_to_kernels_require
+    write_widgets("v1")
+    $app_loaders = []
+    write_file("app.rb", <<~RUBY)
+      require_relative "widgets"
+      $app_loaders << Thread.current
+      Ruflet.app(host: "127.0.0.1", port: 0) { text(WIDGET_LABEL) }.run
+    RUBY
+    # The path require_relative gives Kernel's require, so both wait on the
+    # same lock.
+    app_feature = File.join(real_path(@dir), "app")
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      if $start_other_requirers && $other_requirers.nil?
+        $other_requirers = [
+          Thread.new { require_relative "app" },
+          Thread.new { require #{app_feature.inspect} }
+        ]
+        sleep 0.01 until $other_requirers.all?(&:stop?)
+      end
+      require_relative "app"
+    RUBY
+
+    start_served_runner
+    $start_other_requirers = true
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+
+    assert_equal ["v2"], render_labels, "the reloading fiber loads app.rb and reaches the start"
+    assert_equal 2, $app_loaders.size
+    $other_requirers.each do |thread|
+      refute_includes $app_loaders, thread, "another thread must not load app.rb itself"
+      assert thread.alive?, "it waits on app.rb's require, as without the runner"
+    end
+
+    stop_served_runner
+    assert_equal [false, false], $other_requirers.map { |thread| thread.join(5)&.value },
+                 "once app.rb's require is done, it is already loaded"
+  ensure
+    $other_requirers&.each(&:kill)
+    $app_loaders = $start_other_requirers = $other_requirers = nil
+  end
+
+  # Only the files in flight themselves are loaded instead. A `require "app"`
+  # that finds another app.rb on the load path requires that file as Ruby
+  # always does, also while this app's app.rb is in flight.
+  def test_another_file_with_the_name_of_a_file_in_flight_is_required_as_usual
+    write_widgets("v1")
+    other_dir = Dir.mktmpdir("ruflet-hot-reload-other-")
+    File.write(File.join(other_dir, "app.rb"), "$other_app_loads = ($other_app_loads || 0) + 1\n")
+    write_file("app.rb", <<~RUBY)
+      require_relative "widgets"
+      Ruflet.app(host: "127.0.0.1", port: 0) { text(WIDGET_LABEL) }.run
+    RUBY
+    File.write(@script, <<~RUBY)
+      $LOAD_PATH.unshift(#{other_dir.inspect}) unless $LOAD_PATH.include?(#{other_dir.inspect})
+      require "ruflet"
+      require "ruflet_server"
+      $other_app_required = require "app"
+      require_relative "app"
+    RUBY
+
+    start_served_runner
+    assert_equal true, $other_app_required
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+
+    assert_equal ["v2"], render_labels
+    assert_equal 1, $other_app_loads, "the other app.rb is required, so the reload does not load it again"
+    assert_equal false, $other_app_required
+  ensure
+    $LOAD_PATH.delete(other_dir)
+    FileUtils.remove_entry(other_dir) if other_dir
+    $other_app_loads = $other_app_required = nil
+  end
+
+  # A file system that does not tell "App" from "app" (macOS by default)
+  # lets `require_relative "App"` load app.rb. That require is in flight too.
+  def test_a_file_in_flight_required_in_another_case_reloads
+    write_widgets("v1")
+    write_file("app.rb", <<~RUBY)
+      require_relative "widgets"
+      Ruflet.app(host: "127.0.0.1", port: 0) { text(WIDGET_LABEL) }.run
+    RUBY
+    skip "this file system tells App.rb from app.rb" unless File.exist?(File.join(@dir, "App.rb"))
+
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "App"
+    RUBY
+
+    start_served_runner
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+    assert_equal ["v2"], render_labels
+  end
+
+  # `require_relative` during such a reload resolves as Kernel's does: from
+  # eval'd code it raises the same LoadError.
+  def test_require_relative_from_eval_during_such_a_reload_raises_as_kernels_does
+    write_widgets("v1")
+    $eval_errors = []
+    write_file("app.rb", <<~RUBY)
+      require_relative "widgets"
+      Ruflet.app(host: "127.0.0.1", port: 0) { text(WIDGET_LABEL) }.run
+    RUBY
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      $eval_errors << begin
+        eval('require_relative "app"')
+      rescue LoadError => e
+        e.message
+      end
+      require_relative "app"
+    RUBY
+
+    start_served_runner
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+
+    assert_equal ["v2"], render_labels
+    assert_equal 2, $eval_errors.size
+    assert_kind_of String, $eval_errors.first, "Kernel's require_relative raises from eval'd code"
+    assert_equal $eval_errors.first, $eval_errors.last, "the reload's require_relative raises the same"
+  ensure
+    $eval_errors = nil
+  end
+
+  # Kernel#require_relative calls the interpreter's own require, never a
+  # Kernel#require wrapper such as bootsnap's, which the harness sets up
+  # before it loads the runner. During such a reload it still does. In a
+  # fresh process, so the wrapper exists before the runner is loaded.
+  def test_require_relative_during_such_a_reload_bypasses_kernel_require_wrappers
+    write_widgets("v1")
+    write_file("app.rb", <<~RUBY)
+      require_relative "widgets"
+      Ruflet.app(host: "127.0.0.1", port: 0) { text(WIDGET_LABEL) }.run
+    RUBY
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "app"
+    RUBY
+    driver = <<~'RUBY'
+      module Kernel
+        alias_method :__hot_reload_test_wrapped_require, :require
+        def require(path)
+          ($wrapped_requires ||= []) << path.to_s
+          __hot_reload_test_wrapped_require(path)
+        end
+        private :require, :__hot_reload_test_wrapped_require
+      end
+      require "ruflet/hot_reload"
+      def wait_for(what)
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 20
+        until yield
+          abort "timed out waiting for #{what}" if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+          sleep 0.02
+        end
+      end
+      runner = Ruflet::HotReload::Runner.new(script: ENV.fetch("TEST_SCRIPT"), poll_interval: 0.05, logger: ->(m) { warn m })
+      thread = Thread.new { runner.run }
+      wait_for("the app's server") { runner.server&.port.to_i.positive? }
+      app_files = ->(paths) { paths.select { |path| File.basename(path, ".rb") == "widgets" } }
+      first_load = app_files.call($wrapped_requires)
+      $wrapped_requires = []
+      runner.request_reload
+      wait_for("the reload") { runner.reload_count >= 1 }
+      print first_load.inspect, " ", app_files.call($wrapped_requires).inspect, " ", runner.reload_count
+      runner.server.stop
+      thread.join
+    RUBY
+    env = {
+      "RUBYLIB" => [File.expand_path("../lib", __dir__), CORE_LIB, SERVER_LIB].join(File::PATH_SEPARATOR),
+      "RUFLET_SUPPRESS_SERVER_BANNER" => "1",
+      "TEST_SCRIPT" => @script
+    }
+
+    out, err, status = run_ruby(env, "-e", driver)
+
+    assert status.success?, err
+    assert_equal "[] [] 1", out, "neither the first load's require_relative nor the reload's calls Kernel#require"
     refute_match(/reload failed/, err)
   end
 
