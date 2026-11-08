@@ -589,6 +589,47 @@ class RufletHotReloadTest < Minitest::Test
     $own_servers = $after_own_start = nil
   end
 
+  # Only the starts before the reload's entrypoint return at once. A start
+  # after that Ruflet.run still ends the reload there, as it does for any
+  # Ruflet.run app whose script starts a server after it.
+  def test_a_start_after_the_ruflet_run_still_ends_a_reload_once_the_own_server_stopped
+    $own_servers = []
+    $later_servers = []
+    $after_later_start = 0
+    write_widgets("v1")
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "widgets"
+
+      $own_servers << Ruflet::Server.new(host: "127.0.0.1", port: 0) { |page| page.add("own") }
+      $own_servers.last.start
+      Ruflet.run { |page| page.add(WIDGET_LABEL) }
+      $later_servers << Ruflet::Server.new(host: "127.0.0.1", port: 0) { |page| page.add("later") }
+      $later_servers.last.start
+      $after_later_start += 1
+    RUBY
+    @runner = new_runner
+    @thread = Thread.new { @runner.run }
+    wait_until("the app's own server is bound") { $own_servers.first&.port.to_i.positive? }
+    $own_servers.first.stop
+    # As on v0.0.23, the later server runs as is and holds the load.
+    wait_until("the later server is bound") { $later_servers.first&.port.to_i.positive? }
+    $later_servers.first.stop
+    wait_until("the runner's own server serves") { @runner.server.is_a?(FakeServer) && @runner.watching? }
+    assert_equal 1, $after_later_start
+
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+    assert_equal ["v2"], render
+    assert_equal 2, $later_servers.size
+    assert_equal 0, $later_servers.last.port, "the reload ends at the later start without starting that server"
+    assert_equal 1, $after_later_start, "so the code after it does not run on a reload"
+  ensure
+    ($own_servers.to_a + $later_servers.to_a).each(&:stop)
+    $own_servers = $later_servers = $after_later_start = nil
+  end
+
   # On v0.0.23 a server the script starts itself after an intercepted
   # Ruflet.run blocked the load and served as is; the runner's own server
   # came up only once that one stopped. It still does. On a reload, too,
