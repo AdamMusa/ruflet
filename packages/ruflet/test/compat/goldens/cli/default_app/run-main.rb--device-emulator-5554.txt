@@ -8,7 +8,9 @@ exit: 1
 ## commands (0)
 
 ## output
-err| <uncaught> OptionParser::InvalidOption: invalid option: --device
+err| ruflet run: --device is not supported yet.
+err| To open the app on a phone or emulator, run `ruflet run` and scan the QR code with Ruflet Explorer,
+err| or build and install it: `ruflet build apk --self`, then `ruflet install --device emulator-5554`.
 
 ## files
 (no files changed)

@@ -90,12 +90,16 @@ class RufletCliDispatchTest < Minitest::Test
   def test_every_command_word_runs_its_command_with_the_remaining_arguments
     HANDLERS.each do |word, handler|
       cli = RecordingCli.new(result: 7)
-      argv = [word, "target", "--flag", "value"]
+      # A flag the command does not read reaches only the commands that parse
+      # their own flags or forward them; for the others it is a usage error
+      # before the command runs (CLI-12, cli_usage_test).
+      rest = Ruflet::CLI::Commands.lookup(word).unknown_flags == :reject ? %w[target value] : %w[target --flag value]
+      argv = [word, *rest]
       code = nil
       out, err = capture_io { code = cli.run(argv) }
 
       assert_equal 7, code, "#{word}: the command's result is the exit code"
-      assert_equal [[handler, %w[target --flag value]]], cli.calls, word
+      assert_equal [[handler, rest]], cli.calls, word
       assert_same argv, cli.calls.first.last, "#{word}: the command gets the caller's argv, minus the word"
       assert_empty out, word
       assert_empty err, word
@@ -117,11 +121,12 @@ class RufletCliDispatchTest < Minitest::Test
     end
   end
 
+  # (--help after them prints the version command's help since CLI-12.)
   def test_version_words_print_the_version_and_ignore_further_arguments
     VERSION_WORDS.each do |word|
       cli = RecordingCli.new
       code = nil
-      out, err = capture_io { code = cli.run([word, "--help", "extra"]) }
+      out, err = capture_io { code = cli.run([word, "extra", "more"]) }
 
       assert_equal 0, code, word
       assert_equal "ruflet #{Ruflet::VERSION}\n", out, word
@@ -130,8 +135,9 @@ class RufletCliDispatchTest < Minitest::Test
     end
   end
 
+  # (`help build` prints build's help since CLI-12; see cli_usage_test.)
   def test_help_words_and_no_arguments_print_help
-    [*HELP_WORDS.map { |word| [word] }, [], %w[help build], %w[--help bogus]].each do |argv|
+    [*HELP_WORDS.map { |word| [word] }, [], %w[help bogus], %w[--help bogus]].each do |argv|
       cli = RecordingCli.new
       code = nil
       out, err = capture_io { code = cli.run(argv.dup) }

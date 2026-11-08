@@ -104,8 +104,9 @@ class RufletCliCommandsTest < Minitest::Test
     %w[run update debug emulators].each do |name|
       command = Commands.lookup(name)
       parser = captured_parser(command.handler)
+      # Each parser also takes -h/--help, which raises Commands::HelpRequested.
       declared = OptionParser.new do |o|
-        command.options.each { |option| o.on(*option.switches) {} }
+        [*command.options, Commands::HELP_OPTION].each { |option| o.on(*option.switches, *option.hidden) {} }
       end
 
       assert_equal parser.summarize, declared.summarize, "#{name} options"

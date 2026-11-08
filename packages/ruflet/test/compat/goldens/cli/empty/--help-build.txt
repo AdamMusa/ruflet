@@ -8,20 +8,18 @@ exit: 0
 ## commands (0)
 
 ## output
-out| Ruflet CLI
+out| Usage: ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--lite|--full|--self] [--verbose]
 out| 
-out| Commands:
-out|   ruflet --version
-out|   ruflet create <appname>
-out|   ruflet new <appname>
-out|   ruflet run [scriptname|path] [--web|--desktop] [--port PORT] [--no-reload]
-out|   ruflet update [web|desktop|all] [--check] [--force] [--platform PLATFORM]
-out|   ruflet debug [scriptname|path]
-out|   ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--lite|--full|--self] [--verbose]
-out|   ruflet install [--device DEVICE_ID] [--verbose]
-out|   ruflet devices
-out|   ruflet emulators
-out|   ruflet doctor [--fix] [--verbose]
+out| Build the app for one platform. The target may come before or after the flags.
+out| 
+out| Options:
+out|   --self           Self-contained lite build (default profile)
+out|   --lite           Self-contained lite build
+out|   --full           Self-contained full CRuby build with locked project gems
+out|   -v, --verbose    Print each step and run Flutter with -v
+out|   -h, --help       Show this help
+out| 
+out| Other arguments are passed to `flutter build <target>`.
 out| 
 out| Build profiles:
 out|   --self           Self-contained lite build (default profile)

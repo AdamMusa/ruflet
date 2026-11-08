@@ -3,12 +3,26 @@
 #   ruby packages/ruflet/test/compat/compat.rb --regenerate
 fixture: default_app
 command: ruflet emulators --cold
-exit: 1
+exit: 64
 
 ## commands (0)
 
 ## output
-err| <uncaught> OptionParser::InvalidOption: invalid option: --cold
+err| ruflet emulators: --cold needs --start --emulator ID
+err| 
+err| Usage: ruflet emulators [-v|--verbose]
+err|        ruflet emulators --start --emulator ID [--cold] [-v|--verbose]
+err| 
+err| List the configured emulators, or start one.
+err| 
+err| Options:
+err|   --create         Not implemented yet
+err|   --delete         Not implemented yet
+err|   --start          Launch the emulator named by --emulator
+err|   --emulator ID    Emulator to start
+err|   --cold           With --start: cold boot the emulator (Android only)
+err|   -v, --verbose    Run Flutter with -v
+err|   -h, --help       Show this help
 
 ## files
 (no files changed)

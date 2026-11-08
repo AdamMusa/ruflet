@@ -24,6 +24,7 @@ module Ruflet
           o.on("--check") { options[:check] = true }
           o.on("--force") { options[:force] = true }
           o.on("--platform PLATFORM") { |value| options[:platform] = value.to_s.downcase }
+          o.on("-h", "--help") { raise Commands::HelpRequested }
         end
         parser.parse!(args)
 

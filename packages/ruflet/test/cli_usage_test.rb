@@ -110,6 +110,9 @@ class RufletCliUsageTest < Minitest::Test
     code, _out, err = run_cli(host, %w[install -d])
     assert_equal 64, code
     assert_includes err, "ruflet install: missing argument: -d"
+    code, _out, err = run_cli(Host.new, %w[install --device=])
+    assert_equal 64, code
+    assert_includes err, "ruflet install: missing argument: --device="
 
     %w[--verbose=1 --fix=yes].each do |flag|
       code, _out, err = run_cli(Host.new, ["doctor", flag])

@@ -8,11 +8,17 @@ exit: 0
 ## commands (0)
 
 ## output
-out| Usage: ruflet [options]
-out|         --web
-out|         --desktop
-out|         --port PORT
-out|         --no-reload
+out| Usage: ruflet run [scriptname|path] [--web|--desktop] [--port PORT] [--no-reload]
+out| 
+out| Serve the app with hot reload, for Ruflet Explorer (the default), the web client or the desktop client.
+out| 
+out| Options:
+out|   --web            Serve the web client and open it in a browser
+out|   -d, --desktop    Open the app in the desktop client
+out|   --port PORT      Port to serve on (default 8550); the next free one if it is taken
+out|   --no-reload      Turn off hot reload
+out|   --device ID      Run on a Flutter device (not supported yet)
+out|   -h, --help       Show this help
 
 ## files
 (no files changed)

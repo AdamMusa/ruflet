@@ -4,7 +4,7 @@
 fixture: default_app
 command: ruflet debug --bogus-flag
 before: ruflet build web
-exit: 1
+exit: 64
 
 ## commands (1)
 1. capture3 exit=0
@@ -12,7 +12,19 @@ exit: 1
    env: GIT_TERMINAL_PROMPT=0
 
 ## output
-err| <uncaught> OptionParser::InvalidOption: invalid option: --bogus-flag
+err| ruflet debug: invalid option: --bogus-flag
+err| 
+err| Usage: ruflet debug [platform] [--platform NAME] [--device ID] [--release] [-v|--verbose] [--web-renderer NAME]
+err| 
+err| Run the Flutter client in build/client with `flutter run`.
+err| 
+err| Options:
+err|   --platform NAME               web, ios, android, macos, windows or linux
+err|   --device ID, --device-id ID   Flutter device to run on
+err|   --release                     Run a release build
+err|   -v, --verbose                 Run Flutter with -v
+err|   --web-renderer NAME           Passed to flutter run as --web-renderer
+err|   -h, --help                    Show this help
 
 ## files
 (no files changed)
