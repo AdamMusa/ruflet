@@ -250,6 +250,23 @@ module RufletCompat
       %w[run update debug build install devices emulators doctor].each { |command| cli "default_app", command, flag }
     end
 
+    # --- the template surface check (CRIT-04) ----------------------------------
+    # The vendored template predates Form, so an app using it is warned which
+    # template revision renders it, and --strict makes that an error. An app
+    # that uses nothing the template lacks gets no output.
+    form_app = {
+      "main.rb" => "require \"ruflet\"\n\nRuflet.run do |page|\n  page.add(form(controls: [text_field(label: \"Email\")]))\nend\n"
+    }
+    cli "default_app", "build", "apk", "--self", id: "build-apk--self-form", files: form_app
+    cli "default_app", "build", "apk", "--self", "--strict", id: "build-apk--self--strict-form", files: form_app
+    cli "default_app", "build", "apk", "--self", "--strict"
+    cli "default_app", "run", "main.rb", id: "run-main.rb-form", files: form_app, before: [%w[build web]]
+    cli "default_app", "run", "main.rb", "--strict", id: "run-main.rb--strict-form", files: form_app, before: [%w[build web]]
+    cli "default_app", "run", "main.rb", "--strict", before: [%w[build web]]
+    cli "default_app", "doctor", id: "doctor-form", files: form_app
+    cli "default_app", "doctor", "--strict", id: "doctor--strict-form", files: form_app
+    cli "default_app", "doctor", "--strict"
+
     INVOCATIONS.freeze
 
     # Initial page patch goldens: what a client receives in reply to

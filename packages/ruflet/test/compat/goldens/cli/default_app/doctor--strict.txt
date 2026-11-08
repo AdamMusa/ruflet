@@ -1,0 +1,23 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet doctor --strict
+exit: 64
+
+## commands (0)
+
+## output
+err| ruflet doctor: invalid option: --strict
+err| 
+err| Usage: ruflet doctor [--fix] [--verbose]
+err| 
+err| Report Ruby, the Flutter template and the Flutter SDK, then run `flutter doctor`.
+err| 
+err| Options:
+err|   -v, --verbose    Run flutter doctor with -v
+err|   --fix            Fetch the template again and install Flutter if it is missing
+err|   -h, --help       Show this help
+
+## files
+(no files changed)
