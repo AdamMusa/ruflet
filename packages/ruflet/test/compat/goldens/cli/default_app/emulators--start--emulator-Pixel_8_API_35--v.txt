@@ -1,0 +1,16 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet emulators --start --emulator Pixel_8_API_35 -v
+exit: 0
+
+## commands (1)
+1. system exit=0
+   <FLUTTER_SDK>/bin/flutter emulators --launch Pixel_8_API_35 -v
+   env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+## output
+
+## files
+(no files changed)

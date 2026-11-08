@@ -1,0 +1,24 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet run --help
+exit: 0
+
+## commands (0)
+
+## output
+out| Usage: ruflet run [scriptname|path] [--web|--desktop] [--port PORT] [--no-reload]
+out| 
+out| Serve the app with hot reload, for Ruflet Explorer (the default), the web client or the desktop client.
+out| 
+out| Options:
+out|   --web            Serve the web client and open it in a browser
+out|   -d, --desktop    Open the app in the desktop client
+out|   --port PORT      Port to serve on (default 8550); the next free one if it is taken
+out|   --no-reload      Turn off hot reload
+out|   --device ID      Run on a Flutter device (not supported yet)
+out|   -h, --help       Show this help
+
+## files
+(no files changed)
