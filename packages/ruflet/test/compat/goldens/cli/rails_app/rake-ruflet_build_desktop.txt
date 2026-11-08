@@ -86,7 +86,6 @@ A <PROJECT>/build/client/ios/Runner.xcodeproj/project.pbxproj  sha256:c1ac7f9733
 A <PROJECT>/build/client/ios/Runner/Info.plist  sha256:bfb529283a7918b6 3903b  (from template, edited)
 A <PROJECT>/build/client/lib/main.self.dart  sha256:98d21bfab813772e 7150b  (from template, edited)
 A <PROJECT>/build/client/lib/main.server.dart  sha256:3b0e84ed8d4d664f 5232b  (from template, edited)
-A <PROJECT>/build/client/lib/ruflet_bootstrap.g.dart  sha256:e95e319ae4280270 949b  (new)
 A <PROJECT>/build/client/linux/CMakeLists.txt  sha256:a46161becc6ca5f2 4757b  (from template, edited)
 A <PROJECT>/build/client/macos/Runner/Configs/AppInfo.xcconfig  sha256:9cb6dc12887b6c96 605b  (from template, edited)
 A <PROJECT>/build/client/macos/Runner/DebugProfile.entitlements  sha256:2b7b2a09740bccf5 528b  (from template, edited)
@@ -372,32 +371,6 @@ Binary <PROJECT>/build/client/assets/splash.png: sha256:b81063fd52d07df2
      // --FAT_CLIENT_END--
    ];
  
---- /dev/null
-+++ <PROJECT>/build/client/lib/ruflet_bootstrap.g.dart
-@@ -0,0 +1,23 @@
-+// GENERATED FILE. DO NOT EDIT.
-+//
-+// `ruflet build` writes this file into the Flutter client on every build.
-+// lib/main.self.dart and lib/main.server.dart run its hooks in list order:
-+//
-+// * rufletPreRunAppHooks are awaited one at a time just before runApp, once
-+//   the Flutter binding and every extension are initialized.
-+// * rufletPostFirstFrameHooks run one at a time after the first frame.
-+//
-+// A hook that throws is reported through FlutterError.reportError and does
-+// not stop the hooks after it or the app. With both lists empty the
-+// entrypoints skip the hooks entirely. Build features add hooks through
-+// Ruflet::CLI::ClientBootstrap in the ruflet gem.
-+
-+import 'dart:async';
-+
-+/// A bootstrap hook: a top-level or static function that takes no
-+/// arguments.
-+typedef RufletBootstrapHook = FutureOr<void> Function();
-+
-+const rufletPreRunAppHooks = <RufletBootstrapHook>[];
-+
-+const rufletPostFirstFrameHooks = <RufletBootstrapHook>[];
 --- <TEMPLATE>/linux/CMakeLists.txt
 +++ <PROJECT>/build/client/linux/CMakeLists.txt
 @@ -4,10 +4,10 @@

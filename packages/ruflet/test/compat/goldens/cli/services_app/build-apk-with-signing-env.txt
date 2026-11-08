@@ -79,7 +79,6 @@ A <PROJECT>/build/client/ios/Runner/Info.plist  sha256:f4451e4beb196d74 4514b  (
 A <PROJECT>/build/client/lib/main.dart  sha256:ac3c7ada2cfa2342 292b  (from template, edited)
 A <PROJECT>/build/client/lib/main.self.dart  sha256:f47cca8f1e9ece58 9107b  (from template, edited)
 A <PROJECT>/build/client/lib/main.server.dart  sha256:21a5d984d0af9832 7185b  (from template, edited)
-A <PROJECT>/build/client/lib/ruflet_bootstrap.g.dart  sha256:e95e319ae4280270 949b  (new)
 A <PROJECT>/build/client/linux/CMakeLists.txt  sha256:957ae466ce1452ea 4768b  (from template, edited)
 A <PROJECT>/build/client/macos/Runner/Configs/AppInfo.xcconfig  sha256:0fa2d10156e1b7b8 615b  (from template, edited)
 A <PROJECT>/build/client/macos/Runner/DebugProfile.entitlements  sha256:bd2d90eea33d2b21 657b  (from template, edited)
@@ -282,32 +281,6 @@ Binary <PROJECT>/build/client/assets/splash_dark.png: sha256:cc869d27fd1d485d
  
  const bool isProduction = bool.fromEnvironment('dart.vm.product');
  const int kRufletPort = 8550;
---- /dev/null
-+++ <PROJECT>/build/client/lib/ruflet_bootstrap.g.dart
-@@ -0,0 +1,23 @@
-+// GENERATED FILE. DO NOT EDIT.
-+//
-+// `ruflet build` writes this file into the Flutter client on every build.
-+// lib/main.self.dart and lib/main.server.dart run its hooks in list order:
-+//
-+// * rufletPreRunAppHooks are awaited one at a time just before runApp, once
-+//   the Flutter binding and every extension are initialized.
-+// * rufletPostFirstFrameHooks run one at a time after the first frame.
-+//
-+// A hook that throws is reported through FlutterError.reportError and does
-+// not stop the hooks after it or the app. With both lists empty the
-+// entrypoints skip the hooks entirely. Build features add hooks through
-+// Ruflet::CLI::ClientBootstrap in the ruflet gem.
-+
-+import 'dart:async';
-+
-+/// A bootstrap hook: a top-level or static function that takes no
-+/// arguments.
-+typedef RufletBootstrapHook = FutureOr<void> Function();
-+
-+const rufletPreRunAppHooks = <RufletBootstrapHook>[];
-+
-+const rufletPostFirstFrameHooks = <RufletBootstrapHook>[];
 --- <TEMPLATE>/linux/CMakeLists.txt
 +++ <PROJECT>/build/client/linux/CMakeLists.txt
 @@ -4,10 +4,10 @@

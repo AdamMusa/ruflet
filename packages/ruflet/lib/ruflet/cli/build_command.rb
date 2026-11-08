@@ -581,8 +581,9 @@ module Ruflet
         if @ruflet_extension_selection_applied && !validate_flutter_extension_selection(client_dir)
           return false
         end
-        # Once the entrypoints are final, so a hook can depend on the
-        # extensions this build selected.
+        # Startup hooks (WP-00 R3). While no build feature adds one, this
+        # writes nothing. It runs once the entrypoints are final, so a hook can
+        # depend on the extensions this build selected.
         write_client_bootstrap(client_dir, config, platform: platform, self_contained: self_contained)
         asset_flags = apply_build_config(client_dir, config)
         if asset_flags[:error]
