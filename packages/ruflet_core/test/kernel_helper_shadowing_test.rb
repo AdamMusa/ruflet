@@ -240,6 +240,46 @@ class KernelHelperShadowingTest < Minitest::Test
     assert_equal "Form", component.new.form_with_fields.to_patch["_c"]
   end
 
+  # A method_missing written without keywords (`def method_missing(name,
+  # *args, &block) ... super`) hands a call's keywords on to super as a
+  # trailing Hash. The helper still gets them as keywords, as the Kernel
+  # method did on main, instead of building a control from a Hash
+  # (`steps => {current_step: 1}`). Explicit receivers still raise.
+  def test_keywords_passed_on_by_a_keywordless_method_missing_stay_keywords
+    keywordless = Class.new(PartialMissing) do
+      def stepper_with_options = stepper(current_step: 1, type: "horizontal")
+      def stepper_with_steps = stepper([stepper_step(title: "A")], current_step: 0)
+      def table_with_rows = table(rows: [table_row([text("r")])], border_width: 1)
+      def dialog = about_dialog(application_name: "App")
+      def auth = local_auth(key: "auth")
+      def positional = form([text_field(label: "Name")])
+    end
+    object = keywordless.new
+    expected = {
+      stepper_with_options: Ruflet::DSL.stepper(current_step: 1, type: "horizontal"),
+      stepper_with_steps: Ruflet::DSL.stepper([Ruflet::DSL.stepper_step(title: "A")], current_step: 0),
+      table_with_rows: Ruflet::DSL.table(rows: [Ruflet::DSL.table_row([Ruflet::DSL.text("r")])], border_width: 1),
+      dialog: Ruflet::DSL.about_dialog(application_name: "App"),
+      auth: Ruflet::DSL.local_auth(key: "auth"),
+      positional: Ruflet::DSL.form([Ruflet::DSL.text_field(label: "Name")])
+    }
+
+    expected.each do |method, control|
+      assert_equal without_ids(control.to_patch), without_ids(object.public_send(method).to_patch), method.to_s
+    end
+    assert_equal :handled, object.handled
+
+    error = assert_raises(NoMethodError) { object.stepper(current_step: 1) }
+    assert_equal :stepper, error.name
+    refute error.private_call?
+
+    # Anywhere else a Hash argument is passed as written, as to the Kernel
+    # method on main: a positional Hash is not about_dialog's keywords.
+    plain = Object.new
+    assert_raises(ArgumentError) { plain.instance_eval { about_dialog({ application_name: "App" }) } }
+    assert_equal "AboutDialog", plain.instance_eval { about_dialog(application_name: "App") }.wire_type
+  end
+
   # Every helper v0.0.23 shipped is a private Kernel method, so a bare call
   # to it works with no arguments anywhere (`divider` in a component). The
   # newer ones answer the same calls: a bare word, `name()` and `self.name`,

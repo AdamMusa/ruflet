@@ -603,6 +603,33 @@ module Ruflet
         end
       end
 
+      # The arguments Kernel#method_missing hands the helper for a call
+      # implicit_call? accepted. A method_missing written without keywords
+      # (`def method_missing(name, *args, &block) ... super`) passes a call's
+      # keywords on as a trailing Hash, which the helper would take as its
+      # content: `stepper(current_step: 1)` in such a class built a Stepper
+      # whose steps were that Hash. On main the helper was a Kernel method and
+      # got the keywords as written, so a trailing Hash of Symbol keys from
+      # such a call is read as keywords again. A call that did not pass
+      # through another method_missing keeps its arguments as written.
+      def self.call_arguments(receiver, args, props)
+        options = args.last
+        return [args, props] unless props.empty? && options.is_a?(Hash) && !options.empty?
+        return [args, props] unless options.keys.all? { |key| key.is_a?(Symbol) }
+        return [args, props] unless own_method_missing?(receiver)
+
+        [args[0...-1], options]
+      end
+
+      # Whether `receiver` answers missing methods with a method_missing of its
+      # own, ahead of Kernel's. Kernel#method is used directly because classes
+      # such as HTTP requests define a `method` of their own.
+      def self.own_method_missing?(receiver)
+        !Kernel.instance_method(:method).bind_call(receiver, :method_missing).owner.equal?(Kernel)
+      rescue StandardError
+        false
+      end
+
       private
 
       def control_delegate

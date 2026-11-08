@@ -215,6 +215,7 @@ module Kernel
       rescue NameError => error
         raise error unless scoped.implicit_call?(error, self, name)
       end
+      args, props = scoped.call_arguments(self, args, props)
       return Ruflet::DSL.public_send(name, *args, **props, &block)
     end
     return super if name.to_s.end_with?("=") || (args.empty? && props.empty? && !block)
