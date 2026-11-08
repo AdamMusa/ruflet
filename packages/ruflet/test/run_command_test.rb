@@ -705,7 +705,7 @@ class RufletCliRunCommandTest < Minitest::Test
 
       core_gate.write(".")
       core_gate.close
-      assert_equal run_state[:child_pid], runner.delivered.pop, "the queued reload is sent without a ready report"
+      assert_equal run_state[:child_pid], next_from(runner.delivered, "the fallback"), "the queued reload is sent without a ready report"
       assert_equal [run_state[:child_pid]], runner.reload_signals
       refute run_state[:reload_pending]
 
@@ -750,7 +750,7 @@ class RufletCliRunCommandTest < Minitest::Test
       TCPSocket.new("127.0.0.1", port).close # the app's own thread serves it
 
       capture_io { assert runner.send(:handle_reload_command, "r", run_state) }
-      assert_equal run_state[:child_pid], runner.delivered.pop, "r reaches the app once its trap is reported"
+      assert_equal run_state[:child_pid], next_from(runner.delivered, "the fallback"), "r reaches the app once its trap is reported"
       app.release
       assert_equal "still running\n", app.progress.gets, "USR1 is trapped, so r cannot kill the app"
       TCPSocket.new("127.0.0.1", port).close
@@ -814,7 +814,9 @@ class RufletCliRunCommandTest < Minitest::Test
       runner.send(:spawn_app_child, env, cmd, run_state, out: File::NULL, err: File::NULL)
       progress = File.open(File.join(dir, "progress"), "r")
       assert_equal "L1#{frame}", read_progress(progress)
-      run_state[:ready_thread].join # the app reported ready and closed the fd
+      # The app reports ready and closes the fd; the limit only turns an app
+      # that never does into a failure instead of the session guard's timeout.
+      assert run_state[:ready_thread].join(30), "the app never reported ready"
       assert run_state[:ready], "the app must report ready"
 
       capture_io { assert runner.send(:handle_reload_command, "r", run_state) }
@@ -836,6 +838,15 @@ class RufletCliRunCommandTest < Minitest::Test
   def read_progress(io)
     assert IO.select([io], nil, nil, 30), "the app never reported"
     io.read(3)
+  end
+
+  # The next entry of queue. The fallback these tests wait for fires at once
+  # (ready_fallback_seconds: 0); the limit only turns a fallback that never
+  # fires into a failure instead of a hung suite.
+  def next_from(queue, what, seconds: 15)
+    Timeout.timeout(seconds) { queue.pop }
+  rescue Timeout::Error
+    flunk "#{what} never fired"
   end
 
   # Records reload signals without sending them (these pids are not real),
@@ -876,7 +887,7 @@ class RufletCliRunCommandTest < Minitest::Test
     runner = SignalRecorder.new
     watch_ready_pipe(runner, child_pid: 4242, ready_fallback_seconds: 0) do |run_state, writer, thread|
       writer.write("t") # USR1 trapped; ready never follows
-      assert_equal 4242, runner.marked_ready.pop
+      assert_equal 4242, next_from(runner.marked_ready, "the fallback")
       assert run_state[:ready], "after the fallback, r goes straight to the app"
       refute run_state[:reload_pending]
       assert_equal [4242], runner.reload_signals
@@ -915,7 +926,7 @@ class RufletCliRunCommandTest < Minitest::Test
     runner = SignalRecorder.new
     watch_ready_pipe(runner, child_pid: 2, watched_pid: 1, ready_fallback_seconds: 0) do |run_state, writer, thread|
       writer.write("t")
-      assert_equal 1, runner.marked_ready.pop # the fallback for the replaced app ran out
+      assert_equal 1, next_from(runner.marked_ready, "the fallback") # the fallback for the replaced app ran out
       refute run_state[:ready]
       assert run_state[:reload_pending], "the successor's queued reload waits for the successor"
       assert_empty runner.reload_signals
@@ -934,7 +945,7 @@ class RufletCliRunCommandTest < Minitest::Test
       runner.send(:mark_restarting, run_state) # what "R" does before it kills the app
       run_state[:restart] = true
       writer.write("t") # the old app's fallback runs out during the restart
-      assert_equal 4242, runner.marked_ready.pop
+      assert_equal 4242, next_from(runner.marked_ready, "the fallback")
       refute run_state[:ready], "the app being replaced must not mark the session up"
 
       run_state[:restart] = false # the run loop has reaped the old app, no respawn yet
