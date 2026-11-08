@@ -162,9 +162,16 @@ module Ruflet
       # Whether any Dart file under lib/ imports the generated file. It only
       # reads, and reads bytes, so a file in a client dir the developer owns
       # that is not valid UTF-8, or not readable, cannot fail a build.
+      #
+      # The client path is the glob's base, never part of its pattern: a
+      # developer's client dir may be named "my app [v2]" or "proj{1}", and
+      # those characters would otherwise be read as glob syntax and match
+      # nothing.
       def client_bootstrap_imported?(client_dir)
+        lib_dir = File.join(client_dir, "lib")
         generated = File.expand_path(File.join(client_dir, CLIENT_BOOTSTRAP_PATH))
-        Dir.glob(File.join(client_dir, "lib", "**", "*.dart")).any? do |dart_file|
+        Dir.glob("**/*.dart", base: lib_dir).any? do |relative_path|
+          dart_file = File.join(lib_dir, relative_path)
           next false if File.expand_path(dart_file) == generated || !File.file?(dart_file)
 
           source = File.binread(dart_file)

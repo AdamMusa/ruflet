@@ -311,6 +311,40 @@ class RufletCliClientBootstrapTest < Minitest::Test
     end
   end
 
+  # RUFLET_CLIENT_DIR and ./ruflet_client can sit under any directory name.
+  # Glob characters in it must not hide the entrypoints that import the file:
+  # the hooks would then be routed to a file that is never written.
+  GLOB_CHARACTER_DIRS = ["my app [v2]", "proj{1}", "a,b{c,d}"].freeze
+
+  def test_hooks_reach_a_client_dir_whose_path_has_glob_characters
+    GLOB_CHARACTER_DIRS.each do |name|
+      with_client(self.class.marked_entrypoints, name: name) do |client_dir|
+        assert_equal File.join(client_dir, GENERATED),
+                     HookedBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web"), name
+        assert_equal HOOKED_BOOTSTRAP, File.binread(File.join(client_dir, GENERATED)), name
+        self.class.marked_entrypoints.each do |relative_path, source|
+          assert_equal routed(source), read_utf8(client_dir, relative_path), "#{name}: #{relative_path}"
+        end
+      end
+    end
+  end
+
+  # ... and without hooks, a generated file something still imports there must
+  # be kept, not taken for a leftover and deleted.
+  def test_an_imported_bootstrap_is_kept_in_a_client_dir_whose_path_has_glob_characters
+    entrypoints = self.class.marked_entrypoints.transform_values { |source| routed(source) }
+
+    GLOB_CHARACTER_DIRS.each do |name|
+      with_client(entrypoints, name: name) do |client_dir|
+        path = File.join(client_dir, GENERATED)
+        File.binwrite(path, HOOKED_BOOTSTRAP)
+
+        assert_equal path, DummyBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web"), name
+        assert_equal EMPTY_BOOTSTRAP, File.binread(path), name
+      end
+    end
+  end
+
   def test_recognises_imports_of_the_generated_file_only
     pattern = Ruflet::CLI::ClientBootstrap::CLIENT_BOOTSTRAP_IMPORT_LINE
 
@@ -634,8 +668,9 @@ class RufletCliClientBootstrapTest < Minitest::Test
     refute lines[(at + 1)..].any? { |line| line.start_with?("import ") }, "#{message}: the import must follow the last import"
   end
 
-  def with_client(entrypoints)
-    Dir.mktmpdir do |client_dir|
+  def with_client(entrypoints, name: nil)
+    Dir.mktmpdir do |dir|
+      client_dir = name ? File.join(dir, name, "client") : dir
       FileUtils.mkdir_p(File.join(client_dir, "lib"))
       File.write(File.join(client_dir, "lib", "main.dart"),
                  "import 'main.self.dart' as self_app;\n\nFuture<void> main() => self_app.main();\n")
