@@ -308,6 +308,24 @@ module RufletCompat
                                                  env: { "RUFLET_CLIENT_DIR" => "<SANDBOX>/client" }
     cli "default_app", "build", "apk", "--self", id: "build-apk--self-with-missing-RUFLET_CLIENT_DIR",
                                                  env: { "RUFLET_CLIENT_DIR" => "<PROJECT>/no_such_client" }
+    # RUFLET_CONFIG also moves the directory config paths resolve against:
+    # assets named in the config, and the services.yaml beside it.
+    cli "default_app", "build", "apk", id: "build-apk-with-RUFLET_CONFIG-relative-assets-and-services",
+                                       env: { "RUFLET_CONFIG" => "config/alt.yaml" },
+                                       files: {
+                                         "config/alt.yaml" => "#{alt_config}assets:\n  icon_launcher: assets/icon.png\n" \
+                                                              "  splash_screen: assets/splash.png\n",
+                                         "config/assets/icon.png" => "compat: the icon beside config/alt.yaml\n",
+                                         "config/assets/splash.png" => "compat: the splash beside config/alt.yaml\n",
+                                         "config/services.yaml" => "services:\n  - camera\n"
+                                       }
+    # RUFLET_IOS_TEAM_ID for an app that names no team (services_app's
+    # ios.team_id wins over it), and what a macOS build does with it today
+    # (it sets the iOS project's team; D6 adds an explicit macos.team_id).
+    cli "default_app", "build", "ios", "--self", id: "build-ios--self-with-RUFLET_IOS_TEAM_ID",
+                                                 env: { "RUFLET_IOS_TEAM_ID" => "ENVTEAM42" }
+    cli "default_app", "build", "macos", "--self", id: "build-macos--self-with-RUFLET_IOS_TEAM_ID",
+                                                   env: { "RUFLET_IOS_TEAM_ID" => "ENVTEAM42" }
 
     # --- docs example apps: the embedded (self-contained) project ------------
     DOCS_APPS.each { |id| cli "docs_#{id}", "build", "apk", "--self" }
@@ -336,20 +354,25 @@ module RufletCompat
     INVOCATIONS.freeze
 
     # Initial page patch goldens: what a client receives in reply to
-    # register_client for each fixture app.
+    # register_client for each fixture app, from Ruflet::Server (`ruflet
+    # run`). The `--rails-endpoint` entries run the Rails apps the way a Rails
+    # server serves them, through the endpoint config/routes.rb mounts
+    # (`Ruflet::Rails.native`): register_client without a page patch, then
+    # the page as `page.update` op patches.
+    rails_prelude = 'Ruflet::Rails.config.backend_url = "https://app.test"' # config/initializers/ruflet.rb
     PAGES = [
       { "fixture" => "default_app", "entrypoint" => "main.rb" },
       { "fixture" => "services_app", "entrypoint" => "main.rb" },
       { "fixture" => "rails_app", "entrypoint" => "app/views/ruflet/main.rb", "rails" => true },
       *DOCS_APPS.map { |id| { "fixture" => "docs_#{id}", "entrypoint" => "main.rb" } },
       *DOCS_RAILS_APPS.map do |id|
-        {
-          "fixture" => "docs_#{id}",
-          "entrypoint" => "main.rb",
-          "rails" => true,
-          # The Rails host sets this in config/initializers/ruflet.rb.
-          "prelude" => 'Ruflet::Rails.config.backend_url = "https://app.test"'
-        }
+        { "fixture" => "docs_#{id}", "entrypoint" => "main.rb", "rails" => true, "prelude" => rails_prelude }
+      end,
+      { "fixture" => "rails_app", "id" => "rails_app--rails-endpoint", "mode" => "rails_endpoint",
+        "entrypoint" => "app/views/ruflet/main.rb", "rails" => true },
+      *DOCS_RAILS_APPS.map do |id|
+        { "fixture" => "docs_#{id}", "id" => "docs_#{id}--rails-endpoint", "mode" => "rails_endpoint",
+          "entrypoint" => "main.rb", "rails" => true, "prelude" => rails_prelude }
       end
     ].freeze
   end

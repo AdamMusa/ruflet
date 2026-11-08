@@ -142,7 +142,10 @@ module RufletCompat
     # configuration_reference.md "Environment variables", and the ruflet.yml
     # fallback it describes.
     ENVIRONMENT = {
-      "RUFLET_CONFIG" => %w[default_app/build-apk-with-RUFLET_CONFIG rails_app/rake-ruflet_build_apk],
+      "RUFLET_CONFIG" => %w[
+        default_app/build-apk-with-RUFLET_CONFIG default_app/build-apk-with-RUFLET_CONFIG-relative-assets-and-services
+        rails_app/rake-ruflet_build_apk
+      ],
       "ruflet.yml" => %w[default_app/build-apk-with-ruflet.yml],
       "RUFLET_PORT" => %w[default_app/run-main.rb-with-RUFLET_PORT],
       "RUFLET_CLIENT_DIR" => %w[

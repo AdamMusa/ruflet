@@ -1,0 +1,190 @@
+{
+  "fixture": "docs_rails_erb_to_native__1",
+  "entrypoint": "main.rb",
+  "mode": "rails_endpoint",
+  "mounted_as": "Ruflet::Rails.native(\"main.rb\")",
+  "rack_response": [
+    -1,
+    {},
+    []
+  ],
+  "handshake": [
+    "HTTP/1.1 101 Switching Protocols",
+    "Upgrade: websocket",
+    "Connection: Upgrade",
+    "Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo="
+  ],
+  "frame_opcodes": [
+    2,
+    2,
+    2
+  ],
+  "status": "ok",
+  "messages": [
+    {
+      "action": "register_client",
+      "payload": {
+        "session_id": "compat-session",
+        "page_patch": {},
+        "error": ""
+      }
+    },
+    {
+      "action": "patch_control",
+      "payload": {
+        "id": "#1",
+        "patch": [
+          [
+            0
+          ],
+          [
+            0,
+            0,
+            "_services",
+            []
+          ]
+        ]
+      }
+    },
+    {
+      "action": "patch_control",
+      "payload": {
+        "id": "#2",
+        "patch": [
+          [
+            0
+          ],
+          [
+            0,
+            0,
+            "views",
+            [
+              {
+                "_c": "View",
+                "_i": "#3",
+                "_internals": {
+                  "host_expanded": true
+                },
+                "appbar": {
+                  "_c": "AppBar",
+                  "_i": "#4",
+                  "title": {
+                    "_c": "Text",
+                    "_i": "#5",
+                    "value": "My app"
+                  }
+                },
+                "can_pop": true,
+                "fullscreen_dialog": false,
+                "horizontal_alignment": "start",
+                "padding": 10,
+                "route": "/",
+                "spacing": 10,
+                "vertical_alignment": "start",
+                "controls": [
+                  {
+                    "_c": "Column",
+                    "_i": "#6",
+                    "_internals": {
+                      "host_expanded": true
+                    },
+                    "expand": true,
+                    "spacing": 0,
+                    "scroll": "auto",
+                    "controls": [
+                      {
+                        "_c": "Container",
+                        "_i": "#7",
+                        "content": {
+                          "_c": "Column",
+                          "_i": "#8",
+                          "_internals": {
+                            "host_expanded": true
+                          },
+                          "spacing": 8,
+                          "run_spacing": 8,
+                          "controls": [
+                            {
+                              "_c": "Text",
+                              "_i": "#9",
+                              "value": "No screen for /mobile",
+                              "size": 24,
+                              "weight": "w600"
+                            },
+                            {
+                              "_c": "Text",
+                              "_i": "#10",
+                              "value": "No controller action matches this path.",
+                              "color": "#64748b"
+                            }
+                          ]
+                        },
+                        "padding": 24
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          ],
+          [
+            0,
+            0,
+            "route",
+            "/"
+          ],
+          [
+            0,
+            0,
+            "window",
+            {
+              "_c": "Window",
+              "_i": "#11"
+            }
+          ],
+          [
+            0,
+            0,
+            "_overlay",
+            {
+              "_c": "Overlay",
+              "_i": "#12",
+              "controls": []
+            }
+          ],
+          [
+            0,
+            0,
+            "_services",
+            {
+              "_c": "ServiceRegistry",
+              "_i": "#1",
+              "_services": [],
+              "_internals": {
+                "uid": "00000001"
+              }
+            }
+          ],
+          [
+            0,
+            0,
+            "_dialogs",
+            {
+              "_c": "Dialogs",
+              "_i": "#13",
+              "controls": []
+            }
+          ],
+          [
+            0,
+            0,
+            "title",
+            "Ruflet App"
+          ]
+        ]
+      }
+    }
+  ],
+  "stdout": "",
+  "stderr": ""
+}

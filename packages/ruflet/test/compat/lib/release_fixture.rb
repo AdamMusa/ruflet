@@ -2,7 +2,6 @@
 
 require "json"
 require "stringio"
-require "zlib"
 require_relative "tar"
 
 module RufletCompat
@@ -21,6 +20,15 @@ module RufletCompat
   # <app>`, Windows as the contents of the Release folder. The CLI extracts
   # them with the real host tools (lib/cli_child.rb), so what lands in the
   # client cache is what a developer's machine produces.
+  #
+  # Every archive is built once, when this file is loaded (before the CLI
+  # runs, spawns anything or starts a thread), by plain Ruby: gzip with
+  # stored deflate blocks, stored zip entries and a table CRC-32. No zlib
+  # stream is involved, so the bytes are the same on every run, host and
+  # zlib version, and no signal or thread switch during a request can
+  # change or break them. (Zlib::GzipWriter, built lazily on the first
+  # request, sometimes raised Zlib::BufError when the process was
+  # interrupted mid-deflate; the CLI rescued it and a golden changed.)
   module ReleaseFixture
     API = "https://api.github.com/repos/AdamMusa/Ruflet/releases"
     DOWNLOAD = "https://github.com/AdamMusa/Ruflet/releases/download"
@@ -59,15 +67,18 @@ module RufletCompat
       }
     end
 
-    def assets
-      @assets ||= asset_sources.transform_values do |(kind, content)|
-        case kind
-        when :tar_gz then tar_gz(content)
-        when :zip then zip(content)
-        else content.b
-        end
-      end
+    def build_assets
+      asset_sources.to_h do |name, (kind, content)|
+        bytes = case kind
+                when :tar_gz then tar_gz(content)
+                when :zip then zip(content)
+                else content.b
+                end
+        [name.freeze, bytes.freeze]
+      end.freeze
     end
+
+    def assets = ASSETS
 
     def release(tag, id:)
       {
@@ -113,12 +124,28 @@ module RufletCompat
     def tar_gz(files)
       tar = StringIO.new(+"".b)
       Tar.write(tar, files.map { |path, mode, data| Tar::Entry.new(path: path, mode: mode, data: data) })
-      out = StringIO.new(+"".b)
-      gz = Zlib::GzipWriter.new(out, Zlib::BEST_COMPRESSION)
-      gz.mtime = 1 # a fixed header: Zlib writes the current time for 0
-      gz.write(tar.string)
-      gz.finish
-      out.string
+      gzip_stored(tar.string)
+    end
+
+    # RFC 1952 gzip around RFC 1951 stored (uncompressed) blocks: a fixed
+    # header (mtime 1, no name, OS "unknown"), blocks of at most 65535
+    # bytes, then CRC-32 and size. Any gzip reader accepts it.
+    def gzip_stored(data)
+      data = data.b
+      out = [0x1f, 0x8b, 8, 0, 1, 0, 255].pack("CCCCVCC")
+      chunks = data.empty? ? [+"".b] : data.scan(/.{1,65535}/mn)
+      chunks.each_with_index do |chunk, index|
+        out << [index == chunks.length - 1 ? 1 : 0, chunk.bytesize, chunk.bytesize ^ 0xffff].pack("Cvv") << chunk
+      end
+      out << [crc32(data), data.bytesize & 0xffff_ffff].pack("VV")
+    end
+
+    CRC_TABLE = Array.new(256) do |byte|
+      8.times.reduce(byte) { |crc, _| crc.odd? ? (0xedb88320 ^ (crc >> 1)) : crc >> 1 }
+    end.freeze
+
+    def crc32(data)
+      data.each_byte.reduce(0xffff_ffff) { |crc, byte| CRC_TABLE[(crc ^ byte) & 0xff] ^ (crc >> 8) } ^ 0xffff_ffff
     end
 
     # A stored (uncompressed) zip with Unix modes in the external attributes,
@@ -129,7 +156,7 @@ module RufletCompat
       files.each do |path, mode, data|
         name = path.b
         data = data.b
-        crc = Zlib.crc32(data)
+        crc = crc32(data)
         offset = out.bytesize
         out << [0x04034b50, 20, 0, 0, 0, 0x21, crc, data.bytesize, data.bytesize, name.bytesize, 0].pack("VvvvvvVVVvv")
         out << name << data
@@ -141,5 +168,8 @@ module RufletCompat
       out << [0x06054b50, 0, 0, files.length, files.length, central.bytesize, out.bytesize - central.bytesize, 0].pack("VvvvvVVv")
       out
     end
+
+    # Built here, at load, never on a request.
+    ASSETS = build_assets
   end
 end
