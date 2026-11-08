@@ -1,0 +1,33 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet run main.rb --no-reload
+exit: 0
+
+## commands (2)
+1. system exit=0
+   <RUBY> -S bundle check
+   env: BUNDLE_GEMFILE=<PROJECT>/Gemfile RUFLET_ASSETS_DIR=<PROJECT>/assets RUFLET_PORT=8550 RUFLET_SUPPRESS_SERVER_BANNER=1 RUFLET_TARGET=mobile
+   options: err out
+2. spawn
+   <RUBY> -rbundler/setup <PROJECT>/main.rb
+   env: BUNDLE_GEMFILE=<PROJECT>/Gemfile RUFLET_ASSETS_DIR=<PROJECT>/assets RUFLET_PORT=8550 RUFLET_SUPPRESS_SERVER_BANNER=1 RUFLET_TARGET=mobile
+   options: pgroup
+
+## output
+out| Ruflet target: mobile
+out| 
+out| Ruflet mobile connect URL:
+out|   http://192.168.1.23:8550
+out| Scan this QR from ruflet_client (Connect -> Scan QR):
+out|    ▄ ▄▄▄ ▄ 
+out|    ▄   █▄█ 
+out|   ▀▀   ▀▀▄ 
+out|   ▄▄  ▀▄▄▀ 
+out|  ██ ▄▄▄█▀  
+out|            
+out| 
+
+## files
+(no files changed)
