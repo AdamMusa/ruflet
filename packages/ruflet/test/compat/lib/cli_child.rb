@@ -184,10 +184,54 @@ module CompatChild
       tool_result(true)
     end
 
+    # The values of a Flutter option in every spelling package:args accepts:
+    # `--name value`, `--name=value`, and for a one-letter abbreviation
+    # `-o value` and `-ovalue`.
+    def option_values(args, long_names, abbr: nil)
+      values = []
+      index = 0
+      while index < args.length
+        arg = args[index]
+        name, value = arg.split("=", 2)
+        if long_names.include?(arg) || (abbr && arg == "-#{abbr}")
+          values << args[index + 1] if args[index + 1]
+          index += 1
+        elsif value && long_names.include?(name)
+          values << value
+        elsif abbr && arg.start_with?("-#{abbr}") && !arg.start_with?("--") && arg.length > 2
+          values << arg[2..]
+        end
+        index += 1
+      end
+      values
+    end
+
     def flutter_build(args, cwd)
       target = args.first
       mode = args.include?("--debug") ? "debug" : "release"
       body = "ruflet compat placeholder: flutter build #{target}\n"
+      # Like Flutter, resolve path options against the working directory:
+      # inputs must exist, outputs are written there.
+      option_values(args, %w[--dart-define-from-file]).each do |path|
+        unless File.file?(File.expand_path(path, cwd))
+          return tool_result(false, stderr: "Did not find the file passed to \"--dart-define-from-file\". Path: #{path}\n")
+        end
+      end
+      option_values(args, %w[--export-options-plist]).each do |path|
+        return tool_result(false, stderr: "\"#{path}\" property list does not exist.\n") unless File.exist?(File.expand_path(path, cwd))
+      end
+      option_values(args, %w[--split-debug-info]).each do |dir|
+        stub_write(File.join(File.expand_path(dir, cwd), "app.#{target}.symbols"), body)
+      end
+      if args.include?("--analyze-size")
+        option_values(args, %w[--code-size-directory]).each do |dir|
+          stub_write(File.join(File.expand_path(dir, cwd), "snapshot.#{target}.json"), body)
+        end
+      end
+      option_values(args, %w[--performance-measurement-file]).each do |path|
+        stub_write(File.expand_path(path, cwd), "{}\n")
+      end
+      web_output = option_values(args, %w[--output --output-dir], abbr: "o").last
       outputs = case target
       when "apk" then ["build/app/outputs/flutter-apk/app-#{mode}.apk"]
       when "appbundle" then ["build/app/outputs/bundle/#{mode}/app-#{mode}.aab"]
@@ -195,14 +239,16 @@ module CompatChild
         sdk = args.include?("--simulator") ? "iphonesimulator" : "iphoneos"
         ["build/ios/#{sdk}/Runner.app/Info.plist"]
       when "ipa" then ["build/ios/archive/Runner.xcarchive/Info.plist", "build/ios/ipa/Runner.ipa"]
-      when "web" then ["build/web/index.html", "build/web/main.dart.js", "build/web/flutter_bootstrap.js"]
+      when "web"
+        dir = web_output ? File.expand_path(web_output, cwd) : "build/web"
+        %w[index.html main.dart.js flutter_bootstrap.js].map { |name| File.join(dir, name) }
       when "macos" then ["build/macos/Build/Products/Release/Runner.app/Contents/MacOS/Runner"]
       when "windows" then ["build/windows/x64/runner/Release/runner.exe"]
       when "linux" then ["build/linux/x64/release/bundle/runner"]
       else []
       end
       outputs.each do |relative|
-        path = File.join(cwd, relative)
+        path = File.expand_path(relative, cwd)
         stub_write(path, body)
         File.chmod(0o755, path) if relative.include?("/MacOS/") || relative.end_with?("/bundle/runner")
       end

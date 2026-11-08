@@ -90,18 +90,15 @@ A <PROJECT>/build/client/web/index.html  sha256:62b6f65e51ded6cc 1287b  (from te
 A <PROJECT>/build/client/web/manifest.json  sha256:45b453919db82242 775b  (from template, edited)
 A <PROJECT>/build/client/windows/CMakeLists.txt  sha256:f09c488039d326ff 4631b  (from template, edited)
 A <PROJECT>/build/client/windows/runner/Runner.rc  sha256:693290ccd6da2192 3041b  (from template, edited)
-A <PROJECT>/build/web/flutter_bootstrap.js  sha256:aa6aaff8b823aa71 45b  (new)
-A <PROJECT>/build/web/index.html  sha256:aa6aaff8b823aa71 45b  (new)
-A <PROJECT>/build/web/main.dart.js  sha256:aa6aaff8b823aa71 45b  (new)
 
 ## stub side effects (not CLI output)
   <PROJECT>/build/client/.dart_tool/package_config.json
   <PROJECT>/build/client/android/app/src/main/res/drawable/launch_background.xml
   <PROJECT>/build/client/android/app/src/main/res/mipmap-anydpi-v26/launcher_icon.xml
   <PROJECT>/build/client/android/app/src/main/res/values-v31/styles.xml
-  <PROJECT>/build/client/build/web/flutter_bootstrap.js
-  <PROJECT>/build/client/build/web/index.html
-  <PROJECT>/build/client/build/web/main.dart.js
+  <PROJECT>/build/client/dist/flutter_bootstrap.js
+  <PROJECT>/build/client/dist/index.html
+  <PROJECT>/build/client/dist/main.dart.js
 
 ## diffs
 --- /dev/null
@@ -749,15 +746,3 @@ Binary <PROJECT>/build/client/assets/splash.png: sha256:293cfc16e47a1860
              VALUE "ProductVersion", VERSION_AS_STRING "\0"
          END
      END
---- /dev/null
-+++ <PROJECT>/build/web/flutter_bootstrap.js
-@@ -0,0 +1,1 @@
-+ruflet compat placeholder: flutter build web
---- /dev/null
-+++ <PROJECT>/build/web/index.html
-@@ -0,0 +1,1 @@
-+ruflet compat placeholder: flutter build web
---- /dev/null
-+++ <PROJECT>/build/web/main.dart.js
-@@ -0,0 +1,1 @@
-+ruflet compat placeholder: flutter build web

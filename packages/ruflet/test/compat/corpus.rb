@@ -212,6 +212,18 @@ module RufletCompat
     cli "default_app", "build", "apk", "--release"
     cli "services_app", "build", "apk", "--release"
     cli "services_app", "build", "--release", "apk"
+    # CLI-05: path-valued Flutter flags in both spellings (-o, --split-debug-info
+    # and --web-renderer are above). The fixture files are the inputs Flutter
+    # must find.
+    defines = { "config/defines.json" => "{\"API_HOST\": \"api.example.com\"}\n" }
+    cli "default_app", "build", "web", "--output", "dist"
+    cli "default_app", "build", "web", "--output-dir=dist"
+    cli "default_app", "build", "apk", "--self", "--dart-define-from-file=config/defines.json", files: defines
+    cli "default_app", "build", "apk", "--self", "--dart-define-from-file", "config/defines.json", files: defines
+    cli "default_app", "build", "ipa", "--self", "--export-options-plist", "ExportOptions.plist",
+        files: { "ExportOptions.plist" => "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<plist version=\"1.0\"><dict/></plist>\n" }
+    cli "default_app", "build", "apk", "--self", "--analyze-size", "--code-size-directory=sizes",
+        "--performance-measurement-file", "perf.json"
 
     # --- command words, help, usage and exit codes (R2, CLI-12) ----------------
     # How the first argument picks a command (case-insensitively, aliases

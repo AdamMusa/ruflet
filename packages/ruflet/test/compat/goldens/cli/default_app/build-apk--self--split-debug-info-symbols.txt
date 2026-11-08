@@ -107,6 +107,7 @@ A <PROJECT>/build/client/windows/runner/Runner.rc  sha256:693290ccd6da2192 3041b
   <PROJECT>/build/client/android/app/src/main/res/mipmap-anydpi-v26/launcher_icon.xml
   <PROJECT>/build/client/android/app/src/main/res/values-v31/styles.xml
   <PROJECT>/build/client/build/app/outputs/flutter-apk/app-release.apk
+  <PROJECT>/build/client/symbols/app.apk.symbols
 
 ## diffs
 --- /dev/null
