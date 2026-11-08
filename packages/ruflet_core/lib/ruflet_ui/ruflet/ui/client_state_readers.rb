@@ -125,13 +125,21 @@ module Ruflet
         def install!
           return @skipped unless @skipped.nil?
 
+          @skipped = define_readers(table).freeze
+        end
+
+        # Defines a reader for each name on its class, unless the class already
+        # has a method of that name (see method_exists?). Returns the
+        # [class, name] pairs it skipped. install! calls it with the table;
+        # the tests call it with their own classes to check the guard.
+        def define_readers(pairs)
           skipped = []
-          table.each do |klass, names|
+          pairs.each do |klass, names|
             names.each do |name|
               skipped << [klass, name] unless define_reader(klass, name)
             end
           end
-          @skipped = skipped.freeze
+          skipped
         end
 
         private
@@ -149,7 +157,8 @@ module Ruflet
 
         # A plain zero-argument method. define_method checks the block's arity
         # on CRuby and in the embedded mruby VM alike, so `control.value(1)`
-        # raises the same ArgumentError on both.
+        # raises the same ArgumentError on both. Like any Ruby reader it
+        # ignores a block.
         def define_reader(klass, name)
           return false if method_exists?(klass, name)
 

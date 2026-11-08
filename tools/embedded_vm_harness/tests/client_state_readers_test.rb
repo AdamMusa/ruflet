@@ -114,6 +114,8 @@ rescue ArgumentError => e
   error = e
 end
 assert_equal("wrong number of arguments (given 1, expected 0)", error && error.message, "reader with an argument")
+assert_raises(ArgumentError, "reader with a keyword") { toggle.value(label: "x") }
+assert_equal(false, toggle.value { raise "a reader ignores its block" }, "reader ignores a block")
 assert_raises(NoMethodError, "no setter") { toggle.value = true }
 assert_raises(NoMethodError, "label has no reader") { toggle.label }
 assert(!toggle.respond_to?(:label), "respond_to?(:label) stays false")
@@ -138,6 +140,48 @@ recorder = Ruflet::UI::Services::RufletServicesComponents::AudioRecorderControl.
 %w[data key configuration].each do |name|
   assert(!recorder.respond_to?(name.to_sym), "audio_recorder respond_to?(:#{name}) stays false")
 end
+
+# The guard, on classes that do have such methods. mruby has no
+# Module#private_method_defined?; its method_defined? counts private methods.
+class GuardBase
+  attr_reader :props
+
+  def initialize(props)
+    @props = props
+  end
+
+  def selected
+    :inherited
+  end
+end
+
+class GuardControl < GuardBase
+  def value
+    :public
+  end
+
+  def expanded
+    :protected
+  end
+  protected :expanded
+
+  def selection
+    :private
+  end
+  private :selection
+end
+
+guard_names = %w[value expanded selection selected open entry_mode]
+skipped = readers.define_readers([[GuardControl, guard_names]])
+assert_equal(%w[value expanded selection selected open].map { |name| [GuardControl, name] }, skipped,
+             "guard skips public, protected, private, inherited and Kernel methods")
+guarded = GuardControl.new({ "value" => 1, "expanded" => 1, "selection" => 1, "selected" => 1, "open" => 1, "entry_mode" => "input" })
+assert_equal(:public, guarded.value, "public method kept")
+assert_equal(:protected, guarded.send(:expanded), "protected method kept")
+assert_equal(:private, guarded.send(:selection), "private method kept")
+assert_equal(:inherited, guarded.selected, "inherited method kept")
+assert_raises(NoMethodError, "private Kernel#open kept") { guarded.open }
+assert_equal("input", guarded.entry_mode, "reader defined where no method existed")
 
 stepper = Ruflet.stepper(steps: [])
 assert_equal("stepper", stepper.type, "Control#type is not shadowed")

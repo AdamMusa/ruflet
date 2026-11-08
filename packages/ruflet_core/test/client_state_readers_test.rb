@@ -194,9 +194,47 @@ class RufletClientStateReadersTest < Minitest::Test
 
     error = assert_raises(ArgumentError) { toggle.value(1) }
     assert_equal "wrong number of arguments (given 1, expected 0)", error.message
+    assert_raises(ArgumentError) { toggle.value(label: "x") }
+    assert_equal(false, toggle.value { raise "a reader ignores its block" })
     assert_raises(NoMethodError) { toggle.value = true }
     refute_respond_to toggle, :value=
     assert_equal false, toggle.props["value"]
+  end
+
+  # The guard itself: no table entry collides today, so check it on classes
+  # that do have such methods (public, protected, private, inherited, and the
+  # private Kernel#open every object has).
+  def test_a_reader_is_never_defined_over_an_existing_method
+    base = Class.new do
+      attr_reader :props
+
+      def initialize(props)
+        @props = props
+      end
+
+      def selected = :inherited
+    end
+    klass = Class.new(base) do
+      def value = :public
+
+      protected def expanded = :protected
+
+      private def selection = :private
+    end
+    names = %w[value expanded selection selected open entry_mode]
+
+    skipped = readers.define_readers([[klass, names]])
+
+    assert_equal(%w[value expanded selection selected open].map { |name| [klass, name] }, skipped)
+    control = klass.new(names.to_h { |name| [name, "prop"] })
+    assert_equal :public, control.value
+    assert_equal :protected, control.send(:expanded)
+    assert_equal :private, control.send(:selection)
+    assert_equal :inherited, control.selected
+    assert_equal Kernel, klass.instance_method(:open).owner
+    refute_respond_to control, :open
+    assert_equal "prop", control.entry_mode
+    assert_equal klass, klass.instance_method(:entry_mode).owner
   end
 
   def test_existing_methods_are_not_shadowed
