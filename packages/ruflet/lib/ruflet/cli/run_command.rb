@@ -17,6 +17,8 @@ require "time"
 module Ruflet
   module CLI
     module RunCommand
+      include TemplateSurfaceCheck
+
       # Release assets were published as ruflet_client-* before the preview
       # client became Ruflet Explorer. Ask for the current names, but keep
       # recognising the old ones so an existing release still resolves.
@@ -38,6 +40,10 @@ module Ruflet
         unless script_path
           warn "Script not found: #{script_token}"
           warn "Expected: ./#{script_token}.rb, ./#{script_token}, or explicit file path."
+          return 1
+        end
+        template_root = installed_template_surface_root
+        if template_root && !check_template_surface(template_root, strict: options[:strict], files: [script_path])
           return 1
         end
 
@@ -140,6 +146,7 @@ module Ruflet
           o.on("--port PORT", Integer) { |v| options[:requested_port] = v }
           o.on("--no-reload") { options[:reload] = false }
           o.on("--device ID") { |v| options[:device] = v }
+          o.on("--strict") { options[:strict] = true }
           o.on("-h", "--help") { raise Commands::HelpRequested }
         end
         parser.parse!(args)

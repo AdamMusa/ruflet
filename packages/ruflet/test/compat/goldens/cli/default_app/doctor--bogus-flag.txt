@@ -17,6 +17,7 @@ err|
 err| Options:
 err|   -v, --verbose    Run flutter doctor with -v
 err|   --fix            Fetch the template again and install Flutter if it is missing
+err|   --strict         Exit 1 when the template lacks a control, service or extension the app uses
 err|   -h, --help       Show this help
 
 ## files

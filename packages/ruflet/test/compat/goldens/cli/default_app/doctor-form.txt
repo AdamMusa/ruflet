@@ -33,6 +33,11 @@ out|   Ruby: <RUBY_VERSION>
 out|   Flutter host target: macos_arm64
 out|   Template: <HOME>/.ruflet/templates/ruflet_flutter_template
 out|   Template revision: c0ffee00c0ffee00c0ffee00c0ffee00c0ffee00
+err| warning: the Flutter template lacks 1 control this app uses:
+err|   form (Form), main.rb:4: needs ruflet-template e793ccef345b or newer
+err|   Template: <HOME>/.ruflet/templates/ruflet_flutter_template (revision c0ffee00c0ff)
+err|   Until it has them, a control it lacks shows "Unknown control".
+err|   Fetch the latest template with `ruflet doctor --fix`, or pass --strict to fail instead.
 out|   Ruby runtime: pub.dev package
 out|   Flutter: 3.41.2 stable
 

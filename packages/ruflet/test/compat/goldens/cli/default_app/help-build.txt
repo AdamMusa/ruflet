@@ -17,6 +17,7 @@ out|   --self           Self-contained lite build (default profile)
 out|   --lite           Self-contained lite build
 out|   --full           Self-contained full CRuby build with locked project gems
 out|   -v, --verbose    Print each step and run Flutter with -v
+out|   --strict         Fail when the template lacks a control, service or extension the app uses
 out|   -h, --help       Show this help
 out| 
 out| Other arguments are passed to `flutter build <target>`.

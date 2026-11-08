@@ -15,6 +15,7 @@ out|
 out| Options:
 out|   -v, --verbose    Run flutter doctor with -v
 out|   --fix            Fetch the template again and install Flutter if it is missing
+out|   --strict         Exit 1 when the template lacks a control, service or extension the app uses
 out|   -h, --help       Show this help
 
 ## files

@@ -234,6 +234,7 @@ class RufletCliUsageTest < Minitest::Test
         --lite           Self-contained lite build
         --full           Self-contained full CRuby build with locked project gems
         -v, --verbose    Print each step and run Flutter with -v
+        --strict         Fail when the template lacks a control, service or extension the app uses
         -h, --help       Show this help
 
       Other arguments are passed to `flutter build <target>`.

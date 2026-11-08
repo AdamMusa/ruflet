@@ -2,6 +2,8 @@
 
 require_relative "test_helper"
 require "json"
+require "open3"
+require "rbconfig"
 
 # CRIT-04(b): build, run and doctor read the template's
 # tool/conformance/ruflet_control_surface.json and warn when the app uses a
@@ -62,16 +64,15 @@ class RufletTemplateSurfaceTest < Minitest::Test
 
   # --- the table ---------------------------------------------------------------
 
+  # In a child process: the tool loads ruflet_core, which this process must not.
   def test_the_table_is_current_for_this_checkout
     tool = File.expand_path("../../../tools/template_surface_revisions.rb", __dir__)
     skip "not running from a source checkout" unless File.file?(tool) && Dir.exist?(File.expand_path("../../ruflet_core/lib", __dir__))
 
-    require tool
-    history = TemplateSurfaceRevisions.offline_history
-    expected = TemplateSurfaceRevisions.render(TemplateSurfaceRevisions.table(history), history)
-    assert_equal expected, File.read(TemplateSurfaceRevisions::OUTPUT),
-                 "a control, service or extension changed: run ruby tools/template_surface_revisions.rb " \
-                 "(--offline without a ruflet-template clone)"
+    out, err, status = Open3.capture3(RbConfig.ruby, tool, "--check", "--offline")
+    assert status.success?,
+           "a control, service or extension changed: run ruby tools/template_surface_revisions.rb " \
+           "(--offline without a ruflet-template clone)\n#{out}#{err}"
   end
 
   def test_the_table_names_the_revisions_form_and_local_auth_arrive_in
@@ -153,9 +154,9 @@ class RufletTemplateSurfaceTest < Minitest::Test
   end
 
   def test_a_wire_type_no_template_has_yet_says_so
-    with_wire_type("FutureThing", ["visual", %w[future_thing], nil]) do
-      project("main.rb" => "future_thing(key: 1)\n") do |dir|
-        template = new_template(File.join(dir, "template"))
+    project("main.rb" => "future_thing(key: 1)\n") do |dir|
+      template = new_template(File.join(dir, "template"))
+      with_wire_type("FutureThing", ["visual", %w[future_thing], nil]) do
         problem = Surface.problems(template, project_root: dir).first
 
         assert_equal ["future_thing", nil], [problem.name, problem.revision]

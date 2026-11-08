@@ -363,7 +363,8 @@ module Ruflet
           option("-d", "--desktop", description: "Open the app in the desktop client", hidden: %w[--de --d]),
           option("--port PORT", description: "Port to serve on (default 8550); the next free one if it is taken"),
           option("--no-reload", description: "Turn off hot reload"),
-          option("--device ID", description: "Run on a Flutter device (not supported yet)")
+          option("--device ID", description: "Run on a Flutter device (not supported yet)"),
+          option("--strict", description: "Exit 1 when the template lacks a control or service the app uses")
         ],
         unknown_flags: :command
       )
@@ -407,7 +408,8 @@ module Ruflet
           option("--self", description: "Self-contained lite build (default profile)"),
           option("--lite", description: "Self-contained lite build"),
           option("--full", description: "Self-contained full CRuby build with locked project gems"),
-          verbose
+          verbose,
+          option("--strict", description: "Fail when the template lacks a control, service or extension the app uses")
         ],
         forwards: "flutter build <target>",
         help: [
@@ -467,7 +469,8 @@ module Ruflet
         summary: "Report Ruby, the Flutter template and the Flutter SDK, then run `flutter doctor`.",
         options: [
           option("-v", "--verbose", description: "Run flutter doctor with -v"),
-          option("--fix", description: "Fetch the template again and install Flutter if it is missing")
+          option("--fix", description: "Fetch the template again and install Flutter if it is missing"),
+          option("--strict", description: "Exit 1 when the template lacks a control, service or extension the app uses")
         ],
         first_run_assets: true
       )

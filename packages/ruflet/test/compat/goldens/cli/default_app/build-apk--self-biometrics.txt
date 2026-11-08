@@ -23,6 +23,10 @@ exit: 1
 
 ## output
 out| [ruflet build] Preparing apk build (self-contained lite)
+err| warning: the Flutter template lacks 1 extension this app uses:
+err|   extension local_auth (ruflet_local_auth): needs ruflet-template cdbc2aaf6036 or newer
+err|   Template: <HOME>/.ruflet/templates/ruflet_flutter_template (revision c0ffee00c0ff)
+err|   Fetch the latest template with `ruflet doctor --fix`, or pass --strict to fail instead.
 out| [ruflet build] Verified 45 pinned Ruflet engine and extension source files at 98377b7ffd4f87c13b6443ceb173ca25170f6115
 out| [ruflet build] No Android signing configured; the release build will use the debug key
 err| build config error: selected Flutter extensions are missing: ruflet_local_auth

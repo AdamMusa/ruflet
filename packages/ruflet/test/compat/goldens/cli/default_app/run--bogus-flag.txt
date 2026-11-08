@@ -20,6 +20,7 @@ err|   -d, --desktop    Open the app in the desktop client
 err|   --port PORT      Port to serve on (default 8550); the next free one if it is taken
 err|   --no-reload      Turn off hot reload
 err|   --device ID      Run on a Flutter device (not supported yet)
+err|   --strict         Exit 1 when the template lacks a control or service the app uses
 err|   -h, --help       Show this help
 
 ## files

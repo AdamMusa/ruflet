@@ -4,24 +4,32 @@
 fixture: default_app
 command: ruflet run main.rb --strict
 before: ruflet build web
-exit: 64
+exit: 0
 
-## commands (0)
+## commands (2)
+1. system exit=0
+   <RUBY> -S bundle check
+   env: BUNDLE_GEMFILE=<PROJECT>/Gemfile RUFLET_APP_SCRIPT=<PROJECT>/main.rb RUFLET_ASSETS_DIR=<PROJECT>/assets RUFLET_BOOTSNAP_DIR=<HOME>/.ruflet/bootsnap/<RUBY_VERSION>/<PROJECT_KEY> RUFLET_PORT=8550 RUFLET_SUPPRESS_SERVER_BANNER=1 RUFLET_TARGET=mobile RUFLET_WATCH_ROOT=<PROJECT>
+   options: err out
+2. spawn
+   <RUBY> -rbundler/setup <GEM_HOME>/gems/ruflet-<RUFLET_VERSION>/lib/ruflet/hot_reload/harness.rb
+   env: BUNDLE_GEMFILE=<PROJECT>/Gemfile RUFLET_APP_SCRIPT=<PROJECT>/main.rb RUFLET_ASSETS_DIR=<PROJECT>/assets RUFLET_BOOTSNAP_DIR=<HOME>/.ruflet/bootsnap/<RUBY_VERSION>/<PROJECT_KEY> RUFLET_PORT=8550 RUFLET_SUPPRESS_SERVER_BANNER=1 RUFLET_TARGET=mobile RUFLET_WATCH_ROOT=<PROJECT>
+   options: pgroup
 
 ## output
-err| ruflet run: invalid option: --strict
-err| 
-err| Usage: ruflet run [scriptname|path] [--web|--desktop] [--port PORT] [--no-reload]
-err| 
-err| Serve the app with hot reload, for Ruflet Explorer (the default), the web client or the desktop client.
-err| 
-err| Options:
-err|   --web            Serve the web client and open it in a browser
-err|   -d, --desktop    Open the app in the desktop client
-err|   --port PORT      Port to serve on (default 8550); the next free one if it is taken
-err|   --no-reload      Turn off hot reload
-err|   --device ID      Run on a Flutter device (not supported yet)
-err|   -h, --help       Show this help
+out| Ruflet target: mobile
+out| 
+out| Ruflet mobile connect URL:
+out|   http://192.168.1.23:8550
+out| Scan this QR from ruflet_client (Connect -> Scan QR):
+out|    ▄ ▄▄▄ ▄ 
+out|    ▄   █▄█ 
+out|   ▀▀   ▀▀▄ 
+out|   ▄▄  ▀▄▄▀ 
+out|  ██ ▄▄▄█▀  
+out|            
+out| 
+out| Hot reload: watching *.rb (disable with --no-reload)
 
 ## files
 (no files changed)
