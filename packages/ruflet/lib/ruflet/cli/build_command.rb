@@ -12,6 +12,8 @@ require "yaml"
 
 require_relative "build/support"
 require_relative "build/config_loader"
+require_relative "build/context"
+require_relative "build/contributors"
 require_relative "build/client_dir"
 require_relative "build/flutter_tooling"
 require_relative "build/exports"
@@ -24,10 +26,13 @@ require_relative "build/native_config/apple_pbxproj"
 require_relative "build/native_config/gradle"
 require_relative "build/native_config/podfile"
 require_relative "build/native_config/pubspec"
+# Each contributor registers itself as it loads, so this is the order they
+# run in (build_contributors_test pins it).
 require_relative "build/contributors/template_refresh"
 require_relative "build/contributors/apple_host"
 require_relative "build/contributors/app_identity"
 require_relative "build/contributors/protected_services"
+require_relative "build/contributors/signing"
 require_relative "build/contributors/runtime_mode"
 require_relative "build/contributors/extensions"
 require_relative "build/contributors/assets"
@@ -57,6 +62,7 @@ module Ruflet
       include Build::Contributors::AppleHost
       include Build::Contributors::AppIdentity
       include Build::Contributors::ProtectedServices
+      include Build::Contributors::Signing
       include Build::Contributors::RuntimeMode
       include Build::Contributors::Extensions
       include Build::Contributors::Assets

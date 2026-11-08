@@ -19,6 +19,13 @@ module Ruflet
 
           private
 
+          # Runs first: everything after it edits the refreshed template files.
+          def contribute_template_refresh(build)
+            refreshed = refresh_managed_client_template_files(
+              build.client_dir, platform: build.platform, verbose: build.verbose)
+            refreshed != false
+          end
+
           def refresh_managed_client_template_files(client_dir, platform: nil, verbose: false)
             template_root =
               if Ruflet::CLI.respond_to?(:resolve_ruflet_client_template_root, true)
@@ -149,6 +156,8 @@ module Ruflet
             false
           end
         end
+
+        register :template_refresh, :contribute_template_refresh
       end
     end
   end

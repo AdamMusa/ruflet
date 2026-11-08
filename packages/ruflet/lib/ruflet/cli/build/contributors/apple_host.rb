@@ -9,6 +9,11 @@ module Ruflet
         module AppleHost
           private
 
+          def contribute_apple_host(build)
+            remove_native_apple_renderer_integration(
+              build.client_dir, platform: build.platform, verbose: build.verbose)
+          end
+
           # Ruflet had a second, Swift-rendered Apple host. It is gone: every
           # platform renders through the Ruflet Flutter engine. A client generated
           # while it existed still carries the Swift package, the engine-choice
@@ -71,6 +76,8 @@ module Ruflet
             write_text_file(path, content)
           end
         end
+
+        register :apple_host, :contribute_apple_host
       end
     end
   end

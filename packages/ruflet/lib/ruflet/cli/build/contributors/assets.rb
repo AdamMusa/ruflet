@@ -21,6 +21,18 @@ module Ruflet
 
           private
 
+          # The flags tell the steps after `flutter pub get` which generators to run.
+          def contribute_assets(build)
+            build.asset_flags = apply_build_config(build.client_dir, build.config)
+            if build.asset_flags[:error]
+              warn build.asset_flags[:error]
+              return false
+            end
+
+            announce_asset_configuration(build.asset_flags)
+            true
+          end
+
           # The generators can succeed while silently skipping Android output, which
           # ships a build with the stock Flutter icon and splash. Confirm the native
           # resources that ruflet.yaml asked for are actually on disk.
@@ -484,6 +496,8 @@ module Ruflet
             end
           end
         end
+
+        register :assets, :contribute_assets
       end
     end
   end

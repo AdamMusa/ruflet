@@ -37,6 +37,16 @@ module Ruflet
 
           private
 
+          def contribute_extensions(build)
+            @ruflet_self_contained_build = build.self_contained
+            build.extension_keys = apply_service_extension_config(build.client_dir, build.config)
+            if @ruflet_extension_selection_applied && !validate_flutter_extension_selection(build.client_dir)
+              return false
+            end
+
+            true
+          end
+
           def apply_service_extension_config(client_dir, config = {}, self_contained: @ruflet_self_contained_build)
             extension_keys = configured_extension_keys(config)
             flutter_extension_keys = extension_keys
@@ -505,6 +515,8 @@ module Ruflet
             write_text_file(path, content)
           end
         end
+
+        register :extensions, :contribute_extensions
       end
     end
   end

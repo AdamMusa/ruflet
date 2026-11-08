@@ -3,43 +3,27 @@
 module Ruflet
   module CLI
     module Build
-      # Prepares the managed client for one `ruflet build`.
+      # Prepares the managed client for one `ruflet build`: the registered
+      # contributors write its configuration, then Flutter resolves packages
+      # and the generators run.
       module Pipeline
         private
 
-        def prepare_flutter_client(client_dir, platform:, tools:, config:, self_contained: false, verbose: false)
-          refreshed = refresh_managed_client_template_files(
-            client_dir, platform: platform, verbose: verbose)
-          return false if refreshed == false
-          unless remove_native_apple_renderer_integration(
-            client_dir, platform: platform, verbose: verbose)
-            return false
-          end
-          metadata = sync_client_metadata(client_dir, config, verbose: verbose)
-          return false unless validate_mobile_app_identity(metadata, platform: platform)
+        def build_contributors
+          Contributors.entries
+        end
 
-          apply_native_service_permissions(client_dir, config)
-          apply_android_signing_config(client_dir, platform, verbose: !!verbose)
-          apply_ios_signing_team(client_dir, config) if %w[ios ipa macos].include?(platform.to_s)
-          configured = configure_client_runtime_mode(client_dir, self_contained: self_contained, verbose: verbose)
-          return false if configured == false
-          configure_native_apple_runtime(
-            client_dir, platform: platform, self_contained: self_contained,
-            config: config, verbose: verbose)
-          configure_android_runtime(
-            client_dir, platform: platform, self_contained: self_contained,
-            verbose: verbose)
-          @ruflet_self_contained_build = self_contained
-          extension_keys = apply_service_extension_config(client_dir, config)
-          if @ruflet_extension_selection_applied && !validate_flutter_extension_selection(client_dir)
-            return false
+        def prepare_flutter_client(client_dir, platform:, tools:, config:, self_contained: false, verbose: false)
+          build = Context.new(
+            client_dir: client_dir, platform: platform, tools: tools, config: config,
+            self_contained: self_contained, verbose: verbose, asset_flags: {}
+          )
+          build_contributors.each do |contributor|
+            return false unless __send__(contributor.handler, build)
           end
-          asset_flags = apply_build_config(client_dir, config)
-          if asset_flags[:error]
-            warn asset_flags[:error]
-            return false
-          end
-          announce_asset_configuration(asset_flags)
+          metadata = build.metadata
+          asset_flags = build.asset_flags
+
           clear_flutter_build_state(client_dir, verbose: verbose)
           clear_stale_platform_outputs(client_dir, platform, verbose: verbose)
           unless ensure_flutter_platform_artifacts(client_dir, platform, tools[:env], tools[:flutter], verbose: verbose)

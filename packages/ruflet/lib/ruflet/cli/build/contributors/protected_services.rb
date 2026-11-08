@@ -63,6 +63,11 @@ module Ruflet
 
           private
 
+          def contribute_protected_services(build)
+            apply_native_service_permissions(build.client_dir, build.config)
+            true
+          end
+
           def configured_service_entries(config)
             Array(config["services"]).filter_map do |entry|
               case entry
@@ -158,6 +163,8 @@ module Ruflet
             end
           end
         end
+
+        register :protected_services, :contribute_protected_services
       end
     end
   end

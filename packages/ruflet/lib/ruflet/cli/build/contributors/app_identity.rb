@@ -8,6 +8,13 @@ module Ruflet
         module AppIdentity
           private
 
+          # The metadata is kept on the build: the package-name step after
+          # `flutter pub get` applies its identifiers.
+          def contribute_app_identity(build)
+            build.metadata = sync_client_metadata(build.client_dir, build.config, verbose: build.verbose)
+            validate_mobile_app_identity(build.metadata, platform: build.platform)
+          end
+
           def sync_client_metadata(client_dir, config = {}, verbose: false)
             metadata = build_client_metadata(config, client_dir)
             apply_pubspec_metadata(client_dir, metadata)
@@ -296,6 +303,8 @@ module Ruflet
             name.to_s.gsub(/[_-]+/, " ").split.map(&:capitalize).join(" ")
           end
         end
+
+        register :app_identity, :contribute_app_identity
       end
     end
   end

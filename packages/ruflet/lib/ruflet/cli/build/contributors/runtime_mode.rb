@@ -8,6 +8,20 @@ module Ruflet
         module RuntimeMode
           private
 
+          def contribute_runtime_mode(build)
+            configured = configure_client_runtime_mode(
+              build.client_dir, self_contained: build.self_contained, verbose: build.verbose)
+            return false if configured == false
+
+            configure_native_apple_runtime(
+              build.client_dir, platform: build.platform, self_contained: build.self_contained,
+              config: build.config, verbose: build.verbose)
+            configure_android_runtime(
+              build.client_dir, platform: build.platform, self_contained: build.self_contained,
+              verbose: build.verbose)
+            true
+          end
+
           def configure_client_runtime_mode(client_dir, self_contained:, verbose: false)
             build_log(verbose, "configuring #{self_contained ? 'self-contained' : 'server-driven'} runtime")
             if self_contained
@@ -163,6 +177,8 @@ module Ruflet
             warn "Failed to remove ruby_runtime override: #{e.class}: #{e.message}"
           end
         end
+
+        register :runtime_mode, :contribute_runtime_mode
       end
     end
   end
