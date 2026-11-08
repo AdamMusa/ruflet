@@ -465,26 +465,34 @@ module Ruflet
         end
       end
 
-      # Top-level frames of a file being required or loaded; "<main>" where
-      # a compile cache such as bootsnap's compiled the file.
-      TOP_LEVEL_LABELS = ["<top (required)>", "<main>"].freeze
+      # Labels of the top-level frame of a file being required or loaded:
+      # "<top (required)>", or, where a compile cache such as bootsnap's
+      # compiled the file, "<main>" (InstructionSequence.compile_file) or
+      # "<compiled>" (InstructionSequence.compile from the file's source,
+      # which bootsnap uses on Rubies with Ruby bug #22023: 3.3, 3.4.0-3.4.9
+      # and 4.0.0-4.0.3 with Prism).
+      TOP_LEVEL_LABELS = ["<top (required)>", "<main>", "<compiled>"].freeze
       private_constant :TOP_LEVEL_LABELS
 
       # The files whose top-level code is on the serving fiber's stack above
       # the script's own: the requires it serves from inside of. Nil if there
-      # are none (`.run` in the script), and reloads stay as they were. Below
-      # the script are the runner's callers, such as the harness's own
-      # top-level code, which no reload requires.
+      # are none (`.run` in the script), and reloads stay as they were.
+      #
+      # The script's top level is the bottom-most frame in the script,
+      # whatever its label: a method the script defines can also run above a
+      # file it requires. Below it are the runner's callers, such as the
+      # harness's own top-level code, which no reload requires.
       def requires_in_flight
         script = HotReload.realpath(@script)
-        paths = []
-        caller_locations.each do |location|
-          next unless TOP_LEVEL_LABELS.include?(location.label)
+        frames = caller_locations.filter_map do |location|
+          path = location.absolute_path || location.path
+          [location.label, HotReload.realpath(path)] if path
+        end
+        script_top = frames.rindex { |_label, path| path == script }
+        return nil unless script_top
 
-          path = HotReload.realpath(location.absolute_path || location.path)
-          break if path == script
-
-          paths << path
+        paths = frames.first(script_top).filter_map do |label, path|
+          path if TOP_LEVEL_LABELS.include?(label) && path != script
         end
         paths.empty? ? nil : RequiresInFlight.new(paths.uniq)
       end

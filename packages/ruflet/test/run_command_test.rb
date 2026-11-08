@@ -762,8 +762,10 @@ class RufletCliRunCommandTest < Minitest::Test
   # The app reported ready and "r" was sent, but the reload it started
   # waited forever on app.rb's require (the app's own server serves from
   # inside it), so neither "r" nor a save ever reloaded. Each load reports
-  # its count and whether its top-level frame reads "<main>" (bootsnap's
-  # compile cache) or "<top (required)>".
+  # its count and whether its top-level frame reads "<top (required)>" ("t")
+  # or a label of bootsnap's compile cache ("m"): "<main>", or "<compiled>"
+  # on Rubies with Ruby bug #22023 (3.3, 3.4.0-3.4.9 and 4.0.0-4.0.3 with
+  # Prism), where bootsnap compiles each file from its source.
   REQUIRED_DSL_MAIN = <<~RUBY
     require "ruflet"
     require "ruflet_server"
@@ -772,7 +774,7 @@ class RufletCliRunCommandTest < Minitest::Test
   REQUIRED_APP_PROGRESS = <<~RUBY
     $ruflet_test_progress ||= File.open(ENV.fetch("TEST_PROGRESS_FIFO"), "w")
     $ruflet_test_loads = ($ruflet_test_loads || 0) + 1
-    compiled = caller_locations(0, 1).first.label == "<main>" ? "m" : "t"
+    compiled = %w[<main> <compiled>].include?(caller_locations(0, 1).first.label) ? "m" : "t"
     $ruflet_test_progress.write("L\#{$ruflet_test_loads}\#{compiled}")
     $ruflet_test_progress.flush
   RUBY

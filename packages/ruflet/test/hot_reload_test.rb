@@ -843,11 +843,24 @@ class RufletHotReloadTest < Minitest::Test
     assert_equal ["v2"], render
   end
 
-  # `ruflet run` sets bootsnap up when the app bundles it. Its compile cache
-  # hands Ruby precompiled code, whose top-level frames read "<main>"
-  # instead of "<top (required)>"; a required file must still be found.
-  # This is what bootsnap's cache does, minus the cache.
+  # `ruflet run` sets bootsnap up whenever it is installed. Its compile
+  # cache hands Ruby precompiled code, whose top-level frames do not read
+  # "<top (required)>"; a required file must still be found. These two are
+  # what bootsnap's cache does, minus the cache: compile_file labels the
+  # frame "<main>" (bootsnap on most Rubies), and compiling the file's
+  # source labels it "<compiled>", as bootsnap does on Rubies with Ruby bug
+  # #22023 (3.3, 3.4.0-3.4.9 and 4.0.0-4.0.3 with Prism).
   def test_a_start_in_a_required_file_compiled_by_a_compile_cache_reloads
+    assert_compiled_start_reloads("<main>") { |path| RubyVM::InstructionSequence.compile_file(path) }
+  end
+
+  def test_a_start_in_a_required_file_compiled_from_source_by_a_compile_cache_reloads
+    assert_compiled_start_reloads("<compiled>") do |path|
+      RubyVM::InstructionSequence.compile(File.read(path), path, path)
+    end
+  end
+
+  def assert_compiled_start_reloads(label, &compiler)
     iseq = RubyVM::InstructionSequence.singleton_class
     skip "a compile cache is already installed" if iseq.method_defined?(:load_iseq)
 
@@ -862,10 +875,10 @@ class RufletHotReloadTest < Minitest::Test
       require "ruflet_server"
       require_relative "app"
     RUBY
-    iseq.define_method(:load_iseq) { |path| RubyVM::InstructionSequence.compile_file(path) }
+    iseq.define_method(:load_iseq, &compiler)
 
     start_served_runner
-    assert_equal "<main>", $app_top_label, "the cache must compile the app's files"
+    assert_equal label, $app_top_label, "the cache must compile the app's files"
     write_widgets("v2")
     wait_until("reload") { @runner.reload_count >= 1 }
     assert_equal ["v2"], render_labels
@@ -873,6 +886,36 @@ class RufletHotReloadTest < Minitest::Test
     stop_served_runner
     iseq.send(:remove_method, :load_iseq) if iseq&.method_defined?(:load_iseq)
     $app_top_label = nil
+  end
+
+  # The script's own top level is its bottom-most frame, whatever its label,
+  # not the first frame in it: here a method main.rb defines starts the app
+  # from inside lib/boot.rb's require, so that require is in flight too.
+  def test_a_start_from_a_script_method_called_by_a_required_file_reloads
+    write_widgets("v1")
+    FileUtils.mkdir_p(File.join(@dir, "lib"))
+    write_file("lib/boot.rb", <<~RUBY)
+      $boot_loads = ($boot_loads || 0) + 1
+      hot_reload_test_serve_the_app
+    RUBY
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "widgets"
+
+      def hot_reload_test_serve_the_app
+        Ruflet.app(host: "127.0.0.1", port: 0) { text(WIDGET_LABEL) }.run
+      end
+      require_relative "lib/boot"
+    RUBY
+
+    start_served_runner
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+    assert_equal ["v2"], render_labels
+    assert_equal 2, $boot_loads
+  ensure
+    $boot_loads = nil
   end
 
   # Only a reload of an app served from inside a required file needs its
