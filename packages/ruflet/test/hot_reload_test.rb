@@ -654,7 +654,9 @@ class RufletHotReloadTest < Minitest::Test
   # Serving is not loading. While the app's own server serves, the app runs
   # as without the runner: its warnings show again ($VERBOSE is its own;
   # only the load silences it), and code on the serving fiber is outside the
-  # script load, so nothing it does there is the runner's to capture.
+  # script load, so nothing it does there is the runner's to capture. Once
+  # that server stops, the rest of the script is loading again, and runs
+  # with warnings silenced, as on v0.0.23.
   def test_while_the_apps_own_server_serves_the_app_runs_as_without_the_runner
     $serving_probe = Queue.new
     File.write(@script, <<~RUBY)
@@ -669,6 +671,7 @@ class RufletHotReloadTest < Minitest::Test
         end
       end
       HotReloadTestServingProbe.new(host: "127.0.0.1", port: 0) { |page| page.add("served") }.start
+      $verbose_after_start = [$VERBOSE]
     RUBY
     previous_verbose = $VERBOSE
     $VERBOSE = true
@@ -680,10 +683,47 @@ class RufletHotReloadTest < Minitest::Test
     assert_nil $verbose_while_loading, "the load silences warnings, as on v0.0.23"
     assert_equal true, verbose, "while its server serves, the app's own $VERBOSE is back"
     assert_nil capture, "the serving fiber is no longer loading the script"
+
+    stop_served_runner
+    assert_equal [nil], $verbose_after_start, "the code after the start runs in the load, as on v0.0.23"
+    assert_equal true, $VERBOSE, "the runner restores the $VERBOSE it found once the load ends"
   ensure
-    stop_served_runner # the runner restores the $VERBOSE it found once the load ends
+    stop_served_runner
     $VERBOSE = previous_verbose
-    $serving_probe = $verbose_while_loading = nil
+    $serving_probe = $verbose_while_loading = $verbose_after_start = nil
+  end
+
+  # A script that sets $VERBOSE itself while it loads keeps that setting
+  # while its own server serves and after it, as on v0.0.23.
+  def test_a_verbose_setting_the_script_makes_is_kept_while_its_own_server_serves
+    $serving_probe = Queue.new
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+
+      $VERBOSE = false
+      class HotReloadTestVerboseProbe < Ruflet::Server
+        private def accept_loop
+          $serving_probe << $VERBOSE
+          super
+        end
+      end
+      HotReloadTestVerboseProbe.new(host: "127.0.0.1", port: 0) { |page| page.add("served") }.start
+      $verbose_after_start = [$VERBOSE]
+    RUBY
+    previous_verbose = $VERBOSE
+    $VERBOSE = true
+
+    start_served_runner
+    wait_until("the app's server serves") { !$serving_probe.empty? }
+    assert_equal false, $serving_probe.pop, "the script's own $VERBOSE = false holds while its server serves"
+
+    stop_served_runner
+    assert_equal [false], $verbose_after_start
+  ensure
+    stop_served_runner
+    $VERBOSE = previous_verbose
+    $serving_probe = $verbose_after_start = nil
   end
 
   # A child the app forks while it loads runs the script's code in another

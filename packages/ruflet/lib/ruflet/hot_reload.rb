@@ -452,23 +452,28 @@ module Ruflet
         @server = server
         # Reloads load these files instead of waiting on their requires.
         @requires_in_flight = requires_in_flight
-        # Serving is not loading: warnings show again, and the app's own code
-        # on this fiber (once the server stops) is no longer captured. Done
-        # before the watcher starts, whose reloads save and restore $VERBOSE.
+        # Serving is not loading: warnings show again (as the app had them
+        # before the load silenced them, or as the script set them while it
+        # loaded), and the app's own code on this fiber (once the server
+        # stops) is no longer captured. Done before the watcher starts, whose
+        # reloads save and restore $VERBOSE.
         Thread.current[SERVER_START_CAPTURE] = nil
-        $VERBOSE = script_load.verbose
+        loading_verbose = $VERBOSE
+        $VERBOSE = script_load.verbose if loading_verbose.nil?
         arm_reload
         begin
           start.call
         ensure
           # Once it stops, the runner lets it go: the rest of the script runs
-          # as it does on v0.0.23, so a Ruflet.run there is intercepted and
-          # served by the runner's own server after the load. The requires it
-          # served from inside of finish with it.
+          # as it does on v0.0.23, inside the load and with its $VERBOSE, so
+          # a Ruflet.run there is intercepted and served by the runner's own
+          # server after the load. The requires it served from inside of
+          # finish with it.
           stop
           @server = nil
           @requires_in_flight = nil
           @served_from_script = true
+          $VERBOSE = loading_verbose
         end
       end
 
