@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require_relative "compat/lib/harness"
+require_relative "compat/docs_coverage"
 
 # WP-00 H1: compatibility goldens for everything a developer touches today.
 #
@@ -46,6 +47,15 @@ class RufletCompatGoldensTest < Minitest::Test
                  "goldens without a corpus entry; run compat.rb --regenerate to remove them"
   end
 
+  # compat/docs_coverage.rb maps every documented invocation to goldens;
+  # each must exist (`compat.rb docs-check` checks the other direction).
+  def test_every_documented_invocation_has_goldens
+    goldens = RufletCompat.expected_golden_paths.map { |path| path.delete_prefix("#{RufletCompat::GOLDEN_ROOT}/cli/").delete_suffix(".txt") }
+    missing = RufletCompat::DocsCoverage.golden_ids - goldens
+    assert_empty missing, "compat/docs_coverage.rb names goldens that corpus.rb does not produce"
+    assert(RufletCompat::DocsCoverage::INVOCATIONS.values.all? { |ids| !ids.empty? })
+  end
+
   def test_vendored_template_matches_its_source_manifest
     source = JSON.parse(File.read(File.join(RufletCompat::FIXTURE_ROOT, "template", "SOURCE.json")))
     archive = File.open(RufletCompat::TEMPLATE_ARCHIVE, "rb") { |io| RufletCompat::Tar.read(io) }
@@ -57,21 +67,36 @@ class RufletCompatGoldensTest < Minitest::Test
     assert_equal source.fetch("files").transform_values { |file| file.fetch("sha256") }, actual
   end
 
-  # The comparison must notice a changed flutter argv, a new file and changed
-  # output. Probes are added through the public Ruflet::CLI.command_build and
+  # The comparison must notice a changed flutter argv, a new file, changed
+  # output, a CLI edit to a file a stub wrote, and a change in what the rake
+  # tasks and the Rails generator pass to the CLI. Probes are added through
+  # the public Ruflet::CLI.command_build/command_install/command_update and
   # Page#title= so they keep working however the CLI is reorganized.
   def test_harness_detects_cli_and_page_changes
     skip "compat goldens run on macOS hosts" unless SUPPORTED_HOST
 
     probed = RufletCompat::Workspace.new
-    File.open(File.join(probed.gem_libs.fetch("ruflet"), "ruflet_cli.rb"), "a") do |file|
+    # ruflet/cli.rb is what bin/ruflet, the Railtie and the generator all load.
+    File.open(File.join(probed.gem_libs.fetch("ruflet"), "ruflet", "cli.rb"), "a") do |file|
       file.write(<<~RUBY)
         Ruflet::CLI.singleton_class.prepend(Module.new do
           def command_build(args)
             status = super(args + ["--compat-probe"])
             File.write(File.join("build", "client", "compat-probe.txt"), "probe\\n")
+            stub_file = File.join("build", "client", ".dart_tool", "package_config.json")
+            File.write(stub_file, File.read(stub_file) + "\\n") if File.file?(stub_file)
             puts "compat probe"
             status
+          end
+
+          def command_install(args)
+            puts "compat probe install \#{args.inspect}"
+            super
+          end
+
+          def command_update(args)
+            puts "compat probe update \#{args.inspect}"
+            super
           end
         end)
       RUBY
@@ -89,6 +114,18 @@ class RufletCompatGoldensTest < Minitest::Test
     assert_includes actual, "--compat-probe"
     assert_includes actual, "A <PROJECT>/build/client/compat-probe.txt"
     assert_includes actual, "out| compat probe"
+    assert_includes actual, "M <PROJECT>/build/client/.dart_tool/package_config.json  stub output ->"
+
+    {
+      "rake-ruflet_install_emulator-5554" => 'compat probe install ["--device", "emulator-5554"]',
+      "rake-ruflet_update_desktop" => 'compat probe update ["desktop"]',
+      "generate-ruflet_install--desktop" => 'compat probe update ["desktop"]'
+    }.each do |id, probe|
+      entry = RufletCompat::Corpus::INVOCATIONS.find { |invocation| RufletCompat.invocation_id(invocation) == id }
+      rendered = RufletCompat.render_cli(entry, workspace: probed)
+      refute_equal File.read(RufletCompat.cli_golden_path(entry), encoding: Encoding::UTF_8), rendered, id
+      assert_includes rendered, "out| #{probe}", id
+    end
 
     page = RufletCompat::Corpus::PAGES.find { |entry| entry["fixture"] == "default_app" }
     page_actual = RufletCompat.render_page(page, workspace: probed)
@@ -96,7 +133,31 @@ class RufletCompatGoldensTest < Minitest::Test
     assert_includes page_actual, "Counter Demo (probe)"
   end
 
+  # The generator goldens run against lib/generator_stub, a small stand-in for
+  # railties (CI has no rails gem). Where railties is installed, every
+  # generator golden must come out byte-identical with the real one.
+  def test_generator_stub_matches_railties
+    skip "compat goldens run on macOS hosts" unless SUPPORTED_HOST
+    skip "railties is not installed; the generator stub is checked against it where it is" unless railties_installed?
+
+    RufletCompat::Corpus::INVOCATIONS.select { |invocation| invocation["generator"] }.each do |invocation|
+      path = RufletCompat.cli_golden_path(invocation)
+      real = RufletCompat.render_cli(invocation.merge("real_rails" => true))
+      expected = File.read(path, encoding: Encoding::UTF_8)
+      next pass if expected == real
+
+      diff = RufletCompat::TextDiff.unified(expected, real, old_label: "golden (generator stub)", new_label: "railties")
+      flunk "#{path.delete_prefix("#{RufletCompat::GOLDEN_ROOT}/")}: the generator stub and railties disagree.\n#{diff}"
+    end
+  end
+
   private
+
+  def railties_installed?
+    Gem::Specification.find_all_by_name("railties").any?
+  rescue StandardError
+    false
+  end
 
   def check_golden(path)
     skip "compat goldens run on macOS hosts" unless SUPPORTED_HOST

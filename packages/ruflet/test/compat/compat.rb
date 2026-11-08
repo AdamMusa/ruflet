@@ -7,12 +7,14 @@
 #   ruby packages/ruflet/test/compat/compat.rb --only build-apk  # restrict to ids containing a substring
 #   ruby packages/ruflet/test/compat/compat.rb --list
 #   ruby packages/ruflet/test/compat/compat.rb vendor-template --repo ../ruflet-template --ref <sha>
+#   ruby packages/ruflet/test/compat/compat.rb docs-check --docs <ruflet_site>/app/content/docs
 #
 # The minitest entry point (test/compat_goldens_test.rb) runs the same check.
 
 require "optparse"
 require "etc"
 require_relative "lib/harness"
+require_relative "docs_coverage"
 
 module RufletCompat
   module CLI
@@ -20,6 +22,7 @@ module RufletCompat
 
     def main(argv)
       return vendor(argv.drop(1)) if argv.first == "vendor-template"
+      return docs_check(argv.drop(1)) if argv.first == "docs-check"
 
       options = { mode: :check, only: nil, jobs: [Etc.nprocessors, 8].min }
       OptionParser.new do |parser|
@@ -115,6 +118,50 @@ module RufletCompat
 
     def relative(path)
       path.delete_prefix("#{GOLDEN_ROOT}/")
+    end
+
+    # Lists every invocation a docs checkout shows (fenced shell blocks and
+    # inline code) and fails if one is not in DocsCoverage::INVOCATIONS.
+    def docs_check(argv)
+      docs = nil
+      OptionParser.new { |parser| parser.on("--docs DIR") { |value| docs = value } }.parse!(argv)
+      abort "docs-check needs --docs <ruflet_site>/app/content/docs" unless docs && File.directory?(docs)
+
+      found = documented_invocations(docs)
+      missing = found.keys - DocsCoverage::INVOCATIONS.keys
+      unlisted = DocsCoverage::INVOCATIONS.keys - found.keys
+      missing.each { |form| warn "NOT COVERED #{form}  (#{found[form].first(3).join(', ')})" }
+      unlisted.each { |form| warn "NO LONGER DOCUMENTED #{form}" }
+      puts "#{found.length} documented invocations, #{found.length - missing.length} covered"
+      missing.empty? && unlisted.empty? ? 0 : 1
+    end
+
+    def documented_invocations(docs)
+      found = Hash.new { |hash, key| hash[key] = [] }
+      Dir[File.join(docs, "*.md")].sort.each do |file|
+        fence = nil
+        File.readlines(file, encoding: Encoding::UTF_8).each_with_index do |line, index|
+          if (opening = line.match(/\A\s*```(\w*)/))
+            fence = fence ? nil : opening[1]
+            next
+          end
+          candidates = if fence
+                         %w[ruby erb yaml yml json dart html xml].include?(fence) ? [] : [line.strip]
+                       else
+                         line.scan(/`([^`]+)`/).map { |match| match.first.strip }
+                       end
+          candidates.each do |candidate|
+            candidate.sub(/\A\$\s*/, "").sub(/\s+#.*\z/, "").split(/\s*(?:&&|;|\|\|)\s*/).each do |part|
+              part = part.strip.sub(/\A(?:[A-Z_]+=\S+\s+)+/, "").sub(%r{\A(?:bundle exec |bin/)}, "")
+              next unless part.match?(/\A(?:ruflet(?:\s|\z)|(?:rake|rails) ruflet:|rails (?:g|generate) ruflet)/)
+
+              found[part.sub(/\Arails g /, "rails generate ").sub(/\Arails ruflet:/, "rake ruflet:")] <<
+                "#{File.basename(file)}:#{index + 1}"
+            end
+          end
+        end
+      end
+      found
     end
 
     def vendor(argv)

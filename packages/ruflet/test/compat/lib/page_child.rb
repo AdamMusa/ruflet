@@ -53,6 +53,14 @@ module CompatPage
 
       @served = true
       server = Ruflet::Server.new(host: "127.0.0.1", port: 0) { |page| entrypoint.call(page) }
+      # Server#on_register_client is private: it is what the WebSocket loop
+      # calls for a register_client message, and there is no public entry
+      # point that takes a socket. If it is renamed, every page golden fails
+      # with this message (never silently); point this line at the new name.
+      unless server.respond_to?(:on_register_client, true)
+        raise NotImplementedError, "compat page child: Ruflet::Server#on_register_client is gone; update lib/page_child.rb"
+      end
+
       server.send(:on_register_client, FakeWS.new, REGISTER_PAYLOAD)
       :served
     end

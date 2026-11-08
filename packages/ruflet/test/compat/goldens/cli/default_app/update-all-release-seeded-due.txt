@@ -1,0 +1,124 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet update all
+env: RUFLET_CLIENT_UPDATE_INTERVAL=0
+seed: prebuilt_clients
+network: release fixture (lib/release_fixture.rb)
+exit: 0
+
+## commands (6)
+1. capture3 exit=0
+   git ls-remote https://github.com/AdamMusa/ruflet-template.git refs/heads/main
+   env: GIT_TERMINAL_PROMPT=0
+2. system exit=0
+   git clone --depth 1 --branch main --filter=blob:none --sparse https://github.com/AdamMusa/ruflet-template.git <TMP>/ruflet-assetsXXXXXXXX/Ruflet
+   env: GIT_TERMINAL_PROMPT=0
+   options: err out
+3. system exit=0
+   git -C <TMP>/ruflet-assetsXXXXXXXX/Ruflet sparse-checkout set templates/ruflet_flutter_template
+   env: GIT_TERMINAL_PROMPT=0
+   options: err out
+4. capture3 exit=0
+   git -C <TMP>/ruflet-assetsXXXXXXXX/Ruflet rev-parse HEAD
+5. system exit=0
+   tar -xf <TMP>/ruflet-prebuilt-XXXXXXXX/ruflet_explorer-web.tar.gz -C <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/web
+6. system exit=0
+   unzip -oq <TMP>/ruflet-prebuilt-XXXXXXXX/ruflet_explorer-macos-universal.zip -d <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop
+
+## network (12)
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/prebuild-main -> 200
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/v<RUFLET_VERSION> -> 404
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/<RUFLET_VERSION> -> 404
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/latest -> 200
+GET https://github.com/AdamMusa/Ruflet/releases/download/prebuild-main/ruflet_explorer-web.tar.gz -> 302
+GET https://release-assets.githubusercontent.com/compat/ruflet_explorer-web.tar.gz -> 200
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/prebuild-main -> 200
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/v<RUFLET_VERSION> -> 404
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/<RUFLET_VERSION> -> 404
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/latest -> 200
+GET https://github.com/AdamMusa/Ruflet/releases/download/prebuild-main/ruflet_explorer-macos-universal.zip -> 302
+GET https://release-assets.githubusercontent.com/compat/ruflet_explorer-macos-universal.zip -> 200
+
+## output
+out| Downloading prebuilt client asset: ruflet_explorer-web.tar.gz
+out| Updated web client for macos at <HOME>/.ruflet/client/<RUFLET_VERSION>/macos (prebuild-main)
+out| Downloading prebuilt client asset: ruflet_explorer-macos-universal.zip
+out| Updated desktop client for macos at <HOME>/.ruflet/client/<RUFLET_VERSION>/macos (prebuild-main)
+
+## files
+<HOME>/.ruflet/templates/ruflet_flutter_template/ created from the template: 208 files identical, 0 template files absent
+A <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop/Ruflet Explorer.app/Contents/Info.plist  sha256:45da0c64ba7d1e02 45b  (new)
+M <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop/Ruflet Explorer.app/Contents/MacOS/Ruflet Explorer  sha256:306c6ca740756034 17b mode=755 -> sha256:7baf45490adcf98a 41b mode=755
+M <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/manifest.json  sha256:e0222449bf2fbb98 597b -> sha256:d2043966c1e022e0 906b
+M <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/web/flutter_bootstrap.js  sha256:36e6757f8509d079 10b -> sha256:ed045839003e5c06 40b
+M <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/web/index.html  sha256:335fca8574f060ee 16b -> sha256:1fb0bac07d8fca4c 64b
+M <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/web/main.dart.js  sha256:36e6757f8509d079 10b -> sha256:ad18450ead95cba7 32b
+A <HOME>/.ruflet/templates/ruflet_flutter_template.revision  sha256:9d4a95b50d07fadc 41b  (new)
+
+## diffs
+--- /dev/null
++++ <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop/Ruflet Explorer.app/Contents/Info.plist
+@@ -0,0 +1,2 @@
++<?xml version="1.0"?>
++<plist><dict/></plist>
+--- before:<HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop/Ruflet Explorer.app/Contents/MacOS/Ruflet Explorer
++++ <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop/Ruflet Explorer.app/Contents/MacOS/Ruflet Explorer
+@@ -1,2 +1,2 @@
+ #!/bin/sh
+-exit 0
++# compat release: macOS client
+--- before:<HOME>/.ruflet/client/<RUFLET_VERSION>/macos/manifest.json
++++ <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/manifest.json
+@@ -2,9 +2,9 @@
+   "schema": 2,
+   "ruflet_version": "<RUFLET_VERSION>",
+   "platform": "macos",
+-  "release_tag": "v<RUFLET_VERSION>",
+-  "release_revision": "compat",
+-  "released_at": "2026-01-01T12:00:00Z",
++  "release_tag": "prebuild-main",
++  "release_revision": "705:2025-12-31T09:00:00Z:188",
++  "released_at": "2025-12-31T09:00:00Z",
+   "checked_at": "2026-01-01T12:00:00Z",
+   "installed_at": "2026-01-01T12:00:00Z",
+   "targets": [
+@@ -12,13 +12,15 @@
+       "kind": "web",
+       "platform": "macos",
+       "asset_name": "ruflet_explorer-web.tar.gz",
+-      "release_revision": "compat"
++      "download_url": "https://github.com/AdamMusa/Ruflet/releases/download/prebuild-main/ruflet_explorer-web.tar.gz",
++      "release_revision": "705:2025-12-31T09:00:00Z:188"
+     },
+     {
+       "kind": "desktop",
+       "platform": "macos",
+       "asset_name": "ruflet_explorer-macos-universal.zip",
+-      "release_revision": "compat"
++      "download_url": "https://github.com/AdamMusa/Ruflet/releases/download/prebuild-main/ruflet_explorer-macos-universal.zip",
++      "release_revision": "705:2025-12-31T09:00:00Z:188"
+     }
+   ]
+ }
+\ No newline at end of file
+--- before:<HOME>/.ruflet/client/<RUFLET_VERSION>/macos/web/flutter_bootstrap.js
++++ <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/web/flutter_bootstrap.js
+@@ -1,1 +1,1 @@
+-// compat
++// compat release: flutter_bootstrap.js
+--- before:<HOME>/.ruflet/client/<RUFLET_VERSION>/macos/web/index.html
++++ <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/web/index.html
+@@ -1,1 +1,2 @@
+ <!doctype html>
++<title>Ruflet Explorer (compat release)</title>
+--- before:<HOME>/.ruflet/client/<RUFLET_VERSION>/macos/web/main.dart.js
++++ <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/web/main.dart.js
+@@ -1,1 +1,1 @@
+-// compat
++// compat release: main.dart.js
+--- /dev/null
++++ <HOME>/.ruflet/templates/ruflet_flutter_template.revision
+@@ -0,0 +1,1 @@
++c0ffee00c0ffee00c0ffee00c0ffee00c0ffee00
