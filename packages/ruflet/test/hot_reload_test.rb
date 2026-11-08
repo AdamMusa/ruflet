@@ -22,9 +22,17 @@ class RufletHotReloadTest < Minitest::Test
       @app_block = app_block
       @reload_count = 0
       @queue = Queue.new
+      @started = false
+    end
+
+    # The runner starts its server only once it has armed hot reload and
+    # reported ready.
+    def started?
+      @started
     end
 
     def start
+      @started = true
       @queue.pop
     end
 
@@ -509,7 +517,9 @@ class RufletHotReloadTest < Minitest::Test
 
   # On v0.0.23 a server the script starts itself after an intercepted
   # Ruflet.run blocked the load and served as is; the runner's own server
-  # came up only once that one stopped. It still does.
+  # came up only once that one stopped. It still does. On a reload, too,
+  # the load's first entrypoint is the app's: the later start ends the load
+  # and hands nothing over.
   def test_a_server_started_after_an_intercepted_ruflet_run_runs_as_before
     write_widgets("v1")
     File.write(@script, <<~RUBY)
@@ -530,18 +540,118 @@ class RufletHotReloadTest < Minitest::Test
     $direct_server.stop
     wait_until("runner start") { @runner.watching? }
     assert_equal ["v1"], render
+
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+    assert_equal ["v2"], render, "the reloaded Ruflet.run block is served, not the later server's"
+    assert_equal 0, $direct_server.port, "the reload ends at the later start without starting that server"
   ensure
     $direct_server&.stop
     $direct_server = nil
   end
 
+  # A start on the script's fiber after the runner already holds a server
+  # (from a Ruflet.run the app made on a thread of its own) is not the
+  # load's first entrypoint either: as on v0.0.23 it blocks the load and
+  # serves as is, and the runner's server comes up once it stops.
+  def test_a_server_started_after_a_ruflet_run_on_an_app_thread_runs_as_before
+    write_widgets("v1")
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "widgets"
+
+      Thread.new { Ruflet.run { |page| page.add(WIDGET_LABEL) } }.join
+      $direct_server = Ruflet::Server.new(host: "127.0.0.1", port: 0) { |page| page.add("direct") }
+      $direct_server.start
+    RUBY
+    @runner = new_runner
+    @thread = Thread.new { @runner.run }
+    wait_until("the script's server is bound") { $direct_server&.port.to_i.positive? }
+    assert_instance_of FakeServer, @runner.server, "the thread's Ruflet.run is the app's"
+    refute @runner.watching?, "the script's own server holds the load, as on v0.0.23"
+
+    $direct_server.stop
+    wait_until("runner start") { @runner.watching? }
+    assert_equal ["v1"], render
+  ensure
+    $direct_server&.stop
+    $direct_server = nil
+  end
+
+  # The embedded runtime's transport: a server with an in-process bridge is
+  # never the app's dev server, so it runs exactly as without the runner.
+  def test_a_server_with_an_in_process_bridge_is_not_captured
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+
+      $bridge_server = Ruflet::Server.new(host: "127.0.0.1", port: 0, in_process_bridge: Object.new) { |_page| nil }
+      $bridge_server.start
+    RUBY
+    @runner = new_runner
+    @thread = Thread.new do
+      Thread.current.report_on_exception = false
+      @runner.run
+    rescue Ruflet::HotReload::Error
+      nil # once that server stops, the script has handed nothing over
+    end
+    # Without RUFLET_RUNTIME_TRANSPORT=in_process it listens on a socket.
+    wait_until("the bridge server is bound") { $bridge_server&.port.to_i.positive? }
+    assert_nil @runner.server, "a server with an in-process bridge must not be captured"
+    refute @runner.watching?
+  ensure
+    $bridge_server&.stop
+    @thread&.join(5)
+    $bridge_server = nil
+  end
+
+  # Serving is not loading. While the app's own server serves, the app runs
+  # as without the runner: its warnings show again ($VERBOSE is its own;
+  # only the load silences it), and code on the serving fiber is outside the
+  # script load, so nothing it does there is the runner's to capture.
+  def test_while_the_apps_own_server_serves_the_app_runs_as_without_the_runner
+    $serving_probe = Queue.new
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+
+      $verbose_while_loading = $VERBOSE
+      class HotReloadTestServingProbe < Ruflet::Server
+        private def accept_loop
+          $serving_probe << [$VERBOSE, Thread.current[Ruflet::HotReload::SERVER_START_CAPTURE]]
+          super
+        end
+      end
+      HotReloadTestServingProbe.new(host: "127.0.0.1", port: 0) { |page| page.add("served") }.start
+    RUBY
+    previous_verbose = $VERBOSE
+    $VERBOSE = true
+
+    start_served_runner
+    wait_until("the app's server serves") { !$serving_probe.empty? }
+    verbose, capture = $serving_probe.pop
+
+    assert_nil $verbose_while_loading, "the load silences warnings, as on v0.0.23"
+    assert_equal true, verbose, "while its server serves, the app's own $VERBOSE is back"
+    assert_nil capture, "the serving fiber is no longer loading the script"
+  ensure
+    stop_served_runner # the runner restores the $VERBOSE it found once the load ends
+    $VERBOSE = previous_verbose
+    $serving_probe = $verbose_while_loading = nil
+  end
+
   # A child the app forks while it loads runs the script's code in another
-  # process; a server it starts is that process's, as without the runner.
+  # process; a server it starts is that process's, as without the runner:
+  # the child arms no hot reload of its own and never reports to `ruflet
+  # run` on the ready fd it inherited.
   def test_a_server_started_in_a_child_the_app_forks_is_served_by_the_child
     skip "needs fork" unless Process.respond_to?(:fork)
 
     write_widgets("v1")
     reader, writer = IO.pipe
+    ready_reader, ready_writer = IO.pipe
+    ready_writer.autoclose = false # the runner owns and closes this fd
     $fork_report = writer
     File.write(@script, <<~RUBY)
       require "ruflet"
@@ -553,7 +663,7 @@ class RufletHotReloadTest < Minitest::Test
           server = Ruflet::Server.new(host: "127.0.0.1", port: 0) { |_page| nil }
           Thread.new do
             sleep 0.01 until server.port.to_i.positive?
-            $fork_report.write("bound")
+            $fork_report.write($fork_runner.watching? ? "watched" : "unarmed")
             $fork_report.flush
           end
           server.start
@@ -564,13 +674,26 @@ class RufletHotReloadTest < Minitest::Test
       end
       Ruflet.run { |page| page.add(WIDGET_LABEL) }
     RUBY
-    start_runner
+    ENV["RUFLET_READY_FD"] = ready_writer.fileno.to_s
+    @runner = $fork_runner = new_runner
+    @thread = Thread.new { @runner.run }
+    # The runner starts its server only after it has reported ready.
+    wait_until("the runner's server starts") { @runner.server.is_a?(FakeServer) && @runner.server.started? }
     writer.close
 
     assert IO.select([reader], nil, nil, 30), "the forked child must report"
-    assert_equal "bound", reader.read(5), "the child's server must start, not be captured"
+    assert_equal "unarmed", reader.read(7), "the child's server must start as is, without the runner's hot reload"
     assert_equal ["v1"], render
+    # The child holds its copy of the ready fd open, so read what is there:
+    # the child wrote whatever it did before it reported above.
+    reported = +""
+    while (bytes = ready_reader.read_nonblock(16, exception: false)).is_a?(String)
+      reported << bytes
+    end
+    assert_equal "t.", reported, "only the runner reports on the ready fd"
   ensure
+    ENV.delete("RUFLET_READY_FD")
+    ready_reader&.close
     if $forked_child
       begin
         Process.kill("KILL", $forked_child)
@@ -581,7 +704,7 @@ class RufletHotReloadTest < Minitest::Test
     end
     reader&.close
     writer&.close unless writer.nil? || writer.closed?
-    $forked_child = $fork_report = nil
+    $forked_child = $fork_report = $fork_runner = nil
   end
 
   # `ruflet run` sends a queued "r" (USR1) once the app reports its trap, so
@@ -761,7 +884,11 @@ class RufletHotReloadTest < Minitest::Test
   end
 
   def write_widgets(label)
-    File.write(File.join(@dir, "widgets.rb"), "WIDGET_LABEL = #{label.inspect}\n")
+    write_file("widgets.rb", "WIDGET_LABEL = #{label.inspect}\n")
+  end
+
+  def write_file(name, source)
+    File.write(File.join(@dir, name), source)
   end
 
   def new_runner
