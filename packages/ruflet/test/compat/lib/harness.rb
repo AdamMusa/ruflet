@@ -41,6 +41,12 @@ module RufletCompat
 
   FileState = Struct.new(:sha, :mode, :size, :path, :text, keyword_init: true)
 
+  # An error inside the harness itself (a recorder, a tool emulation, the
+  # fake network or the release fixture), never CLI behavior. It fails the
+  # golden loudly instead of being rendered, so a CLI `rescue` can never turn
+  # a harness bug into a golden difference.
+  class HarnessFault < StandardError; end
+
   module_function
 
   def slug(argv)
@@ -70,7 +76,7 @@ module RufletCompat
   end
 
   def page_golden_path(page)
-    File.join(GOLDEN_ROOT, "page", "#{page['fixture']}.json")
+    File.join(GOLDEN_ROOT, "page", "#{page['id'] || page['fixture']}.json")
   end
 
   def validate_corpus!
@@ -384,7 +390,9 @@ module RufletCompat
         "fake_commit" => FAKE_COMMIT,
         "flutter_sdk" => workspace.flutter_sdk,
         "frozen_epoch" => FROZEN_EPOCH,
-        "host_executables" => HOST_EXECUTABLES
+        "host_executables" => HOST_EXECUTABLES,
+        # Only compat_goldens_test.rb sets this, to prove a fault fails loudly.
+        "inject_fault" => invocation["inject_fault"]
       }
       File.write("#{base}.json", JSON.generate(spec))
       command = [RbConfig.ruby, *(stubs + libs).flat_map { |lib| ["-I", lib] }, CLI_CHILD, "#{base}.json"]
@@ -392,12 +400,21 @@ module RufletCompat
       # The railties cross-check (compat_goldens_test.rb) loads the installed
       # rails gems as well as the sandboxed Ruflet gems.
       env["GEM_PATH"] = [workspace.gem_home, *Gem.path].uniq.join(File::PATH_SEPARATOR) if invocation["real_rails"]
-      stdout, stderr, = RufletCompat.run_process(env, command, chdir: @project)
+      stdout, stderr, status = RufletCompat.run_process(env, command, chdir: @project)
       unless File.file?(spec["result_path"])
-        raise "compat child produced no result for #{argv.join(' ')}:\n#{stdout}\n#{stderr}"
+        raise HarnessFault, "compat child produced no result for #{argv.join(' ')} " \
+                            "(exit #{status.exitstatus.inspect}):\n#{stdout}\n#{stderr}"
       end
 
       result = JSON.parse(File.read(spec["result_path"], encoding: Encoding::UTF_8))
+      if result["harness_fault"]
+        raise HarnessFault, "compat harness fault (not CLI behavior) while running `#{argv.join(' ')}`: " \
+                            "#{result['harness_fault']}\n#{Array(result['backtrace']).join("\n")}"
+      end
+      unless status.success?
+        raise HarnessFault, "compat child exited #{status.exitstatus.inspect} for #{argv.join(' ')}:\n#{stdout}\n#{stderr}"
+      end
+
       result["process_stdout"] = stdout
       result["process_stderr"] = stderr
       result
@@ -413,10 +430,20 @@ module RufletCompat
       File.write("#{base}.json", JSON.generate(spec))
       libs = GEM_PACKAGES.map { |name| workspace.gem_libs.fetch(name) }
       command = [RbConfig.ruby, *libs.flat_map { |lib| ["-I", lib] }, PAGE_CHILD, "#{base}.json"]
-      stdout, stderr, = RufletCompat.run_process(env_for({}), command, chdir: @project)
-      raise "page child produced no result for #{page['fixture']}:\n#{stdout}\n#{stderr}" unless File.file?(spec["result_path"])
+      stdout, stderr, status = RufletCompat.run_process(env_for({}), command, chdir: @project)
+      unless File.file?(spec["result_path"])
+        raise HarnessFault, "page child produced no result for #{page['fixture']} " \
+                            "(exit #{status.exitstatus.inspect}):\n#{stdout}\n#{stderr}"
+      end
 
-      JSON.parse(File.read(spec["result_path"], encoding: Encoding::UTF_8))
+      result = JSON.parse(File.read(spec["result_path"], encoding: Encoding::UTF_8))
+      if result["harness_fault"]
+        raise HarnessFault, "compat harness fault (not app behavior) for page #{page['fixture']}: " \
+                            "#{result['harness_fault']}\n#{Array(result['backtrace']).join("\n")}"
+      end
+      raise HarnessFault, "page child exited #{status.exitstatus.inspect}:\n#{stdout}\n#{stderr}" unless status.success?
+
+      result
     end
 
     def replacements
@@ -454,6 +481,12 @@ module RufletCompat
         out = out.gsub(/(?<![\d.])#{Regexp.escape(RUBY_VERSION)}(?![\d.])/, "<RUBY_VERSION>")
       end
       out
+    end
+
+    # Whether `snapshot` sees this path: the sandbox, except TMPDIR.
+    def observed?(path)
+      path = File.expand_path(path)
+      path.start_with?("#{@root}/") && path != @tmp && !path.start_with?("#{@tmp}/")
     end
 
     def snapshot
@@ -498,7 +531,8 @@ module RufletCompat
     result = sandbox.run_step(invocation)
     after = sandbox.snapshot
     stub_paths = result["stub_writes"].map { |path| sandbox.display(path) }
-    stub_contents = result["stub_contents"].to_h do |path, text|
+    stub_contents = result["stub_writes"].select { |path| sandbox.observed?(path) }.to_h do |path|
+      text = result["stub_contents"].fetch(path)
       [sandbox.display(path), { sha: Digest::SHA256.hexdigest(text.b), text: sandbox.normalize(text) }]
     end
     render_cli_golden(invocation, sandbox, result, before, after, stub_paths, stub_contents)
@@ -584,7 +618,7 @@ module RufletCompat
       before.keys.none? { |path| path.start_with?(mount) } && after.keys.any? { |path| path.start_with?(mount) }
     end
 
-    (before.keys | after.keys).sort.each do |path|
+    (before.keys | after.keys | stub_contents.keys).sort.each do |path|
       if stub_paths.include?(path)
         stub = stub_contents[path]
         final = after[path]
@@ -714,7 +748,7 @@ module RufletCompat
   # --- page goldens ------------------------------------------------------------
 
   def render_page(page, workspace: Workspace.current)
-    sandbox = Sandbox.new(workspace, page["fixture"], "page-#{page['fixture']}")
+    sandbox = Sandbox.new(workspace, page["fixture"], "page-#{page['id'] || page['fixture']}")
     result = sandbox.run_page(page)
     normalized = deep_map(result) { |value| sandbox.normalize(value, runtime_values: true) }
     "#{JSON.pretty_generate(normalized)}\n"

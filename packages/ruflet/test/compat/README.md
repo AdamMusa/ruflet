@@ -34,7 +34,14 @@ intended, review the diff, and list it under "Behavior changes" in the PR.
     template and prebuilt-client caches under `~/.ruflet`, a
     `RUFLET_CLIENT_DIR` outside the project, and anything else in the sandbox.
 * `goldens/page/<fixture>.json`: the messages a client receives in reply to
-  `register_client` for each fixture app, i.e. the initial page patch.
+  `register_client` for each fixture app from `Ruflet::Server` (what `ruflet
+  run` serves): the register reply with the whole page as its page patch.
+* `goldens/page/<fixture>--rails-endpoint.json`, for the Rails apps: what a
+  client receives from the endpoint `config/routes.rb` mounts
+  (`Ruflet::Rails.native`), which a Rails server runs instead. That path
+  replies to `register_client` without a page patch and then sends the page
+  as `page.update` op patches; the golden also holds the Rack response and
+  the WebSocket handshake.
 
 ### What the corpus covers
 
@@ -50,8 +57,14 @@ intended, review the diff, and list it under "Behavior changes" in the PR.
   `RUFLET_CLIENT_DIR`, `RUFLET_FLUTTER_VERSION` with and without FVM, and the
   project `.fvmrc`), plus `RUFLET_IOS_TEAM_ID`, the Android signing variables,
   `RUFLET_RUBY_RUNTIME_PATH`, `RUFLET_TEMPLATE_ROOT`, `RUFLET_CLIENT_CHANNEL`
-  and `RUFLET_CLIENT_UPDATE_INTERVAL`. `RUFLET_HOST` is read only by the app's
-  own server, never by the CLI, so no CLI golden can pin it.
+  and `RUFLET_CLIENT_UPDATE_INTERVAL`. `RUFLET_CONFIG` is pinned for the file
+  it selects and for the directory it moves: assets the config names and the
+  `services.yaml` beside it resolve against the config's directory.
+  `RUFLET_IOS_TEAM_ID` is pinned on an app that names no team (`build ios
+  --self`, where it becomes `DEVELOPMENT_TEAM`, and `build macos --self`,
+  where today it sets the iOS project's team), and on an app whose
+  `ios.team_id` wins over it. `RUFLET_HOST` is read only by the app's own
+  server, never by the CLI, so no CLI golden can pin it.
 * Each build target server-driven and `--self`, the build profiles, the
   undocumented `appbundle` alias, upper-case targets and commands, short and
   long verbose flags (`-v`/`--verbose` on build, install, debug, doctor and
@@ -121,8 +134,9 @@ Inside that process only the process and network boundaries are replaced:
   (only where an entry puts fvm on PATH) links the project's
   `.fvm/flutter_sdk`, and `pod`, `codesign`, `bundle` and `open` succeed.
   Files the stubs write are listed by name and are not counted as CLI output,
-  unless the CLI then changes or removes them: that is reported as an `M` or
-  `D` line with a diff from what the stub wrote. Long-running children (the
+  unless the CLI then changes or removes them: that is reported as an `M`
+  line with a diff from what the stub wrote, or a `D` line, including for a
+  file the stub created during the step. Long-running children (the
   app backend, browsers, desktop clients) are recorded and replaced by a
   process that exits at once.
 * Some host tools really run, because their output is what users get:
@@ -138,8 +152,17 @@ Inside that process only the process and network boundaries are replaced:
   Windows client archives in the layout the release workflow publishes. Those
   goldens pin the download, extract, manifest and cache-reuse paths of
   `ruflet update`, an uncached `ruflet run --web/--desktop`, `rake
-  ruflet:update` and the generator's `--desktop`. Local TCP probes succeed;
-  the LAN address is fixed.
+  ruflet:update` and the generator's `--desktop`. The archives are built
+  once, when `release_fixture.rb` loads and before the CLI runs, in plain
+  Ruby (gzip with stored deflate blocks, stored zip entries, a table
+  CRC-32), so their bytes never depend on zlib, the host or timing. Local TCP
+  probes succeed; the LAN address is fixed.
+* An exception in the harness's own code (a tool emulation, the fake
+  network, the release fixture, the page driver) is a harness fault: the
+  child writes it to its result and exits 70 at once, before any CLI `rescue`
+  can turn it into output, and the golden fails with the fault instead of
+  being rendered. `test_harness_faults_fail_loudly` injects the
+  `Zlib::BufError` the fixture once raised and checks this.
 * The host is a fixed profile: an Apple-silicon Mac with Homebrew CocoaPods,
   no Chrome and no FVM. The clock is frozen at 2026-01-01T12:00:00Z.
 * `rqrcode` is replaced by `lib/stub_lib/rqrcode.rb`, so the QR banner does not
@@ -162,8 +185,15 @@ Page goldens (`lib/page_child.rb`) run the fixture app with the real
 `Ruflet::Server` against a fake WebSocket, through the public
 `Ruflet.with_run_interceptor` hook and the server's private
 `on_register_client` (there is no public entry point that takes a socket; if
-it is renamed, every page golden fails with a message saying so). Generated
-ids are counters and wire ids are renumbered in order of appearance.
+it is renamed, every page golden fails with a message saying so). The
+`--rails-endpoint` page goldens call the Rack endpoint
+`Ruflet::Rails.native(<app file>)` returns, as `config/routes.rb` mounts it,
+with a WebSocket upgrade env and `rack.hijack` handing over one end of a
+socket pair; the other end does the handshake and speaks masked WebSocket
+frames, as a client does. That runs `Ruflet::Rails::Protocol::LocalServer`
+and `Ruflet::ConnectionProtocol` unmodified, including the per-session load
+of the app file. Generated ids are counters and wire ids are renumbered in
+order of appearance.
 
 Goldens are normalized: sandbox paths become `<PROJECT>`, `<HOME>`, `<TMP>`,
 `<GEM_HOME>`, `<FLUTTER_SDK>`, `<FVM_BIN>`; the Ruby executable becomes

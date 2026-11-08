@@ -1,0 +1,155 @@
+{
+  "fixture": "rails_app",
+  "entrypoint": "app/views/ruflet/main.rb",
+  "mode": "rails_endpoint",
+  "mounted_as": "Ruflet::Rails.native(\"app/views/ruflet/main.rb\")",
+  "rack_response": [
+    -1,
+    {},
+    []
+  ],
+  "handshake": [
+    "HTTP/1.1 101 Switching Protocols",
+    "Upgrade: websocket",
+    "Connection: Upgrade",
+    "Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo="
+  ],
+  "frame_opcodes": [
+    2,
+    2
+  ],
+  "status": "ok",
+  "messages": [
+    {
+      "action": "register_client",
+      "payload": {
+        "session_id": "compat-session",
+        "page_patch": {},
+        "error": ""
+      }
+    },
+    {
+      "action": "patch_control",
+      "payload": {
+        "id": "#1",
+        "patch": [
+          [
+            0
+          ],
+          [
+            0,
+            0,
+            "views",
+            [
+              {
+                "_c": "View",
+                "_i": "#2",
+                "route": "/",
+                "_internals": {
+                  "host_expanded": true
+                },
+                "controls": [
+                  {
+                    "_c": "SafeArea",
+                    "_i": "#3",
+                    "avoid_intrusions_bottom": true,
+                    "avoid_intrusions_left": true,
+                    "avoid_intrusions_right": true,
+                    "avoid_intrusions_top": true,
+                    "content": {
+                      "_c": "Container",
+                      "_i": "#4",
+                      "expand": true,
+                      "padding": 24,
+                      "content": {
+                        "_c": "Column",
+                        "_i": "#5",
+                        "_internals": {
+                          "host_expanded": true
+                        },
+                        "spacing": 12,
+                        "controls": [
+                          {
+                            "_c": "Text",
+                            "_i": "#6",
+                            "size": 24,
+                            "weight": "bold",
+                            "value": "Rails App"
+                          },
+                          {
+                            "_c": "Text",
+                            "_i": "#7",
+                            "value": "Edit app/views/ruflet/main.rb to build your app."
+                          }
+                        ]
+                      }
+                    },
+                    "expand": true,
+                    "maintain_bottom_view_padding": false,
+                    "minimum_padding": 0
+                  }
+                ]
+              }
+            ]
+          ],
+          [
+            0,
+            0,
+            "route",
+            "/"
+          ],
+          [
+            0,
+            0,
+            "window",
+            {
+              "_c": "Window",
+              "_i": "#8"
+            }
+          ],
+          [
+            0,
+            0,
+            "_overlay",
+            {
+              "_c": "Overlay",
+              "_i": "#9",
+              "controls": []
+            }
+          ],
+          [
+            0,
+            0,
+            "_services",
+            {
+              "_c": "ServiceRegistry",
+              "_i": "#10",
+              "_services": [],
+              "_internals": {
+                "uid": "00000001"
+              }
+            }
+          ],
+          [
+            0,
+            0,
+            "_dialogs",
+            {
+              "_c": "Dialogs",
+              "_i": "#11",
+              "controls": []
+            }
+          ],
+          [
+            0,
+            0,
+            "title",
+            "Rails App"
+          ]
+        ]
+      }
+    }
+  ],
+  "stdout": "",
+  "stderr": ""
+}
