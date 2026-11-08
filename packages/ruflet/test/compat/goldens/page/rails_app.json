@@ -1,0 +1,93 @@
+{
+  "fixture": "rails_app",
+  "entrypoint": "app/views/ruflet/main.rb",
+  "status": "ok",
+  "messages": [
+    {
+      "action": "register_client",
+      "payload": {
+        "session_id": "compat-session",
+        "page_patch": {
+          "views": [
+            {
+              "_c": "View",
+              "_i": "#1",
+              "route": "/",
+              "_internals": {
+                "host_expanded": true
+              },
+              "controls": [
+                {
+                  "_c": "SafeArea",
+                  "_i": "#2",
+                  "avoid_intrusions_bottom": true,
+                  "avoid_intrusions_left": true,
+                  "avoid_intrusions_right": true,
+                  "avoid_intrusions_top": true,
+                  "content": {
+                    "_c": "Container",
+                    "_i": "#3",
+                    "expand": true,
+                    "padding": 24,
+                    "content": {
+                      "_c": "Column",
+                      "_i": "#4",
+                      "_internals": {
+                        "host_expanded": true
+                      },
+                      "spacing": 12,
+                      "controls": [
+                        {
+                          "_c": "Text",
+                          "_i": "#5",
+                          "size": 24,
+                          "weight": "bold",
+                          "value": "Rails App"
+                        },
+                        {
+                          "_c": "Text",
+                          "_i": "#6",
+                          "value": "Edit app/views/ruflet/main.rb to build your app."
+                        }
+                      ]
+                    }
+                  },
+                  "expand": true,
+                  "maintain_bottom_view_padding": false,
+                  "minimum_padding": 0
+                }
+              ]
+            }
+          ],
+          "route": "/",
+          "window": {
+            "_c": "Window",
+            "_i": "#7"
+          },
+          "_overlay": {
+            "_c": "Overlay",
+            "_i": "#8",
+            "controls": []
+          },
+          "_services": {
+            "_c": "ServiceRegistry",
+            "_i": "#9",
+            "_services": [],
+            "_internals": {
+              "uid": "00000001"
+            }
+          },
+          "_dialogs": {
+            "_c": "Dialogs",
+            "_i": "#10",
+            "controls": []
+          },
+          "title": "Rails App"
+        },
+        "error": ""
+      }
+    }
+  ],
+  "stdout": "",
+  "stderr": ""
+}

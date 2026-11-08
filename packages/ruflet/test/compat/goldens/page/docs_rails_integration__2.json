@@ -1,0 +1,77 @@
+{
+  "fixture": "docs_rails_integration__2",
+  "entrypoint": "main.rb",
+  "status": "ok",
+  "messages": [
+    {
+      "action": "register_client",
+      "payload": {
+        "session_id": "compat-session",
+        "page_patch": {
+          "views": [
+            {
+              "_c": "View",
+              "_i": "#1",
+              "route": "/",
+              "_internals": {
+                "host_expanded": true
+              },
+              "controls": [
+                {
+                  "_c": "Column",
+                  "_i": "#2",
+                  "_internals": {
+                    "host_expanded": true
+                  },
+                  "expand": true,
+                  "controls": [
+                    {
+                      "_c": "Text",
+                      "_i": "#3",
+                      "value": "This header runs in the local Ruflet app"
+                    },
+                    {
+                      "_c": "RufletApp",
+                      "_i": "#4",
+                      "url": "https://app.example.com",
+                      "expand": true,
+                      "app_startup_screen_message": "Connecting to Rails…",
+                      "reconnect_timeout_ms": 10000
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "route": "/",
+          "window": {
+            "_c": "Window",
+            "_i": "#5"
+          },
+          "_overlay": {
+            "_c": "Overlay",
+            "_i": "#6",
+            "controls": []
+          },
+          "_services": {
+            "_c": "ServiceRegistry",
+            "_i": "#7",
+            "_services": [],
+            "_internals": {
+              "uid": "00000001"
+            }
+          },
+          "_dialogs": {
+            "_c": "Dialogs",
+            "_i": "#8",
+            "controls": []
+          },
+          "title": "Ruflet App"
+        },
+        "error": ""
+      }
+    }
+  ],
+  "stdout": "",
+  "stderr": ""
+}

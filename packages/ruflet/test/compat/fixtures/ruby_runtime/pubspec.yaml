@@ -1,0 +1,7 @@
+# Stand-in for a local ruby_runtime checkout (RUFLET_RUBY_RUNTIME_PATH) used by
+# the Ruflet CLI compatibility goldens. Nothing here is built.
+name: ruby_runtime
+description: Compat fixture for a local Ruflet ruby_runtime checkout.
+version: 0.0.14
+environment:
+  sdk: ^3.9.2

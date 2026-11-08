@@ -1,0 +1,24 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet install
+before: ruflet build ios --self
+exit: 0
+
+## commands (3)
+1. capture3 exit=0
+   git ls-remote https://github.com/AdamMusa/ruflet-template.git refs/heads/main
+   env: GIT_TERMINAL_PROMPT=0
+2. system exit=0
+   /usr/bin/codesign -vv <PROJECT>/build/client/build/ios/iphoneos/Runner.app
+   options: err out
+3. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/flutter install
+   env: COCOAPODS_DISABLE_STATS=true FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> GEM_HOME=(unset) GEM_PATH=(unset) GEM_ROOT=(unset) PATH=<PROJECT>/build/client/.ruflet/bin:/opt/homebrew/bin:<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+## output
+out| [ruflet build] Installing app
+
+## files
+(no files changed)
