@@ -13,7 +13,8 @@ module Ruflet
   # Ruflet::Server#reload_app! to repaint live sessions over their open
   # WebSocket connections. Apps that start Ruflet::Server themselves
   # (`Ruflet.app { ... }.run`, or a ruflet_core whose Ruflet.run predates run
-  # interceptors) are served through ServerStartCapture below instead.
+  # interceptors) are served through ServerStartCapture below instead, also
+  # when that start is in a file the script requires (InFlightRequires).
   module HotReload
     Error = Class.new(StandardError)
 
@@ -41,12 +42,17 @@ module Ruflet
       # through the run interceptor), :server (Server#start), or nil.
       attr_accessor :entrypoint
 
-      def initialize(runner, reloading:, verbose:)
+      # in_flight: on a reload, the RequiresInFlight of the app's own server
+      # (see Runner#serve_from_script), which this load loads instead of
+      # requiring (InFlightRequires).
+      def initialize(runner, reloading:, verbose:, in_flight: nil)
         @runner = runner
         @reloading = reloading
         @verbose = verbose
         @pid = Process.pid
         @entrypoint = nil
+        @in_flight = in_flight
+        @loaded_in_flight = {}
       end
 
       def reloading?
@@ -56,6 +62,124 @@ module Ruflet
       def server_start(server, app_block, start)
         @runner.send(:capture_server_start, self, server, app_block, start)
       end
+
+      # The path a `require` of feature would load, if it is a file in flight.
+      def in_flight_path(feature)
+        @in_flight&.path_for(feature)
+      end
+
+      # Loads a file in flight the way `require` would have: once per load,
+      # and again on a later require if loading it raised.
+      def load_in_flight(path)
+        key = HotReload.realpath(path)
+        return false if @loaded_in_flight.key?(key)
+
+        @loaded_in_flight[key] = true
+        begin
+          Kernel.load(path)
+        rescue Exception # rubocop:disable Lint/RescueException -- only undoes the mark, then re-raises
+          @loaded_in_flight.delete(key)
+          raise
+        end
+        true
+      end
+    end
+
+    # The files whose `require` the fiber serving the app's own server is
+    # still inside of, by real path: main.rb requires app.rb, which ends with
+    # `Ruflet.app { ... }.run`, so that fiber serves from inside app.rb's
+    # require, and Ruby's lock on that require is held until the server
+    # stops. A reload loads main.rb again on the watcher thread; its
+    # `require_relative "app"` would wait on that lock forever.
+    class RequiresInFlight
+      def initialize(paths)
+        @paths = paths.to_h { |path| [path, true] }
+        # Most requires name none of these files: told apart by name alone
+        # (in any case: a file system may not tell "App" from "app").
+        @names = paths.to_h { |path| [File.basename(path, ".rb").downcase, true] }
+      end
+
+      def path_for(feature)
+        return nil unless @names.key?(File.basename(File.path(feature), ".rb").downcase)
+
+        found = $LOAD_PATH.resolve_feature_path(feature)
+        found.last if found && found.first == :rb && @paths.key?(HotReload.realpath(found.last))
+      rescue LoadError, TypeError, ArgumentError, EncodingError, SystemCallError
+        nil # Kernel#require reports a bad feature as it always has
+      end
+    end
+
+    # While a reload of an app served from inside a required file runs (see
+    # RequiresInFlight), the reloading fiber loads those files where the
+    # script requires them, instead of waiting on their require locks. Every
+    # other require, and every require on another fiber or thread, goes to
+    # Kernel's own methods.
+    #
+    # Prepended to Object the first time such a reload runs. It has these
+    # methods only while one does, so at any other time, and for any other
+    # app, Kernel's own require and require_relative are all there is. Not
+    # prepended to Kernel: gems such as Zeitwerk and bootsnap alias
+    # Kernel#require, and one loaded during a reload would alias these
+    # methods there and keep calling them once they are gone.
+    module InFlightRequires
+      # The interpreter's own require, which Kernel#require_relative calls
+      # directly, bypassing RubyGems' and others' Kernel#require.
+      CORE_REQUIRE =
+        if Kernel.private_method_defined?(:gem_original_require)
+          Kernel.instance_method(:gem_original_require)
+        else
+          Kernel.instance_method(:require)
+        end
+
+      METHODS = proc do
+        def require(feature)
+          script_load = Thread.current[SERVER_START_CAPTURE]
+          path = script_load.in_flight_path(feature) if script_load.is_a?(ScriptLoad)
+          path ? script_load.load_in_flight(path) : super
+        end
+
+        # Kernel#require_relative resolves against its Ruby caller, which
+        # would be this file, so this resolves as it does: against the real
+        # path of the file that calls it.
+        def require_relative(feature)
+          location = caller_locations(1, 1).first
+          base = location && (location.absolute_path || location.path)
+          raise LoadError, "cannot infer basepath" if base.nil? || base.start_with?("(eval")
+
+          path = File.absolute_path(feature, File.dirname(base))
+          script_load = Thread.current[SERVER_START_CAPTURE]
+          in_flight = script_load.in_flight_path(path) if script_load.is_a?(ScriptLoad)
+          in_flight ? script_load.load_in_flight(in_flight) : CORE_REQUIRE.bind_call(self, path)
+        end
+
+        private :require, :require_relative
+      end
+      private_constant :CORE_REQUIRE, :METHODS
+
+      @mutex = Mutex.new
+      @reloads = 0
+
+      def self.around
+        @mutex.synchronize do
+          Object.prepend(self) unless Object.ancestors.include?(self)
+          module_eval(&METHODS) if @reloads.zero?
+          @reloads += 1
+        end
+        begin
+          yield
+        ensure
+          @mutex.synchronize do
+            @reloads -= 1
+            remove_method(:require, :require_relative) if @reloads.zero?
+          end
+        end
+      end
+    end
+
+    def self.realpath(path)
+      File.realpath(path)
+    rescue SystemCallError
+      File.expand_path(path)
     end
 
     # Prepended to Ruflet::Server. Without the runner, a Server#start that
@@ -158,6 +282,7 @@ module Ruflet
         @force_reload = false
         @reload_mutex = Mutex.new
         @served_from_script = false
+        @requires_in_flight = nil
       end
 
       def run
@@ -318,6 +443,8 @@ module Ruflet
         # it always renders the block the latest load handed over.
         server.instance_variable_set(:@app_block, proc { |page| runner.current_block.call(page) })
         @server = server
+        # Reloads load these files instead of waiting on their requires.
+        @requires_in_flight = requires_in_flight
         # Serving is not loading: warnings show again, and the app's own code
         # on this fiber (once the server stops) is no longer captured. Done
         # before the watcher starts, whose reloads save and restore $VERBOSE.
@@ -329,11 +456,37 @@ module Ruflet
         ensure
           # Once it stops, the runner lets it go: the rest of the script runs
           # as it does on v0.0.23, so a Ruflet.run there is intercepted and
-          # served by the runner's own server after the load.
+          # served by the runner's own server after the load. The requires it
+          # served from inside of finish with it.
           stop
           @server = nil
+          @requires_in_flight = nil
           @served_from_script = true
         end
+      end
+
+      # Top-level frames of a file being required or loaded; "<main>" where
+      # a compile cache such as bootsnap's compiled the file.
+      TOP_LEVEL_LABELS = ["<top (required)>", "<main>"].freeze
+      private_constant :TOP_LEVEL_LABELS
+
+      # The files whose top-level code is on the serving fiber's stack above
+      # the script's own: the requires it serves from inside of. Nil if there
+      # are none (`.run` in the script), and reloads stay as they were. Below
+      # the script are the runner's callers, such as the harness's own
+      # top-level code, which no reload requires.
+      def requires_in_flight
+        script = HotReload.realpath(@script)
+        paths = []
+        caller_locations.each do |location|
+          next unless TOP_LEVEL_LABELS.include?(location.label)
+
+          path = HotReload.realpath(location.absolute_path || location.path)
+          break if path == script
+
+          paths << path
+        end
+        paths.empty? ? nil : RequiresInFlight.new(paths.uniq)
       end
 
       def create_server(host:, port:)
@@ -349,14 +502,19 @@ module Ruflet
 
       # The ScriptLoad is fiber-local, so ServerStartCapture only sees starts
       # the script makes synchronously, never ones on threads or fibers it
-      # creates. On a reload a captured start ends the load (throw).
+      # creates. On a reload a captured start ends the load (throw), and the
+      # files the app's own server serves from inside the require of are
+      # loaded instead of required (InFlightRequires).
       def load_script!(reloading: false)
         previous_verbose = $VERBOSE
         $VERBOSE = nil
         previous_capture = Thread.current[SERVER_START_CAPTURE]
-        script_load = ScriptLoad.new(self, reloading: reloading, verbose: previous_verbose)
+        in_flight = reloading ? @requires_in_flight : nil
+        script_load = ScriptLoad.new(self, reloading: reloading, verbose: previous_verbose, in_flight: in_flight)
         Thread.current[SERVER_START_CAPTURE] = script_load
-        catch(script_load) { Kernel.load(@script) }
+        catch(script_load) do
+          in_flight ? InFlightRequires.around { Kernel.load(@script) } : Kernel.load(@script)
+        end
       ensure
         Thread.current[SERVER_START_CAPTURE] = previous_capture
         $VERBOSE = previous_verbose

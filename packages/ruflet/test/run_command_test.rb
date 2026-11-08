@@ -521,14 +521,17 @@ class RufletCliRunCommandTest < Minitest::Test
   end
 
   # core_shim: source of a ruflet_core.rb loaded in place of this checkout's
-  # (it can load the real one from TEST_REAL_CORE_LIB). The queue is under
-  # test unless ready_fallback_seconds is given.
-  def with_gated_app_session(runner, app: BOOT_GATED_APP, core_shim: nil, ready_fallback_seconds: nil)
+  # (it can load the real one from TEST_REAL_CORE_LIB). files: more app
+  # files, by name. bootsnap: set bootsnap up as `ruflet run` does, with its
+  # cache in the test's directory. The queue is under test unless
+  # ready_fallback_seconds is given.
+  def with_gated_app_session(runner, app: BOOT_GATED_APP, core_shim: nil, ready_fallback_seconds: nil, files: {}, bootsnap: false)
     skip "needs USR1 and FIFOs" unless Signal.list.key?("USR1") && File.respond_to?(:mkfifo)
 
     Dir.mktmpdir("ruflet-reload-restart-") do |dir|
       script = File.join(dir, "main.rb")
       File.write(script, app)
+      files.each { |name, source| File.write(File.join(dir, name), source) }
       %w[gate progress core_gate].each { |name| File.mkfifo(File.join(dir, name)) }
       lib_paths = runner.send(:local_ruflet_dev_lib_paths)
       if core_shim
@@ -547,6 +550,7 @@ class RufletCliRunCommandTest < Minitest::Test
       }
       cmd = runner.send(:build_runtime_command, script, gemfile_path: nil, env: env, reload: true)
       env.delete("RUFLET_BOOTSNAP_DIR") # keep the test out of ~/.ruflet
+      env["RUFLET_BOOTSNAP_DIR"] = File.join(dir, "bootsnap") if bootsnap
       run_state = runner.send(:new_run_state, track_ready: true, ready_fallback_seconds: ready_fallback_seconds)
       spawned = []
       begin
@@ -752,6 +756,86 @@ class RufletCliRunCommandTest < Minitest::Test
       TCPSocket.new("127.0.0.1", port).close
       assert_nil Process.waitpid(run_state[:child_pid], Process::WNOHANG)
     end
+  end
+
+  # main.rb requires app.rb, which starts the app with `Ruflet.app { }.run`.
+  # The app reported ready and "r" was sent, but the reload it started
+  # waited forever on app.rb's require (the app's own server serves from
+  # inside it), so neither "r" nor a save ever reloaded. Each load reports
+  # its count and whether its top-level frame reads "<main>" (bootsnap's
+  # compile cache) or "<top (required)>".
+  REQUIRED_DSL_MAIN = <<~RUBY
+    require "ruflet"
+    require "ruflet_server"
+    require_relative "app"
+  RUBY
+  REQUIRED_APP_PROGRESS = <<~RUBY
+    $ruflet_test_progress ||= File.open(ENV.fetch("TEST_PROGRESS_FIFO"), "w")
+    $ruflet_test_loads = ($ruflet_test_loads || 0) + 1
+    compiled = caller_locations(0, 1).first.label == "<main>" ? "m" : "t"
+    $ruflet_test_progress.write("L\#{$ruflet_test_loads}\#{compiled}")
+    $ruflet_test_progress.flush
+  RUBY
+  REQUIRED_DSL_APP = <<~RUBY
+    #{REQUIRED_APP_PROGRESS.chomp}
+    Ruflet.app(host: "127.0.0.1", port: 0) { text("hi") }.run
+  RUBY
+
+  # The same layout with Ruflet.run in app.rb. That reloaded on v0.0.23 (the
+  # run interceptor returns at once, so app.rb's require completes) and
+  # still does.
+  REQUIRED_RUN_MAIN = <<~RUBY
+    require "ruflet"
+    require_relative "app"
+  RUBY
+  REQUIRED_RUN_APP = <<~RUBY
+    #{REQUIRED_APP_PROGRESS.chomp}
+    Ruflet.run(host: "127.0.0.1", port: 0) { |_page| nil }
+  RUBY
+
+  def test_r_and_a_save_reload_an_app_started_in_a_file_the_script_requires
+    assert_required_app_reloads(main: REQUIRED_DSL_MAIN, app: REQUIRED_DSL_APP, bootsnap: false, frame: "t")
+  end
+
+  # `ruflet run` sets bootsnap up whenever it is installed.
+  def test_r_and_a_save_reload_an_app_started_in_a_required_file_under_bootsnap
+    skip "bootsnap is not installed" if Gem::Specification.find_all_by_name("bootsnap").empty?
+
+    assert_required_app_reloads(main: REQUIRED_DSL_MAIN, app: REQUIRED_DSL_APP, bootsnap: true, frame: "m")
+  end
+
+  def test_r_and_a_save_reload_a_ruflet_run_app_in_a_file_the_script_requires
+    assert_required_app_reloads(main: REQUIRED_RUN_MAIN, app: REQUIRED_RUN_APP, bootsnap: false, frame: "t")
+  end
+
+  def assert_required_app_reloads(main:, app:, bootsnap:, frame:)
+    runner = SignalSpyRunner.new
+    with_gated_app_session(runner, app: main, files: { "app.rb" => app }, bootsnap: bootsnap) do |run_state, _spawn_app, env, cmd, dir|
+      runner.send(:spawn_app_child, env, cmd, run_state, out: File::NULL, err: File::NULL)
+      progress = File.open(File.join(dir, "progress"), "r")
+      assert_equal "L1#{frame}", read_progress(progress)
+      run_state[:ready_thread].join # the app reported ready and closed the fd
+      assert run_state[:ready], "the app must report ready"
+
+      capture_io { assert runner.send(:handle_reload_command, "r", run_state) }
+      assert_equal [run_state[:child_pid]], runner.reload_signals, "r is sent at once"
+      assert_equal "L2#{frame}", read_progress(progress), "r must reload the app"
+
+      File.write(File.join(dir, "app.rb"), "#{app}# saved\n")
+      assert_equal "L3#{frame}", read_progress(progress), "a save must reload it too"
+      capture_io { assert runner.send(:handle_reload_command, "r", run_state) }
+      assert_equal "L4#{frame}", read_progress(progress), "and r keeps working"
+      assert_nil Process.waitpid(run_state[:child_pid], Process::WNOHANG)
+    ensure
+      progress&.close
+    end
+  end
+
+  # The next 3-byte progress report; the limit only stops a hung reload from
+  # hanging the suite.
+  def read_progress(io)
+    assert IO.select([io], nil, nil, 30), "the app never reported"
+    io.read(3)
   end
 
   # Records reload signals without sending them (these pids are not real),

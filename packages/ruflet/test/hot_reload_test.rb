@@ -707,6 +707,388 @@ class RufletHotReloadTest < Minitest::Test
     $forked_child = $fork_report = $fork_runner = nil
   end
 
+  # main.rb requires app.rb, which ends with `Ruflet.app { ... }.run`: the
+  # app's own server then serves from inside app.rb's require, and Ruby
+  # holds that require's lock until the server stops. A reload loads main.rb
+  # again on the watcher thread, and its `require_relative "app"` waited on
+  # that lock forever: no later save or "r" reloaded, and nothing was
+  # logged. A reload now loads app.rb there instead.
+  def test_a_dsl_app_started_in_a_file_the_script_requires_reloads
+    write_widgets("v1")
+    write_file("app.rb", <<~RUBY)
+      require_relative "widgets"
+      $app_loads = ($app_loads || 0) + 1
+      Ruflet.app(host: "127.0.0.1", port: 0) { text(WIDGET_LABEL) }.run
+      $app_after_run = true
+    RUBY
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "app"
+      $main_after_require = true
+    RUBY
+
+    start_served_runner
+    assert_equal ["v1"], render_labels
+
+    write_widgets("v2")
+    wait_until("the reload on save") { @runner.reload_count >= 1 }
+    assert_equal ["v2"], render_labels, "the save reloads app.rb and the file it requires"
+    @runner.request_reload
+    wait_until("the reload on r") { @runner.reload_count >= 2 }
+    assert_equal ["v2"], render_labels
+    assert_equal 3, $app_loads
+    assert_nil $app_after_run, "a reload ends at .run, where the first load is still serving"
+    assert_nil $main_after_require
+
+    stop_served_runner
+    assert $app_after_run, "once its server stops, app.rb goes on, as without the runner"
+    assert $main_after_require, "and so does main.rb"
+    refute @runner.watching?
+  ensure
+    $app_loads = $app_after_run = $main_after_require = nil
+  end
+
+  # The same with Ruflet::Server started directly, in a file found on the
+  # load path (`require "app_server"`).
+  def test_a_server_started_in_a_file_required_from_the_load_path_reloads
+    write_widgets("v1")
+    write_file("app_server.rb", <<~RUBY)
+      require "widgets"
+      Ruflet::Server.new(host: "127.0.0.1", port: 0) { |page| page.add(WIDGET_LABEL) }.start
+    RUBY
+    File.write(@script, <<~RUBY)
+      $LOAD_PATH.unshift(#{@dir.inspect}) unless $LOAD_PATH.include?(#{@dir.inspect})
+      require "ruflet"
+      require "ruflet_server"
+      require "app_server"
+    RUBY
+
+    start_served_runner
+    assert_equal ["v1"], render
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+    assert_equal ["v2"], render
+  ensure
+    $LOAD_PATH.delete(@dir)
+  end
+
+  # Every file between the script and the start is in its require: main.rb
+  # requires lib/boot.rb, which requires app.rb, which starts the server.
+  def test_a_start_required_through_a_chain_of_files_reloads
+    write_widgets("v1")
+    FileUtils.mkdir_p(File.join(@dir, "lib"))
+    write_file("lib/boot.rb", <<~RUBY)
+      $boot_loads = ($boot_loads || 0) + 1
+      require_relative "../app"
+    RUBY
+    write_file("app.rb", <<~RUBY)
+      require_relative "widgets"
+      Ruflet.app(host: "127.0.0.1", port: 0) { text(WIDGET_LABEL) }.run
+    RUBY
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "lib/boot"
+    RUBY
+
+    start_served_runner
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+    assert_equal ["v2"], render_labels
+    assert_equal 2, $boot_loads
+  ensure
+    $boot_loads = nil
+  end
+
+  # On v0.0.23 a Ruflet.run in a file the script requires reloaded: the
+  # interceptor returns at once, so that require completes. It still does.
+  def test_ruflet_run_in_a_file_the_script_requires_reloads
+    write_widgets("v1")
+    write_file("app.rb", <<~RUBY)
+      require_relative "widgets"
+      Ruflet.run { |page| page.add(WIDGET_LABEL) }
+    RUBY
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require_relative "app"
+    RUBY
+
+    start_runner
+    assert_instance_of FakeServer, @runner.server
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+    assert_equal ["v2"], render
+  end
+
+  # On a ruflet_core without run interceptors that Ruflet.run starts the
+  # server itself, from inside the require.
+  def test_ruflet_run_in_a_required_file_on_a_ruflet_core_without_run_interceptors_reloads
+    write_widgets("v1")
+    write_file("app.rb", <<~RUBY)
+      require_relative "widgets"
+      Ruflet.run(host: "127.0.0.1", port: 0) { |page| page.add(WIDGET_LABEL) }
+    RUBY
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require_relative "app"
+    RUBY
+    without_run_interceptors do
+      start_served_runner # the runner looks for run interceptors as it starts
+    end
+
+    assert_instance_of Ruflet::Server, @runner.server
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+    assert_equal ["v2"], render
+  end
+
+  # `ruflet run` sets bootsnap up when the app bundles it. Its compile cache
+  # hands Ruby precompiled code, whose top-level frames read "<main>"
+  # instead of "<top (required)>"; a required file must still be found.
+  # This is what bootsnap's cache does, minus the cache.
+  def test_a_start_in_a_required_file_compiled_by_a_compile_cache_reloads
+    iseq = RubyVM::InstructionSequence.singleton_class
+    skip "a compile cache is already installed" if iseq.method_defined?(:load_iseq)
+
+    write_widgets("v1")
+    write_file("app.rb", <<~RUBY)
+      require_relative "widgets"
+      $app_top_label = caller_locations(0, 1).first.label
+      Ruflet.app(host: "127.0.0.1", port: 0) { text(WIDGET_LABEL) }.run
+    RUBY
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "app"
+    RUBY
+    iseq.define_method(:load_iseq) { |path| RubyVM::InstructionSequence.compile_file(path) }
+
+    start_served_runner
+    assert_equal "<main>", $app_top_label, "the cache must compile the app's files"
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+    assert_equal ["v2"], render_labels
+  ensure
+    stop_served_runner
+    iseq.send(:remove_method, :load_iseq) if iseq&.method_defined?(:load_iseq)
+    $app_top_label = nil
+  end
+
+  # Only a reload of an app served from inside a required file needs its
+  # requires loaded instead, and only while it runs: otherwise Kernel's own
+  # require and require_relative are the ones every caller gets.
+  def test_require_is_wrapped_only_while_a_reload_needs_it
+    write_widgets("v1")
+    $require_owners = []
+    write_file("app.rb", <<~RUBY)
+      require_relative "widgets"
+      $require_owners << [Object.instance_method(:require).owner, Object.instance_method(:require_relative).owner]
+      Ruflet.app(host: "127.0.0.1", port: 0) { text(WIDGET_LABEL) }.run
+    RUBY
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "app"
+    RUBY
+
+    start_served_runner
+    @runner.request_reload
+    wait_until("reload") { @runner.reload_count >= 1 }
+
+    wrapped = Ruflet::HotReload::InFlightRequires
+    assert_equal [[Kernel, Kernel], [wrapped, wrapped]], $require_owners
+    assert_equal [Kernel, Kernel], [Object.instance_method(:require).owner, Object.instance_method(:require_relative).owner],
+                 "once the reload is done, require is Kernel's own again"
+  ensure
+    $require_owners = nil
+  end
+
+  # The script itself is loaded, not required, so it holds no require lock;
+  # nor does the code that runs the runner, which the harness runs from its
+  # own top level, as here.
+  def test_a_reload_of_an_app_served_from_its_main_script_leaves_require_alone
+    write_widgets("v1")
+    $require_owners = []
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "widgets"
+      $require_owners << Object.instance_method(:require).owner
+      Ruflet.app(host: "127.0.0.1", port: 0) { text(WIDGET_LABEL) }.run
+    RUBY
+    launcher = File.join(Dir.mktmpdir("ruflet-hot-reload-launcher-"), "launcher.rb")
+    File.write(launcher, "$hot_reload_test_runner.run\n")
+    @runner = $hot_reload_test_runner = new_runner
+    @thread = Thread.new { load launcher }
+    wait_until("the app's server is bound") { @runner.server&.port.to_i.positive? }
+
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+    assert_equal ["v2"], render_labels
+    assert_equal [Kernel, Kernel], $require_owners, "nothing on the serving fiber's stack holds a require lock"
+  ensure
+    stop_served_runner
+    FileUtils.remove_entry(File.dirname(launcher)) if launcher
+    $require_owners = $hot_reload_test_runner = nil
+  end
+
+  # A file in flight is loaded where the script requires it, as `require`
+  # would: once per load. Here the start moves from app.rb to main.rb, which
+  # requires app.rb twice.
+  def test_a_file_in_flight_is_loaded_once_per_reload
+    write_file("app.rb", <<~RUBY)
+      $app_loads = ($app_loads || 0) + 1
+      Ruflet.app(host: "127.0.0.1", port: 0) { text("from app") }.run
+    RUBY
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "app"
+      require_relative "app"
+      Ruflet.app(host: "127.0.0.1", port: 0) { text("from main") }.run
+    RUBY
+
+    start_served_runner
+    assert_equal ["from app"], render_labels
+    write_file("app.rb", "$app_loads = ($app_loads || 0) + 1\n")
+    wait_until("reload") { @runner.reload_count >= 1 }
+
+    assert_equal ["from main"], render_labels
+    assert_equal 2, $app_loads, "the second require of app.rb in the reload must not load it again"
+  ensure
+    $app_loads = nil
+  end
+
+  # As with `require`, a file in flight whose load raised is loaded again by
+  # a later require in the same load.
+  def test_a_file_in_flight_that_raised_is_loaded_again_by_a_later_require
+    write_file("app.rb", <<~RUBY)
+      $app_loads = ($app_loads || 0) + 1
+      Ruflet.app(host: "127.0.0.1", port: 0) { text("v1") }.run
+    RUBY
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      begin
+        require_relative "app"
+      rescue RuntimeError
+        require_relative "app"
+      end
+    RUBY
+
+    start_served_runner
+    write_file("app.rb", <<~RUBY)
+      $app_loads = ($app_loads || 0) + 1
+      raise "first try" if $app_loads == 2
+      Ruflet.app(host: "127.0.0.1", port: 0) { text("v2") }.run
+    RUBY
+    wait_until("reload") { @runner.reload_count >= 1 }
+
+    assert_equal ["v2"], render_labels
+    assert_equal 3, $app_loads
+  ensure
+    $app_loads = nil
+  end
+
+  # Once the app's own server stops, its requires complete; later reloads
+  # require those files as Ruby always does.
+  def test_files_are_required_again_once_the_apps_own_server_stops
+    write_widgets("v1")
+    app = File.join(@dir, "app.rb")
+    write_file("app.rb", <<~RUBY)
+      require_relative "widgets"
+      unless $own_server
+        $own_server = Ruflet::Server.new(host: "127.0.0.1", port: 0) { |page| page.add("own") }
+        $own_server.start
+      end
+      Ruflet.run { |page| page.add(WIDGET_LABEL) }
+    RUBY
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "app"
+    RUBY
+    @runner = new_runner
+    @thread = Thread.new { @runner.run }
+    wait_until("the app's own server is bound") { $own_server&.port.to_i.positive? }
+
+    $own_server.stop
+    wait_until("the runner's own server serves") { @runner.server.is_a?(FakeServer) && @runner.watching? }
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+
+    assert_equal ["v2"], render
+    assert($LOADED_FEATURES.any? { |feature| real_path(feature) == real_path(app) },
+           "the reload requires app.rb, as Ruby records it")
+  ensure
+    $own_server&.stop
+    $own_server = nil
+  end
+
+  # Zeitwerk and bootsnap alias Kernel#require. One loaded for the first
+  # time during such a reload must leave require working once it is done.
+  # In a fresh process: the alias stays in it for good.
+  def test_a_gem_that_aliases_kernel_require_during_such_a_reload_keeps_require_working
+    write_widgets("v1")
+    write_file("late_patch.rb", <<~RUBY)
+      module Kernel
+        alias_method :__hot_reload_test_late_require, :require
+        def require(path)
+          ($late_requires ||= []) << path
+          __hot_reload_test_late_require(path)
+        end
+        private :require, :__hot_reload_test_late_require
+      end
+    RUBY
+    write_file("fresh.rb", "$fresh_loaded = true\n")
+    write_file("app.rb", <<~RUBY)
+      require_relative "widgets"
+      require_relative "late_patch" if $patch_on_reload && !$patched
+      $patched = true if $patch_on_reload
+      Ruflet.app(host: "127.0.0.1", port: 0) { text(WIDGET_LABEL) }.run
+    RUBY
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "app"
+    RUBY
+    driver = <<~'RUBY'
+      require "ruflet/hot_reload"
+      def wait_for(what)
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 20
+        until yield
+          abort "timed out waiting for #{what}" if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+          sleep 0.02
+        end
+      end
+      runner = Ruflet::HotReload::Runner.new(script: ENV.fetch("TEST_SCRIPT"), poll_interval: 0.05, logger: ->(m) { warn m })
+      thread = Thread.new { runner.run }
+      wait_for("the app's server") { runner.server&.port.to_i.positive? }
+      $patch_on_reload = true
+      runner.request_reload
+      wait_for("the reload that patches require") { runner.reload_count >= 1 }
+      print require(File.join(ENV.fetch("TEST_DIR"), "fresh")), " ", $late_requires.to_a.size.positive?, " "
+      runner.request_reload
+      wait_for("the next reload") { runner.reload_count >= 2 }
+      print runner.reload_count
+      runner.server.stop
+      thread.join
+    RUBY
+    env = {
+      "RUBYLIB" => [File.expand_path("../lib", __dir__), CORE_LIB, SERVER_LIB].join(File::PATH_SEPARATOR),
+      "RUFLET_SUPPRESS_SERVER_BANNER" => "1",
+      "TEST_SCRIPT" => @script,
+      "TEST_DIR" => @dir
+    }
+
+    out, err, status = run_ruby(env, "-e", driver)
+
+    assert status.success?, err
+    assert_equal "true true 2", out
+    refute_match(/reload failed/, err)
+  end
+
   # `ruflet run` sends a queued "r" (USR1) once the app reports its trap, so
   # an app that could not trap USR1 must report nothing: USR1 would kill it.
   def test_nothing_is_reported_when_usr1_cannot_be_trapped
@@ -889,6 +1271,12 @@ class RufletHotReloadTest < Minitest::Test
 
   def write_file(name, source)
     File.write(File.join(@dir, name), source)
+  end
+
+  def real_path(path)
+    File.realpath(path)
+  rescue SystemCallError
+    path
   end
 
   def new_runner
