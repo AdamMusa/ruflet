@@ -1,0 +1,26 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet emulators --help
+exit: 0
+
+## commands (0)
+
+## output
+out| Usage: ruflet emulators [-v|--verbose]
+out|        ruflet emulators --start --emulator ID [--cold] [-v|--verbose]
+out| 
+out| List the configured emulators, or start one.
+out| 
+out| Options:
+out|   --create         Not implemented yet
+out|   --delete         Not implemented yet
+out|   --start          Launch the emulator named by --emulator
+out|   --emulator ID    Emulator to start
+out|   --cold           With --start: cold boot the emulator (Android only)
+out|   -v, --verbose    Run Flutter with -v
+out|   -h, --help       Show this help
+
+## files
+(no files changed)

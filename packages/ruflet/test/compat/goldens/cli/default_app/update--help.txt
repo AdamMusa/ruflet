@@ -1,0 +1,24 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet update --help
+exit: 0
+
+## commands (0)
+
+## output
+out| Usage: ruflet update [web|desktop|all] [--check] [--force] [--platform PLATFORM]
+out| 
+out| Download the prebuilt web and desktop clients, or check which are installed.
+out| 
+out| Options:
+out|   --web                 Update the web client
+out|   --desktop             Update the desktop client
+out|   --check               Report which clients are installed instead of updating them
+out|   --force               Download the template and clients again
+out|   --platform PLATFORM   macos, linux or windows (default: this host)
+out|   -h, --help            Show this help
+
+## files
+(no files changed)

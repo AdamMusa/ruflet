@@ -1,0 +1,110 @@
+{
+  "fixture": "docs_rails_api_reference__5",
+  "entrypoint": "main.rb",
+  "status": "ok",
+  "messages": [
+    {
+      "action": "register_client",
+      "payload": {
+        "session_id": "compat-session",
+        "page_patch": {
+          "views": [
+            {
+              "_c": "View",
+              "_i": "#1",
+              "_internals": {
+                "host_expanded": true
+              },
+              "appbar": {
+                "_c": "AppBar",
+                "_i": "#2",
+                "title": {
+                  "_c": "Text",
+                  "_i": "#3",
+                  "value": "My app"
+                }
+              },
+              "can_pop": true,
+              "fullscreen_dialog": false,
+              "horizontal_alignment": "start",
+              "padding": 10,
+              "route": "/",
+              "spacing": 10,
+              "vertical_alignment": "start",
+              "controls": [
+                {
+                  "_c": "Column",
+                  "_i": "#4",
+                  "_internals": {
+                    "host_expanded": true
+                  },
+                  "expand": true,
+                  "spacing": 0,
+                  "scroll": "auto",
+                  "controls": [
+                    {
+                      "_c": "Container",
+                      "_i": "#5",
+                      "content": {
+                        "_c": "Column",
+                        "_i": "#6",
+                        "_internals": {
+                          "host_expanded": true
+                        },
+                        "spacing": 8,
+                        "run_spacing": 8,
+                        "controls": [
+                          {
+                            "_c": "Text",
+                            "_i": "#7",
+                            "value": "No screen for /mobile",
+                            "size": 24,
+                            "weight": "w600"
+                          },
+                          {
+                            "_c": "Text",
+                            "_i": "#8",
+                            "value": "No controller action matches this path.",
+                            "color": "#64748b"
+                          }
+                        ]
+                      },
+                      "padding": 24
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "route": "/",
+          "window": {
+            "_c": "Window",
+            "_i": "#9"
+          },
+          "_overlay": {
+            "_c": "Overlay",
+            "_i": "#10",
+            "controls": []
+          },
+          "_services": {
+            "_c": "ServiceRegistry",
+            "_i": "#11",
+            "_services": [],
+            "_internals": {
+              "uid": "00000001"
+            }
+          },
+          "_dialogs": {
+            "_c": "Dialogs",
+            "_i": "#12",
+            "controls": []
+          },
+          "title": "Ruflet App"
+        },
+        "error": ""
+      }
+    }
+  ],
+  "stdout": "",
+  "stderr": ""
+}

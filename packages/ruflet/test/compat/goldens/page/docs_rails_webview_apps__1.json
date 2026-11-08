@@ -1,0 +1,175 @@
+{
+  "fixture": "docs_rails_webview_apps__1",
+  "entrypoint": "main.rb",
+  "status": "ok",
+  "messages": [
+    {
+      "action": "register_client",
+      "payload": {
+        "session_id": "compat-session",
+        "page_patch": {
+          "views": [
+            {
+              "_c": "View",
+              "_i": "#1",
+              "_internals": {
+                "host_expanded": true
+              },
+              "appbar": {
+                "_c": "AppBar",
+                "_i": "#2",
+                "title": {
+                  "_c": "Text",
+                  "_i": "#3",
+                  "value": "Dashboard"
+                }
+              },
+              "can_pop": true,
+              "fullscreen_dialog": false,
+              "horizontal_alignment": "start",
+              "padding": 10,
+              "route": "/",
+              "spacing": 10,
+              "vertical_alignment": "start",
+              "controls": [
+                {
+                  "_c": "Stack",
+                  "_i": "#4",
+                  "_internals": {
+                    "host_positioned": true
+                  },
+                  "clip_behavior": "hardEdge",
+                  "expand": true,
+                  "fit": "expand",
+                  "controls": [
+                    {
+                      "_c": "WebView",
+                      "_i": "#5",
+                      "url": "https://app.test/dashboard",
+                      "method": "get",
+                      "expand": true,
+                      "enable_javascript": true,
+                      "on_page_started": true,
+                      "on_page_ended": true,
+                      "on_url_change": true,
+                      "on_web_resource_error": true,
+                      "on_console_message": true
+                    },
+                    {
+                      "_c": "Container",
+                      "_i": "#6",
+                      "bgcolor": "#f7f8fb",
+                      "left": 0,
+                      "right": 0,
+                      "top": 0,
+                      "bottom": 0,
+                      "padding": 24,
+                      "visible": true,
+                      "content": {
+                        "_c": "Shimmer",
+                        "_i": "#7",
+                        "base_color": "#e5e7eb",
+                        "highlight_color": "#f8fafc",
+                        "content": {
+                          "_c": "Column",
+                          "_i": "#8",
+                          "_internals": {
+                            "host_expanded": true
+                          },
+                          "spacing": 18,
+                          "expand": true,
+                          "controls": [
+                            {
+                              "_c": "Container",
+                              "_i": "#9",
+                              "width": 190,
+                              "height": 28,
+                              "bgcolor": "#e5e7eb",
+                              "border_radius": 10
+                            },
+                            {
+                              "_c": "Container",
+                              "_i": "#10",
+                              "width": 320,
+                              "height": 16,
+                              "bgcolor": "#e5e7eb",
+                              "border_radius": 10
+                            },
+                            {
+                              "_c": "Container",
+                              "_i": "#11",
+                              "width": 280,
+                              "height": 16,
+                              "bgcolor": "#e5e7eb",
+                              "border_radius": 10
+                            },
+                            {
+                              "_c": "Container",
+                              "_i": "#12",
+                              "height": 14
+                            },
+                            {
+                              "_c": "Container",
+                              "_i": "#13",
+                              "width": 340,
+                              "height": 86,
+                              "bgcolor": "#e5e7eb",
+                              "border_radius": 10
+                            },
+                            {
+                              "_c": "Container",
+                              "_i": "#14",
+                              "width": 300,
+                              "height": 86,
+                              "bgcolor": "#e5e7eb",
+                              "border_radius": 10
+                            },
+                            {
+                              "_c": "Container",
+                              "_i": "#15",
+                              "width": 330,
+                              "height": 86,
+                              "bgcolor": "#e5e7eb",
+                              "border_radius": 10
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "route": "/",
+          "window": {
+            "_c": "Window",
+            "_i": "#16"
+          },
+          "_overlay": {
+            "_c": "Overlay",
+            "_i": "#17",
+            "controls": []
+          },
+          "_services": {
+            "_c": "ServiceRegistry",
+            "_i": "#18",
+            "_services": [],
+            "_internals": {
+              "uid": "00000001"
+            }
+          },
+          "_dialogs": {
+            "_c": "Dialogs",
+            "_i": "#19",
+            "controls": []
+          },
+          "title": "Ruflet App"
+        },
+        "error": ""
+      }
+    }
+  ],
+  "stdout": "",
+  "stderr": ""
+}

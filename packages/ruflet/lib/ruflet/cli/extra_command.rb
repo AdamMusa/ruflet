@@ -7,6 +7,7 @@ module Ruflet
     module ExtraCommand
       include FlutterSdk
       include NewCommand
+      include TemplateSurfaceCheck
 
       def command_create(args)
         command_new(args)
@@ -15,6 +16,7 @@ module Ruflet
       def command_doctor(args)
         verbose = args.delete("--verbose") || args.delete("-v")
         fix = args.delete("--fix")
+        strict = args.delete("--strict")
         client_dir = detect_client_dir
         template_root =
           if fix
@@ -29,6 +31,7 @@ module Ruflet
           puts "  Template: #{template_root}"
           revision = cached_template_revision if respond_to?(:cached_template_revision, true)
           puts "  Template revision: #{revision}" if revision
+          surface_ok = check_template_surface(template_root, strict: !!strict, config: doctor_project_config)
         elsif fix
           warn "  Template: missing"
           warn "Failed to fetch the Ruflet Flutter template from GitHub."
@@ -52,6 +55,8 @@ module Ruflet
         ok = system(tools[:env], tools[:flutter], "doctor", *(verbose ? ["-v"] : []))
         status = $?.exitstatus if $?
         status ||= ok ? 0 : 1
+        return 1 if surface_ok == false && status.zero?
+
         status
       end
 
@@ -62,19 +67,24 @@ module Ruflet
       end
 
       def command_emulators(args)
-        tools = ensure_flutter!("emulators")
         action = nil
         emulator_id = nil
         verbose = false
+        cold = false
         parser = OptionParser.new do |o|
           o.on("--create") { action = "create" }
           o.on("--delete") { action = "delete" }
           o.on("--start") { action = "start" }
           o.on("--emulator ID") { |v| emulator_id = v }
+          o.on("--cold") { cold = true }
           o.on("-v", "--verbose") { verbose = true }
+          o.on("-h", "--help") { raise Commands::HelpRequested }
         end
+        # Parse first: a bad flag is reported before Flutter is looked up.
         parser.parse!(args)
+        raise Commands::UsageError, "--cold needs --start --emulator ID" if cold && action != "start"
 
+        tools = ensure_flutter!("emulators")
         case action
         when "start"
           unless emulator_id
@@ -82,6 +92,7 @@ module Ruflet
             return 1
           end
           cmd = [tools[:flutter], "emulators", "--launch", emulator_id]
+          cmd << "--cold" if cold
           cmd << "-v" if verbose
           system(tools[:env], *cmd)
           $?.exitstatus || 1
@@ -106,10 +117,12 @@ module Ruflet
         }
         parser = OptionParser.new do |o|
           o.on("--platform NAME") { |v| options[:platform] = v }
-          o.on("--device-id ID") { |v| options[:device_id] = v }
+          # --device and -d already reached --device-id as abbreviations.
+          o.on("--device ID", "--device-id ID") { |v| options[:device_id] = v }
           o.on("--release") { options[:release] = true }
           o.on("-v", "--verbose") { options[:verbose] = true }
           o.on("--web-renderer NAME") { |v| options[:web_renderer] = v }
+          o.on("-h", "--help") { raise Commands::HelpRequested }
         end
         parser.parse!(args)
 
@@ -147,6 +160,15 @@ module Ruflet
       end
 
       private
+
+      # The project's ruflet.yaml/services.yaml, when doctor runs in one; its
+      # extensions are checked against the template.
+      def doctor_project_config
+        return nil unless %w[ruflet.yaml ruflet.yml services.yaml].any? { |name| File.file?(name) }
+        return nil unless respond_to?(:load_ruflet_config, true)
+
+        send(:load_ruflet_config)
+      end
 
       def resolve_ruby_runtime_root
         env_path = ENV["RUFLET_RUBY_RUNTIME_PATH"].to_s.strip

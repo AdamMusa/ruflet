@@ -17,6 +17,8 @@ require "time"
 module Ruflet
   module CLI
     module RunCommand
+      include TemplateSurfaceCheck
+
       # Release assets were published as ruflet_client-* before the preview
       # client became Ruflet Explorer. Ask for the current names, but keep
       # recognising the old ones so an existing release still resolves.
@@ -31,12 +33,17 @@ module Ruflet
 
       def command_run(args)
         options = parse_run_options(args)
+        return report_run_device_unsupported(options[:device]) if options[:device]
 
         script_token = args.shift || "main"
         script_path = resolve_script(script_token)
         unless script_path
           warn "Script not found: #{script_token}"
           warn "Expected: ./#{script_token}.rb, ./#{script_token}, or explicit file path."
+          return 1
+        end
+        template_root = installed_template_surface_root
+        if template_root && !check_template_surface(template_root, strict: options[:strict], files: [script_path])
           return 1
         end
 
@@ -133,12 +140,26 @@ module Ruflet
         options = { target: "mobile", requested_port: 8550, reload: true }
         parser = OptionParser.new do |o|
           o.on("--web") { options[:target] = "web" }
-          o.on("--desktop") { options[:target] = "desktop" }
+          # -d reached --desktop as its only abbreviation before --device
+          # existed, and must keep doing so (as must --d and --de).
+          o.on("-d", "--desktop", "--de", "--d") { options[:target] = "desktop" }
           o.on("--port PORT", Integer) { |v| options[:requested_port] = v }
           o.on("--no-reload") { options[:reload] = false }
+          o.on("--device ID") { |v| options[:device] = v }
+          o.on("--strict") { options[:strict] = true }
+          o.on("-h", "--help") { raise Commands::HelpRequested }
         end
         parser.parse!(args)
         options
+      end
+
+      # `--device` is reserved for running the app's own Flutter client on a
+      # device; until that exists, say how to get the app onto one.
+      def report_run_device_unsupported(device)
+        warn "ruflet run: --device is not supported yet."
+        warn "To open the app on a phone or emulator, run `ruflet run` and scan the QR code with Ruflet Explorer,"
+        warn "or build and install it: `ruflet build apk --self`, then `ruflet install --device #{device}`."
+        1
       end
 
       def build_runtime_command(script_path, gemfile_path:, env:, reload: false)

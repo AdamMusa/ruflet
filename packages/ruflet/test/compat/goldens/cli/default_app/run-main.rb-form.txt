@@ -1,0 +1,41 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet run main.rb
+before: ruflet build web
+added file: main.rb
+exit: 0
+
+## commands (2)
+1. system exit=0
+   <RUBY> -S bundle check
+   env: BUNDLE_GEMFILE=<PROJECT>/Gemfile RUFLET_APP_SCRIPT=<PROJECT>/main.rb RUFLET_ASSETS_DIR=<PROJECT>/assets RUFLET_BOOTSNAP_DIR=<HOME>/.ruflet/bootsnap/<RUBY_VERSION>/<PROJECT_KEY> RUFLET_PORT=8550 RUFLET_SUPPRESS_SERVER_BANNER=1 RUFLET_TARGET=mobile RUFLET_WATCH_ROOT=<PROJECT>
+   options: err out
+2. spawn
+   <RUBY> -rbundler/setup <GEM_HOME>/gems/ruflet-<RUFLET_VERSION>/lib/ruflet/hot_reload/harness.rb
+   env: BUNDLE_GEMFILE=<PROJECT>/Gemfile RUFLET_APP_SCRIPT=<PROJECT>/main.rb RUFLET_ASSETS_DIR=<PROJECT>/assets RUFLET_BOOTSNAP_DIR=<HOME>/.ruflet/bootsnap/<RUBY_VERSION>/<PROJECT_KEY> RUFLET_PORT=8550 RUFLET_SUPPRESS_SERVER_BANNER=1 RUFLET_TARGET=mobile RUFLET_WATCH_ROOT=<PROJECT>
+   options: pgroup
+
+## output
+err| warning: the Flutter template lacks 1 control this app uses:
+err|   form (Form), main.rb:4: needs ruflet-template e793ccef345b or newer
+err|   Template: <HOME>/.ruflet/templates/ruflet_flutter_template (revision c0ffee00c0ff)
+err|   Until it has them, a control it lacks shows "Unknown control".
+err|   Fetch the latest template with `ruflet doctor --fix`, or pass --strict to fail instead.
+out| Ruflet target: mobile
+out| 
+out| Ruflet mobile connect URL:
+out|   http://192.168.1.23:8550
+out| Scan this QR from ruflet_client (Connect -> Scan QR):
+out|    ▄ ▄▄▄ ▄ 
+out|    ▄   █▄█ 
+out|   ▀▀   ▀▀▄ 
+out|   ▄▄  ▀▄▄▀ 
+out|  ██ ▄▄▄█▀  
+out|            
+out| 
+out| Hot reload: watching *.rb (disable with --no-reload)
+
+## files
+(no files changed)

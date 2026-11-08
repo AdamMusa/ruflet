@@ -1,0 +1,52 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet doctor
+added file: main.rb
+exit: 0
+
+## commands (6)
+1. capture3 exit=0
+   git ls-remote https://github.com/AdamMusa/ruflet-template.git refs/heads/main
+   env: GIT_TERMINAL_PROMPT=0
+2. system exit=0
+   git clone --depth 1 --branch main --filter=blob:none --sparse https://github.com/AdamMusa/ruflet-template.git <TMP>/ruflet-assetsXXXXXXXX/Ruflet
+   env: GIT_TERMINAL_PROMPT=0
+   options: err out
+3. system exit=0
+   git -C <TMP>/ruflet-assetsXXXXXXXX/Ruflet sparse-checkout set templates/ruflet_flutter_template
+   env: GIT_TERMINAL_PROMPT=0
+   options: err out
+4. capture3 exit=0
+   git -C <TMP>/ruflet-assetsXXXXXXXX/Ruflet rev-parse HEAD
+5. capture2e exit=0
+   <FLUTTER_SDK>/bin/flutter --version --machine
+   env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
+6. system exit=0
+   <FLUTTER_SDK>/bin/flutter doctor
+   env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+## output
+out| Ruflet doctor
+out|   Ruby: <RUBY_VERSION>
+out|   Flutter host target: macos_arm64
+out|   Template: <HOME>/.ruflet/templates/ruflet_flutter_template
+out|   Template revision: c0ffee00c0ffee00c0ffee00c0ffee00c0ffee00
+err| warning: the Flutter template lacks 1 control this app uses:
+err|   form (Form), main.rb:4: needs ruflet-template e793ccef345b or newer
+err|   Template: <HOME>/.ruflet/templates/ruflet_flutter_template (revision c0ffee00c0ff)
+err|   Until it has them, a control it lacks shows "Unknown control".
+err|   Fetch the latest template with `ruflet doctor --fix`, or pass --strict to fail instead.
+out|   Ruby runtime: pub.dev package
+out|   Flutter: 3.41.2 stable
+
+## files
+<HOME>/.ruflet/templates/ruflet_flutter_template/ created from the template: 208 files identical, 0 template files absent
+A <HOME>/.ruflet/templates/ruflet_flutter_template.revision  sha256:9d4a95b50d07fadc 41b  (new)
+
+## diffs
+--- /dev/null
++++ <HOME>/.ruflet/templates/ruflet_flutter_template.revision
+@@ -0,0 +1,1 @@
++c0ffee00c0ffee00c0ffee00c0ffee00c0ffee00

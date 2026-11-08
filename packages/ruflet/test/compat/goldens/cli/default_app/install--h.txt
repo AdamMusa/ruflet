@@ -1,0 +1,21 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet install -h
+exit: 0
+
+## commands (0)
+
+## output
+out| Usage: ruflet install [--device DEVICE_ID] [--verbose]
+out| 
+out| Install the last build from ./build on a device; without --device, pick one from a list.
+out| 
+out| Options:
+out|   -v, --verbose            Print each step and run Flutter with -v
+out|   -d, --device DEVICE_ID   Device to install on
+out|   -h, --help               Show this help
+
+## files
+(no files changed)
