@@ -515,6 +515,51 @@ class RufletHotReloadTest < Minitest::Test
     $own_server = nil
   end
 
+  # The same without the guard. A reload runs the script from the top, so it
+  # reaches that start again first. It used to hand the stopped server's
+  # block over, and the reload repainted "own" instead of the Ruflet.run
+  # block the runner serves; on v0.0.23 and main it started that server
+  # again on the watcher thread, and the reload never finished. On the first
+  # load that start returned once its server stopped, so on a reload it
+  # returns at once, starting nothing, and the load goes on to Ruflet.run,
+  # as under plain ruby once that server has stopped.
+  def test_ruflet_run_after_the_apps_unguarded_own_server_stops_is_served_by_the_runner
+    $own_servers = []
+    $after_own_start = 0
+    write_widgets("v1")
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "widgets"
+
+      $own_servers << Ruflet::Server.new(host: "127.0.0.1", port: 0) { |page| page.add("own") }
+      $own_servers.last.start
+      $after_own_start += 1
+      Ruflet.run { |page| page.add(WIDGET_LABEL) }
+    RUBY
+    @runner = new_runner
+    @thread = Thread.new { @runner.run }
+    wait_until("the app's own server is bound") { $own_servers.first&.port.to_i.positive? }
+    assert_equal ["own"], render
+
+    $own_servers.first.stop
+    wait_until("the runner's own server serves") { @runner.server.is_a?(FakeServer) && @runner.watching? }
+    assert_equal ["v1"], render
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+    assert_equal ["v2"], render, "the reload serves the new Ruflet.run block"
+    assert_equal 2, $own_servers.size
+    assert_equal 0, $own_servers.last.port, "the reload's start returns without starting that server"
+    assert_equal 2, $after_own_start, "and the load goes on past it"
+
+    @runner.request_reload
+    wait_until("the second reload") { @runner.reload_count >= 2 }
+    assert_equal ["v2"], render
+  ensure
+    $own_servers&.each(&:stop)
+    $own_servers = $after_own_start = nil
+  end
+
   # On v0.0.23 a server the script starts itself after an intercepted
   # Ruflet.run blocked the load and served as is; the runner's own server
   # came up only once that one stopped. It still does. On a reload, too,

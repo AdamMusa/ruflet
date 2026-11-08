@@ -417,6 +417,11 @@ module Ruflet
       # - On a reload the app is served already: the start hands the new
       #   block over and the load ends there, the way it blocked there the
       #   first time. Only the load's first entrypoint is the app's.
+      # - Unless the app's own server has stopped since, and the runner
+      #   serves what the rest of the script handed over (a Ruflet.run after
+      #   that start): on the first load that start returned once its server
+      #   stopped, so on a reload it returns at once, without starting, and
+      #   the load goes on to what the runner serves.
       # - A start in a process the app forked, and, on the first load, one
       #   after an intercepted Ruflet.run (a server Ruflet.run did not start
       #   and that ran on v0.0.23 as is), runs as without the runner.
@@ -424,6 +429,8 @@ module Ruflet
         return start.call unless Process.pid == script_load.pid
 
         if script_load.reloading?
+          return nil if @served_from_script && script_load.entrypoint.nil?
+
           @current_block = app_block unless script_load.entrypoint || server.equal?(@server)
           script_load.entrypoint ||= :server
           throw script_load
