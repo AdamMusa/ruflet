@@ -181,7 +181,7 @@ class KernelHelperShadowingTest < Minitest::Test
     assert_equal :zork, zork.name
   end
 
-  def test_ruflet_owned_receivers_still_build_with_arguments_as_on_v0_0_23
+  def test_ruflet_owned_receivers_still_build_with_arguments_or_a_block_as_on_v0_0_23
     control = Ruflet.text("x")
 
     assert_kind_of Ruflet::Control, control.table(1)
@@ -191,6 +191,15 @@ class KernelHelperShadowingTest < Minitest::Test
     # So are a script's top-level object, named or not, and a page.
     assert_kind_of Ruflet::Control, TOPLEVEL_BINDING.receiver.table(rows: [])
     assert_kind_of Ruflet::Control, new_page.stepper(current_step: 1)
+
+    # A block alone is enough: v0.0.23 built a generic control for
+    # `Ruflet.text("x").table { }` too, and these build the real one.
+    event = Ruflet::Event.new(name: "click", target: 1, raw_data: nil, page: nil, control: nil)
+    assert_equal without_ids(Ruflet::DSL.table {}.to_patch), without_ids(control.table {}.to_patch)
+    assert_equal without_ids(Ruflet::DSL.stepper {}.to_patch), without_ids(event.stepper {}.to_patch)
+    assert_equal without_ids(Ruflet::DSL.form { Ruflet.text_field(label: "N") }.to_patch),
+                 without_ids(TOPLEVEL_BINDING.receiver.form { Ruflet.text_field(label: "N") }.to_patch)
+    assert_equal "Form", TOPLEVEL_BINDING.receiver.form { Ruflet.text_field(label: "N") }.wire_type
   end
 
   # v0.0.23 did not have these names, so `record.table(1)` raised
@@ -243,6 +252,46 @@ class KernelHelperShadowingTest < Minitest::Test
     assert_equal "Stepper", component.new.own.to_patch["_c"]
     assert_equal "SliverList", component.new.in_block.to_patch["_c"]
     assert_equal "Form", component.new.form_with_fields.to_patch["_c"]
+  end
+
+  # Apps wrap helpers: `def section(*args, **opts, &block) = list_section(*args, **opts, &block)`.
+  # A call forwarded with a positional splat, keywords, a block or `...` builds
+  # what the direct Ruflet::DSL call builds, keywords included. (The embedded
+  # VM's mruby 449627d drops such keywords before any method_missing runs;
+  # tools/embedded_vm_harness/tests/scoped_helper_test.rb checks it there.)
+  def test_forwarded_calls_build_what_the_direct_call_builds
+    wrapper = Class.new
+    NEW_HELPERS.each do |name|
+      wrapper.class_eval(<<~RUBY, __FILE__, __LINE__ + 1)
+        def splat_#{name}(*args, **props, &block) = #{name}(*args, **props, &block)
+        def literal_#{name}(*args) = #{name}(*args, key: "lit")
+        def dots_#{name}(...) = #{name}(...)
+      RUBY
+    end
+    host = wrapper.new
+    shapes = {
+      "(key: \"k\")" => [[], { key: "k" }, nil],
+      "([], key: \"k\")" => [[[]], { key: "k" }, nil],
+      "(text, key: \"k\")" => [[Ruflet.text("c")], { key: "k" }, nil],
+      "(key: \"k\") { }" => [[], { key: "k" }, proc {}]
+    }
+
+    NEW_HELPERS.each do |name|
+      takes_block = Ruflet::DSL.method(name).parameters.any? { |type, _| type == :block }
+      shapes.each do |label, (args, props, block)|
+        next if block && !takes_block
+
+        want = patch_or_error { Ruflet::DSL.public_send(name, *args, **props, &block) }
+        %w[splat dots].each do |form|
+          got = patch_or_error { host.public_send("#{form}_#{name}", *args, **props, &block) }
+          assert_equal want, got, "#{form}_#{name}#{label}"
+        end
+        literal = patch_or_error { Ruflet::DSL.public_send(name, *args, key: "lit") }
+        assert_equal literal, patch_or_error { host.public_send("literal_#{name}", *args) }, "literal_#{name}#{label}"
+      end
+    end
+    assert_equal "k", host.splat_stepper([Ruflet.stepper_step(title: "A")], key: "k", current_step: 1).to_patch["key"]
+    assert_equal 1, host.dots_stepper(current_step: 1).to_patch["current_step"]
   end
 
   # Kernel#method_missing reads a trailing Hash of Symbol keys, when no
@@ -315,6 +364,11 @@ class KernelHelperShadowingTest < Minitest::Test
                  without_ids(plain.instance_eval { fade_transition({ a: 1 }, repeat: true) }.to_patch)
     assert_equal without_ids(Ruflet::DSL.table({}).to_patch), without_ids(plain.instance_eval { table({}) }.to_patch)
     assert_equal "AboutDialog", plain.instance_eval { about_dialog({ application_name: "App" }) }.wire_type
+
+    # One non-Symbol key is enough to keep a Hash positional.
+    mixed = { rows: [], "border_width" => 1 }
+    assert_equal without_ids(Ruflet::DSL.table(mixed).to_patch), without_ids(plain.instance_eval { table(mixed) }.to_patch)
+    assert_equal({ "rows" => [], "border_width" => 1 }, plain.instance_eval { table(mixed) }.to_patch["rows"])
   end
 
   # The embedded VM has no NoMethodError#private_call?. An explicit call
@@ -343,6 +397,14 @@ class KernelHelperShadowingTest < Minitest::Test
     refute scoped.receiverless?(vm_error.call(:other), Object.new, :table)
     assert scoped.receiverless?(bare_word, PartialMissing.new, :table)
     refute scoped.receiverless?(NameError.new("uninitialized constant Missing", :Missing), Object.new, :table)
+
+    # When Kernel#method cannot look method_missing up on the receiver, the
+    # call is taken as one that reached Kernel's directly: an explicit call
+    # stops at the VM's visibility check, so what got here is a bare call or
+    # send.
+    opaque = Class.new { undef_method :method_missing }.new
+    assert_raises(NameError) { Kernel.instance_method(:method).bind_call(opaque, :method_missing) }
+    assert scoped.receiverless?(vm_error.call(:table), opaque, :table)
   end
 
   # `super` in Kernel#method_missing can reach a method_missing that another
@@ -593,6 +655,13 @@ class KernelHelperShadowingTest < Minitest::Test
   def outcome
     value = yield
     [value.class, value.respond_to?(:wire_type) ? value.wire_type : nil]
+  rescue StandardError => e
+    [e.class, e.message]
+  end
+
+  # A call's patch without ids, or the error it raises.
+  def patch_or_error
+    without_ids(yield.to_patch)
   rescue StandardError => e
     [e.class, e.message]
   end

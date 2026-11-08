@@ -589,7 +589,9 @@ module Ruflet
       # v0.0.23), so a call that reaches Kernel#method_missing directly is a
       # bare call, send, __send__ or public_send. One that arrives through
       # another class's method_missing calling super cannot be told apart
-      # from an explicit call, and re-raises.
+      # from an explicit call, and re-raises. The stop is mruby 449627d's
+      # visibility check; later mruby (upstream 9aaa7ce5fb) drops it, so an
+      # mruby update must re-check explicit calls here.
       def self.receiverless?(error, receiver, name)
         return false unless error.name == name
         return true unless error.is_a?(NoMethodError)
@@ -616,6 +618,11 @@ module Ruflet
       # written positionally, so both are read the same way, on CRuby too,
       # and the two runtimes build the same control. No helper here takes a
       # Hash as its content, rows or children.
+      #
+      # The embedded VM's mruby (449627d) loses the keywords of a call that
+      # also splats positional arguments, such as `stepper(*args, **opts)` or
+      # `table(...)`, before any method_missing runs, so nothing here can
+      # restore them (tools/embedded_vm_harness/tests/scoped_helper_test.rb).
       def self.build(name, args, props, &block)
         options = args.last
         if props.empty? && options.is_a?(Hash) && !options.empty? && options.keys.all? { |key| key.is_a?(Symbol) }
