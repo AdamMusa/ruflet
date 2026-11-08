@@ -10,10 +10,13 @@ require "rbconfig"
 require "uri"
 require "yaml"
 
+require_relative "client_bootstrap"
+
 module Ruflet
   module CLI
     module BuildCommand
       include FlutterSdk
+      include ClientBootstrap
       CLIENT_EXTENSION_MAP = {
         "ads" => { package: "ruflet_ads", alias: "ruflet_ads" },
         "audio" => { package: "ruflet_audio", alias: "ruflet_audio" },
@@ -578,6 +581,9 @@ module Ruflet
         if @ruflet_extension_selection_applied && !validate_flutter_extension_selection(client_dir)
           return false
         end
+        # Once the entrypoints are final, so a hook can depend on the
+        # extensions this build selected.
+        write_client_bootstrap(client_dir, config, platform: platform, self_contained: self_contained)
         asset_flags = apply_build_config(client_dir, config)
         if asset_flags[:error]
           warn asset_flags[:error]
