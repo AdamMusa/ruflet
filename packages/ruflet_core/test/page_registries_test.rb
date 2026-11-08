@@ -188,3 +188,156 @@ class RufletPageRegistriesTest < Minitest::Test
                  payload.reject { |key, _| key == "call_id" })
   end
 end
+
+# The registries themselves (Ruflet::Page::Registry): seeded with exactly the
+# tables above, and appendable, so a feature can route a new page prop,
+# subscribe a Page event through Page#on or add a page method without
+# editing Page's dispatch code.
+class RufletPageRegistryAppendTest < Minitest::Test
+  REGISTRY = Ruflet::Page::Registry
+  TABLES = %i[@props @events @methods].freeze
+
+  def setup
+    @saved = TABLES.to_h { |table| [table, REGISTRY.instance_variable_get(table).dup] }
+    @sent = []
+    @page = new_page
+  end
+
+  def teardown
+    @saved.each { |table, entries| REGISTRY.instance_variable_set(table, entries) }
+  end
+
+  def new_page
+    Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/", "platform" => "android" },
+      sender: ->(action, payload) { @sent << [action, payload] }
+    )
+  end
+
+  def invokes
+    @sent.select { |action, _payload| action == Ruflet::Protocol::ACTIONS[:invoke_control_method] }.map(&:last)
+  end
+
+  def implicit_view(patch)
+    patch.fetch("views").first
+  end
+
+  def test_seeds_are_the_built_in_tables
+    assert_equal Ruflet::Page::PAGE_PROP_KEYS, REGISTRY.prop_keys
+    mirrored = %w[vertical_alignment horizontal_alignment scroll]
+    Ruflet::Page::PAGE_PROP_KEYS.each do |key|
+      assert_equal mirrored.include?(key) ? :page_and_view : :page, REGISTRY.prop_target(key), key
+    end
+    assert_nil REGISTRY.prop_target("bgcolor")
+    assert_nil REGISTRY.prop_target(:title), "keys match exactly, as the old include? did"
+    assert_equal [], REGISTRY.event_names
+    assert_equal(
+      {
+        "get_device_info" => :page,
+        "set_allowed_device_orientations" => :page,
+        "show_drawer" => :top_view,
+        "close_drawer" => :top_view,
+        "show_end_drawer" => :top_view,
+        "close_end_drawer" => :top_view,
+        "scroll_to" => :root_view
+      },
+      REGISTRY.page_methods
+    )
+    assert REGISTRY.prop_keys.frozen?
+    assert REGISTRY.page_methods.frozen?
+  end
+
+  def test_a_registered_prop_moves_from_the_view_to_the_page
+    @page.set_view_props("r4_probe" => 1, "r4_probe_mirrored" => 2)
+    patch = @page.register_page_patch
+    refute patch.key?("r4_probe")
+    assert_equal 1, implicit_view(patch)["r4_probe"]
+
+    assert_equal "r4_probe", REGISTRY.register_prop(:r4_probe)
+    REGISTRY.register_prop("r4_probe_mirrored", view: true)
+    page = new_page
+    page.set_view_props("r4_probe" => 1)
+    page.r4_probe_mirrored = 2
+    patch = page.register_page_patch
+
+    assert_equal 1, patch["r4_probe"]
+    refute implicit_view(patch).key?("r4_probe")
+    assert_equal 2, patch["r4_probe_mirrored"]
+    assert_equal 2, implicit_view(patch)["r4_probe_mirrored"]
+    assert_equal 1, page.r4_probe
+    assert_equal Ruflet::Page::PAGE_PROP_KEYS + %w[r4_probe r4_probe_mirrored], REGISTRY.prop_keys
+  end
+
+  def test_a_registered_event_is_subscribed_on_the_page_by_page_on
+    @page.on(:r4_probe_event) {}
+    refute @page.register_page_patch.key?("on_r4_probe_event")
+
+    assert_equal "r4_probe_event", REGISTRY.register_event(:on_r4_probe_event)
+    REGISTRY.register_event("scroll")
+    page = new_page
+    fired = []
+    page.on(:r4_probe_event) { |event| fired << event.name }
+    page.on(:scroll) {}
+    patch = page.register_page_patch
+
+    assert_equal true, patch["on_r4_probe_event"]
+    refute implicit_view(patch).key?("on_r4_probe_event")
+    assert_equal true, implicit_view(patch)["on_scroll"], "View events keep their View flag"
+    refute patch.key?("on_scroll")
+    page.dispatch_event(target: 1, name: "r4_probe_event", data: nil)
+    assert_equal ["r4_probe_event"], fired
+
+    page.on(:r4_probe_event)
+    patch = page.register_page_patch
+    assert patch.key?("on_r4_probe_event")
+    assert_nil patch["on_r4_probe_event"]
+    # on without a block never adds a flag that was not there.
+    fresh = new_page
+    fresh.on(:r4_probe_event)
+    refute fresh.register_page_patch.key?("on_r4_probe_event")
+    assert_equal %w[r4_probe_event scroll], REGISTRY.event_names
+  end
+
+  def test_a_registered_method_invokes_its_target
+    @page.add(Ruflet.text("Body"))
+    @page.update
+    @sent.clear
+
+    REGISTRY.register_method("r4_probe_page")
+    REGISTRY.register_method("r4_probe_view", target: :top_view)
+    @page.__send__(:invoke_page_method, "r4_probe_page", args: { "a" => 1 }, timeout: nil)
+    @page.__send__(:invoke_page_method, "r4_probe_view")
+
+    assert_equal(
+      [
+        { "control_id" => 1, "name" => "r4_probe_page", "args" => { "a" => 1 } },
+        { "control_id" => 20, "name" => "r4_probe_view", "args" => nil, "timeout" => 10 }
+      ],
+      invokes.map { |payload| payload.reject { |key, _| key == "call_id" } }
+    )
+    error = assert_raises(ArgumentError) { @page.__send__(:invoke_page_method, "r4_unregistered") }
+    assert_equal "r4_unregistered is not a registered page method", error.message
+    assert_equal 2, invokes.size, "nothing is sent for an unregistered method"
+  end
+
+  def test_registration_is_idempotent_and_rejects_conflicts
+    assert_equal "title", REGISTRY.register_prop("title")
+    assert_equal "scroll", REGISTRY.register_prop(:scroll, view: true)
+    assert_equal "scroll_to", REGISTRY.register_method(:scroll_to, target: :root_view)
+    REGISTRY.register_event("r4_probe_event")
+    assert_equal "r4_probe_event", REGISTRY.register_event("on_r4_probe_event")
+
+    assert_raises(ArgumentError) { REGISTRY.register_prop("title", view: true) }
+    assert_raises(ArgumentError) { REGISTRY.register_prop("scroll") }
+    assert_raises(ArgumentError) { REGISTRY.register_method("scroll_to", target: :page) }
+    assert_raises(ArgumentError) { REGISTRY.register_method("r4_probe", target: :view) }
+    assert_raises(ArgumentError) { REGISTRY.register_prop("on_resize") }
+    assert_raises(ArgumentError) { REGISTRY.register_prop("dialog") }
+    assert_raises(ArgumentError) { REGISTRY.register_prop("") }
+    assert_raises(ArgumentError) { REGISTRY.register_event("on_") }
+    assert_raises(ArgumentError) { REGISTRY.register_method("") }
+    assert_equal Ruflet::Page::PAGE_PROP_KEYS, REGISTRY.prop_keys
+    assert_equal %w[r4_probe_event], REGISTRY.event_names
+  end
+end
