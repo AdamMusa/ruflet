@@ -206,6 +206,12 @@ module RufletCompat
     cli "default_app", "emulators", "--cold"
     cli "default_app", "doctor", "--bogus-flag"
     cli "empty", "new", "my_app", "--bogus-flag"
+    # CLI-12: `build --release apk` must reach Flutter exactly as `build apk
+    # --release` does (default_app stops at its missing backend_url; services_app
+    # has one, so its pair shows the flutter argv).
+    cli "default_app", "build", "apk", "--release"
+    cli "services_app", "build", "apk", "--release"
+    cli "services_app", "build", "--release", "apk"
 
     # --- command words, help, usage and exit codes (R2, CLI-12) ----------------
     # How the first argument picks a command (case-insensitively, aliases
