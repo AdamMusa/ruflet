@@ -417,8 +417,11 @@ module Ruflet
       # must decline the same calls Ruby expects to raise on.
       #
       # A scoped helper name (ScopedControlForwarders) is decided by
-      # Kernel#method_missing before it gets here; it reaches this point only
-      # when that call is to raise, so it is declined as an unknown name.
+      # Kernel#method_missing before it gets here (Ruflet and Ruflet::UI define
+      # these names outright). On any other object it reaches this point only
+      # through that method's `super`, which asks Ruby for the error a missing
+      # name raises, so it is declined as an unknown name; building here would
+      # answer `record.table(rows: [])`, which v0.0.23 raised on.
       def method_missing(name, *args, **props, &block)
         return super if name.to_s.end_with?("=") || (args.empty? && props.empty? && !block)
         return super if Ruflet::UI::ScopedControlForwarders.helper?(name)
@@ -556,7 +559,9 @@ module Ruflet
       #
       # :build    - build it. A script's top level, and a call with arguments
       #             on an object the framework owns (Ruflet::*), where v0.0.23
-      #             already built a generic control for an unknown name.
+      #             already built a generic control for an unknown name, with
+      #             or without a receiver (CRuby only: on the embedded VM
+      #             ControlFactory.dsl_receiver? is always false).
       # :implicit - build it only if the call had no explicit receiver, which
       #             is exactly when a private Kernel method, like every helper
       #             v0.0.23 shipped, would have been called, with or without

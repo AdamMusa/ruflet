@@ -201,7 +201,9 @@ module Kernel
   # the Kernel method would have called, but only where a private Kernel
   # method could have been called: with no explicit receiver, with or without
   # arguments (`record.table(1)` and `record.table` raise NoMethodError, as
-  # they did when the name did not exist).
+  # they did when the name did not exist). Where v0.0.23 built a control for
+  # any name called with arguments, at a script's top level and on an object
+  # Ruflet owns, these names still build (see ScopedControlForwarders.dispatch).
   def method_missing(name, *args, **props, &block)
     scoped = Ruflet::UI::ScopedControlForwarders
     case scoped.dispatch(self, name, args, props, block)
