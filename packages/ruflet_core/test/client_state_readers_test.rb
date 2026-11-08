@@ -171,8 +171,9 @@ class RufletClientStateReadersTest < Minitest::Test
   # directory, `require "ruflet"` loads ruflet_ui.rb a second time and
   # Kernel#method_missing is defined again. That is still Ruflet's own, so the
   # readers keep answering, and an app that wraps it afterwards still gets the
-  # call. Loading the readers file again adds no warning, and the extension
-  # helper recorded before the reload is still told apart from an app method.
+  # call. Loading the readers file again adds no warning, install! still
+  # reports that it skipped nothing, and the extension helper recorded before
+  # the reload is still told apart from an app method.
   def test_readers_survive_the_framework_being_loaded_again
     out = run_ruby(<<~RUBY)
       require "ruflet"
@@ -194,6 +195,7 @@ class RufletClientStateReadersTest < Minitest::Test
       $stderr = STDERR
       reloaded = Kernel.instance_method(:method_missing) != first_method_missing
       after = [toggle.value, Ruflet.switch(value: true).value, tile.expanded]
+      skipped = Ruflet::UI::ClientStateReaders.skipped
       module Kernel
         alias_method :ruflet_method_missing, :method_missing
         private :ruflet_method_missing
@@ -201,10 +203,10 @@ class RufletClientStateReadersTest < Minitest::Test
           name == :value ? :wrapped : ruflet_method_missing(name, *args, **props, &block)
         end
       end
-      print [reloaded, before, after, warnings, toggle.value].inspect
+      print [reloaded, before, after, warnings, skipped, toggle.value].inspect
     RUBY
 
-    assert_equal "[true, false, [false, true, true], [], :wrapped]", out
+    assert_equal "[true, false, [false, true, true], [], [], :wrapped]", out
   end
 
   # Readers exist only where the table says: every method defined in
