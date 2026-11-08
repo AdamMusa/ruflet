@@ -1,0 +1,157 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: empty
+command: ruflet create -h
+exit: 0
+
+## commands (4)
+1. capture3 exit=0
+   git ls-remote https://github.com/AdamMusa/ruflet-template.git refs/heads/main
+   env: GIT_TERMINAL_PROMPT=0
+2. system exit=0
+   git clone --depth 1 --branch main --filter=blob:none --sparse https://github.com/AdamMusa/ruflet-template.git <TMP>/ruflet-assetsXXXXXXXX/Ruflet
+   env: GIT_TERMINAL_PROMPT=0
+   options: err out
+3. system exit=0
+   git -C <TMP>/ruflet-assetsXXXXXXXX/Ruflet sparse-checkout set templates/ruflet_flutter_template
+   env: GIT_TERMINAL_PROMPT=0
+   options: err out
+4. capture3 exit=0
+   git -C <TMP>/ruflet-assetsXXXXXXXX/Ruflet rev-parse HEAD
+
+## output
+out| Run:
+out|   cd -h
+out|   bundle install
+out|   ruflet run main.rb
+out| 
+out| Build:
+out|   ruflet build android --self
+out|   ruflet build ios --self
+
+## files
+<HOME>/.ruflet/templates/ruflet_flutter_template/ created from the template: 208 files identical, 0 template files absent
+A <HOME>/.ruflet/templates/ruflet_flutter_template.revision  sha256:9d4a95b50d07fadc 41b  (new)
+A <PROJECT>/-h/Gemfile  sha256:2fa1282668df710f 115b  (new)
+A <PROJECT>/-h/README.md  sha256:b647b53e43e619f8 150b  (new)
+A <PROJECT>/-h/assets/icon.png  sha256:fb0b33b0eb76157f 242858b binary  (new)
+A <PROJECT>/-h/assets/splash.png  sha256:293cfc16e47a1860 279258b binary  (new)
+A <PROJECT>/-h/main.rb  sha256:47001ac2f1877cae 710b  (new)
+A <PROJECT>/-h/ruflet.yaml  sha256:9454cd7187be25b0 630b  (new)
+A <PROJECT>/-h/services.yaml  sha256:c5a80670d2a4ba92 544b  (new)
+
+## diffs
+--- /dev/null
++++ <HOME>/.ruflet/templates/ruflet_flutter_template.revision
+@@ -0,0 +1,1 @@
++c0ffee00c0ffee00c0ffee00c0ffee00c0ffee00
+--- /dev/null
++++ <PROJECT>/-h/Gemfile
+@@ -0,0 +1,4 @@
++source "https://rubygems.org"
++
++gem "ruflet_core", ">= <RUFLET_VERSION>"
++gem "ruflet_server", ">= <RUFLET_VERSION>"
+--- /dev/null
++++ <PROJECT>/-h/README.md
+@@ -0,0 +1,22 @@
++# -h
++
++Ruflet app.
++
++## Setup
++
++```bash
++bundle install
++```
++
++## Run
++
++```bash
++ruflet run main
++```
++
++## Build
++
++```bash
++ruflet build apk
++ruflet build ios
++```
+Binary <PROJECT>/-h/assets/icon.png: sha256:fb0b33b0eb76157f
+Binary <PROJECT>/-h/assets/splash.png: sha256:293cfc16e47a1860
+--- /dev/null
++++ <PROJECT>/-h/main.rb
+@@ -0,0 +1,31 @@
++require "ruflet"
++Ruflet.run do |page|
++  page.title = "Counter Demo"
++  count = 0
++  count_text = text(
++    value: count.to_s,
++    style: { size: 40, weight: "w700" }
++  )
++  page.floating_action_button = fab(
++    icon: "add",
++    on_click: ->(_e) do
++      count += 1
++      page.update(count_text, value: count.to_s)
++    end
++  )
++  page.add(
++    container(
++      expand: true,
++      alignment: Ruflet::MainAxisAlignment::CENTER,
++      content: column(
++        alignment: Ruflet::MainAxisAlignment::CENTER,
++        horizontal_alignment: Ruflet::CrossAxisAlignment::CENTER,
++        children: [
++          text(value: "You have pushed the button this many times:"),
++          count_text
++        ]
++      )
++    )
++  )
++end
++
+--- /dev/null
++++ <PROJECT>/-h/ruflet.yaml
+@@ -0,0 +1,21 @@
++app:
++  # Required for server-driven builds: `ruflet build ios`, `apk`, `web`, etc. without `--self`.
++  # Example: https://api.example.com
++  backend_url: ""
++
++# Optional Flutter client extensions. Only listed extensions are bundled.
++# Examples: audio, charts, code_editor, map, rive, video, webview
++extensions: []
++
++# Build assets configuration consumed by `ruflet build`.
++# Paths are relative to this file unless absolute.
++assets:
++  dir: assets
++  splash_screen: assets/splash.png
++  icon_launcher: assets/icon.png
++
++build:
++  splash_color: "#FFFFFF"
++  splash_dark_color: "#0B0B0B"
++  icon_background: "#FFFFFF"
++  theme_color: "#FFFFFF"
+--- /dev/null
++++ <PROJECT>/-h/services.yaml
+@@ -0,0 +1,14 @@
++# Application identity used by the Flutter build pipeline. Ruflet derives
++# the mobile identifier as organization.package_name and passes it to
++# change_app_package_name for Android and iOS builds.
++app:
++  app_name: H
++  package_name: _h
++  organization: com.example
++  version: 1.0.0+1
++  description: A new Ruflet app.
++
++# Native capabilities that require platform permissions. Ruflet activates
++# the matching client extensions and writes Android/iOS permissions.
++# Supported services: camera, microphone, location, motion, biometrics
++services: []

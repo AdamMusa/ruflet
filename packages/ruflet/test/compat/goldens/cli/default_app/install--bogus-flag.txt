@@ -1,0 +1,26 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet install --bogus-flag
+before: ruflet build apk --self
+exit: 1
+
+## commands (1)
+1. capture3 exit=0
+   git ls-remote https://github.com/AdamMusa/ruflet-template.git refs/heads/main
+   env: GIT_TERMINAL_PROMPT=0
+
+## output
+err| Could not find built app outputs under ./build
+err| Run `ruflet build ...` first, then `ruflet install`.
+
+## files
+A <PROJECT>/build/client/.ruflet/bin/pod  sha256:1a344dd152acf2de 44b mode=755  (new)
+
+## diffs
+--- /dev/null
++++ <PROJECT>/build/client/.ruflet/bin/pod
+@@ -0,0 +1,2 @@
++#!/bin/sh
++exec "/opt/homebrew/bin/pod" "$@"

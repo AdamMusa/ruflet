@@ -1,0 +1,18 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet run --help
+exit: 0
+
+## commands (0)
+
+## output
+out| Usage: ruflet [options]
+out|         --web
+out|         --desktop
+out|         --port PORT
+out|         --no-reload
+
+## files
+(no files changed)

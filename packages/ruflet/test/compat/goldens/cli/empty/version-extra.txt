@@ -1,0 +1,14 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: empty
+command: ruflet version extra
+exit: 0
+
+## commands (0)
+
+## output
+out| ruflet <RUFLET_VERSION>
+
+## files
+(no files changed)
