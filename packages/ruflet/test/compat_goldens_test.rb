@@ -162,23 +162,30 @@ class RufletCompatGoldensTest < Minitest::Test
   end
 
   # The release archives are built once, when release_fixture.rb loads (before
-  # the CLI runs), without zlib, and are valid for the host tools the CLI
-  # extracts them with.
+  # the CLI runs), without zlib, are byte-identical in every process, and are
+  # valid for the host tools the CLI extracts them with.
   def test_release_fixture_archives_are_fixed_and_valid
     skip "compat goldens run on macOS hosts" unless SUPPORTED_HOST
 
     fixture = File.join(RufletCompat::COMPAT_ROOT, "lib", "release_fixture.rb")
     loaded, status = Open3.capture2(RbConfig.ruby, "-e", <<~RUBY, fixture)
+      require "digest"
+      require "json"
       require ARGV.fetch(0)
       assets = RufletCompat::ReleaseFixture::ASSETS
       raise "not frozen" unless assets.frozen? && assets.each_value.all?(&:frozen?)
       raise "not deterministic" unless RufletCompat::ReleaseFixture.build_assets == assets
-      print $LOADED_FEATURES.grep(/zlib/).join(",")
+      print JSON.generate("zlib" => $LOADED_FEATURES.grep(/zlib/),
+                          "sha256" => assets.transform_values { |bytes| Digest::SHA256.hexdigest(bytes) })
     RUBY
     assert status.success?
-    assert_equal "", loaded, "release_fixture.rb must not load zlib"
+    loaded = JSON.parse(loaded)
+    assert_empty loaded["zlib"], "release_fixture.rb must not load zlib"
 
     require_relative "compat/lib/release_fixture"
+    # A second, independent process builds the very same bytes.
+    assert_equal RufletCompat::ReleaseFixture::ASSETS.transform_values { |bytes| Digest::SHA256.hexdigest(bytes) },
+                 loaded["sha256"]
     Dir.mktmpdir("ruflet-compat-archives-") do |dir|
       RufletCompat::ReleaseFixture.asset_sources.each do |name, (kind, files)|
         next if kind == :raw
