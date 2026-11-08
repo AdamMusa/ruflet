@@ -207,6 +207,31 @@ module RufletCompat
     cli "default_app", "doctor", "--bogus-flag"
     cli "empty", "new", "my_app", "--bogus-flag"
 
+    # --- command words, help, usage and exit codes (R2, CLI-12) ----------------
+    # How the first argument picks a command (case-insensitively, aliases
+    # included), what help prints, and what every command does with --help and
+    # -h today. Mixed-case words get an explicit id: their slug would collide
+    # with the lowercase golden on a case-insensitive filesystem.
+    cli "empty", "VERSION", id: "version-uppercase"
+    cli "empty", "-V", id: "-v-uppercase"
+    cli "empty", "--Version", id: "--version-mixed-case"
+    cli "empty", "HELP", id: "help-uppercase"
+    cli "empty", "-H", id: "-h-uppercase"
+    cli "empty", "Bogus-Command", id: "bogus-command-mixed-case"
+    cli "empty", "", id: "empty-command"
+    cli "empty", "version", "extra"
+    cli "empty", "help", "bogus"
+    cli "empty", "--help", "build"
+    cli "empty", "create"
+    cli "empty", "bootstrap"
+    cli "empty", "init"
+    cli "empty", "CREATE", id: "create-uppercase"
+    cli "empty", "New", "my_app", id: "new-my_app-mixed-case"
+    %w[--help -h].each do |flag|
+      %w[version help new create].each { |command| cli "empty", command, flag }
+      %w[run update debug build install devices emulators doctor].each { |command| cli "default_app", command, flag }
+    end
+
     INVOCATIONS.freeze
 
     # Initial page patch goldens: what a client receives in reply to

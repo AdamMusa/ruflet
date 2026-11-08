@@ -514,8 +514,10 @@ exit_code = begin
     CompatRails.boot(CompatChild::SPEC.fetch("project"))
     CompatRails.invoke_rake(CompatChild::SPEC.fetch("argv").first)
   else
-    # The installed executable itself, exactly as `ruflet ...` runs it.
+    # The installed executable itself, exactly as `ruflet ...` runs it. $0 is
+    # the executable too, so OptionParser's own `--help` names `ruflet`.
     ARGV.replace(CompatChild::SPEC.fetch("argv"))
+    $PROGRAM_NAME = CompatChild::SPEC.fetch("bin")
     load CompatChild::SPEC.fetch("bin")
     0
   end
