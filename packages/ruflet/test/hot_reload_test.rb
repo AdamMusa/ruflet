@@ -213,6 +213,35 @@ class RufletHotReloadTest < Minitest::Test
     reader&.close
   end
 
+  # The same on a ruflet_core without run interceptors, whose apps the
+  # runner serves another way: without "t" such an app that never reports
+  # ready would never get the fallback either.
+  def test_reports_the_usr1_trap_before_the_app_script_runs_on_a_ruflet_core_without_run_interceptors
+    reader, writer = IO.pipe
+    writer.autoclose = false # the runner owns and closes this fd
+    $ready_reader = reader
+    write_widgets("v1")
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require_relative "widgets"
+      $ready_bytes_at_load = $ready_reader.read_nonblock(8, exception: false)
+      Ruflet.run(host: "127.0.0.1", port: 0) { |page| page.add(WIDGET_LABEL) }
+    RUBY
+    ENV["RUFLET_READY_FD"] = writer.fileno.to_s
+
+    without_run_interceptors do
+      start_served_runner # the runner looks for run interceptors as it starts
+    end
+
+    assert_equal "t", $ready_bytes_at_load, "the trap must be reported before the app loads"
+    assert IO.select([reader], nil, nil, 10), "the runner must report ready once the app is up"
+    assert_equal ".", reader.read
+  ensure
+    ENV.delete("RUFLET_READY_FD")
+    $ready_reader = nil
+    reader&.close
+  end
+
   # `Ruflet.app { ... }.run` starts Ruflet::Server directly instead of going
   # through Ruflet.run. The runner never saw it, so the app never reported
   # ready (`ruflet run` queued "r" forever) and file changes never reloaded.
@@ -1471,25 +1500,27 @@ class RufletHotReloadTest < Minitest::Test
 
   # In a fresh process the hook waits for the app to define Ruflet::Server,
   # and leaves alone the app classes it sees open on the way, even one that
-  # defines its own `name`.
+  # defines its own `name`. Once it has hooked the class, its trace is off:
+  # it costs nothing for the rest of the process.
   def test_the_server_hook_waits_for_the_app_to_load_ruflet_server
     code = <<~RUBY
       require "ruflet/hot_reload"
       Ruflet::HotReload.hook_server_start
-      print defined?(Ruflet::Server).inspect, " "
+      watch = Ruflet::HotReload.instance_variable_get(:@server_class_watch)
+      print defined?(Ruflet::Server).inspect, " ", watch.enabled?, " "
       class HookTestOddName
         def self.name(_required) = "odd"
       end
       class HookTestOddName; end # opened again, now with that `name`
       require "ruflet_server"
-      print Ruflet::Server.ancestors.first(2).inspect
+      print Ruflet::Server.ancestors.first(2).inspect, " ", watch.enabled?
     RUBY
     env = { "RUBYLIB" => [File.expand_path("../lib", __dir__), CORE_LIB, SERVER_LIB].join(File::PATH_SEPARATOR) }
 
     out, err, status = run_ruby(env, "-e", code)
 
     assert status.success?, err
-    assert_equal "nil [Ruflet::HotReload::ServerStartCapture, Ruflet::Server]", out
+    assert_equal "nil true [Ruflet::HotReload::ServerStartCapture, Ruflet::Server] false", out
   end
 
   def test_without_the_cli_fd_nothing_is_reported

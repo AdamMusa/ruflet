@@ -885,6 +885,37 @@ class RufletCliRunCommandTest < Minitest::Test
     writer&.close unless writer.nil? || writer.closed?
   end
 
+  # The window bounds how long a queued "r" waits for an app that has
+  # trapped USR1 but never reports it is up. It also bounds the one case
+  # where such an "r" reaches a USR1 handler the app's own code installed
+  # while it loaded: only an app that takes longer than this to boot.
+  def test_the_ready_fallback_waits_five_seconds_by_default
+    assert_equal 5, Ruflet::CLI::RunCommand::READY_FALLBACK_SECONDS
+    run_state = DummyRunner.new.send(:new_run_state, track_ready: true)
+    assert_equal 5, run_state[:ready_fallback_seconds], "`ruflet run` uses the default window"
+  end
+
+  # The fallback fires no sooner than its window after the trap report. The
+  # bound holds however loaded the machine is: the watcher reads "t" only
+  # after it is written, and IO.select does not return before its timeout
+  # (give or take the 1 ms the system rounds a timeout to).
+  def test_the_ready_fallback_waits_its_window_after_the_trap_report
+    runner = SignalRecorder.new
+    window = 0.5
+    watch_ready_pipe(runner, child_pid: 4242, ready_fallback_seconds: window) do |run_state, writer, thread|
+      reported = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      writer.write("t")
+      assert_equal 4242, next_from(runner.marked_ready, "the fallback")
+      waited = Process.clock_gettime(Process::CLOCK_MONOTONIC) - reported
+
+      assert_operator waited, :>=, window - 0.01, "the fallback must wait its window after the trap report"
+      assert run_state[:ready]
+      assert_equal [4242], runner.reload_signals
+      writer.close
+      thread.join
+    end
+  end
+
   def test_ready_fallback_sends_a_queued_reload_to_an_app_that_trapped_it
     runner = SignalRecorder.new
     watch_ready_pipe(runner, child_pid: 4242, ready_fallback_seconds: 0) do |run_state, writer, thread|
