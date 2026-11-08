@@ -1713,8 +1713,13 @@ module Ruflet
       value.is_a?(Array) && value.all? { |item| item.is_a?(Integer) && item.between?(0, 255) }
     end
 
+    # The helpers added after v0.0.23 (ScopedControlForwarders) are left to
+    # Kernel#method_missing, as when they did not exist: a bare `stepper(...)`
+    # inside a page block builds, `page.stepper = x` sets a page property and
+    # `page.respond_to?(:stepper)` is false, all as on v0.0.23.
     def widget_helper_method?(name)
-      WIDGET_HELPER_METHODS.include?(name.to_s)
+      WIDGET_HELPER_METHODS.include?(name.to_s) &&
+        !Ruflet::UI::ScopedControlForwarders::HELPERS.key?(name.to_sym)
     end
 
     def visual_service_type?(type)
