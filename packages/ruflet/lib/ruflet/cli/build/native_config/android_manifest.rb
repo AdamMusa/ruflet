@@ -8,6 +8,28 @@ module Ruflet
         module AndroidManifest
           private
 
+          # Removes every <uses-permission> named in `managed`, then declares
+          # each of `permissions` the manifest does not already declare, right
+          # after the <manifest> tag. Permissions outside `managed` are kept.
+          def write_android_manifest_permissions(client_dir, managed:, permissions:)
+            path = File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")
+            return unless File.file?(path)
+
+            content = read_text_file(path)
+            managed.each do |permission|
+              content.gsub!(
+                %r{^\s*<uses-permission\b[^>]*android:name="#{Regexp.escape(permission)}"[^>]*/>\s*\n?},
+                ""
+              )
+            end
+            permissions.each do |permission|
+              next if content.include?(%(android:name="#{permission}"))
+
+              content.sub!(/<manifest\b[^>]*>\s*/, "\\0    <uses-permission android:name=\"#{permission}\"/>\n")
+            end
+            write_text_file(path, content)
+          end
+
           def upsert_android_metadata(path, name, value)
             content = read_text_file(path)
             escaped_value = xml_escape(value)

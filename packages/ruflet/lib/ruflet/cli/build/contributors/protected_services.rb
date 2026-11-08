@@ -115,22 +115,11 @@ module Ruflet
           end
 
           def apply_android_service_permissions(client_dir, entries)
-            path = File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")
-            return unless File.file?(path)
-
-            content = read_text_file(path)
-            MANAGED_ANDROID_PERMISSIONS.each do |permission|
-              content.gsub!(
-                %r{^\s*<uses-permission\b[^>]*android:name="#{Regexp.escape(permission)}"[^>]*/>\s*\n?},
-                ""
-              )
-            end
-            entries.flat_map { |entry| ANDROID_SERVICE_PERMISSIONS.fetch(entry[:name], []) }.uniq.each do |permission|
-              next if content.include?(%(android:name="#{permission}"))
-
-              content.sub!(/<manifest\b[^>]*>\s*/, "\\0    <uses-permission android:name=\"#{permission}\"/>\n")
-            end
-            write_text_file(path, content)
+            write_android_manifest_permissions(
+              client_dir,
+              managed: MANAGED_ANDROID_PERMISSIONS,
+              permissions: entries.flat_map { |entry| ANDROID_SERVICE_PERMISSIONS.fetch(entry[:name], []) }.uniq
+            )
           end
 
           def apply_ios_service_usage_descriptions(client_dir, entries)
@@ -143,24 +132,11 @@ module Ruflet
             plist = File.join(client_dir, "macos", "Runner", "Info.plist")
             apply_apple_service_usage_descriptions(
               plist, entries, MACOS_SERVICE_USAGE_KEYS, MANAGED_MACOS_USAGE_KEYS)
-
-            %w[DebugProfile.entitlements Release.entitlements].each do |name|
-              path = File.join(client_dir, "macos", "Runner", name)
-              next unless File.file?(path)
-
-              content = read_text_file(path)
-              MANAGED_MACOS_SERVICE_ENTITLEMENTS.each do |key|
-                content.gsub!(
-                  %r{\s*<key>#{Regexp.escape(key)}</key>\s*<(?:true|false)\s*/>}m,
-                  ""
-                )
-              end
-              entries.filter_map { |entry| MACOS_SERVICE_ENTITLEMENTS[entry[:name]] }.uniq.each do |key|
-                pair = "\t<key>#{key}</key>\n\t<true/>\n"
-                content.sub!(%r{</dict>\s*</plist>}m, "#{pair}</dict>\n</plist>")
-              end
-              write_text_file(path, content)
-            end
+            write_macos_entitlements(
+              client_dir,
+              managed: MANAGED_MACOS_SERVICE_ENTITLEMENTS,
+              enabled: entries.filter_map { |entry| MACOS_SERVICE_ENTITLEMENTS[entry[:name]] }.uniq
+            )
           end
         end
 

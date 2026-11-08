@@ -23,6 +23,7 @@ require_relative "build/embedded_runtime"
 require_relative "build/native_config/android_manifest"
 require_relative "build/native_config/apple_plist"
 require_relative "build/native_config/apple_pbxproj"
+require_relative "build/native_config/entitlements"
 require_relative "build/native_config/gradle"
 require_relative "build/native_config/podfile"
 require_relative "build/native_config/pubspec"
@@ -55,6 +56,7 @@ module Ruflet
       include Build::NativeConfig::AndroidManifest
       include Build::NativeConfig::ApplePlist
       include Build::NativeConfig::ApplePbxproj
+      include Build::NativeConfig::Entitlements
       include Build::NativeConfig::Gradle
       include Build::NativeConfig::Podfile
       include Build::NativeConfig::Pubspec
