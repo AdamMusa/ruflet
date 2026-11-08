@@ -1,0 +1,14 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet emulators --cold
+exit: 1
+
+## commands (0)
+
+## output
+err| <uncaught> OptionParser::InvalidOption: invalid option: --cold
+
+## files
+(no files changed)

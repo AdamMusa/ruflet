@@ -1,0 +1,47 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: rails_app
+command: rake ruflet:install[]
+exit: 1
+
+## commands (4)
+1. capture3 exit=0
+   git ls-remote https://github.com/AdamMusa/ruflet-template.git refs/heads/main
+   env: GIT_TERMINAL_PROMPT=0
+2. system exit=0
+   git clone --depth 1 --branch main --filter=blob:none --sparse https://github.com/AdamMusa/ruflet-template.git <TMP>/ruflet-assetsXXXXXXXX/Ruflet
+   env: GIT_TERMINAL_PROMPT=0
+   options: err out
+3. system exit=0
+   git -C <TMP>/ruflet-assetsXXXXXXXX/Ruflet sparse-checkout set templates/ruflet_flutter_template
+   env: GIT_TERMINAL_PROMPT=0
+   options: err out
+4. capture3 exit=0
+   git -C <TMP>/ruflet-assetsXXXXXXXX/Ruflet rev-parse HEAD
+
+## output
+err| Could not find built app outputs under ./build
+err| Run `ruflet build ...` first, then `ruflet install`.
+
+## files
+<PROJECT>/build/client/ created from the template: 208 files identical, 0 template files absent
+<HOME>/.ruflet/templates/ruflet_flutter_template/ created from the template: 208 files identical, 0 template files absent
+A <HOME>/.ruflet/templates/ruflet_flutter_template.revision  sha256:9d4a95b50d07fadc 41b  (new)
+A <PROJECT>/build/client/.ruflet-template-revision  sha256:9d4a95b50d07fadc 41b  (new)
+A <PROJECT>/build/client/.ruflet/bin/pod  sha256:1a344dd152acf2de 44b mode=755  (new)
+
+## diffs
+--- /dev/null
++++ <HOME>/.ruflet/templates/ruflet_flutter_template.revision
+@@ -0,0 +1,1 @@
++c0ffee00c0ffee00c0ffee00c0ffee00c0ffee00
+--- /dev/null
++++ <PROJECT>/build/client/.ruflet-template-revision
+@@ -0,0 +1,1 @@
++c0ffee00c0ffee00c0ffee00c0ffee00c0ffee00
+--- /dev/null
++++ <PROJECT>/build/client/.ruflet/bin/pod
+@@ -0,0 +1,2 @@
++#!/bin/sh
++exec "/opt/homebrew/bin/pod" "$@"

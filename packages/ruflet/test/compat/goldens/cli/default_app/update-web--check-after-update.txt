@@ -1,0 +1,23 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet update web --check
+before: ruflet update web
+network: release fixture (lib/release_fixture.rb)
+exit: 0
+
+## commands (1)
+1. capture3 exit=0
+   git ls-remote https://github.com/AdamMusa/ruflet-template.git refs/heads/main
+   env: GIT_TERMINAL_PROMPT=0
+
+## output
+out| Ruflet client cache: <HOME>/.ruflet/client/<RUFLET_VERSION>/macos
+out| Platform: macos
+out| Ruflet version: <RUFLET_VERSION>
+out| Release tag: prebuild-main
+out| web: installed
+
+## files
+(no files changed)

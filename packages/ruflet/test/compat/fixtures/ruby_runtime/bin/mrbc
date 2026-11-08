@@ -1,0 +1,3 @@
+#!/bin/sh
+echo "ruflet compat: mrbc must be emulated, never executed" >&2
+exit 97

@@ -1,0 +1,70 @@
+# Services/extensions-heavy fixture for the Ruflet CLI compatibility goldens.
+# It turns on every bundled extension that the pinned template ships, both
+# external extension sources, per-platform assets and platform options, so a
+# build exercises every native writer the CLI has.
+app:
+  backend_url: https://api.example.com
+
+extensions:
+  - ads
+  - audio
+  - audio_recorder
+  - camera
+  - charts
+  - code_editor
+  - color_pickers
+  - datatable2
+  - flashlight
+  - geolocator
+  - lottie
+  - map
+  - permission_handler
+  - qrcode_scanner
+  - rive
+  - secure_storage
+  - spinkit
+  - video
+  - webview
+  - flet_lottie
+  - compat_git_ext:
+      git:
+        url: https://github.com/example/compat_git_ext
+        ref: v1.2.3
+  - compat_local_ext:
+      path: ../../extensions/compat_local_ext
+
+assets:
+  dir: assets
+  splash_screen: assets/splash.png
+  splash_dark: assets/splash_dark.png
+  icon_launcher: assets/icon.png
+  splash_color: "#112233"
+  splash_dark_color: "#000000"
+  icon_background: "#FFFFFF"
+  theme_color: "#336699"
+
+android:
+  icon_launcher: assets/icon_android.png
+  adaptive_icon_foreground: assets/icon_foreground.png
+  adaptive_icon_background: "#FFFFFF"
+  splash_android_12: assets/splash_android_12.png
+  min_sdk: 23
+  splash_gravity: center
+
+ios:
+  team_id: ABCDE12345
+  icon_launcher: assets/icon_ios.png
+  remove_alpha: true
+  local_network: true
+  local_network_usage_description: Find Ruflet services on your network.
+  content_mode: scaleAspectFit
+
+web:
+  image_mode: center
+  theme_color: "#336699"
+
+windows:
+  icon_size: 64
+
+build:
+  splash_branding_mode: bottom
