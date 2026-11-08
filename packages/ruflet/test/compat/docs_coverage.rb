@@ -29,7 +29,10 @@ module RufletCompat
       "rake ruflet:build[linux]" => %w[rails_app/rake-ruflet_build_linux],
       "rake ruflet:build[macos]" => %w[rails_app/rake-ruflet_build_macos],
       "rake ruflet:build[windows]" => %w[rails_app/rake-ruflet_build_windows],
-      "rake ruflet:install[DEVICE_ID]" => %w[rails_app/rake-ruflet_install_emulator-5554 rails_app/rake-ruflet-install-without-device],
+      "rake ruflet:install[DEVICE_ID]" => %w[
+        rails_app/rake-ruflet_install_emulator-5554 rails_app/rake-ruflet-install-without-device
+        rails_app/rake-ruflet-install-without-device-after-ios
+      ],
       "rake ruflet:update[desktop|all]" => %w[rails_app/rake-ruflet_update_desktop rails_app/rake-ruflet_update_all],
       # Documented, but the Railtie defines no ruflet:web task: the golden pins
       # rake's "Don't know how to build task".

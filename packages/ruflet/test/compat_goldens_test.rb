@@ -134,11 +134,14 @@ class RufletCompatGoldensTest < Minitest::Test
   end
 
   # The generator goldens run against lib/generator_stub, a small stand-in for
-  # railties (CI has no rails gem). Where railties is installed, every
-  # generator golden must come out byte-identical with the real one.
+  # railties (CI has no rails gem). Where railties 8.1 or later is installed
+  # (the line the stub follows), every generator golden must come out
+  # byte-identical with the real one.
   def test_generator_stub_matches_railties
     skip "compat goldens run on macOS hosts" unless SUPPORTED_HOST
-    skip "railties is not installed; the generator stub is checked against it where it is" unless railties_installed?
+    unless railties_installed?
+      skip "railties >= 8.1 is not installed; the generator stub is checked against it where it is"
+    end
 
     RufletCompat::Corpus::INVOCATIONS.select { |invocation| invocation["generator"] }.each do |invocation|
       path = RufletCompat.cli_golden_path(invocation)
@@ -154,7 +157,8 @@ class RufletCompatGoldensTest < Minitest::Test
   private
 
   def railties_installed?
-    Gem::Specification.find_all_by_name("railties").any?
+    latest = Gem::Specification.find_all_by_name("railties").map(&:version).max
+    !latest.nil? && latest >= Gem::Version.new("8.1")
   rescue StandardError
     false
   end

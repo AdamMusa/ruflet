@@ -263,6 +263,8 @@ module RufletCompat
                                           files: { "config/initializers/ruflet.rb" => "Ruflet::Rails.configure { |config| }\n" }
     cli "rails_app", "ruflet:install[emulator-5554]", rake: true, before: [%w[build apk]]
     cli "rails_app", "ruflet:install[]", id: "rake-ruflet-install-without-device", rake: true, before: [%w[build apk]]
+    # Without a device, install looks for iOS outputs on a Mac.
+    cli "rails_app", "ruflet:install[]", id: "rake-ruflet-install-without-device-after-ios", rake: true, before: [%w[build ios]]
     cli "rails_app", "ruflet:install[]", id: "rake-ruflet-install-without-build", rake: true
     # A current cache, so only the task's own argv decides whether it downloads.
     cli "rails_app", "ruflet:update[desktop]", rake: true, network: "release", seed: "prebuilt_clients"

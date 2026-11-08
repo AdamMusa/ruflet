@@ -59,8 +59,9 @@ intended, review the diff, and list it under "Behavior changes" in the PR.
 * Flags that later work packages will change (`run -d`, `--device`, unknown
   flags, `--release apk`, path flags).
 * The Rails rake tasks: every `ruflet:build` target the docs list, an
-  initializer without build metadata, `ruflet:install` with and without a
-  device, `ruflet:update` with each target, `rake --tasks`, and the
+  initializer without build metadata, `ruflet:install` with a device,
+  without one (after an Android build and after an iOS build) and with
+  nothing built, `ruflet:update` with each target, `rake --tasks`, and the
   documented `ruflet:web`, which does not exist (its golden pins rake's
   "Don't know how to build task").
 * `rails generate ruflet:install` with the documented `--web`/`--desktop`,
@@ -153,9 +154,9 @@ stand-in for railties' `Rails::Generators::Base` and the Thor parts it needs
 (option parsing, steps in definition order, `create_file`,
 `insert_into_file`, `route`, and the status lines). The app is not booted;
 the generator class runs the way `Rails::Generators.invoke` runs it. CI has no
-rails gem, so where railties is installed `compat_goldens_test.rb` also runs
-every generator golden against the real railties and requires identical
-output; it skips otherwise.
+rails gem, so where railties 8.1 or later (the line the stub follows) is
+installed, `compat_goldens_test.rb` also runs every generator golden against
+the real railties and requires identical output; it skips otherwise.
 
 Page goldens (`lib/page_child.rb`) run the fixture app with the real
 `Ruflet::Server` against a fake WebSocket, through the public
