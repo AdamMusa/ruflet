@@ -17,6 +17,21 @@ require_relative "draggablescrollablesheet_control"
 require_relative "dragtarget_control"
 require_relative "fill_control"
 require_relative "fittedbox_control"
+require_relative "absorbpointer_control"
+require_relative "fractionallysizedbox_control"
+require_relative "ignorepointer_control"
+require_relative "intrinsicheight_control"
+require_relative "intrinsicwidth_control"
+require_relative "sliverpadding_control"
+require_relative "clipoval_control"
+require_relative "cliprsuperellipse_control"
+require_relative "fadetransition_control"
+require_relative "rotationtransition_control"
+require_relative "scaletransition_control"
+require_relative "sizetransition_control"
+require_relative "slidetransition_control"
+require_relative "form_control"
+require_relative "nestedscrollview_control"
 require_relative "formrow_control"
 require_relative "gesturedetector_control"
 require_relative "gridview_control"
@@ -99,8 +114,37 @@ module Ruflet
             "draggablescrollablesheet" => RufletComponents::DraggableScrollableSheetControl,
             "dragtarget" => RufletComponents::DragTargetControl,
             "fill" => RufletComponents::FillControl,
+            "absorb_pointer" => RufletComponents::AbsorbPointerControl,
+            "absorbpointer" => RufletComponents::AbsorbPointerControl,
+            "fractionally_sized_box" => RufletComponents::FractionallySizedBoxControl,
+            "fractionallysizedbox" => RufletComponents::FractionallySizedBoxControl,
+            "ignore_pointer" => RufletComponents::IgnorePointerControl,
+            "ignorepointer" => RufletComponents::IgnorePointerControl,
+            "intrinsic_height" => RufletComponents::IntrinsicHeightControl,
+            "intrinsicheight" => RufletComponents::IntrinsicHeightControl,
+            "intrinsic_width" => RufletComponents::IntrinsicWidthControl,
+            "intrinsicwidth" => RufletComponents::IntrinsicWidthControl,
+            "sliver_padding" => RufletComponents::SliverPaddingControl,
+            "sliverpadding" => RufletComponents::SliverPaddingControl,
+            "clip_oval" => RufletComponents::ClipOvalControl,
+            "clipoval" => RufletComponents::ClipOvalControl,
+            "clip_rsuperellipse" => RufletComponents::ClipRSuperellipseControl,
+            "cliprsuperellipse" => RufletComponents::ClipRSuperellipseControl,
+            "fade_transition" => RufletComponents::FadeTransitionControl,
+            "fadetransition" => RufletComponents::FadeTransitionControl,
+            "rotation_transition" => RufletComponents::RotationTransitionControl,
+            "rotationtransition" => RufletComponents::RotationTransitionControl,
+            "scale_transition" => RufletComponents::ScaleTransitionControl,
+            "scaletransition" => RufletComponents::ScaleTransitionControl,
+            "size_transition" => RufletComponents::SizeTransitionControl,
+            "sizetransition" => RufletComponents::SizeTransitionControl,
+            "slide_transition" => RufletComponents::SlideTransitionControl,
+            "slidetransition" => RufletComponents::SlideTransitionControl,
+            "nested_scroll_view" => RufletComponents::NestedScrollViewControl,
+            "nestedscrollview" => RufletComponents::NestedScrollViewControl,
             "fitted_box" => RufletComponents::FittedBoxControl,
             "fittedbox" => RufletComponents::FittedBoxControl,
+            "form" => RufletComponents::FormControl,
             "form_row" => RufletComponents::FormRowControl,
             "formrow" => RufletComponents::FormRowControl,
             "gesture_detector" => RufletComponents::GestureDetectorControl,

@@ -857,11 +857,63 @@ class RufletCliRunCommandTest < Minitest::Test
       out, = capture_io do
         assert runner.send(:handle_reload_command, "r", run_state), "r must not end the key reader"
       end
-      assert_match(/restart/i, out)
+      assert_match(/queued/i, out)
       assert_empty runner.reload_signals, "nothing may be signalled before the respawn"
       writer.close
       thread.join
     end
+  end
+
+  # Records reload signals without sending them.
+  class RecordingRunner < DummyRunner
+    def reload_signals = (@reload_signals ||= [])
+
+    def send_reload_signal(pid)
+      reload_signals << pid
+    end
+  end
+
+  # An app that reports ready just after "R" (it ignored TERM while booting,
+  # or its byte was in flight) must not mark the CLI ready: the run loop then
+  # clears the restart flag before the respawn, and an "r" in that gap would
+  # signal the reaped app, get ESRCH and end the key reader.
+  def test_a_ready_byte_from_the_app_r_retired_does_not_mark_it_ready
+    runner = RecordingRunner.new
+    retired = Process.spawn(RbConfig.ruby, "-e", "exit 0")
+    Process.wait(retired)
+    run_state = runner.send(:new_run_state, track_ready: true)
+    run_state[:child_pid] = retired
+    reader, writer = IO.pipe
+    ready_thread = runner.send(:watch_child_ready, reader, retired, run_state)
+
+    runner.send(:mark_restarting, run_state) # what "R" does before TERM
+    writer.write(".")                        # the late ready byte
+    writer.close
+    ready_thread.join
+
+    refute run_state[:ready], "the retired app's byte must not mark it ready"
+    run_state[:restart] = false # the run loop reaped it and has not respawned yet
+    out, = capture_io do
+      assert runner.send(:handle_reload_command, "r", run_state), "r must not end the key reader"
+    end
+    assert_match(/queued/i, out)
+    assert_empty runner.reload_signals, "nothing may be signalled while no app is up"
+  end
+
+  def test_a_respawned_app_with_the_retired_pid_can_report_ready
+    runner = RecordingRunner.new
+    run_state = runner.send(:new_run_state, track_ready: true)
+    run_state[:child_pid] = 4242
+    runner.send(:mark_restarting, run_state)
+    # spawn_app_child for the next app clears the retired pid under the lock.
+    run_state[:lock].synchronize { run_state[:retired_pid] = nil }
+    reader, writer = IO.pipe
+    ready_thread = runner.send(:watch_child_ready, reader, 4242, run_state)
+    writer.write(".")
+    writer.close
+    ready_thread.join
+
+    assert run_state[:ready]
   end
 
   def test_handle_reload_command_reports_dead_child

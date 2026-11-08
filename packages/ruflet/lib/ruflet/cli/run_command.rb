@@ -224,7 +224,7 @@ module Ruflet
       def new_run_state(track_ready:, ready_fallback_seconds: READY_FALLBACK_SECONDS)
         state = { child_pid: nil, restart: false }
         if track_ready
-          state.merge!(lock: Mutex.new, ready: false, reload_pending: false, restarting: false,
+          state.merge!(lock: Mutex.new, ready: false, reload_pending: false, retired_pid: nil,
                        ready_fallback_seconds: ready_fallback_seconds)
         end
         state
@@ -242,7 +242,7 @@ module Ruflet
           # the previous one is moot.
           run_state[:ready] = false
           run_state[:reload_pending] = false
-          run_state[:restarting] = false
+          run_state[:retired_pid] = nil
           run_state[:child_pid] = Process.spawn(child_env, *cmd, pgroup: true, READY_FD => writer, **spawn_options)
         end
         writer.close
@@ -287,11 +287,12 @@ module Ruflet
 
       # Marks the app up and sends the reload queued while it booted, unless
       # the app has been replaced since, or is being replaced: after "R" the
-      # old app's late report or fallback must not mark its successor's state
-      # up before the respawn, or "r" would signal the reaped app.
+      # old app's late report or its fallback (both come from this watcher)
+      # must not mark the session up before the respawn, or "r" would signal
+      # the reaped app.
       def mark_child_ready(pid, run_state)
         deliver = run_state[:lock].synchronize do
-          next false if run_state[:restarting] || run_state[:child_pid] != pid
+          next false unless run_state[:child_pid] == pid && run_state[:retired_pid] != pid
 
           run_state[:ready] = true
           pending = run_state[:reload_pending]
@@ -304,14 +305,14 @@ module Ruflet
       # "R" kills the app, so until the respawned one reports ready it must not
       # be treated as up: "r" in that gap would signal a reaped pid, get ESRCH
       # and end the key reader for the rest of the session. Only the respawn
-      # (spawn_app_child) clears :restarting.
+      # (spawn_app_child) clears :retired_pid.
       def mark_restarting(run_state)
         return unless run_state[:lock]
 
         run_state[:lock].synchronize do
-          run_state[:restarting] = true
           run_state[:ready] = false
           run_state[:reload_pending] = false
+          run_state[:retired_pid] = run_state[:child_pid]
         end
       end
 
@@ -334,7 +335,7 @@ module Ruflet
       def handle_reload_command(command, run_state)
         case command
         when "r"
-          if run_state[:restart] || run_state[:restarting]
+          if run_state[:restart]
             puts "Restart in progress: the restarted app loads the current code"
           elsif queue_reload_until_ready(run_state)
             puts "Reload queued: the app is still starting and will reload once it is up"

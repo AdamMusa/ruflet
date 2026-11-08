@@ -4,6 +4,7 @@ require_relative "ui/control_methods"
 require_relative "ui/control_factory"
 require_relative "ui/prop_controls"
 require_relative "ui/build_scope"
+require_relative "ui/service_types"
 
 module Ruflet
   module DSL
@@ -89,6 +90,8 @@ module Ruflet
     def geolocator(**props) = _pending_app.geolocator(**props)
     def gyroscope(**props) = _pending_app.gyroscope(**props)
     def haptic_feedback(**props) = _pending_app.haptic_feedback(**props)
+    def local_auth(**props) = _pending_app.local_auth(**props)
+    def local_authentication(**props) = _pending_app.local_authentication(**props)
     def magnetometer(**props) = _pending_app.magnetometer(**props)
     def permission_handler(**props) = _pending_app.permission_handler(**props)
     def screen_brightness(**props) = _pending_app.screen_brightness(**props)
@@ -329,6 +332,35 @@ module Ruflet
     def transparentpointer(content = nil, **props) = _pending_app.transparentpointer(content, **props)
     def rotated_box(content = nil, **props) = _pending_app.rotated_box(content, **props)
     def rotatedbox(content = nil, **props) = _pending_app.rotatedbox(content, **props)
+    def absorb_pointer(content = nil, **props) = _pending_app.absorb_pointer(content, **props)
+    def absorbpointer(content = nil, **props) = _pending_app.absorbpointer(content, **props)
+    def fractionally_sized_box(content = nil, **props) = _pending_app.fractionally_sized_box(content, **props)
+    def fractionallysizedbox(content = nil, **props) = _pending_app.fractionallysizedbox(content, **props)
+    def ignore_pointer(content = nil, **props) = _pending_app.ignore_pointer(content, **props)
+    def ignorepointer(content = nil, **props) = _pending_app.ignorepointer(content, **props)
+    def intrinsic_height(content = nil, **props) = _pending_app.intrinsic_height(content, **props)
+    def intrinsicheight(content = nil, **props) = _pending_app.intrinsicheight(content, **props)
+    def intrinsic_width(content = nil, **props) = _pending_app.intrinsic_width(content, **props)
+    def intrinsicwidth(content = nil, **props) = _pending_app.intrinsicwidth(content, **props)
+    def sliver_padding(slivers = nil, **props, &block) = _pending_app.sliver_padding(slivers, **props, &block)
+    def sliverpadding(slivers = nil, **props, &block) = _pending_app.sliverpadding(slivers, **props, &block)
+    def clip_oval(content = nil, **props) = _pending_app.clip_oval(content, **props)
+    def clipoval(content = nil, **props) = _pending_app.clipoval(content, **props)
+    def clip_rsuperellipse(content = nil, **props) = _pending_app.clip_rsuperellipse(content, **props)
+    def cliprsuperellipse(content = nil, **props) = _pending_app.cliprsuperellipse(content, **props)
+    def fade_transition(content = nil, **props) = _pending_app.fade_transition(content, **props)
+    def fadetransition(content = nil, **props) = _pending_app.fadetransition(content, **props)
+    def rotation_transition(content = nil, **props) = _pending_app.rotation_transition(content, **props)
+    def rotationtransition(content = nil, **props) = _pending_app.rotationtransition(content, **props)
+    def scale_transition(content = nil, **props) = _pending_app.scale_transition(content, **props)
+    def scaletransition(content = nil, **props) = _pending_app.scaletransition(content, **props)
+    def size_transition(content = nil, **props) = _pending_app.size_transition(content, **props)
+    def sizetransition(content = nil, **props) = _pending_app.sizetransition(content, **props)
+    def slide_transition(content = nil, **props) = _pending_app.slide_transition(content, **props)
+    def slidetransition(content = nil, **props) = _pending_app.slidetransition(content, **props)
+    def form(controls = nil, **props, &block) = _pending_app.form(controls, **props, &block)
+    def nested_scroll_view(header_slivers = nil, **props, &block) = _pending_app.nested_scroll_view(header_slivers, **props, &block)
+    def nestedscrollview(header_slivers = nil, **props, &block) = _pending_app.nestedscrollview(header_slivers, **props, &block)
     def fitted_box(content = nil, **props) = _pending_app.fitted_box(content, **props)
     def fittedbox(content = nil, **props) = _pending_app.fittedbox(content, **props)
     def screenshot(content = nil, **props) = _pending_app.screenshot(content, **props)
@@ -522,7 +554,13 @@ module Ruflet
         id = mapped_props.delete(:id)&.to_s || next_id(type)
         c = Ruflet::UI::ControlFactory.build(type.to_s, id: id, **normalize_props(mapped_props))
         Ruflet::UI::PropControls.reclaim(props)
-        attach(c)
+        # An engine service built as a control (control(:audio_recorder),
+        # interstitial_ad(...)) runs as a page service, not in the layout.
+        if Ruflet::UI::ServiceTypes.service_wire_type?(c.wire_type)
+          @services << c unless @services.include?(c)
+        else
+          attach(c)
+        end
 
         if block
           @stack.push(c)

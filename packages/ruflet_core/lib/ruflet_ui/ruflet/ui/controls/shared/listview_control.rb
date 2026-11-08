@@ -12,7 +12,7 @@ module Ruflet
           TYPE = "listview".freeze
           WIRE = "ListView".freeze
 
-          KEYWORDS = [:adaptive, :align, :animate_align, :animate_changes, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :auto_scroll, :badge, :bottom, :build_controls_on_demand, :cache_extent, :clip_behavior, :col, :controls, :data, :disabled, :divider_thickness, :end_reached_threshold, :expand, :expand_loose, :first_item_prototype, :height, :horizontal, :item_animation, :item_extent, :key, :keyboard_dismiss_behavior, :left, :margin, :offset, :opacity, :padding, :prototype_item, :refresh_bgcolor, :refresh_color, :refresh_displacement, :refresh_timeout, :refresh_trigger_distance, :reverse, :right, :rotate, :rtl, :scale, :scroll, :scroll_interval, :semantic_child_count, :size_change_interval, :spacing, :tooltip, :top, :visible, :width, :on_animation_end, :on_end_reached, :on_refresh, :on_scroll, :on_size_change].freeze
+          KEYWORDS = [:adaptive, :align, :animate_align, :animate_changes, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :auto_scroll, :auto_scroll_animation, :badge, :bottom, :build_controls_on_demand, :cache_extent, :clip_behavior, :col, :controls, :data, :disabled, :divider_thickness, :end_reached_threshold, :expand, :expand_loose, :first_item_prototype, :height, :horizontal, :item_animation, :item_extent, :key, :keyboard_dismiss_behavior, :left, :margin, :offset, :opacity, :padding, :prototype_item, :refresh_bgcolor, :refresh_color, :refresh_displacement, :refresh_timeout, :refresh_trigger_distance, :reverse, :right, :rotate, :rtl, :scale, :scroll, :scroll_interval, :semantic_child_count, :size_change_interval, :spacing, :tooltip, :top, :visible, :width, :on_animation_end, :on_end_reached, :on_refresh, :on_scroll, :on_size_change].freeze
 
           def initialize(id: nil, **props)
             unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
@@ -30,6 +30,7 @@ module Ruflet
             animate_size = props[:animate_size]
             aspect_ratio = props[:aspect_ratio]
             auto_scroll = props[:auto_scroll]
+            auto_scroll_animation = props[:auto_scroll_animation]
             badge = props[:badge]
             bottom = props[:bottom]
             build_controls_on_demand = props[:build_controls_on_demand]
@@ -101,6 +102,7 @@ module Ruflet
             props[:animate_size] = animate_size unless animate_size.nil?
             props[:aspect_ratio] = aspect_ratio unless aspect_ratio.nil?
             props[:auto_scroll] = auto_scroll unless auto_scroll.nil?
+            props[:auto_scroll_animation] = auto_scroll_animation unless auto_scroll_animation.nil?
             props[:badge] = badge unless badge.nil?
             props[:bottom] = bottom unless bottom.nil?
             props[:build_controls_on_demand] = build_controls_on_demand unless build_controls_on_demand.nil?

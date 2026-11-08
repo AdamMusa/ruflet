@@ -103,6 +103,55 @@ class RufletDslBlockPropChildrenTest < Minitest::Test
     assert_equal ["Container"], wire_types(row.children.last.children)
   end
 
+  # Reclaim takes prop controls back last-first (so long lists stay linear);
+  # props that are not at the tail of the owner list, or out of order, must
+  # still come back and leave the other children in place.
+  def test_builder_reclaims_props_that_are_out_of_order_or_not_at_the_tail
+    kept = nil
+    column = Ruflet.column do
+      a = text("a")
+      kept = text("kept")
+      c = text("c")
+      d = text("d")
+      row(controls: [d, a, c])
+    end
+
+    assert_equal %w[Text Row], wire_types(column.children)
+    assert_same kept, column.children.first
+    assert_equal %w[d a c], column.children.last.children.map { |child| child.props["value"] }
+  end
+
+  def test_builder_reclaims_a_long_list_of_props
+    column = Ruflet.column do
+      text("header")
+      list_view(controls: (1..500).map { |i| text(i.to_s) })
+    end
+
+    assert_equal %w[Text ListView], wire_types(column.children)
+    assert_equal 500, column.children.last.children.length
+  end
+
+  # Page chrome assigned inside a block belongs to the page, not to the block.
+  def test_page_chrome_assigned_inside_mount_is_not_also_a_body_control
+    page = Ruflet::Page.new(session_id: "s1", client_details: { "route" => "/" }, sender: ->(_action, _payload) {})
+    page.mount do
+      page.appbar = Ruflet.app_bar(title: Ruflet.text("Home"))
+      page.floating_action_button = floating_action_button(icon: "add")
+      page.navigation_bar = Ruflet.navigation_bar(destinations: [Ruflet.navigation_bar_destination(label: "A", icon: "home")])
+      page.drawer = navigation_drawer
+      page.end_drawer = Ruflet.navigation_drawer
+      page.bottom_appbar = bottom_app_bar
+      page.set_view_props(decoration: nil, appbar: app_bar(title: text("Replaced")))
+      column { text("Body") }
+    end
+
+    assert_equal ["Column"], wire_types(page.controls)
+    assert_equal "AppBar", page.appbar.wire_type
+    assert_equal "Replaced", page.appbar.to_patch["title"]["value"]
+    assert_equal "FloatingActionButton", page.floating_action_button.wire_type
+    assert_equal "NavigationBar", page.navigation_bar.wire_type
+  end
+
   def test_builder_block_keeps_real_children_in_order
     column = Ruflet.column do
       text("one")

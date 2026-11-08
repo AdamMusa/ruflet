@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "animation_values"
+
 module Ruflet
   module UI
     module MaterialControlMethods
@@ -102,9 +104,9 @@ module Ruflet
       def animatedswitcher(content = nil, **props) = animated_switcher(content, **props)
       def animation(duration = nil, **props)
         duration = props.delete(:duration) if duration.nil? && props.key?(:duration)
-        Ruflet::Animation.new(duration: duration, **props)
+        AnimationValues.animation(duration, **props)
       end
-      def animation_style(**props) = Ruflet::AnimationStyle.new(**props)
+      def animation_style(**props) = AnimationValues.animation_style(**props)
       def accelerometer(**props) = build_service(:accelerometer, **props)
       def audio(**props) = build_service(:audio, **props)
       def audio_recorder(**props) = build_service(:audio_recorder, **props)
@@ -118,6 +120,8 @@ module Ruflet
       def geolocator(**props) = build_service(:geolocator, **props)
       def gyroscope(**props) = build_service(:gyroscope, **props)
       def haptic_feedback(**props) = build_service(:haptic_feedback, **props)
+      def local_auth(**props) = build_service(:local_authentication, **props)
+      def local_authentication(**props) = build_service(:local_authentication, **props)
       def magnetometer(**props) = build_service(:magnetometer, **props)
       def permission_handler(**props) = build_service(:permission_handler, **props)
       def screen_brightness(**props) = build_service(:screen_brightness, **props)
@@ -710,7 +714,7 @@ module Ruflet
         mapped[:value] = value unless value.nil?
         build_widget(:textfield, **mapped)
       end
-      def textfield(**props) = text_field(**props)
+      def textfield(value = nil, **props) = text_field(value, **props)
       def checkbox(**props) = build_widget(:checkbox, **props)
       def switch(**props) = build_widget(:switch, **props)
       def slider(**props) = build_widget(:slider, **props)
@@ -726,6 +730,98 @@ module Ruflet
         build_widget(:rotatedbox, **mapped)
       end
       def rotatedbox(content = nil, **props) = rotated_box(content, **props)
+      def absorb_pointer(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:absorbpointer, **mapped)
+      end
+      def absorbpointer(content = nil, **props) = absorb_pointer(content, **props)
+      def fractionally_sized_box(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:fractionallysizedbox, **mapped)
+      end
+      def fractionallysizedbox(content = nil, **props) = fractionally_sized_box(content, **props)
+      def ignore_pointer(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:ignorepointer, **mapped)
+      end
+      def ignorepointer(content = nil, **props) = ignore_pointer(content, **props)
+      def intrinsic_height(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:intrinsicheight, **mapped)
+      end
+      def intrinsicheight(content = nil, **props) = intrinsic_height(content, **props)
+      def intrinsic_width(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:intrinsicwidth, **mapped)
+      end
+      def intrinsicwidth(content = nil, **props) = intrinsic_width(content, **props)
+      def sliver_padding(slivers = nil, **props, &block)
+        mapped = props.dup
+        mapped[:slivers] = slivers unless slivers.nil?
+        build_widget(:sliverpadding, **mapped, &block)
+      end
+      def sliverpadding(slivers = nil, **props, &block) = sliver_padding(slivers, **props, &block)
+      def clip_oval(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:clipoval, **mapped)
+      end
+      def clipoval(content = nil, **props) = clip_oval(content, **props)
+      def clip_rsuperellipse(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:cliprsuperellipse, **mapped)
+      end
+      def cliprsuperellipse(content = nil, **props) = clip_rsuperellipse(content, **props)
+      def fade_transition(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:fadetransition, **mapped)
+      end
+      def fadetransition(content = nil, **props) = fade_transition(content, **props)
+      def rotation_transition(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:rotationtransition, **mapped)
+      end
+      def rotationtransition(content = nil, **props) = rotation_transition(content, **props)
+      def scale_transition(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:scaletransition, **mapped)
+      end
+      def scaletransition(content = nil, **props) = scale_transition(content, **props)
+      def size_transition(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:sizetransition, **mapped)
+      end
+      def sizetransition(content = nil, **props) = size_transition(content, **props)
+      def slide_transition(content = nil, **props)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:slidetransition, **mapped)
+      end
+      def slidetransition(content = nil, **props) = slide_transition(content, **props)
+      # A group of fields validated, reset and saved together (Flutter's
+      # Form), laid out like a column: form([fields], on_submit: ...) or
+      # form(...) { text_field(validator: ...) }.
+      def form(controls = nil, **props, &block)
+        mapped = props.dup
+        mapped[:controls] = controls unless controls.nil?
+        build_widget(:form, **mapped, &block)
+      end
+      def nested_scroll_view(header_slivers = nil, **props, &block)
+        mapped = props.dup
+        mapped[:header_slivers] = header_slivers unless header_slivers.nil?
+        build_widget(:nestedscrollview, **mapped, &block)
+      end
+      def nestedscrollview(header_slivers = nil, **props, &block) = nested_scroll_view(header_slivers, **props, &block)
       def fitted_box(content = nil, **props)
         mapped = props.dup
         mapped[:content] = content unless content.nil?

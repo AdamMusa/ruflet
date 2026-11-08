@@ -8,7 +8,7 @@ module Ruflet
           TYPE = "searchbar".freeze
           WIRE = "SearchBar".freeze
 
-          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :autofocus, :badge, :bar_bgcolor, :bar_border_side, :bar_elevation, :bar_hint_text, :bar_hint_text_style, :bar_leading, :bar_overlay_color, :bar_padding, :bar_scroll_padding, :bar_shadow_color, :bar_shape, :bar_size_constraints, :bar_text_style, :bar_trailing, :bottom, :capitalization, :col, :controls, :data, :disabled, :divider_color, :expand, :expand_loose, :full_screen, :height, :key, :keyboard_type, :left, :margin, :offset, :opacity, :right, :rotate, :rtl, :scale, :shrink_wrap, :size_change_interval, :tooltip, :top, :value, :view_bar_padding, :view_bgcolor, :view_elevation, :view_header_height, :view_header_text_style, :view_hint_text, :view_hint_text_style, :view_leading, :view_padding, :view_shape, :view_side, :view_size_constraints, :view_trailing, :visible, :width, :on_animation_end, :on_blur, :on_change, :on_focus, :on_size_change, :on_submit, :on_tap, :on_tap_outside_bar].freeze
+          KEYWORDS = [:align, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :autofocus, :badge, :bar_bgcolor, :bar_border_side, :bar_elevation, :bar_hint_text, :bar_hint_text_style, :bar_leading, :bar_overlay_color, :bar_padding, :bar_scroll_padding, :bar_shadow_color, :bar_shape, :bar_size_constraints, :bar_text_style, :bar_trailing, :bottom, :capitalization, :col, :controls, :data, :disabled, :divider_color, :expand, :expand_loose, :full_screen, :height, :key, :keyboard_type, :left, :margin, :offset, :opacity, :right, :rotate, :rtl, :scale, :shrink_wrap, :size_change_interval, :tooltip, :top, :value, :view_bar_padding, :view_bgcolor, :view_elevation, :view_header_height, :view_header_text_style, :view_hint_text, :view_hint_text_style, :view_leading, :view_padding, :view_shape, :view_side, :view_size_constraints, :view_trailing, :visible, :width, :on_animation_end, :on_blur, :on_change, :on_focus, :on_size_change, :on_submit, :on_tap, :on_tap_outside_bar, :on_tap_outside_view].freeze
 
           def initialize(id: nil, **props)
             unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
@@ -88,6 +88,7 @@ module Ruflet
             on_submit = props[:on_submit]
             on_tap = props[:on_tap]
             on_tap_outside_bar = props[:on_tap_outside_bar]
+            on_tap_outside_view = props[:on_tap_outside_view]
             autofocus = false if autofocus.nil?
             full_screen = false if full_screen.nil?
             value = "" if value.nil?
@@ -168,6 +169,7 @@ module Ruflet
             props[:on_submit] = on_submit unless on_submit.nil?
             props[:on_tap] = on_tap unless on_tap.nil?
             props[:on_tap_outside_bar] = on_tap_outside_bar unless on_tap_outside_bar.nil?
+            props[:on_tap_outside_view] = on_tap_outside_view unless on_tap_outside_view.nil?
             super(type: TYPE, id: id, **props)
           end
 

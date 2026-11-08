@@ -1,15 +1,20 @@
 # frozen_string_literal: true
 
+require_relative "client_action_props"
+
 module Ruflet
   module UI
     module Controls
       module RufletComponents
         class TextSpanControl < Ruflet::Control
+          include ClientActionProps
+
           TYPE = "textspan".freeze
           WIRE = "TextSpan".freeze
 
-          def initialize(id: nil, badge: nil, col: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, key: nil, opacity: nil, rtl: nil, semantics_label: nil, spans: nil, spell_out: nil, style: nil, text: nil, tooltip: nil, url: nil, visible: nil, on_click: nil, on_enter: nil, on_exit: nil)
+          def initialize(id: nil, action: nil, badge: nil, col: nil, data: nil, disabled: nil, expand: nil, expand_loose: nil, key: nil, opacity: nil, rtl: nil, semantics_label: nil, spans: nil, spell_out: nil, style: nil, text: nil, tooltip: nil, url: nil, visible: nil, on_action_result: nil, on_click: nil, on_enter: nil, on_exit: nil)
             props = {}
+            props[:action] = action unless action.nil?
             props[:badge] = badge unless badge.nil?
             props[:col] = col unless col.nil?
             props[:data] = data unless data.nil?
@@ -27,6 +32,7 @@ module Ruflet
             props[:tooltip] = tooltip unless tooltip.nil?
             props[:url] = url unless url.nil?
             props[:visible] = visible unless visible.nil?
+            props[:on_action_result] = on_action_result unless on_action_result.nil?
             props[:on_click] = on_click unless on_click.nil?
             props[:on_enter] = on_enter unless on_enter.nil?
             props[:on_exit] = on_exit unless on_exit.nil?

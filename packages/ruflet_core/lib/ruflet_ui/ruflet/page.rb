@@ -6,6 +6,7 @@ require_relative "control"
 require_relative "ui/widget_builder"
 require_relative "ui/control_factory"
 require_relative "ui/service_types"
+require_relative "types/device_info"
 require_relative "icons/material_icon_lookup"
 require_relative "icons/cupertino_icon_lookup"
 require "set"
@@ -177,10 +178,17 @@ module Ruflet
     # defaults to it, or date_picker(inline: true)) is drawn in place by the
     # engine, so it is laid out like any other control, not presented.
     def self.presented_control?(control)
-      wire = control.wire_type
-      return false if wire == "DatePicker" && control.props["inline"] == true
+      return false unless PRESENTED_TYPES.key?(control.wire_type)
 
-      PRESENTED_TYPES.key?(wire)
+      !inline_overlay?(control)
+    end
+
+    # An overlay built with inline: true renders in place instead of being
+    # presented, so it is laid out like any other control. Today that is the
+    # DatePicker: cupertino_date_picker sends inline: true by default and
+    # date_picker(inline: true) opts in; a plain date_picker stays the dialog.
+    def self.inline_overlay?(control)
+      control.props["inline"] == true && PRESENTED_OVERLAY_TYPES.include?(control.wire_type)
     end
     PAGE_ADD_RESERVED_KEYS = %i[appbar bottom_appbar floating_action_button navigation_bar dialog snack_bar bottom_sheet].freeze
     WIDGET_HELPER_METHODS = (
@@ -197,6 +205,7 @@ module Ruflet
       @sender = sender
       @control_index = {}
       @wire_index = {}
+      @mounted_forms = []
       @next_wire_id = 100
       @view_id = 20
       @root_controls = []
@@ -388,6 +397,9 @@ module Ruflet
       @snack_bar = nil
       @bottom_sheet = nil
       @route_change_seen_since_reset = false
+      # The reloaded app block registers its page handlers again; one it no
+      # longer sets must stop running, like the chrome it no longer sets.
+      @page_event_handlers.clear
 
       @reload_prior_page_prop_keys = @page_props.keys - RELOAD_PRESERVED_PAGE_PROPS
       @view_props = {}
@@ -594,6 +606,32 @@ module Ruflet
       @page_event_handlers["views_pop_until"] = handler
     end
 
+    # Pops every view above the first view whose route is +route+, makes that
+    # route current and calls on_views_pop_until with the route, +result+ and
+    # the destination view (Flet's Page.pop_views_until). route_change follows
+    # when the route changed, then one view patch updates the client.
+    # Raises ArgumentError, leaving the stack alone, when no view matches.
+    def pop_views_until(route, result: nil)
+      route = route.to_s
+      target_index = nil
+      @views.each_with_index do |view, index|
+        next unless view.props["route"].to_s == route
+
+        target_index = index
+        break
+      end
+      raise ArgumentError, "No view found with route '#{route}' in page.views" if target_index.nil?
+
+      target_view = @views[target_index]
+      @views.pop while @views.length > target_index + 1
+      route_changed = @page_props["route"] != route
+      @page_props["route"] = route
+      dispatch_page_event(name: "views_pop_until", data: { "route" => route, "result" => result, "view" => target_view })
+      dispatch_page_event(name: "route_change", data: route) if route_changed
+      send_view_patch
+      self
+    end
+
     def on(event_name, &block)
       name = event_name.to_s
       name = name[3..-1] if name.start_with?("on_")
@@ -605,8 +643,11 @@ module Ruflet
     end
 
     def mount(&block)
-      builder = WidgetBuilder.new
+      mounted_services = []
+      builder = WidgetBuilder.new(services: mounted_services)
       UI::BuildScope.within(builder) { builder.instance_eval(&block) }
+      new_services = mounted_services.reject { |service| services.include?(service) }
+      add_service(*new_services) if new_services.any?
       builder.children.each { |control| add(control) }
     end
 
@@ -615,7 +656,7 @@ module Ruflet
     end
 
     def appbar=(value)
-      @view_props["appbar"] = value
+      @view_props["appbar"] = claim_prop_control(value)
     end
 
     def bottom_appbar
@@ -623,7 +664,7 @@ module Ruflet
     end
 
     def bottom_appbar=(value)
-      @view_props["bottom_appbar"] = value
+      @view_props["bottom_appbar"] = claim_prop_control(value)
     end
 
     def bottomappbar=(value)
@@ -635,7 +676,7 @@ module Ruflet
     end
 
     def floating_action_button=(value)
-      @view_props["floating_action_button"] = value
+      @view_props["floating_action_button"] = claim_prop_control(value)
     end
 
     def navigation_bar
@@ -643,7 +684,7 @@ module Ruflet
     end
 
     def navigation_bar=(value)
-      @view_props["navigation_bar"] = value
+      @view_props["navigation_bar"] = claim_prop_control(value)
     end
 
     def auto_scroll
@@ -707,7 +748,7 @@ module Ruflet
     end
 
     def drawer=(value)
-      @view_props["drawer"] = value
+      @view_props["drawer"] = claim_prop_control(value)
     end
 
     def end_drawer
@@ -715,7 +756,7 @@ module Ruflet
     end
 
     def end_drawer=(value)
-      @view_props["end_drawer"] = value
+      @view_props["end_drawer"] = claim_prop_control(value)
     end
 
     def dialog = @dialog
@@ -905,6 +946,51 @@ module Ruflet
     # before continuing (e.g. picker selection, camera discovery/init).
     def invoke_sync(control_or_id, method_name, args: nil, timeout: 10)
       invoke_and_wait(control_or_id, method_name, args: args, timeout: timeout)
+    end
+
+    # Flet's page.get_device_info(): asks the client for its device record
+    # (device_info_plus) and calls on_result with a Ruflet::DeviceInfo, or nil
+    # on a platform the client has no record for, and the error (nil on
+    # success). Returns the call id; see get_device_info_sync to wait instead.
+    #
+    #   page.get_device_info(on_result: ->(info, error) { puts info&.model })
+    def get_device_info(on_result: nil, timeout: 10)
+      callback =
+        if on_result.respond_to?(:call)
+          ->(result, error) { on_result.call(device_info_from(result), error) }
+        end
+      invoke(:page, "get_device_info", timeout: timeout, on_result: callback)
+    end
+
+    # get_device_info that waits for the answer (like invoke_sync): returns
+    # the Ruflet::DeviceInfo (nil when the platform has none), raises the
+    # client's error as a RuntimeError and Timeout::Error after `timeout`.
+    def get_device_info_sync(timeout: 10)
+      device_info_from(invoke_sync(:page, "get_device_info", timeout: timeout))
+    end
+
+    # Flet's page.set_allowed_device_orientations(): the orientations a mobile
+    # app may rotate to, as Ruflet::DeviceOrientation values or their names
+    # (:portrait_up, :portrait_down, :landscape_left, :landscape_right); []
+    # restores the system default. An unknown name raises ArgumentError, and
+    # a client known not to be a native iOS/Android app (web, desktop, or
+    # android_tv) raises Ruflet::UnsupportedPlatformError, both before
+    # anything is sent. Returns the call id.
+    #
+    #   page.set_allowed_device_orientations(%i[portrait_up landscape_left])
+    def set_allowed_device_orientations(orientations, timeout: 10, on_result: nil)
+      values = Array(orientations).map { |orientation| DeviceOrientation.wire_value(orientation) }.uniq
+      unless orientation_lock_supported?
+        raise UnsupportedPlatformError, "set_allowed_device_orientations is only supported on mobile platforms"
+      end
+
+      invoke(
+        :page,
+        "set_allowed_device_orientations",
+        args: { "orientations" => values },
+        timeout: timeout,
+        on_result: on_result
+      )
     end
 
     def launch_url(url, mode: nil, web_view_configuration: nil, browser_configuration: nil, web_only_window_name: nil, timeout: 10, on_result: nil)
@@ -1139,6 +1225,15 @@ module Ruflet
       service(:secure_storage, **props)
     end
 
+    # Biometric / device-credential authentication (the local_auth extension).
+    def local_authentication(**props)
+      service(:local_authentication, **props)
+    end
+
+    def local_auth(**props)
+      local_authentication(**props)
+    end
+
     def shake_detector(**props)
       service(:shake_detector, **props)
     end
@@ -1348,6 +1443,17 @@ module Ruflet
 
       control = resolve_control(control_or_id)
       return self unless control
+
+      # validator:/on_saved:/autovalidate_mode: stay in Ruby. The bare update
+      # sends what they change on the wire: the event flags the form asks
+      # the client for, and the errors an "always" form shows.
+      form_options = FormFields.extract_options!(props)
+      unless form_options.empty?
+        control.apply_form_options!(form_options)
+        update(control, **props) unless props.empty?
+        return update
+      end
+
       wire_id = control.wire_id
       if wire_id.nil?
         # Events can race with navigation/disposal; never emit patch_control with nil id.
@@ -1357,6 +1463,9 @@ module Ruflet
       return self if wire_id.nil?
 
       patch = normalize_props(props)
+      if patch.key?("action") && control.is_a?(UI::Controls::ClientActionProps)
+        patch["action"] = Ruflet::ClientAction.wire(patch["action"])
+      end
       if text_maps_to_content?(control, patch)
         patch["content"] = patch.delete("text")
       end
@@ -1373,6 +1482,9 @@ module Ruflet
 
       visited = Set.new
       patch.each_value { |value| register_embedded_value(value, visited) }
+      # Fields this patch adds (new `controls` of a form or of a container
+      # inside one) need their form's event flags before they are sent.
+      sync_mounted_forms! if patch.values.any? { |value| value.is_a?(Control) || value.is_a?(Array) || value.is_a?(Hash) }
 
       patch_ops = patch.map { |k, v| [0, 0, k, serialize_patch_value(v)] }
 
@@ -1459,6 +1571,9 @@ module Ruflet
         # its patches are already sent, so stop the client's refresh spinner.
         invoke(control, "end_refresh") if name.to_s == "refresh"
       end
+      # A form field's events then reach its Form: autovalidation after a
+      # change or blur, and the form's on_submit/on_change.
+      control.form_owner&.handle_field_event(control, name.to_s, event)
 
       if name.to_s == "dismiss" && remove_dialog_tracking(control)
         push_dialogs_update!
@@ -1651,29 +1766,26 @@ module Ruflet
         dirty << wire_id if prior && prior != entry[:state]
       end
 
-      # A changed parent patch serializes its newly referenced children, so a
-      # second patch for a dirty descendant would be redundant and can race the
-      # parent's replacement on the client.
-      targets = dirty_ids.reject do |wire_id|
-        ancestor = current[:parents][wire_id]
-        found = false
-        while ancestor
-          if dirty_ids.include?(ancestor)
-            found = true
-            break
-          end
-          ancestor = current[:parents][ancestor]
+      # A changed control's patch re-sends only the props (or children list)
+      # that changed, serialized in full. A dirty descendant inside one of
+      # those values is already covered, and a second patch for it could race
+      # that replacement on the client; any other dirty descendant (its
+      # parent only changed `spacing`, say) still needs its own patch.
+      patches = {}
+      resent = {}
+      dirty_ids.each do |wire_id|
+        entry = current[:controls][wire_id]
+        prior = @published_control_states.fetch(wire_id)
+        patches[wire_id] = changed_control_patch_ops(entry[:control], prior, entry[:state])
+        changed_control_values(entry[:control], prior, entry[:state]).each do |value|
+          collect_subtree_wire_ids(value, resent, {})
         end
-        found
       end
 
-      targets.each do |wire_id|
-        entry = current[:controls][wire_id]
-        patch_ops = changed_control_patch_ops(
-          entry[:control],
-          @published_control_states.fetch(wire_id),
-          entry[:state]
-        )
+      dirty_ids.each do |wire_id|
+        next if resent[wire_id]
+
+        patch_ops = patches[wire_id]
         next if patch_ops.empty?
 
         send_message(Protocol::ACTIONS[:patch_control], {
@@ -1683,6 +1795,35 @@ module Ruflet
       end
 
       publish_wire_state_snapshot!(current)
+    end
+
+    # The values a changed_control_patch_ops patch re-sends in full.
+    def changed_control_values(control, prior, current)
+      prior_props = prior.fetch("props")
+      current_props = current.fetch("props")
+      values = (prior_props.keys | current_props.keys).filter_map do |key|
+        next if prior_props[key] == current_props[key]
+
+        control.props[key]
+      end
+      values << control.children if prior.fetch("children") != current.fetch("children")
+      values
+    end
+
+    def collect_subtree_wire_ids(value, ids, visited)
+      case value
+      when Control
+        return if visited[value.object_id]
+
+        visited[value.object_id] = true
+        ids[value.wire_id] = true if value.wire_id
+        value.children.each { |child| collect_subtree_wire_ids(child, ids, visited) }
+        value.props.each_value { |entry| collect_subtree_wire_ids(entry, ids, visited) }
+      when Array
+        value.each { |entry| collect_subtree_wire_ids(entry, ids, visited) }
+      when Hash
+        value.each_value { |entry| collect_subtree_wire_ids(entry, ids, visited) }
+      end
     end
 
     def changed_control_patch_ops(control, prior, current)
@@ -1862,6 +2003,13 @@ module Ruflet
       control.runtime_page = self if control.respond_to?(:runtime_page=)
       @control_index[control.id.to_s] = control
       @wire_index[control.wire_id] = control
+      # A Form links its fields before they are registered and serialized:
+      # the event flags it needs go out with them, and its autovalidation
+      # runs on every page refresh like a Flutter Form on rebuild.
+      if control.respond_to?(:sync_form_fields!)
+        @mounted_forms << control unless @mounted_forms.any? { |form| form.equal?(control) }
+        control.sync_form_fields!
+      end
       control.children.each { |child| register_control_tree(child, visited) }
       control.props.each_value { |value| register_embedded_value(value, visited) }
     end
@@ -1883,6 +2031,7 @@ module Ruflet
     def refresh_control_indexes!
       @control_index.clear
       @wire_index.clear
+      @mounted_forms.clear
       visited = Set.new
 
       if @views.any?
@@ -1892,6 +2041,10 @@ module Ruflet
         @view_props.each_value { |value| register_embedded_value(value, visited) }
       end
       @page_props.each_value { |value| register_embedded_value(value, visited) }
+    end
+
+    def sync_mounted_forms!
+      @mounted_forms.each(&:sync_form_fields!)
     end
 
     def register_embedded_value(value, visited)
@@ -2047,6 +2200,31 @@ module Ruflet
       control_or_id == 1 || control_or_id.to_s == "1" || control_or_id.to_s == "page"
     end
 
+    # The client platform a device record describes: "web" in a browser
+    # (Flet picks WebDeviceInfo whenever page.web), else the registered one.
+    def device_info_platform
+      return "web" if web
+
+      platform = @client_details["platform"]
+      platform.nil? ? nil : platform.to_s
+    end
+
+    def device_info_from(result)
+      return nil unless result.is_a?(Hash) && !result.empty?
+
+      DeviceInfo.new(platform: device_info_platform, data: result)
+    end
+
+    # Like Flet's PagePlatform.is_mobile (ios, android) and native only: a
+    # browser cannot lock orientation. A client that did not report its
+    # platform is left to answer for itself.
+    def orientation_lock_supported?
+      return false if web
+
+      platform = @client_details["platform"]
+      platform.nil? || platform.to_s == "ios" || platform.to_s == "android"
+    end
+
     def serialize_patch_value(value)
       case value
       when Control
@@ -2163,8 +2341,17 @@ module Ruflet
       elsif PAGE_PROP_KEYS.include?(key)
         @page_props[key] = value
       else
-        @view_props[key] = value
+        @view_props[key] = claim_prop_control(value)
       end
+    end
+
+    # A control assigned as page chrome (page.appbar = ..., set_view_props)
+    # inside a DSL block was attached to that block when it was built; take
+    # it back so it is not also laid out as a body control.
+    def claim_prop_control(value)
+      # reclaim reads props: a control or a list of controls in a slot.
+      UI::PropControls.reclaim("value" => value)
+      value
     end
 
     # page.on_scroll = ->(e) {} keeps the handler on the Ruby side and sends
@@ -2175,7 +2362,13 @@ module Ruflet
       flags = view_event?(event_name) ? @view_props : @page_props
       if handler.nil?
         @page_event_handlers.delete(event_name)
-        flags.delete(prop_name)
+        # Page props merge on the client, so a flag that was on needs an
+        # explicit nil there; the View is rebuilt from @view_props each time.
+        if flags.equal?(@page_props)
+          flags[prop_name] = nil if flags.key?(prop_name)
+        else
+          flags.delete(prop_name)
+        end
       else
         @page_event_handlers[event_name] = handler
         flags[prop_name] = true

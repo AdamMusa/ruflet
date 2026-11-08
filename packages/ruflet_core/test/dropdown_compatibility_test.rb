@@ -420,7 +420,8 @@ class RufletDropdownCompatibilityTest < Minitest::Test
     material2_only = components::Dropdown2Control::KEYWORDS - components::DropdownControl::KEYWORDS
 
     assert_equal material2_only.sort,
-                 (contract::MATERIAL2_RENAMES.keys + contract::MATERIAL2_UNSUPPORTED_KEYWORDS).sort
+                 (contract::MATERIAL2_RENAMES.keys + contract::MATERIAL2_UNSUPPORTED_KEYWORDS +
+                  contract::MATERIAL2_SHARED_KEYWORDS).sort
     assert_empty contract::MATERIAL2_RENAMES.values - components::DropdownControl::KEYWORDS
 
     patch = Ruflet.dropdownm2(
@@ -435,6 +436,17 @@ class RufletDropdownCompatibilityTest < Minitest::Test
     assert_equal "Text", patch["disabled_hint_content"]["_c"]
     assert_equal 48, patch["item_height"]
     assert_equal false, patch["enable_feedback"]
+  end
+  # Flet 1.0's DropdownM2.menu_border_radius rounds the open menu; the field
+  # keeps border_radius. dropdown_m2 sends both under their own names.
+  def test_dropdown_m2_menu_border_radius_is_sent_under_its_own_name
+    patch = Ruflet.dropdown_m2([Ruflet.dropdown_option("red")], menu_border_radius: 12, border_radius: 4).to_patch
+
+    assert_equal "Dropdown", patch["_c"]
+    assert_equal 12, patch["menu_border_radius"]
+    assert_equal 4, patch["border_radius"]
+    assert_equal({ "top_left" => 8 }, Ruflet.dropdown([], menu_border_radius: { top_left: 8 }).to_patch["menu_border_radius"])
+    refute Ruflet.dropdown_m2([]).to_patch.key?("menu_border_radius")
   end
 
   private
