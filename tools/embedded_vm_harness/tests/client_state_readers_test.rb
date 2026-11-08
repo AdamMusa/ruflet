@@ -41,17 +41,35 @@ end
 
 readers = Ruflet::UI::ClientStateReaders
 
-# -- Every reader in the table is defined, publicly, on its class ------------
-assert_equal([], readers.install!, "install! skipped no reader")
+# -- The framework installed every reader when it loaded ---------------------
+# Nothing in this file calls install!: these fail if the framework (ruflet_ui.rb
+# in the VM's compiled blob) stopped running it.
+assert(Ruflet.switch(value: false).respond_to?(:value), "the framework installed the readers")
+assert_equal([], readers.skipped, "the framework ran install! and it skipped no reader")
 count = 0
 readers.table.each do |klass, names|
+  module_name = "Ruflet::UI::ClientStateReaders::" + klass.name.split("::").last(2).join
   names.each do |name|
     count += 1
-    assert(klass.public_method_defined?(name.to_sym), "#{klass}##{name} is public")
-    assert(klass.instance_methods(false).include?(name.to_sym), "#{klass}##{name} is defined on the class itself")
+    public_reader = klass.public_method_defined?(name.to_sym)
+    assert(public_reader, "#{klass}##{name} is defined and public")
+    next unless public_reader
+
+    owner = klass.instance_method(name.to_sym).owner
+    assert_equal(module_name, owner.name, "#{klass}##{name} comes from its reader module")
+    assert_equal(owner, klass.ancestors[1], "#{klass}: the reader module comes right after the class")
+    assert(!klass.instance_methods(false).include?(name.to_sym), "#{klass} itself defines no #{name}")
   end
 end
 assert_equal(51, count, "reader count")
+# The readers look for an app method with method_defined?, which counts
+# private methods in mruby only; on CRuby they also ask private_method_defined?.
+assert_equal(RUBY_ENGINE == "mruby", readers::METHOD_DEFINED_COUNTS_PRIVATE, "method_defined? visibility probe")
+unless $failures.empty?
+  puts "client_state_readers_test (#{RUBY_ENGINE}): the readers are not installed"
+  $failures.first(5).each { |failure| puts "  #{failure}" }
+  raise "client state readers not installed"
+end
 
 # -- Documented flows: update_control, then the event -------------------------
 def build_page
@@ -182,6 +200,8 @@ assert_equal(:private, guarded.send(:selection), "private method kept")
 assert_equal(:inherited, guarded.selected, "inherited method kept")
 assert_raises(NoMethodError, "private Kernel#open kept") { guarded.open }
 assert_equal("input", guarded.entry_mode, "reader defined where no method existed")
+assert_equal(GuardControl.ancestors[1], GuardControl.instance_method(:entry_mode).owner,
+             "the reader comes from a module included into the class")
 
 stepper = Ruflet.stepper(steps: [])
 assert_equal("stepper", stepper.type, "Control#type is not shadowed")
@@ -189,6 +209,164 @@ assert_equal([toggle], [[toggle]].flatten, "flatten")
 
 generic = Ruflet::Control.new(type: "my_extension_widget", value: 3)
 assert_raises(NoMethodError, "schema-less control has no reader") { generic.value }
+
+# -- A method the app adds after loading still wins ---------------------------
+# Apps on v0.0.23 could not read these, so some added a reader of their own.
+# Each case gives what it gives without the readers.
+dropdown = Ruflet.dropdown(label: "Size", options: [])
+toggle = Ruflet.switch(label: "Dark mode", value: false)
+tabs = Ruflet.tabs(selected_index: 1, length: 2, content: Ruflet.text("x"))
+text_field = Ruflet.text_field(label: "Name", value: "Ada")
+
+Ruflet::Control.class_eval do
+  def value
+    props["value"].nil? ? "(unset)" : props["value"]
+  end
+end
+assert_equal("(unset)", dropdown.value, "Ruflet::Control#value added by the app")
+assert_equal(false, toggle.value, "Ruflet::Control#value added by the app, value set")
+Ruflet::Control.send(:remove_method, :value)
+assert_equal(nil, dropdown.value, "the reader answers again once the app method is gone")
+
+Ruflet::UI::PlatformControlContracts::Components::PlatformControl.class_eval do
+  def value
+    "platform"
+  end
+end
+assert_equal("platform", toggle.value, "PlatformControl#value added by the app")
+Ruflet::UI::PlatformControlContracts::Components::PlatformControl.send(:remove_method, :value)
+
+Ruflet::UI::Controls::TextInputMethods.class_eval do
+  def value
+    "text input"
+  end
+end
+assert_equal("text input", text_field.value, "TextInputMethods#value added by the app")
+assert_equal(false, toggle.value, "a switch does not include TextInputMethods")
+Ruflet::UI::Controls::TextInputMethods.send(:remove_method, :value)
+
+Ruflet::Control.class_eval do
+  def value(fallback = :none, upcase: false, &block)
+    result = props.key?("value") ? props["value"] : fallback
+    result = result.to_s.upcase if upcase
+    block ? block.call(result) : result
+  end
+end
+plain_toggle = Ruflet.switch(label: "Plain")
+assert_equal(:none, plain_toggle.value, "app method, no arguments")
+assert_equal("GIVEN", plain_toggle.value("given", upcase: true), "app method gets the arguments")
+assert_equal([:none], plain_toggle.value { |result| [result] }, "app method gets the block")
+Ruflet::Control.send(:remove_method, :value)
+
+Ruflet::Control.class_eval do
+  def value
+    :private
+  end
+  private :value
+end
+assert_equal(:private, toggle.send(:value), "private app method still answers send")
+assert_equal(:private, toggle.instance_eval { value }, "private app method still answers a call without a receiver")
+assert_equal(:private, toggle.value, "private app method answers control.value")
+Ruflet::Control.send(:remove_method, :value)
+
+Ruflet::Control.class_eval do
+  def method_missing(name, *args, **options, &block)
+    name == :value ? [:app_method_missing, props["value"], args] : super
+  end
+end
+assert_equal([:app_method_missing, false, []], toggle.value, "app method_missing still answers")
+assert_equal([:app_method_missing, false, [1]], toggle.value(1), "app method_missing gets the arguments")
+Ruflet::Control.send(:remove_method, :method_missing)
+assert_equal(false, toggle.value, "the reader answers again once method_missing is gone")
+
+# CRuby warns that redefining Object#method_missing may loop; this one does not.
+verbose = $VERBOSE
+$VERBOSE = nil
+Object.class_eval do
+  def method_missing(name, *args, **options, &block)
+    name == :value ? :global_method_missing : super
+  end
+end
+$VERBOSE = verbose
+assert_equal(:global_method_missing, toggle.value, "an Object#method_missing the app adds still answers")
+Object.send(:remove_method, :method_missing)
+assert_equal(false, toggle.value, "the reader answers again once Object#method_missing is gone")
+
+module Kernel
+  alias_method :ruflet_method_missing_for_test, :method_missing
+  def method_missing(name, *args, **props, &block)
+    name == :value ? :wrapped : ruflet_method_missing_for_test(name, *args, **props, &block)
+  end
+  private :method_missing
+end
+assert_equal(:wrapped, toggle.value, "an app wrapping Ruflet's Kernel#method_missing still answers")
+module Kernel
+  alias_method :method_missing, :ruflet_method_missing_for_test
+  private :method_missing
+  remove_method :ruflet_method_missing_for_test
+end
+assert_equal(false, toggle.value, "the reader answers again once Ruflet's method_missing is back")
+
+class AnsweringSwitch < Ruflet::UI::Controls::RufletComponents::SwitchControl
+  def method_missing(name, *args, **options, &block)
+    name == :value ? [:subclass, props["value"]] : super
+  end
+end
+class PlainSwitch < Ruflet::UI::Controls::RufletComponents::SwitchControl
+end
+assert_equal([:subclass, true], AnsweringSwitch.new(value: true).value, "a subclass method_missing still answers")
+assert_equal(true, PlainSwitch.new(value: true).value, "a plain subclass gets the reader")
+
+single = Ruflet.switch(label: "Single", value: false)
+def single.method_missing(name, *args, **options, &block)
+  name == :value ? :object_method_missing : super
+end
+assert_equal(:object_method_missing, single.value, "an object's own method_missing still answers")
+extended = Ruflet.switch(label: "Extended", value: false)
+extended.extend(Module.new do
+  def method_missing(name, *args, **options, &block)
+    name == :value ? :extended_method_missing : super
+  end
+end)
+assert_equal(:extended_method_missing, extended.value, "a method_missing from extend still answers")
+assert_equal(false, toggle.value, "other controls still get the reader")
+
+Object.class_eval do
+  def value
+    :object
+  end
+end
+assert_equal(:object, toggle.value, "a public Object#value still answers")
+Object.send(:remove_method, :value)
+Kernel.class_eval do
+  def value
+    :kernel
+  end
+end
+assert_equal(:kernel, toggle.value, "a public Kernel#value still answers")
+Kernel.send(:remove_method, :value)
+Object.class_eval do
+  def value
+    :top_level_helper
+  end
+  private :value
+end
+assert_equal(:top_level_helper, toggle.instance_eval { value }, "a private Object helper still answers a call without a receiver")
+assert_equal(:top_level_helper, toggle.value, "a private Object helper answers control.value")
+Object.send(:remove_method, :value)
+assert_equal(false, toggle.value, "the reader answers again once the helper is gone")
+
+tabs.define_singleton_method(:selected_index) { :object }
+assert_equal(:object, tabs.selected_index, "singleton method")
+
+# Modules cannot be taken out again, so these come last.
+later_tabs = Ruflet.tabs(selected_index: 1, length: 2, content: Ruflet.text("x"))
+Ruflet::Control.send(:include, Module.new { def selected_index; :included; end })
+assert_equal(:included, later_tabs.selected_index, "module included into Ruflet::Control")
+Ruflet::Control.send(:prepend, Module.new { def selected_index; :prepended; end })
+assert_equal(:prepended, later_tabs.selected_index, "module prepended to Ruflet::Control")
+Ruflet::UI::Controls::RufletComponents::TabsControl.send(:include, Module.new { def selected_index; "from module"; end })
+assert_equal("from module", later_tabs.selected_index, "module included into the table class")
 
 if $failures.empty?
   puts "client_state_readers_test (#{RUBY_ENGINE}): #{$tests} assertions passed"

@@ -440,6 +440,20 @@ class RufletHtmlAppTest < Minitest::Test
     assert_empty invoked
   end
 
+  # With ruflet_rails loaded, the controls an HTML page builds read the
+  # client's value through the readers: nothing ruflet_rails loads defines
+  # these names or a method_missing that the readers would hand the call to.
+  def test_html_inputs_read_client_values_through_the_readers
+    start("/" => '<form action="/s" method="post"><input type="text" name="email" value="old@x.y"></form>')
+    field = find(@page.views.first, "textfield")
+
+    assert_equal "old@x.y", field.value
+    @page.apply_client_update(field.wire_id, { "value" => "new@x.y" })
+    assert_equal "new@x.y", field.value
+    assert_equal [], Ruflet::UI::ClientStateReaders.skipped
+    refute Ruflet::UI::ClientStateReaders.app_method_missing?(field)
+  end
+
   def test_audio_recorder_animates_while_recording_and_autoplays_after_stop
     recording_paths = []
     documents_requests = 0

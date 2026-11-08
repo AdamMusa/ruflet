@@ -6,7 +6,7 @@ require_relative "test_helper"
 # `event.control.value` in a handler, `field.value` / `toggle.value` later.
 # Controls only exposed `props["value"]`, so those reads raised NoMethodError.
 # The properties the client writes back from user interaction now have
-# readers; nothing else changed.
+# readers, and a method the app defines itself still answers instead.
 class RufletClientStateReadersTest < Minitest::Test
   READER_FILE = File.expand_path("../lib/ruflet_ui/ruflet/ui/client_state_readers.rb", __dir__)
 
@@ -135,33 +135,325 @@ class RufletClientStateReadersTest < Minitest::Test
     assert_equal "s", field.value
   end
 
-  def test_every_reader_in_the_table_is_defined_on_its_class
-    assert_empty readers.install!, "no reader may be skipped for an existing method"
+  # What ruflet_ui.rb installed when test_helper required "ruflet". Nothing
+  # here calls install!, so this fails if ruflet_ui.rb stops calling it.
+  def test_ruflet_ui_installs_every_reader_when_it_loads
+    assert_equal [], readers.skipped, "ruflet_ui.rb must run install!, and no reader may be skipped"
 
     readers.table.each do |klass, names|
+      module_name = "Ruflet::UI::ClientStateReaders::#{klass.name.split('::').last(2).join}"
       names.each do |name|
         assert klass.public_method_defined?(name), "#{klass}##{name}"
-        assert_equal klass, klass.instance_method(name).owner, "#{klass}##{name}"
+        owner = klass.instance_method(name).owner
+        assert_equal module_name, owner.name, "#{klass}##{name}"
+        assert_equal owner, klass.ancestors[1], "#{klass}: the reader module comes right after the class"
+        refute_includes klass.instance_methods(false), name.to_sym, "#{klass} itself defines no reader"
         assert_includes declared_properties(klass), name, "#{klass} must declare #{name}"
       end
     end
     assert_equal 51, readers.table.sum { |_klass, names| names.length }
   end
 
+  # The same, in a process that only requires "ruflet", so no earlier test
+  # can have installed anything.
+  def test_requiring_ruflet_is_enough
+    out = run_ruby(<<~RUBY)
+      require "ruflet"
+      field = Ruflet.dropdown(label: "Size", value: "s", options: [])
+      print [Ruflet::UI::ClientStateReaders.skipped, field.value, Ruflet.switch(value: true).respond_to?(:value)].inspect
+    RUBY
+
+    assert_equal '[[], "s", true]', out
+  end
+
   # Readers exist only where the table says: every method defined in
-  # client_state_readers.rb, public or not, across all control classes, is a
-  # table entry.
+  # client_state_readers.rb, public or not, that a control class reaches
+  # through a module it includes itself, is a table entry.
   def test_no_reader_outside_the_table
     expected = readers.table.flat_map { |klass, names| names.map { |name| [klass, name] } }.sort_by(&:inspect)
     defined = control_classes.flat_map do |klass|
-      (klass.public_instance_methods(false) + klass.private_instance_methods(false) +
-        klass.protected_instance_methods(false)).filter_map do |name|
-        location = klass.instance_method(name).source_location
-        [klass, name.to_s] if location && location.first == READER_FILE
+      own_modules = klass.ancestors.take_while { |ancestor| ancestor != klass.superclass } - [klass]
+      own_modules.flat_map do |mod|
+        (mod.public_instance_methods(false) + mod.private_instance_methods(false) +
+          mod.protected_instance_methods(false)).filter_map do |name|
+          location = mod.instance_method(name).source_location
+          [klass, name.to_s] if location && location.first == READER_FILE
+        end
       end
     end
 
     assert_equal expected, defined.sort_by(&:inspect)
+    reader_modules = readers.constants.map { |name| readers.const_get(name) }.grep(Module).reject { |mod| mod.is_a?(Class) }
+    assert_equal 42, reader_modules.length
+    reader_modules.each do |mod|
+      assert_equal 1, control_classes.count { |klass| klass.include?(mod) && !klass.superclass.include?(mod) }, mod.name
+    end
+  end
+
+  # An app on v0.0.23 could not read these, so it may have added a reader of
+  # its own after loading Ruflet. Whatever it defined still answers, as it does
+  # on main, in every place an app can put one.
+  def test_app_methods_added_after_load_still_win
+    dropdown = Ruflet.dropdown(label: "Size", options: [])
+    toggle = Ruflet.switch(label: "Dark mode", value: false)
+    tabs = Ruflet.tabs(selected_index: 1, length: 2, content: Ruflet.text("x"))
+    field = Ruflet.text_field(label: "Name", value: "Ada")
+
+    # On Ruflet::Control (main gives "(unset)" here too).
+    with_app_methods(Ruflet::Control, <<~RUBY) do
+      def value = props["value"].nil? ? "(unset)" : props["value"]
+    RUBY
+      assert_equal "(unset)", dropdown.value
+      assert_equal false, toggle.value
+      assert_equal "Ada", field.value
+    end
+    assert_nil dropdown.value, "the reader answers again once the app method is gone"
+
+    # On the PlatformControl base of the Components classes.
+    with_app_methods(Ruflet::UI::PlatformControlContracts::Components::PlatformControl, <<~RUBY) do
+      def value = "platform"
+    RUBY
+      assert_equal "platform", toggle.value
+      assert_equal 1, tabs.selected_index
+    end
+
+    # In a framework module a table class includes (TextFieldControl
+    # includes TextInputMethods).
+    with_app_methods(Ruflet::UI::Controls::TextInputMethods, <<~RUBY) do
+      def value = "text input"
+    RUBY
+      assert_equal "text input", field.value
+      assert_equal false, toggle.value
+    end
+
+    # On the table class itself, and on the object.
+    with_app_methods(Ruflet::UI::Controls::RufletComponents::TabsControl, "def selected_index = :class") do
+      assert_equal :class, tabs.selected_index
+    end
+    tabs.define_singleton_method(:selected_index) { :object }
+    assert_equal :object, tabs.selected_index
+    tabs.singleton_class.send(:remove_method, :selected_index)
+    assert_equal 1, tabs.selected_index
+  end
+
+  # Modules cannot be taken out again, so these run in their own process.
+  def test_app_modules_added_after_load_still_win
+    out = run_ruby(<<~RUBY)
+      require "ruflet"
+      tabs = Ruflet.tabs(selected_index: 1, length: 2, content: Ruflet.text("x"))
+      field = Ruflet.text_field(label: "Name", value: "Ada")
+      results = [tabs.selected_index]
+
+      # Included into, then prepended to, Ruflet::Control.
+      Ruflet::Control.include(Module.new { def selected_index = :included })
+      results << tabs.selected_index
+      Ruflet::Control.prepend(Module.new { def selected_index = :prepended })
+      results << tabs.selected_index
+
+      # Included into the table class itself.
+      Ruflet::UI::Controls::RufletComponents::TabsControl.include(Module.new { def selected_index = "from module" })
+      results << tabs.selected_index
+
+      # Included into a framework module the table class already includes.
+      Ruflet::UI::Controls::TextInputMethods.include(Module.new { def value = :text_input_module })
+      results << field.value
+
+      print results.inspect
+    RUBY
+
+    assert_equal '[1, :included, :prepended, "from module", :text_input_module]', out
+  end
+
+  def test_app_methods_get_the_arguments_and_block
+    toggle = Ruflet.switch(label: "Dark mode")
+
+    with_app_methods(Ruflet::Control, <<~RUBY) do
+      def value(fallback = :none, upcase: false, &block)
+        result = props.fetch("value", fallback)
+        result = result.to_s.upcase if upcase
+        block ? block.call(result) : result
+      end
+    RUBY
+      assert_equal :none, toggle.value
+      assert_equal "given", toggle.value("given")
+      assert_equal "GIVEN", toggle.value("given", upcase: true)
+      assert_equal [:none], toggle.value { |result| [result] }
+      assert_equal(-1, toggle.method(:value).arity)
+    end
+  end
+
+  # Visibility is the app's business: a private or protected method it
+  # defines on a control class answers send and calls from inside the class
+  # as before. `control.value` now reaches it too; on main that raised
+  # NoMethodError ("private method 'value' called").
+  def test_private_and_protected_app_methods_still_answer
+    toggle = Ruflet.switch(label: "Dark mode", value: false)
+
+    with_app_methods(Ruflet::Control, "private def value = :private") do
+      assert_equal :private, toggle.send(:value)
+      assert_equal :private, toggle.instance_eval { value }
+      assert_equal :private, toggle.value
+    end
+    with_app_methods(Ruflet::Control, "protected def value = :protected") do
+      assert_equal :protected, toggle.send(:value)
+      assert_equal :protected, toggle.value
+    end
+  end
+
+  # A method_missing the app added to answer property reads keeps answering.
+  def test_an_app_method_missing_still_answers
+    toggle = Ruflet.switch(label: "Dark mode", value: false)
+
+    with_app_methods(Ruflet::Control, <<~RUBY) do
+      def method_missing(name, *args, **options, &block)
+        name == :value ? [:app_method_missing, props["value"], args] : super
+      end
+    RUBY
+      assert_equal [:app_method_missing, false, []], toggle.value
+      assert_equal [:app_method_missing, false, [1]], toggle.value(1)
+    end
+    with_app_methods(Ruflet::Control, "def method_missing(name, *args, **options, &block) = super") do
+      error = assert_raises(NoMethodError) { toggle.value }
+      assert_equal :value, error.name
+    end
+    assert_equal false, toggle.value
+  end
+
+  # One the app adds to Object for everything answers too, as on main.
+  def test_an_app_method_missing_on_object_still_answers
+    toggle = Ruflet.switch(label: "Dark mode", value: false)
+    source = <<~RUBY
+      def method_missing(name, *args, **options, &block)
+        name == :value ? :global_method_missing : super
+      end
+    RUBY
+
+    # Ruby warns that redefining Object#method_missing may loop; this one
+    # does not.
+    with_app_methods(Object, source, quiet: true) do
+      assert_equal :global_method_missing, toggle.value
+    end
+    assert_equal false, toggle.value
+  end
+
+  # An app that wraps Ruflet's own Kernel#method_missing (it sees every
+  # missing method) gets every call it got on main: the readers hand all of
+  # them to it, so names it does not answer raise as they did on main. In
+  # its own process: Kernel's method_missing is Ruflet's DSL fallback.
+  def test_an_app_wrapping_the_kernel_method_missing_still_answers
+    out = run_ruby(<<~RUBY)
+      require "ruflet"
+      toggle = Ruflet.switch(label: "Dark mode", value: false)
+      tabs = Ruflet.tabs(selected_index: 1, length: 2, content: Ruflet.text("x"))
+      before = [toggle.value, tabs.selected_index]
+      module Kernel
+        alias_method :ruflet_method_missing, :method_missing
+        private :ruflet_method_missing
+        private def method_missing(name, *args, **props, &block)
+          name == :value ? :wrapped : ruflet_method_missing(name, *args, **props, &block)
+        end
+      end
+      unanswered = begin
+        tabs.selected_index
+      rescue NoMethodError => e
+        e.name
+      end
+      print [before, toggle.value, unanswered].inspect
+    RUBY
+
+    assert_equal "[[false, 1], :wrapped, :selected_index]", out
+  end
+
+  # An app subclass of a table class that answers through its own
+  # method_missing keeps answering; plain subclasses get the reader.
+  def test_an_app_subclass_method_missing_still_answers
+    switch_class = Ruflet::UI::Controls::RufletComponents::SwitchControl
+    answering = Class.new(switch_class) do
+      def method_missing(name, *args, **options, &block)
+        name == :value ? [:subclass, props["value"]] : super
+      end
+    end
+    plain = Class.new(switch_class)
+
+    assert_equal [:subclass, true], answering.new(value: true).value
+    assert_equal true, plain.new(value: true).value
+  end
+
+  # The same for one object: a method_missing defined on it, or in a module
+  # it is extended with.
+  def test_an_object_method_missing_still_answers
+    toggle = Ruflet.switch(label: "Dark mode", value: false)
+    extended = Ruflet.switch(label: "Extended", value: false)
+    def toggle.method_missing(name, *args, **options, &block)
+      name == :value ? :object_method_missing : super
+    end
+    extended.extend(Module.new do
+      def method_missing(name, *args, **options, &block)
+        name == :value ? :extended_method_missing : super
+      end
+    end)
+
+    assert_equal :object_method_missing, toggle.value
+    assert_equal :extended_method_missing, extended.value
+    assert_equal false, Ruflet.switch(label: "Other", value: false).value
+  end
+
+  # Methods on Object or Kernel count too. A public one is what
+  # `control.value` called on main. A private one (a top-level `def` in a
+  # script) is what a call without a receiver from inside the control's own
+  # methods reached on main, so the reader hands those calls to it as well.
+  def test_object_and_kernel_methods_still_answer
+    toggle = Ruflet.switch(label: "Dark mode", value: false)
+
+    with_app_methods(Object, "def value = :object") do
+      assert_equal :object, toggle.value
+    end
+    with_app_methods(Kernel, "def value = :kernel") do
+      assert_equal :kernel, toggle.value
+    end
+    with_app_methods(Object, "private def value = :top_level_helper") do
+      assert_equal :top_level_helper, toggle.send(:value)
+      assert_equal :top_level_helper, toggle.instance_eval { value }
+      assert_equal :top_level_helper, toggle.value
+    end
+    assert_equal false, toggle.value
+  end
+
+  # The same with a real script: a top-level `def` after `require "ruflet"`,
+  # called from a method the script adds to a control class.
+  def test_a_top_level_helper_still_answers_calls_from_control_methods
+    out = run_ruby(<<~RUBY)
+      require "ruflet"
+      def selected_index = :top_level_helper
+      class Ruflet::UI::Controls::RufletComponents::TabsControl
+        def describe = selected_index
+      end
+      tabs = Ruflet.tabs(selected_index: 1, length: 2, content: Ruflet.text("x"))
+      print [tabs.describe, tabs.selected_index, Ruflet.chip(label: Ruflet.text("t"), selected: true).selected].inspect
+    RUBY
+
+    assert_equal "[:top_level_helper, :top_level_helper, true]", out
+  end
+
+  # An app method that already exists when Ruflet loads keeps the reader
+  # from being defined at all.
+  def test_app_method_defined_before_ruflet_loads_wins
+    out = run_ruby(<<~RUBY)
+      module Ruflet
+        class Control
+          def value = "app"
+        end
+      end
+      require "ruflet"
+      readers = Ruflet::UI::ClientStateReaders
+      tabs = Ruflet.tabs(selected_index: 1, length: 2, content: Ruflet.text("x"))
+      skipped = readers.skipped.map { |_klass, name| name }.uniq
+      value_pairs = readers.table.sum { |_klass, names| names.count("value") }
+      print [skipped, readers.skipped.length == value_pairs, Ruflet.dropdown(options: []).value,
+             Ruflet.switch(value: true).value, tabs.selected_index].inspect
+    RUBY
+
+    assert_equal '[["value"], true, "app", "app", 1]', out
   end
 
   def test_properties_without_a_reader_still_raise
@@ -182,9 +474,9 @@ class RufletClientStateReadersTest < Minitest::Test
     # `open` (dialogs) and Dropdown `text` keep resolving to the private
     # Kernel helpers they always did, so they still raise with a receiver.
     error = assert_raises(NoMethodError) { dialog.open }
-    assert_match(/private method 'open'/, error.message)
+    assert_match(/private method [`']open'/, error.message)
     error = assert_raises(NoMethodError) { dropdown.text }
-    assert_match(/private method 'text'/, error.message)
+    assert_match(/private method [`']text'/, error.message)
     refute_respond_to dialog, :open
     refute_respond_to dropdown, :text
   end
@@ -234,7 +526,10 @@ class RufletClientStateReadersTest < Minitest::Test
     assert_equal Kernel, klass.instance_method(:open).owner
     refute_respond_to control, :open
     assert_equal "prop", control.entry_mode
-    assert_equal klass, klass.instance_method(:entry_mode).owner
+    reader_module = klass.instance_method(:entry_mode).owner
+    assert_instance_of Module, reader_module
+    assert_equal [klass, reader_module], klass.ancestors.first(2)
+    assert_nil reader_module.name, "an anonymous class gets an anonymous reader module"
   end
 
   def test_existing_methods_are_not_shadowed
@@ -260,6 +555,34 @@ class RufletClientStateReadersTest < Minitest::Test
   end
 
   private
+
+  # Evaluates `source` in `owner` the way an app reopens a class or module,
+  # runs the block, then removes the methods it added again.
+  def with_app_methods(owner, source, quiet: false)
+    before = own_methods(owner)
+    verbose = $VERBOSE
+    $VERBOSE = nil if quiet
+    begin
+      owner.class_eval(source)
+    ensure
+      $VERBOSE = verbose
+    end
+    added = own_methods(owner) - before
+    yield
+  ensure
+    added&.each { |name| owner.send(:remove_method, name) }
+  end
+
+  def own_methods(owner)
+    owner.instance_methods(false) + owner.private_instance_methods(false)
+  end
+
+  def run_ruby(script)
+    lib = File.expand_path("../lib", __dir__)
+    out = IO.popen([RbConfig.ruby, "-I", lib, "-e", script], err: [:child, :out], &:read)
+    assert $?.success?, out
+    out
+  end
 
   def control_classes
     ObjectSpace.each_object(Class).select { |klass| klass <= Ruflet::Control }

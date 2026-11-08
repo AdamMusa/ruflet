@@ -36,11 +36,42 @@ module Ruflet
     # The readers are ordinary public methods, defined once when Ruflet loads
     # (see the end of ruflet_ui.rb), so CRuby and the embedded mruby VM
     # expose exactly the same ones, and respond_to?, method and public_send
-    # change for these names on these classes only. A reader is never defined
-    # over an existing method, public or private, of the class or any
-    # ancestor. A reader takes no arguments; there are no setters.
+    # change for these names on these classes only. There are no setters.
+    #
+    # An app's own method always wins over a reader, wherever the app puts it.
+    # Apps on v0.0.23, where these reads raised, may already have added one
+    # themselves, for example
+    # `class Ruflet::Control; def value = props["value"]; end`. So:
+    # * A reader is never defined over a method that already exists, public or
+    #   private, on the class or any ancestor (Kernel included).
+    # * Each class gets its readers from its own module, included into the
+    #   class (ClientStateReaders::RufletComponentsSwitchControl and so on).
+    #   A method the app defines on the class itself, in a subclass, on the
+    #   object, or in a module it includes into the class later comes first
+    #   in the lookup and wins as usual.
+    # * A method the app defines further up after Ruflet has loaded (on
+    #   Ruflet::Control, PlatformControl, a module included or prepended
+    #   there, a framework module such as TextInputMethods, Object or Kernel),
+    #   public or private, comes after the reader in the lookup. The reader
+    #   checks for one on every call and hands the call to it with `super`,
+    #   arguments and block included. It hands the call to method_missing the
+    #   same way when the app added one (see app_method_missing?).
+    # Only when there is no such method does the reader answer: with no
+    # arguments it returns props[name]; with arguments it raises the
+    # ArgumentError a zero-argument method raises.
     module ClientStateReaders
+      # mruby's Module#method_defined? also counts private methods; CRuby's
+      # counts public and protected ones only.
+      METHOD_DEFINED_COUNTS_PRIVATE = Class.new {
+        def probe; end
+        private :probe
+      }.method_defined?(:probe)
+
       class << self
+        # The [class, name] pairs install! left out, or nil until it has run.
+        # ruflet_ui.rb runs it when Ruflet loads, so this is [] in every app.
+        attr_reader :skipped
+
         # [control class, [property, ...]] pairs, grouped by the client control
         # and the renderers that write the value back to Ruby.
         def table
@@ -118,53 +149,126 @@ module Ruflet
           ]
         end
 
-        # Defines every reader in the table, once. Returns the [class, name]
-        # pairs it left out because the class already had a method of that
-        # name; with the table above that list is empty, which the tests check
-        # on CRuby and in the embedded VM.
+        # Defines every reader in the table, once. ruflet_ui.rb calls it as its
+        # last statement. Returns the [class, name] pairs it left out because
+        # the class already had a method of that name; with the table above
+        # that list is empty, which the tests check on CRuby and in the
+        # embedded VM.
         def install!
           return @skipped unless @skipped.nil?
 
           @skipped = define_readers(table).freeze
         end
 
-        # Defines a reader for each name on its class, unless the class already
-        # has a method of that name (see method_exists?). Returns the
-        # [class, name] pairs it skipped. install! calls it with the table;
-        # the tests call it with their own classes to check the guard.
+        # Gives each class a reader module with a reader for each of its names,
+        # except names the class already has a method for, public or private,
+        # on itself or any ancestor. Returns the [class, name] pairs it skipped.
+        # install! calls it with the table; the tests call it with their own
+        # classes to check the guard.
         def define_readers(pairs)
+          @ruflet_method_missing ||= Kernel.instance_method(:method_missing)
+          @method_of ||= Kernel.instance_method(:method)
           skipped = []
           pairs.each do |klass, names|
+            free = []
             names.each do |name|
-              skipped << [klass, name] unless define_reader(klass, name)
+              if any_method?(klass, name.to_sym)
+                skipped << [klass, name]
+              else
+                free << name.to_s
+              end
             end
+            include_readers(klass, free) unless free.empty?
           end
           skipped
         end
 
-        private
-
-        # Public, private or protected, on the class or any ancestor (Kernel
-        # included). CRuby's method_defined? counts public and protected
-        # methods only; mruby's also counts private ones. The respond_to?
-        # guard keeps an mruby build without private_method_defined? working.
-        def method_exists?(klass, name)
-          symbol = name.to_sym
-          return true if klass.method_defined?(symbol)
-
-          klass.respond_to?(:private_method_defined?) && klass.private_method_defined?(symbol)
+        # Every reader asks this first. `after` is what comes after the reader
+        # module in the class's lookup: the modules the class included before
+        # it, then the superclass and everything above it, up to Object,
+        # Kernel and BasicObject. True when any of them now has a method of
+        # this name, public, protected or private: the method `super` calls,
+        # and the one a call reached before the reader existed. Private ones
+        # count too (a top-level `def value` in a script is a private Object
+        # method), so a call from inside the control's own methods
+        # (`value` with no receiver) still reaches them.
+        def app_method_after?(after, symbol)
+          after.any? { |mod| any_method?(mod, symbol) }
         end
 
-        # A plain zero-argument method. define_method checks the block's arity
-        # on CRuby and in the embedded mruby VM alike, so `control.value(1)`
-        # raises the same ArgumentError on both. Like any Ruby reader it
-        # ignores a block.
-        def define_reader(klass, name)
-          return false if method_exists?(klass, name)
+        # Every reader asks this second. True when the control answers
+        # method_missing with something other than Ruflet's own
+        # Kernel#method_missing (ruflet_ui.rb, defined just before install!
+        # runs): one the app added on the object, a control class, a
+        # subclass, Object, a module in between, or in place of Ruflet's on
+        # Kernel. Before the reader existed, that method_missing answered
+        # `control.value`. Kernel#method is used unbound, so a control that
+        # has a `method` of its own cannot change the answer. Only the owner
+        # is compared for the control's method, and only Kernel's own two
+        # UnboundMethods with ==: what == says about a method taken from an
+        # object differs between Ruby versions.
+        def app_method_missing?(control)
+          !@method_of.bind_call(control, :method_missing).owner.equal?(Kernel) ||
+            Kernel.instance_method(:method_missing) != @ruflet_method_missing
+        end
 
+        private
+
+        # Public, protected or private, on the module or anything it includes
+        # or inherits. mruby's method_defined? already counts private methods,
+        # and its private_method_defined? (a bootstrap.rb fallback) lists every
+        # method each call, so it is only asked on CRuby.
+        def any_method?(mod, symbol)
+          return true if mod.method_defined?(symbol)
+
+          !METHOD_DEFINED_COUNTS_PRIVATE && mod.private_method_defined?(symbol)
+        end
+
+        def include_readers(klass, names)
+          readers = Module.new
+          name = reader_module_name(klass)
+          const_set(name, readers) if name && !const_defined?(name, false)
+          klass.send(:include, readers)
+
+          ancestors = klass.ancestors
+          after = ancestors[(ancestors.index(readers) + 1)...ancestors.index(klass.superclass)]
+          after << klass.superclass
+          after.freeze
+          names.each { |reader| define_reader(readers, reader, after) }
+          readers
+        end
+
+        # Ruflet::UI::Controls::RufletComponents::SwitchControl reads from
+        # ClientStateReaders::RufletComponentsSwitchControl, and
+        # PlatformControlContracts::Components::SwitchControl from
+        # ClientStateReaders::ComponentsSwitchControl.
+        def reader_module_name(klass)
+          full = klass.name
+          return nil unless full.is_a?(String) && !full.empty?
+
+          full.split("::").last(2).join
+        end
+
+        # Arguments and a block go to the app's method unchanged. Without one,
+        # a call with arguments raises what a zero-argument method raises on
+        # CRuby and in the embedded VM alike, and a block is ignored, as any
+        # Ruby reader ignores it.
+        def define_reader(readers, name, after)
           key = name.to_s
-          klass.send(:define_method, key.to_sym) { props[key] }
-          true
+          symbol = key.to_sym
+          api = self
+          readers.send(:define_method, symbol) do |*args, **options, &block|
+            if api.app_method_after?(after, symbol)
+              super(*args, **options, &block)
+            elsif api.app_method_missing?(self)
+              method_missing(symbol, *args, **options, &block)
+            elsif args.empty? && options.empty?
+              props[key]
+            else
+              given = args.length + (options.empty? ? 0 : 1)
+              raise ArgumentError, "wrong number of arguments (given #{given}, expected 0)"
+            end
+          end
         end
       end
     end
