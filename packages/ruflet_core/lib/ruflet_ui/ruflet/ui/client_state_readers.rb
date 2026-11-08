@@ -61,11 +61,15 @@ module Ruflet
     # ArgumentError a zero-argument method raises.
     module ClientStateReaders
       # mruby's Module#method_defined? also counts private methods; CRuby's
-      # counts public and protected ones only.
-      METHOD_DEFINED_COUNTS_PRIVATE = Class.new {
-        def probe; end
-        private :probe
-      }.method_defined?(:probe)
+      # counts public and protected ones only. (Guarded so that loading this
+      # file again, as a hot reload of a vendored framework does, adds no
+      # warning.)
+      unless const_defined?(:METHOD_DEFINED_COUNTS_PRIVATE, false)
+        METHOD_DEFINED_COUNTS_PRIVATE = Class.new {
+          def probe; end
+          private :probe
+        }.method_defined?(:probe)
+      end
 
       class << self
         # The [class, name] pairs install! left out, or nil until it has run.
@@ -154,7 +158,15 @@ module Ruflet
         # the class already had a method of that name; with the table above
         # that list is empty, which the tests check on CRuby and in the
         # embedded VM.
+        #
+        # Every call records Kernel#method_missing as Ruflet's own (see
+        # app_method_missing?), because ruflet_ui.rb has just defined it. When
+        # ruflet_ui.rb is loaded again (`ruflet run` hot reload re-requires the
+        # framework when its sources sit inside the watched app directory), it
+        # redefines Kernel#method_missing and calls this again, so the readers
+        # keep answering instead of taking the new definition for an app's.
         def install!
+          @ruflet_method_missing = Kernel.instance_method(:method_missing)
           return @skipped unless @skipped.nil?
 
           @skipped = define_readers(table).freeze

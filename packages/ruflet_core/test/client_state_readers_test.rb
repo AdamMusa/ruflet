@@ -166,6 +166,41 @@ class RufletClientStateReadersTest < Minitest::Test
     assert_equal '[[], "s", true]', out
   end
 
+  # `ruflet run` hot reload drops every watched file from $LOADED_FEATURES and
+  # loads the script again, so when the framework sources sit inside the app
+  # directory, `require "ruflet"` loads ruflet_ui.rb a second time and
+  # Kernel#method_missing is defined again. That is still Ruflet's own, so the
+  # readers keep answering, and an app that wraps it afterwards still gets the
+  # call. Loading the readers file again adds no warning.
+  def test_readers_survive_the_framework_being_loaded_again
+    out = run_ruby(<<~RUBY)
+      require "ruflet"
+      require "stringio"
+      toggle = Ruflet.switch(label: "Dark mode", value: false)
+      before = toggle.value
+      first_method_missing = Kernel.instance_method(:method_missing)
+      lib = #{File.expand_path('../lib', __dir__).inspect}
+      roots = [lib, File.realpath(lib)].map { |root| root + "/" }
+      $LOADED_FEATURES.reject! { |feature| roots.any? { |root| feature.start_with?(root) } }
+      $stderr = StringIO.new
+      require "ruflet"
+      warnings = $stderr.string.lines.grep(/client_state_readers/)
+      $stderr = STDERR
+      reloaded = Kernel.instance_method(:method_missing) != first_method_missing
+      after = [toggle.value, Ruflet.switch(value: true).value]
+      module Kernel
+        alias_method :ruflet_method_missing, :method_missing
+        private :ruflet_method_missing
+        private def method_missing(name, *args, **props, &block)
+          name == :value ? :wrapped : ruflet_method_missing(name, *args, **props, &block)
+        end
+      end
+      print [reloaded, before, after, warnings, toggle.value].inspect
+    RUBY
+
+    assert_equal "[true, false, [false, true], [], :wrapped]", out
+  end
+
   # Readers exist only where the table says: every method defined in
   # client_state_readers.rb, public or not, that a control class reaches
   # through a module it includes itself, is a table entry.
