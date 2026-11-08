@@ -236,11 +236,17 @@ class RufletHtmlDslHelpersTest < Minitest::Test
   # builders (a Nokogiri builder's `table`). Views still have all of them.
   def test_helpers_added_after_v0_0_23_are_view_helpers_but_not_kernel_methods
     helpers = Ruflet::Rails::HtmlDsl::ViewHelpers
+    scoped = Ruflet::UI::ScopedControlForwarders::HELPERS.keys
 
-    Ruflet::UI::ScopedControlForwarders::HELPERS.each_key do |name|
-      assert helpers.method_defined?(name), "view helper #{name}"
+    scoped.each do |name|
       refute Kernel.private_method_defined?(name), "Kernel##{name}"
     end
+    # Views get a helper for every registry name. local_auth is only the
+    # Ruby DSL's short name for the local_authentication service, which a view
+    # writes as <%= local_authentication %>; it was never a view helper.
+    assert_equal %i[local_auth], scoped.reject { |name| helpers.method_defined?(name) }
+    assert_equal "<local-authentication></local-authentication>", @view.local_authentication
+    assert_equal "<ignore-pointer><text>x</text></ignore-pointer>", @view.ignore_pointer { @view.text("x") }
 
     markup = @view.list_section(header: "Account") { @view.form_row { @view.text("Name") } }
     assert_equal '<list-section header="Account"><form-row><text>Name</text></form-row></list-section>', markup
@@ -281,6 +287,7 @@ class RufletHtmlDslHelpersTest < Minitest::Test
   def test_service_and_extension_helpers
     assert_equal "<camera></camera>", @view.camera
     assert_equal "<geolocator></geolocator>", @view.geolocator
+    assert_equal "<local-authentication></local-authentication>", @view.local_authentication
     assert_equal '<lottie src="loader.json"></lottie>', @view.lottie(src: "loader.json")
     assert_equal '<web-view url="https://x.test"></web-view>', @view.web_view(url: "https://x.test")
 

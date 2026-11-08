@@ -42,6 +42,19 @@ module Ruflet
           Ruflet::UI::ServiceTypes.service_name?(tag.tr("-", "_"))
         end
 
+        # Deprecated: use Transformer.service_tag?. ruflet_rails 0.0.23 listed
+        # the service tags here by hand, and these two constants are kept for
+        # code written against it. They are autoloaded: legacy_service_tags.rb
+        # builds both from the registry service_tag? reads the first time
+        # either one is read, not when this file loads. So this file still
+        # loads before ruflet_core, as it did on 0.0.23, and a service
+        # extension registered before that first read (from a Rails
+        # initializer, say) is listed too. The lists are frozen once built: an
+        # extension registered after the first read is answered by
+        # service_tag? but not added to them.
+        autoload :SERVICE_TAGS, File.expand_path("legacy_service_tags", __dir__)
+        autoload :SERVICE_TYPES, File.expand_path("legacy_service_tags", __dir__)
+
         # Attributes consumed by the DSL itself, never forwarded as props.
         RESERVED_ATTRIBUTES = %w[class href nav].freeze
         FIELD_ATTRIBUTES = %w[type name value label placeholder checked rows min max].freeze

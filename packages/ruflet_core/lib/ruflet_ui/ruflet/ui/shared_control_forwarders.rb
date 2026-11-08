@@ -447,9 +447,10 @@ module Ruflet
     # A Kernel method wins over another library's method_missing builder with
     # the same name, which changes code that is not Ruflet's:
     # `Nokogiri::HTML::Builder.new { table { ... } }` would build a Ruflet
-    # Table instead of a <table>. That set is therefore kept at what v0.0.23
-    # shipped (test/fixtures/kernel_helpers_v0_0_23.txt); a new helper goes
-    # here instead.
+    # Table instead of a <table>, and `form(action: "/x") { ... }` would raise
+    # in FormControl instead of building a <form>. That set is therefore kept
+    # at what v0.0.23 shipped (test/fixtures/kernel_helpers_v0_0_23.txt); a
+    # new bare helper, control or service, goes here instead.
     #
     # These are included into Ruflet and Ruflet::UI, below
     # SharedControlForwarders so an extension registered under one of these
@@ -491,18 +492,56 @@ module Ruflet
       def fittedbox(content = nil, **props) = control_delegate.fittedbox(content, **props)
       def about_dialog(**props) = control_delegate.about_dialog(**props)
       def aboutdialog(**props) = control_delegate.aboutdialog(**props)
+      def local_auth(**props) = control_delegate.local_auth(**props)
+      def local_authentication(**props) = control_delegate.local_authentication(**props)
+      def absorb_pointer(content = nil, **props) = control_delegate.absorb_pointer(content, **props)
+      def absorbpointer(content = nil, **props) = control_delegate.absorbpointer(content, **props)
+      def fractionally_sized_box(content = nil, **props) = control_delegate.fractionally_sized_box(content, **props)
+      def fractionallysizedbox(content = nil, **props) = control_delegate.fractionallysizedbox(content, **props)
+      def ignore_pointer(content = nil, **props) = control_delegate.ignore_pointer(content, **props)
+      def ignorepointer(content = nil, **props) = control_delegate.ignorepointer(content, **props)
+      def intrinsic_height(content = nil, **props) = control_delegate.intrinsic_height(content, **props)
+      def intrinsicheight(content = nil, **props) = control_delegate.intrinsicheight(content, **props)
+      def intrinsic_width(content = nil, **props) = control_delegate.intrinsic_width(content, **props)
+      def intrinsicwidth(content = nil, **props) = control_delegate.intrinsicwidth(content, **props)
+      def sliver_padding(slivers = nil, **props, &block) = control_delegate.sliver_padding(slivers, **props, &block)
+      def sliverpadding(slivers = nil, **props, &block) = control_delegate.sliverpadding(slivers, **props, &block)
+      def clip_oval(content = nil, **props) = control_delegate.clip_oval(content, **props)
+      def clipoval(content = nil, **props) = control_delegate.clipoval(content, **props)
+      def clip_rsuperellipse(content = nil, **props) = control_delegate.clip_rsuperellipse(content, **props)
+      def cliprsuperellipse(content = nil, **props) = control_delegate.cliprsuperellipse(content, **props)
+      def fade_transition(content = nil, **props) = control_delegate.fade_transition(content, **props)
+      def fadetransition(content = nil, **props) = control_delegate.fadetransition(content, **props)
+      def rotation_transition(content = nil, **props) = control_delegate.rotation_transition(content, **props)
+      def rotationtransition(content = nil, **props) = control_delegate.rotationtransition(content, **props)
+      def scale_transition(content = nil, **props) = control_delegate.scale_transition(content, **props)
+      def scaletransition(content = nil, **props) = control_delegate.scaletransition(content, **props)
+      def size_transition(content = nil, **props) = control_delegate.size_transition(content, **props)
+      def sizetransition(content = nil, **props) = control_delegate.sizetransition(content, **props)
+      def slide_transition(content = nil, **props) = control_delegate.slide_transition(content, **props)
+      def slidetransition(content = nil, **props) = control_delegate.slidetransition(content, **props)
+      def form(controls = nil, **props, &block) = control_delegate.form(controls, **props, &block)
+      def nested_scroll_view(header_slivers = nil, **props, &block) = control_delegate.nested_scroll_view(header_slivers, **props, &block)
+      def nestedscrollview(header_slivers = nil, **props, &block) = control_delegate.nestedscrollview(header_slivers, **props, &block)
 
       # The names above, for Kernel#method_missing. A literal, so the embedded
       # VM needs no reflection to read it.
       HELPERS = {
-        about_dialog: true, aboutdialog: true, carousel_view: true, carouselview: true,
-        custom_scroll_view: true, customscrollview: true, draggable_scrollable_sheet: true,
-        draggablescrollablesheet: true, fitted_box: true, fittedbox: true, form_row: true, formrow: true,
-        indexed_stack: true, indexedstack: true, list_section: true, listsection: true, sliver_app_bar: true,
-        sliver_fill_remaining: true, sliver_grid: true, sliver_list: true, sliver_to_box_adapter: true,
-        sliverappbar: true, sliverfillremaining: true, slivergrid: true, sliverlist: true,
-        slivertoboxadapter: true, stepper: true, stepper_step: true, stepperstep: true, table: true,
-        table_row: true, tablerow: true
+        about_dialog: true, aboutdialog: true, absorb_pointer: true, absorbpointer: true, carousel_view: true,
+        carouselview: true, clip_oval: true, clip_rsuperellipse: true, clipoval: true,
+        cliprsuperellipse: true, custom_scroll_view: true, customscrollview: true,
+        draggable_scrollable_sheet: true, draggablescrollablesheet: true, fade_transition: true,
+        fadetransition: true, fitted_box: true, fittedbox: true, form: true, form_row: true, formrow: true,
+        fractionally_sized_box: true, fractionallysizedbox: true, ignore_pointer: true, ignorepointer: true,
+        indexed_stack: true, indexedstack: true, intrinsic_height: true, intrinsic_width: true,
+        intrinsicheight: true, intrinsicwidth: true, list_section: true, listsection: true, local_auth: true,
+        local_authentication: true, nested_scroll_view: true, nestedscrollview: true,
+        rotation_transition: true, rotationtransition: true, scale_transition: true, scaletransition: true,
+        size_transition: true, sizetransition: true, slide_transition: true, slidetransition: true,
+        sliver_app_bar: true, sliver_fill_remaining: true, sliver_grid: true, sliver_list: true,
+        sliver_padding: true, sliver_to_box_adapter: true, sliverappbar: true, sliverfillremaining: true,
+        slivergrid: true, sliverlist: true, sliverpadding: true, slivertoboxadapter: true, stepper: true,
+        stepper_step: true, stepperstep: true, table: true, table_row: true, tablerow: true
       }.freeze
 
       # Whether Kernel#method_missing decides `name` here. An extension

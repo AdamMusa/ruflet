@@ -795,6 +795,19 @@ class RufletHtmlDslTest < Minitest::Test
     assert_equal "picker", find(result.controls, "picker").type
   end
 
+  def test_local_authentication_tag_routes_to_the_service_slot
+    result, = transform(<<~HTML)
+      <local-authentication id="auth"></local-authentication>
+      <text>Unlock</text>
+    HTML
+
+    assert Ruflet::Rails::HtmlDsl::Transformer.service_tag?("local-authentication")
+    assert_equal %w[LocalAuthentication], result.services.map(&:wire_type)
+    assert_equal "auth", result.services.first.id
+    assert_respond_to result.services.first, :authenticate
+    assert_equal %w[text], result.controls.map(&:type)
+  end
+
   def test_non_visual_services_route_to_the_service_slot_while_camera_renders_inline
     result, = transform(<<~HTML)
       <camera></camera>

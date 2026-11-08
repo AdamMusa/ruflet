@@ -112,6 +112,51 @@ class RufletPageDefaultViewEventsTest < Minitest::Test
     assert_empty calls
   end
 
+  # Page props merge on the client, so turning a page-level event off must
+  # send an explicit nil; dropping the key would leave on_resize: true there.
+  def test_clearing_a_page_level_handler_sends_nil_to_the_client
+    calls = []
+    @page.on_resize = ->(_e) { calls << :resize }
+    @page.add(Ruflet.text("Body"))
+    assert_equal true, page_op("on_resize")
+
+    @page.on_resize = nil
+    @page.update
+
+    assert page_patch.any? { |op| op.is_a?(Array) && op[2] == "on_resize" && op[3].nil? },
+           "expected an explicit on_resize nil in #{page_patch.inspect}"
+    @page.dispatch_event(target: 1, name: "resize", data: {})
+    assert_empty calls
+  end
+
+  def test_clearing_a_page_level_handler_that_was_never_set_sends_nothing
+    @page.on_resize = nil
+    @page.add(Ruflet.text("Body"))
+
+    refute page_patch.any? { |op| op.is_a?(Array) && op[2] == "on_resize" }
+  end
+
+  # A hot reload re-runs the app block, which sets its handlers again; one the
+  # new code no longer sets must not keep running.
+  def test_reset_for_reload_drops_page_handlers_the_reloaded_code_no_longer_sets
+    calls = []
+    @page.on_resize = ->(_e) { calls << :resize }
+    @page.on(:route_change) { calls << :route }
+    @page.on_scroll = ->(_e) { calls << :scroll }
+    @page.add(Ruflet.text("v1"))
+
+    @page.reset_for_reload!
+    @page.on_scroll = ->(_e) { calls << :scroll_v2 }
+    @page.add(Ruflet.text("v2"))
+    @page.finalize_reload!
+    @page.update
+
+    @page.dispatch_event(target: 1, name: "resize", data: {})
+    @page.dispatch_event(target: 1, name: "route_change", data: { "route" => "/other" })
+    @page.dispatch_event(target: implicit_view["_i"], name: "scroll", data: {})
+    assert_equal [:scroll_v2], calls
+  end
+
   def test_page_target_events_and_plain_props_are_unchanged
     routes = []
     @page.on_route_change = ->(e) { routes << e.data }

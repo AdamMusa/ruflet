@@ -80,6 +80,38 @@ class ControlSurfaceExportTest < Minitest::Test
     assert_includes group.fetch("keywords"), "on_change"
   end
 
+  # Chart, map, media and other extension classes take **props: the factory
+  # sends any key for them, so an empty keyword list must not read as "sends
+  # nothing".
+  def test_classes_that_accept_any_prop_are_marked_open
+    line_chart = entry("visual", "line_chart")
+    assert_equal true, line_chart.fetch("open_keywords")
+    assert_equal 0, Ruflet::UI::ControlFactory.build("line_chart", min_x: 0).to_patch["min_x"]
+    assert_equal true, @surface.fetch("wire_types").fetch("LineChart").fetch("open_keywords")
+
+    text = entry("visual", "text")
+    assert_equal false, text.fetch("open_keywords")
+    refute_empty text.fetch("keywords")
+    assert_equal false, @surface.fetch("wire_types").fetch("Text").fetch("open_keywords")
+    @entries.each do |e|
+      assert_includes [true, false], e.fetch("open_keywords"), e.fetch("dsl_name")
+    end
+  end
+
+  # --check compares content, not text: json versions format the same data
+  # differently (empty arrays in pretty_generate, for one).
+  def test_check_ignores_formatting_differences
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "surface.json")
+      File.write(path, JSON.generate(RufletControlSurface.build))
+
+      assert quietly { RufletControlSurface.run(["--check", path], out: StringIO.new) }
+
+      File.write(path, "not json")
+      refute quietly { RufletControlSurface.run(["--check", path], out: StringIO.new) }
+    end
+  end
+
   def test_common_attributes_are_the_wire_ones
     assert_equal %w[flip transform], @surface.fetch("common_attributes")
   end

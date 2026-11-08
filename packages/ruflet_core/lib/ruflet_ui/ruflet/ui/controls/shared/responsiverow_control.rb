@@ -1,14 +1,18 @@
 # frozen_string_literal: true
 
+require_relative "scrollable_methods"
+
 module Ruflet
   module UI
     module Controls
       module RufletComponents
         class ResponsiveRowControl < Ruflet::Control
+          include ScrollableMethods
+
           TYPE = "responsiverow".freeze
           WIRE = "ResponsiveRow".freeze
 
-          KEYWORDS = [:adaptive, :align, :alignment, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :badge, :bottom, :breakpoints, :col, :columns, :controls, :data, :disabled, :expand, :expand_loose, :height, :key, :left, :margin, :offset, :opacity, :right, :rotate, :rtl, :run_spacing, :scale, :size_change_interval, :spacing, :tooltip, :top, :vertical_alignment, :visible, :width, :on_animation_end, :on_size_change].freeze
+          KEYWORDS = [:adaptive, :align, :alignment, :animate_align, :animate_margin, :animate_offset, :animate_opacity, :animate_position, :animate_rotation, :animate_scale, :animate_size, :aspect_ratio, :auto_scroll, :auto_scroll_animation, :badge, :bottom, :breakpoints, :col, :columns, :controls, :data, :disabled, :expand, :expand_loose, :height, :key, :left, :margin, :offset, :opacity, :right, :rotate, :rtl, :run_spacing, :scale, :scroll, :scroll_interval, :size_change_interval, :spacing, :tooltip, :top, :vertical_alignment, :visible, :width, :on_animation_end, :on_scroll, :on_size_change].freeze
 
           def initialize(id: nil, **props)
             unknown = props.keys.reject { |key| KEYWORDS.include?(key) }
@@ -25,6 +29,8 @@ module Ruflet
             animate_scale = props[:animate_scale]
             animate_size = props[:animate_size]
             aspect_ratio = props[:aspect_ratio]
+            auto_scroll = props[:auto_scroll]
+            auto_scroll_animation = props[:auto_scroll_animation]
             badge = props[:badge]
             bottom = props[:bottom]
             breakpoints = props[:breakpoints]
@@ -46,6 +52,8 @@ module Ruflet
             rtl = props[:rtl]
             run_spacing = props[:run_spacing]
             scale = props[:scale]
+            scroll = props[:scroll]
+            scroll_interval = props[:scroll_interval]
             size_change_interval = props[:size_change_interval]
             spacing = props[:spacing]
             tooltip = props[:tooltip]
@@ -54,6 +62,7 @@ module Ruflet
             visible = props[:visible]
             width = props[:width]
             on_animation_end = props[:on_animation_end]
+            on_scroll = props[:on_scroll]
             on_size_change = props[:on_size_change]
             alignment = "start" if alignment.nil?
             breakpoints = { "xs" => 0, "sm" => 576, "md" => 768, "lg" => 992, "xl" => 1200, "xxl" => 1400 } if breakpoints.nil?
@@ -75,6 +84,8 @@ module Ruflet
             props[:animate_scale] = animate_scale unless animate_scale.nil?
             props[:animate_size] = animate_size unless animate_size.nil?
             props[:aspect_ratio] = aspect_ratio unless aspect_ratio.nil?
+            props[:auto_scroll] = auto_scroll unless auto_scroll.nil?
+            props[:auto_scroll_animation] = auto_scroll_animation unless auto_scroll_animation.nil?
             props[:badge] = badge unless badge.nil?
             props[:bottom] = bottom unless bottom.nil?
             props[:breakpoints] = breakpoints unless breakpoints.nil?
@@ -96,6 +107,8 @@ module Ruflet
             props[:rtl] = rtl unless rtl.nil?
             props[:run_spacing] = run_spacing unless run_spacing.nil?
             props[:scale] = scale unless scale.nil?
+            props[:scroll] = scroll unless scroll.nil?
+            props[:scroll_interval] = scroll_interval unless scroll_interval.nil?
             props[:size_change_interval] = size_change_interval unless size_change_interval.nil?
             props[:spacing] = spacing unless spacing.nil?
             props[:tooltip] = tooltip unless tooltip.nil?
@@ -104,6 +117,7 @@ module Ruflet
             props[:visible] = visible unless visible.nil?
             props[:width] = width unless width.nil?
             props[:on_animation_end] = on_animation_end unless on_animation_end.nil?
+            props[:on_scroll] = on_scroll unless on_scroll.nil?
             props[:on_size_change] = on_size_change unless on_size_change.nil?
             super(type: TYPE, id: id, **props)
           end

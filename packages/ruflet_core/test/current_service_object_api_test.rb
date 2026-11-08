@@ -9,6 +9,7 @@ class CurrentServiceObjectApiTest < Minitest::Test
     file_picker: %i[upload get_directory_path save_file pick_files],
     flashlight: %i[on off is_available],
     haptic_feedback: %i[heavy_impact light_impact medium_impact vibrate selection_click],
+    local_authentication: %i[authenticate authenticate_sync can_check_biometrics can_check_biometrics_sync is_device_supported is_device_supported_sync device_supported? get_available_biometrics get_available_biometrics_sync stop_authentication stop_authentication_sync],
     screen_brightness: %i[get_system_screen_brightness can_change_system_screen_brightness set_system_screen_brightness get_application_screen_brightness set_application_screen_brightness reset_application_screen_brightness is_animate set_animate is_auto_reset set_auto_reset],
     share: %i[share_text share_uri share_files],
     shared_preferences: %i[set get contains_key remove get_keys clear],

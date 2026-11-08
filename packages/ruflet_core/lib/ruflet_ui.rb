@@ -5,6 +5,7 @@ require_relative "ruflet_ui/ruflet/colors"
 require_relative "ruflet_ui/ruflet/icon_data"
 require_relative "ruflet_ui/ruflet/types/text_style"
 require_relative "ruflet_ui/ruflet/types/geometry"
+require_relative "ruflet_ui/ruflet/client_action"
 require_relative "ruflet_ui/ruflet/control"
 require_relative "ruflet_ui/ruflet/ui/control_registry"
 require_relative "ruflet_ui/ruflet/ui/widget_builder"
@@ -136,6 +137,12 @@ module Ruflet
       DSL.app(host: host, port: port, &block)
     end
 
+    # A Ruflet::ClientAction for a control's `action:` keyword, e.g.
+    # Ruflet.client_action(:copy_to_clipboard, text: "token").
+    def client_action(type, **options)
+      ClientAction.new(type, **options)
+    end
+
     private
 
     # Inside a builder block, append to that builder like the bare helpers
@@ -188,11 +195,11 @@ module Kernel
   # written at the top level of a script, where an unregistered extension
   # helper is still expected to work.
   #
-  # A helper added after v0.0.23 (`stepper`, `table`, ...) is not a Kernel
-  # method, so an object with its own method_missing builder keeps the name.
-  # A call that reaches this point goes to the same Ruflet::DSL helper the
-  # Kernel method would have called, but only where a private Kernel method
-  # could have been called: with no explicit receiver, with or without
+  # A helper added after v0.0.23 (`stepper`, `table`, `form`, ...) is not a
+  # Kernel method, so an object with its own method_missing builder keeps the
+  # name. A call that reaches this point goes to the same Ruflet::DSL helper
+  # the Kernel method would have called, but only where a private Kernel
+  # method could have been called: with no explicit receiver, with or without
   # arguments (`record.table(1)` and `record.table` raise NoMethodError, as
   # they did when the name did not exist).
   def method_missing(name, *args, **props, &block)

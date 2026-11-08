@@ -7,7 +7,7 @@ require_relative "test_helper"
 # that set; a helper added to it later wins over any other library's
 # method_missing builder with the same tag name, and code that is not Ruflet's
 # changes behaviour (Nokogiri::HTML::Builder.new { table { ... } } built a
-# Ruflet Table instead of a <table>).
+# Ruflet Table instead of a <table>, and `form(action: "/x") { ... }` raised).
 #
 # Helpers added after v0.0.23 are reached through Kernel#method_missing
 # instead, which every builder with its own method_missing takes precedence
@@ -19,12 +19,20 @@ class KernelHelperShadowingTest < Minitest::Test
                       .reject { |line| line.empty? || line.start_with?("#") }
                       .freeze
 
+  # Every bare helper added since v0.0.23, the layout, clip, transition, form
+  # and nested-scroll controls and the local_authentication service of #72
+  # included.
   NEW_HELPERS = %i[
-    about_dialog aboutdialog carousel_view carouselview custom_scroll_view customscrollview
-    draggable_scrollable_sheet draggablescrollablesheet fitted_box fittedbox form_row formrow
-    indexed_stack indexedstack list_section listsection sliver_app_bar sliverappbar
-    sliver_fill_remaining sliverfillremaining sliver_grid slivergrid sliver_list sliverlist
-    sliver_to_box_adapter slivertoboxadapter stepper stepper_step stepperstep table table_row tablerow
+    about_dialog aboutdialog absorb_pointer absorbpointer carousel_view carouselview clip_oval clipoval
+    clip_rsuperellipse cliprsuperellipse custom_scroll_view customscrollview draggable_scrollable_sheet
+    draggablescrollablesheet fade_transition fadetransition fitted_box fittedbox form form_row formrow
+    fractionally_sized_box fractionallysizedbox ignore_pointer ignorepointer indexed_stack indexedstack
+    intrinsic_height intrinsicheight intrinsic_width intrinsicwidth list_section listsection local_auth
+    local_authentication nested_scroll_view nestedscrollview rotation_transition rotationtransition
+    scale_transition scaletransition size_transition sizetransition slide_transition slidetransition
+    sliver_app_bar sliverappbar sliver_fill_remaining sliverfillremaining sliver_grid slivergrid sliver_list
+    sliverlist sliver_padding sliverpadding sliver_to_box_adapter slivertoboxadapter stepper stepper_step
+    stepperstep table table_row tablerow
   ].freeze
 
   # Stands in for Nokogiri::HTML::Builder, Builder::XmlMarkup, Jbuilder and
@@ -117,6 +125,13 @@ class KernelHelperShadowingTest < Minitest::Test
     assert_equal %i[table table_row form_row tablerow stepper stepper_step about_dialog fitted_box sliver_list],
                  builder.tags
 
+    later = TagBuilder.new.build do
+      form(action: "/x") { ignore_pointer }
+      fade_transition
+      local_auth
+    end
+    assert_equal %i[form ignore_pointer fade_transition local_auth], later.tags
+
     # Every name, written as a bare word, with arguments and with a block.
     NEW_HELPERS.each do |name|
       tags = TagBuilder.new.instance_eval("build { #{name}; #{name}(1, a: 2); #{name} { } }", __FILE__, __LINE__)
@@ -125,7 +140,7 @@ class KernelHelperShadowingTest < Minitest::Test
     end
   end
 
-  def test_nokogiri_builder_still_builds_a_table
+  def test_nokogiri_builder_still_builds_a_table_and_a_form
     begin
       require "nokogiri"
     rescue LoadError
@@ -136,6 +151,11 @@ class KernelHelperShadowingTest < Minitest::Test
 
     refute_nil doc.root
     assert_equal "<table><tr><td>cell</td></tr></table>", doc.root.to_html.delete("\n")
+
+    form = Nokogiri::HTML::Builder.new { form(action: "/x") { input(type: "text") } }.doc
+
+    refute_nil form.root
+    assert_equal '<form action="/x"><input type="text"></form>', form.root.to_html.delete("\n")
   end
 
   # A private Kernel helper cannot be called with an explicit receiver, so
@@ -147,7 +167,7 @@ class KernelHelperShadowingTest < Minitest::Test
                  Ruflet.text("x"), Ruflet.column([])]
 
     receivers.each do |receiver|
-      %i[table about_dialog stepper fitted_box sliver_app_bar list_section].each do |name|
+      %i[table about_dialog stepper form ignore_pointer fade_transition local_auth].each do |name|
         error = assert_raises(NoMethodError, "#{receiver.class}##{name}") do
           eval("receiver.#{name}", binding, __FILE__, __LINE__)
         end
@@ -164,7 +184,7 @@ class KernelHelperShadowingTest < Minitest::Test
     control = Ruflet.text("x")
 
     assert_kind_of Ruflet::Control, control.table(1)
-    assert_kind_of Ruflet::Control, control.stepper { nil }
+    assert_kind_of Ruflet::Control, control.form(controls: [])
     assert_kind_of Ruflet::Control, control.zork(1)
   end
 
@@ -180,13 +200,17 @@ class KernelHelperShadowingTest < Minitest::Test
       "table(rows: [])" => ->(receiver) { receiver.table(rows: []) },
       "stepper { }" => ->(receiver) { receiver.stepper {} },
       "list_section([])" => ->(receiver) { receiver.list_section([]) },
-      "public_send(:table, rows: [])" => ->(receiver) { receiver.public_send(:table, rows: []) }
+      "public_send(:table, rows: [])" => ->(receiver) { receiver.public_send(:table, rows: []) },
+      "form(action: \"/x\")" => ->(receiver) { receiver.form(action: "/x") },
+      "form { }" => ->(receiver) { receiver.form {} },
+      "ignore_pointer(1)" => ->(receiver) { receiver.ignore_pointer(1) },
+      "local_auth(key: \"k\")" => ->(receiver) { receiver.local_auth(key: "k") }
     }
 
     receivers.each do |receiver|
       calls.each do |label, call|
         error = assert_raises(NoMethodError, "#{receiver.class}##{label}") { call.call(receiver) }
-        assert_match(/undefined method .(stepper|table|list_section)'/, error.message)
+        assert_match(/undefined method .(stepper|table|list_section|form|ignore_pointer|local_auth)'/, error.message)
         refute error.private_call?
       end
     end
@@ -208,10 +232,12 @@ class KernelHelperShadowingTest < Minitest::Test
     component = Class.new do
       def own = self.stepper([stepper_step(title: "A")])
       def in_block = [1].map { |index| sliver_list([text(index.to_s)]) }.first
+      def form_with_fields = form { text_field(label: "Name") }
     end
 
     assert_equal "Stepper", component.new.own.to_patch["_c"]
     assert_equal "SliverList", component.new.in_block.to_patch["_c"]
+    assert_equal "Form", component.new.form_with_fields.to_patch["_c"]
   end
 
   # Every helper v0.0.23 shipped is a private Kernel method, so a bare call
@@ -235,9 +261,10 @@ class KernelHelperShadowingTest < Minitest::Test
       end
     end
 
+    assert_equal "IgnorePointer", ignore_pointer.wire_type
+    assert_equal "FadeTransition", fade_transition.wire_type
     assert_equal "AboutDialog", about_dialog.wire_type
-    assert_equal "SliverAppBar", sliver_app_bar.wire_type
-    assert_equal "Table", table.wire_type
+    assert_equal "LocalAuthentication", local_auth.wire_type
   end
 
   # Ruflet::Extensions puts a registered helper on SharedControlForwarders;
@@ -292,6 +319,49 @@ class KernelHelperShadowingTest < Minitest::Test
     assert_equal 1, controls[8].to_patch["index"]
   end
 
+  def test_bare_layout_transition_form_and_service_helpers_build_inside_ruflet_run
+    sources = {
+      "absorb_pointer(text(\"a\"))" => "AbsorbPointer", "absorbpointer" => "AbsorbPointer",
+      "fractionally_sized_box(text(\"f\"), width_factor: 0.5)" => "FractionallySizedBox",
+      "fractionallysizedbox" => "FractionallySizedBox",
+      "ignore_pointer(text(\"i\"))" => "IgnorePointer", "ignorepointer" => "IgnorePointer",
+      "intrinsic_height(row([text(\"r\")]))" => "IntrinsicHeight", "intrinsicheight" => "IntrinsicHeight",
+      "intrinsic_width(column([text(\"c\")]), step_width: 8)" => "IntrinsicWidth", "intrinsicwidth" => "IntrinsicWidth",
+      "custom_scroll_view([sliver_padding([sliver_list([text(\"s\")])], padding: 4), sliverpadding])" =>
+        "CustomScrollView",
+      "clip_oval(text(\"o\"))" => "ClipOval", "clipoval" => "ClipOval",
+      "clip_rsuperellipse(text(\"s\"), border_radius: 12)" => "ClipRSuperellipse",
+      "cliprsuperellipse" => "ClipRSuperellipse",
+      "fade_transition(text(\"f\"), repeat: true)" => "FadeTransition", "fadetransition" => "FadeTransition",
+      "rotation_transition(icon(\"refresh\"))" => "RotationTransition", "rotationtransition" => "RotationTransition",
+      "scale_transition(content: text(\"p\"), begin: 1, end: 1.1)" => "ScaleTransition",
+      "scaletransition" => "ScaleTransition",
+      "size_transition(text(\"s\"), axis: \"horizontal\")" => "SizeTransition", "sizetransition" => "SizeTransition",
+      "slide_transition(text(\"s\"))" => "SlideTransition", "slidetransition" => "SlideTransition",
+      "form([text_field(label: \"Name\")])" => "Form", "form { text_field(label: \"Email\") }" => "Form",
+      "form" => "Form",
+      "nested_scroll_view([sliver_app_bar(title: text(\"T\"))], body: list_view([text(\"b\")]))" => "NestedScrollView",
+      "nestedscrollview(body: column([text(\"b\")]))" => "NestedScrollView"
+    }
+    controls = run_at_top_level(<<~RUBY)
+      Ruflet.run do |page|
+        [#{sources.keys.join(",\n ")}].each { |control| page.add(control) }
+      end
+    RUBY
+
+    assert_equal sources.values, controls.map { |control| control.to_patch["_c"] }
+    patch_of = ->(source) { controls[sources.keys.index(source)].to_patch }
+    slivers = patch_of.call(sources.keys.grep(/\Acustom_scroll_view/).first)["slivers"]
+    assert_equal %w[SliverPadding SliverPadding], slivers.map { |sliver| sliver["_c"] }
+    assert_equal 0.5, patch_of.call(sources.keys.grep(/\Afractionally_sized_box/).first)["width_factor"]
+
+    services = run_at_top_level(<<~RUBY)
+      Ruflet.run { |_page| [local_auth, local_authentication(key: "auth")] }
+    RUBY
+    assert_equal %w[LocalAuthentication LocalAuthentication], services.map(&:wire_type)
+    assert_equal "auth", services.last.to_patch["key"]
+  end
+
   def test_bare_new_helpers_match_the_explicit_ruflet_helpers
     bare = run_at_top_level(<<~RUBY)
       Ruflet.run do |_page|
@@ -325,13 +395,13 @@ class KernelHelperShadowingTest < Minitest::Test
 
     component = Class.new do
       def build = list_section([text("item")], header: text("Section"))
-      def dialog = about_dialog
-      def app_bar = sliver_app_bar
+      def blocker = ignore_pointer
+      def auth = local_auth
     end
 
     assert_equal "ListSection", component.new.build.to_patch["_c"]
-    assert_equal "AboutDialog", component.new.dialog.to_patch["_c"]
-    assert_equal "SliverAppBar", component.new.app_bar.to_patch["_c"]
+    assert_equal "IgnorePointer", component.new.blocker.to_patch["_c"]
+    assert_equal "LocalAuthentication", component.new.auth.wire_type
   end
 
   def test_ruflet_namespaces_and_builders_keep_the_new_helpers

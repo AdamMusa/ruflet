@@ -94,6 +94,54 @@ class RufletDslPresentedControlsTest < Minitest::Test
     assert_equal ["Text"], wire_types(app_column.children)
   end
 
+  # Engine services built through control()/widget() or a widget-style helper
+  # (interstitial_ad) are not laid out; where the block has somewhere to put
+  # services (a DSL app, Page#mount) they are registered there instead of
+  # being lost.
+  def test_app_blocks_register_engine_services_built_as_controls
+    app = Ruflet::DSL.app do
+      page do
+        audio(src: "a.mp3")
+        interstitial_ad(unit_id: "ad")
+        control(:audio_recorder)
+        column do
+          widget(:flashlight)
+          text("in column")
+        end
+        text("body")
+      end
+    end
+
+    assert_equal %w[Column Text], wire_types(app.instance_variable_get(:@roots))
+    assert_equal %w[Audio InterstitialAd AudioRecorder Flashlight], wire_types(app.instance_variable_get(:@services))
+    assert_equal ["Text"], wire_types(app.instance_variable_get(:@roots).first.children)
+  end
+
+  def test_page_mount_registers_engine_services_on_the_page
+    page = new_page
+    page.mount do
+      audio(src: "a.mp3")
+      control(:audio_recorder)
+      Ruflet.interstitial_ad(unit_id: "ad")
+      column { widget(:flashlight) }
+      text("body")
+    end
+
+    assert_equal %w[Column Text], wire_types(page.controls)
+    assert_equal %w[Audio AudioRecorder InterstitialAd Flashlight], wire_types(page.services)
+  end
+
+  def test_standalone_builder_blocks_leave_services_to_the_caller
+    audio = nil
+    column = Ruflet.column do
+      audio = control(:audio, src: "track.mp3")
+      text("kept")
+    end
+
+    assert_equal ["Text"], wire_types(column.children)
+    assert_equal "Audio", audio.wire_type
+  end
+
   def test_page_service_accepts_engine_services_without_a_hand_list
     page = new_page
 
@@ -208,6 +256,86 @@ class RufletDslPresentedControlsTest < Minitest::Test
     assert_same dlg, explicit.children.last
     assert_equal %w[Text AlertDialog], wire_types(returned.children)
     assert_equal %w[Text SnackBar], wire_types(app_explicit.children)
+  end
+
+  # A date picker built with inline: true renders in place (cupertino_date_picker
+  # defaults to it), so it is laid out like any other control. Without it the
+  # DatePicker is the dialog the page presents.
+  def test_presented_control_excludes_inline_date_pickers
+    assert Ruflet::Page.presented_control?(Ruflet.date_picker)
+    assert Ruflet::Page.presented_control?(Ruflet.date_picker(inline: false))
+    assert Ruflet::Page.presented_control?(Ruflet.cupertino_date_picker(inline: false))
+    refute Ruflet::Page.presented_control?(Ruflet.date_picker(inline: true))
+    refute Ruflet::Page.presented_control?(Ruflet.cupertino_date_picker)
+    assert Ruflet::Page.presented_control?(Ruflet.alert_dialog(title: Ruflet.text("still presented")))
+  end
+
+  def test_inline_date_pickers_stay_children
+    column = Ruflet.column do
+      cupertino_date_picker(value: "2026-11-02T09:30:00")
+      Ruflet.cupertino_date_picker
+      date_picker(inline: true)
+      Ruflet.date_picker(inline: true)
+      text("kept")
+      nil
+    end
+    app = Ruflet::DSL.app
+    app_column = app.column do
+      cupertino_date_picker
+      date_picker(inline: true)
+      text("kept")
+      nil
+    end
+
+    assert_equal %w[DatePicker DatePicker DatePicker DatePicker Text], wire_types(column.children)
+    assert_equal [true, true, true, true], column.children.first(4).map { |child| child.to_patch["inline"] }
+    assert_equal %w[DatePicker DatePicker Text], wire_types(app_column.children)
+  end
+
+  def test_dialog_date_pickers_are_still_not_captured
+    column = Ruflet.column do
+      date_picker
+      Ruflet.date_picker(open: true)
+      date_picker(inline: false)
+      cupertino_date_picker(inline: false)
+      text("kept")
+      nil
+    end
+
+    assert_equal ["Text"], wire_types(column.children)
+  end
+
+  def test_inline_date_pickers_are_app_roots_and_page_body_controls
+    picker = cupertino_date_picker(value: "2026-11-02T09:30:00")
+    dialog = date_picker(open: true)
+    roots = Ruflet::DSL._pending_app.instance_variable_get(:@roots)
+    page = new_page
+    page.mount do
+      date_picker(inline: true)
+      date_picker
+      text("body")
+      nil
+    end
+
+    assert_equal ["DatePicker"], wire_types(roots)
+    assert_same picker, roots.first
+    refute_includes roots, dialog
+    assert_equal %w[DatePicker Text], wire_types(page.controls)
+  end
+
+  def test_inline_date_picker_in_a_block_is_sent_once_in_its_layout
+    page = new_page
+    column = Ruflet.column do
+      Ruflet.text("When?")
+      Ruflet.cupertino_date_picker(value: "2026-11-02T09:30:00")
+      nil
+    end
+    page.add(column)
+
+    patch = JSON.generate(page.register_page_patch)
+    assert_equal %w[Text DatePicker], wire_types(column.children)
+    assert_equal 1, patch.scan('"_c":"DatePicker"').length
+    assert_empty page.instance_variable_get(:@dialogs)
   end
 
   def test_overlay_props_are_still_reclaimed

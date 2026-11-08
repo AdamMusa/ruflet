@@ -4,17 +4,25 @@ require_relative "test_helper"
 
 # Ruflet::Extensions.register_control makes a helper available in the bare
 # DSL, Ruflet, Ruflet::UI, Ruflet::DSL and widget builders (see
-# docs/extension_authoring.md). Before Stepper, Table, CarouselView and the
-# other controls added after v0.0.23 were built in, an app or extension gem
-# registering one of them under its own name got that helper everywhere.
-# Being built in now must not take any of those entry points away from it.
+# docs/extension_authoring.md). Before Stepper, Table, CarouselView, Form,
+# the transitions and the other helpers added after v0.0.23 were built in, an
+# app or extension gem registering one of them under its own name got that
+# helper everywhere. Being built in now must not take any of those entry
+# points away from it.
 class ExtensionHelperCollisionTest < Minitest::Test
+  # Every scoped helper (Ruflet::UI::ScopedControlForwarders::HELPERS),
+  # spelled out so a name dropped there still fails here.
   NAMES = %i[
-    about_dialog aboutdialog carousel_view carouselview custom_scroll_view customscrollview
-    draggable_scrollable_sheet draggablescrollablesheet fitted_box fittedbox form_row formrow
-    indexed_stack indexedstack list_section listsection sliver_app_bar sliverappbar
-    sliver_fill_remaining sliverfillremaining sliver_grid slivergrid sliver_list sliverlist
-    sliver_to_box_adapter slivertoboxadapter stepper stepper_step stepperstep table table_row tablerow
+    about_dialog aboutdialog absorb_pointer absorbpointer carousel_view carouselview clip_oval clipoval
+    clip_rsuperellipse cliprsuperellipse custom_scroll_view customscrollview draggable_scrollable_sheet
+    draggablescrollablesheet fade_transition fadetransition fitted_box fittedbox form form_row formrow
+    fractionally_sized_box fractionallysizedbox ignore_pointer ignorepointer indexed_stack indexedstack
+    intrinsic_height intrinsicheight intrinsic_width intrinsicwidth list_section listsection local_auth
+    local_authentication nested_scroll_view nestedscrollview rotation_transition rotationtransition
+    scale_transition scaletransition size_transition sizetransition slide_transition slidetransition
+    sliver_app_bar sliverappbar sliver_fill_remaining sliverfillremaining sliver_grid slivergrid sliver_list
+    sliverlist sliver_padding sliverpadding sliver_to_box_adapter slivertoboxadapter stepper stepper_step
+    stepperstep table table_row tablerow
   ].freeze
 
   ENTRY_POINTS = [
