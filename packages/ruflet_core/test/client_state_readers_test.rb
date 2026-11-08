@@ -411,6 +411,28 @@ class RufletClientStateReadersTest < Minitest::Test
       end
       with_app_methods(Object, "def value = :public_object_method") do
         assert_equal :public_object_method, toggle.value
+        # On the superclass chain too: a private or protected
+        # Ruflet::Control#value hides the public Object#value, and so does a
+        # bare visibility change there. (mruby's public_method_defined? on
+        # Ruflet::Control did not see that.)
+        with_app_methods(Ruflet::Control, "private def value = :private_control_method") do
+          assert_equal answered, toggle.value
+        end
+        with_app_methods(Ruflet::Control, "protected def value = :protected_control_method") do
+          assert_equal answered, toggle.value
+        end
+        with_app_methods(Ruflet::Control, "private :value") do
+          assert_equal answered, toggle.value
+          # The known difference again: main reached Object#value from here.
+          assert_equal answered, toggle.instance_eval { value }
+        end
+        assert_equal :public_object_method, toggle.value
+      end
+      # And a public Ruflet::Control#value hides a private Object#value.
+      with_app_methods(Object, "private def value = :top_level_helper") do
+        with_app_methods(Ruflet::Control, "def value = :public_control_method") do
+          assert_equal :public_control_method, toggle.value
+        end
       end
       assert_equal answered, toggle.value
     end
@@ -479,6 +501,17 @@ class RufletClientStateReadersTest < Minitest::Test
       end
       results << other.expanded
 
+      # With an app method_missing, the calls from inside the tile go to it
+      # (the "Not covered" case: main built a control for both), and so does
+      # tile.expanded, as on main.
+      class Ruflet::Control
+        def method_missing(name, *args, **options, &block)
+          name == :expanded ? :control_method_missing : super
+        end
+      end
+      results << tile.instance_eval { expanded } << tile.body_from_args << tile.expanded
+      Ruflet::Control.send(:remove_method, :method_missing)
+
       # App methods of that name still answer: a top-level helper (a private
       # Object method, before Kernel), and the app's own Kernel#expanded.
       def expanded(**) = :top_level_helper
@@ -504,8 +537,38 @@ class RufletClientStateReadersTest < Minitest::Test
 
     assert_equal '[true, true, [], false, ["expansiontile"], [], true, ' \
                  '"expanded", "expanded", "expanded", :object_method_missing, ' \
+                 ":control_method_missing, :control_method_missing, :control_method_missing, " \
                  ":top_level_helper, :top_level_helper, :app_kernel_method, :app_kernel_method, " \
                  "nil, :text_input_method]", out
+  end
+
+  # register_control's Kernel helper is a visibility change: Kernel makes the
+  # SharedControlForwarders method private. Ruby 3.1 and earlier report the
+  # module that defined such a method as its UnboundMethod#owner, where Ruby
+  # 3.2 and later report Kernel (Ruby bug #18729). The script makes #owner
+  # answer as on 3.1, and the plain read still returns the tile's state.
+  def test_the_extension_helper_check_does_not_depend_on_unbound_method_owner
+    out = run_ruby(<<~RUBY)
+      require "ruflet"
+      class ExpandedControl < Ruflet::Control
+        def initialize(**props) = super(type: "expanded", **props)
+      end
+      Ruflet::Extensions.register_control(:expanded, control_class: ExpandedControl)
+      forwarders = Ruflet::UI::SharedControlForwarders
+      UnboundMethod.prepend(Module.new do
+        define_method(:owner) do
+          real = super()
+          real.equal?(Kernel) && name == :expanded ? forwarders : real
+        end
+      end)
+      tile_class = Ruflet::UI::Controls::RufletComponents::ExpansionTileControl
+      owners = [Kernel.instance_method(:expanded).owner, tile_class.superclass.instance_method(:expanded).owner]
+      tile = Ruflet.expansion_tile(title: Ruflet.text("More"), expanded: true)
+      value = tile.expanded
+      print [owners, value, Ruflet::DSL._pending_app.instance_variable_get(:@roots).map(&:type)].inspect
+    RUBY
+
+    assert_equal "[[Ruflet::UI::SharedControlForwarders, Ruflet::UI::SharedControlForwarders], true, []]", out
   end
 
   # One the app adds to Object for everything answers too, as on main.

@@ -322,6 +322,38 @@ end
 assert_equal([:app_method_missing, "Ada", [], {}, nil], text_field.value,
              "a private TextInputMethods#value ahead of a public Object#value still sends the call to method_missing")
 Ruflet::UI::Controls::TextInputMethods.send(:remove_method, :value)
+# On the superclass chain too: a private or protected Ruflet::Control#value
+# hides the public Object#value, and so does a bare visibility change there.
+# (mruby's public_method_defined? on Ruflet::Control did not see that.)
+Ruflet::Control.class_eval do
+  def value
+    :private_control_method
+  end
+  private :value
+end
+assert_equal(answered, toggle.value, "a private Ruflet::Control#value hides a public Object#value")
+Ruflet::Control.send(:protected, :value)
+assert_equal(answered, toggle.value, "a protected Ruflet::Control#value hides a public Object#value")
+Ruflet::Control.send(:remove_method, :value)
+Ruflet::Control.send(:private, :value)
+assert_equal(answered, toggle.value, "private :value on Ruflet::Control hides a public Object#value")
+Ruflet::Control.send(:remove_method, :value)
+assert_equal(:public_object_method, toggle.value, "the public Object#value answers again")
+Object.send(:remove_method, :value)
+# And a public Ruflet::Control#value hides a private Object#value.
+Object.class_eval do
+  def value
+    :top_level_helper
+  end
+  private :value
+end
+Ruflet::Control.class_eval do
+  def value
+    :public_control_method
+  end
+end
+assert_equal(:public_control_method, toggle.value, "a public Ruflet::Control#value hides a private Object#value")
+Ruflet::Control.send(:remove_method, :value)
 Object.send(:remove_method, :value)
 assert_equal(answered, toggle.value, "app method_missing answers again once the other methods are gone")
 
@@ -451,6 +483,20 @@ if registered
     name == :expanded ? :object_method_missing : super
   end
   assert_equal(:object_method_missing, other_tile.expanded, "an app method_missing still answers")
+  # With an app method_missing on Ruflet::Control, calls from inside the tile
+  # go to it too (the "Not covered" case), with or without arguments.
+  Ruflet::Control.class_eval do
+    def method_missing(name, *args, **options, &block)
+      name == :expanded ? :control_method_missing : super
+    end
+  end
+  assert_equal(:control_method_missing, tile.expanded, "an app Ruflet::Control#method_missing answers tile.expanded")
+  assert_equal(:control_method_missing, tile.instance_eval { expanded },
+               "an app method_missing gets a bare expanded from inside the tile")
+  assert_equal(:control_method_missing, tile.instance_eval { expanded(content: Ruflet.text("body")) },
+               "an app method_missing gets expanded(...) from inside the tile")
+  Ruflet::Control.send(:remove_method, :method_missing)
+  assert_equal(true, tile.expanded, "tile.expanded reads the state again once method_missing is gone")
 
   # App methods of that name still answer: a private Object method (a
   # top-level helper), then the app's own Kernel#expanded.

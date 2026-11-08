@@ -63,12 +63,15 @@ module Ruflet
     #   reader hands the call to it the same way, unless the method after the
     #   reader is public. That is what CRuby did without the reader: a call
     #   with a receiver to a private or protected method goes to
-    #   method_missing.
+    #   method_missing. The method after the reader is the one Ruby's lookup
+    #   finds first, so a private Ruflet::Control#value hides a public
+    #   Object#value, in the embedded VM too (see method_after).
     # * The private Kernel DSL helper Ruflet::Extensions.register_control
     #   defines for an extension registered after Ruflet loaded (`expanded`,
     #   say) is Ruflet's, not the app's. A plain `tile.expanded` reads the
     #   state instead of building an `expanded` control (on v0.0.23 it
-    #   raised); a call with arguments or a block still reaches the helper.
+    #   raised); a call with arguments or a block still reaches the helper,
+    #   unless the app has its own method_missing (see "Not covered").
     #   (In the embedded mruby VM, registering an extension after Ruflet has
     #   loaded already raises TypeError, on v0.0.23 too, so this is CRuby's.)
     # Only when there is no such method does the reader answer: with no
@@ -83,13 +86,16 @@ module Ruflet
     #   top-level `def value` in a script, say). The calls that reached that
     #   method on v0.0.23 from inside the control (no receiver,
     #   `self.value`, `send(:value)`), and protected calls from another
-    #   control, now go to the method_missing. Every other call with a
-    #   receiver went to the method_missing on v0.0.23 under CRuby (mruby
-    #   raised), and now goes there on both.
+    #   control, now go to the method_missing. Ruflet's own extension helpers
+    #   are such private methods: `expanded(content: ...)` in an
+    #   ExpansionTile method goes to the method_missing too. Every other call
+    #   with a receiver went to the method_missing on v0.0.23 under CRuby
+    #   (mruby raised), and now goes there on both.
     # * A plain call without a receiver to such an extension helper, from
     #   inside a method of the table class (`expanded` in an ExpansionTile
-    #   method), returns the reader's value; on v0.0.23 it built an empty
-    #   `expanded` control.
+    #   method), returns the reader's value, or the app's method_missing's
+    #   answer if it has one; on v0.0.23 it built an empty `expanded`
+    #   control.
     module ClientStateReaders
       # mruby's Module#method_defined? also counts private methods; CRuby's
       # counts public and protected ones only. (Guarded so that loading this
@@ -100,6 +106,24 @@ module Ruflet
           def probe; end
           private :probe
         }.method_defined?(:probe)
+      end
+
+      # CRuby's method_defined?, public_method_defined? and
+      # private_method_defined? take an inherit flag, and with false they
+      # look at the module's own methods only. mruby's take no flag (the last
+      # two are ruby_runtime/vm/bootstrap.rb fallbacks), so there own_method?
+      # and own_public_method? read the module's own method lists instead.
+      # (Guarded like the constant above.)
+      unless const_defined?(:OWN_METHOD_PREDICATES, false)
+        OWN_METHOD_PREDICATES = begin
+          probe = Module.new
+          probe.method_defined?(:probe, false)
+          probe.public_method_defined?(:probe, false)
+          probe.private_method_defined?(:probe, false)
+          true
+        rescue ArgumentError
+          false
+        end
       end
 
       class << self
@@ -243,16 +267,16 @@ module Ruflet
         end
 
         # Asked when app_method_after? and app_method_missing? are both true.
-        # True when the method `super` would call (the first one after the
-        # reader module) is public: without the reader, `control.value` called
-        # it, whatever method_missing the app had. A private or protected one
-        # it reached only from inside the control (no receiver, `self.`) or,
-        # if protected, from another control; CRuby sent every other call
-        # with a receiver to method_missing instead. (In mruby the fallback
-        # in ruby_runtime/vm/bootstrap.rb answers public_method_defined?.)
+        # True when the method `super` would call is public: without the
+        # reader, `control.value` called it, whatever method_missing the app
+        # had. A private or protected one it reached only from inside the
+        # control (no receiver, `self.`) or, if protected, from another
+        # control; CRuby sent every other call with a receiver to
+        # method_missing instead. The visibility is the one the module that
+        # method_after finds gave the method, as in Ruby's own lookup.
         def public_method_after?(after, symbol)
-          mod = after.find { |candidate| any_method?(candidate, symbol) }
-          mod ? mod.public_method_defined?(symbol) : false
+          owner = method_after(after, symbol)
+          owner ? own_public_method?(owner, symbol) : false
         end
 
         # Asked for a plain read (no arguments, no block) when
@@ -267,10 +291,25 @@ module Ruflet
           helper = Ruflet::Extensions.kernel_helper(symbol)
           return false unless helper
 
-          superclass = after.last
-          after.none? { |mod| !mod.equal?(superclass) && any_method?(mod, symbol) } &&
-            superclass.instance_method(symbol).owner.equal?(Kernel) &&
-            Kernel.instance_method(symbol) == helper
+          method_after(after, symbol).equal?(Kernel) && Kernel.instance_method(symbol) == helper
+        end
+
+        # The module whose method of this name `super` would call from the
+        # reader, or nil: in the lookup after the reader module, the first
+        # module that has a method of this name itself, public, protected or
+        # private. A visibility change (`private :value` in a class that
+        # inherits `value`) is such a method of that class, as in Ruby's
+        # lookup. register_control's Kernel helper is one too (Kernel makes
+        # the SharedControlForwarders method private), which is why
+        # UnboundMethod#owner is not used here: for such a method it is the
+        # module that made the change on Ruby 3.2 and later, but the module
+        # that defined the method on Ruby 3.1 (Ruby bug #18729). And
+        # public_method_defined? is not asked of the module that inherits the
+        # method: mruby's (a bootstrap.rb fallback) lists public methods
+        # without letting a private one of the same name hide them.
+        def method_after(after, symbol)
+          mod = after.find { |candidate| any_method?(candidate, symbol) }
+          mod && mod.ancestors.find { |ancestor| own_method?(ancestor, symbol) }
         end
 
         # Every reader asks this too. True when the control answers
@@ -283,7 +322,12 @@ module Ruflet
         # has a `method` of its own cannot change the answer. Only the owner
         # is compared for the control's method, and only Kernel's own two
         # UnboundMethods with ==: what == says about a method taken from an
-        # object differs between Ruby versions.
+        # object differs between Ruby versions. The owner differs for one
+        # thing: a class that only changes the visibility of method_missing
+        # (`public :method_missing`) is its owner on Ruby 3.2 and later, so
+        # it counts as an app method_missing there, and not on Ruby 3.1. A
+        # read raised NoMethodError in such an app on v0.0.23; on 3.2 and
+        # later it still does, on 3.1 the reader answers.
         def app_method_missing?(control)
           !@method_of.bind_call(control, :method_missing).owner.equal?(Kernel) ||
             Kernel.instance_method(:method_missing) != @ruflet_method_missing
@@ -299,6 +343,24 @@ module Ruflet
           return true if mod.method_defined?(symbol)
 
           !METHOD_DEFINED_COUNTS_PRIVATE && mod.private_method_defined?(symbol)
+        end
+
+        # Public, protected or private, on the module itself only.
+        def own_method?(mod, symbol)
+          if OWN_METHOD_PREDICATES
+            mod.method_defined?(symbol, false) || mod.private_method_defined?(symbol, false)
+          else
+            mod.instance_methods(false).include?(symbol) || mod.private_instance_methods(false).include?(symbol)
+          end
+        end
+
+        # Public, on the module itself (see method_after).
+        def own_public_method?(mod, symbol)
+          if OWN_METHOD_PREDICATES
+            mod.public_method_defined?(symbol, false)
+          else
+            mod.public_instance_methods(false).include?(symbol)
+          end
         end
 
         def include_readers(klass, names)
