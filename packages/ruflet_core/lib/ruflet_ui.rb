@@ -192,8 +192,9 @@ module Kernel
   # method, so an object with its own method_missing builder keeps the name.
   # A call that reaches this point goes to the same Ruflet::DSL helper the
   # Kernel method would have called, but only where a private Kernel method
-  # could have been called: with no explicit receiver (`record.table(1)` raises
-  # NoMethodError, as it did when the name did not exist).
+  # could have been called: with no explicit receiver, with or without
+  # arguments (`record.table(1)` and `record.table` raise NoMethodError, as
+  # they did when the name did not exist).
   def method_missing(name, *args, **props, &block)
     scoped = Ruflet::UI::ScopedControlForwarders
     case scoped.dispatch(self, name, args, props, block)
@@ -206,8 +207,6 @@ module Kernel
         raise error unless scoped.implicit_call?(error, self, name)
       end
       return Ruflet::DSL.public_send(name, *args, **props, &block)
-    when :missing
-      return super
     end
     return super if name.to_s.end_with?("=") || (args.empty? && props.empty? && !block)
     unless Ruflet::UI::ControlFactory.known_control?(name) || Ruflet::UI::ControlFactory.dsl_receiver?(self)

@@ -20,7 +20,7 @@ class ExtensionHelperCollisionTest < Minitest::Test
   ENTRY_POINTS = [
     "Ruflet.<name>", "Ruflet::UI.<name>", "Ruflet::DSL.<name>", "WidgetBuilder#<name>",
     "Ruflet.column { <name> }", "DSL.app { <name> }", "top level <name>(...)", "top level <name>",
-    "App#view <name>(...)", "component <name>(...)", "Object.new.<name>(...)"
+    "App#view <name>(...)", "component <name>(...)", "component <name>", "Object.new.<name>(...)"
   ].freeze
 
   # Registering is process-wide and permanent, so it runs in a child process
@@ -45,6 +45,7 @@ class ExtensionHelperCollisionTest < Minitest::Test
       NAMES.each do |name|
         app_class.class_eval("def via_\#{name} = \#{name}(items: 1)")
         component_class.class_eval("def via_\#{name} = \#{name}(items: 1)")
+        component_class.class_eval("def bare_\#{name} = \#{name}")
       end
 
       calls = {
@@ -61,6 +62,7 @@ class ExtensionHelperCollisionTest < Minitest::Test
         "top level <name>" => ->(n) { TOPLEVEL_BINDING.eval(n.to_s) },
         "App#view <name>(...)" => ->(n) { app_class.new.public_send("via_\#{n}") },
         "component <name>(...)" => ->(n) { component_class.new.public_send("via_\#{n}") },
+        "component <name>" => ->(n) { component_class.new.public_send("bare_\#{n}") },
         "Object.new.<name>(...)" => ->(n) { TOPLEVEL_BINDING.eval("Object.new.\#{n}(items: 1)") }
       }
 

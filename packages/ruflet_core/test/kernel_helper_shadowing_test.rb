@@ -12,7 +12,7 @@ require_relative "test_helper"
 # Helpers added after v0.0.23 are reached through Kernel#method_missing
 # instead, which every builder with its own method_missing takes precedence
 # over, and only by calls a private Kernel method would have answered: ones
-# without an explicit receiver.
+# without an explicit receiver, with or without arguments.
 class KernelHelperShadowingTest < Minitest::Test
   LIB_ROOT = "#{File.expand_path('../lib', __dir__)}/".freeze
   V0_0_23_NAMES = File.readlines(File.expand_path("fixtures/kernel_helpers_v0_0_23.txt", __dir__), chomp: true)
@@ -65,6 +65,14 @@ class KernelHelperShadowingTest < Minitest::Test
     end
   end
 
+  def setup
+    Ruflet::DSL._reset_pending_app!
+  end
+
+  def teardown
+    Ruflet::DSL._reset_pending_app!
+  end
+
   def test_loading_ruflet_adds_no_method_to_every_object_beyond_v0_0_23
     added = ruflet_methods_on_every_object - V0_0_23_NAMES - runtime_extension_helpers
 
@@ -108,6 +116,13 @@ class KernelHelperShadowingTest < Minitest::Test
 
     assert_equal %i[table table_row form_row tablerow stepper stepper_step about_dialog fitted_box sliver_list],
                  builder.tags
+
+    # Every name, written as a bare word, with arguments and with a block.
+    NEW_HELPERS.each do |name|
+      tags = TagBuilder.new.instance_eval("build { #{name}; #{name}(1, a: 2); #{name} { } }", __FILE__, __LINE__)
+                       .tags
+      assert_equal [name, name, name], tags, name.to_s
+    end
   end
 
   def test_nokogiri_builder_still_builds_a_table
@@ -123,10 +138,34 @@ class KernelHelperShadowingTest < Minitest::Test
     assert_equal "<table><tr><td>cell</td></tr></table>", doc.root.to_html.delete("\n")
   end
 
-  def test_ordinary_objects_still_raise_for_a_bare_new_name_without_arguments
-    assert_raises(NoMethodError) { Object.new.instance_eval { table() } }
-    assert_raises(NoMethodError) { Object.new.instance_eval { stepper() } }
-    assert_raises(NoMethodError) { Object.new.about_dialog }
+  # A private Kernel helper cannot be called with an explicit receiver, so
+  # `record.table` raised NoMethodError on v0.0.23 and on main alike. That
+  # holds on Ruflet's own objects too, where v0.0.23 built a generic control
+  # only for a call with arguments.
+  def test_explicit_receivers_raise_without_arguments
+    receivers = [Object.new, nil, Class.new(Ruflet::App) { def view(_page) = nil }.new, PartialMissing.new,
+                 Ruflet.text("x"), Ruflet.column([])]
+
+    receivers.each do |receiver|
+      %i[table about_dialog stepper fitted_box sliver_app_bar list_section].each do |name|
+        error = assert_raises(NoMethodError, "#{receiver.class}##{name}") do
+          eval("receiver.#{name}", binding, __FILE__, __LINE__)
+        end
+        assert_equal name, error.name
+        refute error.private_call?
+      end
+    end
+
+    zork = assert_raises(NoMethodError) { Ruflet.text("x").zork }
+    assert_equal :zork, zork.name
+  end
+
+  def test_ruflet_owned_receivers_still_build_with_arguments_as_on_v0_0_23
+    control = Ruflet.text("x")
+
+    assert_kind_of Ruflet::Control, control.table(1)
+    assert_kind_of Ruflet::Control, control.stepper { nil }
+    assert_kind_of Ruflet::Control, control.zork(1)
   end
 
   # v0.0.23 did not have these names, so `record.table(1)` raised
@@ -173,6 +212,32 @@ class KernelHelperShadowingTest < Minitest::Test
 
     assert_equal "Stepper", component.new.own.to_patch["_c"]
     assert_equal "SliverList", component.new.in_block.to_patch["_c"]
+  end
+
+  # Every helper v0.0.23 shipped is a private Kernel method, so a bare call
+  # to it works with no arguments anywhere (`divider` in a component). The
+  # newer ones answer the same calls: a bare word, `name()` and `self.name`,
+  # in a plain object, a component, an app and a test alike, and build what
+  # Ruflet::DSL.<name> builds (or raise what it raises, for a helper that
+  # needs content).
+  def test_bare_calls_without_arguments_work_wherever_a_v0_0_23_helper_does
+    app = Class.new(Ruflet::App) { def view(_page) = nil }.new
+    component = Class.new.new
+
+    NEW_HELPERS.each do |name|
+      expected = outcome { Ruflet::DSL.public_send(name) }
+
+      [Object.new, component, app, self].each do |receiver|
+        ["#{name}", "#{name}()", "self.#{name}"].each do |source|
+          actual = outcome { receiver.instance_eval(source, __FILE__, __LINE__) }
+          assert_equal expected, actual, "#{receiver.class}: #{source}"
+        end
+      end
+    end
+
+    assert_equal "AboutDialog", about_dialog.wire_type
+    assert_equal "SliverAppBar", sliver_app_bar.wire_type
+    assert_equal "Table", table.wire_type
   end
 
   # Ruflet::Extensions puts a registered helper on SharedControlForwarders;
@@ -260,9 +325,13 @@ class KernelHelperShadowingTest < Minitest::Test
 
     component = Class.new do
       def build = list_section([text("item")], header: text("Section"))
+      def dialog = about_dialog
+      def app_bar = sliver_app_bar
     end
 
     assert_equal "ListSection", component.new.build.to_patch["_c"]
+    assert_equal "AboutDialog", component.new.dialog.to_patch["_c"]
+    assert_equal "SliverAppBar", component.new.app_bar.to_patch["_c"]
   end
 
   def test_ruflet_namespaces_and_builders_keep_the_new_helpers
@@ -297,6 +366,14 @@ class KernelHelperShadowingTest < Minitest::Test
   # Extensions an app registers at runtime get bare helpers by design.
   def runtime_extension_helpers
     Ruflet::Extensions.each.flat_map(&:helpers)
+  end
+
+  # The class and wire type a call returns, or the error it raises.
+  def outcome
+    value = yield
+    [value.class, value.respond_to?(:wire_type) ? value.wire_type : nil]
+  rescue StandardError => e
+    [e.class, e.message]
   end
 
   def run_at_top_level(source)
