@@ -197,26 +197,23 @@ module Kernel
   #
   # A helper added after v0.0.23 (`stepper`, `table`, `form`, ...) is not a
   # Kernel method, so an object with its own method_missing builder keeps the
-  # name. A call that reaches this point goes to the same Ruflet::DSL helper
-  # the Kernel method would have called, but only where a private Kernel
-  # method could have been called: with no explicit receiver, with or without
-  # arguments (`record.table(1)` and `record.table` raise NoMethodError, as
-  # they did when the name did not exist). Where v0.0.23 built a control for
-  # any name called with arguments, at a script's top level and on an object
-  # Ruflet owns, these names still build (see ScopedControlForwarders.dispatch).
+  # name. A call that reaches this point builds the same Ruflet::DSL helper
+  # the Kernel method would have called where v0.0.23 already built a control
+  # for it (with arguments, at a script's top level or on an object Ruflet
+  # owns) or where a private Kernel method could have been called (no
+  # explicit receiver); anything else raises the NoMethodError it raised when
+  # the name did not exist. See ScopedControlForwarders.owned_call?.
   def method_missing(name, *args, **props, &block)
     scoped = Ruflet::UI::ScopedControlForwarders
-    case scoped.dispatch(self, name, args, props, block)
-    when :build
-      return Ruflet::DSL.public_send(name, *args, **props, &block)
-    when :implicit
-      begin
-        return super
-      rescue NameError => error
-        raise error unless scoped.implicit_call?(error, self, name)
+    if scoped.helper?(name)
+      unless scoped.owned_call?(self, args, props, block)
+        begin
+          return super
+        rescue NameError => error
+          raise error unless scoped.receiverless?(error, self, name)
+        end
       end
-      args, props = scoped.call_arguments(self, args, props)
-      return Ruflet::DSL.public_send(name, *args, **props, &block)
+      return scoped.build(name, args, props, &block)
     end
     return super if name.to_s.end_with?("=") || (args.empty? && props.empty? && !block)
     unless Ruflet::UI::ControlFactory.known_control?(name) || Ruflet::UI::ControlFactory.dsl_receiver?(self)

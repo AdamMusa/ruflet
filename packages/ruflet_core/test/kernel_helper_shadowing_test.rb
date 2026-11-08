@@ -11,8 +11,10 @@ require_relative "test_helper"
 #
 # Helpers added after v0.0.23 are reached through Kernel#method_missing
 # instead, which every builder with its own method_missing takes precedence
-# over, and only by calls a private Kernel method would have answered: ones
-# without an explicit receiver, with or without arguments.
+# over, and only by calls a private Kernel method would have answered (ones
+# without an explicit receiver, with or without arguments) or that v0.0.23
+# already built a control for (with arguments, at a script's top level or on
+# a Ruflet object).
 class KernelHelperShadowingTest < Minitest::Test
   LIB_ROOT = "#{File.expand_path('../lib', __dir__)}/".freeze
   V0_0_23_NAMES = File.readlines(File.expand_path("fixtures/kernel_helpers_v0_0_23.txt", __dir__), chomp: true)
@@ -107,7 +109,6 @@ class KernelHelperShadowingTest < Minitest::Test
 
     assert_equal scoped.instance_methods(false).sort, scoped::HELPERS.keys.sort
     assert_empty NEW_HELPERS - scoped::HELPERS.keys
-    assert_same TOPLEVEL_BINDING.receiver, scoped::SCRIPT_MAIN
   end
 
   def test_method_missing_builders_still_receive_the_new_names
@@ -164,7 +165,7 @@ class KernelHelperShadowingTest < Minitest::Test
   # only for a call with arguments.
   def test_explicit_receivers_raise_without_arguments
     receivers = [Object.new, nil, Class.new(Ruflet::App) { def view(_page) = nil }.new, PartialMissing.new,
-                 Ruflet.text("x"), Ruflet.column([])]
+                 Ruflet.text("x"), Ruflet.column([]), TOPLEVEL_BINDING.receiver]
 
     receivers.each do |receiver|
       %i[table about_dialog stepper form ignore_pointer fade_transition local_auth].each do |name|
@@ -186,6 +187,10 @@ class KernelHelperShadowingTest < Minitest::Test
     assert_kind_of Ruflet::Control, control.table(1)
     assert_kind_of Ruflet::Control, control.form(controls: [])
     assert_kind_of Ruflet::Control, control.zork(1)
+
+    # So are a script's top-level object, named or not, and a page.
+    assert_kind_of Ruflet::Control, TOPLEVEL_BINDING.receiver.table(rows: [])
+    assert_kind_of Ruflet::Control, new_page.stepper(current_step: 1)
   end
 
   # v0.0.23 did not have these names, so `record.table(1)` raised
@@ -240,44 +245,150 @@ class KernelHelperShadowingTest < Minitest::Test
     assert_equal "Form", component.new.form_with_fields.to_patch["_c"]
   end
 
-  # A method_missing written without keywords (`def method_missing(name,
-  # *args, &block) ... super`) hands a call's keywords on to super as a
-  # trailing Hash. The helper still gets them as keywords, as the Kernel
-  # method did on main, instead of building a control from a Hash
-  # (`steps => {current_step: 1}`). Explicit receivers still raise.
-  def test_keywords_passed_on_by_a_keywordless_method_missing_stay_keywords
-    keywordless = Class.new(PartialMissing) do
-      def stepper_with_options = stepper(current_step: 1, type: "horizontal")
-      def stepper_with_steps = stepper([stepper_step(title: "A")], current_step: 0)
-      def table_with_rows = table(rows: [table_row([text("r")])], border_width: 1)
-      def dialog = about_dialog(application_name: "App")
-      def auth = local_auth(key: "auth")
-      def positional = form([text_field(label: "Name")])
-    end
-    object = keywordless.new
-    expected = {
-      stepper_with_options: Ruflet::DSL.stepper(current_step: 1, type: "horizontal"),
-      stepper_with_steps: Ruflet::DSL.stepper([Ruflet::DSL.stepper_step(title: "A")], current_step: 0),
-      table_with_rows: Ruflet::DSL.table(rows: [Ruflet::DSL.table_row([Ruflet::DSL.text("r")])], border_width: 1),
-      dialog: Ruflet::DSL.about_dialog(application_name: "App"),
-      auth: Ruflet::DSL.local_auth(key: "auth"),
-      positional: Ruflet::DSL.form([Ruflet::DSL.text_field(label: "Name")])
-    }
+  # Kernel#method_missing reads a trailing Hash of Symbol keys, when no
+  # keywords were passed, as the keywords. Keywords arrive that way from a
+  # method_missing written without keywords that calls super (a user class,
+  # Ruflet::Page, Ruflet::Event, a Ruflet::* class of an extension gem), and
+  # from send, __send__ and public_send on the embedded VM. Each call builds
+  # what Ruflet::DSL builds from the same keywords, as the Kernel method did
+  # on main; explicit receivers outside Ruflet still raise.
+  def test_keywords_that_arrive_as_a_trailing_hash_are_keywords
+    # [bare call; a send whose arguments match what the embedded VM's send
+    #  hands method_missing for that call; the control both must build]
+    calls = [
+      ['stepper(current_step: 1, type: "horizontal")', 'send(:stepper, { current_step: 1, type: "horizontal" })',
+       -> { Ruflet::DSL.stepper(current_step: 1, type: "horizontal") }],
+      ['stepper([stepper_step(title: "A")], current_step: 0)',
+       'send(:stepper, [stepper_step(title: "A")], { current_step: 0 })',
+       -> { Ruflet::DSL.stepper([Ruflet::DSL.stepper_step(title: "A")], current_step: 0) }],
+      ['table(rows: [table_row([text("r")])], border_width: 1)',
+       'send(:table, { rows: [table_row([text("r")])], border_width: 1 })',
+       -> { Ruflet::DSL.table(rows: [Ruflet::DSL.table_row([Ruflet::DSL.text("r")])], border_width: 1) }],
+      ['about_dialog(application_name: "App")', 'send(:about_dialog, { application_name: "App" })',
+       -> { Ruflet::DSL.about_dialog(application_name: "App") }],
+      ['local_auth(key: "auth")', 'send(:local_auth, { key: "auth" })', -> { Ruflet::DSL.local_auth(key: "auth") }],
+      ['fade_transition(text("f"), repeat: true)', 'send(:fade_transition, text("f"), { repeat: true })',
+       -> { Ruflet::DSL.fade_transition(Ruflet::DSL.text("f"), repeat: true) }],
+      ['form([text_field(label: "Name")])', 'send(:form, [text_field(label: "Name")])',
+       -> { Ruflet::DSL.form([Ruflet::DSL.text_field(label: "Name")]) }]
+    ]
+    keywordless = Class.new(PartialMissing)
+    ruflet_class = Class.new(PartialMissing) { def self.name = "Ruflet::ExtensionGemHost" }
+    event = Ruflet::Event.new(name: "click", target: 1, raw_data: nil, page: nil, control: nil)
+    hosts = { "user class" => keywordless.new, "Ruflet::* class" => ruflet_class.new, "Ruflet::Event" => event,
+              "Ruflet::Page" => new_page }
 
-    expected.each do |method, control|
-      assert_equal without_ids(control.to_patch), without_ids(object.public_send(method).to_patch), method.to_s
+    calls.each do |source, vm_send, expected|
+      want = without_ids(expected.call.to_patch)
+      hosts.each do |label, host|
+        assert_equal want, without_ids(host.instance_eval(source, __FILE__, __LINE__).to_patch), "#{label}: #{source}"
+      end
+      [vm_send, vm_send.sub("send", "__send__"), "TOPLEVEL_BINDING.receiver.#{vm_send}"].each do |call|
+        assert_equal want, without_ids(Object.new.instance_eval(call, __FILE__, __LINE__).to_patch), call
+      end
     end
-    assert_equal :handled, object.handled
+    assert_equal :handled, keywordless.new.handled
 
-    error = assert_raises(NoMethodError) { object.stepper(current_step: 1) }
+    # Explicit receivers: still a NoMethodError outside Ruflet; on a Ruflet
+    # object a call with arguments builds, as v0.0.23 built a control there.
+    error = assert_raises(NoMethodError) { keywordless.new.stepper(current_step: 1) }
     assert_equal :stepper, error.name
     refute error.private_call?
+    assert_raises(NoMethodError) { ruflet_class.new.about_dialog }
+    assert_equal without_ids(Ruflet::DSL.stepper(current_step: 1).to_patch),
+                 without_ids(event.stepper(current_step: 1).to_patch)
+    assert_equal without_ids(Ruflet::DSL.about_dialog(application_name: "A").to_patch),
+                 without_ids(ruflet_class.new.about_dialog(application_name: "A").to_patch)
+  end
 
-    # Anywhere else a Hash argument is passed as written, as to the Kernel
-    # method on main: a positional Hash is not about_dialog's keywords.
+  # Only a non-empty Hash of Symbol keys, with no keywords beside it, is
+  # read that way; any other Hash is passed on as written.
+  def test_other_trailing_hashes_are_passed_as_written
     plain = Object.new
-    assert_raises(ArgumentError) { plain.instance_eval { about_dialog({ application_name: "App" }) } }
-    assert_equal "AboutDialog", plain.instance_eval { about_dialog(application_name: "App") }.wire_type
+
+    assert_equal without_ids(Ruflet::DSL.table({ "rows" => [] }).to_patch),
+                 without_ids(plain.instance_eval { table({ "rows" => [] }) }.to_patch)
+    assert_equal({ "rows" => [] }, plain.instance_eval { table({ "rows" => [] }) }.to_patch["rows"])
+    error = assert_raises(ArgumentError) { plain.instance_eval { about_dialog({ "application_name" => "App" }) } }
+    assert_match(/wrong number of arguments/, error.message)
+    assert_equal without_ids(Ruflet::DSL.fade_transition({ a: 1 }, repeat: true).to_patch),
+                 without_ids(plain.instance_eval { fade_transition({ a: 1 }, repeat: true) }.to_patch)
+    assert_equal without_ids(Ruflet::DSL.table({}).to_patch), without_ids(plain.instance_eval { table({}) }.to_patch)
+    assert_equal "AboutDialog", plain.instance_eval { about_dialog({ application_name: "App" }) }.wire_type
+  end
+
+  # The embedded VM has no NoMethodError#private_call?. An explicit call
+  # stops there before Kernel#method_missing ("private method called"), so a
+  # call that reaches it on an object whose method_missing is Kernel's had
+  # no receiver; one that came through another class's method_missing
+  # re-raises. This runs that path on CRuby with a VM-like error.
+  def test_without_private_call_a_call_that_reaches_kernel_directly_had_no_receiver
+    scoped = Ruflet::UI::ScopedControlForwarders
+    vm_error = lambda do |name|
+      NoMethodError.new("undefined method '#{name}'", name).tap do |error|
+        error.singleton_class.send(:undef_method, :private_call?)
+      end
+    end
+    refute vm_error.call(:table).respond_to?(:private_call?)
+
+    # Objects with a `method` of their own, like an HTTP request.
+    request = Class.new { def method = "GET" }.new
+    builder_request = Class.new(PartialMissing) { def method(*) = "GET" }.new
+    bare_word = NameError.new("undefined local variable or method 'table'", :table)
+
+    assert scoped.receiverless?(vm_error.call(:table), Object.new, :table)
+    assert scoped.receiverless?(vm_error.call(:table), request, :table)
+    refute scoped.receiverless?(vm_error.call(:table), PartialMissing.new, :table)
+    refute scoped.receiverless?(vm_error.call(:table), builder_request, :table)
+    refute scoped.receiverless?(vm_error.call(:other), Object.new, :table)
+    assert scoped.receiverless?(bare_word, PartialMissing.new, :table)
+    refute scoped.receiverless?(NameError.new("uninitialized constant Missing", :Missing), Object.new, :table)
+  end
+
+  # `super` in Kernel#method_missing can reach a method_missing that another
+  # library included into Kernel after Ruflet. A NameError that code raises
+  # about some other name is its own error, so it propagates instead of
+  # being taken for the helper's miss.
+  def test_an_unrelated_name_error_behind_kernel_propagates
+    output = run_child(<<~RUBY)
+      module Kernel
+        include(Module.new do
+          def method_missing(name, *args, **props, &block)
+            return super unless name == :table
+            missing_helper_of_this_library
+          end
+        end)
+      end
+      begin
+        Object.new.instance_eval { table(rows: []) }
+        puts "built"
+      rescue NameError => e
+        puts "\#{e.class} \#{e.name}"
+      end
+      puts Object.new.instance_eval { stepper(current_step: 1) }.wire_type
+    RUBY
+
+    assert_equal ["NameError missing_helper_of_this_library", "Stepper"], output
+  end
+
+  # Ruflet::Page answers the v0.0.23 helpers called on it with a "free
+  # widget helper" hint. The newer names are left to Kernel#method_missing,
+  # as on v0.0.23 when they did not exist there.
+  def test_page_leaves_the_new_helpers_to_kernel
+    page = new_page
+
+    assert_equal without_ids(Ruflet::DSL.stepper(current_step: 1).to_patch),
+                 without_ids(page.instance_eval { stepper(current_step: 1) }.to_patch)
+    assert_equal "AboutDialog", page.instance_eval { about_dialog }.wire_type
+    assert_equal "Table", page.table(rows: []).wire_type
+    assert_raises(NoMethodError) { page.about_dialog }
+    refute page.respond_to?(:stepper)
+    page.stepper = 2
+    assert_equal 2, page.stepper
+
+    hint = assert_raises(NoMethodError) { page.text("x") }
+    assert_match(/free widget helper/, hint.message)
+    assert page.respond_to?(:text)
   end
 
   # Every helper v0.0.23 shipped is a private Kernel method, so a bare call
@@ -490,6 +601,15 @@ class KernelHelperShadowingTest < Minitest::Test
     page = new_page
     interceptor = ->(entrypoint:, **) { entrypoint.call(page) }
     Ruflet.with_run_interceptor(interceptor) { TOPLEVEL_BINDING.eval(source) }
+  end
+
+  # Runs Ruby with ruflet_core loaded in a child process, for changes that
+  # must not reach the rest of the suite; returns its output lines.
+  def run_child(body)
+    script = "$LOAD_PATH.unshift #{File.expand_path('../lib', __dir__).inspect}\nrequire \"ruflet_core\"\n#{body}"
+    output = IO.popen([RbConfig.ruby, "-e", script], err: %i[child out], &:read)
+    assert $?.success?, output
+    output.lines(chomp: true)
   end
 
   def new_page

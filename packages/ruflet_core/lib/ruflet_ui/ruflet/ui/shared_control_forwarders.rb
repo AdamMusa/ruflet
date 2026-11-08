@@ -555,79 +555,74 @@ module Ruflet
         HELPERS.key?(name) && !ControlFactory::EXTENSION_CLASS_MAP.key?(name.to_s)
       end
 
-      # What Kernel#method_missing does with a call to `name` on `receiver`:
+      # How Kernel#method_missing answers a call to one of these names, the
+      # same way on CRuby and on the embedded VM:
       #
-      # :build    - build it. A script's top level, and a call with arguments
-      #             on an object the framework owns (Ruflet::*), where v0.0.23
-      #             already built a generic control for an unknown name, with
-      #             or without a receiver (CRuby only: on the embedded VM
-      #             ControlFactory.dsl_receiver? is always false).
-      # :implicit - build it only if the call had no explicit receiver, which
-      #             is exactly when a private Kernel method, like every helper
-      #             v0.0.23 shipped, would have been called, with or without
-      #             arguments: `stepper(...)` or `about_dialog` in an app's
-      #             view, a component or a test builds; `record.stepper(...)`,
-      #             `record.table` and `Ruflet.text("x").table` raise
-      #             NoMethodError, as they did when the name did not exist.
-      # nil       - not a scoped helper; the generic path decides.
-      def self.dispatch(receiver, name, args, props, block)
-        return nil unless helper?(name)
-        return :build if receiver.equal?(SCRIPT_MAIN)
-        return :build if (block || !args.empty? || !props.empty?) && ControlFactory.dsl_receiver?(receiver)
-
-        :implicit
+      # - A call with arguments or a block on an object that
+      #   ControlFactory.dsl_receiver? accepts (a script's top level or a
+      #   Ruflet::* object; never on the VM) builds, with or without a
+      #   receiver, because v0.0.23 built a generic control there for any
+      #   name (owned_call?).
+      # - Any other call asks Ruby, through `super`, how it was written, and
+      #   builds only if it had no explicit receiver, as a private Kernel
+      #   method would have answered it (receiverless?). `stepper(...)`,
+      #   `about_dialog` or `self.table` in an app, a component or a test
+      #   build; `record.table(1)` and `record.table` raise the NoMethodError
+      #   they raised when the name did not exist.
+      # - Either way, ScopedControlForwarders.build makes the control.
+      def self.owned_call?(receiver, args, props, block)
+        (block || !args.empty? || !props.empty?) && ControlFactory.dsl_receiver?(receiver)
       end
 
-      # Whether the call behind `error`, the NameError Ruby raised for a
-      # missing `name` on `receiver`, was written without an explicit
-      # receiver. CRuby raises a plain NameError for a bare word and records
-      # the form of any other call on NoMethodError#private_call?.
+      # Whether `error`, the NameError `super` raised in Kernel#method_missing
+      # for the missing `name`, came from a call written without an explicit
+      # receiver: a bare word, `name(...)`, `self.name`, send or __send__.
       #
-      # The embedded VM records neither. There, `record.table(1)` never
-      # reaches Kernel#method_missing: that method is private, so the VM
-      # raises "private method called" first, as it did at v0.0.23. A call
-      # can still arrive through another class's method_missing calling
-      # super, which is treated as explicit (v0.0.23 raised there too), or
-      # through send/public_send, which the VM hands to method_missing like a
-      # call without a receiver: `record.public_send(:table, rows: [])` builds
-      # on the embedded VM, where CRuby raises.
-      def self.implicit_call?(error, receiver, name)
+      # CRuby raises a plain NameError for a bare word and records the form
+      # of any other call on NoMethodError#private_call?. It takes that from
+      # the thread's most recent method miss, so a method_missing that hits
+      # and rescues another miss of its own before calling super changes the
+      # answer for the call it passes on.
+      #
+      # The embedded VM records neither. There an explicit `record.table(1)`
+      # stops before method_missing ("private method 'table' called", as at
+      # v0.0.23), so a call that reaches Kernel#method_missing directly is a
+      # bare call, send, __send__ or public_send. One that arrives through
+      # another class's method_missing calling super cannot be told apart
+      # from an explicit call, and re-raises.
+      def self.receiverless?(error, receiver, name)
         return false unless error.name == name
         return true unless error.is_a?(NoMethodError)
         return error.private_call? if error.respond_to?(:private_call?)
 
-        begin
-          receiver.method(:method_missing).owner.equal?(Kernel)
-        rescue StandardError
-          true
-        end
+        kernel_method_missing?(receiver)
       end
 
-      # The arguments Kernel#method_missing hands the helper for a call
-      # implicit_call? accepted. A method_missing written without keywords
-      # (`def method_missing(name, *args, &block) ... super`) passes a call's
-      # keywords on as a trailing Hash, which the helper would take as its
-      # content: `stepper(current_step: 1)` in such a class built a Stepper
-      # whose steps were that Hash. On main the helper was a Kernel method and
-      # got the keywords as written, so a trailing Hash of Symbol keys from
-      # such a call is read as keywords again. A call that did not pass
-      # through another method_missing keeps its arguments as written.
-      def self.call_arguments(receiver, args, props)
-        options = args.last
-        return [args, props] unless props.empty? && options.is_a?(Hash) && !options.empty?
-        return [args, props] unless options.keys.all? { |key| key.is_a?(Symbol) }
-        return [args, props] unless own_method_missing?(receiver)
-
-        [args[0...-1], options]
-      end
-
-      # Whether `receiver` answers missing methods with a method_missing of its
-      # own, ahead of Kernel's. Kernel#method is used directly because classes
-      # such as HTTP requests define a `method` of their own.
-      def self.own_method_missing?(receiver)
-        !Kernel.instance_method(:method).bind_call(receiver, :method_missing).owner.equal?(Kernel)
+      # Whether `receiver` answers missing methods with Kernel#method_missing
+      # itself. Kernel#method is used directly because classes such as HTTP
+      # requests define a `method` of their own.
+      def self.kernel_method_missing?(receiver)
+        Kernel.instance_method(:method).bind_call(receiver, :method_missing).owner.equal?(Kernel)
       rescue StandardError
-        false
+        true
+      end
+
+      # Builds `name` with Ruflet::DSL. A call that passed no keywords and
+      # ends in a Hash whose keys are all Symbols passes that Hash as the
+      # keywords. Keywords reach method_missing that way from the embedded
+      # VM's send, __send__ and public_send, and from any method_missing
+      # written without keywords that calls super (Ruflet::Page and
+      # Ruflet::Event among them). Nothing there tells such a Hash from one
+      # written positionally, so both are read the same way, on CRuby too,
+      # and the two runtimes build the same control. No helper here takes a
+      # Hash as its content, rows or children.
+      def self.build(name, args, props, &block)
+        options = args.last
+        if props.empty? && options.is_a?(Hash) && !options.empty? && options.keys.all? { |key| key.is_a?(Symbol) }
+          args = args[0...-1]
+          props = options
+        end
+        Ruflet::DSL.public_send(name, *args, **props, &block)
       end
 
       private
@@ -638,7 +633,3 @@ module Ruflet
     end
   end
 end
-
-# A script's top-level object (`main`). This file runs at the top level on
-# CRuby and in the embedded VM alike, and the VM has no TOPLEVEL_BINDING.
-Ruflet::UI::ScopedControlForwarders::SCRIPT_MAIN = self
