@@ -35,7 +35,7 @@ exit: 0
    <FLUTTER_SDK>/bin/dart run flutter_launcher_icons
    env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
 10. system cwd=<PROJECT>/build/client exit=0
-   <FLUTTER_SDK>/bin/flutter build apk --analyze-size --code-size-directory=sizes --performance-measurement-file perf.json --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=default_app
+   <FLUTTER_SDK>/bin/flutter build apk --analyze-size --code-size-directory=<PROJECT>/sizes --performance-measurement-file <PROJECT>/perf.json --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=default_app
    env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
 ## output
@@ -51,7 +51,7 @@ out| [ruflet build] Applying android package name com.example.default_app
 out| [ruflet build] Generating splash screen with flutter_native_splash
 out| [ruflet build] Generating launcher icons with flutter_launcher_icons
 out| [ruflet build] Android launcher icon and splash resources verified
-out| [ruflet build] Running Flutter build apk --analyze-size --code-size-directory=sizes --performance-measurement-file perf.json --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=default_app
+out| [ruflet build] Running Flutter build apk --analyze-size --code-size-directory=<PROJECT>/sizes --performance-measurement-file <PROJECT>/perf.json --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=default_app
 
 ## files
 <PROJECT>/build/client/ created from the template: 149 files identical, 40 template files absent
@@ -107,8 +107,8 @@ A <PROJECT>/build/client/windows/runner/Runner.rc  sha256:693290ccd6da2192 3041b
   <PROJECT>/build/client/android/app/src/main/res/mipmap-anydpi-v26/launcher_icon.xml
   <PROJECT>/build/client/android/app/src/main/res/values-v31/styles.xml
   <PROJECT>/build/client/build/app/outputs/flutter-apk/app-release.apk
-  <PROJECT>/build/client/perf.json
-  <PROJECT>/build/client/sizes/snapshot.apk.json
+  <PROJECT>/perf.json
+  <PROJECT>/sizes/snapshot.apk.json
 
 ## diffs
 --- /dev/null

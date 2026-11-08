@@ -32,7 +32,7 @@ exit: 0
    <FLUTTER_SDK>/bin/dart run flutter_launcher_icons
    env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
 9. system cwd=<PROJECT>/build/client exit=0
-   <FLUTTER_SDK>/bin/flutter build web -o dist --target lib/main.server.dart
+   <FLUTTER_SDK>/bin/flutter build web -o <PROJECT>/dist --target lib/main.server.dart
    env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
 ## output
@@ -46,7 +46,7 @@ out| [ruflet build] Verified 3 local Ruflet engine, extension and vendor package
 out| [ruflet build] Generating splash screen with flutter_native_splash
 out| [ruflet build] Generating launcher icons with flutter_launcher_icons
 out| [ruflet build] No backend_url configured; the web client will resolve its server at launch
-out| [ruflet build] Running Flutter build web -o dist --target lib/main.server.dart
+out| [ruflet build] Running Flutter build web -o <PROJECT>/dist --target lib/main.server.dart
 
 ## files
 <PROJECT>/build/client/ created from the template: 149 files identical, 40 template files absent
@@ -96,9 +96,9 @@ A <PROJECT>/build/client/windows/runner/Runner.rc  sha256:693290ccd6da2192 3041b
   <PROJECT>/build/client/android/app/src/main/res/drawable/launch_background.xml
   <PROJECT>/build/client/android/app/src/main/res/mipmap-anydpi-v26/launcher_icon.xml
   <PROJECT>/build/client/android/app/src/main/res/values-v31/styles.xml
-  <PROJECT>/build/client/dist/flutter_bootstrap.js
-  <PROJECT>/build/client/dist/index.html
-  <PROJECT>/build/client/dist/main.dart.js
+  <PROJECT>/dist/flutter_bootstrap.js
+  <PROJECT>/dist/index.html
+  <PROJECT>/dist/main.dart.js
 
 ## diffs
 --- /dev/null

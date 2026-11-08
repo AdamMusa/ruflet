@@ -4,7 +4,7 @@
 fixture: default_app
 command: ruflet build apk --self --dart-define-from-file config/defines.json
 added file: config/defines.json
-exit: 1
+exit: 0
 
 ## commands (10)
 1. capture3 exit=0
@@ -35,8 +35,8 @@ exit: 1
 9. system cwd=<PROJECT>/build/client exit=0
    <FLUTTER_SDK>/bin/dart run flutter_launcher_icons
    env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
-10. system cwd=<PROJECT>/build/client exit=1
-   <FLUTTER_SDK>/bin/flutter build apk --dart-define-from-file config/defines.json --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=default_app
+10. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/flutter build apk --dart-define-from-file <PROJECT>/config/defines.json --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=default_app
    env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
 ## output
@@ -52,8 +52,7 @@ out| [ruflet build] Applying android package name com.example.default_app
 out| [ruflet build] Generating splash screen with flutter_native_splash
 out| [ruflet build] Generating launcher icons with flutter_launcher_icons
 out| [ruflet build] Android launcher icon and splash resources verified
-out| [ruflet build] Running Flutter build apk --dart-define-from-file config/defines.json --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=default_app
-err| Did not find the file passed to "--dart-define-from-file". Path: config/defines.json
+out| [ruflet build] Running Flutter build apk --dart-define-from-file <PROJECT>/config/defines.json --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=default_app
 
 ## files
 <PROJECT>/build/client/ created from the template: 149 files identical, 40 template files absent
@@ -78,6 +77,7 @@ err| Did not find the file passed to "--dart-define-from-file". Path: config/def
   absent: ruflet_packages/ruflet_webview/ (2 files)
 <HOME>/.ruflet/templates/ruflet_flutter_template/ created from the template: 208 files identical, 0 template files absent
 A <HOME>/.ruflet/templates/ruflet_flutter_template.revision  sha256:9d4a95b50d07fadc 41b  (new)
+A <PROJECT>/build/android/flutter-apk/app-release.apk  sha256:9e637214365ae979 45b  (new)
 A <PROJECT>/build/client/.ruflet-template-revision  sha256:9d4a95b50d07fadc 41b  (new)
 A <PROJECT>/build/client/.ruflet/extension_dependencies.json  sha256:9327f140d60f847d 29b  (new)
 A <PROJECT>/build/client/android/app/src/main/AndroidManifest.xml  sha256:931ec9602a7c0db4 2773b  (from template, edited)
@@ -107,12 +107,17 @@ A <PROJECT>/build/client/windows/runner/Runner.rc  sha256:693290ccd6da2192 3041b
   <PROJECT>/build/client/android/app/src/main/res/drawable/launch_background.xml
   <PROJECT>/build/client/android/app/src/main/res/mipmap-anydpi-v26/launcher_icon.xml
   <PROJECT>/build/client/android/app/src/main/res/values-v31/styles.xml
+  <PROJECT>/build/client/build/app/outputs/flutter-apk/app-release.apk
 
 ## diffs
 --- /dev/null
 +++ <HOME>/.ruflet/templates/ruflet_flutter_template.revision
 @@ -0,0 +1,1 @@
 +c0ffee00c0ffee00c0ffee00c0ffee00c0ffee00
+--- /dev/null
++++ <PROJECT>/build/android/flutter-apk/app-release.apk
+@@ -0,0 +1,1 @@
++ruflet compat placeholder: flutter build apk
 --- /dev/null
 +++ <PROJECT>/build/client/.ruflet-template-revision
 @@ -0,0 +1,1 @@

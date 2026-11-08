@@ -6,7 +6,53 @@ module Ruflet
       # Runs Flutter and the other external tools a build needs, with the
       # environment each one expects.
       module FlutterTooling
+        # `flutter build` options whose value is a path. Flutter resolves them
+        # against its working directory, which is build/client; Ruflet users
+        # mean the project (CLI-05). -o abbreviates --output.
+        FLUTTER_PATH_OPTIONS = %w[
+          --dart-define-from-file --split-debug-info --export-options-plist
+          --code-size-directory --performance-measurement-file --output --output-dir
+        ].freeze
+        FLUTTER_PATH_ABBREVIATIONS = %w[-o].freeze
+
         private
+
+        # A copy of args with the value of every FLUTTER_PATH_OPTIONS flag, in
+        # each spelling Flutter accepts (`--flag value`, `--flag=value`,
+        # `-o value`, `-ovalue`), made absolute against the project root.
+        # Absolute paths are untouched, and so is a value Ruflet cannot
+        # resolve: a missing or empty one, one that looks like a flag, or a
+        # `~` no shell expanded. Flutter reports those as it did before.
+        def resolve_flutter_path_args(args, root = Dir.pwd)
+          resolved = []
+          index = 0
+          while index < args.length
+            arg = args[index]
+            name, value = arg.split("=", 2)
+            if FLUTTER_PATH_OPTIONS.include?(arg) || FLUTTER_PATH_ABBREVIATIONS.include?(arg)
+              resolved << arg
+              if index + 1 < args.length
+                index += 1
+                resolved << project_path(args[index], root)
+              end
+            elsif value && FLUTTER_PATH_OPTIONS.include?(name)
+              resolved << "#{name}=#{project_path(value, root)}"
+            elsif (abbreviation = FLUTTER_PATH_ABBREVIATIONS.find { |short| arg.start_with?(short) && arg.length > short.length })
+              resolved << "#{abbreviation}#{project_path(arg[abbreviation.length..], root)}"
+            else
+              resolved << arg
+            end
+            index += 1
+          end
+          resolved
+        end
+
+        def project_path(value, root)
+          return value if value.empty? || value.start_with?("-", "~")
+          return value if File.absolute_path?(value)
+
+          File.expand_path(value, root)
+        end
 
         def build_tool_env(env, platform, client_dir = nil)
           return env unless %w[ios macos].include?(platform)

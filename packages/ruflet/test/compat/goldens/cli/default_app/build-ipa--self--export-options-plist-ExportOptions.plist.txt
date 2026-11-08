@@ -4,7 +4,7 @@
 fixture: default_app
 command: ruflet build ipa --self --export-options-plist ExportOptions.plist
 added file: ExportOptions.plist
-exit: 1
+exit: 0
 
 ## commands (15)
 1. capture3 exit=0
@@ -50,8 +50,8 @@ exit: 1
 14. system exit=0
    /usr/libexec/PlistBuddy -c "Add :RufletEmbeddedProject string default_app" <PROJECT>/build/client/ios/Runner/Info.plist
    options: err out
-15. system cwd=<PROJECT>/build/client exit=1
-   <FLUTTER_SDK>/bin/flutter build ipa --export-options-plist ExportOptions.plist --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=default_app
+15. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/flutter build ipa --export-options-plist <PROJECT>/ExportOptions.plist --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=default_app
    env: COCOAPODS_DISABLE_STATS=true FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> GEM_HOME=(unset) GEM_PATH=(unset) GEM_ROOT=(unset) PATH=<PROJECT>/build/client/.ruflet/bin:/opt/homebrew/bin:<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
 ## output
@@ -67,8 +67,7 @@ out| [ruflet build] Applying ios package name com.example.default-app
 out| [ruflet build] Running CocoaPods install for ios
 out| [ruflet build] Generating splash screen with flutter_native_splash
 out| [ruflet build] Generating launcher icons with flutter_launcher_icons
-out| [ruflet build] Running Flutter build ipa --export-options-plist ExportOptions.plist --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=default_app
-err| "ExportOptions.plist" property list does not exist.
+out| [ruflet build] Running Flutter build ipa --export-options-plist <PROJECT>/ExportOptions.plist --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=default_app
 
 ## files
 <PROJECT>/build/client/ created from the template: 148 files identical, 40 template files absent
@@ -118,12 +117,16 @@ A <PROJECT>/build/client/web/index.html  sha256:62b6f65e51ded6cc 1287b  (from te
 A <PROJECT>/build/client/web/manifest.json  sha256:45b453919db82242 775b  (from template, edited)
 A <PROJECT>/build/client/windows/CMakeLists.txt  sha256:f09c488039d326ff 4631b  (from template, edited)
 A <PROJECT>/build/client/windows/runner/Runner.rc  sha256:693290ccd6da2192 3041b  (from template, edited)
+A <PROJECT>/build/ios/archive/Runner.xcarchive/Info.plist  sha256:9e5fcdbf6aa344d8 45b  (new)
+A <PROJECT>/build/ios/ipa/Runner.ipa  sha256:9e5fcdbf6aa344d8 45b  (new)
 
 ## stub side effects (not CLI output)
   <PROJECT>/build/client/.dart_tool/package_config.json
   <PROJECT>/build/client/android/app/src/main/res/drawable/launch_background.xml
   <PROJECT>/build/client/android/app/src/main/res/mipmap-anydpi-v26/launcher_icon.xml
   <PROJECT>/build/client/android/app/src/main/res/values-v31/styles.xml
+  <PROJECT>/build/client/build/ios/archive/Runner.xcarchive/Info.plist
+  <PROJECT>/build/client/build/ios/ipa/Runner.ipa
 
 ## diffs
 --- /dev/null
@@ -878,3 +881,11 @@ Binary <PROJECT>/build/client/assets/splash.png: sha256:293cfc16e47a1860
              VALUE "ProductVersion", VERSION_AS_STRING "\0"
          END
      END
+--- /dev/null
++++ <PROJECT>/build/ios/archive/Runner.xcarchive/Info.plist
+@@ -0,0 +1,1 @@
++ruflet compat placeholder: flutter build ipa
+--- /dev/null
++++ <PROJECT>/build/ios/ipa/Runner.ipa
+@@ -0,0 +1,1 @@
++ruflet compat placeholder: flutter build ipa
