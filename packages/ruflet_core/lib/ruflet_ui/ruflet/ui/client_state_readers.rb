@@ -13,7 +13,10 @@ module Ruflet
     # renderer's updateProperties / writeBack call, then triggerEvent).
     # Page#apply_client_update stores it in the control's props, and
     # Page#dispatch_event also applies change/select values before the
-    # handler runs. A reader returns that stored value: `props["value"]`.
+    # handler runs. A reader returns that stored value, `props["value"]`,
+    # exactly as props holds it: the wire value, normalized when it was set
+    # (`dropdown(value: :apple).value` is "apple", a Date given to a date
+    # picker reads back as a Ruflet::Protocol::DateTimeValue).
     #
     # The list below is deliberately small: only the properties the Flutter
     # renderers (ruflet-engine, packages/ruflet/lib/src/controls) send back
@@ -38,10 +41,11 @@ module Ruflet
     # expose exactly the same ones, and respond_to?, method and public_send
     # change for these names on these classes only. There are no setters.
     #
-    # An app's own method always wins over a reader, wherever the app puts it.
-    # Apps on v0.0.23, where these reads raised, may already have added one
-    # themselves, for example
-    # `class Ruflet::Control; def value = props["value"]; end`. So:
+    # Apps on v0.0.23, where these reads raised, may already answer them
+    # themselves, with a method such as
+    # `class Ruflet::Control; def value = props["value"]; end` or with a
+    # method_missing. Whatever answered a call on v0.0.23 still answers it,
+    # except in the cases under "Not covered" below. So:
     # * A reader is never defined over a method that already exists, public or
     #   private, on the class or any ancestor (Kernel included).
     # * Each class gets its readers from its own module, included into the
@@ -54,11 +58,38 @@ module Ruflet
     #   there, a framework module such as TextInputMethods, Object or Kernel),
     #   public or private, comes after the reader in the lookup. The reader
     #   checks for one on every call and hands the call to it with `super`,
-    #   arguments and block included. It hands the call to method_missing the
-    #   same way when the app added one (see app_method_missing?).
+    #   arguments and block included.
+    # * When the app added a method_missing (see app_method_missing?), the
+    #   reader hands the call to it the same way, unless the method after the
+    #   reader is public. That is what CRuby did without the reader: a call
+    #   with a receiver to a private or protected method goes to
+    #   method_missing.
+    # * The private Kernel DSL helper Ruflet::Extensions.register_control
+    #   defines for an extension registered after Ruflet loaded (`expanded`,
+    #   say) is Ruflet's, not the app's. A plain `tile.expanded` reads the
+    #   state instead of building an `expanded` control (on v0.0.23 it
+    #   raised); a call with arguments or a block still reaches the helper.
+    #   (In the embedded mruby VM, registering an extension after Ruflet has
+    #   loaded already raises TypeError, on v0.0.23 too, so this is CRuby's.)
     # Only when there is no such method does the reader answer: with no
     # arguments it returns props[name]; with arguments it raises the
     # ArgumentError a zero-argument method raises.
+    #
+    # Not covered, because a method cannot see how it was called:
+    # * Refinements (CRuby only) of a class above the table class: the reader
+    #   answers as if the refinement were not active.
+    # * An app that has both its own method_missing and a private or
+    #   protected method of a reader's name above the table class (a
+    #   top-level `def value` in a script, say). The calls that reached that
+    #   method on v0.0.23 from inside the control (no receiver,
+    #   `self.value`, `send(:value)`), and protected calls from another
+    #   control, now go to the method_missing. Every other call with a
+    #   receiver went to the method_missing on v0.0.23 under CRuby (mruby
+    #   raised), and now goes there on both.
+    # * A plain call without a receiver to such an extension helper, from
+    #   inside a method of the table class (`expanded` in an ExpansionTile
+    #   method), returns the reader's value; on v0.0.23 it built an empty
+    #   `expanded` control.
     module ClientStateReaders
       # mruby's Module#method_defined? also counts private methods; CRuby's
       # counts public and protected ones only. (Guarded so that loading this
@@ -73,7 +104,9 @@ module Ruflet
 
       class << self
         # The [class, name] pairs install! left out, or nil until it has run.
-        # ruflet_ui.rb runs it when Ruflet loads, so this is [] in every app.
+        # ruflet_ui.rb runs it when Ruflet loads. It is [] unless the app
+        # defined a method of one of these names before loading Ruflet (then
+        # it lists those pairs, and the app's method answers).
         attr_reader :skipped
 
         # [control class, [property, ...]] pairs, grouped by the client control
@@ -203,12 +236,44 @@ module Ruflet
         # and the one a call reached before the reader existed. Private ones
         # count too (a top-level `def value` in a script is a private Object
         # method), so a call from inside the control's own methods
-        # (`value` with no receiver) still reaches them.
+        # (`value` with no receiver) still reaches them, unless the app also
+        # added a method_missing (see public_method_after?).
         def app_method_after?(after, symbol)
           after.any? { |mod| any_method?(mod, symbol) }
         end
 
-        # Every reader asks this second. True when the control answers
+        # Asked when app_method_after? and app_method_missing? are both true.
+        # True when the method `super` would call (the first one after the
+        # reader module) is public: without the reader, `control.value` called
+        # it, whatever method_missing the app had. A private or protected one
+        # it reached only from inside the control (no receiver, `self.`) or,
+        # if protected, from another control; CRuby sent every other call
+        # with a receiver to method_missing instead. (In mruby the fallback
+        # in ruby_runtime/vm/bootstrap.rb answers public_method_defined?.)
+        def public_method_after?(after, symbol)
+          mod = after.find { |candidate| any_method?(candidate, symbol) }
+          mod ? mod.public_method_defined?(symbol) : false
+        end
+
+        # Asked for a plain read (no arguments, no block) when
+        # app_method_after? is true. True when the method `super` would call is
+        # the private Kernel DSL helper Ruflet::Extensions.register_control
+        # defined for an extension of this name, unchanged: Ruflet's helper,
+        # not an app method. Without the reader, `tile.expanded` raised
+        # ("private method 'expanded' called"), so the reader answers instead
+        # of building an `expanded` control. Only Kernel's own two
+        # UnboundMethods are compared with ==.
+        def ruflet_helper_after?(after, symbol)
+          helper = Ruflet::Extensions.kernel_helper(symbol)
+          return false unless helper
+
+          superclass = after.last
+          after.none? { |mod| !mod.equal?(superclass) && any_method?(mod, symbol) } &&
+            superclass.instance_method(symbol).owner.equal?(Kernel) &&
+            Kernel.instance_method(symbol) == helper
+        end
+
+        # Every reader asks this too. True when the control answers
         # method_missing with something other than Ruflet's own
         # Kernel#method_missing (ruflet_ui.rb, defined just before install!
         # runs): one the app added on the object, a control class, a
@@ -261,20 +326,28 @@ module Ruflet
           full.split("::").last(2).join
         end
 
-        # Arguments and a block go to the app's method unchanged. Without one,
-        # a call with arguments raises what a zero-argument method raises on
-        # CRuby and in the embedded VM alike, and a block is ignored, as any
-        # Ruby reader ignores it.
+        # In order: a method after the reader module (see the module comment),
+        # unless it is an app method_missing's turn or Ruflet's own extension
+        # helper on a plain read; then the app's method_missing; then the
+        # reader itself. Arguments, keyword arguments and a block go to the
+        # app's method or method_missing unchanged. Without one, a call with
+        # arguments raises what a zero-argument method raises on CRuby and in
+        # the embedded VM alike, and a block is ignored, as any Ruby reader
+        # ignores it.
         def define_reader(readers, name, after)
           key = name.to_s
           symbol = key.to_sym
           api = self
           readers.send(:define_method, symbol) do |*args, **options, &block|
-            if api.app_method_after?(after, symbol)
+            plain = args.empty? && options.empty?
+            found = api.app_method_after?(after, symbol) &&
+                    !(plain && block.nil? && api.ruflet_helper_after?(after, symbol))
+            answering = api.app_method_missing?(self)
+            if found && (!answering || api.public_method_after?(after, symbol))
               super(*args, **options, &block)
-            elsif api.app_method_missing?(self)
+            elsif answering
               method_missing(symbol, *args, **options, &block)
-            elsif args.empty? && options.empty?
+            elsif plain
               props[key]
             else
               given = args.length + (options.empty? ? 0 : 1)

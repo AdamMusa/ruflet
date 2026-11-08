@@ -171,11 +171,17 @@ class RufletClientStateReadersTest < Minitest::Test
   # directory, `require "ruflet"` loads ruflet_ui.rb a second time and
   # Kernel#method_missing is defined again. That is still Ruflet's own, so the
   # readers keep answering, and an app that wraps it afterwards still gets the
-  # call. Loading the readers file again adds no warning.
+  # call. Loading the readers file again adds no warning, and the extension
+  # helper recorded before the reload is still told apart from an app method.
   def test_readers_survive_the_framework_being_loaded_again
     out = run_ruby(<<~RUBY)
       require "ruflet"
       require "stringio"
+      class ExpandedControl < Ruflet::Control
+        def initialize(**props) = super(type: "expanded", **props)
+      end
+      Ruflet::Extensions.register_control(:expanded, control_class: ExpandedControl)
+      tile = Ruflet.expansion_tile(title: Ruflet.text("More"), expanded: true)
       toggle = Ruflet.switch(label: "Dark mode", value: false)
       before = toggle.value
       first_method_missing = Kernel.instance_method(:method_missing)
@@ -187,7 +193,7 @@ class RufletClientStateReadersTest < Minitest::Test
       warnings = $stderr.string.lines.grep(/client_state_readers/)
       $stderr = STDERR
       reloaded = Kernel.instance_method(:method_missing) != first_method_missing
-      after = [toggle.value, Ruflet.switch(value: true).value]
+      after = [toggle.value, Ruflet.switch(value: true).value, tile.expanded]
       module Kernel
         alias_method :ruflet_method_missing, :method_missing
         private :ruflet_method_missing
@@ -198,7 +204,7 @@ class RufletClientStateReadersTest < Minitest::Test
       print [reloaded, before, after, warnings, toggle.value].inspect
     RUBY
 
-    assert_equal "[true, false, [false, true], [], :wrapped]", out
+    assert_equal "[true, false, [false, true, true], [], :wrapped]", out
   end
 
   # Readers exist only where the table says: every method defined in
@@ -335,23 +341,171 @@ class RufletClientStateReadersTest < Minitest::Test
     end
   end
 
-  # A method_missing the app added to answer property reads keeps answering.
+  # A method_missing the app added to answer property reads keeps answering,
+  # and gets the arguments, keyword arguments and block, as on main.
   def test_an_app_method_missing_still_answers
     toggle = Ruflet.switch(label: "Dark mode", value: false)
 
     with_app_methods(Ruflet::Control, <<~RUBY) do
       def method_missing(name, *args, **options, &block)
-        name == :value ? [:app_method_missing, props["value"], args] : super
+        name == :value ? [:app_method_missing, props["value"], args, options, block&.call] : super
       end
     RUBY
-      assert_equal [:app_method_missing, false, []], toggle.value
-      assert_equal [:app_method_missing, false, [1]], toggle.value(1)
+      assert_equal [:app_method_missing, false, [], {}, nil], toggle.value
+      assert_equal [:app_method_missing, false, [1], {}, nil], toggle.value(1)
+      assert_equal [:app_method_missing, false, [], { upcase: true }, nil], toggle.value(upcase: true)
+      assert_equal [:app_method_missing, false, [], {}, :block], toggle.value { :block }
+      assert_equal [:app_method_missing, false, [1], { upcase: true }, :block], toggle.value(1, upcase: true) { :block }
     end
     with_app_methods(Ruflet::Control, "def method_missing(name, *args, **options, &block) = super") do
       error = assert_raises(NoMethodError) { toggle.value }
       assert_equal :value, error.name
     end
     assert_equal false, toggle.value
+  end
+
+  # An app with its own method_missing that also has a private or protected
+  # method of that name above the table class (a top-level helper, say). On
+  # main, CRuby sent `control.value` to the method_missing: a call with a
+  # receiver cannot reach a private or protected method. It still does, with
+  # the arguments, keyword arguments and block. A public method there still
+  # comes first, as it did on main.
+  def test_an_app_method_missing_still_wins_over_private_and_protected_methods
+    toggle = Ruflet.switch(label: "Dark mode", value: false)
+    missing = <<~RUBY
+      def method_missing(name, *args, **options, &block)
+        name == :value ? [:app_method_missing, props["value"], args, options, block&.call] : super
+      end
+    RUBY
+    answered = [:app_method_missing, false, [], {}, nil]
+
+    with_app_methods(Ruflet::Control, missing) do
+      with_app_methods(Object, "private def value(*, **) = :top_level_helper") do
+        assert_equal answered, toggle.value
+        assert_equal [:app_method_missing, false, [1], { upcase: true }, :block], toggle.value(1, upcase: true) { :block }
+        assert_equal answered, toggle.public_send(:value)
+        # The known difference (see the module comment): main reached the
+        # helper from these, which the reader cannot tell from a call with
+        # a receiver.
+        assert_equal answered, toggle.instance_eval { value }
+        assert_equal answered, toggle.instance_eval { self.value }
+        assert_equal answered, toggle.send(:value)
+      end
+      with_app_methods(Ruflet::Control, <<~RUBY) do
+        protected def value = :protected_app_method
+        def peek(other) = other.value
+      RUBY
+        assert_equal answered, toggle.value
+        # The known difference for a protected method: main reached it from
+        # another control.
+        assert_equal answered, Ruflet.switch(value: true).peek(toggle)
+      end
+      # What decides is the first method after the reader, as in Ruby's own
+      # lookup: TextInputMethods comes before Object.
+      field = Ruflet.text_field(label: "Name", value: "Ada")
+      with_app_methods(Ruflet::UI::Controls::TextInputMethods, "private def value = :text_input") do
+        assert_equal [:app_method_missing, "Ada", [], {}, nil], field.value
+        with_app_methods(Object, "def value = :public_object_method") do
+          assert_equal [:app_method_missing, "Ada", [], {}, nil], field.value
+        end
+      end
+      with_app_methods(Object, "def value = :public_object_method") do
+        assert_equal :public_object_method, toggle.value
+      end
+      assert_equal answered, toggle.value
+    end
+    assert_equal false, toggle.value
+  end
+
+  # The same in a real script: its own method_missing on Ruflet::Control and
+  # a top-level helper of the same name. Main printed true and left no
+  # instance variable on the chip.
+  def test_a_script_method_missing_still_wins_over_its_top_level_helper
+    out = run_ruby(<<~RUBY)
+      require "ruflet"
+      class Ruflet::Control
+        def method_missing(name, *args, &block)
+          return props[name.to_s] if args.empty? && block.nil? && props.key?(name.to_s)
+
+          super
+        end
+      end
+      def selected = (@selected ||= [])
+      chip = Ruflet.chip(label: Ruflet.text("Tag"), selected: true)
+      print [chip.selected, chip.instance_variable_defined?(:@selected), selected].inspect
+    RUBY
+
+    assert_equal "[true, false, []]", out
+  end
+
+  # An extension registered after Ruflet loads gets a private Kernel DSL
+  # helper. One named like a reader (Flutter's Expanded, say) is Ruflet's
+  # helper, not an app method: a plain `tile.expanded` returns the tile's
+  # state and builds nothing (main raised "private method 'expanded'
+  # called"). Calls with arguments or a block still reach the helper, an app
+  # method_missing still answers, and so does an app's own Kernel#expanded.
+  def test_an_extension_helper_named_like_a_reader_does_not_answer_plain_reads
+    out = run_ruby(<<~RUBY)
+      require "ruflet"
+      class ExpandedControl < Ruflet::Control
+        def initialize(**props) = super(type: "expanded", **props)
+      end
+      Ruflet::Extensions.register_control(:expanded, control_class: ExpandedControl)
+      roots = -> { Ruflet::DSL._pending_app.instance_variable_get(:@roots).map(&:type) }
+      results = []
+
+      tile = Ruflet.expansion_tile(title: Ruflet.text("More"), expanded: true)
+      results << tile.expanded << tile.public_send(:expanded) << roots.call
+      column = Ruflet.column do
+        inner = expansion_tile(title: text("x"), expanded: false)
+        results << inner.expanded
+      end
+      results << column.children.map(&:type) << roots.call
+      # Known difference: a plain call without a receiver from inside the tile
+      # built an empty `expanded` control on main.
+      results << tile.instance_eval { expanded }
+
+      # With arguments or a block, the helper still builds the control.
+      class Ruflet::UI::Controls::RufletComponents::ExpansionTileControl
+        def body_from_args = expanded(content: Ruflet.text("body"))
+        def body_from_block = expanded { nil }
+      end
+      results << tile.body_from_args.type << tile.body_from_block.type
+      results << expanded(content: text("top")).type
+
+      other = Ruflet.expansion_tile(title: Ruflet.text("x"), expanded: true)
+      def other.method_missing(name, *args, **options, &block)
+        name == :expanded ? :object_method_missing : super
+      end
+      results << other.expanded
+
+      # App methods of that name still answer: a top-level helper (a private
+      # Object method, before Kernel), and the app's own Kernel#expanded.
+      def expanded(**) = :top_level_helper
+      results << tile.instance_eval { expanded } << tile.expanded
+      Object.send(:remove_method, :expanded)
+      module Kernel
+        private def expanded(**) = :app_kernel_method
+      end
+      results << tile.instance_eval { expanded } << tile.expanded
+
+      # A module the table class includes comes before Kernel too:
+      # TextFieldControl includes TextInputMethods.
+      class SelectionControl < Ruflet::Control
+        def initialize(**props) = super(type: "selection", **props)
+      end
+      Ruflet::Extensions.register_control(:selection, control_class: SelectionControl)
+      field = Ruflet.text_field(label: "Name", value: "Ada")
+      results << field.selection
+      Ruflet::UI::Controls::TextInputMethods.module_eval { def selection = :text_input_method }
+      results << field.selection
+      print results.inspect
+    RUBY
+
+    assert_equal '[true, true, [], false, ["expansiontile"], [], true, ' \
+                 '"expanded", "expanded", "expanded", :object_method_missing, ' \
+                 ":top_level_helper, :top_level_helper, :app_kernel_method, :app_kernel_method, " \
+                 "nil, :text_input_method]", out
   end
 
   # One the app adds to Object for everything answers too, as on main.

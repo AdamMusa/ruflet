@@ -271,11 +271,60 @@ Ruflet::Control.send(:remove_method, :value)
 
 Ruflet::Control.class_eval do
   def method_missing(name, *args, **options, &block)
-    name == :value ? [:app_method_missing, props["value"], args] : super
+    name == :value ? [:app_method_missing, props["value"], args, options, block ? block.call : nil] : super
   end
 end
-assert_equal([:app_method_missing, false, []], toggle.value, "app method_missing still answers")
-assert_equal([:app_method_missing, false, [1]], toggle.value(1), "app method_missing gets the arguments")
+answered = [:app_method_missing, false, [], {}, nil]
+assert_equal(answered, toggle.value, "app method_missing still answers")
+assert_equal([:app_method_missing, false, [1], {}, nil], toggle.value(1), "app method_missing gets the arguments")
+assert_equal([:app_method_missing, false, [], { upcase: true }, nil], toggle.value(upcase: true),
+             "app method_missing gets the keyword arguments")
+assert_equal([:app_method_missing, false, [], {}, :block], toggle.value { :block }, "app method_missing gets the block")
+assert_equal([:app_method_missing, false, [1], { upcase: true }, :block], toggle.value(1, upcase: true) { :block },
+             "app method_missing gets arguments, keyword arguments and block together")
+
+# With a private or protected method of that name above the table class too
+# (a top-level helper, say), `control.value` still goes to the method_missing,
+# as CRuby sent it there without the reader. A public one still comes first.
+Object.class_eval do
+  def value(*args, **options)
+    :top_level_helper
+  end
+  private :value
+end
+assert_equal(answered, toggle.value, "app method_missing wins over a private Object helper")
+assert_equal([:app_method_missing, false, [1], { upcase: true }, :block], toggle.value(1, upcase: true) { :block },
+             "app method_missing wins over a private Object helper, with arguments and block")
+assert_equal(answered, toggle.public_send(:value), "app method_missing wins over a private Object helper (public_send)")
+Object.send(:remove_method, :value)
+Ruflet::Control.class_eval do
+  def value
+    :protected_app_method
+  end
+  protected :value
+end
+assert_equal(answered, toggle.value, "app method_missing wins over a protected Ruflet::Control#value")
+Ruflet::Control.send(:remove_method, :value)
+Object.class_eval do
+  def value
+    :public_object_method
+  end
+end
+assert_equal(:public_object_method, toggle.value, "a public Object#value still comes before the app method_missing")
+# What decides is the first method after the reader: TextInputMethods comes
+# before Object in a text field's lookup.
+Ruflet::UI::Controls::TextInputMethods.class_eval do
+  def value
+    :text_input
+  end
+  private :value
+end
+assert_equal([:app_method_missing, "Ada", [], {}, nil], text_field.value,
+             "a private TextInputMethods#value ahead of a public Object#value still sends the call to method_missing")
+Ruflet::UI::Controls::TextInputMethods.send(:remove_method, :value)
+Object.send(:remove_method, :value)
+assert_equal(answered, toggle.value, "app method_missing answers again once the other methods are gone")
+
 Ruflet::Control.send(:remove_method, :method_missing)
 assert_equal(false, toggle.value, "the reader answers again once method_missing is gone")
 
@@ -367,6 +416,76 @@ Ruflet::Control.send(:prepend, Module.new { def selected_index; :prepended; end 
 assert_equal(:prepended, later_tabs.selected_index, "module prepended to Ruflet::Control")
 Ruflet::UI::Controls::RufletComponents::TabsControl.send(:include, Module.new { def selected_index; "from module"; end })
 assert_equal("from module", later_tabs.selected_index, "module included into the table class")
+
+# -- An extension helper named like a reader ----------------------------------
+# register_control gives an extension registered after Ruflet loads a private
+# Kernel DSL helper. Ruflet's own helper is not an app method: a plain read
+# returns the state and builds nothing; calls with arguments or a block still
+# reach the helper. Last, because the helper cannot be taken out again.
+class ExpandedTestControl < Ruflet::Control
+  def initialize(**props)
+    super(type: "expanded", **props)
+  end
+end
+registered = begin
+  Ruflet::Extensions.register_control(:expanded, control_class: ExpandedTestControl)
+  true
+rescue TypeError
+  # This mruby rejects the String helper name register_control passes to
+  # Kernel.send(:private, ...), on main too: a separate, earlier bug.
+  false
+end
+assert(registered || RUBY_ENGINE == "mruby", "register_control works on CRuby")
+if registered
+  tile = Ruflet.expansion_tile(title: Ruflet.text("More"), expanded: true)
+  pending_roots = Ruflet::DSL._pending_app.instance_variable_get(:@roots).length
+  assert_equal(true, tile.expanded, "tile.expanded reads the state, not the extension helper")
+  assert_equal(pending_roots, Ruflet::DSL._pending_app.instance_variable_get(:@roots).length,
+               "tile.expanded builds no control")
+  built = tile.instance_eval { expanded(content: Ruflet.text("body")) }
+  assert_equal("expanded", built.type, "the helper with arguments still builds the control")
+  built = tile.instance_eval { expanded { nil } }
+  assert_equal("expanded", built.type, "the helper with a block still builds the control")
+  other_tile = Ruflet.expansion_tile(title: Ruflet.text("Other"), expanded: true)
+  def other_tile.method_missing(name, *args, **options, &block)
+    name == :expanded ? :object_method_missing : super
+  end
+  assert_equal(:object_method_missing, other_tile.expanded, "an app method_missing still answers")
+
+  # App methods of that name still answer: a private Object method (a
+  # top-level helper), then the app's own Kernel#expanded.
+  Object.class_eval do
+    def expanded(**options)
+      :top_level_helper
+    end
+    private :expanded
+  end
+  assert_equal(:top_level_helper, tile.instance_eval { expanded }, "a private Object#expanded still answers")
+  Object.send(:remove_method, :expanded)
+  module Kernel
+    def expanded(**options)
+      :app_kernel_method
+    end
+    private :expanded
+  end
+  assert_equal(:app_kernel_method, tile.instance_eval { expanded }, "an app Kernel#expanded still answers")
+
+  # A module the table class includes comes before Kernel too.
+  class SelectionTestControl < Ruflet::Control
+    def initialize(**props)
+      super(type: "selection", **props)
+    end
+  end
+  Ruflet::Extensions.register_control(:selection, control_class: SelectionTestControl)
+  text_input = Ruflet.text_field(label: "Name", value: "Ada")
+  assert_equal(nil, text_input.selection, "text_field.selection reads the state, not the extension helper")
+  Ruflet::UI::Controls::TextInputMethods.class_eval do
+    def selection
+      :text_input_method
+    end
+  end
+  assert_equal(:text_input_method, text_input.selection, "a TextInputMethods#selection the app adds still answers")
+end
 
 if $failures.empty?
   puts "client_state_readers_test (#{RUBY_ENGINE}): #{$tests} assertions passed"
