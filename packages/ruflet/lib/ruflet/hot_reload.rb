@@ -245,8 +245,9 @@ module Ruflet
       # not, the app just runs, without hot reload.
       def serve_app(interceptable:)
         loaded = load_script!
-        # The app's own server was served from its script and has stopped.
-        return loaded if @served_from_script
+        # The app's own server was served from its script and has stopped,
+        # and the rest of the script handed nothing else over.
+        return loaded if @served_from_script && @server.nil?
 
         unless @server
           raise Error, "#{@script} never called Ruflet.run" if interceptable
@@ -326,8 +327,12 @@ module Ruflet
         begin
           start.call
         ensure
-          @served_from_script = true
+          # Once it stops, the runner lets it go: the rest of the script runs
+          # as it does on v0.0.23, so a Ruflet.run there is intercepted and
+          # served by the runner's own server after the load.
           stop
+          @server = nil
+          @served_from_script = true
         end
       end
 

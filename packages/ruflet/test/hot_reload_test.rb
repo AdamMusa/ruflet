@@ -465,11 +465,46 @@ class RufletHotReloadTest < Minitest::Test
 
     first.stop
     wait_until("the second server is bound") { $second_server&.port.to_i.positive? }
-    assert_same first, @runner.server, "the second server is the script's own again"
+    assert_nil @runner.server, "the runner lets the stopped server go and leaves the second to the script"
   ensure
     $second_server&.stop
     stop_served_runner
     $second_server = nil
+  end
+
+  # On v0.0.23 a script that called Ruflet.run once its own server had
+  # stopped had that Ruflet.run intercepted, and the runner's own server
+  # served it after the load, with hot reload. It still does: the runner
+  # lets the app's stopped server go instead of keeping it as the one it
+  # serves.
+  def test_ruflet_run_after_the_apps_own_server_stops_is_served_by_the_runner
+    write_widgets("v1")
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+      require_relative "widgets"
+
+      unless $own_server
+        $own_server = Ruflet::Server.new(host: "127.0.0.1", port: 0) { |page| page.add("own") }
+        $own_server.start
+      end
+      Ruflet.run { |page| page.add(WIDGET_LABEL) }
+    RUBY
+    @runner = new_runner
+    @thread = Thread.new { @runner.run }
+    wait_until("the app's own server is bound") { $own_server&.port.to_i.positive? }
+    assert_same $own_server, @runner.server
+    assert_equal ["own"], render
+
+    $own_server.stop
+    wait_until("the runner's own server serves") { @runner.server.is_a?(FakeServer) && @runner.watching? }
+    assert_equal ["v1"], render
+    write_widgets("v2")
+    wait_until("reload") { @runner.reload_count >= 1 }
+    assert_equal ["v2"], render
+  ensure
+    $own_server&.stop
+    $own_server = nil
   end
 
   # On v0.0.23 a server the script starts itself after an intercepted
