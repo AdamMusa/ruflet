@@ -50,19 +50,15 @@ module Ruflet
         end
         puts "  Flutter: #{flutter_version_summary(tools)}"
         ok = system(tools[:env], tools[:flutter], "doctor", *(verbose ? ["-v"] : []))
-        status = $?.exitstatus if $?
-        status ||= ok ? 0 : 1
-        status
+        system_exit_code(ok)
       end
 
       def command_devices(args)
         tools = ensure_flutter!("devices")
-        system(tools[:env], tools[:flutter], "devices", *args)
-        $?.exitstatus || 1
+        system_exit_code(system(tools[:env], tools[:flutter], "devices", *args))
       end
 
       def command_emulators(args)
-        tools = ensure_flutter!("emulators")
         action = nil
         emulator_id = nil
         verbose = false
@@ -75,25 +71,22 @@ module Ruflet
         end
         parser.parse!(args)
 
-        case action
-        when "start"
-          unless emulator_id
-            warn "Missing --emulator for start"
-            return 1
-          end
-          cmd = [tools[:flutter], "emulators", "--launch", emulator_id]
-          cmd << "-v" if verbose
-          system(tools[:env], *cmd)
-          $?.exitstatus || 1
-        when "create", "delete"
+        # Settle what can be answered without Flutter before ensure_flutter!,
+        # which may install an SDK (or exit) on a machine without one.
+        if %w[create delete].include?(action)
           warn "ruflet emulators --#{action} is not implemented yet. Use your platform tools."
-          1
-        else
-          cmd = [tools[:flutter], "emulators"]
-          cmd << "-v" if verbose
-          system(tools[:env], *cmd)
-          $?.exitstatus || 1
+          return 1
         end
+        if action == "start" && !emulator_id
+          warn "Missing --emulator for start"
+          return 1
+        end
+
+        tools = ensure_flutter!("emulators")
+        cmd = [tools[:flutter], "emulators"]
+        cmd += ["--launch", emulator_id] if action == "start"
+        cmd << "-v" if verbose
+        system_exit_code(system(tools[:env], *cmd))
       end
 
       def command_debug(args)
@@ -142,11 +135,21 @@ module Ruflet
           end
         end
 
-        system(tools[:env], *cmd, chdir: client_dir)
-        $?.exitstatus || 1
+        system_exit_code(system(tools[:env], *cmd, chdir: client_dir))
       end
 
       private
+
+      # The exit code for a command run with Kernel#system. system's own result
+      # decides success: $? is per thread and still describes the previous
+      # child when system spawned none, so reading it alone could report a
+      # stale status. $? only supplies the code of a command that failed.
+      def system_exit_code(ok)
+        return 0 if ok
+
+        code = $?&.exitstatus
+        code.nil? || code.zero? ? 1 : code
+      end
 
       def resolve_ruby_runtime_root
         env_path = ENV["RUFLET_RUBY_RUNTIME_PATH"].to_s.strip

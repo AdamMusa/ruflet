@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "fileutils"
 
 class RufletCliNewCommandTest < Minitest::Test
   def test_command_new_creates_project_scaffold
@@ -252,6 +253,54 @@ class RufletCliNewCommandTest < Minitest::Test
       cli_singleton.send(:define_method, :ensure_cached_ruflet_client_template!, original_cache_method)
       cli_singleton.send(:private, :resolve_ruflet_client_template_root)
       cli_singleton.send(:private, :ensure_cached_ruflet_client_template!)
+    end
+  end
+
+  def test_command_new_requires_an_app_name
+    [[], [""], ["  "]].each do |argv|
+      _out, err = capture_io { assert_equal 1, Ruflet::CLI.command_new(argv.dup), argv.inspect }
+      assert_includes err, "Usage: ruflet new <appname>"
+    end
+  end
+
+  def test_command_new_refuses_an_existing_directory
+    Dir.mktmpdir do |dir|
+      Dir.chdir(dir) do
+        FileUtils.mkdir_p("taken")
+        _out, err = capture_io { assert_equal 1, Ruflet::CLI.command_new(["taken"]) }
+        assert_includes err, "Directory already exists:"
+        assert_empty Dir.children(File.join(dir, "taken"))
+      end
+    end
+  end
+
+  # There are no options, so these used to scaffold directories named
+  # "--help" and "--force".
+  def test_command_new_treats_dashed_names_as_options
+    Dir.mktmpdir do |dir|
+      Dir.chdir(dir) do
+        %w[-h --help].each do |flag|
+          out, = capture_io { assert_equal 0, Ruflet::CLI.command_new([flag]) }
+          assert_includes out, "Usage: ruflet new <appname>"
+        end
+
+        _out, err = capture_io { assert_equal 1, Ruflet::CLI.command_new(["--force"]) }
+        assert_includes err, "Unknown option: --force"
+        assert_empty Dir.children(dir)
+      end
+    end
+  end
+
+  def test_create_and_the_new_aliases_scaffold_through_the_dispatcher
+    Dir.mktmpdir do |dir|
+      Dir.chdir(dir) do
+        Ruflet::CLI.stub(:download_ruflet_assets, ->(*) {}) do
+          %w[create new bootstrap init].each do |command|
+            capture_io { assert_equal 0, Ruflet::CLI.run([command, "#{command}_app"]) }
+            assert File.file?(File.join(dir, "#{command}_app", "main.rb")), command
+          end
+        end
+      end
     end
   end
 end

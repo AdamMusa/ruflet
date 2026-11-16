@@ -56,6 +56,12 @@ module Ruflet
         print_help
         1
       end
+    rescue OptionParser::ParseError => e
+      # An unknown flag or a bad value (`run --port abc`) is a usage error,
+      # not a crash: say which and exit 1 instead of printing a backtrace.
+      warn "ruflet #{command}: #{e.message}"
+      warn "Run `ruflet help` for usage."
+      1
     end
 
     def print_help
@@ -63,28 +69,29 @@ module Ruflet
         Ruflet CLI
 
         Commands:
-          ruflet --version
+          ruflet --version                 (also: version, -v)
           ruflet create <appname>
-          ruflet new <appname>
+          ruflet new <appname>             (also: bootstrap, init)
           ruflet run [scriptname|path] [--web|--desktop] [--port PORT] [--no-reload]
-          ruflet update [web|desktop|all] [--check] [--force] [--platform PLATFORM]
-          ruflet debug [scriptname|path]
-          ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--lite|--full|--self] [--verbose]
-          ruflet install [--device DEVICE_ID] [--verbose]
-          ruflet devices
-          ruflet emulators
+          ruflet update [web|desktop|all|check] [--web] [--desktop] [--check] [--force] [--platform macos|linux|windows]
+          ruflet debug [web|macos|windows|linux|ios|android] [--platform NAME] [--device-id ID] [--release] [--web-renderer NAME] [--verbose]
+          ruflet build <apk|android|aab|appbundle|ios|ipa|web|macos|windows|linux> [--lite|--full|--self] [--verbose] [flutter args...]
+          ruflet install [--device|-d DEVICE_ID] [--verbose]
+          ruflet devices [flutter args...]
+          ruflet emulators [--start --emulator ID] [--verbose]
           ruflet doctor [--fix] [--verbose]
+          ruflet help                      (also: -h, --help)
 
         Build profiles:
-          --self           Self-contained lite build (default profile)
+          (none)           Server-driven client; mobile targets need backend_url in ruflet.yaml
+          --self           Self-contained build with the embedded lite runtime
           --self --full    Self-contained full CRuby build with locked project gems
-          --full           Also implies --self
+          --lite, --full   Each implies --self
       HELP
     end
 
     def bootstrap(path)
       command_new([path || Dir.pwd])
-      0
     end
 
     def version_string

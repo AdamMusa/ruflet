@@ -138,7 +138,7 @@ module Ruflet
         verbose = args.delete("--verbose") || args.delete("-v")
         platform = (args.shift || "").downcase
         if platform.empty?
-          warn "Usage: ruflet build <apk|android|aab|ios|ipa|web|macos|windows|linux> [--lite|--full|--self] [--verbose]"
+          warn "Usage: ruflet build <apk|android|aab|appbundle|ios|ipa|web|macos|windows|linux> [--lite|--full|--self] [--verbose]"
           return 1
         end
 
@@ -152,6 +152,10 @@ module Ruflet
         # signing, icons, package name — is the same as a plain iOS build.
         requested_platform = platform
         platform = "ios" if platform == "ipa"
+        # `appbundle` is Flutter's name for `aab`. The platform checks below
+        # spell it `aab`, so a build under the other name skipped the app
+        # identity check, the package-name rewrite and the stale-asset clearing.
+        platform = "aab" if platform == "appbundle"
         @ruflet_build_platform = platform
 
         # The embedded Ruby VM is a native plugin with no browser
@@ -435,15 +439,35 @@ module Ruflet
         end
       end
 
+      # Flutter's own ids for the desktop and browser devices.
+      DESKTOP_INSTALL_DEVICES = %w[macos windows linux].freeze
+      WEB_INSTALL_DEVICES = %w[chrome edge web-server].freeze
+
+      # Which build outputs a `flutter install -d ID` needs. The named devices
+      # come first: the Android rule takes any dash-free id, so it used to claim
+      # `linux`, `windows` and pre-2018 40-hex iPhone UDIDs.
       def install_platform_for_device(device_id)
         return inferred_install_platform unless device_id
 
-        return "android" if device_id.include?("emulator-") || device_id.match?(/\A[a-z0-9._:-]+\z/i) && device_id != "macos" && device_id != "chrome" && !device_id.include?("-")
-        return "ios" if device_id.match?(/\A[0-9A-F-]{8,}\z/i)
-        return "macos" if device_id == "macos"
-        return "web" if device_id == "chrome"
+        id = device_id.to_s.strip
+        return id if DESKTOP_INSTALL_DEVICES.include?(id)
+        return "web" if WEB_INSTALL_DEVICES.include?(id)
+        # emulator-5554, and the adb-<serial>-<id>._adb-tls-connect._tcp ids
+        # of wireless debugging, which contain dashes.
+        return "android" if id.start_with?("emulator-", "adb-")
+        return "ios" if ios_device_id?(id)
+        return "android" if id.match?(/\A[a-z0-9._:]+\z/i)
+        return "ios" if id.match?(/\A[0-9A-F-]{8,}\z/i)
 
         inferred_install_platform
+      end
+
+      # A simulator UUID, a current device UDID (00008030-001A2D3C0E12802E) or
+      # a 40-hex UDID from devices before 2018.
+      def ios_device_id?(id)
+        ios_simulator_device_id?(id) ||
+          id.match?(/\A[0-9A-F]{8}-[0-9A-F]{16}\z/i) ||
+          id.match?(/\A[0-9A-F]{40}\z/i)
       end
 
       def validate_install_artifacts(client_dir, platform:, device_id:)
@@ -563,7 +587,7 @@ module Ruflet
         return false unless validate_mobile_app_identity(metadata, platform: platform)
 
         apply_native_service_permissions(client_dir, config)
-        apply_android_signing_config(client_dir, platform, verbose: !!verbose)
+        return false if apply_android_signing_config(client_dir, platform, verbose: !!verbose) == false
         apply_ios_signing_team(client_dir, config) if %w[ios ipa macos].include?(platform.to_s)
         configured = configure_client_runtime_mode(client_dir, self_contained: self_contained, verbose: verbose)
         return false if configured == false
@@ -871,12 +895,20 @@ module Ruflet
         nil
       end
 
-      def load_ruflet_config
+      # RUFLET_CONFIG, else ruflet.yaml, falling back to ruflet.yml when the
+      # first choice does not exist. Loading and asset configuration must agree
+      # on this: they used to resolve it separately, and a RUFLET_CONFIG naming
+      # a missing file loaded ruflet.yml but configured assets as if there were
+      # no config at all.
+      def ruflet_config_path
         config_path = ENV["RUFLET_CONFIG"] || "ruflet.yaml"
-        unless File.file?(config_path)
-          alt = "ruflet.yml"
-          config_path = alt if File.file?(alt)
-        end
+        return config_path if File.file?(config_path)
+
+        File.file?("ruflet.yml") ? "ruflet.yml" : config_path
+      end
+
+      def load_ruflet_config
+        config_path = ruflet_config_path
         config_exists = File.file?(config_path)
         config = config_exists ? YAML.safe_load(read_text_file(config_path), aliases: true) || {} : {}
         config_dir = File.dirname(File.expand_path(config_path))
@@ -899,7 +931,7 @@ module Ruflet
       end
 
       def apply_build_config(client_dir, config = {})
-        config_path = ENV["RUFLET_CONFIG"] || (File.file?("ruflet.yaml") ? "ruflet.yaml" : "ruflet.yml")
+        config_path = ruflet_config_path
         config_present = File.file?(config_path)
         build = config["build"] || {}
         assets = config["assets"] || {}
@@ -1984,11 +2016,14 @@ module Ruflet
           return
         end
 
+        # A partial configuration fails the build like every other build
+        # config error. It used to warn and carry on, leaving whatever
+        # key.properties an earlier build wrote in the client.
         missing = ANDROID_SIGNING_KEYS.keys - properties.keys
         unless missing.empty?
           warn "build config error: Android signing is missing #{missing.join(', ')}"
           warn "Set them in android/key.properties or the matching RUFLET_ANDROID_* variables."
-          return
+          return false
         end
 
         body = ANDROID_SIGNING_KEYS.keys.map { |key| "#{key}=#{properties.fetch(key)}" }.join("\n")
@@ -3151,7 +3186,7 @@ module Ruflet
           set_plist_value(plist, "RufletRuntimeAutostart", "bool", "true")
           set_plist_value(plist, "RufletEmbeddedProject", "string", project)
           build_log(verbose, "enabled runtime autostart in #{platform}/Runner/Info.plist")
-        when "apk", "appbundle", "android"
+        when "apk", "aab", "appbundle", "android"
           manifest = File.join(
             client_dir, "android", "app", "src", "main", "AndroidManifest.xml"
           )
