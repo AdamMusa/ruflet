@@ -207,8 +207,16 @@ module RufletRecord
       @attributes.dup
     end
 
+    # Columns, and the writers belongs_to defines (Post.new(user: user)).
     def assign_attributes(values)
-      values.each { |name, value| write_attribute(name, value) }
+      values.each do |name, value|
+        key = name.to_s
+        if !self.class.columns_hash.key?(key) && self.class.method_defined?("#{key}=")
+          public_send("#{key}=", value)
+        else
+          write_attribute(key, value)
+        end
+      end
       self
     end
 
