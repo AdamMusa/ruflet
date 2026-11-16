@@ -83,7 +83,7 @@ module RufletRecord
       def columns(table_name)
         select_all("PRAGMA table_info(#{SQL.quote_identifier(table_name)})").map do |row|
           Column.new(
-            row["name"], row["type"], row["notnull"].to_i == 1,
+            row["name"], row["type"], row["notnull"].to_i != 1,
             row["dflt_value"], row["pk"].to_i == 1
           )
         end
