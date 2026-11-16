@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "../../icon_data"
 require_relative "../icon_constant_names"
 require_relative "../cupertino_icon_lookup"
 
@@ -32,11 +31,13 @@ module Ruflet
       end
     end
 
+    # A name in this set, as a CupertinoIconName. See Ruflet::MaterialIcons.[].
     def [](name)
-      icon = icons[name.to_s.upcase.to_sym]
-      return icon.to_s.downcase unless icon.nil?
+      found = Ruflet::CupertinoIconLookup.icon_name_for(name)
+      return found unless found.nil?
 
-      Ruflet::CupertinoIconLookup.canonical_name_for(name) || name.to_s
+      icon = icons[name.to_s.upcase.to_sym]
+      icon.nil? ? name.to_s : Ruflet::CupertinoIconLookup.icon_name(icon)
     end
 
     def constants(_inherit = true)
@@ -44,11 +45,11 @@ module Ruflet
     end
 
     def all
-      icons.values.map { |name| name.to_s.downcase }
+      icons.values.map { |name| Ruflet::CupertinoIconLookup.icon_name(name) }
     end
 
     def random
-      all.sample || "question_circle"
+      all.sample || Ruflet::CupertinoIconLookup.icon_name("question_circle")
     end
 
     def names
@@ -57,16 +58,17 @@ module Ruflet
 
     class << self
       # See Ruflet::MaterialIcons.resolve_constant.
-      def resolve_constant(name)
+      def resolve_constant(name, index: true)
         return const_get(name) if const_defined?(name, false)
         return const_set(:ICONS, icons) if name == :ICONS
 
         key = name.to_s
         source = Ruflet::CupertinoIconLookup.icon_map
-        return const_set(name, key.downcase) if source.key?(key)
+        return const_set(name, Ruflet::CupertinoIconLookup.icon_name(key)) if source.key?(key)
+        return nil unless index
 
         icon = icons[name]
-        icon.nil? ? nil : const_set(name, icon.to_s.downcase)
+        icon.nil? ? nil : const_set(name, Ruflet::CupertinoIconLookup.icon_name(icon))
       end
 
       def const_missing(name)

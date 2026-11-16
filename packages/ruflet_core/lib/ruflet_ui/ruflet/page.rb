@@ -7,8 +7,7 @@ require_relative "ui/widget_builder"
 require_relative "ui/control_factory"
 require_relative "ui/service_types"
 require_relative "types/device_info"
-require_relative "icons/material_icon_lookup"
-require_relative "icons/cupertino_icon_lookup"
+require_relative "icon_data"
 require "set"
 require "cgi"
 require "uri"
@@ -2086,7 +2085,9 @@ module Ruflet
     def normalize_value(key, value)
       if icon_prop_key?(key)
         return normalize_icon_name(value.value) if value.is_a?(Ruflet::IconData)
-        return normalize_icon_name(value.to_s) if value.is_a?(String) || value.is_a?(Symbol)
+        # Not value.to_s, which drops a MaterialIconName/CupertinoIconName's set.
+        return normalize_icon_name(value) if value.is_a?(String)
+        return normalize_icon_name(value.to_s) if value.is_a?(Symbol)
         return value if value.is_a?(Ruflet::Control)
         return value if value.nil?
 
@@ -2098,8 +2099,7 @@ module Ruflet
     end
 
     def normalize_icon_name(value)
-      codepoint = Ruflet::MaterialIconLookup.codepoint_for(value)
-      codepoint = Ruflet::CupertinoIconLookup.codepoint_for(value) if codepoint.nil?
+      codepoint = Ruflet::IconData.codepoint_for(value)
       return codepoint unless codepoint.nil?
 
       raise ArgumentError, "page icon must use a known icon name, not #{value.inspect}"

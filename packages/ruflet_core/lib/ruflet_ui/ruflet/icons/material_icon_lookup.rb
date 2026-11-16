@@ -3,6 +3,14 @@
 require "json"
 
 module Ruflet
+  # An icon name from the Material set, as Ruflet::MaterialIcons hands it out.
+  # It is a String, so it compares, interpolates and serializes like the plain
+  # name, but an icon prop resolves it in the Material table only: the two
+  # sets share 101 names (ADD, HOME, ...) with different codepoints, and a
+  # name taken from one set must not render as the other's icon, or load the
+  # other's table.
+  class MaterialIconName < String; end
+
   module MaterialIconLookup
     module_function
 
@@ -42,6 +50,18 @@ module Ruflet
       end
 
       nil
+    end
+
+    # The canonical name for value as a MaterialIconName, or nil when value is
+    # not a Material icon. One probe of the compiled map; never builds the
+    # constant-name index.
+    def icon_name_for(value)
+      name = canonical_name_for(value)
+      name.nil? ? nil : icon_name(name)
+    end
+
+    def icon_name(text)
+      MaterialIconName.new(text.to_s.downcase).freeze
     end
 
     def icon_map

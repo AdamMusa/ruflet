@@ -60,6 +60,43 @@ check.call("Icons::HOME", Ruflet::Icons::HOME, "home")
 check.call("Icons.material[:add]", Ruflet::Icons.material[:add], "add")
 check.call("Icons.cupertino[:add]", Ruflet::Icons.cupertino[:add], "add")
 
+# A single name never needs the constant-name index: building it interns a
+# symbol per icon, the cost this file exists to keep out of the VM.
+check.call(
+  "single-name lookups leave the Material constant index unbuilt",
+  Ruflet::MaterialIcons.instance_variable_defined?(:@icons),
+  false
+)
+check.call("Icons::HOUSE_FILL", Ruflet::Icons::HOUSE_FILL, "house_fill")
+check.call(
+  "a Cupertino-only umbrella name leaves the Material constant index unbuilt",
+  Ruflet::MaterialIcons.instance_variable_defined?(:@icons),
+  false
+)
+
+# ADD is in both sets with different codepoints. A name keeps the set it was
+# taken from on any control; a plain string still resolves Material first.
+check.call(
+  "cupertino_button(icon: CupertinoIcons::ADD) sends the Cupertino codepoint",
+  Ruflet::DSL.cupertino_button("x", icon: Ruflet::CupertinoIcons::ADD).props["icon"],
+  0x20000
+)
+check.call(
+  "button(icon: Icons.cupertino[:add]) sends the Cupertino codepoint",
+  Ruflet::DSL.button("x", icon: Ruflet::Icons.cupertino[:add]).props["icon"],
+  0x20000
+)
+check.call(
+  "cupertino_button(icon: MaterialIcons::ADD) sends the Material codepoint",
+  Ruflet::DSL.cupertino_button("x", icon: Ruflet::MaterialIcons::ADD).props["icon"],
+  65604
+)
+check.call(
+  "a plain \"add\" still resolves Material first",
+  Ruflet::DSL.cupertino_button("x", icon: "add").props["icon"],
+  65604
+)
+
 # "CLASS_" is the one icon out of 10,147 whose constant name differs from its
 # map key (the trailing underscore is stripped), so Ruflet::MaterialIcons::CLASS
 # is the only reference that exercises the reverse-index path rather than a

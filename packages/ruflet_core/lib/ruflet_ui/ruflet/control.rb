@@ -6,8 +6,6 @@ rescue LoadError
   nil
 end
 require_relative "icon_data"
-require_relative "icons/material_icon_lookup"
-require_relative "icons/cupertino_icon_lookup"
 require_relative "form_fields"
 require "set"
 
@@ -251,14 +249,16 @@ module Ruflet
       return normalize_icon_name(value.value) if value.is_a?(Ruflet::IconData)
       return value.map { |item| normalize_icon_prop(key, item) } if value.is_a?(Array)
       return value.each_with_object({}) { |(k, v), out| out[k] = normalize_icon_prop(key, v) } if value.is_a?(Hash)
-      return normalize_icon_name(value.to_s) if value.is_a?(String) || value.is_a?(Symbol)
+      # Not value.to_s: on a MaterialIconName or CupertinoIconName that drops
+      # the icon set the name came from.
+      return normalize_icon_name(value) if value.is_a?(String)
+      return normalize_icon_name(value.to_s) if value.is_a?(Symbol)
 
       raise ArgumentError, "#{type} #{key} must use an icon name string, not #{value.inspect}"
     end
 
     def normalize_icon_name(value)
-      codepoint = Ruflet::MaterialIconLookup.codepoint_for(value)
-      codepoint = Ruflet::CupertinoIconLookup.codepoint_for(value) if codepoint.nil?
+      codepoint = Ruflet::IconData.codepoint_for(value)
       return codepoint unless codepoint.nil?
 
       raise ArgumentError, "#{type} icon must use a known icon name, not #{value.inspect}"

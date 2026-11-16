@@ -3,6 +3,10 @@
 require "json"
 
 module Ruflet
+  # An icon name from the Cupertino set. See Ruflet::MaterialIconName: an icon
+  # prop resolves it in the Cupertino table only.
+  class CupertinoIconName < String; end
+
   module CupertinoIconLookup
     module_function
 
@@ -42,6 +46,18 @@ module Ruflet
       end
 
       nil
+    end
+
+    # The canonical name for value as a CupertinoIconName, or nil when value is
+    # not a Cupertino icon. One probe of the compiled map; never builds the
+    # constant-name index.
+    def icon_name_for(value)
+      name = canonical_name_for(value)
+      name.nil? ? nil : icon_name(name)
+    end
+
+    def icon_name(text)
+      CupertinoIconName.new(text.to_s.downcase).freeze
     end
 
     def icon_map

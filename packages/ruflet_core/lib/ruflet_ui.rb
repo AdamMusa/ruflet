@@ -105,22 +105,26 @@ module Ruflet
         @cupertino ||= IconGroup.new(Ruflet::CupertinoIcons)
       end
 
+      # Material first. Both compiled maps are probed before either set builds
+      # its constant-name index, so a Cupertino-only name does not pay for
+      # Material's whole table.
       def const_missing(name)
-        resolved = Ruflet::MaterialIcons.resolve_constant(name)
-        return resolved unless resolved.nil?
-
-        resolved = Ruflet::CupertinoIcons.resolve_constant(name)
-        return resolved unless resolved.nil?
-
-        super
+        resolved = Ruflet::MaterialIcons.resolve_constant(name, index: false) ||
+                   Ruflet::CupertinoIcons.resolve_constant(name, index: false) ||
+                   Ruflet::MaterialIcons.resolve_constant(name) ||
+                   Ruflet::CupertinoIcons.resolve_constant(name)
+        resolved.nil? ? super : resolved
       end
 
+      # Probes the compiled maps directly, Material first. It used to ask
+      # const_defined?, which with deferred constants is false for every icon
+      # nobody has referenced yet, so the result's type depended on what ran
+      # earlier, and a name that is not a valid constant ("arrow back") raised
+      # NameError.
       def [](name)
-        key = name.to_s.upcase.to_sym
-        return Ruflet::MaterialIcons.const_get(key) if Ruflet::MaterialIcons.const_defined?(key, false)
-        return Ruflet::CupertinoIcons.const_get(key) if Ruflet::CupertinoIcons.const_defined?(key, false)
-
-        Ruflet::IconData.new(name.to_s)
+        Ruflet::MaterialIconLookup.icon_name_for(name) ||
+          Ruflet::CupertinoIconLookup.icon_name_for(name) ||
+          Ruflet::IconData.new(name.to_s)
       end
     end
   end
