@@ -134,6 +134,8 @@ module RufletRecord
           elsif value == false
             0
           elsif value.is_a?(Time)
+            # Stored as UTC wall-clock text, which Column#cast reads as UTC.
+            value = value.getutc
             "%04d-%02d-%02d %02d:%02d:%02d" % [
               value.year, value.month, value.day,
               value.hour, value.min, value.sec
