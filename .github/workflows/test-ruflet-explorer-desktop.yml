@@ -26,6 +26,9 @@ on:
 permissions:
   contents: read
 
+# ubuntu-24.04, not ubuntu-latest: ruby/setup-ruby has no build of the
+# .ruby-version Ruby (3.4.5) for ubuntu-26.04, which ubuntu-latest moved to
+# in November 2026, so every Linux job failed at "Set up Ruby".
 jobs:
   build-explorer:
     name: Ruflet Explorer (${{ matrix.target }})
@@ -35,7 +38,7 @@ jobs:
       matrix:
         include:
           - target: linux
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
           - target: windows
             runner: windows-latest
 
