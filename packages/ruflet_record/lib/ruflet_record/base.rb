@@ -12,7 +12,6 @@ module RufletRecord
       def inherited(subclass)
         super
         Base.descendants << subclass
-        subclass.instance_variable_set(:@connection, @connection)
         subclass.instance_variable_set(:@primary_key, @primary_key || "id")
         subclass.instance_variable_set(:@validators, validators.dup)
         subclass.instance_variable_set(:@abstract_class, false)
@@ -29,8 +28,13 @@ module RufletRecord
         @connection
       end
 
+      # The nearest connection up the class chain, so a model defined before
+      # its abstract parent's establish_connection still uses it.
       def connection
-        @connection || RufletRecord.connection
+        return @connection if @connection
+        return RufletRecord.connection if self == Base
+
+        superclass.connection
       end
 
       def table_name
