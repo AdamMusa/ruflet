@@ -46,6 +46,32 @@ class MapExtensionCompatibilityTest < Minitest::Test
     assert_equal "zoom_in", @sent.last[1]["name"]
   end
 
+  # move_to's destination is optional, but nil (and a Hash with no latitude
+  # and longitude) used to recurse in normalize_coordinates until the stack
+  # ran out, since nil.to_h and Hash#to_h both return a Hash.
+  def test_move_to_without_a_destination_sends_only_what_was_given
+    map = Ruflet.map([], initial_center: [0, 0])
+    @page.add(map)
+
+    map.move_to(zoom: 9, rotation: 45)
+    assert_equal "move_to", @sent.last[1]["name"]
+    assert_equal({ "zoom" => 9, "rotation" => 45 }, @sent.last[1]["args"])
+
+    map.move_to(destination: { latitude: 1.5, longitude: 2.5 })
+    assert_equal({ "destination" => { "latitude" => 1.5, "longitude" => 2.5 } }, @sent.last[1]["args"])
+
+    map.center_on({ "x" => 1 })
+    assert_equal({ "point" => { "x" => 1 } }, @sent.last[1]["args"])
+  end
+
+  # The DSL helpers convert coordinates the same way, and overflowed the same.
+  def test_helpers_accept_unset_or_unrecognised_coordinates
+    assert_nil Ruflet.map([], initial_center: nil).props["initial_center"]
+
+    marker = Ruflet.marker(coordinates: { "x" => 1 }, content: Ruflet.text("Pin"))
+    assert_equal({ "x" => 1 }, marker.to_patch["coordinates"])
+  end
+
   def test_rich_attribution_family_uses_current_flet_wire_types
     image = Ruflet.image_source_attribution(Ruflet.image(src: "logo.png"), height: 24)
     text = Ruflet.text_source_attribution("OpenStreetMap", prepend_copyright: true, on_click: ->(_event) {})

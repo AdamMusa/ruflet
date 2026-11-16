@@ -72,16 +72,27 @@ module Ruflet
             runtime_page&.invoke(self, name, args: args, timeout: timeout, on_result: on_result)
           end
 
+          # [lat, lon], { latitude:, longitude: } (or lat:/lon:/lng:), or an
+          # object with to_h giving one of those. Anything else, nil included,
+          # is passed on unchanged: Hash#to_h and nil.to_h return a Hash, so
+          # converting those again would never end.
           def normalize_coordinates(value)
             case value
+            when nil
+              nil
             when Array
               return { "latitude" => value[0], "longitude" => value[1] } if value.length >= 2
+
+              value
             when Hash
               latitude = value["latitude"] || value[:latitude] || value["lat"] || value[:lat]
               longitude = value["longitude"] || value[:longitude] || value["lon"] || value[:lon] || value["lng"] || value[:lng]
               return { "latitude" => latitude, "longitude" => longitude } unless latitude.nil? || longitude.nil?
+
+              value
+            else
+              value.respond_to?(:to_h) ? normalize_coordinates(value.to_h) : value
             end
-            value.respond_to?(:to_h) ? normalize_coordinates(value.to_h) : value
           end
 
           def normalize_map_value(value)

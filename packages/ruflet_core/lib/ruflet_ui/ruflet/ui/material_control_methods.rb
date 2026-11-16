@@ -5,16 +5,26 @@ require_relative "animation_values"
 module Ruflet
   module UI
     module MaterialControlMethods
+      # Like MapControl#normalize_coordinates: nil, short Arrays and Hashes
+      # without coordinates pass through, since converting nil or a Hash with
+      # to_h again would never end.
       def map_coordinates(value)
         case value
+        when nil
+          nil
         when Array
           return { "latitude" => value[0], "longitude" => value[1] } if value.length >= 2
+
+          value
         when Hash
           latitude = value["latitude"] || value[:latitude] || value["lat"] || value[:lat]
           longitude = value["longitude"] || value[:longitude] || value["lon"] || value[:lon] || value["lng"] || value[:lng]
           return { "latitude" => latitude, "longitude" => longitude } unless latitude.nil? || longitude.nil?
+
+          value
+        else
+          value.respond_to?(:to_h) ? map_coordinates(value.to_h) : value
         end
-        value.respond_to?(:to_h) ? map_coordinates(value.to_h) : value
       end
 
       def map_coordinate_list(value)
