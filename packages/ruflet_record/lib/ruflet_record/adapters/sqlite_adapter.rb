@@ -133,6 +133,10 @@ module RufletRecord
             1
           elsif value == false
             0
+          elsif value.is_a?(Hash) || value.is_a?(Array)
+            # Only json columns hold these; sqlite3 would read a Hash as
+            # named binds and reject an Array.
+            Column.dump_json(value)
           elsif value.is_a?(Time)
             # Stored as UTC wall-clock text, which Column#cast reads as UTC.
             value = value.getutc
