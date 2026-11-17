@@ -59,16 +59,23 @@ module Ruflet
     #   public or private, comes after the reader in the lookup. The reader
     #   checks for one on every call and hands the call to it with `super`,
     #   arguments and block included.
-    # * When the app added a method_missing (see app_method_missing?), the
-    #   reader hands the call to it the same way, unless the method after the
-    #   reader is public, or protected on Object, Kernel or a module Object
-    #   includes. That is what CRuby did without the reader: a call with a
-    #   receiver goes to method_missing when the method is private, or
-    #   protected and the caller is not an instance of the module that has
-    #   it, and every caller is an Object. The method after the reader is the
-    #   one Ruby's lookup finds first, so a private Ruflet::Control#value
-    #   hides a public Object#value, in the embedded VM too (see
-    #   method_after).
+    # * When the app added a method_missing, in front of Ruflet's own
+    #   Kernel#method_missing in the lookup, in place of it, or after it (in a
+    #   module included into Kernel, or on BasicObject; see
+    #   app_method_missing?), the reader hands the call to method_missing,
+    #   arguments and block included, so it reaches the app's through
+    #   Ruflet's Kernel#method_missing when the app's comes after it. It does
+    #   not when the method after the reader is public, or protected on
+    #   Object, Kernel or a module Object includes. That is what CRuby did
+    #   without the reader: a call with a receiver goes to method_missing when
+    #   the method is private, or protected and the caller is not an instance
+    #   of the module that has it, and every caller is an Object. The method
+    #   after the reader is the one Ruby's lookup finds first, so a private
+    #   Ruflet::Control#value hides a public Object#value, in the embedded VM
+    #   too (see method_after). (mruby stopped a call with a receiver at
+    #   Ruflet's private Kernel#method_missing and raised, so on v0.0.23 a
+    #   method_missing after it answered no `control.value` there; the reader
+    #   reaches it in the VM as on CRuby.)
     # * The private Kernel DSL helper Ruflet::Extensions.register_control
     #   defines for an extension registered after Ruflet loaded (`expanded`,
     #   say) is Ruflet's, not the app's. A plain `tile.expanded` reads the
@@ -228,14 +235,17 @@ module Ruflet
         # that list is empty, which the tests check on CRuby and in the
         # embedded VM.
         #
-        # Every call records Kernel#method_missing as Ruflet's own (see
-        # app_method_missing?), because ruflet_ui.rb has just defined it. When
-        # ruflet_ui.rb is loaded again (`ruflet run` hot reload re-requires the
-        # framework when its sources sit inside the watched app directory), it
-        # redefines Kernel#method_missing and calls this again, so the readers
-        # keep answering instead of taking the new definition for an app's.
+        # Every call records the method_missing definitions that are not the
+        # app's (see app_method_missing?): Kernel#method_missing, which
+        # ruflet_ui.rb has just defined, SharedControlForwarders#method_missing,
+        # which it loaded earlier, and Ruby's own BasicObject#method_missing.
+        # When the framework is loaded again (`ruflet run` hot reload
+        # re-requires it when its sources sit inside the watched app
+        # directory), Ruflet's two are defined again and ruflet_ui.rb calls
+        # this again, so the readers keep answering instead of taking the new
+        # definitions for an app's.
         def install!
-          @ruflet_method_missing = Kernel.instance_method(:method_missing)
+          record_method_missing
           return @skipped unless @skipped.nil?
 
           @skipped = define_readers(table).freeze
@@ -247,7 +257,7 @@ module Ruflet
         # install! calls it with the table; the tests call it with their own
         # classes to check the guard.
         def define_readers(pairs)
-          @ruflet_method_missing ||= Kernel.instance_method(:method_missing)
+          record_method_missing unless @ruflet_method_missing
           @method_of ||= Kernel.instance_method(:method)
           skipped = []
           pairs.each do |klass, names|
@@ -337,28 +347,81 @@ module Ruflet
           mod && mod.ancestors.find { |ancestor| own_method?(ancestor, symbol) }
         end
 
-        # Every reader asks this too. True when the control answers
-        # method_missing with something other than Ruflet's own
-        # Kernel#method_missing (ruflet_ui.rb, defined just before install!
-        # runs): one the app added on the object, a control class, a
+        # Every reader asks this too. True when an app method_missing answers
+        # a call that reaches method_missing on the control, as one answered
+        # `control.value` before the reader existed. Ruflet's own definitions
+        # and Ruby's are not the app's (see record_method_missing). The app's
+        # can come first in the lookup: on the object, a control class, a
         # subclass, Object, a module in between, or in place of Ruflet's on
-        # Kernel. Before the reader existed, that method_missing answered
-        # `control.value`. Kernel#method is used unbound, so a control that
-        # has a `method` of its own cannot change the answer. Only the owner
-        # is compared for the control's method, and only Kernel's own two
-        # UnboundMethods with ==: what == says about a method taken from an
-        # object differs between Ruby versions. The owner differs for one
-        # thing: a class that only changes the visibility of method_missing
-        # (`public :method_missing`) is its owner on Ruby 3.2 and later, so
-        # it counts as an app method_missing there, and not on Ruby 3.1. A
-        # read raised NoMethodError in such an app on v0.0.23; on 3.2 and
-        # later it still does, on 3.1 the reader answers.
+        # Kernel. Or it can come after Ruflet's Kernel#method_missing
+        # (app_method_missing_after_kernel?).
+        #
+        # Kernel#method is used unbound, so a control that has a `method` of
+        # its own cannot change the answer. Only the owner is compared for the
+        # control's method, and the modules' own UnboundMethods with ==: what
+        # == says about a method taken from an object differs between Ruby
+        # versions. The owner differs for one thing: a class that only changes
+        # the visibility of method_missing (`public :method_missing`) is its
+        # owner on Ruby 3.2 and later, so it counts as an app method_missing
+        # there, and not on Ruby 3.1. A read raised NoMethodError in such an
+        # app on v0.0.23; on 3.2 and later it still does, on 3.1 the reader
+        # answers.
         def app_method_missing?(control)
-          !@method_of.bind_call(control, :method_missing).owner.equal?(Kernel) ||
-            Kernel.instance_method(:method_missing) != @ruflet_method_missing
+          return true unless @method_of.bind_call(control, :method_missing).owner.equal?(Kernel)
+          return true unless Kernel.instance_method(:method_missing) == @ruflet_method_missing
+
+          app_method_missing_after_kernel?
         end
 
         private
+
+        # Asked when the first method_missing in the lookup is Ruflet's
+        # Kernel#method_missing. For a call with no arguments and no block it
+        # calls `super` at once, and so does
+        # SharedControlForwarders#method_missing, which Kernel includes. So on
+        # v0.0.23 `control.value` reached the next method_missing after them:
+        # one in a module the app included into Kernel (it comes after
+        # SharedControlForwarders when it was included before Ruflet loaded,
+        # in front of it when included later), one the app defined on
+        # BasicObject in place of Ruby's own, or one in a module prepended to
+        # BasicObject. True when there is such a method_missing. The walk
+        # stops at Ruby's own BasicObject#method_missing: it raises
+        # NoMethodError and calls nothing after it, so a module included into
+        # BasicObject was never reached.
+        def app_method_missing_after_kernel?
+          kernel = Kernel.ancestors
+          chain = kernel.drop(kernel.index(Kernel) + 1).concat(BasicObject.ancestors)
+          chain.each do |mod|
+            next unless any_method?(mod, :method_missing)
+
+            found = mod.instance_method(:method_missing)
+            owner = found.owner
+            if owner.equal?(SharedControlForwarders)
+              return true unless found == @forwarders_method_missing
+            else
+              return !owner.equal?(BasicObject) || found != @ruby_method_missing
+            end
+          end
+          false
+        end
+
+        # What install! records: Ruflet's Kernel#method_missing and
+        # SharedControlForwarders#method_missing, and Ruby's own
+        # BasicObject#method_missing, or nil when BasicObject's is already the
+        # app's (defined before Ruflet loaded). Each is taken from its module,
+        # as app_method_missing? takes it, so == compares the definitions.
+        # Ruby's is built in: on CRuby and in the embedded VM it has no
+        # source_location and its parameters have no names. One written in
+        # Ruby has a source_location on CRuby, and named parameters in the
+        # embedded VM (where Ruflet's compiled framework has no
+        # source_location either).
+        def record_method_missing
+          @ruflet_method_missing = Kernel.instance_method(:method_missing)
+          @forwarders_method_missing = SharedControlForwarders.instance_method(:method_missing)
+          ruby = any_method?(BasicObject, :method_missing) && BasicObject.instance_method(:method_missing)
+          built_in = ruby && ruby.source_location.nil? && ruby.parameters.all? { |_kind, name| name.nil? }
+          @ruby_method_missing = built_in ? ruby : nil
+        end
 
         # Public, protected or private, on the module or anything it includes
         # or inherits. mruby's method_defined? already counts private methods,

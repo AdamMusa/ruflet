@@ -700,6 +700,99 @@ class RufletClientStateReadersTest < Minitest::Test
     assert_equal "[[false, 1], :wrapped, :selected_index]", out
   end
 
+  # An app method_missing can also come after Ruflet's own
+  # Kernel#method_missing in the lookup: in a module the app includes into
+  # Kernel (after Ruflet's SharedControlForwarders when it is included before
+  # Ruflet loads, in front of it when included later), or on BasicObject in
+  # place of Ruby's own, defined before or after Ruflet loads. Ruflet's two
+  # pass a plain call on with `super`, so on main `toggle.value` reached that
+  # method_missing, and it still does. With an argument the call reaches
+  # Ruflet's Kernel#method_missing as on main, which builds a generic `value`
+  # control for a Ruflet object on CRuby. A name the app's method_missing
+  # does not answer raises, as on main. Each case in its own process: none of
+  # them can be undone.
+  def test_a_method_missing_after_ruflets_own_still_answers
+    kernel_module = <<~RUBY
+      module AppMethodMissing
+        def method_missing(name, *args, **options, &block)
+          name == :value ? [:kernel_module, args, options] : super
+        end
+      end
+      Kernel.include(AppMethodMissing)
+    RUBY
+    basic_object = <<~RUBY
+      class BasicObject
+        alias_method :ruby_method_missing, :method_missing
+        private :ruby_method_missing
+        def method_missing(name, *args, **options, &block)
+          return ruby_method_missing(name, *args, **options, &block) unless name == :value
+
+          [:basic_object, args, options]
+        end
+      end
+    RUBY
+    reads = <<~RUBY
+      toggle = Ruflet.switch(label: "Dark mode", value: false)
+      tabs = Ruflet.tabs(selected_index: 1, length: 2, content: Ruflet.text("x"))
+      chain = Object.ancestors
+      place = defined?(AppMethodMissing) ? chain.index(AppMethodMissing) <=> chain.index(Ruflet::UI::SharedControlForwarders) : nil
+      built = toggle.value(1)
+      unanswered = begin
+        tabs.selected_index
+      rescue NoMethodError => e
+        [e.class, e.name]
+      end
+      print [place, toggle.value, [built.class, built.type, built.props["value"]], unanswered].inspect
+    RUBY
+    load_ruflet = "require \"ruflet\"\n"
+
+    [
+      [load_ruflet + kernel_module, -1, :kernel_module],
+      [kernel_module + load_ruflet, 1, :kernel_module],
+      [load_ruflet + basic_object, nil, :basic_object],
+      [basic_object + load_ruflet, nil, :basic_object]
+    ].each do |setup, place, answer|
+      out = run_ruby(setup + reads)
+      expected = "[#{place.inspect}, [#{answer.inspect}, [], {}], [Ruflet::Control, \"value\", 1], " \
+                 "[NoMethodError, :selected_index]]"
+      assert_equal expected, out, setup
+    end
+  end
+
+  # Ruby's own BasicObject#method_missing raises and calls nothing after it,
+  # so a method_missing in a module included into BasicObject was never
+  # reached: main raised NoMethodError for `toggle.value`, and the reader
+  # answers. Once the app puts Ruby's own back in place of its
+  # BasicObject#method_missing, the reader answers again.
+  def test_a_method_missing_that_was_never_reached_does_not_count
+    out = run_ruby(<<~RUBY)
+      require "ruflet"
+      toggle = Ruflet.switch(label: "Dark mode", value: false)
+      BasicObject.include(Module.new do
+        def method_missing(name, *args, **options, &block)
+          name == :value ? :never_reached : super
+        end
+      end)
+      unreached = toggle.value
+      class BasicObject
+        alias_method :ruby_method_missing, :method_missing
+        private :ruby_method_missing
+        def method_missing(name, *args, **options, &block)
+          name == :value ? :basic_object : ruby_method_missing(name, *args, **options, &block)
+        end
+      end
+      replaced = toggle.value
+      class BasicObject
+        alias_method :method_missing, :ruby_method_missing
+        private :method_missing
+        remove_method :ruby_method_missing
+      end
+      print [unreached, replaced, toggle.value].inspect
+    RUBY
+
+    assert_equal "[false, :basic_object, false]", out
+  end
+
   # An app subclass of a table class that answers through its own
   # method_missing keeps answering; plain subclasses get the reader.
   def test_an_app_subclass_method_missing_still_answers

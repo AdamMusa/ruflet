@@ -425,6 +425,83 @@ module Kernel
 end
 assert_equal(false, toggle.value, "the reader answers again once Ruflet's method_missing is back")
 
+# A method_missing after Ruflet's own Kernel#method_missing in the lookup: in a
+# module the app includes into Kernel, or on BasicObject in place of Ruby's
+# own. Ruflet's Kernel#method_missing, and the SharedControlForwarders one
+# after it, pass a plain call on with super, so CRuby's `toggle.value` reached
+# it without the reader, and it still does. (This mruby stopped a call with a
+# receiver at Ruflet's private Kernel#method_missing and raised "private method
+# 'value' called"; the reader now reaches the app's there too.) With an
+# argument the call reaches Ruflet's Kernel#method_missing, as without the
+# reader: on CRuby that builds a generic control for a Ruflet object, and the
+# VM passes the call on. The modules stay included, empty, for the rest of the
+# file.
+module LaterKernelMethodMissing
+  def method_missing(name, *args, **options, &block)
+    name == :value ? [:kernel_module, args, options] : super
+  end
+end
+Kernel.send(:include, LaterKernelMethodMissing)
+after_kernel_names = Object.ancestors
+assert(after_kernel_names.index(Kernel) < after_kernel_names.index(LaterKernelMethodMissing) &&
+         after_kernel_names.index(LaterKernelMethodMissing) < after_kernel_names.index(Ruflet::UI::SharedControlForwarders),
+       "a module included into Kernel after Ruflet loads comes between Kernel and SharedControlForwarders")
+assert_equal([:kernel_module, [], {}], toggle.value, "a method_missing in a module included into Kernel answers")
+with_argument = toggle.value(1)
+if RUBY_ENGINE == "mruby"
+  assert_equal([:kernel_module, [1], {}], with_argument, "the VM's Kernel#method_missing passes an argument on to it")
+else
+  assert_equal(["value", 1], [with_argument.type, with_argument.props["value"]],
+               "CRuby's Kernel#method_missing builds a generic control for a call with an argument")
+end
+assert_raises(NoMethodError, "a name that method_missing does not answer still raises") { tabs.selected_index }
+LaterKernelMethodMissing.send(:remove_method, :method_missing)
+assert_equal(false, toggle.value, "the reader answers again once that method_missing is gone")
+# Included into Kernel before Ruflet loads, such a module comes after
+# SharedControlForwarders instead. The VM always loads Ruflet first, so this
+# puts one in that place by including it into SharedControlForwarders.
+module EarlierKernelMethodMissing
+  def method_missing(name, *args, **options, &block)
+    name == :value ? [:earlier_kernel_module, args, options] : super
+  end
+end
+Ruflet::UI::SharedControlForwarders.send(:include, EarlierKernelMethodMissing)
+after_kernel_names = Object.ancestors
+assert(after_kernel_names.index(Ruflet::UI::SharedControlForwarders) < after_kernel_names.index(EarlierKernelMethodMissing) &&
+         after_kernel_names.index(EarlierKernelMethodMissing) < after_kernel_names.index(BasicObject),
+       "that module comes between SharedControlForwarders and BasicObject")
+assert_equal([:earlier_kernel_module, [], {}], toggle.value, "a method_missing after SharedControlForwarders answers")
+assert_raises(NoMethodError, "a name that one does not answer still raises") { tabs.selected_index }
+EarlierKernelMethodMissing.send(:remove_method, :method_missing)
+assert_equal(false, toggle.value, "the reader answers again once that one is gone")
+# Ruby's own BasicObject#method_missing raises and calls nothing after it, so a
+# module included into BasicObject was never reached, and does not count.
+module UnreachedMethodMissing
+  def method_missing(name, *args, **options, &block)
+    name == :value ? :never_reached : super
+  end
+end
+BasicObject.send(:include, UnreachedMethodMissing)
+assert_equal(false, toggle.value, "a method_missing after Ruby's own does not count")
+UnreachedMethodMissing.send(:remove_method, :method_missing)
+class BasicObject
+  alias_method :ruby_method_missing_for_test, :method_missing
+  private :ruby_method_missing_for_test
+  def method_missing(name, *args, **options, &block)
+    return ruby_method_missing_for_test(name, *args, **options, &block) unless name == :value
+
+    [:basic_object, args, options]
+  end
+end
+assert_equal([:basic_object, [], {}], toggle.value, "a BasicObject#method_missing the app puts in place of Ruby's answers")
+assert_raises(NoMethodError, "a name it does not answer still raises") { tabs.selected_index }
+class BasicObject
+  alias_method :method_missing, :ruby_method_missing_for_test
+  private :method_missing
+  remove_method :ruby_method_missing_for_test
+end
+assert_equal(false, toggle.value, "the reader answers again once Ruby's own BasicObject#method_missing is back")
+
 class AnsweringSwitch < Ruflet::UI::Controls::RufletComponents::SwitchControl
   def method_missing(name, *args, **options, &block)
     name == :value ? [:subclass, props["value"]] : super
