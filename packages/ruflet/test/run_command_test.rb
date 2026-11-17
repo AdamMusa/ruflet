@@ -758,6 +758,56 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
+  # A DSL app that traps USR1 itself. On v0.0.23 "r" ran that handler and
+  # never reloaded; on main "r" stayed queued. It now reloads the app and
+  # still runs the app's handler, each time: a reload traps USR1 again from
+  # the top of the script, and the runner takes over from that handler too.
+  OWN_TRAP_DSL_APP = <<~RUBY
+    $ruflet_test_progress ||= File.open(ENV.fetch("TEST_PROGRESS_FIFO"), "w")
+    $ruflet_test_loads = ($ruflet_test_loads || 0) + 1
+    load_number = $ruflet_test_loads
+    require "ruflet"
+    require "ruflet_server"
+    Signal.trap("USR1") do
+      $ruflet_test_progress.write("H\#{load_number}")
+      $ruflet_test_progress.flush
+    end
+    $ruflet_test_progress.write("L\#{load_number}")
+    $ruflet_test_progress.flush
+    Ruflet.app(host: "127.0.0.1", port: 0) { text("hi") }.run
+  RUBY
+
+  def test_r_reloads_a_dsl_app_that_traps_usr1_itself_and_still_runs_its_handler
+    runner = SignalSpyRunner.new
+    with_gated_app_session(runner, app: OWN_TRAP_DSL_APP) do |run_state, _spawn_app, env, cmd, dir|
+      log_reader, log_writer = IO.pipe
+      runner.send(:spawn_app_child, env, cmd, run_state, out: File::NULL, err: log_writer)
+      log_writer.close
+      # The harness logs a reload once it is done, the runner's trap back
+      # in place: only then can the next "r" reach it.
+      reloads = Queue.new
+      log_thread = Thread.new { log_reader.each_line { |line| reloads << line if line.include?("reloaded in") } }
+      progress = File.open(File.join(dir, "progress"), "r")
+      assert_equal "L1", read_progress(progress, 2)
+      assert run_state[:ready_thread].join(30), "the app never reported ready"
+      assert run_state[:ready], "the app must report ready"
+
+      [1, 2].each do |load|
+        capture_io { assert runner.send(:handle_reload_command, "r", run_state) }
+        # The handler runs as USR1 arrives, the reload on the harness's
+        # watcher thread: in either order.
+        reported = [read_progress(progress, 2), read_progress(progress, 2)].sort
+        assert_equal ["H#{load}", "L#{load + 1}"], reported, "r must run the app's handler and reload the app"
+        next_from(reloads, "reload #{load}")
+      end
+      assert_equal [run_state[:child_pid]] * 2, runner.reload_signals
+      assert_nil Process.waitpid(run_state[:child_pid], Process::WNOHANG)
+    ensure
+      log_thread&.kill&.join
+      [progress, log_reader].each { |io| io.close if io && !io.closed? }
+    end
+  end
+
   # main.rb requires app.rb, which starts the app with `Ruflet.app { }.run`.
   # The app reported ready and "r" was sent, but the reload it started
   # waited forever on app.rb's require (the app's own server serves from
@@ -835,11 +885,11 @@ class RufletCliRunCommandTest < Minitest::Test
     end
   end
 
-  # The next 3-byte progress report; the limit only stops a hung reload from
-  # hanging the suite.
-  def read_progress(io)
+  # The next progress report (3 bytes unless given); the limit only stops a
+  # hung reload from hanging the suite.
+  def read_progress(io, bytes = 3)
     assert IO.select([io], nil, nil, 30), "the app never reported"
-    io.read(3)
+    io.read(bytes)
   end
 
   # The next entry of queue. The fallback these tests wait for fires at once

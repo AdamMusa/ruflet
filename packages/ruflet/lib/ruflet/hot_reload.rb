@@ -271,6 +271,85 @@ module Ruflet
     @server_hook_mutex = Mutex.new
     @server_class_watch = nil
 
+    # The USR1 trap while the app's own server serves it (see
+    # Runner#serve_from_script). USR1 asks for a reload, as for any app under
+    # the runner, and then runs the USR1 handler the app installed itself,
+    # as it runs on every USR1 without the runner: `r` in `ruflet run` and a
+    # USR1 from outside both run it. A reload runs the script again, which
+    # may trap USR1 again; the chain then takes over from that handler. Once
+    # the server stops, the app's latest handler is put back, so the rest of
+    # the script has it, as without the runner.
+    #
+    # Only a handler given as a callable (a block, proc, lambda or method)
+    # is run. One given as a command string ("IGNORE", "DEFAULT",
+    # "SYSTEM_DEFAULT", "EXIT", ...) is not: while the server serves, USR1
+    # only reloads, as it does for a Ruflet.run app. It is put back once the
+    # server stops all the same.
+    class AppTrapChain
+      # runner_trap: the runner's own USR1 handler, which the app may never
+      # have replaced, and which asks for a reload.
+      def initialize(runner_trap)
+        @runner_trap = runner_trap
+        @mutex = Mutex.new
+        @armed = false
+        @app_handler = nil
+        # Runs in trap context: no locks.
+        @handler = proc do |signo|
+          runner_trap.call(signo)
+          app_handler = @app_handler
+          app_handler.call(signo) if chained?(app_handler)
+        end
+      end
+
+      # Traps USR1 with the chain, which takes over from the handler it
+      # replaces. False if USR1 cannot be trapped.
+      def arm
+        return false unless Signal.list.key?("USR1")
+
+        @mutex.synchronize do
+          take_over(Signal.trap("USR1", @handler))
+          @armed = true
+        end
+        true
+      rescue ArgumentError, NotImplementedError
+        false
+      end
+
+      # After a reload, which may have trapped USR1 again: the chain takes
+      # over from that handler.
+      def rearm
+        @mutex.synchronize do
+          take_over(Signal.trap("USR1", @handler)) if @armed
+        end
+      rescue ArgumentError, NotImplementedError
+        nil
+      end
+
+      # Puts back the handler the chain took over from last, unless the app
+      # has trapped USR1 again since, whose handler then stays.
+      def restore
+        @mutex.synchronize do
+          next unless @armed
+
+          @armed = false
+          current = Signal.trap("USR1", @app_handler)
+          Signal.trap("USR1", current) unless current.equal?(@handler)
+        end
+      rescue ArgumentError, NotImplementedError
+        nil
+      end
+
+      private
+
+      def take_over(previous)
+        @app_handler = previous unless previous.equal?(@handler)
+      end
+
+      def chained?(handler)
+        !handler.nil? && !handler.is_a?(String) && !handler.equal?(@runner_trap) && handler.respond_to?(:call)
+      end
+    end
+
     DEFAULT_POLL_INTERVAL = 0.25
     EXCLUDED_DIRECTORIES = %w[
       .git
@@ -313,6 +392,10 @@ module Ruflet
         @reload_mutex = Mutex.new
         @served_from_script = false
         @requires_in_flight = nil
+        # The USR1 handler: one object, so the chain below can tell it apart
+        # from one the app installed.
+        @reload_trap = proc { @force_reload = true }
+        @app_trap = AppTrapChain.new(@reload_trap)
       end
 
       def run
@@ -344,7 +427,12 @@ module Ruflet
           started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           begin
             prune_watched_features!
-            load_script!(reloading: true)
+            begin
+              load_script!(reloading: true)
+            ensure
+              # The reloaded script may have trapped USR1 again.
+              @app_trap.rearm
+            end
             if @server.respond_to?(:reload_app!)
               @server.reload_app!
             else
@@ -417,12 +505,15 @@ module Ruflet
       end
 
       # Watches the app's files and tells `ruflet run` the app is up.
-      def arm_reload
+      # keep_app_trap: the app's own server serves it (serve_from_script),
+      # so a USR1 handler the app installed keeps running (AppTrapChain).
+      def arm_reload(keep_app_trap: false)
         @snapshot = file_snapshot
         start_watcher
         # Again after the app code, which may have replaced the trap. Without
         # it, `ruflet run` must never send "r": USR1 would kill the app.
-        install_manual_reload_trap ? signal_ready : close_ready_io
+        trapped = keep_app_trap ? @app_trap.arm : install_manual_reload_trap
+        trapped ? signal_ready : close_ready_io
       end
 
       def run_interceptor
@@ -491,16 +582,18 @@ module Ruflet
         script_load.untrace_verbose
         loading_verbose = $VERBOSE
         $VERBOSE = script_load.verbose if loading_verbose.nil? && !script_load.verbose_assigned?
-        arm_reload
+        # USR1 reloads, and still runs a USR1 handler the app installed.
+        arm_reload(keep_app_trap: true)
         begin
           start.call
         ensure
           # Once it stops, the runner lets it go: the rest of the script runs
           # as it does on v0.0.23, inside the load and with its $VERBOSE, so
           # a Ruflet.run there is intercepted and served by the runner's own
-          # server after the load. The requires it served from inside of
-          # finish with it.
+          # server after the load. It has the app's own USR1 handler back.
+          # The requires it served from inside of finish with it.
           stop
+          @app_trap.restore
           @server = nil
           @requires_in_flight = nil
           @served_from_script = true
@@ -626,7 +719,7 @@ module Ruflet
       def install_manual_reload_trap
         return false unless Signal.list.key?("USR1")
 
-        Signal.trap("USR1") { @force_reload = true }
+        Signal.trap("USR1", @reload_trap)
         true
       rescue ArgumentError, NotImplementedError
         false

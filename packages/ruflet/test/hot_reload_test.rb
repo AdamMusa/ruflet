@@ -847,6 +847,207 @@ class RufletHotReloadTest < Minitest::Test
     $serving_probe = $verbose_after_start = nil
   end
 
+  # Without the runner, a USR1 handler the app installs runs on every USR1
+  # (on v0.0.23 `r` ran it too). While the app's own server serves, USR1
+  # reloads the app and still runs that handler, with the signal number, as
+  # Ruby does. A reload traps USR1 again from the top of the script; USR1
+  # then reloads again and runs that new handler. Once the server stops,
+  # the rest of the script has the app's handler back.
+  def test_the_apps_own_usr1_handler_still_runs_while_its_own_server_serves
+    previous_usr1 = Signal.trap("USR1", "IGNORE")
+    $app_usr1 = Queue.new
+    # No file changes: only USR1 reloads here.
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+
+      $usr1_loads = ($usr1_loads || 0) + 1
+      load_number = $usr1_loads
+      $app_usr1_handler = proc { |signo| $app_usr1 << [load_number, signo] }
+      Signal.trap("USR1", $app_usr1_handler)
+      Ruflet.app(host: "127.0.0.1", port: 0) { text("load \#{load_number}") }.run
+      $usr1_after_run = Signal.trap("USR1", "IGNORE")
+      Signal.trap("USR1", $usr1_after_run)
+    RUBY
+    reader, writer = IO.pipe
+    writer.autoclose = false # the runner owns and closes this fd
+    ENV["RUFLET_READY_FD"] = writer.fileno.to_s
+
+    start_served_runner
+    assert IO.select([reader], nil, nil, 10), "the app must report ready to `ruflet run`"
+    assert_equal "t.", reader.read
+    first_handler = $app_usr1_handler
+
+    Process.kill("USR1", Process.pid)
+    assert_equal [1, Signal.list["USR1"]], Timeout.timeout(5) { $app_usr1.pop }, "USR1 runs the app's own handler"
+    wait_until("the reload USR1 asked for") { @runner.reload_count >= 1 }
+    assert_equal ["load 2"], render_labels
+    refute_same first_handler, $app_usr1_handler, "the reload trapped USR1 again"
+
+    Process.kill("USR1", Process.pid)
+    assert_equal [2, Signal.list["USR1"]], Timeout.timeout(5) { $app_usr1.pop }, "USR1 runs the handler the reload installed"
+    wait_until("the reload the second USR1 asked for") { @runner.reload_count >= 2 }
+    assert_equal ["load 3"], render_labels
+    assert $app_usr1.empty?, "each USR1 runs the app's handler once"
+
+    stop_served_runner
+    assert_same $app_usr1_handler, $usr1_after_run, "once its server stops, the script has its own handler back"
+  ensure
+    ENV.delete("RUFLET_READY_FD")
+    reader&.close
+    stop_served_runner
+    Signal.trap("USR1", previous_usr1) if previous_usr1
+    $app_usr1 = $app_usr1_handler = $usr1_after_run = $usr1_loads = nil
+  end
+
+  # A reload that fails after the script has trapped USR1 again leaves the
+  # runner's trap in place all the same: the next USR1 still reloads.
+  def test_usr1_still_reloads_after_a_failed_reload_that_trapped_it_again
+    previous_usr1 = Signal.trap("USR1", "IGNORE")
+    $app_usr1 = Queue.new
+    write_widgets("v1")
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+
+      Signal.trap("USR1") { |signo| $app_usr1 << signo }
+      require_relative "widgets"
+      Ruflet.app(host: "127.0.0.1", port: 0) { text(WIDGET_LABEL) }.run
+    RUBY
+    start_served_runner
+
+    File.write(File.join(@dir, "widgets.rb"), "def broken(\n")
+    wait_until("the failed reload") { @logs.count { |line| line.include?("reload failed") } >= 1 }
+    Process.kill("USR1", Process.pid)
+    assert_equal Signal.list["USR1"], Timeout.timeout(5) { $app_usr1.pop }
+    wait_until("the reload USR1 asked for") { @logs.count { |line| line.include?("reload failed") } >= 2 }
+    assert_equal 0, @runner.reload_count
+  ensure
+    stop_served_runner
+    Signal.trap("USR1", previous_usr1) if previous_usr1
+    $app_usr1 = nil
+  end
+
+  # USR1 cannot be trapped (the runner reports nothing, as for a Ruflet.run
+  # app in test_nothing_is_reported_when_usr1_cannot_be_trapped): the app's
+  # own server serves it all the same.
+  def test_an_app_served_by_its_own_server_reports_nothing_when_usr1_cannot_be_trapped
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+
+      Ruflet.app(host: "127.0.0.1", port: 0) { text("served") }.run
+    RUBY
+    reader, writer = IO.pipe
+    writer.autoclose = false # the runner owns and closes this fd
+    ENV["RUFLET_READY_FD"] = writer.fileno.to_s
+    trap = Signal.method(:trap)
+    refuse_usr1 = lambda do |signal, *rest, &handler|
+      raise ArgumentError, "can't trap reserved signal: SIGUSR1" if signal.to_s == "USR1"
+
+      trap.call(signal, *rest, &handler)
+    end
+
+    Signal.stub(:trap, refuse_usr1) do
+      start_served_runner
+      assert IO.select([reader], nil, nil, 10), "the runner must still close the fd"
+      assert_equal "", reader.read, "no trap, no report"
+    end
+    assert_equal ["served"], render_labels, "the app itself is still served"
+  ensure
+    ENV.delete("RUFLET_READY_FD")
+    reader&.close
+  end
+
+  # A handler given as a command string is not code the runner can run
+  # beside a reload ("IGNORE" would drop it, "DEFAULT" would end the app):
+  # while the app's own server serves, USR1 only reloads, as for a
+  # Ruflet.run app. The string is put back once the server stops.
+  def test_a_command_string_the_app_traps_usr1_with_is_put_back_once_its_server_stops
+    previous_usr1 = Signal.trap("USR1", "IGNORE")
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+
+      Signal.trap("USR1", "IGNORE")
+      Ruflet.app(host: "127.0.0.1", port: 0) { text("served") }.run
+      $usr1_after_run = Signal.trap("USR1", "IGNORE")
+    RUBY
+
+    start_served_runner
+    Process.kill("USR1", Process.pid)
+    wait_until("the reload USR1 asked for") { @runner.reload_count >= 1 }
+    Process.kill("USR1", Process.pid)
+    wait_until("the reload after the reload trapped USR1 again") { @runner.reload_count >= 2 }
+
+    stop_served_runner
+    assert_equal "IGNORE", $usr1_after_run
+  ensure
+    stop_served_runner
+    Signal.trap("USR1", previous_usr1) if previous_usr1
+    $usr1_after_run = nil
+  end
+
+  # A handler the app installs while its server serves (from a thread of
+  # its own, say) is the app's latest: it stays once the server stops.
+  def test_a_usr1_handler_the_app_installs_while_its_server_serves_stays
+    previous_usr1 = Signal.trap("USR1", "IGNORE")
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+
+      Signal.trap("USR1") { nil }
+      Ruflet.app(host: "127.0.0.1", port: 0) { text("served") }.run
+      $usr1_after_run = Signal.trap("USR1", "IGNORE")
+    RUBY
+
+    start_served_runner
+    later = proc { nil }
+    Signal.trap("USR1", later)
+
+    stop_served_runner
+    assert_same later, $usr1_after_run
+  ensure
+    stop_served_runner
+    Signal.trap("USR1", previous_usr1) if previous_usr1
+    $usr1_after_run = nil
+  end
+
+  # A Ruflet.run app keeps what it had on v0.0.23 and main: once it is up,
+  # the runner's trap replaces the app's own, so USR1 reloads it without
+  # running the app's handler; the reload then traps USR1 again from the
+  # top of the script, and the next USR1 runs that handler.
+  def test_a_ruflet_run_apps_own_usr1_handler_is_replaced_once_it_is_up_as_before
+    previous_usr1 = Signal.trap("USR1", "IGNORE")
+    $app_usr1 = Queue.new
+    # No file changes: only USR1 reloads here.
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+
+      $usr1_loads = ($usr1_loads || 0) + 1
+      load_number = $usr1_loads
+      $app_usr1_handler = proc { |signo| $app_usr1 << [load_number, signo] }
+      Signal.trap("USR1", $app_usr1_handler)
+      Ruflet.run { |page| page.add("load \#{load_number}") }
+    RUBY
+    start_runner
+    wait_until("the runner's server starts") { @runner.server.started? }
+
+    Process.kill("USR1", Process.pid)
+    wait_until("the reload USR1 asked for") { @runner.reload_count >= 1 }
+    assert_equal ["load 2"], render
+    assert $app_usr1.empty?, "the runner's trap replaced the app's"
+    current = Signal.trap("USR1", "IGNORE")
+    Signal.trap("USR1", current)
+    assert_same $app_usr1_handler, current, "the reload's own trap is left in place"
+
+    Process.kill("USR1", Process.pid)
+    assert_equal [2, Signal.list["USR1"]], Timeout.timeout(5) { $app_usr1.pop }, "the reload's own trap runs"
+  ensure
+    Signal.trap("USR1", previous_usr1) if previous_usr1
+    $app_usr1 = $app_usr1_handler = $usr1_loads = nil
+  end
+
   # The trace that tells the script's own $VERBOSE = nil apart is gone once
   # a load ends, also when the runner serves the app (Ruflet.run).
   def test_nothing_traces_verbose_once_the_script_has_loaded
