@@ -780,15 +780,19 @@ class RufletClientStateReadersTest < Minitest::Test
     end
   end
 
-  # Ruby's own BasicObject#method_missing raises and calls nothing after it,
-  # so a method_missing in a module included into BasicObject was never
-  # reached: main raised NoMethodError for `toggle.value`, and the reader
-  # answers. Once the app puts Ruby's own back in place of its
+  # A module prepended to Kernel (a require hook, say) comes before Kernel in
+  # Kernel's own ancestors; with no method_missing of its own it changes
+  # nothing. Ruby's own BasicObject#method_missing raises and calls nothing
+  # after it, so a method_missing in a module included into BasicObject was
+  # never reached: main raised NoMethodError for `toggle.value`, and the
+  # reader answers. Once the app puts Ruby's own back in place of its
   # BasicObject#method_missing, the reader answers again.
   def test_a_method_missing_that_was_never_reached_does_not_count
     out = run_ruby(<<~RUBY)
       require "ruflet"
       toggle = Ruflet.switch(label: "Dark mode", value: false)
+      Kernel.prepend(Module.new { def prepended_helper = :helper })
+      prepended = [Kernel.ancestors.index(Kernel), toggle.value]
       BasicObject.include(Module.new do
         def method_missing(name, *args, **options, &block)
           name == :value ? :never_reached : super
@@ -808,10 +812,10 @@ class RufletClientStateReadersTest < Minitest::Test
         private :method_missing
         remove_method :ruby_method_missing
       end
-      print [unreached, replaced, toggle.value].inspect
+      print [prepended, unreached, replaced, toggle.value].inspect
     RUBY
 
-    assert_equal "[false, :basic_object, false]", out
+    assert_equal "[[1, false], false, :basic_object, false]", out
   end
 
   # An app subclass of a table class that answers through its own

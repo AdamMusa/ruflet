@@ -528,6 +528,17 @@ module Ruflet::UI::SharedControlForwarders
   remove_method :ruflet_method_missing_for_test
 end
 assert_equal(false, toggle.value, "the reader answers again once Ruflet's SharedControlForwarders#method_missing is back")
+# A module prepended to Kernel (a require hook, say) comes before Kernel in
+# Kernel's own ancestors; with no method_missing of its own it changes nothing.
+# It stays prepended for the rest of the file.
+module PrependedKernelHelpers
+  def prepended_helper
+    :helper
+  end
+end
+Kernel.send(:prepend, PrependedKernelHelpers)
+assert_equal([1, false], [Kernel.ancestors.index(Kernel), toggle.value],
+             "a module prepended to Kernel without a method_missing changes nothing")
 
 class AnsweringSwitch < Ruflet::UI::Controls::RufletComponents::SwitchControl
   def method_missing(name, *args, **options, &block)
