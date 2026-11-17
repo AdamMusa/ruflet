@@ -24,8 +24,6 @@ module Ruflet
       def center(**props, &block) = control_delegate.center(**props, &block)
       def row(children = nil, **props, &block) = control_delegate.row(children, **props, &block)
       def stack(children = nil, **props, &block) = control_delegate.stack(children, **props, &block)
-      def indexed_stack(children = nil, **props, &block) = control_delegate.indexed_stack(children, **props, &block)
-      def indexedstack(children = nil, **props, &block) = control_delegate.indexedstack(children, **props, &block)
       def grid_view(children = nil, **props, &block) = control_delegate.grid_view(children, **props, &block)
       def gridview(children = nil, **props, &block) = control_delegate.gridview(children, **props, &block)
       def container(**props, &block) = control_delegate.container(**props, &block)
@@ -46,8 +44,6 @@ module Ruflet
       def geolocator(**props) = control_delegate.geolocator(**props)
       def gyroscope(**props) = control_delegate.gyroscope(**props)
       def haptic_feedback(**props) = control_delegate.haptic_feedback(**props)
-      def local_auth(**props) = control_delegate.local_auth(**props)
-      def local_authentication(**props) = control_delegate.local_authentication(**props)
       def magnetometer(**props) = control_delegate.magnetometer(**props)
       def permission_handler(**props) = control_delegate.permission_handler(**props)
       def screen_brightness(**props) = control_delegate.screen_brightness(**props)
@@ -80,8 +76,6 @@ module Ruflet
       def textspan(text = nil, **props) = control_delegate.textspan(text, **props)
       def keyboard_listener(content = nil, **props) = control_delegate.keyboard_listener(content, **props)
       def keyboardlistener(content = nil, **props) = control_delegate.keyboardlistener(content, **props)
-      def form_row(content = nil, **props) = control_delegate.form_row(content, **props)
-      def formrow(content = nil, **props) = control_delegate.formrow(content, **props)
       def gesture_detector(**props, &block) = control_delegate.gesture_detector(**props, &block)
       def gesturedetector(**props, &block) = control_delegate.gesturedetector(**props, &block)
       def canvas(shapes = nil, **props) = control_delegate.canvas(shapes, **props)
@@ -108,16 +102,10 @@ module Ruflet
       def path_sub_path(**props) = control_delegate.path_sub_path(**props)
       def path_close(**props) = control_delegate.path_close(**props)
       def draggable(content = nil, **props, &block) = control_delegate.draggable(content, **props, &block)
-      def draggable_scrollable_sheet(children = nil, **props, &block) = control_delegate.draggable_scrollable_sheet(children, **props, &block)
-      def draggablescrollablesheet(children = nil, **props, &block) = control_delegate.draggablescrollablesheet(children, **props, &block)
       def dismissible(content = nil, **props) = control_delegate.dismissible(content, **props)
       def drag_target(content = nil, **props, &block) = control_delegate.drag_target(content, **props, &block)
       def dragtarget(content = nil, **props, &block) = control_delegate.dragtarget(content, **props, &block)
       def card(content = nil, **props) = control_delegate.card(content, **props)
-      def carousel_view(children = nil, **props, &block) = control_delegate.carousel_view(children, **props, &block)
-      def carouselview(children = nil, **props, &block) = control_delegate.carouselview(children, **props, &block)
-      def list_section(children = nil, **props, &block) = control_delegate.list_section(children, **props, &block)
-      def listsection(children = nil, **props, &block) = control_delegate.listsection(children, **props, &block)
       def list_tile(**props) = control_delegate.list_tile(**props)
       def listtile(**props) = control_delegate.listtile(**props)
       def map(layers = nil, **props) = control_delegate.map(layers, **props)
@@ -150,18 +138,6 @@ module Ruflet
       def textsourceattribution(text = nil, **props) = control_delegate.textsourceattribution(text, **props)
       def list_view(children = nil, **props) = control_delegate.list_view(children, **props)
       def listview(children = nil, **props) = control_delegate.listview(children, **props)
-      def custom_scroll_view(slivers = nil, **props, &block) = control_delegate.custom_scroll_view(slivers, **props, &block)
-      def customscrollview(slivers = nil, **props, &block) = control_delegate.customscrollview(slivers, **props, &block)
-      def sliver_list(children = nil, **props, &block) = control_delegate.sliver_list(children, **props, &block)
-      def sliverlist(children = nil, **props, &block) = control_delegate.sliverlist(children, **props, &block)
-      def sliver_grid(children = nil, **props, &block) = control_delegate.sliver_grid(children, **props, &block)
-      def slivergrid(children = nil, **props, &block) = control_delegate.slivergrid(children, **props, &block)
-      def sliver_to_box_adapter(content = nil, **props) = control_delegate.sliver_to_box_adapter(content, **props)
-      def slivertoboxadapter(content = nil, **props) = control_delegate.slivertoboxadapter(content, **props)
-      def sliver_fill_remaining(content = nil, **props) = control_delegate.sliver_fill_remaining(content, **props)
-      def sliverfillremaining(content = nil, **props) = control_delegate.sliverfillremaining(content, **props)
-      def sliver_app_bar(**props) = control_delegate.sliver_app_bar(**props)
-      def sliverappbar(**props) = control_delegate.sliverappbar(**props)
       def menu_bar(children = nil, **props) = control_delegate.menu_bar(children, **props)
       def menubar(children = nil, **props) = control_delegate.menubar(children, **props)
       def menu_item_button(content = nil, **props) = control_delegate.menu_item_button(content, **props)
@@ -187,9 +163,6 @@ module Ruflet
       def datarow(cells = nil, **props) = control_delegate.datarow(cells, **props)
       def data_cell(content = nil, **props) = control_delegate.data_cell(content, **props)
       def datacell(content = nil, **props) = control_delegate.datacell(content, **props)
-      def table(rows = nil, **props, &block) = control_delegate.table(rows, **props, &block)
-      def table_row(children = nil, **props, &block) = control_delegate.table_row(children, **props, &block)
-      def tablerow(children = nil, **props, &block) = control_delegate.tablerow(children, **props, &block)
       def option(key = nil, **props) = control_delegate.option(key, **props)
       def data_table2(columns = nil, **props) = control_delegate.data_table2(columns, **props)
       def datatable2(columns = nil, **props) = control_delegate.datatable2(columns, **props)
@@ -232,9 +205,6 @@ module Ruflet
       def segment(value = nil, **props) = control_delegate.segment(value, **props)
       def segmented_button(segments = nil, **props) = control_delegate.segmented_button(segments, **props)
       def segmentedbutton(segments = nil, **props) = control_delegate.segmentedbutton(segments, **props)
-      def stepper(steps = nil, **props, &block) = control_delegate.stepper(steps, **props, &block)
-      def stepper_step(**props) = control_delegate.stepper_step(**props)
-      def stepperstep(**props) = control_delegate.stepperstep(**props)
       def selection_area(content = nil, **props) = control_delegate.selection_area(content, **props)
       def selectionarea(content = nil, **props) = control_delegate.selectionarea(content, **props)
       def search_bar(children = nil, **props) = control_delegate.search_bar(children, **props)
@@ -281,43 +251,10 @@ module Ruflet
       def transparentpointer(content = nil, **props) = control_delegate.transparentpointer(content, **props)
       def rotated_box(content = nil, **props) = control_delegate.rotated_box(content, **props)
       def rotatedbox(content = nil, **props) = control_delegate.rotatedbox(content, **props)
-      def absorb_pointer(content = nil, **props) = control_delegate.absorb_pointer(content, **props)
-      def absorbpointer(content = nil, **props) = control_delegate.absorbpointer(content, **props)
-      def fractionally_sized_box(content = nil, **props) = control_delegate.fractionally_sized_box(content, **props)
-      def fractionallysizedbox(content = nil, **props) = control_delegate.fractionallysizedbox(content, **props)
-      def ignore_pointer(content = nil, **props) = control_delegate.ignore_pointer(content, **props)
-      def ignorepointer(content = nil, **props) = control_delegate.ignorepointer(content, **props)
-      def intrinsic_height(content = nil, **props) = control_delegate.intrinsic_height(content, **props)
-      def intrinsicheight(content = nil, **props) = control_delegate.intrinsicheight(content, **props)
-      def intrinsic_width(content = nil, **props) = control_delegate.intrinsic_width(content, **props)
-      def intrinsicwidth(content = nil, **props) = control_delegate.intrinsicwidth(content, **props)
-      def sliver_padding(slivers = nil, **props, &block) = control_delegate.sliver_padding(slivers, **props, &block)
-      def sliverpadding(slivers = nil, **props, &block) = control_delegate.sliverpadding(slivers, **props, &block)
-      def clip_oval(content = nil, **props) = control_delegate.clip_oval(content, **props)
-      def clipoval(content = nil, **props) = control_delegate.clipoval(content, **props)
-      def clip_rsuperellipse(content = nil, **props) = control_delegate.clip_rsuperellipse(content, **props)
-      def cliprsuperellipse(content = nil, **props) = control_delegate.cliprsuperellipse(content, **props)
-      def fade_transition(content = nil, **props) = control_delegate.fade_transition(content, **props)
-      def fadetransition(content = nil, **props) = control_delegate.fadetransition(content, **props)
-      def rotation_transition(content = nil, **props) = control_delegate.rotation_transition(content, **props)
-      def rotationtransition(content = nil, **props) = control_delegate.rotationtransition(content, **props)
-      def scale_transition(content = nil, **props) = control_delegate.scale_transition(content, **props)
-      def scaletransition(content = nil, **props) = control_delegate.scaletransition(content, **props)
-      def size_transition(content = nil, **props) = control_delegate.size_transition(content, **props)
-      def sizetransition(content = nil, **props) = control_delegate.sizetransition(content, **props)
-      def slide_transition(content = nil, **props) = control_delegate.slide_transition(content, **props)
-      def slidetransition(content = nil, **props) = control_delegate.slidetransition(content, **props)
-      def form(controls = nil, **props, &block) = control_delegate.form(controls, **props, &block)
-      def nested_scroll_view(header_slivers = nil, **props, &block) = control_delegate.nested_scroll_view(header_slivers, **props, &block)
-      def nestedscrollview(header_slivers = nil, **props, &block) = control_delegate.nestedscrollview(header_slivers, **props, &block)
-      def fitted_box(content = nil, **props) = control_delegate.fitted_box(content, **props)
-      def fittedbox(content = nil, **props) = control_delegate.fittedbox(content, **props)
       def screenshot(content = nil, **props) = control_delegate.screenshot(content, **props)
       def radio(**props) = control_delegate.radio(**props)
       def radio_group(content = nil, **props) = control_delegate.radio_group(content, **props)
       def radiogroup(content = nil, **props) = control_delegate.radiogroup(content, **props)
-      def about_dialog(**props) = control_delegate.about_dialog(**props)
-      def aboutdialog(**props) = control_delegate.aboutdialog(**props)
       def alert_dialog(**props) = control_delegate.alert_dialog(**props)
       def alertdialog(**props) = control_delegate.alertdialog(**props)
       def snack_bar(content = nil, **props) = control_delegate.snack_bar(content, **props)
@@ -478,8 +415,16 @@ module Ruflet
       # in the same Ruby DSL without VM or application-specific methods.
       # See Kernel#method_missing: this module is included into Kernel, so it
       # must decline the same calls Ruby expects to raise on.
+      #
+      # A scoped helper name (ScopedControlForwarders) is decided by
+      # Kernel#method_missing before it gets here (Ruflet and Ruflet::UI define
+      # these names outright). On any other object it reaches this point only
+      # through that method's `super`, which asks Ruby for the error a missing
+      # name raises, so it is declined as an unknown name; building here would
+      # answer `record.table(rows: [])`, which v0.0.23 raised on.
       def method_missing(name, *args, **props, &block)
         return super if name.to_s.end_with?("=") || (args.empty? && props.empty? && !block)
+        return super if Ruflet::UI::ScopedControlForwarders.helper?(name)
         unless Ruflet::UI::ControlFactory.known_control?(name) || Ruflet::UI::ControlFactory.dsl_receiver?(self)
           return super
         end
@@ -489,6 +434,202 @@ module Ruflet
         return super unless args.empty?
 
         control_delegate.control(name.to_s, **forwarded, &block)
+      end
+
+      private
+
+      def control_delegate
+        raise NotImplementedError, "control_delegate must be implemented by the including/extended context"
+      end
+    end
+
+    # Bare helpers added after v0.0.23.
+    #
+    # SharedControlForwarders is included into Kernel, so each of its methods
+    # becomes a method of every object in the process, a Rails app's included.
+    # A Kernel method wins over another library's method_missing builder with
+    # the same name, which changes code that is not Ruflet's:
+    # `Nokogiri::HTML::Builder.new { table { ... } }` would build a Ruflet
+    # Table instead of a <table>, and `form(action: "/x") { ... }` would raise
+    # in FormControl instead of building a <form>. That set is therefore kept
+    # at what v0.0.23 shipped (test/fixtures/kernel_helpers_v0_0_23.txt); a
+    # new bare helper, control or service, goes here instead.
+    #
+    # These are included into Ruflet and Ruflet::UI, below
+    # SharedControlForwarders so an extension registered under one of these
+    # names wins there, as everywhere else. Builder blocks reach them through
+    # UI::ControlMethods, and a bare call (`stepper(...)` or `about_dialog` in
+    # a Ruflet.run block, an app's view or a component) reaches the same
+    # Ruflet::DSL helper through Kernel#method_missing. An object with a
+    # method_missing of its own is asked first and keeps the name.
+    module ScopedControlForwarders
+      def indexed_stack(children = nil, **props, &block) = control_delegate.indexed_stack(children, **props, &block)
+      def indexedstack(children = nil, **props, &block) = control_delegate.indexedstack(children, **props, &block)
+      def form_row(content = nil, **props) = control_delegate.form_row(content, **props)
+      def formrow(content = nil, **props) = control_delegate.formrow(content, **props)
+      def draggable_scrollable_sheet(children = nil, **props, &block) = control_delegate.draggable_scrollable_sheet(children, **props, &block)
+      def draggablescrollablesheet(children = nil, **props, &block) = control_delegate.draggablescrollablesheet(children, **props, &block)
+      def carousel_view(children = nil, **props, &block) = control_delegate.carousel_view(children, **props, &block)
+      def carouselview(children = nil, **props, &block) = control_delegate.carouselview(children, **props, &block)
+      def list_section(children = nil, **props, &block) = control_delegate.list_section(children, **props, &block)
+      def listsection(children = nil, **props, &block) = control_delegate.listsection(children, **props, &block)
+      def custom_scroll_view(slivers = nil, **props, &block) = control_delegate.custom_scroll_view(slivers, **props, &block)
+      def customscrollview(slivers = nil, **props, &block) = control_delegate.customscrollview(slivers, **props, &block)
+      def sliver_list(children = nil, **props, &block) = control_delegate.sliver_list(children, **props, &block)
+      def sliverlist(children = nil, **props, &block) = control_delegate.sliverlist(children, **props, &block)
+      def sliver_grid(children = nil, **props, &block) = control_delegate.sliver_grid(children, **props, &block)
+      def slivergrid(children = nil, **props, &block) = control_delegate.slivergrid(children, **props, &block)
+      def sliver_to_box_adapter(content = nil, **props) = control_delegate.sliver_to_box_adapter(content, **props)
+      def slivertoboxadapter(content = nil, **props) = control_delegate.slivertoboxadapter(content, **props)
+      def sliver_fill_remaining(content = nil, **props) = control_delegate.sliver_fill_remaining(content, **props)
+      def sliverfillremaining(content = nil, **props) = control_delegate.sliverfillremaining(content, **props)
+      def sliver_app_bar(**props) = control_delegate.sliver_app_bar(**props)
+      def sliverappbar(**props) = control_delegate.sliverappbar(**props)
+      def table(rows = nil, **props, &block) = control_delegate.table(rows, **props, &block)
+      def table_row(children = nil, **props, &block) = control_delegate.table_row(children, **props, &block)
+      def tablerow(children = nil, **props, &block) = control_delegate.tablerow(children, **props, &block)
+      def stepper(steps = nil, **props, &block) = control_delegate.stepper(steps, **props, &block)
+      def stepper_step(**props) = control_delegate.stepper_step(**props)
+      def stepperstep(**props) = control_delegate.stepperstep(**props)
+      def fitted_box(content = nil, **props) = control_delegate.fitted_box(content, **props)
+      def fittedbox(content = nil, **props) = control_delegate.fittedbox(content, **props)
+      def about_dialog(**props) = control_delegate.about_dialog(**props)
+      def aboutdialog(**props) = control_delegate.aboutdialog(**props)
+      def local_auth(**props) = control_delegate.local_auth(**props)
+      def local_authentication(**props) = control_delegate.local_authentication(**props)
+      def absorb_pointer(content = nil, **props) = control_delegate.absorb_pointer(content, **props)
+      def absorbpointer(content = nil, **props) = control_delegate.absorbpointer(content, **props)
+      def fractionally_sized_box(content = nil, **props) = control_delegate.fractionally_sized_box(content, **props)
+      def fractionallysizedbox(content = nil, **props) = control_delegate.fractionallysizedbox(content, **props)
+      def ignore_pointer(content = nil, **props) = control_delegate.ignore_pointer(content, **props)
+      def ignorepointer(content = nil, **props) = control_delegate.ignorepointer(content, **props)
+      def intrinsic_height(content = nil, **props) = control_delegate.intrinsic_height(content, **props)
+      def intrinsicheight(content = nil, **props) = control_delegate.intrinsicheight(content, **props)
+      def intrinsic_width(content = nil, **props) = control_delegate.intrinsic_width(content, **props)
+      def intrinsicwidth(content = nil, **props) = control_delegate.intrinsicwidth(content, **props)
+      def sliver_padding(slivers = nil, **props, &block) = control_delegate.sliver_padding(slivers, **props, &block)
+      def sliverpadding(slivers = nil, **props, &block) = control_delegate.sliverpadding(slivers, **props, &block)
+      def clip_oval(content = nil, **props) = control_delegate.clip_oval(content, **props)
+      def clipoval(content = nil, **props) = control_delegate.clipoval(content, **props)
+      def clip_rsuperellipse(content = nil, **props) = control_delegate.clip_rsuperellipse(content, **props)
+      def cliprsuperellipse(content = nil, **props) = control_delegate.cliprsuperellipse(content, **props)
+      def fade_transition(content = nil, **props) = control_delegate.fade_transition(content, **props)
+      def fadetransition(content = nil, **props) = control_delegate.fadetransition(content, **props)
+      def rotation_transition(content = nil, **props) = control_delegate.rotation_transition(content, **props)
+      def rotationtransition(content = nil, **props) = control_delegate.rotationtransition(content, **props)
+      def scale_transition(content = nil, **props) = control_delegate.scale_transition(content, **props)
+      def scaletransition(content = nil, **props) = control_delegate.scaletransition(content, **props)
+      def size_transition(content = nil, **props) = control_delegate.size_transition(content, **props)
+      def sizetransition(content = nil, **props) = control_delegate.sizetransition(content, **props)
+      def slide_transition(content = nil, **props) = control_delegate.slide_transition(content, **props)
+      def slidetransition(content = nil, **props) = control_delegate.slidetransition(content, **props)
+      def form(controls = nil, **props, &block) = control_delegate.form(controls, **props, &block)
+      def nested_scroll_view(header_slivers = nil, **props, &block) = control_delegate.nested_scroll_view(header_slivers, **props, &block)
+      def nestedscrollview(header_slivers = nil, **props, &block) = control_delegate.nestedscrollview(header_slivers, **props, &block)
+
+      # The names above, for Kernel#method_missing. A literal, so the embedded
+      # VM needs no reflection to read it.
+      HELPERS = {
+        about_dialog: true, aboutdialog: true, absorb_pointer: true, absorbpointer: true, carousel_view: true,
+        carouselview: true, clip_oval: true, clip_rsuperellipse: true, clipoval: true,
+        cliprsuperellipse: true, custom_scroll_view: true, customscrollview: true,
+        draggable_scrollable_sheet: true, draggablescrollablesheet: true, fade_transition: true,
+        fadetransition: true, fitted_box: true, fittedbox: true, form: true, form_row: true, formrow: true,
+        fractionally_sized_box: true, fractionallysizedbox: true, ignore_pointer: true, ignorepointer: true,
+        indexed_stack: true, indexedstack: true, intrinsic_height: true, intrinsic_width: true,
+        intrinsicheight: true, intrinsicwidth: true, list_section: true, listsection: true, local_auth: true,
+        local_authentication: true, nested_scroll_view: true, nestedscrollview: true,
+        rotation_transition: true, rotationtransition: true, scale_transition: true, scaletransition: true,
+        size_transition: true, sizetransition: true, slide_transition: true, slidetransition: true,
+        sliver_app_bar: true, sliver_fill_remaining: true, sliver_grid: true, sliver_list: true,
+        sliver_padding: true, sliver_to_box_adapter: true, sliverappbar: true, sliverfillremaining: true,
+        slivergrid: true, sliverlist: true, sliverpadding: true, slivertoboxadapter: true, stepper: true,
+        stepper_step: true, stepperstep: true, table: true, table_row: true, tablerow: true
+      }.freeze
+
+      # Whether Kernel#method_missing decides `name` here. An extension
+      # registered under the same name is a Kernel method again (it lives in
+      # SharedControlForwarders), so whatever still misses for it takes the
+      # path every extension helper takes.
+      def self.helper?(name)
+        HELPERS.key?(name) && !ControlFactory::EXTENSION_CLASS_MAP.key?(name.to_s)
+      end
+
+      # How Kernel#method_missing answers a call to one of these names, the
+      # same way on CRuby and on the embedded VM:
+      #
+      # - A call with arguments or a block on an object that
+      #   ControlFactory.dsl_receiver? accepts (a script's top level or a
+      #   Ruflet::* object; never on the VM) builds, with or without a
+      #   receiver, because v0.0.23 built a generic control there for any
+      #   name (owned_call?).
+      # - Any other call asks Ruby, through `super`, how it was written, and
+      #   builds only if it had no explicit receiver, as a private Kernel
+      #   method would have answered it (receiverless?). `stepper(...)`,
+      #   `about_dialog` or `self.table` in an app, a component or a test
+      #   build; `record.table(1)` and `record.table` raise the NoMethodError
+      #   they raised when the name did not exist.
+      # - Either way, ScopedControlForwarders.build makes the control.
+      def self.owned_call?(receiver, args, props, block)
+        (block || !args.empty? || !props.empty?) && ControlFactory.dsl_receiver?(receiver)
+      end
+
+      # Whether `error`, the NameError `super` raised in Kernel#method_missing
+      # for the missing `name`, came from a call written without an explicit
+      # receiver: a bare word, `name(...)`, `self.name`, send or __send__.
+      #
+      # CRuby raises a plain NameError for a bare word and records the form
+      # of any other call on NoMethodError#private_call?. It takes that from
+      # the thread's most recent method miss, so a method_missing that hits
+      # and rescues another miss of its own before calling super changes the
+      # answer for the call it passes on.
+      #
+      # The embedded VM records neither. There an explicit `record.table(1)`
+      # stops before method_missing ("private method 'table' called", as at
+      # v0.0.23), so a call that reaches Kernel#method_missing directly is a
+      # bare call, send, __send__ or public_send. One that arrives through
+      # another class's method_missing calling super cannot be told apart
+      # from an explicit call, and re-raises. The stop is mruby 449627d's
+      # visibility check; later mruby (upstream 9aaa7ce5fb) drops it, so an
+      # mruby update must re-check explicit calls here.
+      def self.receiverless?(error, receiver, name)
+        return false unless error.name == name
+        return true unless error.is_a?(NoMethodError)
+        return error.private_call? if error.respond_to?(:private_call?)
+
+        kernel_method_missing?(receiver)
+      end
+
+      # Whether `receiver` answers missing methods with Kernel#method_missing
+      # itself. Kernel#method is used directly because classes such as HTTP
+      # requests define a `method` of their own.
+      def self.kernel_method_missing?(receiver)
+        Kernel.instance_method(:method).bind_call(receiver, :method_missing).owner.equal?(Kernel)
+      rescue StandardError
+        true
+      end
+
+      # Builds `name` with Ruflet::DSL. A call that passed no keywords and
+      # ends in a Hash whose keys are all Symbols passes that Hash as the
+      # keywords. Keywords reach method_missing that way from the embedded
+      # VM's send, __send__ and public_send, and from any method_missing
+      # written without keywords that calls super (Ruflet::Page and
+      # Ruflet::Event among them). Nothing there tells such a Hash from one
+      # written positionally, so both are read the same way, on CRuby too,
+      # and the two runtimes build the same control. No helper here takes a
+      # Hash as its content, rows or children.
+      #
+      # The embedded VM's mruby (449627d) loses the keywords of a call that
+      # also splats positional arguments, such as `stepper(*args, **opts)` or
+      # `table(...)`, before any method_missing runs, so nothing here can
+      # restore them (tools/embedded_vm_harness/tests/scoped_helper_test.rb).
+      def self.build(name, args, props, &block)
+        options = args.last
+        if props.empty? && options.is_a?(Hash) && !options.empty? && options.keys.all? { |key| key.is_a?(Symbol) }
+          args = args[0...-1]
+          props = options
+        end
+        Ruflet::DSL.public_send(name, *args, **props, &block)
       end
 
       private
