@@ -8,8 +8,8 @@
 # packages/ruflet_core/test/kernel_helper_shadowing_test.rb guards this on
 # CRuby. This is the same contract on the embedded VM, where method_missing is
 # reached differently: send passes keywords as a trailing Hash, there is no
-# NoMethodError#private_call?, and mruby 449627d drops the keywords of a call
-# that also splats positional arguments (see the last section).
+# NoMethodError#private_call?, and unpatched mruby 449627d loses the keywords
+# of a call that also splats positional arguments (see the last section).
 #
 # Valid mruby and CRuby (no Regexp, no defined?, no string eval).
 #
@@ -133,6 +133,7 @@ class ScopedHelperWrapper
   def splat_fade_transition(*args, **props, &block) = fade_transition(*args, **props, &block)
   def splat_about_dialog(*args, **props, &block) = about_dialog(*args, **props, &block)
   def splat_form(*args, **props, &block) = form(*args, **props, &block)
+  def splat_carouselview(*args, **props, &block) = carouselview(*args, **props, &block)
   def literal_table(*args) = table(*args, border_width: 1)
   def dots_table(...) = table(...)
 end
@@ -150,23 +151,37 @@ check.call("keywords about_dialog(application_name:)",
            outcome.call { wrapper.keywords_about_dialog(application_name: "A") },
            outcome.call { Ruflet::DSL.about_dialog(application_name: "A") })
 
-# mruby 449627d loses the keywords of any call that both splats positional
-# arguments and passes keywords (`name(*args, **opts)`, `name(*args, k: 1)`,
-# `name(...)`) to a method that is not defined: prepare_missing() in
-# src/vm.c reads them from argv[ci->n], past the frame, where a splat call
-# holds them in argv[1]. Every such call to one of these helpers goes there,
-# as one to a v0.0.23 control without a forwarder (`elevatedbutton`) already
-# did. A pure-Ruby probe tells whether this VM has that bug; the checks below
-# run where it does not (CRuby, or a VM built with the fix), so they pin the
-# behaviour the fix must give.
+# Unpatched mruby 449627d loses the keywords of any call that both splats
+# positional arguments and passes keywords (`name(*args, **opts)`,
+# `name(*args, k: 1)`, `name(...)`) to a method that is not defined:
+# prepare_missing() in src/vm.c reads them from argv[ci->n], past the frame,
+# where a splat call holds them in argv[1]. What it reads there is left over
+# from earlier calls, so such a call builds without its keywords, builds with
+# an earlier call's keywords, or raises about whatever it found. Every such
+# call to one of these helpers goes there, as one to a v0.0.23 control
+# without a forwarder (`elevatedbutton`) already did.
+#
+# Upstream fixed it in mruby 550d10adb7 (mruby/mruby#6598). AdamMusa/ruflet#81
+# carries that fix as a patch under ruby_runtime/vm/patches/mruby/ that every
+# VM build config applies. A pure-Ruby probe tells whether this VM has the
+# bug: each of the three call forms must hand method_missing exactly its own
+# arguments and keywords, after an earlier call has left other keywords
+# behind. The checks below run where it does not (CRuby, or a VM built with
+# the fix), so they pin the behaviour the fix must give.
 class ScopedHelperKeywordProbe
-  def method_missing(_name, *_args, **props) = props
+  def method_missing(_name, *args, **props) = [args, props]
   def respond_to_missing?(_name, _include_private = false) = true
-  def forward(*args, **props) = probe_missing_name(*args, **props)
+  def splat(*args, **props) = probe_missing_name(*args, **props)
+  def literal(*args) = probe_missing_name(*args, probe: "literal")
+  def dots(...) = probe_missing_name(...)
 end
 splat_keywords_arrive =
   begin
-    ScopedHelperKeywordProbe.new.forward(1, probe: "scoped-helper") == { probe: "scoped-helper" }
+    probe = ScopedHelperKeywordProbe.new
+    probe.probe_missing_name(probe: "earlier")
+    probe.splat(1, probe: "splat") == [[1], { probe: "splat" }] &&
+      probe.literal(2) == [[2], { probe: "literal" }] &&
+      probe.dots(3, probe: "dots") == [[3], { probe: "dots" }]
   rescue StandardError
     false
   end
@@ -200,11 +215,21 @@ if splat_keywords_arrive
   check.call("dots table(rows, border_width: 2)",
              outcome.call { wrapper.dots_table([], border_width: 2) },
              outcome.call { Ruflet::DSL.table([], border_width: 2) })
+  # Unpatched, this forwarded carouselview builds with the keywords of the
+  # call made just before it (`key: "earlier"`) instead of its own.
+  no_args = []
+  own_keywords = { key: "k" }
+  outcome.call { Ruflet::DSL.public_send(:carouselview, *no_args, key: "earlier") }
+  check.call("splat carouselview(key:) right after a call with other keywords",
+             outcome.call { wrapper.splat_carouselview(*no_args, **own_keywords) },
+             outcome.call { Ruflet::DSL.carouselview(key: "k") })
 else
-  skipped += 10
-  puts "\nKNOWN LIMIT: this VM's mruby drops keywords forwarded with a positional splat to a missing " \
-       "method (prepare_missing in mruby 449627d src/vm.c). Skipped 10 splat-forwarding checks; " \
-       "forward through named parameters (`def s(steps = nil, **opts) = stepper(steps, **opts)`) instead."
+  skipped += 11
+  puts "\nKNOWN LIMIT: this VM's mruby loses the keywords of a call to a missing method that also splats " \
+       "positional arguments: it builds without them, builds with an earlier call's keywords, or raises " \
+       "(prepare_missing in unpatched mruby 449627d src/vm.c; fixed upstream by 550d10adb7, carried by " \
+       "AdamMusa/ruflet#81). Skipped 11 splat-forwarding checks. Forward through named parameters " \
+       "(`def s(steps = nil, **opts) = stepper(steps, **opts)`) instead."
 end
 
 puts

@@ -256,8 +256,10 @@ class KernelHelperShadowingTest < Minitest::Test
 
   # Apps wrap helpers: `def section(*args, **opts, &block) = list_section(*args, **opts, &block)`.
   # A call forwarded with a positional splat, keywords, a block or `...` builds
-  # what the direct Ruflet::DSL call builds, keywords included. (The embedded
-  # VM's mruby 449627d drops such keywords before any method_missing runs;
+  # what the direct Ruflet::DSL call builds, keywords included. (On the
+  # embedded VM, unpatched mruby 449627d loses such keywords before any
+  # method_missing runs: it drops them, hands on an earlier call's, or raises.
+  # Upstream 550d10adb7, carried by AdamMusa/ruflet#81, fixes it;
   # tools/embedded_vm_harness/tests/scoped_helper_test.rb checks it there.)
   def test_forwarded_calls_build_what_the_direct_call_builds
     wrapper = Class.new
@@ -634,6 +636,48 @@ class KernelHelperShadowingTest < Minitest::Test
 
     app = Ruflet::DSL.app { stepper([stepper_step(title: "A")]) }
     assert_equal ["Stepper"], app.instance_variable_get(:@roots).map { |root| root.to_patch["_c"] }
+  end
+
+  # Ruflet.<name> and Ruflet::UI.<name> are the ScopedControlForwarders
+  # methods moved off Kernel, and nothing else calls them. Each must hand its
+  # positional argument, keywords and block to the helper it names, so it
+  # builds exactly what Ruflet::DSL.<name> builds.
+  def test_ruflet_and_ruflet_ui_build_what_ruflet_dsl_builds
+    # Keywords a helper cannot build without, so every shape reaches the control.
+    required = {
+      nested_scroll_view: { body: Ruflet.text("body") }, nestedscrollview: { body: Ruflet.text("body") },
+      stepper_step: { title: "A" }, stepperstep: { title: "A" }
+    }
+    # [label, positional arguments, block, text the built patch must contain]
+    shapes = [
+      ["(key: \"k\")", [], nil, nil],
+      ["([], key: \"k\")", [[]], nil, nil],
+      ["(text, key: \"k\")", [Ruflet.text("positional")], nil, "positional"],
+      ["(key: \"k\") { text }", [], proc { text("in block") }, "in block"]
+    ]
+    built = Hash.new(0)
+
+    NEW_HELPERS.each do |name|
+      takes_block = Ruflet::DSL.method(name).parameters.any? { |type, _| type == :block }
+      props = { key: "k" }.merge(required.fetch(name, {}))
+      shapes.each do |label, args, block, content|
+        next if block && !takes_block
+
+        want = patch_or_error { Ruflet::DSL.public_send(name, *args, **props, &block) }
+        if want.is_a?(Hash)
+          # So a forwarder that dropped the keywords, the positional
+          # argument or the block would change the patch compared below.
+          built[name] += 1
+          assert_equal "k", want["key"], "Ruflet::DSL.#{name}#{label} keeps key:"
+          assert_includes want.to_s, content, "Ruflet::DSL.#{name}#{label} shows it" if content
+        end
+        [Ruflet, Ruflet::UI].each do |namespace|
+          got = patch_or_error { namespace.public_send(name, *args, **props, &block) }
+          assert_equal want, got, "#{namespace}.#{name}#{label}"
+        end
+      end
+    end
+    assert_empty NEW_HELPERS.reject { |name| built[name].positive? }, "never built"
   end
 
   private
