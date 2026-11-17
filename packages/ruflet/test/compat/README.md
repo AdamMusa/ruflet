@@ -157,12 +157,19 @@ Inside that process only the process and network boundaries are replaced:
   Ruby (gzip with stored deflate blocks, stored zip entries, a table
   CRC-32), so their bytes never depend on zlib, the host or timing. Local TCP
   probes succeed; the LAN address is fixed.
-* An exception in the harness's own code (a tool emulation, the fake
-  network, the release fixture, the page driver) is a harness fault: the
-  child writes it to its result and exits 70 at once, before any CLI `rescue`
-  can turn it into output, and the golden fails with the fault instead of
-  being rendered. `test_harness_faults_fail_loudly` injects the
-  `Zlib::BufError` the fixture once raised and checks this.
+* An exception in the harness's own code is a harness fault: the child
+  writes it to its result and exits 70 at once, before any CLI or app
+  `rescue` can turn it into output, and the golden fails with the fault
+  instead of being rendered. In a CLI child that covers the recording and
+  tool emulation behind `system`, `spawn`, `Open3` and backticks, the fake
+  network, and loading the release fixture. In a page child it covers only
+  the `--rails-endpoint` driver: the socket I/O on its end of the socket
+  pair, and its handshake and frame checks. The `Ruflet::Server`-mode
+  `FakeWS` is not wrapped; its methods only append to the message list.
+  `test_harness_faults_fail_loudly` injects two faults and checks that each
+  fails the golden: the `Zlib::BufError` the release fixture once raised,
+  inside the request `release_by_tag` rescues, and a closed client socket in
+  the `--rails-endpoint` page driver.
 * The host is a fixed profile: an Apple-silicon Mac with Homebrew CocoaPods,
   no Chrome and no FVM. The clock is frozen at 2026-01-01T12:00:00Z.
 * `rqrcode` is replaced by `lib/stub_lib/rqrcode.rb`, so the QR banner does not
