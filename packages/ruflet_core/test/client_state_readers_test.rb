@@ -402,6 +402,19 @@ class RufletClientStateReadersTest < Minitest::Test
         # another control.
         assert_equal answered, Ruflet.switch(value: true).peek(toggle)
       end
+      # A protected method of Object or Kernel is the exception: CRuby lets
+      # a caller that is an instance of the method's module call it with a
+      # receiver, and every caller is an Object, so main's `control.value`
+      # reached it. It still does. The known difference: main's public_send
+      # went to the method_missing.
+      with_app_methods(Object, "protected def value = :protected_object_method") do
+        assert_equal :protected_object_method, toggle.value
+        assert_equal :protected_object_method, toggle.instance_eval { value }
+        assert_equal :protected_object_method, toggle.public_send(:value)
+      end
+      with_app_methods(Kernel, "protected def value = :protected_kernel_method") do
+        assert_equal :protected_kernel_method, toggle.value
+      end
       # What decides is the first method after the reader, as in Ruby's own
       # lookup: TextInputMethods comes before Object.
       field = Ruflet.text_field(label: "Name", value: "Ada")
@@ -542,6 +555,48 @@ class RufletClientStateReadersTest < Minitest::Test
                  ":control_method_missing, :control_method_missing, :control_method_missing, " \
                  ":top_level_helper, :top_level_helper, :app_kernel_method, :app_kernel_method, " \
                  "nil, :text_input_method]", out
+  end
+
+  # Once the app makes register_control's helper public or protected on
+  # Kernel, it is the app's: main's `tile.expanded` called it (a protected
+  # Kernel method too, since every caller is an Object), and it still does,
+  # with or without an app method_missing. Made private again, it is
+  # Ruflet's helper again.
+  def test_an_extension_helper_the_app_made_public_still_answers
+    out = run_ruby(<<~RUBY)
+      require "ruflet"
+      class ExpandedControl < Ruflet::Control
+        def initialize(**props) = super(type: "expanded", **props)
+      end
+      Ruflet::Extensions.register_control(:expanded, control_class: ExpandedControl)
+      roots = -> { Ruflet::DSL._pending_app.instance_variable_get(:@roots).length }
+      tile = Ruflet.expansion_tile(title: Ruflet.text("More"), expanded: true)
+      read = lambda do
+        value = tile.expanded
+        [value.is_a?(Ruflet::Control) ? value.type : value, roots.call]
+      end
+      results = [read.call]
+      Kernel.send(:public, :expanded)
+      results << read.call
+      Kernel.send(:protected, :expanded)
+      results << read.call
+      class Ruflet::Control
+        def method_missing(name, *args, **options, &block)
+          name == :expanded ? :control_method_missing : super
+        end
+      end
+      results << read.call
+      Kernel.send(:public, :expanded)
+      results << read.call
+      Kernel.send(:private, :expanded)
+      results << read.call
+      Ruflet::Control.send(:remove_method, :method_missing)
+      results << read.call
+      print results.inspect
+    RUBY
+
+    assert_equal '[[true, 0], ["expanded", 1], ["expanded", 2], ["expanded", 3], ["expanded", 4], ' \
+                 "[:control_method_missing, 4], [true, 4]]", out
   end
 
   # register_control's Kernel helper is a visibility change: Kernel makes the

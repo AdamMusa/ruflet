@@ -61,17 +61,22 @@ module Ruflet
     #   arguments and block included.
     # * When the app added a method_missing (see app_method_missing?), the
     #   reader hands the call to it the same way, unless the method after the
-    #   reader is public. That is what CRuby did without the reader: a call
-    #   with a receiver to a private or protected method goes to
-    #   method_missing. The method after the reader is the one Ruby's lookup
-    #   finds first, so a private Ruflet::Control#value hides a public
-    #   Object#value, in the embedded VM too (see method_after).
+    #   reader is public, or protected on Object, Kernel or a module Object
+    #   includes. That is what CRuby did without the reader: a call with a
+    #   receiver goes to method_missing when the method is private, or
+    #   protected and the caller is not an instance of the module that has
+    #   it, and every caller is an Object. The method after the reader is the
+    #   one Ruby's lookup finds first, so a private Ruflet::Control#value
+    #   hides a public Object#value, in the embedded VM too (see
+    #   method_after).
     # * The private Kernel DSL helper Ruflet::Extensions.register_control
     #   defines for an extension registered after Ruflet loaded (`expanded`,
     #   say) is Ruflet's, not the app's. A plain `tile.expanded` reads the
     #   state instead of building an `expanded` control (on v0.0.23 it
     #   raised); a call with arguments or a block still reaches the helper,
-    #   unless the app has its own method_missing (see "Not covered").
+    #   unless the app has its own method_missing (see "Not covered"). Once
+    #   the app makes the helper public or protected on Kernel, it is the
+    #   app's: `tile.expanded` calls it, as on v0.0.23.
     #   (In the embedded mruby VM, registering an extension after Ruflet has
     #   loaded already raises TypeError, on v0.0.23 too, so this is CRuby's.)
     # Only when there is no such method does the reader answer: with no
@@ -81,16 +86,21 @@ module Ruflet
     # Not covered, because a method cannot see how it was called:
     # * Refinements (CRuby only) of a class above the table class: the reader
     #   answers as if the refinement were not active.
-    # * An app that has both its own method_missing and a private or
-    #   protected method of a reader's name above the table class (a
-    #   top-level `def value` in a script, say). The calls that reached that
-    #   method on v0.0.23 from inside the control (no receiver,
-    #   `self.value`, `send(:value)`), and protected calls from another
-    #   control, now go to the method_missing. Ruflet's own extension helpers
-    #   are such private methods: `expanded(content: ...)` in an
-    #   ExpansionTile method goes to the method_missing too. Every other call
-    #   with a receiver went to the method_missing on v0.0.23 under CRuby
-    #   (mruby raised), and now goes there on both.
+    # * An app that has both its own method_missing and a private method of
+    #   a reader's name above the table class (a top-level `def value` in a
+    #   script, say), or a protected one below Object (on Ruflet::Control,
+    #   say). The calls that reached that method on v0.0.23 from inside the
+    #   control (no receiver, `self.value`, `send(:value)`), and protected
+    #   calls from another control, now go to the method_missing. Ruflet's
+    #   own extension helpers are such private methods:
+    #   `expanded(content: ...)` in an ExpansionTile method goes to the
+    #   method_missing too. Every other call with a receiver went to the
+    #   method_missing on v0.0.23 under CRuby (mruby raised), and now goes
+    #   there on both.
+    # * The same app with a protected method of that name on Object, Kernel
+    #   or a module Object includes: CRuby called it for `control.value` on
+    #   v0.0.23 and the reader still does, but `public_send(:value)` went to
+    #   the method_missing and now reaches the protected method too.
     # * A plain call without a receiver to such an extension helper, from
     #   inside a method of the table class (`expanded` in an ExpansionTile
     #   method), returns the reader's value, or the app's method_missing's
@@ -261,37 +271,50 @@ module Ruflet
         # count too (a top-level `def value` in a script is a private Object
         # method), so a call from inside the control's own methods
         # (`value` with no receiver) still reaches them, unless the app also
-        # added a method_missing (see public_method_after?).
+        # added a method_missing (see reachable_method_after?).
         def app_method_after?(after, symbol)
           after.any? { |mod| any_method?(mod, symbol) }
         end
 
         # Asked when app_method_after? and app_method_missing? are both true.
-        # True when the method `super` would call is public: without the
-        # reader, `control.value` called it, whatever method_missing the app
-        # had. A private or protected one it reached only from inside the
-        # control (no receiver, `self.`) or, if protected, from another
-        # control; CRuby sent every other call with a receiver to
-        # method_missing instead. The visibility is the one the module that
-        # method_after finds gave the method, as in Ruby's own lookup.
-        def public_method_after?(after, symbol)
+        # True when, without the reader, CRuby called the method `super`
+        # would call for `control.value`, whatever method_missing the app had:
+        # a public method, or a protected one of Object, Kernel or a module
+        # Object includes. CRuby lets a caller whose self is an instance of
+        # the method's module call a protected method with a receiver, and
+        # every caller's self is an Object. A private method, or a protected
+        # one further down (Ruflet::Control, PlatformControl, a module the
+        # class includes), it reached only from inside the control (no
+        # receiver, `self.`) or, if protected, from another control; CRuby
+        # sent every other call with a receiver to method_missing instead.
+        # The visibility is the one the module that method_after finds gave
+        # the method, as in Ruby's own lookup.
+        def reachable_method_after?(after, symbol)
           owner = method_after(after, symbol)
-          owner ? own_public_method?(owner, symbol) : false
+          return false unless owner
+          return true if own_public_method?(owner, symbol)
+
+          !own_private_method?(owner, symbol) && Object.ancestors.include?(owner)
         end
 
         # Asked for a plain read (no arguments, no block) when
         # app_method_after? is true. True when the method `super` would call is
         # the private Kernel DSL helper Ruflet::Extensions.register_control
-        # defined for an extension of this name, unchanged: Ruflet's helper,
-        # not an app method. Without the reader, `tile.expanded` raised
-        # ("private method 'expanded' called"), so the reader answers instead
-        # of building an `expanded` control. Only Kernel's own two
-        # UnboundMethods are compared with ==.
+        # defined for an extension of this name, unchanged and still private:
+        # Ruflet's helper, not an app method. Without the reader,
+        # `tile.expanded` raised ("private method 'expanded' called"), so the
+        # reader answers instead of building an `expanded` control. Once the
+        # app has made the helper public or protected on Kernel
+        # (`module Kernel; public :expanded; end`), `tile.expanded` called it
+        # on v0.0.23, so it counts as the app's and still answers. Only
+        # Kernel's own two UnboundMethods are compared with ==: == does not
+        # look at visibility.
         def ruflet_helper_after?(after, symbol)
           helper = Ruflet::Extensions.kernel_helper(symbol)
           return false unless helper
 
-          method_after(after, symbol).equal?(Kernel) && Kernel.instance_method(symbol) == helper
+          method_after(after, symbol).equal?(Kernel) && own_private_method?(Kernel, symbol) &&
+            Kernel.instance_method(symbol) == helper
         end
 
         # The module whose method of this name `super` would call from the
@@ -363,6 +386,15 @@ module Ruflet
           end
         end
 
+        # Private, on the module itself (see method_after).
+        def own_private_method?(mod, symbol)
+          if OWN_METHOD_PREDICATES
+            mod.private_method_defined?(symbol, false)
+          else
+            mod.private_instance_methods(false).include?(symbol)
+          end
+        end
+
         def include_readers(klass, names)
           readers = Module.new
           name = reader_module_name(klass)
@@ -405,7 +437,7 @@ module Ruflet
             found = api.app_method_after?(after, symbol) &&
                     !(plain && block.nil? && api.ruflet_helper_after?(after, symbol))
             answering = api.app_method_missing?(self)
-            if found && (!answering || api.public_method_after?(after, symbol))
+            if found && (!answering || api.reachable_method_after?(after, symbol))
               super(*args, **options, &block)
             elsif answering
               method_missing(symbol, *args, **options, &block)
