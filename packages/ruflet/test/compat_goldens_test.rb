@@ -170,6 +170,22 @@ class RufletCompatGoldensTest < Minitest::Test
     assert_includes error.message, "page driver socket: IOError"
   end
 
+  # A stand-in for a long-running child exits at once, and macOS sometimes
+  # answers a signal for its process group with EPERM instead of ESRCH. The
+  # goldens must not depend on which: with EPERM forced for every signal to a
+  # stand-in (the app child `ruflet run` reaps, and the desktop client it
+  # detaches), these run goldens must come out unchanged.
+  def test_signals_to_exited_stand_ins_do_not_change_goldens
+    skip "compat goldens run on macOS hosts" unless SUPPORTED_HOST
+
+    %w[run-main.rb--port_9000 run-main.rb--desktop-release].each do |id|
+      invocation = RufletCompat::Corpus::INVOCATIONS.find { |entry| RufletCompat.invocation_id(entry) == id }
+      expected = File.read(RufletCompat.cli_golden_path(invocation), encoding: Encoding::UTF_8)
+      actual = RufletCompat.render_cli(invocation.merge("inject_fault" => "stand_in_kill_eperm"))
+      assert_equal expected, actual, "#{id}: EPERM for an exited stand-in changed the golden"
+    end
+  end
+
   # The release archives are built once, when release_fixture.rb loads (before
   # the CLI runs), without zlib, are byte-identical in every process, and are
   # valid for the host tools the CLI extracts them with.
