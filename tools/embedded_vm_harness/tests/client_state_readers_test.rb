@@ -342,6 +342,18 @@ module Kernel
 end
 assert_equal(:protected_kernel_method, toggle.value, "a protected Kernel#value still comes before the app method_missing")
 Kernel.send(:remove_method, :value)
+# And in a module Object includes (a script's top-level `include` puts it
+# there). The module stays included, empty, for the rest of the file.
+module ProtectedObjectHelpers
+  def value
+    :protected_module_method
+  end
+  protected :value
+end
+Object.send(:include, ProtectedObjectHelpers)
+assert_equal(:protected_module_method, toggle.value,
+             "a protected value in a module Object includes still comes before the app method_missing")
+ProtectedObjectHelpers.send(:remove_method, :value)
 Object.class_eval do
   def value
     :public_object_method

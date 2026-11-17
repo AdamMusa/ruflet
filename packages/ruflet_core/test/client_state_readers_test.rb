@@ -9,6 +9,9 @@ require_relative "test_helper"
 # readers, and a method the app defines itself still answers instead.
 class RufletClientStateReadersTest < Minitest::Test
   READER_FILE = File.expand_path("../lib/ruflet_ui/ruflet/ui/client_state_readers.rb", __dir__)
+  # A module an app includes into Object. The test that includes it adds
+  # methods only for as long as it needs them, so it stays empty otherwise.
+  OBJECT_HELPERS = Module.new
 
   def readers
     Ruflet::UI::ClientStateReaders
@@ -414,6 +417,14 @@ class RufletClientStateReadersTest < Minitest::Test
       end
       with_app_methods(Kernel, "protected def value = :protected_kernel_method") do
         assert_equal :protected_kernel_method, toggle.value
+      end
+      # And in a module Object includes (a script's top-level `include` puts
+      # it there).
+      Object.include(OBJECT_HELPERS)
+      with_app_methods(OBJECT_HELPERS, "protected def value = :protected_module_method") do
+        assert_equal :protected_module_method, toggle.value
+        assert_equal :protected_module_method, toggle.instance_eval { value }
+        assert_equal :protected_module_method, toggle.public_send(:value)
       end
       # What decides is the first method after the reader, as in Ruby's own
       # lookup: TextInputMethods comes before Object.
