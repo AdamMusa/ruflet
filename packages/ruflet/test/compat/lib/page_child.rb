@@ -93,7 +93,7 @@ module CompatPage
     # rack.hijack, then hand the socket over. Returns what the client saw.
     def serve_rails_endpoint(app_file)
       endpoint = Ruflet::Rails.native(app_file) # config/routes.rb's `to:`
-      client, server_io = UNIXSocket.pair
+      client, server_io = driver { UNIXSocket.pair }
       env = {
         "REQUEST_METHOD" => "GET", "PATH_INFO" => "/ws", "HTTP_UPGRADE" => "websocket",
         "HTTP_CONNECTION" => "Upgrade", "HTTP_SEC_WEBSOCKET_KEY" => WS_KEY, "HTTP_SEC_WEBSOCKET_VERSION" => "13"
@@ -102,13 +102,18 @@ module CompatPage
       before = Thread.list
       rack_response = endpoint.call(env)
       handlers = Thread.list - before
-      handshake = read_handshake(client)
+      handshake = driver { read_handshake(client) }
       register = Ruflet::WireCodec.pack([Ruflet::Protocol::ACTIONS[:register_client], REGISTER_PAYLOAD])
-      client.write(client_frame(0x2, register))
       # The client sends nothing more; the server answers, reads EOF and
       # closes the connection, which ends the frames below.
-      client.close_write
-      frames = read_frames(client)
+      frames = driver do
+        # compat_goldens_test.rb only: a socket error in this driver must fail
+        # the golden, not be rendered as the app's "error" status.
+        client.close if SPEC["inject_fault"] == "page_driver_socket"
+        client.write(client_frame(0x2, register))
+        client.close_write
+        read_frames(client)
+      end
       handlers.each do |thread|
         raise HarnessFault, "the endpoint's socket thread did not finish" unless thread.join(WS_TIMEOUT)
       end
@@ -122,6 +127,15 @@ module CompatPage
       }
     ensure
       client&.close unless client&.closed?
+    end
+
+    # The client end of the socket pair is this driver's, not the app's: a
+    # socket error there (EPIPE, a reset, a closed stream) fails the golden as
+    # a harness fault instead of being rendered as the app's "error" status.
+    def driver
+      yield
+    rescue IOError, SystemCallError => e
+      raise HarnessFault, "page driver socket: #{e.class}: #{e.message}"
     end
 
     def read_handshake(io)

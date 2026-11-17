@@ -148,7 +148,7 @@ class RufletCompatGoldensTest < Minitest::Test
   # A fault in the harness's own code must fail the golden, never reach a
   # CLI `rescue` and be rendered as CLI behavior. The injected fault is the
   # one the release fixture's lazy Zlib::GzipWriter used to raise, inside the
-  # request `release_by_tag` rescues.
+  # request `release_by_tag` rescues; then a socket error in the page driver.
   def test_harness_faults_fail_loudly
     skip "compat goldens run on macOS hosts" unless SUPPORTED_HOST
 
@@ -159,6 +159,15 @@ class RufletCompatGoldensTest < Minitest::Test
     assert_includes error.message, "not CLI behavior"
     assert_includes error.message, "Zlib::BufError: buffer error (injected)"
     assert_includes error.message, "releases/tags/prebuild-main"
+
+    # The same for the page driver: a socket error on the client end of the
+    # Rails endpoint's socket pair is the driver's, never the app's "error".
+    rails_page = RufletCompat::Corpus::PAGES.find { |entry| entry["id"] == "rails_app--rails-endpoint" }
+    error = assert_raises(RufletCompat::HarnessFault) do
+      RufletCompat.render_page(rails_page.merge("inject_fault" => "page_driver_socket"))
+    end
+    assert_includes error.message, "not app behavior"
+    assert_includes error.message, "page driver socket: IOError"
   end
 
   # The release archives are built once, when release_fixture.rb loads (before
