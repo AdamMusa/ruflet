@@ -42,6 +42,10 @@ module Ruflet
       # through the run interceptor), :server (Server#start), or nil.
       attr_accessor :entrypoint
 
+      # The names Ruby gives $VERBOSE; each is a global of its own, so an
+      # assignment to one is traced only under its own name.
+      VERBOSE_GLOBALS = %i[$VERBOSE $-v $-w].freeze
+
       # in_flight: on a reload, the RequiresInFlight of the app's own server
       # (see Runner#serve_from_script), which this load loads instead of
       # requiring (InFlightRequires).
@@ -53,10 +57,36 @@ module Ruflet
         @entrypoint = nil
         @in_flight = in_flight
         @loaded_in_flight = {}
+        @verbose_assigned = false
+        @verbose_trace = nil
       end
 
       def reloading?
         @reloading
+      end
+
+      # Notes any assignment to $VERBOSE from here until untrace_verbose, so
+      # a `$VERBOSE = nil` of the app's own is told apart from the nil the
+      # load set (see Runner#serve_from_script). Called once the load has
+      # silenced warnings, so only the app's code (the script and what it
+      # loads) assigns it in between. Any assignment counts, also one that
+      # puts back the value it found (a gem silencing warnings around a
+      # require): the load's nil then stays, as on v0.0.23.
+      def trace_verbose
+        trace = @verbose_trace = proc { @verbose_assigned = true }
+        VERBOSE_GLOBALS.each { |name| trace_var(name, trace) }
+      end
+
+      def untrace_verbose
+        trace = @verbose_trace
+        return unless trace
+
+        @verbose_trace = nil
+        VERBOSE_GLOBALS.each { |name| untrace_var(name, trace) }
+      end
+
+      def verbose_assigned?
+        @verbose_assigned
       end
 
       def server_start(server, app_block, start)
@@ -454,12 +484,13 @@ module Ruflet
         @requires_in_flight = requires_in_flight
         # Serving is not loading: warnings show again (as the app had them
         # before the load silenced them, or as the script set them while it
-        # loaded), and the app's own code on this fiber (once the server
-        # stops) is no longer captured. Done before the watcher starts, whose
-        # reloads save and restore $VERBOSE.
+        # loaded, nil included), and the app's own code on this fiber (once
+        # the server stops) is no longer captured. Done before the watcher
+        # starts, whose reloads save and restore $VERBOSE.
         Thread.current[SERVER_START_CAPTURE] = nil
+        script_load.untrace_verbose
         loading_verbose = $VERBOSE
-        $VERBOSE = script_load.verbose if loading_verbose.nil?
+        $VERBOSE = script_load.verbose if loading_verbose.nil? && !script_load.verbose_assigned?
         arm_reload
         begin
           start.call
@@ -524,7 +555,8 @@ module Ruflet
       # the script makes synchronously, never ones on threads or fibers it
       # creates. On a reload a captured start ends the load (throw), and the
       # files the app's own server serves from inside the require of are
-      # loaded instead of required (InFlightRequires).
+      # loaded instead of required (InFlightRequires). Only the first load
+      # can serve the app's own server, so only it traces $VERBOSE.
       def load_script!(reloading: false)
         previous_verbose = $VERBOSE
         $VERBOSE = nil
@@ -532,10 +564,12 @@ module Ruflet
         in_flight = reloading ? @requires_in_flight : nil
         script_load = ScriptLoad.new(self, reloading: reloading, verbose: previous_verbose, in_flight: in_flight)
         Thread.current[SERVER_START_CAPTURE] = script_load
+        script_load.trace_verbose unless reloading
         catch(script_load) do
           in_flight ? InFlightRequires.around { Kernel.load(@script) } : Kernel.load(@script)
         end
       ensure
+        script_load&.untrace_verbose
         Thread.current[SERVER_START_CAPTURE] = previous_capture
         $VERBOSE = previous_verbose
       end

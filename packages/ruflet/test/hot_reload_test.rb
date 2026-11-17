@@ -796,6 +796,68 @@ class RufletHotReloadTest < Minitest::Test
     $serving_probe = $verbose_after_start = nil
   end
 
+  # The same for nil, the usual way to silence warnings, which the load
+  # itself also sets: the runner traces assignments to $VERBOSE while the
+  # script loads to tell the script's own nil apart from the load's. On
+  # v0.0.23, and under plain ruby, that server serves with nil.
+  def test_a_verbose_nil_the_script_sets_is_kept_while_its_own_server_serves
+    assert_verbose_kept_while_serving("$VERBOSE = nil", outer: false)
+  end
+
+  # $-v and $-w are $VERBOSE under other names, each traced on its own.
+  def test_a_verbose_nil_set_through_an_alias_is_kept_while_its_own_server_serves
+    assert_verbose_kept_while_serving("$-v = nil", outer: true)
+    assert_verbose_kept_while_serving("$-w = nil", outer: false)
+  end
+
+  def assert_verbose_kept_while_serving(assignment, outer:)
+    $serving_probe = Queue.new
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+
+      #{assignment}
+      class HotReloadTestVerboseNilProbe < Ruflet::Server
+        private def accept_loop
+          traces = Ruflet::HotReload::ScriptLoad::VERBOSE_GLOBALS.flat_map { |name| untrace_var(name) }
+          $serving_probe << [$VERBOSE, traces]
+          super
+        end
+      end
+      HotReloadTestVerboseNilProbe.new(host: "127.0.0.1", port: 0) { |page| page.add("served") }.start
+      $verbose_after_start = [$VERBOSE]
+    RUBY
+    previous_verbose = $VERBOSE
+    $VERBOSE = outer
+
+    start_served_runner
+    wait_until("the app's server serves") { !$serving_probe.empty? }
+    verbose, traces = $serving_probe.pop
+    assert_nil verbose, "the script's own #{assignment} holds while its server serves"
+    assert_empty traces, "nothing traces $VERBOSE while the app is served"
+
+    stop_served_runner
+    assert_equal [nil], $verbose_after_start
+    assert_equal outer, $VERBOSE, "the runner restores the $VERBOSE it found once the load ends"
+    left = Ruflet::HotReload::ScriptLoad::VERBOSE_GLOBALS.flat_map { |name| untrace_var(name) }
+    assert_empty left, "nothing traces $VERBOSE once the load ends"
+  ensure
+    stop_served_runner
+    $VERBOSE = previous_verbose
+    $serving_probe = $verbose_after_start = nil
+  end
+
+  # The trace that tells the script's own $VERBOSE = nil apart is gone once
+  # a load ends, also when the runner serves the app (Ruflet.run).
+  def test_nothing_traces_verbose_once_the_script_has_loaded
+    write_widgets("v1")
+    write_main
+    start_runner
+
+    left = Ruflet::HotReload::ScriptLoad::VERBOSE_GLOBALS.flat_map { |name| untrace_var(name) }
+    assert_empty left
+  end
+
   # A child the app forks while it loads runs the script's code in another
   # process; a server it starts is that process's, as without the runner:
   # the child arms no hot reload of its own and never reports to `ruflet
