@@ -100,8 +100,10 @@ module Ruflet
     # * The same app with a protected method of that name on Object, Kernel
     #   or a module Object includes: CRuby called it for `control.value` on
     #   v0.0.23 and the reader still does, but `public_send(:value)` went to
-    #   the method_missing and now reaches the protected method too.
-    # * A plain call without a receiver to such an extension helper, from
+    #   the method_missing and now reaches the protected method too. (mruby
+    #   raised "protected method called" for every such call with a
+    #   receiver; it now reaches the protected method as well.)
+    # * A plain call without a receiver to Ruflet's own extension helper, from
     #   inside a method of the table class (`expanded` in an ExpansionTile
     #   method), returns the reader's value, or the app's method_missing's
     #   answer if it has one; on v0.0.23 it built an empty `expanded`
