@@ -59,6 +59,8 @@ module CompatChild
   # path => what the stub last wrote there, so the harness can tell when the
   # CLI later changes or removes a stub's file.
   STUB_CONTENTS = {}
+  # Pids of the processes that stand in for long-running children.
+  STAND_INS = []
   NETWORK = []
   NETWORK_MODE = SPEC.fetch("network", "offline")
   FAKE_COMMIT = SPEC.fetch("fake_commit")
@@ -395,9 +397,14 @@ module CompatChild
         env, argv, options = split_command(args, kwargs)
         record("spawn", env, argv, options)
         passed = options.select { |key, _| %i[pgroup].include?(key) }
-        REAL_SPAWN.call("/usr/bin/true", in: File::NULL, out: File::NULL, err: File::NULL, **passed)
+        pid = REAL_SPAWN.call("/usr/bin/true", in: File::NULL, out: File::NULL, err: File::NULL, **passed)
+        STAND_INS << pid
+        pid
       end
     end
+
+    # A pid, or a process group (negative), that only a stand-in leads.
+    def stand_in?(pid) = pid.is_a?(Integer) && STAND_INS.include?(pid.abs)
 
     def host_probe(path)
       value = path.respond_to?(:to_path) ? path.to_path : path
@@ -452,6 +459,37 @@ module Process
     def spawn(*args, **kwargs) = CompatChild.spawn_call(args, kwargs)
   end
 end
+
+# compat_goldens_test.rb only: macOS's answer to a signal for a stand-in
+# that has just exited, made certain instead of rare.
+if CompatChild::SPEC["inject_fault"] == "stand_in_kill_eperm"
+  Process.singleton_class.prepend(Module.new do
+    def kill(signal, *pids)
+      raise Errno::EPERM, "injected" if !pids.empty? && pids.all? { |pid| CompatChild.stand_in?(pid) }
+
+      super
+    end
+  end)
+end
+
+# Signals the CLI sends its children reach the real kernel. A stand-in exits
+# at once, so by then it has exited, and the CLI's ESRCH handling is what
+# every golden records. macOS does not always say ESRCH: kill(-pgid) right
+# after the group's leader exited, even after it was reaped, sometimes fails
+# with EPERM instead (about 0.6% of signals with 8 processes doing it at
+# once), which made `ruflet run` goldens rarely end with an uncaught
+# Errno::EPERM. A stand-in is ours and runs nothing, so EPERM for one can only
+# mean it has exited; it is answered as the ESRCH it stands for. Signals to
+# any other pid are untouched.
+Process.singleton_class.prepend(Module.new do
+  def kill(signal, *pids)
+    super
+  rescue Errno::EPERM
+    raise unless !pids.empty? && pids.all? { |pid| CompatChild.stand_in?(pid) }
+
+    raise Errno::ESRCH, "compat harness: stand-in #{pids.join(', ')} has exited"
+  end
+end)
 
 class IO
   class << self

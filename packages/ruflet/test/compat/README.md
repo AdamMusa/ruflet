@@ -138,7 +138,11 @@ Inside that process only the process and network boundaries are replaced:
   line with a diff from what the stub wrote, or a `D` line, including for a
   file the stub created during the step. Long-running children (the
   app backend, browsers, desktop clients) are recorded and replaced by a
-  process that exits at once.
+  process that exits at once. The CLI's signals to those stand-ins reach
+  the real kernel, except that macOS sometimes answers EPERM instead of
+  ESRCH for a process group whose leader has just exited; for a stand-in
+  that EPERM is answered as ESRCH, so the goldens do not depend on timing
+  (`test_signals_to_exited_stand_ins_do_not_change_goldens`).
 * Some host tools really run, because their output is what users get:
   `/usr/libexec/PlistBuddy` rewrites Info.plist, and `/usr/bin/tar`,
   `/usr/bin/unzip` and `/usr/bin/ditto` extract downloaded prebuilt clients.
@@ -161,7 +165,7 @@ Inside that process only the process and network boundaries are replaced:
   writes it to its result and exits 70 at once, before any CLI or app
   `rescue` can turn it into output, and the golden fails with the fault
   instead of being rendered. In a CLI child that covers the recording and
-  tool emulation behind `system`, `spawn`, `Open3` and backticks, the fake
+  tool emulation behind `system`, `spawn` and the `Open3` captures, the fake
   network, and loading the release fixture. In a page child it covers only
   the `--rails-endpoint` driver: the socket I/O on its end of the socket
   pair, and its handshake and frame checks. The `Ruflet::Server`-mode
