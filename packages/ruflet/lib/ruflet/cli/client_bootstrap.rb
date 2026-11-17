@@ -12,15 +12,20 @@ module Ruflet
     # CLIENT_BOOTSTRAP_BLOCK_START and CLIENT_BOOTSTRAP_BLOCK_END, so they build
     # with every gem, including released ones that know nothing about hooks.
     #
-    # * While no build feature adds a hook, this writes nothing at all, in
-    #   build/client or in a client dir the developer owns (RUFLET_CLIENT_DIR,
-    #   ./ruflet_client, templates/ruflet_flutter_template).
-    # * Once one does, it writes the hooks to lib/ruflet_bootstrap.g.dart,
+    # * While no build feature adds a hook, this writes, edits and deletes
+    #   nothing, in build/client or in a client dir the developer owns
+    #   (RUFLET_CLIENT_DIR, ./ruflet_client, templates/ruflet_flutter_template).
+    #   It only looks for a lib/ruflet_bootstrap.g.dart that starts with
+    #   CLIENT_BOOTSTRAP_SIGNATURE, which only a build with hooks writes.
+    # * Once a feature adds hooks, it writes them to lib/ruflet_bootstrap.g.dart,
     #   imports that file in each entrypoint and empties the marked block. Each
     #   build first copies lib/main*.dart from the template again
     #   (refresh_managed_client_template_files), so the next build without
     #   hooks starts from the template's own empty lists, and the generated
     #   file, imported by nothing any more, is removed.
+    # * A lib/ruflet_bootstrap.g.dart that does not start with the signature
+    #   is the developer's own: it is never overwritten or deleted. A build
+    #   with hooks then warns and leaves the file and the entrypoints alone.
     #
     # A build feature adds hooks by appending the name of a provider method to
     # CLIENT_BOOTSTRAP_HOOK_PROVIDERS. The method receives the build's
@@ -42,8 +47,9 @@ module Ruflet
       # main.self.dart's main.
       CLIENT_BOOTSTRAP_ENTRYPOINTS = %w[lib/main.self.dart lib/main.server.dart].freeze
       CLIENT_BOOTSTRAP_IMPORT = "import 'ruflet_bootstrap.g.dart';"
-      # An import of the generated file, relative or through the package.
-      CLIENT_BOOTSTRAP_IMPORT_LINE = %r{\A\s*import\s+(['"])(?:[^'"]*/)?ruflet_bootstrap\.g\.dart\1}
+      # The URI of an import directive, in either quote style, also when it
+      # sits on the line after `import`.
+      CLIENT_BOOTSTRAP_IMPORT_URI = /^[ \t]*import\s+(['"])([^'"\r\n]*)\1/
       # ruflet-template pins the same markers in
       # tool/conformance/test_bootstrap_hooks_contract.rb.
       CLIENT_BOOTSTRAP_BLOCK_START = "// --RUFLET_BOOTSTRAP_HOOKS_START--"
@@ -61,7 +67,7 @@ module Ruflet
       CLIENT_BOOTSTRAP_FUNCTION_PATTERN = /\A[A-Za-z_$][A-Za-z0-9_$]*(?:\.[A-Za-z_$][A-Za-z0-9_$]*)?\z/
 
       # The start of every file this module writes. A file that does not begin
-      # with it is never deleted.
+      # with it is never overwritten or deleted.
       CLIENT_BOOTSTRAP_SIGNATURE = "// GENERATED FILE. DO NOT EDIT.\n//\n// `ruflet build` writes this file"
       CLIENT_BOOTSTRAP_HEADER = <<~DART
         // GENERATED FILE. DO NOT EDIT.
@@ -83,26 +89,34 @@ module Ruflet
 
       # Points the client at the startup hooks this build's features add.
       #
-      # With no hooks, and entrypoints that do not import the generated file
-      # (every released template), nothing is written or deleted, so the client
-      # is exactly what it would be without this module. Returns the generated
-      # file's path when the client uses it, otherwise nil.
+      # Without hooks it changes nothing unless the client holds a generated
+      # file from an earlier build with hooks: that file is kept in step (both
+      # lists empty) while something imports it, and removed once nothing
+      # does. Returns the generated file's path when the client uses it,
+      # otherwise nil.
       def write_client_bootstrap(client_dir, config = {}, platform: nil, self_contained: false)
         hooks = client_bootstrap_hooks(config, platform: platform, self_contained: self_contained)
         # Rendering validates every hook, so a malformed one raises before any
         # file is touched.
         content = render_client_bootstrap(hooks)
-        route_client_entrypoints_to_bootstrap(client_dir, hooks.size) unless hooks.empty?
-
         path = File.join(client_dir, CLIENT_BOOTSTRAP_PATH)
+        existing = client_bootstrap_file(path)
+
+        if hooks.empty?
+          # Every build today: no generated file, nothing to do.
+          return nil unless existing == :generated
+        elsif existing == :foreign
+          warn_foreign_client_bootstrap(hooks.size)
+          return nil
+        else
+          route_client_entrypoints_to_bootstrap(client_dir, hooks.size)
+        end
+
         unless client_bootstrap_imported?(client_dir)
-          remove_stale_client_bootstrap(path)
+          File.delete(path) if existing == :generated
           return nil
         end
-        # An entrypoint that imports the file needs it even without hooks, for
-        # example one an earlier build pointed at it when no template was
-        # available to refresh it from. It then gets both lists empty.
-        return path if File.file?(path) && File.binread(path) == content
+        return path if existing == :generated && File.binread(path) == content
 
         FileUtils.mkdir_p(File.dirname(path))
         # Binary mode keeps LF line endings on Windows, matching the template.
@@ -121,10 +135,24 @@ module Ruflet
         CLIENT_BOOTSTRAP_HOOK_PROVIDERS
       end
 
+      # What is at lib/ruflet_bootstrap.g.dart: nothing (:absent), a file this
+      # module wrote (:generated), or anything else (:foreign), such as the
+      # developer's own file, a directory, a symlink or a file that cannot be
+      # read.
+      def client_bootstrap_file(path)
+        return :absent unless File.exist?(path) || File.symlink?(path)
+        return :foreign if File.symlink?(path) || !File.file?(path)
+
+        File.binread(path, CLIENT_BOOTSTRAP_SIGNATURE.bytesize) == CLIENT_BOOTSTRAP_SIGNATURE ? :generated : :foreign
+      rescue SystemCallError
+        :foreign
+      end
+
       def route_client_entrypoints_to_bootstrap(client_dir, hook_count)
+        package_name = client_package_name(client_dir)
         unrouted = CLIENT_BOOTSTRAP_ENTRYPOINTS.select do |relative_path|
           path = File.join(client_dir, relative_path)
-          File.file?(path) && !route_client_entrypoint_to_bootstrap(path)
+          File.file?(path) && !route_client_entrypoint_to_bootstrap(path, relative_path, package_name)
         end
         warn_unrouted_client_bootstrap(unrouted, hook_count) unless unrouted.empty?
       end
@@ -132,36 +160,41 @@ module Ruflet
       # Empties the entrypoint's marked block and imports the generated file
       # instead. Returns false when the entrypoint has neither the block nor the
       # import, so the hooks cannot reach it.
-      def route_client_entrypoint_to_bootstrap(path)
+      def route_client_entrypoint_to_bootstrap(path, relative_path, package_name)
         content = read_text_file(path)
+        imported = client_bootstrap_import_in?(content, relative_path, package_name)
         lines = content.lines
-        imported = lines.any? { |line| line.match?(CLIENT_BOOTSTRAP_IMPORT_LINE) }
         start = lines.index { |line| line.chomp == CLIENT_BOOTSTRAP_BLOCK_START }
         finish = start && lines.each_index.find { |index| index > start && lines[index].chomp == CLIENT_BOOTSTRAP_BLOCK_END }
         return imported unless finish
 
-        lines[(start + 1)...finish] = ["#{CLIENT_BOOTSTRAP_BLOCK_POINTER}\n"]
-        insert_client_bootstrap_import(lines) unless imported
+        # The lines this adds end the way the marker line does, so a CRLF
+        # entrypoint stays CRLF.
+        newline = lines[start].end_with?("\r\n") ? "\r\n" : "\n"
+        lines[(start + 1)...finish] = ["#{CLIENT_BOOTSTRAP_BLOCK_POINTER}#{newline}"]
+        insert_client_bootstrap_import(lines, newline) unless imported
         updated = lines.join
         write_text_file(path, updated) unless updated == content
         true
       end
 
-      # After the last import directive, which may span several lines.
-      def insert_client_bootstrap_import(lines)
-        last_import = lines.rindex { |line| line.start_with?("import ") }
+      # After the last import directive, which may span several lines and end
+      # in a // comment.
+      def insert_client_bootstrap_import(lines, newline)
+        last_import = lines.rindex { |line| line.match?(/\Aimport\s/) }
         unless last_import
-          lines.unshift("#{CLIENT_BOOTSTRAP_IMPORT}\n")
+          lines.unshift("#{CLIENT_BOOTSTRAP_IMPORT}#{newline}")
           return
         end
 
-        directive_end = (last_import...lines.length).find { |index| lines[index].rstrip.end_with?(";") } || last_import
-        lines.insert(directive_end + 1, "#{CLIENT_BOOTSTRAP_IMPORT}\n")
+        directive_end = (last_import...lines.length).find { |index| lines[index].match?(%r{;[ \t]*(?://.*)?\s*\z}) } ||
+                        last_import
+        lines.insert(directive_end + 1, "#{CLIENT_BOOTSTRAP_IMPORT}#{newline}")
       end
 
-      # Whether any Dart file under lib/ imports the generated file. It only
-      # reads, and reads bytes, so a file in a client dir the developer owns
-      # that is not valid UTF-8, or not readable, cannot fail a build.
+      # Whether any Dart file under lib/ imports this client's generated file.
+      # It only reads, and reads bytes, so a file in a client dir the developer
+      # owns that is not valid UTF-8, or not readable, cannot fail a build.
       #
       # The client path is the glob's base, never part of its pattern: a
       # developer's client dir may be named "my app [v2]" or "proj{1}", and
@@ -170,6 +203,7 @@ module Ruflet
       def client_bootstrap_imported?(client_dir)
         lib_dir = File.join(client_dir, "lib")
         generated = File.expand_path(File.join(client_dir, CLIENT_BOOTSTRAP_PATH))
+        package_name = client_package_name(client_dir)
         Dir.glob("**/*.dart", base: lib_dir).any? do |relative_path|
           dart_file = File.join(lib_dir, relative_path)
           next false if File.expand_path(dart_file) == generated || !File.file?(dart_file)
@@ -177,20 +211,54 @@ module Ruflet
           source = File.binread(dart_file)
           next false unless source.include?("ruflet_bootstrap.g.dart")
 
-          source.force_encoding(Encoding::UTF_8).scrub.each_line.any? { |line| line.match?(CLIENT_BOOTSTRAP_IMPORT_LINE) }
+          client_bootstrap_import_in?(source.force_encoding(Encoding::UTF_8).scrub, "lib/#{relative_path}", package_name)
         rescue SystemCallError
           false
         end
       end
 
-      # A generated file nothing imports any more, left by a build with hooks
-      # whose entrypoints have since been refreshed from the template. A file
-      # this module did not write is never touched.
-      def remove_stale_client_bootstrap(path)
-        return unless File.file?(path)
-        return unless File.binread(path, CLIENT_BOOTSTRAP_SIGNATURE.bytesize) == CLIENT_BOOTSTRAP_SIGNATURE
+      # Whether the Dart source at `importer` (relative to the client dir, for
+      # example "lib/main.server.dart") imports this client's
+      # lib/ruflet_bootstrap.g.dart.
+      def client_bootstrap_import_in?(source, importer, package_name)
+        source.scan(CLIENT_BOOTSTRAP_IMPORT_URI).any? do |_quote, uri|
+          client_bootstrap_uri?(uri, importer, package_name)
+        end
+      end
 
-        File.delete(path)
+      # Only a URI that resolves to this client's lib/ruflet_bootstrap.g.dart:
+      # relative to the importing file, or package:<this client's pubspec
+      # name>/ruflet_bootstrap.g.dart. Another package's file of the same name
+      # is not this one.
+      def client_bootstrap_uri?(uri, importer, package_name)
+        if uri.start_with?("package:")
+          return !package_name.nil? && uri == "package:#{package_name}/ruflet_bootstrap.g.dart"
+        end
+        # dart:, file:, http: and absolute paths never name the client's file.
+        return false if uri.start_with?("/") || uri.match?(/\A[A-Za-z][A-Za-z0-9+.-]*:/)
+
+        segments = importer.split("/")[0...-1]
+        uri.split("/").each do |segment|
+          case segment
+          when "", "." then next
+          when ".."
+            return false if segments.empty?
+
+            segments.pop
+          else
+            segments << segment
+          end
+        end
+        segments == %w[lib ruflet_bootstrap.g.dart]
+      end
+
+      # The client's package name from its pubspec.yaml, or nil. Every build
+      # has already renamed the package to the app's (apply_pubspec_metadata).
+      def client_package_name(client_dir)
+        source = File.binread(File.join(client_dir, "pubspec.yaml")).force_encoding(Encoding::UTF_8).scrub
+        source[/^name:[ \t]*(['"]?)([A-Za-z_][A-Za-z0-9_]*)\1[ \t]*(?:#.*)?\r?$/, 2]
+      rescue SystemCallError
+        nil
       end
 
       def warn_unrouted_client_bootstrap(entrypoints, hook_count)
@@ -199,6 +267,12 @@ module Ruflet
         warn "warning: #{entrypoints.join(' and ')} #{verb} no #{CLIENT_BOOTSTRAP_BLOCK_START} block, " \
              "so the #{hooks} this build adds will not run from #{pronoun}. " \
              "Update the Flutter client from the current ruflet-template."
+      end
+
+      def warn_foreign_client_bootstrap(hook_count)
+        hooks = "#{hook_count} startup hook#{'s' unless hook_count == 1}"
+        warn "warning: #{CLIENT_BOOTSTRAP_PATH} was not written by `ruflet build`, so it is left as it is " \
+             "and the #{hooks} this build adds will not run. Rename that file to let the build generate it."
       end
 
       def render_client_bootstrap(hooks)

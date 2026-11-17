@@ -11,7 +11,8 @@ require "yaml"
 # frame (WP-00 R3). The entrypoints declare both lists empty themselves, so a
 # build without hooks must leave the client exactly as the template and the
 # rest of the build leave it; only a build that adds hooks writes
-# lib/ruflet_bootstrap.g.dart and points the entrypoints at it.
+# lib/ruflet_bootstrap.g.dart and points the entrypoints at it. A
+# lib/ruflet_bootstrap.g.dart the build did not write is never touched.
 class RufletCliClientBootstrapTest < Minitest::Test
   class DummyBuilder
     include Ruflet::CLI::BuildCommand
@@ -298,16 +299,236 @@ class RufletCliClientBootstrapTest < Minitest::Test
     end
   end
 
-  # Detecting the import must not fail a build that works today, whatever a
-  # developer keeps under lib/.
-  def test_a_client_with_files_that_are_not_utf8_still_builds
-    with_client(self.class.marked_entrypoints) do |client_dir|
-      File.binwrite(File.join(client_dir, "lib", "latin1.dart"), "// caf\xE9 ruflet_bootstrap.g.dart\n".b)
-      FileUtils.mkdir_p(File.join(client_dir, "lib", "folder.dart"))
+  # Without hooks, an entrypoint that imports the file does not make the build
+  # create it: only a file an earlier build with hooks wrote is kept in step.
+  def test_no_hooks_never_creates_the_file_an_entrypoint_imports
+    entrypoints = self.class.marked_entrypoints.transform_values { |source| routed(source) }
+
+    with_client(entrypoints) do |client_dir|
+      before = snapshot(client_dir)
+
+      _out, err = capture_io do
+        assert_nil DummyBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+      end
+      assert_equal before, snapshot(client_dir)
+      assert_empty err
+    end
+  end
+
+  # Review probe A: the developer's own lib/ruflet_bootstrap.g.dart, imported
+  # from lib/, in a client dir they own.
+  OWN_BOOTSTRAP = "// my own file\nconst mine = 1;\n"
+  FOREIGN_WARNING = "warning: lib/ruflet_bootstrap.g.dart was not written by `ruflet build`, so it is " \
+                    "left as it is and the 4 startup hooks this build adds will not run. Rename that file " \
+                    "to let the build generate it.\n"
+
+  def test_a_developers_own_bootstrap_file_is_never_overwritten
+    with_client({ "lib/main.server.dart" => "import 'x.dart';\n" }) do |client_dir|
+      File.write(File.join(client_dir, "lib", "mine.dart"), "import 'ruflet_bootstrap.g.dart';\n")
+      File.write(File.join(client_dir, GENERATED), OWN_BOOTSTRAP)
+      before = snapshot(client_dir)
+
+      _out, err = capture_io do
+        assert_nil DummyBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+      end
+      assert_equal before, snapshot(client_dir)
+      assert_equal OWN_BOOTSTRAP, File.binread(File.join(client_dir, GENERATED))
+      assert_empty err, "nothing would have changed, so there is nothing to warn about"
+    end
+  end
+
+  # With hooks the build would need the file, so it says why the hooks will
+  # not run, and leaves the file and the entrypoints exactly as they are.
+  def test_hooks_leave_a_developers_own_bootstrap_file_and_the_entrypoints_alone
+    owners = {
+      "the developer's own file" => ->(path) { File.write(path, OWN_BOOTSTRAP) },
+      "another tool's generated file" => ->(path) { File.write(path, "// GENERATED CODE - DO NOT MODIFY BY HAND\n") },
+      "the header alone, without the rest of the signature" =>
+        ->(path) { File.write(path, "// GENERATED FILE. DO NOT EDIT.\nconst mine = 1;\n") },
+      "a directory" => ->(path) { FileUtils.mkdir_p(path) }
+    }
+    owners.each do |label, plant|
+      with_client(self.class.marked_entrypoints) do |client_dir|
+        plant.call(File.join(client_dir, GENERATED))
+        before = snapshot(client_dir)
+
+        _out, err = capture_io do
+          assert_nil HookedBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web"), label
+        end
+        assert_equal before, snapshot(client_dir), label
+        assert_equal FOREIGN_WARNING, err, label
+      end
+    end
+  end
+
+  # A symlink is not a file the build wrote, even when it points at one: the
+  # write would land wherever the link points.
+  def test_a_symlinked_bootstrap_file_is_never_written_through
+    entrypoints = self.class.marked_entrypoints.transform_values { |source| routed(source) }
+
+    with_client(entrypoints) do |client_dir|
+      target = File.join(client_dir, "elsewhere.g.dart")
+      File.binwrite(target, HOOKED_BOOTSTRAP)
+      begin
+        File.symlink(target, File.join(client_dir, GENERATED))
+      rescue NotImplementedError, SystemCallError
+        skip "symlinks are not available here"
+      end
+      before = snapshot(client_dir)
+
+      assert_nil DummyBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+      _out, err = capture_io do
+        assert_nil HookedBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+      end
+      assert_equal before, snapshot(client_dir)
+      assert_equal HOOKED_BOOTSTRAP, File.binread(target)
+      assert_equal FOREIGN_WARNING, err
+    end
+  end
+
+  # Review probe B: another package's file of the same name is not this
+  # client's lib/ruflet_bootstrap.g.dart.
+  def test_another_packages_ruflet_bootstrap_is_not_this_clients
+    with_client({ "lib/main.server.dart" => "import 'package:other/ruflet_bootstrap.g.dart';\n" }) do |client_dir|
+      File.write(File.join(client_dir, "pubspec.yaml"), "name: demo\n")
       before = snapshot(client_dir)
 
       assert_nil DummyBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
       assert_equal before, snapshot(client_dir)
+      refute File.exist?(File.join(client_dir, GENERATED))
+
+      # A generated file only that import names is imported by nothing.
+      File.binwrite(File.join(client_dir, GENERATED), HOOKED_BOOTSTRAP)
+      assert_nil DummyBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+      refute File.exist?(File.join(client_dir, GENERATED))
+    end
+  end
+
+  # The client's own package path names the client's file, in either quote
+  # style; the package name is the one in the client's pubspec.yaml.
+  def test_the_clients_own_package_import_names_its_bootstrap
+    ["import 'package:demo/ruflet_bootstrap.g.dart';\n",
+     "import \"package:demo/ruflet_bootstrap.g.dart\" as hooks;\n"].each do |import|
+      with_client({ "lib/main.server.dart" => "import 'x.dart';\n#{import}" }) do |client_dir|
+        File.write(File.join(client_dir, "pubspec.yaml"), "# The app.\nname: 'demo' # renamed by ruflet build\n")
+        path = File.join(client_dir, GENERATED)
+        File.binwrite(path, HOOKED_BOOTSTRAP)
+
+        assert_equal path, DummyBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web"), import
+        assert_equal EMPTY_BOOTSTRAP, File.binread(path), import
+      end
+    end
+  end
+
+  # Detecting the import must not fail a build that works today, whatever a
+  # developer keeps under lib/.
+  def test_a_client_with_files_that_are_not_utf8_still_builds
+    with_client(self.class.released_entrypoints) do |client_dir|
+      File.binwrite(File.join(client_dir, "lib", "latin1.dart"), "// caf\xE9\nimport 'ruflet_bootstrap.g.dart';\n".b)
+      FileUtils.mkdir_p(File.join(client_dir, "lib", "folder.dart"))
+      path = File.join(client_dir, GENERATED)
+      File.binwrite(path, HOOKED_BOOTSTRAP)
+
+      assert_equal path, DummyBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+      assert_equal EMPTY_BOOTSTRAP, File.binread(path)
+    end
+  end
+
+  # Nor can a file or directory under lib/ that cannot be read, or a
+  # lib/ruflet_bootstrap.g.dart that cannot be read (which is then treated as
+  # the developer's own).
+  def test_unreadable_files_cannot_fail_the_build
+    with_client(self.class.marked_entrypoints) do |client_dir|
+      # Both sort before the entrypoints, so the scan reaches them first.
+      secret = File.join(client_dir, "lib", "a_secret.dart")
+      File.write(secret, "import 'ruflet_bootstrap.g.dart';\n")
+      sub = File.join(client_dir, "lib", "a_sub")
+      FileUtils.mkdir_p(sub)
+      File.write(File.join(sub, "inner.dart"), "import '../ruflet_bootstrap.g.dart';\n")
+
+      unreadable(secret, sub) do
+        assert_equal File.join(client_dir, GENERATED),
+                     HookedBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+      end
+      assert_equal HOOKED_BOOTSTRAP, File.binread(File.join(client_dir, GENERATED))
+      self.class.marked_entrypoints.each do |relative_path, source|
+        assert_equal routed(source), read_utf8(client_dir, relative_path), relative_path
+      end
+
+      # The next build without hooks, with the entrypoints still routed.
+      unreadable(secret, sub) do
+        assert_equal File.join(client_dir, GENERATED),
+                     DummyBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+      end
+      assert_equal EMPTY_BOOTSTRAP, File.binread(File.join(client_dir, GENERATED))
+    end
+
+    entrypoints = self.class.marked_entrypoints.transform_values { |source| routed(source) }
+    with_client(entrypoints) do |client_dir|
+      path = File.join(client_dir, GENERATED)
+      File.binwrite(path, HOOKED_BOOTSTRAP)
+      unreadable(path) do
+        before = snapshot(client_dir)
+        assert_nil DummyBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+        _out, err = capture_io do
+          assert_nil HookedBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+        end
+        assert_equal before, snapshot(client_dir)
+        assert_equal FOREIGN_WARNING, err
+      end
+      assert_equal HOOKED_BOOTSTRAP, File.binread(path)
+    end
+  end
+
+  # The import goes after the end of the last import directive, also when
+  # that directive spans lines or ends in a comment.
+  LAST_IMPORT = "import 'package:ruflet_webview/ruflet_webview.dart' as ruflet_webview;\n"
+
+  def test_hooks_are_imported_after_a_last_import_that_spans_lines_or_ends_in_a_comment
+    [
+      "import 'package:ruflet_webview/ruflet_webview.dart'\n    as ruflet_webview;\n",
+      "import 'package:ruflet_webview/ruflet_webview.dart'\n    show RufletWebviewExtension\n    hide Unused;\n",
+      "import 'package:ruflet_webview/ruflet_webview.dart' as ruflet_webview; // the last extension\n",
+      "import 'package:ruflet_webview/ruflet_webview.dart' // the last extension\n    as ruflet_webview;\n"
+    ].each do |last_import|
+      entrypoints = self.class.marked_entrypoints.transform_values do |source|
+        source.sub(LAST_IMPORT, last_import).tap { |result| raise "fixture did not change" if result == source }
+      end
+
+      with_client(entrypoints) do |client_dir|
+        assert_equal File.join(client_dir, GENERATED),
+                     HookedBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web"), last_import
+        entrypoints.each do |relative_path, source|
+          expected = routed(source.sub(last_import, LAST_IMPORT)).sub(LAST_IMPORT, last_import)
+          assert_equal expected, read_utf8(client_dir, relative_path), "#{last_import.inspect}: #{relative_path}"
+        end
+      end
+    end
+  end
+
+  # A CRLF entrypoint (for example one checked out with core.autocrlf) is
+  # found by its markers and stays CRLF; the generated file stays LF.
+  def test_a_crlf_entrypoint_is_routed_and_stays_crlf
+    entrypoints = self.class.marked_entrypoints.transform_values { |source| source.gsub("\n", "\r\n") }
+
+    with_client(entrypoints) do |client_dir|
+      path = File.join(client_dir, GENERATED)
+      assert_equal path, HookedBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+      assert_equal HOOKED_BOOTSTRAP, File.binread(path)
+      routed_entrypoints = self.class.marked_entrypoints.to_h do |relative_path, source|
+        [relative_path, routed(source).gsub("\n", "\r\n")]
+      end
+      routed_entrypoints.each do |relative_path, source|
+        assert_equal source, File.binread(File.join(client_dir, relative_path)).force_encoding(Encoding::UTF_8), relative_path
+      end
+
+      # A second build with hooks finds the import and changes nothing, and a
+      # build without hooks keeps the still-imported file in step.
+      before = snapshot(client_dir)
+      HookedBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+      assert_equal contents(before), contents(snapshot(client_dir))
+      assert_equal path, DummyBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+      assert_equal EMPTY_BOOTSTRAP, File.binread(path)
     end
   end
 
@@ -345,16 +566,72 @@ class RufletCliClientBootstrapTest < Minitest::Test
     end
   end
 
-  def test_recognises_imports_of_the_generated_file_only
-    pattern = Ruflet::CLI::ClientBootstrap::CLIENT_BOOTSTRAP_IMPORT_LINE
+  # Only an import that resolves to this client's lib/ruflet_bootstrap.g.dart
+  # counts: relative to the importing file, or through the client's own
+  # package name (here "demo").
+  def test_recognises_imports_of_this_clients_generated_file_only
+    builder = DummyBuilder.new
+    imports = {
+      "lib/main.server.dart" => [
+        "import 'ruflet_bootstrap.g.dart';", "import \"ruflet_bootstrap.g.dart\";",
+        "import './ruflet_bootstrap.g.dart';", "  import 'ruflet_bootstrap.g.dart' as hooks;",
+        "import 'package:demo/ruflet_bootstrap.g.dart';", "import \"package:demo/ruflet_bootstrap.g.dart\" as hooks;",
+        "import '../lib/ruflet_bootstrap.g.dart';", "import\n    'ruflet_bootstrap.g.dart';",
+        "import 'ruflet_bootstrap.g.dart'\r\n    show rufletPreRunAppHooks;"
+      ],
+      "lib/sub/deeper.dart" => ["import '../ruflet_bootstrap.g.dart';", "import 'package:demo/ruflet_bootstrap.g.dart';"]
+    }
+    others = {
+      "lib/main.server.dart" => [
+        "import 'package:other/ruflet_bootstrap.g.dart';", "import \"package:other/ruflet_bootstrap.g.dart\";",
+        "import 'package:ruflet_client/ruflet_bootstrap.g.dart';", "import 'package:demo/sub/ruflet_bootstrap.g.dart';",
+        "import 'package:demox/ruflet_bootstrap.g.dart';", "import 'sub/ruflet_bootstrap.g.dart';",
+        "import 'my_ruflet_bootstrap.g.dart';", "import 'ruflet_bootstrap.g.dart.dart';",
+        "import '../ruflet_bootstrap.g.dart';", "import '../../lib/ruflet_bootstrap.g.dart';",
+        "import '/lib/ruflet_bootstrap.g.dart';", "import 'file:///lib/ruflet_bootstrap.g.dart';",
+        "import 'dart:ruflet_bootstrap.g.dart';", "// import 'ruflet_bootstrap.g.dart';",
+        "export 'ruflet_bootstrap.g.dart';", "part 'ruflet_bootstrap.g.dart';",
+        "import 'ruflet_bootstrap.g.dart\";", "const s = 'import ruflet_bootstrap.g.dart';"
+      ],
+      "lib/sub/deeper.dart" => ["import 'ruflet_bootstrap.g.dart';", "import '../../ruflet_bootstrap.g.dart';"]
+    }
 
-    ["import 'ruflet_bootstrap.g.dart';", "import \"ruflet_bootstrap.g.dart\";",
-     "  import 'package:ruflet_client/ruflet_bootstrap.g.dart' as hooks;"].each do |line|
-      assert_match pattern, line
+    imports.each do |importer, lines|
+      lines.each do |line|
+        assert builder.send(:client_bootstrap_import_in?, "#{line}\n", importer, "demo"), "#{importer}: #{line}"
+      end
     end
-    ["import 'my_ruflet_bootstrap.g.dart';", "// import 'ruflet_bootstrap.g.dart';",
-     "export 'ruflet_bootstrap.g.dart';", "import 'ruflet_bootstrap.g.dart\";"].each do |line|
-      refute_match pattern, line
+    others.each do |importer, lines|
+      lines.each do |line|
+        refute builder.send(:client_bootstrap_import_in?, "#{line}\n", importer, "demo"), "#{importer}: #{line}"
+      end
+    end
+    # Without a package name, no package: import is the client's.
+    refute builder.send(:client_bootstrap_import_in?, "import 'package:demo/ruflet_bootstrap.g.dart';\n",
+                        "lib/main.server.dart", nil)
+  end
+
+  def test_reads_the_package_name_from_the_clients_pubspec
+    builder = DummyBuilder.new
+    {
+      "name: demo\n" => "demo",
+      "# The app.\nname: 'demo_app' # renamed\r\nversion: 1.0.0\n" => "demo_app",
+      "name: \"demo\"\n" => "demo",
+      "description: x\n  name: nested\n" => nil,
+      "name: 'demo\"\n" => nil,
+      "\xFF\nname: demo\n".b => "demo"
+    }.each do |pubspec, name|
+      Dir.mktmpdir do |client_dir|
+        File.binwrite(File.join(client_dir, "pubspec.yaml"), pubspec)
+        actual = builder.send(:client_package_name, client_dir)
+        name ? assert_equal(name, actual, pubspec.inspect) : assert_nil(actual, pubspec.inspect)
+      end
+    end
+    Dir.mktmpdir { |client_dir| assert_nil builder.send(:client_package_name, client_dir) }
+    Dir.mktmpdir do |client_dir|
+      pubspec = File.join(client_dir, "pubspec.yaml")
+      File.write(pubspec, "name: demo\n")
+      unreadable(pubspec) { assert_nil builder.send(:client_package_name, client_dir) }
     end
   end
 
@@ -684,8 +961,33 @@ class RufletCliClientBootstrapTest < Minitest::Test
   def snapshot(client_dir)
     Dir.glob("**/*", File::FNM_DOTMATCH, base: client_dir).sort.to_h do |relative_path|
       path = File.join(client_dir, relative_path)
-      [relative_path, File.file?(path) ? [File.binread(path), File.mtime(path)] : :directory]
+      [relative_path, File.file?(path) ? [file_bytes(path), File.lstat(path).mtime] : :directory]
     end
+  end
+
+  def file_bytes(path)
+    File.binread(path)
+  rescue SystemCallError
+    :unreadable
+  end
+
+  # Makes `paths` unreadable while the block runs: chmod 000, and where that
+  # does not stop reads (root, Windows), File.binread raising for them as it
+  # would for an unreadable file.
+  def unreadable(*paths, &block)
+    modes = paths.to_h { |path| [path, File.stat(path).mode] }
+    paths.each { |path| File.chmod(0o000, path) }
+    return yield if paths.none? { |path| File.readable?(path) }
+
+    blocked = paths.map { |path| File.expand_path(path) }
+    binread = File.method(:binread)
+    File.stub(:binread, lambda { |path, *args|
+      raise Errno::EACCES, path if blocked.include?(File.expand_path(path))
+
+      binread.call(path, *args)
+    }, &block)
+  ensure
+    modes&.each { |path, mode| File.chmod(mode, path) }
   end
 
   def read_utf8(client_dir, relative_path)
