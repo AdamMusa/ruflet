@@ -459,12 +459,16 @@ assert(after_kernel_names.index(Kernel) < after_kernel_names.index(LaterKernelMe
          after_kernel_names.index(LaterKernelMethodMissing) < after_kernel_names.index(Ruflet::UI::SharedControlForwarders),
        "a module included into Kernel after Ruflet loads comes between Kernel and SharedControlForwarders")
 assert_equal([:kernel_module, [], {}], toggle.value, "a method_missing in a module included into Kernel answers")
-with_argument = toggle.value(1)
+with_argument = begin
+  toggle.value(1)
+rescue ArgumentError => e
+  e
+end
 if RUBY_ENGINE == "mruby"
   assert_equal([:kernel_module, [1], {}], with_argument, "the VM's Kernel#method_missing passes an argument on to it")
 else
-  assert_equal(["value", 1], [with_argument.type, with_argument.props["value"]],
-               "CRuby's Kernel#method_missing builds a generic control for a call with an argument")
+  generic = with_argument.is_a?(Ruflet::Control) ? [with_argument.type, with_argument.props["value"]] : with_argument
+  assert_equal(["value", 1], generic, "CRuby's Kernel#method_missing builds a generic control for a call with an argument")
 end
 assert_raises(NoMethodError, "a name that method_missing does not answer still raises") { tabs.selected_index }
 LaterKernelMethodMissing.send(:remove_method, :method_missing)
