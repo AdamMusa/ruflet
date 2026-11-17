@@ -513,6 +513,21 @@ class BasicObject
   remove_method :ruby_method_missing_for_test
 end
 assert_equal(false, toggle.value, "the reader answers again once Ruby's own BasicObject#method_missing is back")
+# An app wrapper around Ruflet's SharedControlForwarders#method_missing is the
+# app's too: a plain call reached it through Ruflet's Kernel#method_missing.
+module Ruflet::UI::SharedControlForwarders
+  alias_method :ruflet_method_missing_for_test, :method_missing
+  def method_missing(name, *args, **options, &block)
+    name == :value ? [:forwarders, args, options] : ruflet_method_missing_for_test(name, *args, **options, &block)
+  end
+end
+assert_equal([:forwarders, [], {}], toggle.value, "an app wrapper around SharedControlForwarders#method_missing answers")
+assert_raises(NoMethodError, "a name the wrapper does not answer still raises") { tabs.selected_index }
+module Ruflet::UI::SharedControlForwarders
+  alias_method :method_missing, :ruflet_method_missing_for_test
+  remove_method :ruflet_method_missing_for_test
+end
+assert_equal(false, toggle.value, "the reader answers again once Ruflet's SharedControlForwarders#method_missing is back")
 
 class AnsweringSwitch < Ruflet::UI::Controls::RufletComponents::SwitchControl
   def method_missing(name, *args, **options, &block)

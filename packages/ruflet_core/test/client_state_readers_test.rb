@@ -717,7 +717,8 @@ class RufletClientStateReadersTest < Minitest::Test
   # Ruflet loads, in front of it when included later), or on BasicObject in
   # place of Ruby's own, defined before or after Ruflet loads. Ruflet's two
   # pass a plain call on with `super`, so on main `toggle.value` reached that
-  # method_missing, and it still does. With an argument the call reaches
+  # method_missing, and it still does. So does an app wrapper around
+  # Ruflet's SharedControlForwarders#method_missing. With an argument the call reaches
   # Ruflet's Kernel#method_missing as on main, which builds a generic `value`
   # control for a Ruflet object on CRuby. A name the app's method_missing
   # does not answer raises, as on main. Each case in its own process: none of
@@ -742,6 +743,14 @@ class RufletClientStateReadersTest < Minitest::Test
         end
       end
     RUBY
+    forwarders = <<~RUBY
+      module Ruflet::UI::SharedControlForwarders
+        alias_method :ruflet_method_missing, :method_missing
+        def method_missing(name, *args, **options, &block)
+          name == :value ? [:forwarders, args, options] : ruflet_method_missing(name, *args, **options, &block)
+        end
+      end
+    RUBY
     reads = <<~RUBY
       toggle = Ruflet.switch(label: "Dark mode", value: false)
       tabs = Ruflet.tabs(selected_index: 1, length: 2, content: Ruflet.text("x"))
@@ -761,7 +770,8 @@ class RufletClientStateReadersTest < Minitest::Test
       [load_ruflet + kernel_module, -1, :kernel_module],
       [kernel_module + load_ruflet, 1, :kernel_module],
       [load_ruflet + basic_object, nil, :basic_object],
-      [basic_object + load_ruflet, nil, :basic_object]
+      [basic_object + load_ruflet, nil, :basic_object],
+      [load_ruflet + forwarders, nil, :forwarders]
     ].each do |setup, place, answer|
       out = run_ruby(setup + reads)
       expected = "[#{place.inspect}, [#{answer.inspect}, [], {}], [Ruflet::Control, \"value\", 1], " \
