@@ -269,6 +269,16 @@ assert_equal(:private, toggle.instance_eval { value }, "private app method still
 assert_equal(:private, toggle.value, "private app method answers control.value")
 Ruflet::Control.send(:remove_method, :value)
 
+# The readers ask Kernel#method unbound, so an app Ruflet::Control#method
+# changes nothing.
+Ruflet::Control.class_eval do
+  def method(*args)
+    props["method"]
+  end
+end
+assert_equal(false, toggle.value, "an app Ruflet::Control#method leaves the reader answering")
+Ruflet::Control.send(:remove_method, :method)
+
 Ruflet::Control.class_eval do
   def method_missing(name, *args, **options, &block)
     name == :value ? [:app_method_missing, props["value"], args, options, block ? block.call : nil] : super
@@ -282,6 +292,15 @@ assert_equal([:app_method_missing, false, [], { upcase: true }, nil], toggle.val
 assert_equal([:app_method_missing, false, [], {}, :block], toggle.value { :block }, "app method_missing gets the block")
 assert_equal([:app_method_missing, false, [1], { upcase: true }, :block], toggle.value(1, upcase: true) { :block },
              "app method_missing gets arguments, keyword arguments and block together")
+# Kernel#method is used unbound, so an app Ruflet::Control#method (an HTTP-verb
+# style property, say) leaves the app method_missing answering.
+Ruflet::Control.class_eval do
+  def method(*args)
+    props["method"]
+  end
+end
+assert_equal(answered, toggle.value, "an app Ruflet::Control#method leaves the app method_missing answering")
+Ruflet::Control.send(:remove_method, :method)
 
 # With a private or protected method of that name above the table class too
 # (a top-level helper, say), `control.value` still goes to the method_missing,

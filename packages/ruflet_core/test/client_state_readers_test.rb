@@ -628,6 +628,33 @@ class RufletClientStateReadersTest < Minitest::Test
     assert_equal "[[Ruflet::UI::SharedControlForwarders, Ruflet::UI::SharedControlForwarders], true, []]", out
   end
 
+  # app_method_missing? calls Kernel#method unbound, so an app method named
+  # `method` (an HTTP-verb style property, say), on Ruflet::Control or on one
+  # control, changes nothing: the reader still answers, and so does an app
+  # method_missing. Asked through the control's own `method`, every read
+  # would raise NoMethodError (`owner` for nil).
+  def test_an_app_method_named_method_does_not_change_the_answer
+    toggle = Ruflet.switch(label: "Dark mode", value: false)
+    verb = Ruflet.switch(label: "Verb", value: true)
+    def verb.method(*) = :patch
+
+    assert_equal true, verb.value
+    with_app_methods(Ruflet::Control, 'def method(*) = props["method"]') do
+      assert_nil toggle.method
+      assert_equal false, toggle.value
+      with_app_methods(Ruflet::Control, <<~RUBY) do
+        def method_missing(name, *args, **options, &block)
+          name == :value ? [:app_method_missing, props["value"]] : super
+        end
+      RUBY
+        assert_equal [:app_method_missing, false], toggle.value
+        assert_equal [:app_method_missing, true], verb.value
+      end
+      assert_equal false, toggle.value
+    end
+    assert_equal :patch, verb.method
+  end
+
   # One the app adds to Object for everything answers too, as on main.
   def test_an_app_method_missing_on_object_still_answers
     toggle = Ruflet.switch(label: "Dark mode", value: false)
