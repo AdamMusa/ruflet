@@ -778,8 +778,37 @@ class RufletCliRunCommandTest < Minitest::Test
   RUBY
 
   def test_r_reloads_a_dsl_app_that_traps_usr1_itself_and_still_runs_its_handler
+    assert_r_reloads_and_runs_the_apps_handler(OWN_TRAP_DSL_APP, presses: 2)
+  end
+
+  # The same with a handler that also calls the one it replaced, a common
+  # idiom. A reload traps USR1 while the runner's chain is installed, so
+  # there that is the chain itself, which runs that handler: on the second
+  # "r" the two called each other until a SystemStackError ended the app.
+  OWN_CHAINING_TRAP_DSL_APP = <<~RUBY
+    $ruflet_test_progress ||= File.open(ENV.fetch("TEST_PROGRESS_FIFO"), "w")
+    $ruflet_test_loads = ($ruflet_test_loads || 0) + 1
+    load_number = $ruflet_test_loads
+    require "ruflet"
+    require "ruflet_server"
+    previous = Signal.trap("USR1") do |signo|
+      $ruflet_test_progress.write("H\#{load_number}")
+      $ruflet_test_progress.flush
+      previous.call(signo) if previous.respond_to?(:call)
+    end
+    $ruflet_test_progress.write("L\#{load_number}")
+    $ruflet_test_progress.flush
+    Ruflet.app(host: "127.0.0.1", port: 0) { text("hi") }.run
+  RUBY
+
+  def test_r_reloads_a_dsl_app_whose_usr1_handler_calls_the_one_it_replaced
+    assert_r_reloads_and_runs_the_apps_handler(OWN_CHAINING_TRAP_DSL_APP, presses: 3)
+  end
+
+  # Each "r" runs the latest load's handler once and reloads the app.
+  def assert_r_reloads_and_runs_the_apps_handler(app, presses:)
     runner = SignalSpyRunner.new
-    with_gated_app_session(runner, app: OWN_TRAP_DSL_APP) do |run_state, _spawn_app, env, cmd, dir|
+    with_gated_app_session(runner, app: app) do |run_state, _spawn_app, env, cmd, dir|
       log_reader, log_writer = IO.pipe
       runner.send(:spawn_app_child, env, cmd, run_state, out: File::NULL, err: log_writer)
       log_writer.close

@@ -285,6 +285,16 @@ module Ruflet
     # "SYSTEM_DEFAULT", "EXIT", ...) is not: while the server serves, USR1
     # only reloads, as it does for a Ruflet.run app. It is put back once the
     # server stops all the same.
+    #
+    # A handler may call the one it replaced (`previous = Signal.trap("USR1")
+    # { |signo| ...; previous.call(signo) }`). On the first load that is the
+    # runner's own handler. A reload traps USR1 again while the chain is
+    # installed, so there it is the chain itself, which runs that same
+    # handler. Each USR1 asks for one reload and runs the app's handler
+    # once: while the chain runs it, a call it makes to the chain does
+    # nothing, and one to the runner's own handler asks for no second reload
+    # (see running?). Once the server stops, the chain only asks for a
+    # reload, as the runner's own handler does.
     class AppTrapChain
       # runner_trap: the runner's own USR1 handler, which the app may never
       # have replaced, and which asks for a reload.
@@ -293,12 +303,22 @@ module Ruflet
         @mutex = Mutex.new
         @armed = false
         @app_handler = nil
-        # Runs in trap context: no locks.
+        @running = false
+        # Runs in trap context: no locks. A signal never interrupts a trap
+        # handler, so a call made while @running is set comes from the app's
+        # own code, while its handler runs.
         @handler = proc do |signo|
+          next if @running
+
           runner_trap.call(signo)
-          app_handler = @app_handler
-          app_handler.call(signo) if chained?(app_handler)
+          run_app_handler(signo)
         end
+      end
+
+      # True while the chain runs the app's handler. The runner's own handler
+      # then asks for nothing: the chain has asked for this USR1's reload.
+      def running?
+        @running
       end
 
       # Traps USR1 with the chain, which takes over from the handler it
@@ -340,6 +360,20 @@ module Ruflet
       end
 
       private
+
+      # Only while the chain is armed: after restore the app's latest
+      # handler is the trap itself, and runs on its own.
+      def run_app_handler(signo)
+        app_handler = @app_handler
+        return unless @armed && chained?(app_handler)
+
+        @running = true
+        begin
+          app_handler.call(signo)
+        ensure
+          @running = false
+        end
+      end
 
       def take_over(previous)
         @app_handler = previous unless previous.equal?(@handler)
@@ -393,8 +427,9 @@ module Ruflet
         @served_from_script = false
         @requires_in_flight = nil
         # The USR1 handler: one object, so the chain below can tell it apart
-        # from one the app installed.
-        @reload_trap = proc { @force_reload = true }
+        # from one the app installed. The app's handler may call it while
+        # the chain runs that handler, which has asked for the reload already.
+        @reload_trap = proc { @force_reload = true unless @app_trap.running? }
         @app_trap = AppTrapChain.new(@reload_trap)
       end
 
