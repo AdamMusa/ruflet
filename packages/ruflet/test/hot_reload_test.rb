@@ -819,7 +819,7 @@ class RufletHotReloadTest < Minitest::Test
       #{assignment}
       class HotReloadTestVerboseNilProbe < Ruflet::Server
         private def accept_loop
-          traces = Ruflet::HotReload::ScriptLoad::VERBOSE_GLOBALS.flat_map { |name| untrace_var(name) }
+          traces = %i[$VERBOSE $-v $-w].flat_map { |name| untrace_var(name) }
           $serving_probe << [$VERBOSE, traces]
           super
         end
@@ -839,7 +839,7 @@ class RufletHotReloadTest < Minitest::Test
     stop_served_runner
     assert_equal [nil], $verbose_after_start
     assert_equal outer, $VERBOSE, "the runner restores the $VERBOSE it found once the load ends"
-    left = Ruflet::HotReload::ScriptLoad::VERBOSE_GLOBALS.flat_map { |name| untrace_var(name) }
+    left = VERBOSE_NAMES.flat_map { |name| untrace_var(name) }
     assert_empty left, "nothing traces $VERBOSE once the load ends"
   ensure
     stop_served_runner
@@ -879,13 +879,13 @@ class RufletHotReloadTest < Minitest::Test
     first_handler = $app_usr1_handler
 
     Process.kill("USR1", Process.pid)
-    assert_equal [1, Signal.list["USR1"]], Timeout.timeout(5) { $app_usr1.pop }, "USR1 runs the app's own handler"
+    assert_equal [1, Signal.list["USR1"]], next_from($app_usr1, "the app's USR1 handler"), "USR1 runs the app's own handler"
     wait_until("the reload USR1 asked for") { @runner.reload_count >= 1 }
     assert_equal ["load 2"], render_labels
     refute_same first_handler, $app_usr1_handler, "the reload trapped USR1 again"
 
     Process.kill("USR1", Process.pid)
-    assert_equal [2, Signal.list["USR1"]], Timeout.timeout(5) { $app_usr1.pop }, "USR1 runs the handler the reload installed"
+    assert_equal [2, Signal.list["USR1"]], next_from($app_usr1, "the app's USR1 handler"), "USR1 runs the handler the reload installed"
     wait_until("the reload the second USR1 asked for") { @runner.reload_count >= 2 }
     assert_equal ["load 3"], render_labels
     assert $app_usr1.empty?, "each USR1 runs the app's handler once"
@@ -919,7 +919,7 @@ class RufletHotReloadTest < Minitest::Test
     File.write(File.join(@dir, "widgets.rb"), "def broken(\n")
     wait_until("the failed reload") { @logs.count { |line| line.include?("reload failed") } >= 1 }
     Process.kill("USR1", Process.pid)
-    assert_equal Signal.list["USR1"], Timeout.timeout(5) { $app_usr1.pop }
+    assert_equal Signal.list["USR1"], next_from($app_usr1, "the app's USR1 handler")
     wait_until("the reload USR1 asked for") { @logs.count { |line| line.include?("reload failed") } >= 2 }
     assert_equal 0, @runner.reload_count
   ensure
@@ -1042,7 +1042,7 @@ class RufletHotReloadTest < Minitest::Test
     assert_same $app_usr1_handler, current, "the reload's own trap is left in place"
 
     Process.kill("USR1", Process.pid)
-    assert_equal [2, Signal.list["USR1"]], Timeout.timeout(5) { $app_usr1.pop }, "the reload's own trap runs"
+    assert_equal [2, Signal.list["USR1"]], next_from($app_usr1, "the app's USR1 handler"), "the reload's own trap runs"
   ensure
     Signal.trap("USR1", previous_usr1) if previous_usr1
     $app_usr1 = $app_usr1_handler = $usr1_loads = nil
@@ -1055,7 +1055,7 @@ class RufletHotReloadTest < Minitest::Test
     write_main
     start_runner
 
-    left = Ruflet::HotReload::ScriptLoad::VERBOSE_GLOBALS.flat_map { |name| untrace_var(name) }
+    left = VERBOSE_NAMES.flat_map { |name| untrace_var(name) }
     assert_empty left
   end
 
@@ -2021,6 +2021,17 @@ class RufletHotReloadTest < Minitest::Test
   ensure
     singleton.send(:alias_method, :with_run_interceptor, :__test_with_run_interceptor)
     singleton.send(:remove_method, :__test_with_run_interceptor)
+  end
+
+  # $VERBOSE and the names Ruby also gives it, each a global of its own.
+  VERBOSE_NAMES = %i[$VERBOSE $-v $-w].freeze
+
+  # The next entry of queue; the limit only turns one that never comes (a
+  # USR1 handler that never runs) into a failure instead of an error.
+  def next_from(queue, what, seconds: 10)
+    Timeout.timeout(seconds) { queue.pop }
+  rescue Timeout::Error
+    flunk "#{what} never ran"
   end
 
   def wait_until(what, timeout: 5)
