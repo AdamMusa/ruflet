@@ -1,0 +1,33 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet run main.rb --web
+env: RUFLET_CLIENT_DIR=<PROJECT>/my_client
+added file: my_client/build/web/index.html
+added file: my_client/build/web/main.dart.js
+exit: 0
+
+## commands (3)
+1. system exit=0
+   <RUBY> -S bundle check
+   env: BUNDLE_GEMFILE=<PROJECT>/Gemfile RUFLET_APP_SCRIPT=<PROJECT>/main.rb RUFLET_ASSETS_DIR=<PROJECT>/assets RUFLET_BOOTSNAP_DIR=<HOME>/.ruflet/bootsnap/<RUBY_VERSION>/<PROJECT_KEY> RUFLET_PORT=8550 RUFLET_SUPPRESS_SERVER_BANNER=1 RUFLET_TARGET=web RUFLET_WATCH_ROOT=<PROJECT> RUFLET_WEB_CLIENT_DIR=<PROJECT>/my_client/build/web
+   options: err out
+2. spawn
+   <RUBY> -rbundler/setup <GEM_HOME>/gems/ruflet-<RUFLET_VERSION>/lib/ruflet/hot_reload/harness.rb
+   env: BUNDLE_GEMFILE=<PROJECT>/Gemfile RUFLET_APP_SCRIPT=<PROJECT>/main.rb RUFLET_ASSETS_DIR=<PROJECT>/assets RUFLET_BOOTSNAP_DIR=<HOME>/.ruflet/bootsnap/<RUBY_VERSION>/<PROJECT_KEY> RUFLET_PORT=8550 RUFLET_SUPPRESS_SERVER_BANNER=1 RUFLET_TARGET=web RUFLET_WATCH_ROOT=<PROJECT> RUFLET_WEB_CLIENT_DIR=<PROJECT>/my_client/build/web
+   options: pgroup
+3. system exit=0
+   open http://localhost:8550/
+   options: err out
+
+## output
+out| Ruflet target: web
+out| Ruflet URL: http://localhost:8550
+out| Hot reload: watching *.rb (disable with --no-reload)
+out| Opened browser at http://localhost:8550/
+out| Ruflet web client: http://localhost:8550/
+out| Ruflet backend ws: ws://localhost:8550/ws
+
+## files
+(no files changed)
