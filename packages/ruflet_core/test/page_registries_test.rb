@@ -268,7 +268,7 @@ class RufletPageRegistryAppendTest < Minitest::Test
       assert_equal mirrored.include?(key) ? :page_and_view : :page, REGISTRY.prop_target(key), key
     end
     assert_nil REGISTRY.prop_target("bgcolor")
-    assert_nil REGISTRY.prop_target(:title), "keys match exactly, as the old include? did"
+    assert_nil REGISTRY.prop_target("Title"), "keys match exactly, as the old include? did"
     assert_equal [], REGISTRY.event_names
     assert_equal(
       {
@@ -377,5 +377,20 @@ class RufletPageRegistryAppendTest < Minitest::Test
     assert_raises(ArgumentError) { REGISTRY.register_method("") }
     assert_equal Ruflet::Page::PAGE_PROP_KEYS, REGISTRY.prop_keys
     assert_equal %w[r4_probe_event], REGISTRY.event_names
+  end
+
+  def test_lookups_take_the_names_registration_takes
+    REGISTRY.register_event(:r4_probe_event)
+    REGISTRY.register_method(:r4_probe_method, target: :top_view)
+
+    assert_equal :page, REGISTRY.prop_target(:title)
+    assert_equal :page_and_view, REGISTRY.prop_target(:scroll)
+    assert_nil REGISTRY.prop_target(:bgcolor)
+    assert REGISTRY.event?(:r4_probe_event)
+    assert REGISTRY.event?("r4_probe_event")
+    refute REGISTRY.event?(:resize)
+    assert_equal :top_view, REGISTRY.method_target(:r4_probe_method)
+    assert_equal :top_view, REGISTRY.method_target("r4_probe_method")
+    assert_equal :root_view, REGISTRY.method_target(:scroll_to)
   end
 end

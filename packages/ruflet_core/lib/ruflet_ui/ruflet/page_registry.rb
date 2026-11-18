@@ -77,19 +77,21 @@ module Ruflet
           register(@methods, method, target, "page method")
         end
 
-        # :page when +key+ goes on the Page control only, :page_and_view when
-        # the View mirrors it, nil when it is a View prop. Keys are matched
-        # exactly as given (page props are strings).
+        # :page when +key+ (a String or Symbol, as at registration) goes on
+        # the Page control only, :page_and_view when the View mirrors it, nil
+        # when it is a View prop. Page always passes the String key it routes.
         def prop_target(key)
-          @props[key]
+          @props[key.to_s]
         end
 
-        # Whether Page#on subscribes the Page control to +name+.
+        # Whether Page#on subscribes the Page control to the event +name+ (a
+        # String or Symbol, without its on_ prefix, as event_names lists it).
         def event?(name)
-          @events.key?(name)
+          @events.key?(name.to_s)
         end
 
-        # The target registered for the client method +name+, or nil.
+        # The target registered for the client method +name+ (a String or
+        # Symbol), or nil.
         def method_target(name)
           @methods[name.to_s]
         end
