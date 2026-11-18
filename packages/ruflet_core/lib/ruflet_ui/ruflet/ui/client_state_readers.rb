@@ -58,7 +58,14 @@ module Ruflet
     #   there, a framework module such as TextInputMethods, Object or Kernel),
     #   public or private, comes after the reader in the lookup. The reader
     #   checks for one on every call and hands the call to it with `super`,
-    #   arguments and block included.
+    #   arguments and block included. Without an app method_missing, that is
+    #   new for calls that raised on v0.0.23: a call with a receiver
+    #   (`control.value`, `public_send(:value)`) now reaches a private one,
+    #   or a protected one below Object, where v0.0.23 raised "private method
+    #   'value' called" or "protected method"; and a protected one on Object,
+    #   Kernel or a module Object includes now also answers
+    #   `public_send(:value)` and `control.value` from code whose self is not
+    #   an Object (a method of a BasicObject subclass).
     # * When the app added a method_missing, in front of Ruflet's own
     #   Kernel#method_missing in the lookup, in place of it, or after it (in a
     #   module included into Kernel, or on BasicObject; see
@@ -67,9 +74,13 @@ module Ruflet
     #   Ruflet's Kernel#method_missing when the app's comes after it. It does
     #   not when the method after the reader is public, or protected on
     #   Object, Kernel or a module Object includes. That is what CRuby did
-    #   without the reader: a call with a receiver goes to method_missing when
+    #   without the reader for `control.value` from code whose self is an
+    #   Object, as nearly every self is (a method of a BasicObject subclass
+    #   is the exception): a call with a receiver goes to method_missing when
     #   the method is private, or protected and the caller is not an instance
-    #   of the module that has it, and every caller is an Object. The method
+    #   of the module that has it. (`public_send`, and a caller whose self is
+    #   not an Object, went to the method_missing for such a protected
+    #   method; see "Not covered".) The method
     #   after the reader is the one Ruby's lookup finds first, so a private
     #   Ruflet::Control#value hides a public Object#value, in the embedded VM
     #   too (see method_after). (mruby stopped a call with a receiver at
@@ -109,20 +120,24 @@ module Ruflet
     #   there on both.
     # * The same app with a protected method of that name on Object, Kernel
     #   or a module Object includes: CRuby called it for `control.value` on
-    #   v0.0.23 and the reader still does, but `public_send(:value)` went to
-    #   the method_missing and now reaches the protected method too. (mruby
-    #   raised "protected method called" for every such call with a
-    #   receiver; it now reaches the protected method as well.)
+    #   v0.0.23 and the reader still does, but `public_send(:value)`, and
+    #   `control.value` from code whose self is not an Object (a method of a
+    #   BasicObject subclass), went to the method_missing and now reach the
+    #   protected method too. (mruby raised "protected method called" for
+    #   every such call with a receiver; it now reaches the protected method
+    #   as well.)
     # * A plain call without a receiver to Ruflet's own extension helper, from
     #   inside a method of the table class (`expanded` in an ExpansionTile
     #   method), returns the reader's value, or the app's method_missing's
     #   answer if it has one; on v0.0.23 it built an empty `expanded`
     #   control.
     # * A call without a receiver (a bare `value` in a control method,
-    #   `self.value`, `send(:value)`) that the app's method_missing passes to
-    #   `super` raises what `control.value` raises on CRuby: NoMethodError
+    #   `self.value`, `send(:value)`, `super` from a `value` an app subclass
+    #   defines) that the app's method_missing passes to `super` raises what
+    #   `control.value` raises on CRuby: NoMethodError "undefined method"
     #   with private_call? false. On v0.0.23 the bare word raised NameError
-    #   "undefined local variable or method", and the others had
+    #   "undefined local variable or method", `super` raised NoMethodError
+    #   "super: no superclass method 'value'", and all but the bare word had
     #   private_call? true.
     module ClientStateReaders
       # mruby's Module#method_defined? also counts private methods; CRuby's
@@ -346,15 +361,20 @@ module Ruflet
 
         # Asked when app_method_after? and app_method_missing? are both true.
         # True when, without the reader, CRuby called the method `super`
-        # would call for `control.value`, whatever method_missing the app had:
-        # a public method, or a protected one of Object, Kernel or a module
-        # Object includes. CRuby lets a caller whose self is an instance of
-        # the method's module call a protected method with a receiver, and
-        # every caller's self is an Object. A private method, or a protected
-        # one further down (Ruflet::Control, PlatformControl, a module the
-        # class includes), it reached only from inside the control (no
-        # receiver, `self.`) or, if protected, from another control; CRuby
-        # sent every other call with a receiver to method_missing instead.
+        # would call for `control.value` from code whose self is an Object,
+        # whatever method_missing the app had: a public method, or a protected
+        # one of Object, Kernel or a module Object includes. CRuby lets a
+        # caller whose self is an instance of the method's module call a
+        # protected method with a receiver, and nearly every caller's self is
+        # an Object (a method of a BasicObject subclass is the exception).
+        # (`public_send`, and such a caller, went to the method_missing for
+        # that protected method; the reader cannot see its caller and calls
+        # the method for them too. See "Not covered".) A private method, or a
+        # protected one further down (Ruflet::Control, PlatformControl, a
+        # module the class includes), it reached only from inside the
+        # control (no receiver, `self.`) or, if protected, from another
+        # control; CRuby sent every other call with a receiver to
+        # method_missing instead.
         # The visibility is the one the module that method_after finds gave
         # the method, as in Ruby's own lookup.
         def reachable_method_after?(after, symbol)

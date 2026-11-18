@@ -324,7 +324,7 @@ Ruflet::Control.class_eval do
 end
 assert_equal(answered, toggle.value, "app method_missing wins over a protected Ruflet::Control#value")
 Ruflet::Control.send(:remove_method, :value)
-# A protected method of Object or Kernel is the exception: every caller is an
+# A protected method of Object or Kernel is the exception: this caller is an
 # Object, so CRuby let `control.value` reach it without the reader.
 Object.class_eval do
   def value

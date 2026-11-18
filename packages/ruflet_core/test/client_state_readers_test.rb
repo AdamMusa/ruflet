@@ -486,7 +486,7 @@ class RufletClientStateReadersTest < Minitest::Test
       end
       # A protected method of Object or Kernel is the exception: CRuby lets
       # a caller that is an instance of the method's module call it with a
-      # receiver, and every caller is an Object, so main's `control.value`
+      # receiver, and this caller is an Object, so main's `control.value`
       # reached it. It still does. The known difference: main's public_send
       # went to the method_missing.
       with_app_methods(Object, "protected def value = :protected_object_method") do
@@ -649,7 +649,7 @@ class RufletClientStateReadersTest < Minitest::Test
 
   # Once the app makes register_control's helper public or protected on
   # Kernel, it is the app's: main's `tile.expanded` called it (a protected
-  # Kernel method too, since every caller is an Object), and it still does,
+  # Kernel method too, since the caller is an Object), and it still does,
   # with or without an app method_missing. Made private again, it is
   # Ruflet's helper again.
   def test_an_extension_helper_the_app_made_public_still_answers
@@ -1009,24 +1009,28 @@ class RufletClientStateReadersTest < Minitest::Test
   # was called, so a call without a receiver that an app method_missing
   # passes to `super` raises what `control.value` raises. Main raised
   # NameError "undefined local variable or method" for a bare `value` in a
-  # control method, and NoMethodError with private_call? true for
-  # `self.value` and `send(:value)`.
+  # control method, NoMethodError "super: no superclass method 'value'" for
+  # `super` from a `value` an app subclass defines, and NoMethodError with
+  # private_call? true for that `super`, `self.value` and `send(:value)`.
   def test_a_call_without_a_receiver_raises_what_a_call_with_one_raised
     toggle = Ruflet.switch(label: "Dark mode", value: false)
+    subclass = Class.new(Ruflet::UI::Controls::RufletComponents::SwitchControl) { def value = super }
+    child = subclass.new(label: "Child", value: false)
 
     with_app_methods(Ruflet::Control, <<~RUBY) do
       def method_missing(name, *args, **options, &block) = name == :zzz ? :app : super
       def bare_read = value
       def self_read = self.value
     RUBY
-      [-> { toggle.bare_read }, -> { toggle.self_read }, -> { toggle.send(:value) }, -> { toggle.value }].each do |read|
+      [[toggle, -> { toggle.bare_read }], [toggle, -> { toggle.self_read }], [toggle, -> { toggle.send(:value) }],
+       [child, -> { child.value }], [toggle, -> { toggle.value }]].each do |receiver, read|
         begin
           some_bare_word_that_is_missing
         rescue NameError
           nil
         end
         error = assert_raises(NoMethodError) { read.call }
-        assert_equal [:value, true, [], false], [error.name, error.receiver.equal?(toggle), error.args, error.private_call?]
+        assert_equal [:value, true, [], false], [error.name, error.receiver.equal?(receiver), error.args, error.private_call?]
         assert_match(/\Aundefined method/, error.message)
       end
     end
