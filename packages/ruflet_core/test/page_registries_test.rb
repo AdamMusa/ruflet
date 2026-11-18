@@ -167,6 +167,44 @@ class RufletPageRegistriesTest < Minitest::Test
     assert_equal wire.map { |payload| payload.keys }, invokes.map { |payload| payload.keys - ["call_id"] }
   end
 
+  # With the implicit View the top and root View are the same control (20),
+  # so only explicit views tell the two targets apart: drawers go to the top
+  # (last) View, scroll_to to the root (first) View.
+  def test_page_methods_on_explicit_views_invoke_the_top_and_root_view
+    root = Ruflet.view(route: "/", controls: [Ruflet.text("Root")])
+    top = Ruflet.view(
+      route: "/details",
+      controls: [Ruflet.text("Top")],
+      drawer: Ruflet.navigation_drawer([Ruflet.navigation_drawer_destination(icon: "home")]),
+      end_drawer: Ruflet.navigation_drawer([Ruflet.navigation_drawer_destination(icon: "search")])
+    )
+    @page.views = [root, top]
+    @page.update
+    @sent.clear
+
+    @page.get_device_info
+    @page.show_drawer
+    @page.close_drawer
+    @page.show_end_drawer
+    @page.close_end_drawer
+    @page.scroll_to(delta: 5)
+
+    refute_nil root.wire_id
+    refute_nil top.wire_id
+    refute_equal root.wire_id, top.wire_id
+    assert_equal(
+      [
+        [1, "get_device_info"],
+        [top.wire_id, "show_drawer"],
+        [top.wire_id, "close_drawer"],
+        [top.wire_id, "show_end_drawer"],
+        [top.wire_id, "close_end_drawer"],
+        [root.wire_id, "scroll_to"]
+      ],
+      invokes.map { |payload| [payload["control_id"], payload["name"]] }
+    )
+  end
+
   def test_get_device_info_sync_waits_on_the_page
     page = Ruflet::Page.new(
       session_id: "s1",
