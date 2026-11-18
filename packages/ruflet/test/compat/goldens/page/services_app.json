@@ -1,0 +1,93 @@
+{
+  "fixture": "services_app",
+  "entrypoint": "main.rb",
+  "status": "ok",
+  "messages": [
+    {
+      "action": "register_client",
+      "payload": {
+        "session_id": "compat-session",
+        "page_patch": {
+          "views": [
+            {
+              "_c": "View",
+              "_i": "#1",
+              "route": "/",
+              "_internals": {
+                "host_expanded": true
+              },
+              "controls": [
+                {
+                  "_c": "Column",
+                  "_i": "#2",
+                  "_internals": {
+                    "host_expanded": true
+                  },
+                  "expand": true,
+                  "controls": [
+                    {
+                      "_c": "Text",
+                      "_i": "#3",
+                      "value": "Services, extensions and assets",
+                      "size": 20
+                    },
+                    {
+                      "_c": "Lottie",
+                      "_i": "#4",
+                      "width": 120,
+                      "height": 120,
+                      "src": "assets/animation.json"
+                    },
+                    {
+                      "_c": "WebView",
+                      "_i": "#5",
+                      "url": "https://example.com",
+                      "expand": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "route": "/",
+          "window": {
+            "_c": "Window",
+            "_i": "#6"
+          },
+          "_overlay": {
+            "_c": "Overlay",
+            "_i": "#7",
+            "controls": []
+          },
+          "_services": {
+            "_c": "ServiceRegistry",
+            "_i": "#8",
+            "_services": [
+              {
+                "_c": "Geolocator",
+                "_i": "#9",
+                "on_position_change": true
+              },
+              {
+                "_c": "SecureStorage",
+                "_i": "#10"
+              }
+            ],
+            "_internals": {
+              "uid": "00000001"
+            }
+          },
+          "_dialogs": {
+            "_c": "Dialogs",
+            "_i": "#11",
+            "controls": []
+          },
+          "title": "Compat Services"
+        },
+        "error": ""
+      }
+    }
+  ],
+  "stdout": "",
+  "stderr": ""
+}

@@ -1,0 +1,66 @@
+{
+  "fixture": "docs_tutorial_calculator__1",
+  "entrypoint": "main.rb",
+  "status": "ok",
+  "messages": [
+    {
+      "action": "register_client",
+      "payload": {
+        "session_id": "compat-session",
+        "page_patch": {
+          "views": [
+            {
+              "_c": "View",
+              "_i": "#1",
+              "route": "/",
+              "_internals": {
+                "host_expanded": true
+              },
+              "controls": [
+                {
+                  "_c": "Container",
+                  "_i": "#2",
+                  "width": 420,
+                  "padding": 16,
+                  "border_radius": 16,
+                  "content": {
+                    "_c": "Text",
+                    "_i": "#3",
+                    "value": "Calculator coming next..."
+                  }
+                }
+              ]
+            }
+          ],
+          "route": "/",
+          "window": {
+            "_c": "Window",
+            "_i": "#4"
+          },
+          "_overlay": {
+            "_c": "Overlay",
+            "_i": "#5",
+            "controls": []
+          },
+          "_services": {
+            "_c": "ServiceRegistry",
+            "_i": "#6",
+            "_services": [],
+            "_internals": {
+              "uid": "00000001"
+            }
+          },
+          "_dialogs": {
+            "_c": "Dialogs",
+            "_i": "#7",
+            "controls": []
+          },
+          "title": "Calculator"
+        },
+        "error": ""
+      }
+    }
+  ],
+  "stdout": "",
+  "stderr": ""
+}
