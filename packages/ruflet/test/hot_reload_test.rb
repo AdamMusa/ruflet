@@ -900,6 +900,46 @@ class RufletHotReloadTest < Minitest::Test
     $app_usr1 = $app_usr1_handler = $usr1_after_run = $usr1_loads = nil
   end
 
+  # A USR1 handler the app installs only on its first load, like
+  # `$trapped ||= Signal.trap("USR1") { ... }`, or one a gem or a file that
+  # is not reloaded installs. A reload then leaves the chain itself as the
+  # trap, and the chain must keep running that first handler instead of
+  # taking over from itself: each USR1 runs it once and reloads, over
+  # several reloads. Once the server stops, it is back and runs on USR1.
+  def test_a_usr1_handler_installed_only_on_the_first_load_runs_on_every_usr1
+    previous_usr1 = Signal.trap("USR1", "IGNORE")
+    $app_usr1 = Queue.new
+    usr1 = Signal.list["USR1"]
+    # No file changes: only USR1 reloads here.
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require "ruflet_server"
+
+      $usr1_loads = ($usr1_loads || 0) + 1
+      load_number = $usr1_loads
+      $usr1_trapped ||= Signal.trap("USR1") { |signo| $app_usr1 << [load_number, signo] }
+      Ruflet.app(host: "127.0.0.1", port: 0) { text("load \#{load_number}") }.run
+    RUBY
+
+    start_served_runner
+    1.upto(3) do |signal|
+      Process.kill("USR1", Process.pid)
+      assert_equal [1, usr1], next_from($app_usr1, "the app's handler on USR1 #{signal}"), "USR1 #{signal} runs the first load's handler"
+      wait_until("the reload USR1 #{signal} asked for") { @runner.reload_count >= signal }
+      assert_equal ["load #{signal + 1}"], render_labels
+      assert $app_usr1.empty?, "USR1 #{signal} runs the app's handler once"
+    end
+
+    stop_served_runner
+    Process.kill("USR1", Process.pid)
+    assert_equal [1, usr1], next_from($app_usr1, "the app's handler once its server stopped")
+    assert $app_usr1.empty?, "once its server stops, USR1 runs that handler once"
+  ensure
+    stop_served_runner
+    Signal.trap("USR1", previous_usr1) if previous_usr1
+    $app_usr1 = $usr1_trapped = $usr1_loads = nil
+  end
+
   # A common idiom: a USR1 handler that also calls the handler it replaced.
   # On the first load that is the runner's own handler. A reload traps USR1
   # again while the chain is installed, so there it is the chain itself,

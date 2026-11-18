@@ -805,7 +805,8 @@ class RufletCliRunCommandTest < Minitest::Test
     assert_r_reloads_and_runs_the_apps_handler(OWN_CHAINING_TRAP_DSL_APP, presses: 3)
   end
 
-  # Each "r" runs the latest load's handler once and reloads the app.
+  # Presses "r" `presses` times. Each press runs the latest load's handler
+  # once and reloads the app.
   def assert_r_reloads_and_runs_the_apps_handler(app, presses:)
     runner = SignalSpyRunner.new
     with_gated_app_session(runner, app: app) do |run_state, _spawn_app, env, cmd, dir|
@@ -821,7 +822,7 @@ class RufletCliRunCommandTest < Minitest::Test
       assert run_state[:ready_thread].join(30), "the app never reported ready"
       assert run_state[:ready], "the app must report ready"
 
-      [1, 2].each do |load|
+      1.upto(presses) do |load|
         capture_io { assert runner.send(:handle_reload_command, "r", run_state) }
         # The handler runs as USR1 arrives, the reload on the harness's
         # watcher thread: in either order.
@@ -829,7 +830,7 @@ class RufletCliRunCommandTest < Minitest::Test
         assert_equal ["H#{load}", "L#{load + 1}"], reported, "r must run the app's handler and reload the app"
         next_from(reloads, "reload #{load}")
       end
-      assert_equal [run_state[:child_pid]] * 2, runner.reload_signals
+      assert_equal [run_state[:child_pid]] * presses, runner.reload_signals
       assert_nil Process.waitpid(run_state[:child_pid], Process::WNOHANG)
     ensure
       log_thread&.kill&.join
