@@ -184,7 +184,8 @@ class RufletClientStateReadersTest < Minitest::Test
   # readers keep answering, and an app that wraps it afterwards still gets the
   # call. Loading the readers file again adds no warning, install! still
   # reports that it skipped nothing, and the extension helper recorded before
-  # the reload is still told apart from an app method.
+  # the reload is still told apart from an app method. Ruby's own
+  # BasicObject#method_missing is recorded again as well.
   def test_readers_survive_the_framework_being_loaded_again
     out = run_ruby(<<~RUBY)
       require "ruflet"
@@ -219,6 +220,48 @@ class RufletClientStateReadersTest < Minitest::Test
 
     assert_equal "[true, false, [false, true, true], [], [], :wrapped]", out
 
+    # install! records Ruby's own BasicObject#method_missing again on every
+    # call too. One the app defined before Ruflet loaded is the app's; once
+    # the app puts Ruby's own back, it is still taken for the app's (the
+    # read raises, as on main) until the reload records Ruby's again, and
+    # then the reader answers.
+    out = run_ruby(<<~RUBY)
+      class BasicObject
+        alias_method :ruby_method_missing, :method_missing
+        private :ruby_method_missing
+        def method_missing(name, *args, **options, &block)
+          name == :value ? :basic_object : ruby_method_missing(name, *args, **options, &block)
+        end
+      end
+      require "ruflet"
+      require "stringio"
+      toggle = Ruflet.switch(label: "Dark mode", value: false)
+      app = toggle.value
+      class BasicObject
+        alias_method :method_missing, :ruby_method_missing
+        private :method_missing
+        remove_method :ruby_method_missing
+      end
+      restored = begin
+        toggle.value
+      rescue NoMethodError => e
+        [e.class, e.name]
+      end
+      lib = #{File.expand_path('../lib', __dir__).inspect}
+      roots = [lib, File.realpath(lib)].map { |root| root + "/" }
+      $LOADED_FEATURES.reject! { |feature| roots.any? { |root| feature.start_with?(root) } }
+      $stderr = StringIO.new
+      require "ruflet"
+      $stderr = STDERR
+      reloaded = begin
+        toggle.value
+      rescue NoMethodError => e
+        [e.class, e.name]
+      end
+      print [app, restored, reloaded].inspect
+    RUBY
+
+    assert_equal "[:basic_object, [NoMethodError, :value], false]", out
   end
 
   # Readers exist only where the table says: every method defined in
