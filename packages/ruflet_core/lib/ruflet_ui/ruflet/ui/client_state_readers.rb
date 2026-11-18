@@ -75,7 +75,10 @@ module Ruflet
     #   too (see method_after). (mruby stopped a call with a receiver at
     #   Ruflet's private Kernel#method_missing and raised, so on v0.0.23 a
     #   method_missing after it answered no `control.value` there; the reader
-    #   reaches it in the VM as on CRuby.)
+    #   reaches it in the VM as on CRuby.) When the app's method_missing passes
+    #   the call on with `super`, the error is the one CRuby raised for
+    #   `control.value` without the reader, whatever missed earlier on the
+    #   thread (see MISSED_CALL).
     # * The private Kernel DSL helper Ruflet::Extensions.register_control
     #   defines for an extension registered after Ruflet loaded (`expanded`,
     #   say) is Ruflet's, not the app's. A plain `tile.expanded` reads the
@@ -115,6 +118,12 @@ module Ruflet
     #   method), returns the reader's value, or the app's method_missing's
     #   answer if it has one; on v0.0.23 it built an empty `expanded`
     #   control.
+    # * A call without a receiver (a bare `value` in a control method,
+    #   `self.value`, `send(:value)`) that the app's method_missing passes to
+    #   `super` raises what `control.value` raises on CRuby: NoMethodError
+    #   with private_call? false. On v0.0.23 the bare word raised NameError
+    #   "undefined local variable or method", and the others had
+    #   private_call? true.
     module ClientStateReaders
       # mruby's Module#method_defined? also counts private methods; CRuby's
       # counts public and protected ones only. (Guarded so that loading this
@@ -142,6 +151,53 @@ module Ruflet
           true
         rescue ArgumentError
           false
+        end
+      end
+
+      # Ruby's own BasicObject#method_missing raises the error of the call
+      # that missed, and on CRuby it reads how that call missed from the
+      # thread's last method miss: a method that does not exist gives
+      # NoMethodError "undefined method 'value' ...", a private one "private
+      # method 'value' called ...", a bare word NameError "undefined local
+      # variable or method 'value' ...". A reader that hands a call to an app
+      # method_missing calls method_missing itself, which is not a miss, so
+      # when the app's calls `super`, the error would describe whatever missed
+      # last on the thread (a bare scoped helper such as `local_auth`, which
+      # Ruflet's Kernel#method_missing answers, is such a miss). So the reader
+      # first repeats, on MISSED_CALL, the miss `control.value` made before
+      # the reader existed (see repeat_miss). MISSED_CALL's method_missing
+      # answers that call with nil.
+      #
+      # REPEATS_MISS is false in the embedded VM: this mruby raises "private
+      # method called" for a call with a receiver to a private method before
+      # any method_missing runs, and its BasicObject#method_missing always
+      # raises "undefined method", so there is nothing to repeat. The probe
+      # ends with a plain miss, so on CRuby loading Ruflet still leaves a
+      # plain miss as the thread's last, as it did before the probe. (Both
+      # guarded like the constants above.)
+      unless const_defined?(:MISSED_CALL, false)
+        MISSED_CALL = Object.new
+        class << MISSED_CALL
+          def method_missing(_name, *_args)
+            nil
+          end
+
+          def private_reader; end
+          def protected_reader; end
+          private :private_reader
+          protected :protected_reader
+        end
+        MISSED_CALL.freeze
+      end
+
+      unless const_defined?(:REPEATS_MISS, false)
+        REPEATS_MISS = begin
+          MISSED_CALL.private_reader
+          true
+        rescue NoMethodError
+          false
+        ensure
+          MISSED_CALL.undefined_reader
         end
       end
 
@@ -373,6 +429,28 @@ module Ruflet
           app_method_missing_after_kernel?
         end
 
+        # A reader calls this just before it hands a call to an app
+        # method_missing (see MISSED_CALL). It repeats the miss CRuby made
+        # for `control.value` before the reader existed: of a private method
+        # when the method `super` would call is private (a top-level `def
+        # value`, Ruflet's own extension helper), of a protected one when it
+        # is protected (on Ruflet::Control, say; a public one, or a protected
+        # one on Object, Kernel or a module Object includes, gets the call
+        # instead), and of a method that does not exist when there is none.
+        def repeat_miss(after, symbol)
+          return unless REPEATS_MISS
+
+          owner = method_after(after, symbol)
+          if owner && own_private_method?(owner, symbol)
+            MISSED_CALL.private_reader
+          elsif owner
+            MISSED_CALL.protected_reader
+          else
+            MISSED_CALL.undefined_reader
+          end
+          nil
+        end
+
         private
 
         # Asked when the first method_missing in the lookup is Ruflet's
@@ -487,12 +565,12 @@ module Ruflet
 
         # In order: a method after the reader module (see the module comment),
         # unless it is an app method_missing's turn or Ruflet's own extension
-        # helper on a plain read; then the app's method_missing; then the
-        # reader itself. Arguments, keyword arguments and a block go to the
-        # app's method or method_missing unchanged. Without one, a call with
-        # arguments raises what a zero-argument method raises on CRuby and in
-        # the embedded VM alike, and a block is ignored, as any Ruby reader
-        # ignores it.
+        # helper on a plain read; then the app's method_missing, after
+        # repeat_miss; then the reader itself. Arguments, keyword arguments
+        # and a block go to the app's method or method_missing unchanged.
+        # Without one, a call with arguments raises what a zero-argument
+        # method raises on CRuby and in the embedded VM alike, and a block is
+        # ignored, as any Ruby reader ignores it.
         def define_reader(readers, name, after)
           key = name.to_s
           symbol = key.to_sym
@@ -505,6 +583,7 @@ module Ruflet
             if found && (!answering || api.reachable_method_after?(after, symbol))
               super(*args, **options, &block)
             elsif answering
+              api.repeat_miss(after, symbol)
               method_missing(symbol, *args, **options, &block)
             elsif plain
               props[key]

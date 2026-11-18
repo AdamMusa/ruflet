@@ -406,6 +406,74 @@ Ruflet::Control.send(:remove_method, :value)
 Object.send(:remove_method, :value)
 assert_equal(answered, toggle.value, "app method_missing answers again once the other methods are gone")
 
+# When that method_missing passes a read on with super, the error is the one
+# CRuby raised for the read without the reader, whatever missed earlier on the
+# thread: NoMethodError "undefined method", or "private method ... called" /
+# "protected method ... called" when such a method of that name sits after the
+# reader. CRuby takes that from the thread's last miss, and the reader's own
+# call to method_missing is none, so the reader repeats the miss first. This
+# mruby says "undefined method" whenever a method_missing passes a call on.
+# (The repeat is probed when Ruflet loads; this mruby raises "private method
+# called" before any method_missing runs, so it repeats nothing.)
+repeats_miss = readers.const_defined?(:REPEATS_MISS) ? readers::REPEATS_MISS : :not_defined
+assert_equal(RUBY_ENGINE != "mruby", repeats_miss, "repeated-miss probe")
+class ReaderProtectedHolder
+  def guarded
+    :guarded
+  end
+  protected :guarded
+end
+earlier_misses = [
+  ["no earlier miss", lambda { nil }],
+  ["a rescued bare word", lambda { begin; some_bare_word_that_is_missing; rescue NameError; end }],
+  ["a rescued private call", lambda { begin; Object.new.puts("x"); rescue NoMethodError; end }],
+  ["a rescued protected call", lambda { begin; ReaderProtectedHolder.new.guarded; rescue NoMethodError; end }],
+  ["a bare local_auth", lambda { local_auth }]
+]
+def reader_error(receiver)
+  yield
+  [:no_error]
+rescue NoMethodError => e
+  result = [e.message.split(" ").first(2).join(" "), e.name, e.args]
+  result << e.receiver.equal?(receiver) if e.respond_to?(:receiver)
+  result << e.private_call? if e.respond_to?(:private_call?)
+  result
+rescue NameError => e
+  [:escaped_rescue_nomethoderror, e.class]
+end
+def raised_by_main(kind, name)
+  RUBY_ENGINE == "mruby" ? ["undefined method", name, []] : [kind, name, [], true, false]
+end
+earlier_misses.each do |label, miss|
+  miss.call
+  assert_equal(raised_by_main("undefined method", :selected_index), reader_error(tabs) { tabs.selected_index },
+               "after #{label}, a name method_missing passes on raises what it raised without the reader")
+end
+Object.class_eval do
+  def selected_index
+    :top_level_helper
+  end
+  private :selected_index
+end
+earlier_misses.each do |label, miss|
+  miss.call
+  assert_equal(raised_by_main("private method", :selected_index), reader_error(tabs) { tabs.selected_index },
+               "after #{label}, with a private Object#selected_index too")
+end
+Object.send(:remove_method, :selected_index)
+Ruflet::Control.class_eval do
+  def selected_index
+    :protected_control_method
+  end
+  protected :selected_index
+end
+earlier_misses.each do |label, miss|
+  miss.call
+  assert_equal(raised_by_main("protected method", :selected_index), reader_error(tabs) { tabs.selected_index },
+               "after #{label}, with a protected Ruflet::Control#selected_index too")
+end
+Ruflet::Control.send(:remove_method, :selected_index)
+
 Ruflet::Control.send(:remove_method, :method_missing)
 assert_equal(false, toggle.value, "the reader answers again once method_missing is gone")
 
@@ -471,6 +539,11 @@ else
   assert_equal(["value", 1], generic, "CRuby's Kernel#method_missing builds a generic control for a call with an argument")
 end
 assert_raises(NoMethodError, "a name that method_missing does not answer still raises") { tabs.selected_index }
+earlier_misses.each do |label, miss|
+  miss.call
+  assert_equal(raised_by_main("undefined method", :selected_index), reader_error(tabs) { tabs.selected_index },
+               "after #{label}, a name the module's method_missing passes on raises what it raised without the reader")
+end
 LaterKernelMethodMissing.send(:remove_method, :method_missing)
 assert_equal(false, toggle.value, "the reader answers again once that method_missing is gone")
 # Included into Kernel before Ruflet loads, such a module comes after

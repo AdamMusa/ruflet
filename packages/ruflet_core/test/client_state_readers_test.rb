@@ -158,15 +158,23 @@ class RufletClientStateReadersTest < Minitest::Test
   end
 
   # The same, in a process that only requires "ruflet", so no earlier test
-  # can have installed anything.
+  # can have installed anything. Loading leaves a plain miss as the thread's
+  # last one, as on main, although the readers file probes a private call
+  # (see ClientStateReaders::MISSED_CALL): Ruby's own
+  # BasicObject#method_missing, called directly, says "undefined method".
   def test_requiring_ruflet_is_enough
-    out = run_ruby(<<~RUBY)
+    out = run_ruby(<<~'RUBY')
       require "ruflet"
       field = Ruflet.dropdown(label: "Size", value: "s", options: [])
-      print [Ruflet::UI::ClientStateReaders.skipped, field.value, Ruflet.switch(value: true).respond_to?(:value)].inspect
+      last_miss = begin
+        BasicObject.instance_method(:method_missing).bind_call(Object.new, :not_a_method)
+      rescue NoMethodError => e
+        [e.message[/\A(?:undefined|private|protected) method/], e.private_call?]
+      end
+      print [Ruflet::UI::ClientStateReaders.skipped, field.value, Ruflet.switch(value: true).respond_to?(:value), last_miss].inspect
     RUBY
 
-    assert_equal '[[], "s", true]', out
+    assert_equal '[[], "s", true, ["undefined method", false]]', out
   end
 
   # `ruflet run` hot reload drops every watched file from $LOADED_FEATURES and
@@ -210,6 +218,7 @@ class RufletClientStateReadersTest < Minitest::Test
     RUBY
 
     assert_equal "[true, false, [false, true, true], [], [], :wrapped]", out
+
   end
 
   # Readers exist only where the table says: every method defined in
@@ -816,6 +825,141 @@ class RufletClientStateReadersTest < Minitest::Test
     RUBY
 
     assert_equal "[[1, false], false, :basic_object, false]", out
+  end
+
+  # When the reader hands a read to an app method_missing that does not
+  # answer the name and calls `super`, the error is the one main raised for
+  # that read, whatever missed earlier on the thread. CRuby builds Ruby's own
+  # BasicObject#method_missing error from the thread's last method miss, and
+  # the reader's own call to method_missing is not one. So after a rescued
+  # bare word the read raised NameError "undefined local variable or method"
+  # (escaping `rescue NoMethodError`), and after a private or protected miss
+  # it said "private method 'value' called" or "protected method ...".
+  # Ruflet itself makes such a miss: a bare scoped helper (`local_auth`,
+  # `about_dialog`) reaches Kernel#method_missing, which calls `super` and
+  # rescues the NameError. Main raised NoMethodError "undefined method
+  # 'value'" after every one of these, or "private method 'value' called" /
+  # "protected method 'value' called" when such a method of that name sits
+  # after the reader (Ruflet's own `expanded` extension helper is a private
+  # one). Each app in its own process: none of them can be undone.
+  def test_an_app_method_missing_that_calls_super_raises_what_main_raised
+    misses = <<~'RUBY'
+      class ProtectedHolder
+        protected def guarded = :guarded
+      end
+      class SuperHolder
+        def lonely = super
+      end
+      MISSES = {
+        none: -> {},
+        bare_word: -> { begin; some_bare_word_that_is_missing; rescue NameError; end },
+        call: -> { begin; some_call_that_is_missing(1); rescue NoMethodError; end },
+        private: -> { begin; Object.new.puts("x"); rescue NoMethodError; end },
+        protected: -> { begin; ProtectedHolder.new.guarded; rescue NoMethodError; end },
+        super: -> { begin; SuperHolder.new.lonely; rescue NoMethodError; end },
+        local_auth: -> { begin; local_auth; rescue NameError; end },
+        about_dialog: -> { begin; about_dialog; rescue NameError; end }
+      }.freeze
+      # Each earlier miss, then the read: what it raised, as
+      # [miss, message kind, name, receiver, args, private_call?].
+      def errors_after_misses(receiver)
+        MISSES.map do |label, miss|
+          miss.call
+          begin
+            yield
+            [label, :no_error]
+          rescue NoMethodError => e
+            [label, e.message[/\A(?:undefined|private|protected) method/], e.name, e.receiver.equal?(receiver), e.args, e.private_call?]
+          rescue NameError => e
+            [label, :escaped_rescue_nomethoderror, e.class]
+          end
+        end
+      end
+    RUBY
+    workaround = <<~'RUBY'
+      # The shape an app on v0.0.23 used to read props.
+      class Ruflet::Control
+        def method_missing(name, *args, &block)
+          args.empty? && block.nil? && props.key?(name.to_s) ? props[name.to_s] : super
+        end
+      end
+      field = Ruflet.text_field(label: "Name")
+      tile = Ruflet.expansion_tile(title: Ruflet.text("More"))
+      tile.props.delete("expanded") # so the app's method_missing passes `expanded` on
+      results = { no_method: errors_after_misses(field) { field.value } }
+      Object.class_eval { private def value = :top_level_helper }
+      results[:private_object_method] = errors_after_misses(field) { field.value }
+      Object.send(:remove_method, :value)
+      Ruflet::Control.class_eval { protected def value = :protected_control_method }
+      results[:protected_control_method] = errors_after_misses(field) { field.value }
+      Ruflet::Control.send(:remove_method, :value)
+      class ExpandedControl < Ruflet::Control
+        def initialize(**props) = super(type: "expanded", **props)
+      end
+      Ruflet::Extensions.register_control(:expanded, control_class: ExpandedControl)
+      results[:extension_helper] = errors_after_misses(tile) { tile.expanded }
+      results[:no_method_again] = errors_after_misses(field) { field.value }
+      print results.inspect
+    RUBY
+    after_kernel = <<~'RUBY'
+      toggle = Ruflet.switch(label: "Dark mode", value: false)
+      print({ no_method: errors_after_misses(toggle) { toggle.value } }.inspect)
+    RUBY
+    kernel_module = <<~'RUBY'
+      module AppMethodMissing
+        def method_missing(name, *args, **options, &block) = name == :zzz ? :app : super
+      end
+      Kernel.include(AppMethodMissing)
+    RUBY
+    basic_object = <<~'RUBY'
+      class BasicObject
+        alias_method :ruby_method_missing, :method_missing
+        private :ruby_method_missing
+        def method_missing(name, *args, **options, &block)
+          name == :zzz ? :app : ruby_method_missing(name, *args, **options, &block)
+        end
+      end
+    RUBY
+    labels = %i[none bare_word call private protected super local_auth about_dialog]
+    raised = ->(kind, name = :value) { labels.map { |label| [label, kind, name, true, [], false] } }
+    load_ruflet = "require \"ruflet\"\n"
+
+    assert_equal({ no_method: raised.("undefined method"), private_object_method: raised.("private method"),
+                   protected_control_method: raised.("protected method"),
+                   extension_helper: raised.("private method", :expanded),
+                   no_method_again: raised.("undefined method") }.inspect,
+                 run_ruby(load_ruflet + misses + workaround))
+    [kernel_module, basic_object].each do |setup|
+      assert_equal({ no_method: raised.("undefined method") }.inspect,
+                   run_ruby(load_ruflet + setup + misses + after_kernel), setup)
+    end
+  end
+
+  # The known difference (see the module comment): a reader cannot see how it
+  # was called, so a call without a receiver that an app method_missing
+  # passes to `super` raises what `control.value` raises. Main raised
+  # NameError "undefined local variable or method" for a bare `value` in a
+  # control method, and NoMethodError with private_call? true for
+  # `self.value` and `send(:value)`.
+  def test_a_call_without_a_receiver_raises_what_a_call_with_one_raised
+    toggle = Ruflet.switch(label: "Dark mode", value: false)
+
+    with_app_methods(Ruflet::Control, <<~RUBY) do
+      def method_missing(name, *args, **options, &block) = name == :zzz ? :app : super
+      def bare_read = value
+      def self_read = self.value
+    RUBY
+      [-> { toggle.bare_read }, -> { toggle.self_read }, -> { toggle.send(:value) }, -> { toggle.value }].each do |read|
+        begin
+          some_bare_word_that_is_missing
+        rescue NameError
+          nil
+        end
+        error = assert_raises(NoMethodError) { read.call }
+        assert_equal [:value, true, [], false], [error.name, error.receiver.equal?(toggle), error.args, error.private_call?]
+        assert_match(/\Aundefined method/, error.message)
+      end
+    end
   end
 
   # An app subclass of a table class that answers through its own
