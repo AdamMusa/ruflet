@@ -1036,6 +1036,47 @@ class RufletClientStateReadersTest < Minitest::Test
     end
   end
 
+  # A read the reader answers itself, or hands to an app method with
+  # `super`, makes no method miss, as on main, where an app method answered
+  # without one: the thread's last miss (which Ruby's own
+  # BasicObject#method_missing reads; see ClientStateReaders::MISSED_CALL)
+  # is what it was before the read. Only a read handed to an app
+  # method_missing repeats a miss first.
+  def test_reads_that_reach_no_method_missing_leave_the_last_miss_alone
+    toggle = Ruflet.switch(label: "Dark mode", value: false)
+    misses = {
+      bare_word: -> { begin; some_bare_word_that_is_missing; rescue NameError; end },
+      private: -> { begin; Object.new.puts("x"); rescue NoMethodError; end }
+    }
+    last_miss = lambda do
+      BasicObject.instance_method(:method_missing).bind_call(Object.new, :not_a_method)
+    rescue NameError => e
+      [e.class, e.message[/\A(?:undefined local variable or method|undefined method|private method|protected method)/]]
+    end
+    # Each earlier miss, then the read: [miss, what the read returned,
+    # the last miss before the read, the last miss after it].
+    observe = lambda do |read|
+      misses.map do |label, miss|
+        miss.call
+        before = last_miss.call
+        result = read.call
+        [label, result, before, last_miss.call]
+      end
+    end
+    expected = lambda do |result|
+      [[:bare_word, result, *[[NameError, "undefined local variable or method"]] * 2],
+       [:private, result, *[[NoMethodError, "private method"]] * 2]]
+    end
+
+    assert_equal expected.(false), observe.(-> { toggle.value })
+    with_app_methods(Ruflet::Control, "def value = :public_app_method") do
+      assert_equal expected.(:public_app_method), observe.(-> { toggle.value })
+    end
+    with_app_methods(Object, "private def value = :top_level_helper") do
+      assert_equal expected.(:top_level_helper), observe.(-> { toggle.value })
+    end
+  end
+
   # An app subclass of a table class that answers through its own
   # method_missing keeps answering; plain subclasses get the reader.
   def test_an_app_subclass_method_missing_still_answers
