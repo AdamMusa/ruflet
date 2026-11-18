@@ -22,7 +22,7 @@ module Ruflet
     #   build first copies lib/main*.dart from the template again
     #   (refresh_managed_client_template_files), so the next build without
     #   hooks starts from the template's own empty lists, and the generated
-    #   file, imported by nothing any more, is removed.
+    #   file, which no directive under lib/ names any more, is removed.
     # * A lib/ruflet_bootstrap.g.dart that does not start with the signature
     #   is the developer's own: it is never overwritten or deleted. A build
     #   with hooks then warns and leaves the file and the entrypoints alone.
@@ -48,8 +48,16 @@ module Ruflet
       CLIENT_BOOTSTRAP_ENTRYPOINTS = %w[lib/main.self.dart lib/main.server.dart].freeze
       CLIENT_BOOTSTRAP_IMPORT = "import 'ruflet_bootstrap.g.dart';"
       # The URI of an import directive, in either quote style, also when it
-      # sits on the line after `import`.
+      # sits on the line after `import`. Decides whether routing an entrypoint
+      # still has to add the import.
       CLIENT_BOOTSTRAP_IMPORT_URI = /^[ \t]*import\s+(['"])([^'"\r\n]*)\1/
+      # Every directive that names another file: import, export or part (not
+      # `part of`), up to its semicolon, and every URI in it, a conditional
+      # import's alternatives included. Decides whether the generated file
+      # must stay. The same two patterns as DIRECTIVE and URI_LITERAL in
+      # ruflet-template's tool/conformance/test_bootstrap_hooks_contract.rb.
+      CLIENT_BOOTSTRAP_DIRECTIVE = /^[ \t]*(import|export|part)(?![A-Za-z0-9_$])(?![ \t]+of\b)([^;]*);/
+      CLIENT_BOOTSTRAP_URI_LITERAL = /(['"])([^'"\n]*)\1/
       # ruflet-template pins the same markers in
       # tool/conformance/test_bootstrap_hooks_contract.rb.
       CLIENT_BOOTSTRAP_BLOCK_START = "// --RUFLET_BOOTSTRAP_HOOKS_START--"
@@ -91,8 +99,8 @@ module Ruflet
       #
       # Without hooks it changes nothing unless the client holds a generated
       # file from an earlier build with hooks: that file is kept in step (both
-      # lists empty) while something imports it, and removed once nothing
-      # does. Returns the generated file's path when the client uses it,
+      # lists empty) while a directive under lib/ names it, and removed once
+      # none does. Returns the generated file's path when the client uses it,
       # otherwise nil.
       def write_client_bootstrap(client_dir, config = {}, platform: nil, self_contained: false)
         hooks = client_bootstrap_hooks(config, platform: platform, self_contained: self_contained)
@@ -112,7 +120,7 @@ module Ruflet
           route_client_entrypoints_to_bootstrap(client_dir, hooks.size)
         end
 
-        unless client_bootstrap_imported?(client_dir)
+        unless client_bootstrap_referenced?(client_dir)
           File.delete(path) if existing == :generated
           return nil
         end
@@ -160,9 +168,12 @@ module Ruflet
       # Empties the entrypoint's marked block and imports the generated file
       # instead. Returns false when the entrypoint has neither the block nor the
       # import, so the hooks cannot reach it.
+      #
+      # It edits bytes, so an entrypoint that is not valid UTF-8 is routed too
+      # and keeps every byte outside the lines this replaces or adds.
       def route_client_entrypoint_to_bootstrap(path, relative_path, package_name)
-        content = read_text_file(path)
-        imported = client_bootstrap_import_in?(content, relative_path, package_name)
+        content = File.binread(path)
+        imported = client_bootstrap_import_in?(client_bootstrap_text(content), relative_path, package_name)
         lines = content.lines
         start = lines.index { |line| line.chomp == CLIENT_BOOTSTRAP_BLOCK_START }
         finish = start && lines.each_index.find { |index| index > start && lines[index].chomp == CLIENT_BOOTSTRAP_BLOCK_END }
@@ -171,36 +182,39 @@ module Ruflet
         # The lines this adds end the way the marker line does, so a CRLF
         # entrypoint stays CRLF.
         newline = lines[start].end_with?("\r\n") ? "\r\n" : "\n"
-        lines[(start + 1)...finish] = ["#{CLIENT_BOOTSTRAP_BLOCK_POINTER}#{newline}"]
+        lines[(start + 1)...finish] = ["#{CLIENT_BOOTSTRAP_BLOCK_POINTER}#{newline}".b]
         insert_client_bootstrap_import(lines, newline) unless imported
         updated = lines.join
-        write_text_file(path, updated) unless updated == content
+        # Binary mode also keeps the line endings as they are on Windows.
+        File.binwrite(path, updated) unless updated == content
         true
       end
 
       # After the last import directive, which may span several lines and end
       # in a // comment.
       def insert_client_bootstrap_import(lines, newline)
+        import = "#{CLIENT_BOOTSTRAP_IMPORT}#{newline}".b
         last_import = lines.rindex { |line| line.match?(/\Aimport\s/) }
         unless last_import
-          lines.unshift("#{CLIENT_BOOTSTRAP_IMPORT}#{newline}")
+          lines.unshift(import)
           return
         end
 
         directive_end = (last_import...lines.length).find { |index| lines[index].match?(%r{;[ \t]*(?://.*)?\s*\z}) } ||
                         last_import
-        lines.insert(directive_end + 1, "#{CLIENT_BOOTSTRAP_IMPORT}#{newline}")
+        lines.insert(directive_end + 1, import)
       end
 
-      # Whether any Dart file under lib/ imports this client's generated file.
-      # It only reads, and reads bytes, so a file in a client dir the developer
-      # owns that is not valid UTF-8, or not readable, cannot fail a build.
+      # Whether any directive in a Dart file under lib/ names this client's
+      # generated file, so the client stops compiling without it. Files and
+      # directories that cannot be read are skipped, and a file that is not
+      # valid UTF-8 is scanned with its invalid bytes replaced.
       #
       # The client path is the glob's base, never part of its pattern: a
       # developer's client dir may be named "my app [v2]" or "proj{1}", and
       # those characters would otherwise be read as glob syntax and match
       # nothing.
-      def client_bootstrap_imported?(client_dir)
+      def client_bootstrap_referenced?(client_dir)
         lib_dir = File.join(client_dir, "lib")
         generated = File.expand_path(File.join(client_dir, CLIENT_BOOTSTRAP_PATH))
         package_name = client_package_name(client_dir)
@@ -211,10 +225,15 @@ module Ruflet
           source = File.binread(dart_file)
           next false unless source.include?("ruflet_bootstrap.g.dart")
 
-          client_bootstrap_import_in?(source.force_encoding(Encoding::UTF_8).scrub, "lib/#{relative_path}", package_name)
+          client_bootstrap_reference_in?(client_bootstrap_text(source), "lib/#{relative_path}", package_name)
         rescue SystemCallError
           false
         end
+      end
+
+      # Dart source bytes as UTF-8 text to scan, invalid bytes replaced.
+      def client_bootstrap_text(bytes)
+        bytes.dup.force_encoding(Encoding::UTF_8).scrub
       end
 
       # Whether the Dart source at `importer` (relative to the client dir, for
@@ -223,6 +242,17 @@ module Ruflet
       def client_bootstrap_import_in?(source, importer, package_name)
         source.scan(CLIENT_BOOTSTRAP_IMPORT_URI).any? do |_quote, uri|
           client_bootstrap_uri?(uri, importer, package_name)
+        end
+      end
+
+      # Whether any import, export or part directive in the Dart source at
+      # `importer` names this client's lib/ruflet_bootstrap.g.dart, through
+      # any of its URIs.
+      def client_bootstrap_reference_in?(source, importer, package_name)
+        source.scan(CLIENT_BOOTSTRAP_DIRECTIVE).any? do |_keyword, rest|
+          rest.scan(CLIENT_BOOTSTRAP_URI_LITERAL).any? do |_quote, uri|
+            client_bootstrap_uri?(uri, importer, package_name)
+          end
         end
       end
 

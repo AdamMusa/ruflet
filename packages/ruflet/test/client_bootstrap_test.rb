@@ -263,6 +263,61 @@ class RufletCliClientBootstrapTest < Minitest::Test
     end
   end
 
+  # An entrypoint without the block that already imports the generated file,
+  # for example one a developer pointed at it by hand, gets the hooks through
+  # that import: nothing in it changes and there is nothing to warn about.
+  def test_hooks_reach_an_entrypoint_that_imports_them_without_the_block
+    imported = self.class.released_entrypoints.fetch("lib/main.server.dart")
+                   .sub(LAST_IMPORT, "\\0import 'ruflet_bootstrap.g.dart';\n")
+    entrypoints = self.class.marked_entrypoints.merge("lib/main.server.dart" => imported)
+
+    with_client(entrypoints) do |client_dir|
+      _out, err = capture_io do
+        assert_equal File.join(client_dir, GENERATED),
+                     HookedBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "apk")
+      end
+
+      assert_empty err
+      assert_equal imported, read_utf8(client_dir, "lib/main.server.dart")
+      assert_equal routed(entrypoints.fetch("lib/main.self.dart")), read_utf8(client_dir, "lib/main.self.dart")
+      assert_equal HOOKED_BOOTSTRAP, File.binread(File.join(client_dir, GENERATED))
+    end
+  end
+
+  # Every build copies both entrypoints from the template first, so only a
+  # client prepared without a template can lack one. The hooks then reach the
+  # other, and the missing one is not created.
+  def test_hooks_skip_a_missing_entrypoint
+    entrypoints = self.class.marked_entrypoints.except("lib/main.self.dart")
+
+    with_client(entrypoints) do |client_dir|
+      _out, err = capture_io do
+        assert_equal File.join(client_dir, GENERATED),
+                     HookedBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "apk")
+      end
+
+      assert_empty err
+      refute File.exist?(File.join(client_dir, "lib/main.self.dart"))
+      assert_equal routed(entrypoints.fetch("lib/main.server.dart")), read_utf8(client_dir, "lib/main.server.dart")
+    end
+  end
+
+  # An export of the generated file does not put the hook lists in the
+  # entrypoint's own scope, so the build still imports the file there.
+  def test_an_entrypoint_that_only_exports_the_hooks_still_imports_them
+    entrypoints = self.class.marked_entrypoints.transform_values do |source|
+      source.sub(LAST_IMPORT, "\\0export 'ruflet_bootstrap.g.dart';\n")
+    end
+
+    with_client(entrypoints) do |client_dir|
+      assert_equal File.join(client_dir, GENERATED),
+                   HookedBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+      entrypoints.each do |relative_path, source|
+        assert_equal routed(source), read_utf8(client_dir, relative_path), relative_path
+      end
+    end
+  end
+
   # For example entrypoints a build with hooks pointed at the file when no
   # template was available to copy them from again.
   def test_an_imported_bootstrap_gets_empty_lists_without_hooks
@@ -386,6 +441,30 @@ class RufletCliClientBootstrapTest < Minitest::Test
     end
   end
 
+  # A symlink that points nowhere is not an absent file either: writing
+  # through it would create the file it points at.
+  def test_a_dangling_symlinked_bootstrap_file_is_never_written_through
+    with_client(self.class.marked_entrypoints) do |client_dir|
+      target = File.join(client_dir, "elsewhere.g.dart")
+      link = File.join(client_dir, GENERATED)
+      begin
+        File.symlink(target, link)
+      rescue NotImplementedError, SystemCallError
+        skip "symlinks are not available here"
+      end
+      before = snapshot(client_dir)
+
+      assert_nil DummyBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+      _out, err = capture_io do
+        assert_nil HookedBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+      end
+      assert_equal before, snapshot(client_dir)
+      refute File.exist?(target), "the link's target must not be created"
+      assert_equal target, File.readlink(link)
+      assert_equal FOREIGN_WARNING, err
+    end
+  end
+
   # Review probe B: another package's file of the same name is not this
   # client's lib/ruflet_bootstrap.g.dart.
   def test_another_packages_ruflet_bootstrap_is_not_this_clients
@@ -401,6 +480,87 @@ class RufletCliClientBootstrapTest < Minitest::Test
       File.binwrite(File.join(client_dir, GENERATED), HOOKED_BOOTSTRAP)
       assert_nil DummyBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
       refute File.exist?(File.join(client_dir, GENERATED))
+    end
+  end
+
+  # Review probe cases 3 and 4. Without hooks, a generated file stays while
+  # any directive under lib/ names it, in any form: an import, an export, a
+  # part, or one alternative of a conditional import or export, the rule
+  # ruflet-template's conformance test applies to the entrypoints. Removing
+  # it would stop that file compiling.
+  DIRECTIVES_NAMING_THE_BOOTSTRAP = {
+    "lib/mine.dart" => [
+      "export 'ruflet_bootstrap.g.dart';",
+      "import 'stub.dart' if (dart.library.io) 'ruflet_bootstrap.g.dart';",
+      "part 'ruflet_bootstrap.g.dart';",
+      "export \"package:demo/ruflet_bootstrap.g.dart\" show rufletPreRunAppHooks;",
+      "import 'stub.dart'\n    if (dart.library.js_interop) 'web.dart'\n    if (dart.library.io) './ruflet_bootstrap.g.dart';",
+      "export 'stub.dart' if (dart.library.io) 'package:demo/ruflet_bootstrap.g.dart';",
+      "  import\n    \"ruflet_bootstrap.g.dart\"\r\n    as hooks;"
+    ],
+    "lib/sub/mine.dart" => [
+      "export '../ruflet_bootstrap.g.dart';",
+      "import 'stub.dart' if (dart.library.io) '../ruflet_bootstrap.g.dart';"
+    ]
+  }.freeze
+  # ... and nothing else that mentions the name.
+  DIRECTIVES_NAMING_SOMETHING_ELSE = {
+    "lib/mine.dart" => [
+      "part of 'ruflet_bootstrap.g.dart';",
+      "// export 'ruflet_bootstrap.g.dart';",
+      "export 'package:other/ruflet_bootstrap.g.dart';",
+      "import 'stub.dart' if (dart.library.io) 'sub/ruflet_bootstrap.g.dart';",
+      "export '/ruflet_bootstrap.g.dart';",
+      "export 'x:/../ruflet_bootstrap.g.dart';",
+      "void f() {\n  imported = 'ruflet_bootstrap.g.dart';\n  parts = ['ruflet_bootstrap.g.dart'];\n}",
+      "const s = 'export ruflet_bootstrap.g.dart';",
+      "export 'ruflet_bootstrap.g.dart\";"
+    ],
+    "lib/sub/mine.dart" => [
+      "export 'ruflet_bootstrap.g.dart';",
+      "import 'stub.dart' if (dart.library.io) 'ruflet_bootstrap.g.dart';"
+    ]
+  }.freeze
+
+  def test_recognises_every_directive_that_names_this_clients_generated_file
+    builder = DummyBuilder.new
+
+    DIRECTIVES_NAMING_THE_BOOTSTRAP.each do |importer, directives|
+      directives.each do |directive|
+        assert builder.send(:client_bootstrap_reference_in?, "#{directive}\n", importer, "demo"), "#{importer}: #{directive}"
+      end
+    end
+    DIRECTIVES_NAMING_SOMETHING_ELSE.each do |importer, directives|
+      directives.each do |directive|
+        refute builder.send(:client_bootstrap_reference_in?, "#{directive}\n", importer, "demo"), "#{importer}: #{directive}"
+      end
+    end
+  end
+
+  def test_no_hooks_keeps_the_generated_file_while_any_directive_names_it
+    {
+      DIRECTIVES_NAMING_THE_BOOTSTRAP => true, DIRECTIVES_NAMING_SOMETHING_ELSE => false
+    }.each do |table, kept|
+      table.each do |importer, directives|
+        directives.each do |directive|
+          with_client(self.class.released_entrypoints) do |client_dir|
+            File.write(File.join(client_dir, "pubspec.yaml"), "name: demo\n")
+            FileUtils.mkdir_p(File.dirname(File.join(client_dir, importer)))
+            File.write(File.join(client_dir, importer), "#{directive}\n")
+            path = File.join(client_dir, GENERATED)
+            File.binwrite(path, HOOKED_BOOTSTRAP)
+
+            result = DummyBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+            if kept
+              assert_equal path, result, "#{importer}: #{directive}"
+              assert_equal EMPTY_BOOTSTRAP, File.binread(path), "#{importer}: #{directive}"
+            else
+              assert_nil result, "#{importer}: #{directive}"
+              refute File.exist?(path), "#{importer}: #{directive}"
+            end
+          end
+        end
+      end
     end
   end
 
@@ -429,6 +589,36 @@ class RufletCliClientBootstrapTest < Minitest::Test
       path = File.join(client_dir, GENERATED)
       File.binwrite(path, HOOKED_BOOTSTRAP)
 
+      assert_equal path, DummyBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+      assert_equal EMPTY_BOOTSTRAP, File.binread(path)
+    end
+  end
+
+  # Review probe case 5. With hooks, an entrypoint that is not valid UTF-8 is
+  # routed like the others and keeps its other bytes as they are. The next
+  # build with hooks finds its import, and a build without hooks keeps the
+  # file it imports.
+  def test_hooks_route_an_entrypoint_that_is_not_utf8
+    server = self.class.marked_entrypoints.fetch("lib/main.server.dart")
+    entrypoints = self.class.marked_entrypoints.merge("lib/main.server.dart" => latin1(server))
+
+    with_client(entrypoints) do |client_dir|
+      path = File.join(client_dir, GENERATED)
+      _out, err = capture_io do
+        assert_equal path, HookedBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+      end
+
+      assert_empty err
+      assert_equal HOOKED_BOOTSTRAP, File.binread(path)
+      assert_equal latin1(routed(server)), File.binread(File.join(client_dir, "lib/main.server.dart"))
+      assert_equal routed(entrypoints.fetch("lib/main.self.dart")), read_utf8(client_dir, "lib/main.self.dart")
+
+      before = snapshot(client_dir)
+      HookedBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+      assert_equal contents(before), contents(snapshot(client_dir))
+
+      # Only the Latin-1 entrypoint still imports the file.
+      File.binwrite(File.join(client_dir, "lib/main.self.dart"), entrypoints.fetch("lib/main.self.dart"))
       assert_equal path, DummyBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
       assert_equal EMPTY_BOOTSTRAP, File.binread(path)
     end
@@ -591,7 +781,9 @@ class RufletCliClientBootstrapTest < Minitest::Test
         "import '/lib/ruflet_bootstrap.g.dart';", "import 'file:///lib/ruflet_bootstrap.g.dart';",
         "import 'dart:ruflet_bootstrap.g.dart';", "// import 'ruflet_bootstrap.g.dart';",
         "export 'ruflet_bootstrap.g.dart';", "part 'ruflet_bootstrap.g.dart';",
-        "import 'ruflet_bootstrap.g.dart\";", "const s = 'import ruflet_bootstrap.g.dart';"
+        "import 'ruflet_bootstrap.g.dart\";", "const s = 'import ruflet_bootstrap.g.dart';",
+        "import '/ruflet_bootstrap.g.dart';", "import 'x:/../ruflet_bootstrap.g.dart';",
+        "import 'stub.dart' if (dart.library.io) 'ruflet_bootstrap.g.dart';"
       ],
       "lib/sub/deeper.dart" => ["import 'ruflet_bootstrap.g.dart';", "import '../../ruflet_bootstrap.g.dart';"]
     }
@@ -988,6 +1180,14 @@ class RufletCliClientBootstrapTest < Minitest::Test
     }, &block)
   ensure
     modes&.each { |path, mode| File.chmod(mode, path) }
+  end
+
+  # `source` as bytes with Latin-1 text, which is not valid UTF-8, in a
+  # comment at the top and in one right after the hook block.
+  def latin1(source)
+    "// caf\xE9 cr\xE8me\n".b +
+      source.b.sub("// --RUFLET_BOOTSTRAP_HOOKS_END--\n", "\\0// \xE0 la carte\n".b)
+            .tap { |result| raise "fixture did not change" if result == source.b }
   end
 
   def read_utf8(client_dir, relative_path)
