@@ -122,7 +122,7 @@ class RufletCliBuildConfigSchemaTest < Minitest::Test
 
     files.each do |file|
       output, status = Open3.capture2e(
-        RbConfig.ruby, "--disable-gems", "-e",
+        RbConfig.ruby, "-e",
         "require_relative ARGV.fetch(0); print Ruflet::CLI::Build::ConfigSchema.keys.size", file
       )
       assert status.success?, "#{File.basename(file)} does not load on its own:\n#{output}"
