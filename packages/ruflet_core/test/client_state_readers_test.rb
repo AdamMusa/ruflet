@@ -158,10 +158,10 @@ class RufletClientStateReadersTest < Minitest::Test
   end
 
   # The same, in a process that only requires "ruflet", so no earlier test
-  # can have installed anything. Loading leaves a plain miss as the thread's
-  # last one, as on main, although the readers file probes a private call
-  # (see ClientStateReaders::MISSED_CALL): Ruby's own
-  # BasicObject#method_missing, called directly, says "undefined method".
+  # can have installed anything. Nothing missed before the require here, so
+  # Ruby's own BasicObject#method_missing, called directly, says "undefined
+  # method" afterwards; test_requiring_ruflet_leaves_the_last_miss_alone
+  # checks a process where something did.
   def test_requiring_ruflet_is_enough
     out = run_ruby(<<~'RUBY')
       require "ruflet"
@@ -175,6 +175,33 @@ class RufletClientStateReadersTest < Minitest::Test
     RUBY
 
     assert_equal '[[], "s", true, ["undefined method", false]]', out
+  end
+
+  # The readers file probes a private call when it loads
+  # (ClientStateReaders::REPEATS_MISS) in a Fiber of its own, so loading
+  # Ruflet makes no method miss in the caller, as on main: whatever missed
+  # before `require "ruflet"` is still the thread's last miss afterwards,
+  # which is what Ruby's own BasicObject#method_missing, called directly,
+  # reports.
+  def test_requiring_ruflet_leaves_the_last_miss_alone
+    last_miss = <<~'RUBY'
+      def last_miss
+        BasicObject.instance_method(:method_missing).bind_call(Object.new, :not_a_method)
+      rescue NameError => e
+        [e.class, e.message[/\A(?:undefined local variable or method|undefined method|private method)/]]
+      end
+    RUBY
+    misses = {
+      "a rescued bare word" => ["begin; some_bare_word_that_is_missing; rescue NameError; end",
+                                '[NameError, "undefined local variable or method"]'],
+      "a rescued private call" => ['begin; Object.new.puts("x"); rescue NoMethodError; end',
+                                   '[NoMethodError, "private method"]']
+    }
+
+    misses.each do |label, (miss, expected)|
+      out = run_ruby("#{last_miss}#{miss}\nbefore = last_miss\nrequire \"ruflet\"\nprint [before, last_miss].inspect\n")
+      assert_equal "[#{expected}, #{expected}]", out, label
+    end
   end
 
   # `ruflet run` hot reload drops every watched file from $LOADED_FEATURES and

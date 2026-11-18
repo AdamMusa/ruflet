@@ -172,9 +172,9 @@ module Ruflet
       # method called" for a call with a receiver to a private method before
       # any method_missing runs, and its BasicObject#method_missing always
       # raises "undefined method", so there is nothing to repeat. The probe
-      # ends with a plain miss, so on CRuby loading Ruflet still leaves a
-      # plain miss as the thread's last, as it did before the probe. (Both
-      # guarded like the constants above.)
+      # runs in a Fiber of its own: CRuby keeps the last miss per Fiber, so
+      # loading Ruflet leaves the caller's last miss as it was, whatever
+      # missed before the require. (Both guarded like the constants above.)
       unless const_defined?(:MISSED_CALL, false)
         MISSED_CALL = Object.new
         class << MISSED_CALL
@@ -191,14 +191,14 @@ module Ruflet
       end
 
       unless const_defined?(:REPEATS_MISS, false)
-        REPEATS_MISS = begin
-          MISSED_CALL.private_reader
-          true
-        rescue NoMethodError
-          false
-        ensure
-          MISSED_CALL.undefined_reader
-        end
+        REPEATS_MISS = Fiber.new do
+          begin
+            MISSED_CALL.private_reader
+            true
+          rescue NoMethodError
+            false
+          end
+        end.resume
       end
 
       class << self
