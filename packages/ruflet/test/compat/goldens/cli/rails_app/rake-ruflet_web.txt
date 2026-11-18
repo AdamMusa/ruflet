@@ -1,0 +1,17 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: rails_app
+command: rake ruflet:web
+exit: 1
+
+## commands (0)
+
+## output
+err| rake aborted!
+err| Don't know how to build task 'ruflet:web' (See the list of available tasks with `rake --tasks`)
+err| Did you mean?  ruflet:build
+err| (See full trace by running task with --trace)
+
+## files
+(no files changed)
