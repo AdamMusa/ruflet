@@ -1,0 +1,15 @@
+app:
+  app_name: Compat Services
+  package_name: compat_services
+  organization: com.compat
+  version: 2.3.4+56
+  description: Services-heavy fixture for the Ruflet CLI compatibility goldens.
+
+services:
+  - camera:
+      description: Scan documents & receipts.
+  - microphone: Record <voice> notes.
+  - location
+  - motion:
+      description: Count steps.
+  - photo_library
