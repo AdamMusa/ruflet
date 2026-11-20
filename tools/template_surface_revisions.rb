@@ -9,9 +9,18 @@
 #
 # A template's tool/conformance/ruflet_control_surface.json lists the wire types
 # it renders (a snapshot of ruflet_core's registries when it was synced).
-# Templates older than the first one with that file are not checked, so the
-# table lists only what arrived after it; a wire type or package no revision
-# ships yet is listed with nil.
+# Templates older than the first one with that file are not checked. A wire
+# type or package no revision ships yet is listed with nil.
+#
+# Wire types are dated from BASELINE (--baseline), the first revision whose
+# surface lists every wire type its renderers handle. The surfaces before it
+# (0c02f475 to 32cd174) were taken from an older ruflet_core and leave out
+# controls their Dart already rendered (Lottie, Rive, CodeEditor, the map, ads,
+# chart, DataTable2 and color picker controls, Picker, TimerPicker,
+# ActionSheet, ContextMenuAction), so a first listing there is not a first
+# renderer. Every wire type of the baseline surface counts as rendered by every
+# checked template. Bundled packages are read from ruflet_packages/ itself, so
+# they are dated from the first template with a surface file.
 #
 #   ruby tools/template_surface_revisions.rb --template-repo ../ruflet-template \
 #     [--ref origin/main] [--ref origin/<sync branch>]      # write the table
@@ -34,6 +43,9 @@ module TemplateSurfaceRevisions
   TEMPLATE_DIR = "templates/ruflet_flutter_template"
   SURFACE_PATH = "tool/conformance/ruflet_control_surface.json"
   OUTPUT = File.expand_path("../packages/ruflet/lib/ruflet/cli/template_surface_revisions.rb", __dir__)
+  # "Remove the Swift rendering engine": its surface was regenerated from the
+  # ruflet_core its renderers match.
+  BASELINE = "19ac4c9eb87d9ea1ce1083c2cafc74354cbb56d5"
 
   module_function
 
@@ -95,20 +107,32 @@ module TemplateSurfaceRevisions
     git_optional(repo, "ls-tree", "--name-only", "#{commit}:#{TEMPLATE_DIR}/ruflet_packages").to_s.split
   end
 
-  def from_history(repo, refs)
-    commits = template_history(repo, refs)
-    baseline = commits.find { |commit| surface_present?(repo, commit) }
-    abort "no revision of #{refs.join(', ')} has #{SURFACE_PATH}" unless baseline
+  def ancestor?(repo, ancestor, commit)
+    _out, _err, status = Open3.capture3("git", "-C", repo, "merge-base", "--is-ancestor", ancestor, commit)
+    status.success?
+  end
 
-    wire_first = {}
+  def from_history(repo, refs, baseline: BASELINE)
+    commits = template_history(repo, refs)
+    first_surface = commits.find { |commit| surface_present?(repo, commit) }
+    abort "no revision of #{refs.join(', ')} has #{SURFACE_PATH}" unless first_surface
+
+    baseline = git(repo, "rev-parse", "--verify", "#{baseline}^{commit}").strip
+    unless surface_present?(repo, baseline) && refs.any? { |ref| ancestor?(repo, baseline, ref) }
+      abort "baseline #{baseline} has no #{SURFACE_PATH} or is not in #{refs.join(', ')}"
+    end
+
+    wire_first = surface_wire_types(repo, baseline).to_h { |wire| [wire, baseline] }
     package_first = {}
-    seen_baseline = false
+    seen_first_surface = false
     commits.each do |commit|
-      seen_baseline ||= commit == baseline
-      next unless seen_baseline
+      seen_first_surface ||= commit == first_surface
+      next unless seen_first_surface
+
+      packages_at(repo, commit).each { |package| package_first[package] ||= commit }
+      next if commit == baseline || !ancestor?(repo, baseline, commit)
 
       (surface_wire_types(repo, commit) || []).each { |wire| wire_first[wire] ||= commit }
-      packages_at(repo, commit).each { |package| package_first[package] ||= commit }
     end
     { baseline: baseline, wire_first: wire_first, package_first: package_first }
   end
@@ -121,16 +145,11 @@ module TemplateSurfaceRevisions
 
       [wire, entry["family"], entry["dsl_names"], revision]
     end
-    packages = live_packages.filter_map do |package|
-      revision = history[:package_first][package]
-      next if revision == baseline
-
-      [package, revision]
-    end
+    packages = live_packages.map { |package| [package, history[:package_first][package]] }
     { baseline: baseline, wire_types: wire_types, packages: packages }
   end
 
-  # The history the current table was generated from: baseline entries map
+  # The history the current table was generated from: baseline wire types map
   # to the baseline revision, later ones to theirs.
   def offline_history
     require "ruflet/cli/template_surface_revisions"
@@ -138,14 +157,12 @@ module TemplateSurfaceRevisions
     baseline = current::BASELINE_REVISION
     wire_first = current::BASELINE_WIRE_TYPES.to_h { |wire| [wire, baseline] }
     current::WIRE_TYPES.each { |wire, (_family, _names, revision)| wire_first[wire] = revision if revision }
-    package_first = current::BASELINE_PACKAGES.to_h { |package| [package, baseline] }
-    current::EXTENSION_PACKAGES.each { |package, revision| package_first[package] = revision if revision }
+    package_first = current::EXTENSION_PACKAGES.compact
     { baseline: baseline, wire_first: wire_first, package_first: package_first }
   end
 
   def render(table, history)
     baseline_wires = history[:wire_first].select { |_wire, revision| revision == table[:baseline] }.keys.sort
-    baseline_packages = history[:package_first].select { |_package, revision| revision == table[:baseline] }.keys.sort
     lines = []
     lines << "# frozen_string_literal: true"
     lines << ""
@@ -154,13 +171,14 @@ module TemplateSurfaceRevisions
     lines << "module Ruflet"
     lines << "  module CLI"
     lines << "    module TemplateSurface"
-    lines << "      # The first template revision with #{SURFACE_PATH}."
-    lines << "      # Older templates are not checked."
+    lines << "      # The first template revision whose #{SURFACE_PATH}"
+    lines << "      # lists every wire type it renders. Templates without that file are not"
+    lines << "      # checked."
     lines << "      BASELINE_REVISION = #{table[:baseline].inspect}"
     lines << ""
-    lines << "      # Wire types and bundled packages every checked template has."
+    lines << "      # Wire types counted as rendered by every checked template (older"
+    lines << "      # surfaces leave out some that their renderers handle)."
     lines << "      BASELINE_WIRE_TYPES = #{word_list(baseline_wires, 6)}.freeze"
-    lines << "      BASELINE_PACKAGES = #{word_list(baseline_packages, 6)}.freeze"
     lines << ""
     lines << "      # Wire types added since: [family, DSL names, first template revision"
     lines << "      # that renders it (nil: none yet)]."
@@ -171,8 +189,8 @@ module TemplateSurfaceRevisions
     lines[-1] = lines[-1].delete_suffix(",") unless table[:wire_types].empty?
     lines << "      }.freeze"
     lines << ""
-    lines << "      # Bundled extension packages added since: first template revision"
-    lines << "      # with ruflet_packages/<package> (nil: none yet)."
+    lines << "      # Bundled extension packages: first template revision with a surface file"
+    lines << "      # and ruflet_packages/<package> (nil: none yet)."
     lines << "      EXTENSION_PACKAGES = {"
     table[:packages].each { |package, revision| lines << "        #{package.inspect} => #{revision.inspect}," }
     lines[-1] = lines[-1].delete_suffix(",") unless table[:packages].empty?
@@ -201,9 +219,10 @@ module TemplateSurfaceRevisions
   end
 
   def main(argv)
-    options = { refs: [], repo: nil, offline: false, check: false, out: OUTPUT }
+    options = { refs: [], repo: nil, offline: false, check: false, out: OUTPUT, baseline: BASELINE }
     OptionParser.new do |o|
       o.on("--template-repo PATH") { |value| options[:repo] = File.expand_path(value) }
+      o.on("--baseline REV") { |value| options[:baseline] = value }
       o.on("--ref REF") { |value| options[:refs] << value }
       o.on("--offline") { options[:offline] = true }
       o.on("--check") { options[:check] = true }
@@ -216,7 +235,7 @@ module TemplateSurfaceRevisions
         offline_history
       else
         options[:refs] << "origin/main" if options[:refs].empty?
-        from_history(options[:repo], options[:refs])
+        from_history(options[:repo], options[:refs], baseline: options[:baseline])
       end
     content = render(table(history), history)
 

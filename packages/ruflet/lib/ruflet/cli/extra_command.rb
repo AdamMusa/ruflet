@@ -7,7 +7,6 @@ module Ruflet
     module ExtraCommand
       include FlutterSdk
       include NewCommand
-      include TemplateSurfaceCheck
 
       def command_create(args)
         command_new(args)
@@ -31,7 +30,7 @@ module Ruflet
           puts "  Template: #{template_root}"
           revision = cached_template_revision if respond_to?(:cached_template_revision, true)
           puts "  Template revision: #{revision}" if revision
-          surface_ok = check_template_surface(template_root, strict: !!strict, config: doctor_project_config)
+          surface_ok = TemplateSurfaceCheck.check(self, template_root, strict: !!strict, config: -> { doctor_project_config })
         elsif fix
           warn "  Template: missing"
           warn "Failed to fetch the Ruflet Flutter template from GitHub."
@@ -167,12 +166,22 @@ module Ruflet
       private
 
       # The project's ruflet.yaml/services.yaml, when doctor runs in one; its
-      # extensions are checked against the template.
+      # extensions are checked against the template. Read only when the
+      # template lacks a bundled package, and quietly: doctor does not report
+      # a config it cannot parse.
       def doctor_project_config
         return nil unless %w[ruflet.yaml ruflet.yml services.yaml].any? { |name| File.file?(name) }
         return nil unless respond_to?(:load_ruflet_config, true)
 
-        send(:load_ruflet_config)
+        stderr = $stderr
+        File.open(File::NULL, "w") do |null|
+          $stderr = null
+          send(:load_ruflet_config)
+        end
+      rescue StandardError
+        nil
+      ensure
+        $stderr = stderr if stderr
       end
 
       def resolve_ruby_runtime_root

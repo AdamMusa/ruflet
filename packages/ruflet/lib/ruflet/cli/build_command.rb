@@ -56,7 +56,6 @@ module Ruflet
     # module reach the same methods and constants as before the split.
     module BuildCommand
       include FlutterSdk
-      include TemplateSurfaceCheck
       include ClientBootstrap
       include Build::Support
       include Build::ConfigLoader
@@ -138,7 +137,8 @@ module Ruflet
         mode = self_contained ? "self-contained #{runtime_profile}" : "server-driven"
         build_note("Preparing #{platform} build (#{mode})")
         config = load_ruflet_config
-        return 1 unless check_template_surface(build_template_surface_root(client_dir), strict: !!strict, config: config)
+        surface_root = TemplateSurfaceCheck.build_root(self, client_dir)
+        return 1 unless TemplateSurfaceCheck.check(self, surface_root, strict: !!strict, config: config)
 
         if runtime_profile == :full && self_contained
           return 1 unless configure_full_runtime_distribution(config, platform, verbose: !!verbose)

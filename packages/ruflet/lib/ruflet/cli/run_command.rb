@@ -17,8 +17,6 @@ require "time"
 module Ruflet
   module CLI
     module RunCommand
-      include TemplateSurfaceCheck
-
       # Release assets were published as ruflet_client-* before the preview
       # client became Ruflet Explorer. Ask for the current names, but keep
       # recognising the old ones so an existing release still resolves.
@@ -49,8 +47,8 @@ module Ruflet
           warn "Expected: ./#{script_token}.rb, ./#{script_token}, or explicit file path."
           return 1
         end
-        template_root = installed_template_surface_root
-        if template_root && !check_template_surface(template_root, strict: options[:strict], files: [script_path])
+        template_root = TemplateSurfaceCheck.installed_root(self)
+        if template_root && !TemplateSurfaceCheck.check(self, template_root, strict: options[:strict], files: [script_path])
           return 1
         end
 
