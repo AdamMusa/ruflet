@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../config_schema"
+
 module Ruflet
   module CLI
     module Build

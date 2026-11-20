@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ruflet_record (0.0.1)
+    ruflet_record (0.0.23)
       sqlite3 (>= 2.0)
 
 GEM
@@ -29,7 +29,7 @@ CHECKSUMS
   minitest (6.0.6)
   prism (1.9.0)
   rake (13.4.2)
-  ruflet_record (0.0.1)
+  ruflet_record (0.0.23)
   sqlite3 (2.9.5-arm64-darwin)
 
 BUNDLED WITH

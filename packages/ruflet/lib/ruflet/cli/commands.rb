@@ -13,7 +13,8 @@ module Ruflet
     # * handler: the Ruflet::CLI method that runs it, given the arguments after
     #   the word. Its result is the exit status.
     # * usage: its line under "Commands:" in `ruflet help` (nil: not listed).
-    # * options: the flags it reads itself, as OptionParser#on switch strings.
+    # * options: the switches it defines (OptionParser#on switch strings) or,
+    #   for a command that reads argv by hand, the tokens it looks for.
     # * forwards: the tool that receives the arguments it does not read.
     # * help: sections `ruflet help` prints after the command list.
     # * first_run_assets: whether the Flutter template is fetched before it runs.
@@ -39,9 +40,21 @@ module Ruflet
     #     after: "emulators"
     #   )
     #
-    # Each command still reads its own arguments; cli_commands_test checks
-    # that the declarations are exactly what it reads. `ruflet help <command>`
-    # and the usage a bad flag prints are rendered from them.
+    # Each command still reads its own arguments, and cli_commands_test
+    # checks the declarations against what it reads. `ruflet help <command>`
+    # and the usage a bad flag prints are rendered from them. The commands
+    # read more forms than the declarations spell out:
+    #
+    # * run, update, debug and emulators parse with OptionParser, so they
+    #   also take what it completes from a long option: a unique prefix
+    #   (`run --desk`) and a single letter that starts exactly one
+    #   (`debug -d ID` is --device-id ID). These forms are read but not
+    #   declared. A new long option must not make one of them ambiguous: the
+    #   form is declared instead, as a switch or a hidden one (run's -d, --d
+    #   and --de stay --desktop beside --device; emulators' -c and --c stay
+    #   --create beside --cold).
+    # * build, install and doctor look for the exact tokens declared: no
+    #   prefixes and no `--flag=value`, except `install --device=ID`.
     module Commands
       TITLE = "Ruflet CLI"
       HELP_TERM_WIDTH = 16

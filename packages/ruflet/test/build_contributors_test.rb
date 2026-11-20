@@ -130,4 +130,38 @@ class RufletCliBuildContributorsTest < Minitest::Test
     assert_equal BUILT_IN + [:feature], calls
     assert_equal({ has_icon: false, has_splash: false }, seen)
   end
+
+  # No golden sees the next two, so they are pinned here. A client with no
+  # template to refresh from keeps building; only a failed refresh stops it.
+  def test_template_refresh_stops_the_build_only_when_the_refresh_fails
+    builder = DummyBuilder.new
+    build = Ruflet::CLI::Build::Context.new(client_dir: "/client", platform: "apk", verbose: false)
+
+    { nil => true, true => true, false => false }.each do |refreshed, continues|
+      builder.define_singleton_method(:refresh_managed_client_template_files) { |*_args, **_kwargs| refreshed }
+      assert_equal continues, builder.send(:contribute_template_refresh, build), "refresh returned #{refreshed.inspect}"
+    end
+  end
+
+  # prepare_flutter_client has always recorded the runtime mode in
+  # @ruflet_self_contained_build, which apply_service_extension_config takes
+  # as its default.
+  def test_extensions_records_whether_the_build_is_self_contained
+    builder = DummyBuilder.new
+    seen = []
+    builder.define_singleton_method(:apply_service_extension_config) do |_client_dir, _config = {}, self_contained: @ruflet_self_contained_build|
+      seen << self_contained
+      %w[camera]
+    end
+
+    [true, false].each do |self_contained|
+      build = Ruflet::CLI::Build::Context.new(
+        client_dir: "/client", platform: "apk", config: {}, self_contained: self_contained, verbose: false
+      )
+      assert builder.send(:contribute_extensions, build)
+      assert_equal self_contained, builder.instance_variable_get(:@ruflet_self_contained_build)
+      assert_equal %w[camera], build.extension_keys
+    end
+    assert_equal [true, false], seen
+  end
 end
