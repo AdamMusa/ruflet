@@ -2137,6 +2137,8 @@ module Ruflet
     end
 
     def normalize_value(key, value)
+      return normalize_icon_slot_value(value) if icon_slot_key?(key)
+
       if icon_prop_key?(key)
         return normalize_icon_name(value.value) if value.is_a?(Ruflet::IconData)
         return normalize_icon_name(value.to_s) if value.is_a?(String) || value.is_a?(Symbol)
@@ -2156,6 +2158,23 @@ module Ruflet
       return codepoint unless codepoint.nil?
 
       raise ArgumentError, "page icon must use a known icon name, not #{value.inspect}"
+    end
+
+    # `leading:` and `trailing:` take a control or an icon. Construction sends
+    # an icon name as its codepoint (Control#icon_prop_key?), and the renderer
+    # draws a codepoint or a control but drops a String. Here a known icon
+    # name becomes its codepoint too. Any other value (a control, an Integer,
+    # nil, an unknown name) is sent as before, so nothing that worked raises.
+    def normalize_icon_slot_value(value)
+      name = value.is_a?(Ruflet::IconData) ? value.value : value
+      if name.is_a?(String) || name.is_a?(Symbol)
+        codepoint = Ruflet::MaterialIconLookup.codepoint_for(name.to_s)
+        codepoint = Ruflet::CupertinoIconLookup.codepoint_for(name.to_s) if codepoint.nil?
+        return codepoint unless codepoint.nil?
+      end
+
+      return value.value if value.is_a?(Ruflet::IconData)
+      value.is_a?(Symbol) ? value.to_s : value
     end
 
     def build_route(route, query_params = {})
@@ -2293,8 +2312,16 @@ module Ruflet
       end
     end
 
+    # Matches Control#icon_prop_key?: show_close_icon, show_edit_icon,
+    # show_selected_icon and show_trailing_icon are booleans, not icons.
     def icon_prop_key?(key)
+      return false if key.start_with?("show_")
+
       key == "icon" || key.end_with?("_icon")
+    end
+
+    def icon_slot_key?(key)
+      key == "leading" || key == "trailing"
     end
 
     def refresh_dialogs_container!
