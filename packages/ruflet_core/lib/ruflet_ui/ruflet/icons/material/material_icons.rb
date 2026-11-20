@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "../../icon_data"
 require_relative "../icon_constant_names"
 require_relative "../material_icon_lookup"
 
@@ -41,11 +40,23 @@ module Ruflet
       end
     end
 
+    # Answers from the compiled map when it can, so a single lookup does not
+    # build the constant-name index above (a symbol per icon, the cost the
+    # deferral exists to avoid); only a name the map cannot answer (CLASS,
+    # for CLASS_, or no icon at all) still builds it. The answer is the one
+    # the index-first order gave: a map key that is its own constant name is
+    # its own index entry (IconNames.own_constant_text), and a name the index
+    # answers any other way is never one the map answers.
     def [](name)
-      icon = icons[name.to_s.upcase.to_sym]
-      return icon.to_s.downcase unless icon.nil?
+      key = name.to_s.upcase
+      text = Ruflet::IconNames.own_constant_text(key, Ruflet::MaterialIconLookup.icon_map)
+      return text unless text.nil?
 
-      Ruflet::MaterialIconLookup.canonical_name_for(name) || name.to_s
+      found = Ruflet::MaterialIconLookup.canonical_name_for(name)
+      return found unless found.nil?
+
+      icon = icons[key.to_sym]
+      icon.nil? ? name.to_s : icon.to_s.downcase
     end
 
     def constants(_inherit = true)
@@ -69,7 +80,10 @@ module Ruflet
       # icon. Callers that used to probe with const_defined?(name, false) must
       # come through here instead: with deferred constants, const_defined? is
       # false for every icon nobody has referenced yet.
-      def resolve_constant(name)
+      #
+      # index: false answers from the compiled map alone and never builds the
+      # constant-name index, for callers that will try another set next.
+      def resolve_constant(name, index: true)
         return const_get(name) if const_defined?(name, false)
 
         # ICONS stayed a public constant for callers that want the whole table.
@@ -80,6 +94,7 @@ module Ruflet
         key = name.to_s
         source = Ruflet::MaterialIconLookup.icon_map
         return const_set(name, key.downcase) if source.key?(key)
+        return nil unless index
 
         icon = icons[name]
         icon.nil? ? nil : const_set(name, icon.to_s.downcase)

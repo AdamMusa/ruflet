@@ -32,7 +32,9 @@ module RufletCompat
       "services_app" => { "kind" => "dir", "path" => "fixtures/services_app" },
       "rails_app" => { "kind" => "dir", "path" => "fixtures/rails_app", "rails" => true },
       # A fresh `rails new` app before `rails generate ruflet:install`.
-      "rails_new_app" => { "kind" => "dir", "path" => "fixtures/rails_new_app", "rails" => true }
+      "rails_new_app" => { "kind" => "dir", "path" => "fixtures/rails_new_app", "rails" => true },
+      # Every way an app names an icon (page golden only).
+      "icons_app" => { "kind" => "dir", "path" => "fixtures/icons_app" }
     }
 
     # Whole-app examples from the published docs (AdamMusa/ruflet_site
@@ -128,6 +130,11 @@ module RufletCompat
     # beside `aab`, and targets are matched case-insensitively.
     cli "default_app", "build", "appbundle", "--self"
     cli "default_app", "build", "APK", "--self", id: "build-uppercase-target-APK--self"
+    # ruflet.yaml names the app with display_name; the services.yaml `ruflet
+    # new` wrote still carries its generated app_name (issue #106).
+    cli "default_app", "build", "apk", id: "build-apk-with-ruflet-yaml-display-name",
+                                       files: { "ruflet.yaml" => "app:\n  display_name: Acme Shop\n" \
+                                                                 "  backend_url: \"https://api.acme.example\"\n" }
 
     # --- run ------------------------------------------------------------------
     run_files = { "apps/admin.rb" => "require \"ruflet\"\n\nRuflet.run { |page| page.add(text(\"Admin\")) }\n" }
@@ -350,6 +357,35 @@ module RufletCompat
     cli "default_app", "emulators", "--cold"
     cli "default_app", "doctor", "--bogus-flag"
     cli "empty", "new", "my_app", "--bogus-flag"
+    # CLI-12: `build --release apk` must reach Flutter exactly as `build apk
+    # --release` does (default_app stops at its missing backend_url; services_app
+    # has one, so its pair shows the flutter argv).
+    cli "default_app", "build", "apk", "--release"
+    cli "services_app", "build", "apk", "--release"
+    cli "services_app", "build", "--release", "apk"
+    # `--` ends the options (`help --` lists the commands, `build -- apk`
+    # names the unsupported target "--"); `emulators --c`, like -c, is
+    # --create; and the version words given a flag.
+    cli "empty", "help", "--", id: "help-end-of-options"
+    cli "empty", "--help", "--", id: "--help-end-of-options"
+    cli "default_app", "build", "--", "apk", id: "build-end-of-options-apk"
+    cli "default_app", "emulators", "--c", id: "emulators-double-dash-c"
+    cli "empty", "--version", "-v"
+    cli "empty", "-v", "--verbose"
+    cli "empty", "version", "--anything"
+    # ruflet_rails' rake tasks call the command handlers directly, without
+    # `Ruflet::CLI.run`, so help and usage stops must be handled there too.
+    cli "rails_app", "ruflet:update[--help]", rake: true
+    cli "rails_app", "ruflet:update[-h]", rake: true
+    cli "rails_app", "ruflet:build[--help]", rake: true
+    # A name before the help flag, and a flag where the name goes.
+    cli "empty", "new", "my_app", "-h"
+    cli "empty", "create", "my_app", "--help"
+    cli "empty", "new", "-x"
+    # A bare `-` is an argument, not a flag; nothing after `--` is a flag.
+    cli "empty", "help", "-", id: "help-dash"
+    cli "default_app", "build", "--self", "-", "apk", id: "build--self-dash-apk"
+    cli "default_app", "run", "main.rb", "--", "--help", id: "run-main.rb-end-of-options--help"
 
     # --- command words, help, usage and exit codes (R2, CLI-12) ----------------
     # How the first argument picks a command (case-insensitively, aliases
@@ -420,7 +456,8 @@ module RufletCompat
       *DOCS_RAILS_APPS.map do |id|
         { "fixture" => "docs_#{id}", "id" => "docs_#{id}--rails-endpoint", "mode" => "rails_endpoint",
           "entrypoint" => "main.rb", "rails" => true, "prelude" => rails_prelude }
-      end
+      end,
+      { "fixture" => "icons_app", "entrypoint" => "main.rb" }
     ].freeze
   end
 end

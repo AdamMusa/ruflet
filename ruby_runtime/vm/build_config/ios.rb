@@ -1,3 +1,6 @@
+require_relative "../patches/mruby_patches"
+RufletMrubyPatches.apply(MRUBY_ROOT)
+
 VM_DIR = File.expand_path("..", __dir__)
 
 sdk = ENV.fetch("RUFLET_IOS_SDK")
