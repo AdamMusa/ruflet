@@ -1,0 +1,186 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet build ios --self
+before: ruflet build apk --self
+exit: 0
+
+## commands (13)
+1. capture3 exit=0
+   git ls-remote https://github.com/AdamMusa/ruflet-template.git refs/heads/main
+   env: GIT_TERMINAL_PROMPT=0
+2. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/flutter precache --ios
+   env: COCOAPODS_DISABLE_STATS=true FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> GEM_HOME=(unset) GEM_PATH=(unset) GEM_ROOT=(unset) PATH=<PROJECT>/build/client/.ruflet/bin:/opt/homebrew/bin:<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:/usr/bin:/bin:/usr/sbin:/sbin
+3. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/flutter pub get
+   env: COCOAPODS_DISABLE_STATS=true FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> GEM_HOME=(unset) GEM_PATH=(unset) GEM_ROOT=(unset) PATH=<PROJECT>/build/client/.ruflet/bin:/opt/homebrew/bin:<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:/usr/bin:/bin:/usr/sbin:/sbin
+4. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/dart run change_app_package_name:main com.example.default-app --ios
+   env: COCOAPODS_DISABLE_STATS=true FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> GEM_HOME=(unset) GEM_PATH=(unset) GEM_ROOT=(unset) PATH=<PROJECT>/build/client/.ruflet/bin:/opt/homebrew/bin:<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:/usr/bin:/bin:/usr/sbin:/sbin
+5. system cwd=<PROJECT>/build/client/ios exit=0
+   pod install
+   env: COCOAPODS_DISABLE_STATS=true FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<PROJECT>/build/client/.ruflet/bin:/opt/homebrew/bin:<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:/usr/bin:/bin:/usr/sbin:/sbin
+6. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/dart run flutter_native_splash:create
+   env: COCOAPODS_DISABLE_STATS=true FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> GEM_HOME=(unset) GEM_PATH=(unset) GEM_ROOT=(unset) PATH=<PROJECT>/build/client/.ruflet/bin:/opt/homebrew/bin:<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:/usr/bin:/bin:/usr/sbin:/sbin
+7. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/dart run flutter_launcher_icons
+   env: COCOAPODS_DISABLE_STATS=true FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> GEM_HOME=(unset) GEM_PATH=(unset) GEM_ROOT=(unset) PATH=<PROJECT>/build/client/.ruflet/bin:/opt/homebrew/bin:<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:/usr/bin:/bin:/usr/sbin:/sbin
+8. system exit=0
+   /usr/libexec/PlistBuddy -c "Delete :RufletRuntimeAutostart" <PROJECT>/build/client/ios/Runner/Info.plist
+   options: err out
+9. system exit=0
+   /usr/libexec/PlistBuddy -c "Add :RufletRuntimeAutostart bool true" <PROJECT>/build/client/ios/Runner/Info.plist
+   options: err out
+10. system exit=0
+   /usr/libexec/PlistBuddy -c "Delete :RufletEmbeddedProject" <PROJECT>/build/client/ios/Runner/Info.plist
+   options: err out
+11. system exit=0
+   /usr/libexec/PlistBuddy -c "Add :RufletEmbeddedProject string default_app" <PROJECT>/build/client/ios/Runner/Info.plist
+   options: err out
+12. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/flutter build ios --codesign --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=default_app
+   env: COCOAPODS_DISABLE_STATS=true FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> GEM_HOME=(unset) GEM_PATH=(unset) GEM_ROOT=(unset) PATH=<PROJECT>/build/client/.ruflet/bin:/opt/homebrew/bin:<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:/usr/bin:/bin:/usr/sbin:/sbin
+13. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/flutter build ios --simulator --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=default_app
+   env: COCOAPODS_DISABLE_STATS=true FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> GEM_HOME=(unset) GEM_PATH=(unset) GEM_ROOT=(unset) PATH=<PROJECT>/build/client/.ruflet/bin:/opt/homebrew/bin:<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+## output
+out| [ruflet build] Preparing ios build (self-contained lite)
+out| [ruflet build] Verified 45 pinned Ruflet engine and extension source files at 98377b7ffd4f87c13b6443ceb173ca25170f6115
+out| [ruflet build] No ios.team_id configured; Xcode will pick the signing team
+out| [ruflet build] Splash screen is configured
+out| [ruflet build] Launcher icons are configured
+out| [ruflet build] Preparing Flutter ios platform artifacts
+out| [ruflet build] Resolving Flutter packages
+out| [ruflet build] Verified 3 local Ruflet engine, extension and vendor packages
+out| [ruflet build] Applying ios package name com.example.default-app
+out| [ruflet build] Running CocoaPods install for ios
+out| [ruflet build] Generating splash screen with flutter_native_splash
+out| [ruflet build] Generating launcher icons with flutter_launcher_icons
+out| [ruflet build] Running Flutter build ios --codesign --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=default_app
+out| [ruflet build] Running Flutter build ios --simulator --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=default_app
+
+## files
+A <PROJECT>/build/client/.ruflet/bin/pod  sha256:1a344dd152acf2de 44b mode=755  (new)
+M <PROJECT>/build/client/assets/default_app/.ruflet-runtime.json  sha256:a8f589d008b0d6e5 242b -> sha256:bad44943612d96b2 242b
+M <PROJECT>/build/client/ios/Runner.xcodeproj/project.pbxproj  sha256:4bfc90dd92485460 31849b -> sha256:ff06dfbc4e8ed5c0 31684b
+M <PROJECT>/build/client/ios/Runner/AppDelegate.swift  sha256:451c6d9ba0a2b3ff 539b -> sha256:9c29984464321f14 823b
+M <PROJECT>/build/client/ios/Runner/Info.plist  sha256:e40fb00fd98f251b 3893b -> sha256:49b7f13e1b6ca89b 2471b
+A <PROJECT>/build/ios/iphoneos/Runner.app/Info.plist  sha256:f314bbb19ecd8325 45b  (new)
+A <PROJECT>/build/ios/iphonesimulator/Runner.app/Info.plist  sha256:f314bbb19ecd8325 45b  (new)
+
+## stub side effects (not CLI output)
+  <PROJECT>/build/client/.dart_tool/package_config.json
+  <PROJECT>/build/client/android/app/src/main/res/drawable/launch_background.xml
+  <PROJECT>/build/client/android/app/src/main/res/mipmap-anydpi-v26/launcher_icon.xml
+  <PROJECT>/build/client/android/app/src/main/res/values-v31/styles.xml
+  <PROJECT>/build/client/build/ios/iphoneos/Runner.app/Info.plist
+  <PROJECT>/build/client/build/ios/iphonesimulator/Runner.app/Info.plist
+
+## diffs
+--- /dev/null
++++ <PROJECT>/build/client/.ruflet/bin/pod
+@@ -0,0 +1,2 @@
++#!/bin/sh
++exec "/opt/homebrew/bin/pod" "$@"
+--- before:<PROJECT>/build/client/assets/default_app/.ruflet-runtime.json
++++ <PROJECT>/build/client/assets/default_app/.ruflet-runtime.json
+@@ -2,7 +2,7 @@
+   "schema": 1,
+   "profile": "lite",
+   "engine": "mruby",
+-  "platform": "apk",
++  "platform": "ios",
+   "project": "default_app",
+   "entrypoint": "main.rb",
+   "cache_key": "a640adcb6248337dd8910df9dbf3f4fb3c82ff757f0389a7fb16850b961256f4",
+--- before:<PROJECT>/build/client/ios/Runner.xcodeproj/project.pbxproj
++++ <PROJECT>/build/client/ios/Runner.xcodeproj/project.pbxproj
+@@ -491,7 +491,6 @@
+ 				DEVELOPMENT_TEAM = "";
+ 				ENABLE_BITCODE = NO;
+ 				INFOPLIST_FILE = Runner/Info.plist;
+-				INFOPLIST_KEY_CFBundleDisplayName = "Default App";
+ 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+ 				LD_RUNPATH_SEARCH_PATHS = (
+ 					"$(inherited)",
+@@ -676,7 +675,6 @@
+ 				DEVELOPMENT_TEAM = "";
+ 				ENABLE_BITCODE = NO;
+ 				INFOPLIST_FILE = Runner/Info.plist;
+-				INFOPLIST_KEY_CFBundleDisplayName = "Default App";
+ 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+ 				LD_RUNPATH_SEARCH_PATHS = (
+ 					"$(inherited)",
+@@ -701,7 +699,6 @@
+ 				DEVELOPMENT_TEAM = "";
+ 				ENABLE_BITCODE = NO;
+ 				INFOPLIST_FILE = Runner/Info.plist;
+-				INFOPLIST_KEY_CFBundleDisplayName = "Default App";
+ 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+ 				LD_RUNPATH_SEARCH_PATHS = (
+ 					"$(inherited)",
+--- before:<PROJECT>/build/client/ios/Runner/AppDelegate.swift
++++ <PROJECT>/build/client/ios/Runner/AppDelegate.swift
+@@ -14,3 +14,8 @@
+     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+   }
+ }
++
++/// Flutter's UIKit scene host for the standard (non-native-renderer) build.
++/// Info.plist names this class, so it must live in the Runner module rather
++/// than referring directly to FlutterSceneDelegate in the Flutter framework.
++@objc class SceneDelegate: FlutterSceneDelegate {}
+--- before:<PROJECT>/build/client/ios/Runner/Info.plist
++++ <PROJECT>/build/client/ios/Runner/Info.plist
+@@ -24,35 +24,14 @@
+ 	<string>????</string>
+ 	<key>CFBundleVersion</key>
+ 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+-	<!-- RufletAds is an optional renderer product but is linked by the full
+-	     template. Google validates this key while its framework loads, before
+-	     Ruflet can inspect the control tree. Keep the template launch-safe with
+-	     Google's official sample application id; applications serving live ads
+-	     must replace it with their own AdMob application id. -->
+-	<key>GADApplicationIdentifier</key>
+-	<string>ca-app-pub-3940256099942544~1458002511</string>
+ 	<key>LSRequiresIPhoneOS</key>
+ 	<true/>
+-	<!-- A Ruflet backend runs on the developer's machine and is reached over the
+-	     local network at a plain http:// address. iOS 14 and later refuse local
+-	     network connections without this declaration, and refuse them silently:
+-	     the client shows no error, it simply never connects. The Simulator does
+-	     not enforce this, so the failure only appears on a real device. -->
+-	<key>NSLocalNetworkUsageDescription</key>
+-	<string>Local network access is required to connect to a Ruflet application running on your computer.</string>
+-	<!-- The self-contained entrypoint asks ruby_runtime for the server that the
+-	     platform started before Flutter. Server-driven builds do not link the
+-	     plugin, so keeping this ownership flag in the shared template is safe. -->
++	<key>RufletEmbeddedProject</key>
++	<string>default_app</string>
+ 	<key>RufletRuntimeAutostart</key>
+ 	<true/>
+-	<!-- App Transport Security blocks cleartext http by default. Allow it only
+-	     for local networking, so connecting to a development server works while
+-	     internet traffic still requires https. -->
+-	<key>NSAppTransportSecurity</key>
+-	<dict>
+-		<key>NSAllowsLocalNetworking</key>
+-		<true/>
+-	</dict>
++	<key>RufletRuntimeProfile</key>
++	<string>lite</string>
+ 	<key>UIApplicationSceneManifest</key>
+ 	<dict>
+ 		<key>UIApplicationSupportsMultipleScenes</key>
+--- /dev/null
++++ <PROJECT>/build/ios/iphoneos/Runner.app/Info.plist
+@@ -0,0 +1,1 @@
++ruflet compat placeholder: flutter build ios
+--- /dev/null
++++ <PROJECT>/build/ios/iphonesimulator/Runner.app/Info.plist
+@@ -0,0 +1,1 @@
++ruflet compat placeholder: flutter build ios
