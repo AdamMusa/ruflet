@@ -18,6 +18,8 @@
 # neither applies cleanly nor is already there stops the build. When the pin
 # moves, delete the patches the new pin contains.
 #
+# Patches are applied with `git apply`, so building the VM needs git on PATH.
+#
 #   ruby ruby_runtime/vm/patches/mruby_patches.rb [--check] [MRUBY_DIR]
 module RufletMrubyPatches
   class Error < StandardError; end
@@ -54,10 +56,19 @@ module RufletMrubyPatches
 
   # The ceiling keeps git from treating an enclosing checkout (this repository,
   # when third_party/mruby is not a clone of its own) as the tree to patch.
+  #
+  # system returns nil when git itself cannot be run. Reporting that as a
+  # failed check would blame the patch, so it gets its own error.
   def git_apply(root, *args)
     root = File.realpath(root)
-    system({ "GIT_CEILING_DIRECTORIES" => File.dirname(root) },
-           "git", "-C", root, "apply", *args, out: File::NULL, err: File::NULL)
+    result = system({ "GIT_CEILING_DIRECTORIES" => File.dirname(root) },
+                    "git", "-C", root, "apply", *args, out: File::NULL, err: File::NULL)
+    if result.nil?
+      raise Error, "git is required to apply ruby_runtime/vm/patches, but it could not be run. " \
+                   "Install git and put it on PATH."
+    end
+
+    result
   end
 end
 
