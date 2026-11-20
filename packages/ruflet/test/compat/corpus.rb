@@ -160,6 +160,12 @@ module RufletCompat
     # Without a prebuilt cache, against a release to download from.
     cli "default_app", "run", "main.rb", "--web", id: "run-main.rb--web-release", network: "release"
     cli "default_app", "run", "main.rb", "--desktop", id: "run-main.rb--desktop-release", network: "release"
+    # A complete prebuilt cache whose periodic update check is due while GitHub
+    # cannot be reached (every request answers 503): run uses the cache.
+    cli "default_app", "run", "main.rb", "--web", id: "run-main.rb--web-seeded-due-offline", seed: "prebuilt_clients",
+                                                  env: { "RUFLET_CLIENT_UPDATE_INTERVAL" => "0" }
+    cli "default_app", "run", "main.rb", "--desktop", id: "run-main.rb--desktop-seeded-due-offline", seed: "prebuilt_clients",
+                                                      env: { "RUFLET_CLIENT_UPDATE_INTERVAL" => "0" }
 
     # --- update ---------------------------------------------------------------
     cli "default_app", "update", "--check"
@@ -189,6 +195,9 @@ module RufletCompat
                                         env: { "RUFLET_CLIENT_CHANNEL" => "stable" }
     cli "default_app", "update", "web", "--check", id: "update-web--check-after-update", network: "release",
                                                    before: [%w[update web]]
+    # The same due cache with GitHub unreachable: an explicit update still fails.
+    cli "default_app", "update", "web", id: "update-web-seeded-due-offline", seed: "prebuilt_clients",
+                                        env: { "RUFLET_CLIENT_UPDATE_INTERVAL" => "0" }
 
     # --- debug ----------------------------------------------------------------
     cli "default_app", "debug", id: "debug-without-client"

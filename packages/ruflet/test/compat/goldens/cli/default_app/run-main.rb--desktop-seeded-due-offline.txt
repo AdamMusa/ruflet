@@ -1,0 +1,36 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet run main.rb --desktop
+env: RUFLET_CLIENT_UPDATE_INTERVAL=0
+seed: prebuilt_clients
+exit: 0
+
+## commands (3)
+1. system exit=0
+   <RUBY> -S bundle check
+   env: BUNDLE_GEMFILE=<PROJECT>/Gemfile RUFLET_APP_SCRIPT=<PROJECT>/main.rb RUFLET_ASSETS_DIR=<PROJECT>/assets RUFLET_BOOTSNAP_DIR=<HOME>/.ruflet/bootsnap/<RUBY_VERSION>/<PROJECT_KEY> RUFLET_PORT=8550 RUFLET_SUPPRESS_SERVER_BANNER=1 RUFLET_TARGET=desktop RUFLET_WATCH_ROOT=<PROJECT>
+   options: err out
+2. spawn
+   <RUBY> -rbundler/setup <GEM_HOME>/gems/ruflet-<RUFLET_VERSION>/lib/ruflet/hot_reload/harness.rb
+   env: BUNDLE_GEMFILE=<PROJECT>/Gemfile RUFLET_APP_SCRIPT=<PROJECT>/main.rb RUFLET_ASSETS_DIR=<PROJECT>/assets RUFLET_BOOTSNAP_DIR=<HOME>/.ruflet/bootsnap/<RUBY_VERSION>/<PROJECT_KEY> RUFLET_PORT=8550 RUFLET_SUPPRESS_SERVER_BANNER=1 RUFLET_TARGET=desktop RUFLET_WATCH_ROOT=<PROJECT>
+   options: pgroup
+3. spawn
+   "<HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop/Ruflet Explorer.app/Contents/MacOS/Ruflet Explorer" http://localhost:8550
+   env: RUFLET_URL=http://localhost:8550
+   options: err out
+
+## network (4)
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/prebuild-main
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/v<RUFLET_VERSION>
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/<RUFLET_VERSION>
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/latest
+
+## output
+out| Ruflet desktop URL: http://localhost:8550
+out| Hot reload: watching *.rb (disable with --no-reload)
+err| Could not check for a newer client (GitHub API failed (503)); using the cached one
+
+## files
+(no files changed)
