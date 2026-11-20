@@ -4,23 +4,21 @@
 fixture: default_app
 command: ruflet install --bogus-flag
 before: ruflet build apk --self
-exit: 1
+exit: 64
 
-## commands (1)
-1. capture3 exit=0
-   git ls-remote https://github.com/AdamMusa/ruflet-template.git refs/heads/main
-   env: GIT_TERMINAL_PROMPT=0
+## commands (0)
 
 ## output
-err| Could not find built app outputs under ./build
-err| Run `ruflet build ...` first, then `ruflet install`.
+err| ruflet install: invalid option: --bogus-flag
+err| 
+err| Usage: ruflet install [--device DEVICE_ID] [--verbose]
+err| 
+err| Install the last build from ./build on a device; without --device, pick one from a list.
+err| 
+err| Options:
+err|   -v, --verbose            Print each step and run Flutter with -v
+err|   -d, --device DEVICE_ID   Device to install on
+err|   -h, --help               Show this help
 
 ## files
-A <PROJECT>/build/client/.ruflet/bin/pod  sha256:1a344dd152acf2de 44b mode=755  (new)
-
-## diffs
---- /dev/null
-+++ <PROJECT>/build/client/.ruflet/bin/pod
-@@ -0,0 +1,2 @@
-+#!/bin/sh
-+exec "/opt/homebrew/bin/pod" "$@"
+(no files changed)

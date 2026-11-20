@@ -42,5 +42,33 @@ RufletRecord.connection.execute("INSERT INTO note_search(title) VALUES (?)", ["s
 match_count = RufletRecord.connection.select_value("SELECT COUNT(*) FROM note_search WHERE note_search MATCH ?", ["searchable"])
 raise "SQLite FTS5 support failed" unless match_count == 1
 
+# A return, break or throw out of a transaction block commits it and ends it.
+def ruflet_record_smoke_return
+  Note.transaction do
+    Note.create!(title: "Returned")
+    return :returned
+  end
+end
+raise "transaction return value failed" unless ruflet_record_smoke_return == :returned
+[1].each { Note.transaction { Note.create!(title: "Broke out"); break } }
+catch(:done) { Note.transaction { Note.create!(title: "Thrown out"); throw :done } }
+transaction_depth = RufletRecord.connection.instance_variable_get(:@transaction_depth)
+raise "non-local exit left a transaction open" unless transaction_depth.zero?
+RufletRecord.connection.execute("BEGIN IMMEDIATE")
+RufletRecord.connection.execute("ROLLBACK")
+raise "non-local exit lost writes" unless Note.count == 5
+
+# An error raised in a transaction block keeps its class and rolls back.
+begin
+  Note.transaction do
+    Note.create!(title: "Rolled back")
+    Note.create!(title: nil)
+  end
+  raise "invalid record was saved"
+rescue RufletRecord::RecordInvalid => error
+  raise "transaction error lost its message" unless error.message.include?("Title")
+end
+raise "transaction rollback failed" unless Note.count == 5
+
 RufletRecord.connection.close
 puts "ruflet_record mruby sqlite smoke: ok"
