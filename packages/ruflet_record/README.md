@@ -140,9 +140,15 @@ SQL executes when records or scalar values are requested with `each`, `to_a`,
 User.where("age >= ?", 18)
 User.where(id: [1, 2, 3])
 User.where(created_at: start_time..end_time)
+User.where(age: 18..)
+User.where(created_at: ...cutoff)
 User.where.not(active: false)
 User.order(age: :desc).pluck(:name, :age)
 ```
+
+A range with an open end leaves that side unbounded, as in Active Record:
+`18..` is `age >= 18`, `..17` is `age <= 17`, `...18` is `age < 18`, and
+`nil..nil` matches every row.
 
 Values use SQLite bind parameters. Identifiers are quoted. Raw ordering is
 strictly validated; use `RufletRecord.sql(...)` only for trusted application
