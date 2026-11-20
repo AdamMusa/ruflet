@@ -5,13 +5,21 @@ Dir[File.join(__dir__, "support/control_contracts/*.rb")].sort.each { |file| req
 
 # Every control and service the factory can build, and every extension
 # Ruflet ships, has a contract spec, and every spec family has a test file
-# that runs it. A spec's tests check the wire type, that each Ruby KEYWORDS
-# prop serializes under its Ruby wire key, and that each on_* event attaches
-# and dispatches (see test/support/control_contract.rb).
+# that runs it. A spec's tests check the wire type, that each prop serializes
+# under its Ruby wire key, and that each on_* event attaches and dispatches.
+# The props and events are the class's constructor keywords, or for an
+# open-schema class the ones its spec lists (see
+# test/support/control_contract.rb).
 class ControlContractCoverageTest < Minitest::Test
   # Registered names with no spec, each with the reason it has none. Keep
   # this empty: a control the factory builds is one an application can send.
   EXCEPTIONS = {}.freeze
+
+  # Open-schema specs that list no props:, each with the reason. Every other
+  # open-schema spec lists the props its renderer reads.
+  OPEN_SCHEMA_WITHOUT_PROPS = {
+    "map_layer" => "Ruby base class of the map layers; the engine has no MapLayer renderer"
+  }.freeze
 
   def test_every_registered_control_and_service_has_a_contract_spec
     specified = ControlContract.specs.values.flat_map { |spec| [spec.type] + spec.aliases }
@@ -60,6 +68,15 @@ class ControlContractCoverageTest < Minitest::Test
       assert_kind_of String, reason
       refute_empty reason.strip
     end
+  end
+
+  def test_open_schema_specs_list_the_props_their_renderer_reads
+    open = ControlContract.specs.values.select { |spec| ControlContract.open_schema?(ControlContract.class_for(spec.type)) }
+    unlisted = open.select { |spec| spec.props.empty? }.map(&:type)
+
+    assert_equal OPEN_SCHEMA_WITHOUT_PROPS.keys.sort, unlisted.sort,
+                 "open-schema specs must list props: (or be explained in OPEN_SCHEMA_WITHOUT_PROPS)"
+    OPEN_SCHEMA_WITHOUT_PROPS.each_value { |reason| refute_empty reason.strip }
   end
 
   def test_shipped_extensions_are_found

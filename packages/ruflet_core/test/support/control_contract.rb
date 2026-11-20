@@ -6,9 +6,18 @@
 # wire needs to know about one control class: its wire type, every name it is
 # registered under, the props it cannot be built without, and any prop or
 # event that is sent under a different key. The props and events themselves
-# come from the class's Ruby KEYWORDS, so a keyword added to a control is
-# tested without touching its spec, and a control added to the factory fails
-# ControlContractCoverageTest until it has a spec.
+# come from ControlFactory.constructor_keywords: the class's KEYWORDS, or its
+# constructor's keyword parameters when it has no KEYWORDS constant. So a
+# keyword added to a control is tested without touching its spec, and a
+# control added to the factory fails ControlContractCoverageTest until it has
+# a spec.
+#
+# An open-schema class has no constructor keywords and passes any prop and
+# on_* handler through (Video, WebView, Map, the ads, charts and pickers). Its
+# spec lists, under props: and events:, what the engine's renderer for it
+# reads. Every open-schema class is also checked with one prop and one event
+# that no renderer reads (OPEN_SCHEMA_PROBE_PROP, OPEN_SCHEMA_PROBE_EVENT), so
+# a class that drops what it is given fails either way.
 #
 # Wire keys come from Ruby's KEYWORDS, not from Flet's Dart names: the
 # renderer reads the keys Ruby sends.
@@ -19,7 +28,7 @@ module ControlContract
 
   Spec = Struct.new(
     :family, :type, :wire, :aliases, :base, :samples, :wire_keys,
-    :client_events, :helper, :helper_props,
+    :client_events, :helper, :helper_props, :props, :events,
     keyword_init: true
   )
 
@@ -29,6 +38,11 @@ module ControlContract
 
   # Valid values for the timing props every transition checks.
   TIMING_SAMPLES = { animating: true, curve: "ease_in_out", delay: 150, duration: 400, repeat: true, reverse: true }.freeze
+
+  # What every open-schema class is checked with besides its spec's props:
+  # and events:. No renderer reads them; the class must still send them.
+  OPEN_SCHEMA_PROBE_PROP = :contract_open_schema_prop
+  OPEN_SCHEMA_PROBE_EVENT = :on_contract_open_schema_event
 
   ICON_SAMPLE = "add"
   COLOR_SAMPLE = "#a1b2c3"
@@ -48,6 +62,10 @@ module ControlContract
     #   client_events: event => the event name the client sends for it
     #   helper:        the Ruflet.* helper that builds it, or false for none
     #   helper_props:  what to pass the helper, when not the base props
+    #   props:         props to test besides the constructor keywords; for an
+    #                  open-schema class, the ones its renderer reads
+    #   events:        on_* events to test besides the constructor keywords;
+    #                  likewise
     def define(family, entries)
       entries.each do |type, options|
         options = options.dup
@@ -62,9 +80,20 @@ module ControlContract
           wire_keys: (options.delete(:wire_keys) || {}).transform_keys(&:to_sym),
           client_events: (options.delete(:client_events) || {}).transform_keys(&:to_sym),
           helper: options.key?(:helper) ? options.delete(:helper) : :default,
-          helper_props: options.delete(:helper_props)
+          helper_props: options.delete(:helper_props),
+          props: Array(options.delete(:props)).map(&:to_sym),
+          events: Array(options.delete(:events)).map(&:to_sym)
         )
         raise ArgumentError, "#{type}: unknown spec options #{options.keys}" unless options.empty?
+        if (misplaced = spec.props.select { |name| event_keyword?(name) }).any?
+          raise ArgumentError, "#{type}: #{misplaced} are events; list them under events:"
+        end
+        if (misplaced = spec.events.reject { |name| event_keyword?(name) }).any?
+          raise ArgumentError, "#{type}: #{misplaced} are not on_* events; list them under props:"
+        end
+        if (repeated = (spec.props + spec.events).tally.select { |_name, count| count > 1 }.keys).any?
+          raise ArgumentError, "#{type}: #{repeated} listed more than once"
+        end
         raise ArgumentError, "#{type} is specified twice" if @specs.key?(type)
 
         @specs[type] = spec
@@ -100,6 +129,11 @@ module ControlContract
     # The class the factory builds for a name, extensions included.
     def class_for(name)
       Ruflet::UI::ControlFactory::EXTENSION_CLASS_MAP[name] || Ruflet::UI::ControlFactory::CLASS_MAP[name]
+    end
+
+    # A class with no constructor keywords passes any prop through.
+    def open_schema?(klass)
+      Ruflet::UI::ControlFactory.constructor_keywords(klass).empty?
     end
 
     def service_class?(klass)
@@ -145,12 +179,23 @@ module ControlContract
       Ruflet::UI::ControlFactory.constructor_keywords(contract_class(spec))
     end
 
+    # The constructor keywords that are props, then the spec's props:, then
+    # for an open-schema class the probe prop.
     def contract_props(spec)
-      contract_keywords(spec).reject { |name| ControlContract.event_keyword?(name) }
+      props = contract_keywords(spec).reject { |name| ControlContract.event_keyword?(name) }
+      contract_names(spec, props, spec.props, ControlContract::OPEN_SCHEMA_PROBE_PROP)
     end
 
+    # Likewise for the on_* events.
     def contract_events(spec)
-      contract_keywords(spec).select { |name| ControlContract.event_keyword?(name) }
+      events = contract_keywords(spec).select { |name| ControlContract.event_keyword?(name) }
+      contract_names(spec, events, spec.events, ControlContract::OPEN_SCHEMA_PROBE_EVENT)
+    end
+
+    def contract_names(spec, keywords, listed, probe)
+      names = keywords.map(&:to_sym) + listed
+      names << probe if ControlContract.open_schema?(contract_class(spec))
+      names.uniq
     end
 
     def contract_base(spec)
@@ -253,7 +298,8 @@ module ControlContract
       assert_equal spec.wire, control.to_patch["_c"]
     end
 
-    # Each KEYWORDS prop, set on its own, reaches the patch under its wire key.
+    # Each prop (see contract_props), set on its own, reaches the patch under
+    # its wire key.
     def assert_contract_props(spec)
       failures = contract_props(spec).filter_map do |prop|
         sample = contract_sample(spec, prop)
@@ -272,8 +318,9 @@ module ControlContract
       assert_empty failures, "#{spec.type} props that do not serialize under their Ruby wire key"
     end
 
-    # Each on_* keyword, given a handler, flags the event on the wire and runs
-    # the handler when the client sends the event for the mounted control.
+    # Each on_* event (see contract_events), given a handler, flags the event
+    # on the wire and runs the handler when the client sends the event for the
+    # mounted control.
     def assert_contract_events(spec)
       failures = contract_events(spec).filter_map do |event|
         name = event.to_s.delete_prefix("on_")
