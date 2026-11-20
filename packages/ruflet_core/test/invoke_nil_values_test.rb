@@ -31,10 +31,15 @@ class InvokeNilValuesTest < Minitest::Test
     assert_equal({ "settings" => { "accuracy" => "high", "steps" => [1, nil] } }, last_args)
   end
 
-  def test_secure_storage_keeps_nil_inside_a_value
-    @page.secure_storage.set("k", [1, nil])
+  # Only the platform options (web, ios, macos, android, windows) go
+  # through the conversion; the value is sent as given.
+  def test_secure_storage_keeps_nil_inside_its_platform_options
+    @page.secure_storage.set("k", [1, nil], android: { "reset_on_error" => true, "keys" => [nil] }, ios: [nil])
 
-    assert_equal({ "key" => "k", "value" => [1, nil] }, last_args)
+    assert_equal(
+      { "key" => "k", "value" => [1, nil], "android" => { "reset_on_error" => true, "keys" => [nil] }, "ios" => [nil] },
+      last_args
+    )
   end
 
   def test_audio_recorder_keeps_nil_inside_its_configuration
