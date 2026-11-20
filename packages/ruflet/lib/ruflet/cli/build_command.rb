@@ -10,6 +10,7 @@ require "rbconfig"
 require "uri"
 require "yaml"
 
+require_relative "client_bootstrap"
 require_relative "build/support"
 require_relative "build/config_loader"
 require_relative "build/config_schema"
@@ -45,6 +46,7 @@ require_relative "build/contributors/protected_services"
 require_relative "build/contributors/signing"
 require_relative "build/contributors/runtime_mode"
 require_relative "build/contributors/extensions"
+require_relative "build/contributors/startup_hooks"
 require_relative "build/contributors/assets"
 
 module Ruflet
@@ -54,6 +56,7 @@ module Ruflet
     # module reach the same methods and constants as before the split.
     module BuildCommand
       include FlutterSdk
+      include ClientBootstrap
       include Build::Support
       include Build::ConfigLoader
       include Build::ClientDir
@@ -76,6 +79,7 @@ module Ruflet
       include Build::Contributors::Signing
       include Build::Contributors::RuntimeMode
       include Build::Contributors::Extensions
+      include Build::Contributors::StartupHooks
       include Build::Contributors::Assets
 
       def command_build(args)
