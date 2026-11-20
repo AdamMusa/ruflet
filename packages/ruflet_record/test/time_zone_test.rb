@@ -13,6 +13,7 @@ class TimeZoneTest < RufletRecordTestCase
     user.update!(created_at: written)
 
     assert_equal written, user.created_at
+    assert_equal 7200, user.created_at.utc_offset, "an assigned Time is kept as given"
     assert_equal Time.utc(2026, 1, 1, 8, 0, 0), User.find(user.id).created_at
   end
 
@@ -27,6 +28,12 @@ class TimeZoneTest < RufletRecordTestCase
 
     user.created_at = "2026-01-01T10:00:00.250Z"
     assert_equal Time.utc(2026, 1, 1, 10, 0, 0), user.created_at
+
+    user.created_at = "2026-01-01T10:00:00.250+02:00"
+    assert_equal Time.utc(2026, 1, 1, 8, 0, 0), user.created_at, "fractional seconds before an offset"
+
+    user.created_at = "2026-01-01 10:00:00 +0200"
+    assert_equal Time.utc(2026, 1, 1, 8, 0, 0), user.created_at, "Time#to_s format"
 
     user.created_at = "2026-01-01 10:00:00"
     assert_equal Time.utc(2026, 1, 1, 10, 0, 0), user.created_at, "no offset means UTC, as stored"

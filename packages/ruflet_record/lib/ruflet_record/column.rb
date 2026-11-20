@@ -51,11 +51,11 @@ module RufletRecord
 
     private
 
-    # Datetimes are stored as UTC wall-clock text, so every Time is kept as
-    # the same instant in UTC: a local Time (Time.now) or a string with an
-    # offset ("...+02:00", "...Z") must not be read back hours off.
+    # Datetimes are stored as UTC wall-clock text (see SQLiteAdapter), so a
+    # string's Z or +HH:MM offset is applied: "...10:00+02:00" is 08:00 UTC.
+    # An assigned Time is kept as given; binding stores its instant.
     def cast_time(value)
-      return value.getutc if value.is_a?(Time)
+      return value if value.is_a?(Time)
       match = /\A(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}):(\d{2})(?:\.\d+)? *(Z|[+-]\d{2}:?\d{2})?)?/.match(value.to_s)
       return value unless match
 
