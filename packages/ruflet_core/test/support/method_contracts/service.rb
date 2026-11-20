@@ -19,7 +19,7 @@ MethodContract.define(
       "is_supported_encoder" => { args: ["sample:encoder"], sends: {"encoder" => "sample:encoder"} },
       "pause_recording" => {  },
       "resume_recording" => {  },
-      "start_recording" => { sends: {"configuration" => {}} },
+      "start_recording" => { kwargs: { configuration: { sample_rate: 44_100 } }, sends: {"configuration" => {"sample_rate" => 44_100}} },
       "stop_recording" => {  }
     },
     "battery" => {
@@ -89,7 +89,8 @@ MethodContract.define(
     },
     "geolocator" => {
       "distance_between" => { args: ["sample:start_latitude", "sample:start_longitude", "sample:end_latitude", "sample:end_longitude"], sends: {"start_latitude" => "sample:start_latitude", "start_longitude" => "sample:start_longitude", "end_latitude" => "sample:end_latitude", "end_longitude" => "sample:end_longitude"} },
-      "get_current_position" => {  },
+      # Without a configuration it sends no args (service_method_contract_test).
+      "get_current_position" => { kwargs: { configuration: { accuracy: "high", distance_filter: 10 } }, sends: {"settings" => {"accuracy" => "high", "distance_filter" => 10}} },
       "get_last_known_position" => {  },
       "get_permission_status" => {  },
       "is_location_service_enabled" => {  },
@@ -150,7 +151,8 @@ MethodContract.define(
       "get_accessibility_features" => {  }
     },
     "share" => {
-      "share_files" => { args: ["sample:files"], sends: {"files" => "sample:files", "download_fallback_enabled" => true, "mail_to_fallback_enabled" => true} },
+      # A data: byte list inside a file is packed into a binary String.
+      "share_files" => { args: [[{ name: :a, data: [104, 105] }]], sends: {"files" => [{"name" => "a", "data" => "hi".b}], "download_fallback_enabled" => true, "mail_to_fallback_enabled" => true} },
       "share_text" => { args: ["sample:text"], sends: {"text" => "sample:text", "download_fallback_enabled" => true, "mail_to_fallback_enabled" => true} },
       "share_uri" => { args: ["sample:uri"], sends: {"uri" => "sample:uri"} }
     },

@@ -120,7 +120,7 @@ MethodContract.define(
     },
     "map" => {
       "center_on" => { args: [[1.5, 2.5]], kwargs: { zoom: 9 }, sends: {"point" => {"latitude" => 1.5, "longitude" => 2.5}, "zoom" => 9} },
-      "move_to" => { kwargs: { destination: { lat: 1.5, lng: 2.5 }, zoom: 9, animation_duration: 300, animation_curve: :ease_in }, sends: {"destination" => {"latitude" => 1.5, "longitude" => 2.5}, "zoom" => 9, "duration" => 300, "curve" => "ease_in"} },
+      "move_to" => { kwargs: { destination: { lat: 1.5, lng: 2.5 }, zoom: 9, offset: { x: 1, y: 2 }, animation_duration: 300, animation_curve: :ease_in }, sends: {"destination" => {"latitude" => 1.5, "longitude" => 2.5}, "zoom" => 9, "offset" => {"x" => 1, "y" => 2}, "duration" => 300, "curve" => "ease_in"} },
       "reset_rotation" => { sends: {} },
       "rotate_from" => { args: ["sample:degree"], sends: {"degree" => "sample:degree"} },
       "zoom_in" => { sends: {} },
@@ -216,7 +216,8 @@ MethodContract.define(
       "close" => {  },
       "destroy" => {  },
       "start_dragging" => {  },
-      "start_resizing" => { args: ["sample:edge"], sends: {"edge" => "sample:edge"} },
+      # An edge the table does not name is sent as its String (control_method_contract_test).
+      "start_resizing" => { args: [:bottom_right], sends: {"edge" => "bottomRight"} },
       "to_front" => {  },
       "wait_until_ready_to_show" => {  }
     },
