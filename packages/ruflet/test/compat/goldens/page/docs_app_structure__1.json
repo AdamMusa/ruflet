@@ -1,0 +1,83 @@
+{
+  "fixture": "docs_app_structure__1",
+  "entrypoint": "main.rb",
+  "status": "ok",
+  "messages": [
+    {
+      "action": "register_client",
+      "payload": {
+        "session_id": "compat-session",
+        "page_patch": {
+          "views": [
+            {
+              "_c": "View",
+              "_i": "#1",
+              "route": "/",
+              "_internals": {
+                "host_expanded": true
+              },
+              "controls": [
+                {
+                  "_c": "Column",
+                  "_i": "#2",
+                  "_internals": {
+                    "host_expanded": true
+                  },
+                  "controls": [
+                    {
+                      "_c": "Text",
+                      "_i": "#3",
+                      "value": "0",
+                      "style": {
+                        "size": 40
+                      }
+                    },
+                    {
+                      "_c": "FilledButton",
+                      "_i": "#4",
+                      "autofocus": false,
+                      "clip_behavior": "none",
+                      "content": {
+                        "_c": "Text",
+                        "_i": "#5",
+                        "value": "Increment"
+                      },
+                      "on_click": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "route": "/",
+          "window": {
+            "_c": "Window",
+            "_i": "#6"
+          },
+          "_overlay": {
+            "_c": "Overlay",
+            "_i": "#7",
+            "controls": []
+          },
+          "_services": {
+            "_c": "ServiceRegistry",
+            "_i": "#8",
+            "_services": [],
+            "_internals": {
+              "uid": "00000001"
+            }
+          },
+          "_dialogs": {
+            "_c": "Dialogs",
+            "_i": "#9",
+            "controls": []
+          },
+          "title": "Ruflet App"
+        },
+        "error": ""
+      }
+    }
+  ],
+  "stdout": "",
+  "stderr": ""
+}
