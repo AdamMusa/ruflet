@@ -87,8 +87,14 @@ class MapExtensionCompatibilityTest < Minitest::Test
 
   # The DSL helpers convert coordinates the same way, and overflowed the same.
   def test_helpers_take_unset_coordinates_and_reject_unreadable_ones
-    assert_nil Ruflet.map([], initial_center: nil).props["initial_center"]
-    assert_nil Ruflet.marker(coordinates: nil, content: Ruflet.text("Pin")).to_patch["coordinates"]
+    # nil is not given: the prop is left out, as if the keyword were. A nil
+    # prop would reach the client as {}, which it reads as LatLng(0, 0).
+    refute_includes Ruflet.map([], initial_center: nil).to_patch, "initial_center"
+    refute_includes Ruflet::UI::ControlFactory.build("map", initial_center: nil).to_patch, "initial_center"
+    refute_includes Ruflet.marker(coordinates: nil, content: Ruflet.text("Pin")).to_patch, "coordinates"
+    @page.add(Ruflet.map([], initial_center: nil))
+    sent_map = find_wire_control(@sent.map(&:last), "Map")
+    assert_equal({ "_c" => "Map", "_i" => sent_map["_i"], "layers" => [] }, sent_map)
 
     assert_raises(ArgumentError) { Ruflet.map([], initial_center: [1]) }
     assert_raises(ArgumentError) { Ruflet.marker(coordinates: { "x" => 1 }, content: Ruflet.text("Pin")) }
@@ -123,5 +129,26 @@ class MapExtensionCompatibilityTest < Minitest::Test
     ].each do |type|
       assert Ruflet::UI::ControlFactory.known_control?(type), type
     end
+  end
+
+  private
+
+  # The first control patch of the given wire type in what the page sent.
+  def find_wire_control(value, wire_type)
+    case value
+    when Hash
+      return value if value["_c"] == wire_type
+
+      value.each_value do |item|
+        found = find_wire_control(item, wire_type)
+        return found if found
+      end
+    when Array
+      value.each do |item|
+        found = find_wire_control(item, wire_type)
+        return found if found
+      end
+    end
+    nil
   end
 end

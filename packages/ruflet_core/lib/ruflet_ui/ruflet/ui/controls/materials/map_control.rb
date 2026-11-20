@@ -14,7 +14,13 @@ module Ruflet
 
           def initialize(id: nil, **props)
             mapped = props.dup
-            mapped[:initial_center] = normalize_coordinates(mapped[:initial_center]) if mapped.key?(:initial_center)
+            if mapped.key?(:initial_center)
+              mapped[:initial_center] = normalize_coordinates(mapped[:initial_center])
+              # initial_center: nil is not given. A nil prop would reach the
+              # client as {} (Control#serialize_value), which it reads as
+              # LatLng(0, 0) instead of its default center.
+              mapped.delete(:initial_center) if mapped[:initial_center].nil?
+            end
             super(type: TYPE, id: id, **mapped)
           end
 
