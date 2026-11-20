@@ -55,7 +55,7 @@ module Ruflet
             on_animation_end = props[:on_animation_end]
             on_change = props[:on_change]
             on_size_change = props[:on_size_change]
-            alignment = "center" if alignment.nil?
+            alignment = { "x" => 0.0, "y" => 0.0 } if alignment.nil?
             item_extent = 32.0 if item_extent.nil?
             minute_interval = 1 if minute_interval.nil?
             mode = "hour_minute_seconds" if mode.nil?

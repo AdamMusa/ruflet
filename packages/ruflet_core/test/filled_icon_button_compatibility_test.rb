@@ -67,10 +67,10 @@ class RufletFilledIconButtonCompatibilityTest < Minitest::Test
   def test_filled_icon_button_defaults_match_flet
     button = Ruflet.filled_icon_button("check")
 
-    assert_equal "center", button.props["alignment"]
+    assert_equal({ "x" => 0.0, "y" => 0.0 }, button.props["alignment"])
     assert_equal false, button.props["autofocus"]
     assert_equal 24, button.props["icon_size"]
-    assert_equal({ "all" => 8 }, button.props["padding"])
+    assert_equal({ "left" => 8, "top" => 8, "right" => 8, "bottom" => 8 }, button.props["padding"])
   end
 
   def test_filled_icon_button_serializes_non_positive_splash_radius_like_flet

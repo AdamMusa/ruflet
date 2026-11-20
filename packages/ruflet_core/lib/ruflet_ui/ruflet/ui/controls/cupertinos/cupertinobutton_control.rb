@@ -75,9 +75,9 @@ module Ruflet
             on_focus = props[:on_focus]
             on_long_press = props[:on_long_press]
             on_size_change = props[:on_size_change]
-            alignment = "center" if alignment.nil?
+            alignment = { "x" => 0.0, "y" => 0.0 } if alignment.nil?
             autofocus = false if autofocus.nil?
-            border_radius = { "all" => 8.0 } if border_radius.nil?
+            border_radius = { "top_left" => 8.0, "top_right" => 8.0, "bottom_left" => 8.0, "bottom_right" => 8.0 } if border_radius.nil?
             opacity_on_click = 0.4 if opacity_on_click.nil?
             size = "large" if size.nil?
 

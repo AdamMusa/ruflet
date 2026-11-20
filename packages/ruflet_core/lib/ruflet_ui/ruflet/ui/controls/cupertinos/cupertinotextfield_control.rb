@@ -161,7 +161,7 @@ module Ruflet
             on_tap_outside = props[:on_tap_outside]
             clear_button_semantics_label = "Clear" if clear_button_semantics_label.nil?
             clear_button_visibility_mode = "never" if clear_button_visibility_mode.nil?
-            padding = { "all" => 7 } if padding.nil?
+            padding = { "left" => 7, "top" => 7, "right" => 7, "bottom" => 7 } if padding.nil?
             placeholder_text = "" if placeholder_text.nil?
             prefix_visibility_mode = "always" if prefix_visibility_mode.nil?
             suffix_visibility_mode = "always" if suffix_visibility_mode.nil?

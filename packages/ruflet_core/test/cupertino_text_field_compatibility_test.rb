@@ -59,7 +59,7 @@ class RufletCupertinoTextFieldCompatibilityTest < Minitest::Test
 
     assert_equal "Clear", field.props["clear_button_semantics_label"]
     assert_equal "never", field.props["clear_button_visibility_mode"]
-    assert_equal({ "all" => 7 }, field.props["padding"])
+    assert_equal({ "left" => 7, "top" => 7, "right" => 7, "bottom" => 7 }, field.props["padding"])
     assert_equal "", field.props["placeholder_text"]
     assert_equal "always", field.props["prefix_visibility_mode"]
     assert_equal "always", field.props["suffix_visibility_mode"]
