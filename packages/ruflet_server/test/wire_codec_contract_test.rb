@@ -54,14 +54,17 @@ class WireCodecContractTest < Minitest::Test
     ["bin8 empty", bin.call(0), 0xc4],
     ["bin8 255", bin.call(255), 0xc4],
     ["bin16 256", bin.call(256), 0xc5],
+    ["bin16 65535", bin.call(65_535), 0xc5],
     ["bin32 65536", bin.call(65_536), 0xc6],
     ["fixarray empty", [], 0x90],
     ["fixarray 15", Array.new(15) { |i| i }, 0x9f],
     ["array16 16", Array.new(16) { |i| i }, 0xdc],
+    ["array16 65535", Array.new(65_535, 0), 0xdc],
     ["array32 65536", Array.new(65_536, 0), 0xdd],
     ["fixmap empty", {}, 0x80],
     ["fixmap 15", (1..15).to_h { |i| ["k#{i}", i] }, 0x8f],
     ["map16 16", (1..16).to_h { |i| ["k#{i}", i] }, 0xde],
+    ["map16 65535", (1..65_535).to_h { |i| ["k#{i}", nil] }, 0xde],
     ["map32 65536", (1..65_536).to_h { |i| ["k#{i}", nil] }, 0xdf],
     ["nested", { "a" => [1, { "b" => "c" }, nil], "d" => true }, 0x82]
   ].freeze

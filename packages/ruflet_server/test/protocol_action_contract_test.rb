@@ -119,6 +119,13 @@ class ProtocolActionContractTest < Minitest::Test
     end
   end
 
+  # What the block wrote to stderr, minus the "incoming action=..." line both
+  # receivers print for every message when RUFLET_DEBUG=1.
+  def warnings_from(&block)
+    _, err = capture_io(&block)
+    err.lines.grep_v(/\Aincoming action=/).join
+  end
+
   KINDS.each do |kind|
     %i[register_client register_web_client].each do |action|
       contract(kind, action, "#{action}_creates_the_page_and_answers") do
@@ -141,11 +148,13 @@ class ProtocolActionContractTest < Minitest::Test
         client.register
 
         client.receive(ACTIONS.fetch(action), { "target" => client.button.wire_id, "name" => "click", "data" => { "x" => 1 } })
-        client.receive(ACTIONS.fetch(action), { "eventTarget" => client.button.wire_id, "eventName" => "click" })
+        client.receive(ACTIONS.fetch(action), { "eventTarget" => client.button.wire_id, "eventName" => "click", "eventData" => { "y" => 2 } })
 
         assert_equal 2, client.clicks.size
         assert_same client.button, client.clicks.first.control
         assert_equal({ x: 1 }, client.clicks.first.data)
+        assert_same client.button, client.clicks.last.control
+        assert_equal({ y: 2 }, client.clicks.last.data)
       end
     end
 
@@ -155,8 +164,14 @@ class ProtocolActionContractTest < Minitest::Test
         client.register
 
         client.receive(ACTIONS.fetch(action), { "id" => client.field.wire_id, "props" => { "value" => "typed" } })
-
         assert_equal "typed", client.field.props["value"]
+
+        # Protocol's normalizer also takes the control from target or
+        # eventTarget when id is absent.
+        client.receive(ACTIONS.fetch(action), { "target" => client.field.wire_id, "props" => { "value" => "by target" } })
+        assert_equal "by target", client.field.props["value"]
+        client.receive(ACTIONS.fetch(action), { "eventTarget" => client.field.wire_id, "props" => { "value" => "by eventTarget" } })
+        assert_equal "by eventTarget", client.field.props["value"]
       end
     end
 
@@ -176,12 +191,33 @@ class ProtocolActionContractTest < Minitest::Test
       error = "Calling focus method of inexistent control: #{client.button.wire_id}"
       client.receive(ACTIONS[:invoke_control_method], { "control_id" => client.button.wire_id, "call_id" => failed, "result" => nil, "error" => error })
 
-      # No shipped client sends callId/value, but Protocol's normalizer
-      # accepts that spelling, so both receivers must deliver it alike.
-      second = client.page.invoke(client.button, "focus", on_result: on_result)
-      client.receive(ACTIONS[:invoke_control_method], { "callId" => second, "value" => "legacy" })
+      assert_equal [["done", nil], [nil, error]], replies
+    end
 
-      assert_equal [["done", nil], [nil, error], ["legacy", nil]], replies
+    # No shipped client sends callId or value (the engine and template main
+    # send control_id/call_id/result/error), but Protocol's normalizer takes
+    # callId for a missing call_id and value for a missing result, so both
+    # receivers must deliver those replies alike.
+    contract(kind, :invoke_control_method, "invoke_control_method_reply_aliases_reach_on_result") do
+      client = Harness.new(kind)
+      client.register
+      replies = client.replies
+      on_result = ->(result, error) { replies << [result, error] }
+
+      both_aliases = client.page.invoke(client.button, "focus", on_result: on_result)
+      client.receive(ACTIONS[:invoke_control_method], { "callId" => both_aliases, "value" => "legacy" })
+
+      value_alias = client.page.invoke(client.button, "focus", on_result: on_result)
+      client.receive(ACTIONS[:invoke_control_method], { "call_id" => value_alias, "value" => 5 })
+
+      call_id_alias = client.page.invoke(client.button, "focus", on_result: on_result)
+      client.receive(ACTIONS[:invoke_control_method], { "callId" => call_id_alias, "result" => 6, "error" => nil })
+
+      # result wins over value when a reply carries both.
+      result_and_value = client.page.invoke(client.button, "focus", on_result: on_result)
+      client.receive(ACTIONS[:invoke_control_method], { "call_id" => result_and_value, "result" => 1, "value" => 2 })
+
+      assert_equal [["legacy", nil], [5, nil], [6, nil], [1, nil]], replies
     end
 
     contract(kind, :invoke_control_method, "invoke_control_method_ignores_a_reply_that_is_not_a_map") do
@@ -190,7 +226,7 @@ class ProtocolActionContractTest < Minitest::Test
       replies = client.replies
       call_id = client.page.invoke(client.button, "focus", on_result: ->(result, error) { replies << [result, error] })
 
-      assert_silent { client.receive(ACTIONS[:invoke_control_method], [call_id, 1]) }
+      assert_empty warnings_from { client.receive(ACTIONS[:invoke_control_method], [call_id, 1]) }
       assert_empty replies
 
       client.receive(ACTIONS[:invoke_control_method], { "call_id" => call_id, "result" => "done", "error" => nil })
@@ -228,7 +264,9 @@ class ProtocolActionContractTest < Minitest::Test
       client.register
       sent = client.ws.sent.size
 
-      client.receive(ACTIONS[:python_output], { "message" => "diagnostic" })
+      # Ruflet::Server logs and swallows a handler error, so an empty stderr
+      # is what shows the message was accepted.
+      assert_empty warnings_from { client.receive(ACTIONS[:python_output], { "message" => "diagnostic" }) }
 
       assert_equal sent, client.ws.sent.size
       refute_nil client.page, "the session survives"

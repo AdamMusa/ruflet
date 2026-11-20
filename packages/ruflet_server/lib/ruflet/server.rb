@@ -700,8 +700,9 @@ module Ruflet
 
     # Normalized like Ruflet::ConnectionProtocol does, so both receivers treat
     # a reply the same way. Shipped clients send call_id/result/error, which
-    # this passes through unchanged; the callId/value spelling the normalizer
-    # also accepts is not sent by any shipped client.
+    # this passes through unchanged. The normalizer also takes callId for a
+    # missing call_id and value for a missing result; no shipped client sends
+    # either.
     def on_invoke_control_method(ws, payload)
       page = fetch_page(ws)
       page.handle_invoke_method_result(Protocol.normalize_invoke_method_result_payload(payload))
