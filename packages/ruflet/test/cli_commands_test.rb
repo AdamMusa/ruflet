@@ -105,8 +105,9 @@ class RufletCliCommandsTest < Minitest::Test
     %w[run update debug emulators].each do |name|
       command = Commands.lookup(name)
       parser = captured_parser(command.handler)
+      # Each parser also takes -h/--help, which raises Commands::HelpRequested.
       declared = OptionParser.new do |o|
-        command.options.each { |option| o.on(*option.switches) {} }
+        [*command.options, Commands::HELP_OPTION].each { |option| o.on(*option.switches, *option.hidden) {} }
       end
 
       assert_equal parser.summarize, declared.summarize, "#{name} options"
@@ -305,14 +306,15 @@ class RufletCliCommandsTest < Minitest::Test
   end
 
   # The long switch of the declared option that `form` (followed by a value)
-  # runs in a parser built from the command's declarations; nil when it runs
-  # none of them.
+  # runs in a parser built from the command's declarations, hidden switches
+  # included (as in the switch-list check above); nil when it runs none of
+  # them.
   def selected_option(command, form)
     selected = nil
     parser = OptionParser.new do |o|
       command.options.each do |option|
         long = words(option).find { |word| word.start_with?("--") }
-        o.on(*option.switches) { selected = long }
+        o.on(*option.switches, *option.hidden) { selected = long }
       end
     end
     capture_io { parser.parse([form, "VALUE"]) }

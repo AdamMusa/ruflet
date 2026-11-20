@@ -366,6 +366,35 @@ module RufletCompat
     cli "default_app", "emulators", "--cold"
     cli "default_app", "doctor", "--bogus-flag"
     cli "empty", "new", "my_app", "--bogus-flag"
+    # CLI-12: `build --release apk` must reach Flutter exactly as `build apk
+    # --release` does (default_app stops at its missing backend_url; services_app
+    # has one, so its pair shows the flutter argv).
+    cli "default_app", "build", "apk", "--release"
+    cli "services_app", "build", "apk", "--release"
+    cli "services_app", "build", "--release", "apk"
+    # `--` ends the options (`help --` lists the commands, `build -- apk`
+    # names the unsupported target "--"); `emulators --c`, like -c, is
+    # --create; and the version words given a flag.
+    cli "empty", "help", "--", id: "help-end-of-options"
+    cli "empty", "--help", "--", id: "--help-end-of-options"
+    cli "default_app", "build", "--", "apk", id: "build-end-of-options-apk"
+    cli "default_app", "emulators", "--c", id: "emulators-double-dash-c"
+    cli "empty", "--version", "-v"
+    cli "empty", "-v", "--verbose"
+    cli "empty", "version", "--anything"
+    # ruflet_rails' rake tasks call the command handlers directly, without
+    # `Ruflet::CLI.run`, so help and usage stops must be handled there too.
+    cli "rails_app", "ruflet:update[--help]", rake: true
+    cli "rails_app", "ruflet:update[-h]", rake: true
+    cli "rails_app", "ruflet:build[--help]", rake: true
+    # A name before the help flag, and a flag where the name goes.
+    cli "empty", "new", "my_app", "-h"
+    cli "empty", "create", "my_app", "--help"
+    cli "empty", "new", "-x"
+    # A bare `-` is an argument, not a flag; nothing after `--` is a flag.
+    cli "empty", "help", "-", id: "help-dash"
+    cli "default_app", "build", "--self", "-", "apk", id: "build--self-dash-apk"
+    cli "default_app", "run", "main.rb", "--", "--help", id: "run-main.rb-end-of-options--help"
 
     # --- command words, help, usage and exit codes (R2, CLI-12) ----------------
     # How the first argument picks a command (case-insensitively, aliases
