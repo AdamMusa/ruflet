@@ -92,6 +92,7 @@ class JsonColumnTest < RufletRecordTestCase
     Setting.create!(name: "recent", value: [1, 2])
 
     assert_equal [theme.id], Setting.where(value: { "mode" => "dark" }).ids
+    assert_equal [theme.id], Setting.where("value = ?", JSON.generate("mode" => "dark")).ids
     assert_equal ["recent"], Setting.where.not(value: { "mode" => "dark" }).pluck(:name)
     assert_equal ["theme", "recent"], Setting.where(value: [{ "mode" => "dark" }, [1, 2]]).order(:id).pluck(:name)
     assert_equal theme, Setting.find_or_create_by(value: { "mode" => "dark" })
