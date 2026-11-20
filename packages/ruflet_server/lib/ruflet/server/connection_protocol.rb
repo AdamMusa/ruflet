@@ -39,6 +39,15 @@ module Ruflet
     # Called before a control event is dispatched to the Page.
     def before_dispatch_event(ws, event); end
 
+    # Called when application code raises while an event is dispatched (an
+    # on_click, a validator, a page.on_route_change ...). The error is logged
+    # and the connection stays open, as in Ruflet::Server: one failing
+    # handler must not send session_crashed, close the socket and make the
+    # client re-register into a fresh session.
+    def handler_error(_ws, error)
+      log_connection_error(error)
+    end
+
     def log_connection_error(error)
       warn "server error: #{error.class}: #{error.message}"
       warn error.backtrace.join("\n") if error.backtrace
@@ -187,11 +196,16 @@ module Ruflet
 
       attach_sender(page, ws)
       before_dispatch_event(ws, event)
-      page.dispatch_event(
-        target: event["target"],
-        name: event["name"],
-        data: normalize_event_data(event["data"])
-      )
+      begin
+        page.dispatch_event(
+          target: event["target"],
+          name: event["name"],
+          data: normalize_event_data(event["data"])
+        )
+      rescue StandardError => e
+        handler_error(ws, e)
+        nil
+      end
     end
 
     def on_update_control(ws, payload)
