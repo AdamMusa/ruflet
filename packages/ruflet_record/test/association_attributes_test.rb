@@ -47,4 +47,21 @@ class AssociationAttributesTest < RufletRecordTestCase
 
     assert_equal ada.id, entry.create!(user: ada, title: "Inherited").reload.user_id
   end
+
+  # A column keeps going to write_attribute, as before, even when a
+  # belongs_to shares its name: user: 5 writes the user column.
+  def test_a_column_named_like_a_belongs_to_is_written_directly
+    RufletRecord.connection.execute("CREATE TABLE notes (id INTEGER PRIMARY KEY, user INTEGER)")
+    note_class = Class.new(RufletRecord::Base) do
+      self.table_name = "notes"
+      belongs_to :user, foreign_key: "user"
+    end
+    ada = User.create!(name: "Ada")
+
+    assert_equal 5, note_class.new(user: 5).read_attribute("user")
+    note = note_class.create!(user: ada.id)
+    assert_equal ada.id, note_class.find(note.id).read_attribute("user")
+    note.update!(user: 7)
+    assert_equal 7, note.reload.read_attribute("user")
+  end
 end
