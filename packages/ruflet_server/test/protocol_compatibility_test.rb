@@ -23,7 +23,8 @@ class RufletProtocolCompatibilityTest < Minitest::Test
   # The standalone server passed the client's invoke reply through as is,
   # while ConnectionProtocol (ruflet_rails) normalized it, so a reply spelled
   # callId/value reached its on_result under Rails but was dropped by
-  # Ruflet::Server.
+  # Ruflet::Server. No shipped client sends that spelling (they send
+  # call_id/result/error); the test pins that both receivers agree on it.
   def test_standalone_server_accepts_a_call_id_and_value_invoke_reply
     replies = []
     target = nil

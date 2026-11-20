@@ -698,8 +698,10 @@ module Ruflet
       raise e
     end
 
-    # Normalized like Ruflet::ConnectionProtocol does, so a reply spelled
-    # callId/value (older clients) reaches its callback here too.
+    # Normalized like Ruflet::ConnectionProtocol does, so both receivers treat
+    # a reply the same way. Shipped clients send call_id/result/error, which
+    # this passes through unchanged; the callId/value spelling the normalizer
+    # also accepts is not sent by any shipped client.
     def on_invoke_control_method(ws, payload)
       page = fetch_page(ws)
       page.handle_invoke_method_result(Protocol.normalize_invoke_method_result_payload(payload))
