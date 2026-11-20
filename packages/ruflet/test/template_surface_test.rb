@@ -12,8 +12,15 @@ require "rbconfig"
 # without the file (older templates) is not checked.
 class RufletTemplateSurfaceTest < Minitest::Test
   Surface = Ruflet::CLI::TemplateSurface
+  Check = Ruflet::CLI::TemplateSurfaceCheck
   FORM_REVISION = "e793ccef345b6e4777e9b1acf40dd7f9895cd86e"
   LOCAL_AUTH_REVISION = "cdbc2aaf6036e67e7216ce7eaf2a89c1178554a6"
+  BASELINE_REVISION = "19ac4c9eb87d9ea1ce1083c2cafc74354cbb56d5"
+  # Rendered before BASELINE_REVISION, but listed in no surface until it.
+  UNLISTED_BEFORE_BASELINE = %w[
+    Lottie Rive CodeEditor ColorPicker BlockPicker Map Marker TileLayer BannerAd InterstitialAd NativeAd
+    BarChartRod PieChartSection LineChartData DataTable2 DataRow2 Picker TimerPicker ActionSheet ContextMenuAction
+  ].freeze
 
   FORM_APP = <<~RUBY
     require "ruflet"
@@ -83,6 +90,29 @@ class RufletTemplateSurfaceTest < Minitest::Test
     assert_equal LOCAL_AUTH_REVISION, Surface::EXTENSION_PACKAGES.fetch("ruflet_local_auth")
     refute Surface::WIRE_TYPES.key?("Text"), "baseline wire types are not listed"
     assert_includes Surface::BASELINE_WIRE_TYPES, "Text"
+  end
+
+  # Surfaces from 0c02f475 up to 19ac4c9e leave out wire types their Dart
+  # already renders, so the table dates wire types from 19ac4c9e: those count
+  # as rendered by every checked template.
+  def test_wire_types_are_dated_from_the_first_surface_that_matches_its_renderers
+    assert_equal BASELINE_REVISION, Surface::BASELINE_REVISION
+    UNLISTED_BEFORE_BASELINE.each do |wire|
+      assert_includes Surface::BASELINE_WIRE_TYPES, wire
+      refute Surface::WIRE_TYPES.key?(wire), wire
+    end
+    assert_equal [FORM_REVISION], Surface::WIRE_TYPES.values.map(&:last).uniq
+  end
+
+  def test_controls_an_older_surface_leaves_out_are_not_reported
+    app = "lottie(src: \"a.json\")\ncupertino_picker(controls: [])\ncode_editor(value: \"\")\nrive(src: \"b.riv\")\n"
+    project("main.rb" => app) do |dir|
+      template = write_template(File.join(dir, "template"), wire_types: Surface::BASELINE_WIRE_TYPES - UNLISTED_BEFORE_BASELINE)
+      assert_empty Surface.problems(template, project_root: dir)
+
+      File.write(File.join(dir, "main.rb"), "#{app}form\n")
+      assert_equal [["form", FORM_REVISION]], Surface.problems(template, project_root: dir).map { |p| [p.name, p.revision] }
+    end
   end
 
   # --- reading a template -----------------------------------------------------------
@@ -197,6 +227,48 @@ class RufletTemplateSurfaceTest < Minitest::Test
     end
   end
 
+  # Names the app defines without `def` are its own methods.
+  def test_names_the_app_defines_do_not_count
+    [
+      "attr_reader :form",
+      "attr_accessor :x, :form",
+      "attr :form",
+      "attr_reader \"form\"",
+      "attr_reader(*%i[x form])",
+      "let(:form) { 1 }",
+      "let!(:form) { 1 }",
+      "subject(:form) { 1 }",
+      "define_method(:form) { 1 }",
+      "define_method :form do\nend",
+      "alias_method :form, :x",
+      "alias form x",
+      "Struct.new(:x, :form)",
+      "::Struct.new :form do\nend",
+      "Data.define(:form)",
+      "delegate :x, :form, to: :y",
+      "def_delegator :@y, :form",
+      "def_delegators :@y, :x, :form",
+      "belongs_to :form",
+      "has_one :form"
+    ].each do |definition|
+      assert_empty calls("#{definition}\nform(controls: [])\n"), definition
+    end
+  end
+
+  def test_names_a_definer_does_not_define_still_count
+    [
+      "alias_method :x, :form",
+      "alias x form",
+      "let(:x) { form }",
+      "delegate :x, to: :form",
+      "def_delegators :form, :x",
+      "attr_writer :form",
+      "has_many :form"
+    ].each do |source|
+      assert_equal ["form"], calls("#{source}\nform(controls: [])\n").keys, source
+    end
+  end
+
   def test_the_first_call_is_named
     project("main.rb" => "text(\"a\")\nform\n", "lib/b.rb" => "form\n", "lib/a.rb" => "\n\nform\n") do |dir|
       assert_equal({ "form" => "lib/a.rb:3" }, Surface.app_calls(dir, ["form"]))
@@ -205,7 +277,7 @@ class RufletTemplateSurfaceTest < Minitest::Test
 
   def test_build_output_dependencies_and_dot_directories_are_not_read
     files = { "main.rb" => "text(\"a\")\n" }
-    %w[build vendor node_modules tmp log coverage .git .bundle].each { |dir| files["#{dir}/x.rb"] = "form\n" }
+    %w[build vendor node_modules tmp log coverage spec test lib/test .git .bundle].each { |dir| files["#{dir}/x.rb"] = "form\n" }
     project(files) do |dir|
       assert_empty Surface.app_calls(dir, ["form"])
     end
@@ -268,7 +340,7 @@ class RufletTemplateSurfaceTest < Minitest::Test
         form (Form), main.rb:4: needs ruflet-template e793ccef345b or newer
         extension local_auth (ruflet_local_auth): needs ruflet-template cdbc2aaf6036 or newer
         Template: /t (revision c0ffee00c0ff)
-        Until it has them, a control it lacks shows "Unknown control".
+        An app built from this template shows "Unknown control" in place of a control it lacks.
         Fetch the latest template with `ruflet doctor --fix`, or pass --strict to fail instead.
     TEXT
     assert_equal <<~TEXT, "#{Surface.report(problems.last(1), template_root: '/t', strict: true).join("\n")}\n"
@@ -286,21 +358,38 @@ class RufletTemplateSurfaceTest < Minitest::Test
     include Ruflet::CLI::ExtraCommand
   end
 
+  # The check is called, not mixed in. Including a module into RunCommand,
+  # BuildCommand or ExtraCommand reorders Ruflet::CLI's ancestors: FlutterSdk
+  # fell below RunCommand, so `ruflet run --web`, `ruflet update` and the
+  # Flutter SDK download ran RunCommand's download_file and extract_archive.
+  def test_the_cli_resolves_every_method_to_the_same_module_as_before
+    ancestors = Ruflet::CLI.singleton_class.ancestors
+    refute_includes ancestors, Check
+    %w[RunCommand BuildCommand ExtraCommand].each do |name|
+      refute_includes Ruflet::CLI.const_get(name).ancestors, Check, name
+    end
+    assert_equal Ruflet::CLI::FlutterSdk, Ruflet::CLI.method(:download_file).owner
+    assert_equal Ruflet::CLI::FlutterSdk, Ruflet::CLI.method(:extract_archive).owner
+    assert_equal Ruflet::CLI::Build::ClientDir, Ruflet::CLI.method(:hidden_flutter_client_dir).owner
+    assert_equal Ruflet::CLI::Build::Contributors::AppIdentity, Ruflet::CLI.method(:humanize_name).owner
+    assert_operator ancestors.index(Ruflet::CLI::FlutterSdk), :<, ancestors.index(Ruflet::CLI::RunCommand)
+  end
+
   def test_check_warns_and_fails_only_with_strict
     project("main.rb" => FORM_APP) do |dir|
       template = old_template(File.join(dir, "template"))
       Dir.chdir(dir) do
         result = nil
-        _out, err = capture_io { result = Host.new.send(:check_template_surface, template) }
+        _out, err = capture_io { result = Check.check(Host.new, template) }
         assert result
         assert err.start_with?("warning: the Flutter template lacks 1 control this app uses:\n  form (Form), main.rb:4:")
 
-        _out, err = capture_io { result = Host.new.send(:check_template_surface, template, strict: true) }
+        _out, err = capture_io { result = Check.check(Host.new, template, strict: true) }
         refute result
         assert err.start_with?("error: ")
 
         new_root = new_template(File.join(dir, "new_template"))
-        out, err = capture_io { result = Host.new.send(:check_template_surface, new_root, strict: true) }
+        out, err = capture_io { result = Check.check(Host.new, new_root, strict: true) }
         assert result
         assert_empty out
         assert_empty err
@@ -312,8 +401,41 @@ class RufletTemplateSurfaceTest < Minitest::Test
     project("main.rb" => "text(\"a\")\n") do |dir|
       template = old_template(File.join(dir, "template"))
       Dir.chdir(dir) do
-        _out, err = capture_io { Host.new.send(:check_template_surface, template, config: { "services" => ["biometrics"] }) }
+        _out, err = capture_io { Check.check(Host.new, template, config: { "services" => ["biometrics"] }) }
         assert_includes err, "extension local_auth (ruflet_local_auth): needs ruflet-template cdbc2aaf6036 or newer"
+
+        _out, err = capture_io { Check.check(Host.new, template, config: -> { { "services" => ["biometrics"] } }) }
+        assert_includes err, "extension local_auth (ruflet_local_auth): needs ruflet-template cdbc2aaf6036 or newer"
+      end
+    end
+  end
+
+  # doctor passes its config as a callable: it is read only when the template
+  # lacks a bundled package, so a project whose ruflet.yaml does not parse
+  # gets no new output from doctor.
+  def test_the_config_is_read_only_when_the_template_lacks_a_bundled_package
+    project("main.rb" => "text(\"a\")\n") do |dir|
+      template = new_template(File.join(dir, "template"))
+      out, err = capture_io { assert Check.check(Host.new, template, strict: true, config: -> { flunk("config read") }) }
+      assert_empty out
+      assert_empty err
+    end
+  end
+
+  def test_doctor_reads_a_config_it_cannot_parse_quietly
+    project("main.rb" => "text(\"a\")\n", "ruflet.yaml" => "app: [unclosed\n") do |dir|
+      template = old_template(File.join(dir, "template"))
+      Dir.chdir(dir) do
+        host = Host.new
+        config = nil
+        out, err = capture_io { config = host.send(:doctor_project_config) }
+        assert_equal({}, config)
+        assert_empty out
+        assert_empty err
+
+        out, err = capture_io { assert Check.check(host, template, strict: true, config: -> { host.send(:doctor_project_config) }) }
+        assert_empty out
+        assert_empty err
       end
     end
   end
@@ -321,10 +443,25 @@ class RufletTemplateSurfaceTest < Minitest::Test
   def test_check_never_raises
     host = Host.new
     Surface.stub(:problems, ->(*) { raise "boom" }) do
-      out, err = capture_io { assert host.send(:check_template_surface, "/nowhere", strict: true) }
+      out, err = capture_io { assert Check.check(host, "/nowhere", strict: true) }
       assert_empty out
       assert_empty err
     end
+  end
+
+  def test_which_template_is_checked
+    host = Host.new
+    host.define_singleton_method(:resolve_ruflet_client_template_root) { "/installed" }
+    assert_equal "/installed", Check.installed_root(host)
+    assert_equal "/installed", Check.build_root(host, "/project/build/client")
+    with_env("RUFLET_CLIENT_DIR" => "/custom") do
+      assert_equal "/project/client", Check.build_root(host, "/project/client")
+    end
+    host.define_singleton_method(:resolve_ruflet_client_template_root) { nil }
+    assert_equal "/project/build/client", Check.build_root(host, "/project/build/client")
+    host.define_singleton_method(:resolve_ruflet_client_template_root) { raise "boom" }
+    assert_nil Check.installed_root(host)
+    assert_nil Check.installed_root(Object.new)
   end
 
   def test_build_fails_with_strict_before_preparing_the_client
@@ -333,7 +470,7 @@ class RufletTemplateSurfaceTest < Minitest::Test
       host = Host.new
       host.define_singleton_method(:ensure_ruflet_build_assets) { |**| true }
       host.define_singleton_method(:ensure_flutter_client_dir) { |**| template }
-      host.define_singleton_method(:installed_template_surface_root) { template }
+      host.define_singleton_method(:resolve_ruflet_client_template_root) { template }
       host.define_singleton_method(:ensure_flutter!) { |*, **| flunk("nothing is prepared") }
       Dir.chdir(dir) do
         code = nil
@@ -359,6 +496,14 @@ class RufletTemplateSurfaceTest < Minitest::Test
   end
 
   private
+
+  def with_env(values)
+    saved = values.keys.to_h { |key| [key, ENV[key]] }
+    values.each { |key, value| ENV[key] = value }
+    yield
+  ensure
+    saved.each { |key, value| ENV[key] = value }
+  end
 
   def with_wire_type(wire, entry)
     original = Surface::WIRE_TYPES

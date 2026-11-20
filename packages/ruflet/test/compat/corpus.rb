@@ -492,6 +492,19 @@ module RufletCompat
     cli "default_app", "doctor", id: "doctor-form", files: form_app
     cli "default_app", "doctor", "--strict", id: "doctor--strict-form", files: form_app
     cli "default_app", "doctor", "--strict"
+    # Not control calls: `table` from attr_reader, `form` from let, and calls
+    # under spec/ and test/. A ruflet.yaml doctor cannot parse is read only
+    # when the template lacks a bundled package, and quietly. Each prints what
+    # it printed before the check existed.
+    accessor_app = {
+      "main.rb" => "require \"ruflet\"\n\nclass Orders\n  attr_reader :table\n\n  def refresh\n    table.update\n  end\nend\n\n" \
+                   "Ruflet.run do |page|\n  page.add(text(\"Orders\"))\nend\n",
+      "spec/orders_spec.rb" => "RSpec.describe \"orders\" do\n  let(:form) { nil }\n  it { expect(stepper(steps: [])).to be_truthy }\nend\n",
+      "test/orders_test.rb" => "def sample\n  form(controls: [])\nend\n"
+    }
+    cli "default_app", "build", "apk", "--self", id: "build-apk--self-accessor", files: accessor_app
+    cli "default_app", "run", "main.rb", id: "run-main.rb-accessor", files: accessor_app, before: [%w[build web]]
+    cli "default_app", "doctor", id: "doctor-unparsable-ruflet.yaml", files: { "ruflet.yaml" => "app: [unclosed\n" }
 
     INVOCATIONS.freeze
 
