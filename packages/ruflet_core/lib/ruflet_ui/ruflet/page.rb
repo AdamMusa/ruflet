@@ -3,6 +3,7 @@
 require_relative "event"
 require "ruflet_protocol"
 require_relative "control"
+require_relative "page_registry"
 require_relative "ui/widget_builder"
 require_relative "ui/control_factory"
 require_relative "ui/service_types"
@@ -151,8 +152,29 @@ module Ruflet
       end
     end
 
+    # The built-in page props that travel on the Page control's patch.
+    # Features register theirs (Registry.register_prop); Registry.prop_keys
+    # lists the built-in and the registered ones.
     PAGE_PROP_KEYS = %w[dark_theme fonts route rtl show_semantics_debugger theme theme_mode theme_animation_style title vertical_alignment horizontal_alignment scroll].freeze
     DIALOG_PROP_KEYS = %w[dialog snack_bar bottom_sheet].freeze
+
+    # Seed the registries (page_registry.rb) with the built-in entries.
+    # vertical_alignment, horizontal_alignment and scroll lay out the page
+    # View's body, so the View mirrors them.
+    PAGE_PROP_KEYS.each do |key|
+      Registry.register_prop(key, view: key == "vertical_alignment" || key == "horizontal_alignment" || key == "scroll")
+    end
+    # No built-in event: Page#on flags View events only (the client sends
+    # route_change and view_pop without a flag).
+    # The client methods Page's own methods invoke, and who answers them.
+    Registry.register_method("get_device_info", target: :page)
+    Registry.register_method("set_allowed_device_orientations", target: :page)
+    Registry.register_method("show_drawer", target: :top_view)
+    Registry.register_method("close_drawer", target: :top_view)
+    Registry.register_method("show_end_drawer", target: :top_view)
+    Registry.register_method("close_end_drawer", target: :top_view)
+    Registry.register_method("scroll_to", target: :root_view)
+
     # RufletServices entries that render in the layout (compact DSL names).
     # The engine registers Camera with createWidget, not createService.
     VISUAL_SERVICE_TYPES = %w[camera].freeze
@@ -636,9 +658,20 @@ module Ruflet
       name = event_name.to_s
       name = name[3..-1] if name.start_with?("on_")
       @page_event_handlers[name] = block
-      # View events are only sent by the client when the default page View
-      # has the flag; page events (route_change, ...) need none.
-      @view_props["on_#{name}"] = true if block && view_event?(name)
+      if view_event?(name)
+        # View events are only sent by the client when the default page View
+        # has the flag; page events (route_change, ...) need none, unless
+        # registered (Registry.register_event).
+        @view_props["on_#{name}"] = true if block
+      elsif Registry.event?(name)
+        flag = "on_#{name}"
+        if block
+          @page_props[flag] = true
+        elsif @page_props.key?(flag)
+          # Page props merge on the client: clear with an explicit nil.
+          @page_props[flag] = nil
+        end
+      end
       self
     end
 
@@ -872,26 +905,25 @@ module Ruflet
     def show_drawer(timeout: 10, on_result: nil)
       raise ArgumentError, "No drawer defined" unless top_view_prop("drawer")
 
-      invoke(:top_view, "show_drawer", timeout: timeout, on_result: on_result)
+      invoke_page_method("show_drawer", timeout: timeout, on_result: on_result)
     end
 
     def close_drawer(timeout: 10, on_result: nil)
-      invoke(:top_view, "close_drawer", timeout: timeout, on_result: on_result)
+      invoke_page_method("close_drawer", timeout: timeout, on_result: on_result)
     end
 
     def show_end_drawer(timeout: 10, on_result: nil)
       raise ArgumentError, "No end_drawer defined" unless top_view_prop("end_drawer")
 
-      invoke(:top_view, "show_end_drawer", timeout: timeout, on_result: on_result)
+      invoke_page_method("show_end_drawer", timeout: timeout, on_result: on_result)
     end
 
     def close_end_drawer(timeout: 10, on_result: nil)
-      invoke(:top_view, "close_end_drawer", timeout: timeout, on_result: on_result)
+      invoke_page_method("close_end_drawer", timeout: timeout, on_result: on_result)
     end
 
     def scroll_to(offset: nil, delta: nil, scroll_key: nil, duration: nil, curve: nil, timeout: 10, on_result: nil)
-      invoke(
-        :root_view,
+      invoke_page_method(
         "scroll_to",
         args: {
           "offset" => offset,
@@ -959,14 +991,14 @@ module Ruflet
         if on_result.respond_to?(:call)
           ->(result, error) { on_result.call(device_info_from(result), error) }
         end
-      invoke(:page, "get_device_info", timeout: timeout, on_result: callback)
+      invoke_page_method("get_device_info", timeout: timeout, on_result: callback)
     end
 
     # get_device_info that waits for the answer (like invoke_sync): returns
     # the Ruflet::DeviceInfo (nil when the platform has none), raises the
     # client's error as a RuntimeError and Timeout::Error after `timeout`.
     def get_device_info_sync(timeout: 10)
-      device_info_from(invoke_sync(:page, "get_device_info", timeout: timeout))
+      device_info_from(invoke_page_method_sync("get_device_info", timeout: timeout))
     end
 
     # Flet's page.set_allowed_device_orientations(): the orientations a mobile
@@ -984,8 +1016,7 @@ module Ruflet
         raise UnsupportedPlatformError, "set_allowed_device_orientations is only supported on mobile platforms"
       end
 
-      invoke(
-        :page,
+      invoke_page_method(
         "set_allowed_device_orientations",
         args: { "orientations" => values },
         timeout: timeout,
@@ -1638,6 +1669,23 @@ module Ruflet
       control
     end
 
+    # Invokes the registered client method +name+ on the control that
+    # answers it (Registry.register_method).
+    def invoke_page_method(name, args: nil, timeout: 10, on_result: nil)
+      invoke(page_method_target(name), name, args: args, timeout: timeout, on_result: on_result)
+    end
+
+    def invoke_page_method_sync(name, args: nil, timeout: 10)
+      invoke_sync(page_method_target(name), name, args: args, timeout: timeout)
+    end
+
+    def page_method_target(name)
+      target = Registry.method_target(name)
+      raise ArgumentError, "#{name} is not a registered page method" unless target
+
+      target
+    end
+
     def invoke_and_wait(control_or_id, method_name, args: nil, timeout: 10)
       control_id =
         if page_control_target?(control_or_id)
@@ -1713,8 +1761,13 @@ module Ruflet
       value.is_a?(Array) && value.all? { |item| item.is_a?(Integer) && item.between?(0, 255) }
     end
 
+    # The helpers added after v0.0.23 (ScopedControlForwarders) are left to
+    # Kernel#method_missing, as when they did not exist: a bare `stepper(...)`
+    # inside a page block builds, `page.stepper = x` sets a page property and
+    # `page.respond_to?(:stepper)` is false, all as on v0.0.23.
     def widget_helper_method?(name)
-      WIDGET_HELPER_METHODS.include?(name.to_s)
+      WIDGET_HELPER_METHODS.include?(name.to_s) &&
+        !Ruflet::UI::ScopedControlForwarders::HELPERS.key?(name.to_sym)
     end
 
     def visual_service_type?(type)
@@ -2084,6 +2137,8 @@ module Ruflet
     end
 
     def normalize_value(key, value)
+      return normalize_icon_slot_value(value) if icon_slot_key?(key)
+
       if icon_prop_key?(key)
         return normalize_icon_name(value.value) if value.is_a?(Ruflet::IconData)
         return normalize_icon_name(value.to_s) if value.is_a?(String) || value.is_a?(Symbol)
@@ -2103,6 +2158,23 @@ module Ruflet
       return codepoint unless codepoint.nil?
 
       raise ArgumentError, "page icon must use a known icon name, not #{value.inspect}"
+    end
+
+    # `leading:` and `trailing:` take a control or an icon. Construction sends
+    # an icon name as its codepoint (Control#icon_prop_key?), and the renderer
+    # draws a codepoint or a control but drops a String. Here a known icon
+    # name becomes its codepoint too. Any other value (a control, an Integer,
+    # nil, an unknown name) is sent as before, so nothing that worked raises.
+    def normalize_icon_slot_value(value)
+      name = value.is_a?(Ruflet::IconData) ? value.value : value
+      if name.is_a?(String) || name.is_a?(Symbol)
+        codepoint = Ruflet::MaterialIconLookup.codepoint_for(name.to_s)
+        codepoint = Ruflet::CupertinoIconLookup.codepoint_for(name.to_s) if codepoint.nil?
+        return codepoint unless codepoint.nil?
+      end
+
+      return value.value if value.is_a?(Ruflet::IconData)
+      value.is_a?(Symbol) ? value.to_s : value
     end
 
     def build_route(route, query_params = {})
@@ -2240,8 +2312,16 @@ module Ruflet
       end
     end
 
+    # Matches Control#icon_prop_key?: show_close_icon, show_edit_icon,
+    # show_selected_icon and show_trailing_icon are booleans, not icons.
     def icon_prop_key?(key)
+      return false if key.start_with?("show_")
+
       key == "icon" || key.end_with?("_icon")
+    end
+
+    def icon_slot_key?(key)
+      key == "leading" || key == "trailing"
     end
 
     def refresh_dialogs_container!
@@ -2330,15 +2410,16 @@ module Ruflet
     def assign_split_prop(key, value)
       # Every page/view prop entry point (page.on_x =, set_view_props, the DSL
       # page(...), update(:page, ...)) lands here, so no handler reaches a patch.
+      target = Registry.prop_target(key)
       if key.start_with?("on_") && (value.nil? || value.respond_to?(:call))
         assign_page_handler(key, value)
-      elsif key == "vertical_alignment" || key == "horizontal_alignment" || key == "scroll"
+      elsif target == :page_and_view
         @page_props[key] = value
         @view_props[key] = value
       elsif DIALOG_PROP_KEYS.include?(key)
         instance_variable_set("@#{key}", value)
         refresh_dialogs_container!
-      elsif PAGE_PROP_KEYS.include?(key)
+      elsif target == :page
         @page_props[key] = value
       else
         @view_props[key] = claim_prop_control(value)

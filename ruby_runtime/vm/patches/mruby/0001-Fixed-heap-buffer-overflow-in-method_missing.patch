@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: dearblue <dearblue@gmx.com>
+Date: Wed, 30 Jul 2025 21:35:55 +0900
+Subject: [PATCH] Fixed heap buffer overflow in `#method_missing`
+
+When `ci->n == CALL_MAXARGS`, the correct value is `argv[1] = argv[1]`.
+However, it was always `args[1] = args[ci->n]`, which caused objects outside the range to be picked up.
+
+fixed #6584
+
+(cherry picked from commit 550d10adb76a1bde1954ea78e1b8b5451c74cec3)
+---
+ src/vm.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/vm.c b/src/vm.c
+index b0b0b5b12..1b0c97ebc 100644
+--- a/src/vm.c
++++ b/src/vm.c
+@@ -708,7 +708,9 @@ prepare_missing(mrb_state *mrb, mrb_callinfo *ci, mrb_value recv, mrb_sym mid, m
+   }
+   else {
+     mrb_assert(ci->nk == 15);
+-    argv[1] = argv[ci->n];
++    if (ci->n != CALL_MAXARGS) {
++      argv[1] = argv[ci->n];    /* keyword arguments */
++    }
+     argv[2] = blk;
+   }
+   argv[0] = args;               /* must be replaced after saving argv[0] as it may be a keyword argument */

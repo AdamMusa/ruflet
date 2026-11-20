@@ -10,6 +10,7 @@ require "rbconfig"
 require "uri"
 require "yaml"
 
+require_relative "client_bootstrap"
 require_relative "build/support"
 require_relative "build/config_loader"
 require_relative "build/config_schema"
@@ -45,6 +46,7 @@ require_relative "build/contributors/protected_services"
 require_relative "build/contributors/signing"
 require_relative "build/contributors/runtime_mode"
 require_relative "build/contributors/extensions"
+require_relative "build/contributors/startup_hooks"
 require_relative "build/contributors/assets"
 
 module Ruflet
@@ -55,6 +57,7 @@ module Ruflet
     module BuildCommand
       include FlutterSdk
       include TemplateSurfaceCheck
+      include ClientBootstrap
       include Build::Support
       include Build::ConfigLoader
       include Build::ClientDir
@@ -77,6 +80,7 @@ module Ruflet
       include Build::Contributors::Signing
       include Build::Contributors::RuntimeMode
       include Build::Contributors::Extensions
+      include Build::Contributors::StartupHooks
       include Build::Contributors::Assets
 
       def command_build(args)
@@ -151,8 +155,9 @@ module Ruflet
         )
         return 1 unless ok
 
-        # Flutter runs in build/client; relative path flags mean the project.
-        build_args = [*flutter_cmd, *resolve_flutter_path_args(args)]
+        # Flutter runs in the client dir; a relative path flag that is broken
+        # there is resolved against the project (CLI-05).
+        build_args = [*flutter_cmd, *resolve_flutter_path_args(args, client_dir: client_dir, platform: platform)]
         build_args << "--codesign" if ios_device_build_needs_codesign_flag?(requested_platform, build_args)
         target_entrypoint = flutter_target_entrypoint(client_dir, self_contained: !!self_contained)
         build_args += ["--target", target_entrypoint] if target_entrypoint
@@ -220,6 +225,8 @@ module Ruflet
 
         export_platform_build_outputs(client_dir, platform, verbose: !!verbose) if ok
         ok ? 0 : 1
+      rescue Commands::UsageError => e
+        Commands.report_stop("build", e)
       end
 
       def command_install(args)

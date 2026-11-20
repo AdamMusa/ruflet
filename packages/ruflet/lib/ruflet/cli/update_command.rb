@@ -83,6 +83,8 @@ module Ruflet
         end
 
         0
+      rescue Commands::HelpRequested => e
+        Commands.report_stop("update", e)
       end
 
       private

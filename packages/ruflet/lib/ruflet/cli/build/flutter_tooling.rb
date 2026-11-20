@@ -6,39 +6,68 @@ module Ruflet
       # Runs Flutter and the other external tools a build needs, with the
       # environment each one expects.
       module FlutterTooling
-        # `flutter build` options whose value is a path. Flutter resolves them
-        # against its working directory, which is build/client; Ruflet users
-        # mean the project (CLI-05). -o abbreviates --output.
-        FLUTTER_PATH_OPTIONS = %w[
-          --dart-define-from-file --split-debug-info --export-options-plist
-          --code-size-directory --performance-measurement-file --output --output-dir
+        # `flutter build` options whose value is a path. Flutter resolves a
+        # relative one against its working directory, the client dir, while
+        # Ruflet users mean the project (CLI-05). Inputs are files Flutter
+        # reads; outputs are files or directories it writes.
+        FLUTTER_INPUT_PATH_OPTIONS = %w[--dart-define-from-file --export-options-plist].freeze
+        FLUTTER_OUTPUT_PATH_OPTIONS = %w[
+          --split-debug-info --code-size-directory --performance-measurement-file
         ].freeze
-        FLUTTER_PATH_ABBREVIATIONS = %w[-o].freeze
+        # `flutter build web`'s output directory: --output, its alias
+        # --output-dir and its abbreviation -o. Flutter gives no other target
+        # Ruflet builds this option.
+        FLUTTER_WEB_OUTPUT_OPTIONS = %w[--output --output-dir].freeze
+        FLUTTER_WEB_OUTPUT_ABBREVIATION = "-o"
 
         private
 
-        # A copy of args with the value of every FLUTTER_PATH_OPTIONS flag, in
-        # each spelling Flutter accepts (`--flag value`, `--flag=value`,
-        # `-o value`, `-ovalue`), made absolute against the project root.
-        # Absolute paths are untouched, and so is a value Ruflet cannot
-        # resolve: a missing or empty one, one that looks like a flag, or a
-        # `~` no shell expanded. Flutter reports those as it did before.
-        def resolve_flutter_path_args(args, root = Dir.pwd)
+        # A copy of args in which a relative path given to a path-valued
+        # Flutter option, in each spelling Flutter accepts (`--flag value`,
+        # `--flag=value`, and for web `-o value` and `-ovalue`), is made
+        # absolute against the project root when, and only when, the path
+        # Flutter would use today is broken:
+        # - an input is rewritten when it is not a file in the client dir
+        #   (Flutter would stop with "not found") but is one in the project;
+        # - an output is rewritten when it would be written inside the
+        #   managed build/client, which a template refresh deletes, outside
+        #   what the build exports from there, and when its project path lies
+        #   inside the project but is neither the project root nor a
+        #   directory holding build/client, nor inside build/client or a
+        #   directory that export replaces.
+        # Everything else is left as written: absolute paths; paths that
+        # already leave build/client (such as `../../symbols`); outputs in a
+        # client dir Ruflet does not manage (RUFLET_CLIENT_DIR,
+        # ./ruflet_client); a missing or empty value, one that looks like a
+        # flag, or a `~` no shell expanded; every other argument; and all
+        # arguments after a bare `--`, which Flutter takes as positional.
+        def resolve_flutter_path_args(args, root = Dir.pwd, client_dir: hidden_flutter_client_dir(root), platform: nil)
+          # An ipa is built and exported as ios (see BuildCommand#command_build).
+          platform = "ios" if platform == "ipa"
+          kinds = flutter_path_option_kinds(platform)
+          resolve = ->(kind, value) { flutter_path_value(kind, value, root, client_dir, platform) }
           resolved = []
           index = 0
           while index < args.length
             arg = args[index]
+            if arg == "--"
+              resolved.concat(args[index..])
+              break
+            end
+
             name, value = arg.split("=", 2)
-            if FLUTTER_PATH_OPTIONS.include?(arg) || FLUTTER_PATH_ABBREVIATIONS.include?(arg)
+            if (kind = kinds[arg])
               resolved << arg
               if index + 1 < args.length
                 index += 1
-                resolved << project_path(args[index], root)
+                resolved << resolve.call(kind, args[index])
               end
-            elsif value && FLUTTER_PATH_OPTIONS.include?(name)
-              resolved << "#{name}=#{project_path(value, root)}"
-            elsif (abbreviation = FLUTTER_PATH_ABBREVIATIONS.find { |short| arg.start_with?(short) && arg.length > short.length })
-              resolved << "#{abbreviation}#{project_path(arg[abbreviation.length..], root)}"
+            elsif value && name.start_with?("--") && (kind = kinds[name])
+              resolved << "#{name}=#{resolve.call(kind, value)}"
+            elsif kinds.key?(FLUTTER_WEB_OUTPUT_ABBREVIATION) && arg.start_with?(FLUTTER_WEB_OUTPUT_ABBREVIATION) &&
+                arg.length > FLUTTER_WEB_OUTPUT_ABBREVIATION.length
+              short = FLUTTER_WEB_OUTPUT_ABBREVIATION
+              resolved << "#{short}#{resolve.call(:output, arg[short.length..])}"
             else
               resolved << arg
             end
@@ -47,11 +76,53 @@ module Ruflet
           resolved
         end
 
-        def project_path(value, root)
-          return value if value.empty? || value.start_with?("-", "~")
-          return value if File.absolute_path?(value)
+        def flutter_path_option_kinds(platform)
+          kinds = FLUTTER_INPUT_PATH_OPTIONS.to_h { |name| [name, :input] }
+          FLUTTER_OUTPUT_PATH_OPTIONS.each { |name| kinds[name] = :output }
+          if platform == "web"
+            FLUTTER_WEB_OUTPUT_OPTIONS.each { |name| kinds[name] = :output }
+            kinds[FLUTTER_WEB_OUTPUT_ABBREVIATION] = :output
+          end
+          kinds
+        end
 
-          File.expand_path(value, root)
+        def flutter_path_value(kind, value, root, client_dir, platform)
+          return value if value.empty? || value.start_with?("-", "~") || File.absolute_path?(value)
+
+          client = File.expand_path(client_dir)
+          if kind == :input
+            flutter_input_path(value, root, client)
+          else
+            flutter_output_path(value, root, client, platform)
+          end
+        end
+
+        def flutter_input_path(value, root, client)
+          return value if File.file?(File.expand_path(value, client))
+
+          project = File.expand_path(value, root)
+          File.file?(project) ? project : value
+        end
+
+        def flutter_output_path(value, root, client, platform)
+          return value unless client == File.expand_path(hidden_flutter_client_dir(root))
+
+          today = File.expand_path(value, client)
+          return value unless path_within?(today, client)
+
+          exports = exports_for(platform)
+          return value if exports.keys.any? { |source| path_within?(today, File.join(client, "build", source)) }
+
+          project = File.expand_path(value, root)
+          return value unless path_within?(project, File.expand_path(root))
+          return value if path_within?(project, client) || path_within?(client, project)
+          return value if exports.values.any? { |target| path_within?(project, File.join(user_build_root(root), target)) }
+
+          project
+        end
+
+        def path_within?(path, dir)
+          path == dir || path.start_with?(File.join(dir, ""))
         end
 
         def build_tool_env(env, platform, client_dir = nil)
@@ -161,11 +232,16 @@ module Ruflet
         # names a target, so the flags before it reach Flutter as they would
         # after it. Two such arguments (`--flavor web apk`) are refused rather
         # than guessed at: which one is a flag's value is Flutter's to know.
+        # Nothing after `--` is a target: `build -- apk` is still the
+        # unsupported target "--", and `build --release -- apk` has none. A
+        # bare `-` is an argument, not a flag (Commands.flag?), so `build -
+        # apk` is still the unsupported target "-".
         def extract_build_target!(args)
           first = args.first
-          return (args.shift || "").downcase unless first&.start_with?("-")
+          return (args.shift || "").downcase unless first && Commands.flag?(first) && first != "--"
 
-          positionals = args.each_index.reject { |index| args[index].start_with?("-") }
+          stop = args.index("--") || args.length
+          positionals = (0...stop).reject { |index| Commands.flag?(args[index]) }
           targets = positionals.select { |index| flutter_build_command(args[index].downcase) }
           if targets.length > 1
             names = targets.map { |index| args[index] }.join(", ")
