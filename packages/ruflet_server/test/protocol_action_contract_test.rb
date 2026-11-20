@@ -8,12 +8,17 @@ require_relative "test_helper"
 # same result from either, legacy JSON spellings included.
 class ProtocolActionContractTest < Minitest::Test
   ACTIONS = Ruflet::Protocol::ACTIONS
+  KINDS = %i[server connection_protocol].freeze
 
-  INBOUND = %i[
-    register_client register_web_client control_event page_event_from_web
-    update_control update_control_props invoke_control_method python_output
-  ].freeze
-  OUTBOUND = %i[patch_control session_crashed].freeze
+  # [kind, action] for every test defined with `contract` below.
+  COVERED = []
+
+  # Defines a test of `action` on the `kind` receiver and records it, so
+  # test_every_action_has_a_test_on_both_receivers sees which actions have one.
+  def self.contract(kind, action, description, &body)
+    COVERED << [kind, action]
+    define_method("test_#{kind}_#{description}", &body)
+  end
 
   class FakeWs
     attr_reader :sent
@@ -88,13 +93,35 @@ class ProtocolActionContractTest < Minitest::Test
     end
   end
 
-  def test_every_action_is_covered_here
-    assert_equal ACTIONS.keys.sort, (INBOUND + OUTBOUND).sort
+  def test_every_action_has_a_test_on_both_receivers
+    KINDS.each do |kind|
+      covered = COVERED.select { |covered_kind, _| covered_kind == kind }.map(&:last).uniq
+      assert_equal ACTIONS.keys.sort, covered.sort, "#{kind} has no contract test for some action"
+    end
   end
 
-  %i[server connection_protocol].each do |kind|
+  # Waits for the invoke_control_method request the page sent and returns its
+  # call id. invoke_sync sends it from its own thread.
+  def sent_invoke_call_id(client)
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 10
+    loop do
+      request = client.ws.sent.dup.map { |bytes| Ruflet::WireCodec.unpack(bytes) }
+                      .find { |action, _| action == ACTIONS[:invoke_control_method] }
+      return request[1]["call_id"] if request
+      flunk "the page sent no invoke_control_method request" if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+      sleep 0.01
+    end
+  end
+
+  def invoke_sync_in_thread(client)
+    Thread.new { client.page.invoke_sync(client.button, "focus", timeout: 10) }.tap do |thread|
+      thread.report_on_exception = false
+    end
+  end
+
+  KINDS.each do |kind|
     %i[register_client register_web_client].each do |action|
-      define_method("test_#{kind}_#{action}_creates_the_page_and_answers") do
+      contract(kind, action, "#{action}_creates_the_page_and_answers") do
         client = Harness.new(kind)
         client.register(ACTIONS.fetch(action))
 
@@ -109,7 +136,7 @@ class ProtocolActionContractTest < Minitest::Test
     end
 
     %i[control_event page_event_from_web].each do |action|
-      define_method("test_#{kind}_#{action}_runs_the_controls_handler") do
+      contract(kind, action, "#{action}_runs_the_controls_handler") do
         client = Harness.new(kind)
         client.register
 
@@ -123,7 +150,7 @@ class ProtocolActionContractTest < Minitest::Test
     end
 
     %i[update_control update_control_props].each do |action|
-      define_method("test_#{kind}_#{action}_applies_the_clients_props") do
+      contract(kind, action, "#{action}_applies_the_clients_props") do
         client = Harness.new(kind)
         client.register
 
@@ -133,22 +160,57 @@ class ProtocolActionContractTest < Minitest::Test
       end
     end
 
-    define_method("test_#{kind}_invoke_control_method_reply_reaches_on_result") do
+    contract(kind, :invoke_control_method, "invoke_control_method_reply_reaches_on_result") do
       client = Harness.new(kind)
       client.register
       replies = client.replies
+      on_result = ->(result, error) { replies << [result, error] }
 
-      first = client.page.invoke(client.button, "focus", on_result: ->(result, error) { replies << [result, error] })
+      # The engine's reply (InvokeMethodResponseBody#toMap): control_id,
+      # call_id, result, error.
+      first = client.page.invoke(client.button, "focus", on_result: on_result)
       client.receive(ACTIONS[:invoke_control_method], { "control_id" => client.button.wire_id, "call_id" => first, "result" => "done", "error" => nil })
 
-      # Older clients spell the reply callId/value.
-      second = client.page.invoke(client.button, "focus", on_result: ->(result, error) { replies << [result, error] })
+      # The engine's reply when the call failed.
+      failed = client.page.invoke(client.button, "focus", on_result: on_result)
+      error = "Calling focus method of inexistent control: #{client.button.wire_id}"
+      client.receive(ACTIONS[:invoke_control_method], { "control_id" => client.button.wire_id, "call_id" => failed, "result" => nil, "error" => error })
+
+      # No shipped client sends callId/value, but Protocol's normalizer
+      # accepts that spelling, so both receivers must deliver it alike.
+      second = client.page.invoke(client.button, "focus", on_result: on_result)
       client.receive(ACTIONS[:invoke_control_method], { "callId" => second, "value" => "legacy" })
 
-      assert_equal [["done", nil], ["legacy", nil]], replies
+      assert_equal [["done", nil], [nil, error], ["legacy", nil]], replies
     end
 
-    define_method("test_#{kind}_python_output_is_accepted_and_ignored") do
+    contract(kind, :invoke_control_method, "invoke_sync_returns_the_reply_result") do
+      client = Harness.new(kind)
+      client.register
+      client.ws.sent.clear
+
+      waiting = invoke_sync_in_thread(client)
+      call_id = sent_invoke_call_id(client)
+      client.receive(ACTIONS[:invoke_control_method], { "control_id" => client.button.wire_id, "call_id" => call_id, "result" => 5, "error" => nil })
+
+      assert_equal 5, waiting.value
+    end
+
+    contract(kind, :invoke_control_method, "invoke_sync_raises_the_reply_error") do
+      client = Harness.new(kind)
+      client.register
+      client.ws.sent.clear
+
+      waiting = invoke_sync_in_thread(client)
+      call_id = sent_invoke_call_id(client)
+      message = "Calling focus method of inexistent control: #{client.button.wire_id}"
+      client.receive(ACTIONS[:invoke_control_method], { "control_id" => client.button.wire_id, "call_id" => call_id, "result" => nil, "error" => message })
+
+      error = assert_raises(RuntimeError) { waiting.value }
+      assert_equal message, error.message
+    end
+
+    contract(kind, :python_output, "python_output_is_accepted_and_ignored") do
       client = Harness.new(kind)
       client.register
       sent = client.ws.sent.size
@@ -159,7 +221,7 @@ class ProtocolActionContractTest < Minitest::Test
       refute_nil client.page, "the session survives"
     end
 
-    define_method("test_#{kind}_page_updates_go_out_as_patch_control") do
+    contract(kind, :patch_control, "page_updates_go_out_as_patch_control") do
       client = Harness.new(kind)
       client.register
       client.ws.sent.clear
@@ -171,7 +233,7 @@ class ProtocolActionContractTest < Minitest::Test
       assert_equal client.field.wire_id, payload["id"]
     end
 
-    define_method("test_#{kind}_an_app_that_raises_on_register_reports_session_crashed") do
+    contract(kind, :session_crashed, "an_app_that_raises_on_register_reports_session_crashed") do
       client = Harness.new(kind) { |_page| raise "boom" }
 
       assert_raises(RuntimeError) { client.register } if kind == :connection_protocol
