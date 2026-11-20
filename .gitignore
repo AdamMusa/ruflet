@@ -52,6 +52,8 @@ replay_pid*.log
 **/.pub-cache/
 **/.pub/
 **/build/
+# The CLI's `ruflet build` implementation is source, not build output.
+!packages/ruflet/lib/ruflet/cli/build/
 **/coverage/
 **/doc/api/
 **/pubspec_overrides.yaml

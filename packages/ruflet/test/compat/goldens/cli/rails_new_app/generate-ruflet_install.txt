@@ -1,0 +1,76 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: rails_new_app
+command: rails generate ruflet:install
+exit: 0
+
+## commands (0)
+
+## output
+out|       create  app/views/ruflet/main.rb
+out|       create  config/initializers/ruflet.rb
+out|        route  match "/ws", to: Ruflet::Rails.native(Rails.root.join("app/views/ruflet/main.rb")), via: :all
+out| Ruflet Rails installed.
+out| Generated entrypoint: app/views/ruflet/main.rb
+out| Added WebSocket route /ws to config/routes.rb
+out| Next steps:
+out|   1. Start Rails: bin/rails server
+out|   2. Connect your Ruflet app to ws://localhost:3000/ws
+
+## files
+A <PROJECT>/app/views/ruflet/main.rb  sha256:1fbcdd02a56d7d1f 666b  (new)
+A <PROJECT>/config/initializers/ruflet.rb  sha256:83948208dadc968b 422b  (new)
+M <PROJECT>/config/routes.rb  sha256:f8c50cb3ec4441fb 685b -> sha256:1c5b57fe93d1235e 781b
+
+## diffs
+--- /dev/null
++++ <PROJECT>/app/views/ruflet/main.rb
+@@ -0,0 +1,24 @@
++# frozen_string_literal: true
++
++# The home screen for this Ruflet app. You own this file; nothing is
++# auto-discovered. It is mounted explicitly in config/routes.rb:
++#   match "/ws", to: Ruflet::Rails.native(Rails.root.join("app/views/ruflet/main.rb")), via: :all
++Ruflet.run do |page|
++  page.title = "Rails New App"
++  page.add(
++    safe_area(
++      container(
++        expand: true,
++        padding: 24,
++        content: column(
++          spacing: 12,
++          controls: [
++            text("Rails New App", size: 24, weight: "bold"),
++            text("Edit app/views/ruflet/main.rb to build your app.")
++          ]
++        )
++      ),
++      expand: true
++    )
++  )
++end
+--- /dev/null
++++ <PROJECT>/config/initializers/ruflet.rb
+@@ -0,0 +1,12 @@
++# frozen_string_literal: true
++
++Ruflet::Rails.configure do |config|
++  config.app_name = "Rails New App"
++  config.backend_url = ENV.fetch("RUFLET_BACKEND_URL", "http://localhost:3000")
++
++  config.services = []
++
++  # Build assets. Replace these with your app artwork when ready.
++  config.splash_screen = Rails.root.join("app/assets/images/splash.png")
++  config.icon_launcher = Rails.root.join("app/assets/images/icon.png")
++end
+--- before:<PROJECT>/config/routes.rb
++++ <PROJECT>/config/routes.rb
+@@ -1,4 +1,5 @@
+ Rails.application.routes.draw do
++  match "/ws", to: Ruflet::Rails.native(Rails.root.join("app/views/ruflet/main.rb")), via: :all
+   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
+ 
+   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

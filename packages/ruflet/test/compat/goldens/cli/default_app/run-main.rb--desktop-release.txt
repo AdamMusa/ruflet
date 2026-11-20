@@ -1,0 +1,76 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet run main.rb --desktop
+network: release fixture (lib/release_fixture.rb)
+exit: 0
+
+## commands (4)
+1. system exit=0
+   <RUBY> -S bundle check
+   env: BUNDLE_GEMFILE=<PROJECT>/Gemfile RUFLET_APP_SCRIPT=<PROJECT>/main.rb RUFLET_ASSETS_DIR=<PROJECT>/assets RUFLET_BOOTSNAP_DIR=<HOME>/.ruflet/bootsnap/<RUBY_VERSION>/<PROJECT_KEY> RUFLET_PORT=8550 RUFLET_SUPPRESS_SERVER_BANNER=1 RUFLET_TARGET=desktop RUFLET_WATCH_ROOT=<PROJECT>
+   options: err out
+2. spawn
+   <RUBY> -rbundler/setup <GEM_HOME>/gems/ruflet-<RUFLET_VERSION>/lib/ruflet/hot_reload/harness.rb
+   env: BUNDLE_GEMFILE=<PROJECT>/Gemfile RUFLET_APP_SCRIPT=<PROJECT>/main.rb RUFLET_ASSETS_DIR=<PROJECT>/assets RUFLET_BOOTSNAP_DIR=<HOME>/.ruflet/bootsnap/<RUBY_VERSION>/<PROJECT_KEY> RUFLET_PORT=8550 RUFLET_SUPPRESS_SERVER_BANNER=1 RUFLET_TARGET=desktop RUFLET_WATCH_ROOT=<PROJECT>
+   options: pgroup
+3. system exit=0
+   unzip -oq <TMP>/ruflet-prebuilt-XXXXXXXX/ruflet_explorer-macos-universal.zip -d <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop
+4. spawn
+   "<HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop/Ruflet Explorer.app/Contents/MacOS/Ruflet Explorer" http://localhost:8550
+   env: RUFLET_URL=http://localhost:8550
+   options: err out
+
+## network (6)
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/prebuild-main -> 200
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/v<RUFLET_VERSION> -> 404
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/<RUFLET_VERSION> -> 404
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/latest -> 200
+GET https://github.com/AdamMusa/Ruflet/releases/download/prebuild-main/ruflet_explorer-macos-universal.zip -> 302
+GET https://release-assets.githubusercontent.com/compat/ruflet_explorer-macos-universal.zip -> 200
+
+## output
+out| Ruflet desktop URL: http://localhost:8550
+out| Hot reload: watching *.rb (disable with --no-reload)
+out| Downloading prebuilt client asset: ruflet_explorer-macos-universal.zip
+
+## files
+A <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop/Ruflet Explorer.app/Contents/Info.plist  sha256:45da0c64ba7d1e02 45b  (new)
+A <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop/Ruflet Explorer.app/Contents/MacOS/Ruflet Explorer  sha256:7baf45490adcf98a 41b mode=755  (new)
+A <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/manifest.json  sha256:78be9b21d11ca13d 619b  (new)
+
+## diffs
+--- /dev/null
++++ <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop/Ruflet Explorer.app/Contents/Info.plist
+@@ -0,0 +1,2 @@
++<?xml version="1.0"?>
++<plist><dict/></plist>
+--- /dev/null
++++ <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop/Ruflet Explorer.app/Contents/MacOS/Ruflet Explorer
+@@ -0,0 +1,2 @@
++#!/bin/sh
++# compat release: macOS client
+--- /dev/null
++++ <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/manifest.json
+@@ -0,0 +1,19 @@
++{
++  "schema": 2,
++  "ruflet_version": "<RUFLET_VERSION>",
++  "platform": "macos",
++  "release_tag": "prebuild-main",
++  "release_revision": "705:2025-12-31T09:00:00Z:188",
++  "released_at": "2025-12-31T09:00:00Z",
++  "checked_at": "2026-01-01T12:00:00Z",
++  "installed_at": "2026-01-01T12:00:00Z",
++  "targets": [
++    {
++      "kind": "desktop",
++      "platform": "macos",
++      "asset_name": "ruflet_explorer-macos-universal.zip",
++      "download_url": "https://github.com/AdamMusa/Ruflet/releases/download/prebuild-main/ruflet_explorer-macos-universal.zip",
++      "release_revision": "705:2025-12-31T09:00:00Z:188"
++    }
++  ]
++}
+\ No newline at end of file
