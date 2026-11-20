@@ -7,6 +7,9 @@
 #   cd ruby_runtime/third_party/mruby
 #   rake MRUBY_CONFIG=../../vm/build_config/host_vm.rb
 
+require_relative "../patches/mruby_patches"
+RufletMrubyPatches.apply(MRUBY_ROOT)
+
 VM_DIR = File.expand_path("..", __dir__)
 
 MRuby::Build.new("host_vm") do |conf|
