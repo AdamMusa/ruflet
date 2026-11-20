@@ -151,8 +151,9 @@ module Ruflet
         )
         return 1 unless ok
 
-        # Flutter runs in build/client; relative path flags mean the project.
-        build_args = [*flutter_cmd, *resolve_flutter_path_args(args)]
+        # Flutter runs in the client dir; a relative path flag that is broken
+        # there is resolved against the project (CLI-05).
+        build_args = [*flutter_cmd, *resolve_flutter_path_args(args, client_dir: client_dir, platform: platform)]
         build_args << "--codesign" if ios_device_build_needs_codesign_flag?(requested_platform, build_args)
         target_entrypoint = flutter_target_entrypoint(client_dir, self_contained: !!self_contained)
         build_args += ["--target", target_entrypoint] if target_entrypoint
