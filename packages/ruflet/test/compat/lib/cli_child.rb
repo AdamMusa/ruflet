@@ -267,6 +267,14 @@ module CompatChild
       target = args.first
       mode = args.include?("--debug") ? "debug" : "release"
       body = "ruflet compat placeholder: flutter build #{target}\n"
+      # Like Flutter's validateBuild (android/build_validation.dart): code size
+      # analysis needs one target ABI, and a release build defaults to three.
+      if %w[apk appbundle].include?(target) && args.include?("--analyze-size") &&
+          option_values(args, %w[--target-platform]).flat_map { |value| value.split(",") }.length != 1
+        return tool_result(false, stderr: "Cannot perform code size analysis when building for multiple ABIs. " \
+                                          "Specify one of android-arm, android-arm64, or android-x64 in the " \
+                                          "--target-platform flag.\n")
+      end
       # Like Flutter, resolve path options against the working directory:
       # inputs must exist, outputs are written there.
       option_values(args, %w[--dart-define-from-file]).each do |path|

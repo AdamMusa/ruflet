@@ -382,8 +382,9 @@ module RufletCompat
     cli "default_app", "build", "apk", "--self", "--dart-define-from-file", "config/defines.json", files: defines
     cli "default_app", "build", "ipa", "--self", "--export-options-plist", "ExportOptions.plist",
         files: { "ExportOptions.plist" => "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<plist version=\"1.0\"><dict/></plist>\n" }
-    cli "default_app", "build", "apk", "--self", "--analyze-size", "--code-size-directory=sizes",
-        "--performance-measurement-file", "perf.json"
+    # Flutter analyzes code size for one ABI only (android/build_validation.dart).
+    cli "default_app", "build", "apk", "--self", "--analyze-size", "--target-platform", "android-arm64",
+        "--code-size-directory=sizes", "--performance-measurement-file", "perf.json"
     # `--` ends the options (`help --` lists the commands, `build -- apk`
     # names the unsupported target "--"); `emulators --c`, like -c, is
     # --create; and the version words given a flag.
@@ -419,6 +420,12 @@ module RufletCompat
     cli "default_app", "build", "web", "-o", "build/web"
     cli "default_app", "build", "apk", "--self", "--split-debug-info=build/app/outputs/symbols"
     cli "default_app", "build", "apk", "--self", "--split-debug-info=build/android/symbols"
+    cli "default_app", "build", "ipa", "--self", "--split-debug-info=build/ios/symbols"
+    # Outputs whose project path would leave the project, or would be the
+    # project root or ./build, which hold build/client.
+    cli "default_app", "build", "apk", "--self", "--split-debug-info=../client/symbols"
+    cli "default_app", "build", "web", "-o", ".", id: "build-web--o-dot"
+    cli "default_app", "build", "web", "-o", "build"
     cli "default_app", "build", "apk", "--self", "--split-debug-info=symbols", id: "build-apk--self--split-debug-info-symbols-with-RUFLET_CLIENT_DIR",
                                                  client_copy: true, env: { "RUFLET_CLIENT_DIR" => "<SANDBOX>/client" }
 
