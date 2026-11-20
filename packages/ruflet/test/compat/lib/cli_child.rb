@@ -698,8 +698,10 @@ exit_code = begin
     generator.start(CompatChild::SPEC.fetch("argv").drop(1), destination_root: CompatChild::SPEC.fetch("project"))
     0
   else
-    # The installed executable itself, exactly as `ruflet ...` runs it.
+    # The installed executable itself, exactly as `ruflet ...` runs it. $0 is
+    # the executable too, so OptionParser's own `--help` names `ruflet`.
     ARGV.replace(CompatChild::SPEC.fetch("argv"))
+    $PROGRAM_NAME = CompatChild::SPEC.fetch("bin")
     load CompatChild::SPEC.fetch("bin")
     0
   end
