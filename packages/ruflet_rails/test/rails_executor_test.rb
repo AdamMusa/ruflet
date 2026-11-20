@@ -154,27 +154,22 @@ class RufletRailsExecutorTest < Minitest::Test
     end
   end
 
-  # Runs one hijacked socket through an Endpoint, with a stub
-  # ::Rails.application.executor. Returns whether the server handled the
+  # Runs one hijacked socket through an Endpoint whose whole-socket wrap
+  # uses a stub executor (session_registry_test covers that the wrap uses
+  # Rails.application.executor). Returns whether the server handled the
   # socket inside a run, and how many runs the endpoint started.
   def socket_run_with(server)
-    skip("::Rails is already defined in this process") if defined?(::Rails)
-
     executor = StubExecutor.new
     server.executor = executor
-    application = Struct.new(:executor).new(executor)
-    fake_rails = Module.new
-    fake_rails.define_singleton_method(:application) { application }
-    Object.const_set(:Rails, fake_rails)
-    server_io, client_io = UNIXSocket.pair
     endpoint = Ruflet::Rails::Protocol::Endpoint.new(server: server)
+    endpoint.define_singleton_method(:rails_executor_wrap) { |&block| executor.wrap(&block) }
+    server_io, client_io = UNIXSocket.pair
     assert_equal(-1, endpoint.call(hijack_env(server_io)).first)
     in_run = server.seen.pop(timeout: 5)
     [in_run, executor.runs]
   ensure
     client_io&.close
     server_io&.close
-    Object.send(:remove_const, :Rails) if fake_rails && defined?(::Rails) && ::Rails.equal?(fake_rails)
   end
 
   def wait_for(timeout: 5)
