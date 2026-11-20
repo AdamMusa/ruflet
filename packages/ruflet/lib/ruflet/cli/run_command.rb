@@ -607,7 +607,7 @@ module Ruflet
           root = ENV["RUFLET_CLIENT_DIR"]
           root = File.expand_path("ruflet_client", Dir.pwd) if root.to_s.strip.empty?
           root = nil unless Dir.exist?(root)
-          root ||= ensure_prebuilt_client(desktop: true)
+          root ||= ensure_prebuilt_client(desktop: true, use_cache_if_check_fails: true)
         end
         return nil unless root && Dir.exist?(root)
 
@@ -658,7 +658,7 @@ module Ruflet
         root = ENV["RUFLET_CLIENT_DIR"]
         root = File.expand_path("ruflet_client", Dir.pwd) if root.to_s.strip.empty?
         root = nil unless Dir.exist?(root)
-        root ||= ensure_prebuilt_client(web: true)
+        root ||= ensure_prebuilt_client(web: true, use_cache_if_check_fails: true)
         return nil unless root && Dir.exist?(root)
 
         client_build_roots(root).each do |base|
@@ -670,7 +670,11 @@ module Ruflet
         nil
       end
 
-      def ensure_prebuilt_client(web: false, desktop: false, platform: nil, force: false)
+      # use_cache_if_check_fails: the run path passes true, so a complete cache
+      # is still used when the optional periodic update check cannot reach
+      # GitHub (offline, DNS failure, 5xx, rate limit). `ruflet update` leaves
+      # it false: there the check is the point, so failing to run it fails.
+      def ensure_prebuilt_client(web: false, desktop: false, platform: nil, force: false, use_cache_if_check_fails: false)
         platform ||= host_platform_name
         return nil if platform.nil?
 
@@ -693,7 +697,15 @@ module Ruflet
           manifest = read_client_manifest(cache_root)
           return cache_root unless client_update_due?(manifest)
 
-          release = fetch_release_for_version(wanted_assets: wanted_assets)
+          begin
+            release = fetch_release_for_version(wanted_assets: wanted_assets)
+          rescue StandardError => e
+            raise unless use_cache_if_check_fails
+
+            # Not marked as checked, so the next run tries again.
+            warn "Could not check for a newer client (#{e.message}); using the cached one"
+            return cache_root
+          end
           if release.nil? || client_release_current?(manifest, release, wanted_assets)
             mark_client_update_checked(cache_root)
             return cache_root
