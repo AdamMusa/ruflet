@@ -442,27 +442,90 @@ class PageUpdateSerializationTest < Minitest::Test
   end
 
   def test_children_emptied_after_targeted_update_with_a_mixed_list_stay_empty_in_a_full_patch
+    { control_first: [:control, :raw], raw_first: [:raw, :control] }.each do |order, kinds|
+      sent = []
+      page = Ruflet::Page.new(
+        session_id: "s1",
+        client_details: { "route" => "/" },
+        sender: ->(action, payload) { sent << [action, payload] }
+      )
+      todo = Ruflet.column(controls: [])
+      page.add(todo)
+      items = kinds.map { |kind| kind == :control ? Ruflet.text("milk") : { "_c" => "Text", "value" => "raw" } }
+
+      page.update(todo, controls: items)
+      todo.children.clear
+      page.update
+      sent.clear
+      page.title = "Done"
+      page.update
+
+      views_patch = sent.last[1]["patch"].find { |op| op[2] == "views" }
+      column = views_patch[3].first["controls"].first
+      assert_equal todo.wire_id, column["_i"], order
+      assert_empty Array(column["controls"]), order
+      refute todo.props.key?("controls"), order
+    end
+  end
+
+  # Behavior change of the #105 fix: a control removed from children after a
+  # targeted controls: update is no longer treated as mounted, even when the
+  # list keeps other controls. Before, the props copy kept it in the page's
+  # tree walks, so it was still patched, found by id and sent its events.
+  def test_control_removed_after_targeted_update_is_no_longer_mounted
     sent = []
     page = Ruflet::Page.new(
       session_id: "s1",
       client_details: { "route" => "/" },
       sender: ->(action, payload) { sent << [action, payload] }
     )
-    todo = Ruflet.column(controls: [])
-    page.add(todo)
+    list = Ruflet.column(controls: [])
+    page.add(list)
+    clicked = []
+    keep = Ruflet.text("keep")
+    gone = Ruflet.text("gone", id: "gone_id")
+    button = Ruflet.text_button(content: Ruflet.text("b"), on_click: ->(_e) { clicked << :clicked })
+    page.update(list, controls: [keep, gone, button])
+    button_wire_id = button.wire_id
 
-    page.update(todo, controls: [Ruflet.text("milk"), { "_c" => "Text", "value" => "raw" }])
-    todo.children.clear
-    page.update
+    list.children.delete(gone)
+    list.children.delete(button)
     sent.clear
-    page.title = "Done"
+    page.update
+    assert_equal [list.wire_id], sent.map { |_, payload| payload["id"] }
+    controls_op = sent.first[1]["patch"].find { |op| op[2] == "controls" }
+    assert_equal %w[keep], controls_op[3].map { |control| control["value"] }
+
+    sent.clear
+    gone.props["value"] = "ghost"
+    page.update
+    assert_empty sent
+    assert_nil page.get_control("gone_id")
+    page.dispatch_event(target: button_wire_id, name: "click", data: nil)
+    assert_empty clicked
+  end
+
+  def test_field_removed_after_targeted_update_leaves_the_form
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    required = ->(value) { "required" if value.to_s.empty? }
+    name = Ruflet.text_field(value: "Ann", validator: required)
+    email = Ruflet.text_field(value: "", validator: required)
+    form = Ruflet.form(controls: [])
+    page.add(form)
+
+    page.update(form, controls: [name, email])
+    form.children.delete(email)
     page.update
 
-    views_patch = sent.last[1]["patch"].find { |op| op[2] == "views" }
-    column = views_patch[3].first["controls"].first
-    assert_equal todo.wire_id, column["_i"]
-    assert_empty Array(column["controls"])
-    refute todo.props.key?("controls")
+    assert_equal [name], form.fields
+    sent.clear
+    assert form.validate
+    refute sent.any? { |_, payload| payload["id"] == email.wire_id }
   end
 
   # Behavior change of the #105 fix: page.update(col, controls: list) copies
