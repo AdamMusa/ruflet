@@ -375,6 +375,28 @@ module RufletCompat
       %w[version help new create].each { |command| cli "empty", command, flag }
       %w[run update debug build install devices emulators doctor].each { |command| cli "default_app", command, flag }
     end
+    # run, update, debug and emulators parse with OptionParser, so they also
+    # take the short and prefix forms it completes from their long options,
+    # though none of these is declared (`run -d`, above, is --desktop and keeps
+    # that meaning, D6). `run -v` and `update -v` reach OptionParser's own
+    # --version.
+    cli "default_app", "run", "main.rb", "-p", "9000"
+    cli "default_app", "run", "main.rb", "-n"
+    cli "default_app", "run", "main.rb", "-w", seed: "prebuilt_clients"
+    cli "default_app", "run", "main.rb", "--desk", seed: "prebuilt_clients"
+    cli "default_app", "run", "main.rb", "-v"
+    cli "default_app", "update", "-c"
+    cli "default_app", "update", "all", "-c", "-p", "linux"
+    cli "default_app", "update", "all", "-f"
+    cli "default_app", "update", "-v"
+    cli "default_app", "debug", "-d", "chrome", before: [%w[build web]]
+    cli "default_app", "debug", "--dev", "chrome", before: [%w[build web]]
+    cli "default_app", "debug", "-p", "macos", before: [%w[build web]]
+    cli "default_app", "debug", "web", "-r", before: [%w[build web]]
+    cli "default_app", "debug", "web", "-w", "canvaskit", before: [%w[build web]]
+    cli "default_app", "emulators", "-c"
+    cli "default_app", "emulators", "-d"
+    cli "default_app", "emulators", "-s", "-e", "Pixel_8_API_35"
 
     INVOCATIONS.freeze
 
