@@ -18,9 +18,11 @@ require "timeout"
 #   returns: what a sync method returns for that reply (default: result)
 #   local:   why the method sends nothing (it works in Ruby), and where that
 #            behaviour is tested; the other options are then not used
+#   also:    more calls of the same method, each a Hash of args:, kwargs:
+#            and sends: (a default, or a case the main spec does not pass)
 # MethodContractCoverageTest fails for any public method without a spec.
 module MethodContract
-  Spec = Struct.new(:type, :method_name, :args, :kwargs, :name, :sends, :sync, :result, :returns, :local,
+  Spec = Struct.new(:type, :method_name, :args, :kwargs, :name, :sends, :sync, :result, :returns, :local, :also,
                     keyword_init: true)
 
   DEFAULT_RESULT = "contract result"
@@ -53,6 +55,17 @@ module MethodContract
             returns: options.key?(:returns) ? options.delete(:returns) : :result,
             local: options.delete(:local)
           )
+          spec.also = Array(options.delete(:also)).map do |call|
+            call = call.dup
+            extra = spec.dup
+            extra.args = call.delete(:args) || []
+            extra.kwargs = call.delete(:kwargs) || {}
+            extra.sends = call.delete(:sends)
+            extra.also = []
+            raise ArgumentError, "#{type}##{method_name}: unknown also options #{call.keys}" unless call.empty?
+
+            extra
+          end
           raise ArgumentError, "#{type}##{method_name}: unknown options #{options.keys}" unless options.empty?
 
           key = [spec.type, spec.method_name]
@@ -177,8 +190,10 @@ module MethodContract
   def self.define_tests(test_class, types)
     test_class.include(Assertions)
     @specs.values.select { |spec| types.include?(spec.type) && spec.local.nil? }.each do |spec|
-      test_class.send(:define_method, "test_#{spec.type}_#{spec.method_name.sub(/\?\z/, "_p")}_sends_#{spec.name}") do
-        assert_method_contract(spec)
+      base = "test_#{spec.type}_#{spec.method_name.sub(/\?\z/, "_p")}_sends_#{spec.name}"
+      test_class.send(:define_method, base) { assert_method_contract(spec) }
+      spec.also.each_with_index do |extra, index|
+        test_class.send(:define_method, "#{base}_call_#{index + 2}") { assert_method_contract(extra) }
       end
     end
   end

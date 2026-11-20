@@ -19,7 +19,7 @@ MethodContract.define(
       "is_supported_encoder" => { args: ["sample:encoder"], sends: {"encoder" => "sample:encoder"} },
       "pause_recording" => {  },
       "resume_recording" => {  },
-      "start_recording" => { kwargs: { configuration: { sample_rate: 44_100 } }, sends: {"configuration" => {"sample_rate" => 44_100}} },
+      "start_recording" => { kwargs: { configuration: { sample_rate: 44_100 } }, sends: {"configuration" => {"sample_rate" => 44_100}}, also: [{ sends: {"configuration" => {}} }] },
       "stop_recording" => {  }
     },
     "battery" => {
@@ -41,8 +41,7 @@ MethodContract.define(
       "get_min_exposure_offset" => {  },
       "get_min_zoom_level" => {  },
       "initialize_camera" => { args: [{ name: "0", lens_direction: :back }, :high], name: "initialize", sends: {"description" => {"name" => "0", "lens_direction" => "back"}, "resolution_preset" => "high", "enable_audio" => true} },
-      # Without an orientation it sends nil (invoke_nil_values_test).
-      "lock_capture_orientation" => { args: [:portrait_up], sends: {"orientation" => "portrait_up"} },
+      "lock_capture_orientation" => { args: [:portrait_up], sends: {"orientation" => "portrait_up"}, also: [{ sends: {"orientation" => nil} }] },
       "pause_preview" => {  },
       "pause_video_recording" => {  },
       "prepare_for_video_recording" => {  },
@@ -78,7 +77,7 @@ MethodContract.define(
     "file_picker" => {
       "get_directory_path" => { sends: {} },
       "pick_files" => { sends: {"file_type" => "any", "allow_multiple" => false, "with_data" => false} },
-      "save_file" => { kwargs: { file_name: :report, src_bytes: [1, 2, 255] }, sends: {"file_name" => "report", "file_type" => "any", "src_bytes" => "\x01\x02\xFF".b} },
+      "save_file" => { kwargs: { file_name: :report, src_bytes: [1, 2, 255] }, sends: {"file_name" => "report", "file_type" => "any", "src_bytes" => "\x01\x02\xFF".b}, also: [{ sends: {"file_type" => "any"} }] },
       "upload" => { args: ["sample:files"], sends: {"files" => "sample:files"} }
     },
     # flashlight.on replaces Ruflet::Control#on: it turns the light on.
@@ -89,8 +88,7 @@ MethodContract.define(
     },
     "geolocator" => {
       "distance_between" => { args: ["sample:start_latitude", "sample:start_longitude", "sample:end_latitude", "sample:end_longitude"], sends: {"start_latitude" => "sample:start_latitude", "start_longitude" => "sample:start_longitude", "end_latitude" => "sample:end_latitude", "end_longitude" => "sample:end_longitude"} },
-      # Without a configuration it sends no args (service_method_contract_test).
-      "get_current_position" => { kwargs: { configuration: { accuracy: "high", distance_filter: 10 } }, sends: {"settings" => {"accuracy" => "high", "distance_filter" => 10}} },
+      "get_current_position" => { kwargs: { configuration: { accuracy: "high", distance_filter: 10 } }, sends: {"settings" => {"accuracy" => "high", "distance_filter" => 10}}, also: [{ sends: nil }] },
       "get_last_known_position" => {  },
       "get_permission_status" => {  },
       "is_location_service_enabled" => {  },
@@ -137,12 +135,12 @@ MethodContract.define(
     },
     "secure_storage" => {
       # Each platform option key is sent; its value's keys become Strings.
-      "clear" => { kwargs: { android: { reset_on_error: true } }, sends: {"android" => {"reset_on_error" => true}} },
-      "contains_key" => { args: ["sample:key"], kwargs: { web: { db_name: "db" } }, sends: {"key" => "sample:key", "web" => {"db_name" => "db"}} },
-      "get" => { args: ["sample:key"], kwargs: { ios: { accessibility: "first_unlock" } }, sends: {"key" => "sample:key", "ios" => {"accessibility" => "first_unlock"}} },
-      "get_all" => { kwargs: { macos: { synchronizable: true } }, sends: {"macos" => {"synchronizable" => true}} },
+      "clear" => { kwargs: { android: { reset_on_error: true } }, sends: {"android" => {"reset_on_error" => true}}, also: [{ sends: {} }] },
+      "contains_key" => { args: ["sample:key"], kwargs: { web: { db_name: "db" } }, sends: {"key" => "sample:key", "web" => {"db_name" => "db"}}, also: [{ args: ["sample:key"], sends: {"key" => "sample:key"} }] },
+      "get" => { args: ["sample:key"], kwargs: { ios: { accessibility: "first_unlock" } }, sends: {"key" => "sample:key", "ios" => {"accessibility" => "first_unlock"}}, also: [{ args: ["sample:key"], sends: {"key" => "sample:key"} }] },
+      "get_all" => { kwargs: { macos: { synchronizable: true } }, sends: {"macos" => {"synchronizable" => true}}, also: [{ sends: {} }] },
       "get_availability" => {  },
-      "remove" => { args: ["sample:key"], kwargs: { windows: { use_backward_compatibility: true } }, sends: {"key" => "sample:key", "windows" => {"use_backward_compatibility" => true}} },
+      "remove" => { args: ["sample:key"], kwargs: { windows: { use_backward_compatibility: true } }, sends: {"key" => "sample:key", "windows" => {"use_backward_compatibility" => true}}, also: [{ args: ["sample:key"], sends: {"key" => "sample:key"} }] },
       "set" => { args: ["sample:key", "sample:value"], sends: {"key" => "sample:key", "value" => "sample:value"} }
     },
     "semantics_service" => {
@@ -152,7 +150,7 @@ MethodContract.define(
     },
     "share" => {
       # A data: byte list inside a file is packed into a binary String.
-      "share_files" => { args: [[{ name: :a, data: [104, 105] }]], sends: {"files" => [{"name" => "a", "data" => "hi".b}], "download_fallback_enabled" => true, "mail_to_fallback_enabled" => true} },
+      "share_files" => { args: [[{ name: :a, data: [104, 105] }]], sends: {"files" => [{"name" => "a", "data" => "hi".b}], "download_fallback_enabled" => true, "mail_to_fallback_enabled" => true}, also: [{ args: ["sample:files"], sends: {"files" => "sample:files", "download_fallback_enabled" => true, "mail_to_fallback_enabled" => true} }] },
       "share_text" => { args: ["sample:text"], sends: {"text" => "sample:text", "download_fallback_enabled" => true, "mail_to_fallback_enabled" => true} },
       "share_uri" => { args: ["sample:uri"], sends: {"uri" => "sample:uri"} }
     },
