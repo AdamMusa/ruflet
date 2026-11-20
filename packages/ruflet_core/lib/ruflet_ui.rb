@@ -106,14 +106,17 @@ module Ruflet
         @cupertino ||= IconGroup.new(Ruflet::CupertinoIcons)
       end
 
+      # Material first, as before. Both compiled maps are probed before either
+      # set builds its constant-name index, so a Cupertino-only name such as
+      # HOUSE_FILL no longer builds Material's index (a symbol per icon) only
+      # to miss in it. The answer is unchanged: CLASS (for CLASS_) is the one
+      # name that needs an index, and neither compiled map has a CLASS key.
       def const_missing(name)
-        resolved = Ruflet::MaterialIcons.resolve_constant(name)
-        return resolved unless resolved.nil?
-
-        resolved = Ruflet::CupertinoIcons.resolve_constant(name)
-        return resolved unless resolved.nil?
-
-        super
+        resolved = Ruflet::MaterialIcons.resolve_constant(name, index: false) ||
+                   Ruflet::CupertinoIcons.resolve_constant(name, index: false) ||
+                   Ruflet::MaterialIcons.resolve_constant(name) ||
+                   Ruflet::CupertinoIcons.resolve_constant(name)
+        resolved.nil? ? super : resolved
       end
 
       def [](name)
