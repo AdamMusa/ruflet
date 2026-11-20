@@ -50,8 +50,10 @@ class MethodContractCoverageTest < Minitest::Test
     Ruflet::UI::ControlFactory::CLASS_MAP.each { |name, klass| types[klass] ||= name }
     lib = File.expand_path("../lib", __dir__)
     Ruflet::Extensions.each do |registration|
-      # Only the extensions this gem ships, not ones another test registered.
-      next unless Object.const_source_location(registration.control_class.name)&.first&.start_with?(lib)
+      # Only the extensions this gem ships, not ones another test registered
+      # (an anonymous class has no name to look up).
+      name = registration.control_class.name
+      next unless name && Object.const_source_location(name)&.first&.start_with?(lib)
 
       types[registration.control_class] ||= registration.name
     end
