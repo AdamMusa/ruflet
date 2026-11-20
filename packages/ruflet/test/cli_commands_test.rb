@@ -5,7 +5,8 @@ require_relative "cli_dispatch_test"
 
 # The command registry `Ruflet::CLI.run` dispatches through and `ruflet help`
 # renders: the built-in table, the registration API later commands use, and
-# that each command's declared options are exactly the ones it reads today.
+# that each command's declared options match the switches it defines or the
+# tokens it looks for today, plus the forms OptionParser completes from them.
 class RufletCliCommandsTest < Minitest::Test
   Commands = Ruflet::CLI::Commands
   Dispatch = RufletCliDispatchTest
@@ -109,6 +110,45 @@ class RufletCliCommandsTest < Minitest::Test
       end
 
       assert_equal parser.summarize, declared.summarize, "#{name} options"
+    end
+  end
+
+  # Every single letter the OptionParser commands take today, and the option
+  # it selects. Most are not declared: OptionParser completes a letter that
+  # starts exactly one long option (`run -d` is --desktop and keeps that
+  # meaning, D6). Letters that reach OptionParser's own --help or --version
+  # (H1 pins `-h` after each command, and `run -v` and `update -v`) or no
+  # option at all are left out.
+  LETTERS = {
+    "run" => { "-d" => "--desktop", "-n" => "--no-reload", "-p" => "--port", "-w" => "--web" },
+    "update" => { "-c" => "--check", "-d" => "--desktop", "-f" => "--force", "-p" => "--platform", "-w" => "--web" },
+    "debug" => {
+      "-d" => "--device-id", "-p" => "--platform", "-r" => "--release", "-v" => "--verbose", "-w" => "--web-renderer"
+    },
+    "emulators" => { "-c" => "--create", "-d" => "--delete", "-e" => "--emulator", "-s" => "--start", "-v" => "--verbose" }
+  }.freeze
+
+  # A unique prefix of a long option selects it too.
+  PREFIXES = {
+    "run" => { "--desk" => "--desktop", "--no" => "--no-reload" },
+    "update" => { "--plat" => "--platform" },
+    "debug" => { "--dev" => "--device-id", "--web" => "--web-renderer" },
+    "emulators" => { "--emu" => "--emulator" }
+  }.freeze
+
+  def test_option_parser_commands_take_the_forms_optionparser_completes
+    assert_equal LETTERS.keys, PREFIXES.keys
+    LETTERS.each do |name, letters|
+      command = Commands.lookup(name)
+      # The switch lists match (above), so without require_exact the command's
+      # own parser completes exactly what one built from the declarations does.
+      refute captured_parser(command.handler).require_exact, "#{name} completes switches"
+
+      taken = ("a".."z").to_h { |letter| ["-#{letter}", selected_option(command, "-#{letter}")] }.compact
+      assert_equal letters, taken, "#{name} single letters"
+      PREFIXES.fetch(name).each do |form, long|
+        assert_equal long, selected_option(command, form), "#{name} #{form}"
+      end
     end
   end
 
@@ -262,6 +302,23 @@ class RufletCliCommandsTest < Minitest::Test
     sink.first
   ensure
     Thread.current[:ruflet_commands_test_parsers] = nil
+  end
+
+  # The long switch of the declared option that `form` (followed by a value)
+  # runs in a parser built from the command's declarations; nil when it runs
+  # none of them.
+  def selected_option(command, form)
+    selected = nil
+    parser = OptionParser.new do |o|
+      command.options.each do |option|
+        long = words(option).find { |word| word.start_with?("--") }
+        o.on(*option.switches) { selected = long }
+      end
+    end
+    capture_io { parser.parse([form, "VALUE"]) }
+    selected
+  rescue OptionParser::ParseError, SystemExit
+    nil
   end
 
   def words(option)

@@ -11,7 +11,8 @@ module Ruflet
     # * handler: the Ruflet::CLI method that runs it, given the arguments after
     #   the word. Its result is the exit status.
     # * usage: its line under "Commands:" in `ruflet help` (nil: not listed).
-    # * options: the flags it reads itself, as OptionParser#on switch strings.
+    # * options: the switches it defines (OptionParser#on switch strings) or,
+    #   for a command that reads argv by hand, the tokens it looks for.
     # * forwards: the tool that receives the arguments it does not read.
     # * help: sections `ruflet help` prints after the command list.
     # * first_run_assets: whether the Flutter template is fetched before it runs.
@@ -28,9 +29,21 @@ module Ruflet
     #   )
     #
     # Nothing parses with the declared options yet: each command still reads
-    # its own arguments, and cli_commands_test checks that the declarations
-    # are exactly what it reads. They are what per-command usage and
-    # unknown-flag errors (CLI-12) are to be built from.
+    # its own arguments, and cli_commands_test checks the declarations
+    # against what it reads. They are what per-command usage and unknown-flag
+    # errors (CLI-12) are to be built from. The commands read more forms than
+    # the declarations spell out, and a parser built from them must keep
+    # accepting those:
+    #
+    # * run, update, debug and emulators parse with OptionParser, so they
+    #   also take what it completes from a long option: a unique prefix
+    #   (`run --desk`) and a single letter that starts exactly one
+    #   (`run -d` is --desktop, `debug -d ID` is --device-id ID). These forms
+    #   are read but not declared. OptionParser completes the same ones from
+    #   the declared switches unless require_exact is set.
+    # * build, install and doctor look for the exact tokens declared: no
+    #   prefixes and no `--flag=value` (`install --device=ID` is not read as
+    #   a device).
     module Commands
       TITLE = "Ruflet CLI"
       HELP_TERM_WIDTH = 16
