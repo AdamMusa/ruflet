@@ -241,12 +241,14 @@ module CompatChild
 
     # The values of a Flutter option in every spelling package:args accepts:
     # `--name value`, `--name=value`, and for a one-letter abbreviation
-    # `-o value` and `-ovalue`.
+    # `-o value` and `-ovalue`. A bare `--` ends the options.
     def option_values(args, long_names, abbr: nil)
       values = []
       index = 0
       while index < args.length
         arg = args[index]
+        break if arg == "--"
+
         name, value = arg.split("=", 2)
         if long_names.include?(arg) || (abbr && arg == "-#{abbr}")
           values << args[index + 1] if args[index + 1]
@@ -273,7 +275,7 @@ module CompatChild
         end
       end
       option_values(args, %w[--export-options-plist]).each do |path|
-        return tool_result(false, stderr: "\"#{path}\" property list does not exist.\n") unless File.exist?(File.expand_path(path, cwd))
+        return tool_result(false, stderr: "\"#{path}\" property list does not exist.\n") unless File.file?(File.expand_path(path, cwd))
       end
       option_values(args, %w[--split-debug-info]).each do |dir|
         stub_write(File.join(File.expand_path(dir, cwd), "app.#{target}.symbols"), body)

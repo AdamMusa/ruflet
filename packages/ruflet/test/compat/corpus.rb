@@ -398,6 +398,20 @@ module RufletCompat
     cli "empty", "help", "-", id: "help-dash"
     cli "default_app", "build", "--self", "-", "apk", id: "build--self-dash-apk"
     cli "default_app", "run", "main.rb", "--", "--help", id: "run-main.rb-end-of-options--help"
+    # CLI-05: relative path flags that work today and must keep working:
+    # paths written against build/client, an output the build exports, an
+    # output whose project path the export replaces, and a client dir the
+    # developer owns (RUFLET_CLIENT_DIR).
+    cli "default_app", "build", "apk", "--self", "--dart-define-from-file=../../config/defines.json", files: defines
+    cli "default_app", "build", "ipa", "--self", "--export-options-plist", "../../ExportOptions.plist",
+        files: { "ExportOptions.plist" => "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<plist version=\"1.0\"><dict/></plist>\n" }
+    cli "default_app", "build", "apk", "--self", "--split-debug-info=../../symbols"
+    cli "default_app", "build", "web", "-o", "../web_dist"
+    cli "default_app", "build", "web", "-o", "build/web"
+    cli "default_app", "build", "apk", "--self", "--split-debug-info=build/app/outputs/symbols"
+    cli "default_app", "build", "apk", "--self", "--split-debug-info=build/android/symbols"
+    cli "default_app", "build", "apk", "--self", "--split-debug-info=symbols", id: "build-apk--self--split-debug-info-symbols-with-RUFLET_CLIENT_DIR",
+                                                 client_copy: true, env: { "RUFLET_CLIENT_DIR" => "<SANDBOX>/client" }
 
     # --- command words, help, usage and exit codes (R2, CLI-12) ----------------
     # How the first argument picks a command (case-insensitively, aliases
