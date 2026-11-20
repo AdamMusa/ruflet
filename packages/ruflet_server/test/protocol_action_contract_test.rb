@@ -184,6 +184,19 @@ class ProtocolActionContractTest < Minitest::Test
       assert_equal [["done", nil], [nil, error], ["legacy", nil]], replies
     end
 
+    contract(kind, :invoke_control_method, "invoke_control_method_ignores_a_reply_that_is_not_a_map") do
+      client = Harness.new(kind)
+      client.register
+      replies = client.replies
+      call_id = client.page.invoke(client.button, "focus", on_result: ->(result, error) { replies << [result, error] })
+
+      assert_silent { client.receive(ACTIONS[:invoke_control_method], [call_id, 1]) }
+      assert_empty replies
+
+      client.receive(ACTIONS[:invoke_control_method], { "call_id" => call_id, "result" => "done", "error" => nil })
+      assert_equal [["done", nil]], replies, "the call is still pending"
+    end
+
     contract(kind, :invoke_control_method, "invoke_sync_returns_the_reply_result") do
       client = Harness.new(kind)
       client.register
