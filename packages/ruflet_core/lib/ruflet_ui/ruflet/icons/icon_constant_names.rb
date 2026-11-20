@@ -25,5 +25,21 @@ module Ruflet
       text = "ICON_#{text}" if first && first >= 48 && first <= 57
       text
     end
+
+    # What a set's constant-name index gives for key (an upcased name) when
+    # key is a compiled-map key that is also its own constant name, as every
+    # key but CLASS_ is; nil otherwise. The index maps each constant name to
+    # its map key, so for such a key the answer needs no index. The index
+    # hands back the map's own key, so the text takes that key's encoding,
+    # not the caller's (a Symbol's text is US-ASCII; the keys are UTF-8).
+    def own_constant_text(key, source)
+      return nil unless source.key?(key) && constant_for(key) == key
+
+      text = key.downcase
+      return text unless text.respond_to?(:force_encoding)
+
+      source.each_key { |stored| return text.force_encoding(stored.encoding) }
+      text
+    end
   end
 end

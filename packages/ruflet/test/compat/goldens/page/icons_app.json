@@ -1,0 +1,176 @@
+{
+  "fixture": "icons_app",
+  "entrypoint": "main.rb",
+  "status": "ok",
+  "messages": [
+    {
+      "action": "register_client",
+      "payload": {
+        "session_id": "compat-session",
+        "page_patch": {
+          "views": [
+            {
+              "_c": "View",
+              "_i": "#1",
+              "route": "/",
+              "_internals": {
+                "host_expanded": true
+              },
+              "controls": [
+                {
+                  "_c": "Column",
+                  "_i": "#2",
+                  "_internals": {
+                    "host_expanded": true
+                  },
+                  "controls": [
+                    {
+                      "_c": "Icon",
+                      "_i": "#3",
+                      "icon": 65604
+                    },
+                    {
+                      "_c": "Icon",
+                      "_i": "#4",
+                      "icon": 69217
+                    },
+                    {
+                      "_c": "Icon",
+                      "_i": "#5",
+                      "icon": 65957
+                    },
+                    {
+                      "_c": "Icon",
+                      "_i": "#6",
+                      "icon": 65604
+                    },
+                    {
+                      "_c": "Icon",
+                      "_i": "#7",
+                      "icon": 69217
+                    },
+                    {
+                      "_c": "Icon",
+                      "_i": "#8",
+                      "icon": 65604
+                    },
+                    {
+                      "_c": "Icon",
+                      "_i": "#9",
+                      "icon": 69217
+                    },
+                    {
+                      "_c": "Icon",
+                      "_i": "#10",
+                      "icon": 131732
+                    },
+                    {
+                      "_c": "Icon",
+                      "_i": "#11",
+                      "icon": 72141
+                    },
+                    {
+                      "_c": "Icon",
+                      "_i": "#12",
+                      "icon": 69217
+                    },
+                    {
+                      "_c": "Icon",
+                      "_i": "#13",
+                      "icon": 131732
+                    },
+                    {
+                      "_c": "Icon",
+                      "_i": "#14",
+                      "icon": 72245
+                    },
+                    {
+                      "_c": "Icon",
+                      "_i": "#15",
+                      "icon": 65604
+                    },
+                    {
+                      "_c": "Icon",
+                      "_i": "#16",
+                      "icon": 72141
+                    },
+                    {
+                      "_c": "Icon",
+                      "_i": "#17",
+                      "icon": 65604
+                    },
+                    {
+                      "_c": "Icon",
+                      "_i": "#18",
+                      "icon": 66925
+                    },
+                    {
+                      "_c": "Icon",
+                      "_i": "#19",
+                      "icon": 66925
+                    },
+                    {
+                      "_c": "IconButton",
+                      "_i": "#20",
+                      "icon": 65604
+                    },
+                    {
+                      "_c": "Button",
+                      "_i": "#21",
+                      "alignment": "center",
+                      "autofocus": false,
+                      "border_radius": {
+                        "all": 8.0
+                      },
+                      "content": "Add",
+                      "icon": 65604,
+                      "opacity_on_click": 0.4,
+                      "size": "large"
+                    },
+                    {
+                      "_c": "FloatingActionButton",
+                      "_i": "#22",
+                      "icon": 69217
+                    },
+                    {
+                      "_c": "TextField",
+                      "_i": "#23",
+                      "prefix_icon": 72141
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "route": "/",
+          "window": {
+            "_c": "Window",
+            "_i": "#24"
+          },
+          "_overlay": {
+            "_c": "Overlay",
+            "_i": "#25",
+            "controls": []
+          },
+          "_services": {
+            "_c": "ServiceRegistry",
+            "_i": "#26",
+            "_services": [],
+            "_internals": {
+              "uid": "00000001"
+            }
+          },
+          "_dialogs": {
+            "_c": "Dialogs",
+            "_i": "#27",
+            "controls": []
+          },
+          "title": "Icons"
+        },
+        "error": ""
+      }
+    }
+  ],
+  "stdout": "",
+  "stderr": ""
+}
