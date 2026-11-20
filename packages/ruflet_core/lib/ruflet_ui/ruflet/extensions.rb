@@ -15,6 +15,9 @@ module Ruflet
     )
 
     @registrations = {}
+    # Kept when this file is loaded again (a hot reload of a vendored
+    # framework), like the Kernel helpers it records.
+    @kernel_helpers ||= {}
 
     class << self
       def register_control(name, control_class:, helpers: nil, flutter: nil)
@@ -51,6 +54,14 @@ module Ruflet
 
       def registered?(name)
         @registrations.key?(normalize_name(name))
+      end
+
+      # The private Kernel DSL helper that register_control defined for this
+      # helper name, as Kernel.instance_method returned it then, or nil. The
+      # client state readers use it to tell Ruflet's own helper from an app
+      # method of the same name (Ruflet::UI::ClientStateReaders).
+      def kernel_helper(name)
+        @kernel_helpers[name.to_sym]
       end
 
       private
@@ -94,7 +105,10 @@ module Ruflet
           _pending_app.public_send(type, **props, &block)
         end
 
-        Kernel.send(:private, helper) if Kernel.method_defined?(helper)
+        return unless Kernel.method_defined?(helper)
+
+        Kernel.send(:private, helper)
+        @kernel_helpers[helper.to_sym] = Kernel.instance_method(helper)
       end
     end
   end
