@@ -19,8 +19,9 @@
 # that no renderer reads (OPEN_SCHEMA_PROBE_PROP, OPEN_SCHEMA_PROBE_EVENT), so
 # a class that drops what it is given fails either way.
 #
-# Wire keys come from Ruby's KEYWORDS, not from Flet's Dart names: the
-# renderer reads the keys Ruby sends.
+# Wire keys come from Ruby's constructor keywords, not from Flet's Dart
+# names: the renderer reads the keys Ruby sends. Only an open-schema class,
+# which has no keywords to read them from, takes its names from the engine.
 module ControlContract
   # A sample value for one prop: what the test passes in, and what the patch
   # must then carry under the prop's wire key.
