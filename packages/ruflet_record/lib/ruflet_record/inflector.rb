@@ -2,8 +2,21 @@
 
 module RufletRecord
   module Inflector
-    # Plurals of words that end in "sse"; singularize drops only the "s".
-    SSE_PLURALS = %w[crevasses impasses finesses posses lacrosses largesses demitasses wrasses].freeze
+    # Plurals of words that end in "sse" (crevasse, mousse); singularize
+    # drops only their "s", so they keep the result they had before -sses
+    # plurals lost "es". Where the -ss word is the usual one (pass, mass,
+    # cross, princess), it wins.
+    SSE_PLURALS = %w[
+      abscisses anabasses bagasses bouillabaisses bretesses causses chasses
+      cosses coulisses crevasses cuisses damasses delicatesses demitasses
+      filasses finesses fougasses gentilesses graisses hausses heathenesses
+      impasses lacrosses largesses molosses mousses nisses noblesses
+      paillasses palliasses pelisses politesses posses retrousses richesses
+      rubasses varisses vinasses wrasses
+    ].freeze
+    # The same for whole words: as suffixes these would also catch the
+    # plurals of -ss words (carcasses, bosses, grasses, potasses, swisses).
+    SSE_WORDS = %w[casses fosses osses rasses tasses tendresses wisses].freeze
 
     class << self
 
@@ -28,12 +41,12 @@ module RufletRecord
 
     # The inverse of pluralize for the words it pluralizes with "es": a
     # trailing "es" goes after ss, ch, sh, x and z, and after status, bus and
-    # alias, so addresses -> address, not addresse. Words ending in "sse"
-    # (crevasse) and other "-uses" words (abuse, minibus) are left as before.
+    # alias, so addresses -> address, not addresse. The -sse words above
+    # and other "-uses" words (abuse, minibus) are left as before.
     def singularize(value)
       word = value.to_s
       return "#{word[0...-3]}y" if word.end_with?("ies")
-      return word[0...-1] if word.end_with?(*Inflector::SSE_PLURALS)
+      return word[0...-1] if word.end_with?(*Inflector::SSE_PLURALS) || Inflector::SSE_WORDS.include?(word.split("_").last)
       return word[0...-2] if word.end_with?("sses", "ches", "shes", "xes", "zes", "statuses", "aliases")
       return word[0...-2] if word == "buses" || word.end_with?("_buses")
       return word[0...-1] if word.end_with?("s") && !word.end_with?("ss")
