@@ -60,9 +60,12 @@ module RufletRecord
         # propagates, and an open outer transaction is left alone.
         execute(outermost ? "BEGIN IMMEDIATE" : "SAVEPOINT #{savepoint}")
         @transaction_depth += 1
+        completed = false
         failed = false
         begin
-          yield
+          result = yield
+          completed = true
+          result
         rescue Exception => error
           failed = true
           @transaction_depth -= 1
@@ -75,7 +78,7 @@ module RufletRecord
           # `yield` and the rescue above.
           unless failed
             @transaction_depth -= 1
-            if aborting_thread?
+            if !completed && aborting_thread?
               rollback_transaction(outermost, savepoint)
             else
               commit_transaction(outermost, savepoint)

@@ -121,6 +121,24 @@ class TransactionExitTest < RufletRecordTestCase
     assert_empty committed_names
   end
 
+  # Only a block cut short by the kill rolls back; one that runs to the end,
+  # here in the dying thread's ensure, commits as it always did.
+  def test_a_block_that_completes_while_its_thread_is_being_killed_commits
+    started = Queue.new
+    thread = Thread.new do
+      started << true
+      sleep
+    ensure
+      User.transaction { User.create!(name: "Ada") }
+    end
+    started.pop
+    thread.kill
+    thread.join
+
+    assert_transaction_closed
+    assert_equal ["Ada"], committed_names
+  end
+
   def test_a_failed_begin_reports_its_own_error
     reconnect(timeout: 50)
     other = SQLite3::Database.new(@database_path)
