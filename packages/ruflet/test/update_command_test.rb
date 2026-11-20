@@ -337,6 +337,129 @@ class RufletCliUpdateCommandTest < Minitest::Test
     end
   end
 
+  # A client with every file the display name is written into.
+  def write_named_client(client_dir)
+    {
+      "android/app/src/main/AndroidManifest.xml" => %(<manifest><application android:label="ruflet_client"/></manifest>\n),
+      "ios/Runner/Info.plist" => "<plist><dict>\n<key>CFBundleDisplayName</key>\n<string>Ruflet</string>\n</dict></plist>\n",
+      "ios/Runner.xcodeproj/project.pbxproj" => %(INFOPLIST_KEY_CFBundleDisplayName = "Ruflet";\n),
+      "macos/Runner/Configs/AppInfo.xcconfig" => "PRODUCT_NAME = ruflet_client\nPRODUCT_BUNDLE_IDENTIFIER = com.example.client\n",
+      "web/manifest.json" => %({"name": "ruflet_client", "short_name": "ruflet_client"}\n),
+      "web/index.html" => "<title>ruflet_client</title>\n"
+    }.each do |path, content|
+      FileUtils.mkdir_p(File.dirname(File.join(client_dir, path)))
+      File.write(File.join(client_dir, path), content)
+    end
+  end
+
+  # `ruflet new` writes `app_name` into services.yaml. ruflet.yaml naming the
+  # app with `display_name`, as the configuration reference documents, used to
+  # lose to it, so the generated name shipped instead of the one the project
+  # states.
+  def test_ruflet_yaml_display_name_wins_over_the_app_name_ruflet_new_writes
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      Ruflet::CLI.send(:write_default_ruflet_config, dir, "shop")
+      ruflet_yaml = File.join(dir, "ruflet.yaml")
+      File.write(ruflet_yaml, File.read(ruflet_yaml).sub("app:\n", "app:\n  display_name: Acme Shop\n"))
+      client_dir = File.join(dir, "client")
+      write_named_client(client_dir)
+
+      Dir.chdir(dir) do
+        config = builder.send(:load_ruflet_config)
+        metadata = builder.send(:sync_client_metadata, client_dir, config)
+
+        assert_equal "Acme Shop", metadata[:display_name]
+        assert_equal "Acme Shop", metadata[:short_name]
+        # The rest of the identity still comes from services.yaml.
+        assert_equal "shop", metadata[:package_name]
+        assert_equal "com.example.shop", metadata[:android_application_id]
+        assert_equal "1.0.0+1", metadata[:version]
+        assert_empty metadata[:mobile_identity_errors]
+      end
+
+      assert_includes File.read(File.join(client_dir, "android/app/src/main/AndroidManifest.xml")), %(android:label="Acme Shop")
+      assert_includes File.read(File.join(client_dir, "ios/Runner/Info.plist")), "<string>Acme Shop</string>"
+      assert_includes File.read(File.join(client_dir, "ios/Runner.xcodeproj/project.pbxproj")), %(INFOPLIST_KEY_CFBundleDisplayName = "Acme Shop";)
+      assert_includes File.read(File.join(client_dir, "macos/Runner/Configs/AppInfo.xcconfig")), "PRODUCT_NAME = Acme Shop\n"
+      assert_equal({ "name" => "Acme Shop", "short_name" => "Acme Shop" },
+        JSON.parse(File.read(File.join(client_dir, "web/manifest.json"))).slice("name", "short_name"))
+      assert_includes File.read(File.join(client_dir, "web/index.html")), "<title>Acme Shop</title>"
+    end
+  end
+
+  def test_ruflet_yaml_name_spellings_replace_services_yaml_ones_and_blank_ones_leave_the_gap
+    builder = DummyBuilder.new
+    services = "app:\n  app_name: Shop\n  display_name: Shop Display\n  package_name: shop\n  organization: com.example\n"
+
+    {
+      "app:\n  display_name: Acme Shop\n" => "Acme Shop",
+      "app:\n  app_name: Acme Shop\n" => "Acme Shop",
+      # A blank name states nothing, so services.yaml still fills it.
+      "app:\n  display_name: \"\"\n" => "Shop",
+      "app:\n  display_name:\n" => "Shop",
+      "app:\n  backend_url: https://api.example.com\n" => "Shop"
+    }.each do |declared, expected|
+      Dir.mktmpdir do |dir|
+        File.write(File.join(dir, "ruflet.yaml"), declared)
+        File.write(File.join(dir, "services.yaml"), services)
+
+        Dir.chdir(dir) do
+          config = builder.send(:load_ruflet_config)
+          metadata = builder.send(:build_client_metadata, config, File.join(dir, "client"))
+
+          assert_equal expected, metadata[:display_name], declared
+          assert_equal "com.example.shop", metadata[:android_application_id], declared
+        end
+      end
+    end
+  end
+
+  # With no package_name in either file the package is derived from the app's
+  # name. Stating the display name in ruflet.yaml must not move it: the bundle
+  # identifiers, binary names and pubspec name stay what they were.
+  def test_ruflet_yaml_display_name_keeps_the_package_derived_from_services_yaml
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "ruflet.yaml"), "app:\n  display_name: Acme Shop\n")
+      File.write(File.join(dir, "services.yaml"), "app:\n  app_name: Voice Journal\n  organization: com.acme\n")
+
+      Dir.chdir(dir) do
+        config = builder.send(:load_ruflet_config)
+        metadata = builder.send(:build_client_metadata, config, File.join(dir, "client"))
+
+        assert_equal "Acme Shop", metadata[:display_name]
+        assert_equal "voice_journal", metadata[:package_name]
+        assert_equal "com.acme.voice_journal", metadata[:android_application_id]
+        assert_equal "com.acme.voice-journal", metadata[:macos_bundle_identifier]
+        # A mobile build still stops for the missing package_name.
+        assert_equal ["app.package_name"], metadata[:mobile_identity_errors]
+      end
+    end
+  end
+
+  # Only app_name and display_name are user-facing names everywhere; `name`
+  # also serves as a package-style name, so this fix leaves it as it was.
+  def test_ruflet_yaml_name_alone_still_lets_services_yaml_app_name_fill
+    builder = DummyBuilder.new
+
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "ruflet.yaml"), "app:\n  name: acme_shop\n")
+      File.write(File.join(dir, "services.yaml"), "app:\n  app_name: Shop\n  package_name: shop\n  organization: com.example\n")
+
+      Dir.chdir(dir) do
+        config = builder.send(:load_ruflet_config)
+        metadata = builder.send(:build_client_metadata, config, File.join(dir, "client"))
+
+        assert_equal "Shop", metadata[:display_name]
+        assert_equal "shop", metadata[:package_name]
+        assert_nil config["package_name"]
+      end
+    end
+  end
+
   def test_services_activate_only_their_required_client_extensions
     builder = DummyBuilder.new
 
