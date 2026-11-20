@@ -1,0 +1,217 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: services_app
+command: ruflet build macos --self
+before: ruflet build ios --self
+exit: 0
+
+## commands (12)
+1. capture3 exit=0
+   git ls-remote https://github.com/AdamMusa/ruflet-template.git refs/heads/main
+   env: GIT_TERMINAL_PROMPT=0
+2. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/flutter precache --macos
+   env: COCOAPODS_DISABLE_STATS=true FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> GEM_HOME=(unset) GEM_PATH=(unset) GEM_ROOT=(unset) PATH=<PROJECT>/build/client/.ruflet/bin:/opt/homebrew/bin:<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:/usr/bin:/bin:/usr/sbin:/sbin
+3. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/flutter pub get
+   env: COCOAPODS_DISABLE_STATS=true FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> GEM_HOME=(unset) GEM_PATH=(unset) GEM_ROOT=(unset) PATH=<PROJECT>/build/client/.ruflet/bin:/opt/homebrew/bin:<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:/usr/bin:/bin:/usr/sbin:/sbin
+4. system cwd=<PROJECT>/build/client/ios exit=0
+   pod install
+   env: COCOAPODS_DISABLE_STATS=true FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<PROJECT>/build/client/.ruflet/bin:/opt/homebrew/bin:<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:/usr/bin:/bin:/usr/sbin:/sbin
+5. system cwd=<PROJECT>/build/client/macos exit=0
+   pod install
+   env: COCOAPODS_DISABLE_STATS=true FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<PROJECT>/build/client/.ruflet/bin:/opt/homebrew/bin:<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:/usr/bin:/bin:/usr/sbin:/sbin
+6. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/dart run flutter_native_splash:create
+   env: COCOAPODS_DISABLE_STATS=true FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> GEM_HOME=(unset) GEM_PATH=(unset) GEM_ROOT=(unset) PATH=<PROJECT>/build/client/.ruflet/bin:/opt/homebrew/bin:<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:/usr/bin:/bin:/usr/sbin:/sbin
+7. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/dart run flutter_launcher_icons
+   env: COCOAPODS_DISABLE_STATS=true FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> GEM_HOME=(unset) GEM_PATH=(unset) GEM_ROOT=(unset) PATH=<PROJECT>/build/client/.ruflet/bin:/opt/homebrew/bin:<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:/usr/bin:/bin:/usr/sbin:/sbin
+8. system exit=0
+   /usr/libexec/PlistBuddy -c "Delete :RufletRuntimeAutostart" <PROJECT>/build/client/macos/Runner/Info.plist
+   options: err out
+9. system exit=0
+   /usr/libexec/PlistBuddy -c "Add :RufletRuntimeAutostart bool true" <PROJECT>/build/client/macos/Runner/Info.plist
+   options: err out
+10. system exit=0
+   /usr/libexec/PlistBuddy -c "Delete :RufletEmbeddedProject" <PROJECT>/build/client/macos/Runner/Info.plist
+   options: err out
+11. system exit=0
+   /usr/libexec/PlistBuddy -c "Add :RufletEmbeddedProject string services_app" <PROJECT>/build/client/macos/Runner/Info.plist
+   options: err out
+12. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/flutter build macos --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=services_app
+   env: COCOAPODS_DISABLE_STATS=true FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> GEM_HOME=(unset) GEM_PATH=(unset) GEM_ROOT=(unset) PATH=<PROJECT>/build/client/.ruflet/bin:/opt/homebrew/bin:<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+## output
+out| [ruflet build] Preparing macos build (self-contained lite)
+out| [ruflet build] Verified 45 pinned Ruflet engine and extension source files at 98377b7ffd4f87c13b6443ceb173ca25170f6115
+out| [ruflet build] iOS signing team set to ABCDE12345
+out| [ruflet build] Excluded assets/AuthKey_COMPAT.p8 from the embedded project; it looks like a credential
+out| [ruflet build] Excluded lib/google-play-compat.json from the embedded project; it looks like a credential
+out| [ruflet build] Excluded assets/AuthKey_COMPAT.p8 from the embedded project; it looks like a credential
+out| [ruflet build] Excluded lib/google-play-compat.json from the embedded project; it looks like a credential
+out| [ruflet build] Added compat_git_ext, compat_local_ext from the extension configuration
+out| [ruflet build] Splash screen is configured
+out| [ruflet build] Launcher icons are configured
+out| [ruflet build] Preparing Flutter macos platform artifacts
+out| [ruflet build] Resolving Flutter packages
+out| [ruflet build] Verified 23 local Ruflet engine, extension and vendor packages
+out| [ruflet build] Running CocoaPods install for ios
+out| [ruflet build] Running CocoaPods install for macos
+out| [ruflet build] Generating splash screen with flutter_native_splash
+out| [ruflet build] Generating launcher icons with flutter_launcher_icons
+out| [ruflet build] Running Flutter build macos --target lib/main.self.dart --dart-define RUFLET_EMBEDDED_PROJECT=services_app
+
+## files
+M <PROJECT>/build/client/android/app/src/main/AndroidManifest.xml  sha256:a6d7c5ef738e3bfe 3086b -> sha256:392814f647103d26 3082b
+M <PROJECT>/build/client/assets/services_app/.ruflet-runtime.json  sha256:5e867a599bd67422 243b -> sha256:9de9a406459aa54a 245b
+M <PROJECT>/build/client/ios/Runner/Info.plist  sha256:bbaadde70aca40c0 3291b -> sha256:064deeb51374c423 4420b
+M <PROJECT>/build/client/macos/Runner/Info.plist  sha256:e036f779d7690fc3 1596b -> sha256:9fd468f31c4d9bab 1578b
+A <PROJECT>/build/macos/Build/Products/Release/Runner.app/Contents/MacOS/Runner  sha256:f7387d613bdf1247 47b mode=755  (new)
+
+## stub side effects (not CLI output)
+  <PROJECT>/build/client/.dart_tool/package_config.json
+  <PROJECT>/build/client/android/app/src/main/res/drawable/launch_background.xml
+  <PROJECT>/build/client/android/app/src/main/res/mipmap-anydpi-v26/launcher_icon.xml
+  <PROJECT>/build/client/android/app/src/main/res/values-v31/styles.xml
+  <PROJECT>/build/client/build/macos/Build/Products/Release/Runner.app/Contents/MacOS/Runner
+
+## diffs
+--- before:<PROJECT>/build/client/android/app/src/main/AndroidManifest.xml
++++ <PROJECT>/build/client/android/app/src/main/AndroidManifest.xml
+@@ -1,5 +1,5 @@
+ <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+-                            <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS"/>
++                        <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS"/>
+ <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION"/>
+ <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+ <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+--- before:<PROJECT>/build/client/assets/services_app/.ruflet-runtime.json
++++ <PROJECT>/build/client/assets/services_app/.ruflet-runtime.json
+@@ -2,7 +2,7 @@
+   "schema": 1,
+   "profile": "lite",
+   "engine": "mruby",
+-  "platform": "ios",
++  "platform": "macos",
+   "project": "services_app",
+   "entrypoint": "main.rb",
+   "cache_key": "f7a7440899f49810ec0221f8c4c7f2e3d63e59887b2191af1c1ee3d9aa5815df",
+--- before:<PROJECT>/build/client/ios/Runner/Info.plist
++++ <PROJECT>/build/client/ios/Runner/Info.plist
+@@ -24,33 +24,33 @@
+ 	<string>????</string>
+ 	<key>CFBundleVersion</key>
+ 	<string>$(FLUTTER_BUILD_NUMBER)</string>
++	<!-- RufletAds is an optional renderer product but is linked by the full
++	     template. Google validates this key while its framework loads, before
++	     Ruflet can inspect the control tree. Keep the template launch-safe with
++	     Google's official sample application id; applications serving live ads
++	     must replace it with their own AdMob application id. -->
+ 	<key>LSRequiresIPhoneOS</key>
+ 	<true/>
++	<!-- A Ruflet backend runs on the developer's machine and is reached over the
++	     local network at a plain http:// address. iOS 14 and later refuse local
++	     network connections without this declaration, and refuse them silently:
++	     the client shows no error, it simply never connects. The Simulator does
++	     not enforce this, so the failure only appears on a real device. -->
++	<key>NSLocalNetworkUsageDescription</key>
++	<string>Local network access is required to connect to a Ruflet application running on your computer.</string>
++	<!-- The self-contained entrypoint asks ruby_runtime for the server that the
++	     platform started before Flutter. Server-driven builds do not link the
++	     plugin, so keeping this ownership flag in the shared template is safe. -->
++	<key>RufletRuntimeAutostart</key>
++	<true/>
++	<!-- App Transport Security blocks cleartext http by default. Allow it only
++	     for local networking, so connecting to a development server works while
++	     internet traffic still requires https. -->
+ 	<key>NSAppTransportSecurity</key>
+ 	<dict>
+ 		<key>NSAllowsLocalNetworking</key>
+ 		<true/>
+ 	</dict>
+-	<key>NSCameraUsageDescription</key>
+-	<string>Scan documents &amp; receipts.</string>
+-	<key>NSLocalNetworkUsageDescription</key>
+-	<string>Find Ruflet services on your network.</string>
+-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+-	<string>This app uses location access for its Ruflet features.</string>
+-	<key>NSLocationWhenInUseUsageDescription</key>
+-	<string>This app uses location access for its Ruflet features.</string>
+-	<key>NSMicrophoneUsageDescription</key>
+-	<string>Record &lt;voice&gt; notes.</string>
+-	<key>NSMotionUsageDescription</key>
+-	<string>Count steps.</string>
+-	<key>NSPhotoLibraryUsageDescription</key>
+-	<string>This app uses photo_library access for its Ruflet features.</string>
+-	<key>RufletEmbeddedProject</key>
+-	<string>services_app</string>
+-	<key>RufletRuntimeAutostart</key>
+-	<true/>
+-	<key>RufletRuntimeProfile</key>
+-	<string>lite</string>
+ 	<key>UIApplicationSceneManifest</key>
+ 	<dict>
+ 		<key>UIApplicationSupportsMultipleScenes</key>
+@@ -95,5 +95,17 @@
+ 	</array>
+ 	<key>UIViewControllerBasedStatusBarAppearance</key>
+ 	<false/>
++	<key>NSCameraUsageDescription</key>
++	<string>Scan documents &amp; receipts.</string>
++	<key>NSMicrophoneUsageDescription</key>
++	<string>Record &lt;voice&gt; notes.</string>
++	<key>NSLocationWhenInUseUsageDescription</key>
++	<string>This app uses location access for its Ruflet features.</string>
++	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
++	<string>This app uses location access for its Ruflet features.</string>
++	<key>NSMotionUsageDescription</key>
++	<string>Count steps.</string>
++	<key>NSPhotoLibraryUsageDescription</key>
++	<string>This app uses photo_library access for its Ruflet features.</string>
+ </dict>
+ </plist>
+--- before:<PROJECT>/build/client/macos/Runner/Info.plist
++++ <PROJECT>/build/client/macos/Runner/Info.plist
+@@ -22,23 +22,25 @@
+ 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+ 	<key>LSMinimumSystemVersion</key>
+ 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
++	<key>NSCameraUsageDescription</key>
++	<string>Scan documents &amp; receipts.</string>
+ 	<key>NSHumanReadableCopyright</key>
+ 	<string>$(PRODUCT_COPYRIGHT)</string>
++	<key>NSLocationUsageDescription</key>
++	<string>This app uses location access for its Ruflet features.</string>
+ 	<key>NSMainNibFile</key>
+ 	<string>MainMenu</string>
+-	<key>NSPrincipalClass</key>
+-	<string>NSApplication</string>
+-	<!-- ruby_runtime owns the embedded server lifecycle in self-contained apps.
+-	     It discovers the one packaged project dynamically. -->
+-	<key>RufletRuntimeAutostart</key>
+-	<true/>
+-	<key>NSCameraUsageDescription</key>
+-	<string>Scan documents &amp; receipts.</string>
+ 	<key>NSMicrophoneUsageDescription</key>
+ 	<string>Record &lt;voice&gt; notes.</string>
+-	<key>NSLocationUsageDescription</key>
+-	<string>This app uses location access for its Ruflet features.</string>
+ 	<key>NSMotionUsageDescription</key>
+ 	<string>Count steps.</string>
++	<key>NSPrincipalClass</key>
++	<string>NSApplication</string>
++	<key>RufletEmbeddedProject</key>
++	<string>services_app</string>
++	<key>RufletRuntimeAutostart</key>
++	<true/>
++	<key>RufletRuntimeProfile</key>
++	<string>lite</string>
+ </dict>
+ </plist>
+--- /dev/null
++++ <PROJECT>/build/macos/Build/Products/Release/Runner.app/Contents/MacOS/Runner
+@@ -0,0 +1,1 @@
++ruflet compat placeholder: flutter build macos

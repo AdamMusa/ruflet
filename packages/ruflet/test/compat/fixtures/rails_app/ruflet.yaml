@@ -1,0 +1,14 @@
+# A ruflet.yaml the developer keeps beside the Rails initializer. `rake
+# ruflet:build` builds from the initializer instead (it points RUFLET_CONFIG at
+# a generated file), so these keys show what that task does with user config.
+app:
+  name: Rails App
+  package_name: rails_app
+  organization: com.compat.rails
+  backend_url: https://rails.example.com
+
+extensions:
+  - charts
+
+android:
+  min_sdk: 24

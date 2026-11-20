@@ -1,0 +1,8 @@
+name: compat_local_ext
+description: Local extension package for the Ruflet CLI compatibility goldens.
+version: 0.0.1
+environment:
+  sdk: ^3.9.2
+dependencies:
+  flutter:
+    sdk: flutter
