@@ -32,7 +32,9 @@ module RufletCompat
       "services_app" => { "kind" => "dir", "path" => "fixtures/services_app" },
       "rails_app" => { "kind" => "dir", "path" => "fixtures/rails_app", "rails" => true },
       # A fresh `rails new` app before `rails generate ruflet:install`.
-      "rails_new_app" => { "kind" => "dir", "path" => "fixtures/rails_new_app", "rails" => true }
+      "rails_new_app" => { "kind" => "dir", "path" => "fixtures/rails_new_app", "rails" => true },
+      # Every way an app names an icon (page golden only).
+      "icons_app" => { "kind" => "dir", "path" => "fixtures/icons_app" }
     }
 
     # Whole-app examples from the published docs (AdamMusa/ruflet_site
@@ -128,6 +130,11 @@ module RufletCompat
     # beside `aab`, and targets are matched case-insensitively.
     cli "default_app", "build", "appbundle", "--self"
     cli "default_app", "build", "APK", "--self", id: "build-uppercase-target-APK--self"
+    # ruflet.yaml names the app with display_name; the services.yaml `ruflet
+    # new` wrote still carries its generated app_name (issue #106).
+    cli "default_app", "build", "apk", id: "build-apk-with-ruflet-yaml-display-name",
+                                       files: { "ruflet.yaml" => "app:\n  display_name: Acme Shop\n" \
+                                                                 "  backend_url: \"https://api.acme.example\"\n" }
 
     # --- run ------------------------------------------------------------------
     run_files = { "apps/admin.rb" => "require \"ruflet\"\n\nRuflet.run { |page| page.add(text(\"Admin\")) }\n" }
@@ -420,7 +427,8 @@ module RufletCompat
       *DOCS_RAILS_APPS.map do |id|
         { "fixture" => "docs_#{id}", "id" => "docs_#{id}--rails-endpoint", "mode" => "rails_endpoint",
           "entrypoint" => "main.rb", "rails" => true, "prelude" => rails_prelude }
-      end
+      end,
+      { "fixture" => "icons_app", "entrypoint" => "main.rb" }
     ].freeze
   end
 end

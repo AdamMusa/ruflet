@@ -36,7 +36,7 @@ module Ruflet
             current_pubspec = load_client_pubspec(client_dir)
             current_name = current_pubspec["name"].to_s
             inferred_display_name = app["app_name"] || app["name"] || config["name"] || humanize_name(File.basename(Dir.pwd))
-            configured_app_name = first_present(app["app_name"], app["display_name"], app["name"])
+            configured_app_name = package_source_name(app)
             package_source = first_present(app["package_name"], config["package_name"], configured_app_name)
             package_source = current_name if package_source.nil?
             package_name = normalize_package_name(package_source)
