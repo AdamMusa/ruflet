@@ -67,8 +67,8 @@ module Ruflet
         "dropdown" => "Dropdown",
         "dropdownm2" => "DropdownM2",
         "dropdown_m2" => "DropdownM2",
-        "option" => "dropdownoption",
-        "dropdownoption" => "dropdownoption",
+        "option" => "Option",
+        "dropdownoption" => "DropdownOption",
         "card" => "Card",
         "banner" => "Banner",
         "datepicker" => "DatePicker",
@@ -152,10 +152,10 @@ module Ruflet
         "scatterchartspot" => "ScatterChartSpot",
         "chartaxis" => "ChartAxis",
         "chartaxislabel" => "ChartAxisLabel",
-        "datacell" => "c",
-        "datacolumn" => "c",
-        "datarow" => "r",
-        "windowdragarea" => "windowDragArea"
+        "datacell" => "DataCell",
+        "datacolumn" => "DataColumn",
+        "datarow" => "DataRow",
+        "windowdragarea" => "WindowDragArea"
       }.freeze
 
       EVENT_PROPS = {
