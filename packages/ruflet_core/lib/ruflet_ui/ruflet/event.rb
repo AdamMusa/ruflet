@@ -10,11 +10,25 @@ module Ruflet
     # Choices whose declared value the renderer reads as a String and sends
     # back as the value of the control they belong to: wire type => the props
     # it reads, first one set wins (material_dropdown.dart: an option's key,
-    # else its text; radio.dart: a radio's value).
+    # else its text; material_dropdown_m2.dart: then its wire id, "_i";
+    # radio.dart: a radio's value).
     CHOICE_VALUE_PROPS = {
-      "DropdownOption" => %w[key text],
-      "Option" => %w[key text],
+      "DropdownOption" => %w[key text _i],
+      "Option" => %w[key text _i],
       "Radio" => %w[value]
+    }.freeze
+
+    # The controls whose value is one of those choices: a Dropdown's options
+    # (select), the radios inside a RadioGroup (change).
+    CHOICE_OWNERS = %w[Dropdown DropdownM2 RadioGroup].freeze
+
+    # Events whose String payload is always the text the user typed, even
+    # when it is not the control's value: material_search_bar.dart syncs the
+    # text with its capitalization applied and sends it as typed; a
+    # Dropdown's text_change is the text typed into it (synced as its text).
+    TEXT_EVENTS = {
+      "SearchBar" => %w[change submit],
+      "Dropdown" => %w[text_change]
     }.freeze
 
     def initialize(name:, target:, raw_data:, page:, control:)
@@ -61,12 +75,12 @@ module Ruflet
     private
 
     # Map and list payloads arrive decoded, and a String payload that holds
-    # JSON is decoded too. The exception is a String that is the control's
-    # own value or text. The client syncs that String into the control
-    # (update_control) right before the event that reports it: TextField
-    # change and submit, Dropdown select and text_change, RadioGroup change.
-    # It is what the user typed or picked, so it stays a String, even when it
-    # looks like JSON ("123", "2.50", "null", "[1]").
+    # JSON is decoded too. The exception is what the user typed or picked:
+    # the payload of a TEXT_EVENTS event, and a String that is the control's
+    # own value, which the client syncs into the control (update_control)
+    # right before the event that reports it (TextField and CodeEditor
+    # change, TextField submit, Dropdown select, RadioGroup change). It stays
+    # a String, even when it looks like JSON ("123", "2.50", "null", "[1]").
     # One case keeps the decoded value: the renderer sends an Integer option
     # key or radio value back as "2", and the handler still gets 2.
     def parse_data(raw)
@@ -74,17 +88,12 @@ module Ruflet
 
       decoded = decode_json(raw)
       return decoded if decoded.equal?(raw)
+      return raw if text_event?
 
       props = @control.respond_to?(:props) ? @control.props : nil
-      return decoded unless props.is_a?(Hash)
+      return decoded unless props.is_a?(Hash) && props["value"] == raw
 
-      if props["value"] == raw
-        declared_choice?(raw, decoded) ? decoded : raw
-      elsif props["text"] == raw
-        raw
-      else
-        decoded
-      end
+      declared_choice?(decoded) ? decoded : raw
     end
 
     def decode_json(raw)
@@ -95,15 +104,22 @@ module Ruflet
       raw
     end
 
+    def text_event?
+      return false unless @control.respond_to?(:wire_type)
+
+      names = TEXT_EVENTS[@control.wire_type]
+      !names.nil? && names.include?(@name.to_s)
+    end
+
     # Whether +decoded+ (not a String) is a value the app declared on one of
-    # the control's choices, while no choice declares +raw+ itself.
-    def declared_choice?(raw, decoded)
+    # the choices of a control that owns choices. When choices declare both
+    # 2 and "2", the client sends "2" for either one, and the handler gets 2
+    # as before.
+    def declared_choice?(decoded)
       return false if decoded.nil? || decoded.is_a?(String) || decoded.is_a?(Hash) || decoded.is_a?(Array)
+      return false unless @control.respond_to?(:wire_type) && CHOICE_OWNERS.include?(@control.wire_type)
 
-      values = choice_values
-      return false if values.include?(raw)
-
-      values.any? { |value| !value.is_a?(String) && value == decoded }
+      choice_values.include?(decoded)
     end
 
     # The declared values of the control's choices: its options, or the
@@ -127,7 +143,7 @@ module Ruflet
         names = CHOICE_VALUE_PROPS[item.wire_type]
         if names
           value = nil
-          names.each { |prop| value = item.props[prop] if value.nil? }
+          names.each { |prop| value = (prop == "_i" ? item.wire_id : item.props[prop]) if value.nil? }
           values << value unless value.nil?
         elsif !FormFields.field?(item) && !FormFields.form?(item)
           stack.concat(item.children)

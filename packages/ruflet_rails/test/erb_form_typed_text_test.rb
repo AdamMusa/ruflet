@@ -2,8 +2,8 @@
 
 require_relative "test_helper"
 
-# An ERB-to-native form posts what the user typed, as Rails params are:
-# Strings, also when the text looks like a number or like JSON. Driven
+# An ERB-to-native form posts what the user typed or picked, as Rails params
+# are: Strings, also when the text looks like a number or like JSON. Driven
 # through the ConnectionProtocol receiver ruflet_rails uses, with the frames
 # textfield.dart sends on each keystroke (update_control, then change with
 # the text as data).
@@ -49,6 +49,8 @@ class ErbFormTypedTextTest < Minitest::Test
               <input type="text" name="price" label="Price">
               <input type="text" name="note" label="Note">
               <input type="text" name="tags" label="Tags">
+              <select name="qty" label="Qty"><option value="1">One</option><option value="2">Two</option></select>
+              <radio-group name="plan" value="10"><radio value="10" label="Ten"></radio><radio value="20" label="Twenty"></radio></radio-group>
               <input type="submit" value="Save">
             </form>
           HTML
@@ -88,13 +90,23 @@ class ErbFormTypedTextTest < Minitest::Test
     page = host.instance_variable_get(:@sessions)[ws.session_key]
 
     zip, price, note, tags = controls_of_type(page.views, "textfield")
-    { zip => "12345", price => "19.90", note => "null", tags => "[1]" }.each do |field, typed|
+    qty = controls_of_type(page.views, "dropdown").first
+    plan = controls_of_type(page.views, "radiogroup").first
+    [
+      [zip, "change", "12345"], [price, "change", "19.90"], [note, "change", "null"], [tags, "change", "[1]"],
+      # material_dropdown.dart (select) and radio_group.dart (change) sync
+      # the picked option's value, then send it, the same way.
+      [qty, "select", "2"], [plan, "change", "20"]
+    ].each do |field, event, typed|
       receive.call(ACTIONS[:update_control], { "id" => field.wire_id, "props" => { "value" => typed } })
-      receive.call(ACTIONS[:control_event], { "target" => field.wire_id, "name" => "change", "data" => typed })
+      receive.call(ACTIONS[:control_event], { "target" => field.wire_id, "name" => event, "data" => typed })
     end
     save = controls_of_type(page.views, "filledbutton").first
     receive.call(ACTIONS[:control_event], { "target" => save.wire_id, "name" => "click", "data" => "" })
 
-    assert_equal({ "zip" => "12345", "price" => "19.90", "note" => "null", "tags" => "[1]" }, fetcher.submitted)
+    assert_equal(
+      { "zip" => "12345", "price" => "19.90", "note" => "null", "tags" => "[1]", "qty" => "2", "plan" => "20" },
+      fetcher.submitted
+    )
   end
 end

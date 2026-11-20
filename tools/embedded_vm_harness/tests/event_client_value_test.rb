@@ -58,8 +58,18 @@ int_group = Ruflet.radio_group(
   content: Ruflet.column(controls: [Ruflet.radio(value: 10), Ruflet.radio(value: 20)]),
   on_change: ->(e) { seen << [e.data, e.control.props["value"]] }
 )
+m2_ints = Ruflet.dropdown_m2(
+  options: [Ruflet.option(key: 1), Ruflet.option(text: 2)],
+  on_change: ->(e) { seen << e.data }
+)
+mixed = Ruflet.dropdown(
+  options: [Ruflet.dropdown_option(key: 2, text: "Two"), Ruflet.dropdown_option(key: "2", text: "String two")],
+  on_select: ->(e) { seen << e.data }
+)
+suffix_field = Ruflet.text_field(suffix: Ruflet.radio(value: 5), on_change: ->(e) { seen << e.data })
+search = Ruflet.search_bar(capitalization: "characters", on_change: ->(e) { seen << e.data })
 menu = Ruflet.popup_menu_button([Ruflet.popup_menu_item("Edit")], on_select: ->(e) { seen << e.data })
-page.add(Ruflet.column(controls: [field, strings, ints, group, int_group, menu]))
+page.add(Ruflet.column(controls: [field, strings, ints, group, int_group, m2_ints, mixed, suffix_field, search, menu]))
 
 ["123", "007", "2.50", "null", "true", "[1]", "{\"a\":1}"].each do |typed|
   seen.clear
@@ -82,6 +92,24 @@ check.call("string radio value", seen.first, %w[20 20])
 seen.clear
 client_sends.call(int_group, "change", "20")
 check.call("Integer radio value", seen.first, [20, 20])
+
+seen.clear
+client_sends.call(m2_ints, "select", "2")
+check.call("Integer text-only option", seen.first, 2)
+
+seen.clear
+client_sends.call(mixed, "select", "2")
+check.call("options declaring 2 and \"2\"", seen.first, 2)
+
+seen.clear
+client_sends.call(suffix_field, "change", "5")
+check.call("text field holding a radio", seen.first, "5")
+
+# The search bar syncs the capitalized text and sends it as typed.
+seen.clear
+page.apply_client_update(search.wire_id, { "value" => "TRUE" })
+page.dispatch_event(target: search.wire_id, name: "change", data: "true")
+check.call("capitalized search bar", seen.first, "true")
 
 # Not a control's own value: decoded as before.
 seen.clear

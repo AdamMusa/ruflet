@@ -127,6 +127,149 @@ class EventClientValueTest < Minitest::Test
     assert_equal [[:ints, 2], [:floats, 2.5], [:bools, false], [:radio, 20, 20]], seen
   end
 
+  # Ruflet.option (dropdown_m2) is read like a dropdown_option, and an
+  # option without a key is read by its text, also an Integer text.
+  def test_dropdown_m2_keys_and_text_only_options_keep_their_declared_type
+    seen = []
+    m2 = Ruflet.dropdown_m2(
+      options: [Ruflet.option(key: 1), Ruflet.option(key: 2)],
+      on_change: ->(e) { seen << [:m2, e.data] }
+    )
+    m2_text_only = Ruflet.dropdown_m2(
+      options: [Ruflet.option(text: 10), Ruflet.option(text: 20)],
+      on_change: ->(e) { seen << [:m2_text_only, e.data] }
+    )
+    text_only = Ruflet.dropdown(
+      options: [Ruflet.dropdown_option(text: 10), Ruflet.dropdown_option(text: 20)],
+      on_select: ->(e) { seen << [:text_only, e.data] }
+    )
+    @page.add(Ruflet.column(controls: [m2, m2_text_only, text_only]))
+
+    client_sends(m2, "select", "2")
+    client_sends(m2_text_only, "select", "20")
+    client_sends(text_only, "select", "20")
+
+    assert_equal [[:m2, 2], [:m2_text_only, 20], [:text_only, 20]], seen
+  end
+
+  # material_dropdown_m2.dart reports an option with neither key nor text by
+  # its wire id, which handlers got as an Integer before.
+  def test_an_option_without_key_or_text_is_reported_by_its_wire_id
+    seen = []
+    dropdown = Ruflet.dropdown_m2(
+      options: [Ruflet.option(content: Ruflet.text("a")), Ruflet.option(content: Ruflet.text("b"))],
+      on_change: ->(e) { seen << e.data }
+    )
+    @page.add(dropdown)
+    picked = dropdown.props["options"][1]
+
+    client_sends(dropdown, "select", picked.wire_id.to_s)
+
+    assert_equal [picked.wire_id], seen
+  end
+
+  # The client sends "2" for both of these options, so the pick cannot be
+  # told apart: the handler gets 2, as before.
+  def test_choices_declaring_both_2_and_the_string_2_keep_the_decoded_value
+    seen = []
+    dropdown = Ruflet.dropdown(
+      options: [Ruflet.dropdown_option(key: 2, text: "Two"), Ruflet.dropdown_option(key: "2", text: "String two")],
+      on_select: ->(e) { seen << e.data }
+    )
+    @page.add(dropdown)
+
+    client_sends(dropdown, "select", "2")
+
+    assert_equal [2], seen
+  end
+
+  # Radios inside a nested RadioGroup (or the options of a nested Dropdown)
+  # belong to that field, not to the group the user picked in.
+  def test_a_radio_group_counts_only_its_own_radios
+    seen = []
+    group = Ruflet.radio_group(
+      content: Ruflet.column(controls: [
+        Ruflet.radio(value: "a"),
+        Ruflet.radio(value: "20"),
+        Ruflet.radio_group(content: Ruflet.radio(value: 20)),
+        Ruflet.dropdown(options: [Ruflet.dropdown_option(key: 20)])
+      ]),
+      on_change: ->(e) { seen << e.data }
+    )
+    @page.add(group)
+
+    client_sends(group, "change", "20")
+
+    assert_equal ["20"], seen
+  end
+
+  # Only a Dropdown or a RadioGroup reports one of its choices as its value.
+  # A TextField reports the typed text, whatever controls it holds.
+  def test_a_text_field_holding_choices_reports_the_typed_text
+    seen = []
+    with_radio = Ruflet.text_field(suffix: Ruflet.radio(value: 5), on_change: ->(e) { seen << e.data })
+    with_dropdown = Ruflet.text_field(
+      suffix: Ruflet.dropdown(options: [Ruflet.dropdown_option(key: 5)]),
+      on_change: ->(e) { seen << e.data }
+    )
+    @page.add(Ruflet.column(controls: [with_radio, with_dropdown]))
+
+    client_sends(with_radio, "change", "5")
+    client_sends(with_radio, "change", "6")
+    client_sends(with_dropdown, "change", "5")
+
+    assert_equal %w[5 6 5], seen
+  end
+
+  # A Symbol key reaches the wire as its String, and comes back as that
+  # String, whether it reads like a word or like a number.
+  def test_symbol_option_keys_come_back_as_their_string
+    seen = []
+    dropdown = Ruflet.dropdown(
+      options: [Ruflet.dropdown_option(key: :"1", text: "One"), Ruflet.dropdown_option(key: :small, text: "Small")],
+      on_select: ->(e) { seen << e.data }
+    )
+    @page.add(dropdown)
+
+    client_sends(dropdown, "select", "1")
+    client_sends(dropdown, "select", "small")
+
+    assert_equal %w[1 small], seen
+  end
+
+  # code_editor.dart syncs the edited text into value, then sends it.
+  def test_code_editor_change_is_the_edited_text
+    seen = []
+    editor = Ruflet.code_editor(value: "", on_change: ->(e) { seen << e.data })
+    @page.add(editor)
+
+    ["{}", "123", "[1]"].each { |text| client_sends(editor, "change", text) }
+
+    assert_equal ["{}", "123", "[1]"], seen
+  end
+
+  # material_search_bar.dart syncs the text with its capitalization applied
+  # and sends it as typed, so the two differ; the handler still gets the
+  # typed text.
+  def test_search_bar_change_and_submit_are_the_typed_text_with_capitalization
+    seen = []
+    bar = Ruflet.search_bar(
+      capitalization: "characters",
+      on_change: ->(e) { seen << [:change, e.data] },
+      on_submit: ->(e) { seen << [:submit, e.data] }
+    )
+    @page.add(bar)
+
+    { "{\"a\":1}" => "{\"A\":1}", "\"q\"" => "\"Q\"", "true" => "TRUE", "1e5" => "1E5" }.each do |typed, synced|
+      @page.apply_client_update(bar.wire_id, { "value" => synced })
+      @page.dispatch_event(target: bar.wire_id, name: "change", data: typed)
+    end
+    @page.apply_client_update(bar.wire_id, { "value" => "NULL" })
+    @page.dispatch_event(target: bar.wire_id, name: "submit", data: "null")
+
+    assert_equal [[:change, "{\"a\":1}"], [:change, "\"q\""], [:change, "true"], [:change, "1e5"], [:submit, "null"]], seen
+  end
+
   def test_dropdown_text_change_is_the_typed_text
     seen = []
     dropdown = Ruflet.dropdown(
@@ -139,6 +282,24 @@ class EventClientValueTest < Minitest::Test
     client_sends(dropdown, "text_change", "null", prop: "text")
 
     assert_equal %w[2 null], seen
+  end
+
+  # After the user picks the option with Integer key 2, the dropdown's value
+  # is "2"; typing "2" into it is still text.
+  def test_dropdown_text_change_matching_the_picked_key_is_the_typed_text
+    seen = []
+    dropdown = Ruflet.dropdown(
+      editable: true,
+      options: [Ruflet.dropdown_option(key: 1, text: "One"), Ruflet.dropdown_option(key: 2, text: "Two")],
+      on_select: ->(e) { seen << [:select, e.data] },
+      on_text_change: ->(e) { seen << [:text_change, e.data] }
+    )
+    @page.add(dropdown)
+
+    client_sends(dropdown, "select", "2")
+    client_sends(dropdown, "text_change", "2", prop: "text")
+
+    assert_equal [[:select, 2], [:text_change, "2"]], seen
   end
 
   # Payloads that are not the control's own value decode as before: JSON
