@@ -485,9 +485,10 @@ class RufletCliClientBootstrapTest < Minitest::Test
 
   # Review probe cases 3 and 4. Without hooks, a generated file stays while
   # any directive under lib/ names it, in any form: an import, an export, a
-  # part, or one alternative of a conditional import or export, the rule
-  # ruflet-template's conformance test applies to the entrypoints. Removing
-  # it would stop that file compiling.
+  # part, or one alternative of a conditional import or export, also after
+  # another directive or a block comment on the same line (review probe r5),
+  # the rule ruflet-template's conformance test applies to the entrypoints.
+  # Removing it would stop that file compiling.
   DIRECTIVES_NAMING_THE_BOOTSTRAP = {
     "lib/mine.dart" => [
       "export 'ruflet_bootstrap.g.dart';",
@@ -496,7 +497,11 @@ class RufletCliClientBootstrapTest < Minitest::Test
       "export \"package:demo/ruflet_bootstrap.g.dart\" show rufletPreRunAppHooks;",
       "import 'stub.dart'\n    if (dart.library.js_interop) 'web.dart'\n    if (dart.library.io) './ruflet_bootstrap.g.dart';",
       "export 'stub.dart' if (dart.library.io) 'package:demo/ruflet_bootstrap.g.dart';",
-      "  import\n    \"ruflet_bootstrap.g.dart\"\r\n    as hooks;"
+      "  import\n    \"ruflet_bootstrap.g.dart\"\r\n    as hooks;",
+      "import 'a.dart'; export 'ruflet_bootstrap.g.dart';",
+      "import 'a.dart';export 'ruflet_bootstrap.g.dart' show rufletPreRunAppHooks;",
+      "/* hooks */ export 'ruflet_bootstrap.g.dart';",
+      "/** a */ /* b */\tpart 'ruflet_bootstrap.g.dart';"
     ],
     "lib/sub/mine.dart" => [
       "export '../ruflet_bootstrap.g.dart';",
@@ -507,7 +512,10 @@ class RufletCliClientBootstrapTest < Minitest::Test
   DIRECTIVES_NAMING_SOMETHING_ELSE = {
     "lib/mine.dart" => [
       "part of 'ruflet_bootstrap.g.dart';",
+      "part\tof 'ruflet_bootstrap.g.dart';",
+      "import 'a.dart'; part of 'ruflet_bootstrap.g.dart';",
       "// export 'ruflet_bootstrap.g.dart';",
+      "/* export 'ruflet_bootstrap.g.dart'; */",
       "export 'package:other/ruflet_bootstrap.g.dart';",
       "import 'stub.dart' if (dart.library.io) 'sub/ruflet_bootstrap.g.dart';",
       "export '/ruflet_bootstrap.g.dart';",
@@ -696,6 +704,29 @@ class RufletCliClientBootstrapTest < Minitest::Test
     end
   end
 
+  # An entrypoint with the block but no import directive gets the import as
+  # its first line, ahead of every declaration (review plant N19). The next
+  # build with hooks finds it and changes nothing.
+  def test_hooks_are_imported_first_in_an_entrypoint_without_imports
+    source = "// An entrypoint without imports.\n#{TEMPLATE_HOOK_BLOCK}\nFuture<void> main() async {}\n"
+    entrypoints = self.class.marked_entrypoints.merge("lib/main.self.dart" => source)
+
+    with_client(entrypoints) do |client_dir|
+      assert_equal File.join(client_dir, GENERATED),
+                   HookedBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+      expected = "import 'ruflet_bootstrap.g.dart';\n" +
+                 source.sub("const rufletPreRunAppHooks = <RufletBootstrapHook>[];\n" \
+                            "const rufletPostFirstFrameHooks = <RufletBootstrapHook>[];\n",
+                            "// This build's hooks are in lib/ruflet_bootstrap.g.dart.\n")
+      assert_equal expected, read_utf8(client_dir, "lib/main.self.dart")
+      assert_equal routed(entrypoints.fetch("lib/main.server.dart")), read_utf8(client_dir, "lib/main.server.dart")
+
+      before = snapshot(client_dir)
+      HookedBuilder.new.send(:write_client_bootstrap, client_dir, {}, platform: "web")
+      assert_equal contents(before), contents(snapshot(client_dir))
+    end
+  end
+
   # A CRLF entrypoint (for example one checked out with core.autocrlf) is
   # found by its markers and stays CRLF; the generated file stays LF.
   def test_a_crlf_entrypoint_is_routed_and_stays_crlf
@@ -799,8 +830,9 @@ class RufletCliClientBootstrapTest < Minitest::Test
       end
     end
     # Without a package name, no package: import is the client's.
-    refute builder.send(:client_bootstrap_import_in?, "import 'package:demo/ruflet_bootstrap.g.dart';\n",
-                        "lib/main.server.dart", nil)
+    ["import 'package:demo/ruflet_bootstrap.g.dart';\n", "import 'package:/ruflet_bootstrap.g.dart';\n"].each do |line|
+      refute builder.send(:client_bootstrap_import_in?, line, "lib/main.server.dart", nil), line
+    end
   end
 
   def test_reads_the_package_name_from_the_clients_pubspec

@@ -53,10 +53,13 @@ module Ruflet
       CLIENT_BOOTSTRAP_IMPORT_URI = /^[ \t]*import\s+(['"])([^'"\r\n]*)\1/
       # Every directive that names another file: import, export or part (not
       # `part of`), up to its semicolon, and every URI in it, a conditional
-      # import's alternatives included. Decides whether the generated file
-      # must stay. The same two patterns as DIRECTIVE and URI_LITERAL in
-      # ruflet-template's tool/conformance/test_bootstrap_hooks_contract.rb.
-      CLIENT_BOOTSTRAP_DIRECTIVE = /^[ \t]*(import|export|part)(?![A-Za-z0-9_$])(?![ \t]+of\b)([^;]*);/
+      # import's alternatives included. A directive may start a line or follow
+      # another directive or a block comment on its line. Decides whether the
+      # generated file must stay, so text that only looks like a directive
+      # after a semicolon (in a comment, say) keeps it too, which is safe. The
+      # same two patterns as DIRECTIVE and URI_LITERAL in ruflet-template's
+      # tool/conformance/test_bootstrap_hooks_contract.rb.
+      CLIENT_BOOTSTRAP_DIRECTIVE = /(?:^|(?<=;)|(?<=\*\/))[ \t]*(import|export|part)(?![A-Za-z0-9_$])(?![ \t]+of\b)([^;]*);/
       CLIENT_BOOTSTRAP_URI_LITERAL = /(['"])([^'"\n]*)\1/
       # ruflet-template pins the same markers in
       # tool/conformance/test_bootstrap_hooks_contract.rb.
@@ -247,7 +250,8 @@ module Ruflet
 
       # Whether any import, export or part directive in the Dart source at
       # `importer` names this client's lib/ruflet_bootstrap.g.dart, through
-      # any of its URIs.
+      # any of its URIs, wherever on its line the directive starts
+      # (CLIENT_BOOTSTRAP_DIRECTIVE).
       def client_bootstrap_reference_in?(source, importer, package_name)
         source.scan(CLIENT_BOOTSTRAP_DIRECTIVE).any? do |_keyword, rest|
           rest.scan(CLIENT_BOOTSTRAP_URI_LITERAL).any? do |_quote, uri|
