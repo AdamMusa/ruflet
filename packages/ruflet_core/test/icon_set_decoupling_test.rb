@@ -158,8 +158,9 @@ class RufletIconSetDecouplingTest < Minitest::Test
   end
 
   # The single-name lookups now try the compiled map before the constant-name
-  # index. That must give the answer the index-first order gave, for every
-  # name in both sets and the spellings apps use.
+  # index. That must give the answer the index-first order gave (the same
+  # text, encoding and frozenness), for every name in both sets and the
+  # spellings apps use.
   def test_single_name_lookups_give_the_index_first_answer
     sets = [
       [Ruflet::MaterialIcons, Ruflet::MaterialIconLookup],
@@ -168,15 +169,19 @@ class RufletIconSetDecouplingTest < Minitest::Test
     keys = sets.flat_map { |_, lookup| lookup.icon_map.keys }.uniq
     inputs = keys.flat_map do |key|
       name = key.downcase
-      [name, name.to_sym, key, Ruflet::IconNames.constant_for(key), name.tr("_", " "), "icons.#{name}"]
+      [name, name.to_sym, name.b, key, Ruflet::IconNames.constant_for(key), name.tr("_", " "), "icons.#{name}"]
     end
-    inputs += ["class", "CLASS", "Class", :class, "", " home ", "0x10044", "65604", 65_604, "not_an_icon"]
+    inputs += ["class", "CLASS", "Class", :class, :class_, "", " home ", "0x10044", "65604", 65_604, "not_an_icon"]
 
     sets.each do |set, lookup|
+      # The map-first answer relies on no two map keys sharing a constant name.
+      assert_equal lookup.icon_map.size, set.icons.size, "#{set}: two icons share a constant name"
       inputs.each do |input|
         icon = set.icons[input.to_s.upcase.to_sym]
         expected = icon.nil? ? (lookup.canonical_name_for(input) || input.to_s) : icon.to_s.downcase
-        assert_equal expected, set[input], "#{set}[#{input.inspect}]"
+        actual = set[input]
+        assert_equal [expected, expected.encoding, expected.frozen?], [actual, actual.encoding, actual.frozen?],
+                     "#{set}[#{input.inspect}]"
       end
     end
 
@@ -190,7 +195,8 @@ class RufletIconSetDecouplingTest < Minitest::Test
                  elsif cupertino.key?(key) then key.downcase
                  else Ruflet::CupertinoIcons.icons.fetch(constant).downcase
                  end
-      assert_equal expected, Ruflet::Icons.const_get(constant), "Icons::#{constant}"
+      actual = Ruflet::Icons.const_get(constant)
+      assert_equal [expected, expected.encoding], [actual, actual.encoding], "Icons::#{constant}"
     end
   end
 

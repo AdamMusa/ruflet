@@ -31,13 +31,17 @@ module Ruflet
       end
     end
 
-    # See Ruflet::MaterialIcons.[]: the compiled map first, the constant-name
-    # index only when the map has no match.
+    # The compiled map first, the constant-name index only for what the map
+    # cannot answer. See Ruflet::MaterialIcons.[].
     def [](name)
+      key = name.to_s.upcase
+      text = Ruflet::IconNames.own_constant_text(key, Ruflet::CupertinoIconLookup.icon_map)
+      return text unless text.nil?
+
       found = Ruflet::CupertinoIconLookup.canonical_name_for(name)
       return found unless found.nil?
 
-      icon = icons[name.to_s.upcase.to_sym]
+      icon = icons[key.to_sym]
       icon.nil? ? name.to_s : icon.to_s.downcase
     end
 

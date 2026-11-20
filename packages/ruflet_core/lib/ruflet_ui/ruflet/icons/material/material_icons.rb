@@ -40,16 +40,22 @@ module Ruflet
       end
     end
 
-    # One probe of the compiled map answers almost every name, so a single
-    # lookup no longer builds the constant-name index below (a symbol per icon,
-    # the cost the deferral exists to avoid). Only a constant name that differs
-    # from its map key (CLASS for CLASS_) still needs the index. The result is
-    # the same plain String the index-first order returned.
+    # Answers from the compiled map when it can, so a single lookup does not
+    # build the constant-name index above (a symbol per icon, the cost the
+    # deferral exists to avoid); only a name the map cannot answer (CLASS,
+    # for CLASS_, or no icon at all) still builds it. The answer is the one
+    # the index-first order gave: a map key that is its own constant name is
+    # its own index entry (IconNames.own_constant_text), and a name the index
+    # answers any other way is never one the map answers.
     def [](name)
+      key = name.to_s.upcase
+      text = Ruflet::IconNames.own_constant_text(key, Ruflet::MaterialIconLookup.icon_map)
+      return text unless text.nil?
+
       found = Ruflet::MaterialIconLookup.canonical_name_for(name)
       return found unless found.nil?
 
-      icon = icons[name.to_s.upcase.to_sym]
+      icon = icons[key.to_sym]
       icon.nil? ? name.to_s : icon.to_s.downcase
     end
 
