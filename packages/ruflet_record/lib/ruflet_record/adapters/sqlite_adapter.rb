@@ -94,7 +94,7 @@ module RufletRecord
       def columns(table_name)
         select_all("PRAGMA table_info(#{SQL.quote_identifier(table_name)})").map do |row|
           Column.new(
-            row["name"], row["type"], row["notnull"].to_i == 1,
+            row["name"], row["type"], row["notnull"].to_i != 1,
             row["dflt_value"], row["pk"].to_i == 1
           )
         end
@@ -171,6 +171,8 @@ module RufletRecord
           elsif value == false
             0
           elsif value.is_a?(Time)
+            # Stored as UTC wall-clock text, which Column#cast reads as UTC.
+            value = value.getutc
             "%04d-%02d-%02d %02d:%02d:%02d" % [
               value.year, value.month, value.day,
               value.hour, value.min, value.sec
