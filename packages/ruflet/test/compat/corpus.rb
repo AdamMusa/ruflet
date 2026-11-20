@@ -130,6 +130,11 @@ module RufletCompat
     # beside `aab`, and targets are matched case-insensitively.
     cli "default_app", "build", "appbundle", "--self"
     cli "default_app", "build", "APK", "--self", id: "build-uppercase-target-APK--self"
+    # ruflet.yaml names the app with display_name; the services.yaml `ruflet
+    # new` wrote still carries its generated app_name (issue #106).
+    cli "default_app", "build", "apk", id: "build-apk-with-ruflet-yaml-display-name",
+                                       files: { "ruflet.yaml" => "app:\n  display_name: Acme Shop\n" \
+                                                                 "  backend_url: \"https://api.acme.example\"\n" }
 
     # --- run ------------------------------------------------------------------
     run_files = { "apps/admin.rb" => "require \"ruflet\"\n\nRuflet.run { |page| page.add(text(\"Admin\")) }\n" }
