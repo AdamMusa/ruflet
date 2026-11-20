@@ -206,15 +206,19 @@ class RufletCliFlutterSdkTest < Minitest::Test
   end
 
   # No system Flutter, no FVM, a fixed host, and a network boundary that
-  # fails the test unless the test replaces it.
+  # fails the test unless the test replaces it. The guards raise
+  # Minitest::Assertion (via the test's own flunk), which is not a
+  # StandardError, so the code's offline `rescue StandardError` cannot
+  # swallow them.
   def managed_only_sdk(spec)
+    test = self
     sdk = DummySdk.new
     sdk.define_singleton_method(:desired_flutter_spec) { |client_dir: nil| spec }
     sdk.define_singleton_method(:flutter_host) { "macos_arm64" }
     sdk.define_singleton_method(:windows_host?) { false }
     sdk.define_singleton_method(:which_command) { |_name| nil }
-    sdk.define_singleton_method(:fetch_releases_manifest) { |_host| flunk "the release manifest must not be fetched" }
-    sdk.define_singleton_method(:download_file) { |url, _destination| flunk "unexpected download of #{url}" }
+    sdk.define_singleton_method(:fetch_releases_manifest) { |_host| test.flunk "the release manifest must not be fetched" }
+    sdk.define_singleton_method(:download_file) { |url, _destination| test.flunk "unexpected download of #{url}" }
     sdk
   end
 
@@ -325,8 +329,35 @@ class RufletCliFlutterSdkTest < Minitest::Test
     end
   end
 
+  def test_installed_managed_sdk_matches_a_pin_with_a_channel_suffix
+    Dir.mktmpdir do |home|
+      pinned = install_managed_sdk(home, "3.41.2")
+      install_managed_sdk(home, "3.44.0")
+      sdk = managed_only_sdk({ version: "3.41.2@stable", source: :fvmrc })
+
+      with_singleton_method(Dir, :home, -> { home }) do
+        assert_equal pinned, sdk.send(:installed_managed_flutter_sdk_root)
+      end
+    end
+  end
+
+  def test_installed_managed_sdk_prefers_the_newest_prerelease_off_the_stable_channel
+    Dir.mktmpdir do |home|
+      install_managed_sdk(home, "3.41.2")
+      prerelease = install_managed_sdk(home, "3.44.0-0.1.pre")
+      sdk = managed_only_sdk({ channel: "beta", source: :metadata })
+
+      with_singleton_method(Dir, :home, -> { home }) do
+        assert_equal prerelease, sdk.send(:installed_managed_flutter_sdk_root)
+      end
+    end
+  end
+
   def test_installed_managed_sdk_picks_the_newest_stable_without_a_pin
     Dir.mktmpdir do |home|
+      # 3.10.0 sorts first as a string and 3.9.0 sorts last, so neither
+      # string order nor directory order can pick 3.41.2 by accident.
+      install_managed_sdk(home, "3.10.0")
       install_managed_sdk(home, "3.9.0")
       newest = install_managed_sdk(home, "3.41.2")
       install_managed_sdk(home, "3.44.0-0.1.pre")

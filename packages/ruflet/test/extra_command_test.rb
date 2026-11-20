@@ -48,8 +48,8 @@ class RufletCliExtraCommandTest < Minitest::Test
       runner.define_singleton_method(:windows_host?) { false }
       runner.define_singleton_method(:which_command) { |_name| nil }
       runner.define_singleton_method(:desired_flutter_spec) { |client_dir: nil| { channel: "stable", source: :metadata } }
-      runner.define_singleton_method(:fetch_releases_manifest) { |_host| raise "plain doctor must not fetch the release manifest" }
-      runner.define_singleton_method(:download_file) { |url, _destination| raise "plain doctor must not download #{url}" }
+      runner.define_singleton_method(:fetch_releases_manifest) { |_host| raise Minitest::Assertion, "plain doctor must not fetch the release manifest" }
+      runner.define_singleton_method(:download_file) { |url, _destination| raise Minitest::Assertion, "plain doctor must not download #{url}" }
       runner.define_singleton_method(:system) { |_env, *args| flutter_runs << args; true }
 
       err = StringIO.new
