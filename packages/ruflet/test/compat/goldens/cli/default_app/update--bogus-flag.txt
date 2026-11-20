@@ -3,7 +3,7 @@
 #   ruby packages/ruflet/test/compat/compat.rb --regenerate
 fixture: default_app
 command: ruflet update --bogus-flag
-exit: 1
+exit: 64
 
 ## commands (4)
 1. capture3 exit=0
@@ -21,7 +21,19 @@ exit: 1
    git -C <TMP>/ruflet-assetsXXXXXXXX/Ruflet rev-parse HEAD
 
 ## output
-err| <uncaught> OptionParser::InvalidOption: invalid option: --bogus-flag
+err| ruflet update: invalid option: --bogus-flag
+err| 
+err| Usage: ruflet update [web|desktop|all] [--check] [--force] [--platform PLATFORM]
+err| 
+err| Download the prebuilt web and desktop clients, or check which are installed.
+err| 
+err| Options:
+err|   --web                 Update the web client
+err|   --desktop             Update the desktop client
+err|   --check               Report which clients are installed instead of updating them
+err|   --force               Download the template and clients again
+err|   --platform PLATFORM   macos, linux or windows (default: this host)
+err|   -h, --help            Show this help
 
 ## files
 <HOME>/.ruflet/templates/ruflet_flutter_template/ created from the template: 208 files identical, 0 template files absent

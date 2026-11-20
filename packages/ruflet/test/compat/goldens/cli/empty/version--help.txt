@@ -8,7 +8,14 @@ exit: 0
 ## commands (0)
 
 ## output
-out| ruflet <RUFLET_VERSION>
+out| Usage: ruflet --version
+out|        ruflet -v
+out|        ruflet version
+out| 
+out| Print the installed Ruflet version.
+out| 
+out| Options:
+out|   -h, --help       Show this help
 
 ## files
 (no files changed)
