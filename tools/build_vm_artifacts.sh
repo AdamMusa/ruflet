@@ -23,7 +23,8 @@
 #   docker run --rm --platform linux/amd64 -v "$PWD:/work" -w /work IMAGE \
 #     sh tools/build_vm_artifacts.sh linux
 #
-# where IMAGE has build-essential, ruby, rake, gperf, bison and mingw-w64.
+# where IMAGE has build-essential, git, ruby, rake, gperf, bison and mingw-w64.
+# git applies the mruby patches in ruby_runtime/vm/patches before the build.
 #
 # Needs ruby_runtime/third_party populated; run from a checkout that has it.
 set -eu
