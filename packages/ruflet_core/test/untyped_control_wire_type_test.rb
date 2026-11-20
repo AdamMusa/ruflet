@@ -5,8 +5,11 @@ require_relative "test_helper"
 # A Ruflet::Control built without its class (Ruflet::Control.new(type: ...))
 # takes its wire type from ControlRegistry::TYPE_MAP. These entries still held
 # the names older Flet clients used ("c", "r", "windowDragArea",
-# "dropdownoption"), so such a control sent a type no current client renders,
-# while the class-built control sent the current one.
+# "dropdownoption"), so such a control sent a different wire type from the
+# class-built one. The engine renders no "windowDragArea" (it shows "Unknown
+# control"); DataTable and Dropdown read their rows, cells, columns and
+# options by slot without checking the type, so the other five still
+# rendered and only their `_c` changes.
 class UntypedControlWireTypeTest < Minitest::Test
   {
     "datacell" => "DataCell",
