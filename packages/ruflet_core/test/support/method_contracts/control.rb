@@ -120,7 +120,7 @@ MethodContract.define(
     },
     "map" => {
       "center_on" => { args: [[1.5, 2.5]], kwargs: { zoom: 9 }, sends: {"point" => {"latitude" => 1.5, "longitude" => 2.5}, "zoom" => 9} },
-      "move_to" => { kwargs: { destination: { lat: 1.5, lng: 2.5 }, zoom: 9, offset: { x: 1, y: 2 }, animation_duration: 300, animation_curve: :ease_in }, sends: {"destination" => {"latitude" => 1.5, "longitude" => 2.5}, "zoom" => 9, "offset" => {"x" => 1, "y" => 2}, "duration" => 300, "curve" => "ease_in"} },
+      "move_to" => { kwargs: { destination: { lat: 1.5, lng: 2.5 }, zoom: 9, offset: { x: 1, y: 2 }, animation_duration: 300, animation_curve: :ease_in }, sends: {"destination" => {"latitude" => 1.5, "longitude" => 2.5}, "zoom" => 9, "offset" => {"x" => 1, "y" => 2}, "duration" => 300, "curve" => "ease_in"}, also: [{ kwargs: { destination: { lat: 1.5, lng: 2.5 }, zoom: 9, animation_duration: 300 }, sends: {"destination" => {"latitude" => 1.5, "longitude" => 2.5}, "zoom" => 9, "duration" => 300} }] },
       "reset_rotation" => { sends: {} },
       "rotate_from" => { args: ["sample:degree"], sends: {"degree" => "sample:degree"} },
       "zoom_in" => { sends: {} },
@@ -198,11 +198,11 @@ MethodContract.define(
       "get_user_agent" => {  },
       "go_back" => {  },
       "go_forward" => {  },
-      "load_file" => { args: [Pathname("/www/index.html")], sends: {"path" => "/www/index.html"} },
-      "load_html" => { args: [:"<p>hi</p>"], kwargs: { base_url: URI("https://example.com/") }, sends: {"value" => "<p>hi</p>", "base_url" => "https://example.com/"}, also: [{ args: [:"<p>hi</p>"], sends: {"value" => "<p>hi</p>"} }] },
-      "load_request" => { args: [URI("https://example.com/")], kwargs: { method: :post }, sends: {"url" => "https://example.com/", "method" => "post"} },
+      "load_file" => { args: [Pathname("/www/index.html")], sends: {"path" => "/www/index.html"}, also: [{ args: ["sample:path"], sends: {"path" => "sample:path"} }] },
+      "load_html" => { args: [:"<p>hi</p>"], kwargs: { base_url: URI("https://example.com/") }, sends: {"value" => "<p>hi</p>", "base_url" => "https://example.com/"}, also: [{ args: ["sample:value"], sends: {"value" => "sample:value"} }] },
+      "load_request" => { args: [URI("https://example.com/")], kwargs: { method: :post }, sends: {"url" => "https://example.com/", "method" => "post"}, also: [{ args: ["sample:url"], kwargs: { method: :post }, sends: {"url" => "sample:url", "method" => "post"} }] },
       "reload" => {  },
-      "run_javascript" => { args: [:"alert(1)"], sends: {"value" => "alert(1)"} },
+      "run_javascript" => { args: [:"alert(1)"], sends: {"value" => "alert(1)"}, also: [{ args: ["sample:value"], sends: {"value" => "sample:value"} }] },
       "scroll_by" => { args: [10.5, "20"], sends: {"x" => 10, "y" => 20} },
       "scroll_to" => { args: ["12", 480.9], sends: {"x" => 12, "y" => 480} },
       "set_javascript_mode" => { args: [:unrestricted], sends: {"mode" => "unrestricted"} }
@@ -217,7 +217,7 @@ MethodContract.define(
       "destroy" => {  },
       "start_dragging" => {  },
       # An edge the table does not name is sent as its String.
-      "start_resizing" => { args: [:bottom_right], sends: {"edge" => "bottomRight"}, also: [{ args: [:middle], sends: {"edge" => "middle"} }] },
+      "start_resizing" => { args: [:bottom_right], sends: {"edge" => "bottomRight"}, also: [{ args: [:middle], sends: {"edge" => "middle"} }, { args: ["sample:edge"], sends: {"edge" => "sample:edge"} }] },
       "to_front" => {  },
       "wait_until_ready_to_show" => {  }
     },

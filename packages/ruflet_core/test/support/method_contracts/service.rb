@@ -68,7 +68,7 @@ MethodContract.define(
       "get_files" => {  },
       "get_image" => {  },
       "set" => { args: [42], sends: {"data" => "42"} },
-      "set_files" => { args: [Pathname("/tmp/a.txt")], sends: {"files" => ["/tmp/a.txt"]} },
+      "set_files" => { args: [Pathname("/tmp/a.txt")], sends: {"files" => ["/tmp/a.txt"]}, also: [{ args: ["sample:files"], sends: {"files" => ["sample:files"]} }] },
       "set_image" => { args: ["sample:value"], sends: {"data" => "sample:value"} }
     },
     "connectivity" => {
@@ -104,8 +104,8 @@ MethodContract.define(
       "vibrate" => {  }
     },
     "local_authentication" => {
-      "authenticate" => { kwargs: { localized_reason: :unlock, biometric_only: 1, android_messages: { sign_in_title: :title, cancel_button: nil } }, sends: {"localized_reason" => "unlock", "biometric_only" => true, "sensitive_transaction" => true, "persist_across_backgrounding" => false, "android_messages" => {"sign_in_title" => "title"}} },
-      "authenticate_sync" => { kwargs: { localized_reason: :unlock, sensitive_transaction: nil, persist_across_backgrounding: "yes", ios_messages: { cancel_button: :cancel } }, sends: {"localized_reason" => "unlock", "biometric_only" => false, "sensitive_transaction" => false, "persist_across_backgrounding" => true, "ios_messages" => {"cancel_button" => "cancel"}}, sync: true },
+      "authenticate" => { kwargs: { localized_reason: :unlock, biometric_only: 1, android_messages: { sign_in_title: :title, cancel_button: nil } }, sends: {"localized_reason" => "unlock", "biometric_only" => true, "sensitive_transaction" => true, "persist_across_backgrounding" => false, "android_messages" => {"sign_in_title" => "title"}}, also: [{ kwargs: { localized_reason: "sample:localized_reason" }, sends: {"localized_reason" => "sample:localized_reason", "biometric_only" => false, "sensitive_transaction" => true, "persist_across_backgrounding" => false} }] },
+      "authenticate_sync" => { kwargs: { localized_reason: :unlock, sensitive_transaction: nil, persist_across_backgrounding: "yes", ios_messages: { cancel_button: :cancel } }, sends: {"localized_reason" => "unlock", "biometric_only" => false, "sensitive_transaction" => false, "persist_across_backgrounding" => true, "ios_messages" => {"cancel_button" => "cancel"}}, sync: true, also: [{ kwargs: { localized_reason: "sample:localized_reason" }, sends: {"localized_reason" => "sample:localized_reason", "biometric_only" => false, "sensitive_transaction" => true, "persist_across_backgrounding" => false} }] },
       "can_check_biometrics" => {  },
       "can_check_biometrics_sync" => { sync: true },
       "device_supported?" => { name: "is_device_supported" },
@@ -175,7 +175,7 @@ MethodContract.define(
       "get_temporary_directory" => {  }
     },
     "url_launcher" => {
-      "can_launch_url" => { args: [URI("https://example.com/")], sends: {"url" => "https://example.com/"} },
+      "can_launch_url" => { args: [URI("https://example.com/")], sends: {"url" => "https://example.com/"}, also: [{ args: ["sample:url"], sends: {"url" => "sample:url"} }] },
       "close_in_app_web_view" => {  },
       "launch_url" => { args: ["sample:url"], sends: {"url" => "sample:url", "mode" => "platform_default"} },
       "open_window" => { args: ["sample:url"], sends: {"url" => "sample:url"} },
