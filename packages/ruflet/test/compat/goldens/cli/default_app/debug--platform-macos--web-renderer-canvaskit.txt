@@ -1,0 +1,20 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet debug --platform macos --web-renderer canvaskit
+before: ruflet build web
+exit: 0
+
+## commands (2)
+1. capture3 exit=0
+   git ls-remote https://github.com/AdamMusa/ruflet-template.git refs/heads/main
+   env: GIT_TERMINAL_PROMPT=0
+2. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/flutter run --web-renderer canvaskit -d macos
+   env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+## output
+
+## files
+(no files changed)

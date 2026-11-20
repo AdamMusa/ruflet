@@ -1,0 +1,641 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: services_app
+command: ruflet build linux
+exit: 0
+
+## commands (9)
+1. capture3 exit=0
+   git ls-remote https://github.com/AdamMusa/ruflet-template.git refs/heads/main
+   env: GIT_TERMINAL_PROMPT=0
+2. system exit=0
+   git clone --depth 1 --branch main --filter=blob:none --sparse https://github.com/AdamMusa/ruflet-template.git <TMP>/ruflet-assetsXXXXXXXX/Ruflet
+   env: GIT_TERMINAL_PROMPT=0
+   options: err out
+3. system exit=0
+   git -C <TMP>/ruflet-assetsXXXXXXXX/Ruflet sparse-checkout set templates/ruflet_flutter_template
+   env: GIT_TERMINAL_PROMPT=0
+   options: err out
+4. capture3 exit=0
+   git -C <TMP>/ruflet-assetsXXXXXXXX/Ruflet rev-parse HEAD
+5. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/flutter precache --linux
+   env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
+6. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/flutter pub get
+   env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
+7. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/dart run flutter_native_splash:create
+   env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
+8. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/dart run flutter_launcher_icons
+   env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
+9. system cwd=<PROJECT>/build/client exit=0
+   <FLUTTER_SDK>/bin/flutter build linux --target lib/main.server.dart --dart-define RUFLET_BACKEND_URL=https://api.example.com
+   env: FLUTTER_ROOT=<FLUTTER_SDK> FVM_FLUTTER_SDK=<FLUTTER_SDK> PATH=<FLUTTER_SDK>/bin:<HOME>/.pub-cache/bin:<FLUTTER_SDK>/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+## output
+out| [ruflet build] Preparing linux build (server-driven)
+out| [ruflet build] Verified 45 pinned Ruflet engine and extension source files at 98377b7ffd4f87c13b6443ceb173ca25170f6115
+out| [ruflet build] Added compat_git_ext, compat_local_ext from the extension configuration
+out| [ruflet build] Splash screen is configured
+out| [ruflet build] Launcher icons are configured
+out| [ruflet build] Preparing Flutter linux platform artifacts
+out| [ruflet build] Resolving Flutter packages
+out| [ruflet build] Verified 23 local Ruflet engine, extension and vendor packages
+out| [ruflet build] Generating splash screen with flutter_native_splash
+out| [ruflet build] Generating launcher icons with flutter_launcher_icons
+out| [ruflet build] Running Flutter build linux --target lib/main.server.dart --dart-define RUFLET_BACKEND_URL=https://api.example.com
+
+## files
+<PROJECT>/build/client/ created from the template: 188 files identical, 0 template files absent
+<HOME>/.ruflet/templates/ruflet_flutter_template/ created from the template: 208 files identical, 0 template files absent
+A <HOME>/.ruflet/templates/ruflet_flutter_template.revision  sha256:9d4a95b50d07fadc 41b  (new)
+A <PROJECT>/build/client/.ruflet-template-revision  sha256:9d4a95b50d07fadc 41b  (new)
+A <PROJECT>/build/client/.ruflet/extension_dependencies.json  sha256:409fcfd77f4125e8 77b  (new)
+A <PROJECT>/build/client/android/app/src/main/AndroidManifest.xml  sha256:a6d7c5ef738e3bfe 3086b  (from template, edited)
+A <PROJECT>/build/client/assets/icon.png  sha256:b55073e3e55d1ee5 73b binary  (from template, edited)
+A <PROJECT>/build/client/assets/icon_android.png  sha256:5d5e8a1051751ce2 73b binary  (new)
+A <PROJECT>/build/client/assets/icon_foreground.png  sha256:081d787c7d725bdd 72b binary  (new)
+A <PROJECT>/build/client/assets/icon_ios.png  sha256:cee19bc5adb0ebd8 73b binary  (new)
+A <PROJECT>/build/client/assets/splash.png  sha256:3329bc1dc19d4ce7 73b binary  (from template, edited)
+A <PROJECT>/build/client/assets/splash_android_12.png  sha256:b5f43239e65284f3 73b binary  (new)
+A <PROJECT>/build/client/assets/splash_dark.png  sha256:cc869d27fd1d485d 69b binary  (new)
+A <PROJECT>/build/client/ios/Runner.xcodeproj/project.pbxproj  sha256:d2910b8f7a03e0d7 31861b  (from template, edited)
+A <PROJECT>/build/client/ios/Runner/Info.plist  sha256:f4451e4beb196d74 4514b  (from template, edited)
+A <PROJECT>/build/client/lib/main.dart  sha256:ac3c7ada2cfa2342 292b  (from template, edited)
+A <PROJECT>/build/client/lib/main.self.dart  sha256:f47cca8f1e9ece58 9107b  (from template, edited)
+A <PROJECT>/build/client/lib/main.server.dart  sha256:21a5d984d0af9832 7185b  (from template, edited)
+A <PROJECT>/build/client/linux/CMakeLists.txt  sha256:957ae466ce1452ea 4768b  (from template, edited)
+A <PROJECT>/build/client/macos/Runner/Configs/AppInfo.xcconfig  sha256:0fa2d10156e1b7b8 615b  (from template, edited)
+A <PROJECT>/build/client/macos/Runner/DebugProfile.entitlements  sha256:bd2d90eea33d2b21 657b  (from template, edited)
+A <PROJECT>/build/client/macos/Runner/Info.plist  sha256:e036f779d7690fc3 1596b  (from template, edited)
+A <PROJECT>/build/client/macos/Runner/Release.entitlements  sha256:395686b8cab742bf 604b  (from template, edited)
+A <PROJECT>/build/client/pubspec.yaml  sha256:682f28fce8f6ed2a 3015b  (from template, edited)
+A <PROJECT>/build/client/web/index.html  sha256:f64e261b28df2ef6 1342b  (from template, edited)
+A <PROJECT>/build/client/web/manifest.json  sha256:780ab7ffbcd4ca29 830b  (from template, edited)
+A <PROJECT>/build/client/windows/CMakeLists.txt  sha256:a41b14aeaa9141e5 4639b  (from template, edited)
+A <PROJECT>/build/client/windows/runner/Runner.rc  sha256:4ba2591e1269fdeb 3055b  (from template, edited)
+A <PROJECT>/build/linux/x64/release/bundle/runner  sha256:1028af952c4a58ef 47b mode=755  (new)
+
+## stub side effects (not CLI output)
+  <PROJECT>/build/client/.dart_tool/package_config.json
+  <PROJECT>/build/client/android/app/src/main/res/drawable/launch_background.xml
+  <PROJECT>/build/client/android/app/src/main/res/mipmap-anydpi-v26/launcher_icon.xml
+  <PROJECT>/build/client/android/app/src/main/res/values-v31/styles.xml
+  <PROJECT>/build/client/build/linux/x64/release/bundle/runner
+
+## diffs
+--- /dev/null
++++ <HOME>/.ruflet/templates/ruflet_flutter_template.revision
+@@ -0,0 +1,1 @@
++c0ffee00c0ffee00c0ffee00c0ffee00c0ffee00
+--- /dev/null
++++ <PROJECT>/build/client/.ruflet-template-revision
+@@ -0,0 +1,1 @@
++c0ffee00c0ffee00c0ffee00c0ffee00c0ffee00
+--- /dev/null
++++ <PROJECT>/build/client/.ruflet/extension_dependencies.json
+@@ -0,0 +1,6 @@
++{
++  "external_packages": [
++    "compat_git_ext",
++    "compat_local_ext"
++  ]
++}
+\ No newline at end of file
+--- <TEMPLATE>/android/app/src/main/AndroidManifest.xml
++++ <PROJECT>/build/client/android/app/src/main/AndroidManifest.xml
+@@ -1,7 +1,13 @@
+ <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+-    <uses-permission android:name="android.permission.INTERNET"/>
++                            <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS"/>
++<uses-permission android:name="android.permission.ACTIVITY_RECOGNITION"/>
++<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
++<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
++<uses-permission android:name="android.permission.RECORD_AUDIO"/>
++<uses-permission android:name="android.permission.CAMERA"/>
++<uses-permission android:name="android.permission.INTERNET"/>
+     <application
+-        android:label="Ruflet Demo"
++        android:label="Compat Services"
+         android:name="${applicationName}"
+         android:icon="@mipmap/launcher_icon"
+         android:enableOnBackInvokedCallback="true"
+Binary <PROJECT>/build/client/assets/icon.png: sha256:b55073e3e55d1ee5
+Binary <PROJECT>/build/client/assets/icon_android.png: sha256:5d5e8a1051751ce2
+Binary <PROJECT>/build/client/assets/icon_foreground.png: sha256:081d787c7d725bdd
+Binary <PROJECT>/build/client/assets/icon_ios.png: sha256:cee19bc5adb0ebd8
+Binary <PROJECT>/build/client/assets/splash.png: sha256:3329bc1dc19d4ce7
+Binary <PROJECT>/build/client/assets/splash_android_12.png: sha256:b5f43239e65284f3
+Binary <PROJECT>/build/client/assets/splash_dark.png: sha256:cc869d27fd1d485d
+--- <TEMPLATE>/ios/Runner.xcodeproj/project.pbxproj
++++ <PROJECT>/build/client/ios/Runner.xcodeproj/project.pbxproj
+@@ -491,7 +491,7 @@
+ 				DEVELOPMENT_TEAM = "";
+ 				ENABLE_BITCODE = NO;
+ 				INFOPLIST_FILE = Runner/Info.plist;
+-				INFOPLIST_KEY_CFBundleDisplayName = "Ruflet Demo";
++				INFOPLIST_KEY_CFBundleDisplayName = "Compat Services";
+ 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+ 				LD_RUNPATH_SEARCH_PATHS = (
+ 					"$(inherited)",
+@@ -676,7 +676,7 @@
+ 				DEVELOPMENT_TEAM = "";
+ 				ENABLE_BITCODE = NO;
+ 				INFOPLIST_FILE = Runner/Info.plist;
+-				INFOPLIST_KEY_CFBundleDisplayName = "Ruflet Demo";
++				INFOPLIST_KEY_CFBundleDisplayName = "Compat Services";
+ 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+ 				LD_RUNPATH_SEARCH_PATHS = (
+ 					"$(inherited)",
+@@ -701,7 +701,7 @@
+ 				DEVELOPMENT_TEAM = "";
+ 				ENABLE_BITCODE = NO;
+ 				INFOPLIST_FILE = Runner/Info.plist;
+-				INFOPLIST_KEY_CFBundleDisplayName = "Ruflet Demo";
++				INFOPLIST_KEY_CFBundleDisplayName = "Compat Services";
+ 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+ 				LD_RUNPATH_SEARCH_PATHS = (
+ 					"$(inherited)",
+--- <TEMPLATE>/ios/Runner/Info.plist
++++ <PROJECT>/build/client/ios/Runner/Info.plist
+@@ -7,7 +7,7 @@
+ 	<key>CFBundleDevelopmentRegion</key>
+ 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+ 	<key>CFBundleDisplayName</key>
+-	<string>Ruflet Demo</string>
++	<string>Compat Services</string>
+ 	<key>CFBundleExecutable</key>
+ 	<string>$(EXECUTABLE_NAME)</string>
+ 	<key>CFBundleIdentifier</key>
+@@ -15,7 +15,7 @@
+ 	<key>CFBundleInfoDictionaryVersion</key>
+ 	<string>6.0</string>
+ 	<key>CFBundleName</key>
+-	<string>Ruflet Demo</string>
++	<string>Compat Services</string>
+ 	<key>CFBundlePackageType</key>
+ 	<string>APPL</string>
+ 	<key>CFBundleShortVersionString</key>
+@@ -97,5 +97,17 @@
+ 	</array>
+ 	<key>UIViewControllerBasedStatusBarAppearance</key>
+ 	<false/>
++	<key>NSCameraUsageDescription</key>
++	<string>Scan documents &amp; receipts.</string>
++	<key>NSMicrophoneUsageDescription</key>
++	<string>Record &lt;voice&gt; notes.</string>
++	<key>NSLocationWhenInUseUsageDescription</key>
++	<string>This app uses location access for its Ruflet features.</string>
++	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
++	<string>This app uses location access for its Ruflet features.</string>
++	<key>NSMotionUsageDescription</key>
++	<string>Count steps.</string>
++	<key>NSPhotoLibraryUsageDescription</key>
++	<string>This app uses photo_library access for its Ruflet features.</string>
+ </dict>
+ </plist>
+--- <TEMPLATE>/lib/main.dart
++++ <PROJECT>/build/client/lib/main.dart
+@@ -1,3 +1,7 @@
+ import 'main.self.dart' as self_app;
++import 'package:compat_git_ext/compat_git_ext.dart' as compat_git_ext;
++import 'package:compat_local_ext/compat_local_ext.dart' as compat_local_ext;
+ 
+ Future<void> main() => self_app.main();
++    compat_git_ext.Extension(),
++    compat_local_ext.Extension(),
+--- <TEMPLATE>/lib/main.self.dart
++++ <PROJECT>/build/client/lib/main.self.dart
+@@ -3,6 +3,8 @@
+ import 'package:ruflet/ruflet.dart';
+ import 'package:ruflet_ads/ruflet_ads.dart' as ruflet_ads;
+ import 'package:ruflet/src/widgets/platform_startup_app.dart';
++    compat_git_ext.Extension(),
++    compat_local_ext.Extension(),
+ // --FAT_CLIENT_START--
+ import 'package:ruflet_audio/ruflet_audio.dart' as ruflet_audio;
+ // --FAT_CLIENT_END--
+@@ -38,6 +40,8 @@
+ import 'package:ruby_runtime/ruflet_runtime.dart';
+ 
+ import 'package:ruflet_webview/ruflet_webview.dart' as ruflet_webview;
++import 'package:compat_git_ext/compat_git_ext.dart' as compat_git_ext;
++import 'package:compat_local_ext/compat_local_ext.dart' as compat_local_ext;
+ 
+ const bool isProduction = bool.fromEnvironment('dart.vm.product');
+ const String kConfiguredClientUrl = String.fromEnvironment(
+--- <TEMPLATE>/lib/main.server.dart
++++ <PROJECT>/build/client/lib/main.server.dart
+@@ -2,6 +2,8 @@
+ 
+ import 'package:ruflet/ruflet.dart';
+ import 'package:ruflet_ads/ruflet_ads.dart' as ruflet_ads;
++    compat_git_ext.Extension(),
++    compat_local_ext.Extension(),
+ // --FAT_CLIENT_START--
+ import 'package:ruflet_audio/ruflet_audio.dart' as ruflet_audio;
+ // --FAT_CLIENT_END--
+@@ -36,6 +38,8 @@
+ 
+ import 'connection_probe.dart';
+ import 'package:ruflet_webview/ruflet_webview.dart' as ruflet_webview;
++import 'package:compat_git_ext/compat_git_ext.dart' as compat_git_ext;
++import 'package:compat_local_ext/compat_local_ext.dart' as compat_local_ext;
+ 
+ const bool isProduction = bool.fromEnvironment('dart.vm.product');
+ const int kRufletPort = 8550;
+--- <TEMPLATE>/linux/CMakeLists.txt
++++ <PROJECT>/build/client/linux/CMakeLists.txt
+@@ -4,10 +4,10 @@
+ 
+ # The name of the executable created for the application. Change this to change
+ # the on-disk name of your application.
+-set(BINARY_NAME "ruflet_client")
++set(BINARY_NAME "compat_services")
+ # The unique GTK application identifier for this application. See:
+ # https://wiki.gnome.org/HowDoI/ChooseApplicationID
+-set(APPLICATION_ID "com.example.ruflet_client")
++set(APPLICATION_ID "com.compat.compat_services")
+ 
+ # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
+ # versions of CMake.
+--- <TEMPLATE>/macos/Runner/Configs/AppInfo.xcconfig
++++ <PROJECT>/build/client/macos/Runner/Configs/AppInfo.xcconfig
+@@ -5,10 +5,10 @@
+ // 'flutter create' template.
+ 
+ // The application's name. By default this is also the title of the Flutter window.
+-PRODUCT_NAME = ruflet_client
++PRODUCT_NAME = Compat Services
+ 
+ // The application's bundle identifier
+-PRODUCT_BUNDLE_IDENTIFIER = com.example.rubyNativeClient
++PRODUCT_BUNDLE_IDENTIFIER = com.compat.compat-services
+ 
+ // The copyright displayed in application information
+-PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
++PRODUCT_COPYRIGHT = Copyright © 2026 com.compat. All rights reserved.
+--- <TEMPLATE>/macos/Runner/DebugProfile.entitlements
++++ <PROJECT>/build/client/macos/Runner/DebugProfile.entitlements
+@@ -12,10 +12,10 @@
+ 	<true/>
+ 	<key>com.apple.security.files.user-selected.read-write</key>
+ 	<true/>
+-	<key>com.apple.security.device.audio-input</key>
+-	<true/>
+ 	<key>com.apple.security.device.camera</key>
+ 	<true/>
++	<key>com.apple.security.device.audio-input</key>
++	<true/>
+ 	<key>com.apple.security.personal-information.location</key>
+ 	<true/>
+ </dict>
+--- <TEMPLATE>/macos/Runner/Info.plist
++++ <PROJECT>/build/client/macos/Runner/Info.plist
+@@ -28,15 +28,17 @@
+ 	<string>MainMenu</string>
+ 	<key>NSPrincipalClass</key>
+ 	<string>NSApplication</string>
+-	<key>NSCameraUsageDescription</key>
+-	<string>Camera access may be requested by previewed Ruflet applications.</string>
+-	<key>NSMicrophoneUsageDescription</key>
+-	<string>Microphone access may be requested by previewed Ruflet applications.</string>
+-	<key>NSLocationUsageDescription</key>
+-	<string>Location access may be requested by previewed Ruflet applications.</string>
+ 	<!-- ruby_runtime owns the embedded server lifecycle in self-contained apps.
+ 	     It discovers the one packaged project dynamically. -->
+ 	<key>RufletRuntimeAutostart</key>
+ 	<true/>
++	<key>NSCameraUsageDescription</key>
++	<string>Scan documents &amp; receipts.</string>
++	<key>NSMicrophoneUsageDescription</key>
++	<string>Record &lt;voice&gt; notes.</string>
++	<key>NSLocationUsageDescription</key>
++	<string>This app uses location access for its Ruflet features.</string>
++	<key>NSMotionUsageDescription</key>
++	<string>Count steps.</string>
+ </dict>
+ </plist>
+--- <TEMPLATE>/macos/Runner/Release.entitlements
++++ <PROJECT>/build/client/macos/Runner/Release.entitlements
+@@ -10,10 +10,10 @@
+ 	<true/>
+ 	<key>com.apple.security.files.user-selected.read-write</key>
+ 	<true/>
+-	<key>com.apple.security.device.audio-input</key>
+-	<true/>
+ 	<key>com.apple.security.device.camera</key>
+ 	<true/>
++	<key>com.apple.security.device.audio-input</key>
++	<true/>
+ 	<key>com.apple.security.personal-information.location</key>
+ 	<true/>
+ </dict>
+--- <TEMPLATE>/pubspec.yaml
++++ <PROJECT>/build/client/pubspec.yaml
+@@ -1,40 +1,14 @@
+-name: ruflet_client
+-description: "A new Flutter project."
+-# The following line prevents the package from being accidentally published to
+-# pub.dev using `flutter pub publish`. This is preferred for private packages.
+-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+-
+-# The following defines the version and build number for your application.
+-# A version number is three numbers separated by dots, like 1.2.43
+-# followed by an optional build number separated by a +.
+-# Both the version and the builder number may be overridden in flutter
+-# build by specifying --build-name and --build-number, respectively.
+-# In Android, build-name is used as versionName while build-number used as versionCode.
+-# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+-# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
+-# Read more about iOS versioning at
+-# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+-# In Windows, build-name is used as the major, minor, and patch parts
+-# of the product and file versions while build-number is used as the build suffix.
+-version: 1.0.0+1
+-
++name: compat_services
++description: Services-heavy fixture for the Ruflet CLI compatibility goldens.
++publish_to: none
++version: 2.3.4+56
+ environment:
+-  sdk: ^3.9.2
+-
+-# Dependencies specify other packages that your package needs in order to work.
+-# To automatically upgrade your package dependencies to the latest versions
+-# consider running `flutter pub upgrade --major-versions`. Alternatively,
+-# dependencies can be manually updated by changing the version numbers below to
+-# the latest version available on pub.dev. To see which dependencies have newer
+-# versions available, run `flutter pub outdated`.
++  sdk: "^3.9.2"
+ dependencies:
+   flutter:
+     sdk: flutter
+   flutter_web_plugins:
+     sdk: flutter
+-
+-  # Exact Ruflet engine and extension packages from the pinned engine commit
+-  # 98377b7ffd4f87c13b6443ceb173ca25170f6115. No git/Python dependency.
+   ruflet:
+     path: ruflet_packages/ruflet
+   ruflet_ads:
+@@ -75,80 +49,61 @@
+     path: ruflet_packages/ruflet_webview
+   ruflet_qrcode_scanner:
+     path: ruflet_packages/ruflet_qrcode_scanner
+-  ruby_runtime: ^0.0.13
+-  flutter_native_splash: ^2.4.7
++  flutter_native_splash: "^2.4.7"
++  compat_git_ext:
++    git:
++      url: https://github.com/example/compat_git_ext
++      ref: v1.2.3
++  compat_local_ext:
++    path: "../../extensions/compat_local_ext"
+ dev_dependencies:
+-  change_app_package_name: ^1.5.0
++  change_app_package_name: "^1.5.0"
+   flutter_launcher_icons: "^0.14.4"
+-  
+   flutter_test:
+     sdk: flutter
+-
+-  # The "flutter_lints" package below contains a set of recommended lints to
+-  # encourage good coding practices. The lint set provided by the package is
+-  # activated in the `analysis_options.yaml` file located at the root of your
+-  # package. See that file for information about deactivating specific lint
+-  # rules and activating additional ones.
+-  flutter_lints: ^5.0.0
+-
+-# For information on the generic Dart part of this file, see the
+-# following page: https://dart.dev/tools/pub/pubspec
++  flutter_lints: "^5.0.0"
+ flutter_native_splash:
+-  color: "#FFFFFF"
+-  image: assets/splash.png
++  color: "#112233"
++  image: "assets/splash.png"
+   fullscreen: true
+-
++  image_dark: "assets/splash_dark.png"
++  color_dark: "#000000"
++  branding_mode: bottom
++  android: true
++  ios: true
++  web: true
++  ios_content_mode: scaleAspectFit
++  web_image_mode: center
++  android_gravity: center
++  android_12:
++    image: "assets/splash_android_12.png"
++    icon_background_color: "#112233"
++    image_dark: "assets/splash_dark.png"
++    icon_background_color_dark: "#000000"
+ flutter_launcher_icons:
+-  android: "launcher_icon"
++  android: launcher_icon
+   ios: true
+   remove_alpha_ios: true
+   background_color_ios: "#FFFFFF"
+-  image_path: "assets/splash.png"
++  image_path: "assets/icon.png"
+   background_color: "#FFFFFF"
+-  theme_color: "#FFFFFF"
+-  min_sdk_android: 21 # android min sdk min:16, default 21
++  theme_color: "#336699"
++  min_sdk_android: 23
+   web:
+     generate: true
+-    image_path: "assets/splash.png"
++    image_path: "assets/icon.png"
+     background_color: "#FFFFFF"
+-    theme_color: "#FFFFFF"
++    theme_color: "#336699"
+   windows:
+     generate: true
+-    image_path: "assets/splash.png"
+-    icon_size: 48 # min:48, max:256, default: 48
++    image_path: "assets/icon.png"
++    icon_size: 64
+   macos:
+     generate: true
+-    image_path: "assets/splash.png"
+-# The following section is specific to Flutter packages.
++    image_path: "assets/icon.png"
++  adaptive_icon_foreground: "assets/icon_foreground.png"
++  adaptive_icon_background: "#FFFFFF"
++  image_path_android: "assets/icon_android.png"
++  image_path_ios: "assets/icon_ios.png"
+ flutter:
+-
+-  # The following line ensures that the Material Icons font is
+-  # included with your application, so that you can use the icons in
+-  # the material Icons class.
+   uses-material-design: true
+-
+-  # An image asset can refer to one or more resolution-specific "variants", see
+-  # https://flutter.dev/to/resolution-aware-images
+-
+-  # For details regarding adding assets from package dependencies, see
+-  # https://flutter.dev/to/asset-from-package
+-
+-  # To add custom fonts to your application, add a fonts section here,
+-  # in this "flutter" section. Each entry in this list should have a
+-  # "family" key with the font family name, and a "fonts" key with a
+-  # list giving the asset and other descriptors for the font. For
+-  # example:
+-  # fonts:
+-  #   - family: Schyler
+-  #     fonts:
+-  #       - asset: fonts/Schyler-Regular.ttf
+-  #       - asset: fonts/Schyler-Italic.ttf
+-  #         style: italic
+-  #   - family: Trajan Pro
+-  #     fonts:
+-  #       - asset: fonts/TrajanPro.ttf
+-  #       - asset: fonts/TrajanPro_Bold.ttf
+-  #         weight: 700
+-  #
+-  # For details regarding fonts from package dependencies,
+-  # see https://flutter.dev/to/font-from-package
+--- <TEMPLATE>/web/index.html
++++ <PROJECT>/build/client/web/index.html
+@@ -16,18 +16,18 @@
+ 
+   <meta charset="UTF-8">
+   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+-  <meta name="description" content="A new Flutter project.">
++  <meta name="description" content="Services-heavy fixture for the Ruflet CLI compatibility goldens.">
+ 
+   <!-- iOS meta tags & icons -->
+   <meta name="mobile-web-app-capable" content="yes">
+   <meta name="apple-mobile-web-app-status-bar-style" content="black">
+-  <meta name="apple-mobile-web-app-title" content="ruflet_client">
++  <meta name="apple-mobile-web-app-title" content="Compat Services">
+   <link rel="apple-touch-icon" href="icons/Icon-192.png">
+ 
+   <!-- Favicon -->
+   <link rel="icon" type="image/png" href="favicon.png">
+ 
+-  <title>ruflet_client</title>
++  <title>Compat Services</title>
+   <link rel="manifest" href="manifest.json">
+   <meta content="width=device-width, initial-scale=1.0" name="viewport">
+ </head>
+--- <TEMPLATE>/web/manifest.json
++++ <PROJECT>/build/client/web/manifest.json
+@@ -1,35 +1,35 @@
+ {
+-    "name": "ruflet_client",
+-    "short_name": "ruflet_client",
+-    "start_url": ".",
+-    "display": "standalone",
+-    "background_color": "#FFFFFF",
+-    "theme_color": "#FFFFFF",
+-    "description": "A new Flutter project.",
+-    "orientation": "portrait-primary",
+-    "prefer_related_applications": false,
+-    "icons": [
+-        {
+-            "src": "icons/Icon-192.png",
+-            "sizes": "192x192",
+-            "type": "image/png"
+-        },
+-        {
+-            "src": "icons/Icon-512.png",
+-            "sizes": "512x512",
+-            "type": "image/png"
+-        },
+-        {
+-            "src": "icons/Icon-maskable-192.png",
+-            "sizes": "192x192",
+-            "type": "image/png",
+-            "purpose": "maskable"
+-        },
+-        {
+-            "src": "icons/Icon-maskable-512.png",
+-            "sizes": "512x512",
+-            "type": "image/png",
+-            "purpose": "maskable"
+-        }
+-    ]
+-}
+\ No newline at end of file
++  "name": "Compat Services",
++  "short_name": "Compat Services",
++  "start_url": ".",
++  "display": "standalone",
++  "background_color": "#FFFFFF",
++  "theme_color": "#FFFFFF",
++  "description": "Services-heavy fixture for the Ruflet CLI compatibility goldens.",
++  "orientation": "portrait-primary",
++  "prefer_related_applications": false,
++  "icons": [
++    {
++      "src": "icons/Icon-192.png",
++      "sizes": "192x192",
++      "type": "image/png"
++    },
++    {
++      "src": "icons/Icon-512.png",
++      "sizes": "512x512",
++      "type": "image/png"
++    },
++    {
++      "src": "icons/Icon-maskable-192.png",
++      "sizes": "192x192",
++      "type": "image/png",
++      "purpose": "maskable"
++    },
++    {
++      "src": "icons/Icon-maskable-512.png",
++      "sizes": "512x512",
++      "type": "image/png",
++      "purpose": "maskable"
++    }
++  ]
++}
+--- <TEMPLATE>/windows/CMakeLists.txt
++++ <PROJECT>/build/client/windows/CMakeLists.txt
+@@ -1,10 +1,10 @@
+ # Project-level configuration.
+ cmake_minimum_required(VERSION 3.14)
+-project(ruflet_client LANGUAGES CXX)
++project(compat_services LANGUAGES CXX)
+ 
+ # The name of the executable created for the application. Change this to change
+ # the on-disk name of your application.
+-set(BINARY_NAME "ruflet_client")
++set(BINARY_NAME "compat_services")
+ 
+ # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
+ # versions of CMake.
+--- <TEMPLATE>/windows/runner/Runner.rc
++++ <PROJECT>/build/client/windows/runner/Runner.rc
+@@ -89,13 +89,13 @@
+     BEGIN
+         BLOCK "040904e4"
+         BEGIN
+-            VALUE "CompanyName", "com.example" "\0"
+-            VALUE "FileDescription", "ruflet_client" "\0"
++            VALUE "CompanyName", "com.compat" "\0"
++            VALUE "FileDescription", "Compat Services" "\0"
+             VALUE "FileVersion", VERSION_AS_STRING "\0"
+-            VALUE "InternalName", "ruflet_client" "\0"
+-            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
+-            VALUE "OriginalFilename", "ruflet_client.exe" "\0"
+-            VALUE "ProductName", "ruflet_client" "\0"
++            VALUE "InternalName", "compat_services" "\0"
++            VALUE "LegalCopyright", "Copyright (C) 2026 com.compat. All rights reserved." "\0"
++            VALUE "OriginalFilename", "compat_services.exe" "\0"
++            VALUE "ProductName", "Compat Services" "\0"
+             VALUE "ProductVersion", VERSION_AS_STRING "\0"
+         END
+     END
+--- /dev/null
++++ <PROJECT>/build/linux/x64/release/bundle/runner
+@@ -0,0 +1,1 @@
++ruflet compat placeholder: flutter build linux
