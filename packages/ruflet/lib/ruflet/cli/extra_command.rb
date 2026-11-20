@@ -67,7 +67,8 @@ module Ruflet
         verbose = false
         cold = false
         parser = OptionParser.new do |o|
-          o.on("--create") { action = "create" }
+          # -c and --c reached --create before --cold made them ambiguous.
+          o.on("--create", "-c", "--c") { action = "create" }
           o.on("--delete") { action = "delete" }
           o.on("--start") { action = "start" }
           o.on("--emulator ID") { |v| emulator_id = v }
@@ -113,7 +114,7 @@ module Ruflet
         parser = OptionParser.new do |o|
           o.on("--platform NAME") { |v| options[:platform] = v }
           # --device and -d already reached --device-id as abbreviations.
-          o.on("--device ID", "--device-id ID") { |v| options[:device_id] = v }
+          o.on("--device-id ID", "--device ID") { |v| options[:device_id] = v }
           o.on("--release") { options[:release] = true }
           o.on("-v", "--verbose") { options[:verbose] = true }
           o.on("--web-renderer NAME") { |v| options[:web_renderer] = v }

@@ -83,12 +83,14 @@ module Ruflet
     end
 
     # `ruflet help` lists the commands; `ruflet help <command>` shows one.
-    # A word that is not a command still lists them all.
+    # A word that is not a command still lists them all, and so does `--`,
+    # which ends the options rather than being one (`help --` and
+    # `help -- build` list them, as they did before).
     def command_help(args)
       word = args.first.to_s.downcase
       entry = Commands.lookup(word)
       return print_command_help(entry) if entry && entry.name != "help"
-      raise OptionParser::InvalidOption, args.first if entry.nil? && Commands.flag?(word)
+      raise OptionParser::InvalidOption, args.first if entry.nil? && word != "--" && Commands.flag?(word)
 
       print_help
       0

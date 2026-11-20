@@ -403,7 +403,9 @@ module Ruflet
         summary: "Run the Flutter client in build/client with `flutter run`.",
         options: [
           option("--platform NAME", description: "web, ios, android, macos, windows or linux"),
-          option("--device ID", "--device-id ID", description: "Flutter device to run on"),
+          # --device-id stays first: -d and --dev select this option as they did
+          # before --device was declared beside it.
+          option("--device-id ID", "--device ID", description: "Flutter device to run on"),
           option("--release", description: "Run a release build"),
           option("-v", "--verbose", description: "Run Flutter with -v"),
           option("--web-renderer NAME", description: "Passed to flutter run as --web-renderer")
@@ -464,7 +466,9 @@ module Ruflet
         synopsis: ["ruflet emulators [-v|--verbose]", "ruflet emulators --start --emulator ID [--cold] [-v|--verbose]"],
         summary: "List the configured emulators, or start one.",
         options: [
-          option("--create", description: "Not implemented yet"),
+          # -c and --c reached --create as abbreviations before --cold existed,
+          # and must keep doing so.
+          option("--create", description: "Not implemented yet", hidden: %w[-c --c]),
           option("--delete", description: "Not implemented yet"),
           option("--start", description: "Launch the emulator named by --emulator"),
           option("--emulator ID", description: "Emulator to start"),
