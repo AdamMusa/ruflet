@@ -28,6 +28,8 @@ raise "insert failed" unless first.id == 1 && second.id == 2
 raise "lazy query failed" unless pending.pluck(:title) == ["Ship RufletRecord"]
 raise "scope failed" unless Note.done.first.title == "Verify mruby"
 raise "count failed" unless Note.count == 2
+raise "endless range failed" unless Note.where(id: 2..).pluck(:title) == ["Verify mruby"]
+raise "beginless range failed" unless Note.where(id: ...2).pluck(:title) == ["Ship RufletRecord"]
 
 first.update!(done: true)
 raise "update failed" unless Note.done.count == 2
