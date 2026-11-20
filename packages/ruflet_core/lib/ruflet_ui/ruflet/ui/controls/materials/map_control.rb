@@ -73,26 +73,29 @@ module Ruflet
           end
 
           # [lat, lon], { latitude:, longitude: } (or lat:/lon:/lng:), or an
-          # object with to_h giving one of those. Anything else, nil included,
-          # is passed on unchanged: Hash#to_h and nil.to_h return a Hash, so
-          # converting those again would never end.
+          # object whose to_h gives one of those; nil means not given, and a
+          # value without to_h (a String, say) is passed on as it is. Anything
+          # else (a shorter Array, a Hash without both coordinates) raises
+          # ArgumentError here, where the mistake was made. It used to raise
+          # SystemStackError or TypeError: nil.to_h and Hash#to_h return a
+          # Hash, and the conversion kept calling itself on it.
           def normalize_coordinates(value)
             case value
             when nil
-              nil
+              return nil
             when Array
               return { "latitude" => value[0], "longitude" => value[1] } if value.length >= 2
-
-              value
             when Hash
               latitude = value["latitude"] || value[:latitude] || value["lat"] || value[:lat]
               longitude = value["longitude"] || value[:longitude] || value["lon"] || value[:lon] || value["lng"] || value[:lng]
               return { "latitude" => latitude, "longitude" => longitude } unless latitude.nil? || longitude.nil?
-
-              value
             else
-              value.respond_to?(:to_h) ? normalize_coordinates(value.to_h) : value
+              return value unless value.respond_to?(:to_h)
+
+              coordinates = value.to_h
+              return normalize_coordinates(coordinates) unless coordinates.nil?
             end
+            raise ArgumentError, "map coordinates must be [latitude, longitude] or a Hash with latitude and longitude, got #{value.inspect}"
           end
 
           def normalize_map_value(value)

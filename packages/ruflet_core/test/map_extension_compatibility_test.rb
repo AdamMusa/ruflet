@@ -46,9 +46,9 @@ class MapExtensionCompatibilityTest < Minitest::Test
     assert_equal "zoom_in", @sent.last[1]["name"]
   end
 
-  # move_to's destination is optional, but nil (and a Hash with no latitude
-  # and longitude) used to recurse in normalize_coordinates until the stack
-  # ran out, since nil.to_h and Hash#to_h both return a Hash.
+  # move_to's destination is optional, but nil used to recurse in
+  # normalize_coordinates until the stack ran out, since nil.to_h and
+  # Hash#to_h both return a Hash.
   def test_move_to_without_a_destination_sends_only_what_was_given
     map = Ruflet.map([], initial_center: [0, 0])
     @page.add(map)
@@ -60,16 +60,45 @@ class MapExtensionCompatibilityTest < Minitest::Test
     map.move_to(destination: { latitude: 1.5, longitude: 2.5 })
     assert_equal({ "destination" => { "latitude" => 1.5, "longitude" => 2.5 } }, @sent.last[1]["args"])
 
-    map.center_on({ "x" => 1 })
-    assert_equal({ "point" => { "x" => 1 } }, @sent.last[1]["args"])
+    # The client's center_on does nothing without a point.
+    map.center_on(nil)
+    assert_equal({}, @sent.last[1]["args"])
+  end
+
+  # Coordinates that cannot be read used to overflow the stack (a Hash
+  # without both coordinates, []), or raise TypeError ([1]). They now raise
+  # ArgumentError, and nothing reaches the client.
+  def test_unreadable_coordinates_raise_argument_error
+    map = Ruflet.map([], initial_center: [0, 0])
+    @page.add(map)
+    @sent.clear
+
+    [{ "x" => 1 }, { latitude: 1 }, [], [1], Struct.new(:x).new(1)].each do |value|
+      error = assert_raises(ArgumentError, value.inspect) { map.center_on(value) }
+      assert_match(/map coordinates must be \[latitude, longitude\]/, error.message)
+      assert_raises(ArgumentError, value.inspect) { map.move_to(destination: value) }
+    end
+    assert_empty @sent
+
+    # An object whose to_h gives coordinates still works.
+    map.center_on(Struct.new(:lat, :lng).new(1.5, 2.5))
+    assert_equal({ "point" => { "latitude" => 1.5, "longitude" => 2.5 } }, @sent.last[1]["args"])
   end
 
   # The DSL helpers convert coordinates the same way, and overflowed the same.
-  def test_helpers_accept_unset_or_unrecognised_coordinates
+  def test_helpers_take_unset_coordinates_and_reject_unreadable_ones
     assert_nil Ruflet.map([], initial_center: nil).props["initial_center"]
+    assert_nil Ruflet.marker(coordinates: nil, content: Ruflet.text("Pin")).to_patch["coordinates"]
 
-    marker = Ruflet.marker(coordinates: { "x" => 1 }, content: Ruflet.text("Pin"))
-    assert_equal({ "x" => 1 }, marker.to_patch["coordinates"])
+    assert_raises(ArgumentError) { Ruflet.map([], initial_center: [1]) }
+    assert_raises(ArgumentError) { Ruflet.marker(coordinates: { "x" => 1 }, content: Ruflet.text("Pin")) }
+    assert_raises(ArgumentError) { Ruflet.circle_marker(coordinates: [], radius: 4) }
+    # A nil point inside a polyline or polygon is a mistake too.
+    assert_raises(ArgumentError) { Ruflet.polyline_marker(coordinates: [[1, 2], nil]) }
+    assert_raises(ArgumentError) { Ruflet.polygon_marker(coordinates: [[1, 2], { "x" => 1 }]) }
+
+    line = Ruflet.polyline_marker(coordinates: [[1, 2], { lat: 3, lon: 4 }])
+    assert_equal [{ "latitude" => 1, "longitude" => 2 }, { "latitude" => 3, "longitude" => 4 }], line.to_patch["coordinates"]
   end
 
   def test_rich_attribution_family_uses_current_flet_wire_types
