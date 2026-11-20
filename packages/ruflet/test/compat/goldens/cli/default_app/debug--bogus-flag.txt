@@ -1,0 +1,18 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet debug --bogus-flag
+before: ruflet build web
+exit: 1
+
+## commands (1)
+1. capture3 exit=0
+   git ls-remote https://github.com/AdamMusa/ruflet-template.git refs/heads/main
+   env: GIT_TERMINAL_PROMPT=0
+
+## output
+err| <uncaught> OptionParser::InvalidOption: invalid option: --bogus-flag
+
+## files
+(no files changed)

@@ -1,0 +1,22 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet run main.rb --web
+exit: 1
+
+## commands (0)
+
+## network (4)
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/prebuild-main
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/v<RUFLET_VERSION>
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/<RUFLET_VERSION>
+GET https://api.github.com/repos/AdamMusa/Ruflet/releases/latest
+
+## output
+err| Prebuilt client bootstrap failed: RuntimeError: GitHub API failed (503)
+err| Web client build not found and prebuilt download failed.
+err| Build one with `ruflet build web`, or set RUFLET_CLIENT_DIR.
+
+## files
+(no files changed)
