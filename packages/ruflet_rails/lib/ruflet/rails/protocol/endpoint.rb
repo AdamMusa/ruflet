@@ -32,7 +32,11 @@ module Ruflet
           captured_env = env.dup
           Thread.new(io, captured_env) do |socket, ws_env|
             Thread.current.report_on_exception = false if Thread.current.respond_to?(:report_on_exception=)
-            rails_executor_wrap { handle_socket(socket, ws_env) }
+            if server_runs_messages_in_rails_executor?
+              handle_socket(socket, ws_env)
+            else
+              rails_executor_wrap { handle_socket(socket, ws_env) }
+            end
           end
 
           [-1, {}, []]
@@ -46,6 +50,13 @@ module Ruflet
           Context.with_env(env) do
             @server.handle_upgraded_socket(socket)
           end
+        end
+
+        # LocalServer (what Ruflet::Rails.native mounts) runs each message in
+        # its own executor run. Another server passed in keeps the previous
+        # whole-socket wrap.
+        def server_runs_messages_in_rails_executor?
+          @server.respond_to?(:runs_messages_in_rails_executor?) && @server.runs_messages_in_rails_executor?
         end
 
         def rails_executor_wrap(&block)
