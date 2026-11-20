@@ -490,6 +490,14 @@ class RufletTemplateSurfaceTest < Minitest::Test
     end
   end
 
+  # Ripper is loaded the first time a file is parsed, not with the CLI.
+  def test_loading_the_cli_does_not_load_ripper
+    lib = File.expand_path("../lib", __dir__)
+    script = 'require "ruflet_cli"; exit($LOADED_FEATURES.grep(/ripper/).empty? ? 0 : 1)'
+    _out, err, status = Open3.capture3(RbConfig.ruby, "-I", lib, "-e", script)
+    assert status.success?, "require \"ruflet_cli\" loaded ripper\n#{err}"
+  end
+
   def test_the_check_is_quick_on_a_large_project
     files = { "main.rb" => FORM_APP }
     2_000.times { |index| files["lib/screens/screen_#{index}.rb"] = "def screen_#{index}\n  column(controls: [text(\"#{index}\")])\nend\n" * 20 }
