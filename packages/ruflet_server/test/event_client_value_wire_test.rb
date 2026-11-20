@@ -115,5 +115,20 @@ class EventClientValueWireTest < Minitest::Test
 
       assert_equal [[:strings, "2"], [:ints, 2], [:radio, "20", "20"]], seen
     end
+
+    # Radios inside a Form still join the RadioGroup above it.
+    define_method("test_#{kind}_integer_radios_inside_a_form_keep_their_type") do
+      seen = []
+      group = nil
+      connect(kind) do |page|
+        group = Ruflet.radio_group(content: Ruflet.form(controls: [Ruflet.radio(value: 1, label: "One"), Ruflet.radio(value: 2, label: "Two")]),
+                                   on_change: ->(e) { seen << [e.data, e.control.props["value"]] })
+        page.add(group)
+      end
+
+      client_sends(group, "change", "2")
+
+      assert_equal [[2, 2]], seen
+    end
   end
 end

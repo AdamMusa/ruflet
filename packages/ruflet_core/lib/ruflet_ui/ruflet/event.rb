@@ -123,7 +123,10 @@ module Ruflet
     end
 
     # The declared values of the control's choices: its options, or the
-    # radios inside a RadioGroup. A nested form field owns its own choices.
+    # radios inside a RadioGroup. radio_group.dart wraps its content in a
+    # RadioGroup<String>, which every Radio below it joins, also one inside
+    # a Form or a field's label or suffix. Only a nested RadioGroup owns the
+    # radios inside it, and a nested Dropdown its options.
     def choice_values
       values = []
       return values unless @control.respond_to?(:props) && @control.respond_to?(:children)
@@ -145,9 +148,10 @@ module Ruflet
           value = nil
           names.each { |prop| value = (prop == "_i" ? item.wire_id : item.props[prop]) if value.nil? }
           values << value unless value.nil?
-        elsif !FormFields.field?(item) && !FormFields.form?(item)
+        elsif item.wire_type != "RadioGroup"
+          owner = CHOICE_OWNERS.include?(item.wire_type)
           stack.concat(item.children)
-          stack.concat(item.props.values)
+          item.props.each { |prop, held| stack << held unless owner && prop == "options" }
         end
       end
       values

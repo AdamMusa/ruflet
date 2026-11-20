@@ -53,7 +53,8 @@ class EventClientValueTest < Minitest::Test
     validated = []
     form_seen = []
     field = nil
-    form = Ruflet.form(autovalidate_mode: "always", on_change: ->(e) { form_seen << [e.data, e.value] }) do
+    form = Ruflet.form(autovalidate_mode: "always",
+                       on_change: ->(e) { form_seen << [e.data, e.value, e.name, e.control.equal?(form), e.target] }) do
       field = text_field(key: "zip", on_change: ->(_e) {},
                          validator: ->(v) { validated << v; "Digits only" unless v.strip.match?(/\A\d+\z/) })
     end
@@ -61,7 +62,8 @@ class EventClientValueTest < Minitest::Test
 
     client_sends(field, "change", "12345")
 
-    assert_equal [["12345", "12345"]], form_seen
+    # The form relays the field's event as its own.
+    assert_equal [["12345", "12345", "change", true, form.wire_id]], form_seen
     assert_equal({ "zip" => "12345" }, form.values)
     # "always" also validated the empty field when the form was added.
     assert_equal "12345", validated.last
@@ -127,8 +129,9 @@ class EventClientValueTest < Minitest::Test
     assert_equal [[:ints, 2], [:floats, 2.5], [:bools, false], [:radio, 20, 20]], seen
   end
 
-  # Ruflet.option (dropdown_m2) is read like a dropdown_option, and an
-  # option without a key is read by its text, also an Integer text.
+  # Ruflet.dropdown_m2 goes on the wire as a Dropdown, and
+  # material_dropdown.dart reads a Ruflet.option like a dropdown_option: its
+  # key, else its text, also an Integer text.
   def test_dropdown_m2_keys_and_text_only_options_keep_their_declared_type
     seen = []
     m2 = Ruflet.dropdown_m2(
@@ -152,8 +155,10 @@ class EventClientValueTest < Minitest::Test
     assert_equal [[:m2, 2], [:m2_text_only, 20], [:text_only, 20]], seen
   end
 
-  # material_dropdown_m2.dart reports an option with neither key nor text by
-  # its wire id, which handlers got as an Integer before.
+  # Only a DropdownM2 (material_dropdown_m2.dart) reports an option with
+  # neither key nor text, by its wire id, which handlers got as an Integer
+  # before. Ruflet.dropdown_m2 goes on the wire as a Dropdown, whose renderer
+  # leaves such an option out; this replays what a DropdownM2 sends.
   def test_an_option_without_key_or_text_is_reported_by_its_wire_id
     seen = []
     dropdown = Ruflet.dropdown_m2(
@@ -201,6 +206,40 @@ class EventClientValueTest < Minitest::Test
     client_sends(group, "change", "20")
 
     assert_equal ["20"], seen
+  end
+
+  # radio_group.dart wraps its content in a RadioGroup<String>, and every
+  # Radio below it joins that group: also one inside a Form, a container, a
+  # field's suffix, a Checkbox's label or a Dropdown's label. Their declared
+  # Integer values come back as before.
+  def test_radios_inside_a_form_or_a_field_still_belong_to_the_group
+    seen = []
+    layouts = {
+      form: Ruflet.form(controls: [Ruflet.radio(value: 1), Ruflet.radio(value: 2)]),
+      container: Ruflet.container(content: Ruflet.radio(value: 2)),
+      text_field_suffix: Ruflet.column(controls: [Ruflet.text_field(suffix: Ruflet.radio(value: 2))]),
+      checkbox_label: Ruflet.column(controls: [Ruflet.checkbox(label: Ruflet.radio(value: 2))]),
+      dropdown_label: Ruflet.dropdown(label: Ruflet.radio(value: 2), options: [Ruflet.dropdown_option(key: "a")])
+    }
+    groups = layouts.map do |name, content|
+      Ruflet.radio_group(content: content, on_change: ->(e) { seen << [name, e.data, e.control.props["value"]] })
+    end
+    strings_in_form = Ruflet.radio_group(
+      content: Ruflet.form(controls: [Ruflet.radio(value: "1"), Ruflet.radio(value: "2")]),
+      on_change: ->(e) { seen << [:strings_in_form, e.data, e.control.props["value"]] }
+    )
+    @page.add(Ruflet.column(controls: groups + [strings_in_form]))
+
+    (groups + [strings_in_form]).each { |group| client_sends(group, "change", "2") }
+
+    assert_equal [
+      [:form, 2, 2],
+      [:container, 2, 2],
+      [:text_field_suffix, 2, 2],
+      [:checkbox_label, 2, 2],
+      [:dropdown_label, 2, 2],
+      [:strings_in_form, "2", "2"]
+    ], seen
   end
 
   # Only a Dropdown or a RadioGroup reports one of its choices as its value.

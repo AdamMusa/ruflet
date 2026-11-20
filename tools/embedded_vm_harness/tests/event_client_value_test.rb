@@ -66,10 +66,14 @@ mixed = Ruflet.dropdown(
   options: [Ruflet.dropdown_option(key: 2, text: "Two"), Ruflet.dropdown_option(key: "2", text: "String two")],
   on_select: ->(e) { seen << e.data }
 )
+form_group = Ruflet.radio_group(
+  content: Ruflet.form(controls: [Ruflet.radio(value: 1), Ruflet.radio(value: 2)]),
+  on_change: ->(e) { seen << e.data }
+)
 suffix_field = Ruflet.text_field(suffix: Ruflet.radio(value: 5), on_change: ->(e) { seen << e.data })
 search = Ruflet.search_bar(capitalization: "characters", on_change: ->(e) { seen << e.data })
 menu = Ruflet.popup_menu_button([Ruflet.popup_menu_item("Edit")], on_select: ->(e) { seen << e.data })
-page.add(Ruflet.column(controls: [field, strings, ints, group, int_group, m2_ints, mixed, suffix_field, search, menu]))
+page.add(Ruflet.column(controls: [field, strings, ints, group, int_group, m2_ints, mixed, form_group, suffix_field, search, menu]))
 
 ["123", "007", "2.50", "null", "true", "[1]", "{\"a\":1}"].each do |typed|
   seen.clear
@@ -100,6 +104,10 @@ check.call("Integer text-only option", seen.first, 2)
 seen.clear
 client_sends.call(mixed, "select", "2")
 check.call("options declaring 2 and \"2\"", seen.first, 2)
+
+seen.clear
+client_sends.call(form_group, "change", "2")
+check.call("Integer radio inside a form", seen.first, 2)
 
 seen.clear
 client_sends.call(suffix_field, "change", "5")
