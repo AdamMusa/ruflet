@@ -25,9 +25,16 @@ module Ruflet
       CLIENT_CHANNEL_MANIFEST = "#{ASSET_PREFIX}-manifest.json"
       LEGACY_CLIENT_CHANNEL_MANIFEST = "#{LEGACY_ASSET_PREFIX}-manifest.json"
       DEFAULT_CLIENT_UPDATE_INTERVAL = 6 * 60 * 60
-      # Child fd on which the hot-reload harness reports that its USR1 trap is
-      # installed (see Ruflet::HotReload::Runner#signal_ready).
+      # Child fd on which the hot-reload harness reports its boot progress
+      # (see Ruflet::HotReload::Runner#report): READY_TRAP_ARMED once its USR1
+      # trap is installed, then READY_UP once the app is captured and watched.
       READY_FD = 3
+      READY_TRAP_ARMED = "t"
+      READY_UP = "."
+      # An app that has trapped USR1 but has not reported READY_UP by then
+      # gets queued reloads anyway. It may never report: it can start its
+      # server some way the harness does not capture.
+      READY_FALLBACK_SECONDS = 5
 
       def command_run(args)
         options = parse_run_options(args)
@@ -209,12 +216,17 @@ module Ruflet
       end
 
       # With manual reload, the app child reports through a pipe once its USR1
-      # trap is installed. Until then "r" is queued: USR1 delivered earlier
-      # meets Ruby's default action and kills the booting app, which ends the
-      # whole session.
-      def new_run_state(track_ready:)
+      # trap is installed and again once it is up. Until then "r" is queued:
+      # USR1 delivered before the trap meets Ruby's default action and kills
+      # the booting app, which ends the whole session. Once the trap is
+      # reported, a queued reload is sent after ready_fallback_seconds even if
+      # the app never reports it is up (nil: wait for that report).
+      def new_run_state(track_ready:, ready_fallback_seconds: READY_FALLBACK_SECONDS)
         state = { child_pid: nil, restart: false }
-        state.merge!(lock: Mutex.new, ready: false, reload_pending: false) if track_ready
+        if track_ready
+          state.merge!(lock: Mutex.new, ready: false, reload_pending: false, retired_pid: nil,
+                       ready_fallback_seconds: ready_fallback_seconds)
+        end
         state
       end
 
@@ -239,30 +251,61 @@ module Ruflet
       end
 
       def watch_child_ready(reader, pid, run_state)
+        fallback = run_state[:ready_fallback_seconds]
         Thread.new do
-          signalled = reader.read(1)
-          reader.close
-          next unless signalled
-
-          deliver = run_state[:lock].synchronize do
-            # A byte from the app "R" retired (it reported just after the
-            # TERM) must not mark it ready: it is about to be reaped.
-            next false unless run_state[:child_pid] == pid && run_state[:retired_pid] != pid
-
-            run_state[:ready] = true
-            pending = run_state[:reload_pending]
-            run_state[:reload_pending] = false
-            pending
+          begin
+            mark_child_ready(pid, run_state) if await_child_ready(reader, fallback)
+            # Hold the pipe until the app closes it: one that reports after
+            # the fallback must not write into a closed pipe (SIGPIPE kills an
+            # app that restored its default action).
+            nil while reader.read(1)
+          ensure
+            reader.close
           end
-          send_reload_signal(pid) if deliver
         rescue Errno::ESRCH, IOError
           nil
         end
       end
 
+      # True once the app reports it is up, or once it has reported its USR1
+      # trap and `fallback` seconds pass without that; false if it goes away
+      # first. Only the trap report starts the clock: before it, USR1 kills.
+      def await_child_ready(reader, fallback)
+        deadline = nil
+        loop do
+          remaining = deadline && [deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC), 0].max
+          return true unless IO.select([reader], nil, nil, remaining)
+
+          case reader.read(1)
+          when nil then return false
+          when READY_UP then return true
+          when READY_TRAP_ARMED
+            deadline ||= Process.clock_gettime(Process::CLOCK_MONOTONIC) + fallback if fallback
+          end
+        end
+      end
+
+      # Marks the app up and sends the reload queued while it booted, unless
+      # the app has been replaced since, or is being replaced: after "R" the
+      # old app's late report or its fallback (both come from this watcher)
+      # must not mark the session up before the respawn, or "r" would signal
+      # the reaped app.
+      def mark_child_ready(pid, run_state)
+        deliver = run_state[:lock].synchronize do
+          next false unless run_state[:child_pid] == pid && run_state[:retired_pid] != pid
+
+          run_state[:ready] = true
+          pending = run_state[:reload_pending]
+          run_state[:reload_pending] = false
+          pending
+        end
+        send_reload_signal(pid) if deliver
+      end
+
       # "R" kills the app, so until the respawned one reports ready it must not
       # be treated as up: "r" in that gap would signal a reaped pid, get ESRCH
-      # and end the key reader for the rest of the session.
+      # and end the key reader for the rest of the session. Only the respawn
+      # (spawn_app_child) clears :retired_pid.
       def mark_restarting(run_state)
         return unless run_state[:lock]
 

@@ -15,7 +15,9 @@ module Ruflet
       # platform_build_config merges: `ios.team_id`, `build.ios.team_id` and
       # `assets.ios.team_id`.
       #
-      # A feature adding a key registers it beside its code:
+      # A feature adding a key registers it beside its code, in a
+      # config_schema/<feature>.rb that starts with `require_relative
+      # "sections"`, so it loads in any order:
       #
       #   ConfigSchema.register("deep_links", type: :map, feature: :deep_links)
       #   ConfigSchema.register("deep_links.schemes", type: :list, feature: :deep_links)

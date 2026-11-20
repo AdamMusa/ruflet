@@ -2,6 +2,8 @@
 
 require_relative "test_helper"
 require "fileutils"
+require "open3"
+require "rbconfig"
 require "yaml"
 
 # The schema lists every ruflet.yaml and services.yaml key Ruflet reads, so
@@ -110,6 +112,21 @@ class RufletCliBuildConfigSchemaTest < Minitest::Test
     refute_includes services_yaml, "extensions"
     assert_includes schema.keys(feature: :extensions).map(&:path), "extensions"
     assert(schema.keys.all?(&:frozen?))
+  end
+
+  # A feature's schema file registers keys under the sections, so each one
+  # requires what it needs: a new file works wherever its require is placed.
+  def test_each_schema_file_loads_on_its_own
+    files = Dir[File.expand_path("../lib/ruflet/cli/build/config_schema{.rb,/*.rb}", __dir__)].sort
+    assert_operator files.size, :>, 2
+
+    files.each do |file|
+      output, status = Open3.capture2e(
+        RbConfig.ruby, "-e",
+        "require_relative ARGV.fetch(0); print Ruflet::CLI::Build::ConfigSchema.keys.size", file
+      )
+      assert status.success?, "#{File.basename(file)} does not load on its own:\n#{output}"
+    end
   end
 
   def test_every_key_the_build_reads_is_registered
