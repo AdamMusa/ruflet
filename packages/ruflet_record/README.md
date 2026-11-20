@@ -49,9 +49,12 @@ Supported column helpers are `string`, `text`, `integer`, `float`, `decimal`,
 
 A `json` column is a TEXT column. A Hash or Array assigned to it is stored as
 JSON text, and every value reads back as the stored text, so use
-`JSON.parse(record.value)` to get the data back. `datetime` values are stored
-as UTC: a `Time` keeps its instant, and a string's `Z` or `+HH:MM` offset is
-applied.
+`JSON.parse(record.value)` to get the data back. `where(value: hash)` matches
+that text. A Hash or Array bound in raw SQL (`connection.execute` or
+`where("...", value)`) is passed to the SQLite driver as given.
+`datetime` values are stored as UTC: a `Time` keeps its instant, and a
+string's `Z` or `+HH:MM` offset is applied. They read back as UTC times, so
+call `localtime` to show local time.
 
 `references` creates an index by default. Pass `index: false` to omit it and
 `foreign_key: true` to reference the conventionally named table. A hash can

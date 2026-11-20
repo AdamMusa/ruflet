@@ -419,7 +419,7 @@ module RufletRecord
     def create_record
       primary = self.class.primary_key
       values = @attributes.reject { |name, value| name == primary && value.nil? }
-      sql, binds = SQL.insert(self.class.table_name, values)
+      sql, binds = SQL.insert(self.class.table_name, SQL.column_values(values))
       identifier = self.class.connection.insert(sql, binds)
       @attributes[primary] = identifier if @attributes.key?(primary) && @attributes[primary].nil?
       @new_record = false

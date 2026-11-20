@@ -5,11 +5,12 @@ require "json"
 require "open3"
 require "rbconfig"
 
-# Assigning a Hash or Array failed: sqlite3 reads a Hash bind as named
-# parameters ("no such bind parameter") and rejects an Array, and the device
-# VM stored inspect text. Both are now stored as JSON text. A json column is
-# still TEXT and reads back the stored text, so every other value behaves
-# exactly as before.
+# Assigning a Hash or Array to a model failed: sqlite3 reads a Hash bind as
+# named parameters ("no such bind parameter") and flattens an Array into
+# positional binds, and the device VM stored inspect text. A model now
+# stores both as JSON text. A json column is still TEXT and reads back the
+# stored text, so every other value behaves exactly as before, and raw SQL
+# binds still reach sqlite3 unchanged.
 class JsonColumnTest < RufletRecordTestCase
   def setup
     super
@@ -86,17 +87,57 @@ class JsonColumnTest < RufletRecordTestCase
     assert_equal :string, column.type
   end
 
-  def test_without_a_json_library_the_value_is_bound_unchanged
-    adapter = Setting.connection
-    adapter.define_singleton_method(:json_library) { nil }
+  def test_hash_conditions_and_update_all_bind_json_text
+    theme = Setting.create!(name: "theme", value: { "mode" => "dark" })
+    Setting.create!(name: "recent", value: [1, 2])
 
-    assert_equal [{ "a" => 1 }, [1], "x"], adapter.send(:normalize_binds, [{ "a" => 1 }, [1], "x"])
-  ensure
-    adapter.singleton_class.send(:remove_method, :json_library)
+    assert_equal [theme.id], Setting.where(value: { "mode" => "dark" }).ids
+    assert_equal ["recent"], Setting.where.not(value: { "mode" => "dark" }).pluck(:name)
+    assert_equal ["theme", "recent"], Setting.where(value: [{ "mode" => "dark" }, [1, 2]]).order(:id).pluck(:name)
+    assert_equal theme, Setting.find_or_create_by(value: { "mode" => "dark" })
+
+    # An Array condition is still an IN list; its Hash or Array items are JSON.
+    assert_equal 0, Setting.where(value: [1, 2]).count
+    assert_equal 1, Setting.where(value: [[1, 2]]).count
+    Setting.where(name: "recent").update_all(value: { "max" => 3 })
+    assert_equal ["{\"max\":3}"], Setting.where(name: "recent").pluck(:value)
+    assert_equal 1, Setting.where(value: { "max" => 3 }).update_all(name: "capped")
+    assert_equal 1, Setting.where(value: { "max" => 3 }).delete_all
   end
 
-  # The device VM's framework code cannot require json at load time, so the
-  # adapter requires it the first time a Hash or Array is bound.
+  # bound_attributes shows the values as given, as before.
+  def test_bound_attributes_keep_the_given_values
+    assert_equal [{ "mode" => "dark" }], Setting.where(value: { "mode" => "dark" }).bound_attributes
+  end
+
+  # Raw SQL binds go to sqlite3 as before: a Hash is a set of named
+  # parameters and an Array is flattened into positional binds.
+  def test_raw_sql_binds_reach_sqlite_unchanged
+    connection = RufletRecord.connection
+    connection.execute("INSERT INTO settings (name, value) VALUES (:name, :value)", [{ name: "raw", value: "v" }])
+    connection.execute("INSERT INTO settings (name, value) VALUES (?, ?)", [["list", "w"]])
+
+    assert_equal [{ "name" => "raw", "value" => "v" }],
+      connection.select_all("SELECT name, value FROM settings WHERE name = :name", [{ name: "raw" }])
+    assert_equal ["raw", "list"],
+      connection.select_all("SELECT name FROM settings WHERE name = ? OR value = ? ORDER BY id", [["raw", "w"]]).map { |row| row["name"] }
+    assert_equal ["raw"], Setting.where("name IN (?)", ["raw"]).pluck(:name)
+    assert_raises(RufletRecord::StatementInvalid) { Setting.where("name IN (?)", ["raw", "list"]).to_a }
+  end
+
+  def test_without_a_json_library_the_value_is_bound_unchanged
+    sql = RufletRecord::SQL.singleton_class
+    sql.send(:alias_method, :json_library_before_test, :json_library)
+    sql.send(:define_method, :json_library) { nil }
+
+    assert_equal [{ "a" => 1 }, [1], "x"], [{ "a" => 1 }, [1], "x"].map { |value| RufletRecord::SQL.column_value(value) }
+  ensure
+    sql.send(:alias_method, :json_library, :json_library_before_test)
+    sql.send(:remove_method, :json_library_before_test)
+  end
+
+  # The device VM's framework code cannot require json at load time, so it
+  # is required the first time a model binds a Hash or Array.
   def test_json_is_required_when_first_needed
     script = <<~RUBY
       require "ruflet_record"
