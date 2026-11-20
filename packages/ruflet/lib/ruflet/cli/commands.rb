@@ -66,10 +66,12 @@ module Ruflet
 
       # Raised by a command's own parser for -h/--help (or an abbreviation of
       # it), so `ruflet <command> --help` prints what `ruflet help <command>` does.
+      # The handler rescues it with Commands.report_stop.
       class HelpRequested < StandardError; end
 
       # A usage mistake OptionParser cannot see, such as a flag that needs
-      # another one. Reported like an unknown flag.
+      # another one. Reported like an unknown flag, by the handler that
+      # raises it (Commands.report_stop).
       class UsageError < StandardError; end
 
       # hidden: switches the command still accepts but `ruflet help` does not
@@ -327,6 +329,36 @@ module Ruflet
         # An argument that names a flag: "-x", "--x", "--x=v"; not "-" alone.
         def flag?(arg)
           arg.start_with?("-") && arg != "-"
+        end
+
+        # `ruflet help <command>` and `ruflet <command> --help`: the command's
+        # help on stdout. Returns 0.
+        def print_command_help(entry)
+          puts entry.help_text
+          0
+        end
+
+        # A flag or argument the command cannot take: "ruflet <command>:
+        # <reason>", a blank line and the command's help on stderr. Returns
+        # EX_USAGE.
+        def report_usage_error(entry, message)
+          warn "ruflet #{entry.name}: #{message}"
+          warn ""
+          warn entry.help_text
+          EX_USAGE
+        end
+
+        # Reports the HelpRequested or UsageError that stopped the command
+        # `name` and returns its exit status: the help (0) or the usage
+        # error (EX_USAGE). Each handler that raises them rescues them with
+        # this itself, so a caller that runs the handler directly
+        # (ruflet_rails' rake tasks call command_build and command_update)
+        # gets what `ruflet <command>` prints instead of the exception.
+        def report_stop(name, error)
+          entry = lookup(name)
+          return print_command_help(entry) if error.is_a?(HelpRequested)
+
+          report_usage_error(entry, error.message)
         end
 
         def section(title, rows)

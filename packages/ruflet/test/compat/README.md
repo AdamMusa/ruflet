@@ -74,7 +74,9 @@ intended, review the diff, and list it under "Behavior changes" in the PR.
 * The Rails rake tasks: every `ruflet:build` target the docs list, an
   initializer without build metadata, `ruflet:install` with a device,
   without one (after an Android build and after an iOS build) and with
-  nothing built, `ruflet:update` with each target, `rake --tasks`, and the
+  nothing built, `ruflet:update` with each target, `ruflet:update` and
+  `ruflet:build` given a help flag (the tasks call the command handlers
+  directly, not through `Ruflet::CLI.run`), `rake --tasks`, and the
   documented `ruflet:web`, which does not exist (its golden pins rake's
   "Don't know how to build task").
 * `rails generate ruflet:install` with the documented `--web`/`--desktop`,

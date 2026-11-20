@@ -8,7 +8,7 @@ exit: 1
 ## commands (0)
 
 ## output
-err| Unsupported build target: --help
+err| Usage: ruflet build <apk|android|aab|ios|ipa|web|macos|windows|linux> [--lite|--full|--self] [--verbose]
 
 ## files
 (no files changed)

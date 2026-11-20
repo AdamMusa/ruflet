@@ -215,6 +215,8 @@ module Ruflet
 
         export_platform_build_outputs(client_dir, platform, verbose: !!verbose) if ok
         ok ? 0 : 1
+      rescue Commands::UsageError => e
+        Commands.report_stop("build", e)
       end
 
       def command_install(args)

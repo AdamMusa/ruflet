@@ -49,9 +49,11 @@ module Ruflet
 
       begin
         send(entry.handler, argv)
-      rescue Commands::HelpRequested
-        print_command_help(entry)
-      rescue OptionParser::ParseError, Commands::UsageError => e
+      rescue Commands::HelpRequested, Commands::UsageError => e
+        # The built-in handlers report these themselves; a registered
+        # command's handler may not.
+        Commands.report_stop(entry.name, e)
+      rescue OptionParser::ParseError => e
         report_usage_error(entry, e.message)
       end
     end
@@ -62,8 +64,7 @@ module Ruflet
 
     # `ruflet help <command>` and `ruflet <command> --help`.
     def print_command_help(entry)
-      puts entry.help_text
-      0
+      Commands.print_command_help(entry)
     end
 
     def bootstrap(path)
@@ -97,10 +98,7 @@ module Ruflet
     end
 
     def report_usage_error(entry, message)
-      warn "ruflet #{entry.name}: #{message}"
-      warn ""
-      warn entry.help_text
-      Commands::EX_USAGE
+      Commands.report_usage_error(entry, message)
     end
 
     def ensure_first_run_assets(command)

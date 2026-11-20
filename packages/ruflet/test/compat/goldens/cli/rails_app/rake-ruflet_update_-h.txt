@@ -8,12 +8,17 @@ exit: 0
 ## commands (0)
 
 ## output
-out| Usage: cli_child.rb [options]
-out|         --web
-out|         --desktop
-out|         --check
-out|         --force
-out|         --platform PLATFORM
+out| Usage: ruflet update [web|desktop|all] [--check] [--force] [--platform PLATFORM]
+out| 
+out| Download the prebuilt web and desktop clients, or check which are installed.
+out| 
+out| Options:
+out|   --web                 Update the web client
+out|   --desktop             Update the desktop client
+out|   --check               Report which clients are installed instead of updating them
+out|   --force               Download the template and clients again
+out|   --platform PLATFORM   macos, linux or windows (default: this host)
+out|   -h, --help            Show this help
 
 ## files
 (no files changed)

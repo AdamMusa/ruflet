@@ -108,6 +108,8 @@ module Ruflet
           elapsed_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
           puts "Restarted in #{elapsed_ms}ms"
         end
+      rescue Commands::HelpRequested => e
+        Commands.report_stop("run", e)
       ensure
         reload_input_thread&.kill if defined?(reload_input_thread)
         Signal.trap("INT", previous_int) if defined?(previous_int) && previous_int

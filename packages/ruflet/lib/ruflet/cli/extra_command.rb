@@ -101,6 +101,8 @@ module Ruflet
           system(tools[:env], *cmd)
           $?.exitstatus || 1
         end
+      rescue Commands::HelpRequested, Commands::UsageError => e
+        Commands.report_stop("emulators", e)
       end
 
       def command_debug(args)
@@ -153,6 +155,8 @@ module Ruflet
 
         system(tools[:env], *cmd, chdir: client_dir)
         $?.exitstatus || 1
+      rescue Commands::HelpRequested => e
+        Commands.report_stop("debug", e)
       end
 
       private
