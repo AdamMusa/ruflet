@@ -11,26 +11,6 @@ module Ruflet
   class IconData
     attr_reader :value
 
-    # The codepoint an icon prop sends for value, or nil for an unknown name.
-    #
-    # A name from Ruflet::MaterialIcons or Ruflet::CupertinoIcons carries its
-    # set and is resolved in that table alone, so using one set never loads
-    # the other's, and a name both sets define keeps the codepoint of the set
-    # it was taken from. A plain string keeps the long-standing order:
-    # Material first, Cupertino as the fallback.
-    def self.codepoint_for(value)
-      value = value.value if value.is_a?(IconData)
-      case value
-      when Ruflet::CupertinoIconName
-        Ruflet::CupertinoIconLookup.codepoint_for(value)
-      when Ruflet::MaterialIconName
-        Ruflet::MaterialIconLookup.codepoint_for(value)
-      else
-        Ruflet::MaterialIconLookup.codepoint_for(value) ||
-          Ruflet::CupertinoIconLookup.codepoint_for(value)
-      end
-    end
-
     def initialize(value)
       @value = normalize(value)
     end
@@ -62,17 +42,21 @@ module Ruflet
 
     def normalize(input)
       return input.value if input.is_a?(IconData)
-      return input if input.is_a?(Integer)
-      # Already canonical, and it must keep the set it came from.
-      return input if input.is_a?(Ruflet::MaterialIconName) || input.is_a?(Ruflet::CupertinoIconName)
+      if input.is_a?(Integer)
+        codepoint = Ruflet::MaterialIconLookup.codepoint_for(input)
+        codepoint = Ruflet::CupertinoIconLookup.codepoint_for(input) if codepoint == input
+        return codepoint
+      end
 
       raw = input.to_s
       raw = raw.strip if raw.respond_to?(:strip)
       return raw if raw.empty?
 
-      Ruflet::MaterialIconLookup.icon_name_for(raw) ||
-        Ruflet::CupertinoIconLookup.icon_name_for(raw) ||
-        raw
+      canonical = Ruflet::MaterialIconLookup.canonical_name_for(raw)
+      canonical = Ruflet::CupertinoIconLookup.canonical_name_for(raw) if canonical.nil?
+      return canonical unless canonical.nil?
+
+      raw
     end
   end
 end

@@ -4,52 +4,73 @@ require_relative "test_helper"
 require "json"
 require "open3"
 require "rbconfig"
+require "yaml"
 
-# Material and Cupertino are separate icon sets. Using one must not load the
-# other (the Material table alone is a ~234KB JSON parse), and a name taken
-# from one set must keep that set's codepoint on the wire: 101 names (ADD,
-# HOME, ...) exist in both with different codepoints, and resolving every
-# icon prop Material-first used to send Material's ADD for CupertinoIcons::ADD.
+# The Material and Cupertino icon sets: what each lookup returns, what it
+# sends on the wire, and what it loads.
+#
+# 101 names (ADD, HOME, ...) are in both sets with different codepoints.
+# Every published ruflet_core (0.0.15 through 0.0.23) sends Material's
+# codepoint for all of them, whichever set the name was taken from:
+# CupertinoIcons::ADD sends 65604, not Cupertino's 131072. Apps show that
+# glyph today, so these tests pin it. Changing it is a decision for the
+# owner, not a side effect of a lookup change.
 class RufletIconSetDecouplingTest < Minitest::Test
-  MATERIAL_SET = 0x10000
-  CUPERTINO_SET = 0x20000
   CORE_LIB = File.expand_path("../lib", __dir__)
 
-  def test_shared_names_keep_their_set_on_every_control_family
-    shared = Ruflet::MaterialIconLookup.icon_map.keys & Ruflet::CupertinoIconLookup.icon_map.keys
-    assert_operator shared.size, :>=, 100, "expected the two sets to share names"
+  # What every published ruflet_core from 0.0.15 to 0.0.23 sends.
+  PUBLISHED_WIRE = {
+    "CupertinoIcons::ADD" => 65_604,
+    "CupertinoIcons::HOME" => 69_217,
+    "CupertinoIcons::HOUSE_FILL" => 131_732,
+    "Icons.cupertino[:add]" => 65_604,
+    "MaterialIcons::CLASS" => 66_925
+  }.freeze
+
+  def test_published_codepoints_are_unchanged
+    values = {
+      "CupertinoIcons::ADD" => Ruflet::CupertinoIcons::ADD,
+      "CupertinoIcons::HOME" => Ruflet::CupertinoIcons::HOME,
+      "CupertinoIcons::HOUSE_FILL" => Ruflet::CupertinoIcons::HOUSE_FILL,
+      "Icons.cupertino[:add]" => Ruflet::Icons.cupertino[:add],
+      "MaterialIcons::CLASS" => Ruflet::MaterialIcons::CLASS
+    }
+
+    values.each do |label, value|
+      assert_equal PUBLISHED_WIRE.fetch(label), Ruflet::DSL.icon(icon: value).props["icon"], label
+      assert_equal PUBLISHED_WIRE.fetch(label), Ruflet::DSL.cupertino_button("x", icon: value).props["icon"], label
+    end
+  end
+
+  def test_shared_names_send_the_material_codepoint_from_every_entry_point
+    material = Ruflet::MaterialIconLookup.icon_map
+    shared = material.keys & Ruflet::CupertinoIconLookup.icon_map.keys
+    assert_equal 101, shared.size
 
     shared.each do |key|
+      name = key.downcase
       constant = key.to_sym
-      cupertino = Ruflet::CupertinoIcons.resolve_constant(constant)
-      material = Ruflet::MaterialIcons.resolve_constant(constant)
+      entry_points = {
+        "CupertinoIcons::#{key}" => Ruflet::CupertinoIcons.const_get(constant),
+        "CupertinoIcons[#{name.inspect}]" => Ruflet::CupertinoIcons[name],
+        "CupertinoIcons[:#{name}]" => Ruflet::CupertinoIcons[name.to_sym],
+        "Icons.cupertino[#{name.inspect}]" => Ruflet::Icons.cupertino[name],
+        "IconData.new(CupertinoIcons::#{key})" => Ruflet::IconData.new(Ruflet::CupertinoIcons.const_get(constant)),
+        "MaterialIcons::#{key}" => Ruflet::MaterialIcons.const_get(constant),
+        "Icons::#{key}" => Ruflet::Icons.const_get(constant),
+        name.inspect => name
+      }
 
-      [:button, :cupertino_button].each do |family|
-        assert_equal Ruflet::CupertinoIconLookup.icon_map[key],
-                     Ruflet::DSL.public_send(family, "x", icon: cupertino).props["icon"],
-                     "#{family}(icon: CupertinoIcons::#{key})"
-        assert_equal Ruflet::MaterialIconLookup.icon_map[key],
-                     Ruflet::DSL.public_send(family, "x", icon: material).props["icon"],
-                     "#{family}(icon: MaterialIcons::#{key})"
+      entry_points.each do |label, value|
+        [:icon, :button, :cupertino_button].each do |family|
+          control = family == :icon ? Ruflet::DSL.icon(icon: value) : Ruflet::DSL.public_send(family, "x", icon: value)
+          assert_equal material.fetch(key), control.props["icon"], "#{family}(icon: #{label})"
+        end
       end
     end
   end
 
-  def test_every_cupertino_entry_point_resolves_in_the_cupertino_set
-    values = {
-      "CupertinoIcons::ADD" => Ruflet::CupertinoIcons::ADD,
-      "CupertinoIcons[:add]" => Ruflet::CupertinoIcons[:add],
-      "Icons.cupertino[:add]" => Ruflet::Icons.cupertino[:add],
-      "IconData.new(CupertinoIcons::ADD)" => Ruflet::IconData.new(Ruflet::CupertinoIcons::ADD)
-    }
-
-    values.each do |label, value|
-      assert_equal CUPERTINO_SET, Ruflet::DSL.icon(icon: value).props["icon"], label
-    end
-    assert_equal CUPERTINO_SET, Ruflet::DSL.icon(icon: Ruflet::CupertinoIcons.random).props["icon"] & 0xF0000
-  end
-
-  def test_page_update_keeps_the_icon_set
+  def test_page_update_sends_the_published_codepoint
     sent = []
     page = Ruflet::Page.new(
       session_id: "s1",
@@ -62,58 +83,126 @@ class RufletIconSetDecouplingTest < Minitest::Test
     page.update(control, icon: Ruflet::CupertinoIcons::ADD)
 
     patch = sent.last[1]["patch"].find { |op| op[2] == "icon" }
-    assert_equal CUPERTINO_SET, patch[3]
+    assert_equal PUBLISHED_WIRE.fetch("CupertinoIcons::ADD"), patch[3]
   end
 
-  def test_plain_names_still_resolve_material_first
-    assert_equal Ruflet::MaterialIconLookup.codepoint_for("add"), Ruflet::DSL.cupertino_button("x", icon: "add").props["icon"]
-    assert_equal Ruflet::CupertinoIconLookup.codepoint_for("house_fill"), Ruflet::DSL.button("x", icon: "house_fill").props["icon"]
+  def test_whole_set_accessors_send_the_published_codepoints
+    material = Ruflet::MaterialIconLookup.icon_map
+    cupertino = Ruflet::CupertinoIconLookup.icon_map
+
+    names = Ruflet::CupertinoIcons.all
+    assert_equal cupertino.size, names.size
+    names.each do |name|
+      expected = material[name.upcase] || cupertino.fetch(name.upcase)
+      assert_equal expected, Ruflet::DSL.icon(icon: name).props["icon"], "CupertinoIcons.all: #{name}"
+      assert_equal expected, Ruflet::DSL.icon(icon: Ruflet::IconData.new(name)).props["icon"], "IconData(#{name})"
+    end
+    assert_equal names, Ruflet::Icons.cupertino.all
+
+    10.times do
+      name = Ruflet::CupertinoIcons.random
+      assert_includes names, name
+      assert_equal material[name.upcase] || cupertino.fetch(name.upcase), Ruflet::DSL.icon(icon: name).props["icon"]
+    end
   end
 
-  def test_set_names_still_behave_as_plain_strings
-    name = Ruflet::CupertinoIcons::ADD
+  def test_set_names_are_plain_mutable_strings
+    values = {
+      "MaterialIcons::HOME" => Ruflet::MaterialIcons::HOME,
+      "MaterialIcons[:home]" => Ruflet::MaterialIcons[:home],
+      "CupertinoIcons::ADD" => Ruflet::CupertinoIcons::ADD,
+      "CupertinoIcons[:add]" => Ruflet::CupertinoIcons[:add],
+      "Icons.cupertino[:add]" => Ruflet::Icons.cupertino[:add],
+      "Icons::HOUSE_FILL" => Ruflet::Icons::HOUSE_FILL,
+      "MaterialIcons.all.first" => Ruflet::MaterialIcons.all.first,
+      "CupertinoIcons.all.first" => Ruflet::CupertinoIcons.all.first,
+      "CupertinoIcons.random" => Ruflet::CupertinoIcons.random
+    }
 
-    assert_kind_of String, name
-    assert_equal "add", name
-    assert_equal name, "add"
-    assert_equal "icon:add", "icon:#{name}"
-    assert_equal 1, { "add" => 1 }[name]
-    assert_predicate name, :frozen?
-    assert_equal Ruflet::IconData.new("add"), Ruflet::IconData.new(name)
+    values.each do |label, value|
+      assert_instance_of String, value, label
+      refute_predicate value, :frozen?, label
+    end
+    assert_equal "home_filled", Ruflet::MaterialIcons[:home] << "_filled"
+    assert_equal "---\nicon: home\nadd: add\n",
+                 YAML.dump("icon" => Ruflet::MaterialIcons::HOME, "add" => Ruflet::CupertinoIcons[:add])
+    assert_equal({ "icon" => "home" }, YAML.safe_load(YAML.dump("icon" => Ruflet::MaterialIcons::HOME)))
+    assert_instance_of String, Marshal.load(Marshal.dump(Ruflet::CupertinoIcons::ADD))
   end
 
-  def test_icons_lookup_does_not_depend_on_what_was_referenced_before
-    assert_equal ["Ruflet::MaterialIconName", "Ruflet::MaterialIconName"], run_fresh(<<~RUBY).split(",")
-      before = Ruflet::Icons[:add].class.name
-      Ruflet::MaterialIcons::ADD
-      print [before, Ruflet::Icons[:add].class.name].join(",")
-    RUBY
-  end
-
-  def test_icons_lookup_accepts_names_that_are_not_constants
-    assert_equal "arrow_back", Ruflet::Icons["arrow back"]
-    assert_kind_of Ruflet::MaterialIconName, Ruflet::Icons["arrow back"]
-    assert_kind_of Ruflet::CupertinoIconName, Ruflet::Icons["house_fill"]
-    assert_kind_of Ruflet::IconData, Ruflet::Icons["not_an_icon_anywhere"]
-  end
-
-  def test_using_only_cupertino_icons_never_loads_material
+  # Ruflet::Icons[] is left exactly as main and 0.0.23 have it, including the
+  # result's type depending on whether the constant was referenced first.
+  def test_icons_lookup_keeps_its_published_results
     result = JSON.parse(run_fresh(<<~RUBY))
-      wire = []
-      wire << Ruflet::DSL.cupertino_button("x", icon: Ruflet::CupertinoIcons::ADD).props["icon"]
-      wire << Ruflet::DSL.button("x", icon: Ruflet::CupertinoIcons::HOUSE_FILL).props["icon"]
-      wire << Ruflet::DSL.icon(icon: Ruflet::Icons.cupertino[:search]).props["icon"]
-      wire << Ruflet::DSL.icon(icon: Ruflet::IconData.new(Ruflet::CupertinoIcons::HOME)).props["icon"]
+      cold = Ruflet::Icons[:home]
+      arrow = begin
+        Ruflet::Icons["arrow back"]
+        "no error"
+      rescue NameError => e
+        e.class.name
+      end
+      Ruflet::MaterialIcons::HOME
+      Ruflet::Icons::CLASS
       print JSON.generate(
-        "wire" => wire,
-        "material_module_loaded" => !Ruflet.autoload?(:MaterialIcons),
-        "material_table_loaded" => Ruflet::MaterialIconLookup.instance_variable_defined?(:@icon_map)
+        "cold" => [cold.class.name, cold.value, cold == "HOME", Ruflet::DSL.icon(icon: cold).props["icon"]],
+        "warm" => [Ruflet::Icons[:home].class.name, Ruflet::Icons[:home]],
+        "class" => [:class, "CLASS", "Class"].map { |name| Ruflet::DSL.icon(icon: Ruflet::Icons[name]).props["icon"] },
+        "arrow back" => arrow
       )
     RUBY
 
-    assert(result["wire"].all? { |codepoint| codepoint & 0xF0000 == CUPERTINO_SET }, result["wire"].inspect)
-    refute result["material_module_loaded"], "Ruflet::MaterialIcons was loaded by Cupertino-only code"
-    refute result["material_table_loaded"], "the Material icon table was parsed by Cupertino-only code"
+    assert_equal ["Ruflet::IconData", "home", true, 69_217], result["cold"]
+    assert_equal ["String", "home"], result["warm"]
+    assert_equal [66_925, 66_925, 66_925], result["class"]
+    assert_equal "NameError", result["arrow back"]
+  end
+
+  # The single-name lookups now try the compiled map before the constant-name
+  # index. That must give the answer the index-first order gave, for every
+  # name in both sets and the spellings apps use.
+  def test_single_name_lookups_give_the_index_first_answer
+    sets = [
+      [Ruflet::MaterialIcons, Ruflet::MaterialIconLookup],
+      [Ruflet::CupertinoIcons, Ruflet::CupertinoIconLookup]
+    ]
+    keys = sets.flat_map { |_, lookup| lookup.icon_map.keys }.uniq
+    inputs = keys.flat_map do |key|
+      name = key.downcase
+      [name, name.to_sym, key, Ruflet::IconNames.constant_for(key), name.tr("_", " "), "icons.#{name}"]
+    end
+    inputs += ["class", "CLASS", "Class", :class, "", " home ", "0x10044", "65604", 65_604, "not_an_icon"]
+
+    sets.each do |set, lookup|
+      inputs.each do |input|
+        icon = set.icons[input.to_s.upcase.to_sym]
+        expected = icon.nil? ? (lookup.canonical_name_for(input) || input.to_s) : icon.to_s.downcase
+        assert_equal expected, set[input], "#{set}[#{input.inspect}]"
+      end
+    end
+
+    material = Ruflet::MaterialIconLookup.icon_map
+    cupertino = Ruflet::CupertinoIconLookup.icon_map
+    constants = (Ruflet::MaterialIcons.icons.keys + Ruflet::CupertinoIcons.icons.keys).uniq
+    constants.each do |constant|
+      key = constant.to_s
+      expected = if material.key?(key) then key.downcase
+                 elsif Ruflet::MaterialIcons.icons.key?(constant) then Ruflet::MaterialIcons.icons[constant].downcase
+                 elsif cupertino.key?(key) then key.downcase
+                 else Ruflet::CupertinoIcons.icons.fetch(constant).downcase
+                 end
+      assert_equal expected, Ruflet::Icons.const_get(constant), "Icons::#{constant}"
+    end
+  end
+
+  # Single-name lookups answer from the compiled map; the constant-name index
+  # (a symbol per icon, the cost the deferral exists to avoid) is only for
+  # whole-table callers and the one name that needs it, CLASS.
+  def test_single_name_lookups_do_not_build_the_constant_index
+    assert_equal ["false,false", "add home house_fill house"], run_fresh(<<~RUBY).split("|")
+      found = [Ruflet::MaterialIcons[:add], Ruflet::Icons.material["home"], Ruflet::Icons::HOUSE_FILL, Ruflet::CupertinoIcons[:house]]
+      built = [Ruflet::MaterialIcons, Ruflet::CupertinoIcons].map { |set| set.instance_variable_defined?(:@icons) }
+      print built.join(","), "|", found.join(" ")
+    RUBY
   end
 
   def test_using_only_material_icons_never_loads_cupertino
@@ -131,22 +220,10 @@ class RufletIconSetDecouplingTest < Minitest::Test
       )
     RUBY
 
-    assert(result["wire"].all? { |codepoint| codepoint & 0xF0000 == MATERIAL_SET }, result["wire"].inspect)
+    lookup = Ruflet::MaterialIconLookup.icon_map
+    assert_equal lookup.values_at("ADD", "HOME", "SEARCH", "SETTINGS", "ACCESS_ALARM"), result["wire"]
     refute result["cupertino_module_loaded"], "Ruflet::CupertinoIcons was loaded by Material-only code"
     refute result["cupertino_table_loaded"], "the Cupertino icon table was parsed by Material-only code"
-  end
-
-  # Single-name lookups answer from the compiled map; the constant-name index
-  # (thousands of interned symbols, the cost the deferral exists to avoid) is
-  # only for whole-table callers.
-  def test_single_name_lookups_do_not_build_the_constant_index
-    assert_equal "false,false", run_fresh(<<~RUBY)
-      Ruflet::MaterialIcons[:add]
-      Ruflet::Icons.material["home"]
-      Ruflet::Icons::HOUSE_FILL
-      Ruflet::CupertinoIcons[:house]
-      print [Ruflet::MaterialIcons, Ruflet::CupertinoIcons].map { |set| set.instance_variable_defined?(:@icons) }.join(",")
-    RUBY
   end
 
   def test_each_icon_set_file_loads_without_the_other

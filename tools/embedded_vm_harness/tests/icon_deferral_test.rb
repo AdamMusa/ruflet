@@ -74,20 +74,26 @@ check.call(
   false
 )
 
-# ADD is in both sets with different codepoints. A name keeps the set it was
-# taken from on any control; a plain string still resolves Material first.
+# ADD and HOME are in both sets with different codepoints. Every published
+# gem sends Material's for both, whichever set the name came from, so apps
+# show that glyph today and it must not change.
 check.call(
-  "cupertino_button(icon: CupertinoIcons::ADD) sends the Cupertino codepoint",
+  "cupertino_button(icon: CupertinoIcons::ADD) sends the published codepoint",
   Ruflet::DSL.cupertino_button("x", icon: Ruflet::CupertinoIcons::ADD).props["icon"],
-  0x20000
+  65604
 )
 check.call(
-  "button(icon: Icons.cupertino[:add]) sends the Cupertino codepoint",
+  "button(icon: Icons.cupertino[:add]) sends the published codepoint",
   Ruflet::DSL.button("x", icon: Ruflet::Icons.cupertino[:add]).props["icon"],
-  0x20000
+  65604
 )
 check.call(
-  "cupertino_button(icon: MaterialIcons::ADD) sends the Material codepoint",
+  "icon(icon: CupertinoIcons::HOME) sends the published codepoint",
+  Ruflet::DSL.icon(icon: Ruflet::CupertinoIcons::HOME).props["icon"],
+  69217
+)
+check.call(
+  "cupertino_button(icon: MaterialIcons::ADD) sends the published codepoint",
   Ruflet::DSL.cupertino_button("x", icon: Ruflet::MaterialIcons::ADD).props["icon"],
   65604
 )
@@ -96,12 +102,22 @@ check.call(
   Ruflet::DSL.cupertino_button("x", icon: "add").props["icon"],
   65604
 )
+check.call(
+  "a Cupertino-only name sends its Cupertino codepoint",
+  Ruflet::DSL.icon(icon: Ruflet::CupertinoIcons::HOUSE_FILL).props["icon"],
+  131732
+)
 
 # "CLASS_" is the one icon out of 10,147 whose constant name differs from its
 # map key (the trailing underscore is stripped), so Ruflet::MaterialIcons::CLASS
 # is the only reference that exercises the reverse-index path rather than a
 # direct hit on the compiled map.
 check.call("MaterialIcons::CLASS", Ruflet::MaterialIcons::CLASS, "class_")
+check.call(
+  "Icons[:class] resolves once MaterialIcons::CLASS is defined",
+  Ruflet::DSL.icon(icon: Ruflet::Icons[:class]).props["icon"],
+  66925
+)
 
 # Whole-table accessors still see everything.
 check.call("names.size", Ruflet::MaterialIcons.names.size, 8825)

@@ -40,15 +40,17 @@ module Ruflet
       end
     end
 
-    # A name in this set, as a MaterialIconName. The compiled map answers
-    # almost every name in one probe; only a constant name that differs from
-    # its map key (CLASS for CLASS_) needs the constant-name index.
+    # One probe of the compiled map answers almost every name, so a single
+    # lookup no longer builds the constant-name index below (a symbol per icon,
+    # the cost the deferral exists to avoid). Only a constant name that differs
+    # from its map key (CLASS for CLASS_) still needs the index. The result is
+    # the same plain String the index-first order returned.
     def [](name)
-      found = Ruflet::MaterialIconLookup.icon_name_for(name)
+      found = Ruflet::MaterialIconLookup.canonical_name_for(name)
       return found unless found.nil?
 
       icon = icons[name.to_s.upcase.to_sym]
-      icon.nil? ? name.to_s : Ruflet::MaterialIconLookup.icon_name(icon)
+      icon.nil? ? name.to_s : icon.to_s.downcase
     end
 
     def constants(_inherit = true)
@@ -56,11 +58,11 @@ module Ruflet
     end
 
     def all
-      icons.values.map { |name| Ruflet::MaterialIconLookup.icon_name(name) }
+      icons.values.map { |name| name.to_s.downcase }
     end
 
     def random
-      all.sample || Ruflet::MaterialIconLookup.icon_name("help_outline")
+      all.sample || "help_outline"
     end
 
     def names
@@ -85,11 +87,11 @@ module Ruflet
         # common case is one hash hit and never builds the reverse table.
         key = name.to_s
         source = Ruflet::MaterialIconLookup.icon_map
-        return const_set(name, Ruflet::MaterialIconLookup.icon_name(key)) if source.key?(key)
+        return const_set(name, key.downcase) if source.key?(key)
         return nil unless index
 
         icon = icons[name]
-        icon.nil? ? nil : const_set(name, Ruflet::MaterialIconLookup.icon_name(icon))
+        icon.nil? ? nil : const_set(name, icon.to_s.downcase)
       end
 
       def const_missing(name)
