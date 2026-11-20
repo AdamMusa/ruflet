@@ -1,0 +1,19 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: rails_app
+command: rails generate ruflet:install
+exit: 0
+
+## commands (0)
+
+## output
+out| Ruflet Rails installed.
+out| Generated entrypoint: app/views/ruflet/main.rb
+out| Added WebSocket route /ws to config/routes.rb
+out| Next steps:
+out|   1. Start Rails: bin/rails server
+out|   2. Connect your Ruflet app to ws://localhost:3000/ws
+
+## files
+(no files changed)

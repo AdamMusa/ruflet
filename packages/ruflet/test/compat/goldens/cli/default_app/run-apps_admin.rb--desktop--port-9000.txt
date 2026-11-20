@@ -1,0 +1,29 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet run apps/admin.rb --desktop --port 9000
+seed: prebuilt_clients
+added file: apps/admin.rb
+exit: 0
+
+## commands (3)
+1. system exit=0
+   <RUBY> -S bundle check
+   env: BUNDLE_GEMFILE=<PROJECT>/Gemfile RUFLET_APP_SCRIPT=<PROJECT>/apps/admin.rb RUFLET_BOOTSNAP_DIR=<HOME>/.ruflet/bootsnap/<RUBY_VERSION>/<PROJECT_KEY>-apps RUFLET_PORT=9000 RUFLET_SUPPRESS_SERVER_BANNER=1 RUFLET_TARGET=desktop RUFLET_WATCH_ROOT=<PROJECT>/apps
+   options: err out
+2. spawn
+   <RUBY> -rbundler/setup <GEM_HOME>/gems/ruflet-<RUFLET_VERSION>/lib/ruflet/hot_reload/harness.rb
+   env: BUNDLE_GEMFILE=<PROJECT>/Gemfile RUFLET_APP_SCRIPT=<PROJECT>/apps/admin.rb RUFLET_BOOTSNAP_DIR=<HOME>/.ruflet/bootsnap/<RUBY_VERSION>/<PROJECT_KEY>-apps RUFLET_PORT=9000 RUFLET_SUPPRESS_SERVER_BANNER=1 RUFLET_TARGET=desktop RUFLET_WATCH_ROOT=<PROJECT>/apps
+   options: pgroup
+3. spawn
+   "<HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop/Ruflet Explorer.app/Contents/MacOS/Ruflet Explorer" http://localhost:9000
+   env: RUFLET_URL=http://localhost:9000
+   options: err out
+
+## output
+out| Ruflet desktop URL: http://localhost:9000
+out| Hot reload: watching *.rb (disable with --no-reload)
+
+## files
+(no files changed)
