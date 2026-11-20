@@ -2,7 +2,6 @@
 
 require "find"
 require "json"
-require "ripper"
 
 require_relative "template_surface_revisions"
 
@@ -33,6 +32,9 @@ module Ruflet
       }.freeze
       MAX_FILE_BYTES = 1_000_000
       MAX_FILES = 5_000
+      # Directory entries visited at most, so a large asset tree cannot slow
+      # a build or `ruflet run` down.
+      MAX_ENTRIES = 50_000
 
       Problem = Struct.new(:kind, :name, :provides, :revision, :location, keyword_init: true)
 
@@ -118,6 +120,7 @@ module Ruflet
           source = read_source(path)
           next unless source&.match?(pattern)
 
+          require "ripper" # loaded only when a file may call a name the template lacks
           tree = Ripper.sexp(source)
           next unless tree
 
@@ -147,7 +150,11 @@ module Ruflet
         return [] unless %w[main.rb ruflet.yaml ruflet.yml services.yaml].any? { |marker| File.file?(File.join(project_root, marker)) }
 
         files = []
+        entries = 0
         Find.find(project_root) do |path|
+          entries += 1
+          break if entries > MAX_ENTRIES
+
           if File.directory?(path)
             name = File.basename(path)
             Find.prune if path != project_root && (name.start_with?(".") || SKIPPED_DIRS.include?(name))

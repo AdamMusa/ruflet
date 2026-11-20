@@ -283,6 +283,15 @@ class RufletTemplateSurfaceTest < Minitest::Test
     end
   end
 
+  def test_the_walk_stops_after_max_entries
+    files = { "main.rb" => "text(\"a\")\n", "zz/screen.rb" => "form\n" }
+    10.times { |index| files["assets/#{index}.png"] = "" }
+    project(files) do |dir|
+      assert_equal({ "form" => "zz/screen.rb:1" }, Surface.app_calls(dir, ["form"]))
+      with_const(:MAX_ENTRIES, 5) { assert_empty Surface.app_calls(dir, ["form"]) }
+    end
+  end
+
   def test_a_directory_that_is_not_a_ruflet_project_is_not_read
     project("script.rb" => "form\n") do |dir|
       assert_empty Surface.ruby_files(dir)
@@ -503,6 +512,16 @@ class RufletTemplateSurfaceTest < Minitest::Test
     yield
   ensure
     saved.each { |key, value| ENV[key] = value }
+  end
+
+  def with_const(name, value)
+    original = Surface.const_get(name)
+    Surface.send(:remove_const, name)
+    Surface.const_set(name, value)
+    yield
+  ensure
+    Surface.send(:remove_const, name)
+    Surface.const_set(name, original)
   end
 
   def with_wire_type(wire, entry)
