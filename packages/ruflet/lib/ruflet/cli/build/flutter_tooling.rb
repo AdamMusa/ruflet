@@ -31,9 +31,10 @@ module Ruflet
         #   (Flutter would stop with "not found") but is one in the project;
         # - an output is rewritten when it would be written inside the
         #   managed build/client, which a template refresh deletes, outside
-        #   what the build exports from there, and when its project path is
-        #   neither inside build/client nor inside a directory that export
-        #   replaces.
+        #   what the build exports from there, and when its project path lies
+        #   inside the project but is neither the project root nor a
+        #   directory holding build/client, nor inside build/client or a
+        #   directory that export replaces.
         # Everything else is left as written: absolute paths; paths that
         # already leave build/client (such as `../../symbols`); outputs in a
         # client dir Ruflet does not manage (RUFLET_CLIENT_DIR,
@@ -41,6 +42,8 @@ module Ruflet
         # flag, or a `~` no shell expanded; every other argument; and all
         # arguments after a bare `--`, which Flutter takes as positional.
         def resolve_flutter_path_args(args, root = Dir.pwd, client_dir: hidden_flutter_client_dir(root), platform: nil)
+          # An ipa is built and exported as ios (see BuildCommand#command_build).
+          platform = "ios" if platform == "ipa"
           kinds = flutter_path_option_kinds(platform)
           resolve = ->(kind, value) { flutter_path_value(kind, value, root, client_dir, platform) }
           resolved = []
@@ -111,7 +114,8 @@ module Ruflet
           return value if exports.keys.any? { |source| path_within?(today, File.join(client, "build", source)) }
 
           project = File.expand_path(value, root)
-          return value if path_within?(project, client)
+          return value unless path_within?(project, File.expand_path(root))
+          return value if path_within?(project, client) || path_within?(client, project)
           return value if exports.values.any? { |target| path_within?(project, File.join(user_build_root(root), target)) }
 
           project

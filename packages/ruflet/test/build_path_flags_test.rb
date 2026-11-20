@@ -84,6 +84,13 @@ class RufletBuildPathFlagsTest < Minitest::Test
     assert_equal ["--output", "#{@root}/out/web"], resolve(%w[--output out/web/], platform: "web")
   end
 
+  # A sibling of an exported or replaced directory is in neither.
+  def test_outputs_beside_the_export_directories_are_resolved
+    assert_equal ["-o", "#{@root}/build/web_out"], resolve(%w[-o build/web_out], platform: "web")
+    assert_equal ["--split-debug-info=#{@root}/build/android_symbols"],
+                 resolve(%w[--split-debug-info=build/android_symbols])
+  end
+
   def test_repeated_flags_are_all_resolved
     touch("a.json")
     touch("b.env")
@@ -115,7 +122,10 @@ class RufletBuildPathFlagsTest < Minitest::Test
       %w[--split-debug-info=../../symbols],
       %w[--split-debug-info ../symbols],
       %w[--split-debug-info=../client_symbols],  # beside build/client, not in it
-      %w[--code-size-directory=../../sizes --performance-measurement-file ../../perf.json]
+      %w[--code-size-directory=../../sizes --performance-measurement-file ../../perf.json],
+      # build/<project name>/symbols today; the same words from the project
+      # root would name ./symbols.
+      ["--split-debug-info=../#{File.basename(@root)}/symbols"]
     ].each { |args| assert_equal args, resolve(args, platform: "ios"), args.inspect }
     [%w[-o ../web_dist], %w[-o../../dist], %w[--output=../../dist], %w[--output-dir ../web_dist]].each do |args|
       assert_equal args, resolve(args, platform: "web"), args.inspect
@@ -127,6 +137,14 @@ class RufletBuildPathFlagsTest < Minitest::Test
     touch("defines.json")
     assert_equal %w[--dart-define-from-file=defines.json], resolve(%w[--dart-define-from-file=defines.json])
     assert_equal %w[--export-options-plist defines.json], resolve(%w[--export-options-plist defines.json], platform: "ios")
+  end
+
+  # Flutter needs a file: a directory at that path in the client dir is as
+  # broken as nothing there.
+  def test_a_directory_in_the_client_dir_does_not_count_as_the_input
+    FileUtils.mkdir_p(File.join(@client, "config", "defines.json"))
+    expected = touch("config", "defines.json")
+    assert_equal ["--dart-define-from-file=#{expected}"], resolve(%w[--dart-define-from-file=config/defines.json])
   end
 
   def test_an_input_found_nowhere_is_left_for_flutter_to_report
@@ -143,6 +161,7 @@ class RufletBuildPathFlagsTest < Minitest::Test
       "apk" => [%w[--split-debug-info=build/app/outputs/symbols]],
       "appbundle" => [%w[--split-debug-info build/app/outputs]],
       "ios" => [%w[--split-debug-info=build/ios/symbols]],
+      "ipa" => [%w[--split-debug-info=build/ios/symbols], %w[--code-size-directory build/ios/sizes]],
       "macos" => [%w[--code-size-directory=build/macos/sizes]],
       "linux" => [%w[--split-debug-info=build/linux/symbols]],
       "windows" => [%w[--split-debug-info=build/windows/symbols]] }.each do |platform, cases|
@@ -161,6 +180,28 @@ class RufletBuildPathFlagsTest < Minitest::Test
     ].each { |platform, args| assert_equal args, resolve(args, platform: platform), "#{platform} #{args.inspect}" }
   end
 
+  # Rewriting these would move an output out of the project, or onto the
+  # project root or ./build, which hold build/client, so they stay as today.
+  def test_outputs_whose_project_path_leaves_the_project_or_holds_the_client_dir_are_left_as_written
+    [
+      ["apk", %w[--split-debug-info=../client/symbols]],
+      ["apk", %w[--split-debug-info .]],
+      ["web", %w[-o ../client]],
+      ["web", %w[-o .]],
+      ["web", %w[-o./]],
+      ["web", %w[--output build]],
+      ["web", %w[--output-dir=build/]]
+    ].each { |platform, args| assert_equal args, resolve(args, platform: platform), "#{platform} #{args.inspect}" }
+  end
+
+  # An ipa is exported as ios, whatever name the caller passes.
+  def test_an_ipa_is_resolved_like_ios
+    assert_equal ["--split-debug-info=#{@root}/symbols"], resolve(%w[--split-debug-info=symbols], platform: "ipa")
+    [%w[--split-debug-info=symbols], %w[--split-debug-info=build/ios/symbols], %w[-o dist]].each do |args|
+      assert_equal resolve(args, platform: "ios"), resolve(args, platform: "ipa"), args.inspect
+    end
+  end
+
   # A client dir the developer owns is never deleted by Ruflet, so outputs
   # written into it work today. Inputs it lacks are still found in the project.
   def test_outputs_in_a_client_dir_ruflet_does_not_manage_are_left_as_written
@@ -175,7 +216,7 @@ class RufletBuildPathFlagsTest < Minitest::Test
   end
 
   def test_output_dir_flags_are_left_alone_for_targets_flutter_gives_none
-    %w[apk appbundle ios macos windows linux].each do |platform|
+    %w[apk appbundle ios ipa macos windows linux].each do |platform|
       [%w[-o dist], %w[-odist], %w[--output dist], %w[--output-dir=dist]].each do |args|
         assert_equal args, resolve(args, platform: platform), "#{platform} #{args.inspect}"
       end
