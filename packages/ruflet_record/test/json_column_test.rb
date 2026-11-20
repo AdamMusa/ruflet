@@ -129,10 +129,12 @@ class JsonColumnTest < RufletRecordTestCase
   def test_without_a_json_library_the_value_is_bound_unchanged
     sql = RufletRecord::SQL.singleton_class
     sql.send(:alias_method, :json_library_before_test, :json_library)
+    sql.send(:remove_method, :json_library)
     sql.send(:define_method, :json_library) { nil }
 
     assert_equal [{ "a" => 1 }, [1], "x"], [{ "a" => 1 }, [1], "x"].map { |value| RufletRecord::SQL.column_value(value) }
   ensure
+    sql.send(:remove_method, :json_library)
     sql.send(:alias_method, :json_library, :json_library_before_test)
     sql.send(:remove_method, :json_library_before_test)
   end
