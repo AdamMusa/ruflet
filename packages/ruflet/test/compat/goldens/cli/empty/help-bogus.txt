@@ -1,0 +1,32 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: empty
+command: ruflet help bogus
+exit: 0
+
+## commands (0)
+
+## output
+out| Ruflet CLI
+out| 
+out| Commands:
+out|   ruflet --version
+out|   ruflet create <appname>
+out|   ruflet new <appname>
+out|   ruflet run [scriptname|path] [--web|--desktop] [--port PORT] [--no-reload]
+out|   ruflet update [web|desktop|all] [--check] [--force] [--platform PLATFORM]
+out|   ruflet debug [scriptname|path]
+out|   ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--lite|--full|--self] [--verbose]
+out|   ruflet install [--device DEVICE_ID] [--verbose]
+out|   ruflet devices
+out|   ruflet emulators
+out|   ruflet doctor [--fix] [--verbose]
+out| 
+out| Build profiles:
+out|   --self           Self-contained lite build (default profile)
+out|   --self --full    Self-contained full CRuby build with locked project gems
+out|   --full           Also implies --self
+
+## files
+(no files changed)
