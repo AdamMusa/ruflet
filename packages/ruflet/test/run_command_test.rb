@@ -1274,4 +1274,104 @@ class RufletCliRunCommandTest < Minitest::Test
     ENV["RUFLET_CLIENT_UPDATE_INTERVAL"] = previous_interval
   end
 
+  # The periodic "is there a newer client?" check is optional. When it cannot
+  # reach GitHub (offline, DNS failure, 5xx, or the unauthenticated rate limit),
+  # `ruflet run` must keep using the complete cache it already has instead of
+  # failing with "client not found".
+  def test_run_web_keeps_a_complete_cache_when_the_update_check_cannot_reach_github
+    with_due_client_cache do |runner, cache, checked_at|
+      runner.define_singleton_method(:github_get_json) do |_url|
+        raise SocketError, "getaddrinfo: nodename nor servname provided, or not known"
+      end
+
+      found = nil
+      _out, err = capture_io do
+        found = Dir.mktmpdir { |cwd| Dir.chdir(cwd) { with_client_dir(nil) { runner.send(:detect_web_client_dir) } } }
+      end
+
+      assert_equal File.join(cache, "web"), found
+      assert_includes err, "Could not check for a newer client (getaddrinfo: nodename nor servname provided, or not known); using the cached one"
+      refute_includes err, "Prebuilt client bootstrap failed"
+      # A failed check is not a completed one: the next run checks again.
+      assert_equal checked_at, read_manifest(cache)["checked_at"]
+    end
+  end
+
+  def test_run_desktop_keeps_a_complete_cache_when_the_update_check_cannot_reach_github
+    skip "macOS layout" unless RbConfig::CONFIG["host_os"].match?(/darwin/i)
+
+    with_due_client_cache do |runner, cache, checked_at|
+      executable = build_macos_app(File.join(cache, "desktop"), "Ruflet Explorer")
+      runner.define_singleton_method(:github_get_json) { |_url| raise "GitHub API failed (503)" }
+
+      command = nil
+      _out, err = capture_io do
+        command = Dir.mktmpdir do |cwd|
+          Dir.chdir(cwd) { with_client_dir(nil) { runner.send(:detect_desktop_client_command, "http://localhost:8550") } }
+        end
+      end
+
+      assert_equal [executable, "http://localhost:8550"], command
+      assert_includes err, "Could not check for a newer client (GitHub API failed (503)); using the cached one"
+      assert_equal checked_at, read_manifest(cache)["checked_at"]
+    end
+  end
+
+  # `ruflet update` asked for a newer client, so a check that cannot run is
+  # still a failed update there; only the run path falls back to the cache.
+  def test_update_still_fails_when_the_update_check_cannot_reach_github
+    with_due_client_cache do |runner, cache, checked_at|
+      runner.define_singleton_method(:github_get_json) { |_url| raise "GitHub API failed (503)" }
+
+      root = :unset
+      _out, err = capture_io { root = runner.send(:ensure_prebuilt_client, web: true, platform: "macos") }
+
+      assert_nil root
+      assert_includes err, "Prebuilt client bootstrap failed: RuntimeError: GitHub API failed (503)"
+      refute_includes err, "Could not check for a newer client"
+      assert_equal checked_at, read_manifest(cache)["checked_at"]
+    end
+  end
+
+  def read_manifest(dir)
+    JSON.parse(File.read(File.join(dir, "manifest.json")))
+  end
+
+  # A complete prebuilt web cache whose last update check is older than the
+  # interval, so the next lookup asks GitHub for a newer client.
+  def with_due_client_cache
+    previous = ENV.to_h.slice("RUFLET_CLIENT_UPDATE_INTERVAL", "RUFLET_CLIENT_AUTO_UPDATE", "RUFLET_CLIENT_CHANNEL")
+    ENV.delete("RUFLET_CLIENT_UPDATE_INTERVAL")
+    ENV.delete("RUFLET_CLIENT_AUTO_UPDATE")
+    ENV.delete("RUFLET_CLIENT_CHANNEL")
+
+    Dir.mktmpdir do |cache|
+      build_web_output(File.join(cache, "web"))
+      checked_at = (Time.now.utc - (7 * 60 * 60)).iso8601
+      File.write(
+        File.join(cache, "manifest.json"),
+        JSON.generate(
+          "schema" => 2,
+          "release_tag" => "prebuild-main",
+          "checked_at" => checked_at,
+          "installed_at" => checked_at,
+          "targets" => [{ "kind" => "web", "platform" => "macos", "release_revision" => "1:2026-01-01T00:00:00Z:10" }]
+        )
+      )
+      runner = DummyRunner.new
+      runner.define_singleton_method(:ruflet_version) { "0.0.23" }
+      runner.define_singleton_method(:client_cache_root_for) { |_platform| cache }
+      runner.define_singleton_method(:download_file) { |*_args, **_opts| flunk "nothing should be downloaded" }
+      yield runner, cache, checked_at
+    end
+  ensure
+    %w[RUFLET_CLIENT_UPDATE_INTERVAL RUFLET_CLIENT_AUTO_UPDATE RUFLET_CLIENT_CHANNEL].each do |key|
+      if previous&.key?(key)
+        ENV[key] = previous[key]
+      else
+        ENV.delete(key)
+      end
+    end
+  end
+
 end
