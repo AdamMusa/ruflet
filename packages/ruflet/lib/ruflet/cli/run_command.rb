@@ -145,6 +145,14 @@ module Ruflet
 
       def parse_run_options(args)
         options = { target: "mobile", requested_port: 8550, reload: true }
+        # --strict is read only as written, before OptionParser, so that no
+        # abbreviation of it (-s, --st, ...) comes to mean it: those stay
+        # unknown flags, as before it existed. Arguments after `--` are left.
+        terminator = args.index("--") || args.length
+        if args.first(terminator).include?("--strict")
+          options[:strict] = true
+          args.replace(args.first(terminator).reject { |arg| arg == "--strict" } + args.drop(terminator))
+        end
         parser = OptionParser.new do |o|
           o.on("--web") { options[:target] = "web" }
           # -d reached --desktop as its only abbreviation before --device
@@ -153,7 +161,6 @@ module Ruflet
           o.on("--port PORT", Integer) { |v| options[:requested_port] = v }
           o.on("--no-reload") { options[:reload] = false }
           o.on("--device ID") { |v| options[:device] = v }
-          o.on("--strict") { options[:strict] = true }
           o.on("-h", "--help") { raise Commands::HelpRequested }
         end
         parser.parse!(args)
