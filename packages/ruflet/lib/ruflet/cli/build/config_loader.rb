@@ -51,7 +51,7 @@ module Ruflet
               # identity from older projects, so it fills gaps rather than
               # overriding what the project states.
               declared = config["app"].is_a?(Hash) ? config["app"] : {}
-              config["app"] = service_config["app"].merge(declared)
+              config["app"] = merge_declared_app(config, service_config["app"], declared)
             end
             config["services"] = service_config["services"] if service_config.key?("services")
           end
@@ -59,6 +59,31 @@ module Ruflet
         rescue StandardError => e
           warn "Failed to load ruflet config: #{e.class}: #{e.message}"
           {}
+        end
+
+        # services.yaml's app fills the keys ruflet.yaml's app leaves out. The
+        # user-facing name is one statement however it is spelled: once
+        # ruflet.yaml gives a display_name or app_name, services.yaml's are not
+        # gaps to fill. Merged key by key, the app_name `ruflet new` writes
+        # into services.yaml outranked a display_name stated in ruflet.yaml.
+        def merge_declared_app(config, inherited, declared)
+          merged = inherited.merge(declared)
+          return merged if first_present(declared["display_name"], declared["app_name"]).nil?
+
+          named = inherited.reject { |key, _| %w[display_name app_name].include?(key) }.merge(declared)
+          # With no package_name in either file the package is derived from the
+          # app's name. Keep deriving it from the name it came from, so the
+          # bundle identifiers, binary names and pubspec name stay where they were.
+          previous = package_source_name(merged)
+          if first_present(named["package_name"], config["package_name"]).nil? && previous != package_source_name(named)
+            config["package_name"] = previous
+          end
+          named
+        end
+
+        # The name a package name is derived from when none is stated.
+        def package_source_name(app)
+          first_present(app["app_name"], app["display_name"], app["name"])
         end
 
         # Platform-specific overrides may live in a top-level `<platform>:` block,
