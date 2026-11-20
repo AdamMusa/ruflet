@@ -19,6 +19,15 @@ module Ruflet
           nil
         end
 
+        # The value of the first `--flag=value` in args, removed from them.
+        def extract_equals_option_value!(args, flag)
+          prefix = "#{flag}="
+          index = args.index { |arg| arg.start_with?(prefix) }
+          return nil unless index
+
+          args.delete_at(index).delete_prefix(prefix)
+        end
+
         # Native project files are UTF-8 and the values written into them are too
         # (the macOS copyright line carries a ©). Reading them with the default
         # external encoding fails outright under a non-UTF-8 locale, so pin it.
