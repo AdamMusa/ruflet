@@ -97,6 +97,9 @@ intended, review the diff, and list it under "Behavior changes" in the PR.
   is needed. `ruflet_rails_demo` is not used.
 * `rails_new_app`: the files of a fresh `rails new` app (railties 8.1
   templates) that the install generator reads and edits.
+* `icons_app`: one control per way an app names an icon (strings, symbols,
+  `MaterialIcons`, `CupertinoIcons`, `Icons`, `IconData`), including names
+  both icon sets define, so its page golden pins the codepoint each one sends.
 * `docs/<id>.rb`: whole-app examples copied verbatim from the published docs
   (AdamMusa/ruflet_site), each the `main.rb` of a default app.
 * `ruby_runtime`: a stand-in local runtime checkout for `RUFLET_RUBY_RUNTIME_PATH`.
