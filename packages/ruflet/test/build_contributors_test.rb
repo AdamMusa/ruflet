@@ -8,7 +8,9 @@ class RufletCliBuildContributorsTest < Minitest::Test
   end
 
   # The order prepare_flutter_client has always written the client's
-  # configuration in. Later features insert themselves with before:/after:.
+  # configuration in, with startup_hooks (WP-00 R3) right after extensions,
+  # where prepare_flutter_client called it before the split. Later features
+  # insert themselves with before:/after:.
   BUILT_IN = %i[
     template_refresh
     apple_host
@@ -17,6 +19,7 @@ class RufletCliBuildContributorsTest < Minitest::Test
     signing
     runtime_mode
     extensions
+    startup_hooks
     assets
   ].freeze
 
@@ -131,7 +134,7 @@ class RufletCliBuildContributorsTest < Minitest::Test
     assert_equal({ has_icon: false, has_splash: false }, seen)
   end
 
-  # No golden sees the next two, so they are pinned here. A client with no
+  # No golden sees the next three, so they are pinned here. A client with no
   # template to refresh from keeps building; only a failed refresh stops it.
   def test_template_refresh_stops_the_build_only_when_the_refresh_fails
     builder = DummyBuilder.new
@@ -163,5 +166,26 @@ class RufletCliBuildContributorsTest < Minitest::Test
       assert_equal %w[camera], build.extension_keys
     end
     assert_equal [true, false], seen
+  end
+
+  # The startup hooks get this build's client dir, config, platform and
+  # self_contained, and never stop the build: write_client_bootstrap returns
+  # nil whenever the client does not use the generated file.
+  def test_startup_hooks_pass_the_build_on_and_continue
+    builder = DummyBuilder.new
+    calls = []
+    config = { "app" => {} }
+
+    [nil, "/client/lib/ruflet_bootstrap.g.dart"].each do |written|
+      builder.define_singleton_method(:write_client_bootstrap) do |*args, **kwargs|
+        calls << [args, kwargs]
+        written
+      end
+      build = Ruflet::CLI::Build::Context.new(
+        client_dir: "/client", platform: "ios", config: config, self_contained: true, verbose: false
+      )
+      assert_equal true, builder.send(:contribute_startup_hooks, build), "write_client_bootstrap returned #{written.inspect}"
+    end
+    assert_equal [[["/client", config], { platform: "ios", self_contained: true }]] * 2, calls
   end
 end
