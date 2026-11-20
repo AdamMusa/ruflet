@@ -74,9 +74,10 @@ check.call(
   false
 )
 
-# ADD and HOME are in both sets with different codepoints. Every published
-# gem sends Material's for both, whichever set the name came from, so apps
-# show that glyph today and it must not change.
+# ADD and HOME are in both sets with different codepoints. Main and the
+# published gems (0.0.15 to 0.0.21 and 0.0.23 were checked) send Material's
+# for both, whichever set the name came from, so apps show that glyph today
+# and it must not change.
 check.call(
   "cupertino_button(icon: CupertinoIcons::ADD) sends the published codepoint",
   Ruflet::DSL.cupertino_button("x", icon: Ruflet::CupertinoIcons::ADD).props["icon"],

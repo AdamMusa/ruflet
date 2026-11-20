@@ -10,15 +10,15 @@ require "yaml"
 # sends on the wire, and what it loads.
 #
 # 101 names (ADD, HOME, ...) are in both sets with different codepoints.
-# Every published ruflet_core (0.0.15 through 0.0.23) sends Material's
-# codepoint for all of them, whichever set the name was taken from:
-# CupertinoIcons::ADD sends 65604, not Cupertino's 131072. Apps show that
-# glyph today, so these tests pin it. Changing it is a decision for the
-# owner, not a side effect of a lookup change.
+# Main and the published ruflet_core gems (0.0.15 to 0.0.21 and 0.0.23 were
+# checked) send Material's codepoint for all of them, whichever set the name
+# was taken from: CupertinoIcons::ADD sends 65604, not Cupertino's 131072.
+# Apps show that glyph today, so these tests pin it. Changing it is a
+# decision for the owner, not a side effect of a lookup change.
 class RufletIconSetDecouplingTest < Minitest::Test
   CORE_LIB = File.expand_path("../lib", __dir__)
 
-  # What every published ruflet_core from 0.0.15 to 0.0.23 sends.
+  # What main and ruflet_core 0.0.15 to 0.0.21 and 0.0.23 send.
   PUBLISHED_WIRE = {
     "CupertinoIcons::ADD" => 65_604,
     "CupertinoIcons::HOME" => 69_217,
