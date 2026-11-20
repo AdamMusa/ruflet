@@ -1,3 +1,6 @@
+require_relative "../patches/mruby_patches"
+RufletMrubyPatches.apply(MRUBY_ROOT)
+
 VM_DIR = File.expand_path("..", __dir__)
 
 MRuby::Build.new(ENV.fetch("RUFLET_VM_BUILD", "desktop_linux")) do |conf|
