@@ -12,6 +12,7 @@ module RufletRecord
       def inherited(subclass)
         super
         Base.descendants << subclass
+        subclass.instance_variable_set(:@connection, @connection)
         subclass.instance_variable_set(:@primary_key, @primary_key || "id")
         subclass.instance_variable_set(:@validators, validators.dup)
         subclass.instance_variable_set(:@abstract_class, false)
@@ -25,14 +26,23 @@ module RufletRecord
         @connection = Adapters::SQLiteAdapter.new(config)
         RufletRecord.connection = @connection if self == Base
         reset_column_information
+        # Models that follow this class's connection (see #connection) must
+        # not keep the previous database's columns.
+        Base.descendants.each do |model|
+          next if model.equal?(self) || !model.ancestors.include?(self)
+
+          model.reset_column_information unless model.instance_variable_get(:@connection)
+        end
         @connection
       end
 
-      # The nearest connection up the class chain, so a model defined before
-      # its abstract parent's establish_connection still uses it.
+      # A model keeps the connection its parent had when it was defined. A
+      # model defined before its abstract parent's establish_connection had
+      # none, so it uses the parent's; Base's direct subclasses fall back to
+      # RufletRecord.connection, as before.
       def connection
         return @connection if @connection
-        return RufletRecord.connection if self == Base
+        return RufletRecord.connection if equal?(Base) || superclass.equal?(Base)
 
         superclass.connection
       end
