@@ -5,11 +5,16 @@
 # guards this on CRuby. This is the same contract on the embedded VM, whose
 # JSON (ruby_runtime/vm/stdlib/json.rb) decodes even "007" as 7.
 #
+# The compiled framework does not load JSON by itself: Ruflet::Event decodes
+# String payloads only once something has required "json" (an app or a gem
+# usually has), so this file requires it to exercise that path.
+#
 # Valid mruby and CRuby (no Regexp, no defined?, no string eval).
 #
 # Run: embedded_mruby --preload tools/embedded_vm_harness/tests/event_client_value_test.rb
 #  or: ruby -Ipackages/ruflet_core/lib tools/embedded_vm_harness/tests/event_client_value_test.rb
 require "ruflet_core"
+require "json"
 
 failures = 0
 
