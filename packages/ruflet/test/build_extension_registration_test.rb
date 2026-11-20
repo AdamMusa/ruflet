@@ -6,7 +6,8 @@ require "fileutils"
 # Where a build writes an extension's `Extension()` registration in a client
 # entrypoint. The template brackets some imports at the top of main.self.dart
 # and main.server.dart with FAT_CLIENT markers, as well as entries in the
-# extensions list; only the list's markers place a registration.
+# extensions list; only the list's markers place a registration. A file with no
+# extensions list (lib/main.dart) gets no registration.
 class RufletCliBuildExtensionRegistrationTest < Minitest::Test
   class DummyBuilder
     include Ruflet::CLI::BuildCommand
@@ -95,6 +96,26 @@ class RufletCliBuildExtensionRegistrationTest < Minitest::Test
       assert_equal 1, content.scan("ext_pkg.Extension(),").length
       assert_equal 1, content.scan("import 'package:ext_pkg/ext_pkg.dart' as ext_pkg;").length
     end
+  end
+
+  def test_an_entrypoint_without_a_list_is_left_unchanged
+    # The template's lib/main.dart: it only calls main.self.dart, which
+    # registers the extensions.
+    wrapper = <<~DART
+      import 'main.self.dart' as self_app;
+
+      Future<void> main() => self_app.main();
+    DART
+
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "main.dart")
+      File.write(path, wrapper)
+
+      DummyBuilder.new.send(:sync_external_extension_registrations, path, [{ name: "ext_pkg" }])
+
+      assert_equal wrapper, File.read(path)
+    end
+    assert_equal wrapper, insert(wrapper, "    ext_pkg.Extension(),\n")
   end
 
   def test_a_list_without_its_own_marker_gets_the_registration_first

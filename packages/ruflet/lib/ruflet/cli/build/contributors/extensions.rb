@@ -241,10 +241,14 @@ module Ruflet
 
           # Ruflet extension packages expose an Extension class from a library named
           # after the package, so the import and registration can be derived.
+          # lib/main.dart only calls main.self.dart and has no extensions list, so
+          # it needs neither.
           def sync_external_extension_registrations(path, entries)
             return if entries.empty?
 
             content = read_text_file(path)
+            return unless content.include?(EXTENSION_LIST_OPENING)
+
             original = content.dup
 
             entries.each do |entry|
@@ -466,11 +470,12 @@ module Ruflet
           # list, before the list's own FAT_CLIENT_START block, or first in the
           # list when it has none. The template also brackets imports at the top
           # of the file with FAT_CLIENT markers, so only the lines between the
-          # list's opening and its closing `];` are searched for one.
+          # list's opening and its closing `];` are searched for one. An
+          # entrypoint without the list has nowhere to register and is left as is.
           def insert_missing_extension(content, extension_line)
             lines = content.lines
             list_index = lines.index { |line| line.include?(EXTENSION_LIST_OPENING) }
-            return (lines << extension_line).join unless list_index
+            return content unless list_index
 
             close_index = (list_index + 1...lines.length).find { |index| lines[index].lstrip.start_with?("];") }
             marker_index =
