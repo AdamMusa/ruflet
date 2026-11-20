@@ -356,6 +356,16 @@ module RufletCompat
     cli "default_app", "build", "apk", "--release"
     cli "services_app", "build", "apk", "--release"
     cli "services_app", "build", "--release", "apk"
+    # `--` ends the options (`help --` lists the commands, `build -- apk`
+    # names the unsupported target "--"); `emulators --c`, like -c, is
+    # --create; and the version words given a flag.
+    cli "empty", "help", "--", id: "help-end-of-options"
+    cli "empty", "--help", "--", id: "--help-end-of-options"
+    cli "default_app", "build", "--", "apk", id: "build-end-of-options-apk"
+    cli "default_app", "emulators", "--c", id: "emulators-double-dash-c"
+    cli "empty", "--version", "-v"
+    cli "empty", "-v", "--verbose"
+    cli "empty", "version", "--anything"
 
     # --- command words, help, usage and exit codes (R2, CLI-12) ----------------
     # How the first argument picks a command (case-insensitively, aliases

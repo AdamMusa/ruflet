@@ -214,7 +214,11 @@ class RufletCliUsageTest < Minitest::Test
   end
 
   def test_help_without_a_command_word_still_lists_every_command
-    [%w[help], %w[help help], %w[help -h], %w[help --help], %w[help bogus], %w[--help bogus], %w[-h]].each do |argv|
+    [
+      %w[help], %w[help help], %w[help -h], %w[help --help], %w[help bogus], %w[--help bogus], %w[-h],
+      # `--` ends the options; it is not a bad flag, and nothing after it is read.
+      %w[help --], %w[--help --], %w[help -- build]
+    ].each do |argv|
       code, out, err = run_cli(Host.new, argv)
 
       assert_equal 0, code, argv.inspect
@@ -252,10 +256,15 @@ class RufletCliUsageTest < Minitest::Test
       assert text.start_with?("Usage: ruflet "), entry.name
       entry.options.each { |option| assert_includes text, "  #{option.label} ", "#{entry.name}: #{option.label}" }
       option_lines = text.lines.grep(/\A  -/).join
-      %w[--de --d].each { |hidden| refute_match(/#{Regexp.escape(hidden)}\b/, option_lines, "#{entry.name}: #{hidden} is not listed") }
+      entry.options.flat_map(&:hidden).each do |hidden|
+        refute_match(/(?<![\w-])#{Regexp.escape(hidden)}(?![\w-])/, option_lines, "#{entry.name}: #{hidden} is not listed")
+      end
       assert_includes text, "`#{entry.forwards}`", entry.name if entry.forwards
     end
+    assert_equal %w[--de --d], Commands.lookup("run").options.flat_map(&:hidden)
+    assert_equal %w[-c --c], Commands.lookup("emulators").options.flat_map(&:hidden)
     assert_includes Commands.lookup("debug").help_text, "Usage: ruflet debug [platform] "
+    assert_match(/^  --device-id ID, --device ID +Flutter device to run on$/, Commands.lookup("debug").help_text)
     assert_includes Commands.lookup("new").help_text, "Aliases: bootstrap, init"
   end
 
@@ -328,6 +337,19 @@ class RufletCliUsageTest < Minitest::Test
     assert_equal [{}, "flutter", "emulators", "--launch", "Pixel_8_API_35", "--cold", "-v"], ran
   end
 
+  def test_the_abbreviations_of_create_still_reach_it_beside_cold
+    [%w[-c], %w[--c], %w[--cr], %w[--create]].each do |argv|
+      code, out, err = run_cli(Host.new, ["emulators", *argv])
+
+      assert_equal 1, code, argv.inspect
+      assert_empty out, argv.inspect
+      assert_equal "ruflet emulators --create is not implemented yet. Use your platform tools.\n", err, argv.inspect
+    end
+    code, _out, err = run_cli(Host.new, %w[emulators --co])
+    assert_equal 64, code
+    assert err.start_with?("ruflet emulators: --cold needs --start --emulator ID\n\n"), err
+  end
+
   # --- build: the target may follow flags ---------------------------------------
 
   def test_the_build_target_is_the_first_argument_or_the_one_argument_naming_a_target
@@ -342,7 +364,12 @@ class RufletCliUsageTest < Minitest::Test
       %w[--target-platform android-arm64 apk --release] => ["apk", %w[--target-platform android-arm64 --release]],
       %w[--build-name 1.2.3 IOS] => ["ios", %w[--build-name 1.2.3]],
       %w[--flavor prod] => ["prod", %w[--flavor]],
-      %w[--release] => ["", %w[--release]]
+      %w[--release] => ["", %w[--release]],
+      # Nothing after `--` names the target.
+      %w[-- apk] => ["--", %w[apk]],
+      %w[--release -- apk] => ["", %w[--release -- apk]],
+      %w[--release apk -- web] => ["apk", %w[--release -- web]],
+      %w[apk -- --release] => ["apk", %w[-- --release]]
     }.each do |argv, (target, rest)|
       args = argv.dup
       assert_equal target, host.send(:extract_build_target!, args), argv.inspect
@@ -358,6 +385,15 @@ class RufletCliUsageTest < Minitest::Test
     code, _out, err = run_cli(Host.new.recorder(:ensure_ruflet_build_assets) { flunk("nothing is prepared") }, %w[build --flavor web apk])
     assert_equal 64, code
     assert err.start_with?("ruflet build: more than one argument names a build target (web, apk); put the target first\n\nUsage: ruflet build ")
+  end
+
+  def test_build_end_of_options_first_is_still_an_unsupported_target
+    host = Host.new.recorder(:ensure_ruflet_build_assets) { flunk("nothing is prepared") }
+    code, out, err = run_cli(host, %w[build -- apk])
+
+    assert_equal 1, code
+    assert_empty out
+    assert_equal "Unsupported build target: --\n", err
   end
 
   # The H1 goldens of both spellings, minus the line naming the invocation.
