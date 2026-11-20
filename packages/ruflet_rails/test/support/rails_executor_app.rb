@@ -23,6 +23,8 @@ RESULT_MARKER = "RUFLET_EXECUTOR_RESULT "
 def report(result)
   $stdout.puts(RESULT_MARKER + JSON.generate(result))
   $stdout.flush
+  # exit! skips at_exit, so remove the app directory here.
+  FileUtils.rm_rf(APP_ROOT) if defined?(APP_ROOT)
   # Socket threads may still be blocked in a read; nothing here needs a
   # graceful shutdown.
   exit!(0)
@@ -320,29 +322,40 @@ when "execution_state"
     "event_reporter" => ActiveSupport.respond_to?(:event_reporter)
   )
 
-when "handler_error"
-  # A handler error is logged and answered with session_crashed, as before;
-  # it is not reported to Rails.error as an unhandled error.
+when "unhandled_errors"
+  # An error raised by the entrypoint or by a handler is handled by the
+  # connection protocol as before; the executor does not also report it to
+  # Rails.error as an unhandled error.
   reports = Queue.new
   subscriber = Class.new do
     define_method(:report) { |error, **| reports << error.message }
   end.new
   Rails.error.subscribe(subscriber)
-  endpoint = Ruflet::Rails.native do |page|
-    page.add(button("Boom") { |_event| raise "handler failed" })
+  raised = []
+  drain = lambda do |io|
+    nil while Wire.read_frame(io, timeout: 2)
+    io.close
   end
-  client, patch = Wire.connect(endpoint)
+
+  failing_entrypoint = Ruflet::Rails.native do |_page|
+    raised << "entrypoint"
+    raise "entrypoint failed"
+  end
+  client, = Wire.connect(failing_entrypoint)
+  drain.call(client)
+
+  failing_handler = Ruflet::Rails.native do |page|
+    page.add(button("Boom") do |_event|
+      raised << "handler"
+      raise "handler failed"
+    end)
+  end
+  client, patch = Wire.connect(failing_handler)
   Wire.click(client, Wire.wire_id(patch, "Boom"))
-  frames = []
-  while (frame = Wire.read_frame(client, timeout: 2))
-    frames << Ruflet::WireCodec.unpack(frame)
-  end
-  client.close
+  drain.call(client)
+
   sleep 0.2
-  report(
-    "session_crashed" => frames.any? { |(action, _)| action == Ruflet::Protocol::ACTIONS[:session_crashed] },
-    "reported" => Array.new(reports.size) { reports.pop }
-  )
+  report("raised" => raised, "reported" => Array.new(reports.size) { reports.pop })
 
 else
   report("error" => "unknown scenario #{scenario}")

@@ -56,9 +56,10 @@ class RufletRailsExecutorTest < Minitest::Test
     assert_equal 1, result["resets_after_disconnect"], "Current is reset once, when the client disconnects"
   end
 
-  def test_a_handler_error_is_not_reported_as_an_unhandled_rails_error
-    result = run_scenario("handler_error")
+  def test_entrypoint_and_handler_errors_are_not_reported_as_unhandled_rails_errors
+    result = run_scenario("unhandled_errors")
 
+    assert_equal %w[entrypoint handler], result["raised"], "both errors were raised"
     assert_equal [], result["reported"]
   end
 
@@ -83,7 +84,9 @@ class RufletRailsExecutorTest < Minitest::Test
       read_frame(client_io) # register reply
       read_frame(client_io) # initial patch
       assert_equal 1, executor.runs, "the registration is one run"
-      refute executor.active?, "no run is held while the socket waits for the next message"
+      # The server sends the patch from inside the run, so the run may still
+      # be finishing when the patch arrives.
+      assert wait_for { !executor.active? }, "no run is held while the socket waits for the next message"
 
       2.times do
         send_frame(client_io, Ruflet::WireCodec.pack([
@@ -92,8 +95,7 @@ class RufletRailsExecutorTest < Minitest::Test
         assert_equal true, in_run.pop(timeout: 5), "the handler runs inside a run"
       end
       client_io.close
-      deadline = Time.now + 5
-      sleep 0.02 until (executor.runs == 4 && !executor.active?) || Time.now > deadline
+      wait_for { executor.runs == 4 && !executor.active? }
       assert_equal 4, executor.runs, "register, two clicks and the disconnect: one run each"
       refute executor.active?
     ensure
@@ -101,7 +103,89 @@ class RufletRailsExecutorTest < Minitest::Test
     end
   end
 
+  # An outer executor run owns the state; a unit inside it starts no run of
+  # its own.
+  def test_a_unit_inside_an_executor_run_does_not_start_another
+    executor = StubExecutor.new
+    stub_executor(executor) do
+      execution = Ruflet::Rails::Protocol::Execution.new
+      ran = false
+      executor.wrap { execution.run { ran = true } }
+
+      assert ran
+      assert_equal 1, executor.runs
+    end
+  end
+
+  # Endpoint leaves the executor to a server that declares it (LocalServer)
+  # and keeps the whole-socket run for any other server passed to it.
+  def test_endpoint_keeps_the_socket_run_for_a_server_that_does_not_declare_its_own
+    in_run, runs = socket_run_with(RecordingServer.new)
+
+    assert_equal true, in_run, "the socket is handled inside an executor run"
+    assert_equal 1, runs
+  end
+
+  def test_endpoint_leaves_the_executor_to_a_server_that_declares_its_own
+    in_run, runs = socket_run_with(DeclaringServer.new)
+
+    assert_equal false, in_run, "the endpoint starts no run around the socket"
+    assert_equal 0, runs
+  end
+
   private
+
+  class RecordingServer
+    attr_accessor :executor
+    attr_reader :seen
+
+    def initialize
+      @seen = Queue.new
+    end
+
+    def handle_upgraded_socket(_socket)
+      @seen << executor.active?
+    end
+  end
+
+  class DeclaringServer < RecordingServer
+    def runs_messages_in_rails_executor?
+      true
+    end
+  end
+
+  # Runs one hijacked socket through an Endpoint, with a stub
+  # ::Rails.application.executor. Returns whether the server handled the
+  # socket inside a run, and how many runs the endpoint started.
+  def socket_run_with(server)
+    skip("::Rails is already defined in this process") if defined?(::Rails)
+
+    executor = StubExecutor.new
+    server.executor = executor
+    application = Struct.new(:executor).new(executor)
+    fake_rails = Module.new
+    fake_rails.define_singleton_method(:application) { application }
+    Object.const_set(:Rails, fake_rails)
+    server_io, client_io = UNIXSocket.pair
+    endpoint = Ruflet::Rails::Protocol::Endpoint.new(server: server)
+    assert_equal(-1, endpoint.call(hijack_env(server_io)).first)
+    in_run = server.seen.pop(timeout: 5)
+    [in_run, executor.runs]
+  ensure
+    client_io&.close
+    server_io&.close
+    Object.send(:remove_const, :Rails) if fake_rails && defined?(::Rails) && ::Rails.equal?(fake_rails)
+  end
+
+  def wait_for(timeout: 5)
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
+    until yield
+      return false if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+
+      sleep 0.02
+    end
+    true
+  end
 
   class StubExecutor
     attr_reader :runs
