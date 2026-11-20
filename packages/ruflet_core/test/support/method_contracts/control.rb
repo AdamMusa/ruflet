@@ -115,8 +115,8 @@ MethodContract.define(
       "scroll_to" => { sends: {} }
     },
     "map" => {
-      "center_on" => { args: ["sample:point"], sends: {"point" => "sample:point"} },
-      "move_to" => { sends: {} },
+      "center_on" => { args: [[1.5, 2.5]], kwargs: { zoom: 9 }, sends: {"point" => {"latitude" => 1.5, "longitude" => 2.5}, "zoom" => 9} },
+      "move_to" => { kwargs: { destination: { lat: 1.5, lng: 2.5 }, zoom: 9, animation_duration: 300 }, sends: {"destination" => {"latitude" => 1.5, "longitude" => 2.5}, "zoom" => 9, "duration" => 300} },
       "reset_rotation" => { sends: {} },
       "rotate_from" => { args: ["sample:degree"], sends: {"degree" => "sample:degree"} },
       "zoom_in" => { sends: {} },
@@ -196,12 +196,12 @@ MethodContract.define(
       "go_forward" => {  },
       "load_file" => { args: ["sample:path"], sends: {"path" => "sample:path"} },
       "load_html" => { args: ["sample:value"], sends: {"value" => "sample:value"} },
-      "load_request" => { args: ["sample:url"], sends: {"url" => "sample:url", "method" => "get"} },
+      "load_request" => { args: ["sample:url"], kwargs: { method: :post }, sends: {"url" => "sample:url", "method" => "post"} },
       "reload" => {  },
       "run_javascript" => { args: ["sample:value"], sends: {"value" => "sample:value"} },
-      "scroll_by" => { args: [10, 20], sends: {"x" => 10, "y" => 20} },
-      "scroll_to" => { args: [0, 480], sends: {"x" => 0, "y" => 480} },
-      "set_javascript_mode" => { args: ["sample:mode"], sends: {"mode" => "sample:mode"} }
+      "scroll_by" => { args: [10.5, "20"], sends: {"x" => 10, "y" => 20} },
+      "scroll_to" => { args: ["12", 480.9], sends: {"x" => 12, "y" => 480} },
+      "set_javascript_mode" => { args: [:unrestricted], sends: {"mode" => "unrestricted"} }
     },
     "view" => {
       "end_refresh" => {  },
