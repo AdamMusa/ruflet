@@ -68,9 +68,7 @@ module RufletRecord
     TYPE_SQL = {
       string: "VARCHAR", text: "TEXT", integer: "INTEGER", float: "REAL",
       decimal: "DECIMAL", boolean: "BOOLEAN", datetime: "DATETIME",
-      date: "DATE", binary: "BLOB",
-      # Declared JSON (as Rails does) so Column#type knows to parse it.
-      json: "JSON"
+      date: "DATE", binary: "BLOB", json: "TEXT"
     }.freeze
 
     class << self

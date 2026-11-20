@@ -134,9 +134,7 @@ module RufletRecord
           elsif value == false
             0
           elsif value.is_a?(Hash) || value.is_a?(Array)
-            # Only json columns hold these; sqlite3 would read a Hash as
-            # named binds and reject an Array.
-            Column.dump_json(value)
+            json_text(value)
           elsif value.is_a?(Time)
             # Stored as UTC wall-clock text, which Column#cast reads as UTC.
             value = value.getutc
@@ -148,6 +146,26 @@ module RufletRecord
             value
           end
         end
+      end
+
+      # A Hash or Array (a json column's value) is stored as JSON text and
+      # reads back as that text. sqlite3 reads a Hash bind as named
+      # parameters and rejects an Array; the VM stored inspect text.
+      # Without a JSON library the value is bound unchanged, as before.
+      def json_text(value)
+        json = json_library
+        return value unless json
+
+        json.generate(value)
+      end
+
+      # Loaded on first use: the device VM's framework code cannot require
+      # it, and the VM's require loads its builtin json after boot.
+      def json_library
+        require "json" unless Object.const_defined?(:JSON)
+        Object.const_defined?(:JSON) ? Object.const_get(:JSON) : nil
+      rescue ScriptError, StandardError
+        nil
       end
     end
 
