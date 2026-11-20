@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
+require "pathname"
+require "uri"
 require_relative "../method_contract"
 
 # What each control method sends the client. See test/support/method_contract.rb.
+# A method that converts an argument (to_s, to_i, a Symbol name, coordinates)
+# gets a value the conversion changes, so the spec fails without it.
 
 MethodContract.define(
   {
@@ -37,7 +41,7 @@ MethodContract.define(
       "scroll_to" => { sends: {} }
     },
     "context_menu" => {
-      "open" => { sends: {} }
+      "open" => { kwargs: { position: { x: 10, y: 20 } }, sends: {"position" => {"x" => 10, "y" => 20}} }
     },
     "cupertino_button" => {
       "focus" => { sends: {} }
@@ -105,7 +109,7 @@ MethodContract.define(
     },
     "interactive_viewer" => {
       "pan" => { args: ["sample:dx"], sends: {"dx" => "sample:dx", "dy" => 0, "dz" => 0} },
-      "reset" => {  },
+      "reset" => { kwargs: { animation_duration: { milliseconds: 300 } }, sends: {"animation_duration" => {"milliseconds" => 300}} },
       "restore_state" => {  },
       "save_state" => {  },
       "zoom" => { args: ["sample:factor"], sends: {"factor" => "sample:factor"} }
@@ -116,7 +120,7 @@ MethodContract.define(
     },
     "map" => {
       "center_on" => { args: [[1.5, 2.5]], kwargs: { zoom: 9 }, sends: {"point" => {"latitude" => 1.5, "longitude" => 2.5}, "zoom" => 9} },
-      "move_to" => { kwargs: { destination: { lat: 1.5, lng: 2.5 }, zoom: 9, animation_duration: 300 }, sends: {"destination" => {"latitude" => 1.5, "longitude" => 2.5}, "zoom" => 9, "duration" => 300} },
+      "move_to" => { kwargs: { destination: { lat: 1.5, lng: 2.5 }, zoom: 9, animation_duration: 300, animation_curve: :ease_in }, sends: {"destination" => {"latitude" => 1.5, "longitude" => 2.5}, "zoom" => 9, "duration" => 300, "curve" => "ease_in"} },
       "reset_rotation" => { sends: {} },
       "rotate_from" => { args: ["sample:degree"], sends: {"degree" => "sample:degree"} },
       "zoom_in" => { sends: {} },
@@ -130,11 +134,11 @@ MethodContract.define(
       "focus" => { sends: {} }
     },
     "page_view" => {
-      "go_to_page" => { args: ["sample:index"], sends: {"index" => "sample:index"} },
+      "go_to_page" => { args: ["sample:index"], kwargs: { duration: 250, curve: :ease_in_out }, sends: {"index" => "sample:index", "duration" => 250, "curve" => "ease_in_out"} },
       "jump_to" => { args: ["sample:value"], sends: {"value" => "sample:value"} },
       "jump_to_page" => { args: ["sample:index"], sends: {"index" => "sample:index"} },
-      "next_page" => { sends: {} },
-      "previous_page" => { sends: {} }
+      "next_page" => { kwargs: { duration: 250, curve: :ease_in }, sends: {"duration" => 250, "curve" => "ease_in"} },
+      "previous_page" => { kwargs: { curve: :ease_out }, sends: {"curve" => "ease_out"} }
     },
     "reorderable_list_view" => {
       "end_refresh" => {  },
@@ -157,7 +161,7 @@ MethodContract.define(
       "open_view" => {  }
     },
     "tabs" => {
-      "move_to" => { args: ["sample:index"], sends: {"index" => "sample:index"} }
+      "move_to" => { args: ["sample:index"], kwargs: { duration: 250, curve: :ease_in }, sends: {"index" => "sample:index", "duration" => 250, "curve" => "ease_in"} }
     },
     "text_button" => {
       "focus" => { sends: {} }
@@ -176,7 +180,7 @@ MethodContract.define(
       "pause" => {  },
       "play" => {  },
       "play_or_pause" => {  },
-      "playlist_add" => { sends: {"media" => {}} },
+      "playlist_add" => { args: [{ resource: "a.mp4", http_headers: { auth: "x" } }], sends: {"media" => {"resource" => "a.mp4", "http_headers" => {"auth" => "x"}}} },
       "playlist_remove" => { args: ["sample:media_index"], sends: {"media_index" => "sample:media_index"} },
       "previous" => {  },
       "seek" => { args: ["sample:position_milliseconds"], sends: {"position" => "sample:position_milliseconds"} },
@@ -194,11 +198,11 @@ MethodContract.define(
       "get_user_agent" => {  },
       "go_back" => {  },
       "go_forward" => {  },
-      "load_file" => { args: ["sample:path"], sends: {"path" => "sample:path"} },
-      "load_html" => { args: ["sample:value"], sends: {"value" => "sample:value"} },
-      "load_request" => { args: ["sample:url"], kwargs: { method: :post }, sends: {"url" => "sample:url", "method" => "post"} },
+      "load_file" => { args: [Pathname("/www/index.html")], sends: {"path" => "/www/index.html"} },
+      "load_html" => { args: [:"<p>hi</p>"], kwargs: { base_url: URI("https://example.com/") }, sends: {"value" => "<p>hi</p>", "base_url" => "https://example.com/"} },
+      "load_request" => { args: [URI("https://example.com/")], kwargs: { method: :post }, sends: {"url" => "https://example.com/", "method" => "post"} },
       "reload" => {  },
-      "run_javascript" => { args: ["sample:value"], sends: {"value" => "sample:value"} },
+      "run_javascript" => { args: [:"alert(1)"], sends: {"value" => "alert(1)"} },
       "scroll_by" => { args: [10.5, "20"], sends: {"x" => 10, "y" => 20} },
       "scroll_to" => { args: ["12", 480.9], sends: {"x" => 12, "y" => 480} },
       "set_javascript_mode" => { args: [:unrestricted], sends: {"mode" => "unrestricted"} }

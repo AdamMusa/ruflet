@@ -107,6 +107,28 @@ class MapExtensionCompatibilityTest < Minitest::Test
     assert_equal [{ "latitude" => 1, "longitude" => 2 }, { "latitude" => 3, "longitude" => 4 }], line.to_patch["coordinates"]
   end
 
+  # What main accepted still converts the same way: a value without to_h
+  # (a String) is passed on as it is, and an object whose to_h gives
+  # coordinates is converted, in the map methods and in the DSL helpers.
+  def test_strings_pass_through_and_to_h_objects_convert
+    point = Struct.new(:lat, :lng).new(1.5, 2.5)
+    map = Ruflet.map([], initial_center: "51.5,-0.09")
+    assert_equal "51.5,-0.09", map.to_patch["initial_center"]
+    @page.add(map)
+
+    map.center_on("40.7,-74.0")
+    assert_equal({ "point" => "40.7,-74.0" }, @sent.last[1]["args"])
+    map.move_to(destination: point)
+    assert_equal({ "destination" => { "latitude" => 1.5, "longitude" => 2.5 } }, @sent.last[1]["args"])
+
+    assert_equal "51.5,-0.09", Ruflet.marker(coordinates: "51.5,-0.09", content: Ruflet.text("Pin")).to_patch["coordinates"]
+    assert_equal({ "latitude" => 1.5, "longitude" => 2.5 },
+                 Ruflet.marker(coordinates: point, content: Ruflet.text("Pin")).to_patch["coordinates"])
+    assert_equal({ "latitude" => 1.5, "longitude" => 2.5 }, Ruflet.circle_marker(coordinates: point, radius: 4).to_patch["coordinates"])
+    assert_equal ["1,2", { "latitude" => 1.5, "longitude" => 2.5 }],
+                 Ruflet.polygon_marker(coordinates: ["1,2", point]).to_patch["coordinates"]
+  end
+
   def test_rich_attribution_family_uses_current_flet_wire_types
     image = Ruflet.image_source_attribution(Ruflet.image(src: "logo.png"), height: 24)
     text = Ruflet.text_source_attribution("OpenStreetMap", prepend_copyright: true, on_click: ->(_event) {})

@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
+require "pathname"
+require "uri"
 require_relative "../method_contract"
 
 # What each service method sends the client. See test/support/method_contract.rb.
+# A method that converts an argument (to_s, a Symbol name, packed bytes)
+# gets a value the conversion changes, so the spec fails without it.
 
 MethodContract.define(
   {
@@ -37,7 +41,8 @@ MethodContract.define(
       "get_min_exposure_offset" => {  },
       "get_min_zoom_level" => {  },
       "initialize_camera" => { args: [{ name: "0", lens_direction: :back }, :high], name: "initialize", sends: {"description" => {"name" => "0", "lens_direction" => "back"}, "resolution_preset" => "high", "enable_audio" => true} },
-      "lock_capture_orientation" => { sends: {"orientation" => nil} },
+      # Without an orientation it sends nil (invoke_nil_values_test).
+      "lock_capture_orientation" => { args: [:portrait_up], sends: {"orientation" => "portrait_up"} },
       "pause_preview" => {  },
       "pause_video_recording" => {  },
       "prepare_for_video_recording" => {  },
@@ -64,7 +69,7 @@ MethodContract.define(
       "get_files" => {  },
       "get_image" => {  },
       "set" => { args: [42], sends: {"data" => "42"} },
-      "set_files" => { args: ["sample:files"], sends: {"files" => ["sample:files"]} },
+      "set_files" => { args: [Pathname("/tmp/a.txt")], sends: {"files" => ["/tmp/a.txt"]} },
       "set_image" => { args: ["sample:value"], sends: {"data" => "sample:value"} }
     },
     "connectivity" => {
@@ -73,7 +78,7 @@ MethodContract.define(
     "file_picker" => {
       "get_directory_path" => { sends: {} },
       "pick_files" => { sends: {"file_type" => "any", "allow_multiple" => false, "with_data" => false} },
-      "save_file" => { sends: {"file_type" => "any"} },
+      "save_file" => { kwargs: { file_name: :report, src_bytes: [1, 2, 255] }, sends: {"file_name" => "report", "file_type" => "any", "src_bytes" => "\x01\x02\xFF".b} },
       "upload" => { args: ["sample:files"], sends: {"files" => "sample:files"} }
     },
     # flashlight.on replaces Ruflet::Control#on: it turns the light on.
@@ -100,8 +105,8 @@ MethodContract.define(
       "vibrate" => {  }
     },
     "local_authentication" => {
-      "authenticate" => { kwargs: { localized_reason: "sample:localized_reason" }, sends: {"localized_reason" => "sample:localized_reason", "biometric_only" => false, "sensitive_transaction" => true, "persist_across_backgrounding" => false} },
-      "authenticate_sync" => { kwargs: { localized_reason: "sample:localized_reason" }, sends: {"localized_reason" => "sample:localized_reason", "biometric_only" => false, "sensitive_transaction" => true, "persist_across_backgrounding" => false}, sync: true },
+      "authenticate" => { kwargs: { localized_reason: :unlock, biometric_only: 1, android_messages: { sign_in_title: :title, cancel_button: nil } }, sends: {"localized_reason" => "unlock", "biometric_only" => true, "sensitive_transaction" => true, "persist_across_backgrounding" => false, "android_messages" => {"sign_in_title" => "title"}} },
+      "authenticate_sync" => { kwargs: { localized_reason: :unlock, sensitive_transaction: nil, persist_across_backgrounding: "yes", ios_messages: { cancel_button: :cancel } }, sends: {"localized_reason" => "unlock", "biometric_only" => false, "sensitive_transaction" => false, "persist_across_backgrounding" => true, "ios_messages" => {"cancel_button" => "cancel"}}, sync: true },
       "can_check_biometrics" => {  },
       "can_check_biometrics_sync" => { sync: true },
       "device_supported?" => { name: "is_device_supported" },
@@ -130,12 +135,13 @@ MethodContract.define(
       "set_system_screen_brightness" => { args: ["sample:brightness"], sends: {"brightness" => "sample:brightness"} }
     },
     "secure_storage" => {
-      "clear" => { sends: {} },
-      "contains_key" => { args: ["sample:key"], sends: {"key" => "sample:key"} },
-      "get" => { args: ["sample:key"], sends: {"key" => "sample:key"} },
-      "get_all" => { sends: {} },
+      # Each platform option key is sent; its value's keys become Strings.
+      "clear" => { kwargs: { android: { reset_on_error: true } }, sends: {"android" => {"reset_on_error" => true}} },
+      "contains_key" => { args: ["sample:key"], kwargs: { web: { db_name: "db" } }, sends: {"key" => "sample:key", "web" => {"db_name" => "db"}} },
+      "get" => { args: ["sample:key"], kwargs: { ios: { accessibility: "first_unlock" } }, sends: {"key" => "sample:key", "ios" => {"accessibility" => "first_unlock"}} },
+      "get_all" => { kwargs: { macos: { synchronizable: true } }, sends: {"macos" => {"synchronizable" => true}} },
       "get_availability" => {  },
-      "remove" => { args: ["sample:key"], sends: {"key" => "sample:key"} },
+      "remove" => { args: ["sample:key"], kwargs: { windows: { use_backward_compatibility: true } }, sends: {"key" => "sample:key", "windows" => {"use_backward_compatibility" => true}} },
       "set" => { args: ["sample:key", "sample:value"], sends: {"key" => "sample:key", "value" => "sample:value"} }
     },
     "semantics_service" => {
@@ -169,7 +175,7 @@ MethodContract.define(
       "get_temporary_directory" => {  }
     },
     "url_launcher" => {
-      "can_launch_url" => { args: ["sample:url"], sends: {"url" => "sample:url"} },
+      "can_launch_url" => { args: [URI("https://example.com/")], sends: {"url" => "https://example.com/"} },
       "close_in_app_web_view" => {  },
       "launch_url" => { args: ["sample:url"], sends: {"url" => "sample:url", "mode" => "platform_default"} },
       "open_window" => { args: ["sample:url"], sends: {"url" => "sample:url"} },
