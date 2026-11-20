@@ -1,0 +1,6 @@
+source "https://rubygems.org"
+
+# The files of a fresh `rails new` app (railties 8.1 templates) that
+# `rails generate ruflet:install` reads or edits, after `bundle add ruflet_rails`.
+gem "rails", "~> 8.1.1"
+gem "ruflet_rails"
