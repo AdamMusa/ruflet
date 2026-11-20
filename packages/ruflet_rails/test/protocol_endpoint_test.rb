@@ -3,6 +3,7 @@
 require_relative "test_helper"
 require "socket"
 require "digest/sha1"
+require "stringio"
 
 # End-to-end proof that a Flutter client's wire protocol flows through the
 # Rails server socket (Rack hijack) into ruflet_core pages and back —
@@ -72,7 +73,81 @@ class RufletProtocolEndpointTest < Minitest::Test
     server_io&.close rescue nil
   end
 
+  # A raising handler is logged and the session goes on, as under
+  # `ruflet run`: no session_crashed, the socket stays open, the next event
+  # reaches its handler and the registry keeps the session.
+  def test_a_raising_event_handler_keeps_the_connection_and_the_session
+    server_io, client_io = UNIXSocket.pair
+    log = StringIO.new
+    original_stderr = $stderr
+    $stderr = log
+
+    clicks = 0
+    runner = Ruflet::Rails::Protocol::Runner.new do |page|
+      label = Ruflet::UI::ControlFactory.build(:text, value: "count=0")
+      button = Ruflet::UI::ControlFactory.build(:button, content: "Save")
+      button.on(:click) do |_event|
+        clicks += 1
+        raise ArgumentError, "validation failed" if clicks == 1
+
+        page.update(label, value: "count=#{clicks}")
+      end
+      page.add(label)
+      page.add(button)
+    end
+    endpoint = runner.build_endpoint(path: "/ws")
+    assert_equal(-1, endpoint.call(hijack_env(server_io))[0])
+    read_http_response(client_io)
+
+    send_client_frame(client_io, Ruflet::WireCodec.pack([
+      Ruflet::Protocol::ACTIONS[:register_client],
+      { "session_id" => "", "page" => { "route" => "/" } }
+    ]))
+    session_id = Ruflet::WireCodec.unpack(read_server_frame(client_io))[1]["session_id"]
+    wire_id = nil
+    while wire_id.nil? && (frame = read_server_frame_within(client_io, 2))
+      wire_id = find_wire_id(Ruflet::WireCodec.unpack(frame)[1], "Save")
+    end
+    refute_nil wire_id, "the page patch publishes the button"
+    click = Ruflet::WireCodec.pack([
+      Ruflet::Protocol::ACTIONS[:control_event],
+      { "target" => wire_id, "name" => "click", "data" => "" }
+    ])
+
+    send_client_frame(client_io, click)
+    send_client_frame(client_io, click)
+
+    # Read until the second click's patch arrives (or the server gives up).
+    replies = []
+    until replies.any? { |action, payload| action == Ruflet::Protocol::ACTIONS[:patch_control] && payload.inspect.include?("count=2") }
+      frame = read_server_frame_within(client_io, 2)
+      break unless frame
+
+      replies << Ruflet::WireCodec.unpack(frame)
+    end
+
+    refute_includes replies.map(&:first), Ruflet::Protocol::ACTIONS[:session_crashed], "a handler error must not crash the session"
+    assert replies.any? { |_action, payload| payload.inspect.include?("count=2") }, "the second click's update reaches the client"
+    assert_equal 2, clicks
+    assert Ruflet::Rails.sessions[session_id], "the registry keeps the session"
+    assert_includes log.string, "ArgumentError: validation failed", "the handler error is still logged"
+  ensure
+    $stderr = original_stderr if original_stderr
+    client_io&.close rescue nil
+    server_io&.close rescue nil
+  end
+
   private
+
+  # The next frame, or nil when none arrives in time or the server closed
+  # the socket.
+  def read_server_frame_within(io, seconds)
+    return nil unless IO.select([io], nil, nil, seconds)
+
+    read_server_frame(io)
+  rescue RuntimeError, IOError, Errno::ECONNRESET
+    nil
+  end
 
   def hijack_env(io)
     {
