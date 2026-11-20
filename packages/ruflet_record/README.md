@@ -47,6 +47,16 @@ Supported column helpers are `string`, `text`, `integer`, `float`, `decimal`,
 `timestamps`. Schema operations include `create_table`, `drop_table`,
 `add_column`, `add_index`, `remove_index`, and `rename_table`.
 
+A `json` column is a TEXT column. A Hash or Array assigned to it is stored as
+JSON text, and every value reads back as the stored text, so use
+`JSON.parse(record.value)` to get the data back. `where(value: hash)` matches
+that text. A Hash or Array bound in raw SQL (`connection.execute` or
+`where("...", value)`) is passed to the SQLite driver as given, so bind
+`JSON.generate(value)` there to match a stored value.
+`datetime` values are stored as UTC: a `Time` keeps its instant, and a
+string's `Z` or `+HH:MM` offset is applied. They read back as UTC times, so
+call `localtime` to show local time.
+
 `references` creates an index by default. Pass `index: false` to omit it and
 `foreign_key: true` to reference the conventionally named table. A hash can
 configure `to_table`, `primary_key`, `on_delete`, and `on_update`; supported

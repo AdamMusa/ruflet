@@ -26,11 +26,25 @@ module RufletRecord
         @connection = Adapters::SQLiteAdapter.new(config)
         RufletRecord.connection = @connection if self == Base
         reset_column_information
+        # Models that follow this class's connection (see #connection) must
+        # not keep the previous database's columns.
+        Base.descendants.each do |model|
+          next if model.equal?(self) || !model.ancestors.include?(self)
+
+          model.reset_column_information unless model.instance_variable_get(:@connection)
+        end
         @connection
       end
 
+      # A model keeps the connection its parent had when it was defined. A
+      # model defined before its abstract parent's establish_connection had
+      # none, so it uses the parent's; Base's direct subclasses fall back to
+      # RufletRecord.connection, as before.
       def connection
-        @connection || RufletRecord.connection
+        return @connection if @connection
+        return RufletRecord.connection if equal?(Base) || superclass.equal?(Base)
+
+        superclass.connection
       end
 
       def table_name
@@ -157,6 +171,7 @@ module RufletRecord
       def belongs_to(name, options = {})
         class_name = options[:class_name] || Inflector.classify(name)
         foreign_key = (options[:foreign_key] || "#{name}_id").to_s
+        (@belongs_to_names ||= []) << name.to_s
         define_method(name) do
           identifier = read_attribute(foreign_key)
           identifier.nil? ? nil : Inflector.constantize(class_name).find_by(Inflector.constantize(class_name).primary_key => identifier)
@@ -187,6 +202,21 @@ module RufletRecord
           Inflector.constantize(class_name).find_by(foreign_key => public_send(self.class.primary_key))
         end
       end
+
+      private
+
+      # Whether +name+ is a belongs_to association of this model or a parent.
+      def belongs_to_writer?(name)
+        model = self
+        while model
+          names = model.instance_variable_get(:@belongs_to_names)
+          return true if names && names.include?(name)
+          return false if model.equal?(Base)
+
+          model = model.superclass
+        end
+        false
+      end
     end
 
     attr_reader :errors
@@ -207,8 +237,17 @@ module RufletRecord
       @attributes.dup
     end
 
+    # Columns, and the writers belongs_to defines (Post.new(user: user)).
+    # Any other name raises UnknownAttributeError.
     def assign_attributes(values)
-      values.each { |name, value| write_attribute(name, value) }
+      values.each do |name, value|
+        key = name.to_s
+        if !self.class.columns_hash.key?(key) && self.class.send(:belongs_to_writer?, key)
+          public_send("#{key}=", value)
+        else
+          write_attribute(key, value)
+        end
+      end
       self
     end
 
@@ -380,7 +419,7 @@ module RufletRecord
     def create_record
       primary = self.class.primary_key
       values = @attributes.reject { |name, value| name == primary && value.nil? }
-      sql, binds = SQL.insert(self.class.table_name, values)
+      sql, binds = SQL.insert(self.class.table_name, SQL.column_values(values))
       identifier = self.class.connection.insert(sql, binds)
       @attributes[primary] = identifier if @attributes.key?(primary) && @attributes[primary].nil?
       @new_record = false
