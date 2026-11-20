@@ -32,7 +32,9 @@ module RufletCompat
       "services_app" => { "kind" => "dir", "path" => "fixtures/services_app" },
       "rails_app" => { "kind" => "dir", "path" => "fixtures/rails_app", "rails" => true },
       # A fresh `rails new` app before `rails generate ruflet:install`.
-      "rails_new_app" => { "kind" => "dir", "path" => "fixtures/rails_new_app", "rails" => true }
+      "rails_new_app" => { "kind" => "dir", "path" => "fixtures/rails_new_app", "rails" => true },
+      # Every way an app names an icon (page golden only).
+      "icons_app" => { "kind" => "dir", "path" => "fixtures/icons_app" }
     }
 
     # Whole-app examples from the published docs (AdamMusa/ruflet_site
@@ -420,7 +422,8 @@ module RufletCompat
       *DOCS_RAILS_APPS.map do |id|
         { "fixture" => "docs_#{id}", "id" => "docs_#{id}--rails-endpoint", "mode" => "rails_endpoint",
           "entrypoint" => "main.rb", "rails" => true, "prelude" => rails_prelude }
-      end
+      end,
+      { "fixture" => "icons_app", "entrypoint" => "main.rb" }
     ].freeze
   end
 end

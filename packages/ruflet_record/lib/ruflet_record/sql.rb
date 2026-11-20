@@ -67,12 +67,26 @@ module RufletRecord
               values.concat(value)
             end
           elsif value.is_a?(Range)
-            if value.exclude_end?
+            first = value.begin
+            last = value.end
+            # An open end (18.., ..17, ...18) has no bound on that side, as in
+            # Active Record. Binding it as NULL would make the comparison
+            # unknown, so the condition would never match a row.
+            if first.nil? && last.nil?
+              parts << "1 = 1"
+            elsif last.nil?
+              parts << "#{identifier} >= ?"
+              values << first
+            elsif first.nil?
+              parts << "#{identifier} #{value.exclude_end? ? '<' : '<='} ?"
+              values << last
+            elsif value.exclude_end?
               parts << "(#{identifier} >= ? AND #{identifier} < ?)"
+              values << first << last
             else
               parts << "#{identifier} BETWEEN ? AND ?"
+              values << first << last
             end
-            values << value.begin << value.end
           else
             parts << "#{identifier} = ?"
             values << value
