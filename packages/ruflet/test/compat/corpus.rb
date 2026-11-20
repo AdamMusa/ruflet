@@ -366,6 +366,19 @@ module RufletCompat
     cli "empty", "--version", "-v"
     cli "empty", "-v", "--verbose"
     cli "empty", "version", "--anything"
+    # ruflet_rails' rake tasks call the command handlers directly, without
+    # `Ruflet::CLI.run`, so help and usage stops must be handled there too.
+    cli "rails_app", "ruflet:update[--help]", rake: true
+    cli "rails_app", "ruflet:update[-h]", rake: true
+    cli "rails_app", "ruflet:build[--help]", rake: true
+    # A name before the help flag, and a flag where the name goes.
+    cli "empty", "new", "my_app", "-h"
+    cli "empty", "create", "my_app", "--help"
+    cli "empty", "new", "-x"
+    # A bare `-` is an argument, not a flag; nothing after `--` is a flag.
+    cli "empty", "help", "-", id: "help-dash"
+    cli "default_app", "build", "--self", "-", "apk", id: "build--self-dash-apk"
+    cli "default_app", "run", "main.rb", "--", "--help", id: "run-main.rb-end-of-options--help"
 
     # --- command words, help, usage and exit codes (R2, CLI-12) ----------------
     # How the first argument picks a command (case-insensitively, aliases
