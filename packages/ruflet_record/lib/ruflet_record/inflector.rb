@@ -2,6 +2,9 @@
 
 module RufletRecord
   module Inflector
+    # Plurals of words that end in "sse"; singularize drops only the "s".
+    SSE_PLURALS = %w[crevasses impasses finesses posses lacrosses largesses demitasses wrasses].freeze
+
     class << self
 
     def underscore(value)
@@ -13,21 +16,26 @@ module RufletRecord
 
     def pluralize(value)
       word = value.to_s
-      # category -> categories, but survey -> surveys (a vowel before the y).
-      return "#{word[0...-1]}ies" if word.end_with?("y") && word.length > 1 && !"aeiou".include?(word[-2, 1])
+      # category -> categories and soliloquy -> soliloquies, but a y after
+      # another vowel stays: survey -> surveys.
+      if word.end_with?("y") && word.length > 1 && (!"aeiou".include?(word[-2, 1]) || word.end_with?("quy"))
+        return "#{word[0...-1]}ies"
+      end
       return "#{word}es" if word.end_with?("s", "x", "z", "ch", "sh")
 
       "#{word}s"
     end
 
     # The inverse of pluralize for the words it pluralizes with "es": a
-    # trailing "es" goes after ss, ch, sh, x and z, and after the common
-    # -s words (status, bus, alias), so addresses -> address, not addresse.
+    # trailing "es" goes after ss, ch, sh, x and z, and after status, bus and
+    # alias, so addresses -> address, not addresse. Words ending in "sse"
+    # (crevasse) and other "-uses" words (abuse, minibus) are left as before.
     def singularize(value)
       word = value.to_s
       return "#{word[0...-3]}y" if word.end_with?("ies")
-      return word[0...-2] if word.end_with?("sses", "ches", "shes", "xes", "zes")
-      return word[0...-2] if word.end_with?("statuses", "buses", "aliases")
+      return word[0...-1] if word.end_with?(*Inflector::SSE_PLURALS)
+      return word[0...-2] if word.end_with?("sses", "ches", "shes", "xes", "zes", "statuses", "aliases")
+      return word[0...-2] if word == "buses" || word.end_with?("_buses")
       return word[0...-1] if word.end_with?("s") && !word.end_with?("ss")
 
       word

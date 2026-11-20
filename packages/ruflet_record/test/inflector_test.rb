@@ -6,13 +6,16 @@ require_relative "test_helper"
 # Inflector. pluralize turned every final y into "ies" (survey -> surveies),
 # and singularize did not undo pluralize's "es" after ss (addresses ->
 # addresse), so a Survey model looked for a "surveies" table and
-# has_many :addresses looked for an Addresse class.
+# has_many :addresses looked for an Addresse class. Words the old rules got
+# right (soliloquies, crevasses, abuses) must keep their results.
 class InflectorTest < Minitest::Test
   WORDS = {
     "user" => "users", "category" => "categories", "survey" => "surveys", "day" => "days",
     "key" => "keys", "toy" => "toys", "box" => "boxes", "match" => "matches", "wish" => "wishes",
     "quiz" => "quizes", "address" => "addresses", "class" => "classes", "status" => "statuses",
-    "bus" => "buses", "alias" => "aliases", "house" => "houses", "note" => "notes"
+    "bus" => "buses", "alias" => "aliases", "house" => "houses", "note" => "notes",
+    "soliloquy" => "soliloquies", "colloquy" => "colloquies", "order_status" => "order_statuses", "crevasse" => "crevasses",
+    "impasse" => "impasses", "posse" => "posses", "abuse" => "abuses", "cause" => "causes"
   }.freeze
 
   def test_pluralize_and_singularize_are_inverses
