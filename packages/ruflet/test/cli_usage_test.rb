@@ -131,7 +131,9 @@ class RufletCliUsageTest < Minitest::Test
       %w[install -d emulator-5554 extra] => :command_install,
       %w[doctor --fix --verbose] => :command_doctor,
       %w[doctor -v] => :command_doctor,
-      ["install", "--", "--after-the-terminator"] => :command_install
+      ["install", "--", "--after-the-terminator"] => :command_install,
+      # A bare `-` is an argument, not a flag.
+      %w[new my_app -] => :command_new
     }.each do |argv, handler|
       host = Host.new.recorder(handler) { 0 }
       code, _out, err = run_cli(host, argv)
@@ -139,6 +141,21 @@ class RufletCliUsageTest < Minitest::Test
       assert_equal 0, code, argv.inspect
       assert_empty err, argv.inspect
       assert_equal [[handler, [argv.drop(1)], {}]], host.ran, argv.inspect
+    end
+  end
+
+  # build, install and doctor read their flags by exact match, so the
+  # check does too: a prefix of a declared flag is not that flag.
+  def test_a_prefix_of_a_declared_flag_is_an_unknown_flag
+    [%w[install --dev emulator-5554], %w[install --verb], %w[doctor --fi], %w[doctor --verb]].each do |argv|
+      entry = Commands.lookup(argv.first)
+      host = Host.new
+      host.define_singleton_method(entry.handler) { |*| flunk("#{argv.inspect}: the command must not run") }
+      code, out, err = run_cli(host, argv)
+
+      assert_equal 64, code, argv.inspect
+      assert_empty out, argv.inspect
+      assert_equal "ruflet #{entry.name}: invalid option: #{argv[1]}\n\n#{entry.help_text}", err, argv.inspect
     end
   end
 
@@ -171,6 +188,21 @@ class RufletCliUsageTest < Minitest::Test
         assert_empty err, [word, *args].inspect
         assert_equal 0, host.fetches, "#{word}: help fetches nothing"
       end
+    end
+  end
+
+  # `--` ends the options: a help flag after it is an argument for the
+  # command (`run main.rb -- --help` runs main.rb).
+  def test_a_help_flag_after_the_end_of_options_reaches_the_command
+    [%w[run main.rb -- --help], %w[install -- -h], %w[update -- --help]].each do |argv|
+      handler = Commands.lookup(argv.first).handler
+      host = Host.new.recorder(handler) { 0 }
+      code, out, err = run_cli(host, argv)
+
+      assert_equal 0, code, argv.inspect
+      assert_empty out, argv.inspect
+      assert_empty err, argv.inspect
+      assert_equal [[handler, [argv.drop(1)], {}]], host.ran, argv.inspect
     end
   end
 
@@ -214,13 +246,24 @@ class RufletCliUsageTest < Minitest::Test
   end
 
   def test_help_without_a_command_word_still_lists_every_command
-    [%w[help], %w[help help], %w[help -h], %w[help --help], %w[help bogus], %w[--help bogus], %w[-h]].each do |argv|
+    [
+      %w[help], %w[help help], %w[help -h], %w[help --help], %w[help bogus], %w[--help bogus], %w[-h],
+      # `--` ends the options; it is not a bad flag, and nothing after it is read.
+      %w[help --], %w[--help --], %w[help -- build],
+      # A bare `-` is not a flag either.
+      %w[help -]
+    ].each do |argv|
       code, out, err = run_cli(Host.new, argv)
 
       assert_equal 0, code, argv.inspect
       assert_equal Commands.help_text, out, argv.inspect
       assert_empty err, argv.inspect
     end
+  end
+
+  def test_a_bare_dash_is_not_a_flag
+    refute Commands.flag?("-")
+    %w[-x --x --x=1 --].each { |arg| assert Commands.flag?(arg), arg }
   end
 
   def test_build_help_text
@@ -252,10 +295,15 @@ class RufletCliUsageTest < Minitest::Test
       assert text.start_with?("Usage: ruflet "), entry.name
       entry.options.each { |option| assert_includes text, "  #{option.label} ", "#{entry.name}: #{option.label}" }
       option_lines = text.lines.grep(/\A  -/).join
-      %w[--de --d].each { |hidden| refute_match(/#{Regexp.escape(hidden)}\b/, option_lines, "#{entry.name}: #{hidden} is not listed") }
+      entry.options.flat_map(&:hidden).each do |hidden|
+        refute_match(/(?<![\w-])#{Regexp.escape(hidden)}(?![\w-])/, option_lines, "#{entry.name}: #{hidden} is not listed")
+      end
       assert_includes text, "`#{entry.forwards}`", entry.name if entry.forwards
     end
+    assert_equal %w[--de --d], Commands.lookup("run").options.flat_map(&:hidden)
+    assert_equal %w[-c --c], Commands.lookup("emulators").options.flat_map(&:hidden)
     assert_includes Commands.lookup("debug").help_text, "Usage: ruflet debug [platform] "
+    assert_match(/^  --device-id ID, --device ID +Flutter device to run on$/, Commands.lookup("debug").help_text)
     assert_includes Commands.lookup("new").help_text, "Aliases: bootstrap, init"
   end
 
@@ -328,6 +376,19 @@ class RufletCliUsageTest < Minitest::Test
     assert_equal [{}, "flutter", "emulators", "--launch", "Pixel_8_API_35", "--cold", "-v"], ran
   end
 
+  def test_the_abbreviations_of_create_still_reach_it_beside_cold
+    [%w[-c], %w[--c], %w[--cr], %w[--create]].each do |argv|
+      code, out, err = run_cli(Host.new, ["emulators", *argv])
+
+      assert_equal 1, code, argv.inspect
+      assert_empty out, argv.inspect
+      assert_equal "ruflet emulators --create is not implemented yet. Use your platform tools.\n", err, argv.inspect
+    end
+    code, _out, err = run_cli(Host.new, %w[emulators --co])
+    assert_equal 64, code
+    assert err.start_with?("ruflet emulators: --cold needs --start --emulator ID\n\n"), err
+  end
+
   # --- build: the target may follow flags ---------------------------------------
 
   def test_the_build_target_is_the_first_argument_or_the_one_argument_naming_a_target
@@ -342,7 +403,16 @@ class RufletCliUsageTest < Minitest::Test
       %w[--target-platform android-arm64 apk --release] => ["apk", %w[--target-platform android-arm64 --release]],
       %w[--build-name 1.2.3 IOS] => ["ios", %w[--build-name 1.2.3]],
       %w[--flavor prod] => ["prod", %w[--flavor]],
-      %w[--release] => ["", %w[--release]]
+      %w[--release] => ["", %w[--release]],
+      # Nothing after `--` names the target.
+      %w[-- apk] => ["--", %w[apk]],
+      %w[--release -- apk] => ["", %w[--release -- apk]],
+      %w[--release apk -- web] => ["apk", %w[--release -- web]],
+      %w[apk -- --release] => ["apk", %w[-- --release]],
+      # A bare `-` is an argument, as Commands.flag? has it.
+      %w[- apk] => ["-", %w[apk]],
+      %w[--release - apk] => ["apk", %w[--release -]],
+      %w[--release -] => ["-", %w[--release]]
     }.each do |argv, (target, rest)|
       args = argv.dup
       assert_equal target, host.send(:extract_build_target!, args), argv.inspect
@@ -360,6 +430,24 @@ class RufletCliUsageTest < Minitest::Test
     assert err.start_with?("ruflet build: more than one argument names a build target (web, apk); put the target first\n\nUsage: ruflet build ")
   end
 
+  def test_build_end_of_options_first_is_still_an_unsupported_target
+    host = Host.new.recorder(:ensure_ruflet_build_assets) { flunk("nothing is prepared") }
+    code, out, err = run_cli(host, %w[build -- apk])
+
+    assert_equal 1, code
+    assert_empty out
+    assert_equal "Unsupported build target: --\n", err
+  end
+
+  def test_a_bare_dash_first_is_still_an_unsupported_target
+    host = Host.new.recorder(:ensure_ruflet_build_assets) { flunk("nothing is prepared") }
+    code, out, err = run_cli(host, %w[build --self - apk])
+
+    assert_equal 1, code
+    assert_empty out
+    assert_equal "Unsupported build target: -\n", err
+  end
+
   # The H1 goldens of both spellings, minus the line naming the invocation.
   def test_release_before_the_target_reaches_flutter_like_release_after_it
     strip = ->(text) { text.lines.reject { |line| line.start_with?("command: ") }.join }
@@ -372,6 +460,72 @@ class RufletCliUsageTest < Minitest::Test
     end
     services = File.read(File.expand_path("compat/goldens/cli/services_app/build--release-apk.txt", __dir__))
     assert_includes services, "/bin/flutter build apk --release --target lib/main.server.dart"
+  end
+
+  # --- handlers called directly ------------------------------------------------------
+
+  # ruflet_rails' rake tasks call the handlers themselves (`rake
+  # ruflet:update[--help]` is `Ruflet::CLI.command_update(["--help"])`), with
+  # no Ruflet::CLI.run around them; so does this host.
+  def call_handler(handler, argv)
+    host = Object.new
+    [
+      Ruflet::CLI::NewCommand,
+      Ruflet::CLI::RunCommand,
+      Ruflet::CLI::UpdateCommand,
+      Ruflet::CLI::BuildCommand,
+      Ruflet::CLI::ExtraCommand
+    ].each { |mod| host.extend(mod) }
+    code = nil
+    out, err = capture_io do
+      code = host.public_send(handler, argv.dup)
+    rescue SystemExit => e
+      code = "exit(#{e.status})"
+    end
+    [code, out, err]
+  end
+
+  def test_a_handler_called_directly_prints_its_help
+    {
+      %w[update --help] => :command_update,
+      %w[update -h] => :command_update,
+      %w[update --he] => :command_update,
+      %w[update web --help] => :command_update,
+      %w[run -h] => :command_run,
+      %w[run main.rb --help] => :command_run,
+      %w[debug --help] => :command_debug,
+      %w[debug web -h] => :command_debug,
+      %w[emulators -h] => :command_emulators,
+      %w[emulators --start --help] => :command_emulators
+    }.each do |argv, handler|
+      code, out, err = call_handler(handler, argv.drop(1))
+
+      assert_equal 0, code, argv.inspect
+      assert_equal Commands.lookup(argv.first).help_text, out, argv.inspect
+      assert_empty err, argv.inspect
+    end
+  end
+
+  def test_a_handler_called_directly_reports_its_usage_errors
+    {
+      %w[build --flavor web apk] => "more than one argument names a build target (web, apk); put the target first",
+      %w[emulators --cold] => "--cold needs --start --emulator ID"
+    }.each do |argv, reason|
+      entry = Commands.lookup(argv.first)
+      code, out, err = call_handler(entry.handler, argv.drop(1))
+
+      assert_equal 64, code, argv.inspect
+      assert_empty out, argv.inspect
+      assert_equal "ruflet #{entry.name}: #{reason}\n\n#{entry.help_text}", err, argv.inspect
+    end
+  end
+
+  # A flag the handler's own parser rejects still raises OptionParser's
+  # error to a direct caller, as before CLI-12; only Ruflet::CLI.run turns
+  # it into a usage error.
+  def test_a_handler_called_directly_still_raises_its_parsers_errors
+    error = assert_raises(OptionParser::InvalidOption) { call_handler(:command_update, %w[--bogus-flag]) }
+    assert_equal "invalid option: --bogus-flag", error.message
   end
 
   # --- install --device=ID ---------------------------------------------------------

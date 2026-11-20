@@ -31,6 +31,7 @@ on:
       - '.github/workflows/build-ruflet-client.yml'
       - 'packages/**'
       - 'ruby_runtime/**'
+      - 'tools/mruby_patches_test.rb'
 
 permissions:
   contents: write
@@ -43,6 +44,9 @@ env:
   EXPLORER_REPOSITORY: AdamMusa/ruflet_explorer
   EXPLORER_REF: ${{ github.event.inputs.explorer_ref || 'main' }}
 
+# ubuntu-24.04, not ubuntu-latest: ruby/setup-ruby has no build of the
+# .ruby-version Ruby (3.4.5) for ubuntu-26.04, which ubuntu-latest moved to
+# in November 2026, so every Linux job failed at "Set up Ruby".
 jobs:
   verify-explorer:
     name: Verify Ruflet Explorer
@@ -95,6 +99,11 @@ jobs:
             echo "== $package =="
             (cd "$package" && for file in test/*_test.rb; do ruby -Ilib -Itest "$file"; done)
           done
+
+      - name: Run VM build tests
+        working-directory: ruflet
+        # The mruby patches the VM build configs apply (ruby_runtime/vm/patches).
+        run: ruby tools/mruby_patches_test.rb
 
       - name: Run Explorer tests
         working-directory: explorer
@@ -167,10 +176,10 @@ jobs:
       matrix:
         include:
           - target: web
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
             artifact: ruflet_explorer-web.tar.gz
           - target: linux
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
             artifact: ruflet_explorer-linux-x64.tar.gz
           - target: windows
             runner: windows-latest
@@ -306,7 +315,7 @@ jobs:
   build-android:
     name: Build Android
     needs: verify-explorer
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout ruflet
@@ -546,7 +555,7 @@ jobs:
       - build-desktop-and-web
       - build-ios-simulator
       - build-android
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Write completed-build manifest
         env:

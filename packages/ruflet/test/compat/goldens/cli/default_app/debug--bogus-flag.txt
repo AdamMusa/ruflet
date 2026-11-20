@@ -20,7 +20,7 @@ err| Run the Flutter client in build/client with `flutter run`.
 err| 
 err| Options:
 err|   --platform NAME               web, ios, android, macos, windows or linux
-err|   --device ID, --device-id ID   Flutter device to run on
+err|   --device-id ID, --device ID   Flutter device to run on
 err|   --release                     Run a release build
 err|   -v, --verbose                 Run Flutter with -v
 err|   --web-renderer NAME           Passed to flutter run as --web-renderer

@@ -28,6 +28,8 @@ raise "insert failed" unless first.id == 1 && second.id == 2
 raise "lazy query failed" unless pending.pluck(:title) == ["Ship RufletRecord"]
 raise "scope failed" unless Note.done.first.title == "Verify mruby"
 raise "count failed" unless Note.count == 2
+raise "endless range failed" unless Note.where(id: 2..).pluck(:title) == ["Verify mruby"]
+raise "beginless range failed" unless Note.where(id: ...2).pluck(:title) == ["Ship RufletRecord"]
 
 first.update!(done: true)
 raise "update failed" unless Note.done.count == 2
@@ -39,6 +41,34 @@ RufletRecord.connection.execute("CREATE VIRTUAL TABLE note_search USING fts5(tit
 RufletRecord.connection.execute("INSERT INTO note_search(title) VALUES (?)", ["searchable note"])
 match_count = RufletRecord.connection.select_value("SELECT COUNT(*) FROM note_search WHERE note_search MATCH ?", ["searchable"])
 raise "SQLite FTS5 support failed" unless match_count == 1
+
+# A return, break or throw out of a transaction block commits it and ends it.
+def ruflet_record_smoke_return
+  Note.transaction do
+    Note.create!(title: "Returned")
+    return :returned
+  end
+end
+raise "transaction return value failed" unless ruflet_record_smoke_return == :returned
+[1].each { Note.transaction { Note.create!(title: "Broke out"); break } }
+catch(:done) { Note.transaction { Note.create!(title: "Thrown out"); throw :done } }
+transaction_depth = RufletRecord.connection.instance_variable_get(:@transaction_depth)
+raise "non-local exit left a transaction open" unless transaction_depth.zero?
+RufletRecord.connection.execute("BEGIN IMMEDIATE")
+RufletRecord.connection.execute("ROLLBACK")
+raise "non-local exit lost writes" unless Note.count == 5
+
+# An error raised in a transaction block keeps its class and rolls back.
+begin
+  Note.transaction do
+    Note.create!(title: "Rolled back")
+    Note.create!(title: nil)
+  end
+  raise "invalid record was saved"
+rescue RufletRecord::RecordInvalid => error
+  raise "transaction error lost its message" unless error.message.include?("Title")
+end
+raise "transaction rollback failed" unless Note.count == 5
 
 RufletRecord.connection.close
 puts "ruflet_record mruby sqlite smoke: ok"

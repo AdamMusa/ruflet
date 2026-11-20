@@ -231,6 +231,31 @@ class RufletHtmlDslHelpersTest < Minitest::Test
     assert_equal %w[Account Confirm], patch["controls"].map { |step| step["title"] }
   end
 
+  # Helpers added to ruflet_core after v0.0.23 are not Kernel methods, which
+  # would put them on every object of the Rails process and shadow other
+  # builders (a Nokogiri builder's `table`). Views still have all of them.
+  def test_helpers_added_after_v0_0_23_are_view_helpers_but_not_kernel_methods
+    helpers = Ruflet::Rails::HtmlDsl::ViewHelpers
+    scoped = Ruflet::UI::ScopedControlForwarders::HELPERS.keys
+
+    scoped.each do |name|
+      refute Kernel.private_method_defined?(name), "Kernel##{name}"
+    end
+    # Views get a helper for every registry name. local_auth is only the
+    # Ruby DSL's short name for the local_authentication service, which a view
+    # writes as <%= local_authentication %>; it was never a view helper.
+    assert_equal %i[local_auth], scoped.reject { |name| helpers.method_defined?(name) }
+    assert_equal "<local-authentication></local-authentication>", @view.local_authentication
+    assert_equal "<ignore-pointer><text>x</text></ignore-pointer>", @view.ignore_pointer { @view.text("x") }
+
+    markup = @view.list_section(header: "Account") { @view.form_row { @view.text("Name") } }
+    assert_equal '<list-section header="Account"><form-row><text>Name</text></form-row></list-section>', markup
+    result, = transform(markup)
+    patch = result.controls.first.to_patch
+    assert_equal "ListSection", patch["_c"]
+    assert_equal ["FormRow"], patch["controls"].map { |row| row["_c"] }
+  end
+
   def test_rich_component_helpers_round_trip
     markup = @view.column do
       [

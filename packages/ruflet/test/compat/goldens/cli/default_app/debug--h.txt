@@ -14,7 +14,7 @@ out| Run the Flutter client in build/client with `flutter run`.
 out| 
 out| Options:
 out|   --platform NAME               web, ios, android, macos, windows or linux
-out|   --device ID, --device-id ID   Flutter device to run on
+out|   --device-id ID, --device ID   Flutter device to run on
 out|   --release                     Run a release build
 out|   -v, --verbose                 Run Flutter with -v
 out|   --web-renderer NAME           Passed to flutter run as --web-renderer

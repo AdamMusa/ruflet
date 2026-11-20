@@ -15,8 +15,26 @@
 #   dart, pod, mrbc, codesign, bundle, open: succeed (mrbc writes a placeholder .mrb).
 #   git      ls-remote / rev-parse answer a fixed commit; clone checks out the
 #            frozen fixture template.
-# Only /usr/libexec/PlistBuddy runs for real: it rewrites Info.plist and its
-# output is what users get. Any other command is recorded and fails.
+#   fvm      (only on PATH with `host_fvm: true`) install succeeds; use links
+#            the project's .fvm/flutter_sdk to the fake Flutter SDK.
+# A few host tools run for real, because their output is what users get:
+# /usr/libexec/PlistBuddy rewrites Info.plist, and /usr/bin/tar,
+# /usr/bin/unzip and /usr/bin/ditto extract downloaded prebuilt clients. Any
+# other command is recorded and fails.
+#
+# Modes (spec "mode"): `cli` loads the installed bin/ruflet; `rake` runs a
+# Railtie task body through lib/rails_stub.rb; `generator` runs a Rails
+# generator class against lib/generator_stub (or real railties, for the
+# cross-check in compat_goldens_test.rb).
+#
+# Network (spec "network"): `offline` answers every HTTP request 503;
+# `release` serves lib/release_fixture.rb, a fake GitHub release.
+#
+# An exception inside the harness's own code (a tool emulation, the fake
+# network, the release fixture) is a harness fault, not CLI behavior: it is
+# written to the result file and the process exits 70 at once, before any
+# CLI `rescue` can turn it into output. lib/harness.rb then fails the golden
+# with the fault instead of rendering it.
 
 Encoding.default_external = Encoding::UTF_8
 
@@ -29,6 +47,7 @@ require "pathname"
 require "rbconfig"
 require "socket"
 require "stringio"
+require "tmpdir"
 require "uri"
 require "yaml"
 
@@ -37,12 +56,27 @@ module CompatChild
   OUTPUT = []
   COMMANDS = []
   STUB_WRITES = []
+  # path => what the stub last wrote there, so the harness can tell when the
+  # CLI later changes or removes a stub's file.
+  STUB_CONTENTS = {}
+  # Pids of the processes that stand in for long-running children.
+  STAND_INS = []
   NETWORK = []
+  NETWORK_MODE = SPEC.fetch("network", "offline")
   FAKE_COMMIT = SPEC.fetch("fake_commit")
   # Only host tool locations the CLI probes; Ruby's own install is never masked.
   HOST_PROBE_PREFIXES = %w[/opt/homebrew/bin/ /usr/local/bin/ /Applications/].freeze
   HOST_EXECUTABLES = SPEC.fetch("host_executables")
-  PASSTHROUGH = %w[/usr/libexec/PlistBuddy].freeze
+  # Host tools that run for real: the name the CLI calls => the binary run.
+  REAL_TOOLS = {
+    "/usr/libexec/PlistBuddy" => "/usr/libexec/PlistBuddy",
+    "tar" => "/usr/bin/tar",
+    "/usr/bin/tar" => "/usr/bin/tar",
+    "ditto" => "/usr/bin/ditto",
+    "/usr/bin/ditto" => "/usr/bin/ditto",
+    "unzip" => "/usr/bin/unzip",
+    "/usr/bin/unzip" => "/usr/bin/unzip"
+  }.freeze
 
   class Stream < StringIO
     def initialize(tag)
@@ -70,6 +104,26 @@ module CompatChild
   REAL_SPAWN = Process.method(:spawn)
 
   class << self
+    # Never returns: even if the result cannot be written, the process ends
+    # here, so nothing reaches the CLI's rescue clauses.
+    def harness_fault!(where, error)
+      message = "#{where}: #{error.class}: #{error.message}"
+      STDERR.write("compat harness fault: #{message}\n")
+      File.write(SPEC.fetch("result_path"), JSON.generate("harness_fault" => message,
+                                                          "backtrace" => Array(error.backtrace).first(12)))
+    rescue Exception # rubocop:disable Lint/RescueException
+      nil
+    ensure
+      exit!(70)
+    end
+
+    # Runs harness code; any exception it raises is a harness fault.
+    def harness(where)
+      yield
+    rescue Exception => e # rubocop:disable Lint/RescueException
+      harness_fault!(where, e)
+    end
+
     def record(via, env, argv, options)
       entry = { "via" => via, "argv" => argv.map(&:to_s) }
       entry["env"] = env.to_h { |key, value| [key.to_s, value.nil? ? nil : value.to_s] } unless env.nil? || env.empty?
@@ -115,6 +169,7 @@ module CompatChild
       when "dart" then dart(args, cwd)
       when "pod" then tool_result(args.first == "install")
       when "git" then git(args, cwd)
+      when "fvm" then fvm(args, cwd)
       when "mrbc" then mrbc(args, cwd)
       when "codesign", "open", "xdg-open" then tool_result(true)
       else
@@ -304,6 +359,19 @@ module CompatChild
       end
     end
 
+    # `fvm use` points .fvm/flutter_sdk at the selected SDK; here, copies of
+    # the fake SDK's executables, which the CLI then runs (emulated).
+    def fvm(args, cwd)
+      if args.first == "use"
+        %w[flutter dart].each do |tool|
+          path = File.join(cwd, ".fvm", "flutter_sdk", "bin", tool)
+          stub_write(path, File.read(File.join(SPEC.fetch("flutter_sdk"), "bin", tool)))
+          File.chmod(0o755, path)
+        end
+      end
+      tool_result(true)
+    end
+
     def mrbc(args, cwd)
       output = args[args.index("-o") + 1]
       source = args.last
@@ -317,43 +385,72 @@ module CompatChild
       FileUtils.mkdir_p(File.dirname(path))
       File.write(path, content)
       STUB_WRITES << File.expand_path(path)
+      STUB_CONTENTS[File.expand_path(path)] = content.to_s.dup.force_encoding(Encoding::UTF_8)
+    end
+
+    # A host tool that really runs. What it prints reaches the golden's output
+    # unless the CLI redirected that stream, as it would reach the terminal.
+    def run_real_tool(entry, real, args, options)
+      passed = options.key?(:chdir) ? { chdir: options[:chdir] } : {}
+      base = File.join(Dir.tmpdir, "compat-tool-#{COMMANDS.length}")
+      ok = REAL_SYSTEM.bind_call(Kernel, real, *args, out: "#{base}.out", err: "#{base}.err", **passed)
+      { out: $stdout, err: $stderr }.each do |stream, io|
+        captured = File.read("#{base}.#{stream}")
+        File.delete("#{base}.#{stream}")
+        io.write(captured) unless captured.empty? || redirected?(options, stream)
+      end
+      entry["result"] = ok ? 0 : 1
+      ok
+    end
+
+    def redirected?(options, stream)
+      options.any? { |key, _| key == stream || (key.is_a?(Array) && key.include?(stream)) }
     end
 
     # --- interception entry points ---------------------------------------------
 
     def system_call(args, kwargs)
-      env, argv, options = split_command(args, kwargs)
-      entry = record("system", env, argv, options)
-      if PASSTHROUGH.include?(argv.first.to_s)
-        ok = REAL_SYSTEM.bind_call(Kernel, *argv, out: File::NULL, err: File::NULL)
-        entry["result"] = ok ? 0 : 1
-        return ok
+      harness("system #{args.inspect}") do
+        env, argv, options = split_command(args, kwargs)
+        entry = record("system", env, argv, options)
+        real = REAL_TOOLS[argv.first.to_s]
+        next run_real_tool(entry, real, argv.drop(1).map(&:to_s), options) if real
+
+        result = run_tool(env, argv, options)
+        $stdout.write(result[:stdout]) unless result[:stdout].empty? || options.key?(:out)
+        $stderr.write(result[:stderr]) unless result[:stderr].empty? || options.key?(:err)
+        entry["result"] = result[:ok] ? 0 : 1
+        set_last_status(result[:ok] ? 0 : 1)
+        result[:ok]
       end
-      result = run_tool(env, argv, options)
-      $stdout.write(result[:stdout]) unless result[:stdout].empty? || options.key?(:out)
-      $stderr.write(result[:stderr]) unless result[:stderr].empty? || options.key?(:err)
-      entry["result"] = result[:ok] ? 0 : 1
-      set_last_status(result[:ok] ? 0 : 1)
-      result[:ok]
     end
 
     def capture(via, args, kwargs)
-      env, argv, options = split_command(args, kwargs)
-      entry = record(via, env, argv, options)
-      result = run_tool(env, argv, options)
-      entry["result"] = result[:ok] ? 0 : 1
-      [result[:stdout], result[:stderr], FakeStatus.new(result[:ok] ? 0 : 1)]
+      harness("#{via} #{args.inspect}") do
+        env, argv, options = split_command(args, kwargs)
+        entry = record(via, env, argv, options)
+        result = run_tool(env, argv, options)
+        entry["result"] = result[:ok] ? 0 : 1
+        [result[:stdout], result[:stderr], FakeStatus.new(result[:ok] ? 0 : 1)]
+      end
     end
 
     # Long-running children (the app backend, browsers, desktop clients) are
     # recorded, then stood in for by a real process that exits at once, so the
     # CLI's own wait/kill/detach logic runs unchanged.
     def spawn_call(args, kwargs)
-      env, argv, options = split_command(args, kwargs)
-      record("spawn", env, argv, options)
-      passed = options.select { |key, _| %i[pgroup].include?(key) }
-      REAL_SPAWN.call("/usr/bin/true", in: File::NULL, out: File::NULL, err: File::NULL, **passed)
+      harness("spawn #{args.inspect}") do
+        env, argv, options = split_command(args, kwargs)
+        record("spawn", env, argv, options)
+        passed = options.select { |key, _| %i[pgroup].include?(key) }
+        pid = REAL_SPAWN.call("/usr/bin/true", in: File::NULL, out: File::NULL, err: File::NULL, **passed)
+        STAND_INS << pid
+        pid
+      end
     end
+
+    # A pid, or a process group (negative), that only a stand-in leads.
+    def stand_in?(pid) = pid.is_a?(Integer) && STAND_INS.include?(pid.abs)
 
     def host_probe(path)
       value = path.respond_to?(:to_path) ? path.to_path : path
@@ -408,6 +505,37 @@ module Process
     def spawn(*args, **kwargs) = CompatChild.spawn_call(args, kwargs)
   end
 end
+
+# compat_goldens_test.rb only: macOS's answer to a signal for a stand-in
+# that has just exited, made certain instead of rare.
+if CompatChild::SPEC["inject_fault"] == "stand_in_kill_eperm"
+  Process.singleton_class.prepend(Module.new do
+    def kill(signal, *pids)
+      raise Errno::EPERM, "injected" if !pids.empty? && pids.all? { |pid| CompatChild.stand_in?(pid) }
+
+      super
+    end
+  end)
+end
+
+# Signals the CLI sends its children reach the real kernel. A stand-in exits
+# at once, so by then it has exited, and the CLI's ESRCH handling is what
+# every golden records. macOS does not always say ESRCH: kill(-pgid) right
+# after the group's leader exited, even after it was reaped, sometimes fails
+# with EPERM instead (about 0.6% of signals with 8 processes doing it at
+# once), which made `ruflet run` goldens rarely end with an uncaught
+# Errno::EPERM. A stand-in is ours and runs nothing, so EPERM for one can only
+# mean it has exited; it is answered as the ESRCH it stands for. Signals to
+# any other pid are untouched.
+Process.singleton_class.prepend(Module.new do
+  def kill(signal, *pids)
+    super
+  rescue Errno::EPERM
+    raise unless !pids.empty? && pids.all? { |pid| CompatChild.stand_in?(pid) }
+
+    raise Errno::ESRCH, "compat harness: stand-in #{pids.join(', ')} has exited"
+  end
+end)
 
 class IO
   class << self
@@ -476,7 +604,8 @@ Time.singleton_class.prepend(Module.new do
 end)
 
 # No real network. Local server probes succeed (the "server" is up); every
-# HTTP request is recorded and answered 503.
+# HTTP request is recorded and answered 503, or, with the "release" network,
+# from the fake GitHub release in lib/release_fixture.rb.
 class CompatFakeSocket
   def write(data) = data.to_s.bytesize
   def close = nil
@@ -512,12 +641,40 @@ class CompatFakeHTTP
     @port = port
   end
 
-  def request(req, _body = nil)
-    CompatChild::NETWORK << "#{req.method} #{req.uri || "https://#{@address}:#{@port}#{req.path}"}"
-    response = Net::HTTPServiceUnavailable.new("1.1", "503", "Service Unavailable")
-    response.instance_variable_set(:@body, "")
+  REASONS = { 200 => "OK", 302 => "Found", 404 => "Not Found", 503 => "Service Unavailable" }.freeze
+
+  # Lets `res.read_body { |chunk| ... }` stream the canned body once.
+  module CannedBody
+    def read_body(dest = nil, &block)
+      return super() unless dest || block
+
+      block ? yield(@body) : dest << @body
+      @body
+    end
+  end
+
+  def request(req, _body = nil, &block)
+    url = "#{req.uri || "https://#{@address}:#{@port}#{req.path}"}"
+    response = CompatChild.harness("fake network #{req.method} #{url}") { canned_response(req, url) }
+    # The CLI's own block (it streams the body to a file) is CLI code.
+    yield response if block
+    response
+  end
+
+  def canned_response(req, url)
+    if CompatChild::NETWORK_MODE == "release"
+      status, headers, body = RufletCompat::ReleaseFixture.respond(url)
+      CompatChild::NETWORK << "#{req.method} #{url} -> #{status}"
+    else
+      status, headers, body = 503, {}, ""
+      CompatChild::NETWORK << "#{req.method} #{url}"
+    end
+    klass = Net::HTTPResponse::CODE_TO_OBJ.fetch(status.to_s)
+    response = klass.new("1.1", status.to_s, REASONS.fetch(status))
+    headers.each { |key, value| response[key] = value }
+    response.instance_variable_set(:@body, body)
     response.instance_variable_set(:@read, true)
-    yield response if block_given?
+    response.extend(CannedBody)
     response
   end
 end
@@ -554,11 +711,38 @@ end
 $stdout = CompatChild::Stream.new("out")
 $stderr = CompatChild::Stream.new("err")
 
+# The release fixture builds its archives here, at load, before the CLI runs.
+if CompatChild::NETWORK_MODE == "release"
+  CompatChild.harness("loading lib/release_fixture.rb") { require_relative "release_fixture" }
+end
+# compat_goldens_test.rb only: a fixture that fails mid-request, as Zlib once
+# did, must fail the golden instead of reaching a CLI rescue.
+if CompatChild::SPEC["inject_fault"] == "release_fixture"
+  require "zlib"
+  RufletCompat::ReleaseFixture.singleton_class.prepend(Module.new do
+    def respond(url)
+      raise Zlib::BufError, "buffer error (injected)" if url.include?("/releases/tags/")
+
+      super
+    end
+  end)
+end
+
 exit_code = begin
-  if CompatChild::SPEC["mode"] == "rake"
+  case CompatChild::SPEC["mode"]
+  when "rake"
     require_relative "rails_stub"
     CompatRails.boot(CompatChild::SPEC.fetch("project"))
-    CompatRails.invoke_rake(CompatChild::SPEC.fetch("argv").first)
+    CompatRails.invoke_rake(CompatChild::SPEC.fetch("argv"))
+  when "generator"
+    # `rails generate NAMESPACE:NAME ARGS`: what Rails::Generators.invoke does
+    # once the app has booted. The app itself is not booted.
+    require "rails/generators"
+    namespace, name = CompatChild::SPEC.fetch("argv").first.split(":", 2)
+    require "generators/#{namespace}/#{name}/#{name}_generator"
+    generator = Object.const_get("#{namespace.capitalize}::Generators::#{name.capitalize}Generator")
+    generator.start(CompatChild::SPEC.fetch("argv").drop(1), destination_root: CompatChild::SPEC.fetch("project"))
+    0
   else
     # The installed executable itself, exactly as `ruflet ...` runs it. $0 is
     # the executable too, so OptionParser's own `--help` names `ruflet`.
@@ -576,14 +760,21 @@ rescue Exception => e # rubocop:disable Lint/RescueException
   1
 end
 
-File.write(
-  CompatChild::SPEC.fetch("result_path"),
-  JSON.pretty_generate(
-    "exit" => exit_code,
-    "output" => CompatChild.output_events,
-    "commands" => CompatChild::COMMANDS,
-    "network" => CompatChild::NETWORK,
-    "stub_writes" => CompatChild::STUB_WRITES.uniq
+begin
+  File.write(
+    CompatChild::SPEC.fetch("result_path"),
+    JSON.pretty_generate(
+      "exit" => exit_code,
+      "output" => CompatChild.output_events,
+      "commands" => CompatChild::COMMANDS,
+      "network" => CompatChild::NETWORK,
+      "stub_writes" => CompatChild::STUB_WRITES.uniq,
+      "stub_contents" => CompatChild::STUB_CONTENTS
+    )
   )
-)
+rescue Exception => e # rubocop:disable Lint/RescueException
+  # $stderr is the CLI's recorded stream; the harness reads the real one.
+  STDERR.write("compat child could not write its result: #{e.class}: #{e.message}\n")
+  exit!(71)
+end
 exit!(0)

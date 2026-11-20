@@ -161,11 +161,16 @@ module Ruflet
         # names a target, so the flags before it reach Flutter as they would
         # after it. Two such arguments (`--flavor web apk`) are refused rather
         # than guessed at: which one is a flag's value is Flutter's to know.
+        # Nothing after `--` is a target: `build -- apk` is still the
+        # unsupported target "--", and `build --release -- apk` has none. A
+        # bare `-` is an argument, not a flag (Commands.flag?), so `build -
+        # apk` is still the unsupported target "-".
         def extract_build_target!(args)
           first = args.first
-          return (args.shift || "").downcase unless first&.start_with?("-")
+          return (args.shift || "").downcase unless first && Commands.flag?(first) && first != "--"
 
-          positionals = args.each_index.reject { |index| args[index].start_with?("-") }
+          stop = args.index("--") || args.length
+          positionals = (0...stop).reject { |index| Commands.flag?(args[index]) }
           targets = positionals.select { |index| flutter_build_command(args[index].downcase) }
           if targets.length > 1
             names = targets.map { |index| args[index] }.join(", ")
