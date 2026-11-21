@@ -180,7 +180,11 @@ module Ruflet
             push_update
           end
 
+          # The field's event, relayed: its data stays what the field's event
+          # decoded (the typed text stays a String).
           def form_event(name, event)
+            return event.relayed(name: name, target: wire_id, control: self) if event.respond_to?(:relayed)
+
             Ruflet::Event.new(name: name, target: wire_id, raw_data: event.raw_data, page: event.page, control: self)
           end
 

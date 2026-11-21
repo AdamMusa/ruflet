@@ -226,6 +226,16 @@ module RufletCompat
     cli "default_app", "install", "--verbose", id: "install--verbose-after-ios--self", before: [%w[build ios --self]]
     cli "default_app", "install", "--device", "emulator-5554", "--verbose", before: [%w[build apk --self]]
     cli "default_app", "install", "--device=emulator-5554", before: [%w[build apk --self]]
+    # Named desktop devices, a 40-hex iPhone UDID (devices from before 2018)
+    # and a wireless-debugging adb id: each installs its own platform's
+    # outputs. Before #84 the first three synced Android's and the adb id,
+    # on a Mac, iOS's.
+    cli "default_app", "install", "-d", "linux", before: [%w[build linux]]
+    cli "default_app", "install", "-d", "windows", before: [%w[build windows]]
+    cli "default_app", "install", "-d", "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678", id: "install--d-40-hex-udid-after-ios--self",
+                                  before: [%w[build ios --self]]
+    cli "default_app", "install", "-d", "adb-R58M123ABCD-x1Yz._adb-tls-connect._tcp", id: "install--d-adb-tls-id-after-apk--self",
+                                  before: [%w[build apk --self]]
 
     # --- devices, emulators, doctor -------------------------------------------
     cli "default_app", "devices"
@@ -251,6 +261,10 @@ module RufletCompat
       cli "services_app", "build", target, "--self" unless target == "web"
     end
     cli "services_app", "build", "apk", id: "build-apk-with-signing-env", env: FAKE_SIGNING_ENV
+    # A partial signing setup stops the build; before #84 it printed "build
+    # config error" and built anyway.
+    cli "services_app", "build", "apk", id: "build-apk-with-partial-signing-env",
+                                        env: FAKE_SIGNING_ENV.slice("RUFLET_ANDROID_KEYSTORE")
     cli "services_app", "build", "ios", "--self", id: "build-ios--self-with-team-env", env: { "RUFLET_IOS_TEAM_ID" => "ENVTEAM42" }
     cli "services_app", "build", "apk", "--self", id: "build-apk--self-local-runtime", runtime: true
     cli "services_app", "build", "ios", "--self", id: "build-ios--self-local-runtime", runtime: true
@@ -264,6 +278,9 @@ module RufletCompat
 
     # --- Rails project: rake tasks and the plain CLI in Rails.root ------------
     cli "rails_app", "ruflet:build[apk]", rake: true
+    # `appbundle` gets aab's app identity check and package rename; before #84
+    # it was the one mobile target that skipped them.
+    cli "rails_app", "ruflet:build[appbundle]", rake: true
     cli "rails_app", "ruflet:build[ios]", rake: true
     cli "rails_app", "ruflet:build[desktop]", rake: true
     cli "rails_app", "ruflet:build[web]", rake: true

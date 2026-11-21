@@ -74,9 +74,14 @@ module Ruflet
       end
 
       def flutter_tools_via_managed_sdk(client_dir: nil, auto_install: true)
-        return nil unless auto_install
-
-        sdk_root = ensure_flutter_sdk_downloaded(client_dir: client_dir)
+        sdk_root =
+          if auto_install
+            ensure_flutter_sdk_downloaded(client_dir: client_dir)
+          else
+            # Without auto-install (plain `ruflet doctor`) nothing is
+            # downloaded, but an SDK an earlier run installed still counts.
+            installed_managed_flutter_sdk_root(client_dir: client_dir)
+          end
         return nil unless sdk_root
 
         tools_from_flutter_bin(File.join(sdk_root, "bin", flutter_executable_name))
@@ -166,8 +171,18 @@ module Ruflet
       end
 
       def ensure_flutter_sdk_downloaded(client_dir: nil)
-        release_info = resolve_flutter_release(client_dir: client_dir)
-        return nil unless release_info
+        release_info =
+          begin
+            resolve_flutter_release(client_dir: client_dir)
+          rescue StandardError
+            # Offline: the release manifest is unreachable, but an SDK that
+            # is already installed needs no download.
+            installed = installed_managed_flutter_sdk_root(client_dir: client_dir)
+            return installed if installed
+
+            raise
+          end
+        return installed_managed_flutter_sdk_root(client_dir: client_dir) unless release_info
 
         release = release_info[:release]
         host = release_info[:host]
@@ -195,6 +210,40 @@ module Ruflet
         nil
       rescue StandardError => e
         warn "Flutter auto-install failed: #{e.class}: #{e.message}"
+        nil
+      end
+
+      # An SDK ensure_flutter_sdk_downloaded installed earlier, found on disk
+      # without the release manifest: ~/.ruflet/flutter/<version>/<host>/flutter.
+      # An explicit version pin (RUFLET_FLUTTER_VERSION or .fvmrc) only accepts
+      # that exact version; otherwise the newest installed SDK wins, preferring
+      # stable releases on the stable channel.
+      def installed_managed_flutter_sdk_root(client_dir: nil)
+        host = flutter_host
+        return nil unless host
+
+        base = File.join(Dir.home, ".ruflet", "flutter")
+        return nil unless File.directory?(base)
+
+        installed = Dir.children(base).sort.filter_map do |version|
+          sdk_root = File.join(base, version, host, "flutter")
+          flutter_bin = File.join(sdk_root, "bin", flutter_executable_name)
+          [version, sdk_root] if File.file?(flutter_bin) && File.executable?(flutter_bin)
+        end
+        return nil if installed.empty?
+
+        desired = desired_flutter_spec(client_dir: client_dir)
+        pinned = desired[:version].to_s.split("@").first.to_s.strip
+        exact = installed.find { |version, _| version == pinned }
+        return exact.last if exact
+        return nil if pinned.match?(/\A\d+\.\d+\.\d+/)
+
+        stable_only = (desired[:channel] || DEFAULT_FLUTTER_CHANNEL) == DEFAULT_FLUTTER_CHANNEL
+        installed.max_by do |version, _|
+          parsed = Gem::Version.correct?(version) ? Gem::Version.new(version) : Gem::Version.new("0")
+          [stable_only && parsed.prerelease? ? 0 : 1, parsed]
+        end.last
+      rescue SystemCallError
         nil
       end
 

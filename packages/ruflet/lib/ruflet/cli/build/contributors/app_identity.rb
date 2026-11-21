@@ -78,8 +78,11 @@ module Ruflet
             }
           end
 
+          # `appbundle` is Flutter's name for `aab` and gets the same checks:
+          # it used to skip this one and the package-name step, so the bundle
+          # kept the template's com.example.ruflet_client id.
           def validate_mobile_app_identity(metadata, platform:)
-            return true unless %w[apk android aab ios].include?(platform.to_s)
+            return true unless %w[apk android aab appbundle ios].include?(platform.to_s)
             return true unless metadata
 
             errors = Array(metadata[:mobile_identity_errors])
@@ -136,7 +139,7 @@ module Ruflet
             return true unless metadata
 
             package_name, platform_flag = case platform.to_s
-            when "apk", "android", "aab"
+            when "apk", "android", "aab", "appbundle"
               [metadata[:android_application_id], "--android"]
             when "ios"
               [metadata[:ios_bundle_identifier], "--ios"]

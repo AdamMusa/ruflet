@@ -51,18 +51,30 @@ module RufletRecord
 
     private
 
+    # Datetimes are stored as UTC wall-clock text (see SQLiteAdapter), so a
+    # string's Z or +HH:MM offset is applied: "...10:00+02:00" is 08:00 UTC.
+    # An assigned Time is kept as given; binding stores its instant.
     def cast_time(value)
       return value if value.is_a?(Time)
-      match = /\A(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}):(\d{2}))?/.match(value.to_s)
+      match = /\A(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}):(\d{2})(?:\.\d+)? *(Z|[+-]\d{2}:?\d{2})?)?/.match(value.to_s)
       return value unless match
 
-      Time.utc(
+      time = Time.utc(
         match[1].to_i, match[2].to_i, match[3].to_i,
         (match[4] || "0").to_i, (match[5] || "0").to_i,
         (match[6] || "0").to_i
       )
+      time - utc_offset_seconds(match[7])
     rescue StandardError
       value
+    end
+
+    def utc_offset_seconds(zone)
+      return 0 if zone.nil? || zone == "Z"
+
+      digits = zone.delete(":")
+      seconds = (digits[1, 2].to_i * 3600) + (digits[3, 2].to_i * 60)
+      zone[0, 1] == "-" ? -seconds : seconds
     end
   end
 end

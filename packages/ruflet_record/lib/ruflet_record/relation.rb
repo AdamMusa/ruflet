@@ -100,7 +100,7 @@ module RufletRecord
     end
 
     def load
-      sql, binds = to_sql_and_binds
+      sql, binds = bound_sql_and_binds
       @records = @model.connection.select_all(sql, binds).map { |row| @model.instantiate(row) }
       @loaded = true
       self
@@ -199,12 +199,12 @@ module RufletRecord
 
     def update_all(attributes)
       raise ArgumentError, "attributes must not be empty" if attributes.empty?
-      sql, binds = SQL.update(@table_name, stringify_keys(attributes), @values[:where])
+      sql, binds = SQL.update(@table_name, SQL.column_values(stringify_keys(attributes)), bound_wheres)
       @model.connection.update(sql, binds)
     end
 
     def delete_all
-      sql, binds = SQL.delete(@table_name, @values[:where])
+      sql, binds = SQL.delete(@table_name, bound_wheres)
       @model.connection.delete(sql, binds)
     end
 
@@ -238,7 +238,7 @@ module RufletRecord
     attr_reader :values
 
     def raw_rows
-      sql, binds = to_sql_and_binds
+      sql, binds = bound_sql_and_binds
       @model.connection.select_all(sql, binds)
     end
 
@@ -258,6 +258,15 @@ module RufletRecord
 
     def to_sql_and_binds
       SQL.select(@table_name, @values)
+    end
+
+    # What a query runs with. bound_attributes keeps the values as given.
+    def bound_sql_and_binds
+      SQL.select(@table_name, @values.merge(where: bound_wheres))
+    end
+
+    def bound_wheres
+      @values[:where].map { |fragment| SQL.bound_fragment(fragment) }
     end
 
     def spawn_with(key, value)

@@ -17,15 +17,15 @@ class RufletCliDispatchTest < Minitest::Test
       ruflet new <appname>
       ruflet run [scriptname|path] [--web|--desktop] [--port PORT] [--no-reload]
       ruflet update [web|desktop|all] [--check] [--force] [--platform PLATFORM]
-      ruflet debug [scriptname|path]
-      ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--lite|--full|--self] [--verbose]
+      ruflet debug [platform]
+      ruflet build <apk|android|ios|ipa|aab|appbundle|web|macos|windows|linux> [--lite|--full|--self] [--verbose]
       ruflet install [--device DEVICE_ID] [--verbose]
       ruflet devices
       ruflet emulators
       ruflet doctor [--fix] [--verbose]
 
     Build profiles:
-      --self           Self-contained lite build (default profile)
+      --self           Self-contained build; lite profile unless --full
       --self --full    Self-contained full CRuby build with locked project gems
       --full           Also implies --self
   HELP
@@ -80,7 +80,11 @@ class RufletCliDispatchTest < Minitest::Test
     end
   end
 
-  def test_help_text_is_unchanged
+  # The text #77 and #78 kept byte-identical, except three statements that
+  # were wrong: debug's positional argument is a platform (it said a script),
+  # `build` also takes `appbundle`, and --self is not the default profile (a
+  # build without a profile flag is server-driven).
+  def test_help_text
     out, err = capture_io { Ruflet::CLI.print_help }
 
     assert_equal HELP, out
@@ -183,6 +187,21 @@ class RufletCliDispatchTest < Minitest::Test
     assert_equal [[:command_build, %w[apk]]], cli.calls
     assert_empty out
     assert_empty err
+  end
+
+  # It returned 0 even when nothing was created.
+  def test_bootstrap_returns_the_scaffold_status
+    Dir.mktmpdir do |dir|
+      Dir.chdir(dir) do
+        out, err = capture_io do
+          assert_equal 0, Ruflet::CLI.bootstrap("demo")
+          assert_equal 1, Ruflet::CLI.bootstrap("demo")
+        end
+        assert File.file?(File.join(dir, "demo", "main.rb"))
+        assert_includes out, "ruflet run main.rb"
+        assert_includes err, "Directory already exists: #{File.join(Dir.pwd, 'demo')}"
+      end
+    end
   end
 
   def test_the_cli_itself_runs_every_command_method

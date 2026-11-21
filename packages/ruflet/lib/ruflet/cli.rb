@@ -67,9 +67,10 @@ module Ruflet
       Commands.print_command_help(entry)
     end
 
+    # Creates a Ruflet app at path and returns `ruflet new`'s status: 1 when
+    # nothing was created (the directory already exists, for one).
     def bootstrap(path)
       command_new([path || Dir.pwd])
-      0
     end
 
     def version_string
