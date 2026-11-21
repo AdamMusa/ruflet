@@ -1508,6 +1508,13 @@ module Ruflet
         replacement_controls = Array(patch["controls"]).dup
         control.children.clear
         replacement_controls.each { |child| control.children << child if child.is_a?(Control) }
+        # children is now the only store for these controls, as it is for a
+        # DSL-built container. A second copy left in props came back in every
+        # later full or parent patch once the app emptied children (to_patch
+        # only overrides "controls" from a non-empty children list). A list
+        # with no Control in it (nil, [], raw maps) has nothing children can
+        # hold, so it stays in props as before.
+        control.props.delete("controls") if replacement_controls.any? { |child| child.is_a?(Control) }
         patch["controls"] = replacement_controls
       end
 

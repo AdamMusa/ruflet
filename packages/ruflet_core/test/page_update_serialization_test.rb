@@ -327,4 +327,271 @@ class PageUpdateSerializationTest < Minitest::Test
     assert_equal %w[First Second], controls_patch[3].map { |control| control["value"] }
   end
 
+  # Issue #105: page.update(col, controls: [...]) left a second copy of the
+  # list in col.props, and to_patch sent it again once children was emptied.
+  def test_children_emptied_after_targeted_update_stay_empty_in_a_full_patch
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    todo = Ruflet.column(controls: [])
+    page.add(todo)
+
+    page.update(todo, controls: [Ruflet.text("milk"), Ruflet.text("eggs")])
+    todo.children.clear
+    sent.clear
+    page.update
+    assert_equal [[[0], [0, 0, "controls", []]]], sent.map { |_, payload| payload["patch"] }
+
+    sent.clear
+    page.title = "Done"
+    page.update
+    views_patch = sent.last[1]["patch"].find { |op| op[2] == "views" }
+    column = views_patch[3].first["controls"].first
+    assert_equal todo.wire_id, column["_i"]
+    assert_empty Array(column["controls"])
+    assert_empty Array(todo.to_patch["controls"])
+    refute todo.props.key?("controls")
+  end
+
+  def test_children_emptied_after_children_alias_update_stay_empty_in_the_parent_patch
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    todo = Ruflet.column(controls: [])
+    outer = Ruflet.column(controls: [todo])
+    page.add(outer)
+
+    page.update(todo, children: [Ruflet.text("milk"), Ruflet.text("eggs")])
+    todo.children.replace([])
+    page.update
+    outer.children << Ruflet.text("All done")
+    sent.clear
+    page.update
+
+    assert_equal 1, sent.length
+    assert_equal outer.wire_id, sent.first[1]["id"]
+    controls_patch = sent.first[1]["patch"].find { |op| op[2] == "controls" }
+    assert_equal ["Column", "Text"], controls_patch[3].map { |control| control["_c"] }
+    assert_empty Array(controls_patch[3].first["controls"])
+  end
+
+  def test_control_removed_after_targeted_update_is_no_longer_patched
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    list = Ruflet.column(controls: [])
+    page.add(list)
+    removed = Ruflet.text("gone")
+    page.update(list, controls: [removed])
+    list.children.clear
+    page.update
+
+    sent.clear
+    removed.props["value"] = "still gone"
+    page.update
+
+    assert_empty sent
+  end
+
+  def test_bare_update_after_targeted_update_with_own_children_sends_the_list_once
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    list = Ruflet.column(children: [Ruflet.text("First")])
+    page.add(list)
+    page.update(list, controls: list.children)
+
+    sent.clear
+    list.children << Ruflet.text("Second")
+    page.update
+
+    assert_equal 1, sent.length
+    controls_ops = sent.first[1]["patch"].select { |op| op[2] == "controls" }
+    assert_equal 1, controls_ops.length
+    assert_equal %w[First Second], controls_ops.first[3].map { |control| control["value"] }
+  end
+
+  def test_targeted_update_with_a_list_holding_no_controls_still_serializes_it
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(_action, _payload) {}
+    )
+    empty = Ruflet.column(controls: [])
+    raw = Ruflet.column(controls: [])
+    page.add(Ruflet.column(controls: [empty, raw]))
+    raw_child = { "_c" => "Text", "value" => "raw" }
+
+    page.update(empty, controls: [])
+    page.update(raw, controls: [raw_child])
+
+    assert_equal [], empty.to_patch["controls"]
+    assert_equal [raw_child], raw.to_patch["controls"]
+  end
+
+  def test_children_emptied_after_targeted_update_with_a_mixed_list_stay_empty_in_a_full_patch
+    { control_first: [:control, :raw], raw_first: [:raw, :control] }.each do |order, kinds|
+      sent = []
+      page = Ruflet::Page.new(
+        session_id: "s1",
+        client_details: { "route" => "/" },
+        sender: ->(action, payload) { sent << [action, payload] }
+      )
+      todo = Ruflet.column(controls: [])
+      page.add(todo)
+      items = kinds.map { |kind| kind == :control ? Ruflet.text("milk") : { "_c" => "Text", "value" => "raw" } }
+
+      page.update(todo, controls: items)
+      todo.children.clear
+      page.update
+      sent.clear
+      page.title = "Done"
+      page.update
+
+      views_patch = sent.last[1]["patch"].find { |op| op[2] == "views" }
+      column = views_patch[3].first["controls"].first
+      assert_equal todo.wire_id, column["_i"], order
+      assert_empty Array(column["controls"]), order
+      refute todo.props.key?("controls"), order
+    end
+  end
+
+  # Behavior change of the #105 fix: a control removed from children after a
+  # targeted controls: update is no longer treated as mounted, even when the
+  # list keeps other controls. Before, the props copy kept it in the page's
+  # tree walks, so it was still patched, found by id and sent its events.
+  def test_control_removed_after_targeted_update_is_no_longer_mounted
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    list = Ruflet.column(controls: [])
+    page.add(list)
+    clicked = []
+    keep = Ruflet.text("keep")
+    gone = Ruflet.text("gone", id: "gone_id")
+    button = Ruflet.text_button(content: Ruflet.text("b"), on_click: ->(_e) { clicked << :clicked })
+    page.update(list, controls: [keep, gone, button])
+    button_wire_id = button.wire_id
+
+    list.children.delete(gone)
+    list.children.delete(button)
+    sent.clear
+    page.update
+    assert_equal [list.wire_id], sent.map { |_, payload| payload["id"] }
+    controls_op = sent.first[1]["patch"].find { |op| op[2] == "controls" }
+    assert_equal %w[keep], controls_op[3].map { |control| control["value"] }
+
+    sent.clear
+    gone.props["value"] = "ghost"
+    page.update
+    assert_empty sent
+    assert_nil page.get_control("gone_id")
+    page.dispatch_event(target: button_wire_id, name: "click", data: nil)
+    assert_empty clicked
+  end
+
+  def test_field_removed_after_targeted_update_leaves_the_form
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    required = ->(value) { "required" if value.to_s.empty? }
+    name = Ruflet.text_field(value: "Ann", validator: required)
+    email = Ruflet.text_field(value: "", validator: required)
+    form = Ruflet.form(controls: [])
+    page.add(form)
+
+    page.update(form, controls: [name, email])
+    form.children.delete(email)
+    page.update
+
+    assert_equal [name], form.fields
+    sent.clear
+    assert form.validate
+    refute sent.any? { |_, payload| payload["id"] == email.wire_id }
+  end
+
+  # Behavior change of the #105 fix: page.update(col, controls: list) copies
+  # the Controls into col.children, as column(controls: list) always has, so a
+  # later change to the app's own `list` is not sent; a change to col.children
+  # is. Before the fix that change reached the client from a props copy only,
+  # and the next full patch, built from children, dropped it again.
+  def test_targeted_update_keeps_its_own_copy_of_the_passed_list
+    %i[controls children].each do |keyword|
+      sent = []
+      page = Ruflet::Page.new(
+        session_id: "s1",
+        client_details: { "route" => "/" },
+        sender: ->(action, payload) { sent << [action, payload] }
+      )
+      list = Ruflet.column(controls: [])
+      page.add(list)
+      items = [Ruflet.text("first")]
+      page.update(list, keyword => items)
+
+      items << Ruflet.text("second")
+      sent.clear
+      page.update
+      assert_empty sent, "#{keyword}: appending to the passed Array"
+      items.clear
+      page.update
+      assert_empty sent, "#{keyword}: clearing the passed Array"
+      assert_equal %w[first], list.children.map { |control| control.props["value"] }
+      refute list.props.key?("controls")
+
+      page.title = "Full"
+      page.update
+      views_patch = sent.last[1]["patch"].find { |op| op[2] == "views" }
+      column = views_patch[3].first["controls"].first
+      assert_equal %w[first], column["controls"].map { |control| control["value"] }
+
+      list.children << Ruflet.text("second")
+      sent.clear
+      page.update
+      assert_equal [list.wire_id], sent.map { |_, payload| payload["id"] }
+      controls_op = sent.first[1]["patch"].find { |op| op[2] == "controls" }
+      assert_equal %w[first second], controls_op[3].map { |control| control["value"] }
+    end
+  end
+
+  # A list with no Control in it stays in props as the app's own Array, so a
+  # later change to it is still sent, as before the fix.
+  def test_targeted_update_with_an_empty_list_still_tracks_the_passed_array
+    sent = []
+    page = Ruflet::Page.new(
+      session_id: "s1",
+      client_details: { "route" => "/" },
+      sender: ->(action, payload) { sent << [action, payload] }
+    )
+    list = Ruflet.column(controls: [])
+    page.add(list)
+    items = []
+    page.update(list, controls: items)
+
+    items << Ruflet.text("e1")
+    sent.clear
+    page.update
+
+    assert_equal [list.wire_id], sent.map { |_, payload| payload["id"] }
+    controls_op = sent.first[1]["patch"].find { |op| op[2] == "controls" }
+    assert_equal %w[e1], controls_op[3].map { |control| control["value"] }
+  end
+
 end
