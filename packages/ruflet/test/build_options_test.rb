@@ -232,6 +232,28 @@ class RufletCliBuildOptionsTest < Minitest::Test
     end
   end
 
+  # Every other id maps as it did before #84. old_rule is the rule
+  # install_platform_for_device replaced.
+  def test_other_device_ids_map_as_before
+    old_rule = lambda do |device_id|
+      next "android" if device_id.include?("emulator-") || device_id.match?(/\A[a-z0-9._:-]+\z/i) && device_id != "macos" && device_id != "chrome" && !device_id.include?("-")
+      next "ios" if device_id.match?(/\A[0-9A-F-]{8,}\z/i)
+      next "macos" if device_id == "macos"
+      next "web" if device_id == "chrome"
+
+      "inferred"
+    end
+    builder = DummyBuilder.new
+    builder.define_singleton_method(:inferred_install_platform) { "inferred" }
+    [
+      "emulator-5554", " emulator-5554", "R58M123ABCD", "0123456789ABCDEF", "192.168.1.20:5555",
+      "00008030-001A2D3C0E12802E", "6B29FC40-CA47-1067-B31D-00DD010662DA", "0123-4567", "macos", "chrome",
+      " linux", "iPhone-15", "ZY22-4F7Q", "my phone", ""
+    ].each do |device_id|
+      assert_equal old_rule.call(device_id), builder.send(:install_platform_for_device, device_id), device_id.inspect
+    end
+  end
+
   def test_install_short_device_flag_and_verbose
     [["-d", "emulator-5554"], ["--device", "emulator-5554"]].each do |device_args|
       in_project do |dir|

@@ -84,25 +84,24 @@ module Ruflet
         def install_platform_for_device(device_id)
           return inferred_install_platform unless device_id
 
-          id = device_id.to_s.strip
-          return id if DESKTOP_INSTALL_DEVICES.include?(id)
-          return "web" if WEB_INSTALL_DEVICES.include?(id)
+          return device_id if DESKTOP_INSTALL_DEVICES.include?(device_id)
+          return "web" if WEB_INSTALL_DEVICES.include?(device_id)
           # emulator-5554, and the adb-<serial>-<id>._adb-tls-connect._tcp ids
           # of wireless debugging, which contain dashes.
-          return "android" if id.start_with?("emulator-", "adb-")
-          return "ios" if ios_device_id?(id)
-          return "android" if id.match?(/\A[a-z0-9._:]+\z/i)
-          return "ios" if id.match?(/\A[0-9A-F-]{8,}\z/i)
+          return "android" if device_id.include?("emulator-") || device_id.start_with?("adb-")
+          return "ios" if ios_device_id?(device_id)
+          return "android" if device_id.match?(/\A[a-z0-9._:]+\z/i)
+          return "ios" if device_id.match?(/\A[0-9A-F-]{8,}\z/i)
 
           inferred_install_platform
         end
 
         # A simulator UUID, a current device UDID (00008030-001A2D3C0E12802E)
         # or the 40-hex UDID of a device from before 2018.
-        def ios_device_id?(id)
-          ios_simulator_device_id?(id) ||
-            id.match?(/\A[0-9A-F]{8}-[0-9A-F]{16}\z/i) ||
-            id.match?(/\A[0-9A-F]{40}\z/i)
+        def ios_device_id?(device_id)
+          ios_simulator_device_id?(device_id) ||
+            device_id.match?(/\A[0-9A-F]{8}-[0-9A-F]{16}\z/i) ||
+            device_id.match?(/\A[0-9A-F]{40}\z/i)
         end
 
         def validate_install_artifacts(client_dir, platform:, device_id:)
