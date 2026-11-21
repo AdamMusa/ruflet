@@ -65,6 +65,32 @@ class InvokeNilValuesTest < Minitest::Test
     assert_equal({ "offset" => [1, nil] }, last_args)
   end
 
+  # A nil value inside a Hash was left out on main, by every helper but
+  # camera's, which kept it. Both stay as they were.
+  def test_a_nil_hash_value_is_left_out_except_by_camera
+    map = mount(Ruflet.map([]))
+    map.zoom_in(offset: { x: 1, y: nil })
+    assert_equal({ "offset" => { "x" => 1 } }, last_args)
+
+    prefs = Ruflet::UI::ControlFactory.build("shared_preferences")
+    @page.add_service(prefs)
+    prefs.set("k", { a: 1, b: nil })
+    assert_equal({ "key" => "k", "value" => { "a" => 1 } }, last_args)
+
+    @page.geolocator.get_current_position(configuration: { accuracy: "high", distance_filter: nil })
+    assert_equal({ "settings" => { "accuracy" => "high" } }, last_args)
+
+    @page.audio_recorder.start_recording(configuration: { sample_rate: 44_100, channels: nil })
+    assert_equal({ "configuration" => { "sample_rate" => 44_100 } }, last_args)
+
+    @page.secure_storage.clear(android: { reset_on_error: true, shared_preferences_name: nil })
+    assert_equal({ "android" => { "reset_on_error" => true } }, last_args)
+
+    camera = mount(Ruflet::UI::ControlFactory.build("camera"))
+    camera.set_focus_point({ x: 1, y: nil })
+    assert_equal({ "point" => { "x" => 1, "y" => nil } }, last_args)
+  end
+
   private
 
   def mount(control)
