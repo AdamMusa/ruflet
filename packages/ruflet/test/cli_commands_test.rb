@@ -106,11 +106,31 @@ class RufletCliCommandsTest < Minitest::Test
       command = Commands.lookup(name)
       parser = captured_parser(command.handler)
       # Each parser also takes -h/--help, which raises Commands::HelpRequested.
+      # Exact options are read before the parser runs (below).
       declared = OptionParser.new do |o|
-        [*command.options, Commands::HELP_OPTION].each { |option| o.on(*option.switches, *option.hidden) {} }
+        [*command.options.reject(&:exact), Commands::HELP_OPTION].each { |option| o.on(*option.switches, *option.hidden) {} }
       end
 
       assert_equal parser.summarize, declared.summarize, "#{name} options"
+    end
+  end
+
+  # run's --strict is read only as written: -s, --s and --st, which
+  # OptionParser would complete to it, stay unknown flags, and a --strict
+  # after `--` is left where it is.
+  def test_exact_options_are_read_only_as_written
+    exact = Commands.commands.to_h { |command| [command.name, command.options.select(&:exact).flat_map { |o| words(o) }] }
+    assert_equal({ "run" => %w[--strict] }, exact.reject { |_name, flags| flags.empty? })
+
+    host = command_host
+    args = %w[main.rb --strict --port 9000]
+    assert_equal({ target: "mobile", requested_port: 9000, reload: true, strict: true }, host.send(:parse_run_options, args))
+    assert_equal %w[main.rb], args
+    args = %w[main.rb -- --strict]
+    assert_nil host.send(:parse_run_options, args)[:strict]
+    assert_equal %w[main.rb --strict], args
+    %w[-s --s --st --stric --strict=1].each do |form|
+      assert_raises(OptionParser::InvalidOption, form) { host.send(:parse_run_options, ["main.rb", form]) }
     end
   end
 
@@ -312,7 +332,7 @@ class RufletCliCommandsTest < Minitest::Test
   def selected_option(command, form)
     selected = nil
     parser = OptionParser.new do |o|
-      command.options.each do |option|
+      command.options.reject(&:exact).each do |option|
         long = words(option).find { |word| word.start_with?("--") }
         o.on(*option.switches, *option.hidden) { selected = long }
       end

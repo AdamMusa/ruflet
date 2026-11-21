@@ -52,7 +52,9 @@ module Ruflet
     #   declared. A new long option must not make one of them ambiguous: the
     #   form is declared instead, as a switch or a hidden one (run's -d, --d
     #   and --de stay --desktop beside --device; emulators' -c and --c stay
-    #   --create beside --cold).
+    #   --create beside --cold). An option declared exact: is read only as
+    #   written, before OptionParser runs, so it adds no such form (run's
+    #   --strict: -s and --st stay unknown flags).
     # * build, install and doctor look for the exact tokens declared: no
     #   prefixes and no `--flag=value`, except `install --device=ID`.
     module Commands
@@ -76,7 +78,9 @@ module Ruflet
 
       # hidden: switches the command still accepts but `ruflet help` does not
       # list, such as abbreviations that worked before a longer flag existed.
-      Option = Struct.new(:switches, :description, :hidden, keyword_init: true) do
+      # exact: read only as written, even by a command that parses with
+      # OptionParser.
+      Option = Struct.new(:switches, :description, :hidden, :exact, keyword_init: true) do
         # The flag words, without the value placeholder: "--port PORT" is "--port".
         def words
           (switches + hidden).map { |switch| switch.split(" ", 2).first }
@@ -318,11 +322,12 @@ module Ruflet
           registry.help_text
         end
 
-        def option(*switches, description: nil, hidden: [])
+        def option(*switches, description: nil, hidden: [], exact: false)
           Option.new(
             switches: switches.map { |switch| switch.to_s.dup.freeze }.freeze,
             description: description,
-            hidden: Array(hidden).map { |switch| switch.to_s.dup.freeze }.freeze
+            hidden: Array(hidden).map { |switch| switch.to_s.dup.freeze }.freeze,
+            exact: exact
           ).freeze
         end
 
@@ -408,7 +413,8 @@ module Ruflet
           option("-d", "--desktop", description: "Open the app in the desktop client", hidden: %w[--de --d]),
           option("--port PORT", description: "Port to serve on (default 8550); the next free one if it is taken"),
           option("--no-reload", description: "Turn off hot reload"),
-          option("--device ID", description: "Run on a Flutter device (not supported yet)")
+          option("--device ID", description: "Run on a Flutter device (not supported yet)"),
+          option("--strict", description: "Exit 1 when the template lacks a control or service the app uses", exact: true)
         ],
         unknown_flags: :command
       )
@@ -456,7 +462,8 @@ module Ruflet
           option("--self", description: "Self-contained build; lite profile unless --full"),
           option("--lite", description: "Self-contained lite build"),
           option("--full", description: "Self-contained full CRuby build with locked project gems"),
-          verbose
+          verbose,
+          option("--strict", description: "Fail when the template lacks a control, service or extension the app uses")
         ],
         forwards: "flutter build <target>",
         help: [
@@ -518,7 +525,8 @@ module Ruflet
         summary: "Report Ruby, the Flutter template and the Flutter SDK, then run `flutter doctor`.",
         options: [
           option("-v", "--verbose", description: "Run flutter doctor with -v"),
-          option("--fix", description: "Fetch the template again and install Flutter if it is missing")
+          option("--fix", description: "Fetch the template again and install Flutter if it is missing"),
+          option("--strict", description: "Exit 1 when the template lacks a control, service or extension the app uses")
         ],
         first_run_assets: true
       )
