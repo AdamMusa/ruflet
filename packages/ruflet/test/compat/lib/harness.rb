@@ -280,7 +280,9 @@ module RufletCompat
       @root = File.join(workspace.dir, "runs", "#{format('%03d', workspace.next_id)}-#{label}")
       @home = File.join(@root, "home")
       @tmp = File.join(@root, "tmp")
-      project_name = fixture == "empty" ? "projects" : fixture
+      # A fixture's "project_dir" names the project folder (and the folders
+      # above it) when the fixture is about the path itself.
+      project_name = fixture == "empty" ? "projects" : (Corpus::FIXTURES.dig(fixture, "project_dir") || fixture)
       @project = File.join(@root, "proj", project_name)
       @specs = File.join(workspace.dir, "specs")
       [@home, @tmp, @specs, File.dirname(@project)].each { |dir| FileUtils.mkdir_p(dir) }

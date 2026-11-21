@@ -45,12 +45,16 @@ module Ruflet
 
           def set_android_meta_data(manifest, name, value)
             contents = File.read(manifest)
-            entry = %(<meta-data android:name="#{name}" android:value="#{value}" />)
+            # The value sits in a double-quoted attribute, where a bare "&" (as
+            # in "Tom%20&%20Jerry") makes the whole manifest invalid XML. "'" is
+            # legal there and is left as it is.
+            escaped = value.to_s.gsub("&", "&amp;").gsub("<", "&lt;").gsub(">", "&gt;").gsub('"', "&quot;")
+            entry = %(<meta-data android:name="#{name}" android:value="#{escaped}" />)
             existing = /<meta-data\s+android:name="#{Regexp.escape(name)}"[^>]*\/>/
 
             contents =
               if contents.match?(existing)
-                contents.sub(existing, entry)
+                contents.sub(existing) { entry }
               else
                 contents.sub(%r{(\n(\s*)</application>)}) { "\n#{$2}    #{entry}#{$1}" }
               end

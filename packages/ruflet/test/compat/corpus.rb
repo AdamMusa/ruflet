@@ -26,6 +26,8 @@ module RufletCompat
     # (so `ruflet new` and the builds of its output can never disagree); `dir`
     # fixtures are committed under fixtures/; `docs` fixtures are the default
     # app with main.rb replaced by a whole-app example from the docs.
+    # `project_dir` names the folder (and the folders above it) the project is
+    # run from; it defaults to the fixture's name.
     FIXTURES = {
       "empty" => { "kind" => "empty" },
       "default_app" => { "kind" => "generated", "argv" => %w[new default_app] },
@@ -34,7 +36,12 @@ module RufletCompat
       # A fresh `rails new` app before `rails generate ruflet:install`.
       "rails_new_app" => { "kind" => "dir", "path" => "fixtures/rails_new_app", "rails" => true },
       # Every way an app names an icon (page golden only).
-      "icons_app" => { "kind" => "dir", "path" => "fixtures/icons_app" }
+      "icons_app" => { "kind" => "dir", "path" => "fixtures/icons_app" },
+      # `ruflet new "Bob's Café & Co"` inside a folder named "Apps [2026]": a
+      # space, an "é", an apostrophe and an "&" in the project's name, and
+      # brackets in its path (#139).
+      "path_chars_app" => { "kind" => "generated", "argv" => ["new", "Bob's Café & Co"],
+                            "project_dir" => "Apps [2026]/Bob's Café & Co" }
     }
 
     # Whole-app examples from the published docs (AdamMusa/ruflet_site
@@ -551,6 +558,30 @@ module RufletCompat
                                                                     "{\"contract_version\":1,\"entries\":[{\"wire_type\":\"#{wire}\"}]}\n"
                                                                 )
     end
+
+    # --- project names and paths with reserved characters (#139) -------------
+    # Info.plist and AndroidManifest.xml name the project's directory as
+    # Flutter stores it in the app (Bob's%20Caf%C3%A9%20&%20Co); Dart keeps the
+    # plain name. Every build verifies the local packages under "Apps [2026]".
+    cli "path_chars_app", "build", "apk", "--self"
+    cli "path_chars_app", "build", "ios", "--self", "--simulator"
+    cli "path_chars_app", "build", "macos", "--self"
+    cli "path_chars_app", "build", "web"
+    # The globbed steps see the project's files: the lite precompile compiles
+    # main.rb, and the runtime manifest's cache key covers it.
+    cli "path_chars_app", "build", "apk", "--self", id: "build-apk--self-local-runtime", runtime: true
+    # local_auth switches MainActivity to FlutterFragmentActivity. The build
+    # then stops because the vendored template predates ruflet_local_auth, as
+    # default_app's build-apk--self-biometrics does.
+    cli "path_chars_app", "build", "apk", "--self", id: "build-apk--self-biometrics",
+                                                     files: {
+                                                       "services.yaml" => "app:\n  app_name: Bob's Café & Co\n" \
+                                                                          "  package_name: bob_s_caf_co\n" \
+                                                                          "  organization: com.example\n" \
+                                                                          "  version: 1.0.0+1\n" \
+                                                                          "  description: A new Ruflet app.\n\n" \
+                                                                          "services:\n  - biometrics\n"
+                                                     }
 
     INVOCATIONS.freeze
 

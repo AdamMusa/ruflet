@@ -45,11 +45,14 @@ module Ruflet
             flutter = data["flutter"]
             flutter = data["flutter"] = {} unless flutter.is_a?(Hash)
             assets = Array(flutter["assets"]).map(&:to_s)
-            project_prefix = "assets/#{self_contained_project_name}/"
+            project_prefixes = [
+              "assets/#{self_contained_project_name}/",
+              pubspec_asset_entry("assets/#{self_contained_project_name}/")
+            ].uniq
             # The exact directory list changes between lite and full (most notably
             # vendor/bundle). Remove the previous profile's generated entries
             # before adding the directories that exist in this build.
-            assets.reject! { |asset| asset == project_prefix || asset.start_with?(project_prefix) }
+            assets.reject! { |asset| project_prefixes.any? { |prefix| asset.start_with?(prefix) } }
 
             if self_contained
               dependencies["ruby_runtime"] = ruby_runtime_dependency(dependencies["ruby_runtime"])
@@ -85,7 +88,7 @@ module Ruflet
 
               upsert_plist_string(
                 path, "RufletEmbeddedProject",
-                self_contained ? self_contained_project_name : "")
+                self_contained ? self_contained_project_asset_name : "")
               upsert_plist_boolean(path, "RufletRuntimeAutostart", self_contained)
               upsert_plist_string(
                 path, "RufletRuntimeProfile",
@@ -124,7 +127,7 @@ module Ruflet
             upsert_android_metadata(path, "ruflet.runtime.autostart", self_contained.to_s)
             upsert_android_metadata(
               path, "ruflet.runtime.project",
-              self_contained ? self_contained_project_name : "")
+              self_contained ? self_contained_project_asset_name : "")
             upsert_android_metadata(
               path, "ruflet.runtime.profile",
               self_contained ? embedded_runtime_profile.to_s : "")
@@ -145,8 +148,12 @@ module Ruflet
           # Desktop needs nothing here -- it has no manifest to carry a flag, and
           # treats the presence of a packaged project as the opt-in, which is the
           # same distinction this flag draws on the other platforms.
+          #
+          # The project is named as Flutter stores its directory in the app (see
+          # self_contained_project_asset_name), which is the name the runtime
+          # looks for on disk.
           def configure_platform_autostart(client_dir, platform, verbose: false)
-            project = self_contained_project_name
+            project = self_contained_project_asset_name
             case platform
             when "ios", "macos"
               plist = File.join(client_dir, platform, "Runner", "Info.plist")

@@ -145,7 +145,8 @@ module Ruflet
       def ruby_files(project_root)
         rails_views = File.join(project_root, "app", "views", "ruflet")
         if File.file?(File.join(project_root, "config", "application.rb")) && Dir.exist?(rails_views)
-          return Dir.glob(File.join(rails_views, "**", "*.rb")).sort.first(MAX_FILES)
+          return Dir.glob("**/*.rb", base: rails_views).map { |relative| File.join(rails_views, relative) }
+                    .sort.first(MAX_FILES)
         end
         return [] unless %w[main.rb ruflet.yaml ruflet.yml services.yaml].any? { |marker| File.file?(File.join(project_root, marker)) }
 

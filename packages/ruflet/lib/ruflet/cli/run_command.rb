@@ -647,7 +647,7 @@ module Ruflet
             search.each do |dir|
               next unless Dir.exist?(dir)
 
-              Dir.glob(File.join(dir, "*.app")).sort.each do |app_bundle|
+              Dir.glob("*.app", base: dir).map { |name| File.join(dir, name) }.sort.each do |app_bundle|
                 executable = macos_app_executable(app_bundle)
                 return [executable, url] if executable
               end
@@ -660,7 +660,8 @@ module Ruflet
             search.each do |dir|
               next unless Dir.exist?(dir)
 
-              exe = Dir.glob(File.join(dir, "*.exe")).sort.find { |path| File.file?(path) }
+              exe = Dir.glob("*.exe", base: dir).map { |name| File.join(dir, name) }.sort
+                       .find { |path| File.file?(path) }
               return [exe, url] if exe
             end
           else

@@ -276,7 +276,8 @@ module Ruflet
           end
 
           def android_main_activity_paths(client_dir)
-            Dir.glob(File.join(client_dir, "android", "app", "src", "main", "{kotlin,java}", "**", "MainActivity.{kt,java}")).sort
+            root = File.join(client_dir, "android", "app", "src", "main")
+            glob_under(root, "{kotlin,java}/**/MainActivity.{kt,java}").sort
           end
 
           def normalize_extension_key(value)

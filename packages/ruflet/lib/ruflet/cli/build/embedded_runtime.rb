@@ -158,7 +158,7 @@ module Ruflet
             return true
           end
 
-          sources = Dir.glob(File.join(destination_root, "**", "*.rb")).sort
+          sources = glob_under(destination_root, "**/*.rb").sort
           compiled = []
           sources.each do |source|
             output = source.sub(/\.rb\z/, ".mrb")
@@ -368,7 +368,7 @@ module Ruflet
         # Downloaded .gem archives are installation inputs, not runtime inputs.
         # Keeping them would duplicate every registry gem in the application.
         def prune_full_runtime_bundle_cache(bundle_path)
-          Dir.glob(File.join(bundle_path, "ruby", "*", "cache")).each do |cache_dir|
+          glob_under(bundle_path, "ruby/*/cache").each do |cache_dir|
             FileUtils.rm_rf(cache_dir)
           end
         end
@@ -378,9 +378,8 @@ module Ruflet
         # bridge. Reject an older locked ruflet_server while the app is still
         # being built instead of shipping a bundle that fails on first launch.
         def validate_full_runtime_in_process_transport(bundle_path)
-          server_roots = Dir.glob(
-            File.join(bundle_path, "ruby", "*", "gems", "ruflet_server-*")
-          ).select { |path| Dir.exist?(path) }
+          server_roots = glob_under(bundle_path, "ruby/*/gems/ruflet_server-*")
+            .select { |path| Dir.exist?(path) }
           return true if server_roots.empty?
 
           supported = server_roots.any? do |root|
@@ -432,7 +431,7 @@ module Ruflet
         end
 
         def write_embedded_runtime_manifest(project_root, destination_root, profile:, platform:)
-          paths = Dir.glob(File.join(destination_root, "**", "*"), File::FNM_DOTMATCH)
+          paths = glob_under(destination_root, "**/*", File::FNM_DOTMATCH)
             .select { |path| File.file?(path) }
             .reject { |path| File.basename(path) == ".ruflet-runtime.json" }
             .sort

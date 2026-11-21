@@ -39,6 +39,15 @@ module Ruflet
           File.write(path, content, encoding: Encoding::UTF_8)
         end
 
+        # Dir.glob(File.join(root, pattern)) reads any [ ] { } * ? in root --
+        # the project's own path -- as part of the pattern, so under a folder
+        # such as "Apps [2026]" it matches nothing. Globbing relative to root
+        # keeps the pattern to what the caller wrote. Returns full paths, in
+        # the order Dir.glob gives them.
+        def glob_under(root, pattern, flags = 0)
+          Dir.glob(pattern, flags, base: root).map { |relative| File.join(root, relative) }
+        end
+
         def replace_in_file(path, pattern, replacement)
           return unless File.file?(path)
 
@@ -68,12 +77,24 @@ module Ruflet
           value.to_s.gsub('"', '""')
         end
 
+        # One segment of a URI path, percent-encoded as RFC 3986 and Dart's
+        # Uri(pathSegments:) do: letters, digits and -._~!$&'()*+,;=:@ stay as
+        # they are, and every other byte of the UTF-8 text becomes %XX.
+        def uri_path_segment_escape(segment)
+          segment.to_s.b.gsub(%r{[^A-Za-z0-9\-._~!$&'()*+,;=:@]}n) { |byte| format("%%%02X", byte.ord) }
+                 .force_encoding(Encoding::UTF_8)
+        end
+
         # A POSIX path already starts with "/", so "file://" + path gives the
         # three slashes a file URI needs. A Windows path starts with the drive
         # ("D:/..."), and without the extra slash "D:" is parsed as the URI's
         # host -- which is why this read every bundled package as missing there.
+        #
+        # Each segment is escaped on its own, so a folder named "Apps [2026]"
+        # or "What?" stays part of the path instead of making the URI invalid
+        # or starting its query.
         def file_uri_for(path)
-          escaped = URI::DEFAULT_PARSER.escape(path.tr("\\", "/"))
+          escaped = path.tr("\\", "/").split("/", -1).map { |segment| uri_path_segment_escape(segment) }.join("/")
           escaped.start_with?("/") ? "file://#{escaped}" : "file:///#{escaped}"
         end
 
