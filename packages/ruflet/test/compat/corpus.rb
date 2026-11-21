@@ -504,6 +504,54 @@ module RufletCompat
     cli "default_app", "emulators", "-d"
     cli "default_app", "emulators", "-s", "-e", "Pixel_8_API_35"
 
+    # --- the template surface check (CRIT-04) ----------------------------------
+    # The vendored template predates Form, so an app using it is warned which
+    # template revision renders it, and --strict makes that an error. An app
+    # that uses nothing the template lacks gets no output.
+    form_app = {
+      "main.rb" => "require \"ruflet\"\n\nRuflet.run do |page|\n  page.add(form(controls: [text_field(label: \"Email\")]))\nend\n"
+    }
+    cli "default_app", "build", "apk", "--self", id: "build-apk--self-form", files: form_app
+    cli "default_app", "build", "apk", "--self", "--strict", id: "build-apk--self--strict-form", files: form_app
+    cli "default_app", "build", "apk", "--self", "--strict"
+    cli "default_app", "run", "main.rb", id: "run-main.rb-form", files: form_app, before: [%w[build web]]
+    cli "default_app", "run", "main.rb", "--strict", id: "run-main.rb--strict-form", files: form_app, before: [%w[build web]]
+    cli "default_app", "run", "main.rb", "--strict", before: [%w[build web]]
+    cli "default_app", "doctor", id: "doctor-form", files: form_app
+    cli "default_app", "doctor", "--strict", id: "doctor--strict-form", files: form_app
+    cli "default_app", "doctor", "--strict"
+    # Not control calls: `table` from attr_reader, `form` from let, and calls
+    # under spec/ and test/. A ruflet.yaml doctor cannot parse is read only
+    # when the template lacks a bundled package, and quietly. Each prints what
+    # it printed before the check existed.
+    accessor_app = {
+      "main.rb" => "require \"ruflet\"\n\nclass Orders\n  attr_reader :table\n\n  def refresh\n    table.update\n  end\nend\n\n" \
+                   "Ruflet.run do |page|\n  page.add(text(\"Orders\"))\nend\n",
+      "spec/orders_spec.rb" => "RSpec.describe \"orders\" do\n  let(:form) { nil }\n  it { expect(stepper(steps: [])).to be_truthy }\nend\n",
+      "test/orders_test.rb" => "def sample\n  form(controls: [])\nend\n"
+    }
+    cli "default_app", "build", "apk", "--self", id: "build-apk--self-accessor", files: accessor_app
+    cli "default_app", "run", "main.rb", id: "run-main.rb-accessor", files: accessor_app, before: [%w[build web]]
+    cli "default_app", "doctor", id: "doctor-unparsable-ruflet.yaml", files: { "ruflet.yaml" => "app: [unclosed\n" }
+    # RUFLET_TEMPLATE_ROOT comes before the cached template `ruflet doctor
+    # --fix` refreshes, so the advice names RUFLET_TEMPLATE_ROOT.
+    cli "default_app", "build", "apk", "--self", "--strict", id: "build-apk--self--strict-form-explicit-template",
+                                                             files: form_app, template: "explicit"
+    # run --web opens the client in RUFLET_CLIENT_DIR, so that client's
+    # surface is checked, not the installed template's: one that renders Form
+    # is served with --strict, one that lacks it is named.
+    [["Form", "run-main.rb--web--strict-form-with-RUFLET_CLIENT_DIR"],
+     ["Text", "run-main.rb--web--strict-form-with-RUFLET_CLIENT_DIR-lacking-Form"]].each do |wire, id|
+      cli "default_app", "run", "main.rb", "--web", "--strict", id: id,
+                                                                env: { "RUFLET_CLIENT_DIR" => "<PROJECT>/my_client" },
+                                                                files: form_app.merge(
+                                                                  "my_client/build/web/index.html" => "<!doctype html>\n",
+                                                                  "my_client/build/web/main.dart.js" => "// my client\n",
+                                                                  "my_client/tool/conformance/ruflet_control_surface.json" =>
+                                                                    "{\"contract_version\":1,\"entries\":[{\"wire_type\":\"#{wire}\"}]}\n"
+                                                                )
+    end
+
     INVOCATIONS.freeze
 
     # Initial page patch goldens: what a client receives in reply to

@@ -47,6 +47,10 @@ module Ruflet
           warn "Expected: ./#{script_token}.rb, ./#{script_token}, or explicit file path."
           return 1
         end
+        template_root = TemplateSurfaceCheck.run_root(self)
+        if template_root && !TemplateSurfaceCheck.check(self, template_root, strict: options[:strict], files: [script_path])
+          return 1
+        end
 
         selected_port = resolve_backend_port(options[:target], requested_port: options[:requested_port])
         return 1 unless selected_port
@@ -141,6 +145,14 @@ module Ruflet
 
       def parse_run_options(args)
         options = { target: "mobile", requested_port: 8550, reload: true }
+        # --strict is read only as written, before OptionParser, so that no
+        # abbreviation of it (-s, --st, ...) comes to mean it: those stay
+        # unknown flags, as before it existed. Arguments after `--` are left.
+        terminator = args.index("--") || args.length
+        if args.first(terminator).include?("--strict")
+          options[:strict] = true
+          args.replace(args.first(terminator).reject { |arg| arg == "--strict" } + args.drop(terminator))
+        end
         parser = OptionParser.new do |o|
           o.on("--web") { options[:target] = "web" }
           # -d reached --desktop as its only abbreviation before --device
