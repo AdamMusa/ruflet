@@ -6,6 +6,8 @@ require "fileutils"
 require "rbconfig"
 require "timeout"
 require "socket"
+require "digest"
+require "openssl"
 
 class RufletCliRunCommandTest < Minitest::Test
   class DummyRunner
@@ -1330,6 +1332,256 @@ class RufletCliRunCommandTest < Minitest::Test
       assert_includes err, "Prebuilt client bootstrap failed: RuntimeError: GitHub API failed (503)"
       refute_includes err, "Could not check for a newer client"
       assert_equal checked_at, read_manifest(cache)["checked_at"]
+    end
+  end
+
+  # --- which prebuild-main revision a cache is compared against -------------
+
+  # The API lists release assets by name, so prebuild-main's stale
+  # ruflet_client-manifest.json (left from before the rename) comes before
+  # the ruflet_explorer-manifest.json each build rewrites.
+  def prebuild_release(explorer_manifest_id:, web_url:, web_digest: nil)
+    web = { "name" => "ruflet_explorer-web.tar.gz", "browser_download_url" => web_url }
+    web["digest"] = web_digest if web_digest
+    {
+      "tag_name" => "prebuild-main",
+      "published_at" => "2026-07-29T00:20:00Z",
+      "assets" => [
+        { "name" => "ruflet_client-manifest.json", "id" => 493398481, "updated_at" => "2026-07-29T00:41:47Z", "size" => 187 },
+        { "name" => "ruflet_client-web.tar.gz", "browser_download_url" => "https://example.test/legacy-web.tar.gz" },
+        { "name" => "ruflet_explorer-manifest.json", "id" => explorer_manifest_id, "updated_at" => "2026-11-21T04:39:23Z", "size" => 187 },
+        web
+      ]
+    }
+  end
+
+  def test_the_client_revision_follows_the_current_manifest_when_a_stale_legacy_one_is_listed_first
+    runner = DummyRunner.new
+    release = prebuild_release(explorer_manifest_id: 774435043, web_url: "https://example.test/web.tar.gz")
+
+    assert_equal "ruflet_explorer-manifest.json", runner.send(:channel_manifest_asset, release)["name"]
+    assert_equal "774435043:2026-11-21T04:39:23Z:187", runner.send(:client_release_revision, release)
+    assert runner.send(:rolling_release_complete?, release)
+
+    legacy_only = { "assets" => release["assets"].reject { |asset| asset["name"].start_with?("ruflet_explorer") } }
+    assert_equal "ruflet_client-manifest.json", runner.send(:channel_manifest_asset, legacy_only)["name"]
+    assert_equal "493398481:2026-07-29T00:41:47Z:187", runner.send(:client_release_revision, legacy_only)
+  end
+
+  # --- installing a downloaded client ----------------------------------------
+
+  # A real ruflet_explorer-web.tar.gz shape: index.html plus the compiled
+  # entrypoints, at the archive root. Returns [path, sha256 digest].
+  def web_client_archive(dir, build)
+    source = File.join(dir, "src-#{build}")
+    FileUtils.mkdir_p(File.join(source, "assets"))
+    File.write(File.join(source, "index.html"), "<html>#{build}</html>")
+    File.write(File.join(source, "main.dart.js"), "// #{build}\n" + ("x" * 200_000))
+    File.write(File.join(source, "flutter_bootstrap.js"), "// #{build}")
+    File.write(File.join(source, "assets", "fonts.otf"), Random.new(42).bytes(200_000))
+    archive = File.join(dir, "#{build}.tar.gz")
+    assert system("tar", "-czf", archive, "-C", source, ".", out: File::NULL, err: File::NULL), "tar must build the fixture"
+    [archive, "sha256:#{Digest::SHA256.file(archive).hexdigest}"]
+  end
+
+  # A runner whose cache is <dir>/cache, served `releases` (one per call to
+  # fetch_release_for_version, the last repeating) and whose downloads copy
+  # the fixture `files` map {url => path} (or call it, when it is a proc).
+  def client_runner(dir, releases, files)
+    runner = DummyRunner.new
+    cache = File.join(dir, "cache")
+    queue = releases.dup
+    downloads = []
+    runner.define_singleton_method(:ruflet_version) { "0.0.24" }
+    runner.define_singleton_method(:client_cache_root_for) { |_platform| cache }
+    runner.define_singleton_method(:fetch_release_for_version) { |wanted_assets:| queue.length > 1 ? queue.shift : queue.first }
+    runner.define_singleton_method(:download_file) do |url, destination, limit: 5|
+      downloads << url
+      source = files.fetch(url)
+      source.respond_to?(:call) ? source.call(destination) : FileUtils.cp(source, destination)
+      destination
+    end
+    [runner, cache, downloads]
+  end
+
+  def with_client_env(interval: "0")
+    previous = ENV.to_h.slice("RUFLET_CLIENT_UPDATE_INTERVAL", "RUFLET_CLIENT_AUTO_UPDATE", "RUFLET_CLIENT_CHANNEL")
+    ENV["RUFLET_CLIENT_UPDATE_INTERVAL"] = interval
+    ENV.delete("RUFLET_CLIENT_AUTO_UPDATE")
+    ENV.delete("RUFLET_CLIENT_CHANNEL")
+    yield
+  ensure
+    %w[RUFLET_CLIENT_UPDATE_INTERVAL RUFLET_CLIENT_AUTO_UPDATE RUFLET_CLIENT_CHANNEL].each do |key|
+      previous&.key?(key) ? ENV[key] = previous[key] : ENV.delete(key)
+    end
+  end
+
+  def leftover_staging(cache)
+    Dir.exist?(cache) ? Dir.children(cache).grep(/\.(?:partial|old)-\d+\z/) : []
+  end
+
+  # With the legacy manifest listed first, a rebuild that only rewrites the
+  # ruflet_explorer-* assets left the revision unchanged, so a cached client
+  # was "current" forever and only `ruflet update --force` refreshed it.
+  def test_a_cached_client_picks_up_a_new_build_while_the_stale_legacy_manifest_remains
+    with_client_env do
+      Dir.mktmpdir do |dir|
+        build1, digest1 = web_client_archive(dir, "build1")
+        build2, digest2 = web_client_archive(dir, "build2")
+        releases = [
+          prebuild_release(explorer_manifest_id: 700, web_url: "https://example.test/1.tar.gz", web_digest: digest1),
+          prebuild_release(explorer_manifest_id: 701, web_url: "https://example.test/2.tar.gz", web_digest: digest2)
+        ]
+        runner, cache, downloads = client_runner(dir, releases, "https://example.test/1.tar.gz" => build1, "https://example.test/2.tar.gz" => build2)
+
+        capture_io { assert_equal cache, runner.send(:ensure_prebuilt_client, web: true, platform: "macos", use_cache_if_check_fails: true) }
+        assert_equal "<html>build1</html>", File.read(File.join(cache, "web", "index.html"))
+
+        capture_io { assert_equal cache, runner.send(:ensure_prebuilt_client, web: true, platform: "macos", use_cache_if_check_fails: true) }
+
+        assert_equal ["https://example.test/1.tar.gz", "https://example.test/2.tar.gz"], downloads
+        assert_equal "<html>build2</html>", File.read(File.join(cache, "web", "index.html"))
+        assert_equal "701:2026-11-21T04:39:23Z:187", read_manifest(cache).dig("targets", 0, "release_revision")
+        assert_empty leftover_staging(cache)
+      end
+    end
+  end
+
+  # Installed in place, an archive cut short (or an extraction interrupted)
+  # left index.html and main.dart.js without the rest, and that passed as an
+  # installed client. GitHub lists a SHA-256 for every release asset.
+  def test_a_truncated_client_download_is_refused_and_the_cached_client_kept
+    with_client_env do
+      Dir.mktmpdir do |dir|
+        build1, digest1 = web_client_archive(dir, "build1")
+        build2, digest2 = web_client_archive(dir, "build2")
+        truncated = ->(destination) { File.binwrite(destination, File.binread(build2)[0, File.size(build2) * 9 / 10]) }
+        releases = [
+          prebuild_release(explorer_manifest_id: 700, web_url: "https://example.test/1.tar.gz", web_digest: digest1),
+          prebuild_release(explorer_manifest_id: 701, web_url: "https://example.test/2.tar.gz", web_digest: digest2)
+        ]
+        runner, cache, = client_runner(dir, releases, "https://example.test/1.tar.gz" => build1, "https://example.test/2.tar.gz" => truncated)
+        capture_io { runner.send(:ensure_prebuilt_client, web: true, platform: "macos") }
+        checked_at = read_manifest(cache)["checked_at"]
+
+        # `ruflet run --web`: the newer build is refused, the cached one used.
+        root = :unset
+        _out, err = capture_io { root = runner.send(:ensure_prebuilt_client, web: true, platform: "macos", use_cache_if_check_fails: true) }
+        assert_equal cache, root
+        assert_includes err, "ruflet_explorer-web.tar.gz does not match its published SHA-256 (expected #{digest2.delete_prefix('sha256:')}"
+        assert_includes err, "Could not install the newer client; using the cached one"
+        assert_equal checked_at, read_manifest(cache)["checked_at"], "a refresh that failed is retried on the next run"
+
+        # `ruflet update --force`: the update fails, the cache is not deleted.
+        _out, err = capture_io { root = runner.send(:ensure_prebuilt_client, web: true, platform: "macos", force: true) }
+        assert_nil root
+        assert_includes err, "does not match its published SHA-256"
+
+        web = File.join(cache, "web")
+        assert_equal "<html>build1</html>", File.read(File.join(web, "index.html"))
+        assert File.file?(File.join(web, "flutter_bootstrap.js"))
+        assert_equal File.size(File.join(dir, "src-build1", "main.dart.js")), File.size(File.join(web, "main.dart.js"))
+        assert_empty leftover_staging(cache)
+      end
+    end
+  end
+
+  def test_a_client_archive_that_fails_to_extract_never_replaces_the_cache
+    with_client_env do
+      Dir.mktmpdir do |dir|
+        build1, = web_client_archive(dir, "build1")
+        build2, = web_client_archive(dir, "build2")
+        # No digest published, so only the extraction can catch the damage.
+        truncated = ->(destination) { File.binwrite(destination, File.binread(build2)[0, File.size(build2) * 9 / 10]) }
+        releases = [
+          prebuild_release(explorer_manifest_id: 700, web_url: "https://example.test/1.tar.gz"),
+          prebuild_release(explorer_manifest_id: 701, web_url: "https://example.test/2.tar.gz")
+        ]
+        runner, cache, = client_runner(dir, releases, "https://example.test/1.tar.gz" => build1, "https://example.test/2.tar.gz" => truncated)
+        _out, err = capture_io { runner.send(:ensure_prebuilt_client, web: true, platform: "macos") }
+        assert_includes err, "No SHA-256 is published for ruflet_explorer-web.tar.gz; installing it unverified"
+
+        root = :unset
+        extracted_into = []
+        real_extract = runner.method(:extract_archive)
+        runner.define_singleton_method(:extract_archive) do |archive, destination|
+          extracted_into << destination
+          real_extract.call(archive, destination)
+        end
+        _out, err = capture_io { root = runner.send(:ensure_prebuilt_client, web: true, platform: "macos", force: true) }
+
+        assert_nil root
+        assert_includes err, "Failed to extract asset: ruflet_explorer-web.tar.gz"
+        refute_includes extracted_into, File.join(cache, "web"), "extraction must never write into the live cache"
+        web = File.join(cache, "web")
+        assert_equal "<html>build1</html>", File.read(File.join(web, "index.html"))
+        assert File.file?(File.join(web, "flutter_bootstrap.js"))
+        assert_empty leftover_staging(cache)
+      end
+    end
+  end
+
+  def test_a_client_archive_without_a_built_client_is_refused
+    with_client_env do
+      Dir.mktmpdir do |dir|
+        source = File.join(dir, "unbuilt")
+        FileUtils.mkdir_p(source)
+        File.write(File.join(source, "index.html"), "<html>source</html>")
+        archive = File.join(dir, "unbuilt.tar.gz")
+        assert system("tar", "-czf", archive, "-C", source, ".", out: File::NULL, err: File::NULL)
+        release = prebuild_release(
+          explorer_manifest_id: 700, web_url: "https://example.test/u.tar.gz",
+          web_digest: "sha256:#{Digest::SHA256.file(archive).hexdigest}"
+        )
+        runner, cache, = client_runner(dir, [release], "https://example.test/u.tar.gz" => archive)
+
+        root = :unset
+        _out, err = capture_io { root = runner.send(:ensure_prebuilt_client, web: true, platform: "macos") }
+
+        assert_nil root
+        assert_includes err, "ruflet_explorer-web.tar.gz does not contain a complete web client; not installing it"
+        refute File.exist?(File.join(cache, "web"))
+        assert_empty leftover_staging(cache)
+      end
+    end
+  end
+
+  # The run path already kept a complete cache when the update check failed;
+  # a refresh download that fails mid-body has to keep it too, instead of
+  # failing `ruflet run` with no client at all.
+  def test_a_failed_refresh_download_keeps_the_cached_client_on_the_run_path
+    with_due_client_cache do |runner, cache, checked_at|
+      release = prebuild_release(explorer_manifest_id: 701, web_url: "https://example.test/2.tar.gz")
+      runner.define_singleton_method(:fetch_release_for_version) { |wanted_assets:| release }
+      runner.define_singleton_method(:download_file) do |_url, _destination, limit: 5|
+        raise OpenSSL::SSL::SSLError, "SSL_read: unexpected eof while reading"
+      end
+
+      found = nil
+      _out, err = capture_io do
+        found = Dir.mktmpdir { |cwd| Dir.chdir(cwd) { with_client_dir(nil) { runner.send(:detect_web_client_dir) } } }
+      end
+
+      assert_equal File.join(cache, "web"), found
+      assert_includes err, "Could not install the newer client (SSL_read: unexpected eof while reading); using the cached one"
+      refute_includes err, "Prebuilt client bootstrap failed"
+      assert_equal checked_at, read_manifest(cache)["checked_at"]
+      assert File.file?(File.join(cache, "web", "flutter_bootstrap.js"))
+    end
+  end
+
+  def test_a_failed_refresh_download_still_fails_ruflet_update
+    with_due_client_cache do |runner, cache, _checked_at|
+      release = prebuild_release(explorer_manifest_id: 701, web_url: "https://example.test/2.tar.gz")
+      runner.define_singleton_method(:fetch_release_for_version) { |wanted_assets:| release }
+      runner.define_singleton_method(:download_file) { |_url, _destination, limit: 5| raise Errno::ECONNRESET }
+
+      root = :unset
+      _out, err = capture_io { root = runner.send(:ensure_prebuilt_client, web: true, platform: "macos", force: true) }
+
+      assert_nil root
+      assert_includes err, "Prebuilt client bootstrap failed: Errno::ECONNRESET"
+      assert File.file?(File.join(cache, "web", "flutter_bootstrap.js")), "a failed update must not delete the cache"
     end
   end
 

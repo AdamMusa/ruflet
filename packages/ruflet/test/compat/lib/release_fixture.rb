@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "json"
 require "stringio"
 require_relative "tar"
@@ -92,6 +93,8 @@ module RufletCompat
             "id" => (id * 100) + index + 1,
             "name" => name,
             "size" => assets[name].bytesize,
+            # GitHub lists every asset's SHA-256; the CLI checks downloads against it.
+            "digest" => "sha256:#{Digest::SHA256.hexdigest(assets[name])}",
             "updated_at" => PUBLISHED_AT,
             "browser_download_url" => "#{DOWNLOAD}/#{tag}/#{name}"
           }

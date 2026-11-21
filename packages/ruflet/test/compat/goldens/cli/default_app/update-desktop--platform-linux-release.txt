@@ -21,7 +21,7 @@ exit: 0
 4. capture3 exit=0
    git -C <TMP>/ruflet-assetsXXXXXXXX/Ruflet rev-parse HEAD
 5. system exit=0
-   tar -xf <TMP>/ruflet-prebuilt-XXXXXXXX/ruflet_explorer-linux-x64.tar.gz -C <HOME>/.ruflet/client/<RUFLET_VERSION>/linux/desktop
+   tar -xf <TMP>/ruflet-prebuilt-XXXXXXXX/ruflet_explorer-linux-x64.tar.gz -C <HOME>/.ruflet/client/<RUFLET_VERSION>/linux/desktop.partial-<PID>
 
 ## network (6)
 GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/prebuild-main -> 200
