@@ -69,6 +69,7 @@ class RufletRailsSessionRegistryTest < Minitest::Test
 
     refute_nil session
     assert_equal env, session.env
+    assert_same ws, session.connection, "the registry keeps the owning socket so a resume can ping it"
     assert_equal "/orders", session.page.route
     assert_equal 2, ws.sent.length
   end

@@ -3,12 +3,15 @@
 module Ruflet
   class WebSocketConnection
     TASK_IO_POLL_INTERVAL = 0.01
+    PING_POLL_INTERVAL = 0.01
     # Ruflet control messages are small; anything much larger is invalid or hostile.
     MAX_FRAME_PAYLOAD_BYTES = 16 * 1024 * 1024
 
     def initialize(socket)
       @socket = socket
       @write_mutex = Mutex.new
+      @pong_mutex = Mutex.new
+      @awaited_pongs = {}
     end
 
     def session_key
@@ -31,6 +34,31 @@ module Ruflet
       send_frame(0x1, payload.to_s.b)
     end
 
+    # Sends a ping and waits up to +timeout+ seconds for its pong. The pong
+    # is read by whichever thread is in read_message on this connection (the
+    # connection's own loop), so call this from another thread. Browsers and
+    # dart:io answer pings themselves, so a live client answers even while
+    # its app is idle. False on timeout, on a closed socket, or when the
+    # ping cannot be written.
+    def ping(timeout: 1.0)
+      return false if closed?
+
+      token = Array.new(8) { rand(256) }.pack("C*")
+      @pong_mutex.synchronize { @awaited_pongs[token] = false }
+      send_frame(0x9, token)
+      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout.to_f
+      loop do
+        return true if @pong_mutex.synchronize { @awaited_pongs[token] }
+        return false if closed? || Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+
+        sleep PING_POLL_INTERVAL
+      end
+    rescue StandardError
+      false
+    ensure
+      @pong_mutex.synchronize { @awaited_pongs.delete(token) } if token
+    end
+
     def read_message
       frame = read_frame
       return nil if frame.nil?
@@ -46,6 +74,7 @@ module Ruflet
         send_frame(0xA, payload)
         read_message
       when 0xA
+        pong_received(payload)
         read_message
       when 0x1, 0x2
         return traced_incoming(payload) if frame[:fin]
@@ -60,6 +89,7 @@ module Ruflet
             send_frame(0xA, continuation[:payload])
             next
           when 0xA
+            pong_received(continuation[:payload])
             next
           when 0x0
             message << continuation[:payload]
@@ -85,6 +115,12 @@ module Ruflet
     end
 
     private
+
+    def pong_received(payload)
+      @pong_mutex.synchronize do
+        @awaited_pongs[payload] = true if @awaited_pongs.key?(payload)
+      end
+    end
 
     def traced_incoming(payload)
       Ruflet::WireCodec.trace("client->ruby conn=#{session_key}", payload)

@@ -5,14 +5,18 @@ require "thread"
 module Ruflet
   module Rails
     class Session
-      attr_reader :key, :page, :env, :connected_at, :connection_key
+      attr_reader :key, :page, :env, :connected_at, :connection_key, :connection
 
-      def initialize(key:, page:, env: nil, connected_at: Time.now, connection_key: nil)
+      # +connection+ is the socket that owns the session (connection_key is
+      # its session_key). LocalServer pings it before letting another socket
+      # resume the session.
+      def initialize(key:, page:, env: nil, connected_at: Time.now, connection_key: nil, connection: nil)
         @key = key
         @page = page
         @env = env
         @connected_at = connected_at
         @connection_key = connection_key
+        @connection = connection
       end
 
       def session_id
@@ -32,8 +36,8 @@ module Ruflet
         @mutex = Mutex.new
       end
 
-      def add(key:, page:, env: nil, connection_key: nil)
-        session = Session.new(key: key, page: page, env: env, connection_key: connection_key)
+      def add(key:, page:, env: nil, connection_key: nil, connection: nil)
+        session = Session.new(key: key, page: page, env: env, connection_key: connection_key, connection: connection)
         @mutex.synchronize { @sessions[key] = session }
         session
       end

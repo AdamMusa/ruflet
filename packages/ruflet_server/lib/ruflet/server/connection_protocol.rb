@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "session_id"
+
 module Ruflet
   # Transport-agnostic implementation of the Ruflet wire protocol: one
   # connection loop shared by every server that speaks to Flutter clients.
@@ -28,6 +30,15 @@ module Ruflet
     # create a fresh one (hosts with a session registry override this).
     def resume_session(_session_id)
       nil
+    end
+
+    # Return false to refuse a client's request to resume the session it
+    # names: the connection then gets a fresh Page under a new session id,
+    # as if it had sent no id. ruflet_rails refuses while the socket that
+    # owns the session still answers, so a second live client (a duplicated
+    # browser tab copies the id) neither shares nor takes over that Page.
+    def allow_resume?(_session_id, _ws)
+      true
     end
 
     # Called after a Page is stored for a connection.
@@ -156,7 +167,13 @@ module Ruflet
 
     def on_register_client(ws, payload)
       normalized = Protocol.normalize_register_payload(payload)
-      session_id = normalized["session_id"].to_s.empty? ? pseudo_uuid : normalized["session_id"]
+      session_id = normalized["session_id"]
+      if session_id.to_s.empty?
+        session_id = pseudo_uuid
+      elsif !allow_resume?(session_id, ws)
+        normalized = normalized.merge("session_id" => nil)
+        session_id = pseudo_uuid
+      end
 
       page = resume_session(session_id)
       first_registration = page.nil?
@@ -284,15 +301,7 @@ module Ruflet
     end
 
     def pseudo_uuid
-      now = Process.clock_gettime(Process::CLOCK_REALTIME, :nanosecond)
-      rnd = rand(0..0xffff_ffff)
-      "%08x-%04x-%04x-%04x-%012x" % [
-        rnd,
-        now & 0xffff,
-        (now >> 16) & 0xffff,
-        (now >> 32) & 0xffff,
-        (now >> 48) & 0xffff_ffff_ffff
-      ]
+      Ruflet::SessionId.generate
     end
   end
 end
