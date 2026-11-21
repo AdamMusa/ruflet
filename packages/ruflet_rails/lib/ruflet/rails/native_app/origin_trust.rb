@@ -153,8 +153,10 @@ module Ruflet
 
       # --- Bridge frames -----------------------------------------------------
 
+      # A sheet URL that stays relative (URI could not resolve it) is on the
+      # origin of the page or code that opened the sheet.
       def new_bridge_frame(url)
-        BridgeFrame.new(trusted: trusted_origin?(url), nonces: [], url: url.to_s)
+        BridgeFrame.new(trusted: trusted_origin?(url) || same_origin_reference?(url), nonces: [], url: url.to_s)
       end
 
       # A URL the frame's WebView reported (page_started, url_change,
@@ -291,12 +293,20 @@ module Ruflet
       # stays on that page's origin, which the request needs verified anyway;
       # //host or /\host names another host, read with the page's scheme.
       def request_target_trusted?(target)
+        return true if same_origin_reference?(target)
+
         text = url_text(target)
         return trusted_origin?(text) if text.match?(URL_SCHEME)
-        return true unless text.match?(URL_OTHER_HOST)
 
         page = origin_of(@main_frame.url) || origin_of(current_url)
         !page.nil? && trusted_origin?("#{page.first}://#{text.sub(%r{\A[/\\]+}, "")}")
+      end
+
+      # A relative URL that stays on the origin of the page it came from: no
+      # scheme, and no //host.
+      def same_origin_reference?(url)
+        text = url_text(url)
+        !text.match?(URL_SCHEME) && !text.match?(URL_OTHER_HOST)
       end
 
       def report_untrusted_message(frame, message)

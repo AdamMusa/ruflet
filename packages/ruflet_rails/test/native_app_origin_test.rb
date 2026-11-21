@@ -463,6 +463,16 @@ class RufletNativeAppOriginTest < Minitest::Test
     end
   end
 
+  def test_own_sheet_whose_url_uri_rejects_gets_the_adapter
+    start
+    action({ "action" => "sheet", "url" => "/items/[3]/edit" })
+    @sent.clear
+    event(sheet_webview, "page_started", "#{APP}/items/[3]/edit")
+    event(sheet_webview, "url_change", "#{APP}/items/[3]/edit")
+    event(sheet_webview, "page_ended", "#{APP}/items/[3]/edit")
+    assert_equal [Ruflet::Rails::NativeApp.html_adapter_js(sheet: true)], scripts
+  end
+
   def test_userinfo_and_backslashes_do_not_hide_another_origin
     ["https://myapp.com@other.example/", "https://other.example\\@myapp.com/", "https://other.example#@myapp.com",
      "https://myapp.com:443@other.example/", "#{OTHER}/docs#a#b"].each_with_index do |url, index|
