@@ -626,7 +626,9 @@ class RufletTemplateSurfaceTest < Minitest::Test
   # A client copied from a template records the revision it came from;
   # that comes before the revision of the template installed now.
   def test_the_revision_a_client_records_comes_first
-    Dir.mktmpdir do |dir|
+    Dir.mktmpdir do |tmp|
+      dir = File.join(tmp, "ruflet-template", "templates", "ruflet_flutter_template")
+      FileUtils.mkdir_p(dir)
       host = Object.new
       host.define_singleton_method(:installed_template_revision) { |_root| "installed0000" }
       assert_equal "installed0000", Check.revision(host, dir)
@@ -634,6 +636,19 @@ class RufletTemplateSurfaceTest < Minitest::Test
       File.write(File.join(dir, ".ruflet-template-revision"), "recorded0000\n")
       assert_equal "recorded0000", Check.revision(host, dir)
       assert_equal "recorded0000", Check.revision(Object.new, dir)
+    end
+  end
+
+  # Only a template has an installed revision. For a client in
+  # RUFLET_CLIENT_DIR (here <app>/my_client), the git HEAD above it is the
+  # app's, so none is named.
+  def test_a_client_that_records_no_revision_has_none
+    Dir.mktmpdir do |tmp|
+      client = File.join(tmp, "app", "my_client")
+      FileUtils.mkdir_p(client)
+      host = Object.new
+      host.define_singleton_method(:installed_template_revision) { |_root| flunk("the app's git HEAD is no template revision") }
+      assert_nil Check.revision(host, client)
     end
   end
 
@@ -749,6 +764,33 @@ class RufletTemplateSurfaceTest < Minitest::Test
         assert_equal 1, code
         assert_includes err, "error: the Flutter template lacks 1 extension this app uses:\n" \
                              "  extension local_auth (ruflet_local_auth): needs ruflet-template cdbc2aaf6036 or newer"
+      end
+    end
+  end
+
+  # doctor finishes its report, flutter doctor included, then --strict makes
+  # a lacking template exit 1. A failing flutter doctor keeps its own code.
+  def test_doctor_exits_1_with_strict_after_flutter_doctor
+    project("main.rb" => FORM_APP) do |dir|
+      template = old_template(File.join(dir, "template"))
+      host = cli_host
+      host.define_singleton_method(:resolve_ruflet_client_template_root) { template }
+      host.define_singleton_method(:cached_template_revision) { nil }
+      host.define_singleton_method(:flutter_tools) { |**| { flutter: "flutter", env: {} } }
+      host.define_singleton_method(:flutter_version_summary) { |_tools| "3.41.2 stable" }
+      flutter = true
+      runs = 0
+      host.define_singleton_method(:system) do |_env, *_args, **_opts|
+        runs += 1
+        flutter == :exit_3 ? Kernel.system(RbConfig.ruby, "-e", "exit 3") : flutter
+      end
+      Dir.chdir(dir) do
+        capture_io { assert_equal 0, host.command_doctor([]) }
+        _out, err = capture_io { assert_equal 1, host.command_doctor(%w[--strict]) }
+        assert_includes err, "error: the Flutter template lacks 1 control this app uses:"
+        assert_equal 2, runs, "flutter doctor runs before --strict fails"
+        flutter = :exit_3
+        capture_io { assert_equal 3, host.command_doctor(%w[--strict]) }
       end
     end
   end

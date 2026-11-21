@@ -423,9 +423,15 @@ module Ruflet
         TemplateSurface::FETCH_ADVICE
       end
 
+      # The revision a client recorded when it was copied, otherwise that of
+      # the installed template: the cached one's, or the git HEAD of a
+      # ruflet-template checkout (<checkout>/templates/ruflet_flutter_template).
+      # Any other directory, such as a client in RUFLET_CLIENT_DIR, has none:
+      # the git HEAD above it would be the app's, not the template's.
       def revision(cli, template_root)
         recorded = File.join(template_root, ".ruflet-template-revision")
         return File.read(recorded).strip if File.file?(recorded)
+        return nil unless File.expand_path(template_root).end_with?("/templates/ruflet_flutter_template")
         return nil unless cli.respond_to?(:installed_template_revision, true)
 
         cli.send(:installed_template_revision, template_root)

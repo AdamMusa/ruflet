@@ -537,6 +537,20 @@ module RufletCompat
     # --fix` refreshes, so the advice names RUFLET_TEMPLATE_ROOT.
     cli "default_app", "build", "apk", "--self", "--strict", id: "build-apk--self--strict-form-explicit-template",
                                                              files: form_app, template: "explicit"
+    # run --web opens the client in RUFLET_CLIENT_DIR, so that client's
+    # surface is checked, not the installed template's: one that renders Form
+    # is served with --strict, one that lacks it is named.
+    [["Form", "run-main.rb--web--strict-form-with-RUFLET_CLIENT_DIR"],
+     ["Text", "run-main.rb--web--strict-form-with-RUFLET_CLIENT_DIR-lacking-Form"]].each do |wire, id|
+      cli "default_app", "run", "main.rb", "--web", "--strict", id: id,
+                                                                env: { "RUFLET_CLIENT_DIR" => "<PROJECT>/my_client" },
+                                                                files: form_app.merge(
+                                                                  "my_client/build/web/index.html" => "<!doctype html>\n",
+                                                                  "my_client/build/web/main.dart.js" => "// my client\n",
+                                                                  "my_client/tool/conformance/ruflet_control_surface.json" =>
+                                                                    "{\"contract_version\":1,\"entries\":[{\"wire_type\":\"#{wire}\"}]}\n"
+                                                                )
+    end
 
     INVOCATIONS.freeze
 
