@@ -67,18 +67,9 @@ class RufletRailsSessionResumeTest < Minitest::Test
       end
     end
 
-    # Everything that arrives until the server has been quiet for +quiet+ s.
-    def drain(quiet = 0.3)
-      out = []
-      while (message = next_message(quiet))
-        out << message
-      end
-      out
-    end
-
-    # Waits for the patch whose text includes +text+ and returns all
-    # messages read on the way.
-    def read_until(text, timeout = 3)
+    # Reads until a message whose text includes +text+ (the page patch
+    # carrying a known control) and returns every message read on the way.
+    def read_until(text, timeout = 5)
       out = []
       while (message = next_message(timeout))
         out << message
@@ -201,12 +192,12 @@ class RufletRailsSessionResumeTest < Minitest::Test
     endpoint = bank_endpoint
     victim = client(endpoint, cookie: "user=alice")
     victim_id = victim.register("")
-    victim_page = victim.drain
+    victim_page = victim.read_until("Transfer")
     assert_includes victim_page.inspect, 'Balance of \"alice\"'
 
     attacker = client(endpoint)
     attacker_id = attacker.register(victim_id)
-    attacker_page = attacker.drain
+    attacker_page = attacker.read_until("Transfer")
 
     refute_equal victim_id, attacker_id, "the second socket must get a new session id"
     assert_match(/\A\h{8}-\h{4}-4\h{3}-[89ab]\h{3}-\h{12}\z/, attacker_id)
@@ -241,10 +232,10 @@ class RufletRailsSessionResumeTest < Minitest::Test
     end.build_endpoint(path: "/ws")
     tab1 = client(endpoint)
     tab1_id = tab1.register(nil)
-    tab1_button = wire_id(tab1.drain, "+1")
+    tab1_button = wire_id(tab1.read_until("+1"), "+1")
     tab2 = client(endpoint)
     tab2_id = tab2.register(tab1_id)
-    tab2_button = wire_id(tab2.drain, "+1")
+    tab2_button = wire_id(tab2.read_until("+1"), "+1")
 
     refute_equal tab1_id, tab2_id
     assert_equal 2, Ruflet::Rails.sessions.size
@@ -271,13 +262,13 @@ class RufletRailsSessionResumeTest < Minitest::Test
     endpoint = bank_endpoint
     dropped = client(endpoint, cookie: "user=alice", answers_pings: false)
     session_id = dropped.register("")
-    dropped.drain
+    dropped.read_until("Transfer")
 
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     reconnect = client(endpoint, cookie: "user=alice")
     resumed_id = reconnect.register(session_id)
     elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
-    page = reconnect.drain
+    page = reconnect.read_until("Transfer")
 
     assert_equal session_id, resumed_id, "the reconnecting client resumes its session"
     assert_operator elapsed, :>=, 0.2, "the server waited for the old socket's pong"
@@ -292,7 +283,7 @@ class RufletRailsSessionResumeTest < Minitest::Test
     endpoint = bank_endpoint
     first = client(endpoint, cookie: "user=alice")
     session_id = first.register("")
-    first.drain
+    first.read_until("Transfer")
     first.close
     deadline = Time.now + 3
     sleep 0.02 until Ruflet::Rails.sessions[session_id].nil? || Time.now > deadline
@@ -313,11 +304,11 @@ class RufletRailsSessionResumeTest < Minitest::Test
     endpoint = bank_endpoint
     dropped = client(endpoint, cookie: "user=alice", answers_pings: false)
     session_id = dropped.register("")
-    dropped.drain
+    dropped.read_until("Transfer")
 
     stranger = client(endpoint, cookie: "user=mallory")
     stranger_id = stranger.register(session_id)
-    stranger_page = stranger.drain
+    stranger_page = stranger.read_until("Transfer")
     pings_after_refusal = dropped.pings
     owner = client(endpoint, cookie: "user=alice")
     owner_id = owner.register(session_id)
@@ -335,7 +326,7 @@ class RufletRailsSessionResumeTest < Minitest::Test
     endpoint = bank_endpoint
     dropped = client(endpoint, cookie: "user=alice", answers_pings: false)
     session_id = dropped.register("")
-    dropped.drain
+    dropped.read_until("Transfer")
 
     original_stderr = $stderr
     $stderr = StringIO.new
@@ -356,12 +347,12 @@ class RufletRailsSessionResumeTest < Minitest::Test
     endpoint = bank_endpoint
     first = client(endpoint, cookie: "user=alice")
     session_id = first.register("")
-    first.drain
+    first.read_until("Transfer")
 
     second = client(endpoint)
 
     assert_equal session_id, second.register(session_id)
-    assert_includes second.drain.inspect, 'Balance of \"alice\"'
+    assert_includes second.read_until("Transfer").inspect, 'Balance of \"alice\"'
     assert_equal 0, first.pings
   end
 end
