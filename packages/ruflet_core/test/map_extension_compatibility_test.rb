@@ -46,6 +46,158 @@ class MapExtensionCompatibilityTest < Minitest::Test
     assert_equal "zoom_in", @sent.last[1]["name"]
   end
 
+  # move_to's destination is optional, but nil used to recurse in
+  # normalize_coordinates until the stack ran out, since nil.to_h and
+  # Hash#to_h both return a Hash.
+  def test_move_to_without_a_destination_sends_only_what_was_given
+    map = Ruflet.map([], initial_center: [0, 0])
+    @page.add(map)
+
+    map.move_to(zoom: 9, rotation: 45)
+    assert_equal "move_to", @sent.last[1]["name"]
+    assert_equal({ "zoom" => 9, "rotation" => 45 }, @sent.last[1]["args"])
+
+    map.move_to(destination: { latitude: 1.5, longitude: 2.5 })
+    assert_equal({ "destination" => { "latitude" => 1.5, "longitude" => 2.5 } }, @sent.last[1]["args"])
+
+    # The client's center_on does nothing without a point.
+    map.center_on(nil)
+    assert_equal({}, @sent.last[1]["args"])
+  end
+
+  # Coordinates that cannot be read used to overflow the stack (a Hash
+  # without both coordinates, []), or raise TypeError ([1]). They now raise
+  # ArgumentError, and nothing reaches the client.
+  def test_unreadable_coordinates_raise_argument_error
+    map = Ruflet.map([], initial_center: [0, 0])
+    @page.add(map)
+    @sent.clear
+
+    [{ "x" => 1 }, { latitude: 1 }, [], [1], Struct.new(:x).new(1)].each do |value|
+      error = assert_raises(ArgumentError, value.inspect) { map.center_on(value) }
+      assert_match(/map coordinates must be \[latitude, longitude\]/, error.message)
+      assert_raises(ArgumentError, value.inspect) { map.move_to(destination: value) }
+    end
+    assert_empty @sent
+
+    # An object whose to_h gives coordinates still works.
+    map.center_on(Struct.new(:lat, :lng).new(1.5, 2.5))
+    assert_equal({ "point" => { "latitude" => 1.5, "longitude" => 2.5 } }, @sent.last[1]["args"])
+  end
+
+  # The DSL helpers convert coordinates the same way, and overflowed the same.
+  def test_helpers_take_unset_coordinates_and_reject_unreadable_ones
+    # nil is not given: the prop is left out, as if the keyword were.
+    refute_includes Ruflet.map([], initial_center: nil).to_patch, "initial_center"
+    refute_includes Ruflet::UI::ControlFactory.build("map", initial_center: nil).to_patch, "initial_center"
+    refute_includes Ruflet.marker(coordinates: nil, content: Ruflet.text("Pin")).to_patch, "coordinates"
+    @page.add(Ruflet.map([], initial_center: nil))
+    sent_map = find_wire_control(@sent.map(&:last), "Map")
+    assert_equal({ "_c" => "Map", "_i" => sent_map["_i"], "layers" => [] }, sent_map)
+
+    assert_raises(ArgumentError) { Ruflet.map([], initial_center: [1]) }
+    assert_raises(ArgumentError) { Ruflet.marker(coordinates: { "x" => 1 }, content: Ruflet.text("Pin")) }
+    assert_raises(ArgumentError) { Ruflet.circle_marker(coordinates: [], radius: 4) }
+    # A Hash with only one of the two coordinates cannot be read either.
+    [{ lat: 1 }, { "latitude" => 1 }, { lng: 2 }, { "longitude" => 2 }].each do |value|
+      assert_raises(ArgumentError, value.inspect) { Ruflet.marker(coordinates: value, content: Ruflet.text("Pin")) }
+      assert_raises(ArgumentError, value.inspect) { Ruflet.map([], initial_center: value) }
+      assert_raises(ArgumentError, value.inspect) { Ruflet::UI::ControlFactory.build("map", initial_center: value) }
+    end
+    # A nil point inside a polyline or polygon is a mistake too.
+    assert_raises(ArgumentError) { Ruflet.polyline_marker(coordinates: [[1, 2], nil]) }
+    assert_raises(ArgumentError) { Ruflet.polygon_marker(coordinates: [[1, 2], { "x" => 1 }]) }
+
+    line = Ruflet.polyline_marker(coordinates: [[1, 2], { lat: 3, lon: 4 }])
+    assert_equal [{ "latitude" => 1, "longitude" => 2 }, { "latitude" => 3, "longitude" => 4 }], line.to_patch["coordinates"]
+    # A nil list is no points, as on main.
+    assert_equal [], Ruflet.polyline_marker(coordinates: nil).to_patch["coordinates"]
+    assert_equal [], Ruflet.polygon_marker(coordinates: nil).to_patch["coordinates"]
+  end
+
+  # Every latitude and longitude key the two conversions read, as a String
+  # and as a Symbol, in the map methods, the DSL helpers and a map built by
+  # ControlFactory (which ruflet_rails' HTML <map> uses and which does not
+  # go through the DSL).
+  def test_every_coordinate_key_alias_converts
+    expected = { "latitude" => 1.5, "longitude" => 2.5 }
+    map = Ruflet.map([], initial_center: [0, 0])
+    @page.add(map)
+
+    %w[latitude lat].product(%w[longitude lon lng]).each do |lat_key, lon_key|
+      [[lat_key, lon_key], [lat_key.to_sym, lon_key.to_sym]].each do |lat, lon|
+        value = { lat => 1.5, lon => 2.5 }
+
+        map.center_on(value)
+        assert_equal({ "point" => expected }, @sent.last[1]["args"], "center_on #{value.inspect}")
+        assert_equal expected, Ruflet::UI::ControlFactory.build("map", initial_center: value).to_patch["initial_center"], "factory #{value.inspect}"
+        assert_equal expected, Ruflet.marker(coordinates: value, content: Ruflet.text("Pin")).to_patch["coordinates"], "marker #{value.inspect}"
+        assert_equal [expected], Ruflet.polyline_marker(coordinates: [value]).to_patch["coordinates"], "polyline #{value.inspect}"
+      end
+    end
+
+    factory_map = Ruflet::UI::ControlFactory.build("map", initial_center: [1.5, 2.5])
+    assert_equal expected, factory_map.to_patch["initial_center"]
+  end
+
+  # What main accepted still converts the same way: a value without to_h
+  # (a String) is passed on as it is, and an object whose to_h gives
+  # coordinates is converted, in the map methods and in the DSL helpers.
+  def test_strings_pass_through_and_to_h_objects_convert
+    point = Struct.new(:lat, :lng).new(1.5, 2.5)
+    map = Ruflet.map([], initial_center: "51.5,-0.09")
+    assert_equal "51.5,-0.09", map.to_patch["initial_center"]
+    @page.add(map)
+
+    map.center_on("40.7,-74.0")
+    assert_equal({ "point" => "40.7,-74.0" }, @sent.last[1]["args"])
+    map.move_to(destination: point)
+    assert_equal({ "destination" => { "latitude" => 1.5, "longitude" => 2.5 } }, @sent.last[1]["args"])
+
+    assert_equal "51.5,-0.09", Ruflet.marker(coordinates: "51.5,-0.09", content: Ruflet.text("Pin")).to_patch["coordinates"]
+    assert_equal({ "latitude" => 1.5, "longitude" => 2.5 },
+                 Ruflet.marker(coordinates: point, content: Ruflet.text("Pin")).to_patch["coordinates"])
+    assert_equal({ "latitude" => 1.5, "longitude" => 2.5 }, Ruflet.circle_marker(coordinates: point, radius: 4).to_patch["coordinates"])
+    assert_equal ["1,2", { "latitude" => 1.5, "longitude" => 2.5 }],
+                 Ruflet.polygon_marker(coordinates: ["1,2", point]).to_patch["coordinates"]
+  end
+
+  # The edges of both conversions (MapControl#normalize_coordinates for the
+  # map methods and map props, MaterialControlMethods#map_coordinates for
+  # the marker helpers): an Array longer than two still converts from its
+  # first two items, as on main; a one-item Array and an object whose to_h
+  # gives nil cannot be read, so they raise instead of sending no point or a
+  # point with a nil longitude.
+  def test_coordinate_edges_in_both_conversions
+    expected = { "latitude" => 1.5, "longitude" => 2.5 }
+    no_coordinates = Object.new
+    def no_coordinates.to_h
+      nil
+    end
+    map = Ruflet.map([], initial_center: [0, 0])
+    @page.add(map)
+
+    map.center_on([1.5, 2.5, 30])
+    assert_equal({ "point" => expected }, @sent.last[1]["args"])
+    map.move_to(destination: [1.5, 2.5, 30])
+    assert_equal({ "destination" => expected }, @sent.last[1]["args"])
+    assert_equal expected, Ruflet::UI::ControlFactory.build("map", initial_center: [1.5, 2.5, 30]).to_patch["initial_center"]
+    assert_equal expected, Ruflet.marker(coordinates: [1.5, 2.5, 30], content: Ruflet.text("Pin")).to_patch["coordinates"]
+    assert_equal expected, Ruflet.circle_marker(coordinates: [1.5, 2.5, 30], radius: 4).to_patch["coordinates"]
+    assert_equal [expected], Ruflet.polyline_marker(coordinates: [[1.5, 2.5, 30]]).to_patch["coordinates"]
+
+    @sent.clear
+    [[1], no_coordinates].each do |value|
+      assert_raises(ArgumentError, value.inspect) { map.center_on(value) }
+      assert_raises(ArgumentError, value.inspect) { map.move_to(destination: value) }
+      assert_raises(ArgumentError, value.inspect) { Ruflet::UI::ControlFactory.build("map", initial_center: value) }
+      assert_raises(ArgumentError, value.inspect) { Ruflet.marker(coordinates: value, content: Ruflet.text("Pin")) }
+      assert_raises(ArgumentError, value.inspect) { Ruflet.circle_marker(coordinates: value, radius: 4) }
+      assert_raises(ArgumentError, value.inspect) { Ruflet.polygon_marker(coordinates: [value]) }
+    end
+    assert_empty @sent
+  end
+
   def test_rich_attribution_family_uses_current_flet_wire_types
     image = Ruflet.image_source_attribution(Ruflet.image(src: "logo.png"), height: 24)
     text = Ruflet.text_source_attribution("OpenStreetMap", prepend_copyright: true, on_click: ->(_event) {})
@@ -68,5 +220,26 @@ class MapExtensionCompatibilityTest < Minitest::Test
     ].each do |type|
       assert Ruflet::UI::ControlFactory.known_control?(type), type
     end
+  end
+
+  private
+
+  # The first control patch of the given wire type in what the page sent.
+  def find_wire_control(value, wire_type)
+    case value
+    when Hash
+      return value if value["_c"] == wire_type
+
+      value.each_value do |item|
+        found = find_wire_control(item, wire_type)
+        return found if found
+      end
+    when Array
+      value.each do |item|
+        found = find_wire_control(item, wire_type)
+        return found if found
+      end
+    end
+    nil
   end
 end

@@ -14,7 +14,13 @@ module Ruflet
 
           def initialize(id: nil, **props)
             mapped = props.dup
-            mapped[:initial_center] = normalize_coordinates(mapped[:initial_center]) if mapped.key?(:initial_center)
+            if mapped.key?(:initial_center)
+              mapped[:initial_center] = normalize_coordinates(mapped[:initial_center])
+              # initial_center: nil is not given, so it is left out, the same
+              # as leaving the keyword out: the client opens at its default
+              # center.
+              mapped.delete(:initial_center) if mapped[:initial_center].nil?
+            end
             super(type: TYPE, id: id, **mapped)
           end
 
@@ -72,20 +78,35 @@ module Ruflet
             runtime_page&.invoke(self, name, args: args, timeout: timeout, on_result: on_result)
           end
 
+          # [lat, lon], { latitude:, longitude: } (or lat:/lon:/lng:), or an
+          # object whose to_h gives one of those; nil means not given, and a
+          # value without to_h (a String, say) is passed on as it is. Anything
+          # else (a shorter Array, a Hash without both coordinates) raises
+          # ArgumentError here, where the mistake was made. It used to raise
+          # SystemStackError or TypeError: nil.to_h and Hash#to_h return a
+          # Hash, and the conversion kept calling itself on it.
           def normalize_coordinates(value)
             case value
+            when nil
+              return nil
             when Array
               return { "latitude" => value[0], "longitude" => value[1] } if value.length >= 2
             when Hash
               latitude = value["latitude"] || value[:latitude] || value["lat"] || value[:lat]
               longitude = value["longitude"] || value[:longitude] || value["lon"] || value[:lon] || value["lng"] || value[:lng]
               return { "latitude" => latitude, "longitude" => longitude } unless latitude.nil? || longitude.nil?
+            else
+              return value unless value.respond_to?(:to_h)
+
+              coordinates = value.to_h
+              return normalize_coordinates(coordinates) unless coordinates.nil?
             end
-            value.respond_to?(:to_h) ? normalize_coordinates(value.to_h) : value
+            raise ArgumentError, "map coordinates must be [latitude, longitude] or a Hash with latitude and longitude, got #{value.inspect}"
           end
 
           def normalize_map_value(value)
             case value
+            when nil then nil # nil.to_h is {}, which the client would get instead
             when Array then value.map { |item| normalize_map_value(item) }
             when Hash then value.each_with_object({}) { |(key, item), result| result[key.to_s] = normalize_map_value(item) unless item.nil? }
             when Symbol then value.to_s
