@@ -13,6 +13,12 @@ module Ruflet
             "keyPassword" => "RUFLET_ANDROID_KEY_PASSWORD"
           }.freeze
 
+          # What java_properties_escape writes for each character
+          # Properties#load would misread.
+          JAVA_PROPERTIES_ESCAPES = { "\\" => "\\\\", "\n" => "\\n", "\r" => "\\r" }.freeze
+          JAVA_PROPERTIES_LEADING_BLANKS = { " " => "\\ ", "\t" => "\\t", "\f" => "\\f" }.freeze
+          private_constant :JAVA_PROPERTIES_ESCAPES, :JAVA_PROPERTIES_LEADING_BLANKS
+
           private
 
           # Release signing is read from the project, never from the managed client,
@@ -48,9 +54,18 @@ module Ruflet
             end
 
             body = ANDROID_SIGNING_KEYS.keys.map { |key| "#{key}=#{properties.fetch(key)}" }.join("\n")
-            write_text_file(destination, "#{body}\n")
+            write_android_key_properties(destination, "#{body}\n")
             build_log(verbose, "wrote #{destination}")
             build_note("Android release signing configured from #{properties.fetch("_source")}")
+          end
+
+          # The file holds the signing passwords in plain text, so only the
+          # owner may read it: it is created that way, and the mode is reset on
+          # a file an earlier build left behind.
+          def write_android_key_properties(destination, content)
+            File.open(destination, File::WRONLY | File::CREAT, 0o600) { nil }
+            File.chmod(0o600, destination)
+            write_text_file(destination, content)
           end
 
           def android_signing_properties
@@ -60,6 +75,9 @@ module Ruflet
             end
             unless from_env.empty?
               from_env["storeFile"] = File.expand_path(from_env["storeFile"]) if from_env["storeFile"]
+              # These are the values themselves, not Properties text, so they
+              # are escaped the way Gradle's Properties#load reads them back.
+              from_env.transform_values! { |value| java_properties_escape(value) }
               return from_env.merge("_source" => "the RUFLET_ANDROID_* environment")
             end
 
@@ -74,11 +92,61 @@ module Ruflet
             end
             return {} if parsed.empty?
 
-            # storeFile is written relative to the project; the client sits deeper.
+            # storeFile is written relative to the project; the client sits
+            # deeper. The project's own values are Properties text and are
+            # copied as written, but the folder this joins them to is not: its
+            # non-ASCII characters ("Développement") are escaped.
             if parsed["storeFile"] && !Pathname.new(parsed["storeFile"]).absolute?
-              parsed["storeFile"] = File.expand_path(parsed["storeFile"], File.dirname(source))
+              expanded = File.expand_path(parsed["storeFile"], File.dirname(source))
+              parsed["storeFile"] = java_properties_escape_non_ascii(expanded)
             end
             parsed.merge("_source" => source)
+          end
+
+          # java.util.Properties#load, which the client's build.gradle.kts reads
+          # key.properties with, decodes backslash escapes, ends a value at a
+          # line break, skips the blanks a value starts with and reads the file
+          # as ISO-8859-1. A value that is not Properties text (a RUFLET_ANDROID_*
+          # variable, an expanded path) is escaped so load returns it unchanged.
+          # Only what load would misread is escaped, so a value it already read
+          # correctly is written byte for byte as before; Properties#store would
+          # also escape a leading # or !, tabs and form feeds, which load reads
+          # fine.
+          def java_properties_escape(value)
+            text = java_properties_utf8(value)
+            unless text.valid_encoding?
+              # Not text in any encoding we can tell: keep its bytes as they were
+              # always written, escaping only what breaks the line.
+              return text.b.gsub(/[\\\n\r]/n, JAVA_PROPERTIES_ESCAPES).force_encoding(Encoding::UTF_8)
+            end
+
+            escaped = text.gsub(/[\\\n\r]/, JAVA_PROPERTIES_ESCAPES)
+            escaped = escaped.sub(/\A[ \t\f]/, JAVA_PROPERTIES_LEADING_BLANKS)
+            java_properties_escape_non_ascii(escaped)
+          end
+
+          # Anything outside ASCII as \uXXXX UTF-16 code units, as
+          # Properties#store writes it. Load reads raw UTF-8 bytes as
+          # ISO-8859-1, so such a value could never be read back as written.
+          def java_properties_escape_non_ascii(value)
+            text = java_properties_utf8(value)
+            return text unless text.valid_encoding?
+
+            text.gsub(/[^\x00-\x7F]/) do |char|
+              char.encode(Encoding::UTF_16BE).unpack("n*").map { |unit| format("\\u%04X", unit) }.join
+            end
+          end
+
+          # Values reach us tagged with the locale's encoding: transcode them, as
+          # writing them did, except under a C/POSIX locale, which tags UTF-8
+          # bytes as binary (writing those raised Encoding::UndefinedConversionError).
+          def java_properties_utf8(value)
+            text = value.to_s
+            return text.dup.force_encoding(Encoding::UTF_8) if text.encoding == Encoding::BINARY
+
+            text.encode(Encoding::UTF_8)
+          rescue EncodingError
+            text.dup.force_encoding(Encoding::UTF_8)
           end
 
           def project_android_key_properties_path
