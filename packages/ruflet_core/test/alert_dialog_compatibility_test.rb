@@ -135,6 +135,7 @@ class RufletAlertDialogCompatibilityTest < Minitest::Test
     page.dispatch_event(target: dialog.wire_id, name: "dismiss", data: nil)
 
     assert_equal [["dismiss", true]], dismissed
-    assert_equal [], sent.last[1]["patch"][1][3]
+    # The dismissed overlay leaves the client's Dialogs list: one list remove.
+    assert_equal [[0, { "controls" => [1] }], [2, 1, 0]], sent.last[1]["patch"]
   end
 end
