@@ -63,6 +63,27 @@ class RufletRailsLocalServerReconnectTest < Minitest::Test
     assert_empty replaced_keys(second)
   end
 
+  # The register reply mounts the containers, so page.snack_bar= patches
+  # container 5 at once. A prop set on the snack bar after that, before the
+  # block's first view patch, must still reach the client, as it did inside
+  # that view patch before.
+  def test_a_snack_bar_opened_after_snack_bar_assignment_in_the_app_block_reaches_the_client
+    server = Ruflet::Rails::Protocol::LocalServer.new(session_registry: @registry) do |page|
+      snack_bar = Ruflet.snack_bar(Ruflet.text("Welcome back"))
+      page.snack_bar = snack_bar
+      snack_bar.props["open"] = true
+      page.add(Ruflet.text("body"))
+    end
+    ws = Socket.new("socket-1")
+    server.send(:on_register_client, ws, { "session_id" => "native-session", "page" => { "route" => "/" } })
+
+    patches = ws.sent.drop(1).map { |_action, payload| payload }
+    assert_equal [5, 1, 5], patches.map { |payload| payload["id"] }
+    last_op = patches.last["patch"][1]
+    assert_equal "controls", last_op[2]
+    assert_equal [["SnackBar", true]], last_op[3].map { |control| [control["_c"], control["open"]] }
+  end
+
   def test_a_dialog_shown_after_a_fresh_reconnect_patches_the_same_container
     first = Socket.new("socket-1")
     register(first, "/")

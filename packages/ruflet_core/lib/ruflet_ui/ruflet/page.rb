@@ -2126,16 +2126,20 @@ module Ruflet
 
     # Whether +container+ went to the client in a register reply's
     # containers-only page patch and has changed since without sending
-    # anything (page.overlay << control, or a dialog, snack bar or bottom
-    # sheet given to set_view_props or page.update(:page, ...)). Before the
-    # containers moved into that reply, the first view patch carried them
-    # whole, so such a change still reached the client; the view patch now
-    # leaves mounted containers out.
+    # anything: the container itself (page.overlay << control, or a dialog,
+    # snack bar or bottom sheet given to set_view_props or
+    # page.update(:page, ...)) or any control inside it (a snack bar's
+    # props["open"] set after page.snack_bar=, an overlay control's value).
+    # Before the containers moved into that reply, the first view patch
+    # carried them whole, so such a change still reached the client; the
+    # view patch now leaves mounted containers out.
     def unsent_container_change?(container)
       return false unless @containers_await_view_patch
+      return false unless @published_control_states.key?(container.wire_id)
 
-      prior = @published_control_states[container.wire_id]
-      !prior.nil? && prior != control_local_wire_state(container)
+      controls = {}
+      collect_control_wire_state(container, nil, controls, {}, Set.new)
+      controls.any? { |wire_id, entry| @published_control_states[wire_id] != entry[:state] }
     end
 
     def register_control_tree(control, visited = Set.new)

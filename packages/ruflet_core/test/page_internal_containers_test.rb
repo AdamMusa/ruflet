@@ -118,6 +118,71 @@ class PageInternalContainersTest < Minitest::Test
     assert_equal ["SnackBar"], sent[2][1]["patch"][1][3].map { |c| c["_c"] }
   end
 
+  # The setters push their container as soon as it is mounted, so the
+  # change that is still unsent is inside it: a prop of the snack bar,
+  # dialog, sheet or overlay control, set after the setter. The first view
+  # patch carried it on main, inside the whole container.
+  def test_a_change_inside_a_container_before_the_first_view_patch_still_reaches_the_client
+    cases = {
+      "snack_bar=" => lambda do |page|
+        sb = Ruflet.snack_bar(Ruflet.text("Welcome back"))
+        page.snack_bar = sb
+        sb.props["open"] = true
+        page.add(Ruflet.text("body"))
+      end,
+      "dialog=" => lambda do |page|
+        dialog = Ruflet.alert_dialog(title: Ruflet.text("Terms"))
+        page.dialog = dialog
+        dialog.props["open"] = true
+        page.update
+      end,
+      "bottom_sheet=" => lambda do |page|
+        sheet = Ruflet.bottom_sheet(Ruflet.text("Sheet"))
+        page.bottom_sheet = sheet
+        sheet.props["open"] = true
+        page.add(Ruflet.text("body"))
+      end
+    }
+    cases.each do |name, app|
+      page, sent = new_page
+      page.register_containers_patch
+      app.call(page)
+
+      assert_equal [5, 1, 5], sent.map { |_action, payload| payload["id"] }, name
+      assert_nil sent[0][1]["patch"][1][3].first["open"], name
+      assert_equal [true], sent[2][1]["patch"][1][3].map { |c| c["open"] }, name
+    end
+  end
+
+  def test_an_overlay_control_changed_before_the_first_view_patch_is_sent_as_changed
+    page, sent = new_page
+    page.register_containers_patch
+    text = Ruflet.text("before")
+    page.overlay = [text]
+    text.props["value"] = "after"
+
+    page.add(Ruflet.text("body"))
+
+    assert_equal [3, 1, 3], sent.map { |_action, payload| payload["id"] }
+    assert_equal ["after"], sent[2][1]["patch"][1][3].map { |c| c["value"] }
+  end
+
+  # The flush is for the first view patch only: what the register reply's
+  # containers predate. Later view patches send what they sent before, the
+  # view patch alone (a container change that sent nothing is still not
+  # sent there, as on main; see #145).
+  def test_only_the_first_view_patch_flushes_unsent_container_changes
+    page, sent = new_page
+    page.register_containers_patch
+    page.add(Ruflet.text("body"))
+    sent.clear
+
+    page.overlay << Ruflet.text("overlay text")
+    page.add(Ruflet.text("more"))
+
+    assert_equal [1], sent.map { |_action, payload| payload["id"] }
+  end
+
   def test_containers_already_sent_are_not_sent_again_with_the_first_view_patch
     page, sent = new_page
     page.register_containers_patch
