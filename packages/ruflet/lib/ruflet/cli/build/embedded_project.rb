@@ -49,7 +49,16 @@ module Ruflet
           project_dirs = dirs.map { |dir| dir == "." ? "#{prefix}/" : "#{prefix}/#{dir}/" }
           manifest = File.join(client_dir.to_s, prefix, ".ruflet-runtime.json")
           project_dirs << "#{prefix}/.ruflet-runtime.json" if client_dir && File.file?(manifest)
-          project_dirs.uniq.sort
+          project_dirs.map { |entry| pubspec_asset_entry(entry) }.uniq.sort
+        end
+
+        # flutter_tools reads a pubspec asset entry with Uri.parse, which takes
+        # "#" and "?" as the start of a fragment or query, decodes a "%XX"
+        # sequence and reads "\" as "/". It reads every other character back as
+        # written (a space or an "é" included), so only those four are escaped
+        # and every entry that already named its directory is written as before.
+        def pubspec_asset_entry(path)
+          path.to_s.gsub(/[#?\\]|%(?=\h\h)/) { |char| format("%%%02X", char.ord) }
         end
 
         def sync_self_contained_project_assets(client_dir, verbose: false)
@@ -129,6 +138,16 @@ module Ruflet
           name = File.basename(Dir.pwd.to_s)
           name = "app" if name.to_s.strip.empty?
           name
+        end
+
+        # The name of the project's directory inside the built app. Flutter
+        # stores every asset under its URI-encoded path, so assets/My Shop/ is
+        # packaged as flutter_assets/assets/My%20Shop/, and the Android and
+        # Apple runtimes look the project up on disk under the name the native
+        # configuration gives them. Dart code keeps the plain name: rootBundle
+        # encodes the keys it is asked for itself.
+        def self_contained_project_asset_name
+          uri_path_segment_escape(self_contained_project_name)
         end
 
         def skip_project_asset_directory?(relative)

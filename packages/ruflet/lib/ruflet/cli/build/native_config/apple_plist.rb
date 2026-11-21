@@ -149,8 +149,17 @@ module Ruflet
             # after renaming the project would otherwise keep the stale name.
             system("/usr/libexec/PlistBuddy", "-c", "Delete :#{key}", plist,
                    out: File::NULL, err: File::NULL)
-            system("/usr/libexec/PlistBuddy", "-c", "Add :#{key} #{type} #{value}",
+            system("/usr/libexec/PlistBuddy", "-c", "Add :#{key} #{type} #{plist_buddy_escape(value)}",
                    plist, out: File::NULL, err: File::NULL)
+          end
+
+          # PlistBuddy splits a command at whitespace and reads ' and " as
+          # quotes. An unbalanced one ("Bob's") makes Add fail with "Parse Error:
+          # Unclosed Quotes" while still exiting 0, after the Delete above has
+          # already removed the key. A backslash makes it read the next
+          # character literally.
+          def plist_buddy_escape(value)
+            value.to_s.gsub(/[\\'"\s]/) { |char| "\\#{char}" }
           end
         end
       end

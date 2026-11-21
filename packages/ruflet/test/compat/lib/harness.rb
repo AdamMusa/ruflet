@@ -1,5 +1,12 @@
 # frozen_string_literal: true
 
+# The children run under a UTF-8 locale (Sandbox#env_for) and set this too.
+# This process renders part of each golden itself: display_word uses
+# String#inspect, which escapes every non-ASCII character ("Café")
+# unless the default external encoding is Unicode. Setting it here keeps the
+# goldens the same whatever locale the shell that runs the harness has.
+Encoding.default_external = Encoding::UTF_8
+
 require "digest"
 require "fileutils"
 require "json"
@@ -280,7 +287,9 @@ module RufletCompat
       @root = File.join(workspace.dir, "runs", "#{format('%03d', workspace.next_id)}-#{label}")
       @home = File.join(@root, "home")
       @tmp = File.join(@root, "tmp")
-      project_name = fixture == "empty" ? "projects" : fixture
+      # A fixture's "project_dir" names the project folder (and the folders
+      # above it) when the fixture is about the path itself.
+      project_name = fixture == "empty" ? "projects" : (Corpus::FIXTURES.dig(fixture, "project_dir") || fixture)
       @project = File.join(@root, "proj", project_name)
       @specs = File.join(workspace.dir, "specs")
       [@home, @tmp, @specs, File.dirname(@project)].each { |dir| FileUtils.mkdir_p(dir) }

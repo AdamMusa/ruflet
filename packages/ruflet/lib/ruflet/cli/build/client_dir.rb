@@ -137,10 +137,11 @@ module Ruflet
           # disappeared from a Flutter asset directory. Clear only the generated
           # embedded project tree so a removed gem/archive cannot survive the
           # next signed build; native compilation outputs remain reusable.
-          asset_pattern = File.join(
-            client_dir, "build", "ios", "**", "flutter_assets", "assets",
-            self_contained_project_name)
-          Dir.glob(asset_pattern).each do |asset_root|
+          # Flutter writes the project there under its encoded name
+          # (assets/My%20Shop), and the name is joined on rather than globbed so
+          # no character of it is read as a pattern.
+          glob_under(File.join(client_dir, "build", "ios"), "**/flutter_assets/assets").each do |assets_dir|
+            asset_root = File.join(assets_dir, self_contained_project_asset_name)
             next unless Dir.exist?(asset_root)
 
             FileUtils.rm_rf(asset_root)
