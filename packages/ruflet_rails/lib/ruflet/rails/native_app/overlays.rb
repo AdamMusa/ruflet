@@ -166,11 +166,23 @@ module Ruflet
         return if url.empty?
 
         sheet_webview = nil
+        # The sheet's own trust: a sheet may show another origin than the body.
+        frame = new_bridge_frame(url)
         sheet_webview = webview(
           url: url, method: "get", enable_javascript: true,
-          on_page_started: ->(_event) { enable_js(sheet_webview) },
-          on_page_ended: ->(_event) { inject_html_adapter_for(sheet_webview, sheet: true) },
-          on_console_message: ->(event) { handle_sheet_message(message_of(event)) }
+          on_page_started: lambda do |event|
+            note_frame_url(frame, reported_url(event))
+            enable_js(sheet_webview)
+          end,
+          on_page_ended: lambda do |event|
+            page_url = reported_url(event)
+            note_frame_url(frame, page_url)
+            sync_sheet_page(frame, sheet_webview, page_url)
+          end,
+          on_console_message: ->(event) { handle_sheet_message(frame, sheet_webview, message_of(event)) },
+          # Redirects show up here first (iOS reports page_started with the
+          # URL before the redirect).
+          on_url_change: ->(event) { note_frame_url(frame, reported_url(event), probe: sheet_webview) }
         )
         card = container(
           content: sheet_webview,
