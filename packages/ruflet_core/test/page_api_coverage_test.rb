@@ -52,6 +52,7 @@ class PageApiCoverageTest < Minitest::Test
     "prepare_for_reconnect!" => "page_update_serialization_test#test_reconnect_republishes_page_shell_and_internal_roots",
     "push_route" => "routes_compatibility_test#test_navigate_and_push_route_match_flet_route_helpers",
     "query" => "routes_compatibility_test#test_query_reflects_client_route_changes",
+    "reload_transaction" => "page_reload_transaction_test#test_a_reload_transaction_sends_what_a_direct_reload_sends_once_it_returns",
     "register_page_patch" => "dsl_presented_controls_test#test_qa_repro_dialog_opened_from_a_block_is_mounted_once",
     "remove" => "page_compatibility_test#test_page_controls_insert_remove_remove_at_and_clean_match_flet_shape",
     "remove_at" => "page_compatibility_test#test_page_controls_insert_remove_remove_at_and_clean_match_flet_shape",

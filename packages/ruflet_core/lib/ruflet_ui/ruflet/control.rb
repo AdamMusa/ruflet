@@ -144,9 +144,6 @@ module Ruflet
 
       props.each { |k, v| patch[k] = serialize_value(v) }
       patch["controls"] = children.map(&:to_patch) unless children.empty?
-      if ENV["RUFLET_DEBUG"] == "1" && type == "floatingactionbutton"
-        Kernel.warn("[to_patch] #{patch.inspect}")
-      end
       patch
     end
 
