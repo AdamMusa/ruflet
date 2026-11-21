@@ -18,6 +18,7 @@ out|   -d, --desktop    Open the app in the desktop client
 out|   --port PORT      Port to serve on (default 8550); the next free one if it is taken
 out|   --no-reload      Turn off hot reload
 out|   --device ID      Run on a Flutter device (not supported yet)
+out|   --strict         Exit 1 when the template lacks a control or service the app uses
 out|   -h, --help       Show this help
 
 ## files
