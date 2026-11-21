@@ -138,6 +138,30 @@ class ApiSurfaceTest < RufletRecordTestCase
     assert_raises(RufletRecord::RecordNotSaved) { User.new.touch }
   end
 
+  # update_columns saves only the columns it is given; other unsaved changes
+  # stay pending for the next save, as in Active Record (issue #124).
+  def test_update_columns_keeps_other_unsaved_changes
+    @ada.name = "Ada Lovelace"
+    @ada.update_columns(age: 37)
+
+    assert @ada.changed?
+    assert_equal({ "name" => ["Ada", "Ada Lovelace"] }, @ada.changes)
+    assert_equal ["Ada", 37], User.where(id: @ada.id).pluck(:name, :age).first
+    @ada.save!
+    assert_equal ["Ada Lovelace", 37], User.where(id: @ada.id).pluck(:name, :age).first
+    refute @ada.changed?
+  end
+
+  def test_touch_keeps_other_unsaved_changes
+    @ada.name = "Ada Lovelace"
+    @ada.touch
+
+    assert_equal ["name"], @ada.changes.keys
+    assert_equal "Ada", User.find(@ada.id).name
+    @ada.save!
+    assert_equal "Ada Lovelace", User.find(@ada.id).name
+  end
+
   # --- Relations ----------------------------------------------------------------
 
   def test_relation_query_and_aggregate_methods
