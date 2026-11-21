@@ -83,7 +83,8 @@ class RufletCliBuildProjectPathNamesTest < Minitest::Test
         project = File.join(root, name)
         FileUtils.mkdir_p(project)
         Dir.chdir(project) do
-          assert_equal name, builder.send(:self_contained_project_name)
+          # Outside a UTF-8 locale Dir.pwd, and so the name, is BINARY.
+          assert_equal name.b, builder.send(:self_contained_project_name).b
           assert_equal stored, builder.send(:self_contained_project_asset_name), name
         end
       end
@@ -106,6 +107,22 @@ class RufletCliBuildProjectPathNamesTest < Minitest::Test
     end
     with_client("Bob's App") do |_builder, _client_dir, plist_buddy|
       assert_includes plist_buddy, "Add :RufletEmbeddedProject string Bob\\'s%20App"
+    end
+  end
+
+  # configure_platform_autostart has no case for aab or ipa, so for
+  # `ruflet build aab --self` and `ruflet build ipa --self` the runtime-mode
+  # contributor's value is the one that ships.
+  def test_an_app_bundle_and_an_ipa_name_the_stored_directory
+    ["My Shop", "Tom & Jerry"].each do |name|
+      with_client(name, platforms: %w[aab ipa]) do |_builder, client_dir, plist_buddy|
+        stored = FLUTTER_ASSET_NAMES.fetch(name)
+        manifest = File.read(File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml"))
+        assert_equal [stored], manifest_values(manifest, "ruflet.runtime.project"), "#{name}: aab"
+        assert_equal stored, plist_string(File.join(client_dir, "ios", "Runner", "Info.plist"), "RufletEmbeddedProject"),
+                     "#{name}: ipa"
+        assert_empty plist_buddy, "#{name}: no autostart step ran"
+      end
     end
   end
 
@@ -154,7 +171,9 @@ class RufletCliBuildProjectPathNamesTest < Minitest::Test
 
     Dir.mktmpdir do |dir|
       plist = File.join(dir, "Info.plist")
-      ["Bob's%20App", "Bob's", "a b", "quo\"te", "back\\slash", "Tom%20&%20Jerry", "shop"].each do |value|
+      # Unescaped, "Bob's" made Add fail and "Rock'n'Roll" was stored as
+      # "RocknRoll".
+      ["Bob's%20App", "Bob's", "Rock'n'Roll", "a b", "quo\"te", "back\\slash", "Tom%20&%20Jerry", "shop"].each do |value|
         File.write(plist, PLIST)
         builder.send(:set_plist_value, plist, "RufletEmbeddedProject", "string", value)
         read = IO.popen([plist_buddy, "-c", "Print :RufletEmbeddedProject", plist], err: File::NULL, &:read).chomp
@@ -190,17 +209,30 @@ class RufletCliBuildProjectPathNamesTest < Minitest::Test
       assert_equal written, builder.send(:pubspec_asset_entry, entry), entry
     end
 
-    # A rebuild replaces the entries an older CLI wrote unescaped.
     with_client("C# App") do |builder2, client_dir, _plist_buddy|
       pubspec_path = File.join(client_dir, "pubspec.yaml")
-      data = YAML.safe_load(File.read(pubspec_path))
-      data["flutter"]["assets"] = ["assets/C# App/", "assets/C# App/lib/", "assets/icon.png"]
-      File.write(pubspec_path, YAML.dump(data))
-      Dir.chdir(File.dirname(File.dirname(client_dir))) do
-        builder2.send(:sync_client_pubspec_for_runtime_mode, client_dir, self_contained: true)
+      rebuild = lambda do |seeded, self_contained:|
+        data = YAML.safe_load(File.read(pubspec_path))
+        data["flutter"]["assets"] = seeded
+        File.write(pubspec_path, YAML.dump(data))
+        Dir.chdir(File.dirname(File.dirname(client_dir))) do
+          builder2.send(:sync_client_pubspec_for_runtime_mode, client_dir, self_contained: self_contained)
+        end
+        YAML.safe_load(File.read(pubspec_path)).fetch("flutter").fetch("assets")
       end
-      assets = YAML.safe_load(File.read(pubspec_path)).fetch("flutter").fetch("assets")
-      assert_equal ["assets/icon.png", "assets/C%23 App/"], assets
+
+      # A rebuild replaces the entries an older CLI wrote unescaped,
+      assert_equal ["assets/icon.png", "assets/C%23 App/"],
+                   rebuild.call(["assets/C# App/", "assets/C# App/lib/", "assets/icon.png"], self_contained: true)
+      # and the escaped ones this CLI wrote for a profile whose directories
+      # are gone (full's vendor/bundle on a lite rebuild),
+      assert_equal ["assets/icon.png", "assets/C%23 App/"],
+                   rebuild.call(["assets/C%23 App/", "assets/C%23 App/vendor/bundle/", "assets/icon.png"],
+                                self_contained: true)
+      # and all of them when the app is rebuilt server-driven.
+      assert_equal ["assets/icon.png"],
+                   rebuild.call(["assets/C%23 App/", "assets/C%23 App/lib/", "assets/C# App/", "assets/icon.png"],
+                                self_contained: false)
     end
   end
 
@@ -333,46 +365,47 @@ class RufletCliBuildProjectPathNamesTest < Minitest::Test
     end
   end
 
+  # The macOS (*.app) and Windows (*.exe) lookups, each run as on that host.
   def test_the_desktop_client_is_found_under_a_path_with_glob_characters
-    skip "macOS layout" unless RbConfig::CONFIG["host_os"].match?(/darwin/i)
-
+    url = "http://127.0.0.1:8550"
     Dir.mktmpdir do |tmp|
       root = File.join(tmp, "Apps [2026]", "ruflet_client")
       macos_dir = File.join(root, "build", "macos", "Build", "Products", "Release", "Shop.app", "Contents", "MacOS")
-      FileUtils.mkdir_p(macos_dir)
-      executable = File.join(macos_dir, "Shop")
-      File.write(executable, "#!/bin/sh\n")
-      FileUtils.chmod(0o755, executable)
+      windows_dir = File.join(root, "build", "windows", "x64", "runner", "Release")
+      [macos_dir, windows_dir].each { |dir| FileUtils.mkdir_p(dir) }
+      app = File.join(macos_dir, "Shop")
+      exe = File.join(windows_dir, "Shop.exe")
+      [app, exe].each do |path|
+        File.write(path, "#!/bin/sh\n")
+        FileUtils.chmod(0o755, path)
+      end
 
-      command = DummyRunner.new.send(:detect_desktop_client_command, "http://127.0.0.1:8550", root: root)
-      assert_equal [executable, "http://127.0.0.1:8550"], command
+      { "darwin25" => app, "mingw32" => exe }.each do |host_os, expected|
+        command = with_host_os(host_os) { DummyRunner.new.send(:detect_desktop_client_command, url, root: root) }
+        assert_equal [expected, url], command, host_os
+      end
     end
   end
 
   private
 
+  def with_host_os(host_os)
+    saved = RbConfig::CONFIG["host_os"]
+    RbConfig::CONFIG["host_os"] = host_os
+    yield
+  ensure
+    RbConfig::CONFIG["host_os"] = saved
+  end
+
   # A client dir at <tmp>/Apps [2026]/<name>/build/client with the
   # template's Info.plist and AndroidManifest.xml, configured for a
-  # self-contained build the way `ruflet build` does: the runtime-mode
-  # contributor first, then the autostart step right before Flutter runs.
-  # PlistBuddy is recorded rather than run unless real_plist_buddy is set.
-  def with_client(name, real_plist_buddy: false)
+  # self-contained build of each platform the way `ruflet build` does: the
+  # runtime-mode contributor first, then the autostart step right before
+  # Flutter runs. PlistBuddy is recorded rather than run unless
+  # real_plist_buddy is set.
+  def with_client(name, platforms: %w[ios macos apk], real_plist_buddy: false)
     Dir.mktmpdir do |tmp|
-      project = File.join(tmp, "Apps [2026]", name)
-      client_dir = File.join(project, "build", "client")
-      %w[ios macos].each do |platform|
-        path = File.join(client_dir, platform, "Runner", "Info.plist")
-        FileUtils.mkdir_p(File.dirname(path))
-        File.write(path, PLIST)
-      end
-      manifest = File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")
-      FileUtils.mkdir_p(File.dirname(manifest))
-      File.write(manifest, MANIFEST)
-      File.write(File.join(client_dir, "pubspec.yaml"), "name: ruflet_client\nflutter:\n  assets: []\n")
-      FileUtils.mkdir_p(File.join(client_dir, "assets", name))
-      File.write(File.join(client_dir, "assets", name, "main.rb"), "puts 1\n")
-      File.write(File.join(project, "main.rb"), "puts 1\n")
-
+      FileUtils.mkdir_p(File.join(tmp, "Apps [2026]", name))
       builder = DummyBuilder.new
       plist_buddy = []
       unless real_plist_buddy
@@ -382,13 +415,33 @@ class RufletCliBuildProjectPathNamesTest < Minitest::Test
         end
       end
 
-      Dir.chdir(project) do
-        builder.send(:sync_client_pubspec_for_runtime_mode, client_dir, self_contained: true)
+      client_dir = nil
+      Dir.chdir(File.join(tmp, "Apps [2026]", name)) do
+        # Every path comes from Dir.pwd, as in a real build, so that it has
+        # the encoding the CLI's own paths have (BINARY outside a UTF-8
+        # locale) and File.join can combine them.
+        project = Dir.pwd
+        client_dir = File.join(project, "build", "client")
         %w[ios macos].each do |platform|
-          builder.send(:configure_native_apple_runtime, client_dir, platform: platform, self_contained: true)
+          path = File.join(client_dir, platform, "Runner", "Info.plist")
+          FileUtils.mkdir_p(File.dirname(path))
+          File.write(path, PLIST)
         end
-        builder.send(:configure_android_runtime, client_dir, platform: "apk", self_contained: true)
-        %w[ios macos apk].each { |platform| builder.send(:configure_platform_autostart, client_dir, platform) }
+        manifest = File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")
+        FileUtils.mkdir_p(File.dirname(manifest))
+        File.write(manifest, MANIFEST)
+        File.write(File.join(client_dir, "pubspec.yaml"), "name: ruflet_client\nflutter:\n  assets: []\n")
+        packaged = File.join(client_dir, "assets", File.basename(project))
+        FileUtils.mkdir_p(packaged)
+        File.write(File.join(packaged, "main.rb"), "puts 1\n")
+        File.write(File.join(project, "main.rb"), "puts 1\n")
+
+        builder.send(:sync_client_pubspec_for_runtime_mode, client_dir, self_contained: true)
+        platforms.each do |platform|
+          builder.send(:configure_native_apple_runtime, client_dir, platform: platform, self_contained: true)
+          builder.send(:configure_android_runtime, client_dir, platform: platform, self_contained: true)
+        end
+        platforms.each { |platform| builder.send(:configure_platform_autostart, client_dir, platform) }
       end
       yield builder, client_dir, plist_buddy
     end

@@ -1,5 +1,12 @@
 # frozen_string_literal: true
 
+# The children run under a UTF-8 locale (Sandbox#env_for) and set this too.
+# This process renders part of each golden itself: display_word uses
+# String#inspect, which escapes every non-ASCII character ("Café")
+# unless the default external encoding is Unicode. Setting it here keeps the
+# goldens the same whatever locale the shell that runs the harness has.
+Encoding.default_external = Encoding::UTF_8
+
 require "digest"
 require "fileutils"
 require "json"
