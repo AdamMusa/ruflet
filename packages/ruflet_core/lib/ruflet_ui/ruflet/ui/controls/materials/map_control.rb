@@ -16,9 +16,9 @@ module Ruflet
             mapped = props.dup
             if mapped.key?(:initial_center)
               mapped[:initial_center] = normalize_coordinates(mapped[:initial_center])
-              # initial_center: nil is not given. A nil prop would reach the
-              # client as {} (Control#serialize_value), which it reads as
-              # LatLng(0, 0) instead of its default center.
+              # initial_center: nil is not given, so it is left out, the same
+              # as leaving the keyword out: the client opens at its default
+              # center.
               mapped.delete(:initial_center) if mapped[:initial_center].nil?
             end
             super(type: TYPE, id: id, **mapped)
