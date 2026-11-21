@@ -342,6 +342,7 @@ class RufletBuilderBlockSlotsTest < Minitest::Test
         card { text("card #{@count}") }
         card { header }
         list_view { text("list #{@count}"); header }
+        column { card { text("nested") } }
       end
     end
     roots = app.instance_variable_get(:@roots).map(&:to_patch)
@@ -350,7 +351,14 @@ class RufletBuilderBlockSlotsTest < Minitest::Test
     assert_equal "card 3", roots[1]["content"]["value"]
     assert_equal "Header", roots[2]["content"]["value"]
     assert_equal ["list 3", "Header"], roots[3]["controls"].map { |c| c["value"] }
-    assert_equal 4, roots.size
+    assert_equal ["Card"], roots[4]["controls"].map { |c| c["_c"] }
+    assert_equal "nested", roots[4]["controls"][0]["content"]["value"]
+    assert_equal 5, roots.size
+  end
+
+  def test_a_control_returned_by_a_dsl_app_slot_block_is_its_child
+    built = Ruflet.text("outside")
+    assert_same built, Ruflet::DSL.app.card { built }.props["content"]
   end
 
   # -- What an explicit slot, or a pressed control, keeps ---------------------
@@ -410,12 +418,14 @@ class RufletBuilderBlockSlotsTest < Minitest::Test
     _out, err = capture_io do
       2.times { view.new.build }
       Ruflet.list_view { refresh_items(1) }
+      Ruflet.cupertino_segmented_button { text("a"); reload_items(1) }
       Ruflet.card { text("x") }
       Ruflet.dropdown { dropdown_option("red") }
     end
 
     assert_equal 1, err.scan("dropdown's block built `apply_color`, which is not a registered control").size
     assert_equal 1, err.scan("list_view's block built `refresh_items`").size
+    assert_equal 1, err.scan("cupertino_segmented_button's block built `reload_items`").size
     refute_match(/card's block|`text`|`dropdown_option`|`dropdownoption`/, err)
   end
 
