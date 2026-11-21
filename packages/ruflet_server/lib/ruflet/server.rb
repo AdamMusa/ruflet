@@ -843,7 +843,7 @@ module Ruflet
     # This and normalize_event_data loop with while, not map or
     # each_with_object, so each level of nesting costs one call. The embedded
     # mruby VM allows 512 nested calls, and the block forms overflowed at
-    # about 106 levels, below WireCodec::MAX_NESTING_DEPTH.
+    # 102 levels, below WireCodec::MAX_NESTING_DEPTH.
     def normalize_incoming(value)
       case value
       when String
