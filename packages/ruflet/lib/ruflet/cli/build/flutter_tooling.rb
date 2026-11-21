@@ -6,7 +6,158 @@ module Ruflet
       # Runs Flutter and the other external tools a build needs, with the
       # environment each one expects.
       module FlutterTooling
+        # `flutter build` options whose value is a path. Flutter resolves a
+        # relative one against its working directory, the client dir, while
+        # Ruflet users mean the project (CLI-05). Inputs are files Flutter
+        # reads; outputs are files or directories it writes.
+        FLUTTER_INPUT_PATH_OPTIONS = %w[--dart-define-from-file --export-options-plist].freeze
+        FLUTTER_OUTPUT_PATH_OPTIONS = %w[
+          --split-debug-info --code-size-directory --performance-measurement-file
+        ].freeze
+        # `flutter build web`'s output directory: --output, its alias
+        # --output-dir and its abbreviation -o. Flutter gives no other target
+        # Ruflet builds this option.
+        FLUTTER_WEB_OUTPUT_OPTIONS = %w[--output --output-dir].freeze
+        FLUTTER_WEB_OUTPUT_ABBREVIATION = "-o"
+
         private
+
+        # A copy of args in which a relative path given to a path-valued
+        # Flutter option, in each spelling Flutter accepts (`--flag value`,
+        # `--flag=value`, and for web `-o value` and `-ovalue`), is made
+        # absolute against the project root when, and only when, the path
+        # Flutter would use today is broken:
+        # - an input is rewritten when it is not a file in the client dir
+        #   (Flutter would stop with "not found") but is one in the project;
+        # - an output is rewritten when it would be written inside the
+        #   managed build/client, which a template refresh deletes, outside
+        #   what the build exports from there, and when its project path lies
+        #   inside the project but is neither the project root nor a
+        #   directory holding build/client, nor inside build/client or a
+        #   directory that export replaces. Where the file system ignores
+        #   case (the macOS and Windows default), so do these comparisons:
+        #   there build/client/Build/Web is build/client/build/web.
+        # Everything else is left as written: absolute paths; paths that
+        # already leave build/client (such as `../../symbols`); outputs in a
+        # client dir Ruflet does not manage (RUFLET_CLIENT_DIR,
+        # ./ruflet_client); a missing or empty value, one that looks like a
+        # flag, or a `~` no shell expanded; an argument or value Ruby cannot
+        # read as text in its encoding; every other argument; and all
+        # arguments after a bare `--`, which Flutter takes as positional.
+        def resolve_flutter_path_args(args, root = Dir.pwd, client_dir: hidden_flutter_client_dir(root), platform: nil)
+          # An ipa is built and exported as ios (see BuildCommand#command_build).
+          platform = "ios" if platform == "ipa"
+          kinds = flutter_path_option_kinds(platform)
+          resolve = ->(kind, value) { flutter_path_value(kind, value, root, client_dir, platform) }
+          resolved = []
+          index = 0
+          while index < args.length
+            arg = args[index]
+            if arg == "--"
+              resolved.concat(args[index..])
+              break
+            end
+            # Splitting an argument that is not valid in its encoding raises
+            # (`--dart-define=GREETING=caf\xE9` in a UTF-8 locale). None of
+            # the path options is spelled that way, so it goes through as is.
+            unless arg.valid_encoding?
+              resolved << arg
+              index += 1
+              next
+            end
+
+            name, value = arg.split("=", 2)
+            if (kind = kinds[arg])
+              resolved << arg
+              if index + 1 < args.length
+                index += 1
+                resolved << resolve.call(kind, args[index])
+              end
+            elsif value && name.start_with?("--") && (kind = kinds[name])
+              resolved << "#{name}=#{resolve.call(kind, value)}"
+            elsif kinds.key?(FLUTTER_WEB_OUTPUT_ABBREVIATION) && arg.start_with?(FLUTTER_WEB_OUTPUT_ABBREVIATION) &&
+                arg.length > FLUTTER_WEB_OUTPUT_ABBREVIATION.length
+              short = FLUTTER_WEB_OUTPUT_ABBREVIATION
+              resolved << "#{short}#{resolve.call(:output, arg[short.length..])}"
+            else
+              resolved << arg
+            end
+            index += 1
+          end
+          resolved
+        end
+
+        def flutter_path_option_kinds(platform)
+          kinds = FLUTTER_INPUT_PATH_OPTIONS.to_h { |name| [name, :input] }
+          FLUTTER_OUTPUT_PATH_OPTIONS.each { |name| kinds[name] = :output }
+          if platform == "web"
+            FLUTTER_WEB_OUTPUT_OPTIONS.each { |name| kinds[name] = :output }
+            kinds[FLUTTER_WEB_OUTPUT_ABBREVIATION] = :output
+          end
+          kinds
+        end
+
+        def flutter_path_value(kind, value, root, client_dir, platform)
+          return value if value.empty? || value.start_with?("-", "~") || File.absolute_path?(value)
+
+          client = File.expand_path(client_dir)
+          return value unless path_text_comparable?(value, root, client)
+
+          if kind == :input
+            flutter_input_path(value, root, client)
+          else
+            flutter_output_path(value, root, client, platform)
+          end
+        end
+
+        def flutter_input_path(value, root, client)
+          return value if File.file?(File.expand_path(value, client))
+
+          project = File.expand_path(value, root)
+          File.file?(project) ? project : value
+        end
+
+        def flutter_output_path(value, root, client, platform)
+          # The managed client is the one refresh_hidden_flutter_client_template
+          # refreshes, which it recognizes by this same comparison.
+          return value unless client == File.expand_path(hidden_flutter_client_dir(root))
+
+          fold = case_insensitive_dir?(client)
+          within = ->(path, dir) { path_within?(path, dir, fold: fold) }
+          today = File.expand_path(value, client)
+          return value unless within.call(today, client)
+
+          exports = exports_for(platform)
+          return value if exports.keys.any? { |source| within.call(today, File.join(client, "build", source)) }
+
+          project = File.expand_path(value, root)
+          return value unless within.call(project, File.expand_path(root))
+          return value if within.call(project, client) || within.call(client, project)
+          return value if exports.values.any? { |target| within.call(project, File.join(user_build_root(root), target)) }
+
+          project
+        end
+
+        # fold: compare as a file system that ignores case does.
+        def path_within?(path, dir, fold: false)
+          path, dir = path.downcase(:fold), dir.downcase(:fold) if fold
+          path == dir || path.start_with?(File.join(dir, ""))
+        end
+
+        # Whether the file system holding dir, an existing directory, ignores
+        # case in names, as APFS and NTFS do by default.
+        def case_insensitive_dir?(dir)
+          name = File.basename(dir)
+          other = name.swapcase
+          other != name && File.identical?(dir, File.join(File.dirname(dir), other))
+        end
+
+        # Ruby can join and compare value with these paths only when each is
+        # valid in its encoding and the encodings agree. Any other value
+        # reaches Flutter as written, as it always has.
+        def path_text_comparable?(value, *paths)
+          ([value] + paths).all?(&:valid_encoding?) && paths.all? { |path| Encoding.compatible?(value, path) }
+        end
 
         def build_tool_env(env, platform, client_dir = nil)
           return env unless %w[ios macos].include?(platform)
