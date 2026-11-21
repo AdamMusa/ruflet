@@ -51,13 +51,26 @@ class RufletServerInputLimitsTest < Minitest::Test
     assert_match(%r{\AHTTP/1\.1 431 Request Header Fields Too Large\r\n}, response)
   end
 
+  # The request ends with the 101st field, the last byte the server reads.
   def test_more_than_100_header_fields_get_431
     server = start_server
     headers = (1..101).map { |n| "X-Field-#{n}: #{n}\r\n" }.join
 
-    response = http_exchange(server, "GET /health HTTP/1.1\r\n#{headers}\r\n")
+    response = http_exchange(server, "GET /health HTTP/1.1\r\n#{headers}")
 
     assert_match(%r{\AHTTP/1\.1 431 }, response)
+  end
+
+  # Every line is far under the budget; together they pass it. The request
+  # ends exactly at the budget, inside the last line, as above.
+  def test_header_lines_that_together_pass_the_budget_get_431
+    server = start_server
+    head = "GET /health HTTP/1.1\r\n" + (1..4).map { |n| "X-Part-#{n}: #{"a" * 30_000}\r\n" }.join
+    last = "X-Last: "
+
+    response = http_exchange(server, head + last + ("b" * (BUDGET - head.bytesize - last.bytesize)))
+
+    assert_match(%r{\AHTTP/1\.1 431 Request Header Fields Too Large\r\n}, response)
   end
 
   def test_a_request_line_past_the_budget_gets_414
@@ -142,6 +155,39 @@ class RufletServerInputLimitsTest < Minitest::Test
     assert_match(%r{\AHTTP/1\.1 200 OK\r\n}, response, "a slot is free again once a socket closes")
   end
 
+  # A refused client has usually sent its request by the time the server
+  # answers. Closing a socket with input still unread sends a reset instead
+  # of a normal close, and a reset can cost the client the 503 (Linux
+  # discards what the client has not read yet).
+  def test_a_refused_client_that_already_sent_its_request_gets_the_503_and_a_clean_close
+    set_env("RUFLET_MAX_CONNECTIONS", "1")
+    server = start_server
+    connect(server) # holds the only slot
+    sleep 0.3
+
+    capture_io do
+      10.times do |attempt|
+        client = connect(server)
+        client.write("GET /health HTTP/1.1\r\nHost: localhost\r\n\r\n")
+        data, error = read_to_eof(client)
+
+        assert_match(%r{\AHTTP/1\.1 503 }, data, "attempt #{attempt}")
+        assert_nil error, "attempt #{attempt}: #{error.inspect} after #{data.inspect}"
+        client.close
+      end
+
+      # A client that reads only after the server has closed: the request
+      # was read and dropped first, so there is still no reset.
+      client = connect(server)
+      client.write("GET /health HTTP/1.1\r\nHost: localhost\r\n\r\n")
+      sleep Ruflet::Server::REFUSED_LINGER_SECONDS + 1.0
+      data, error = read_to_eof(client)
+
+      assert_match(%r{\AHTTP/1\.1 503 }, data, "late reader")
+      assert_nil error, "late reader: #{error.inspect} after #{data.inspect}"
+    end
+  end
+
   def test_connections_are_unlimited_without_ruflet_max_connections
     server = start_server
     Array.new(30) { connect(server) }
@@ -224,6 +270,12 @@ class RufletServerInputLimitsTest < Minitest::Test
   end
 
   def read_until_closed(client, seconds = REPLY_WAIT)
+    read_to_eof(client, seconds).first
+  end
+
+  # [bytes read, nil] at a normal end of stream, or [bytes read, error]
+  # when a reset (a SystemCallError) ended it.
+  def read_to_eof(client, seconds = REPLY_WAIT)
     data = +"".b
     deadline = monotonic + seconds
     loop do
@@ -233,15 +285,14 @@ class RufletServerInputLimitsTest < Minitest::Test
 
       begin
         chunk = client.read_nonblock(65_536, exception: false)
-      rescue SystemCallError
-        break
+      rescue SystemCallError => e
+        return [data, e]
       end
       next if chunk == :wait_readable
-      break if chunk.nil?
+      return [data, nil] if chunk.nil?
 
       data << chunk
     end
-    data
   end
 
   def assert_closed_within(client, seconds)

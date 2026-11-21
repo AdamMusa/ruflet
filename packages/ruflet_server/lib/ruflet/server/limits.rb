@@ -7,22 +7,28 @@ module Ruflet
   class MessageTooLargeError < ArgumentError
     attr_reader :bytes, :limit
 
-    # outgoing: true for a message the server tried to send.
+    # outgoing: true for a message the server tried to send (the in-process
+    # transport). That message is not sent; whether the connection then
+    # closes is up to the caller, so the message does not claim it.
     def initialize(bytes:, limit:, outgoing: false)
       @bytes = bytes
       @limit = limit
-      what = outgoing ? "a #{bytes}-byte message to the client" : "a client message of at least #{bytes} bytes"
-      super(
-        "#{what} exceeds the #{limit}-byte limit, so the connection was closed; " \
-        "set #{ServerLimits::MAX_MESSAGE_BYTES_ENV} to raise the limit"
-      )
+      what =
+        if outgoing
+          "a #{bytes}-byte message to the client exceeds the #{limit}-byte limit, so it was not sent"
+        else
+          "a client message of at least #{bytes} bytes exceeds the #{limit}-byte limit, so the connection was closed"
+        end
+      super("#{what}; set #{ServerLimits::MAX_MESSAGE_BYTES_ENV} to raise the limit")
     end
   end
 
   # Limits on what clients may send. The defaults keep every application
   # working as before; the environment variables below adjust them.
   #
-  #   RUFLET_MAX_MESSAGE_BYTES  largest message a client may send
+  #   RUFLET_MAX_MESSAGE_BYTES  largest message a client may send and,
+  #                             over the embedded in-process transport,
+  #                             largest message the server sends
   #                             (default 16 MiB, as before)
   #   RUFLET_MAX_CONNECTIONS    most connections handled at once
   #                             (default: unlimited)

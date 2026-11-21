@@ -78,6 +78,21 @@ class RufletWireCodecLimitsTest < Minitest::Test
     assert_equal "Unexpected EOF", error.message
   end
 
+  # The count is checked before any element is decoded, so the elements
+  # that are there (here an invalid marker, 0xc1) are never read.
+  def test_a_count_larger_than_the_bytes_left_fails_before_reading_any_element
+    error = assert_raises(RuntimeError) { Ruflet::WireCodec.unpack("\x93\x01\xc1".b) }
+    assert_equal "Unexpected EOF", error.message
+    error = assert_raises(RuntimeError) { Ruflet::WireCodec.unpack("\x82\xa1a\xc1".b) }
+    assert_equal "Unexpected EOF", error.message
+    error = assert_raises(RuntimeError) { Ruflet::WireCodec.unpack("\xdc\x00\x05\x01\x02\x03\xc1".b) }
+    assert_equal "Unexpected EOF", error.message
+
+    # With room for the count, the same bytes reach the element.
+    error = assert_raises(RuntimeError) { Ruflet::WireCodec.unpack("\x92\x01\xc1".b) }
+    assert_equal "Unsupported MessagePack marker: 0xc1", error.message
+  end
+
   def test_the_server_traces_its_own_messages_whatever_their_depth
     value = nil
     (LIMIT + 10).times { value = [value] }

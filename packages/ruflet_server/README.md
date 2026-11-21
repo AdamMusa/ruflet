@@ -36,5 +36,9 @@ callback or `invoke_sync` still waiting on that client gets the error
 instead of waiting forever. A file picker reply carrying the files' bytes
 (`with_data: true`) is the usual way to reach the limit.
 
+Over the embedded runtime's in-process transport, `RUFLET_MAX_MESSAGE_BYTES`
+also caps the messages the server sends, as the fixed 16 MiB limit did
+before. A message over it is not sent, and the error is logged.
+
 `ruflet_rails` applies the message limit, the first-message deadline and
 `RUFLET_MAX_CONNECTIONS` to its WebSocket endpoint as well.

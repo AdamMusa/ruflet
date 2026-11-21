@@ -5,10 +5,12 @@ module Ruflet
     # Most arrays and maps one decoded value may nest. Client messages nest
     # fewer than ten levels. Decoding, and every recursive walk over the
     # result afterwards (normalizing events, Hash#inspect), recurses once
-    # per level; in a connection thread those walks overflow the stack at
-    # about 350 levels of maps. 128 keeps them all well clear of that, so a
-    # hostile message gets a decode error instead of a SystemStackError,
-    # which no `rescue StandardError` catches.
+    # per level. In a CRuby connection thread the first walk to overflow,
+    # Hash#inspect, does so at about 650 levels of maps. The embedded mruby
+    # VM allows 512 nested calls, and decoding, at two calls per level,
+    # overflows at about 250. 128 stays below both, so a hostile message
+    # gets a decode error instead of a SystemStackError, which no
+    # `rescue StandardError` catches.
     MAX_NESTING_DEPTH = 128
 
     class << self

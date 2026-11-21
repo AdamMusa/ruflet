@@ -26,6 +26,11 @@ module Ruflet
     HTTP_LINE_CHUNK_BYTES = 4096
     HANDSHAKE_TIMEOUT_SECONDS = ConnectionDeadlines::HANDSHAKE_TIMEOUT_SECONDS
     REGISTER_TIMEOUT_SECONDS = ConnectionDeadlines::REGISTER_TIMEOUT_SECONDS
+    # A socket refused under RUFLET_MAX_CONNECTIONS stays open this long
+    # after its 503, at most this many at once, so the request the client
+    # sent can be read and dropped before the socket closes.
+    REFUSED_LINGER_SECONDS = 0.5
+    MAX_LINGERING_REFUSALS = 64
 
     # The request line or headers ran past the limits above.
     class RequestHeadTooLarge < StandardError
@@ -52,6 +57,7 @@ module Ruflet
       @open_connections = 0
       @open_connections_mutex = Mutex.new
       @connection_limit_reported = false
+      @lingering_refusals = 0
 
       at_exit do
         begin
@@ -339,11 +345,51 @@ module Ruflet
 
       begin
         socket.write("HTTP/1.1 503 Service Unavailable\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+        socket.close_write
       rescue StandardError
         nil
       end
-      close_socket(socket)
+      linger_then_close(socket)
       nil
+    end
+
+    # Closing a socket whose input is still unread sends a reset instead of
+    # a normal close, and a client that gets the reset can lose the 503 it
+    # has not read yet. So the request is read and dropped first. The
+    # shared deadline thread does that after REFUSED_LINGER_SECONDS, which
+    # gives a request still in flight time to arrive without holding the
+    # accept loop; past MAX_LINGERING_REFUSALS, or where deadlines are not
+    # enforced, it happens at once.
+    def linger_then_close(socket)
+      deadlines = ConnectionDeadlines.shared
+      lingering = deadlines && @open_connections_mutex.synchronize do
+        if @lingering_refusals < MAX_LINGERING_REFUSALS
+          @lingering_refusals += 1
+          true
+        else
+          false
+        end
+      end
+      return discard_input_and_close(socket) unless lingering
+
+      deadlines.watch(socket, REFUSED_LINGER_SECONDS) do
+        begin
+          discard_input_and_close(socket)
+        ensure
+          @open_connections_mutex.synchronize { @lingering_refusals -= 1 }
+        end
+      end
+    end
+
+    def discard_input_and_close(socket)
+      16.times do
+        chunk = socket.read_nonblock(65_536)
+        break if chunk.nil? || chunk.empty?
+      end
+    rescue StandardError
+      nil
+    ensure
+      close_socket(socket)
     end
 
     def handle_socket(socket)
@@ -794,6 +840,10 @@ module Ruflet
       raise "Unsupported payload format"
     end
 
+    # This and normalize_event_data loop with while, not map or
+    # each_with_object, so each level of nesting costs one call. The embedded
+    # mruby VM allows 512 nested calls, and the block forms overflowed at
+    # about 106 levels, below WireCodec::MAX_NESTING_DEPTH.
     def normalize_incoming(value)
       case value
       when String
@@ -803,11 +853,23 @@ module Ruflet
       when Symbol
         value.to_s
       when Array
-        value.map { |v| normalize_incoming(v) }
-      when Hash
-        value.each_with_object({}) do |(k, v), out|
-          out[k.to_s] = normalize_incoming(v)
+        out = []
+        index = 0
+        while index < value.length
+          out << normalize_incoming(value[index])
+          index += 1
         end
+        out
+      when Hash
+        out = {}
+        pairs = value.to_a
+        index = 0
+        while index < pairs.length
+          key, entry = pairs[index]
+          out[key.to_s] = normalize_incoming(entry)
+          index += 1
+        end
+        out
       else
         value.to_s
       end
@@ -911,9 +973,23 @@ module Ruflet
     def normalize_event_data(value)
       case value
       when Hash
-        value.each_with_object({}) { |(k, v), out| out[k.to_sym] = normalize_event_data(v) }
+        out = {}
+        pairs = value.to_a
+        index = 0
+        while index < pairs.length
+          key, entry = pairs[index]
+          out[key.to_sym] = normalize_event_data(entry)
+          index += 1
+        end
+        out
       when Array
-        value.map { |entry| normalize_event_data(entry) }
+        out = []
+        index = 0
+        while index < value.length
+          out << normalize_event_data(value[index])
+          index += 1
+        end
+        out
       else
         value
       end

@@ -91,11 +91,16 @@ class RufletInProcessConnectionTest < Minitest::Test
     error = assert_raises(Ruflet::MessageTooLargeError) { connection.read_message }
     assert_kind_of ArgumentError, error
     assert_same error, connection.message_limit_error
-    assert_includes error.message, "a client message of at least 65 bytes exceeds the 64-byte limit"
+    assert_includes error.message, "a client message of at least 65 bytes exceeds the 64-byte limit, so the connection was closed"
     assert_includes error.message, "RUFLET_MAX_MESSAGE_BYTES"
 
+    # Refusing to send a message does not close anything, so its error
+    # must not say it did.
     outgoing = assert_raises(Ruflet::MessageTooLargeError) { connection.send_binary("c" * 65) }
-    assert_includes outgoing.message, "a 65-byte message to the client exceeds the 64-byte limit"
+    assert_includes outgoing.message, "a 65-byte message to the client exceeds the 64-byte limit, so it was not sent"
+    refute_includes outgoing.message, "closed"
+    assert_includes outgoing.message, "RUFLET_MAX_MESSAGE_BYTES"
+    assert_empty bridge.written
   ensure
     ENV["RUFLET_MAX_MESSAGE_BYTES"] = previous
   end
@@ -122,5 +127,47 @@ class RufletInProcessConnectionTest < Minitest::Test
     assert_includes crashed, Ruflet::Protocol::ACTIONS[:session_crashed]
   ensure
     ENV["RUFLET_MAX_MESSAGE_BYTES"] = previous
+  end
+
+  # A Ruflet::ConnectionProtocol host (ruflet_rails' endpoint) over the
+  # in-process transport, whose read_message raises instead of returning
+  # nil: the error reaches run_connection's rescue and close_connection,
+  # and is logged once, not by both.
+  class ProtocolHost
+    include Ruflet::ConnectionProtocol
+
+    attr_reader :logged
+
+    def initialize(&app)
+      @app_block = app
+      @sessions = {}
+      @sessions_mutex = Mutex.new
+      @logged = []
+    end
+
+    def log_connection_error(error)
+      @logged << "#{error.class}: #{error.message}"
+    end
+  end
+
+  def test_connection_protocol_logs_an_in_process_message_over_the_limit_once
+    register = Ruflet::WireCodec.pack([Ruflet::Protocol::ACTIONS[:register_client], { "session_id" => "s", "page" => { "route" => "/" } }])
+    bridge = FakeBridge.new([register, "x" * 5000])
+    results = []
+    host = ProtocolHost.new do |page|
+      page.invoke(1, "pick_files", timeout: nil, on_result: ->(result, error) { results << [result, error] })
+    end
+    connection = Ruflet::InProcessConnection.new(bridge: bridge, max_message_bytes: 4096)
+
+    host.run_connection(connection)
+
+    assert_equal 1, host.logged.size, host.logged.inspect
+    assert_match(/\ARuflet::MessageTooLargeError: a client message of at least 5000 bytes/, host.logged[0])
+    assert_equal 1, results.size
+    assert_nil results[0][0]
+    assert_includes results[0][1], "the 4096-byte limit"
+    sent = bridge.written.map { |bytes| Ruflet::WireCodec.unpack(bytes)[0] }
+    assert_includes sent, Ruflet::Protocol::ACTIONS[:session_crashed]
+    assert connection.closed?
   end
 end

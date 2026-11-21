@@ -175,6 +175,10 @@ module Ruflet
       raise "Unsupported payload format"
     end
 
+    # This and normalize_event_data loop with while, not map or
+    # each_with_object, so each level of nesting costs one call. The embedded
+    # mruby VM allows 512 nested calls, and the block forms overflowed at
+    # about 106 levels, below WireCodec::MAX_NESTING_DEPTH.
     def normalize_incoming(value)
       case value
       when String
@@ -184,11 +188,23 @@ module Ruflet
       when Symbol
         value.to_s
       when Array
-        value.map { |v| normalize_incoming(v) }
-      when Hash
-        value.each_with_object({}) do |(k, v), out|
-          out[k.to_s] = normalize_incoming(v)
+        out = []
+        index = 0
+        while index < value.length
+          out << normalize_incoming(value[index])
+          index += 1
         end
+        out
+      when Hash
+        out = {}
+        pairs = value.to_a
+        index = 0
+        while index < pairs.length
+          key, entry = pairs[index]
+          out[key.to_s] = normalize_incoming(entry)
+          index += 1
+        end
+        out
       else
         value.to_s
       end
@@ -281,9 +297,23 @@ module Ruflet
     def normalize_event_data(value)
       case value
       when Hash
-        value.each_with_object({}) { |(k, v), out| out[k.to_sym] = normalize_event_data(v) }
+        out = {}
+        pairs = value.to_a
+        index = 0
+        while index < pairs.length
+          key, entry = pairs[index]
+          out[key.to_sym] = normalize_event_data(entry)
+          index += 1
+        end
+        out
       when Array
-        value.map { |entry| normalize_event_data(entry) }
+        out = []
+        index = 0
+        while index < value.length
+          out << normalize_event_data(value[index])
+          index += 1
+        end
+        out
       else
         value
       end
