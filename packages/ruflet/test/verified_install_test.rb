@@ -60,6 +60,21 @@ class RufletCliVerifiedInstallTest < Minitest::Test
     end
   end
 
+  # The old copy moves aside instead of being deleted first, so a move that
+  # fails puts it back.
+  def test_a_failed_promote_keeps_the_previous_destination
+    Dir.mktmpdir do |dir|
+      dest = File.join(dir, "web")
+      FileUtils.mkdir_p(dest)
+      File.write(File.join(dest, "index.html"), "old")
+
+      assert_raises(SystemCallError) { VerifiedInstall.promote(File.join(dir, "web.partial-gone"), dest) }
+
+      assert_equal "old", File.read(File.join(dest, "index.html"))
+      assert_equal ["web"], Dir.children(dir)
+    end
+  end
+
   def test_a_failed_extraction_leaves_nothing_staged
     Dir.mktmpdir do |dir|
       dest = File.join(dir, "web")

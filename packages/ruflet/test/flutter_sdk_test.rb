@@ -462,8 +462,10 @@ class RufletCliFlutterSdkTest < Minitest::Test
         refute File.exist?(File.join(install_root, "flutter", ".ruflet-complete")), "the marker stays out of the SDK checkout"
         refute_includes calls[:extracted_into], install_root, "extraction must not write into the live install"
         assert_equal ["macos_arm64"], Dir.children(File.dirname(install_root)), "no staging directory is left behind"
-        assert_includes out, "Downloading Flutter 3.44.0 to #{install_root}."
-        assert_includes out, "RUFLET_FLUTTER_VERSION or .fvmrc"
+        # On stderr: stdout may be Flutter's own (`ruflet devices --machine`).
+        refute_includes out, "Downloading Flutter"
+        assert_includes err, "Downloading Flutter 3.44.0 to #{install_root}. To use your own SDK, put flutter on PATH, " \
+                             "or pin a version with RUFLET_FLUTTER_VERSION or .fvmrc."
         refute_includes err, "No SHA-256"
 
         # Installed: the next run downloads nothing.
@@ -479,9 +481,54 @@ class RufletCliFlutterSdkTest < Minitest::Test
       sdk.define_singleton_method(:remote_file_size) { |_url| 1_503_238_554 }
 
       with_singleton_method(Dir, :home, -> { home }) do
-        out, = capture_io { sdk.send(:ensure_flutter_sdk_downloaded, client_dir: nil) }
+        _out, err = capture_io { sdk.send(:ensure_flutter_sdk_downloaded, client_dir: nil) }
 
-        assert_includes out, "Downloading Flutter 3.44.0 (1.4 GB) to #{managed_root(home, '3.44.0')}."
+        assert_includes err, "Downloading Flutter 3.44.0 (1.4 GB) to #{managed_root(home, '3.44.0')}."
+      end
+    end
+  end
+
+  # A pin is never satisfied by the flutter on PATH, so the notice does not
+  # suggest it (or suggest pinning) when RUFLET_FLUTTER_VERSION or .fvmrc is set.
+  def test_the_download_notice_for_a_pinned_version_gives_no_hint
+    %i[env fvmrc].each do |source|
+      Dir.mktmpdir do |home|
+        sdk, = downloading_sdk({ version: "3.44.0", source: source })
+
+        with_singleton_method(Dir, :home, -> { home }) do
+          _out, err = capture_io { sdk.send(:ensure_flutter_sdk_downloaded, client_dir: nil) }
+
+          notice = err.lines.grep(/Downloading Flutter/)
+          assert_equal ["Downloading Flutter 3.44.0 to #{managed_root(home, '3.44.0')}.\n"], notice, source.to_s
+        end
+      end
+    end
+  end
+
+  # The install that got there first wins: a second process finishing the
+  # same download must not move an SDK a running build uses out of the way.
+  def test_an_install_finished_meanwhile_by_another_process_is_kept
+    Dir.mktmpdir do |home|
+      test = self
+      sdk, calls = downloading_sdk({ channel: "stable", source: :metadata })
+      install_root = managed_root(home, "3.44.0")
+      stage_extract = sdk.method(:extract_archive)
+      sdk.define_singleton_method(:extract_archive) do |archive, destination|
+        other = test.install_managed_sdk(home, "3.44.0")
+        File.write(File.join(other, "in-use"), "the other process's SDK")
+        File.write(File.join(install_root, ".ruflet-complete"), "{\"by\": \"the other process\"}")
+        stage_extract.call(archive, destination)
+      end
+
+      with_singleton_method(Dir, :home, -> { home }) do
+        sdk_root = nil
+        capture_io { sdk_root = sdk.send(:ensure_flutter_sdk_downloaded, client_dir: nil) }
+
+        assert_equal File.join(install_root, "flutter"), sdk_root
+        assert_equal 1, calls[:extracted_into].length
+        assert_equal "the other process's SDK", File.read(File.join(install_root, "flutter", "in-use"))
+        assert_equal "{\"by\": \"the other process\"}", File.read(File.join(install_root, ".ruflet-complete"))
+        assert_equal ["macos_arm64"], Dir.children(File.dirname(install_root)), "the staged copy is removed"
       end
     end
   end
@@ -627,6 +674,47 @@ class RufletCliFlutterSdkTest < Minitest::Test
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       refute DummySdk.new.send(:legacy_flutter_sdk_works?, flutter, timeout: 0.3)
       assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, :<, 10
+    end
+  end
+
+  # bin/flutter is a shell script; what it starts (a tool rebuild, a Dart
+  # SDK fetch) must not outlive the check.
+  def test_the_check_of_an_unmarked_sdk_also_stops_what_flutter_started
+    Dir.mktmpdir do |dir|
+      child_pid_file = File.join(dir, "child.pid")
+      flutter = File.join(dir, "flutter")
+      File.write(flutter, "#!/bin/sh\nsleep 30 &\necho $! > '#{child_pid_file}'\nwait\n")
+      FileUtils.chmod("+x", flutter)
+
+      refute DummySdk.new.send(:legacy_flutter_sdk_works?, flutter, timeout: 2)
+      child = Integer(File.read(child_pid_file).strip, 10)
+      if Ruflet::CLI::VerifiedInstall.process_alive?(child)
+        Process.kill("KILL", child)
+        flunk "the child flutter started (#{child}) still runs after the check"
+      end
+    end
+  end
+
+  def test_the_check_of_an_unmarked_sdk_stops_flutter_when_interrupted
+    Dir.mktmpdir do |dir|
+      pid_file = File.join(dir, "flutter.pid")
+      flutter = File.join(dir, "flutter")
+      File.write(flutter, "#!/bin/sh\necho $$ > '#{pid_file}'\nexec sleep 30\n")
+      FileUtils.chmod("+x", flutter)
+      sdk = DummySdk.new
+      sdk.define_singleton_method(:sleep) do |_seconds|
+        raise Interrupt if File.size?(pid_file)
+
+        Kernel.sleep(0.05)
+      end
+
+      assert_raises(Interrupt) { sdk.send(:legacy_flutter_sdk_works?, flutter, timeout: 10) }
+      flutter_pid = Integer(File.read(pid_file).strip, 10)
+      if Ruflet::CLI::VerifiedInstall.process_alive?(flutter_pid)
+        Process.kill("KILL", flutter_pid)
+        Process.wait(flutter_pid)
+        flunk "flutter (#{flutter_pid}) still runs after Ctrl-C"
+      end
     end
   end
 

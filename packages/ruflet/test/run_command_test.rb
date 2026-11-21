@@ -1462,7 +1462,10 @@ class RufletCliRunCommandTest < Minitest::Test
         ]
         runner, cache, = client_runner(dir, releases, "https://example.test/1.tar.gz" => build1, "https://example.test/2.tar.gz" => truncated)
         capture_io { runner.send(:ensure_prebuilt_client, web: true, platform: "macos") }
-        checked_at = read_manifest(cache)["checked_at"]
+        # A time no check can write, so a refused refresh that marked the
+        # cache as checked shows even within the same second.
+        checked_at = "2001-01-01T00:00:00Z"
+        File.write(File.join(cache, "manifest.json"), JSON.generate(read_manifest(cache).merge("checked_at" => checked_at)))
 
         # `ruflet run --web`: the newer build is refused, the cached one used.
         root = :unset

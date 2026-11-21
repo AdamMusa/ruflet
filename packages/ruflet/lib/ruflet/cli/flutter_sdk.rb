@@ -194,7 +194,8 @@ module Ruflet
         sdk_root = File.join(install_root, "flutter")
         return sdk_root if managed_flutter_sdk_complete?(install_root)
 
-        installed = install_managed_flutter_sdk(release, install_root)
+        pinned = %i[env fvmrc].include?(desired_flutter_spec(client_dir: client_dir)[:source])
+        installed = install_managed_flutter_sdk(release, install_root, pinned: pinned)
         return installed if installed
 
         installed_flutter_sdk_after_failed_install(client_dir)
@@ -215,11 +216,11 @@ module Ruflet
       # release manifest lists for it, unpacks it beside install_root and
       # swaps it into place with the complete marker. Returns the SDK root, or
       # nil after warning why; whatever install_root held before is kept then.
-      def install_managed_flutter_sdk(release, install_root)
+      def install_managed_flutter_sdk(release, install_root, pinned: false)
         archive = release.fetch("archive")
         url = "#{RELEASES_BASE}/#{archive}"
         label = File.basename(archive)
-        announce_managed_flutter_sdk_download(release, url, install_root)
+        announce_managed_flutter_sdk_download(release, url, install_root, pinned: pinned)
         FileUtils.mkdir_p(File.dirname(install_root))
         staging = nil
         Dir.mktmpdir("ruflet-flutter-sdk-") do |tmpdir|
@@ -271,11 +272,17 @@ module Ruflet
           File.executable?(File.join(install_root, sdk_dir, "bin", flutter_executable_name))
       end
 
-      def announce_managed_flutter_sdk_download(release, url, install_root)
+      # On stderr, so a command whose stdout is Flutter's (`ruflet devices
+      # --machine`) stays parseable. The hint only applies without a pin: a
+      # pinned version is never taken from the flutter on PATH.
+      def announce_managed_flutter_sdk_download(release, url, install_root, pinned: false)
         size = remote_file_size(url)
         size_note = size ? " (#{VerifiedInstall.human_size(size)})" : ""
-        puts "Downloading Flutter #{release['version']}#{size_note} to #{install_root}. " \
-             "To use your own SDK, put flutter on PATH, or pin a version with RUFLET_FLUTTER_VERSION or .fvmrc."
+        notice = "Downloading Flutter #{release['version']}#{size_note} to #{install_root}."
+        unless pinned
+          notice += " To use your own SDK, put flutter on PATH, or pin a version with RUFLET_FLUTTER_VERSION or .fvmrc."
+        end
+        warn notice
       end
 
       def remote_file_size(url)
@@ -318,27 +325,52 @@ module Ruflet
       end
 
       # A partial SDK can try to rebuild its tool or fetch its Dart SDK, so
-      # the check gives up (and kills it) after `timeout` seconds.
+      # the check gives up after `timeout` seconds. bin/flutter is a script
+      # that starts those as children, so it runs in its own process group
+      # and the whole group is killed: a surviving child would keep running
+      # (and may hold bin/cache/lockfile). Ctrl-C during the check kills the
+      # group too, since a separate group does not get the terminal's SIGINT.
       def legacy_flutter_sdk_works?(flutter_bin, timeout: LEGACY_SDK_PROBE_SECONDS)
-        pid = Process.spawn(utf8_locale_env, flutter_bin, "--version", out: File::NULL, err: File::NULL, in: File::NULL)
+        group = windows_host? ? {} : { pgroup: true }
+        pid = Process.spawn(utf8_locale_env, flutter_bin, "--version", out: File::NULL, err: File::NULL, in: File::NULL, **group)
+        reaped = false
         deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
-        loop do
-          _, status = Process.wait2(pid, Process::WNOHANG)
-          return status.success? if status
+        begin
+          loop do
+            _, status = Process.wait2(pid, Process::WNOHANG)
+            if status
+              reaped = true
+              return status.success?
+            end
+            return false if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
 
-          if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+            sleep 0.1
+          end
+        ensure
+          unless reaped
+            kill_process_tree(pid)
             begin
-              Process.kill("KILL", pid)
-            rescue Errno::ESRCH
+              Process.wait(pid)
+            rescue SystemCallError
               nil
             end
-            Process.wait(pid)
-            return false
           end
-          sleep 0.1
         end
       rescue SystemCallError
         false
+      end
+
+      # pid leads its own process group off Windows; taskkill /T ends the
+      # tree there.
+      def kill_process_tree(pid)
+        if windows_host?
+          system("taskkill", "/T", "/F", "/PID", pid.to_s, out: File::NULL, err: File::NULL)
+          Process.kill("KILL", pid)
+        else
+          Process.kill("KILL", -pid)
+        end
+      rescue SystemCallError
+        nil
       end
 
       # An SDK ensure_flutter_sdk_downloaded installed earlier, found on disk
