@@ -463,6 +463,22 @@ class RufletNativeAppOriginTest < Minitest::Test
     end
   end
 
+  def test_a_blob_page_has_the_origin_of_the_page_that_made_it
+    start
+    visit("#{APP}/reports")
+    @sent.clear
+    visit("blob:#{APP}/0b6f3d2e-6a1c-4c55-9a4e-1f2d3c4b5a69")
+    assert_equal [Ruflet::Rails::NativeApp.html_adapter_js], scripts
+    action({ "component" => "clipboard", "text" => "from-own-blob" })
+    assert_sent "from-own-blob"
+    quietly { action({ "component" => "request", "url" => "blob:#{APP}/x", "method" => "post" }) }
+    refute_includes scripts.join, "csrf-token", "requests still go to http(s) URLs only"
+
+    visit("blob:#{OTHER}/0b6f3d2e-6a1c-4c55-9a4e-1f2d3c4b5a69")
+    quietly { action({ "component" => "clipboard", "text" => "from-foreign-blob" }) }
+    refute_sent "from-foreign-blob"
+  end
+
   def test_own_sheet_whose_url_uri_rejects_gets_the_adapter
     start
     action({ "action" => "sheet", "url" => "/items/[3]/edit" })

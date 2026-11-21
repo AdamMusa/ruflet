@@ -358,6 +358,10 @@ Ruflet::Rails.native_shell(
 )
 ```
 
+The shell checks nothing when `start_url` has no `http(s)` origin it can read
+and no `trusted_origins:` are given. Examples are a `file:` URL, or a host
+written in Unicode; write such a host in its ASCII `xn--` form.
+
 The same rule covers sheets, which check the page in the sheet itself.
 Request actions (`component: "request"`, or the `post`/`put`/`patch`/`delete`
 modes) only run against `http(s)` URLs on a trusted origin, and only inside a

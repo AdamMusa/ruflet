@@ -83,6 +83,12 @@ module Ruflet
         !origin.nil? && @trusted_origins.include?(origin)
       end
 
+      # Whether a page the WebView reports is on a trusted origin. A blob: page
+      # (blob:https://myapp.com/<id>) has the origin of the page that made it.
+      def page_url_trusted?(url)
+        trusted_origin?(url_text(url).sub(/\Ablob:/i, ""))
+      end
+
       URL_SCHEME = /\A[a-zA-Z][a-zA-Z0-9+.-]*:/
       URL_AUTHORITY = %r{\A([a-zA-Z][a-zA-Z0-9+.-]*)://([^/\\?#]*)}
       URL_HOST_PORT = /\A(\[[0-9a-fA-F:.]+\]|[a-zA-Z0-9\-._~!$&'()*+,;=]+)(?::(\d*))?\z/
@@ -157,7 +163,7 @@ module Ruflet
       # A sheet URL that stays relative (URI could not resolve it) is on the
       # origin of the page or code that opened the sheet.
       def new_bridge_frame(url)
-        BridgeFrame.new(trusted: trusted_origin?(url) || same_origin_reference?(url), nonces: [], url: url.to_s)
+        BridgeFrame.new(trusted: page_url_trusted?(url) || same_origin_reference?(url), nonces: [], url: url.to_s)
       end
 
       # A URL the frame's WebView reported (page_started, url_change,
@@ -173,7 +179,7 @@ module Ruflet
         return if url.empty? || url == "about:blank"
 
         frame.url = url
-        if trusted_origin?(url)
+        if page_url_trusted?(url)
           verify_frame(frame, probe) if probe && !frame.trusted
         else
           frame.trusted = false
@@ -188,7 +194,7 @@ module Ruflet
       # about to replace.
       def verify_frame(frame, webview, adapter: nil)
         return unless origin_checks? && webview.respond_to?(:run_javascript)
-        return unless trusted_origin?(frame.url)
+        return unless page_url_trusted?(frame.url)
 
         nonce = SecureRandom.hex(16)
         frame.nonces << nonce
@@ -245,7 +251,7 @@ module Ruflet
       def sync_page_chrome(screen, url)
         if @main_frame.trusted
           inject_html_adapter(screen)
-        elsif trusted_origin?(url)
+        elsif page_url_trusted?(url)
           verify_frame(@main_frame, screen.webview, adapter: self.class.html_adapter_js)
         else
           clear_untrusted_chrome(screen)
@@ -257,7 +263,7 @@ module Ruflet
       def sync_sheet_page(frame, sheet_webview, url)
         if frame.trusted
           inject_html_adapter_for(sheet_webview, sheet: true)
-        elsif trusted_origin?(url)
+        elsif page_url_trusted?(url)
           verify_frame(frame, sheet_webview, adapter: self.class.html_adapter_js(sheet: true))
         end
       end
