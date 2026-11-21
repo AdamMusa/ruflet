@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "fileutils"
 
 class RufletCliNewCommandTest < Minitest::Test
   def test_command_new_creates_project_scaffold
@@ -252,6 +253,61 @@ class RufletCliNewCommandTest < Minitest::Test
       cli_singleton.send(:define_method, :ensure_cached_ruflet_client_template!, original_cache_method)
       cli_singleton.send(:private, :resolve_ruflet_client_template_root)
       cli_singleton.send(:private, :ensure_cached_ruflet_client_template!)
+    end
+  end
+
+  def test_command_new_requires_an_app_name
+    [[], [""], ["  "]].each do |argv|
+      _out, err = capture_io { assert_equal 1, Ruflet::CLI.command_new(argv.dup), argv.inspect }
+      assert_includes err, "Usage: ruflet new <appname>"
+    end
+  end
+
+  def test_command_new_refuses_an_existing_directory
+    Dir.mktmpdir do |dir|
+      Dir.chdir(dir) do
+        FileUtils.mkdir_p("taken")
+        _out, err = capture_io { assert_equal 1, Ruflet::CLI.command_new(["taken"]) }
+        assert_includes err, "Directory already exists:"
+        assert_empty Dir.children(File.join(dir, "taken"))
+      end
+    end
+  end
+
+  # `new` takes no options, so the CLI stops for a dashed word before the
+  # scaffold runs (#78): help for -h/--help, a usage error for anything else.
+  # Nothing named after the flag is created.
+  def test_dashed_words_after_new_are_help_or_usage_errors_not_app_names
+    Dir.mktmpdir do |dir|
+      Dir.chdir(dir) do
+        new_help = Ruflet::CLI::Commands.lookup("new").help_text
+        Ruflet::CLI.stub(:download_ruflet_assets, ->(*) { flunk("no template fetch for help or a usage error") }) do
+          %w[-h --help].each do |flag|
+            out, err = capture_io { assert_equal 0, Ruflet::CLI.run(["new", flag]), flag }
+            assert_equal new_help, out, flag
+            assert_empty err, flag
+          end
+          %w[--force -x].each do |flag|
+            out, err = capture_io { assert_equal 64, Ruflet::CLI.run(["new", flag]), flag }
+            assert_empty out, flag
+            assert_equal "ruflet new: invalid option: #{flag}\n\n#{new_help}", err, flag
+          end
+        end
+        assert_empty Dir.children(dir)
+      end
+    end
+  end
+
+  def test_create_and_the_new_aliases_scaffold_through_the_dispatcher
+    Dir.mktmpdir do |dir|
+      Dir.chdir(dir) do
+        Ruflet::CLI.stub(:download_ruflet_assets, ->(*) {}) do
+          %w[create new bootstrap init].each do |command|
+            capture_io { assert_equal 0, Ruflet::CLI.run([command, "#{command}_app"]) }
+            assert File.file?(File.join(dir, "#{command}_app", "main.rb")), command
+          end
+        end
+      end
     end
   end
 end

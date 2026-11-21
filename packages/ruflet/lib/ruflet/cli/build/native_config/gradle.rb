@@ -19,6 +19,11 @@ module Ruflet
           # so nobody has to edit build/client by hand. Either keep an
           # android/key.properties beside the app, or set the RUFLET_ANDROID_*
           # variables. Without one of those, Gradle falls back to the debug key.
+          #
+          # Returns false for a partial configuration, which fails the build like
+          # every other build config error. It used to warn and carry on, and
+          # Gradle signed with whatever key.properties an earlier build had left
+          # in the client (or the debug key).
           def apply_android_signing_config(client_dir, platform, verbose: false)
             return unless %w[apk android aab appbundle].include?(platform.to_s)
 
@@ -35,9 +40,11 @@ module Ruflet
 
             missing = ANDROID_SIGNING_KEYS.keys - properties.keys
             unless missing.empty?
-              warn "build config error: Android signing is missing #{missing.join(', ')}"
+              # Name the source: once one RUFLET_ANDROID_* variable is set, the
+              # environment replaces android/key.properties entirely.
+              warn "build config error: Android signing from #{properties.fetch("_source")} is missing #{missing.join(', ')}"
               warn "Set them in android/key.properties or the matching RUFLET_ANDROID_* variables."
-              return
+              return false
             end
 
             body = ANDROID_SIGNING_KEYS.keys.map { |key| "#{key}=#{properties.fetch(key)}" }.join("\n")

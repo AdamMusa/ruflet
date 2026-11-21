@@ -100,7 +100,7 @@ module Ruflet
         verbose = args.delete("--verbose") || args.delete("-v")
         platform = extract_build_target!(args)
         if platform.empty?
-          warn "Usage: ruflet build <apk|android|aab|ios|ipa|web|macos|windows|linux> [--lite|--full|--self] [--verbose]"
+          warn "Usage: ruflet build <apk|android|aab|appbundle|ios|ipa|web|macos|windows|linux> [--lite|--full|--self] [--verbose]"
           return 1
         end
 
