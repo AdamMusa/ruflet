@@ -48,8 +48,8 @@ module Ruflet
         private
 
         # A browser sends Origin with every WebSocket handshake; native
-        # clients send none. An Origin that is neither the app's own address
-        # nor localhost is logged once, and accepted as before until
+        # clients send none. An Origin that is neither the app's own host
+        # (any port) nor localhost is logged once, and accepted as before until
         # Ruflet::Rails.config.allowed_origins (or RUFLET_ALLOWED_ORIGINS) is
         # set. Once it is, other foreign origins get a 403. See
         # Ruflet::OriginPolicy.

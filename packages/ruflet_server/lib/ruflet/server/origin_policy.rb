@@ -14,9 +14,12 @@ module Ruflet
   # - it carries no Origin (native clients and tools);
   # - its Origin is served from this machine (localhost, *.localhost,
   #   127.x.x.x, ::1, 0.0.0.0);
-  # - its Origin is the address the request was sent to (the Host or
-  #   X-Forwarded-Host header). That covers the web client `ruflet run --web`
-  #   serves from its own port, opened on localhost or on a LAN address;
+  # - its Origin's host is the host the request was sent to (the Host or
+  #   X-Forwarded-Host header), on any port. That covers the web client
+  #   `ruflet run --web` serves from its own port and a web build served from
+  #   another port of the same machine, opened on localhost or on a LAN
+  #   address. A page that could rebind that name could already use the
+  #   server's own port, so allowing the other ports adds no exposure;
   # - its Origin is in allowed_origins. "*" allows every Origin.
   #
   # Any other Origin is foreign. An enforcing policy refuses it. A
@@ -89,7 +92,7 @@ module Ruflet
     end
 
     # True when the Origin is one that never needs a warning: absent, local,
-    # this server's own address, or listed.
+    # this server's own host, or listed.
     def allowed_without_warning?(origin, hosts = [])
       return true if origin.nil? || origin.to_s.strip.empty?
       return true if @allow_all
@@ -122,12 +125,22 @@ module Ruflet
 
     def refused_message(origin)
       "Ruflet: refused a WebSocket connection from Origin #{describe(origin)}: " \
-        "only this server's own address, localhost and allowed origins may connect. " \
-        "To allow it, add #{suggestion(origin)} to #{@setting_hint}."
+        "only pages on this server's own host, localhost and allowed origins may connect. " \
+        "#{refused_hint(origin)}"
+    end
+
+    # An Origin such as "null" (a file:// page or a sandboxed iframe) cannot
+    # be listed, since entries are scheme://host[:port]; only "*" allows it.
+    def refused_hint(origin)
+      parsed = parse_origin(origin)
+      return "To allow it, add #{format_origin(parsed)} to #{@setting_hint}." if parsed
+
+      "That Origin cannot be listed in #{@setting_hint}, which takes scheme://host[:port] entries; " \
+        "only \"*\" there allows it, together with every other origin."
     end
 
     def accepted_message(origin)
-      "Ruflet: accepted a WebSocket connection from Origin #{describe(origin)}, which is not this server's address. " \
+      "Ruflet: accepted a WebSocket connection from Origin #{describe(origin)}, which is not this server's host. " \
         "A page on that origin can read and drive this app from a visitor's browser. " \
         "Set #{@setting_hint} to the origins your web clients are served from to refuse the others " \
         "(\"*\" allows every origin and silences this warning)."
@@ -137,11 +150,6 @@ module Ruflet
       text = origin.to_s
       text = "#{text[0, 200]}..." if text.length > 200
       text.inspect
-    end
-
-    def suggestion(origin)
-      parsed = parse_origin(origin)
-      parsed ? format_origin(parsed) : "that origin"
     end
 
     def emit(message)
@@ -168,21 +176,16 @@ module Ruflet
       parts.all? { |part| digits?(part) && part.to_i <= 255 }
     end
 
+    # The port is not compared: a page on another port of the host the
+    # request was sent to is served by the same machine or proxy.
     def same_host?(parsed, hosts)
-      scheme, host, port = parsed
+      host = parsed[1]
       hosts.each do |raw|
         next if raw.nil?
 
         raw.to_s.split(",").each do |value|
           authority = split_authority(value.strip.downcase)
-          next unless authority
-
-          request_host, request_port = authority
-          next unless request_host == host
-
-          # A Host header leaves out the port when it is the default one for
-          # the scheme the page used.
-          return true if request_port.nil? ? port == DEFAULT_PORTS[scheme] : request_port == port
+          return true if authority && authority[0] == host
         end
       end
       false

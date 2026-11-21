@@ -42,7 +42,7 @@ module Ruflet
       # and by the desktop launcher.
       attr_accessor :backend_url
 
-      # Browser origins, besides the app's own address and localhost, that
+      # Browser origins, besides the app's own host and localhost, that
       # may open the Ruflet WebSocket endpoint, e.g.
       # %w[https://app.example.com]. "*" allows every origin.
       # RUFLET_ALLOWED_ORIGINS adds to it.

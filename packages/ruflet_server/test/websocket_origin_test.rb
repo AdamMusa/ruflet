@@ -82,6 +82,28 @@ class RufletWebSocketOriginTest < Minitest::Test
     assert_app_served(origin: "http://192.168.1.242:#{@server.port}", host: "192.168.1.242:#{@server.port}")
   end
 
+  # `ruflet build web` with app.backend_url set to the LAN URL `ruflet run`
+  # prints, served from another port of the dev machine and opened on a
+  # phone through the LAN address.
+  def test_dev_server_serves_a_web_build_on_another_port_of_its_lan_address
+    ENV["RUFLET_TARGET"] = "mobile"
+    start_server
+
+    assert_app_served(origin: "http://192.168.1.242:8000", host: "192.168.1.242:#{@server.port}")
+    refute_includes @log.string, "WebSocket connection from Origin"
+  end
+
+  def test_dev_server_refuses_a_page_on_another_lan_machine
+    ENV["RUFLET_TARGET"] = "mobile"
+    start_server
+
+    socket, status = handshake(origin: "http://192.168.1.50:8000", host: "192.168.1.242:#{@server.port}")
+    assert_equal "HTTP/1.1 403 Forbidden", status
+    assert_equal 0, @handler_runs.size
+  ensure
+    socket&.close
+  end
+
   def test_dev_server_serves_a_page_on_another_local_port
     ENV["RUFLET_TARGET"] = "mobile"
     start_server

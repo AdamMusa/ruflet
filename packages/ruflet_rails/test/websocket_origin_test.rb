@@ -43,6 +43,7 @@ class RufletRailsWebSocketOriginTest < Minitest::Test
     endpoint = build_endpoint
 
     assert_equal(-1, upgrade(endpoint, origin: "https://myapp.example").first)
+    assert_equal(-1, upgrade(endpoint, origin: "http://myapp.example:8000").first)
     assert_equal(-1, upgrade(endpoint, origin: nil).first)
     assert_equal(-1, upgrade(endpoint, origin: "https://myapp.example", host: "127.0.0.1:3000",
                                        forwarded_host: "myapp.example").first)

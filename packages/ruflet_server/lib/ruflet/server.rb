@@ -17,7 +17,7 @@ module Ruflet
     WEBSOCKET_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
     TASK_IO_POLL_INTERVAL = 0.01
 
-    # allowed_origins: browser origins, besides this server's own address and
+    # allowed_origins: browser origins, besides this server's own host and
     # localhost, that may open the WebSocket (an Array or a comma-separated
     # String; "*" allows every origin). RUFLET_ALLOWED_ORIGINS adds to it.
     # See Ruflet::OriginPolicy and #websocket_origin_allowed?.
@@ -380,12 +380,13 @@ module Ruflet
     end
 
     # A browser sends Origin with every WebSocket handshake; native Flutter
-    # clients send none. Under `ruflet run` a foreign Origin is refused: the
-    # web client it serves shares the server's origin and its native clients
-    # send no Origin, so only another site's page is turned away. Everywhere
-    # else (Ruflet.run in production, the embedded runtime, custom hosts) a
-    # foreign Origin is still accepted, with a warning, until allowed_origins
-    # or RUFLET_ALLOWED_ORIGINS is set.
+    # clients send none. Under `ruflet run` a foreign Origin is refused: its
+    # native clients send no Origin, and the web client it serves (or a web
+    # build served from another port of that machine) is on the host the
+    # socket was opened to, so only a page on another host is turned away.
+    # Everywhere else (Ruflet.run in production, the embedded runtime, custom
+    # hosts) a foreign Origin is still accepted, with a warning, until
+    # allowed_origins or RUFLET_ALLOWED_ORIGINS is set.
     def websocket_origin_allowed?(headers)
       origin_policy.allow?(headers["origin"], [headers["host"], headers["x-forwarded-host"]])
     end

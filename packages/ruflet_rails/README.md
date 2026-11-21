@@ -59,8 +59,8 @@ The Rails gem does not install or serve a second static web application.
 
 Native clients send no `Origin` header. When a browser page from another site
 opens the endpoint, the endpoint logs a warning once per origin and accepts the
-connection. To make it refuse origins other than the app's own address and
-localhost, list the origins that may connect:
+connection. To make it refuse origins other than the app's own host (on any
+port) and localhost, list the origins that may connect:
 
 ```ruby
 Ruflet::Rails.configure do |config|
@@ -69,7 +69,8 @@ end
 ```
 
 `RUFLET_ALLOWED_ORIGINS` (comma-separated) adds to that list. `"*"` accepts
-every origin without a warning.
+every origin without a warning; it is also the only way to accept
+`Origin: null`, which `file://` pages and sandboxed iframes send.
 
 ## Build native clients from Rails
 

@@ -51,13 +51,30 @@ class RufletOriginPolicyTest < Minitest::Test
     assert enforcing.allow?("http://[fe80::1]:8550", ["[fe80::1]:8550"])
   end
 
-  def test_another_port_or_host_is_foreign
+  # A web build served from another port of the dev machine, opened on its
+  # LAN address and pointed at `ruflet run` (app.backend_url).
+  def test_another_port_of_the_server_s_host_is_allowed
     enforcing = policy(enforce: true)
 
-    refute enforcing.allow?("http://192.168.1.242:9000", ["192.168.1.242:8550"])
+    assert enforcing.allow?("http://192.168.1.242:8000", ["192.168.1.242:8550"])
+    assert enforcing.allow?("http://192.168.1.242", ["192.168.1.242:8550"])
+    assert enforcing.allow?("https://app.example.com:8443", ["app.example.com"])
+    assert enforcing.allow?("https://app.example.com", ["app.example.com:80"])
+    assert enforcing.allow?("http://[fe80::1]:8000", ["[fe80::1]:8550"])
+    assert enforcing.allow?("https://dev.example.com:8443", ["127.0.0.1:8550", "dev.example.com"])
+    assert_empty @messages
+  end
+
+  def test_another_host_is_foreign
+    enforcing = policy(enforce: true)
+
     refute enforcing.allow?("http://192.168.1.50:8550", ["192.168.1.242:8550"])
-    refute enforcing.allow?("https://app.example.com:8443", ["app.example.com"])
-    refute enforcing.allow?("https://app.example.com", ["app.example.com:80"])
+    refute enforcing.allow?("http://192.168.1.2:8550", ["192.168.1.242:8550"])
+    refute enforcing.allow?("http://192.168.1.242:8550", ["192.168.1.24:8550"])
+    refute enforcing.allow?("https://evil.app.example.com", ["app.example.com"])
+    refute enforcing.allow?("https://app.example.com", ["evil.app.example.com"])
+    refute enforcing.allow?("http://[fe80::2]:8550", ["[fe80::1]:8550"])
+    refute enforcing.allow?("https://evil.example", ["evil.example.attacker.test"])
     refute enforcing.allow?("https://evil.example", [nil])
     refute enforcing.allow?("https://evil.example", [])
   end
@@ -133,7 +150,25 @@ class RufletOriginPolicyTest < Minitest::Test
 
     assert_equal 1, @messages.size
     refute_includes @messages.first, "\e"
-    assert_includes @messages.first, "that origin"
+    assert_includes @messages.first, "cannot be listed"
+  end
+
+  # file:// pages and sandboxed iframes send "Origin: null", which is not a
+  # scheme://host[:port] entry, so the hint must not say to list it.
+  def test_an_unlistable_origin_is_refused_with_a_hint_that_works
+    enforcing = policy(enforce: true)
+
+    refute enforcing.allow?("null", ["127.0.0.1:8550"])
+    assert_equal 1, @messages.size
+    refute_includes @messages.first, "add null"
+    assert_includes @messages.first, 'That Origin cannot be listed in RUFLET_ALLOWED_ORIGINS'
+    assert_includes @messages.first, 'only "*" there allows it'
+
+    @messages.clear
+    listed = policy(allowed_origins: "null")
+    refute listed.allow?("null", ["127.0.0.1:8550"]), "listing null is ignored, as the hint says"
+    assert_includes @messages.first, 'ignoring allowed origin "null"'
+    assert policy(allowed_origins: "*").allow?("null", ["127.0.0.1:8550"]), "the hint's remedy works"
   end
 
   def test_invalid_allowed_entries_are_reported_and_still_enforce
