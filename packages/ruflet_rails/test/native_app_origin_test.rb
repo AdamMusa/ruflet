@@ -187,10 +187,7 @@ class RufletNativeAppOriginTest < Minitest::Test
              webview: sheet_webview)
     end
 
-    refute_includes scripts.join, "csrf-token", "no request form is built"
-    assert_equal [sheet_webview.wire_id], run_javascript_calls.map { |_a, p| p["control_id"] },
-                 "only the sheet is probed (its origin check fails there), the app's page gets nothing"
-    refute_includes scripts.first, "addEventListener", "a bare probe, no adapter"
+    assert_empty run_javascript_calls, "no request form in the app's page, and no probe for a page on another origin"
     refute_sent "attacker-text"
     assert_equal "#{APP}/dashboard", body_webview.props["url"]
     assert_includes err, "native_shell ignored ruflet:action from https://help.thirdparty.example"
@@ -258,6 +255,50 @@ class RufletNativeAppOriginTest < Minitest::Test
     assert_equal "Welcome back", find(find(@page.views.last, "appbar"), "text").props["value"]
   end
 
+  def test_adapter_runs_only_once_the_probe_origin_check_passes
+    start
+    visit("#{OTHER}/oauth")
+    @sent.clear
+    visit("#{APP}/callback")
+    probe = scripts.first
+    adapter = Ruflet::Rails::NativeApp.html_adapter_js
+
+    assert probe.end_with?("#{adapter}})();\n"), "the adapter is the last thing inside the probe function"
+    assert probe.index("return;") < probe.index(adapter)
+
+    node = ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).map { |dir| File.join(dir, "node") }
+              .find { |path| File.executable?(path) }
+    skip "node is not installed" unless node
+
+    { "https://myapp.com" => true, "https://other.example" => false }.each do |origin, trusted|
+      lines = run_probe_in_node(node, probe, origin)
+      if trusted
+        assert_equal "ruflet:trust:#{probe_token(probe)}", lines.first
+        assert_includes lines, %(ruflet:appbar:{"absent":true}), "the adapter ran on #{origin}"
+      else
+        assert_empty lines, "neither the token nor the adapter ran on #{origin}"
+      end
+    end
+  end
+
+  def run_probe_in_node(node, probe, origin)
+    harness = <<~JS
+      var lines = [];
+      var console = { log: function (line) { lines.push(String(line)); } };
+      var document = { querySelector: function () { return null; }, addEventListener: function () {} };
+      var window = { location: { origin: #{origin.to_json} }, innerWidth: 400 };
+      #{probe}
+      process.stdout.write(JSON.stringify(lines));
+    JS
+    path = File.join(Dir.tmpdir, "ruflet_probe_#{Process.pid}_#{SecureRandom.hex(4)}.js")
+    File.write(path, harness)
+    out = IO.popen([node, path], err: %i[child out], &:read)
+    assert $?.success?, out
+    JSON.parse(out)
+  ensure
+    File.delete(path) if path && File.exist?(path)
+  end
+
   def test_a_reported_url_alone_does_not_restore_trust
     start
     visit("#{OTHER}/landing")
@@ -306,7 +347,10 @@ class RufletNativeAppOriginTest < Minitest::Test
 
   def test_untrusted_message_sends_one_probe_until_it_is_answered
     start
-    event(body_webview, "url_change", "#{OTHER}/x")
+    visit("#{OTHER}/x")
+    # Android reports page_started when the next page commits; the adapter
+    # only comes with its page_ended.
+    event(body_webview, "page_started", "#{APP}/y")
     @sent.clear
 
     quietly do
@@ -319,6 +363,154 @@ class RufletNativeAppOriginTest < Minitest::Test
     answer_probe
     action({ "component" => "clipboard", "text" => "third" })
     assert_sent "third"
+  end
+
+  def test_url_change_sends_a_fresh_probe_while_an_earlier_one_is_unanswered
+    start
+    visit("#{OTHER}/landing")
+    event(body_webview, "url_change", "#{APP}/a") # the foreign page is still current and never answers
+    @sent.clear
+
+    # A back-forward cache restore reports only the URL.
+    event(body_webview, "url_change", "#{APP}/b")
+    assert_equal 1, scripts.length, "a fresh probe"
+    answer_probe
+    action({ "component" => "clipboard", "text" => "restored" })
+    assert_sent "restored"
+  end
+
+  def test_an_earlier_probe_still_counts_after_a_newer_one
+    start
+    visit("#{OTHER}/oauth")
+    visit("#{APP}/callback")
+    with_adapter = probe_token(scripts.last)
+    event(body_webview, "url_change", "#{APP}/home") # Turbo, before the page answered
+
+    log("ruflet:trust:#{with_adapter}")
+    log(%(ruflet:appbar:#{JSON.generate({ "title" => "Home" })}))
+    assert_equal "Home", find(find(@page.views.last, "appbar"), "text").props["value"]
+  end
+
+  # --- a navigation in flight -------------------------------------------
+
+  # iOS reports page_started and url_change as a navigation starts, while the
+  # app's page still runs; nothing reports the commit. A probe that page
+  # answered would hand its trust to the foreign page that replaces it.
+  def test_no_probe_while_a_navigation_to_another_origin_is_in_flight
+    start
+    visit("#{APP}/posts/1")
+    event(body_webview, "page_started", "#{OTHER}/landing")
+    event(body_webview, "url_change", "#{OTHER}/landing")
+    @sent.clear
+
+    quietly { action({ "component" => "clipboard", "text" => "tap-in-the-app-page" }) }
+    assert_empty run_javascript_calls, "no probe for the app's page to answer"
+    refute_sent "tap-in-the-app-page"
+
+    # The foreign page commits unannounced; its inline script runs.
+    quietly do
+      action({ "component" => "clipboard", "text" => "bc1-attacker-wallet" })
+      action({ "component" => "url", "url" => "tel:+19005550100" })
+    end
+    assert_empty run_javascript_calls
+    refute_sent "bc1-attacker-wallet"
+    refute_sent "tel:+19005550100"
+  end
+
+  def test_adapter_reports_racing_a_navigation_to_another_origin_send_no_probe
+    start
+    event(body_webview, "page_started", "#{APP}/posts/1")
+    event(body_webview, "page_ended", "#{APP}/posts/1")
+    event(body_webview, "page_started", "#{OTHER}/landing") # the user followed an external link
+    @sent.clear
+
+    quietly { log(%(ruflet:appbar:#{JSON.generate({ "absent" => true })})) } # the adapter, still in the app page
+    assert_empty run_javascript_calls
+    quietly { action({ "component" => "dialog", "title" => "Session expired" }) }
+    refute_sent "Session expired"
+  end
+
+  def test_a_navigation_to_another_origin_that_is_abandoned_is_verified_again
+    start
+    visit("#{APP}/posts/1")
+    event(body_webview, "page_started", "#{OTHER}/report.zip")
+    event(body_webview, "url_change", "#{OTHER}/report.zip")
+    quietly { action({ "component" => "clipboard", "text" => "dropped" }) }
+    @sent.clear
+
+    # A download never commits; WKWebView's URL goes back to the app's page.
+    event(body_webview, "url_change", "#{APP}/posts/1")
+    assert_equal 1, scripts.length
+    answer_probe
+    action({ "component" => "clipboard", "text" => "copied" })
+    assert_sent "copied"
+  end
+
+  # --- origins are read as the WebView reads them -------------------------
+
+  # The WebView reports these as they are; URI.parse rejects them.
+  OWN_URLS_URI_REJECTS = ["#{APP}/docs#intro#step-2", "#{APP}/tags/ruby|rails", "#{APP}/files/[draft]",
+                          "#{APP}/search?q=%zz"].freeze
+
+  def test_own_pages_whose_url_uri_rejects_keep_driving_the_shell
+    start
+    OWN_URLS_URI_REJECTS.each do |url|
+      @sent.clear
+      visit(url)
+      assert_equal [Ruflet::Rails::NativeApp.html_adapter_js], scripts, "#{url} gets the adapter"
+      action({ "component" => "clipboard", "text" => "copied on #{url}" })
+      assert_sent "copied on #{url}"
+    end
+  end
+
+  def test_userinfo_and_backslashes_do_not_hide_another_origin
+    ["https://myapp.com@other.example/", "https://other.example\\@myapp.com/", "https://other.example#@myapp.com",
+     "https://myapp.com:443@other.example/", "#{OTHER}/docs#a#b"].each do |url|
+      setup
+      start
+      visit("#{APP}/inbox")
+      event(body_webview, "page_started", url)
+      quietly { action({ "component" => "clipboard", "text" => "from #{url}" }) }
+      refute_sent "from #{url}", "#{url} is not on #{APP}"
+    end
+  end
+
+  def test_request_targets_are_read_as_the_webview_reads_them
+    start
+    visit("#{APP}/items")
+    @sent.clear
+
+    quietly do
+      ["https://myapp.com@other.example/x", "https://other.example\\@myapp.com/x", "https://other.example#@myapp.com",
+       "/\\other.example/x", "\\\\other.example/x", "/\t/other.example/x", " //other.example/x",
+       "java\tscript:alert(1)", " javascript:alert(1)", "https:\\\\other.example/x"].each do |url|
+        action({ "component" => "request", "url" => url, "method" => "delete" })
+      end
+    end
+    assert_empty run_javascript_calls
+
+    # The last one is https://myapp.com/@other.example/x to a WebView.
+    own = ["/items/ruby|rails", "?q=%zz", "#{APP}/items/[1]", "https://myapp.com\\@other.example/x"]
+    own.each { |url| action({ "component" => "request", "url" => url, "method" => "delete" }) }
+    assert_equal own.map { |url| %(form.action = #{url.to_json};) },
+                 scripts.map { |js| js[/form\.action = .*;/] }, "the form is built as before"
+  end
+
+  def test_relative_request_target_on_a_page_whose_url_uri_rejects
+    start
+    visit("#{APP}/docs#intro#step-2")
+    @sent.clear
+
+    quietly do
+      action({ "component" => "request", "url" => "//other.example/x", "method" => "delete" })
+      action({ "component" => "request", "url" => "/\\other.example/x", "method" => "delete" })
+    end
+    assert_empty run_javascript_calls
+
+    own = ["/items/1", "//myapp.com/items/2"]
+    own.each { |url| action({ "component" => "request", "url" => url, "method" => "delete" }) }
+    assert_equal own.map { |url| %(form.action = #{url.to_json};) },
+                 scripts.map { |js| js[/form\.action = .*;/] }, "the target stays relative, as before"
   end
 
   def test_plain_console_output_from_a_foreign_page_is_ignored_silently

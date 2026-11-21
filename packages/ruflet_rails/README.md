@@ -363,6 +363,16 @@ Request actions (`component: "request"`, or the `post`/`put`/`patch`/`delete`
 modes) only run against `http(s)` URLs on a trusted origin, and only inside a
 page on a trusted origin.
 
+After the WebView shows a page from another origin, the app's next page counts
+once the shell has checked it, a moment after it finishes loading. Lines it logs
+before that check are dropped. A line logged while a navigation to another
+origin is still loading is dropped too.
+
+Iframes are not covered. The WebView forwards the console lines of every frame
+in a page without saying which frame logged them. So an iframe from another
+origin inside one of the app's own pages can still drive the shell. Only embed
+iframes you trust in the pages the shell shows.
+
 ### Crossing web and native from HTML
 
 A tiny HTML adapter reads `data-ruflet-*` attributes from the rendered page and
