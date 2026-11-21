@@ -78,7 +78,10 @@ module Ruflet
       # client holds the session (a duplicated browser tab copies the id), so
       # the newcomer gets its own session instead. No reply means the old
       # socket is a dead connection the server has not noticed yet, and the
-      # reconnecting client resumes as before. nil or 0 skips the check.
+      # reconnecting client resumes as before. The reply is read by the
+      # owner socket's own loop, between its messages: while that client's
+      # handler runs longer than this, its reply is not read in time and the
+      # newcomer resumes the session too. nil or 0 skips the check.
       attr_accessor :session_resume_probe_timeout
 
       # Optional callable, called before a client resumes a session:

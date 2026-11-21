@@ -27,6 +27,9 @@ module Ruflet
           @sessions_mutex = Mutex.new
           @executions = {}
           @executions_mutex = Mutex.new
+          # session id => Page that allow_resume? let a client resume, kept
+          # until resume_session hands it over (see allow_resume?).
+          @resuming = {}
         end
 
         # Endpoint leaves the Rails executor to this server: one run per
@@ -51,18 +54,27 @@ module Ruflet
         # -- ConnectionProtocol hooks ------------------------------------
 
         def resume_session(session_id)
-          @session_registry[session_id]&.page
+          allowed = @sessions_mutex.synchronize { @resuming.delete(session_id) }
+          @session_registry[session_id]&.page || allowed
         end
 
         # A client may resume a session only when no other live socket owns
         # it and the app's session_resume_guard (if any) agrees. Otherwise it
         # gets a fresh session under a new id.
+        #
+        # The old socket of a reconnecting client can close while it is
+        # pinged (the peer resets, or a proxy drops the upstream), and its
+        # close removes the session from the registry. The Page found here is
+        # kept for resume_session, so the client resumes it as it did before
+        # the ping existed.
         def allow_resume?(session_id, ws)
           session = @session_registry[session_id]
           return true unless session
           return false unless resume_guard_allows?(session)
+          return false if owned_by_another_live_socket?(session, ws)
 
-          !owned_by_another_live_socket?(session, ws)
+          @sessions_mutex.synchronize { @resuming[session_id] = session.page }
+          true
         end
 
         def session_stored(page, ws)

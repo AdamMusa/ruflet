@@ -17,13 +17,16 @@ class RufletRailsSessionResumeTest < Minitest::Test
   ACTIONS = Ruflet::Protocol::ACTIONS
 
   # The client side of one WebSocket: a reader thread decodes binary frames
-  # into a queue and, like a browser, answers every ping.
+  # into a queue and, like a browser, answers every ping. closes_on_ping
+  # plays a connection that died without the server noticing, whose peer
+  # resets (or whose proxy closes the upstream) once the server writes to it.
   class Client
     attr_reader :session_id, :pings
 
-    def initialize(endpoint, cookie: nil, answers_pings: true)
+    def initialize(endpoint, cookie: nil, answers_pings: true, closes_on_ping: false)
       @server_io, @io = UNIXSocket.pair
       @answers_pings = answers_pings
+      @closes_on_ping = closes_on_ping
       @pings = 0
       @messages = Queue.new
       @write_mutex = Mutex.new
@@ -116,6 +119,10 @@ class RufletRailsSessionResumeTest < Minitest::Test
         when 0x2 then @messages << Ruflet::WireCodec.unpack(payload)
         when 0x9
           @pings += 1
+          if @closes_on_ping
+            @io.close
+            break
+          end
           write_frame(0xA, payload) if @answers_pings
         when 0x8 then break
         end
@@ -177,6 +184,20 @@ class RufletRailsSessionResumeTest < Minitest::Test
     end
   end
 
+  def counter_endpoint
+    Ruflet::Rails::Protocol::Runner.new do |page|
+      count = 0
+      label = Ruflet::UI::ControlFactory.build(:text, value: "count 0")
+      button = Ruflet::UI::ControlFactory.build(:button, content: "+1")
+      button.on(:click) do |_event|
+        count += 1
+        page.update(label, value: "count #{count}")
+      end
+      page.add(label)
+      page.add(button)
+    end.build_endpoint(path: "/ws")
+  end
+
   def next_action(timeout = 3)
     deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
     loop do
@@ -219,17 +240,7 @@ class RufletRailsSessionResumeTest < Minitest::Test
   # Browsers copy sessionStorage (and the Ruflet session id in it) into a
   # duplicated tab or a window.open window.
   def test_a_duplicated_tab_gets_its_own_page_and_closing_it_keeps_the_original
-    endpoint = Ruflet::Rails::Protocol::Runner.new do |page|
-      count = 0
-      label = Ruflet::UI::ControlFactory.build(:text, value: "count 0")
-      button = Ruflet::UI::ControlFactory.build(:button, content: "+1")
-      button.on(:click) do |_event|
-        count += 1
-        page.update(label, value: "count #{count}")
-      end
-      page.add(label)
-      page.add(button)
-    end.build_endpoint(path: "/ws")
+    endpoint = counter_endpoint
     tab1 = client(endpoint)
     tab1_id = tab1.register(nil)
     tab1_button = wire_id(tab1.read_until("+1"), "+1")
@@ -277,6 +288,88 @@ class RufletRailsSessionResumeTest < Minitest::Test
     reconnect.click(wire_id(page, "Transfer"))
     assert_equal 'transfer as "alice"', next_action
     assert_equal 1, Ruflet::Rails.sessions.size
+  end
+
+  # The old socket closes while it is pinged, and its close removes the
+  # session from the registry before the probe returns. The reconnecting
+  # client still resumes the Page it had, with its state.
+  def test_a_reconnect_whose_old_socket_closes_on_the_ping_still_resumes_the_page
+    # Long enough that the probe returns because the old socket closed,
+    # not because it timed out.
+    @config.session_resume_probe_timeout = 10
+    endpoint = counter_endpoint
+    old = client(endpoint, closes_on_ping: true)
+    session_id = old.register(nil)
+    button = wire_id(old.read_until("+1"), "+1")
+    old.click(button)
+    old.read_until("count 1")
+    old.click(button)
+    old.read_until("count 2")
+
+    reconnect = client(endpoint)
+    resumed_id = reconnect.register(session_id)
+    page = reconnect.read_until("+1")
+
+    assert_equal 1, old.pings
+    assert_equal session_id, resumed_id, "the reconnecting client keeps its session id"
+    assert_includes page.inspect, "count 2", "the reconnecting client resumes its Page"
+    reconnect.click(wire_id(page, "+1"))
+    assert_includes reconnect.read_until("count 3").inspect, "count 3"
+    assert_equal 1, Ruflet::Rails.sessions.size
+    refute_nil Ruflet::Rails.sessions[session_id]
+  end
+
+  # A client that registers again on its own socket owns the session: the
+  # server must not ping that socket, whose pong only the thread doing the
+  # register could read.
+  def test_registering_again_on_the_same_socket_resumes_without_a_ping
+    @config.session_resume_probe_timeout = 0.5
+    endpoint = counter_endpoint
+    tab = client(endpoint)
+    session_id = tab.register(nil)
+    tab.read_until("+1")
+
+    assert_equal session_id, tab.register(session_id)
+    assert_equal 0, tab.pings
+    assert_equal 1, Ruflet::Rails.sessions.size
+  end
+
+  # An owner socket whose ping would say a live client holds the session.
+  class AnsweringSocket
+    attr_reader :pings
+
+    def initialize(closed: false)
+      @closed = closed
+      @pings = 0
+    end
+
+    def closed?
+      @closed
+    end
+
+    def session_key
+      object_id
+    end
+
+    def ping(timeout:)
+      @pings += 1
+      true
+    end
+  end
+
+  def test_a_closed_owner_or_the_registering_socket_itself_is_never_pinged
+    registry = Ruflet::Rails::SessionRegistry.new
+    server = Ruflet::Rails::Protocol::LocalServer.new(session_registry: registry) { |_page| }
+    closed_owner = AnsweringSocket.new(closed: true)
+    registry.add(key: "closed", page: :closed_page, connection_key: closed_owner.session_key, connection: closed_owner)
+    owner = AnsweringSocket.new
+    registry.add(key: "own", page: :own_page, connection_key: owner.session_key, connection: owner)
+
+    assert server.allow_resume?("closed", AnsweringSocket.new), "a closed owner is a dropped connection"
+    assert_equal 0, closed_owner.pings
+    assert server.allow_resume?("own", owner), "a socket may resume the session it owns"
+    assert_equal 0, owner.pings
+    assert_equal :own_page, server.resume_session("own")
   end
 
   def test_a_closed_owner_is_not_pinged

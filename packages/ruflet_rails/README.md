@@ -57,6 +57,35 @@ match "/ws", to: Ruflet::Rails.native(Rails.root.join("app/views/ruflet/main.rb"
 Start Rails, then connect a Ruflet mobile or desktop client to that endpoint.
 The Rails gem does not install or serve a second static web application.
 
+### Session resume
+
+A Flutter web client stores its session id and sends it when it reconnects,
+and the endpoint gives it back the same Page. A duplicated browser tab copies
+that id too, so before resuming, the endpoint pings the socket that owns the
+session. If that socket answers, the newcomer gets its own session. If it is
+closed or does not answer in time, the reconnecting client resumes the Page.
+Both settings are runtime only and are not written to `ruflet.yaml`:
+
+```ruby
+Ruflet::Rails.configure do |config|
+  # Seconds to wait for the owner's pong (default 1.0). nil or 0 skips the
+  # ping: a socket that presents the id resumes the session (if the guard
+  # below, when set, allows it).
+  config.session_resume_probe_timeout = 1.0
+
+  # Optional. Called before a resume with the Rack env of the request that
+  # owns the session and the env of the request asking for it. A falsy
+  # result, or an error, gives the new client a fresh session.
+  config.session_resume_guard = lambda do |original_env, new_env|
+    user_id = ->(env) { ActionDispatch::Request.new(env).session[:user_id] }
+    user_id.call(original_env) == user_id.call(new_env)
+  end
+end
+```
+
+The owner's pong is read between its messages, so while its handler runs
+longer than the timeout, a newcomer with its id still resumes the session.
+
 ## Build native clients from Rails
 
 Uses the same native build pipeline as `ruflet build`:
