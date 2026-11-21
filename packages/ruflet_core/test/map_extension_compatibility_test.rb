@@ -162,6 +162,42 @@ class MapExtensionCompatibilityTest < Minitest::Test
                  Ruflet.polygon_marker(coordinates: ["1,2", point]).to_patch["coordinates"]
   end
 
+  # The edges of both conversions (MapControl#normalize_coordinates for the
+  # map methods and map props, MaterialControlMethods#map_coordinates for
+  # the marker helpers): an Array longer than two still converts from its
+  # first two items, as on main; a one-item Array and an object whose to_h
+  # gives nil cannot be read, so they raise instead of sending no point or a
+  # point with a nil longitude.
+  def test_coordinate_edges_in_both_conversions
+    expected = { "latitude" => 1.5, "longitude" => 2.5 }
+    no_coordinates = Object.new
+    def no_coordinates.to_h
+      nil
+    end
+    map = Ruflet.map([], initial_center: [0, 0])
+    @page.add(map)
+
+    map.center_on([1.5, 2.5, 30])
+    assert_equal({ "point" => expected }, @sent.last[1]["args"])
+    map.move_to(destination: [1.5, 2.5, 30])
+    assert_equal({ "destination" => expected }, @sent.last[1]["args"])
+    assert_equal expected, Ruflet::UI::ControlFactory.build("map", initial_center: [1.5, 2.5, 30]).to_patch["initial_center"]
+    assert_equal expected, Ruflet.marker(coordinates: [1.5, 2.5, 30], content: Ruflet.text("Pin")).to_patch["coordinates"]
+    assert_equal expected, Ruflet.circle_marker(coordinates: [1.5, 2.5, 30], radius: 4).to_patch["coordinates"]
+    assert_equal [expected], Ruflet.polyline_marker(coordinates: [[1.5, 2.5, 30]]).to_patch["coordinates"]
+
+    @sent.clear
+    [[1], no_coordinates].each do |value|
+      assert_raises(ArgumentError, value.inspect) { map.center_on(value) }
+      assert_raises(ArgumentError, value.inspect) { map.move_to(destination: value) }
+      assert_raises(ArgumentError, value.inspect) { Ruflet::UI::ControlFactory.build("map", initial_center: value) }
+      assert_raises(ArgumentError, value.inspect) { Ruflet.marker(coordinates: value, content: Ruflet.text("Pin")) }
+      assert_raises(ArgumentError, value.inspect) { Ruflet.circle_marker(coordinates: value, radius: 4) }
+      assert_raises(ArgumentError, value.inspect) { Ruflet.polygon_marker(coordinates: [value]) }
+    end
+    assert_empty @sent
+  end
+
   def test_rich_attribution_family_uses_current_flet_wire_types
     image = Ruflet.image_source_attribution(Ruflet.image(src: "logo.png"), height: 24)
     text = Ruflet.text_source_attribution("OpenStreetMap", prepend_copyright: true, on_click: ->(_event) {})
