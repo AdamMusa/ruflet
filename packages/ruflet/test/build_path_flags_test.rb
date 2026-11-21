@@ -258,6 +258,19 @@ class RufletBuildPathFlagsTest < Minitest::Test
     expected = ignored ? %w[-o Build/Web] : ["-o", "#{@root}/Build/Web"]
     assert_equal expected, resolve(%w[-o Build/Web], platform: "web")
     refute Builder.new.send(:case_insensitive_dir?, File.join(@root, "missing")), "a missing directory tells nothing"
+    FileUtils.mkdir_p(File.join(@sandbox, "2026"))
+    refute Builder.new.send(:case_insensitive_dir?, File.join(@sandbox, "2026")), "a name without letters tells nothing"
+  end
+
+  # Where names ignore case, ../CLIENT from build/client leads back into it,
+  # so an output there is stranded today like any other in build/client.
+  def test_where_names_ignore_case_a_path_back_into_the_client_dir_in_another_case_is_inside_it
+    @root = File.join(@sandbox, "client")
+    @client = File.join(@root, "build", "client")
+    FileUtils.mkdir_p(@client)
+    args = %w[--split-debug-info=../CLIENT/symbols]
+    assert_equal ["--split-debug-info=#{@sandbox}/CLIENT/symbols"], resolve_where_case(true, args, "apk")
+    assert_equal args, resolve_where_case(false, args, "apk"), "where case matters it leaves build/client"
   end
 
   # Ruby cannot split or compare text that is not valid in its encoding

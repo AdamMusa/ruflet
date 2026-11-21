@@ -153,7 +153,7 @@ module Ruflet
         end
 
         # Ruby can join and compare value with these paths only when each is
-        # valid in its encoding and the encodings agree. A value it cannot
+        # valid in its encoding and the encodings agree. Any other value
         # reaches Flutter as written, as it always has.
         def path_text_comparable?(value, *paths)
           ([value] + paths).all?(&:valid_encoding?) && paths.all? { |path| Encoding.compatible?(value, path) }
