@@ -70,14 +70,21 @@ module Ruflet
         end
 
         def build_origin_policy
+          configured = Ruflet::Rails.config.allowed_origins
           # ruflet_server releases older than the origin check have no
           # OriginPolicy; keep accepting every origin with those.
-          return nil unless defined?(Ruflet::OriginPolicy)
+          unless defined?(Ruflet::OriginPolicy)
+            unless configured.nil? && ENV["RUFLET_ALLOWED_ORIGINS"].to_s.strip.empty?
+              log_origin_warning(
+                "Ruflet: allowed_origins is set, but the installed ruflet_server does not check origins. " \
+                "Update ruflet_server for the endpoint to refuse other origins."
+              )
+            end
+            return nil
+          end
 
           Ruflet::OriginPolicy.new(
-            allowed_origins: Ruflet::OriginPolicy.entries(
-              Ruflet::Rails.config.allowed_origins, ENV["RUFLET_ALLOWED_ORIGINS"]
-            ),
+            allowed_origins: Ruflet::OriginPolicy.entries(configured, ENV["RUFLET_ALLOWED_ORIGINS"]),
             setting_hint: "Ruflet::Rails.config.allowed_origins (or RUFLET_ALLOWED_ORIGINS)",
             log: method(:log_origin_warning)
           )

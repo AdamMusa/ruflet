@@ -83,6 +83,21 @@ class RufletRailsWebSocketOriginTest < Minitest::Test
     refute_includes @log.string, "WebSocket connection from Origin"
   end
 
+  # ruflet_rails accepts ruflet_server >= 0.0.23, which has no origin check.
+  def test_with_a_ruflet_server_without_the_check_it_accepts_and_says_allowed_origins_has_no_effect
+    Ruflet::Rails.config.allowed_origins = %w[https://app.example.com]
+    policy_class = Ruflet.send(:remove_const, :OriginPolicy)
+    begin
+      endpoint = build_endpoint
+      assert_equal(-1, upgrade(endpoint, origin: "https://evil.example").first)
+      assert_equal(-1, upgrade(endpoint, origin: "https://evil.example").first)
+    ensure
+      Ruflet.const_set(:OriginPolicy, policy_class)
+    end
+
+    assert_equal 1, @log.string.scan("the installed ruflet_server does not check origins").size
+  end
+
   private
 
   def build_endpoint
