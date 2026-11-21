@@ -476,6 +476,8 @@ module RufletCompat
       replacements.each { |path, label| out = out.gsub(path, label) }
       out = out.gsub(%r{(<TMP>/[A-Za-z_.-]+?)\d{8}-\d+-[0-9a-z]+}) { "#{Regexp.last_match(1)}XXXXXXXX" }
       out = out.gsub(/ruflet\d{8}-\d+-[0-9a-z]+\.yaml/, "ruflet<TEMPFILE>.yaml")
+      # Downloads unpack into <dest>.partial-<pid> (VerifiedInstall) first.
+      out = out.gsub(/\.(partial|old)-\d+(?![\d])/) { ".#{Regexp.last_match(1)}-<PID>" }
       out = out.gsub(/(?<![\d.])#{Regexp.escape(workspace.ruflet_version)}(?![\d.])/, "<RUFLET_VERSION>")
       if runtime_values
         out = out.gsub(/(?<![\d.])#{Regexp.escape(RUBY_VERSION)}(?![\d.])/, "<RUBY_VERSION>")

@@ -21,9 +21,9 @@ exit: 0
 4. capture3 exit=0
    git -C <TMP>/ruflet-assetsXXXXXXXX/Ruflet rev-parse HEAD
 5. system exit=0
-   tar -xf <TMP>/ruflet-prebuilt-XXXXXXXX/ruflet_explorer-web.tar.gz -C <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/web
+   tar -xf <TMP>/ruflet-prebuilt-XXXXXXXX/ruflet_explorer-web.tar.gz -C <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/web.partial-<PID>
 6. system exit=0
-   unzip -oq <TMP>/ruflet-prebuilt-XXXXXXXX/ruflet_explorer-macos-universal.zip -d <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop
+   unzip -oq <TMP>/ruflet-prebuilt-XXXXXXXX/ruflet_explorer-macos-universal.zip -d <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop.partial-<PID>
 
 ## network (12)
 GET https://api.github.com/repos/AdamMusa/Ruflet/releases/tags/prebuild-main -> 200

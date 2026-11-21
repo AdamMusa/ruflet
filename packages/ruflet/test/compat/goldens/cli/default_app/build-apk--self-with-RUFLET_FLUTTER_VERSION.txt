@@ -25,7 +25,7 @@ exit: 1
    options: err out
 
 ## network (1)
-GET https://storage.googleapis.com/flutter_infra_release/releases/releases_macos_arm64.json
+GET https://storage.googleapis.com/flutter_infra_release/releases/releases_macos.json
 
 ## output
 out| [ruflet build] Preparing apk build (self-contained lite)
