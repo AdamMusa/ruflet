@@ -268,12 +268,12 @@ class RufletCliUsageTest < Minitest::Test
 
   def test_build_help_text
     assert_equal <<~HELP, Commands.lookup("build").help_text
-      Usage: ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--lite|--full|--self] [--verbose]
+      Usage: ruflet build <apk|android|ios|ipa|aab|appbundle|web|macos|windows|linux> [--lite|--full|--self] [--verbose]
 
       Build the app for one platform. The target may come before or after the flags.
 
       Options:
-        --self           Self-contained lite build (default profile)
+        --self           Self-contained build; lite profile unless --full
         --lite           Self-contained lite build
         --full           Self-contained full CRuby build with locked project gems
         -v, --verbose    Print each step and run Flutter with -v
@@ -282,7 +282,7 @@ class RufletCliUsageTest < Minitest::Test
       Other arguments are passed to `flutter build <target>`.
 
       Build profiles:
-        --self           Self-contained lite build (default profile)
+        --self           Self-contained build; lite profile unless --full
         --self --full    Self-contained full CRuby build with locked project gems
         --full           Also implies --self
     HELP

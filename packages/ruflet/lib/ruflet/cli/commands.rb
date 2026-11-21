@@ -430,7 +430,8 @@ module Ruflet
       register(
         "debug",
         handler: :command_debug,
-        usage: "ruflet debug [scriptname|path]",
+        # Its positional argument is a platform, not a script.
+        usage: "ruflet debug [platform]",
         synopsis: ["ruflet debug [platform] [--platform NAME] [--device ID] [--release] [-v|--verbose] [--web-renderer NAME]"],
         summary: "Run the Flutter client in build/client with `flutter run`.",
         options: [
@@ -448,10 +449,11 @@ module Ruflet
       register(
         "build",
         handler: :command_build,
-        usage: "ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--lite|--full|--self] [--verbose]",
+        usage: "ruflet build <apk|android|ios|ipa|aab|appbundle|web|macos|windows|linux> [--lite|--full|--self] [--verbose]",
         summary: "Build the app for one platform. The target may come before or after the flags.",
         options: [
-          option("--self", description: "Self-contained lite build (default profile)"),
+          # Not "(default profile)": a build without a profile flag is server-driven.
+          option("--self", description: "Self-contained build; lite profile unless --full"),
           option("--lite", description: "Self-contained lite build"),
           option("--full", description: "Self-contained full CRuby build with locked project gems"),
           verbose
@@ -461,7 +463,7 @@ module Ruflet
           section(
             "Build profiles",
             [
-              ["--self", "Self-contained lite build (default profile)"],
+              ["--self", "Self-contained build; lite profile unless --full"],
               ["--self --full", "Self-contained full CRuby build with locked project gems"],
               ["--full", "Also implies --self"]
             ]

@@ -109,7 +109,7 @@ module Ruflet
               build/ios/Debug-iphonesimulator
               build/ios/iphonesimulator
             ]
-          when "android", "apk", "aab"
+          when "android", "apk", "aab", "appbundle"
             # Flutter and Gradle merge assets incrementally. When a build switches
             # from full to lite, removed project gems can otherwise survive in the
             # next APK even though pubspec.yaml and the source asset tree are clean.
