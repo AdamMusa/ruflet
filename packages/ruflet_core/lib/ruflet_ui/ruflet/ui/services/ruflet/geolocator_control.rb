@@ -55,6 +55,7 @@ module Ruflet
 
           def normalize_value(value)
             case value
+            when nil then nil # nil.to_h is {}, which the client would get instead
             when Array then value.map { |item| normalize_value(item) }
             when Hash
               value.each_with_object({}) { |(key, item), result| result[key.to_s] = normalize_value(item) unless item.nil? }
