@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 
+require_relative "drawer_methods"
+
 module Ruflet
   module UI
     module Controls
       module RufletComponents
         class PageletControl < Ruflet::Control
+          include DrawerMethods
+
           TYPE = "pagelet".freeze
           WIRE = "Pagelet".freeze
 

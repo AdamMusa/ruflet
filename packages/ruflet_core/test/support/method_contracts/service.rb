@@ -80,7 +80,8 @@ MethodContract.define(
       "save_file" => { kwargs: { file_name: :report, src_bytes: [1, 2, 255] }, sends: {"file_name" => "report", "file_type" => "any", "src_bytes" => "\x01\x02\xFF".b}, also: [{ sends: {"file_type" => "any"} }] },
       "upload" => { args: ["sample:files"], sends: {"files" => "sample:files"}, also: [{ args: [nil], sends: {"files" => nil} }] }
     },
-    # flashlight.on replaces Ruflet::Control#on: it turns the light on.
+    # flashlight.on without an event name turns the light on; with one it is
+    # Ruflet::Control#on (flashlight_on_test).
     "flashlight" => {
       "is_available" => {  },
       "off" => {  },

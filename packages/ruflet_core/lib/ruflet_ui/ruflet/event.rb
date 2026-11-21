@@ -44,7 +44,21 @@ module Ruflet
     # A stable convenience accessor shared by built-in and extension events.
     # Extension event names are intentionally not part of the core typed-event
     # registry, so fall back to the same value extraction used by GenericEvent.
+    #
+    # Every "select" builds an AutoCompleteSelectEvent, which reads only a Map
+    # payload (material_auto_complete.dart). The other controls that fire
+    # select send the pick itself: a Dropdown its option's key
+    # (material_dropdown.dart), a Chip its new selected bool
+    # (material_chip.dart), a PopupMenuButton the item's id
+    # (material_popup_menu_button.dart), and the Cupertino renderers the same.
+    # Their value is that payload, as it is for GenericEvent. typed_data is
+    # left as it is: Page writes a select's typed value into the control's
+    # props (apply_event_value_to_control), and the client already synced
+    # those itself.
     def value
+      if typed_data.is_a?(Events::AutoCompleteSelectEvent) && !data.is_a?(Hash)
+        return Events::GenericEvent.from_data(data).value
+      end
       return typed_data.value if typed_data&.respond_to?(:value)
 
       Events::GenericEvent.from_data(data).value

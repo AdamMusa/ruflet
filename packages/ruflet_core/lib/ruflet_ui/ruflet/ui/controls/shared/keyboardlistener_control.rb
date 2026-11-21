@@ -1,10 +1,16 @@
 # frozen_string_literal: true
 
+require_relative "focusable_methods"
+
 module Ruflet
   module UI
     module Controls
       module RufletComponents
         class KeyboardListenerControl < Ruflet::Control
+          # keyboard_listener.dart: "focus" requests focus for its focus node,
+          # so key events reach it without a tap first.
+          include FocusableMethods
+
           TYPE = "keyboardlistener".freeze
           WIRE = "KeyboardListener".freeze
 

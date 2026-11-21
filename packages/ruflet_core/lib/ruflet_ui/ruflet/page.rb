@@ -2284,7 +2284,7 @@ module Ruflet
       return unless handler.respond_to?(:call)
 
       event = Event.new(name: name.to_s, target: 1, raw_data: data, page: self, control: nil)
-      handler.call(event)
+      Control.call_handler(handler, event)
     end
 
     def apply_event_value_to_control(control, event)
