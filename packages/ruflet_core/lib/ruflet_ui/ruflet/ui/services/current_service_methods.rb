@@ -22,6 +22,7 @@ module Ruflet
           end
 
           case value
+          when nil then nil # nil.to_h is {}, which the client would get instead
           when Array
             value.map { |item| service_value(item) }
           when Hash
