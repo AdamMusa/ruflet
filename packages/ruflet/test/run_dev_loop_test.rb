@@ -294,13 +294,14 @@ class RufletCliRunDevLoopTest < Minitest::Test
   end
 
   def test_a_probe_cut_off_by_an_app_that_exited_ends_the_wait
+    port = free_port # outside the stub: TCPServer.new can resolve to TCPSocket.new
     pid = Process.spawn(RbConfig.ruby, "-e", "exit 3", pgroup: true)
     run_state = { child_pid: pid, restart: false }
 
     booted = :unset
     _out, err = capture_io do
       TCPSocket.stub(:new, ->(*) { raise Errno::ECONNRESET }) do
-        booted = DummyRunner.new.send(:wait_for_server_boot, free_port, run_state, timeout_seconds: 30)
+        booted = DummyRunner.new.send(:wait_for_server_boot, port, run_state, timeout_seconds: 30)
       end
     end
 
