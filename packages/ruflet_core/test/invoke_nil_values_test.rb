@@ -65,8 +65,8 @@ class InvokeNilValuesTest < Minitest::Test
     assert_equal({ "offset" => [1, nil] }, last_args)
   end
 
-  # A nil value inside a Hash was left out on main, by every helper but
-  # camera's, which kept it. Both stay as they were.
+  # Every helper but camera's leaves a nil Hash value out, as on main.
+  # Camera's keeps the key, and now sends nil for it instead of {}.
   def test_a_nil_hash_value_is_left_out_except_by_camera
     map = mount(Ruflet.map([]))
     map.zoom_in(offset: { x: 1, y: nil })
