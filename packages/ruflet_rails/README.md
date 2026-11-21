@@ -309,6 +309,14 @@ Available helpers: layout (`column`, `row`, `stack`, `card`, `center`,
 `submit`), and `widget("progress-bar", value: 0.4)` for anything else in the
 control registry.
 
+These helpers are available in every view of the app, web pages included.
+Where one shares its name with an Action View form helper (`text_field`, and on
+Rails 8 `textarea` and `checkbox`), a call in Action View's shape still reaches
+Action View: `form_with`/`form_for` builders (`f.text_field :title`,
+`f.text_area :body`, `f.check_box :published`) and direct calls such as
+`text_field :post, :title` or `textarea :post, :body` render Rails' markup, as
+they would without ruflet_rails.
+
 Pick the mode per app: `erb_to_native` when HTML should *become* native controls,
 `native_shell` when you want the real web page in a WebView with native chrome.
 
