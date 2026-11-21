@@ -148,14 +148,20 @@ class RufletCliBuildProjectPathNamesTest < Minitest::Test
   def test_an_ampersand_keeps_the_android_manifest_valid_xml
     require "rexml/document"
 
-    with_client("Tom & Jerry") do |_builder, client_dir, _plist_buddy|
-      manifest = File.read(File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml"))
+    with_client("Tom & Jerry") do |builder, client_dir, _plist_buddy|
+      manifest_path = File.join(client_dir, "android", "app", "src", "main", "AndroidManifest.xml")
+      manifest = File.read(manifest_path)
       document = REXML::Document.new(manifest)
       values = REXML::XPath.match(document, "//meta-data").to_h do |node|
         [node.attributes["android:name"], node.attributes["android:value"]]
       end
       assert_equal "Tom%20&%20Jerry", values.fetch("ruflet.runtime.project")
       assert_equal "true", values.fetch("ruflet.runtime.autostart")
+
+      # An existing entry is replaced literally: a "\0" in the value is not a
+      # back-reference to the entry it replaces.
+      builder.send(:set_android_meta_data, manifest_path, "ruflet.runtime.project", "a\\0b")
+      assert_equal ["a\\0b"], manifest_values(File.read(manifest_path), "ruflet.runtime.project")
     end
   end
 
