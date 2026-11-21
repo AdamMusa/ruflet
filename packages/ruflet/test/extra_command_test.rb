@@ -34,6 +34,48 @@ class RufletCliExtraCommandTest < Minitest::Test
     $stdout = original_stdout
   end
 
+  def test_doctor_without_fix_reports_the_flutter_sdk_doctor_fix_installed
+    Dir.mktmpdir do |home|
+      bin_dir = File.join(home, ".ruflet", "flutter", "3.41.2", "macos_arm64", "flutter", "bin")
+      FileUtils.mkdir_p(bin_dir)
+      flutter = File.join(bin_dir, "flutter")
+      File.write(flutter, "#!/bin/sh\necho '{\"frameworkVersion\":\"3.41.2\",\"channel\":\"stable\"}'\n")
+      FileUtils.chmod("+x", flutter)
+
+      runner = DummyExtra.new
+      flutter_runs = []
+      runner.define_singleton_method(:detect_client_dir) { nil }
+      runner.define_singleton_method(:resolve_ruflet_client_template_root) { "/tmp/ruflet_flutter_template" }
+      runner.define_singleton_method(:flutter_host) { "macos_arm64" }
+      runner.define_singleton_method(:windows_host?) { false }
+      runner.define_singleton_method(:which_command) { |_name| nil }
+      runner.define_singleton_method(:desired_flutter_spec) { |client_dir: nil| { channel: "stable", source: :metadata } }
+      runner.define_singleton_method(:fetch_releases_manifest) { |_host| raise Minitest::Assertion, "plain doctor must not fetch the release manifest" }
+      runner.define_singleton_method(:download_file) { |url, _destination| raise Minitest::Assertion, "plain doctor must not download #{url}" }
+      runner.define_singleton_method(:system) { |_env, *args| flutter_runs << args; true }
+
+      err = StringIO.new
+      out = StringIO.new
+      original_stderr = $stderr
+      original_stdout = $stdout
+      original_home = Dir.method(:home)
+      Dir.define_singleton_method(:home) { home }
+      $stderr = err
+      $stdout = out
+
+      code = runner.command_doctor([])
+
+      assert_equal 0, code
+      assert_includes out.string, "Flutter: 3.41.2 stable"
+      refute_includes err.string, "Flutter: missing"
+      assert_equal [[flutter, "doctor"]], flutter_runs
+    ensure
+      $stderr = original_stderr
+      $stdout = original_stdout
+      Dir.define_singleton_method(:home, original_home) if original_home
+    end
+  end
+
   def test_doctor_fix_uses_host_platform_install_path
     runner = DummyExtra.new
     calls = []
@@ -72,17 +114,40 @@ class RufletCliExtraCommandTest < Minitest::Test
   # earlier test in the process left a failing $?.
   def test_exit_codes_follow_system_not_a_stale_last_status
     runner = doctor_runner(system_result: true)
-    leave_failing_last_status(4)
+    leave_last_status(4)
     capture_io { assert_equal 0, runner.command_doctor(["--fix"]) }
 
     runner = flutter_runner
     runner.define_singleton_method(:system) { |*_args, **_opts| true }
-    leave_failing_last_status(4)
+    leave_last_status(4)
     assert_equal 0, runner.command_devices([])
-    leave_failing_last_status(4)
+    leave_last_status(4)
     assert_equal 0, runner.command_emulators([])
-    leave_failing_last_status(4)
+    leave_last_status(4)
     with_client_dir { |dir| assert_equal 0, debug_runner(dir).command_debug([]) }
+  end
+
+  # The other way round: a system call that failed (false or nil) while $?
+  # still describes an earlier child that succeeded must not report 0.
+  def test_a_failed_system_call_never_reports_a_stale_success
+    [false, nil].each do |result|
+      runner = doctor_runner(system_result: result)
+      leave_last_status(0)
+      capture_io { assert_equal 1, runner.command_doctor(["--fix"]), "doctor, system => #{result.inspect}" }
+
+      runner = flutter_runner
+      runner.define_singleton_method(:system) { |*_args, **_opts| result }
+      leave_last_status(0)
+      assert_equal 1, runner.command_devices([]), "devices, system => #{result.inspect}"
+      leave_last_status(0)
+      assert_equal 1, runner.command_emulators([]), "emulators, system => #{result.inspect}"
+      leave_last_status(0)
+      with_client_dir do |dir|
+        runner = debug_runner(dir)
+        runner.define_singleton_method(:system) { |*_args, **_opts| result }
+        assert_equal 1, runner.command_debug([]), "debug, system => #{result.inspect}"
+      end
+    end
   end
 
   def test_failing_flutter_status_is_passed_through
@@ -269,7 +334,8 @@ class RufletCliExtraCommandTest < Minitest::Test
     Dir.mktmpdir { |dir| yield dir }
   end
 
-  def leave_failing_last_status(code)
+  # Leaves $? describing a child that exited with code (0 included).
+  def leave_last_status(code)
     Kernel.system(RbConfig.ruby, "-e", "exit #{code}")
     assert_equal code, $?.exitstatus
   end

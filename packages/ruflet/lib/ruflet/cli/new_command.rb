@@ -37,18 +37,7 @@ module Ruflet
 
       def command_new(args)
         app_name = args.shift
-        if %w[-h --help].include?(app_name)
-          puts "Usage: ruflet new <appname>"
-          return 0
-        end
         if app_name.nil? || app_name.strip.empty?
-          warn "Usage: ruflet new <appname>"
-          return 1
-        end
-        # There are no options, so a leading dash is a mistyped flag, not a
-        # name: `ruflet new --force` used to scaffold a directory "--force".
-        if app_name.start_with?("-")
-          warn "Unknown option: #{app_name}"
           warn "Usage: ruflet new <appname>"
           return 1
         end

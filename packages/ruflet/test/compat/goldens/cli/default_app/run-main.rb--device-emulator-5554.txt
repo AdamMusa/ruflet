@@ -1,0 +1,16 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet run main.rb --device emulator-5554
+exit: 1
+
+## commands (0)
+
+## output
+err| ruflet run: --device is not supported yet.
+err| To open the app on a phone or emulator, run `ruflet run` and scan the QR code with Ruflet Explorer,
+err| or build and install it: `ruflet build apk --self`, then `ruflet install --device emulator-5554`.
+
+## files
+(no files changed)

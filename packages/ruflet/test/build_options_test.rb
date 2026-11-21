@@ -29,9 +29,10 @@ class RufletCliBuildOptionsTest < Minitest::Test
       "apk" => [["build", "apk"], "apk"],
       "android" => [["build", "apk"], "android"],
       "aab" => [["build", "appbundle"], "aab"],
-      # Flutter's spelling is normalized, so the identity and stale-asset
-      # checks that look for "aab" apply to it too.
-      "appbundle" => [["build", "appbundle"], "aab"],
+      # Flutter's spelling keeps its name (logs, .ruflet-runtime.json and the
+      # --full cache key say "appbundle", as before); the checks treat it as
+      # aab (test_appbundle_gets_the_checks_aab_gets).
+      "appbundle" => [["build", "appbundle"], "appbundle"],
       "ios" => [["build", "ios", "--codesign"], "ios"],
       "ipa" => [["build", "ipa"], "ios"],
       "web" => [["build", "web"], "web"],
@@ -131,29 +132,80 @@ class RufletCliBuildOptionsTest < Minitest::Test
   end
 
   # A partial signing setup used to print "build config error" and build
-  # anyway, leaving whatever key.properties an earlier build wrote.
+  # anyway, signing with whatever key.properties an earlier build left in the
+  # client (or the debug key). Now it stops the build before anything else is
+  # written. The error names where the partial setup came from: once one
+  # RUFLET_ANDROID_* variable is set, the environment replaces
+  # android/key.properties, even a complete one.
   def test_partial_android_signing_fails_the_build
-    in_project do |dir|
-      client = File.join(dir, "client")
-      FileUtils.mkdir_p(File.join(client, "android"))
-      stale = File.join(client, "android", "key.properties")
-      File.write(stale, "storeFile=/old/release.jks\n")
-
-      builder = DummyBuilder.new
-      builder.define_singleton_method(:refresh_managed_client_template_files) { |*_args, **_opts| true }
-      builder.define_singleton_method(:remove_native_apple_renderer_integration) { |*_args, **_opts| true }
-      builder.define_singleton_method(:sync_client_metadata) { |*_args, **_opts| nil }
-      builder.define_singleton_method(:apply_native_service_permissions) { |*_args| nil }
-      builder.define_singleton_method(:configure_client_runtime_mode) { |*_args, **_opts| flunk("must stop at the signing error") }
-
-      with_env("RUFLET_ANDROID_KEYSTORE" => "release.jks", "RUFLET_ANDROID_KEYSTORE_PASSWORD" => nil,
-               "RUFLET_ANDROID_KEY_ALIAS" => nil, "RUFLET_ANDROID_KEY_PASSWORD" => nil) do
-        _out, err = capture_io do
-          refute builder.send(:prepare_flutter_client, client, platform: "apk", tools: { env: {}, flutter: "flutter" }, config: {})
+    complete = "storeFile=release.jks\nstorePassword=s\nkeyAlias=a\nkeyPassword=k\n"
+    partial_env = { "RUFLET_ANDROID_KEYSTORE" => "release.jks", "RUFLET_ANDROID_KEYSTORE_PASSWORD" => nil,
+                    "RUFLET_ANDROID_KEY_ALIAS" => nil, "RUFLET_ANDROID_KEY_PASSWORD" => nil }
+    no_env = partial_env.transform_values { nil }
+    [
+      ["a partial environment", partial_env, nil, "the RUFLET_ANDROID_* environment"],
+      ["a leftover variable beside a complete android/key.properties", partial_env, complete,
+       "the RUFLET_ANDROID_* environment"],
+      ["a partial android/key.properties", no_env, "storeFile=release.jks\n", "android/key.properties"]
+    ].each do |label, env, project_properties, source|
+      in_project do |dir|
+        if project_properties
+          FileUtils.mkdir_p("android")
+          File.write(File.join("android", "key.properties"), project_properties)
         end
-        assert_includes err, "build config error: Android signing is missing storePassword, keyAlias, keyPassword"
+        client = File.join(dir, "client")
+        FileUtils.mkdir_p(File.join(client, "android"))
+        stale = File.join(client, "android", "key.properties")
+        File.write(stale, "storeFile=/old/release.jks\n")
+
+        builder = DummyBuilder.new
+        builder.define_singleton_method(:refresh_managed_client_template_files) { |*_args, **_opts| true }
+        builder.define_singleton_method(:remove_native_apple_renderer_integration) { |*_args, **_opts| true }
+        builder.define_singleton_method(:sync_client_metadata) { |*_args, **_opts| nil }
+        builder.define_singleton_method(:apply_native_service_permissions) { |*_args| nil }
+        builder.define_singleton_method(:configure_client_runtime_mode) { |*_args, **_opts| flunk("#{label}: must stop at the signing error") }
+
+        with_env(env) do
+          _out, err = capture_io do
+            refute builder.send(:prepare_flutter_client, client, platform: "apk", tools: { env: {}, flutter: "flutter" }, config: {}), label
+          end
+          # Each case supplies only storeFile.
+          assert_match(/\Abuild config error: Android signing from \S*#{Regexp.escape(source)} is missing storePassword, keyAlias, keyPassword\n/, err, label)
+          assert_includes err, "Set them in android/key.properties or the matching RUFLET_ANDROID_* variables.", label
+        end
+        assert_equal "storeFile=/old/release.jks\n", File.read(stale), label
       end
-      assert_equal "storeFile=/old/release.jks\n", File.read(stale)
+    end
+  end
+
+  # `appbundle` is Flutter's name for `aab`. The identity check, the package
+  # rename and the stale-asset clearing only recognised `aab`, so an
+  # appbundle kept the template's com.example.ruflet_client application id
+  # (and skipped the check that a mobile build names its app).
+  def test_appbundle_gets_the_checks_aab_gets
+    builder = DummyBuilder.new
+    unnamed = { mobile_identity_errors: ["app.package_name"] }
+    %w[aab appbundle].each do |target|
+      _out, err = capture_io { refute builder.send(:validate_mobile_app_identity, unnamed, platform: target), target }
+      assert_includes err, "ruflet.yaml must define app.package_name", target
+
+      renames = []
+      builder.define_singleton_method(:run_external_command) do |_env, *command, **_opts|
+        renames << command
+        true
+      end
+      capture_io do
+        assert builder.send(:apply_mobile_package_name, "/client", { android_application_id: "com.acme.shop" },
+                            platform: target, tools: { env: {}, dart: "dart" }), target
+      end
+      assert_equal [["dart", "run", "change_app_package_name:main", "com.acme.shop", "--android"]], renames, target
+
+      Dir.mktmpdir do |client|
+        stale = File.join(client, "build", "app", "intermediates", "assets")
+        FileUtils.mkdir_p(stale)
+        builder.send(:clear_stale_platform_outputs, client, target)
+        refute Dir.exist?(stale), target
+      end
     end
   end
 
@@ -203,27 +255,46 @@ class RufletCliBuildOptionsTest < Minitest::Test
   def test_config_path_falls_back_to_ruflet_yml
     in_project do
       builder = DummyBuilder.new
+      File.write("ruflet.yml", "app:\n  backend_url: https://yml.example.test\n")
       with_env("RUFLET_CONFIG" => nil) do
-        assert_equal "ruflet.yaml", builder.send(:ruflet_config_path)
-        File.write("ruflet.yml", "app:\n  backend_url: https://yml.example.test\n")
-        assert_equal "ruflet.yml", builder.send(:ruflet_config_path)
+        assert_equal "https://yml.example.test", builder.send(:load_ruflet_config).dig("app", "backend_url")
         File.write("ruflet.yaml", "app:\n  backend_url: https://yaml.example.test\n")
-        assert_equal "ruflet.yaml", builder.send(:ruflet_config_path)
+        assert_equal "https://yaml.example.test", builder.send(:load_ruflet_config).dig("app", "backend_url")
       end
 
       File.write("custom.yaml", "app:\n  backend_url: https://custom.example.test\n")
       with_env("RUFLET_CONFIG" => "custom.yaml") do
-        assert_equal "custom.yaml", builder.send(:ruflet_config_path)
         assert_equal "https://custom.example.test", builder.send(:load_ruflet_config).dig("app", "backend_url")
       end
 
-      # A RUFLET_CONFIG naming a missing file loads ruflet.yml, and asset
-      # configuration now resolves the same file instead of none.
+      # A RUFLET_CONFIG naming a missing file loads ruflet.yml.
       File.delete("ruflet.yaml")
       with_env("RUFLET_CONFIG" => "missing.yaml") do
-        assert_equal "ruflet.yml", builder.send(:ruflet_config_path)
         assert_equal "https://yml.example.test", builder.send(:load_ruflet_config).dig("app", "backend_url")
       end
+    end
+  end
+
+  # With RUFLET_CONFIG naming a missing file, asset configuration resolves the
+  # assets ruflet.yml declares against the project directory, the directory
+  # ruflet.yml is in: resolving that file separately from load_ruflet_config
+  # gives the same directory, so the two cannot disagree here.
+  def test_assets_ruflet_yml_declares_are_configured_when_ruflet_config_names_a_missing_file
+    in_project do |dir|
+      FileUtils.mkdir_p("art")
+      File.binwrite(File.join("art", "icon.png"), "png")
+      File.write("ruflet.yml", "assets:\n  icon_launcher: art/icon.png\n")
+      client = File.join(dir, "client")
+      FileUtils.mkdir_p(client)
+      File.write(File.join(client, "pubspec.yaml"), "name: client\n")
+
+      builder = DummyBuilder.new
+      flags = with_env("RUFLET_CONFIG" => "missing.yaml") do
+        builder.send(:apply_build_config, client, builder.send(:load_ruflet_config))
+      end
+
+      assert flags[:has_icon], flags.inspect
+      assert_includes File.read(File.join(client, "pubspec.yaml")), "icon.png"
     end
   end
 

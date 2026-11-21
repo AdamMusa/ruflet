@@ -1,0 +1,16 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: rails_app
+command: rake --tasks
+exit: 0
+
+## commands (0)
+
+## output
+out| rake ruflet:build[platform]  # Build Ruflet native client for this Rails app
+out| rake ruflet:install[device]  # Install the last built Ruflet mobile app onto a device
+out| rake ruflet:update[target]   # Download/update prebuilt Ruflet clients from GitHub releases
+
+## files
+(no files changed)

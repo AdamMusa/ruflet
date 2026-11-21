@@ -49,8 +49,7 @@ module Ruflet
           end
         end
         puts "  Flutter: #{flutter_version_summary(tools)}"
-        ok = system(tools[:env], tools[:flutter], "doctor", *(verbose ? ["-v"] : []))
-        system_exit_code(ok)
+        system_exit_code(system(tools[:env], tools[:flutter], "doctor", *(verbose ? ["-v"] : [])))
       end
 
       def command_devices(args)
@@ -62,17 +61,23 @@ module Ruflet
         action = nil
         emulator_id = nil
         verbose = false
+        cold = false
         parser = OptionParser.new do |o|
-          o.on("--create") { action = "create" }
+          # -c and --c reached --create before --cold made them ambiguous.
+          o.on("--create", "-c", "--c") { action = "create" }
           o.on("--delete") { action = "delete" }
           o.on("--start") { action = "start" }
           o.on("--emulator ID") { |v| emulator_id = v }
+          o.on("--cold") { cold = true }
           o.on("-v", "--verbose") { verbose = true }
+          o.on("-h", "--help") { raise Commands::HelpRequested }
         end
+        # Parse first: a bad flag is reported before Flutter is looked up.
         parser.parse!(args)
+        raise Commands::UsageError, "--cold needs --start --emulator ID" if cold && action != "start"
 
-        # Settle what can be answered without Flutter before ensure_flutter!,
-        # which may install an SDK (or exit) on a machine without one.
+        # Answer what needs no Flutter before ensure_flutter!, which may
+        # install an SDK (or exit) on a machine without one.
         if %w[create delete].include?(action)
           warn "ruflet emulators --#{action} is not implemented yet. Use your platform tools."
           return 1
@@ -85,8 +90,11 @@ module Ruflet
         tools = ensure_flutter!("emulators")
         cmd = [tools[:flutter], "emulators"]
         cmd += ["--launch", emulator_id] if action == "start"
+        cmd << "--cold" if cold
         cmd << "-v" if verbose
         system_exit_code(system(tools[:env], *cmd))
+      rescue Commands::HelpRequested, Commands::UsageError => e
+        Commands.report_stop("emulators", e)
       end
 
       def command_debug(args)
@@ -99,10 +107,12 @@ module Ruflet
         }
         parser = OptionParser.new do |o|
           o.on("--platform NAME") { |v| options[:platform] = v }
-          o.on("--device-id ID") { |v| options[:device_id] = v }
+          # --device and -d already reached --device-id as abbreviations.
+          o.on("--device-id ID", "--device ID") { |v| options[:device_id] = v }
           o.on("--release") { options[:release] = true }
           o.on("-v", "--verbose") { options[:verbose] = true }
           o.on("--web-renderer NAME") { |v| options[:web_renderer] = v }
+          o.on("-h", "--help") { raise Commands::HelpRequested }
         end
         parser.parse!(args)
 
@@ -136,14 +146,17 @@ module Ruflet
         end
 
         system_exit_code(system(tools[:env], *cmd, chdir: client_dir))
+      rescue Commands::HelpRequested => e
+        Commands.report_stop("debug", e)
       end
 
       private
 
-      # The exit code for a command run with Kernel#system. system's own result
+      # The exit code of a command run with Kernel#system. system's own result
       # decides success: $? is per thread and still describes the previous
-      # child when system spawned none, so reading it alone could report a
-      # stale status. $? only supplies the code of a command that failed.
+      # child when system spawned none (a stubbed system in a test), so
+      # reading $? alone could report someone else's status. $? only supplies
+      # the code of a command that failed.
       def system_exit_code(ok)
         return 0 if ok
 

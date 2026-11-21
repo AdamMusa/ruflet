@@ -3,6 +3,7 @@
 require "optparse"
 
 require_relative "version"
+require_relative "cli/commands"
 require_relative "cli/templates"
 require_relative "cli/new_command"
 require_relative "cli/flutter_sdk"
@@ -20,76 +21,54 @@ module Ruflet
     extend BuildCommand
     extend ExtraCommand
 
+    # Runs the command the first argument names (see cli/commands.rb) with
+    # the remaining arguments and returns its exit status.
+    #
+    # -h/--help prints the command's help instead (exit 0), and a flag the
+    # command does not read prints its usage on stderr (exit 64). Both are
+    # decided before anything is fetched or written.
     def run(argv = ARGV)
       command = (argv.shift || "help").downcase
+      entry = Commands.lookup(command)
+      if entry
+        return print_command_help(entry) if entry.help_requested?(argv)
+
+        begin
+          entry.check_flags!(argv)
+        rescue OptionParser::ParseError => e
+          return report_usage_error(entry, e.message)
+        end
+      end
       ensure_first_run_assets(command)
 
-      case command
-      when "version", "-v", "--version"
-        puts version_string
-        0
-      when "create"
-        command_create(argv)
-      when "new", "bootstrap", "init"
-        command_new(argv)
-      when "run"
-        command_run(argv)
-      when "update"
-        command_update(argv)
-      when "debug"
-        command_debug(argv)
-      when "build"
-        command_build(argv)
-      when "install"
-        command_install(argv)
-      when "devices"
-        command_devices(argv)
-      when "emulators"
-        command_emulators(argv)
-      when "doctor"
-        command_doctor(argv)
-      when "help", "-h", "--help"
-        print_help
-        0
-      else
+      unless entry
         warn "Unknown command: #{command}"
         print_help
-        1
+        return 1
       end
-    rescue OptionParser::ParseError => e
-      # An unknown flag or a bad value (`run --port abc`) is a usage error,
-      # not a crash: say which and exit 1 instead of printing a backtrace.
-      warn "ruflet #{command}: #{e.message}"
-      warn "Run `ruflet help` for usage."
-      1
+
+      begin
+        send(entry.handler, argv)
+      rescue Commands::HelpRequested, Commands::UsageError => e
+        # The built-in handlers report these themselves; a registered
+        # command's handler may not.
+        Commands.report_stop(entry.name, e)
+      rescue OptionParser::ParseError => e
+        report_usage_error(entry, e.message)
+      end
     end
 
     def print_help
-      puts <<~HELP
-        Ruflet CLI
-
-        Commands:
-          ruflet --version                 (also: version, -v)
-          ruflet create <appname>
-          ruflet new <appname>             (also: bootstrap, init)
-          ruflet run [scriptname|path] [--web|--desktop] [--port PORT] [--no-reload]
-          ruflet update [web|desktop|all|check] [--web] [--desktop] [--check] [--force] [--platform macos|linux|windows]
-          ruflet debug [web|macos|windows|linux|ios|android] [--platform NAME] [--device-id ID] [--release] [--web-renderer NAME] [--verbose]
-          ruflet build <apk|android|aab|appbundle|ios|ipa|web|macos|windows|linux> [--lite|--full|--self] [--verbose] [flutter args...]
-          ruflet install [--device|-d DEVICE_ID] [--verbose]
-          ruflet devices [flutter args...]
-          ruflet emulators [--start --emulator ID] [--verbose]
-          ruflet doctor [--fix] [--verbose]
-          ruflet help                      (also: -h, --help)
-
-        Build profiles:
-          (none)           Server-driven client; mobile targets need backend_url in ruflet.yaml
-          --self           Self-contained build with the embedded lite runtime
-          --self --full    Self-contained full CRuby build with locked project gems
-          --lite, --full   Each implies --self
-      HELP
+      puts Commands.help_text
     end
 
+    # `ruflet help <command>` and `ruflet <command> --help`.
+    def print_command_help(entry)
+      Commands.print_command_help(entry)
+    end
+
+    # Creates a Ruflet app at path and returns `ruflet new`'s status: 1 when
+    # nothing was created (the directory already exists, for one).
     def bootstrap(path)
       command_new([path || Dir.pwd])
     end
@@ -100,8 +79,31 @@ module Ruflet
 
     private
 
+    def command_version(_args)
+      puts version_string
+      0
+    end
+
+    # `ruflet help` lists the commands; `ruflet help <command>` shows one.
+    # A word that is not a command still lists them all, and so does `--`,
+    # which ends the options rather than being one (`help --` and
+    # `help -- build` list them, as they did before).
+    def command_help(args)
+      word = args.first.to_s.downcase
+      entry = Commands.lookup(word)
+      return print_command_help(entry) if entry && entry.name != "help"
+      raise OptionParser::InvalidOption, args.first if entry.nil? && word != "--" && Commands.flag?(word)
+
+      print_help
+      0
+    end
+
+    def report_usage_error(entry, message)
+      Commands.report_usage_error(entry, message)
+    end
+
     def ensure_first_run_assets(command)
-      return unless %w[create new bootstrap init update debug build install doctor].include?(command)
+      return unless Commands.lookup(command)&.first_run_assets
       return unless respond_to?(:download_ruflet_assets, true)
 
       send(:download_ruflet_assets)

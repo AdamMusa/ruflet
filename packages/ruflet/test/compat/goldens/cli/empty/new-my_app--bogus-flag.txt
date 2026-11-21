@@ -1,0 +1,23 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: empty
+command: ruflet new my_app --bogus-flag
+exit: 64
+
+## commands (0)
+
+## output
+err| ruflet new: invalid option: --bogus-flag
+err| 
+err| Usage: ruflet new <appname>
+err| 
+err| Create a Ruflet app in ./<appname>: main.rb, Gemfile, ruflet.yaml and starter assets.
+err| 
+err| Aliases: bootstrap, init
+err| 
+err| Options:
+err|   -h, --help       Show this help
+
+## files
+(no files changed)

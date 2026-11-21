@@ -274,18 +274,25 @@ class RufletCliNewCommandTest < Minitest::Test
     end
   end
 
-  # There are no options, so these used to scaffold directories named
-  # "--help" and "--force".
-  def test_command_new_treats_dashed_names_as_options
+  # `new` takes no options, so the CLI stops for a dashed word before the
+  # scaffold runs (#78): help for -h/--help, a usage error for anything else.
+  # Nothing named after the flag is created.
+  def test_dashed_words_after_new_are_help_or_usage_errors_not_app_names
     Dir.mktmpdir do |dir|
       Dir.chdir(dir) do
-        %w[-h --help].each do |flag|
-          out, = capture_io { assert_equal 0, Ruflet::CLI.command_new([flag]) }
-          assert_includes out, "Usage: ruflet new <appname>"
+        new_help = Ruflet::CLI::Commands.lookup("new").help_text
+        Ruflet::CLI.stub(:download_ruflet_assets, ->(*) { flunk("no template fetch for help or a usage error") }) do
+          %w[-h --help].each do |flag|
+            out, err = capture_io { assert_equal 0, Ruflet::CLI.run(["new", flag]), flag }
+            assert_equal new_help, out, flag
+            assert_empty err, flag
+          end
+          %w[--force -x].each do |flag|
+            out, err = capture_io { assert_equal 64, Ruflet::CLI.run(["new", flag]), flag }
+            assert_empty out, flag
+            assert_equal "ruflet new: invalid option: #{flag}\n\n#{new_help}", err, flag
+          end
         end
-
-        _out, err = capture_io { assert_equal 1, Ruflet::CLI.command_new(["--force"]) }
-        assert_includes err, "Unknown option: --force"
         assert_empty Dir.children(dir)
       end
     end

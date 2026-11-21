@@ -25,12 +25,20 @@ module Ruflet
       CLIENT_CHANNEL_MANIFEST = "#{ASSET_PREFIX}-manifest.json"
       LEGACY_CLIENT_CHANNEL_MANIFEST = "#{LEGACY_ASSET_PREFIX}-manifest.json"
       DEFAULT_CLIENT_UPDATE_INTERVAL = 6 * 60 * 60
-      # Child fd on which the hot-reload harness reports that its USR1 trap is
-      # installed (see Ruflet::HotReload::Runner#signal_ready).
+      # Child fd on which the hot-reload harness reports its boot progress
+      # (see Ruflet::HotReload::Runner#report): READY_TRAP_ARMED once its USR1
+      # trap is installed, then READY_UP once the app is captured and watched.
       READY_FD = 3
+      READY_TRAP_ARMED = "t"
+      READY_UP = "."
+      # An app that has trapped USR1 but has not reported READY_UP by then
+      # gets queued reloads anyway. It may never report: it can start its
+      # server some way the harness does not capture.
+      READY_FALLBACK_SECONDS = 5
 
       def command_run(args)
         options = parse_run_options(args)
+        return report_run_device_unsupported(options[:device]) if options[:device]
 
         script_token = args.shift || "main"
         script_path = resolve_script(script_token)
@@ -100,6 +108,8 @@ module Ruflet
           elapsed_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
           puts "Restarted in #{elapsed_ms}ms"
         end
+      rescue Commands::HelpRequested => e
+        Commands.report_stop("run", e)
       ensure
         reload_input_thread&.kill if defined?(reload_input_thread)
         Signal.trap("INT", previous_int) if defined?(previous_int) && previous_int
@@ -133,12 +143,25 @@ module Ruflet
         options = { target: "mobile", requested_port: 8550, reload: true }
         parser = OptionParser.new do |o|
           o.on("--web") { options[:target] = "web" }
-          o.on("--desktop") { options[:target] = "desktop" }
+          # -d reached --desktop as its only abbreviation before --device
+          # existed, and must keep doing so (as must --d and --de).
+          o.on("-d", "--desktop", "--de", "--d") { options[:target] = "desktop" }
           o.on("--port PORT", Integer) { |v| options[:requested_port] = v }
           o.on("--no-reload") { options[:reload] = false }
+          o.on("--device ID") { |v| options[:device] = v }
+          o.on("-h", "--help") { raise Commands::HelpRequested }
         end
         parser.parse!(args)
         options
+      end
+
+      # `--device` is reserved for running the app's own Flutter client on a
+      # device; until that exists, say how to get the app onto one.
+      def report_run_device_unsupported(device)
+        warn "ruflet run: --device is not supported yet."
+        warn "To open the app on a phone or emulator, run `ruflet run` and scan the QR code with Ruflet Explorer,"
+        warn "or build and install it: `ruflet build apk --self`, then `ruflet install --device #{device}`."
+        1
       end
 
       def build_runtime_command(script_path, gemfile_path:, env:, reload: false)
@@ -209,12 +232,17 @@ module Ruflet
       end
 
       # With manual reload, the app child reports through a pipe once its USR1
-      # trap is installed. Until then "r" is queued: USR1 delivered earlier
-      # meets Ruby's default action and kills the booting app, which ends the
-      # whole session.
-      def new_run_state(track_ready:)
+      # trap is installed and again once it is up. Until then "r" is queued:
+      # USR1 delivered before the trap meets Ruby's default action and kills
+      # the booting app, which ends the whole session. Once the trap is
+      # reported, a queued reload is sent after ready_fallback_seconds even if
+      # the app never reports it is up (nil: wait for that report).
+      def new_run_state(track_ready:, ready_fallback_seconds: READY_FALLBACK_SECONDS)
         state = { child_pid: nil, restart: false }
-        state.merge!(lock: Mutex.new, ready: false, reload_pending: false) if track_ready
+        if track_ready
+          state.merge!(lock: Mutex.new, ready: false, reload_pending: false, retired_pid: nil,
+                       ready_fallback_seconds: ready_fallback_seconds)
+        end
         state
       end
 
@@ -239,30 +267,61 @@ module Ruflet
       end
 
       def watch_child_ready(reader, pid, run_state)
+        fallback = run_state[:ready_fallback_seconds]
         Thread.new do
-          signalled = reader.read(1)
-          reader.close
-          next unless signalled
-
-          deliver = run_state[:lock].synchronize do
-            # A byte from the app "R" retired (it reported just after the
-            # TERM) must not mark it ready: it is about to be reaped.
-            next false unless run_state[:child_pid] == pid && run_state[:retired_pid] != pid
-
-            run_state[:ready] = true
-            pending = run_state[:reload_pending]
-            run_state[:reload_pending] = false
-            pending
+          begin
+            mark_child_ready(pid, run_state) if await_child_ready(reader, fallback)
+            # Hold the pipe until the app closes it: one that reports after
+            # the fallback must not write into a closed pipe (SIGPIPE kills an
+            # app that restored its default action).
+            nil while reader.read(1)
+          ensure
+            reader.close
           end
-          send_reload_signal(pid) if deliver
         rescue Errno::ESRCH, IOError
           nil
         end
       end
 
+      # True once the app reports it is up, or once it has reported its USR1
+      # trap and `fallback` seconds pass without that; false if it goes away
+      # first. Only the trap report starts the clock: before it, USR1 kills.
+      def await_child_ready(reader, fallback)
+        deadline = nil
+        loop do
+          remaining = deadline && [deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC), 0].max
+          return true unless IO.select([reader], nil, nil, remaining)
+
+          case reader.read(1)
+          when nil then return false
+          when READY_UP then return true
+          when READY_TRAP_ARMED
+            deadline ||= Process.clock_gettime(Process::CLOCK_MONOTONIC) + fallback if fallback
+          end
+        end
+      end
+
+      # Marks the app up and sends the reload queued while it booted, unless
+      # the app has been replaced since, or is being replaced: after "R" the
+      # old app's late report or its fallback (both come from this watcher)
+      # must not mark the session up before the respawn, or "r" would signal
+      # the reaped app.
+      def mark_child_ready(pid, run_state)
+        deliver = run_state[:lock].synchronize do
+          next false unless run_state[:child_pid] == pid && run_state[:retired_pid] != pid
+
+          run_state[:ready] = true
+          pending = run_state[:reload_pending]
+          run_state[:reload_pending] = false
+          pending
+        end
+        send_reload_signal(pid) if deliver
+      end
+
       # "R" kills the app, so until the respawned one reports ready it must not
       # be treated as up: "r" in that gap would signal a reaped pid, get ESRCH
-      # and end the key reader for the rest of the session.
+      # and end the key reader for the rest of the session. Only the respawn
+      # (spawn_app_child) clears :retired_pid.
       def mark_restarting(run_state)
         return unless run_state[:lock]
 
@@ -564,7 +623,7 @@ module Ruflet
           root = ENV["RUFLET_CLIENT_DIR"]
           root = File.expand_path("ruflet_client", Dir.pwd) if root.to_s.strip.empty?
           root = nil unless Dir.exist?(root)
-          root ||= ensure_prebuilt_client(desktop: true)
+          root ||= ensure_prebuilt_client(desktop: true, use_cache_if_check_fails: true)
         end
         return nil unless root && Dir.exist?(root)
 
@@ -615,7 +674,7 @@ module Ruflet
         root = ENV["RUFLET_CLIENT_DIR"]
         root = File.expand_path("ruflet_client", Dir.pwd) if root.to_s.strip.empty?
         root = nil unless Dir.exist?(root)
-        root ||= ensure_prebuilt_client(web: true)
+        root ||= ensure_prebuilt_client(web: true, use_cache_if_check_fails: true)
         return nil unless root && Dir.exist?(root)
 
         client_build_roots(root).each do |base|
@@ -627,7 +686,11 @@ module Ruflet
         nil
       end
 
-      def ensure_prebuilt_client(web: false, desktop: false, platform: nil, force: false)
+      # use_cache_if_check_fails: the run path passes true, so a complete cache
+      # is still used when the optional periodic update check cannot reach
+      # GitHub (offline, DNS failure, 5xx, rate limit). `ruflet update` leaves
+      # it false: there the check is the point, so failing to run it fails.
+      def ensure_prebuilt_client(web: false, desktop: false, platform: nil, force: false, use_cache_if_check_fails: false)
         platform ||= host_platform_name
         return nil if platform.nil?
 
@@ -650,7 +713,15 @@ module Ruflet
           manifest = read_client_manifest(cache_root)
           return cache_root unless client_update_due?(manifest)
 
-          release = fetch_release_for_version(wanted_assets: wanted_assets)
+          begin
+            release = fetch_release_for_version(wanted_assets: wanted_assets)
+          rescue StandardError => e
+            raise unless use_cache_if_check_fails
+
+            # Not marked as checked, so the next run tries again.
+            warn "Could not check for a newer client (#{e.message}); using the cached one"
+            return cache_root
+          end
           if release.nil? || client_release_current?(manifest, release, wanted_assets)
             mark_client_update_checked(cache_root)
             return cache_root

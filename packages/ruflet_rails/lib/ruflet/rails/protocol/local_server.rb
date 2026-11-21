@@ -12,7 +12,8 @@ module Ruflet
       #
       # The Rails-specific behavior lives entirely in the hooks below:
       # session resumption through the Rails session registry, Rails
-      # logging, and request-env capture for the registry.
+      # logging, request-env capture for the registry, and running each
+      # message in the Rails executor (see Execution).
       class LocalServer
         include Ruflet::ConnectionProtocol
 
@@ -21,6 +22,27 @@ module Ruflet
           @session_registry = session_registry
           @sessions = {}
           @sessions_mutex = Mutex.new
+          @executions = {}
+          @executions_mutex = Mutex.new
+        end
+
+        # Endpoint leaves the Rails executor to this server: one run per
+        # message, not one for the socket's whole life.
+        def runs_messages_in_rails_executor?
+          true
+        end
+
+        # -- Rails executor: one run per unit of work --------------------
+
+        def handle_message(ws, raw)
+          execution_for(ws).run { super }
+        end
+
+        def close_connection(ws)
+          return super unless ws
+
+          execution = @executions_mutex.synchronize { @executions.delete(ws.session_key) }
+          (execution || Execution.new).finish { super }
         end
 
         # -- ConnectionProtocol hooks ------------------------------------
@@ -59,6 +81,12 @@ module Ruflet
           else
             super
           end
+        end
+
+        private
+
+        def execution_for(ws)
+          @executions_mutex.synchronize { @executions[ws.session_key] ||= Execution.new }
         end
       end
     end

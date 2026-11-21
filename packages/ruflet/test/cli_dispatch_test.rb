@@ -2,11 +2,36 @@
 
 require_relative "test_helper"
 
-# Ruflet::CLI.run: every command name and alias reaches its handler, the
-# first-run template download happens only for the commands that need it,
-# and usage errors exit 1 instead of raising.
+# Pins how `Ruflet::CLI.run` turns the first argument into a command: which
+# words reach which command method, with which arguments, which commands fetch
+# the first-run assets beforehand, what `help` prints and every exit code.
+# The commands themselves are replaced by recorders on a private copy of the
+# CLI, so nothing here touches Ruflet::CLI or runs a real command.
 class RufletCliDispatchTest < Minitest::Test
-  ROUTES = {
+  HELP = <<~HELP
+    Ruflet CLI
+
+    Commands:
+      ruflet --version
+      ruflet create <appname>
+      ruflet new <appname>
+      ruflet run [scriptname|path] [--web|--desktop] [--port PORT] [--no-reload]
+      ruflet update [web|desktop|all] [--check] [--force] [--platform PLATFORM]
+      ruflet debug [platform]
+      ruflet build <apk|android|ios|ipa|aab|appbundle|web|macos|windows|linux> [--lite|--full|--self] [--verbose]
+      ruflet install [--device DEVICE_ID] [--verbose]
+      ruflet devices
+      ruflet emulators
+      ruflet doctor [--fix] [--verbose]
+
+    Build profiles:
+      --self           Self-contained build; lite profile unless --full
+      --self --full    Self-contained full CRuby build with locked project gems
+      --full           Also implies --self
+  HELP
+
+  # Every word `ruflet` accepts as a command, and the method it runs.
+  HANDLERS = {
     "create" => :command_create,
     "new" => :command_new,
     "bootstrap" => :command_new,
@@ -20,134 +45,172 @@ class RufletCliDispatchTest < Minitest::Test
     "emulators" => :command_emulators,
     "doctor" => :command_doctor
   }.freeze
+  VERSION_WORDS = %w[version -v --version].freeze
+  HELP_WORDS = %w[help -h --help].freeze
+  # The words that fetch the Flutter template on first use before they run.
+  FIRST_RUN_ASSET_WORDS = %w[create new bootstrap init update debug build install doctor].freeze
+  ALL_WORDS = (HANDLERS.keys + VERSION_WORDS + HELP_WORDS).freeze
 
-  # Only these fetch the Flutter template before running (cli.rb).
-  DOWNLOADING = %w[create new bootstrap init update debug build install doctor].freeze
+  # A copy of Ruflet::CLI's own dispatch whose commands and asset download
+  # only record what they were given.
+  class RecordingCli
+    attr_reader :calls, :asset_fetches
 
-  def test_each_command_and_alias_reaches_its_handler_with_the_remaining_args
-    ROUTES.each do |command, handler|
-      received = nil
-      code = with_assets_stubbed do
-        Ruflet::CLI.stub(handler, ->(args) { received = args; 7 }) do
-          Ruflet::CLI.run([command, "--flag", "value"])
+    def initialize(result: 0, fetch_error: nil)
+      @calls = []
+      @asset_fetches = 0
+      @result = result
+      @fetch_error = fetch_error
+      extend Ruflet::CLI
+      HANDLERS.values.uniq.each do |handler|
+        define_singleton_method(handler) do |args|
+          @calls << [handler, args]
+          @result
         end
       end
+    end
 
-      assert_equal 7, code, "#{command} must return its handler's exit code"
-      assert_equal ["--flag", "value"], received, "#{command} -> #{handler}"
+    private
+
+    def download_ruflet_assets(*)
+      @asset_fetches += 1
+      raise @fetch_error if @fetch_error
+
+      true
     end
   end
 
-  def test_command_names_are_case_insensitive
-    received = nil
-    with_assets_stubbed do
-      Ruflet::CLI.stub(:command_build, ->(args) { received = args; 0 }) do
-        assert_equal 0, Ruflet::CLI.run(["BUILD", "apk"])
-      end
-    end
-    assert_equal ["apk"], received
+  # The text #77 and #78 kept byte-identical, except three statements that
+  # were wrong: debug's positional argument is a platform (it said a script),
+  # `build` also takes `appbundle`, and --self is not the default profile (a
+  # build without a profile flag is server-driven).
+  def test_help_text
+    out, err = capture_io { Ruflet::CLI.print_help }
+
+    assert_equal HELP, out
+    assert_empty err
   end
 
-  def test_first_run_assets_are_fetched_only_for_commands_that_need_the_template
-    ROUTES.each do |command, handler|
-      downloads = 0
-      with_assets_stubbed(-> { downloads += 1 }) do
-        Ruflet::CLI.stub(handler, ->(_args) { 0 }) { Ruflet::CLI.run([command]) }
-      end
+  def test_every_command_word_runs_its_command_with_the_remaining_arguments
+    HANDLERS.each do |word, handler|
+      cli = RecordingCli.new(result: 7)
+      # A flag the command does not read reaches only the commands that parse
+      # their own flags or forward them; for the others it is a usage error
+      # before the command runs (CLI-12, cli_usage_test).
+      rest = Ruflet::CLI::Commands.lookup(word).unknown_flags == :reject ? %w[target value] : %w[target --flag value]
+      argv = [word, *rest]
+      code = nil
+      out, err = capture_io { code = cli.run(argv) }
 
-      expected = DOWNLOADING.include?(command) ? 1 : 0
-      assert_equal expected, downloads, "first-run download for #{command}"
-    end
-
-    downloads = 0
-    capture_io do
-      with_assets_stubbed(-> { downloads += 1 }) do
-        Ruflet::CLI.run(["--version"])
-        Ruflet::CLI.run(["help"])
-      end
-    end
-    assert_equal 0, downloads
-  end
-
-  def test_a_failed_first_run_download_does_not_stop_the_command
-    ran = false
-    with_assets_stubbed(-> { raise SocketError, "offline" }) do
-      Ruflet::CLI.stub(:command_doctor, ->(_args) { ran = true; 0 }) do
-        assert_equal 0, Ruflet::CLI.run(["doctor"])
-      end
-    end
-    assert ran
-  end
-
-  def test_version_aliases
-    %w[version -v --version VERSION].each do |alias_name|
-      out, = capture_io { assert_equal 0, Ruflet::CLI.run([alias_name]) }
-      assert_equal "ruflet #{Ruflet::VERSION}\n", out, alias_name
+      assert_equal 7, code, "#{word}: the command's result is the exit code"
+      assert_equal [[handler, rest]], cli.calls, word
+      assert_same argv, cli.calls.first.last, "#{word}: the command gets the caller's argv, minus the word"
+      assert_empty out, word
+      assert_empty err, word
     end
   end
 
-  def test_help_aliases_and_no_arguments_print_help
-    [["help"], ["-h"], ["--help"], []].each do |argv|
-      out, = capture_io { assert_equal 0, Ruflet::CLI.run(argv.dup) }
-      assert_includes out, "Ruflet CLI", argv.inspect
-    end
-  end
+  def test_command_words_match_in_any_case
+    ALL_WORDS.each do |word|
+      [word.upcase, word.capitalize, word.swapcase].uniq.each do |variant|
+        expected = RecordingCli.new
+        actual = RecordingCli.new
+        expected_out = capture_io { expected.run([word, "arg"]) }
+        actual_out = capture_io { actual.run([variant, "arg"]) }
 
-  def test_unknown_options_are_usage_errors_not_crashes
-    cases = {
-      %w[run --bogus] => "invalid option: --bogus",
-      %w[run --port abc] => "invalid argument: --port abc",
-      %w[update --platform] => "missing argument: --platform",
-      %w[debug --bogus] => "invalid option: --bogus",
-      %w[emulators --bogus] => "invalid option: --bogus"
-    }
-
-    cases.each do |argv, message|
-      Ruflet::CLI.stub(:ensure_flutter!, ->(*) { flunk "#{argv.inspect} must fail before touching Flutter" }) do
-        _out, err = capture_io do
-          with_assets_stubbed { assert_equal 1, Ruflet::CLI.run(argv.dup), argv.inspect }
-        end
-        assert_includes err, "ruflet #{argv.first}: #{message}"
-        assert_includes err, "ruflet help"
+        assert_equal expected.calls, actual.calls, variant
+        assert_equal expected.asset_fetches, actual.asset_fetches, variant
+        assert_equal expected_out, actual_out, variant
       end
     end
   end
 
-  def test_help_documents_what_the_parsers_accept
-    out, = capture_io { Ruflet::CLI.print_help }
+  # (--help after them prints the version command's help since CLI-12.)
+  def test_version_words_print_the_version_and_ignore_further_arguments
+    VERSION_WORDS.each do |word|
+      cli = RecordingCli.new
+      code = nil
+      out, err = capture_io { code = cli.run([word, "extra", "more"]) }
 
-    # debug's positional is a platform (extra_command.rb); it used to be
-    # documented as a script.
-    refute_includes out, "ruflet debug [scriptname"
-    assert_includes out, "ruflet debug [web|macos|windows|linux|ios|android]"
-    %w[--platform --device-id --release --web-renderer].each { |flag| assert_includes out, flag }
-    assert_includes out, "appbundle"
-    assert_includes out, "--device|-d DEVICE_ID"
-    assert_includes out, "ruflet emulators [--start --emulator ID]"
-    assert_includes out, "[web|desktop|all|check]"
-    assert_includes out, "(also: bootstrap, init)"
-    assert_includes out, "(also: version, -v)"
-    assert_includes out, "(also: -h, --help)"
-    # The default build is server-driven, not --self.
-    refute_includes out, "(default profile)"
+      assert_equal 0, code, word
+      assert_equal "ruflet #{Ruflet::VERSION}\n", out, word
+      assert_empty err, word
+      assert_empty cli.calls, word
+    end
   end
 
+  # (`help build` prints build's help since CLI-12; see cli_usage_test.)
+  def test_help_words_and_no_arguments_print_help
+    [*HELP_WORDS.map { |word| [word] }, [], %w[help bogus], %w[--help bogus]].each do |argv|
+      cli = RecordingCli.new
+      code = nil
+      out, err = capture_io { code = cli.run(argv.dup) }
+
+      assert_equal 0, code, argv.inspect
+      assert_equal HELP, out, argv.inspect
+      assert_empty err, argv.inspect
+      assert_empty cli.calls, argv.inspect
+    end
+  end
+
+  def test_an_unknown_command_names_the_downcased_word_prints_help_and_exits_1
+    { "pack" => "pack", "Bogus-Command" => "bogus-command", "" => "", "-x" => "-x", "versions" => "versions" }.each do |word, shown|
+      cli = RecordingCli.new
+      code = nil
+      out, err = capture_io { code = cli.run([word, "build"]) }
+
+      assert_equal 1, code, word.inspect
+      assert_equal "Unknown command: #{shown}\n", err, word.inspect
+      assert_equal HELP, out, word.inspect
+      assert_empty cli.calls, word.inspect
+      assert_equal 0, cli.asset_fetches, word.inspect
+    end
+  end
+
+  def test_only_commands_that_create_or_build_fetch_first_run_assets
+    ALL_WORDS.each do |word|
+      cli = RecordingCli.new
+      capture_io { cli.run([word]) }
+
+      expected = FIRST_RUN_ASSET_WORDS.include?(word) ? 1 : 0
+      assert_equal expected, cli.asset_fetches, word
+    end
+  end
+
+  def test_a_failed_asset_fetch_does_not_stop_the_command
+    cli = RecordingCli.new(result: 0, fetch_error: StandardError.new("offline"))
+    code = nil
+    out, err = capture_io { code = cli.run(%w[build apk]) }
+
+    assert_equal 0, code
+    assert_equal 1, cli.asset_fetches
+    assert_equal [[:command_build, %w[apk]]], cli.calls
+    assert_empty out
+    assert_empty err
+  end
+
+  # It returned 0 even when nothing was created.
   def test_bootstrap_returns_the_scaffold_status
     Dir.mktmpdir do |dir|
       Dir.chdir(dir) do
-        capture_io do
+        out, err = capture_io do
           assert_equal 0, Ruflet::CLI.bootstrap("demo")
-          # It used to return 0 here too, after printing that the directory exists.
           assert_equal 1, Ruflet::CLI.bootstrap("demo")
         end
         assert File.file?(File.join(dir, "demo", "main.rb"))
+        assert_includes out, "ruflet run main.rb"
+        assert_includes err, "Directory already exists: #{File.join(Dir.pwd, 'demo')}"
       end
     end
   end
 
-  private
-
-  def with_assets_stubbed(callback = -> {}, &block)
-    Ruflet::CLI.stub(:download_ruflet_assets, ->(*) { callback.call }, &block)
+  def test_the_cli_itself_runs_every_command_method
+    HANDLERS.values.uniq.each do |handler|
+      assert Ruflet::CLI.respond_to?(handler), "Ruflet::CLI.#{handler}"
+    end
+    assert Ruflet::CLI.respond_to?(:print_help)
+    assert Ruflet::CLI.respond_to?(:version_string)
+    assert Ruflet::CLI.respond_to?(:bootstrap)
+    assert Ruflet::CLI.respond_to?(:download_ruflet_assets, true)
   end
 end

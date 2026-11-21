@@ -1,0 +1,14 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: rails_app
+command: rake ruflet:build[bogus]
+exit: 1
+
+## commands (0)
+
+## output
+err| Unsupported build target: bogus
+
+## files
+(no files changed)
