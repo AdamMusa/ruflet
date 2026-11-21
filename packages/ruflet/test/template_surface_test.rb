@@ -240,6 +240,8 @@ class RufletTemplateSurfaceTest < Minitest::Test
       "subject(:form) { 1 }",
       "define_method(:form) { 1 }",
       "define_method :form do\nend",
+      "define_method(:\"form\") { 1 }",
+      "alias_method :\"form\", :x",
       "alias_method :form, :x",
       "alias form x",
       "Struct.new(:x, :form)",
@@ -273,6 +275,17 @@ class RufletTemplateSurfaceTest < Minitest::Test
     project("main.rb" => "text(\"a\")\nform\n", "lib/b.rb" => "form\n", "lib/a.rb" => "\n\nform\n") do |dir|
       assert_equal({ "form" => "lib/a.rb:3" }, Surface.app_calls(dir, ["form"]))
     end
+  end
+
+  # Line numbers compare as numbers: line 9 comes before line 10, although
+  # "main.rb:10" sorts before "main.rb:9" as a string.
+  def test_the_first_call_is_found_by_line_number
+    project("main.rb" => "#{"x = 1\n" * 8}form\nform\n") do |dir|
+      assert_equal({ "form" => "main.rb:9" }, Surface.app_calls(dir, ["form"]))
+    end
+    assert Surface.location_before?("main.rb:9", "main.rb:10")
+    refute Surface.location_before?("main.rb:10", "main.rb:9")
+    assert Surface.location_before?("a.rb:10", "b.rb:2")
   end
 
   def test_build_output_dependencies_and_dot_directories_are_not_read
@@ -340,6 +353,14 @@ class RufletTemplateSurfaceTest < Minitest::Test
     ) do |dir|
       assert_equal %w[app/specifications/z.rb lib/gems/y.rb main.rb],
                    Surface.ruby_files(dir).map { |path| Surface.relative_path(path, dir) }
+    end
+  end
+
+  def test_each_marker_makes_a_ruflet_project
+    %w[main.rb ruflet.yaml ruflet.yml services.yaml].each do |marker|
+      project(marker => "", "app.rb" => "form\n") do |dir|
+        assert_equal({ "form" => "app.rb:1" }, Surface.app_calls(dir, ["form"]), marker)
+      end
     end
   end
 
@@ -416,6 +437,15 @@ class RufletTemplateSurfaceTest < Minitest::Test
         Template: /t
         Failing because of --strict. Fetch the latest template with `ruflet doctor --fix`.
     TEXT
+    three = [
+      problems.first,
+      Surface::Problem.new(kind: :service, name: "local_authentication", provides: "LocalAuthentication", revision: FORM_REVISION, location: "main.rb:5"),
+      problems.last
+    ]
+    assert_equal "warning: the Flutter template lacks 1 control, 1 service and 1 extension this app uses:",
+                 Surface.report(three, template_root: "/t").first
+    assert_equal "error: the Flutter template lacks 2 controls this app uses:",
+                 Surface.report([problems.first, problems.first], template_root: "/t", strict: true).first
     assert_equal "  Update it, or pass --strict to fail instead.",
                  Surface.report(problems, template_root: "/t", advice: "Update it").last
     assert_equal "  Failing because of --strict. Update it.",
@@ -446,9 +476,17 @@ class RufletTemplateSurfaceTest < Minitest::Test
         assert_equal expected, Check.advice(host, checkout)
         assert_equal Surface::FETCH_ADVICE, Check.advice(host, cached)
       end
+      client_advice = "Update the client in RUFLET_CLIENT_DIR from the latest ruflet-template #{unchanged}"
       with_env("RUFLET_CLIENT_DIR" => File.join(dir, "client"), "RUFLET_TEMPLATE_ROOT" => nil) do
-        assert_equal "Update the client in RUFLET_CLIENT_DIR from the latest ruflet-template #{unchanged}",
-                     Check.advice(host, File.join(dir, "client"))
+        assert_equal client_advice, Check.advice(host, File.join(dir, "client"))
+      end
+      # A relative RUFLET_CLIENT_DIR names the client in the current directory.
+      FileUtils.mkdir_p(File.join(dir, "client"))
+      Dir.chdir(dir) do
+        with_env("RUFLET_CLIENT_DIR" => "client", "RUFLET_TEMPLATE_ROOT" => nil) do
+          assert_equal client_advice, Check.advice(host, "client")
+          assert_equal client_advice, Check.advice(host, File.join(Dir.pwd, "client"))
+        end
       end
     end
   end
@@ -571,8 +609,15 @@ class RufletTemplateSurfaceTest < Minitest::Test
     with_env("RUFLET_CLIENT_DIR" => "/custom") do
       assert_equal "/project/client", Check.build_root(host, "/project/client")
     end
+    Dir.mktmpdir do |dir|
+      with_env("RUFLET_CLIENT_DIR" => dir) { assert_equal dir, Check.run_root(host) }
+      with_env("RUFLET_CLIENT_DIR" => File.join(dir, "missing")) { assert_equal "/installed", Check.run_root(host) }
+      with_env("RUFLET_CLIENT_DIR" => " ") { assert_equal "/installed", Check.run_root(host) }
+      with_env("RUFLET_CLIENT_DIR" => nil) { assert_equal "/installed", Check.run_root(host) }
+    end
     host.define_singleton_method(:resolve_ruflet_client_template_root) { nil }
     assert_equal "/project/build/client", Check.build_root(host, "/project/build/client")
+    with_env("RUFLET_CLIENT_DIR" => nil) { assert_nil Check.run_root(host) }
     host.define_singleton_method(:resolve_ruflet_client_template_root) { raise "boom" }
     assert_nil Check.installed_root(host)
     assert_nil Check.installed_root(Object.new)
@@ -641,6 +686,69 @@ class RufletTemplateSurfaceTest < Minitest::Test
         assert_equal 1, code
         assert_equal ["mobile"], served, "with --strict, no server starts"
         assert_includes err, "error: the Flutter template lacks 1 control this app uses:\n  form (Form), #{script}:4:"
+      end
+    end
+  end
+
+  # run --web and --desktop open the client in RUFLET_CLIENT_DIR, which is
+  # also the one `ruflet build` uses, so run checks it as its own template,
+  # as build does, and not the installed template.
+  def test_run_checks_the_client_in_ruflet_client_dir
+    project("main.rb" => FORM_APP) do |dir|
+      old_root = old_template(File.join(dir, "old"))
+      new_root = new_template(File.join(dir, "new"))
+      host = cli_host
+      installed = old_root
+      host.define_singleton_method(:resolve_ruflet_client_template_root) { installed }
+      served = 0
+      host.define_singleton_method(:resolve_backend_port) do |*, **|
+        served += 1
+        nil
+      end
+      Dir.chdir(dir) do
+        code = nil
+        with_env("RUFLET_CLIENT_DIR" => new_root) do
+          out, err = capture_io { code = host.command_run(%w[--strict main.rb --web]) }
+          assert_equal 1, served, "the client renders Form, so run goes on to start the server"
+          assert_empty out
+          assert_empty err
+        end
+
+        installed = new_root
+        with_env("RUFLET_CLIENT_DIR" => "old") do
+          _out, err = capture_io { code = host.command_run(%w[--strict main.rb --web]) }
+          assert_equal 1, code
+          assert_equal 1, served, "the client lacks Form: with --strict, no server starts"
+          assert_includes err, "error: the Flutter template lacks 1 control this app uses:\n  form (Form), main.rb:4:"
+          assert_includes err, "  Template: old\n"
+          assert_includes err, "Update the client in RUFLET_CLIENT_DIR from the latest ruflet-template"
+        end
+
+        installed = old_root
+        with_env("RUFLET_CLIENT_DIR" => File.join(dir, "missing")) do
+          _out, err = capture_io { code = host.command_run(%w[--strict main.rb --web]) }
+          assert_equal 1, code
+          assert_equal 1, served, "a RUFLET_CLIENT_DIR that names no directory leaves the installed template"
+          assert_includes err, "  Template: #{old_root}\n"
+        end
+      end
+    end
+  end
+
+  # doctor reads the config build reads: ruflet.yaml, or ruflet.yml.
+  def test_doctor_checks_the_extensions_ruflet_yml_selects
+    project("main.rb" => "text(\"a\")\n", "ruflet.yml" => "services:\n  - biometrics\n") do |dir|
+      template = old_template(File.join(dir, "template"))
+      host = cli_host
+      host.define_singleton_method(:resolve_ruflet_client_template_root) { template }
+      host.define_singleton_method(:cached_template_revision) { nil }
+      host.define_singleton_method(:flutter_tools) { |**| nil }
+      Dir.chdir(dir) do
+        code = nil
+        _out, err = capture_io { code = host.command_doctor(%w[--strict]) }
+        assert_equal 1, code
+        assert_includes err, "error: the Flutter template lacks 1 extension this app uses:\n" \
+                             "  extension local_auth (ruflet_local_auth): needs ruflet-template cdbc2aaf6036 or newer"
       end
     end
   end

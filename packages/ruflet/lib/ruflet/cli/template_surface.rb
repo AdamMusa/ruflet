@@ -374,6 +374,19 @@ module Ruflet
         installed_root(cli) || client_dir
       end
 
+      # The template run checks: a RUFLET_CLIENT_DIR that names a directory
+      # is the client run --web and --desktop open and the one `ruflet build`
+      # uses, so it is checked as its own template, as build checks it;
+      # otherwise the installed template is.
+      def run_root(cli)
+        client_dir = ENV["RUFLET_CLIENT_DIR"].to_s
+        return client_dir if !client_dir.strip.empty? && Dir.exist?(client_dir)
+
+        installed_root(cli)
+      rescue StandardError
+        nil
+      end
+
       # The template already on this machine; nothing is fetched.
       def installed_root(cli)
         return nil unless cli.respond_to?(:resolve_ruflet_client_template_root, true)

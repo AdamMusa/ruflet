@@ -47,7 +47,7 @@ module Ruflet
           warn "Expected: ./#{script_token}.rb, ./#{script_token}, or explicit file path."
           return 1
         end
-        template_root = TemplateSurfaceCheck.installed_root(self)
+        template_root = TemplateSurfaceCheck.run_root(self)
         if template_root && !TemplateSurfaceCheck.check(self, template_root, strict: options[:strict], files: [script_path])
           return 1
         end
