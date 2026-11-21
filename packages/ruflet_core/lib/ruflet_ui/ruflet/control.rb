@@ -164,6 +164,10 @@ module Ruflet
 
     def serialize_value(value)
       case value
+      when nil
+        # Sent as null, as Page#update sends it: the to_h branch below would
+        # turn nil into {} (nil.to_h), which the client reads as a value.
+        nil
       when Control
         value.to_patch
       when Ruflet::IconData
