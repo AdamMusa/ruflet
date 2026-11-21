@@ -22,7 +22,7 @@ module RufletRecord
       @table_name = model.table_name
       @values = values || {
         where: [], order: [], select: [], joins: [], limit: nil,
-        offset: nil, distinct: false
+        offset: nil, distinct: false, reordering: false
       }
       @loaded = false
       @records = nil
@@ -46,7 +46,12 @@ module RufletRecord
     def reorder(*values)
       replacements = values.flatten
       SQL.order(@table_name, replacements)
-      spawn_with(:order, replacements)
+      # reordering records that this order replaces any earlier one. Only
+      # scope chaining reads it (see method_missing); merge adds the order.
+      changed = duplicate_values
+      changed[:order] = replacements
+      changed[:reordering] = true
+      self.class.new(@model, changed)
     end
 
     def limit(value)
@@ -126,6 +131,8 @@ module RufletRecord
     # of the rows the relation selects.
     def last(count = nil)
       count = count.to_i unless count.nil?
+      relation = without_blank_order
+      return relation.last(count) unless relation.equal?(self)
       return last_selected(count) if row_window?
 
       order = @values[:order].empty? ? [{ @model.primary_key => :desc }] : reversed_order
@@ -265,6 +272,11 @@ module RufletRecord
     # method_missing for a call with a receiver.
     def method_missing(name, *args, &block)
       return super unless @model.send(:scope_defined?, name)
+      # CRuby also lands here for a non-public method called with a receiver,
+      # such as Kernel#open or #format. mruby raises NoMethodError for those
+      # without calling method_missing, so a scope with such a name raises
+      # here too: it fails the same way under CRuby as on a device.
+      return super if hidden_method?(name)
 
       value = @model.public_send(name, *args, &block)
       return value unless value.is_a?(Relation)
@@ -274,11 +286,13 @@ module RufletRecord
       if !value.model.equal?(@model) && @model.ancestors.include?(value.model) && value.table_name == @table_name
         value = Relation.new(@model, value.send(:values))
       end
-      merge(value)
+      # As in Active Record, a scope that calls reorder replaces the order.
+      base = value.send(:values)[:reordering] ? reorder : self
+      base.merge(value)
     end
 
     def respond_to_missing?(name, include_private = false)
-      @model.send(:scope_defined?, name) || super
+      (@model.send(:scope_defined?, name) && !hidden_method?(name)) || super
     end
 
     def to_sql
@@ -325,7 +339,7 @@ module RufletRecord
     end
 
     def count_from(relation, expression)
-      sql, binds = relation.send(:bound_sql_and_binds)
+      sql, binds = relation.send(:without_blank_order).send(:bound_sql_and_binds)
       row = @model.connection.select_all("SELECT #{expression} AS value FROM (#{sql}) AS \"subquery\"", binds).first
       row ? row["value"].to_i : 0
     end
@@ -336,7 +350,7 @@ module RufletRecord
     def write_wheres
       return bound_wheres unless row_window?
 
-      sql, binds = select(@model.primary_key).distinct(false).send(:bound_sql_and_binds)
+      sql, binds = without_blank_order.select(@model.primary_key).send(:bound_sql_and_binds)
       [SQL::Fragment.new("#{SQL.column(@table_name, @model.primary_key)} IN (#{sql})", binds)]
     end
 
@@ -353,6 +367,26 @@ module RufletRecord
       start = row_count - wanted
       records = offset(start > 0 ? start : 0).limit(wanted).to_a
       count ? records : records.last
+    end
+
+    # This relation without the order entries that add nothing to ORDER BY,
+    # such as nil or "" from order(params[:sort]) with no sort given, which
+    # Active Record ignores. last, and count and the writes with a limit or
+    # offset, keep the relation's order, so they query through this: such an
+    # entry must not leave a bare ORDER BY there.
+    def without_blank_order
+      kept = @values[:order].reject { |value| SQL.order(@table_name, [value]).strip.empty? }
+      kept.length == @values[:order].length ? self : spawn_with(:order, kept)
+    end
+
+    # Whether +name+ is a protected or private method of a relation.
+    # mruby has no private_method_defined?, and never calls method_missing
+    # for a private method anyway.
+    def hidden_method?(name)
+      klass = self.class
+      return true if klass.method_defined?(name)
+
+      klass.respond_to?(:private_method_defined?) && klass.private_method_defined?(name)
     end
 
     # The relation's order reversed, or nil when part of it is SQL.
@@ -400,7 +434,8 @@ module RufletRecord
       {
         where: @values[:where].dup, order: @values[:order].dup,
         select: @values[:select].dup, joins: @values[:joins].dup,
-        limit: @values[:limit], offset: @values[:offset], distinct: @values[:distinct]
+        limit: @values[:limit], offset: @values[:offset], distinct: @values[:distinct],
+        reordering: @values[:reordering]
       }
     end
 

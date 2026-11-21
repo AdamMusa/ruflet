@@ -34,6 +34,7 @@ raise "beginless range failed" unless Note.where(id: ...2).pluck(:title) == ["Sh
 raise "scope chaining failed" unless Note.where(id: 2).done.count == 1 && Note.done.where(id: 1).count == 0
 raise "count with a limit failed" unless Note.limit(1).count == 1
 raise "last with an order failed" unless Note.order(id: :desc).last.id == 1
+raise "a blank order failed" unless Note.order(nil).last.id == 2 && Note.order(nil).limit(1).count == 1
 
 first.update!(done: true)
 raise "update failed" unless Note.done.count == 2

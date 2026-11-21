@@ -49,6 +49,18 @@ class RelationScopeTest < RufletRecordTestCase
     assert_nil User.find_by(age: 0)
   end
 
+  # Active Record 8.1 raises for delete_all on a distinct relation and leaves
+  # distinct out of update_all. Here both change each selected row once.
+  def test_writes_on_a_distinct_join_with_a_limit_change_each_selected_row_once
+    with_posts = User.joins('INNER JOIN "posts" ON "posts"."user_id" = "users"."id"').distinct.order("users.id")
+
+    assert_equal [0, 1], with_posts.limit(2).pluck(:age)
+    assert_equal 2, with_posts.limit(2).update_all(name: "posted")
+    assert_equal [0, 1], User.where(name: "posted").order(:id).pluck(:age)
+    assert_equal 2, with_posts.limit(2).delete_all
+    assert_equal (2..9).to_a, User.order(:id).pluck(:age)
+  end
+
   def test_update_all_with_a_limit_updates_only_the_limited_rows
     assert_equal 2, User.order(:id).limit(2).update_all(name: "first two")
     assert_equal [0, 1], User.where(name: "first two").order(:id).pluck(:age)
@@ -90,6 +102,7 @@ class RelationScopeTest < RufletRecordTestCase
     assert_equal 3, User.where(active: true).order(:id).limit(3).count
     assert_equal 1, User.where(active: true).order(:id).limit(3).offset(4).count
     assert_equal 3, User.select(:age).limit(3).count
+    assert_equal 2, User.limit(2).count(RufletRecord.sql("*"))
   end
 
   def test_count_of_a_column_with_a_limit_counts_its_non_null_values
@@ -161,15 +174,41 @@ class RelationScopeTest < RufletRecordTestCase
     assert_nil User.limit(0).last
   end
 
+  # order(params[:sort]) with no sort given. Active Record ignores a blank
+  # order entry, and so do last, and count and the writes with a limit.
+  def test_blank_order_entries_are_ignored
+    sort = nil
+
+    assert_equal 9, User.order(sort).last.age
+    assert_equal 9, User.reorder(nil).last.age
+    assert_equal 9, User.order("").last.age
+    assert_equal 9, User.order({}).last.age
+    assert_equal 9, User.order(RufletRecord.sql("")).last.age
+    assert_equal [8, 9], User.order(sort).last(2).map(&:age)
+    assert_equal 0, User.order(age: :desc).order(sort).last.age
+    assert_equal 0, User.order(RufletRecord.sql("age * -1"), sort).last.age
+    assert_equal 2, User.order(sort).limit(3).last.age
+    assert_equal 2, User.order(sort).limit(2).count
+    assert_equal 1, User.order(sort).order(:id).limit(2).count(:email)
+    assert_equal 2, User.order(sort).limit(2).update_all(name: "two")
+    assert_equal 2, User.where(name: "two").count
+    assert_equal 2, User.order(sort).order(:id).limit(2).update_all(name: "first two")
+    assert_equal [0, 1], User.where(name: "first two").order(:id).pluck(:age)
+    assert_equal 1, User.order(sort).limit(1).delete_all
+    assert_equal 9, User.count
+  end
+
   def test_last_without_an_order_or_limit_sends_the_same_sql
     statements = capture_statements do
       User.last
       User.where(active: true).last(2)
+      User.order(nil).last
     end
 
     assert_equal [
       [%(SELECT "users".* FROM "users" ORDER BY "users"."id" DESC LIMIT ?), [1]],
-      [%(SELECT "users".* FROM "users" WHERE ("users"."active" = ?) ORDER BY "users"."id" DESC LIMIT ?), [true, 2]]
+      [%(SELECT "users".* FROM "users" WHERE ("users"."active" = ?) ORDER BY "users"."id" DESC LIMIT ?), [true, 2]],
+      [%(SELECT "users".* FROM "users" ORDER BY "users"."id" DESC LIMIT ?), [1]]
     ], statements
   end
 
@@ -215,6 +254,20 @@ class RelationScopeTest < RufletRecordTestCase
     assert_equal [0, 1], User.order(:id).top_two.pluck(:age)
   end
 
+  def test_a_scope_that_reorders_replaces_the_order
+    User.class_eval do
+      scope :oldest_first, -> { reorder(age: :desc) }
+      scope :oldest_active, -> { where(active: true).oldest_first }
+    end
+
+    assert_equal 9, User.order(:id).oldest_first.first.age
+    assert_equal 4, User.order(:id).oldest_active.first.age
+    assert_equal 0, User.where(active: true).order(:id).oldest_first.last.age
+    assert_equal [9, 8, 7], User.oldest_first.order(:id).limit(3).pluck(:age)
+    # merge keeps adding the other relation's order, as it did before.
+    assert_equal [0, 1], User.order(:id).merge(User.reorder(age: :desc)).limit(2).pluck(:age)
+  end
+
   def test_a_scope_returning_nil_keeps_the_relation
     User.class_eval { scope :nothing, -> {} }
 
@@ -238,6 +291,18 @@ class RelationScopeTest < RufletRecordTestCase
     Post.class_eval { scope :authors, -> { User.all } }
 
     assert_raises(ArgumentError) { Post.where(title: "p0").authors }
+  end
+
+  # mruby raises NoMethodError for a private method called with a receiver
+  # before method_missing runs, so such a scope cannot chain on a device.
+  # It raises under CRuby too, and still works on the model.
+  def test_a_scope_named_after_a_private_kernel_method_does_not_chain
+    User.class_eval { scope :open, -> { where(active: true) } }
+
+    assert_equal 5, User.open.count
+    assert_equal 3, User.open.where("age > ?", 1).count
+    refute User.where("age > ?", 1).respond_to?(:open)
+    assert_raises(NoMethodError) { User.where("age > ?", 1).open }
   end
 
   def test_class_methods_that_are_not_scopes_are_not_delegated
