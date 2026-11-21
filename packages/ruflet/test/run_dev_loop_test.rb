@@ -415,7 +415,11 @@ class RufletCliRunDevLoopTest < Minitest::Test
     require "socket"
     counter = ENV.fetch("TEST_START_COUNTER")
     starts = File.exist?(counter) ? File.read(counter).to_i : 0
-    File.write(counter, (starts + 1).to_s)
+    # Written whole (then renamed): "R" fires as soon as the file exists,
+    # and a TERM between File.write's create and its write would leave it
+    # empty, so the respawn would count as a first start and sleep too.
+    File.write("\#{counter}.tmp", (starts + 1).to_s)
+    File.rename("\#{counter}.tmp", counter)
     sleep 60 if starts.zero?
     server = TCPServer.new("127.0.0.1", Integer(ENV.fetch("RUFLET_PORT")))
     probe = server.accept # the boot probe; then the app ends
