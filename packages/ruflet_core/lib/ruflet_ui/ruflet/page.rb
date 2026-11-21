@@ -1456,6 +1456,32 @@ module Ruflet
       false
     end
 
+    # Ends every invoke still waiting for the client's reply with an error.
+    # The server calls it when it closes a connection over a message it
+    # refused (one larger than its limit, often that very reply): the reply
+    # can no longer arrive, so on_result callbacks run with (nil, message)
+    # and invoke_and_wait callers raise instead of waiting forever -- calls
+    # like pick_files have no timeout by default. Returns how many it ended.
+    def fail_pending_invokes!(error_message)
+      callbacks, waiters = @invoke_waiters_mutex.synchronize do
+        pending = [@invoke_callbacks.to_a, @invoke_waiters.to_a]
+        @invoke_callbacks.clear
+        pending
+      end
+
+      waiters.each do |call_id, waiter|
+        waiter << { "call_id" => call_id, "result" => nil, "error" => error_message }
+      end
+      callbacks.each do |_call_id, callback|
+        begin
+          callback.call(nil, error_message)
+        rescue StandardError => e
+          Kernel.warn("invoke callback error: #{e.class}: #{e.message}")
+        end
+      end
+      callbacks.length + waiters.length
+    end
+
     def pop_dialog
       close_dialog
     end

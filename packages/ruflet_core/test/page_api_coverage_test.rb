@@ -27,6 +27,7 @@ class PageApiCoverageTest < Minitest::Test
     "dialog" => "date_picker_dialog_presentation_test#test_open_and_dialog_assignment_host_the_picker_the_same_way",
     "dialog=" => "date_picker_dialog_presentation_test#test_open_and_dialog_assignment_host_the_picker_the_same_way",
     "dispatch_event" => "page_compatibility_test#test_page_supports_theme_animation_and_views_pop_until_api",
+    "fail_pending_invokes!" => "page_pending_invokes_test#test_fail_pending_invokes_ends_callbacks_and_waiters_with_the_error",
     "finalize_reload!" => "page_default_view_events_test#test_reset_for_reload_drops_page_handlers_the_reloaded_code_no_longer_sets",
     "get_control" => "page_compatibility_test#test_page_get_control_and_schedule_update",
     "get_device_info" => "page_device_info_test#test_get_device_info_invokes_the_page_and_wraps_the_record",

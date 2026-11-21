@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+require_relative "limits"
+require_relative "connection_deadlines"
+require_relative "web_socket_connection"
+
 module Ruflet
   # Transport-agnostic implementation of the Ruflet wire protocol: one
   # connection loop shared by every server that speaks to Flutter clients.
@@ -53,6 +57,12 @@ module Ruflet
       warn error.backtrace.join("\n") if error.backtrace
     end
 
+    # Seconds an upgraded WebSocket may stay silent before it is closed;
+    # real clients register at once. nil or 0 disables the deadline.
+    def registration_timeout_seconds
+      ConnectionDeadlines::REGISTER_TIMEOUT_SECONDS
+    end
+
     # ------------------------------------------------------------------
     # Transport entry points.
     # ------------------------------------------------------------------
@@ -60,30 +70,60 @@ module Ruflet
     # For hosts that already performed the HTTP upgrade (Rack hijack, the
     # embedded runtime, tests with socket pairs).
     def handle_upgraded_socket(io)
-      run_connection(Ruflet::WebSocketConnection.new(io))
+      ws = Ruflet::WebSocketConnection.new(io)
+      ConnectionDeadlines.shared&.watch(ws.session_key, registration_timeout_seconds) { ws.close }
+      run_connection(ws)
     end
 
     def run_connection(ws)
       connection_opened(ws)
 
+      awaiting_first_message = true
       while (raw = ws.read_message)
+        if awaiting_first_message
+          awaiting_first_message = false
+          ConnectionDeadlines.shared&.cancel(ws.session_key)
+        end
         handle_message(ws, raw)
       end
     rescue StandardError => e
       return if disconnect_error?(e)
 
-      log_connection_error(e)
+      # close_connection logs a message-limit error itself.
+      log_connection_error(e) unless e.equal?(message_limit_error_of(ws))
       send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => e.message.to_s.dup.force_encoding("UTF-8") })
     ensure
+      ConnectionDeadlines.shared&.cancel(ws.session_key) if awaiting_first_message && ws
       close_connection(ws)
     end
 
     def close_connection(ws)
       return unless ws
 
+      end_pending_invokes_after_message_limit(ws)
       remove_session(ws)
       connection_closed(ws)
       ws.close
+    end
+
+    # When the client sent more than RUFLET_MAX_MESSAGE_BYTES, say so and
+    # end the invokes waiting on that client instead of leaving them
+    # waiting for a reply that cannot arrive. Runs inside close_connection,
+    # so a host that wraps it (ruflet_rails runs it in the Rails executor)
+    # runs the on_result callbacks the same way.
+    def end_pending_invokes_after_message_limit(ws)
+      error = message_limit_error_of(ws)
+      return unless error
+
+      log_connection_error(error)
+      page = @sessions_mutex.synchronize { @sessions[ws.session_key] }
+      page.fail_pending_invokes!(error.message) if page.respond_to?(:fail_pending_invokes!)
+    rescue StandardError => e
+      log_connection_error(e)
+    end
+
+    def message_limit_error_of(ws)
+      ws.respond_to?(:message_limit_error) ? ws.message_limit_error : nil
     end
 
     # ------------------------------------------------------------------
