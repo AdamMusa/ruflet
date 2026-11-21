@@ -17,7 +17,8 @@ module Ruflet
       #
       # Each WebView slot (the shell body, and each sheet) keeps a BridgeFrame:
       #
-      # - It starts trusted when its first URL is on a trusted origin.
+      # - It starts trusted when its first URL is on a trusted origin (or is a
+      #   relative URL URI could not resolve: the opener's origin).
       # - A page_started / url_change / page_ended URL on any other origin
       #   makes it untrusted.
       # - Only a probe makes it trusted again. The probe is a short script that
@@ -210,7 +211,8 @@ module Ruflet
 
       # Whether +message+ from +frame+'s WebView may drive the shell. A probe
       # reply is consumed here; a ruflet:* line from an untrusted frame is
-      # dropped, logged, and (when no probe is pending) answered with a probe.
+      # dropped, logged, and answered with a probe when none is pending and the
+      # frame's last reported URL is on a trusted origin.
       def bridge_message_allowed?(frame, message, webview)
         if message.start_with?(TRUST_PREFIX)
           confirm_frame(frame, message[TRUST_PREFIX.length..])
