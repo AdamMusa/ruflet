@@ -342,7 +342,7 @@ class RufletBuilderBlockSlotsTest < Minitest::Test
         card { text("card #{@count}") }
         card { header }
         list_view { text("list #{@count}"); header }
-        column { card { text("nested") } }
+        column { card { text("nested"); nil } } # the block's value is not its control
       end
     end
     roots = app.instance_variable_get(:@roots).map(&:to_patch)
