@@ -57,6 +57,20 @@ match "/ws", to: Ruflet::Rails.native(Rails.root.join("app/views/ruflet/main.rb"
 Start Rails, then connect a Ruflet mobile or desktop client to that endpoint.
 The Rails gem does not install or serve a second static web application.
 
+Native clients send no `Origin` header. When a browser page from another site
+opens the endpoint, the endpoint logs a warning once per origin and accepts the
+connection. To make it refuse origins other than the app's own address and
+localhost, list the origins that may connect:
+
+```ruby
+Ruflet::Rails.configure do |config|
+  config.allowed_origins = %w[https://app.example.com]
+end
+```
+
+`RUFLET_ALLOWED_ORIGINS` (comma-separated) adds to that list. `"*"` accepts
+every origin without a warning.
+
 ## Build native clients from Rails
 
 Uses the same native build pipeline as `ruflet build`:

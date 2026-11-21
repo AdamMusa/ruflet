@@ -42,6 +42,18 @@ module Ruflet
       # and by the desktop launcher.
       attr_accessor :backend_url
 
+      # Browser origins, besides the app's own address and localhost, that
+      # may open the Ruflet WebSocket endpoint, e.g.
+      # %w[https://app.example.com]. "*" allows every origin.
+      # RUFLET_ALLOWED_ORIGINS adds to it.
+      #
+      # Native clients send no Origin and are never affected. Until this (or
+      # RUFLET_ALLOWED_ORIGINS) is set, the endpoint accepts a foreign Origin
+      # and logs a warning once per origin; once it is set, the endpoint
+      # refuses other foreign origins with 403. Runtime only: it is not
+      # written to ruflet.yaml.
+      attr_accessor :allowed_origins
+
       # --- App metadata (ruflet.yaml → app:) ---
 
       attr_accessor :app_name

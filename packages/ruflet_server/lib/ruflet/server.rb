@@ -8,6 +8,7 @@ require "ruflet_core"
 require_relative "server/in_process_connection"
 require_relative "server/wire_codec"
 require_relative "server/web_socket_connection"
+require_relative "server/origin_policy"
 
 module Ruflet
   class Server
@@ -16,10 +17,15 @@ module Ruflet
     WEBSOCKET_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
     TASK_IO_POLL_INTERVAL = 0.01
 
-    def initialize(host: "0.0.0.0", port: 8550, in_process_bridge: nil, &app_block)
+    # allowed_origins: browser origins, besides this server's own address and
+    # localhost, that may open the WebSocket (an Array or a comma-separated
+    # String; "*" allows every origin). RUFLET_ALLOWED_ORIGINS adds to it.
+    # See Ruflet::OriginPolicy and #websocket_origin_allowed?.
+    def initialize(host: "0.0.0.0", port: 8550, in_process_bridge: nil, allowed_origins: nil, &app_block)
       @host = host
       @port = port
       @in_process_bridge = in_process_bridge
+      @allowed_origins = allowed_origins
       @app_block = app_block
       @sessions = {}
       @sessions_mutex = Mutex.new
@@ -276,6 +282,8 @@ module Ruflet
         return if path.nil?
 
         if websocket_upgrade_request?(path, headers)
+          return refuse_websocket_origin(socket) unless websocket_origin_allowed?(headers)
+
           send_handshake_response(socket, headers["sec-websocket-key"])
           ws = Ruflet::WebSocketConnection.new(socket)
           run_connection(ws)
@@ -369,6 +377,39 @@ module Ruflet
       return false if headers["sec-websocket-key"].to_s.empty?
 
       true
+    end
+
+    # A browser sends Origin with every WebSocket handshake; native Flutter
+    # clients send none. Under `ruflet run` a foreign Origin is refused: the
+    # web client it serves shares the server's origin and its native clients
+    # send no Origin, so only another site's page is turned away. Everywhere
+    # else (Ruflet.run in production, the embedded runtime, custom hosts) a
+    # foreign Origin is still accepted, with a warning, until allowed_origins
+    # or RUFLET_ALLOWED_ORIGINS is set.
+    def websocket_origin_allowed?(headers)
+      origin_policy.allow?(headers["origin"], [headers["host"], headers["x-forwarded-host"]])
+    end
+
+    def origin_policy
+      @origin_policy ||= Ruflet::OriginPolicy.new(
+        allowed_origins: Ruflet::OriginPolicy.entries(@allowed_origins, ENV["RUFLET_ALLOWED_ORIGINS"]),
+        enforce: started_by_ruflet_run?
+      )
+    end
+
+    # Every published `ruflet run` passes RUFLET_TARGET to the app it starts.
+    def started_by_ruflet_run?
+      !ENV["RUFLET_TARGET"].to_s.strip.empty?
+    end
+
+    def refuse_websocket_origin(socket)
+      write_http_response(socket, 403, "text/plain", "origin not allowed")
+    ensure
+      begin
+        socket.close
+      rescue StandardError
+        nil
+      end
     end
 
     def handle_http_request(socket, path)
@@ -511,6 +552,7 @@ module Ruflet
     def write_http_response(socket, status, content_type, body, binary: false)
       reason = {
         200 => "OK",
+        403 => "Forbidden",
         404 => "Not Found",
         500 => "Internal Server Error"
       }[status] || "OK"
