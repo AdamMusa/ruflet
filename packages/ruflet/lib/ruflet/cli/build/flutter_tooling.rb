@@ -34,12 +34,15 @@ module Ruflet
         #   what the build exports from there, and when its project path lies
         #   inside the project but is neither the project root nor a
         #   directory holding build/client, nor inside build/client or a
-        #   directory that export replaces.
+        #   directory that export replaces. Where the file system ignores
+        #   case (the macOS and Windows default), so do these comparisons:
+        #   there build/client/Build/Web is build/client/build/web.
         # Everything else is left as written: absolute paths; paths that
         # already leave build/client (such as `../../symbols`); outputs in a
         # client dir Ruflet does not manage (RUFLET_CLIENT_DIR,
         # ./ruflet_client); a missing or empty value, one that looks like a
-        # flag, or a `~` no shell expanded; every other argument; and all
+        # flag, or a `~` no shell expanded; an argument or value Ruby cannot
+        # read as text in its encoding; every other argument; and all
         # arguments after a bare `--`, which Flutter takes as positional.
         def resolve_flutter_path_args(args, root = Dir.pwd, client_dir: hidden_flutter_client_dir(root), platform: nil)
           # An ipa is built and exported as ios (see BuildCommand#command_build).
@@ -53,6 +56,14 @@ module Ruflet
             if arg == "--"
               resolved.concat(args[index..])
               break
+            end
+            # Splitting an argument that is not valid in its encoding raises
+            # (`--dart-define=GREETING=caf\xE9` in a UTF-8 locale). None of
+            # the path options is spelled that way, so it goes through as is.
+            unless arg.valid_encoding?
+              resolved << arg
+              index += 1
+              next
             end
 
             name, value = arg.split("=", 2)
@@ -90,6 +101,8 @@ module Ruflet
           return value if value.empty? || value.start_with?("-", "~") || File.absolute_path?(value)
 
           client = File.expand_path(client_dir)
+          return value unless path_text_comparable?(value, root, client)
+
           if kind == :input
             flutter_input_path(value, root, client)
           else
@@ -105,24 +118,45 @@ module Ruflet
         end
 
         def flutter_output_path(value, root, client, platform)
+          # The managed client is the one refresh_hidden_flutter_client_template
+          # refreshes, which it recognizes by this same comparison.
           return value unless client == File.expand_path(hidden_flutter_client_dir(root))
 
+          fold = case_insensitive_dir?(client)
+          within = ->(path, dir) { path_within?(path, dir, fold: fold) }
           today = File.expand_path(value, client)
-          return value unless path_within?(today, client)
+          return value unless within.call(today, client)
 
           exports = exports_for(platform)
-          return value if exports.keys.any? { |source| path_within?(today, File.join(client, "build", source)) }
+          return value if exports.keys.any? { |source| within.call(today, File.join(client, "build", source)) }
 
           project = File.expand_path(value, root)
-          return value unless path_within?(project, File.expand_path(root))
-          return value if path_within?(project, client) || path_within?(client, project)
-          return value if exports.values.any? { |target| path_within?(project, File.join(user_build_root(root), target)) }
+          return value unless within.call(project, File.expand_path(root))
+          return value if within.call(project, client) || within.call(client, project)
+          return value if exports.values.any? { |target| within.call(project, File.join(user_build_root(root), target)) }
 
           project
         end
 
-        def path_within?(path, dir)
+        # fold: compare as a file system that ignores case does.
+        def path_within?(path, dir, fold: false)
+          path, dir = path.downcase(:fold), dir.downcase(:fold) if fold
           path == dir || path.start_with?(File.join(dir, ""))
+        end
+
+        # Whether the file system holding dir, an existing directory, ignores
+        # case in names, as APFS and NTFS do by default.
+        def case_insensitive_dir?(dir)
+          name = File.basename(dir)
+          other = name.swapcase
+          other != name && File.identical?(dir, File.join(File.dirname(dir), other))
+        end
+
+        # Ruby can join and compare value with these paths only when each is
+        # valid in its encoding and the encodings agree. A value it cannot
+        # reaches Flutter as written, as it always has.
+        def path_text_comparable?(value, *paths)
+          ([value] + paths).all?(&:valid_encoding?) && paths.all? { |path| Encoding.compatible?(value, path) }
         end
 
         def build_tool_env(env, platform, client_dir = nil)

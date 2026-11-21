@@ -215,6 +215,90 @@ class RufletBuildPathFlagsTest < Minitest::Test
     end
   end
 
+  # The paths above in another case. Where names ignore case (the APFS and
+  # NTFS default), Flutter writes Build/Web into build/client/build/web,
+  # which the build exports, and BUILD is ./build, so these work today. On a
+  # case-sensitive file system they name other directories, which Flutter
+  # writes inside build/client today.
+  # [platform, args] => the args where case matters (<ROOT> is the project).
+  OTHER_CASE = {
+    ["web", %w[-o Build/Web]] => %w[-o <ROOT>/Build/Web],
+    ["web", %w[--output=BUILD/WEB/assets]] => %w[--output=<ROOT>/BUILD/WEB/assets],
+    ["apk", %w[--split-debug-info=Build/App/Outputs/symbols]] => %w[--split-debug-info=<ROOT>/Build/App/Outputs/symbols],
+    ["ipa", %w[--split-debug-info BUILD/IOS/symbols]] => %w[--split-debug-info <ROOT>/BUILD/IOS/symbols],
+    ["web", %w[-o BUILD]] => %w[-o <ROOT>/BUILD],
+    ["web", %w[-oBuild/]] => %w[-o<ROOT>/Build],
+    ["web", %w[-o Build/Client/web_out]] => %w[-o <ROOT>/Build/Client/web_out],
+    ["apk", %w[--split-debug-info=Build/Android/symbols]] => %w[--split-debug-info=<ROOT>/Build/Android/symbols]
+  }.freeze
+
+  def resolve_where_case(ignored, args, platform)
+    builder = Builder.new
+    builder.define_singleton_method(:case_insensitive_dir?) { |_dir| ignored }
+    builder.send(:resolve_flutter_path_args, args, @root, client_dir: @client, platform: platform)
+  end
+
+  def test_where_names_ignore_case_other_spellings_of_working_paths_are_left_as_written
+    OTHER_CASE.each_key do |platform, args|
+      assert_equal args, resolve_where_case(true, args, platform), "#{platform} #{args.inspect}"
+    end
+  end
+
+  def test_where_case_matters_those_spellings_are_resolved_against_the_project
+    OTHER_CASE.each do |(platform, args), rewritten|
+      expected = rewritten.map { |arg| arg.sub("<ROOT>", @root) }
+      assert_equal expected, resolve_where_case(false, args, platform), "#{platform} #{args.inspect}"
+    end
+  end
+
+  # Without a stub: what this machine's file system does with the client dir.
+  def test_case_is_judged_by_the_file_system_that_holds_the_client_dir
+    ignored = File.identical?(@client, File.join(@root, "build", "CLIENT"))
+    assert_equal ignored, Builder.new.send(:case_insensitive_dir?, @client)
+    expected = ignored ? %w[-o Build/Web] : ["-o", "#{@root}/Build/Web"]
+    assert_equal expected, resolve(%w[-o Build/Web], platform: "web")
+    refute Builder.new.send(:case_insensitive_dir?, File.join(@root, "missing")), "a missing directory tells nothing"
+  end
+
+  # Ruby cannot split or compare text that is not valid in its encoding
+  # (Latin-1 bytes in a UTF-8 locale), so such an argument or value reaches
+  # Flutter exactly as written, as it always has.
+  def test_text_invalid_in_its_encoding_reaches_flutter_unchanged
+    bad = "caf\xE9"
+    refute bad.valid_encoding?
+    [
+      ["--dart-define=GREETING=#{bad}"],
+      ["--dart-define", "GREETING=#{bad}"],
+      ["--split-debug-info=#{bad}"],
+      ["--split-debug-info", bad],
+      ["--dart-define-from-file=#{bad}.json"],
+      ["-o", bad],
+      ["-o#{bad}"],
+      ["--output=#{bad}"]
+    ].each do |args|
+      assert_equal args, resolve(args, platform: "web"), args.inspect
+    end
+    # The arguments around one are still resolved.
+    assert_equal ["--dart-define=GREETING=#{bad}", "--split-debug-info=#{@root}/symbols"],
+                 resolve(["--dart-define=GREETING=#{bad}", "--split-debug-info=symbols"])
+  end
+
+  # A value Ruby cannot join with the project path (a binary value with
+  # non-ASCII bytes, a project path with non-ASCII characters) also goes
+  # through as written; a valid one in that project is still resolved.
+  def test_a_value_whose_encoding_clashes_with_the_project_path_reaches_flutter_unchanged
+    root = File.join(@sandbox, "café_app")
+    client = File.join(root, "build", "client")
+    FileUtils.mkdir_p(client)
+    value = "symbols\xE9".b
+    assert_nil Encoding.compatible?(value, root)
+    [["--split-debug-info", value], ["--split-debug-info=".b + value]].each do |args|
+      assert_equal args, resolve(args, root: root, client_dir: client), args.inspect
+    end
+    assert_equal ["--split-debug-info=#{root}/símbolos"],
+                 resolve(["--split-debug-info=símbolos"], root: root, client_dir: client)
+  end
+
   def test_output_dir_flags_are_left_alone_for_targets_flutter_gives_none
     %w[apk appbundle ios ipa macos windows linux].each do |platform|
       [%w[-o dist], %w[-odist], %w[--output dist], %w[--output-dir=dist]].each do |args|

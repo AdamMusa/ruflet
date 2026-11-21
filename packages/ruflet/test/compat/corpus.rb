@@ -445,6 +445,17 @@ module RufletCompat
     cli "default_app", "build", "web", "-o", "build"
     cli "default_app", "build", "apk", "--self", "--split-debug-info=symbols", id: "build-apk--self--split-debug-info-symbols-with-RUFLET_CLIENT_DIR",
                                                  client_copy: true, env: { "RUFLET_CLIENT_DIR" => "<SANDBOX>/client" }
+    # The same paths in another case. These goldens assume a file system that
+    # ignores case, as APFS does by default: Build/Web and Build/App/Outputs
+    # are exported, BUILD is ./build, Build/Client is build/client, and the
+    # export replaces Build/Android.
+    cli "default_app", "build", "web", "-o", "Build/Web", id: "build-web--o-Build_Web-mixed-case"
+    cli "default_app", "build", "web", "-o", "BUILD", id: "build-web--o-BUILD-upper-case"
+    cli "default_app", "build", "web", "-o", "Build/Client/web_out", id: "build-web--o-Build_Client_web_out-mixed-case"
+    cli "default_app", "build", "apk", "--self", "--split-debug-info=Build/App/Outputs/symbols",
+        id: "build-apk--self--split-debug-info_Build_App_Outputs_symbols-mixed-case"
+    cli "default_app", "build", "apk", "--self", "--split-debug-info=Build/Android/symbols",
+        id: "build-apk--self--split-debug-info_Build_Android_symbols-mixed-case"
 
     # --- command words, help, usage and exit codes (R2, CLI-12) ----------------
     # How the first argument picks a command (case-insensitively, aliases
