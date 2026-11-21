@@ -389,6 +389,19 @@ module RufletCompat
     cli "default_app", "build", "apk", "--release"
     cli "services_app", "build", "apk", "--release"
     cli "services_app", "build", "--release", "apk"
+    # CLI-05: path-valued Flutter flags in both spellings (-o, --split-debug-info
+    # and --web-renderer are above). The fixture files are the inputs Flutter
+    # must find.
+    defines = { "config/defines.json" => "{\"API_HOST\": \"api.example.com\"}\n" }
+    cli "default_app", "build", "web", "--output", "dist"
+    cli "default_app", "build", "web", "--output-dir=dist"
+    cli "default_app", "build", "apk", "--self", "--dart-define-from-file=config/defines.json", files: defines
+    cli "default_app", "build", "apk", "--self", "--dart-define-from-file", "config/defines.json", files: defines
+    cli "default_app", "build", "ipa", "--self", "--export-options-plist", "ExportOptions.plist",
+        files: { "ExportOptions.plist" => "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<plist version=\"1.0\"><dict/></plist>\n" }
+    # Flutter analyzes code size for one ABI only (android/build_validation.dart).
+    cli "default_app", "build", "apk", "--self", "--analyze-size", "--target-platform", "android-arm64",
+        "--code-size-directory=sizes", "--performance-measurement-file", "perf.json"
     # `--` ends the options (`help --` lists the commands, `build -- apk`
     # names the unsupported target "--"); `emulators --c`, like -c, is
     # --create; and the version words given a flag.
@@ -412,6 +425,37 @@ module RufletCompat
     cli "empty", "help", "-", id: "help-dash"
     cli "default_app", "build", "--self", "-", "apk", id: "build--self-dash-apk"
     cli "default_app", "run", "main.rb", "--", "--help", id: "run-main.rb-end-of-options--help"
+    # CLI-05: relative path flags that work today and must keep working:
+    # paths written against build/client, an output the build exports, an
+    # output whose project path the export replaces, and a client dir the
+    # developer owns (RUFLET_CLIENT_DIR).
+    cli "default_app", "build", "apk", "--self", "--dart-define-from-file=../../config/defines.json", files: defines
+    cli "default_app", "build", "ipa", "--self", "--export-options-plist", "../../ExportOptions.plist",
+        files: { "ExportOptions.plist" => "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<plist version=\"1.0\"><dict/></plist>\n" }
+    cli "default_app", "build", "apk", "--self", "--split-debug-info=../../symbols"
+    cli "default_app", "build", "web", "-o", "../web_dist"
+    cli "default_app", "build", "web", "-o", "build/web"
+    cli "default_app", "build", "apk", "--self", "--split-debug-info=build/app/outputs/symbols"
+    cli "default_app", "build", "apk", "--self", "--split-debug-info=build/android/symbols"
+    cli "default_app", "build", "ipa", "--self", "--split-debug-info=build/ios/symbols"
+    # Outputs whose project path would leave the project, or would be the
+    # project root or ./build, which hold build/client.
+    cli "default_app", "build", "apk", "--self", "--split-debug-info=../client/symbols"
+    cli "default_app", "build", "web", "-o", ".", id: "build-web--o-dot"
+    cli "default_app", "build", "web", "-o", "build"
+    cli "default_app", "build", "apk", "--self", "--split-debug-info=symbols", id: "build-apk--self--split-debug-info-symbols-with-RUFLET_CLIENT_DIR",
+                                                 client_copy: true, env: { "RUFLET_CLIENT_DIR" => "<SANDBOX>/client" }
+    # The same paths in another case. These goldens assume a file system that
+    # ignores case, as APFS does by default: Build/Web and Build/App/Outputs
+    # are exported, BUILD is ./build, Build/Client is build/client, and the
+    # export replaces Build/Android.
+    cli "default_app", "build", "web", "-o", "Build/Web", id: "build-web--o-Build_Web-mixed-case"
+    cli "default_app", "build", "web", "-o", "BUILD", id: "build-web--o-BUILD-upper-case"
+    cli "default_app", "build", "web", "-o", "Build/Client/web_out", id: "build-web--o-Build_Client_web_out-mixed-case"
+    cli "default_app", "build", "apk", "--self", "--split-debug-info=Build/App/Outputs/symbols",
+        id: "build-apk--self--split-debug-info_Build_App_Outputs_symbols-mixed-case"
+    cli "default_app", "build", "apk", "--self", "--split-debug-info=Build/Android/symbols",
+        id: "build-apk--self--split-debug-info_Build_Android_symbols-mixed-case"
 
     # --- command words, help, usage and exit codes (R2, CLI-12) ----------------
     # How the first argument picks a command (case-insensitively, aliases
