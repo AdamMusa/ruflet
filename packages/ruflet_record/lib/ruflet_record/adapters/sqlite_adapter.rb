@@ -179,10 +179,10 @@ module RufletRecord
       # Monitor, and its Mutex is not reentrant, so statements there run
       # unlocked, as they always have.
       #
-      # On CRuby a shorter busy `timeout` does not shorten a thread's wait
-      # below the default: a thread can keep the GVL, and with it the
-      # connection, for a 100 ms time slice, so plain statements on two
-      # threads would fail with "database is locked".
+      # On CRuby a busy `timeout` below the default does not shorten a
+      # thread's wait for another thread. Plain statements on two threads
+      # overlap all the time, and a waiting thread can go a GVL time slice
+      # (100 ms) or longer before it runs, so a short wait would fail them.
       def build_lock
         return NullLock.new if RUBY_ENGINE == "mruby"
 

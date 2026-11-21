@@ -188,8 +188,8 @@ waits longer than `timeout` milliseconds gets
 `StatementInvalid: database is locked`. A `timeout` below the default 5000
 still waits 5000 ms for another thread. So do not wait inside a transaction
 block for another thread that uses the database. A `Signal.trap` handler
-cannot take the connection (CRuby does not allow locking a `Mutex` there), so
-its statements run without waiting, as before.
+cannot take the connection (CRuby does not allow locking a `Mutex` there). Its
+statements run at once, as before, even inside another thread's transaction.
 
 On Ruflet's mruby VM threads are cooperative and the connection takes no lock.
 A VM thread that writes while another VM thread's transaction block is
