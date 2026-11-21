@@ -15,6 +15,7 @@ module Ruflet
       def command_doctor(args)
         verbose = args.delete("--verbose") || args.delete("-v")
         fix = args.delete("--fix")
+        strict = args.delete("--strict")
         client_dir = detect_client_dir
         template_root =
           if fix
@@ -29,6 +30,7 @@ module Ruflet
           puts "  Template: #{template_root}"
           revision = cached_template_revision if respond_to?(:cached_template_revision, true)
           puts "  Template revision: #{revision}" if revision
+          surface_ok = TemplateSurfaceCheck.check(self, template_root, strict: !!strict, config: -> { doctor_project_config })
         elsif fix
           warn "  Template: missing"
           warn "Failed to fetch the Ruflet Flutter template from GitHub."
@@ -49,7 +51,10 @@ module Ruflet
           end
         end
         puts "  Flutter: #{flutter_version_summary(tools)}"
-        system_exit_code(system(tools[:env], tools[:flutter], "doctor", *(verbose ? ["-v"] : [])))
+        status = system_exit_code(system(tools[:env], tools[:flutter], "doctor", *(verbose ? ["-v"] : [])))
+        return 1 if surface_ok == false && status.zero?
+
+        status
       end
 
       def command_devices(args)
@@ -151,6 +156,25 @@ module Ruflet
       end
 
       private
+
+      # The project's ruflet.yaml/services.yaml, when doctor runs in one; its
+      # extensions are checked against the template. Read only when the
+      # template lacks a bundled package, and quietly: doctor does not report
+      # a config it cannot parse.
+      def doctor_project_config
+        return nil unless %w[ruflet.yaml ruflet.yml services.yaml].any? { |name| File.file?(name) }
+        return nil unless respond_to?(:load_ruflet_config, true)
+
+        stderr = $stderr
+        File.open(File::NULL, "w") do |null|
+          $stderr = null
+          send(:load_ruflet_config)
+        end
+      rescue StandardError
+        nil
+      ensure
+        $stderr = stderr if stderr
+      end
 
       # The exit code of a command run with Kernel#system. system's own result
       # decides success: $? is per thread and still describes the previous

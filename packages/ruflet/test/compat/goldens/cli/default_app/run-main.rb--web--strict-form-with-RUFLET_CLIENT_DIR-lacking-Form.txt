@@ -1,0 +1,22 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet run main.rb --web --strict
+env: RUFLET_CLIENT_DIR=<PROJECT>/my_client
+added file: main.rb
+added file: my_client/build/web/index.html
+added file: my_client/build/web/main.dart.js
+added file: my_client/tool/conformance/ruflet_control_surface.json
+exit: 1
+
+## commands (0)
+
+## output
+err| error: the Flutter template lacks 1 control this app uses:
+err|   form (Form), main.rb:4: needs ruflet-template e793ccef345b or newer
+err|   Template: <PROJECT>/my_client
+err|   Failing because of --strict. Update the client in RUFLET_CLIENT_DIR from the latest ruflet-template (`ruflet doctor --fix` does not change it).
+
+## files
+(no files changed)

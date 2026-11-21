@@ -1,0 +1,19 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: default_app
+command: ruflet run main.rb --strict
+before: ruflet build web
+added file: main.rb
+exit: 1
+
+## commands (0)
+
+## output
+err| error: the Flutter template lacks 1 control this app uses:
+err|   form (Form), main.rb:4: needs ruflet-template e793ccef345b or newer
+err|   Template: <HOME>/.ruflet/templates/ruflet_flutter_template (revision c0ffee00c0ff)
+err|   Failing because of --strict. Fetch the latest template with `ruflet doctor --fix`.
+
+## files
+(no files changed)
