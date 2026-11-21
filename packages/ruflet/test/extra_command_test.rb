@@ -174,7 +174,8 @@ class RufletCliExtraCommandTest < Minitest::Test
   def test_doctor_without_fix_reports_a_healthy_setup
     runner = doctor_runner(system_result: true)
     runner.define_singleton_method(:resolve_ruflet_client_template_root) { "/tmp/template" }
-    runner.define_singleton_method(:flutter_tools) { |client_dir: nil, auto_install: true| auto_install ? flunk("doctor must not install") : { flutter: "flutter", env: {} } }
+    test = self # the stub runs with the runner as self
+    runner.define_singleton_method(:flutter_tools) { |client_dir: nil, auto_install: true| auto_install ? test.flunk("doctor must not install") : { flutter: "flutter", env: {} } }
 
     out, err = capture_io { assert_equal 0, runner.command_doctor([]) }
     assert_includes out, "Template: /tmp/template"
@@ -185,7 +186,8 @@ class RufletCliExtraCommandTest < Minitest::Test
   def test_doctor_fix_fails_when_the_template_cannot_be_fetched
     runner = doctor_runner(system_result: true)
     runner.define_singleton_method(:ensure_cached_ruflet_client_template!) { |force: false, verbose: false| nil }
-    runner.define_singleton_method(:ensure_flutter!) { |*_args, **_opts| flunk("no Flutter install without a template") }
+    test = self # the stub runs with the runner as self
+    runner.define_singleton_method(:ensure_flutter!) { |*_args, **_opts| test.flunk("no Flutter install without a template") }
 
     _out, err = capture_io { assert_equal 1, runner.command_doctor(["--fix"]) }
     assert_includes err, "Failed to fetch the Ruflet Flutter template from GitHub."
@@ -221,7 +223,8 @@ class RufletCliExtraCommandTest < Minitest::Test
       ["--delete"] => "ruflet emulators --delete is not implemented yet"
     }.each do |argv, message|
       runner = DummyExtra.new
-      runner.define_singleton_method(:ensure_flutter!) { |*_args, **_opts| flunk("#{argv.inspect} must not need Flutter") }
+      test = self # the stub runs with the runner as self
+      runner.define_singleton_method(:ensure_flutter!) { |*_args, **_opts| test.flunk("#{argv.inspect} must not need Flutter") }
       _out, err = capture_io { assert_equal 1, runner.command_emulators(argv.dup), argv.inspect }
       assert_includes err, message
     end
@@ -254,7 +257,8 @@ class RufletCliExtraCommandTest < Minitest::Test
   def test_debug_without_a_client_explains_and_fails
     runner = DummyExtra.new
     runner.define_singleton_method(:detect_client_dir) { nil }
-    runner.define_singleton_method(:ensure_flutter!) { |*_args, **_opts| flunk("no client, no Flutter") }
+    test = self # the stub runs with the runner as self
+    runner.define_singleton_method(:ensure_flutter!) { |*_args, **_opts| test.flunk("no client, no Flutter") }
 
     _out, err = capture_io { assert_equal 1, runner.command_debug(["web"]) }
     assert_includes err, "Could not find Flutter client directory."

@@ -117,7 +117,8 @@ class RufletCliBuildOptionsTest < Minitest::Test
       assert_nil builder.calls[:flutter]
 
       builder = builder_for(dir, config: BACKEND, flutter_ok: false)
-      builder.define_singleton_method(:export_platform_build_outputs) { |*_args, **_opts| flunk("nothing to export") }
+      test = self # the stub runs with the runner as self
+      builder.define_singleton_method(:export_platform_build_outputs) { |*_args, **_opts| test.flunk("nothing to export") }
       capture_io { assert_equal 1, builder.command_build(["apk"]) }
     end
   end
@@ -163,7 +164,8 @@ class RufletCliBuildOptionsTest < Minitest::Test
         builder.define_singleton_method(:remove_native_apple_renderer_integration) { |*_args, **_opts| true }
         builder.define_singleton_method(:sync_client_metadata) { |*_args, **_opts| nil }
         builder.define_singleton_method(:apply_native_service_permissions) { |*_args| nil }
-        builder.define_singleton_method(:configure_client_runtime_mode) { |*_args, **_opts| flunk("#{label}: must stop at the signing error") }
+        test = self # the stub runs with the runner as self
+        builder.define_singleton_method(:configure_client_runtime_mode) { |*_args, **_opts| test.flunk("#{label}: must stop at the signing error") }
 
         with_env(env) do
           _out, err = capture_io do
