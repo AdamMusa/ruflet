@@ -83,10 +83,10 @@ module Ruflet
             on_hover = props[:on_hover]
             on_long_press = props[:on_long_press]
             on_size_change = props[:on_size_change]
-            alignment = "center" if alignment.nil?
+            alignment = { "x" => 0.0, "y" => 0.0 } if alignment.nil?
             autofocus = false if autofocus.nil?
             icon_size = 24 if icon_size.nil?
-            padding = { "all" => 8 } if padding.nil?
+            padding = { "left" => 8, "top" => 8, "right" => 8, "bottom" => 8 } if padding.nil?
             props = {}
             props[:action] = action unless action.nil?
             props[:adaptive] = adaptive unless adaptive.nil?

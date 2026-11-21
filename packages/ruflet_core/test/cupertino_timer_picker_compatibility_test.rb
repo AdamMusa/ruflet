@@ -31,7 +31,7 @@ class RufletCupertinoTimerPickerCompatibilityTest < Minitest::Test
   def test_cupertino_timer_picker_defaults_match_flet
     picker = Ruflet.cupertino_timer_picker
 
-    assert_equal "center", picker.props["alignment"]
+    assert_equal({ "x" => 0.0, "y" => 0.0 }, picker.props["alignment"])
     assert_equal 32.0, picker.props["item_extent"]
     assert_equal 1, picker.props["minute_interval"]
     assert_equal "hour_minute_seconds", picker.props["mode"]

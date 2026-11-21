@@ -37,9 +37,9 @@ class RufletCupertinoButtonCompatibilityTest < Minitest::Test
   def test_cupertino_button_defaults_match_flet
     button = Ruflet.cupertino_button
 
-    assert_equal "center", button.props["alignment"]
+    assert_equal({ "x" => 0.0, "y" => 0.0 }, button.props["alignment"])
     assert_equal false, button.props["autofocus"]
-    assert_equal({ "all" => 8.0 }, button.props["border_radius"])
+    assert_equal({ "top_left" => 8.0, "top_right" => 8.0, "bottom_left" => 8.0, "bottom_right" => 8.0 }, button.props["border_radius"])
     assert_equal 0.4, button.props["opacity_on_click"]
     assert_equal "large", button.props["size"]
   end
@@ -55,7 +55,7 @@ class RufletCupertinoButtonCompatibilityTest < Minitest::Test
 
     assert_equal "FilledButton", filled.to_patch["_c"]
     assert_equal "Fill", filled.to_patch["content"]
-    assert_equal "center", filled.props["alignment"]
+    assert_equal({ "x" => 0.0, "y" => 0.0 }, filled.props["alignment"])
     assert_equal 0.2, filled.props["opacity_on_click"]
 
     assert_equal "FilledTonalButton", tinted.to_patch["_c"]
