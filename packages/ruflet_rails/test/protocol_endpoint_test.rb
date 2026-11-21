@@ -137,6 +137,50 @@ class RufletProtocolEndpointTest < Minitest::Test
     server_io&.close rescue nil
   end
 
+  def test_ruflet_max_connections_answers_503_past_the_cap_and_frees_slots_on_close
+    previous = ENV["RUFLET_MAX_CONNECTIONS"]
+    ENV["RUFLET_MAX_CONNECTIONS"] = "1"
+    runner = Ruflet::Rails::Protocol::Runner.new { |page| page.title = "Capped" }
+    endpoint = runner.build_endpoint(path: "/ws")
+    first_server, first_client = UNIXSocket.pair
+
+    assert_equal(-1, endpoint.call(hijack_env(first_server)).first)
+    read_http_response(first_client)
+
+    second_server, second_client = UNIXSocket.pair
+    status, headers, body = endpoint.call(hijack_env(second_server))
+    assert_equal 503, status
+    assert_equal "5", headers["retry-after"]
+    assert_equal ["Ruflet connection limit reached"], body
+
+    first_client.close
+    third_server, third_client = UNIXSocket.pair
+    status = nil
+    deadline = Time.now + 5
+    loop do
+      status = endpoint.call(hijack_env(third_server)).first
+      break if status == -1 || Time.now > deadline
+
+      sleep 0.02
+    end
+    assert_equal(-1, status, "the slot frees once the first socket closes")
+  ensure
+    ENV["RUFLET_MAX_CONNECTIONS"] = previous
+    [first_client, second_server, second_client, third_server, third_client].each { |io| io&.close rescue nil }
+  end
+
+  def test_connections_are_not_capped_without_ruflet_max_connections
+    runner = Ruflet::Rails::Protocol::Runner.new { |page| page.title = "Open" }
+    endpoint = runner.build_endpoint(path: "/ws")
+    pairs = Array.new(5) { UNIXSocket.pair }
+
+    statuses = pairs.map { |server_io, _client| endpoint.call(hijack_env(server_io)).first }
+
+    assert_equal [-1] * 5, statuses
+  ensure
+    pairs&.each { |pair| pair.each { |io| io.close rescue nil } }
+  end
+
   private
 
   # The next frame, or nil when none arrives in time or the server closed

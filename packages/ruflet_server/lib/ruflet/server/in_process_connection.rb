@@ -1,19 +1,30 @@
 # frozen_string_literal: true
 
+require_relative "limits"
+
 module Ruflet
   # Presents the embedded runtime bridge through the same connection contract
   # used by the WebSocket transport. The server protocol therefore remains
   # transport-agnostic: only the bytes' path changes.
   class InProcessConnection
-    MAX_MESSAGE_BYTES = 16 * 1024 * 1024
+    # The default; RUFLET_MAX_MESSAGE_BYTES changes it.
+    MAX_MESSAGE_BYTES = ServerLimits::DEFAULT_MAX_MESSAGE_BYTES
     TASK_PUMP_INTERVAL = 0.001
     REQUIRED_BRIDGE_METHODS = %i[
       __bridge_read_nonblock __bridge_write __bridge_close
     ].freeze
 
-    def initialize(bridge: nil)
+    attr_reader :max_message_bytes
+
+    # The Ruflet::MessageTooLargeError read_message raised for an oversized
+    # incoming message, or nil.
+    attr_reader :message_limit_error
+
+    def initialize(bridge: nil, max_message_bytes: nil)
       @bridge = bridge || default_bridge
       @closed = false
+      @max_message_bytes = max_message_bytes || ServerLimits.max_message_bytes
+      @message_limit_error = nil
       validate_bridge!
     end
 
@@ -35,12 +46,15 @@ module Ruflet
       end
 
       checked_bytes(payload)
+    rescue MessageTooLargeError => e
+      @message_limit_error = e
+      raise e
     end
 
     def send_binary(payload)
       raise IOError, "Ruflet in-process connection is closed" if closed?
 
-      @bridge.__bridge_write(checked_bytes(payload))
+      @bridge.__bridge_write(checked_bytes(payload, outgoing: true))
     end
 
     def send_text(payload)
@@ -79,10 +93,10 @@ module Ruflet
       end
     end
 
-    def checked_bytes(payload)
+    def checked_bytes(payload, outgoing: false)
       bytes = payload.to_s.b
-      if bytes.bytesize > MAX_MESSAGE_BYTES
-        raise ArgumentError, "Ruflet in-process message exceeds #{MAX_MESSAGE_BYTES} bytes"
+      if bytes.bytesize > @max_message_bytes
+        raise MessageTooLargeError.new(bytes: bytes.bytesize, limit: @max_message_bytes, outgoing: outgoing)
       end
 
       bytes

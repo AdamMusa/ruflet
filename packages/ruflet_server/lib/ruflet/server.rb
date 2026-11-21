@@ -5,6 +5,8 @@ require "socket"
 require "thread"
 
 require "ruflet_core"
+require_relative "server/limits"
+require_relative "server/connection_deadlines"
 require_relative "server/in_process_connection"
 require_relative "server/wire_codec"
 require_relative "server/web_socket_connection"
@@ -15,6 +17,30 @@ module Ruflet
 
     WEBSOCKET_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
     TASK_IO_POLL_INTERVAL = 0.01
+
+    # Limits on an HTTP request before it is served or upgraded. Browsers
+    # send a few KB; the byte budget is above Puma's 112 KB, so a request
+    # Rails would accept is accepted here too.
+    HTTP_REQUEST_HEAD_MAX_BYTES = 128 * 1024
+    HTTP_MAX_HEADER_LINES = 100
+    HTTP_LINE_CHUNK_BYTES = 4096
+    HANDSHAKE_TIMEOUT_SECONDS = ConnectionDeadlines::HANDSHAKE_TIMEOUT_SECONDS
+    REGISTER_TIMEOUT_SECONDS = ConnectionDeadlines::REGISTER_TIMEOUT_SECONDS
+    # A socket refused under RUFLET_MAX_CONNECTIONS stays open this long
+    # after its 503, at most this many at once, so the request the client
+    # sent can be read and dropped before the socket closes.
+    REFUSED_LINGER_SECONDS = 0.5
+    MAX_LINGERING_REFUSALS = 64
+
+    # The request line or headers ran past the limits above.
+    class RequestHeadTooLarge < StandardError
+      attr_reader :status
+
+      def initialize(status, message)
+        @status = status
+        super(message)
+      end
+    end
 
     def initialize(host: "0.0.0.0", port: 8550, in_process_bridge: nil, &app_block)
       @host = host
@@ -27,6 +53,11 @@ module Ruflet
       @connections_mutex = Mutex.new
       @running = false
       @server_socket = nil
+      @max_connections = ServerLimits.max_connections
+      @open_connections = 0
+      @open_connections_mutex = Mutex.new
+      @connection_limit_reported = false
+      @lingering_refusals = 0
 
       at_exit do
         begin
@@ -64,6 +95,7 @@ module Ruflet
     # For Rack-hosted mode: caller already performed the HTTP upgrade.
     def handle_upgraded_socket(io)
       ws = Ruflet::WebSocketConnection.new(io)
+      watch_registration(ws)
       run_connection(ws)
     end
 
@@ -261,26 +293,128 @@ module Ruflet
     end
 
     def start_client_thread(socket)
-      thread = Thread.new(socket) do |client|
-        Thread.current.report_on_exception = false if Thread.current.respond_to?(:report_on_exception=)
-        handle_socket(client)
+      return refuse_connection(socket) unless reserve_connection_slot
+
+      begin
+        thread = Thread.new(socket) do |client|
+          Thread.current.report_on_exception = false if Thread.current.respond_to?(:report_on_exception=)
+          begin
+            handle_socket(client)
+          ensure
+            release_connection_slot
+          end
+        end
+      rescue StandardError => e
+        release_connection_slot
+        raise e
       end
       Thread.pass if task_scheduler?
       thread
     end
 
+    # RUFLET_MAX_CONNECTIONS (unset: unlimited) caps the sockets handled at
+    # once, HTTP and WebSocket alike, since each holds a thread.
+    def reserve_connection_slot
+      return true if @max_connections.nil?
+
+      @open_connections_mutex.synchronize do
+        return false if @open_connections >= @max_connections
+
+        @open_connections += 1
+        @connection_limit_reported = false
+        true
+      end
+    end
+
+    def release_connection_slot
+      return if @max_connections.nil?
+
+      @open_connections_mutex.synchronize { @open_connections -= 1 if @open_connections > 0 }
+    end
+
+    def refuse_connection(socket)
+      report = @open_connections_mutex.synchronize do
+        first = !@connection_limit_reported
+        @connection_limit_reported = true
+        first
+      end
+      if report
+        warn "Ruflet server: refusing new connections while #{@max_connections} are open " \
+             "(#{ServerLimits::MAX_CONNECTIONS_ENV}=#{@max_connections})"
+      end
+
+      begin
+        socket.write("HTTP/1.1 503 Service Unavailable\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+        socket.close_write
+      rescue StandardError
+        nil
+      end
+      linger_then_close(socket)
+      nil
+    end
+
+    # Closing a socket whose input is still unread sends a reset instead of
+    # a normal close, and a client that gets the reset can lose the 503 it
+    # has not read yet. So the request is read and dropped first. The
+    # shared deadline thread does that after REFUSED_LINGER_SECONDS, which
+    # gives a request still in flight time to arrive without holding the
+    # accept loop; past MAX_LINGERING_REFUSALS, or where deadlines are not
+    # enforced, it happens at once.
+    def linger_then_close(socket)
+      deadlines = ConnectionDeadlines.shared
+      lingering = deadlines && @open_connections_mutex.synchronize do
+        if @lingering_refusals < MAX_LINGERING_REFUSALS
+          @lingering_refusals += 1
+          true
+        else
+          false
+        end
+      end
+      return discard_input_and_close(socket) unless lingering
+
+      deadlines.watch(socket, REFUSED_LINGER_SECONDS) do
+        begin
+          discard_input_and_close(socket)
+        ensure
+          @open_connections_mutex.synchronize { @lingering_refusals -= 1 }
+        end
+      end
+    end
+
+    def discard_input_and_close(socket)
+      16.times do
+        chunk = socket.read_nonblock(65_536)
+        break if chunk.nil? || chunk.empty?
+      end
+    rescue StandardError
+      nil
+    ensure
+      close_socket(socket)
+    end
+
     def handle_socket(socket)
       ws = nil
+      deadlines = ConnectionDeadlines.shared
+      deadline_key = socket.object_id
       begin
+        deadlines&.watch(deadline_key, handshake_timeout_seconds) { close_socket(socket) }
         path, headers = read_http_upgrade_request(socket)
+        deadlines&.cancel(deadline_key)
         return if path.nil?
 
         if websocket_upgrade_request?(path, headers)
           send_handshake_response(socket, headers["sec-websocket-key"])
           ws = Ruflet::WebSocketConnection.new(socket)
+          watch_registration(ws)
           run_connection(ws)
         else
           handle_http_request(socket, path)
+        end
+      rescue RequestHeadTooLarge => e
+        begin
+          write_http_response(socket, e.status, "text/plain", e.message)
+        rescue StandardError
+          nil
         end
       rescue StandardError => e
         return if disconnect_error?(e)
@@ -289,24 +423,74 @@ module Ruflet
         warn e.backtrace.join("\n") if e.backtrace
         send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => e.message.to_s.dup.force_encoding("UTF-8") }) if ws
       ensure
+        deadlines&.cancel(deadline_key)
         close_connection(ws)
+        # HTTP responses say Connection: close; the socket was never closed,
+        # so every request leaked a descriptor until garbage collection.
+        close_socket(socket)
       end
     end
 
     def run_connection(ws)
       register_connection(ws)
 
+      awaiting_first_message = true
       while (raw = ws.read_message)
+        if awaiting_first_message
+          awaiting_first_message = false
+          ConnectionDeadlines.shared&.cancel(ws.session_key)
+        end
         handle_message(ws, raw)
       end
     rescue StandardError => e
       return if disconnect_error?(e)
 
+      logged_error = e
       warn "server error: #{e.class}: #{e.message}"
       warn e.backtrace.join("\n") if e.backtrace
       send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => e.message.to_s.dup.force_encoding("UTF-8") })
     ensure
+      ConnectionDeadlines.shared&.cancel(ws.session_key) if awaiting_first_message
+      end_pending_invokes_after_message_limit(ws, logged_error)
       close_connection(ws)
+    end
+
+    # A connection closed because the client sent more than
+    # RUFLET_MAX_MESSAGE_BYTES used to vanish without a word, and every
+    # invoke waiting on that client (often the oversized reply itself, such
+    # as pick_files(with_data: true)) waited forever.
+    def end_pending_invokes_after_message_limit(ws, already_logged)
+      error = ws.respond_to?(:message_limit_error) ? ws.message_limit_error : nil
+      return unless error
+
+      warn "server error: #{error.class}: #{error.message}" unless error.equal?(already_logged)
+      page = @sessions_mutex.synchronize { @sessions[ws.session_key] }
+      page.fail_pending_invokes!(error.message) if page.respond_to?(:fail_pending_invokes!)
+    rescue StandardError => e
+      warn "server error: #{e.class}: #{e.message}"
+    end
+
+    # A WebSocket that sends nothing within REGISTER_TIMEOUT_SECONDS of the
+    # upgrade is closed; run_connection cancels this on the first message.
+    def watch_registration(ws)
+      ConnectionDeadlines.shared&.watch(ws.session_key, register_timeout_seconds) do
+        warn "Ruflet server: closed a WebSocket that sent nothing for #{register_timeout_seconds}s" if ENV["RUFLET_DEBUG"] == "1"
+        ws.close
+      end
+    end
+
+    def handshake_timeout_seconds
+      HANDSHAKE_TIMEOUT_SECONDS
+    end
+
+    def register_timeout_seconds
+      REGISTER_TIMEOUT_SECONDS
+    end
+
+    def close_socket(socket)
+      socket.close unless socket.closed?
+    rescue StandardError
+      nil
     end
 
     def close_connection(ws)
@@ -316,18 +500,25 @@ module Ruflet
     end
 
     def read_http_upgrade_request(socket)
-      request_line = read_http_line(socket)
+      budget = HTTP_REQUEST_HEAD_MAX_BYTES
+      request_line = read_http_line(socket, budget, 414, "request line too long")
       return [nil, {}] if request_line.nil?
       return [nil, {}] unless request_line.include?(" ")
 
+      budget -= request_line.bytesize
       method, path, _version = request_line.strip.split(" ", 3)
       return [nil, {}] unless method == "GET"
       return [nil, {}] if path.to_s.empty?
 
       headers = {}
+      header_lines = 0
       loop do
-        line = read_http_line(socket)
+        line = read_http_line(socket, budget, 431, "request header fields too large")
         break if line.nil? || line == "\r\n"
+
+        budget -= line.bytesize
+        header_lines += 1
+        raise RequestHeadTooLarge.new(431, "too many request header fields") if header_lines > HTTP_MAX_HEADER_LINES
 
         key, value = line.split(":", 2)
         next if key.nil? || value.nil?
@@ -340,14 +531,22 @@ module Ruflet
       @http_read_buffers&.delete(socket.object_id) if task_scheduler?
     end
 
-    def read_http_line(socket)
-      return socket.gets("\r\n") unless task_scheduler? && socket.respond_to?(:recv_nonblock)
+    # Reads one CRLF-terminated line, as socket.gets("\r\n") does, but
+    # raises RequestHeadTooLarge (status, message) once it runs past budget
+    # bytes instead of buffering whatever the client sends.
+    def read_http_line(socket, budget, status, message)
+      return read_bounded_http_line(socket, budget, status, message) unless task_scheduler? && socket.respond_to?(:recv_nonblock)
 
       @http_read_buffers ||= {}
       buffer = (@http_read_buffers[socket.object_id] ||= +"")
       loop do
         newline = buffer.index("\r\n")
-        return buffer.slice!(0, newline + 2) if newline
+        if newline
+          raise RequestHeadTooLarge.new(status, message) if newline + 2 > budget
+
+          return buffer.slice!(0, newline + 2)
+        end
+        raise RequestHeadTooLarge.new(status, message) if buffer.bytesize >= budget
 
         begin
           part = socket.recv_nonblock(4096)
@@ -359,6 +558,24 @@ module Ruflet
 
           sleep TASK_IO_POLL_INTERVAL
         end
+      end
+    end
+
+    # Reads up to the next "\n" in chunks and stops only after "\r\n", so
+    # a bare "\n" stays inside the line exactly as with gets("\r\n").
+    # Searching for "\n" (not "\r\n") keeps a CRLF split across two chunks
+    # from being missed. At end of stream it returns what it read, or nil.
+    def read_bounded_http_line(socket, budget, status, message)
+      line = nil
+      loop do
+        room = budget - (line ? line.bytesize : 0)
+        raise RequestHeadTooLarge.new(status, message) if room <= 0
+
+        chunk = socket.gets("\n", room < HTTP_LINE_CHUNK_BYTES ? room : HTTP_LINE_CHUNK_BYTES)
+        return line if chunk.nil?
+
+        line = line ? line << chunk : chunk
+        return line if line.end_with?("\r\n")
       end
     end
 
@@ -512,6 +729,8 @@ module Ruflet
       reason = {
         200 => "OK",
         404 => "Not Found",
+        414 => "URI Too Long",
+        431 => "Request Header Fields Too Large",
         500 => "Internal Server Error"
       }[status] || "OK"
 
@@ -621,6 +840,10 @@ module Ruflet
       raise "Unsupported payload format"
     end
 
+    # This and normalize_event_data loop with while, not map or
+    # each_with_object, so each level of nesting costs one call. The embedded
+    # mruby VM allows 512 nested calls, and the block forms overflowed at
+    # 102 levels, below WireCodec::MAX_NESTING_DEPTH.
     def normalize_incoming(value)
       case value
       when String
@@ -630,11 +853,23 @@ module Ruflet
       when Symbol
         value.to_s
       when Array
-        value.map { |v| normalize_incoming(v) }
-      when Hash
-        value.each_with_object({}) do |(k, v), out|
-          out[k.to_s] = normalize_incoming(v)
+        out = []
+        index = 0
+        while index < value.length
+          out << normalize_incoming(value[index])
+          index += 1
         end
+        out
+      when Hash
+        out = {}
+        pairs = value.to_a
+        index = 0
+        while index < pairs.length
+          key, entry = pairs[index]
+          out[key.to_s] = normalize_incoming(entry)
+          index += 1
+        end
+        out
       else
         value.to_s
       end
@@ -738,9 +973,23 @@ module Ruflet
     def normalize_event_data(value)
       case value
       when Hash
-        value.each_with_object({}) { |(k, v), out| out[k.to_sym] = normalize_event_data(v) }
+        out = {}
+        pairs = value.to_a
+        index = 0
+        while index < pairs.length
+          key, entry = pairs[index]
+          out[key.to_sym] = normalize_event_data(entry)
+          index += 1
+        end
+        out
       when Array
-        value.map { |entry| normalize_event_data(entry) }
+        out = []
+        index = 0
+        while index < value.length
+          out << normalize_event_data(value[index])
+          index += 1
+        end
+        out
       else
         value
       end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "io/wait"
 
 class RufletConnectionProtocolTest < Minitest::Test
   ACTIONS = Ruflet::Protocol::ACTIONS
@@ -154,6 +155,81 @@ class RufletConnectionProtocolTest < Minitest::Test
     assert_includes ws.actions, ACTIONS[:session_crashed]
     assert ws.closed?
     assert_equal ["RuntimeError: boom"], host.logged
+  end
+
+  # A FakeWs that refuses its last frame the way WebSocketConnection
+  # refuses a message over RUFLET_MAX_MESSAGE_BYTES: read_message returns nil
+  # and message_limit_error says why.
+  class OversizedWs < FakeWs
+    attr_reader :message_limit_error
+
+    def read_message
+      message = super
+      @message_limit_error = Ruflet::MessageTooLargeError.new(bytes: 20_000_000, limit: 16_777_216) if message.nil?
+      message
+    end
+  end
+
+  def test_a_message_over_the_limit_is_logged_and_fails_the_pending_invokes
+    results = []
+    host = AppHost.new do |page|
+      page.invoke(1, "pick_files", timeout: nil, on_result: ->(result, error) { results << [result, error] })
+    end
+    ws = OversizedWs.new([register_frame])
+
+    host.run_connection(ws)
+
+    assert_equal 1, results.size, "the on_result callback ran once"
+    assert_nil results[0][0]
+    assert_includes results[0][1], "RUFLET_MAX_MESSAGE_BYTES"
+    assert_equal 1, host.logged.size
+    assert_match(/\ARuflet::MessageTooLargeError: a client message of at least 20000000 bytes/, host.logged[0])
+    assert ws.closed?
+    assert_equal 1, host.removed.size
+  end
+
+  def test_a_connection_that_ends_normally_leaves_pending_invokes_alone
+    results = []
+    host = AppHost.new do |page|
+      page.invoke(1, "pick_files", timeout: nil, on_result: ->(result, error) { results << [result, error] })
+    end
+
+    host.run_connection(FakeWs.new([register_frame]))
+
+    assert_empty results
+    assert_empty host.logged
+  end
+
+  def test_an_upgraded_socket_that_never_sends_is_closed_after_the_registration_timeout
+    host = AppHost.new { |_page| nil }
+    host.define_singleton_method(:registration_timeout_seconds) { 0.3 }
+    server_side, client_side = UNIXSocket.pair
+
+    thread = Thread.new { host.handle_upgraded_socket(server_side) }
+
+    assert client_side.wait_readable(4), "the silent socket was not closed"
+    assert_nil client_side.read(1)
+    assert thread.join(4)
+  ensure
+    client_side&.close
+  end
+
+  def test_an_upgraded_socket_that_registers_is_not_closed_by_the_registration_timeout
+    host = AppHost.new { |page| page.add(Ruflet.text("hi")) }
+    host.define_singleton_method(:registration_timeout_seconds) { 0.3 }
+    server_side, client_side = UNIXSocket.pair
+    thread = Thread.new { host.handle_upgraded_socket(server_side) }
+    payload = register_frame
+    client_side.write([0x82, 126, payload.bytesize].pack("CCn") + payload) if payload.bytesize > 125
+    client_side.write([0x82, payload.bytesize].pack("CC") + payload) if payload.bytesize <= 125
+
+    sleep 1.0
+
+    refute server_side.closed?, "a registered connection was closed"
+    assert thread.alive?
+  ensure
+    client_side&.close
+    thread&.join(4)
   end
 
   def test_an_event_before_register_still_raises

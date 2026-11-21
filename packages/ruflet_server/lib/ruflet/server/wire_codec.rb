@@ -2,6 +2,17 @@
 
 module Ruflet
   class WireCodec
+    # Most arrays and maps one decoded value may nest. Client messages nest
+    # fewer than ten levels. Decoding, and every recursive walk over the
+    # result afterwards (normalizing events, Hash#inspect), recurses once
+    # per level. In a CRuby connection thread the first walk to overflow,
+    # Hash#inspect, does so at about 650 levels of maps. The embedded mruby
+    # VM allows 512 nested calls, and decoding, at two calls per level,
+    # overflows at about 250. 128 stays below both, so a hostile message
+    # gets a decode error instead of a SystemStackError, which no
+    # `rescue StandardError` catches.
+    MAX_NESTING_DEPTH = 128
+
     class << self
       # Transport tracing is opt-in. Even compact summaries decode every frame
       # and write to stdout, so enabling them by default would distort the
@@ -10,12 +21,15 @@ module Ruflet
       #   RUFLET_PROTOCOL_TRACE=summary  compact frame metadata
       #   RUFLET_PROTOCOL_TRACE=1        exact bytes and decoded value
       #   RUFLET_PROTOCOL_TRACE=0        disabled (default)
-      def trace(direction, bytes)
+      #
+      # max_depth: as for unpack; nil decodes the server's own messages
+      # whatever their depth.
+      def trace(direction, bytes, max_depth: MAX_NESTING_DEPTH)
         mode = ENV.fetch("RUFLET_PROTOCOL_TRACE", "0")
         return if mode == "0"
 
         raw = bytes.to_s.b
-        decoded = unpack(raw)
+        decoded = unpack(raw, max_depth: max_depth)
         action = decoded.is_a?(Array) ? decoded[0] : nil
         prefix = "[RUFLET_PROTOCOL] t=#{format("%.6f", Process.clock_gettime(Process::CLOCK_MONOTONIC))} #{direction} bytes=#{raw.bytesize} action=#{action.inspect}"
         if mode == "1" || mode == "full"
@@ -58,9 +72,11 @@ module Ruflet
         end
       end
 
-      def unpack(bytes)
+      # Raises a RuntimeError for malformed input, including arrays and maps
+      # nested more than max_depth levels (nil: no limit).
+      def unpack(bytes, max_depth: MAX_NESTING_DEPTH)
         reader = ByteReader.new(bytes)
-        read_value(reader)
+        read_value(reader, 0, max_depth)
       end
 
       private
@@ -187,7 +203,8 @@ module Ruflet
         head + body
       end
 
-      def read_value(reader)
+      # depth: how many arrays and maps enclose this value.
+      def read_value(reader, depth = 0, max_depth = nil)
         marker = reader.read_u8
 
         return marker if marker <= 0x7f
@@ -213,10 +230,10 @@ module Ruflet
         when 0xc4 then reader.read_binary(reader.read_u8)
         when 0xc5 then reader.read_binary(reader.read_u16)
         when 0xc6 then reader.read_binary(reader.read_u32)
-        when 0xdc then read_array(reader, reader.read_u16)
-        when 0xdd then read_array(reader, reader.read_u32)
-        when 0xde then read_map(reader, reader.read_u16)
-        when 0xdf then read_map(reader, reader.read_u32)
+        when 0xdc then read_array(reader, reader.read_u16, depth, max_depth)
+        when 0xdd then read_array(reader, reader.read_u32, depth, max_depth)
+        when 0xde then read_map(reader, reader.read_u16, depth, max_depth)
+        when 0xdf then read_map(reader, reader.read_u32, depth, max_depth)
         when 0xd4
           read_ext(reader, 1)
         when 0xd5
@@ -235,9 +252,9 @@ module Ruflet
           read_ext(reader, reader.read_u32)
         else
           if (marker & 0xf0) == 0x90
-            read_array(reader, marker & 0x0f)
+            read_array(reader, marker & 0x0f, depth, max_depth)
           elsif (marker & 0xf0) == 0x80
-            read_map(reader, marker & 0x0f)
+            read_map(reader, marker & 0x0f, depth, max_depth)
           elsif (marker & 0xe0) == 0xa0
             reader.read_string(marker & 0x1f)
           else
@@ -246,17 +263,37 @@ module Ruflet
         end
       end
 
-      def read_array(reader, size)
-        Array.new(size) { read_value(reader) }
-      end
-
-      def read_map(reader, size)
-        out = {}
-        size.times do
-          key = read_value(reader)
-          out[key.to_s] = read_value(reader)
+      # Every element takes at least one byte, so a count larger than the
+      # bytes left is malformed: fail before allocating for it. Plain loops,
+      # not blocks, so each level costs one Ruby call, not a C re-entry.
+      def read_array(reader, size, depth, max_depth)
+        enter_container(reader, size, depth, max_depth)
+        out = []
+        index = 0
+        while index < size
+          out << read_value(reader, depth + 1, max_depth)
+          index += 1
         end
         out
+      end
+
+      def read_map(reader, size, depth, max_depth)
+        enter_container(reader, size * 2, depth, max_depth)
+        out = {}
+        index = 0
+        while index < size
+          key = read_value(reader, depth + 1, max_depth)
+          out[key.to_s] = read_value(reader, depth + 1, max_depth)
+          index += 1
+        end
+        out
+      end
+
+      def enter_container(reader, min_bytes, depth, max_depth)
+        raise "Unexpected EOF" if min_bytes > reader.remaining
+        return if max_depth.nil? || depth < max_depth
+
+        raise "MessagePack value nests more than #{max_depth} arrays and maps"
       end
 
       def read_ext(reader, size)
@@ -275,6 +312,10 @@ module Ruflet
       def initialize(bytes)
         @data = bytes.to_s.b
         @offset = 0
+      end
+
+      def remaining
+        @data.bytesize - @offset
       end
 
       def read_u8

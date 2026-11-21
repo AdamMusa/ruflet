@@ -13,6 +13,8 @@ module Ruflet
         def initialize(server:, path: nil)
           @server = server
           @path = path
+          @open_sockets = 0
+          @open_sockets_mutex = Mutex.new
         end
 
         def call(env)
@@ -21,7 +23,9 @@ module Ruflet
 
           hijack = env["rack.hijack"]
           return bad_request("Rack hijack is required by Ruflet::Rails::Protocol::Endpoint") unless hijack.respond_to?(:call)
+          return service_unavailable unless reserve_socket
 
+          reserved = true
           hijack.call
           io = env["rack.hijack_io"]
           return bad_request("Rack did not provide hijacked IO") unless io
@@ -32,19 +36,50 @@ module Ruflet
           captured_env = env.dup
           Thread.new(io, captured_env) do |socket, ws_env|
             Thread.current.report_on_exception = false if Thread.current.respond_to?(:report_on_exception=)
-            if server_runs_messages_in_rails_executor?
-              handle_socket(socket, ws_env)
-            else
-              rails_executor_wrap { handle_socket(socket, ws_env) }
+            begin
+              if server_runs_messages_in_rails_executor?
+                handle_socket(socket, ws_env)
+              else
+                rails_executor_wrap { handle_socket(socket, ws_env) }
+              end
+            ensure
+              release_socket
             end
           end
+          reserved = false
 
           [-1, {}, []]
         rescue StandardError => e
           [500, { "content-type" => "text/plain" }, ["Ruflet Rails protocol error: #{e.message}"]]
+        ensure
+          release_socket if reserved
         end
 
         private
+
+        # RUFLET_MAX_CONNECTIONS (unset: unlimited) caps the WebSockets this
+        # endpoint serves at once; each holds a thread of the Rails process.
+        def reserve_socket
+          limit = max_connections
+          return true if limit.nil?
+
+          @open_sockets_mutex.synchronize do
+            return false if @open_sockets >= limit
+
+            @open_sockets += 1
+            true
+          end
+        end
+
+        def release_socket
+          @open_sockets_mutex.synchronize { @open_sockets -= 1 if @open_sockets > 0 }
+        end
+
+        def max_connections
+          return nil unless defined?(Ruflet::ServerLimits)
+
+          Ruflet::ServerLimits.max_connections
+        end
 
         def handle_socket(socket, env)
           Context.with_env(env) do
@@ -87,6 +122,10 @@ module Ruflet
 
         def bad_request(message)
           [400, { "content-type" => "text/plain" }, [message]]
+        end
+
+        def service_unavailable
+          [503, { "content-type" => "text/plain", "retry-after" => "5" }, ["Ruflet connection limit reached"]]
         end
       end
     end
