@@ -22,11 +22,12 @@ class RufletProtocolCompatibilityTest < Minitest::Test
 
   # The standalone server passed the client's invoke reply through as is,
   # while ConnectionProtocol (ruflet_rails) normalized it, so a reply spelled
-  # callId/value reached its on_result under Rails but was dropped by
-  # Ruflet::Server. No shipped client sends that spelling (they send
+  # callId/value reached its on_result under Rails, but Ruflet::Server
+  # ignored it and on_result only got (nil, "execution expired") once the
+  # call's timeout passed. No shipped client sends that spelling (they send
   # call_id/result/error). This test pins the fix on Ruflet::Server;
   # ProtocolActionContractTest checks that both receivers agree.
-  def test_standalone_server_accepts_a_call_id_and_value_invoke_reply
+  def test_standalone_server_accepts_a_callId_and_value_invoke_reply
     replies = []
     target = nil
     server = Ruflet::Server.new(port: 0) { |page| page.add(target = Ruflet.text("x")) }

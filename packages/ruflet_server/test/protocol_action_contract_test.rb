@@ -196,8 +196,8 @@ class ProtocolActionContractTest < Minitest::Test
 
     # No shipped client sends callId or value (the engine and template main
     # send control_id/call_id/result/error), but Protocol's normalizer takes
-    # callId for a missing call_id and value for a missing result, so both
-    # receivers must deliver those replies alike.
+    # callId when call_id is missing, nil or false, and value when there is
+    # no result key, so both receivers must deliver those replies alike.
     contract(kind, :invoke_control_method, "invoke_control_method_reply_aliases_reach_on_result") do
       client = Harness.new(kind)
       client.register
@@ -213,11 +213,17 @@ class ProtocolActionContractTest < Minitest::Test
       call_id_alias = client.page.invoke(client.button, "focus", on_result: on_result)
       client.receive(ACTIONS[:invoke_control_method], { "callId" => call_id_alias, "result" => 6, "error" => nil })
 
-      # result wins over value when a reply carries both.
+      nil_call_id = client.page.invoke(client.button, "focus", on_result: on_result)
+      client.receive(ACTIONS[:invoke_control_method], { "call_id" => nil, "callId" => nil_call_id, "result" => 7 })
+
+      # call_id wins over callId, and result over value, when a reply
+      # carries both.
+      call_id_and_alias = client.page.invoke(client.button, "focus", on_result: on_result)
+      client.receive(ACTIONS[:invoke_control_method], { "call_id" => call_id_and_alias, "callId" => "call_unknown", "result" => 8 })
       result_and_value = client.page.invoke(client.button, "focus", on_result: on_result)
       client.receive(ACTIONS[:invoke_control_method], { "call_id" => result_and_value, "result" => 1, "value" => 2 })
 
-      assert_equal [["legacy", nil], [5, nil], [6, nil], [1, nil]], replies
+      assert_equal [["legacy", nil], [5, nil], [6, nil], [7, nil], [8, nil], [1, nil]], replies
     end
 
     contract(kind, :invoke_control_method, "invoke_control_method_ignores_a_reply_that_is_not_a_map") do
