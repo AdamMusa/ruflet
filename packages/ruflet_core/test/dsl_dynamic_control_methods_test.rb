@@ -19,7 +19,12 @@ class RufletDslDynamicControlMethodsTest < Minitest::Test
       navigation_rail_destination(icon: "search")
     end
 
+    # The renderers read "destinations" (material_navigation_rail.dart,
+    # cupertino_navigation_controls.dart). Before #135 the block's
+    # destinations went to "controls", and the rail was drawn without them.
     assert_equal "navigationrail", rail.type
-    assert_equal 2, rail.children.length
+    assert_equal 2, rail.props["destinations"].length
+    assert_equal %w[NavigationRailDestination NavigationRailDestination], rail.to_patch["destinations"].map { |d| d["_c"] }
+    assert_empty rail.children
   end
 end

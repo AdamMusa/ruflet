@@ -3,10 +3,12 @@
 require_relative "material_control_methods"
 require_relative "platform_control_methods"
 require_relative "cupertino_control_methods"
+require_relative "block_slots"
 
 module Ruflet
   module UI
     module ControlMethods
+      include BlockSlotMethods
       include MaterialControlMethods
       include PlatformControlMethods
       # Compatibility aliases only. They emit the same canonical wire types as
