@@ -156,6 +156,87 @@ class RufletConnectionProtocolTest < Minitest::Test
     assert_equal ["RuntimeError: boom"], host.logged
   end
 
+  # A host with a session registry, like ruflet_rails' LocalServer.
+  class ResumingHost < AppHost
+    attr_accessor :refuse_resume
+    attr_reader :registry, :resume_requests
+
+    def initialize(&app)
+      super
+      @registry = {}
+      @resume_requests = []
+    end
+
+    def resume_session(session_id)
+      @registry[session_id]
+    end
+
+    def allow_resume?(session_id, ws)
+      @resume_requests << [session_id, ws]
+      !refuse_resume
+    end
+
+    def session_stored(page, _ws)
+      @registry[page.session_id] = page
+    end
+  end
+
+  def register_reply(ws)
+    Ruflet::WireCodec.unpack(ws.sent.first)[1]
+  end
+
+  def test_a_refused_resume_gets_a_fresh_page_under_a_new_session_id
+    renders = 0
+    host = ResumingHost.new { |page| renders += 1; page.add(Ruflet.text("hello")) }
+    first = FakeWs.new([])
+    host.handle_message(first, pack(:register_client, { "session_id" => "", "page" => { "route" => "/" } }))
+    owned_id = register_reply(first)["session_id"]
+
+    host.refuse_resume = true
+    second = FakeWs.new([])
+    host.handle_message(second, pack(:register_client, { "session_id" => owned_id, "page" => { "route" => "/" } }))
+    second_id = register_reply(second)["session_id"]
+
+    assert_equal [[owned_id, second]], host.resume_requests
+    refute_equal owned_id, second_id
+    assert_match(/\A\h{8}-\h{4}-4\h{3}-[89ab]\h{3}-\h{12}\z/, second_id)
+    refute_same host.page_for(first), host.page_for(second)
+    assert_same host.page_for(first), host.registry[owned_id]
+    assert_equal 2, renders
+    assert_nil host.page_for(second).client_details["session_id"], "the fresh page must not carry the other client's id"
+  end
+
+  def test_an_allowed_resume_reattaches_the_page_as_before
+    renders = 0
+    host = ResumingHost.new { |_page| renders += 1 }
+    first = FakeWs.new([])
+    host.handle_message(first, register_frame)
+    second = FakeWs.new([])
+    host.handle_message(second, register_frame)
+
+    assert_equal "s-1", register_reply(second)["session_id"]
+    assert_same host.page_for(first), host.page_for(second)
+    assert_equal 1, renders
+  end
+
+  def test_registering_without_an_id_does_not_ask_to_resume
+    host = ResumingHost.new { |_page| nil }
+    ws = FakeWs.new([])
+    host.handle_message(ws, pack(:register_client, { "session_id" => nil, "page" => { "route" => "/" } }))
+
+    assert_empty host.resume_requests
+    assert_match(/\A\h{8}-\h{4}-4\h{3}-[89ab]\h{3}-\h{12}\z/, register_reply(ws)["session_id"])
+  end
+
+  def test_the_default_hook_keeps_the_client_id
+    host = AppHost.new { |_page| nil }
+    ws = FakeWs.new([])
+    host.handle_message(ws, register_frame)
+
+    assert_equal "s-1", register_reply(ws)["session_id"]
+    assert_equal "s-1", host.page_for(ws).session_id
+  end
+
   def test_an_event_before_register_still_raises
     host = AppHost.new { |_page| nil }
 

@@ -6,6 +6,7 @@ require "thread"
 
 require "ruflet_core"
 require_relative "server/in_process_connection"
+require_relative "server/session_id"
 require_relative "server/wire_codec"
 require_relative "server/web_socket_connection"
 
@@ -775,14 +776,7 @@ module Ruflet
     end
 
     def pseudo_uuid
-      rnd = (rand(0..0xffff) << 16) | rand(0..0xffff)
-      "%08x-%04x-%04x-%04x-%012x" % [
-        rnd,
-        rand(0..0xffff),
-        rand(0..0xffff),
-        rand(0..0xffff),
-        (rand(0..0xffff) << 32) | (rand(0..0xffff) << 16) | rand(0..0xffff)
-      ]
+      Ruflet::SessionId.generate
     end
   end
 end

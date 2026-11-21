@@ -17,6 +17,9 @@ module Ruflet
       class LocalServer
         include Ruflet::ConnectionProtocol
 
+        # Seconds; Ruflet::Rails.config.session_resume_probe_timeout's default.
+        RESUME_PROBE_TIMEOUT = 1.0
+
         def initialize(session_registry: Ruflet::Rails.sessions, &app_block)
           @app_block = app_block
           @session_registry = session_registry
@@ -51,12 +54,24 @@ module Ruflet
           @session_registry[session_id]&.page
         end
 
+        # A client may resume a session only when no other live socket owns
+        # it and the app's session_resume_guard (if any) agrees. Otherwise it
+        # gets a fresh session under a new id.
+        def allow_resume?(session_id, ws)
+          session = @session_registry[session_id]
+          return true unless session
+          return false unless resume_guard_allows?(session)
+
+          !owned_by_another_live_socket?(session, ws)
+        end
+
         def session_stored(page, ws)
           @session_registry.add(
             key: page.session_id,
             page: page,
             env: Context.current_env,
-            connection_key: ws.session_key
+            connection_key: ws.session_key,
+            connection: ws
           )
         end
 
@@ -84,6 +99,35 @@ module Ruflet
         end
 
         private
+
+        def resume_guard_allows?(session)
+          guard = rails_config&.session_resume_guard
+          return true unless guard
+
+          guard.call(session.env, Context.current_env) ? true : false
+        rescue StandardError => e
+          log_connection_error(e)
+          false
+        end
+
+        # The owner answering a ping means a second live client presents its
+        # id. A closed owner, one that does not answer in time, or one that
+        # cannot be pinged is treated as the dropped connection of the
+        # reconnecting client.
+        def owned_by_another_live_socket?(session, ws)
+          owner = session.connection
+          return false if owner.nil? || owner.equal?(ws) || owner.closed?
+          return false unless owner.respond_to?(:ping)
+
+          timeout = rails_config ? rails_config.session_resume_probe_timeout : RESUME_PROBE_TIMEOUT
+          return false unless timeout && timeout.to_f.positive?
+
+          owner.ping(timeout: timeout.to_f) == true
+        end
+
+        def rails_config
+          Ruflet::Rails.config if Ruflet::Rails.respond_to?(:config)
+        end
 
         def execution_for(ws)
           @executions_mutex.synchronize { @executions[ws.session_key] ||= Execution.new }

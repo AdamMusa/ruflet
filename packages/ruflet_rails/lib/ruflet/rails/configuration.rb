@@ -69,11 +69,38 @@ module Ruflet
       attr_accessor :icon_background
       attr_accessor :theme_color
 
+      # --- Sessions (runtime only; not written to ruflet.yaml) ---
+
+      # A Flutter web client reconnects with the session id it stored, and
+      # the WebSocket endpoint resumes that session's Page. When the socket
+      # that owns the session is still open, the endpoint first pings it and
+      # waits this many seconds for the reply. A reply means another live
+      # client holds the session (a duplicated browser tab copies the id), so
+      # the newcomer gets its own session instead. No reply means the old
+      # socket is a dead connection the server has not noticed yet, and the
+      # reconnecting client resumes as before. nil or 0 skips the check.
+      attr_accessor :session_resume_probe_timeout
+
+      # Optional callable, called before a client resumes a session:
+      #
+      #   config.session_resume_guard = lambda do |original_env, new_env|
+      #     user_id = ->(env) { ActionDispatch::Request.new(env).session[:user_id] }
+      #     user_id.call(original_env) == user_id.call(new_env)
+      #   end
+      #
+      # original_env is the Rack env of the WebSocket request that owns the
+      # session, new_env the env of the request asking to resume it. A falsy
+      # result (or an error) gives the new client a fresh session. Unset by
+      # default.
+      attr_accessor :session_resume_guard
+
       def initialize
         @backend_url = nil
         @app_name = nil
         @services = []
         @extensions = []
+        @session_resume_probe_timeout = 1.0
+        @session_resume_guard = nil
       end
 
       # Serialises config to the ruflet.yaml hash structure so the CLI can
