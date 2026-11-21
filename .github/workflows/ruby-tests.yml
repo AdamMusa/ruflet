@@ -37,8 +37,12 @@ on:
 permissions:
   contents: read
 
+# A newer push to a pull request replaces its unfinished run. Every other run
+# gets a group of its own: with one group per branch, a merge to main would
+# cancel the pending run of the merge before it, and that commit would never
+# get a result.
 concurrency:
-  group: ruby-tests-${{ github.ref }}
+  group: ruby-tests-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: true
 
 # macOS: parts of the CLI branch on the host being darwin, and the suites have
@@ -54,6 +58,8 @@ jobs:
         with:
           path: ruflet
 
+      # Not pinned: published gems fetch ruflet-template main at build time,
+      # so the CLI tests check against what users get.
       - name: Checkout Ruflet template
         uses: actions/checkout@v5
         with:
@@ -62,10 +68,14 @@ jobs:
 
       # dsl_presented_controls_test checks ruflet_core's list of engine
       # services against the engine (tools/sync_engine_service_types.rb).
+      # Pinned, so an engine merge cannot turn later ruflet runs red. To move
+      # to a newer engine, run tools/sync_engine_service_types.rb --engine
+      # against a checkout of that commit and update ref in the same change.
       - name: Checkout Ruflet engine
         uses: actions/checkout@v5
         with:
           repository: AdamMusa/ruflet-engine
+          ref: f96aeee64068af7914873cdea08012401eec81da
           path: ruflet-engine
 
       - name: Set up Ruby

@@ -11,7 +11,9 @@ require_relative "run_ruby_tests"
 # - every Ruby test file in the repository belongs to a suite in
 #   tools/run_ruby_tests.rb;
 # - .github/workflows/ruby-tests.yml runs every suite with --strict;
-# - a change to any suite's files, or to anything under tools/, triggers it.
+# - a change to any file in a suite's folder (its lib/, Gemfile, Gemfile.lock
+#   and tests), or to anything under tools/, triggers it;
+# - the engine it checks ruflet_core against is pinned to a commit.
 class RubyTestsWorkflowTest < Minitest::Test
   ROOT = RufletRubyTests::ROOT
   WORKFLOW = File.join(ROOT, ".github/workflows/ruby-tests.yml")
@@ -44,23 +46,35 @@ class RubyTestsWorkflowTest < Minitest::Test
     watched = RufletRubyTests::SUITES.flat_map do |suite|
       suite.files.map { |file| File.join(suite.dir, file).delete_prefix("./") }
     end
+    # Everything else in each suite's folder: the code under test (lib/), the
+    # Gemfile and Gemfile.lock it runs under, and what its tests read.
+    RufletRubyTests::SUITES.reject { |suite| suite.dir == "." }.each do |suite|
+      watched += suite_files(suite.dir)
+      watched += %w[Gemfile Gemfile.lock].map { |name| File.join(suite.dir, name) } if suite.bundled?
+    end
     # What the suites load from outside their own folders.
-    watched += %w[
-      tools/run_ruby_tests.rb
-      tools/control_surface.rb
-      tools/sync_engine_service_types.rb
-      tools/build_apple_vm_artifacts.sh
-      ruby_runtime/vm/patches/mruby_patches.rb
-      .ruby-version
-      .github/workflows/ruby-tests.yml
-    ]
+    watched += suite_files("tools")
+    watched += %w[.ruby-version .github/workflows/ruby-tests.yml]
+    watched.uniq!
 
+    assert_operator watched.grep(%r{\Apackages/[^/]+/lib/}).length, :>, 0, "the package suites have lib/ files"
     %w[pull_request push].each do |event|
       paths = triggers.fetch(event).fetch("paths")
-      unmatched = watched.reject { |file| paths.any? { |pattern| github_glob?(pattern, file) } }
+      unmatched = watched.reject { |file| triggered?(paths, file) }
 
-      assert_empty unmatched, "#{event} paths in ruby-tests.yml miss these files"
+      assert_empty unmatched.first(20), "#{event} paths in ruby-tests.yml miss #{unmatched.length} file(s), such as these"
     end
+  end
+
+  # dsl_presented_controls_test compares ruflet_core with this engine checkout.
+  # A moving ref would let an engine merge fail every later ruflet run.
+  def test_the_engine_checkout_is_pinned_to_a_commit
+    checkouts = workflow.fetch("jobs").values.flat_map { |job| job.fetch("steps") }.select do |step|
+      step["uses"].to_s.start_with?("actions/checkout@") && step.dig("with", "repository") == "AdamMusa/ruflet-engine"
+    end
+
+    refute_empty checkouts, "ruby-tests.yml checks out ruflet-engine"
+    checkouts.each { |step| assert_match(/\A\h{40}\z/, step.dig("with", "ref").to_s, "ruflet-engine checkout ref") }
   end
 
   def test_package_suites_install_their_gemfiles_before_running
@@ -76,6 +90,11 @@ class RubyTestsWorkflowTest < Minitest::Test
 
   def workflow
     @workflow ||= YAML.safe_load(File.read(WORKFLOW))
+  end
+
+  # Every file under +dir+ (relative to ROOT), as a path relative to ROOT.
+  def suite_files(dir)
+    Dir.glob("#{dir}/**/*", base: ROOT).select { |path| File.file?(File.join(ROOT, path)) }
   end
 
   # YAML 1.1 reads a bare `on:` key as true.
@@ -94,7 +113,19 @@ class RubyTestsWorkflowTest < Minitest::Test
     end
   end
 
-  # GitHub's paths filter: ** matches across directories, * within one.
+  # GitHub's paths filter: patterns apply in order, and a later !pattern
+  # excludes what an earlier one matched.
+  def triggered?(paths, file)
+    paths.reduce(false) do |matched, pattern|
+      if pattern.start_with?("!")
+        matched && !github_glob?(pattern.delete_prefix("!"), file)
+      else
+        matched || github_glob?(pattern, file)
+      end
+    end
+  end
+
+  # ** matches across directories, * within one.
   def github_glob?(pattern, path)
     regexp = Regexp.escape(pattern).gsub("\\*\\*", "\u0000").gsub("\\*", "[^/]*").gsub("\u0000", ".*")
     path.match?(/\A#{regexp}\z/)
