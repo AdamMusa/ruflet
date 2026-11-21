@@ -519,6 +519,15 @@ module Ruflet
     class App
       include UI::ControlMethods
 
+      # Where a slot block's controls are attached (see block_slot_children).
+      class SlotChildren
+        attr_reader :children
+
+        def initialize
+          @children = []
+        end
+      end
+
       attr_reader :page_props, :host, :port
 
       def initialize(host:, port:)
@@ -612,9 +621,24 @@ module Ruflet
 
       private
 
-      # Services built in a slot block go to the app's services, as they do
-      # from any other block (see UI::BlockSlotMethods).
-      def block_services = @services
+      # A slot block (`card { ... }`, see UI::BlockSlotMethods) runs on the
+      # app, as a column's block does, so it reaches the app's methods and
+      # instance variables, and services built in it go to the app's. Its
+      # controls are collected where a parent control's children would be.
+      def block_slot_children(block)
+        slot = SlotChildren.new
+        @stack.push(slot)
+        begin
+          result = UI::BuildScope.within(self) { instance_eval(&block) }
+        ensure
+          @stack.pop
+        end
+        children = Ruflet::UI::PropControls.release(slot.children)
+        if result.is_a?(Ruflet::Control) && !children.any? { |child| child.equal?(result) }
+          children << result
+        end
+        children
+      end
 
       def build_widget(type, **props, &block) = control(type.to_s, **props, &block)
       def build_service(type, **props, &block) = service(type.to_s, **props, &block)

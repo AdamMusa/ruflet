@@ -11,7 +11,8 @@ require_relative "test_helper"
 #
 # A control that is pressed (a content slot and an on_click event) never runs
 # its block: `elevated_button(on_click: h) { save }` written as a handler
-# would otherwise run `save` while the page is built.
+# would otherwise run `save` while the page is built. A block beside a slot
+# passed explicitly is not run either, unless it was before #135.
 class RufletBuilderBlockSlotsTest < Minitest::Test
   # Every child slot a builder's block can fill, by wire key.
   SLOT_KEYS = %w[content controls actions destinations items options tabs rows shapes segments steps slivers header_slivers].freeze
@@ -21,8 +22,6 @@ class RufletBuilderBlockSlotsTest < Minitest::Test
     "expansion_tile" => [[], { title: "T" }],
     "nested_scroll_view" => [[], { body: -> { Ruflet.text("body") } }],
     "stepper_step" => [[], { title: "A" }],
-    "cupertino_segmented_button" => [[-> { [Ruflet.text("other")] }], {}],
-    "cupertino_sliding_segmented_button" => [[-> { [Ruflet.text("other")] }], {}],
     # Pressed controls require content; their block never provides it.
     "action_sheet_action" => [[], { content: "x" }],
     "context_menu_action" => [[], { content: "x" }],
@@ -30,6 +29,20 @@ class RufletBuilderBlockSlotsTest < Minitest::Test
     "cupertino_context_menu_action" => [[], { content: "x" }],
     "cupertino_dialog_action" => [[], { content: "x" }]
   }.freeze
+
+  # Builders that need two children: the contract block builds a second.
+  TWO_CHILDREN = %w[cupertino_segmented_button cupertino_sliding_segmented_button].freeze
+
+  # The builders that ran their block before #135 even when the slot was
+  # passed too, and still do. column and its kin put the block's controls
+  # before the passed ones; container and the other legacy builders send them
+  # under "controls". Every other builder leaves the block unrun.
+  RAN_BESIDE_A_GIVEN_SLOT = %w[
+    carousel_view center column container custom_scroll_view drag_target draggable draggable_scrollable_sheet
+    form gesture_detector grid_view indexed_stack list_section navigation_bar navigation_rail nested_scroll_view
+    pagelet responsive_row row sliver_grid sliver_list sliver_padding stack stepper tab_bar tab_bar_view table
+    table_row tabs view
+  ].freeze
 
   Probe = Class.new(StandardError)
 
@@ -52,7 +65,7 @@ class RufletBuilderBlockSlotsTest < Minitest::Test
 
       ran = false
       args, props = required_for(name)
-      control = Ruflet::WidgetBuilder.new.public_send(name, *args, **props) { ran = true; text("from block") }
+      control = Ruflet::WidgetBuilder.new.public_send(name, *args, **props, &contract_block(name) { ran = true })
       patch = control.to_patch
 
       assert ran, "#{name} runs its block"
@@ -99,17 +112,72 @@ class RufletBuilderBlockSlotsTest < Minitest::Test
       next if pressed?(klass)
 
       args, props = required_for(name)
-      want = Ruflet::WidgetBuilder.new.public_send(name, *args, **props) { text("from block") }.to_patch
+      block = contract_block(name)
+      want = Ruflet::WidgetBuilder.new.public_send(name, *args, **props, &block).to_patch
       {
-        "Ruflet" => -> { Ruflet.public_send(name, *required_for(name)[0], **required_for(name)[1]) { text("from block") } },
-        "Ruflet::UI" => -> { Ruflet::UI.public_send(name, *required_for(name)[0], **required_for(name)[1]) { text("from block") } },
-        "Ruflet::DSL" => -> { Ruflet::DSL.public_send(name, *required_for(name)[0], **required_for(name)[1]) { text("from block") } },
-        "bare" => -> { Object.new.send(name, *required_for(name)[0], **required_for(name)[1]) { text("from block") } },
-        "app" => -> { Ruflet::DSL.app.public_send(name, *required_for(name)[0], **required_for(name)[1]) { text("from block") } }
+        "Ruflet" => -> { Ruflet.public_send(name, *required_for(name)[0], **required_for(name)[1], &block) },
+        "Ruflet::UI" => -> { Ruflet::UI.public_send(name, *required_for(name)[0], **required_for(name)[1], &block) },
+        "Ruflet::DSL" => -> { Ruflet::DSL.public_send(name, *required_for(name)[0], **required_for(name)[1], &block) },
+        "bare" => -> { Object.new.send(name, *required_for(name)[0], **required_for(name)[1], &block) },
+        "app" => -> { Ruflet::DSL.app.public_send(name, *required_for(name)[0], **required_for(name)[1], &block) }
       }.each do |via, call|
         assert_equal want, call.call.to_patch, "#{via}.#{name} { ... }"
       end
     end
+  end
+
+  # A call that passes the slot its block would fill sends what it sent
+  # before #135: the block is not run, and a warning says so. Only the
+  # builders that ran such a block before still run it.
+  def test_a_block_beside_a_given_slot_is_not_run_unless_it_was_before
+    ran_anyway = []
+    checked = 0
+    slot_builders.each do |name, klass, _slots|
+      next if pressed?(klass)
+
+      args, props = required_for(name)
+      key = filled_key(name)
+      assert key, "#{name} fills a slot from its block"
+      given = -> { props.merge(key.to_sym => given_value(name, key)) }
+      without = Ruflet::WidgetBuilder.new.public_send(name, *args, **given.call).to_patch
+
+      Ruflet::UI::BlockSlots.reset_warnings!
+      ran = false
+      control = nil
+      _out, err = capture_io do
+        control = Ruflet::WidgetBuilder.new.public_send(name, *args, **given.call, &contract_block(name) { ran = true })
+      end
+      checked += 1
+      if ran
+        ran_anyway << name
+        next
+      end
+
+      assert_equal without, control.to_patch, "#{name}(#{key}: ...) { ... } sends what it sends without the block"
+      assert_match(/ignores its block because \w+: was given/, err, "#{name} says it ignored its block")
+    end
+
+    assert_equal RAN_BESIDE_A_GIVEN_SLOT, ran_anyway.reject { |name| compact_alias?(name) }.sort
+    assert_operator checked, :>=, 150, "slot builders checked"
+  end
+
+  def test_a_passed_children_list_keeps_a_list_builders_block_unrun
+    ran = []
+    list = search = segmented = nil
+    _out, err = capture_io do
+      list = Ruflet.list_view([Ruflet.text("given")]) { ran << :list; text("block") }
+      search = Ruflet.search_bar(controls: [Ruflet.text("suggestion")], on_change: ->(_e) {}) { |_e| ran << :search }
+      segmented = Ruflet.segmented_button([Ruflet.segment("a")], selected: ["a"]) { ran << :segmented; segment("b") }
+    end
+
+    assert_empty ran
+    assert_equal ["given"], list.to_patch["controls"].map { |c| c["value"] }
+    assert_equal ["suggestion"], search.to_patch["controls"].map { |c| c["value"] }
+    assert_equal ["a"], segmented.to_patch["segments"].map { |s| s["value"] }
+    refute segmented.to_patch.key?("controls")
+    assert_match(/list_view ignores its block because children: was given/, err)
+    assert_match(/search_bar ignores its block because controls: was given/, err)
+    assert_match(/segmented_button ignores its block because segments: was given/, err)
   end
 
   # -- What the block fills ---------------------------------------------------
@@ -197,20 +265,35 @@ class RufletBuilderBlockSlotsTest < Minitest::Test
     assert_equal %w[Circle Line], canvas.to_patch["shapes"].map { |s| s["_c"] }
   end
 
-  def test_cupertino_segmented_buttons_take_block_controls_before_passed_ones
-    button = Ruflet.cupertino_segmented_button([Ruflet.text("c")]) { text("a"); text("b") }
-    assert_equal %w[a b c], button.to_patch["controls"].map { |c| c["value"] }
+  def test_cupertino_segmented_buttons_take_their_children_from_the_block
+    button = Ruflet.cupertino_segmented_button { text("a"); text("b") }
+    assert_equal %w[a b], button.to_patch["controls"].map { |c| c["value"] }
 
     sliding = Ruflet.cupertino_sliding_segmented_button { text("a"); text("b") }
     assert_equal %w[a b], sliding.to_patch["controls"].map { |c| c["value"] }
 
     assert_raises(ArgumentError) { Ruflet.cupertino_segmented_button { text("only one") } }
+
+    ran = false
+    passed = nil
+    capture_io { passed = Ruflet.cupertino_segmented_button([Ruflet.text("c"), Ruflet.text("d")]) { ran = true; text("a") } }
+    refute ran
+    assert_equal %w[c d], passed.to_patch["controls"].map { |c| c["value"] }
   end
 
   def test_a_control_returned_by_the_block_is_its_child
     built = Ruflet.text("outside")
     card = Ruflet.card { built }
     assert_same built, card.props["content"]
+  end
+
+  # Ruflet.text inside the block lands in the block's builder, so a block
+  # whose last value is not a control keeps what it built.
+  def test_ruflet_calls_in_a_slot_block_fill_the_slot
+    assert_equal "a", Ruflet.card { Ruflet.text("a"); nil }.to_patch["content"]["value"]
+    bar = Ruflet.app_bar { Ruflet.icon_button(icon: "add"); Ruflet.icon_button(icon: "edit"); nil }
+    assert_equal %w[IconButton IconButton], bar.to_patch["actions"].map { |a| a["_c"] }
+    assert_equal "a", Ruflet::DSL.app.card { Ruflet.text("a"); nil }.to_patch["content"]["value"]
   end
 
   def test_services_built_in_a_slot_block_go_where_the_builders_services_go
@@ -238,6 +321,36 @@ class RufletBuilderBlockSlotsTest < Minitest::Test
 
     assert_equal "x", card.to_patch["content"]["value"]
     assert_equal %w[a b], dialog.to_patch["content"]["controls"].map { |c| c["value"] }
+  end
+
+  def test_services_built_in_a_dsl_app_slot_block_go_to_the_apps_services
+    app = Ruflet::DSL.app
+    card = app.card { audio(src: "a.mp3"); text("x") }
+
+    assert_equal ["Audio"], app.instance_variable_get(:@services).map(&:wire_type)
+    assert_equal "x", card.to_patch["content"]["value"]
+  end
+
+  # In a DSL app a slot block runs on the app, as a column's block does, so
+  # both see the app's methods and instance variables.
+  def test_dsl_app_slot_blocks_run_on_the_app_like_column_blocks
+    app = Ruflet::DSL.app do
+      @count = 3
+      def header = text("Header")
+      page(title: "x") do
+        column { text("column #{@count}"); header }
+        card { text("card #{@count}") }
+        card { header }
+        list_view { text("list #{@count}"); header }
+      end
+    end
+    roots = app.instance_variable_get(:@roots).map(&:to_patch)
+
+    assert_equal ["column 3", "Header"], roots[0]["controls"].map { |c| c["value"] }
+    assert_equal "card 3", roots[1]["content"]["value"]
+    assert_equal "Header", roots[2]["content"]["value"]
+    assert_equal ["list 3", "Header"], roots[3]["controls"].map { |c| c["value"] }
+    assert_equal 4, roots.size
   end
 
   # -- What an explicit slot, or a pressed control, keeps ---------------------
@@ -285,6 +398,25 @@ class RufletBuilderBlockSlotsTest < Minitest::Test
     assert_equal 0, clicks
     assert_equal Ruflet.elevated_button("Save", on_click: handler).to_patch, button.to_patch
     assert_equal 1, err.scan("elevated_button does not run its block").size
+  end
+
+  # A block written as an event handler builds a generic control for each
+  # method it calls; a type nothing registered is reported once.
+  def test_a_slot_block_that_builds_an_unregistered_control_warns_once
+    view = Class.new do
+      def build = Ruflet.dropdown(label: "Color", on_change: ->(_e) {}) { |e| apply_color(e) }
+      def apply_color(_e) = nil
+    end
+    _out, err = capture_io do
+      2.times { view.new.build }
+      Ruflet.list_view { refresh_items(1) }
+      Ruflet.card { text("x") }
+      Ruflet.dropdown { dropdown_option("red") }
+    end
+
+    assert_equal 1, err.scan("dropdown's block built `apply_color`, which is not a registered control").size
+    assert_equal 1, err.scan("list_view's block built `refresh_items`").size
+    refute_match(/card's block|`text`|`dropdown_option`|`dropdownoption`/, err)
   end
 
   def test_floating_action_button_takes_its_content_positionally
@@ -363,6 +495,32 @@ class RufletBuilderBlockSlotsTest < Minitest::Test
   def pressed?(klass)
     keywords = Ruflet::UI::ControlFactory.constructor_keywords(klass)
     keywords.include?(:content) && keywords.include?(:on_click) && !klass.name.end_with?("ContainerControl")
+  end
+
+  # The block the contract tests pass: one control, or two for a builder that
+  # needs two children. +on_run+ is called when the block runs.
+  def contract_block(name, &on_run)
+    second = TWO_CHILDREN.any? { |key| key == name || key.delete("_") == name }
+    proc do
+      on_run&.call
+      text("from block")
+      text("other") if second
+    end
+  end
+
+  # The wire key a builder's block fills, found by building it.
+  def filled_key(name)
+    args, props = required_for(name)
+    patch = Ruflet::WidgetBuilder.new.public_send(name, *args, **props, &contract_block(name)).to_patch
+    patch.keys.find { |key| holds_block_text?(patch[key]) }
+  end
+
+  # A fresh control (or list of them) to pass in +key+ explicitly.
+  def given_value(name, key)
+    return Ruflet.text("given") if key == "content"
+    return [Ruflet.text("given"), Ruflet.text("given 2")] if TWO_CHILDREN.any? { |k| k == name || k.delete("_") == name }
+
+    [Ruflet.text("given")]
   end
 
   def required_for(name)

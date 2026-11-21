@@ -27,7 +27,7 @@ module Ruflet
       def picker(children = nil, **props, &block)
         mapped = props.dup
         mapped[:controls] = children unless children.nil?
-        build_widget(:picker, **mapped, &block)
+        build_with_block_children(:picker, "picker", mapped, block)
       end
 
       def timer_picker(**props) = build_widget(:timerpicker, **props)

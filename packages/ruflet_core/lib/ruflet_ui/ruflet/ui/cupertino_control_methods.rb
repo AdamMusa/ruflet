@@ -82,12 +82,12 @@ module Ruflet
       def cupertino_picker(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
-        build_widget(:cupertinopicker, **mapped, &block)
+        build_with_block_children(:cupertinopicker, "cupertino_picker", mapped, block)
       end
       def cupertinopicker(children = nil, **props, &block) = cupertino_picker(children, **props, &block)
       def cupertino_segmented_button(children = nil, **props, &block)
         mapped = props.dup
-        children = segmented_block_children(children, mapped, block)
+        children = segmented_block_children("cupertino_segmented_button", children, mapped, block)
         validate_cupertino_segmented_children!("cupertino_segmented_button", children, mapped)
         mapped[:children] = children unless children.nil?
         build_widget(:cupertinosegmentedbutton, **mapped)
@@ -95,7 +95,7 @@ module Ruflet
       def cupertinosegmentedbutton(children = nil, **props, &block) = cupertino_segmented_button(children, **props, &block)
       def cupertino_sliding_segmented_button(children = nil, **props, &block)
         mapped = props.dup
-        children = segmented_block_children(children, mapped, block)
+        children = segmented_block_children("cupertino_sliding_segmented_button", children, mapped, block)
         validate_cupertino_segmented_children!("cupertino_sliding_segmented_button", children, mapped)
         mapped[:children] = children unless children.nil?
         build_widget(:cupertinoslidingsegmentedbutton, **mapped)

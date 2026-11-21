@@ -43,7 +43,7 @@ module Ruflet
       def dialogs(controls = nil, **props, &block)
         mapped = props.dup
         mapped[:controls] = controls unless controls.nil?
-        build_widget(:dialogs, **mapped, &block)
+        build_with_block_children(:dialogs, "dialogs", mapped, block)
       end
       def pagelet(content = nil, **props, &block)
         mapped = props.dup
@@ -184,7 +184,7 @@ module Ruflet
       def overlay(children = nil, **props, &block)
         mapped = props.dup
         mapped[:controls] = children unless children.nil?
-        build_widget(:overlay, **mapped, &block)
+        build_with_block_children(:overlay, "overlay", mapped, block)
       end
       def shader_mask(content = nil, **props, &block)
         mapped = props.dup
@@ -366,7 +366,7 @@ module Ruflet
       def list_view(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
-        build_widget(:listview, **mapped, &block)
+        build_with_block_children(:listview, "list_view", mapped, block)
       end
       def listview(children = nil, **props, &block) = list_view(children, **props, &block)
       def custom_scroll_view(slivers = nil, **props, &block)
@@ -404,7 +404,7 @@ module Ruflet
       def menu_bar(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
-        build_widget(:menubar, **mapped, &block)
+        build_with_block_children(:menubar, "menu_bar", mapped, block)
       end
       def menubar(children = nil, **props, &block) = menu_bar(children, **props, &block)
       def menu_item_button(content = nil, **props, &block)
@@ -423,7 +423,7 @@ module Ruflet
       def submenu_button(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
-        build_widget(:submenubutton, **mapped, &block)
+        build_with_block_children(:submenubutton, "submenu_button", mapped, block)
       end
       def submenubutton(children = nil, **props, &block) = submenu_button(children, **props, &block)
       def divider(**props) = build_widget(:divider, **props)
@@ -501,7 +501,7 @@ module Ruflet
       def expansion_tile(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
-        build_widget(:expansiontile, **mapped, &block)
+        build_with_block_children(:expansiontile, "expansion_tile", mapped, block)
       end
       def expansiontile(children = nil, **props, &block) = expansion_tile(children, **props, &block)
       def expansion_panel(**props, &block) = build_with_block_slot(:expansionpanel, "expansion_panel", :content, props.dup, block)
@@ -509,7 +509,7 @@ module Ruflet
       def expansion_panel_list(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
-        build_widget(:expansionpanellist, **mapped, &block)
+        build_with_block_children(:expansionpanellist, "expansion_panel_list", mapped, block)
       end
       def expansionpanellist(children = nil, **props, &block) = expansion_panel_list(children, **props, &block)
       def dropdown(options = nil, **props, &block)
@@ -537,7 +537,7 @@ module Ruflet
       def page_view(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
-        build_widget(:pageview, **mapped, &block)
+        build_with_block_children(:pageview, "page_view", mapped, block)
       end
       def pageview(children = nil, **props, &block) = page_view(children, **props, &block)
       def progress_ring(**props) = build_widget(:progressring, **props)
@@ -570,7 +570,7 @@ module Ruflet
       def reorderable_list_view(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
-        build_widget(:reorderablelistview, **mapped, &block)
+        build_with_block_children(:reorderablelistview, "reorderable_list_view", mapped, block)
       end
       def reorderablelistview(children = nil, **props, &block) = reorderable_list_view(children, **props, &block)
       def safe_area(content = nil, **props, &block)
@@ -587,7 +587,7 @@ module Ruflet
       def segmented_button(segments = nil, **props, &block)
         mapped = props.dup
         mapped[:segments] = segments unless segments.nil?
-        build_widget(:segmentedbutton, **mapped, &block)
+        build_with_block_children(:segmentedbutton, "segmented_button", mapped, block, also: :segments)
       end
       def segmentedbutton(segments = nil, **props, &block) = segmented_button(segments, **props, &block)
       def stepper(steps = nil, **props, &block)
@@ -609,7 +609,7 @@ module Ruflet
       def search_bar(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
-        build_widget(:searchbar, **mapped, &block)
+        build_with_block_children(:searchbar, "search_bar", mapped, block)
       end
       def searchbar(children = nil, **props, &block) = search_bar(children, **props, &block)
       def semantics(content = nil, **props, &block)
@@ -868,7 +868,7 @@ module Ruflet
         build_with_block_slot(:radiogroup, "radio_group", :content, mapped, block)
       end
       def radiogroup(content = nil, **props, &block) = radio_group(content, **props, &block)
-      def about_dialog(**props, &block) = build_widget(:aboutdialog, **props, &block)
+      def about_dialog(**props, &block) = build_with_block_children(:aboutdialog, "about_dialog", props.dup, block)
       def aboutdialog(**props, &block) = about_dialog(**props, &block)
       def alert_dialog(**props, &block) = build_with_block_slot(:alertdialog, "alert_dialog", :content, props.dup, block)
       def alertdialog(**props, &block) = alert_dialog(**props, &block)
@@ -959,7 +959,7 @@ module Ruflet
       def navigation_drawer(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
-        build_widget(:navigationdrawer, **mapped, &block)
+        build_with_block_children(:navigationdrawer, "navigation_drawer", mapped, block)
       end
       def navigationdrawer(children = nil, **props, &block) = navigation_drawer(children, **props, &block)
       def navigation_drawer_destination(**props) = build_widget(:navigationdrawerdestination, **props)
