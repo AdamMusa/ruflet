@@ -505,6 +505,10 @@ module RufletCompat
     cli "default_app", "build", "apk", "--self", id: "build-apk--self-accessor", files: accessor_app
     cli "default_app", "run", "main.rb", id: "run-main.rb-accessor", files: accessor_app, before: [%w[build web]]
     cli "default_app", "doctor", id: "doctor-unparsable-ruflet.yaml", files: { "ruflet.yaml" => "app: [unclosed\n" }
+    # RUFLET_TEMPLATE_ROOT comes before the cached template `ruflet doctor
+    # --fix` refreshes, so the advice names RUFLET_TEMPLATE_ROOT.
+    cli "default_app", "build", "apk", "--self", "--strict", id: "build-apk--self--strict-form-explicit-template",
+                                                             files: form_app, template: "explicit"
 
     INVOCATIONS.freeze
 

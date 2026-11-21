@@ -292,6 +292,57 @@ class RufletTemplateSurfaceTest < Minitest::Test
     end
   end
 
+  def test_at_most_max_files_are_read
+    files = { "main.rb" => "text(\"a\")\n" }
+    5.times { |index| files["lib/screen_#{index}.rb"] = "form\n" }
+    5.times { |index| files["app/views/ruflet/screen_#{index}.rb"] = "form\n" }
+    project(files) do |dir|
+      assert_equal 11, Surface.ruby_files(dir).length
+      with_const(:MAX_FILES, 3) { assert_equal 3, Surface.ruby_files(dir).length }
+
+      FileUtils.mkdir_p(File.join(dir, "config"))
+      File.write(File.join(dir, "config", "application.rb"), "")
+      assert_equal 5, Surface.ruby_files(dir).length
+      with_const(:MAX_FILES, 3) { assert_equal 3, Surface.ruby_files(dir).length }
+    end
+  end
+
+  def test_a_file_larger_than_max_file_bytes_is_not_read
+    project("main.rb" => "form\n#{'#' * 40}\n") do |dir|
+      assert_equal({ "form" => "main.rb:1" }, Surface.app_calls(dir, ["form"]))
+      with_const(:MAX_FILE_BYTES, 46) { assert_equal({ "form" => "main.rb:1" }, Surface.app_calls(dir, ["form"])) }
+      with_const(:MAX_FILE_BYTES, 45) { assert_empty Surface.app_calls(dir, ["form"]) }
+    end
+  end
+
+  # Only directories below the root are skipped by name: a project whose own
+  # directory is called test, build or log is still read.
+  def test_a_project_root_named_like_a_skipped_directory_is_read
+    %w[test build log vendor .app].each do |name|
+      Dir.mktmpdir do |parent|
+        root = File.join(parent, name)
+        FileUtils.mkdir_p(root)
+        File.write(File.join(root, "main.rb"), "form\n")
+
+        assert_equal({ "form" => "main.rb:1" }, Surface.app_calls(root, ["form"]), name)
+      end
+    end
+  end
+
+  # `bundle config set path gems` installs the bundle into gems/ruby/<version>.
+  def test_installed_gems_are_not_read
+    project(
+      "main.rb" => "text(\"a\")\n",
+      "gems/ruby/3.4.0/gems/x-1.0/lib/x.rb" => "form\n",
+      "gems/ruby/3.4.0/specifications/x-1.0.gemspec" => "",
+      "lib/gems/y.rb" => "form\n",
+      "app/specifications/z.rb" => "form\n"
+    ) do |dir|
+      assert_equal %w[app/specifications/z.rb lib/gems/y.rb main.rb],
+                   Surface.ruby_files(dir).map { |path| Surface.relative_path(path, dir) }
+    end
+  end
+
   def test_a_directory_that_is_not_a_ruflet_project_is_not_read
     project("script.rb" => "form\n") do |dir|
       assert_empty Surface.ruby_files(dir)
@@ -307,6 +358,13 @@ class RufletTemplateSurfaceTest < Minitest::Test
       "app/views/ruflet/screens/signup.rb" => "form(controls: [])\n"
     ) do |dir|
       assert_equal({ "form" => "app/views/ruflet/screens/signup.rb:1" }, Surface.app_calls(dir, ["form"]))
+    end
+  end
+
+  # app/views/ruflet makes a Rails app only beside config/application.rb.
+  def test_app_views_ruflet_without_rails_is_read_as_a_project
+    project("main.rb" => "form\n", "app/views/ruflet/main.rb" => "text(\"a\")\n") do |dir|
+      assert_equal({ "form" => "main.rb:1" }, Surface.app_calls(dir, ["form"]))
     end
   end
 
@@ -358,6 +416,53 @@ class RufletTemplateSurfaceTest < Minitest::Test
         Template: /t
         Failing because of --strict. Fetch the latest template with `ruflet doctor --fix`.
     TEXT
+    assert_equal "  Update it, or pass --strict to fail instead.",
+                 Surface.report(problems, template_root: "/t", advice: "Update it").last
+    assert_equal "  Failing because of --strict. Update it.",
+                 Surface.report(problems, template_root: "/t", strict: true, advice: "Update it").last
+  end
+
+  # `ruflet doctor --fix` refreshes only the cached template. A template that
+  # RUFLET_CLIENT_DIR, RUFLET_TEMPLATE_ROOT or a ruflet-template checkout
+  # provides comes first, so the advice names it instead.
+  def test_the_advice_names_where_the_template_comes_from
+    Dir.mktmpdir do |dir|
+      cached = File.join(dir, "cache", "templates", "ruflet_flutter_template")
+      checkout = File.join(dir, "ruflet-template")
+      host = Object.new
+      host.define_singleton_method(:cached_ruflet_client_template_root) { cached }
+      unchanged = "(`ruflet doctor --fix` does not change it)"
+
+      with_env("RUFLET_CLIENT_DIR" => nil, "RUFLET_TEMPLATE_ROOT" => nil) do
+        assert_equal Surface::FETCH_ADVICE, Check.advice(host, cached)
+        assert_equal Surface::FETCH_ADVICE, Check.advice(host, File.join(dir, "app", "build", "client"))
+        assert_equal Surface::FETCH_ADVICE, Check.advice(Object.new, cached)
+        assert_equal "Update the ruflet-template checkout #{checkout} #{unchanged}",
+                     Check.advice(host, File.join(checkout, "templates", "ruflet_flutter_template"))
+      end
+      with_env("RUFLET_TEMPLATE_ROOT" => checkout, "RUFLET_CLIENT_DIR" => nil) do
+        expected = "Update the template in RUFLET_TEMPLATE_ROOT to the latest ruflet-template #{unchanged}"
+        assert_equal expected, Check.advice(host, File.join(checkout, "templates", "ruflet_flutter_template"))
+        assert_equal expected, Check.advice(host, checkout)
+        assert_equal Surface::FETCH_ADVICE, Check.advice(host, cached)
+      end
+      with_env("RUFLET_CLIENT_DIR" => File.join(dir, "client"), "RUFLET_TEMPLATE_ROOT" => nil) do
+        assert_equal "Update the client in RUFLET_CLIENT_DIR from the latest ruflet-template #{unchanged}",
+                     Check.advice(host, File.join(dir, "client"))
+      end
+    end
+  end
+
+  def test_check_names_the_template_root_that_takes_precedence
+    project("main.rb" => FORM_APP) do |dir|
+      template = old_template(File.join(dir, "template"))
+      with_env("RUFLET_TEMPLATE_ROOT" => template, "RUFLET_CLIENT_DIR" => nil) do
+        Dir.chdir(dir) do
+          _out, err = capture_io { refute Check.check(Host.new, template, strict: true) }
+          assert_includes err, "  Failing because of --strict. Update the template in RUFLET_TEMPLATE_ROOT to the latest ruflet-template"
+        end
+      end
+    end
   end
 
   # --- the commands -------------------------------------------------------------------
@@ -473,6 +578,73 @@ class RufletTemplateSurfaceTest < Minitest::Test
     assert_nil Check.installed_root(Object.new)
   end
 
+  # A client copied from a template records the revision it came from;
+  # that comes before the revision of the template installed now.
+  def test_the_revision_a_client_records_comes_first
+    Dir.mktmpdir do |dir|
+      host = Object.new
+      host.define_singleton_method(:installed_template_revision) { |_root| "installed0000" }
+      assert_equal "installed0000", Check.revision(host, dir)
+
+      File.write(File.join(dir, ".ruflet-template-revision"), "recorded0000\n")
+      assert_equal "recorded0000", Check.revision(host, dir)
+      assert_equal "recorded0000", Check.revision(Object.new, dir)
+    end
+  end
+
+  # doctor hands the check a callable, so its config is read only when the
+  # template lacks a bundled package.
+  def test_doctor_passes_its_config_as_a_callable
+    Dir.mktmpdir do |dir|
+      host = cli_host
+      host.define_singleton_method(:resolve_ruflet_client_template_root) { "/t" }
+      host.define_singleton_method(:cached_template_revision) { nil }
+      host.define_singleton_method(:doctor_project_config) { flunk("doctor read its config before the check needed it") }
+      host.define_singleton_method(:flutter_tools) { |**| nil }
+      seen = nil
+      Dir.chdir(dir) do
+        Check.stub(:check, ->(_cli, root, strict:, config:) { seen = [root, strict, config] }) do
+          capture_io { host.command_doctor(%w[--strict]) }
+        end
+      end
+
+      assert_equal ["/t", true], seen.first(2)
+      assert_respond_to seen.last, :call
+    end
+  end
+
+  # run reads the script it is given, wherever it is: `cd ~ && ruflet run
+  # ~/apps/demo/main.rb` is checked although ~ is no Ruflet project.
+  def test_run_checks_the_script_it_is_given_from_outside_the_project
+    Dir.mktmpdir do |tmp|
+      sandbox = File.realpath(tmp)
+      work = File.join(sandbox, "work")
+      script = File.join(sandbox, "apps", "demo", "main.rb")
+      FileUtils.mkdir_p([work, File.dirname(script)])
+      File.write(script, FORM_APP)
+      template = old_template(File.join(sandbox, "template"))
+      host = cli_host
+      host.define_singleton_method(:resolve_ruflet_client_template_root) { template }
+      served = []
+      host.define_singleton_method(:resolve_backend_port) do |target, **|
+        served << target
+        nil
+      end
+      Dir.chdir(work) do
+        code = nil
+        _out, err = capture_io { code = host.command_run([script]) }
+        assert_equal 1, code
+        assert_equal ["mobile"], served, "without --strict, run goes on to start the server"
+        assert_includes err, "warning: the Flutter template lacks 1 control this app uses:\n  form (Form), #{script}:4:"
+
+        _out, err = capture_io { code = host.command_run(["--strict", script]) }
+        assert_equal 1, code
+        assert_equal ["mobile"], served, "with --strict, no server starts"
+        assert_includes err, "error: the Flutter template lacks 1 control this app uses:\n  form (Form), #{script}:4:"
+      end
+    end
+  end
+
   def test_build_fails_with_strict_before_preparing_the_client
     project("main.rb" => FORM_APP) do |dir|
       template = old_template(File.join(dir, "template"))
@@ -498,21 +670,40 @@ class RufletTemplateSurfaceTest < Minitest::Test
     assert status.success?, "require \"ruflet_cli\" loaded ripper\n#{err}"
   end
 
-  def test_the_check_is_quick_on_a_large_project
+  # The cost on a large project is reading its files: only a file that
+  # mentions a name the template lacks is parsed.
+  def test_only_files_that_mention_a_lacking_name_are_parsed
     files = { "main.rb" => FORM_APP }
     2_000.times { |index| files["lib/screens/screen_#{index}.rb"] = "def screen_#{index}\n  column(controls: [text(\"#{index}\")])\nend\n" * 20 }
     project(files) do |dir|
       template = old_template(File.join(dir, "template"))
-      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      problems = Surface.problems(template, project_root: dir)
-      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+      require "ripper"
+      parsed = []
+      sexp = Ripper.method(:sexp)
+      problems = Ripper.stub(:sexp, lambda { |source, *rest|
+        parsed << source
+        sexp.call(source, *rest)
+      }) do
+        Surface.problems(template, project_root: dir)
+      end
 
       assert_equal ["form"], problems.map(&:name)
-      assert_operator elapsed, :<, 2.0, "2001 files checked in #{elapsed.round(3)}s"
+      assert_equal [FORM_APP], parsed
     end
   end
 
   private
+
+  # Ruflet::CLI's commands on an object of their own, whose methods a test
+  # can replace.
+  def cli_host
+    host = Object.new
+    [
+      Ruflet::CLI::NewCommand, Ruflet::CLI::RunCommand, Ruflet::CLI::UpdateCommand,
+      Ruflet::CLI::BuildCommand, Ruflet::CLI::ExtraCommand, Ruflet::CLI
+    ].each { |mod| host.extend(mod) }
+    host
+  end
 
   def with_env(values)
     saved = values.keys.to_h { |key| [key, ENV[key]] }

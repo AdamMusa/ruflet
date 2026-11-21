@@ -138,10 +138,10 @@ module Ruflet
       end
 
       # The Ruby files of the app: app/views/ruflet in a Rails app, otherwise
-      # the project, without build output, dependencies, tests, specs or dot
-      # directories.
-      # Nothing outside a Ruflet project (no main.rb, ruflet.yaml or
-      # services.yaml) is read.
+      # the project, without build output, dependencies, installed gems,
+      # tests, specs or dot directories.
+      # Nothing outside a Ruflet project (no main.rb, ruflet.yaml, ruflet.yml
+      # or services.yaml) is read.
       def ruby_files(project_root)
         rails_views = File.join(project_root, "app", "views", "ruflet")
         if File.file?(File.join(project_root, "config", "application.rb")) && Dir.exist?(rails_views)
@@ -157,13 +157,20 @@ module Ruflet
 
           if File.directory?(path)
             name = File.basename(path)
-            Find.prune if path != project_root && (name.start_with?(".") || SKIPPED_DIRS.include?(name))
+            Find.prune if path != project_root && (name.start_with?(".") || SKIPPED_DIRS.include?(name) || gem_dir?(path))
           elsif path.end_with?(".rb")
             files << path
             break if files.length >= MAX_FILES
           end
         end
         files.sort
+      end
+
+      # A RubyGems install directory (one with specifications/ and gems/),
+      # such as gems/ruby/3.4.0 after `bundle config set path gems`: its gems
+      # are not the app.
+      def gem_dir?(path)
+        File.directory?(File.join(path, "specifications")) && File.directory?(File.join(path, "gems"))
       end
 
       def read_source(path)
@@ -280,8 +287,12 @@ module Ruflet
         expanded.start_with?(prefix) ? expanded.delete_prefix(prefix) : expanded
       end
 
+      FETCH_ADVICE = "Fetch the latest template with `ruflet doctor --fix`"
+
       # The lines a command prints for problems (strict: they are an error).
-      def report(problems, template_root:, revision: nil, strict: false)
+      # advice says how to get a newer template (see
+      # TemplateSurfaceCheck.advice).
+      def report(problems, template_root:, revision: nil, strict: false, advice: FETCH_ADVICE)
         counts = %i[control service extension].filter_map do |kind|
           count = problems.count { |problem| problem.kind == kind }
           "#{count} #{kind}#{'s' unless count == 1}" if count.positive?
@@ -301,12 +312,7 @@ module Ruflet
         if !strict && problems.any? { |problem| problem.kind == :control }
           lines << "  An app built from this template shows \"Unknown control\" in place of a control it lacks."
         end
-        lines <<
-          if strict
-            "  Failing because of --strict. Fetch the latest template with `ruflet doctor --fix`."
-          else
-            "  Fetch the latest template with `ruflet doctor --fix`, or pass --strict to fail instead."
-          end
+        lines << (strict ? "  Failing because of --strict. #{advice}." : "  #{advice}, or pass --strict to fail instead.")
         lines
       end
 
@@ -338,7 +344,9 @@ module Ruflet
         return true if problems.empty?
 
         TemplateSurface.report(
-          problems, template_root: template_root, revision: revision(cli, template_root), strict: strict
+          problems,
+          template_root: template_root, revision: revision(cli, template_root), strict: strict,
+          advice: advice(cli, template_root)
         ).each { |line| warn line }
         !strict
       rescue StandardError
@@ -373,6 +381,33 @@ module Ruflet
         cli.send(:resolve_ruflet_client_template_root)
       rescue StandardError
         nil
+      end
+
+      # How to get a newer template than template_root. `ruflet doctor --fix`
+      # refreshes only the cached one, and RUFLET_CLIENT_DIR, RUFLET_TEMPLATE_ROOT
+      # and a ruflet-template checkout beside this ruflet take precedence over
+      # it, so a template from one of those is named instead.
+      def advice(cli, template_root)
+        root = File.expand_path(template_root)
+        unchanged = "(`ruflet doctor --fix` does not change it)"
+        client_dir = ENV["RUFLET_CLIENT_DIR"].to_s.strip
+        if !client_dir.empty? && File.expand_path(client_dir) == root
+          return "Update the client in RUFLET_CLIENT_DIR from the latest ruflet-template #{unchanged}"
+        end
+
+        explicit = ENV["RUFLET_TEMPLATE_ROOT"].to_s.strip
+        if !explicit.empty? && [explicit, File.join(explicit, "templates", "ruflet_flutter_template")].any? { |path| File.expand_path(path) == root }
+          return "Update the template in RUFLET_TEMPLATE_ROOT to the latest ruflet-template #{unchanged}"
+        end
+
+        cached = cli.send(:cached_ruflet_client_template_root) if cli.respond_to?(:cached_ruflet_client_template_root, true)
+        if cached && File.expand_path(cached) != root && root.end_with?("/templates/ruflet_flutter_template")
+          return "Update the ruflet-template checkout #{File.expand_path('../..', root)} #{unchanged}"
+        end
+
+        TemplateSurface::FETCH_ADVICE
+      rescue StandardError
+        TemplateSurface::FETCH_ADVICE
       end
 
       def revision(cli, template_root)
