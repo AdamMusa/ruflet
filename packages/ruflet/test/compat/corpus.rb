@@ -268,6 +268,14 @@ module RufletCompat
       cli "services_app", "build", target, "--self" unless target == "web"
     end
     cli "services_app", "build", "apk", id: "build-apk-with-signing-env", env: FAKE_SIGNING_ENV
+    # Passwords with a backslash and non-ASCII text are escaped in
+    # key.properties, so Gradle's Properties#load reads them as set. Before,
+    # they were written raw and read as "compatnot-a-secret" and "pÃ¤ss...".
+    cli "services_app", "build", "apk", id: "build-apk-with-escaped-signing-env",
+                                        env: FAKE_SIGNING_ENV.merge(
+                                          "RUFLET_ANDROID_KEYSTORE_PASSWORD" => "compat\\not-a-secret",
+                                          "RUFLET_ANDROID_KEY_PASSWORD" => "compat-pässwörd-€"
+                                        )
     # A partial signing setup stops the build; before #84 it printed "build
     # config error" and built anyway.
     cli "services_app", "build", "apk", id: "build-apk-with-partial-signing-env",
