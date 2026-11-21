@@ -184,10 +184,17 @@ Nested transactions use SQLite savepoints.
 Every thread shares the one connection. On CRuby a thread holds it for each
 statement and for a whole transaction block. Another thread's reads and writes
 wait until the block ends; they never join its transaction. A thread that
-waits longer than `timeout` milliseconds (5000 by default) gets
-`StatementInvalid: database is locked`. So do not wait inside a transaction
-block for another thread that uses the database. On Ruflet's mruby VM threads
-are cooperative and the connection takes no lock.
+waits longer than `timeout` milliseconds gets
+`StatementInvalid: database is locked`. A `timeout` below the default 5000
+still waits 5000 ms for another thread. So do not wait inside a transaction
+block for another thread that uses the database. A `Signal.trap` handler
+cannot take the connection (CRuby does not allow locking a `Mutex` there), so
+its statements run without waiting, as before.
+
+On Ruflet's mruby VM threads are cooperative and the connection takes no lock.
+A VM thread that writes while another VM thread's transaction block is
+paused, in a `sleep` for example, writes inside that transaction, and its
+write is lost if the transaction rolls back.
 
 ## Deliberate limits
 

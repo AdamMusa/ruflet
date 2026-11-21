@@ -6,10 +6,12 @@ module RufletRecord
     # process. On CRuby a thread holds the connection for each statement and
     # for a whole transaction block, so threads never share a transaction:
     # another thread waits until the block ends. It waits at most the busy
-    # `timeout`, then gets "database is locked", as from a second SQLite
-    # connection. A transaction block must not wait for another thread that
-    # needs the database.
+    # `timeout`, but never less than the default, then gets "database is
+    # locked", as from a second SQLite connection. A transaction block must
+    # not wait for another thread that needs the database.
     class SQLiteAdapter
+      DEFAULT_TIMEOUT_MS = 5_000
+
       attr_reader :database
 
       def initialize(config)
@@ -176,12 +178,19 @@ module RufletRecord
       # mruby's Thread is cooperative (fibers on one native thread), it has no
       # Monitor, and its Mutex is not reentrant, so statements there run
       # unlocked, as they always have.
+      #
+      # On CRuby a shorter busy `timeout` does not shorten a thread's wait
+      # below the default: a thread can keep the GVL, and with it the
+      # connection, for a 100 ms time slice, so plain statements on two
+      # threads would fail with "database is locked".
       def build_lock
-        RUBY_ENGINE == "mruby" ? NullLock.new : ThreadLock.new(busy_timeout)
+        return NullLock.new if RUBY_ENGINE == "mruby"
+
+        ThreadLock.new([busy_timeout, DEFAULT_TIMEOUT_MS].max)
       end
 
       def busy_timeout
-        @config.fetch(:timeout, 5_000).to_i
+        @config.fetch(:timeout, DEFAULT_TIMEOUT_MS).to_i
       end
 
       def configure
@@ -254,7 +263,9 @@ module RufletRecord
       # transaction block and nested transactions (savepoints) run as before.
       # A thread owns it, not a fiber, so an Enumerator stepped inside a
       # transaction block uses the same connection. A thread that cannot take
-      # it within `timeout_ms` gets StatementInvalid.
+      # it within `timeout_ms` gets StatementInvalid. A Signal.trap handler
+      # cannot take it (CRuby forbids Mutex#lock there), so a handler's
+      # statements run without it, as they did before this lock existed.
       class ThreadLock
         def initialize(timeout_ms)
           @timeout_ms = timeout_ms.to_i < 0 ? 0 : timeout_ms.to_i
@@ -271,8 +282,7 @@ module RufletRecord
             # `acquired` is set, so the ensure releases exactly the locks this
             # thread took.
             Thread.handle_interrupt(Object => :never) do
-              acquire
-              acquired = true
+              acquired = acquire
             end
             yield
           ensure
@@ -282,28 +292,41 @@ module RufletRecord
 
         private
 
+        # Takes the lock and returns true. In a Signal.trap handler, where
+        # Mutex#lock raises ThreadError, it takes nothing and returns false.
         def acquire
-          current = Thread.current
-          @mutex.synchronize do
-            if @owner.equal?(current)
-              @depth += 1
-              return
-            end
-            deadline = nil
-            # A dead owner (a forked child, for one) never releases the lock.
-            while @owner && @owner.alive?
-              deadline ||= monotonic_now + (@timeout_ms / 1000.0)
-              remaining = deadline - monotonic_now
-              if remaining <= 0
-                raise StatementInvalid,
-                      "database is locked (another thread held the connection for over #{@timeout_ms} ms)"
-              end
-              # A thread that is waiting can still be killed or timed out.
-              Thread.handle_interrupt(Object => :on_blocking) { @released.wait(@mutex, remaining) }
-            end
-            @owner = current
-            @depth = 1
+          begin
+            @mutex.lock
+          rescue ThreadError
+            return false
           end
+          begin
+            take(Thread.current)
+          ensure
+            @mutex.unlock
+          end
+          true
+        end
+
+        def take(current)
+          if @owner.equal?(current)
+            @depth += 1
+            return
+          end
+          deadline = nil
+          # A dead owner (a forked child, for one) never releases the lock.
+          while @owner && @owner.alive?
+            deadline ||= monotonic_now + (@timeout_ms / 1000.0)
+            remaining = deadline - monotonic_now
+            if remaining <= 0
+              raise StatementInvalid,
+                    "database is locked (another thread held the connection for over #{@timeout_ms} ms)"
+            end
+            # A thread that is waiting can still be killed or timed out.
+            Thread.handle_interrupt(Object => :on_blocking) { @released.wait(@mutex, remaining) }
+          end
+          @owner = current
+          @depth = 1
         end
 
         def release
