@@ -56,7 +56,7 @@ module Ruflet
       [
         [components::BatteryControl, %w[get_battery_level get_battery_state is_in_battery_save_mode]],
         [components::ConnectivityControl, %w[get_connectivity]],
-        [components::FlashlightControl, %w[on off is_available]],
+        [components::FlashlightControl, %w[off is_available]],
         [components::HapticFeedbackControl, %w[heavy_impact light_impact medium_impact vibrate selection_click]],
         [components::StoragePathsControl, %w[
           get_application_cache_directory get_application_documents_directory
@@ -70,6 +70,25 @@ module Ruflet
         klass.include(CurrentServiceMethods)
         klass.extend(NoArgumentServiceMethods)
         klass.define_no_argument_service_methods(*method_names)
+      end
+
+      # Flet names the method that turns the light on `on`, the name of
+      # Ruflet::Control#on(event_name, &block) too. Called with an event name
+      # (`flashlight.on(:error) { |e| ... }`) it is Control#on, which this
+      # method used to hide (it raised ArgumentError). Without one it turns
+      # the light on, as before; a block given there is still ignored.
+      class RufletServicesComponents::FlashlightControl
+        def on(*event_name, timeout: 10, on_result: nil)
+          unless event_name.empty?
+            unless on_result.nil? && timeout == 10
+              raise ArgumentError, "flashlight.on(event_name) takes a block, not timeout: or on_result:"
+            end
+
+            return super(*event_name)
+          end
+
+          invoke_service_method("on", timeout: timeout, on_result: on_result)
+        end
       end
 
       class RufletServicesComponents::FilePickerControl

@@ -30,6 +30,7 @@ module MethodContract
   # Props a control cannot be built without.
   BASE = {
     "context_menu" => -> { { content: Ruflet.text("x") } },
+    "dismissible" => -> { { content: Ruflet.text("x") } },
     "nested_scroll_view" => -> { { body: Ruflet.text("x") } },
     "screenshot" => -> { { content: Ruflet.text("x") } }
   }.freeze

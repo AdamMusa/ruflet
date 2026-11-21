@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "scrollable_methods"
+require_relative "drawer_methods"
 
 module Ruflet
   module UI
@@ -9,6 +10,7 @@ module Ruflet
         # floating_action_button_location: *_docked locations float above the navigation bar on iOS/macOS (no notched tab bar).
         class ViewControl < Ruflet::Control
           include ScrollableMethods
+          include DrawerMethods
 
           TYPE = "view".freeze
           WIRE = "View".freeze
@@ -166,6 +168,13 @@ module Ruflet
             props[:on_scroll] = on_scroll unless on_scroll.nil?
             props[:on_size_change] = on_size_change unless on_size_change.nil?
             super(type: TYPE, id: id, **props)
+          end
+
+          # Answers on_confirm_pop: the client keeps the view until this
+          # arrives (view.dart; after 5 minutes it keeps the view). As
+          # Flet's View.confirm_pop, true pops the view and false keeps it.
+          def confirm_pop(should_pop = true, timeout: 10, on_result: nil)
+            runtime_page&.invoke(self, "confirm_pop", args: { "should_pop" => !!should_pop }, timeout: timeout, on_result: on_result)
           end
         end
       end
