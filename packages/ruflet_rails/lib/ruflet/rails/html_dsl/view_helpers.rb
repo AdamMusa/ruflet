@@ -323,6 +323,68 @@ module Ruflet
           end
         end
         define_registry_helpers!
+
+        # --- helpers that share a name with Action View's ---------------------------
+        #
+        # The Railtie includes this module into every view of the host app,
+        # web pages too, above Action View's own helpers. A few DSL helpers
+        # share a name with an Action View form helper: text_field, and on
+        # Rails 8 textarea and checkbox. Action View's take
+        # (object_name, method, options, ...), and the form_with, form_for and
+        # fields_for builders always call them that way: `f.text_field :title`
+        # is `text_field(:post, :title, {...})`.
+        #
+        # When the module is included, each DSL helper that hides a method of
+        # the including class or module is wrapped. In that class, a call the
+        # DSL signature cannot take (more positional arguments than the helper
+        # accepts) goes to the hidden method, and so does Action View's
+        # `textarea(:post, :body)`: a Symbol second argument names a model
+        # attribute, where the DSL's second argument is the text to show.
+        # Every other call runs the DSL helper exactly as before. Methods every
+        # object has, such as ruflet_core's builders, do not count as hidden:
+        # these helpers exist to replace them in views.
+        SYMBOL_SECOND_ARGUMENT_IS_RAILS = %i[textarea].freeze
+
+        def self.included(base)
+          super
+          hand_rails_calls_to_hidden_helpers(base)
+        end
+
+        def self.hand_rails_calls_to_hidden_helpers(base)
+          @hidden_helper_bases ||= {}
+          everywhere = Object.ancestors
+          public_instance_methods(false).each do |name|
+            next unless base.method_defined?(name) || base.private_method_defined?(name)
+
+            resolved = base.instance_method(name)
+            next unless resolved.owner == self
+
+            hidden = resolved.super_method
+            next if hidden.nil? || everywhere.include?(hidden.owner)
+
+            bases = (@hidden_helper_bases[name] ||= [])
+            wrap_for_hidden_helper(name, bases) if bases.empty?
+            bases << base unless bases.include?(base)
+          end
+        end
+
+        def self.wrap_for_hidden_helper(name, bases)
+          dsl = instance_method(name)
+          max = dsl.parameters.count { |kind, _| kind == :req || kind == :opt }
+          max = Float::INFINITY if dsl.parameters.any? { |kind, _| kind == :rest }
+          symbol_second = SYMBOL_SECOND_ARGUMENT_IS_RAILS.include?(name)
+          # `dsl` keeps the helper's body; removing it first avoids Ruby's
+          # "method redefined" warning.
+          remove_method(name)
+          define_method(name) do |*args, **attrs, &block|
+            if (args.length > max || (symbol_second && args[1].is_a?(Symbol))) && bases.any? { |base| base === self }
+              super(*args, **attrs, &block)
+            else
+              dsl.bind_call(self, *args, **attrs, &block)
+            end
+          end
+        end
+        private_class_method :hand_rails_calls_to_hidden_helpers, :wrap_for_hidden_helper
       end
     end
   end
