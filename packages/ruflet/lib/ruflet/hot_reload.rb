@@ -469,7 +469,13 @@ module Ruflet
               @app_trap.rearm
             end
             if @server.respond_to?(:reload_app!)
-              @server.reload_app!
+              # false: the app block raised for a session, which the server
+              # logged, and the session kept its previous UI. Any other value
+              # (older servers return the sessions) is a reload.
+              if @server.reload_app! == false
+                log "reload failed: the app raised while rendering; clients keep the previous UI"
+                return
+              end
             else
               log "installed ruflet_server does not support reload_app!; clients keep the previous UI"
             end
@@ -480,7 +486,7 @@ module Ruflet
             raise if fatal_error?(e)
 
             log "reload failed: #{e.class}: #{e.message}"
-            Array(e.backtrace).first(3).each { |line| log "  #{line}" }
+            failure_frames(e).each { |line| log "  #{line}" }
           end
         end
       end
@@ -797,6 +803,28 @@ module Ruflet
         io&.close
       rescue SystemCallError, IOError
         nil
+      end
+
+      # The frames a failed reload logs. RUFLET_DEBUG=1: all of them.
+      # Otherwise the first three in the app's own files (the watch root,
+      # without gems bundled there): the runner's frames say nothing about
+      # the app. A SyntaxError's message already names the file and line;
+      # any other error with no app frame keeps its first three frames.
+      def failure_frames(error)
+        frames = Array(error.backtrace)
+        return frames if ENV["RUFLET_DEBUG"] == "1"
+
+        prefixes = [@watch_root, HotReload.realpath(@watch_root)].uniq.map { |dir| dir.end_with?("/") ? dir : "#{dir}/" }
+        app_frames = frames.select do |frame|
+          prefix = prefixes.find { |candidate| frame.start_with?(candidate) }
+          next false unless prefix
+
+          !frame[prefix.length..].start_with?("vendor/", ".bundle/")
+        end
+        return app_frames.first(3) unless app_frames.empty?
+        return [] if error.is_a?(SyntaxError)
+
+        frames.first(3)
       end
 
       def fatal_error?(error)

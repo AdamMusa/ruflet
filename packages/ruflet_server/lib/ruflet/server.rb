@@ -25,6 +25,9 @@ module Ruflet
       @sessions_mutex = Mutex.new
       @connections = {}
       @connections_mutex = Mutex.new
+      # Sessions whose first render raised, by session key (see
+      # rerun_first_render). Guarded by @sessions_mutex.
+      @crashed_sessions = {}
       @running = false
       @server_socket = nil
 
@@ -123,63 +126,180 @@ module Ruflet
       warn "Unable to publish Ruflet runtime port: #{error.message}"
     end
 
+    # Re-renders every live session with the current app block (hot reload).
+    # Each session's reload is all or nothing: if the block raises, the
+    # session keeps its previous state and the client keeps showing it (see
+    # Page#reload_transaction). A session whose first render raised gets its
+    # first render again, and the client leaves its error screen once that
+    # succeeds. Returns false when the block raised for a session (each error
+    # is logged), true otherwise.
     def reload_app!
       snapshots = @sessions_mutex.synchronize { @sessions.to_a }
 
+      reloaded = true
       snapshots.each do |session_key, current_page|
         ws = @connections_mutex.synchronize { @connections[session_key] }
         next unless ws
 
-        # Open dialogs, sheets, and snack bars are Navigator routes on the
-        # client; replacing the control tree does not pop them. Close them
-        # first, otherwise a reload while an overlay is open leaves it on
-        # screen wired to control ids the reloaded page cannot resolve.
-        begin
-          nil while current_page.respond_to?(:close_dialog) && current_page.close_dialog
-        rescue StandardError
-          nil
-        end
-
-        if current_page.respond_to?(:reset_for_reload!)
-          # Re-render on the live page. The client's overlay/service/dialogs
-          # containers stay mounted; a recreated Page would re-send them,
-          # replacing their client-side instances and detaching them — after
-          # which dialog and service patches are silently ignored.
-          current_page.reset_for_reload!
-          @app_block.call(current_page)
-          # Clear page-level chrome the reloaded block dropped and flush the
-          # overlay (appbar/drawer/FAB live in the view and rebuild wholesale;
-          # page props and the mounted overlay need explicit updates).
-          current_page.finalize_reload! if current_page.respond_to?(:finalize_reload!)
-          # Keeps route-driven apps on their current route: replays the
-          # route_change event when the block did not route itself.
-          current_page.replay_route_after_reload! if current_page.respond_to?(:replay_route_after_reload!)
-          current_page.update
-        else
-          # Older ruflet_core without reset_for_reload!: fall back to a fresh
-          # page (loses client-side container bindings until reconnect).
-          refreshed_page = Page.new(
-            session_id: current_page.session_id,
-            client_details: current_page.client_details,
-            sender: lambda do |action, payload|
-              send_message(ws, action, payload)
-            end
-          )
-          refreshed_page.title = "Ruflet App"
-
-          @sessions_mutex.synchronize do
-            @sessions[session_key] = refreshed_page
-          end
-
-          @app_block.call(refreshed_page)
-          refreshed_page.update
-        end
-      rescue StandardError => e
-        warn "reload error: #{e.class}: #{e.message}"
+        crashed = @sessions_mutex.synchronize { @crashed_sessions.key?(session_key) }
+        session_reloaded = crashed ? rerun_first_render(ws, current_page) : reload_session(ws, current_page)
+        reloaded = false unless session_reloaded
       end
+      reloaded
     end
 
     private
+
+    def reload_session(ws, current_page)
+      # Open dialogs, sheets, and snack bars are Navigator routes on the
+      # client; replacing the control tree does not pop them. Close them
+      # first, otherwise a reload while an overlay is open leaves it on
+      # screen wired to control ids the reloaded page cannot resolve.
+      begin
+        nil while current_page.respond_to?(:close_dialog) && current_page.close_dialog
+      rescue StandardError
+        nil
+      end
+
+      if current_page.respond_to?(:reset_for_reload!)
+        # Re-render on the live page. The client's overlay/service/dialogs
+        # containers stay mounted; a recreated Page would re-send them,
+        # replacing their client-side instances and detaching them — after
+        # which dialog and service patches are silently ignored.
+        if current_page.respond_to?(:reload_transaction)
+          current_page.reload_transaction { rerender_page(current_page) }
+        else
+          rerender_page(current_page)
+        end
+      else
+        # Older ruflet_core without reset_for_reload!: fall back to a fresh
+        # page (loses client-side container bindings until reconnect).
+        refreshed_page = Page.new(
+          session_id: current_page.session_id,
+          client_details: current_page.client_details,
+          sender: lambda do |action, payload|
+            send_message(ws, action, payload)
+          end
+        )
+        refreshed_page.title = "Ruflet App"
+
+        @sessions_mutex.synchronize do
+          @sessions[ws.session_key] = refreshed_page
+        end
+
+        @app_block.call(refreshed_page)
+        refreshed_page.update
+      end
+      true
+    rescue StandardError => e
+      report_reload_error(e)
+      false
+    end
+
+    def rerender_page(current_page)
+      current_page.reset_for_reload!
+      @app_block.call(current_page)
+      # Clear page-level chrome the reloaded block dropped and flush the
+      # overlay (appbar/drawer/FAB live in the view and rebuild wholesale;
+      # page props and the mounted overlay need explicit updates).
+      current_page.finalize_reload! if current_page.respond_to?(:finalize_reload!)
+      # Keeps route-driven apps on their current route: replays the
+      # route_change event when the block did not route itself.
+      current_page.replay_route_after_reload! if current_page.respond_to?(:replay_route_after_reload!)
+      current_page.update
+    end
+
+    # The client of a session whose first render raised shows the error and
+    # waits for a register_client response; patches do not reach it. Render
+    # the session from scratch again, as when it registered: on success the
+    # client gets that response and leaves its error screen; on failure it
+    # gets the new error.
+    def rerun_first_render(ws, crashed_page)
+      register_session(ws, crashed_page.session_id, crashed_page.client_details)
+      true
+    rescue StandardError => e
+      report_reload_error(e)
+      false
+    end
+
+    def report_reload_error(error)
+      warn "reload error: #{error.class}: #{error.message}"
+      if ENV["RUFLET_DEBUG"] == "1"
+        warn error.backtrace.join("\n") if error.backtrace
+      else
+        warn_app_location(error)
+      end
+    end
+
+    # Points at the app's own code an error came from: "  at main.rb:7:in
+    # ...", the first frame in the app's directory. Nothing when the
+    # backtrace has no such frame. RUFLET_DEBUG=1 prints whole backtraces.
+    def warn_app_location(error)
+      frame = app_frame(error)
+      warn "  at #{frame}" if frame
+    rescue StandardError
+      nil
+    end
+
+    def app_frame(error)
+      return nil if RUBY_ENGINE == "mruby"
+
+      prefixes = app_source_prefixes
+      return nil if prefixes.empty?
+
+      # Locations know the absolute path of a frame Ruby prints relative to
+      # where it started (`ruby main.rb` prints "main.rb:7").
+      locations = error.respond_to?(:backtrace_locations) ? error.backtrace_locations : nil
+      if locations
+        location = locations.find do |candidate|
+          path = candidate.absolute_path || candidate.path.to_s
+          !path.start_with?("<") && app_source_path?(File.expand_path(path), prefixes)
+        end
+        return location&.to_s
+      end
+
+      Array(error.backtrace).find { |frame| app_source_path?(frame, prefixes) }
+    end
+
+    def app_source_path?(path, prefixes)
+      prefix = prefixes.find { |candidate| path.start_with?(candidate) }
+      return false unless prefix
+
+      # Gems the app bundles in its directory (vendor/bundle, .bundle) are
+      # not its own code.
+      relative = path[prefix.length..-1]
+      !relative.start_with?("vendor/") && !relative.start_with?(".bundle/")
+    end
+
+    # The app's directory, as "dir/" (and its real path, which frames of
+    # files loaded through require_relative show): what `ruflet run` watches
+    # for reloads, else the directory of the script Ruby runs (`ruby
+    # main.rb`, `ruflet run --no-reload`).
+    def app_source_prefixes
+      return @app_source_prefixes if @app_source_prefixes
+
+      @app_source_prefixes =
+        begin
+          watch_root = ENV["RUFLET_WATCH_ROOT"].to_s
+          script = ENV["RUFLET_APP_SCRIPT"].to_s
+          script = $PROGRAM_NAME.to_s if script.empty?
+          root =
+            if !watch_root.empty?
+              File.expand_path(watch_root)
+            elsif !script.empty? && !script.start_with?("-")
+              File.dirname(File.expand_path(script))
+            end
+          roots = root ? [root] : []
+          begin
+            roots << File.realpath(root) if root
+          rescue StandardError
+            nil
+          end
+          roots.uniq.map { |dir| dir.end_with?("/") ? dir : "#{dir}/" }
+        rescue StandardError
+          []
+        end
+    end
 
     def in_process_transport_requested?
       ENV["RUFLET_RUNTIME_TRANSPORT"] == "in_process"
@@ -541,6 +661,7 @@ module Ruflet
 
       @sessions_mutex.synchronize do
         @sessions.delete(ws.session_key)
+        @crashed_sessions.delete(ws.session_key)
       end
     end
 
@@ -586,7 +707,11 @@ module Ruflet
       # WebSocket connection — that would disconnect the client on every
       # navigation. Log it and keep the session alive.
       warn "[embedded server] handle_message error: #{e.class}: #{e.message}"
-      warn e.backtrace.join("\n") if e.backtrace && ENV["RUFLET_DEBUG"] == "1"
+      if ENV["RUFLET_DEBUG"] == "1"
+        warn e.backtrace.join("\n") if e.backtrace
+      else
+        warn_app_location(e)
+      end
       report_runtime_error(e, "handle_message")
     end
 
@@ -644,21 +769,29 @@ module Ruflet
       normalized = Protocol.normalize_register_payload(payload)
       session_id = normalized["session_id"].to_s.empty? ? pseudo_uuid : normalized["session_id"]
 
+      register_session(ws, session_id, normalized)
+    end
+
+    # Renders a new Page for the session and answers its register_client.
+    def register_session(ws, session_id, client_details)
       # Run the app block BEFORE responding and ship the complete state in the
       # register response (page_patch), like Flet. The client merges that map
       # by control id, keeping existing instances alive — required for
       # reconnecting clients (backend restarts) whose control store persists.
       # Incremental op patches sent during the block are superseded by the
-      # full state and dropped; everything else is flushed afterwards.
+      # full state and dropped; everything else is flushed afterwards. Once
+      # the render has raised, nothing is held: its page never registers
+      # (rerun_first_render gives the session a new one).
       registered = false
+      crashed = false
       buffered = []
       page = Page.new(
         session_id: session_id,
-        client_details: normalized,
+        client_details: client_details,
         sender: lambda do |action, msg_payload|
           if registered
             send_message(ws, action, msg_payload)
-          else
+          elsif !crashed
             buffered << [action, msg_payload]
           end
         end
@@ -686,6 +819,7 @@ module Ruflet
       ]
       ws.send_binary(Ruflet::WireCodec.pack(initial_response))
       registered = true
+      @sessions_mutex.synchronize { @crashed_sessions.delete(ws.session_key) }
 
       buffered.each do |action, msg_payload|
         next if action == Protocol::ACTIONS[:patch_control]
@@ -694,8 +828,28 @@ module Ruflet
       end
       page.update if page_patch.empty?
     rescue StandardError => e
-      send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => e.message })
+      crashed = true
+      buffered.clear
+      @sessions_mutex.synchronize do
+        @crashed_sessions[ws.session_key] = true if page && @sessions[ws.session_key].equal?(page)
+      end
+      send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => session_crashed_message(e) })
       raise e
+    end
+
+    # The error a client whose session crashed shows. Under `ruflet run`
+    # (RUFLET_TARGET is set) it also says where: the engine shows the lines
+    # after the first as the error's details.
+    def session_crashed_message(error)
+      message = error.message
+      return message if ENV["RUFLET_TARGET"].to_s.empty?
+
+      frame = begin
+        app_frame(error)
+      rescue StandardError
+        nil
+      end
+      frame ? "#{message}\n#{error.class} at #{frame}" : "#{message}\n#{error.class}"
     end
 
     # Normalized like Ruflet::ConnectionProtocol does, so both receivers treat

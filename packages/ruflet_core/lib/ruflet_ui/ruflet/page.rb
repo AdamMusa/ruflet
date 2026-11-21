@@ -267,6 +267,11 @@ module Ruflet
       @invoke_waiters = {}
       @invoke_callbacks = {}
       @invoke_waiters_mutex = Mutex.new
+      # Messages a hot reload holds back (see reload_transaction); nil while
+      # nothing is held.
+      @held_messages = nil
+      @held_messages_mutex = Mutex.new
+      @reload_transaction = nil
       @shared_preferences_proxy = SharedPreferencesService.new(self)
       @wakelock_proxy = WakelockService.new(self)
       @flashlight_proxy = FlashlightService.new(self)
@@ -467,6 +472,51 @@ module Ruflet
       return self unless @page_event_handlers["route_change"].respond_to?(:call)
 
       dispatch_page_event(name: "route_change", data: @page_props["route"])
+      self
+    end
+
+    # Page state a failed hot reload does not put back: the transport and
+    # what it holds, pending invoke waits and callbacks (other threads may be
+    # waiting on them), and the wire id counter, so ids stay unique even for
+    # controls the failed render built.
+    RELOAD_UNRESTORED_STATE = %i[
+      @sender @held_messages @held_messages_mutex @reload_transaction
+      @next_wire_id @invoke_waiters @invoke_callbacks @invoke_waiters_mutex
+    ].freeze
+
+    # Runs a hot reload of this page (the block: reset_for_reload!, the app
+    # block, finalize_reload!, ...) as one unit. What the page sends while it
+    # runs is held back and goes out, in the same order, once the block
+    # returns. If the block raises, the held messages are dropped and the
+    # page is put back as it was before, so the client keeps the last working
+    # UI and the page still matches what the client shows; the error is
+    # raised again.
+    #
+    # A synchronous invoke (invoke_sync and the *_sync helpers) waits for the
+    # client's reply, so it sends what is held first and the rest of the
+    # reload goes out as it runs, as without a transaction. A reload that
+    # raises after that leaves the page as the failed render left it.
+    def reload_transaction
+      if @reload_transaction
+        yield self
+        return self
+      end
+
+      transaction = @reload_transaction = { state: capture_reload_state, committed: false }
+      @held_messages_mutex.synchronize { @held_messages = [] }
+      completed = false
+      begin
+        yield self
+        completed = true
+      ensure
+        @reload_transaction = nil
+        if completed || transaction[:committed]
+          release_held_messages!
+        else
+          @held_messages_mutex.synchronize { @held_messages = nil }
+          restore_reload_state!(transaction[:state])
+        end
+      end
       self
     end
 
@@ -1721,6 +1771,7 @@ module Ruflet
       waiter = Queue.new
       @invoke_waiters_mutex.synchronize { @invoke_waiters[call_id] = waiter }
 
+      release_reload_transaction_for_wait!
       send_message(Protocol::ACTIONS[:invoke_control_method], {
         "control_id" => control_id,
         "call_id" => call_id,
@@ -1814,7 +1865,78 @@ module Ruflet
     end
 
     def send_message(action, payload)
+      if @held_messages
+        held = @held_messages_mutex.synchronize { @held_messages&.push([action, payload]) }
+        return if held
+      end
+
       @sender.call(action, payload)
+    end
+
+    # Sends what a reload transaction holds, in order. Messages sent while it
+    # runs (from another thread) are held behind it, so they go out after.
+    def release_held_messages!
+      loop do
+        batch = @held_messages_mutex.synchronize do
+          held = @held_messages
+          @held_messages = held.nil? || held.empty? ? nil : []
+          held
+        end
+        break if batch.nil? || batch.empty?
+
+        batch.each { |action, payload| @sender.call(action, payload) }
+      end
+    end
+
+    # A synchronous invoke waits for the client's reply, which a held request
+    # would never get: the reload transaction sends what it holds and stops
+    # holding (see reload_transaction).
+    def release_reload_transaction_for_wait!
+      transaction = @reload_transaction
+      return unless transaction && !transaction[:committed]
+
+      transaction[:committed] = true
+      release_held_messages!
+    end
+
+    def capture_reload_state
+      ivars = {}
+      instance_variables.each do |name|
+        next if RELOAD_UNRESTORED_STATE.include?(name)
+
+        ivars[name] = reload_state_copy(instance_variable_get(name))
+      end
+      # The overlay, dialogs and services containers stay the same objects
+      # across a reload; what changes is inside them.
+      containers = [@overlay_container, @dialogs_container, @services_container].map do |container|
+        props = {}
+        container.props.each { |key, value| props[key] = reload_state_copy(value) }
+        [container, container.children.dup, props]
+      end
+      { ivars: ivars, containers: containers }
+    end
+
+    def restore_reload_state!(state)
+      ivars = state[:ivars]
+      instance_variables.each do |name|
+        next if RELOAD_UNRESTORED_STATE.include?(name) || ivars.key?(name)
+
+        remove_instance_variable(name)
+      end
+      ivars.each { |name, value| instance_variable_set(name, value) }
+      state[:containers].each do |container, children, props|
+        container.children.replace(children)
+        container.props.replace(props)
+      end
+    end
+
+    # A copy of a piece of page state that later in-place changes (<<,
+    # clear, []=) do not reach. Controls and other values are kept as is.
+    def reload_state_copy(value)
+      case value
+      when Array, Hash, Set then value.dup
+      else value
+      end
     end
 
     # Bare page.update is the public commit point for direct mutations such as
