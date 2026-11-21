@@ -55,7 +55,7 @@ out| [ruflet build] Android launcher icon and splash resources verified
 out| [ruflet build] Running Flutter build appbundle --target lib/main.server.dart --dart-define RUFLET_BACKEND_URL=https://api.example.com
 
 ## files
-<PROJECT>/build/client/ created from the template: 188 files identical, 0 template files absent
+<PROJECT>/build/client/ created from the template: 189 files identical, 0 template files absent
 <HOME>/.ruflet/templates/ruflet_flutter_template/ created from the template: 208 files identical, 0 template files absent
 A <HOME>/.ruflet/templates/ruflet_flutter_template.revision  sha256:9d4a95b50d07fadc 41b  (new)
 A <PROJECT>/build/android/bundle/release/app-release.aab  sha256:e5f06be004d6d124 51b  (new)
@@ -71,9 +71,8 @@ A <PROJECT>/build/client/assets/splash_android_12.png  sha256:b5f43239e65284f3 7
 A <PROJECT>/build/client/assets/splash_dark.png  sha256:cc869d27fd1d485d 69b binary  (new)
 A <PROJECT>/build/client/ios/Runner.xcodeproj/project.pbxproj  sha256:d2910b8f7a03e0d7 31861b  (from template, edited)
 A <PROJECT>/build/client/ios/Runner/Info.plist  sha256:f4451e4beb196d74 4514b  (from template, edited)
-A <PROJECT>/build/client/lib/main.dart  sha256:ac3c7ada2cfa2342 292b  (from template, edited)
-A <PROJECT>/build/client/lib/main.self.dart  sha256:f47cca8f1e9ece58 9107b  (from template, edited)
-A <PROJECT>/build/client/lib/main.server.dart  sha256:21a5d984d0af9832 7185b  (from template, edited)
+A <PROJECT>/build/client/lib/main.self.dart  sha256:58b1b4c3a2bb109f 9107b  (from template, edited)
+A <PROJECT>/build/client/lib/main.server.dart  sha256:e05a0446d32efd79 7185b  (from template, edited)
 A <PROJECT>/build/client/linux/CMakeLists.txt  sha256:957ae466ce1452ea 4768b  (from template, edited)
 A <PROJECT>/build/client/macos/Runner/Configs/AppInfo.xcconfig  sha256:0fa2d10156e1b7b8 615b  (from template, edited)
 A <PROJECT>/build/client/macos/Runner/DebugProfile.entitlements  sha256:bd2d90eea33d2b21 657b  (from template, edited)
@@ -219,28 +218,9 @@ Binary <PROJECT>/build/client/assets/splash_dark.png: sha256:cc869d27fd1d485d
 +	<string>This app uses photo_library access for its Ruflet features.</string>
  </dict>
  </plist>
---- <TEMPLATE>/lib/main.dart
-+++ <PROJECT>/build/client/lib/main.dart
-@@ -1,3 +1,7 @@
- import 'main.self.dart' as self_app;
-+import 'package:compat_git_ext/compat_git_ext.dart' as compat_git_ext;
-+import 'package:compat_local_ext/compat_local_ext.dart' as compat_local_ext;
- 
- Future<void> main() => self_app.main();
-+    compat_git_ext.Extension(),
-+    compat_local_ext.Extension(),
 --- <TEMPLATE>/lib/main.self.dart
 +++ <PROJECT>/build/client/lib/main.self.dart
-@@ -3,6 +3,8 @@
- import 'package:ruflet/ruflet.dart';
- import 'package:ruflet_ads/ruflet_ads.dart' as ruflet_ads;
- import 'package:ruflet/src/widgets/platform_startup_app.dart';
-+    compat_git_ext.Extension(),
-+    compat_local_ext.Extension(),
- // --FAT_CLIENT_START--
- import 'package:ruflet_audio/ruflet_audio.dart' as ruflet_audio;
- // --FAT_CLIENT_END--
-@@ -38,6 +40,8 @@
+@@ -38,6 +38,8 @@
  import 'package:ruby_runtime/ruflet_runtime.dart';
  
  import 'package:ruflet_webview/ruflet_webview.dart' as ruflet_webview;
@@ -249,18 +229,18 @@ Binary <PROJECT>/build/client/assets/splash_dark.png: sha256:cc869d27fd1d485d
  
  const bool isProduction = bool.fromEnvironment('dart.vm.product');
  const String kConfiguredClientUrl = String.fromEnvironment(
---- <TEMPLATE>/lib/main.server.dart
-+++ <PROJECT>/build/client/lib/main.server.dart
-@@ -2,6 +2,8 @@
+@@ -121,6 +123,8 @@
+     ruflet_webview.Extension(),
+     ruflet_qrcode_scanner.Extension(),
  
- import 'package:ruflet/ruflet.dart';
- import 'package:ruflet_ads/ruflet_ads.dart' as ruflet_ads;
 +    compat_git_ext.Extension(),
 +    compat_local_ext.Extension(),
- // --FAT_CLIENT_START--
- import 'package:ruflet_audio/ruflet_audio.dart' as ruflet_audio;
- // --FAT_CLIENT_END--
-@@ -36,6 +38,8 @@
+     // --FAT_CLIENT_START--
+     ruflet_audio.Extension(),
+     ruflet_video.Extension(),
+--- <TEMPLATE>/lib/main.server.dart
++++ <PROJECT>/build/client/lib/main.server.dart
+@@ -36,6 +36,8 @@
  
  import 'connection_probe.dart';
  import 'package:ruflet_webview/ruflet_webview.dart' as ruflet_webview;
@@ -269,6 +249,15 @@ Binary <PROJECT>/build/client/assets/splash_dark.png: sha256:cc869d27fd1d485d
  
  const bool isProduction = bool.fromEnvironment('dart.vm.product');
  const int kRufletPort = 8550;
+@@ -145,6 +147,8 @@
+     ruflet_webview.Extension(),
+     ruflet_qrcode_scanner.Extension(),
+ 
++    compat_git_ext.Extension(),
++    compat_local_ext.Extension(),
+     // --FAT_CLIENT_START--
+     ruflet_audio.Extension(),
+     ruflet_video.Extension(),
 --- <TEMPLATE>/linux/CMakeLists.txt
 +++ <PROJECT>/build/client/linux/CMakeLists.txt
 @@ -4,10 +4,10 @@

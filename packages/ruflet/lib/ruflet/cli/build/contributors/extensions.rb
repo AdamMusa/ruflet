@@ -34,6 +34,8 @@ module Ruflet
           # requires the host activity to be a FragmentActivity.
           FRAGMENT_ACTIVITY_EXTENSIONS = %w[local_auth].freeze
           MANAGED_EXTENSION_STATE_PATH = File.join(".ruflet", "extension_dependencies.json")
+          EXTENSION_LIST_OPENING = "final extensions = <RufletExtension>["
+          FAT_CLIENT_START_MARKER = "// --FAT_CLIENT_START--"
 
           private
 
@@ -239,10 +241,14 @@ module Ruflet
 
           # Ruflet extension packages expose an Extension class from a library named
           # after the package, so the import and registration can be derived.
+          # lib/main.dart only calls main.self.dart and has no extensions list, so
+          # it needs neither.
           def sync_external_extension_registrations(path, entries)
             return if entries.empty?
 
             content = read_text_file(path)
+            return unless content.include?(EXTENSION_LIST_OPENING)
+
             original = content.dup
 
             entries.each do |entry|
@@ -460,15 +466,21 @@ module Ruflet
             lines.join
           end
 
+          # A registration goes inside the `final extensions = <RufletExtension>[`
+          # list, before the list's own FAT_CLIENT_START block, or first in the
+          # list when it has none. The template also brackets imports at the top
+          # of the file with FAT_CLIENT markers, so only the lines between the
+          # list's opening and its closing `];` are searched for one. An
+          # entrypoint without the list has nowhere to register and is left as is.
           def insert_missing_extension(content, extension_line)
             lines = content.lines
-            marker_index = lines.index { |line| line.include?("// --FAT_CLIENT_START--") }
-            if marker_index
-              lines.insert(marker_index, extension_line)
-            else
-              list_index = lines.index { |line| line.include?("final extensions = <RufletExtension>[") }
-              lines.insert(list_index ? list_index + 1 : lines.length, extension_line)
-            end
+            list_index = lines.index { |line| line.include?(EXTENSION_LIST_OPENING) }
+            return content unless list_index
+
+            close_index = (list_index + 1...lines.length).find { |index| lines[index].lstrip.start_with?("];") }
+            marker_index =
+              close_index && (list_index + 1...close_index).find { |index| lines[index].include?(FAT_CLIENT_START_MARKER) }
+            lines.insert(marker_index || list_index + 1, extension_line)
             lines.join
           end
 
