@@ -117,6 +117,34 @@ class RufletViewHelpersTest < Minitest::Test
     assert_includes html, "&lt;script&gt;"
   end
 
+  # A label is text: one that comes from data must not become markup. Each
+  # call is the helper with only its required arguments besides the label.
+  LABEL_HELPERS = {
+    ruflet_nav_item: ->(h, label) { h.ruflet_nav_item(label, "/p", icon: "person") },
+    ruflet_drawer_item: ->(h, label) { h.ruflet_drawer_item(label, "/p", icon: "person") },
+    ruflet_rail_item: ->(h, label) { h.ruflet_rail_item(label, "/p", icon: "person") },
+    ruflet_share_link: ->(h, label) { h.ruflet_share_link(label, "/p") },
+    ruflet_copy_button: ->(h, label) { h.ruflet_copy_button(label, text: "x") },
+    ruflet_launch_link: ->(h, label) { h.ruflet_launch_link(label, "https://example.com") },
+    ruflet_haptic_button: ->(h, label) { h.ruflet_haptic_button(label) }
+  }.freeze
+
+  def test_label_helpers_escape_the_label
+    payload = %(<img src=x onerror="alert(1)">)
+    LABEL_HELPERS.each do |name, call|
+      html = call.call(helper, payload).to_s
+      refute_includes html, "<img", "#{name} must not insert its label as markup"
+      assert_includes html, "&lt;img src=x onerror=&quot;alert(1)&quot;&gt;", name.to_s
+    end
+  end
+
+  def test_label_helpers_render_a_plain_label_unchanged
+    LABEL_HELPERS.each do |name, call|
+      assert_includes call.call(helper, "Home & away").to_s, ">Home &amp; away</", name.to_s
+      assert_includes call.call(helper, "Home").to_s, ">Home</", name.to_s
+    end
+  end
+
   def test_extra_kwargs_become_dashed_attributes
     html = helper.ruflet_nav_item("Home", "/x", icon: "house", data_role: "cta").to_s
     assert_includes html, 'data-role="cta"'

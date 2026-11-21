@@ -1061,8 +1061,7 @@ module Ruflet
           ->(_event) { handlers.navigate(url, mode) }
         end
 
-        # `on-click="post:/counter/increment"`, `on-click="/refresh"` (POST by
-        # default), `on-click="get:/search"`.
+        # `on-click="/counter/increment"`, `on-click="/refresh"`.
         # An on-click names the screen path whose method to run. It used to
         # carry an HTTP verb ("post:/x"); nothing dispatches a request now, so
         # a leading verb is stripped rather than obeyed.

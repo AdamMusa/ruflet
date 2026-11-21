@@ -16,10 +16,14 @@ module Ruflet
       #
       # There is no request: no routing, no middleware, no Rack env, and so no
       # "Started POST … Completed 200 OK" per tap. What that costs is the parts
-      # of Rails that only exist because of a request — `session`, `flash`,
-      # `cookies` and CSRF. State lives where a Ruflet app keeps it instead: in
-      # the controller instance, which is held for the life of the session, so
-      # an ordinary `@count` survives from one tap to the next.
+      # of Rails that only exist because of a request — `flash`, `cookies`,
+      # CSRF, and the controller's callbacks (`before_action`, `after_action`,
+      # `around_action`), because the action is called directly rather than
+      # through `process_action`. State lives where a Ruflet app keeps it
+      # instead: in the controller instance, which is held for the life of the
+      # session, so an ordinary `@count` survives from one tap to the next, and
+      # in a `session` hash the connection holds. A controller whose callbacks
+      # are skipped this way is named once in the log (see SkippedCallbacks).
       #
       class TemplateSource
         Response = Struct.new(:body, :url, keyword_init: true)
@@ -75,6 +79,7 @@ module Ruflet
         end
 
         def build_controller(klass)
+          SkippedCallbacks.report(klass)
           instance = klass.new
           instance.singleton_class.include(ScreenContext)
           # One session for the connection, shared by every screen in it. A
@@ -252,6 +257,127 @@ module Ruflet
               <text class="text-red-600">#{ERB::Util.html_escape("#{error.class}: #{error.message}")}</text>
             </column>
           HTML
+        end
+
+        # A screen calls its action directly, so the controller's callbacks
+        # never run: a `before_action :authenticate_user!` does not guard an
+        # erb_to_native screen. That is by design (there is no request for a
+        # filter to inspect), but a filter that silently stops applying is
+        # easy to miss. So the first time a controller class with callbacks of
+        # the app's own serves a screen, this names them in one log line.
+        #
+        # Not listed: callbacks every controller inherits from
+        # ActionController::Base (CSRF verification, and whatever gems install
+        # there), and blocks Rails' own macros declare (allow_browser,
+        # rate_limit). They guard parts of a request that do not exist here.
+        # Set RUFLET_RAILS_QUIET_CALLBACKS=1 to silence the line.
+        module SkippedCallbacks
+          QUIET_ENV = "RUFLET_RAILS_QUIET_CALLBACKS"
+          FRAMEWORK_GEMS = %w[actionpack actionview activesupport railties].freeze
+
+          @reported = {}
+          @mutex = Mutex.new
+
+          class << self
+            def report(klass)
+              return if quiet?
+
+              names = skipped(klass)
+              # Once per class and callback list, so a development reload
+              # repeats it only when the callbacks changed.
+              return if names.empty? || !first_report?([klass.name || klass, names])
+
+              log("[ruflet_rails] #{klass.name || klass.inspect}: #{names.join(', ')} " \
+                  "#{names.one? ? 'does' : 'do'} not run for erb_to_native screens, which call the " \
+                  "action directly, without a request. Set #{QUIET_ENV}=1 to silence this.")
+            rescue StandardError
+              # Reporting must never be the reason a screen fails to render.
+              nil
+            end
+
+            # ["before_action :require_admin!", "after_action (block at app/controllers/x.rb:4)"]
+            def skipped(klass)
+              return [] unless klass.respond_to?(:_process_action_callbacks)
+
+              inherited = framework_chain
+              klass._process_action_callbacks.filter_map do |callback|
+                next if inherited.include?([callback.kind, callback.filter])
+                next if framework_code?(klass, callback.filter)
+
+                "#{callback.kind}_action #{describe(callback.filter)}"
+              end.uniq
+            end
+
+            # For tests.
+            def reset!
+              @mutex.synchronize { @reported = {} }
+            end
+
+            private
+
+            def quiet?
+              %w[1 true yes].include?(ENV[QUIET_ENV].to_s.strip.downcase)
+            end
+
+            def first_report?(key)
+              @mutex.synchronize do
+                next false if @reported[key]
+
+                @reported[key] = true
+              end
+            end
+
+            def framework_chain
+              %w[Base API].flat_map do |name|
+                base = defined?(::ActionController) && ::ActionController.const_defined?(name, false) &&
+                       ::ActionController.const_get(name, false)
+                next [] unless base.respond_to?(:_process_action_callbacks)
+
+                base._process_action_callbacks.map { |callback| [callback.kind, callback.filter] }
+              end
+            end
+
+            # A symbol names a method and a block is its own code; where that
+            # code lives says whose callback it is.
+            def framework_code?(klass, filter)
+              file =
+                case filter
+                when Symbol then klass.instance_method(filter).source_location&.first
+                when Proc then filter.source_location&.first
+                end
+              file && framework_roots.any? { |root| file.start_with?(root) }
+            rescue NameError
+              false
+            end
+
+            def framework_roots
+              @framework_roots ||= FRAMEWORK_GEMS.filter_map do |name|
+                spec = Gem.loaded_specs[name]
+                File.join(spec.full_gem_path, "") if spec
+              end
+            end
+
+            def describe(filter)
+              case filter
+              when Symbol then filter.inspect
+              when Proc
+                file, line = filter.source_location
+                file ? "(block at #{relative(file)}:#{line})" : "(block)"
+              when Module then filter.name.to_s
+              else filter.class.name.to_s
+              end
+            end
+
+            def relative(file)
+              root = defined?(::Rails.root) && ::Rails.root ? File.join(::Rails.root.to_s, "") : nil
+              root && file.start_with?(root) ? file.delete_prefix(root) : file
+            end
+
+            def log(message)
+              logger = defined?(::Rails.logger) ? ::Rails.logger : nil
+              logger ? logger.warn(message) : Kernel.warn(message)
+            end
+          end
         end
 
         # Gives a plain controller instance the few things a screen needs

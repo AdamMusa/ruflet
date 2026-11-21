@@ -65,7 +65,7 @@ module Ruflet
                                                                                    color: color, size: size)))
         }
         data["data-ruflet-selected"] = "true" if selected
-        ruflet_build_tag("a", label, data.merge(ruflet_dash_attrs(attrs)))
+        ruflet_build_tag("a", ruflet_escape_label(label), data.merge(ruflet_dash_attrs(attrs)))
       end
 
       # A drawer the native shell hides and re-renders as a native
@@ -91,7 +91,7 @@ module Ruflet
                                                                                    action: nav&.to_s)))
         }
         data["data-ruflet-selected"] = "true" if selected
-        ruflet_build_tag("a", label, data.merge(ruflet_dash_attrs(attrs)))
+        ruflet_build_tag("a", ruflet_escape_label(label), data.merge(ruflet_dash_attrs(attrs)))
       end
 
       # Desktop/tablet navigation the native shell hides and re-renders as a
@@ -121,7 +121,7 @@ module Ruflet
                                                                                    action: nav&.to_s)))
         }
         data["data-ruflet-selected"] = "true" if selected
-        ruflet_build_tag("a", label, data.merge(ruflet_dash_attrs(attrs)))
+        ruflet_build_tag("a", ruflet_escape_label(label), data.merge(ruflet_dash_attrs(attrs)))
       end
 
       # Native platform services from ERB. These are normal HTML elements in a
@@ -129,22 +129,22 @@ module Ruflet
       def ruflet_share_link(label, href = "#", text: nil, title: nil, subject: nil, url: nil, files: nil, **attrs)
         payload = ruflet_compact_hash(component: "share", text: text, title: title, subject: subject,
                                       url: url || href, files: files)
-        ruflet_action_tag("a", label, payload, { "href" => href }.merge(ruflet_dash_attrs(attrs)))
+        ruflet_action_tag("a", ruflet_escape_label(label), payload, { "href" => href }.merge(ruflet_dash_attrs(attrs)))
       end
 
       def ruflet_copy_button(label, text:, toast: "Copied", haptic: true, **attrs)
         payload = ruflet_compact_hash(component: "clipboard", text: text, toast: toast, haptic: haptic)
-        ruflet_action_tag("button", label, payload, { "type" => "button" }.merge(ruflet_dash_attrs(attrs)))
+        ruflet_action_tag("button", ruflet_escape_label(label), payload, { "type" => "button" }.merge(ruflet_dash_attrs(attrs)))
       end
 
       def ruflet_launch_link(label, href, mode: nil, **attrs)
         payload = ruflet_compact_hash(component: "url_launcher", url: href, mode: mode)
-        ruflet_action_tag("a", label, payload, { "href" => href }.merge(ruflet_dash_attrs(attrs)))
+        ruflet_action_tag("a", ruflet_escape_label(label), payload, { "href" => href }.merge(ruflet_dash_attrs(attrs)))
       end
 
       def ruflet_haptic_button(label, style: "selection", **attrs)
         payload = ruflet_compact_hash(component: "haptic", style: style)
-        ruflet_action_tag("button", label, payload, { "type" => "button" }.merge(ruflet_dash_attrs(attrs)))
+        ruflet_action_tag("button", ruflet_escape_label(label), payload, { "type" => "button" }.merge(ruflet_dash_attrs(attrs)))
       end
 
       private
@@ -162,8 +162,23 @@ module Ruflet
         respond_to?(:capture) ? capture(&block) : block.call
       end
 
+      # A label is text, so it is escaped the way link_to and content_tag
+      # escape theirs. A label that comes from data, such as
+      # `ruflet_nav_item user.name, ...`, must not become markup in the
+      # browser or in the native shell's WebView. A label already marked
+      # html_safe (`"<b>Hi</b>".html_safe`, another helper's output) is markup
+      # on purpose and passes through unchanged.
+      def ruflet_escape_label(label)
+        return nil if label.nil?
+        return label if label.respond_to?(:html_safe?) && label.html_safe?
+
+        ERB::Util.html_escape(label.to_s)
+      end
+
       # Build a tag from a name, inner content, and an attribute hash. nil/false
       # attribute values are dropped; "" is kept (a bare boolean attribute).
+      # Content is inserted as given: a label arrives escaped
+      # (ruflet_escape_label) and a captured block is already markup.
       def ruflet_build_tag(name, content, attributes)
         markup = +"<#{name}"
         attributes.each do |key, value|
