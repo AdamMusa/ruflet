@@ -60,8 +60,9 @@ module Ruflet
     module BlockSlotMethods
       private
 
-      # Where services built in a slot block go. WidgetBuilder and
-      # Ruflet::DSL::App return their own list, as their blocks do.
+      # Where services built in a slot block go. WidgetBuilder returns its
+      # own list, as its blocks do. Ruflet::DSL::App runs a slot block on
+      # itself instead (see App#block_slot_children).
       def block_services = nil
 
       def block_slot_given?(props, slot)
