@@ -1278,12 +1278,16 @@ module Ruflet
           TemplateSource::Response.new(body: error_markup(url, e), url: url)
         end
 
+        # The URL and the message are text, escaped the way
+        # TemplateSource#failure_markup escapes its own: an exception message
+        # often quotes a record (`#<User id: 1 ...>`) or the markup that failed,
+        # and either would otherwise be parsed as tags.
         def error_markup(url, error)
           <<~HTML
             <column class="p-6 gap-2">
               <h3>Could not load screen</h3>
-              <text class="text-slate-500">#{url}</text>
-              <text class="text-red-600">#{error.message}</text>
+              <text class="text-slate-500">#{ERB::Util.html_escape(url.to_s)}</text>
+              <text class="text-red-600">#{ERB::Util.html_escape(error.message.to_s)}</text>
             </column>
           HTML
         end

@@ -55,9 +55,9 @@ module Ruflet
 
         # --- interactive ------------------------------------------------------
 
-        # button "Up", on_click: "/counter/increment"       (POST + re-render)
+        # button "Up", on_click: "/counter/increment"       (run the action + re-render)
         # button "Open", href: "/settings"                  (push a screen)
-        # button "Remove", on_click: "delete:/items/3", variant: "outlined"
+        # button "Remove", on_click: "/items/destroy/3", variant: "outlined"
         # button "Copy", service: "copy", text: "Hello"     (run a native service)
         def button(label = nil, **attrs, &block) = ruflet_dsl_tag("button", label, attrs, &block)
 
