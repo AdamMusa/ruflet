@@ -1,0 +1,26 @@
+# frozen_string_literal: true
+
+# Development and test dependencies only. The gem's own dependencies are in
+# ruflet_server.gemspec, and this file is not part of the published gem (the
+# gemspec ships lib/ and the README).
+#
+#   bundle install
+#   bundle exec ruby ../../tools/run_ruby_tests.rb ruflet_server
+
+source "https://rubygems.org"
+
+gemspec
+
+# Test against the ruflet_core beside this package, not a released one.
+gem "ruflet_core", path: "../ruflet_core"
+
+group :test do
+  # minitest 6 moved minitest/mock into the minitest-mock gem; with both, the
+  # suites run on minitest 5 and 6 alike.
+  gem "minitest", ">= 5.25", "< 7"
+  gem "minitest-mock"
+
+  # wire_codec_contract_test checks the codec against this independent
+  # MessagePack implementation, and skips those checks without it.
+  gem "msgpack"
+end

@@ -1,0 +1,35 @@
+# Weekly update PRs for the development lockfiles and the workflows' actions.
+#
+# lockfile-only: Dependabot moves the versions locked for development and
+# tests. It never edits a Gemfile, a gemspec or a pubspec.yaml, so the
+# dependency ranges the published gems and the ruby_runtime package declare
+# stay as they are.
+version: 2
+updates:
+  - package-ecosystem: bundler
+    directories:
+      - /packages/ruflet_rails
+      - /packages/ruflet_record
+    schedule:
+      interval: weekly
+    versioning-strategy: lockfile-only
+    groups:
+      bundler:
+        patterns: ["*"]
+
+  - package-ecosystem: pub
+    directory: /ruby_runtime
+    schedule:
+      interval: weekly
+    versioning-strategy: lockfile-only
+    groups:
+      pub:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]

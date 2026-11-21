@@ -24,16 +24,32 @@ packages are released together, publish dependencies before dependents:
 `ruflet_record` has no Ruflet package dependency and can be published at any
 point in that sequence.
 
-Run the package tests before building:
+Run the package's tests before building it, the same way CI does
+(`.github/workflows/ruby-tests.yml`):
 
 ```bash
 cd packages/ruflet_core
-bundle exec ruby -Itest -e 'Dir["test/**/*_test.rb"].sort.each { |file| require_relative file }'
+bundle install
+ruby ../../tools/run_ruby_tests.rb --strict ruflet_core
 gem build ruflet_core.gemspec
 ```
 
-Repeat from each package directory with its matching gemspec. Building from
-the package directory ensures the gem contains the intended files.
+Repeat from each package directory, using that package's suite name and
+gemspec. Building from the package directory ensures the gem contains the
+intended files.
+
+- `bundle install` installs the test toolchain from the package's Gemfile.
+  That Gemfile is development-only and is not part of the gem.
+- `tools/run_ruby_tests.rb` runs the core packages one process per test file.
+  It runs `ruflet_rails` and `ruflet_record` through `bundle exec rake test`.
+- CI sets three variables. Set them the same way locally:
+  - `RUFLET_TEMPLATE_ROOT`: a ruflet-template checkout, for `ruflet`.
+  - `RUFLET_ENGINE_ROOT`: a ruflet-engine checkout, for `ruflet_core`'s
+    engine cross-check.
+  - `RUFLET_MRUBY`: the pinned mruby, for `tools`.
+- `--strict` fails on any skipped test. Without the last two variables, the
+  checks that need them skip. In that case, drop `--strict` and read the
+  skips it lists by name.
 
 Inspect and publish the resulting gem:
 

@@ -1,0 +1,23 @@
+# frozen_string_literal: true
+
+# Development and test dependencies only. The gem's own dependencies are in
+# ruflet_core.gemspec, and this file is not part of the published gem (the
+# gemspec ships lib/ and the README).
+#
+#   bundle install
+#   bundle exec ruby ../../tools/run_ruby_tests.rb ruflet_core
+
+source "https://rubygems.org"
+
+gemspec
+
+group :test do
+  # minitest 6 moved minitest/mock into the minitest-mock gem; with both, the
+  # suites run on minitest 5 and 6 alike.
+  gem "minitest", ">= 5.25", "< 7"
+  gem "minitest-mock"
+
+  # kernel_helper_shadowing_test checks that the DSL leaves Nokogiri's HTML
+  # builder working, and skips without it.
+  gem "nokogiri"
+end
