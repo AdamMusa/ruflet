@@ -1,3 +1,6 @@
+require_relative "../patches/mruby_patches"
+RufletMrubyPatches.apply(MRUBY_ROOT)
+
 VM_DIR = File.expand_path("..", __dir__)
 ARCH = ENV.fetch("RUFLET_VM_ARCH")
 raise "Unsupported macOS VM architecture: #{ARCH}" unless %w[arm64 x86_64].include?(ARCH)

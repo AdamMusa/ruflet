@@ -10,7 +10,9 @@ module Ruflet
           private
 
           def contribute_signing(build)
-            apply_android_signing_config(build.client_dir, build.platform, verbose: !!build.verbose)
+            # false: a partial Android signing configuration (gradle.rb).
+            return false if apply_android_signing_config(build.client_dir, build.platform, verbose: !!build.verbose) == false
+
             apply_ios_signing_team(build.client_dir, build.config) if %w[ios ipa macos].include?(build.platform.to_s)
             true
           end

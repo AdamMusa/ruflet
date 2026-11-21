@@ -10,6 +10,7 @@ require "rbconfig"
 require "uri"
 require "yaml"
 
+require_relative "client_bootstrap"
 require_relative "build/support"
 require_relative "build/config_loader"
 require_relative "build/config_schema"
@@ -45,6 +46,7 @@ require_relative "build/contributors/protected_services"
 require_relative "build/contributors/signing"
 require_relative "build/contributors/runtime_mode"
 require_relative "build/contributors/extensions"
+require_relative "build/contributors/startup_hooks"
 require_relative "build/contributors/assets"
 
 module Ruflet
@@ -54,6 +56,7 @@ module Ruflet
     # module reach the same methods and constants as before the split.
     module BuildCommand
       include FlutterSdk
+      include ClientBootstrap
       include Build::Support
       include Build::ConfigLoader
       include Build::ClientDir
@@ -76,6 +79,7 @@ module Ruflet
       include Build::Contributors::Signing
       include Build::Contributors::RuntimeMode
       include Build::Contributors::Extensions
+      include Build::Contributors::StartupHooks
       include Build::Contributors::Assets
 
       def command_build(args)
@@ -93,9 +97,9 @@ module Ruflet
         @ruflet_runtime_profile = self_contained ? runtime_profile : :server
         @ruflet_runtime_profile_explicit = !!(lite || full)
         verbose = args.delete("--verbose") || args.delete("-v")
-        platform = (args.shift || "").downcase
+        platform = extract_build_target!(args)
         if platform.empty?
-          warn "Usage: ruflet build <apk|android|aab|ios|ipa|web|macos|windows|linux> [--lite|--full|--self] [--verbose]"
+          warn "Usage: ruflet build <apk|android|aab|appbundle|ios|ipa|web|macos|windows|linux> [--lite|--full|--self] [--verbose]"
           return 1
         end
 
@@ -215,11 +219,13 @@ module Ruflet
 
         export_platform_build_outputs(client_dir, platform, verbose: !!verbose) if ok
         ok ? 0 : 1
+      rescue Commands::UsageError => e
+        Commands.report_stop("build", e)
       end
 
       def command_install(args)
         verbose = args.delete("--verbose") || args.delete("-v")
-        device_id = extract_option_value!(args, "--device", "-d")
+        device_id = extract_option_value!(args, "--device", "-d") || extract_equals_option_value!(args, "--device")
 
         client_dir = ensure_flutter_client_dir(verbose: !!verbose)
         unless client_dir

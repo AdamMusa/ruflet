@@ -17,9 +17,16 @@ module RufletRecord
     class Fragment
       attr_reader :sql, :binds
 
-      def initialize(sql, binds)
+      # +column_values+ marks binds that are column values (from Hash
+      # conditions), not the binds of a SQL string.
+      def initialize(sql, binds, column_values = false)
         @sql = sql.to_s.freeze
         @binds = binds.freeze
+        @column_values = column_values
+      end
+
+      def column_values?
+        @column_values
       end
     end
 
@@ -60,18 +67,32 @@ module RufletRecord
               values.concat(value)
             end
           elsif value.is_a?(Range)
-            if value.exclude_end?
+            first = value.begin
+            last = value.end
+            # An open end (18.., ..17, ...18) has no bound on that side, as in
+            # Active Record. Binding it as NULL would make the comparison
+            # unknown, so the condition would never match a row.
+            if first.nil? && last.nil?
+              parts << "1 = 1"
+            elsif last.nil?
+              parts << "#{identifier} >= ?"
+              values << first
+            elsif first.nil?
+              parts << "#{identifier} #{value.exclude_end? ? '<' : '<='} ?"
+              values << last
+            elsif value.exclude_end?
               parts << "(#{identifier} >= ? AND #{identifier} < ?)"
+              values << first << last
             else
               parts << "#{identifier} BETWEEN ? AND ?"
+              values << first << last
             end
-            values << value.begin << value.end
           else
             parts << "#{identifier} = ?"
             values << value
           end
         end
-        return Fragment.new(parts.empty? ? "1 = 1" : parts.join(" AND "), values)
+        return Fragment.new(parts.empty? ? "1 = 1" : parts.join(" AND "), values, true)
       elsif conditions.is_a?(String)
         expected = conditions.count("?")
         if expected != binds.length
@@ -84,7 +105,31 @@ module RufletRecord
     end
 
     def negate(fragment)
-      Fragment.new("NOT (#{fragment.sql})", fragment.binds)
+      Fragment.new("NOT (#{fragment.sql})", fragment.binds, fragment.column_values?)
+    end
+
+    # A Hash or Array column value is stored as JSON text. Models bind their
+    # attribute values and Hash-condition values through this when a query
+    # runs; the binds of raw SQL (execute, where("...", value)) reach the
+    # driver unchanged. Without a JSON library the value is bound unchanged.
+    def column_value(value)
+      return value unless value.is_a?(Hash) || value.is_a?(Array)
+
+      json = json_library
+      json ? json.generate(value) : value
+    end
+
+    def column_values(attributes)
+      result = {}
+      attributes.each { |name, value| result[name] = column_value(value) }
+      result
+    end
+
+    # The fragment as bound when its query runs.
+    def bound_fragment(fragment)
+      return fragment unless fragment.column_values?
+
+      Fragment.new(fragment.sql, fragment.binds.map { |value| column_value(value) }, true)
     end
 
     def order(table, values)
@@ -169,6 +214,17 @@ module RufletRecord
 
       sql << " WHERE #{wheres.map { |fragment| "(#{fragment.sql})" }.join(' AND ')}"
       wheres.each { |fragment| binds.concat(fragment.binds) }
+    end
+
+    private
+
+    # Loaded on first use: the device VM's framework code cannot require
+    # it, and the VM's require loads its builtin json after boot.
+    def json_library
+      require "json" unless Object.const_defined?(:JSON)
+      Object.const_defined?(:JSON) ? Object.const_get(:JSON) : nil
+    rescue ScriptError, StandardError
+      nil
     end
     end
   end

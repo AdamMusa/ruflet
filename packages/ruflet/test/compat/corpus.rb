@@ -32,7 +32,9 @@ module RufletCompat
       "services_app" => { "kind" => "dir", "path" => "fixtures/services_app" },
       "rails_app" => { "kind" => "dir", "path" => "fixtures/rails_app", "rails" => true },
       # A fresh `rails new` app before `rails generate ruflet:install`.
-      "rails_new_app" => { "kind" => "dir", "path" => "fixtures/rails_new_app", "rails" => true }
+      "rails_new_app" => { "kind" => "dir", "path" => "fixtures/rails_new_app", "rails" => true },
+      # Every way an app names an icon (page golden only).
+      "icons_app" => { "kind" => "dir", "path" => "fixtures/icons_app" }
     }
 
     # Whole-app examples from the published docs (AdamMusa/ruflet_site
@@ -128,6 +130,11 @@ module RufletCompat
     # beside `aab`, and targets are matched case-insensitively.
     cli "default_app", "build", "appbundle", "--self"
     cli "default_app", "build", "APK", "--self", id: "build-uppercase-target-APK--self"
+    # ruflet.yaml names the app with display_name; the services.yaml `ruflet
+    # new` wrote still carries its generated app_name (issue #106).
+    cli "default_app", "build", "apk", id: "build-apk-with-ruflet-yaml-display-name",
+                                       files: { "ruflet.yaml" => "app:\n  display_name: Acme Shop\n" \
+                                                                 "  backend_url: \"https://api.acme.example\"\n" }
 
     # --- run ------------------------------------------------------------------
     run_files = { "apps/admin.rb" => "require \"ruflet\"\n\nRuflet.run { |page| page.add(text(\"Admin\")) }\n" }
@@ -153,6 +160,12 @@ module RufletCompat
     # Without a prebuilt cache, against a release to download from.
     cli "default_app", "run", "main.rb", "--web", id: "run-main.rb--web-release", network: "release"
     cli "default_app", "run", "main.rb", "--desktop", id: "run-main.rb--desktop-release", network: "release"
+    # A complete prebuilt cache whose periodic update check is due while GitHub
+    # cannot be reached (every request answers 503): run uses the cache.
+    cli "default_app", "run", "main.rb", "--web", id: "run-main.rb--web-seeded-due-offline", seed: "prebuilt_clients",
+                                                  env: { "RUFLET_CLIENT_UPDATE_INTERVAL" => "0" }
+    cli "default_app", "run", "main.rb", "--desktop", id: "run-main.rb--desktop-seeded-due-offline", seed: "prebuilt_clients",
+                                                      env: { "RUFLET_CLIENT_UPDATE_INTERVAL" => "0" }
 
     # --- update ---------------------------------------------------------------
     cli "default_app", "update", "--check"
@@ -182,6 +195,9 @@ module RufletCompat
                                         env: { "RUFLET_CLIENT_CHANNEL" => "stable" }
     cli "default_app", "update", "web", "--check", id: "update-web--check-after-update", network: "release",
                                                    before: [%w[update web]]
+    # The same due cache with GitHub unreachable: an explicit update still fails.
+    cli "default_app", "update", "web", id: "update-web-seeded-due-offline", seed: "prebuilt_clients",
+                                        env: { "RUFLET_CLIENT_UPDATE_INTERVAL" => "0" }
 
     # --- debug ----------------------------------------------------------------
     cli "default_app", "debug", id: "debug-without-client"
@@ -210,6 +226,16 @@ module RufletCompat
     cli "default_app", "install", "--verbose", id: "install--verbose-after-ios--self", before: [%w[build ios --self]]
     cli "default_app", "install", "--device", "emulator-5554", "--verbose", before: [%w[build apk --self]]
     cli "default_app", "install", "--device=emulator-5554", before: [%w[build apk --self]]
+    # Named desktop devices, a 40-hex iPhone UDID (devices from before 2018)
+    # and a wireless-debugging adb id: each installs its own platform's
+    # outputs. Before #84 the first three synced Android's and the adb id,
+    # on a Mac, iOS's.
+    cli "default_app", "install", "-d", "linux", before: [%w[build linux]]
+    cli "default_app", "install", "-d", "windows", before: [%w[build windows]]
+    cli "default_app", "install", "-d", "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678", id: "install--d-40-hex-udid-after-ios--self",
+                                  before: [%w[build ios --self]]
+    cli "default_app", "install", "-d", "adb-R58M123ABCD-x1Yz._adb-tls-connect._tcp", id: "install--d-adb-tls-id-after-apk--self",
+                                  before: [%w[build apk --self]]
 
     # --- devices, emulators, doctor -------------------------------------------
     cli "default_app", "devices"
@@ -235,6 +261,10 @@ module RufletCompat
       cli "services_app", "build", target, "--self" unless target == "web"
     end
     cli "services_app", "build", "apk", id: "build-apk-with-signing-env", env: FAKE_SIGNING_ENV
+    # A partial signing setup stops the build; before #84 it printed "build
+    # config error" and built anyway.
+    cli "services_app", "build", "apk", id: "build-apk-with-partial-signing-env",
+                                        env: FAKE_SIGNING_ENV.slice("RUFLET_ANDROID_KEYSTORE")
     cli "services_app", "build", "ios", "--self", id: "build-ios--self-with-team-env", env: { "RUFLET_IOS_TEAM_ID" => "ENVTEAM42" }
     cli "services_app", "build", "apk", "--self", id: "build-apk--self-local-runtime", runtime: true
     cli "services_app", "build", "ios", "--self", id: "build-ios--self-local-runtime", runtime: true
@@ -248,6 +278,9 @@ module RufletCompat
 
     # --- Rails project: rake tasks and the plain CLI in Rails.root ------------
     cli "rails_app", "ruflet:build[apk]", rake: true
+    # `appbundle` gets aab's app identity check and package rename; before #84
+    # it was the one mobile target that skipped them.
+    cli "rails_app", "ruflet:build[appbundle]", rake: true
     cli "rails_app", "ruflet:build[ios]", rake: true
     cli "rails_app", "ruflet:build[desktop]", rake: true
     cli "rails_app", "ruflet:build[web]", rake: true
@@ -350,6 +383,35 @@ module RufletCompat
     cli "default_app", "emulators", "--cold"
     cli "default_app", "doctor", "--bogus-flag"
     cli "empty", "new", "my_app", "--bogus-flag"
+    # CLI-12: `build --release apk` must reach Flutter exactly as `build apk
+    # --release` does (default_app stops at its missing backend_url; services_app
+    # has one, so its pair shows the flutter argv).
+    cli "default_app", "build", "apk", "--release"
+    cli "services_app", "build", "apk", "--release"
+    cli "services_app", "build", "--release", "apk"
+    # `--` ends the options (`help --` lists the commands, `build -- apk`
+    # names the unsupported target "--"); `emulators --c`, like -c, is
+    # --create; and the version words given a flag.
+    cli "empty", "help", "--", id: "help-end-of-options"
+    cli "empty", "--help", "--", id: "--help-end-of-options"
+    cli "default_app", "build", "--", "apk", id: "build-end-of-options-apk"
+    cli "default_app", "emulators", "--c", id: "emulators-double-dash-c"
+    cli "empty", "--version", "-v"
+    cli "empty", "-v", "--verbose"
+    cli "empty", "version", "--anything"
+    # ruflet_rails' rake tasks call the command handlers directly, without
+    # `Ruflet::CLI.run`, so help and usage stops must be handled there too.
+    cli "rails_app", "ruflet:update[--help]", rake: true
+    cli "rails_app", "ruflet:update[-h]", rake: true
+    cli "rails_app", "ruflet:build[--help]", rake: true
+    # A name before the help flag, and a flag where the name goes.
+    cli "empty", "new", "my_app", "-h"
+    cli "empty", "create", "my_app", "--help"
+    cli "empty", "new", "-x"
+    # A bare `-` is an argument, not a flag; nothing after `--` is a flag.
+    cli "empty", "help", "-", id: "help-dash"
+    cli "default_app", "build", "--self", "-", "apk", id: "build--self-dash-apk"
+    cli "default_app", "run", "main.rb", "--", "--help", id: "run-main.rb-end-of-options--help"
 
     # --- command words, help, usage and exit codes (R2, CLI-12) ----------------
     # How the first argument picks a command (case-insensitively, aliases
@@ -420,7 +482,8 @@ module RufletCompat
       *DOCS_RAILS_APPS.map do |id|
         { "fixture" => "docs_#{id}", "id" => "docs_#{id}--rails-endpoint", "mode" => "rails_endpoint",
           "entrypoint" => "main.rb", "rails" => true, "prelude" => rails_prelude }
-      end
+      end,
+      { "fixture" => "icons_app", "entrypoint" => "main.rb" }
     ].freeze
   end
 end

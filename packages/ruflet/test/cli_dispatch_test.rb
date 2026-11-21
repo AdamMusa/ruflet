@@ -17,15 +17,15 @@ class RufletCliDispatchTest < Minitest::Test
       ruflet new <appname>
       ruflet run [scriptname|path] [--web|--desktop] [--port PORT] [--no-reload]
       ruflet update [web|desktop|all] [--check] [--force] [--platform PLATFORM]
-      ruflet debug [scriptname|path]
-      ruflet build <apk|android|ios|ipa|aab|web|macos|windows|linux> [--lite|--full|--self] [--verbose]
+      ruflet debug [platform]
+      ruflet build <apk|android|ios|ipa|aab|appbundle|web|macos|windows|linux> [--lite|--full|--self] [--verbose]
       ruflet install [--device DEVICE_ID] [--verbose]
       ruflet devices
       ruflet emulators
       ruflet doctor [--fix] [--verbose]
 
     Build profiles:
-      --self           Self-contained lite build (default profile)
+      --self           Self-contained build; lite profile unless --full
       --self --full    Self-contained full CRuby build with locked project gems
       --full           Also implies --self
   HELP
@@ -80,7 +80,11 @@ class RufletCliDispatchTest < Minitest::Test
     end
   end
 
-  def test_help_text_is_unchanged
+  # The text #77 and #78 kept byte-identical, except three statements that
+  # were wrong: debug's positional argument is a platform (it said a script),
+  # `build` also takes `appbundle`, and --self is not the default profile (a
+  # build without a profile flag is server-driven).
+  def test_help_text
     out, err = capture_io { Ruflet::CLI.print_help }
 
     assert_equal HELP, out
@@ -90,12 +94,16 @@ class RufletCliDispatchTest < Minitest::Test
   def test_every_command_word_runs_its_command_with_the_remaining_arguments
     HANDLERS.each do |word, handler|
       cli = RecordingCli.new(result: 7)
-      argv = [word, "target", "--flag", "value"]
+      # A flag the command does not read reaches only the commands that parse
+      # their own flags or forward them; for the others it is a usage error
+      # before the command runs (CLI-12, cli_usage_test).
+      rest = Ruflet::CLI::Commands.lookup(word).unknown_flags == :reject ? %w[target value] : %w[target --flag value]
+      argv = [word, *rest]
       code = nil
       out, err = capture_io { code = cli.run(argv) }
 
       assert_equal 7, code, "#{word}: the command's result is the exit code"
-      assert_equal [[handler, %w[target --flag value]]], cli.calls, word
+      assert_equal [[handler, rest]], cli.calls, word
       assert_same argv, cli.calls.first.last, "#{word}: the command gets the caller's argv, minus the word"
       assert_empty out, word
       assert_empty err, word
@@ -117,11 +125,12 @@ class RufletCliDispatchTest < Minitest::Test
     end
   end
 
+  # (--help after them prints the version command's help since CLI-12.)
   def test_version_words_print_the_version_and_ignore_further_arguments
     VERSION_WORDS.each do |word|
       cli = RecordingCli.new
       code = nil
-      out, err = capture_io { code = cli.run([word, "--help", "extra"]) }
+      out, err = capture_io { code = cli.run([word, "extra", "more"]) }
 
       assert_equal 0, code, word
       assert_equal "ruflet #{Ruflet::VERSION}\n", out, word
@@ -130,8 +139,9 @@ class RufletCliDispatchTest < Minitest::Test
     end
   end
 
+  # (`help build` prints build's help since CLI-12; see cli_usage_test.)
   def test_help_words_and_no_arguments_print_help
-    [*HELP_WORDS.map { |word| [word] }, [], %w[help build], %w[--help bogus]].each do |argv|
+    [*HELP_WORDS.map { |word| [word] }, [], %w[help bogus], %w[--help bogus]].each do |argv|
       cli = RecordingCli.new
       code = nil
       out, err = capture_io { code = cli.run(argv.dup) }
@@ -177,6 +187,21 @@ class RufletCliDispatchTest < Minitest::Test
     assert_equal [[:command_build, %w[apk]]], cli.calls
     assert_empty out
     assert_empty err
+  end
+
+  # It returned 0 even when nothing was created.
+  def test_bootstrap_returns_the_scaffold_status
+    Dir.mktmpdir do |dir|
+      Dir.chdir(dir) do
+        out, err = capture_io do
+          assert_equal 0, Ruflet::CLI.bootstrap("demo")
+          assert_equal 1, Ruflet::CLI.bootstrap("demo")
+        end
+        assert File.file?(File.join(dir, "demo", "main.rb"))
+        assert_includes out, "ruflet run main.rb"
+        assert_includes err, "Directory already exists: #{File.join(Dir.pwd, 'demo')}"
+      end
+    end
   end
 
   def test_the_cli_itself_runs_every_command_method

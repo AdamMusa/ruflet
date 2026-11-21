@@ -31,6 +31,7 @@ on:
       - '.github/workflows/build-ruflet-client.yml'
       - 'packages/**'
       - 'ruby_runtime/**'
+      - 'tools/mruby_patches_test.rb'
 
 permissions:
   contents: write
@@ -104,6 +105,11 @@ jobs:
             echo "== $package =="
             (cd "$package" && for file in test/*_test.rb; do ruby -Ilib -Itest "$file"; done)
           done
+
+      - name: Run VM build tests
+        working-directory: ruflet
+        # The mruby patches the VM build configs apply (ruby_runtime/vm/patches).
+        run: ruby tools/mruby_patches_test.rb
 
       - name: Run Explorer tests
         working-directory: explorer
