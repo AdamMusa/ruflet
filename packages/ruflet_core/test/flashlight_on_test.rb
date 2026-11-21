@@ -48,6 +48,25 @@ class FlashlightOnTest < Minitest::Test
     assert_equal [{ "message" => "no torch" }], seen
   end
 
+  # Without a block it is Control#on on any control: it subscribes the
+  # event (on_error, one patch) and runs nothing when the event arrives.
+  def test_on_with_an_event_name_and_no_block_is_control_on
+    button = Ruflet.button("b")
+    @page.add(button)
+    @sent.clear
+
+    assert_same button, button.on(:click)
+    button_messages = @sent.map(&:first)
+    @sent.clear
+
+    assert_same @flashlight, @flashlight.on(:error)
+    assert_equal true, @flashlight.props["on_error"]
+    assert_empty invokes, "subscribing turns nothing on"
+    assert_equal button_messages, @sent.map(&:first)
+    assert_equal 1, @sent.size
+    refute @flashlight.has_handler?(:error)
+  end
+
   def test_on_with_an_on_spelled_event_name_registers_the_handler
     seen = []
     @flashlight.on("on_error") { |e| seen << e.name }

@@ -57,7 +57,7 @@ MethodContract.define(
       "focus" => { sends: {} }
     },
     "dismissible" => {
-      "confirm_dismiss" => { sends: {"dismiss" => true}, also: [{ args: [false], sends: {"dismiss" => false} }, { args: [nil], sends: {"dismiss" => false} }] }
+      "confirm_dismiss" => { sends: {"dismiss" => true}, also: [{ args: [false], sends: {"dismiss" => false} }, { args: [nil], sends: {"dismiss" => false} }, { kwargs: { dismiss: false }, sends: {"dismiss" => false} }, { kwargs: { dismiss: true }, sends: {"dismiss" => true} }] }
     },
     "draggable_scrollable_sheet" => {
       "animate_to" => { args: ["sample:size"], sends: {"size" => "sample:size", "duration" => 300, "curve" => "easeOut"} },
@@ -222,7 +222,7 @@ MethodContract.define(
     "view" => {
       "close_drawer" => {  },
       "close_end_drawer" => {  },
-      "confirm_pop" => { sends: {"should_pop" => true}, also: [{ args: [false], sends: {"should_pop" => false} }, { args: [nil], sends: {"should_pop" => false} }] },
+      "confirm_pop" => { sends: {"should_pop" => true}, also: [{ args: [false], sends: {"should_pop" => false} }, { args: [nil], sends: {"should_pop" => false} }, { kwargs: { should_pop: false }, sends: {"should_pop" => false} }, { kwargs: { should_pop: true }, sends: {"should_pop" => true} }] },
       "end_refresh" => {  },
       "scroll_to" => { sends: {} },
       "show_drawer" => {  },

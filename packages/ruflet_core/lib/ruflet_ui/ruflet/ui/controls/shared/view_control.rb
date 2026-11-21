@@ -173,7 +173,9 @@ module Ruflet
           # Answers on_confirm_pop: the client keeps the view until this
           # arrives (view.dart; after 5 minutes it keeps the view). As
           # Flet's View.confirm_pop, true pops the view and false keeps it.
-          def confirm_pop(should_pop = true, timeout: 10, on_result: nil)
+          # The answer is positional (`confirm_pop(false)`) or Flet's keyword
+          # (`confirm_pop(should_pop: false)`); the keyword wins if both.
+          def confirm_pop(confirmed = true, should_pop: confirmed, timeout: 10, on_result: nil)
             runtime_page&.invoke(self, "confirm_pop", args: { "should_pop" => !!should_pop }, timeout: timeout, on_result: on_result)
           end
         end

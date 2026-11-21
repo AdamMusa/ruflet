@@ -62,6 +62,29 @@ class ConfirmAndDrawerMethodsTest < Minitest::Test
     ], invokes
   end
 
+  # Flet calls them by keyword too: View.confirm_pop(should_pop=...) and
+  # Dismissible.confirm_dismiss(dismiss=...).
+  def test_confirm_methods_take_flets_keyword_spelling
+    view = Ruflet.view(on_confirm_pop: ->(e) { e.control.confirm_pop(should_pop: false) })
+    item = Ruflet.dismissible(Ruflet.text("Swipe"), on_confirm_dismiss: ->(e) { e.control.confirm_dismiss(dismiss: false) })
+    @page.add(Ruflet.column(controls: [view, item]))
+    @sent.clear
+
+    @page.dispatch_event(target: view.wire_id, name: "confirm_pop", data: nil)
+    @page.dispatch_event(target: item.wire_id, name: "confirm_dismiss", data: { "direction" => "endToStart" })
+    view.confirm_pop(false, should_pop: true)
+    item.confirm_dismiss(false, dismiss: true)
+
+    assert_equal [
+      [view.wire_id, "confirm_pop", { "should_pop" => false }],
+      [item.wire_id, "confirm_dismiss", { "dismiss" => false }],
+      [view.wire_id, "confirm_pop", { "should_pop" => true }],
+      [item.wire_id, "confirm_dismiss", { "dismiss" => true }]
+    ], invokes
+    assert_raises(ArgumentError) { view.confirm_pop(dismiss: true) }
+    assert_raises(ArgumentError) { item.confirm_dismiss(should_pop: true) }
+  end
+
   def test_view_and_pagelet_drawer_methods_target_their_own_control
     view = Ruflet.view(drawer: Ruflet.navigation_drawer(controls: []), controls: [Ruflet.text("v")])
     pagelet = Ruflet.pagelet(content: Ruflet.text("p"), drawer: Ruflet.navigation_drawer(controls: []),
