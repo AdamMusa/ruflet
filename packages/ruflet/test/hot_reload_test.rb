@@ -45,6 +45,33 @@ class RufletHotReloadTest < Minitest::Test
     end
   end
 
+  # A connected client of a real Ruflet::Server, for the end-to-end tests.
+  class ReloadClientWs
+    attr_reader :sent
+
+    def initialize
+      @sent = []
+    end
+
+    def session_key = object_id
+    def closed? = false
+    def close; end
+
+    def send_binary(bytes)
+      @sent << bytes
+    end
+
+    def self.texts(value, acc = [])
+      case value
+      when Hash
+        acc << value["value"] if value["_c"] == "Text"
+        value.each_value { |entry| texts(entry, acc) }
+      when Array then value.each { |entry| texts(entry, acc) }
+      end
+      acc
+    end
+  end
+
   class RecorderPage
     attr_reader :added
 
@@ -117,6 +144,127 @@ class RufletHotReloadTest < Minitest::Test
     write_widgets("v3")
     wait_until("recovery reload") { @runner.reload_count >= 1 }
     assert_equal ["v3"], render
+  end
+
+  # A reload whose script loads but whose app block raises while rendering:
+  # the server reports false (and logs the error), so the runner says the
+  # reload failed instead of "reloaded".
+  def test_a_reload_the_server_reports_as_failed_is_logged_as_failed
+    write_widgets("v1")
+    write_main
+    start_runner
+    def (@runner.server).reload_app!
+      super
+      false
+    end
+
+    write_widgets("v2")
+    wait_until("reload failure log") { @logs.any? { |line| line.include?("reload failed") } }
+
+    assert_equal ["reload failed: the app raised while rendering; clients keep the previous UI"], @logs
+    assert_equal 0, @runner.reload_count
+  end
+
+  # End to end with the real server: an edit whose block raises mid-render
+  # leaves the connected client's UI as it was, and the next good edit
+  # renders as usual.
+  def test_an_app_block_that_raises_on_reload_keeps_the_clients_ui
+    require "ruflet_server"
+    # What `ruflet run` sets: errors point at the first frame in it.
+    previous_watch_root = ENV["RUFLET_WATCH_ROOT"]
+    ENV["RUFLET_WATCH_ROOT"] = @dir
+    queue = Queue.new
+    server_class = Class.new(Ruflet::Server) do
+      define_method(:start) { queue.pop }
+      define_method(:stop) { queue << :stop }
+    end
+    write_file("widgets.rb", "def widget_label = 'v1'\n")
+    File.write(@script, <<~RUBY)
+      require "ruflet"
+      require_relative "widgets"
+
+      Ruflet.run do |page|
+        page.add(Ruflet::Control.new(type: "Text", id: "first", value: "first"))
+        page.add(Ruflet::Control.new(type: "Text", id: "label", value: widget_label))
+      end
+    RUBY
+    @runner = Ruflet::HotReload::Runner.new(
+      script: @script,
+      poll_interval: 0.05,
+      server_factory: ->(host:, port:, &block) { server_class.new(host: host, port: 0, &block) },
+      logger: ->(msg) { @logs << msg }
+    )
+    @thread = Thread.new { @runner.run }
+    wait_until("runner start") { @runner.watching? }
+    ws = ReloadClientWs.new
+    @runner.server.instance_variable_get(:@connections)[ws.session_key] = ws
+    @runner.server.send(:on_register_client, ws, { "session_id" => nil, "page" => { "route" => "/" } })
+    ws.sent.clear
+
+    _, err = capture_io do
+      write_file("widgets.rb", "def widget_label = footer_text\n")
+      wait_until("reload failure log") { @logs.any? { |line| line.include?("reload failed") } }
+    end
+
+    assert_empty ws.sent, "the client keeps the last working UI"
+    refute(@logs.any? { |line| line.include?("reloaded in") })
+    first_line, location = err.lines
+    assert_match(/\Areload error: NameError: undefined local variable or method 'footer_text'/, first_line)
+    assert_includes location.to_s, "widgets.rb:1:in "
+
+    write_file("widgets.rb", "def widget_label = 'v2'\n")
+    wait_until("recovery reload") { @runner.reload_count >= 1 }
+    values = ws.sent.flat_map { |raw| ReloadClientWs.texts(Ruflet::WireCodec.unpack(raw)) }
+    assert_includes values, "v2"
+  ensure
+    stop_served_runner
+    previous_watch_root.nil? ? ENV.delete("RUFLET_WATCH_ROOT") : ENV["RUFLET_WATCH_ROOT"] = previous_watch_root
+  end
+
+  # A script that raises while it loads: the log names the app's frames
+  # (the file, then what required it), not the runner's own.
+  def test_a_reload_that_raises_while_loading_logs_the_apps_frames
+    write_widgets("v1")
+    write_main
+    start_runner
+
+    write_file("widgets.rb", "WIDGET_LABEL = undefined_helper\n")
+    wait_until("reload failure log") { @logs.any? { |line| line.include?("reload failed") } }
+
+    frames = @logs.drop(1)
+    assert_match(/\Areload failed: NameError: undefined local variable or method 'undefined_helper'/, @logs.first)
+    refute_empty frames
+    assert_includes frames.first, "widgets.rb:1:in "
+    refute(frames.any? { |line| line.include?("hot_reload.rb") }, "the runner's frames say nothing about the app")
+  end
+
+  # A SyntaxError names its file and line itself; the frames after it are
+  # what required that file, not the runner's own.
+  def test_a_syntax_error_reload_logs_no_runner_frames
+    write_widgets("v1")
+    write_main
+    start_runner
+
+    write_file("widgets.rb", "def broken(\n")
+    wait_until("reload failure log") { @logs.any? { |line| line.include?("reload failed") } }
+
+    assert_match(/\Areload failed: SyntaxError: .*widgets\.rb:1/m, @logs.first)
+    frames = @logs.drop(1)
+    assert_includes frames.first.to_s, "main.rb:2:in "
+    refute(frames.any? { |line| line.include?("hot_reload.rb") }, @logs.inspect)
+  end
+
+  # A SyntaxError in the script itself has no app frame after it.
+  def test_a_syntax_error_in_the_script_logs_only_the_error
+    write_widgets("v1")
+    write_main
+    start_runner
+
+    File.write(@script, "Ruflet.run do |page|\n")
+    wait_until("reload failure log") { @logs.any? { |line| line.include?("reload failed") } }
+
+    assert_equal 1, @logs.length, @logs.inspect
+    assert_match(/\Areload failed: SyntaxError: .*main\.rb:1/m, @logs.first)
   end
 
   def test_manual_reload_request_triggers_without_file_changes

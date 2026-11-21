@@ -70,15 +70,9 @@ module Ruflet
       end
 
       def build_control(normalized_type, id, props)
-        if ENV["RUFLET_DEBUG"] == "1" && normalized_type == "floatingactionbutton"
-          Kernel.warn("[factory] type=#{normalized_type} id=#{id.inspect} props=#{props.inspect}")
-        end
         klass = EXTENSION_CLASS_MAP[normalized_type] || CLASS_MAP[normalized_type]
         if klass
           normalized_props, supplemental_props = normalize_constructor_props(klass, normalized_type, props)
-          if ENV["RUFLET_DEBUG"] == "1" && normalized_type == "floatingactionbutton"
-            Kernel.warn("[factory] normalized_props=#{normalized_props.inspect}")
-          end
           control = klass.new(id: id, **normalized_props)
           supplemental_props.each do |key, value|
             if key.to_s.start_with?("on_") && value.respond_to?(:call)
