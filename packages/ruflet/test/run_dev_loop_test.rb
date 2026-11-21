@@ -253,6 +253,98 @@ class RufletCliRunDevLoopTest < Minitest::Test
     end
   end
 
+  # A listener that goes away during the probe (an app that "R" stops or
+  # that crashes just as its server comes up), and macOS refusing a probe
+  # that got the target port as its own port (EINVAL), mean "not up yet".
+  def test_wait_for_server_boot_retries_a_probe_that_is_cut_off
+    server = TCPServer.new("127.0.0.1", 0)
+    acceptor = Thread.new { loop { server.accept.close } }
+    pid = Process.spawn(RbConfig.ruby, "-e", "sleep 30", pgroup: true)
+    real_new = TCPSocket.method(:new)
+    [Errno::ECONNRESET, Errno::ECONNABORTED, Errno::EPIPE, Errno::EINVAL].each do |error|
+      run_state = { child_pid: pid, restart: false }
+      attempts = 0
+      cut_off_once = lambda do |*args|
+        attempts += 1
+        raise error if attempts == 1
+
+        real_new.call(*args)
+      end
+
+      booted = :unset
+      _out, err = capture_io do
+        TCPSocket.stub(:new, cut_off_once) do
+          booted = DummyRunner.new.send(:wait_for_server_boot, server.addr[1], run_state, timeout_seconds: 30)
+        end
+      end
+
+      assert_equal true, booted, error.name
+      assert_equal 2, attempts, error.name
+      assert_empty err, error.name
+      refute run_state.key?(:boot_exit_status), error.name
+    end
+    assert_nil Process.waitpid(pid, Process::WNOHANG), "a running app is not reaped"
+  ensure
+    acceptor&.kill
+    server&.close
+    if pid
+      Process.kill("KILL", pid)
+      Process.wait(pid)
+    end
+  end
+
+  def test_a_probe_cut_off_by_an_app_that_exited_ends_the_wait
+    pid = Process.spawn(RbConfig.ruby, "-e", "exit 3", pgroup: true)
+    run_state = { child_pid: pid, restart: false }
+
+    booted = :unset
+    _out, err = capture_io do
+      TCPSocket.stub(:new, ->(*) { raise Errno::ECONNRESET }) do
+        booted = DummyRunner.new.send(:wait_for_server_boot, free_port, run_state, timeout_seconds: 30)
+      end
+    end
+
+    assert_equal false, booted
+    assert_equal 3, run_state[:boot_exit_status].exitstatus
+    assert_includes err, "The app exited during startup (status 3); see the error above."
+  end
+
+  # On macOS a process group whose only member is the exited app, not reaped
+  # yet, refuses a signal with EPERM. Stopping the app on the way out of an
+  # error must not raise that in place of the error.
+  def test_stopping_an_exited_app_on_the_way_out_does_not_hide_the_error
+    in_project do
+      File.write("main.rb", "")
+      runner = scripted_runner(port: free_port, app: "exit 0")
+      runner.define_singleton_method(:launch_target_client) { |*| raise IOError, "client launch failed" }
+      group_signals = []
+      real_kill = Process.method(:kill)
+      zombie_only_group = lambda do |signal, *pids|
+        return real_kill.call(signal, *pids) unless pids.any?(&:negative?)
+
+        group_signals << [signal, *pids]
+        raise Errno::EPERM
+      end
+
+      error = nil
+      capture_io do
+        Process.stub(:kill, zombie_only_group) do
+          error = assert_raises(IOError) { runner.command_run(["main.rb", "--no-reload"]) }
+        end
+      end
+
+      assert_equal "client launch failed", error.message
+      app_pid = runner.calls.fetch(:spawned_pids).fetch(0)
+      assert_equal [["TERM", -app_pid]], group_signals
+    ensure
+      Array(runner&.calls&.fetch(:spawned_pids)).each do |pid|
+        Process.wait(pid)
+      rescue Errno::ECHILD
+        nil
+      end
+    end
+  end
+
   FAILING_APP = <<~RUBY
     warn "main.rb:3: syntax error found (SyntaxError)"
     exit 1
@@ -303,7 +395,7 @@ class RufletCliRunDevLoopTest < Minitest::Test
       File.write("main.rb", "")
       port = free_port
       runner = scripted_runner(port: port, app: RESTART_APP, env: { "TEST_START_COUNTER" => File.join(dir, "starts") })
-      press_big_r_once_up(runner, port)
+      press_big_r_once_up(runner)
 
       code = nil
       out, err = capture_io { Timeout.timeout(60) { code = runner.command_run(["main.rb"]) } }
@@ -407,6 +499,32 @@ class RufletCliRunDevLoopTest < Minitest::Test
     end
   end
 
+  # ... and such a refusal does not count the port as taken: with the start
+  # port busy, the next port is chosen (not the start port, which is what
+  # is returned once every attempt has failed).
+  def test_a_loopback_bind_refused_for_other_reasons_does_not_count_as_taken
+    held = nil
+    loop do
+      held = TCPServer.new("0.0.0.0", 0)
+      break if held.addr[1] < 65_000 # leaves room for the ports after it
+
+      held.close
+    end
+    port = held.addr[1]
+    real_new = TCPServer.method(:new)
+    [Errno::EADDRNOTAVAIL, Errno::EAFNOSUPPORT, Errno::EACCES].each do |error|
+      refusing = lambda do |host, probe_port|
+        raise error if host == "::1"
+
+        real_new.call(host, probe_port)
+      end
+      picked = TCPServer.stub(:new, refusing) { DummyRunner.new.send(:find_available_port, port) }
+      assert_operator picked, :>, port, error.name
+    end
+  ensure
+    held&.close
+  end
+
   private
 
   # Runs command_run up to a real app child, with everything around it
@@ -449,16 +567,16 @@ class RufletCliRunDevLoopTest < Minitest::Test
     ScriptedRunner.new(port: port, app: app, env: env)
   end
 
-  # Sends "R" once the first app answers on `port`, as the key reader would.
-  def press_big_r_once_up(runner, port)
+  # Sends "R", as the key reader would, once the first app is up and its
+  # client step is done. (R pressed during the boot probe has its own tests.)
+  def press_big_r_once_up(runner)
+    up = Queue.new
+    runner.define_singleton_method(:launch_target_client) do |*args|
+      super(*args).tap { up << true }
+    end
     runner.define_singleton_method(:start_reload_input_thread) do |run_state|
       Thread.new do
-        begin
-          TCPSocket.new("127.0.0.1", port).close
-        rescue Errno::ECONNREFUSED
-          sleep 0.01
-          retry
-        end
+        up.pop
         send(:handle_reload_command, "R", run_state)
       end
     end

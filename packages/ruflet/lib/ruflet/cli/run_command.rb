@@ -38,6 +38,15 @@ module Ruflet
       # Addresses another local server may hold the chosen port on while the
       # 0.0.0.0 bind still succeeds (see loopback_port_taken?).
       LOOPBACK_PROBE_HOSTS = %w[127.0.0.1 ::1].freeze
+      # What the boot probe meets while the app's server is not up: nothing
+      # listening, or a listener that went away during the connect or the
+      # write (an app stopped by "R", or one that crashed). EINVAL is macOS
+      # refusing a probe whose own port is the target port (it connected to
+      # itself). Each means "not up yet" (see wait_for_server_boot).
+      BOOT_PROBE_NOT_UP_ERRORS = [
+        Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Errno::ECONNRESET,
+        Errno::ECONNABORTED, Errno::EPIPE, Errno::EINVAL
+      ].freeze
 
       def command_run(args)
         options = parse_run_options(args)
@@ -128,7 +137,10 @@ module Ruflet
         if defined?(run_state) && run_state && run_state[:child_pid]
           begin
             signal_app_child("TERM", run_state)
-          rescue Errno::ESRCH
+          rescue Errno::ESRCH, Errno::EPERM
+            # EPERM: on macOS a group whose only member is the exited app,
+            # not reaped yet (an error is on its way out), cannot be
+            # signalled. Nothing is left to stop.
             nil
           end
         end
@@ -286,11 +298,12 @@ module Ruflet
       # Sends `signal` to the app child's process group. Raises Errno::ESRCH
       # once the app is gone.
       #
-      # Windows has no process groups to signal, and Process.kill delivers
-      # only KILL there (TERM and INT to another process raise EINVAL), so
-      # the app's process tree is ended instead. Only an app child that has
-      # not been reaped yet: Ruby holds its handle until then, so its pid
-      # cannot name another process.
+      # On Windows, Process.kill cannot address a negative pid (EINVAL). To
+      # another process, INT arrives only as a CTRL_BREAK event and TERM
+      # raises EINVAL. So the app's whole process tree is ended instead
+      # (taskkill /T /F). Only an app child that has not been reaped yet:
+      # Ruby holds its handle until then, so its pid cannot name another
+      # process.
       def signal_app_child(signal, run_state)
         pid = run_state[:child_pid]
         return Process.kill(signal, -pid) unless windows_native_ruby?
@@ -596,7 +609,8 @@ module Ruflet
               sock.write("GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")
               sock.close
               break
-            rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
+            rescue *BOOT_PROBE_NOT_UP_ERRORS
+              sock&.close
               status = run_state && reap_exited_app_child(run_state)
               if status
                 run_state[:boot_exit_status] = status
@@ -1229,13 +1243,15 @@ module Ruflet
         start_port
       end
 
-      # The server binds 0.0.0.0. On macOS and the BSDs that bind succeeds
-      # (Ruby sets SO_REUSEADDR) while another process listens on 127.0.0.1
-      # or [::1] at the same port, and http://localhost:<port>, which the web
-      # and desktop clients open, then reaches that process. A bind on each
-      # loopback address finds such a listener (Linux refuses the 0.0.0.0
-      # bind already). Only "in use" counts: a host without IPv6 has no [::1]
-      # to hold, and any other refusal leaves the result as it was.
+      # The server binds 0.0.0.0. That bind can succeed while another process
+      # listens on a loopback address at the same port: on macOS and the
+      # BSDs (Ruby sets SO_REUSEADDR) for 127.0.0.1 or [::1], on Linux for
+      # [::1] (an IPv6 socket bound to ::1 does not conflict with 0.0.0.0;
+      # Linux refuses the bind for 127.0.0.1 already). http://localhost:<port>,
+      # which the web and desktop clients open, then reaches that process.
+      # A bind on each loopback address finds such a listener. Only "in use"
+      # counts: a host without IPv6 has no [::1] to hold, and any other
+      # refusal leaves the result as it was.
       def loopback_port_taken?(port)
         LOOPBACK_PROBE_HOSTS.any? do |host|
           TCPServer.new(host, port).close
