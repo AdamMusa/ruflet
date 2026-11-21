@@ -454,24 +454,24 @@ class RufletNativeAppOriginTest < Minitest::Test
 
   def test_own_pages_whose_url_uri_rejects_keep_driving_the_shell
     start
-    OWN_URLS_URI_REJECTS.each do |url|
+    OWN_URLS_URI_REJECTS.each_with_index do |url, index|
       @sent.clear
       visit(url)
       assert_equal [Ruflet::Rails::NativeApp.html_adapter_js], scripts, "#{url} gets the adapter"
-      action({ "component" => "clipboard", "text" => "copied on #{url}" })
-      assert_sent "copied on #{url}"
+      action({ "component" => "clipboard", "text" => "own-page-#{index}" })
+      assert_sent "own-page-#{index}", "#{url} still drives the shell"
     end
   end
 
   def test_userinfo_and_backslashes_do_not_hide_another_origin
     ["https://myapp.com@other.example/", "https://other.example\\@myapp.com/", "https://other.example#@myapp.com",
-     "https://myapp.com:443@other.example/", "#{OTHER}/docs#a#b"].each do |url|
+     "https://myapp.com:443@other.example/", "#{OTHER}/docs#a#b"].each_with_index do |url, index|
       setup
       start
       visit("#{APP}/inbox")
       event(body_webview, "page_started", url)
-      quietly { action({ "component" => "clipboard", "text" => "from #{url}" }) }
-      refute_sent "from #{url}", "#{url} is not on #{APP}"
+      quietly { action({ "component" => "clipboard", "text" => "from-page-#{index}" }) }
+      refute_sent "from-page-#{index}", "#{url} is not on #{APP}"
     end
   end
 
