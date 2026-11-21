@@ -23,27 +23,54 @@ module Ruflet
 
     # Runs the command the first argument names (see cli/commands.rb) with
     # the remaining arguments and returns its exit status.
+    #
+    # -h/--help prints the command's help instead (exit 0), and a flag the
+    # command does not read prints its usage on stderr (exit 64). Both are
+    # decided before anything is fetched or written.
     def run(argv = ARGV)
       command = (argv.shift || "help").downcase
+      entry = Commands.lookup(command)
+      if entry
+        return print_command_help(entry) if entry.help_requested?(argv)
+
+        begin
+          entry.check_flags!(argv)
+        rescue OptionParser::ParseError => e
+          return report_usage_error(entry, e.message)
+        end
+      end
       ensure_first_run_assets(command)
 
-      entry = Commands.lookup(command)
       unless entry
         warn "Unknown command: #{command}"
         print_help
         return 1
       end
 
-      send(entry.handler, argv)
+      begin
+        send(entry.handler, argv)
+      rescue Commands::HelpRequested, Commands::UsageError => e
+        # The built-in handlers report these themselves; a registered
+        # command's handler may not.
+        Commands.report_stop(entry.name, e)
+      rescue OptionParser::ParseError => e
+        report_usage_error(entry, e.message)
+      end
     end
 
     def print_help
       puts Commands.help_text
     end
 
+    # `ruflet help <command>` and `ruflet <command> --help`.
+    def print_command_help(entry)
+      Commands.print_command_help(entry)
+    end
+
+    # Creates a Ruflet app at path and returns `ruflet new`'s status: 1 when
+    # nothing was created (the directory already exists, for one).
     def bootstrap(path)
       command_new([path || Dir.pwd])
-      0
     end
 
     def version_string
@@ -57,9 +84,22 @@ module Ruflet
       0
     end
 
-    def command_help(_args)
+    # `ruflet help` lists the commands; `ruflet help <command>` shows one.
+    # A word that is not a command still lists them all, and so does `--`,
+    # which ends the options rather than being one (`help --` and
+    # `help -- build` list them, as they did before).
+    def command_help(args)
+      word = args.first.to_s.downcase
+      entry = Commands.lookup(word)
+      return print_command_help(entry) if entry && entry.name != "help"
+      raise OptionParser::InvalidOption, args.first if entry.nil? && word != "--" && Commands.flag?(word)
+
       print_help
       0
+    end
+
+    def report_usage_error(entry, message)
+      Commands.report_usage_error(entry, message)
     end
 
     def ensure_first_run_assets(command)

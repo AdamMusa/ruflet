@@ -1,0 +1,14 @@
+# Ruflet CLI compatibility golden (packages/ruflet/test/compat). Generated; do not edit.
+# Regenerate after an approved behavior change:
+#   ruby packages/ruflet/test/compat/compat.rb --regenerate
+fixture: rails_app
+command: rake ruflet:build[--help]
+exit: 1
+
+## commands (0)
+
+## output
+err| Usage: ruflet build <apk|android|aab|appbundle|ios|ipa|web|macos|windows|linux> [--lite|--full|--self] [--verbose]
+
+## files
+(no files changed)

@@ -109,6 +109,34 @@ module Ruflet
           end
         end
 
+        # The build target, downcased and removed from args ("" when there is
+        # none). It is the first argument, as it always was. When that is a
+        # flag (`ruflet build --release apk`), it is the one argument that
+        # names a target, so the flags before it reach Flutter as they would
+        # after it. Two such arguments (`--flavor web apk`) are refused rather
+        # than guessed at: which one is a flag's value is Flutter's to know.
+        # Nothing after `--` is a target: `build -- apk` is still the
+        # unsupported target "--", and `build --release -- apk` has none. A
+        # bare `-` is an argument, not a flag (Commands.flag?), so `build -
+        # apk` is still the unsupported target "-".
+        def extract_build_target!(args)
+          first = args.first
+          return (args.shift || "").downcase unless first && Commands.flag?(first) && first != "--"
+
+          stop = args.index("--") || args.length
+          positionals = (0...stop).reject { |index| Commands.flag?(args[index]) }
+          targets = positionals.select { |index| flutter_build_command(args[index].downcase) }
+          if targets.length > 1
+            names = targets.map { |index| args[index] }.join(", ")
+            raise Commands::UsageError, "more than one argument names a build target (#{names}); put the target first"
+          end
+
+          index = targets.first || positionals.first
+          return "" unless index
+
+          args.delete_at(index).downcase
+        end
+
         def ios_device_build_needs_codesign_flag?(platform, build_args)
           return false unless platform == "ios"
           return false if build_args.include?("--simulator")

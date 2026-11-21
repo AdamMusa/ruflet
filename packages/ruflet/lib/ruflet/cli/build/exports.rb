@@ -74,15 +74,34 @@ module Ruflet
           end
         end
 
+        # Flutter's own ids for the desktop and browser devices.
+        DESKTOP_INSTALL_DEVICES = %w[macos windows linux].freeze
+        WEB_INSTALL_DEVICES = %w[chrome edge web-server].freeze
+
+        # Which build outputs `flutter install -d ID` needs. The named devices
+        # come first: the Android rule takes any dash-free id, so it used to
+        # claim `linux`, `windows`, `edge` and 40-hex iPhone UDIDs.
         def install_platform_for_device(device_id)
           return inferred_install_platform unless device_id
 
-          return "android" if device_id.include?("emulator-") || device_id.match?(/\A[a-z0-9._:-]+\z/i) && device_id != "macos" && device_id != "chrome" && !device_id.include?("-")
+          return device_id if DESKTOP_INSTALL_DEVICES.include?(device_id)
+          return "web" if WEB_INSTALL_DEVICES.include?(device_id)
+          # emulator-5554, and the adb-<serial>-<id>._adb-tls-connect._tcp ids
+          # of wireless debugging, which contain dashes.
+          return "android" if device_id.include?("emulator-") || device_id.start_with?("adb-")
+          return "ios" if ios_device_id?(device_id)
+          return "android" if device_id.match?(/\A[a-z0-9._:]+\z/i)
           return "ios" if device_id.match?(/\A[0-9A-F-]{8,}\z/i)
-          return "macos" if device_id == "macos"
-          return "web" if device_id == "chrome"
 
           inferred_install_platform
+        end
+
+        # A simulator UUID, a current device UDID (00008030-001A2D3C0E12802E)
+        # or the 40-hex UDID of a device from before 2018.
+        def ios_device_id?(device_id)
+          ios_simulator_device_id?(device_id) ||
+            device_id.match?(/\A[0-9A-F]{8}-[0-9A-F]{16}\z/i) ||
+            device_id.match?(/\A[0-9A-F]{40}\z/i)
         end
 
         def validate_install_artifacts(client_dir, platform:, device_id:)

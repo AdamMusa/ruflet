@@ -36,7 +36,7 @@ module Ruflet
             current_pubspec = load_client_pubspec(client_dir)
             current_name = current_pubspec["name"].to_s
             inferred_display_name = app["app_name"] || app["name"] || config["name"] || humanize_name(File.basename(Dir.pwd))
-            configured_app_name = first_present(app["app_name"], app["display_name"], app["name"])
+            configured_app_name = package_source_name(app)
             package_source = first_present(app["package_name"], config["package_name"], configured_app_name)
             package_source = current_name if package_source.nil?
             package_name = normalize_package_name(package_source)
@@ -78,8 +78,11 @@ module Ruflet
             }
           end
 
+          # `appbundle` is Flutter's name for `aab` and gets the same checks:
+          # it used to skip this one and the package-name step, so the bundle
+          # kept the template's com.example.ruflet_client id.
           def validate_mobile_app_identity(metadata, platform:)
-            return true unless %w[apk android aab ios].include?(platform.to_s)
+            return true unless %w[apk android aab appbundle ios].include?(platform.to_s)
             return true unless metadata
 
             errors = Array(metadata[:mobile_identity_errors])
@@ -136,7 +139,7 @@ module Ruflet
             return true unless metadata
 
             package_name, platform_flag = case platform.to_s
-            when "apk", "android", "aab"
+            when "apk", "android", "aab", "appbundle"
               [metadata[:android_application_id], "--android"]
             when "ios"
               [metadata[:ios_bundle_identifier], "--ios"]

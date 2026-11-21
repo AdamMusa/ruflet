@@ -49,31 +49,42 @@ module RufletRecord
       end
       alias delete update
 
+      # Runs the block in a transaction, or in a savepoint when one is already
+      # open. Raising rolls it back. Every other exit commits it: returning
+      # normally, `next`, and also `return`, `break` and `throw` out of the
+      # block, as Active Record 7.2 does. A thread killed mid-block rolls back.
       def transaction
-        savepoint = "ruflet_record_#{@transaction_depth}"
-        if @transaction_depth.zero?
-          execute("BEGIN IMMEDIATE")
-        else
-          execute("SAVEPOINT #{SQL.quote_identifier(savepoint)}")
-        end
+        savepoint = SQL.quote_identifier("ruflet_record_#{@transaction_depth}")
+        outermost = @transaction_depth.zero?
+        # If BEGIN or SAVEPOINT fails, nothing was opened: its own error
+        # propagates, and an open outer transaction is left alone.
+        execute(outermost ? "BEGIN IMMEDIATE" : "SAVEPOINT #{savepoint}")
         @transaction_depth += 1
-        result = yield
-        @transaction_depth -= 1
-        if @transaction_depth.zero?
-          execute("COMMIT")
-        else
-          execute("RELEASE SAVEPOINT #{SQL.quote_identifier(savepoint)}")
+        completed = false
+        failed = false
+        begin
+          result = yield
+          completed = true
+          result
+        rescue Exception => error
+          failed = true
+          @transaction_depth -= 1
+          rollback_transaction(outermost, savepoint)
+          # `raise error`, not a bare `raise`: in mruby a bare `raise` raises
+          # an empty RuntimeError instead of re-raising the current error.
+          raise error
+        ensure
+          # Also reached by a non-local exit, which skips both the code after
+          # `yield` and the rescue above.
+          unless failed
+            @transaction_depth -= 1
+            if !completed && aborting_thread?
+              rollback_transaction(outermost, savepoint)
+            else
+              commit_transaction(outermost, savepoint)
+            end
+          end
         end
-        result
-      rescue Exception
-        @transaction_depth -= 1 if @transaction_depth > 0
-        if @transaction_depth.zero?
-          execute("ROLLBACK")
-        else
-          execute("ROLLBACK TO SAVEPOINT #{SQL.quote_identifier(savepoint)}")
-          execute("RELEASE SAVEPOINT #{SQL.quote_identifier(savepoint)}")
-        end
-        raise
       end
 
       def table_exists?(name)
@@ -83,7 +94,7 @@ module RufletRecord
       def columns(table_name)
         select_all("PRAGMA table_info(#{SQL.quote_identifier(table_name)})").map do |row|
           Column.new(
-            row["name"], row["type"], row["notnull"].to_i == 1,
+            row["name"], row["type"], row["notnull"].to_i != 1,
             row["dflt_value"], row["pk"].to_i == 1
           )
         end
@@ -98,6 +109,32 @@ module RufletRecord
       end
 
       private
+
+      def commit_transaction(outermost, savepoint)
+        execute(outermost ? "COMMIT" : "RELEASE SAVEPOINT #{savepoint}")
+      rescue Exception => error
+        rollback_transaction(outermost, savepoint)
+        raise error
+      end
+
+      def rollback_transaction(outermost, savepoint)
+        if outermost
+          execute("ROLLBACK")
+        else
+          execute("ROLLBACK TO SAVEPOINT #{savepoint}")
+          execute("RELEASE SAVEPOINT #{savepoint}")
+        end
+      end
+
+      # Thread#kill runs ensure blocks but not rescue blocks; its half-done
+      # work must not be committed. mruby has no native threads; the VM's
+      # cooperative Thread shim never reports "aborting".
+      def aborting_thread?
+        return false unless Object.const_defined?(:Thread) && Thread.respond_to?(:current)
+
+        thread = Thread.current
+        thread.respond_to?(:status) && thread.status == "aborting"
+      end
 
       def normalize_config(config)
         value = config.is_a?(Hash) ? config.dup : { database: config }
@@ -134,6 +171,8 @@ module RufletRecord
           elsif value == false
             0
           elsif value.is_a?(Time)
+            # Stored as UTC wall-clock text, which Column#cast reads as UTC.
+            value = value.getutc
             "%04d-%02d-%02d %02d:%02d:%02d" % [
               value.year, value.month, value.day,
               value.hour, value.min, value.sec

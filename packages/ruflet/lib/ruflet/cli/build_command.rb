@@ -97,9 +97,9 @@ module Ruflet
         @ruflet_runtime_profile = self_contained ? runtime_profile : :server
         @ruflet_runtime_profile_explicit = !!(lite || full)
         verbose = args.delete("--verbose") || args.delete("-v")
-        platform = (args.shift || "").downcase
+        platform = extract_build_target!(args)
         if platform.empty?
-          warn "Usage: ruflet build <apk|android|aab|ios|ipa|web|macos|windows|linux> [--lite|--full|--self] [--verbose]"
+          warn "Usage: ruflet build <apk|android|aab|appbundle|ios|ipa|web|macos|windows|linux> [--lite|--full|--self] [--verbose]"
           return 1
         end
 
@@ -219,11 +219,13 @@ module Ruflet
 
         export_platform_build_outputs(client_dir, platform, verbose: !!verbose) if ok
         ok ? 0 : 1
+      rescue Commands::UsageError => e
+        Commands.report_stop("build", e)
       end
 
       def command_install(args)
         verbose = args.delete("--verbose") || args.delete("-v")
-        device_id = extract_option_value!(args, "--device", "-d")
+        device_id = extract_option_value!(args, "--device", "-d") || extract_equals_option_value!(args, "--device")
 
         client_dir = ensure_flutter_client_dir(verbose: !!verbose)
         unless client_dir
