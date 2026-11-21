@@ -25,14 +25,33 @@
       "action": "register_client",
       "payload": {
         "session_id": "compat-session",
-        "page_patch": {},
+        "page_patch": {
+          "_overlay": {
+            "_c": "Overlay",
+            "_i": "#1",
+            "controls": []
+          },
+          "_services": {
+            "_c": "ServiceRegistry",
+            "_i": "#2",
+            "_services": [],
+            "_internals": {
+              "uid": "00000001"
+            }
+          },
+          "_dialogs": {
+            "_c": "Dialogs",
+            "_i": "#3",
+            "controls": []
+          }
+        },
         "error": ""
       }
     },
     {
       "action": "patch_control",
       "payload": {
-        "id": "#1",
+        "id": "#4",
         "patch": [
           [
             0
@@ -44,16 +63,16 @@
             [
               {
                 "_c": "View",
-                "_i": "#2",
+                "_i": "#5",
                 "_internals": {
                   "host_expanded": true
                 },
                 "appbar": {
                   "_c": "AppBar",
-                  "_i": "#3",
+                  "_i": "#6",
                   "title": {
                     "_c": "Text",
-                    "_i": "#4",
+                    "_i": "#7",
                     "value": "Dashboard"
                   }
                 },
@@ -67,7 +86,7 @@
                 "controls": [
                   {
                     "_c": "Stack",
-                    "_i": "#5",
+                    "_i": "#8",
                     "_internals": {
                       "host_positioned": true
                     },
@@ -77,7 +96,7 @@
                     "controls": [
                       {
                         "_c": "WebView",
-                        "_i": "#6",
+                        "_i": "#9",
                         "url": "https://app.test/dashboard",
                         "method": "get",
                         "expand": true,
@@ -90,7 +109,7 @@
                       },
                       {
                         "_c": "Container",
-                        "_i": "#7",
+                        "_i": "#10",
                         "bgcolor": "#f7f8fb",
                         "left": 0,
                         "right": 0,
@@ -100,12 +119,12 @@
                         "visible": true,
                         "content": {
                           "_c": "Shimmer",
-                          "_i": "#8",
+                          "_i": "#11",
                           "base_color": "#e5e7eb",
                           "highlight_color": "#f8fafc",
                           "content": {
                             "_c": "Column",
-                            "_i": "#9",
+                            "_i": "#12",
                             "_internals": {
                               "host_expanded": true
                             },
@@ -114,7 +133,7 @@
                             "controls": [
                               {
                                 "_c": "Container",
-                                "_i": "#10",
+                                "_i": "#13",
                                 "width": 190,
                                 "height": 28,
                                 "bgcolor": "#e5e7eb",
@@ -122,7 +141,7 @@
                               },
                               {
                                 "_c": "Container",
-                                "_i": "#11",
+                                "_i": "#14",
                                 "width": 320,
                                 "height": 16,
                                 "bgcolor": "#e5e7eb",
@@ -130,7 +149,7 @@
                               },
                               {
                                 "_c": "Container",
-                                "_i": "#12",
+                                "_i": "#15",
                                 "width": 280,
                                 "height": 16,
                                 "bgcolor": "#e5e7eb",
@@ -138,12 +157,12 @@
                               },
                               {
                                 "_c": "Container",
-                                "_i": "#13",
+                                "_i": "#16",
                                 "height": 14
                               },
                               {
                                 "_c": "Container",
-                                "_i": "#14",
+                                "_i": "#17",
                                 "width": 340,
                                 "height": 86,
                                 "bgcolor": "#e5e7eb",
@@ -151,7 +170,7 @@
                               },
                               {
                                 "_c": "Container",
-                                "_i": "#15",
+                                "_i": "#18",
                                 "width": 300,
                                 "height": 86,
                                 "bgcolor": "#e5e7eb",
@@ -159,7 +178,7 @@
                               },
                               {
                                 "_c": "Container",
-                                "_i": "#16",
+                                "_i": "#19",
                                 "width": 330,
                                 "height": 86,
                                 "bgcolor": "#e5e7eb",
@@ -187,40 +206,7 @@
             "window",
             {
               "_c": "Window",
-              "_i": "#17"
-            }
-          ],
-          [
-            0,
-            0,
-            "_overlay",
-            {
-              "_c": "Overlay",
-              "_i": "#18",
-              "controls": []
-            }
-          ],
-          [
-            0,
-            0,
-            "_services",
-            {
-              "_c": "ServiceRegistry",
-              "_i": "#19",
-              "_services": [],
-              "_internals": {
-                "uid": "00000001"
-              }
-            }
-          ],
-          [
-            0,
-            0,
-            "_dialogs",
-            {
-              "_c": "Dialogs",
-              "_i": "#20",
-              "controls": []
+              "_i": "#20"
             }
           ],
           [
@@ -235,7 +221,7 @@
     {
       "action": "patch_control",
       "payload": {
-        "id": "#7",
+        "id": "#10",
         "patch": [
           [
             0

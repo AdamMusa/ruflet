@@ -25,14 +25,33 @@
       "action": "register_client",
       "payload": {
         "session_id": "compat-session",
-        "page_patch": {},
+        "page_patch": {
+          "_overlay": {
+            "_c": "Overlay",
+            "_i": "#1",
+            "controls": []
+          },
+          "_services": {
+            "_c": "ServiceRegistry",
+            "_i": "#2",
+            "_services": [],
+            "_internals": {
+              "uid": "00000001"
+            }
+          },
+          "_dialogs": {
+            "_c": "Dialogs",
+            "_i": "#3",
+            "controls": []
+          }
+        },
         "error": ""
       }
     },
     {
       "action": "patch_control",
       "payload": {
-        "id": "#1",
+        "id": "#2",
         "patch": [
           [
             0
@@ -49,7 +68,7 @@
     {
       "action": "patch_control",
       "payload": {
-        "id": "#2",
+        "id": "#4",
         "patch": [
           [
             0
@@ -61,16 +80,16 @@
             [
               {
                 "_c": "View",
-                "_i": "#3",
+                "_i": "#5",
                 "_internals": {
                   "host_expanded": true
                 },
                 "appbar": {
                   "_c": "AppBar",
-                  "_i": "#4",
+                  "_i": "#6",
                   "title": {
                     "_c": "Text",
-                    "_i": "#5",
+                    "_i": "#7",
                     "value": "My app"
                   }
                 },
@@ -84,7 +103,7 @@
                 "controls": [
                   {
                     "_c": "Column",
-                    "_i": "#6",
+                    "_i": "#8",
                     "_internals": {
                       "host_expanded": true
                     },
@@ -94,10 +113,10 @@
                     "controls": [
                       {
                         "_c": "Container",
-                        "_i": "#7",
+                        "_i": "#9",
                         "content": {
                           "_c": "Column",
-                          "_i": "#8",
+                          "_i": "#10",
                           "_internals": {
                             "host_expanded": true
                           },
@@ -106,14 +125,14 @@
                           "controls": [
                             {
                               "_c": "Text",
-                              "_i": "#9",
+                              "_i": "#11",
                               "value": "No screen for /mobile",
                               "size": 24,
                               "weight": "w600"
                             },
                             {
                               "_c": "Text",
-                              "_i": "#10",
+                              "_i": "#12",
                               "value": "No controller action matches this path.",
                               "color": "#64748b"
                             }
@@ -139,40 +158,7 @@
             "window",
             {
               "_c": "Window",
-              "_i": "#11"
-            }
-          ],
-          [
-            0,
-            0,
-            "_overlay",
-            {
-              "_c": "Overlay",
-              "_i": "#12",
-              "controls": []
-            }
-          ],
-          [
-            0,
-            0,
-            "_services",
-            {
-              "_c": "ServiceRegistry",
-              "_i": "#1",
-              "_services": [],
-              "_internals": {
-                "uid": "00000001"
-              }
-            }
-          ],
-          [
-            0,
-            0,
-            "_dialogs",
-            {
-              "_c": "Dialogs",
-              "_i": "#13",
-              "controls": []
+              "_i": "#13"
             }
           ],
           [

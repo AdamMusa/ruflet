@@ -90,13 +90,21 @@ class RufletRailsSessionRegistryTest < Minitest::Test
     server.send(:on_register_client, second_ws, { "session_id" => "same-session", "page" => { "route" => "/posts" } })
     second_session = registry["same-session"]
     second_messages = second_ws.sent.map { |payload| Ruflet::WireCodec.unpack(payload) }
+    register_reply = second_messages.first[1]
     reattach_patch = second_messages.last[1]["patch"]
 
     assert_same first_page, second_session.page
     assert_equal "socket-2", second_session.connection_key
     assert_equal 1, renders
-    assert reattach_patch.any? { |op| op[2] == "_dialogs" },
-           "reattached clients must receive the current dialog container ids"
+    # The container goes in the register reply, which the client merges by
+    # id; a replace op in the reattach patch would replace the client's
+    # container and detach it (#142).
+    dialogs = register_reply["page_patch"]["_dialogs"]
+    refute_nil dialogs, "reattached clients must receive the current dialog container"
+    assert_equal Ruflet::Page::DIALOGS_WIRE_ID, dialogs["_i"]
+    assert_equal ["Still open"], dialogs["controls"].map { |dialog| dialog["title"]["value"] }
+    assert reattach_patch.any? { |op| op[2] == "views" }
+    refute reattach_patch.any? { |op| op[2] == "_dialogs" }
 
     server.send(:remove_session, first_ws)
 

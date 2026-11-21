@@ -566,8 +566,9 @@ module RufletCompat
     # register_client for each fixture app, from Ruflet::Server (`ruflet
     # run`). The `--rails-endpoint` entries run the Rails apps the way a Rails
     # server serves them, through the endpoint config/routes.rb mounts
-    # (`Ruflet::Rails.native`): register_client without a page patch, then
-    # the page as `page.update` op patches.
+    # (`Ruflet::Rails.native`): register_client with only the page's
+    # internal containers as its page patch, then the page as `page.update`
+    # op patches.
     rails_prelude = 'Ruflet::Rails.config.backend_url = "https://app.test"' # config/initializers/ruflet.rb
     PAGES = [
       { "fixture" => "default_app", "entrypoint" => "main.rb" },

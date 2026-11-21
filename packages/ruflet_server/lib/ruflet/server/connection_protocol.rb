@@ -178,7 +178,7 @@ module Ruflet
 
       initial_response = [
         Protocol::ACTIONS[:register_client],
-        Protocol.register_response(session_id: session_id)
+        register_response_for(page, session_id)
       ]
       ws.send_binary(Ruflet::WireCodec.pack(initial_response))
 
@@ -187,6 +187,21 @@ module Ruflet
     rescue StandardError => e
       send_message(ws, Protocol::ACTIONS[:session_crashed], { "message" => e.message.to_s })
       raise
+    end
+
+    # The register reply carries the page's overlay, services and dialogs
+    # containers as its page_patch (Page#register_containers_patch). The
+    # client merges a page_patch by control id, so a client that reconnects
+    # with its old control tree keeps its container instances, which its View
+    # looks up only once. Sent in the first op patch instead, as before, they
+    # replaced those instances, and no dialog, snack bar or bottom sheet
+    # showed again on that client. The rest of the page still follows as op
+    # patches while the app block renders it, so first paint stays
+    # progressive.
+    def register_response_for(page, session_id)
+      return Protocol.register_response(session_id: session_id) unless page.respond_to?(:register_containers_patch)
+
+      Protocol.register_response(session_id: session_id, page_patch: page.register_containers_patch)
     end
 
     def on_control_event(ws, payload)
