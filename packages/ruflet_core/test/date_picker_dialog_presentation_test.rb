@@ -131,11 +131,12 @@ class RufletDatePickerDialogPresentationTest < Minitest::Test
 
   private
 
+  # The controls the latest patch of the Dialogs container adds to it (the
+  # container changes by list operations once mounted).
   def dialogs_update_controls
     update = @sent.reverse.find { |_action, payload| payload["id"] == @dialogs["_i"] }
     refute_nil update, "expected a patch of the Dialogs container"
-    op = update[1]["patch"].find { |candidate| candidate.is_a?(Array) && candidate[2] == "controls" }
-    op[3]
+    update[1]["patch"].drop(1).select { |op| op[0] == 1 && op[1] == 1 }.map { |op| op[3] }
   end
 
   # The root controls of the latest view patch sent.
