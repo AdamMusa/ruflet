@@ -85,6 +85,12 @@ jobs:
           ruby-version: .ruby-version
           working-directory: ruflet
 
+      - name: Install the msgpack gem for the codec cross-checks
+        # Test-only: ruflet_server's wire_codec_contract_test checks the codec
+        # against this independent MessagePack implementation and skips those
+        # checks when the gem is missing. No Ruflet package depends on it.
+        run: gem install msgpack -v 1.8.5 --no-document
+
       - name: Run framework tests
         working-directory: ruflet
         env:
