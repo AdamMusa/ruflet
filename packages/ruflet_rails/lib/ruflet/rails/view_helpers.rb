@@ -167,9 +167,10 @@ module Ruflet
       # `ruflet_nav_item user.name, ...`, must not become markup in the
       # browser or in the native shell's WebView. A label already marked
       # html_safe (`"<b>Hi</b>".html_safe`, another helper's output) is markup
-      # on purpose and passes through unchanged.
+      # on purpose and passes through unchanged. A nil or false label is
+      # returned as is, so ruflet_build_tag still renders an empty tag.
       def ruflet_escape_label(label)
-        return nil if label.nil?
+        return label unless label
         return label if label.respond_to?(:html_safe?) && label.html_safe?
 
         ERB::Util.html_escape(label.to_s)

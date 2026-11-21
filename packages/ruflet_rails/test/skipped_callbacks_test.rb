@@ -5,6 +5,8 @@ require "action_controller"
 require "action_view"
 require "minitest/mock"
 require "fileutils"
+require "open3"
+require "rbconfig"
 
 # erb_to_native calls a screen's action directly, with no request, so the
 # controller's callbacks do not run. That stays as it is; what this pins down
@@ -24,6 +26,17 @@ class RufletSkippedCallbacksTest < Minitest::Test
     def ruflet_test_gem_callback; end
   end
   ActionController::Base.include(GemInstalledCallback)
+
+  # The same on ActionController::API, whose chain an API-only controller
+  # inherits instead of Base's.
+  module ApiGemInstalledCallback
+    def self.included(base) = base.before_action(:ruflet_test_api_gem_callback)
+
+    private
+
+    def ruflet_test_api_gem_callback; end
+  end
+  ActionController::API.include(ApiGemInstalledCallback)
 
   CALLS = []
 
@@ -58,6 +71,25 @@ class RufletSkippedCallbacksTest < Minitest::Test
     allow_browser versions: :modern if respond_to?(:allow_browser)
 
     def home = @secret = "framework"
+  end
+
+  class CbapiController < ActionController::API
+    before_action :authenticate!
+
+    def home; end
+
+    private
+
+    def authenticate!; end
+  end
+
+  # One block per action, declared on one line: two callbacks, one name.
+  class CbrepeatedController < ActionController::Base
+    %w[home other].each { |action| before_action(only: action) { CALLS << action } }
+
+    def home; end
+
+    def other; end
   end
 
   VIEWS = Dir.mktmpdir("ruflet-skipped-callbacks")
@@ -134,5 +166,34 @@ class RufletSkippedCallbacksTest < Minitest::Test
 
   def test_a_plain_class_without_a_callback_chain_is_ignored
     assert_empty SkippedCallbacks.skipped(Class.new)
+  end
+
+  def test_an_api_controller_lists_its_own_callbacks_but_not_inherited_ones
+    assert_equal ["before_action :authenticate!"], SkippedCallbacks.skipped(CbapiController)
+  end
+
+  def test_blocks_declared_on_one_line_are_listed_once
+    names = SkippedCallbacks.skipped(CbrepeatedController)
+
+    assert_equal 1, names.length, names.inspect
+    assert_match %r{\Abefore_action \(block at [^)]*skipped_callbacks_test\.rb:\d+\)\z}, names.first
+  end
+
+  # Loading a controller base runs its load hooks, so reporting must not load
+  # one the app has not. That needs a process where ActionController::API is
+  # still an autoload, which this one is not (it is used above).
+  def test_reporting_does_not_load_an_unused_controller_base
+    script = <<~RUBY
+      require "action_controller"
+      require #{File.expand_path("../lib/ruflet_rails", __dir__).dump}
+      abort "ActionController::API is already loaded" unless ActionController.autoload?(:API)
+      klass = Class.new(ActionController::Base) { before_action :guard; def guard; end }
+      names = Ruflet::Rails::HtmlDsl::TemplateSource::SkippedCallbacks.skipped(klass)
+      puts [names, ActionController.autoload?(:API) ? :not_loaded : :loaded].inspect
+    RUBY
+    out, status = Open3.capture2e(RbConfig.ruby, *$LOAD_PATH.flat_map { |dir| ["-I", dir] }, "-e", script)
+
+    assert status.success?, out
+    assert_equal %([["before_action :guard"], :not_loaded]), out.lines.last.to_s.strip
   end
 end

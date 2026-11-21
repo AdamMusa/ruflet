@@ -138,10 +138,22 @@ class RufletViewHelpersTest < Minitest::Test
     end
   end
 
-  def test_label_helpers_render_a_plain_label_unchanged
+  # Same text in a browser; only the ampersand is encoded, as link_to does.
+  def test_label_helpers_keep_a_plain_label_and_encode_its_ampersand
     LABEL_HELPERS.each do |name, call|
       assert_includes call.call(helper, "Home & away").to_s, ">Home &amp; away</", name.to_s
       assert_includes call.call(helper, "Home").to_s, ">Home</", name.to_s
+    end
+  end
+
+  # Unchanged from before labels were escaped: no label, empty tag.
+  def test_label_helpers_render_an_empty_tag_for_a_nil_or_false_label
+    LABEL_HELPERS.each do |name, call|
+      [nil, false].each do |label|
+        html = call.call(helper, label).to_s
+        assert_match %r{"></(a|button)>\z}, html, "#{name}(#{label.inspect})"
+        refute_includes html, ">false<", "#{name}(#{label.inspect})"
+      end
     end
   end
 

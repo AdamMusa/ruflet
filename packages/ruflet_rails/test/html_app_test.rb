@@ -700,13 +700,14 @@ class RufletHtmlAppTest < Minitest::Test
     def fetcher.fetch(*, **)
       raise ArgumentError, %(bad record #<User id: 1, name: "Bob"> <button on-click="/native/x">Pwn</button>)
     end
-    Ruflet::Rails.erb_to_native(@page, start_url: "/native?a=1&b=2", fetcher: fetcher)
+    url = %(/native/<button on-click="/native/y">Url</button>?a=1&b=2)
+    Ruflet::Rails.erb_to_native(@page, start_url: url, fetcher: fetcher)
 
     view = @page.views.first
     texts = find_all_text_values(view)
     assert_includes texts, %(bad record #<User id: 1, name: "Bob"> <button on-click="/native/x">Pwn</button>)
-    assert_includes texts, "/native?a=1&b=2"
-    assert_nil find(view, "button"), "the message must not become a control"
+    assert_includes texts, url
+    assert_nil find(view, "button"), "neither the message nor the URL may become a control"
   end
 
   # --- one session, many screens ------------------------------------------

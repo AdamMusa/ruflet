@@ -328,9 +328,16 @@ module Ruflet
             end
 
             def framework_chain
+              return [] unless defined?(::ActionController)
+
               %w[Base API].flat_map do |name|
-                base = defined?(::ActionController) && ::ActionController.const_defined?(name, false) &&
-                       ::ActionController.const_get(name, false)
+                # A base that is not loaded yet has no subclasses, so nothing
+                # inherits from it. Asking for it would autoload it and run its
+                # load hooks, as ActionController::API would be in a
+                # development app that never uses it.
+                next [] if !::ActionController.const_defined?(name, false) || ::ActionController.autoload?(name)
+
+                base = ::ActionController.const_get(name, false)
                 next [] unless base.respond_to?(:_process_action_callbacks)
 
                 base._process_action_callbacks.map { |callback| [callback.kind, callback.filter] }

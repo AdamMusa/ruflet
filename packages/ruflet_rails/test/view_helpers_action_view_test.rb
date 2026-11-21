@@ -40,6 +40,19 @@ class RufletViewHelpersActionViewTest < Minitest::Test
       refute_includes html, "<img", "#{name} inserted its label as markup"
       assert_includes html, ">#{ESCAPED}</", name
     end
+    assert_includes render("<%= ruflet_nav_item label, '/p', icon: 'person' %>", label: "Ada & <Bob>"),
+                    ">Ada &amp; &lt;Bob&gt;</a>"
+  end
+
+  def test_a_label_from_data_inside_a_block_renders_as_text
+    html = render(<<~ERB, label: PAYLOAD)
+      <%= ruflet_bottom_nav do %>
+        <%= ruflet_nav_item label, "/", icon: "house" %>
+      <% end %>
+    ERB
+
+    assert_includes html, ">#{ESCAPED}</a>"
+    refute_includes html, "<img"
   end
 
   # The native shell reads the label from the data-ruflet-icon JSON, which was
@@ -48,7 +61,6 @@ class RufletViewHelpersActionViewTest < Minitest::Test
     html = render("<%= ruflet_nav_item label, '/p', icon: 'person' %>", label: "Ada & <Bob>")
 
     assert_includes html, "&quot;label&quot;:&quot;Ada &amp; &lt;Bob&gt;&quot;"
-    assert_includes html, ">Ada &amp; &lt;Bob&gt;</a>"
   end
 
   def test_an_html_safe_label_still_renders_as_markup
@@ -66,18 +78,24 @@ class RufletViewHelpersActionViewTest < Minitest::Test
   end
 
   def test_block_content_still_renders_as_markup
-    html = render(<<~ERB, label: PAYLOAD)
+    html = render(<<~ERB)
       <%= ruflet_bottom_nav do %>
-        <%= ruflet_nav_item label, "/", icon: "house" %>
         <%= ruflet_nav_item "<i>Raw</i>".html_safe, "/raw", icon: "x" %>
       <% end %>
       <%= ruflet_appbar "Inbox" do %><span class="t">Inbox</span><% end %>
     ERB
 
     assert_includes html, %(<nav data-ruflet-tabs="bottom-navigation" hidden="true">)
-    assert_includes html, ">#{ESCAPED}</a>"
-    refute_includes html, "<img"
     assert_includes html, "><i>Raw</i></a>"
     assert_includes html, %(<span class="t">Inbox</span></header>)
+  end
+
+  def test_a_nil_or_false_label_still_renders_an_empty_tag
+    LABEL_CALLS.each do |name, call|
+      [nil, false].each do |label|
+        html = render("<%= #{call} %>", label: label)
+        assert_match %r{"></(a|button)>\z}, html, "#{name}(#{label.inspect})"
+      end
+    end
   end
 end
