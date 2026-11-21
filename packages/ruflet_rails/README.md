@@ -337,6 +337,32 @@ Ruflet.run do |page|
 end
 ```
 
+### Which pages may drive the shell
+
+Only pages on a trusted origin can drive the native shell. The trusted origins
+are `start_url`'s origin, its `https` form when `start_url` is `http`, and its
+`www`/bare-domain twin. A page from any other origin still loads in the
+WebView, but the shell ignores its `data-ruflet-*` declarations and actions
+and logs one line for each one it drops. Examples are an external site the user
+followed a link to, or an OAuth provider. Over such a page the shell clears the
+AppBar, drawer and rail, as it does over a page without Ruflet markup.
+
+If the app serves its own pages from another origin as well, such as a
+separate sign-in host, list that origin:
+
+```ruby
+Ruflet::Rails.native_shell(
+  page,
+  start_url: "https://myapp.com",
+  trusted_origins: ["https://auth.myapp.com"]
+)
+```
+
+The same rule covers sheets, which check the page in the sheet itself.
+Request actions (`component: "request"`, or the `post`/`put`/`patch`/`delete`
+modes) only run against `http(s)` URLs on a trusted origin, and only inside a
+page on a trusted origin.
+
 ### Crossing web and native from HTML
 
 A tiny HTML adapter reads `data-ruflet-*` attributes from the rendered page and

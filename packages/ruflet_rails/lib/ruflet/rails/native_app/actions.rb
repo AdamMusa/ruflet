@@ -119,6 +119,7 @@ module Ruflet
       def submit_webview_request(url, method = "post")
         target = absolute_url(url)
         return if target.empty?
+        return unless webview_request_allowed?(target)
 
         verb = method.to_s.downcase
         verb = "post" if verb.empty?

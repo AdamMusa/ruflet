@@ -51,17 +51,25 @@ module Ruflet
           # enable_javascript prop, so switch JS on as each page starts loading.
           # Without it the in-page adapter cannot read ERB data-ruflet
           # declarations, and WebAuthn/passkeys will not work.
+          # Every body WebView shares @main_frame: one is mounted at a time, and
+          # the client may keep the same native view (and page) for the next.
           on_page_started: lambda do |event|
             update_screen_url_from_event(screen, event)
+            note_frame_url(@main_frame, reported_url(event))
             show_loading(screen)
             enable_js(screen.webview)
           end,
           on_page_ended: lambda do |event|
             update_screen_url_from_event(screen, event)
-            inject_html_adapter(screen)
+            url = reported_url(event)
+            note_frame_url(@main_frame, url)
+            sync_page_chrome(screen, url)
             hide_loading(screen)
           end,
-          on_url_change: ->(event) { update_screen_url_from_event(screen, event) },
+          on_url_change: lambda do |event|
+            update_screen_url_from_event(screen, event)
+            note_frame_url(@main_frame, reported_url(event), probe: screen.webview)
+          end,
           on_web_resource_error: ->(_event) { hide_loading(screen) },
           on_console_message: ->(event) { handle_message(screen, message_of(event)) }
         )
@@ -85,6 +93,14 @@ module Ruflet
         screen.webview.props["url"] = screen.url if screen.webview
       rescue StandardError
         nil
+      end
+
+      # The absolute URL a WebView event reported, or "".
+      def reported_url(event)
+        url = webview_event_url(event)
+        url.empty? ? url : absolute_url(url)
+      rescue StandardError
+        ""
       end
 
       def webview_event_url(event)

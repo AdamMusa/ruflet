@@ -11,9 +11,11 @@ module Ruflet
                           :drawer, :end_drawer, :drawer_signature, :rail, :rail_signature, keyword_init: true)
 
       def initialize(page, start_url:, title: nil, actions: nil, navigation_bar: nil, bottom_appbar: nil,
-                     loading: :shimmer)
+                     loading: :shimmer, trusted_origins: nil)
         @page = page
         @start_url = start_url.to_s
+        configure_trusted_origins(@start_url, trusted_origins)
+        @main_frame = new_bridge_frame(@start_url)
         @title = title.to_s
         @actions = actions
         @navigation_bar = navigation_bar
@@ -39,6 +41,7 @@ module Ruflet
 end
 
 require_relative "native_app/html_adapter"
+require_relative "native_app/origin_trust"
 require_relative "native_app/customization"
 require_relative "native_app/shell"
 require_relative "native_app/navigation"
@@ -51,7 +54,9 @@ module Ruflet
 
     # Wrap your Rails web pages in a native shell: the body stays a WebView
     # while Ruflet owns the native chrome (app bar, drawer, navigation, sheets,
-    # dialogs, services). See NativeApp.
+    # dialogs, services). See NativeApp. Only pages on start_url's origin (or
+    # one listed in `trusted_origins:`) may drive the shell; see
+    # NativeApp::BridgeFrame.
     def native_shell(page, **opts)
       NativeApp.new(page, **opts).start
     end
