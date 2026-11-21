@@ -121,11 +121,18 @@ module RufletRecord
       limit(1).to_a.first
     end
 
+    # The last record, or the last +count+, in the relation's order (by
+    # primary key when it has none). With a limit or offset they are the last
+    # of the rows the relation selects.
     def last(count = nil)
-      primary = @model.primary_key
-      relation = reorder(primary => :desc)
-      records = count ? relation.limit(count).to_a.reverse : relation.limit(1).to_a.first
-      records
+      count = count.to_i unless count.nil?
+      return last_selected(count) if row_window?
+
+      order = @values[:order].empty? ? [{ @model.primary_key => :desc }] : reversed_order
+      return last_by_position(count) unless order
+
+      relation = reorder(*order)
+      count ? relation.limit(count).to_a.reverse : relation.limit(1).to_a.first
     end
 
     def find(id)
@@ -144,8 +151,26 @@ module RufletRecord
       record
     end
 
+    # With a limit, offset or distinct this counts from a subquery of the
+    # rows the relation selects, as Active Record does: the rows, or the
+    # non-NULL values of +column+ in them. A distinct relation with one
+    # selected column counts that column's distinct values, NULL excluded,
+    # also as Active Record does.
     def count(column = nil)
-      aggregate("COUNT", column || SQL::Literal.new("*"), integer: true)
+      unless row_window? || @values[:distinct]
+        return aggregate("COUNT", column || SQL::Literal.new("*"), integer: true)
+      end
+
+      selected = @values[:select]
+      if column.nil? && @values[:distinct] && selected.length == 1 && !selected.first.is_a?(SQL::Literal)
+        column = selected.first
+      end
+      column = nil if column.is_a?(SQL::Literal) && column.sql.strip == "*"
+      return row_count if column.nil?
+
+      counted = select(SQL::Literal.new("#{SQL.column(@table_name, column)} AS \"count_column\""))
+      counted = counted.reorder unless row_window?
+      count_from(counted, "COUNT(\"subquery\".\"count_column\")")
     end
 
     def sum(column)
@@ -199,12 +224,12 @@ module RufletRecord
 
     def update_all(attributes)
       raise ArgumentError, "attributes must not be empty" if attributes.empty?
-      sql, binds = SQL.update(@table_name, SQL.column_values(stringify_keys(attributes)), bound_wheres)
+      sql, binds = SQL.update(@table_name, SQL.column_values(stringify_keys(attributes)), write_wheres)
       @model.connection.update(sql, binds)
     end
 
     def delete_all
-      sql, binds = SQL.delete(@table_name, bound_wheres)
+      sql, binds = SQL.delete(@table_name, write_wheres)
       @model.connection.delete(sql, binds)
     end
 
@@ -212,17 +237,48 @@ module RufletRecord
       to_a.each(&:destroy)
     end
 
+    # Visits the records in primary key order, batch_size at a time, and
+    # stops after the relation's limit when it has one.
     def find_each(batch_size: 1000)
       return to_enum(:find_each, batch_size: batch_size) unless block_given?
+      remaining = @values[:limit]
       cursor = nil
       loop do
-        relation = reorder(@model.primary_key => :asc).limit(batch_size)
+        size = remaining && remaining < batch_size.to_i ? remaining : batch_size
+        relation = reorder(@model.primary_key => :asc).limit(size)
         relation = relation.where("#{SQL.column(@table_name, @model.primary_key)} > ?", cursor) if cursor
         batch = relation.to_a
         break if batch.empty?
         batch.each { |record| yield record }
+        if remaining
+          remaining -= batch.length
+          break if remaining <= 0
+        end
         cursor = batch.last.public_send(@model.primary_key)
       end
+    end
+
+    # A model's scopes chain on its relations (User.where(...).active): the
+    # scope's relation is merged into this one. Other class methods are not
+    # delegated, because they would run without this relation's conditions.
+    # Public, as Base#method_missing is: mruby does not dispatch to a private
+    # method_missing for a call with a receiver.
+    def method_missing(name, *args, &block)
+      return super unless @model.send(:scope_defined?, name)
+
+      value = @model.public_send(name, *args, &block)
+      return value unless value.is_a?(Relation)
+
+      # A parent model's scope builds the parent's relation. Over the same
+      # table it applies to this model's.
+      if !value.model.equal?(@model) && @model.ancestors.include?(value.model) && value.table_name == @table_name
+        value = Relation.new(@model, value.send(:values))
+      end
+      merge(value)
+    end
+
+    def respond_to_missing?(name, include_private = false)
+      @model.send(:scope_defined?, name) || super
     end
 
     def to_sql
@@ -254,6 +310,71 @@ module RufletRecord
       row = select(SQL::Literal.new("#{function}(#{expression}) AS value")).reorder.send(:raw_rows).first
       value = row && row["value"]
       options[:integer] && value ? value.to_i : value
+    end
+
+    # Whether a limit or offset narrows the rows the relation selects.
+    def row_window?
+      !@values[:limit].nil? || !@values[:offset].nil?
+    end
+
+    # The number of rows the relation selects.
+    def row_count
+      counted = @values[:distinct] ? self : select(SQL::Literal.new("1"))
+      counted = counted.reorder unless row_window?
+      count_from(counted, "COUNT(*)")
+    end
+
+    def count_from(relation, expression)
+      sql, binds = relation.send(:bound_sql_and_binds)
+      row = @model.connection.select_all("SELECT #{expression} AS value FROM (#{sql}) AS \"subquery\"", binds).first
+      row ? row["value"].to_i : 0
+    end
+
+    # The conditions an UPDATE or DELETE runs with. With a limit or offset
+    # they pick the rows the relation selects by primary key, as Active
+    # Record does on SQLite; otherwise they are the relation's conditions.
+    def write_wheres
+      return bound_wheres unless row_window?
+
+      sql, binds = select(@model.primary_key).distinct(false).send(:bound_sql_and_binds)
+      [SQL::Fragment.new("#{SQL.column(@table_name, @model.primary_key)} IN (#{sql})", binds)]
+    end
+
+    def last_selected(count)
+      relation = @values[:order].empty? ? reorder(@model.primary_key => :asc) : self
+      records = relation.to_a
+      count ? records.last(count) : records.last
+    end
+
+    # An order given as SQL cannot be reversed safely, so the last rows are
+    # read by their position in it.
+    def last_by_position(count)
+      wanted = count || 1
+      start = row_count - wanted
+      records = offset(start > 0 ? start : 0).limit(wanted).to_a
+      count ? records : records.last
+    end
+
+    # The relation's order reversed, or nil when part of it is SQL.
+    def reversed_order
+      reversed = []
+      @values[:order].each do |value|
+        if value.is_a?(Hash)
+          flipped = {}
+          value.each { |name, direction| flipped[name] = direction.to_s.upcase == "DESC" ? :asc : :desc }
+          reversed << flipped
+        elsif value.is_a?(Symbol)
+          reversed << { value => :desc }
+        elsif value.is_a?(SQL::Literal)
+          return nil
+        else
+          pieces = SQL.parse_order_string(@table_name, value.to_s).split(", ").map do |piece|
+            piece.end_with?(" DESC") ? "#{piece[0...-5]} ASC" : "#{piece[0...-4]} DESC"
+          end
+          reversed << SQL::Literal.new(pieces.join(", "))
+        end
+      end
+      reversed
     end
 
     def to_sql_and_binds

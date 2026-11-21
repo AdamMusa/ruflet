@@ -156,6 +156,27 @@ User.where.not(active: false)
 User.order(age: :desc).pluck(:name, :age)
 ```
 
+Scopes chain on any relation of their model, including another scope and an
+association reader: `User.where(age: 18..).active` and
+`user.posts.published.recent`. A scope's conditions and order are added to
+the relation's; its select, limit and offset replace the relation's. Other
+class methods do not chain.
+
+A relation's limit and offset apply to everything that runs it, as in Active
+Record:
+
+- `update_all` and `delete_all` change only the rows the relation selects:
+  `Task.order(:created_at).limit(100).delete_all` deletes the 100 oldest.
+- `count` counts the selected rows: `User.limit(2).count` is at most 2.
+- `last` is the last of the selected rows.
+- `find_each` stops after the relation's limit.
+
+`sum`, `average`, `minimum` and `maximum` ignore the limit and offset, as in
+Active Record. `last` follows the relation's order:
+`User.order(age: :desc).last` is the youngest user. On a distinct relation,
+`count` counts the distinct values of its one selected column, without `NULL`:
+`User.select(:city).distinct.count`.
+
 A range with an open end leaves that side unbounded, as in Active Record:
 `18..` is `age >= 18`, `..17` is `age <= 17`, `...18` is `age < 18`, and
 `nil..nil` matches every row.

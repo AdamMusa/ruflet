@@ -31,6 +31,10 @@ raise "count failed" unless Note.count == 2
 raise "endless range failed" unless Note.where(id: 2..).pluck(:title) == ["Verify mruby"]
 raise "beginless range failed" unless Note.where(id: ...2).pluck(:title) == ["Ship RufletRecord"]
 
+raise "scope chaining failed" unless Note.where(id: 2).done.count == 1 && Note.done.where(id: 1).count == 0
+raise "count with a limit failed" unless Note.limit(1).count == 1
+raise "last with an order failed" unless Note.order(id: :desc).last.id == 1
+
 first.update!(done: true)
 raise "update failed" unless Note.done.count == 2
 raise "timestamp casting failed" unless first.reload.updated_at.is_a?(Time)
@@ -69,6 +73,9 @@ rescue RufletRecord::RecordInvalid => error
   raise "transaction error lost its message" unless error.message.include?("Title")
 end
 raise "transaction rollback failed" unless Note.count == 5
+
+# A limit narrows delete_all to the rows the relation selects.
+raise "delete_all with a limit failed" unless Note.order(:id).limit(2).delete_all == 2 && Note.count == 3
 
 RufletRecord.connection.close
 puts "ruflet_record mruby sqlite smoke: ok"
