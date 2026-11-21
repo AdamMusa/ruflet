@@ -35,6 +35,9 @@ module Ruflet
       # gets queued reloads anyway. It may never report: it can start its
       # server some way the harness does not capture.
       READY_FALLBACK_SECONDS = 5
+      # Addresses another local server may hold the chosen port on while the
+      # 0.0.0.0 bind still succeeds (see loopback_port_taken?).
+      LOOPBACK_PROBE_HOSTS = %w[127.0.0.1 ::1].freeze
 
       def command_run(args)
         options = parse_run_options(args)
@@ -86,10 +89,10 @@ module Ruflet
         run_state = new_run_state(track_ready: options[:reload] && manual_reload_supported?)
         spawn_app_child(env, cmd, run_state)
         reload_input_thread = options[:reload] ? start_reload_input_thread(run_state) : nil
-        launched_client_pids = launch_target_client(options[:target], selected_port)
+        launched_client_pids = launch_target_client(options[:target], selected_port, run_state)
         forward_signal = lambda do |signal|
           begin
-            Process.kill(signal, -run_state[:child_pid])
+            signal_app_child(signal, run_state)
           rescue Errno::ESRCH
             nil
           end
@@ -99,7 +102,9 @@ module Ruflet
         previous_term = Signal.trap("TERM") { forward_signal.call("TERM") }
 
         loop do
-          _pid, status = Process.wait2(run_state[:child_pid])
+          # An app that exited while its server was starting has been reaped
+          # by wait_for_server_boot already; its status is kept for here.
+          status = run_state.delete(:boot_exit_status) || wait_app_child(run_state)
           return status.success? ? 0 : (status.exitstatus || 1) unless run_state[:restart]
 
           # Full restart requested ("R"): respawn the backend; connected
@@ -108,7 +113,8 @@ module Ruflet
           puts "Restarting app..."
           started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           spawn_app_child(env, cmd, run_state)
-          wait_for_server_boot(selected_port)
+          next unless wait_for_server_boot(selected_port, run_state)
+
           elapsed_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
           puts "Restarted in #{elapsed_ms}ms"
         end
@@ -121,13 +127,18 @@ module Ruflet
 
         if defined?(run_state) && run_state && run_state[:child_pid]
           begin
-            Process.kill("TERM", -run_state[:child_pid])
+            signal_app_child("TERM", run_state)
           rescue Errno::ESRCH
             nil
           end
         end
 
         Array(defined?(launched_client_pids) ? launched_client_pids : nil).compact.each do |pid|
+          if windows_native_ruby?
+            stop_launched_process_on_windows(pid)
+            next
+          end
+
           begin
             Process.kill("TERM", -pid)
           rescue Errno::ESRCH
@@ -258,9 +269,88 @@ module Ruflet
         state
       end
 
+      # Ruby built for Windows itself (mswin, MinGW/RubyInstaller). Cygwin's
+      # Ruby is POSIX: it has process groups and keeps the POSIX paths.
+      def windows_native_ruby?
+        RbConfig::CONFIG["host_os"].to_s.match?(/mswin|mingw/i)
+      end
+
+      # The app child leads its own process group, so the terminal's Ctrl-C
+      # reaches `ruflet run`, which then stops the app. CRuby has `pgroup:`
+      # only where setpgid exists; Windows builds reject it (ArgumentError:
+      # wrong exec option symbol) and take `new_pgroup:` instead.
+      def app_child_group_options
+        windows_native_ruby? ? { new_pgroup: true } : { pgroup: true }
+      end
+
+      # Sends `signal` to the app child's process group. Raises Errno::ESRCH
+      # once the app is gone.
+      #
+      # Windows has no process groups to signal, and Process.kill delivers
+      # only KILL there (TERM and INT to another process raise EINVAL), so
+      # the app's process tree is ended instead. Only an app child that has
+      # not been reaped yet: Ruby holds its handle until then, so its pid
+      # cannot name another process.
+      def signal_app_child(signal, run_state)
+        pid = run_state[:child_pid]
+        return Process.kill(signal, -pid) unless windows_native_ruby?
+        raise Errno::ESRCH, "app child #{pid} has exited" if run_state[:reaped_pid] == pid
+
+        end_windows_process_tree(pid)
+      end
+
+      def wait_app_child(run_state)
+        pid = run_state[:child_pid]
+        _pid, status = Process.wait2(pid)
+        run_state[:reaped_pid] = pid
+        status
+      end
+
+      # The app child's exit status if it has exited (reaping it), else nil.
+      def reap_exited_app_child(run_state)
+        pid = run_state[:child_pid]
+        return nil unless pid
+
+        _pid, status = Process.waitpid2(pid, Process::WNOHANG)
+        return nil unless status
+
+        run_state[:reaped_pid] = pid
+        status
+      rescue Errno::ECHILD
+        nil
+      end
+
+      # taskkill /T ends the process and what it started, as a group signal
+      # does on POSIX; KILL (TerminateProcess) covers a host without it.
+      def end_windows_process_tree(pid)
+        return if system("taskkill", "/T", "/F", "/PID", pid.to_s, out: File::NULL, err: File::NULL)
+
+        Process.kill("KILL", pid)
+      end
+
+      # The desktop client is ended only while its Process.detach waiter
+      # still runs: once that has reaped the client, the pid may belong to
+      # another process. (No browser is launched by pid on Windows.)
+      def stop_launched_process_on_windows(pid)
+        waiter = launched_process_waiters[pid]
+        return unless waiter&.alive?
+
+        end_windows_process_tree(pid)
+      rescue Errno::ESRCH
+        nil
+      end
+
+      def detach_launched_process(pid)
+        launched_process_waiters[pid] = Process.detach(pid)
+      end
+
+      def launched_process_waiters
+        @launched_process_waiters ||= {}
+      end
+
       def spawn_app_child(env, cmd, run_state, **spawn_options)
         unless run_state[:lock]
-          return run_state[:child_pid] = Process.spawn(env, *cmd, pgroup: true, **spawn_options)
+          return run_state[:child_pid] = Process.spawn(env, *cmd, **app_child_group_options, **spawn_options)
         end
 
         reader, writer = IO.pipe
@@ -271,7 +361,7 @@ module Ruflet
           run_state[:ready] = false
           run_state[:reload_pending] = false
           run_state[:retired_pid] = nil
-          run_state[:child_pid] = Process.spawn(child_env, *cmd, pgroup: true, READY_FD => writer, **spawn_options)
+          run_state[:child_pid] = Process.spawn(child_env, *cmd, **app_child_group_options, READY_FD => writer, **spawn_options)
         end
         writer.close
         run_state[:ready_thread] = watch_child_ready(reader, pid, run_state)
@@ -461,8 +551,11 @@ module Ruflet
         end
       end
 
-      def launch_target_client(target, port)
-        wait_for_server_boot(port)
+      def launch_target_client(target, port, run_state = nil)
+        # An app that exited before its server came up leaves nothing for a
+        # client to open; command_run then returns its status. An app that
+        # "R" stopped is respawned right after, so its client still opens.
+        return [] unless wait_for_server_boot(port, run_state) || run_state[:restart]
 
         case target
         when "web"
@@ -490,7 +583,12 @@ module Ruflet
         []
       end
 
-      def wait_for_server_boot(port, timeout_seconds: 10, poll_interval: 0.01)
+      # Waits until the app's server accepts connections on `port`, for at
+      # most timeout_seconds (then says so and carries on). Given the run
+      # state, it also watches the app child: an app that exits first (a
+      # startup error, which it has printed) ends the wait at once. Its status
+      # is kept in run_state[:boot_exit_status] and the result is false.
+      def wait_for_server_boot(port, run_state = nil, timeout_seconds: 10, poll_interval: 0.01)
         Timeout.timeout(timeout_seconds) do
           loop do
             begin
@@ -499,12 +597,26 @@ module Ruflet
               sock.close
               break
             rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
+              status = run_state && reap_exited_app_child(run_state)
+              if status
+                run_state[:boot_exit_status] = status
+                # "R" stopped it on purpose; the respawn follows.
+                report_app_exit_during_boot(status) unless run_state[:restart]
+                return false
+              end
               sleep poll_interval
             end
           end
         end
+        true
       rescue Timeout::Error
         warn "Server did not become reachable at http://localhost:#{port} yet."
+        true
+      end
+
+      def report_app_exit_during_boot(status)
+        detail = status.exitstatus ? "status #{status.exitstatus}" : "signal #{status.termsig}"
+        warn "The app exited during startup (#{detail})#{status.success? ? "" : "; see the error above"}."
       end
 
       def open_in_browser(url)
@@ -586,7 +698,7 @@ module Ruflet
         # client reads RUFLET_URL, so it connects instead of showing its own
         # launcher. Pass both so either client auto-connects.
         pid = Process.spawn({ "RUFLET_URL" => url }, *cmd, out: File::NULL, err: File::NULL)
-        Process.detach(pid)
+        detach_launched_process(pid)
         if !pid
           warn "Failed to launch desktop client: #{cmd.first}"
           warn "Start it manually with URL: #{url}"
@@ -1106,13 +1218,33 @@ module Ruflet
               probe = TCPServer.new("127.0.0.1", port)
             end
             probe.close
-            return port
+            return port unless loopback_port_taken?(port)
+
+            port += 1
           rescue Errno::EADDRINUSE, Errno::EACCES, Errno::EPERM
             port += 1
           end
         end
 
         start_port
+      end
+
+      # The server binds 0.0.0.0. On macOS and the BSDs that bind succeeds
+      # (Ruby sets SO_REUSEADDR) while another process listens on 127.0.0.1
+      # or [::1] at the same port, and http://localhost:<port>, which the web
+      # and desktop clients open, then reaches that process. A bind on each
+      # loopback address finds such a listener (Linux refuses the 0.0.0.0
+      # bind already). Only "in use" counts: a host without IPv6 has no [::1]
+      # to hold, and any other refusal leaves the result as it was.
+      def loopback_port_taken?(port)
+        LOOPBACK_PROBE_HOSTS.any? do |host|
+          TCPServer.new(host, port).close
+          false
+        rescue Errno::EADDRINUSE
+          true
+        rescue SystemCallError, SocketError
+          false
+        end
       end
 
       def resolve_backend_port(_target, requested_port: 8550)

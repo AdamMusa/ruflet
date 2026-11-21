@@ -388,6 +388,11 @@ module Ruflet
         end
       end
     rescue StandardError => e
+      # A client that hung up mid-response (the `ruflet run` boot probe, a
+      # browser cancelling a request) is not a server error, and has no
+      # socket left to send a 500 on.
+      return if disconnect_error?(e)
+
       warn "http error: #{e.class}: #{e.message}"
       write_http_response(socket, 500, "text/plain", "server error")
     end
