@@ -1491,7 +1491,6 @@ module Ruflet
         refresh_control_indexes!
         wire_id = control.wire_id
       end
-      return self if wire_id.nil?
 
       patch = normalize_props(props)
       if patch.key?("action") && control.is_a?(UI::Controls::ClientActionProps)
@@ -1517,6 +1516,11 @@ module Ruflet
         control.props.delete("controls") if replacement_controls.any? { |child| child.is_a?(Control) }
         patch["controls"] = replacement_controls
       end
+
+      # A control the client does not have yet (a dialog's title before
+      # show_dialog, a view not pushed yet) keeps the new props above and
+      # sends nothing: they go out with it when it is mounted.
+      return self if wire_id.nil?
 
       visited = Set.new
       patch.each_value { |value| register_embedded_value(value, visited) }
@@ -1995,6 +1999,12 @@ module Ruflet
       when String
         value.dup
       else
+        # A value object compares by what it sends: a dup of a TextStyle is
+        # never == the original, so comparing dups re-sent it on every bare
+        # update.
+        hash = value_object_wire_hash(value)
+        return [value.class, comparison_wire_value(hash)] if hash
+
         begin
           value.dup
         rescue TypeError
@@ -2315,8 +2325,27 @@ module Ruflet
       when Hash
         value.each_with_object({}) { |(k, v), result| result[k.to_s] = serialize_patch_value(v) }
       else
-        value
+        hash = value_object_wire_hash(value)
+        hash ? serialize_patch_value(hash) : value
       end
+    end
+
+    # The map a value object (Ruflet::TextStyle, StrutStyle, Offset,
+    # Duration, a Struct) goes on the wire as: its to_h, as
+    # Control#serialize_value sends it when the control is built. Without
+    # it the codec fell back to to_s and sent "#<Ruflet::...:0x...>", which
+    # the renderer cannot read. nil for anything else, which is sent as it
+    # is: nil itself (nil.to_h is {}), collections (Range, Set, Enumerator:
+    # their to_h raises or means something else), and objects whose to_h
+    # raises or does not return a Hash.
+    def value_object_wire_hash(value)
+      return nil if value.nil? || !value.respond_to?(:to_h)
+      return nil if value.is_a?(Enumerable) && !value.is_a?(Struct)
+
+      hash = value.to_h
+      hash.is_a?(Hash) ? hash : nil
+    rescue StandardError
+      nil
     end
 
     # Matches Control#icon_prop_key?: show_close_icon, show_edit_icon,
