@@ -22,7 +22,10 @@ class RufletPageCompatibilityTest < Minitest::Test
     page.show_dialog(dialog)
     update = sent.last[1]
     assert_equal patch_value(patch, "_dialogs")["_i"], update["id"]
-    assert_equal "AlertDialog", update["patch"][1][3].first["_c"]
+    # Added to the mounted container's list, not sent as a new list.
+    assert_equal [0, { "controls" => [1] }], update["patch"][0]
+    assert_equal [1, 1, 0], update["patch"][1].first(3)
+    assert_equal "AlertDialog", update["patch"][1][3]["_c"]
   end
 
   def test_web_capability_defaults_to_false_when_client_omits_it
