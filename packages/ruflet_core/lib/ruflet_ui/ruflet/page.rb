@@ -158,6 +158,20 @@ module Ruflet
     PAGE_PROP_KEYS = %w[dark_theme fonts route rtl show_semantics_debugger theme theme_mode theme_animation_style title vertical_alignment horizontal_alignment scroll].freeze
     DIALOG_PROP_KEYS = %w[dialog snack_bar bottom_sheet].freeze
 
+    # Wire ids of the page's internal overlay, services and dialogs
+    # containers. They are fixed, like the page (1), its window (2) and the
+    # implicit view (20), and below the first id the allocator hands out
+    # (100). A client that reconnects keeps its control tree and merges the
+    # new Page's containers into it by id. Taken from the allocator, these
+    # ids moved with the content registered before them (a route that renders
+    # more rows), so the new containers replaced the client's instances, and
+    # the client's View, which looks them up once, never showed a dialog,
+    # snack bar or bottom sheet again.
+    OVERLAY_WIRE_ID = 3
+    SERVICES_WIRE_ID = 4
+    DIALOGS_WIRE_ID = 5
+    INTERNAL_CONTAINER_KEYS = %w[_overlay _services _dialogs].freeze
+
     # Seed the registries (page_registry.rb) with the built-in entries.
     # vertical_alignment, horizontal_alignment and scroll lay out the page
     # View's body, so the View mirrors them.
@@ -236,6 +250,7 @@ module Ruflet
       @overlay_container_mounted = false
       @dialogs_container_mounted = false
       @services_container_mounted = false
+      @containers_await_view_patch = false
       @visual_service_controls = {}
       @page_event_handlers = {}
       @view_props = {}
@@ -260,6 +275,9 @@ module Ruflet
         id: "_dialogs",
         controls: []
       )
+      @overlay_container.wire_id = OVERLAY_WIRE_ID
+      @services_container.wire_id = SERVICES_WIRE_ID
+      @dialogs_container.wire_id = DIALOGS_WIRE_ID
       @invoke_waiters = {}
       @invoke_callbacks = {}
       @invoke_waiters_mutex = Mutex.new
@@ -296,11 +314,14 @@ module Ruflet
     # A resumed Page keeps its Ruby controls and event handlers, but a newly
     # connected client has not mounted any of that state yet. Invalidate only
     # the client-side publication snapshot so the next update sends the full
-    # page shell, including the internal overlay, dialog, and service roots.
+    # page shell, including the internal overlay, dialog, and service roots
+    # (unless register_containers_patch sends those roots first, as
+    # Ruflet::ConnectionProtocol does).
     def prepare_for_reconnect!
       @overlay_container_mounted = false
       @dialogs_container_mounted = false
       @services_container_mounted = false
+      @containers_await_view_patch = false
       @published_shell_state = nil
       self
     end
@@ -390,6 +411,34 @@ module Ruflet
       @dialogs_container_mounted = true if @dialogs_container.wire_id
       @services_container_mounted = true if @services_container.wire_id
       capture_published_wire_state!
+      patch
+    end
+
+    # Only the internal overlay, services and dialogs containers, as a
+    # property map for a register_client reply that op patches follow
+    # (Ruflet::ConnectionProtocol, which ruflet_rails runs, sends the rest of
+    # the page as the app block renders it). Like register_page_patch, the
+    # client merges this map by control id, so a client that reconnects with
+    # its old tree keeps its container instances; sent in an op patch
+    # instead, each container replaces its client-side instance and detaches
+    # it. Marks the containers mounted, so later view patches leave them out,
+    # and records what they hold for page.update; the first view patch after
+    # it also sends what changed in them meanwhile without being sent
+    # (unsent_container_change?). The page shell is not published here: the
+    # next page.update still sends the views.
+    def register_containers_patch
+      refresh_control_indexes!
+      patch = {}
+      @page_props.each do |key, value|
+        patch[key] = serialize_patch_value(value) if INTERNAL_CONTAINER_KEYS.include?(key)
+      end
+      @overlay_container_mounted = true
+      @dialogs_container_mounted = true
+      @services_container_mounted = true
+      @containers_await_view_patch = true
+      capture_published_control_tree!(@overlay_container)
+      capture_published_control_tree!(@services_container)
+      capture_published_control_tree!(@dialogs_container)
       patch
     end
 
@@ -836,7 +885,9 @@ module Ruflet
       dialog_control.props["open"] = true
       @dialogs << dialog_control unless @dialogs.include?(dialog_control)
       refresh_dialogs_container!
-      send_view_patch unless @dialogs_container.wire_id
+      # The container's wire id is fixed (DIALOGS_WIRE_ID), so it no longer
+      # tells whether the client has the container; being mounted does.
+      send_view_patch unless @dialogs_container_mounted
       push_dialogs_update!
       self
     end
@@ -2039,6 +2090,12 @@ module Ruflet
       refresh_control_indexes!
       view_patches = build_view_patches
       page_patch_ops = build_page_patch_ops
+      # Until the first view patch after a containers-only register reply,
+      # a container change that sent nothing still goes out on its own.
+      stale_overlay = unsent_container_change?(@overlay_container)
+      stale_services = unsent_container_change?(@services_container)
+      stale_dialogs = unsent_container_change?(@dialogs_container)
+      @containers_await_view_patch = false
 
       send_message(Protocol::ACTIONS[:patch_control], {
         "id" => 1,
@@ -2052,6 +2109,23 @@ module Ruflet
       @dialogs_container_mounted = true if @dialogs_container.wire_id
       @services_container_mounted = true if @services_container.wire_id
       capture_published_wire_state!
+      push_overlay_update! if stale_overlay
+      push_services_update! if stale_services
+      push_dialogs_update! if stale_dialogs
+    end
+
+    # Whether +container+ went to the client in a register reply's
+    # containers-only page patch and has changed since without sending
+    # anything (page.overlay << control, or a dialog, snack bar or bottom
+    # sheet given to set_view_props or page.update(:page, ...)). Before the
+    # containers moved into that reply, the first view patch carried them
+    # whole, so such a change still reached the client; the view patch now
+    # leaves mounted containers out.
+    def unsent_container_change?(container)
+      return false unless @containers_await_view_patch
+
+      prior = @published_control_states[container.wire_id]
+      !prior.nil? && prior != control_local_wire_state(container)
     end
 
     def register_control_tree(control, visited = Set.new)

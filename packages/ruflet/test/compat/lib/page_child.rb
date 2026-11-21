@@ -16,8 +16,9 @@
 #   config/routes.rb, `Ruflet::Rails.native(<app file>)`, is called with a
 #   WebSocket upgrade env and a hijacked socket pair, and a client speaks real
 #   WebSocket frames to it. That runs Ruflet::Rails::Protocol::LocalServer
-#   (Ruflet::ConnectionProtocol): `register_client` without a page patch,
-#   then the page as `page.update` op patches.
+#   (Ruflet::ConnectionProtocol): `register_client` with only the page's
+#   internal containers as its page patch, then the page as `page.update` op
+#   patches.
 #
 # An error in this driver (not in the app) is a harness fault: it is written
 # to the result file and lib/harness.rb fails the golden with it.

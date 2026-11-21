@@ -39,9 +39,10 @@ intended, review the diff, and list it under "Behavior changes" in the PR.
 * `goldens/page/<fixture>--rails-endpoint.json`, for the Rails apps: what a
   client receives from the endpoint `config/routes.rb` mounts
   (`Ruflet::Rails.native`), which a Rails server runs instead. That path
-  replies to `register_client` without a page patch and then sends the page
-  as `page.update` op patches; the golden also holds the Rack response and
-  the WebSocket handshake.
+  replies to `register_client` with only the page's overlay, services and
+  dialogs containers as its page patch and then sends the page as
+  `page.update` op patches; the golden also holds the Rack response and the
+  WebSocket handshake.
 
 ### What the corpus covers
 

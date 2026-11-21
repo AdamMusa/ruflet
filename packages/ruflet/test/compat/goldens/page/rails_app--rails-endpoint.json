@@ -24,14 +24,33 @@
       "action": "register_client",
       "payload": {
         "session_id": "compat-session",
-        "page_patch": {},
+        "page_patch": {
+          "_overlay": {
+            "_c": "Overlay",
+            "_i": "#1",
+            "controls": []
+          },
+          "_services": {
+            "_c": "ServiceRegistry",
+            "_i": "#2",
+            "_services": [],
+            "_internals": {
+              "uid": "00000001"
+            }
+          },
+          "_dialogs": {
+            "_c": "Dialogs",
+            "_i": "#3",
+            "controls": []
+          }
+        },
         "error": ""
       }
     },
     {
       "action": "patch_control",
       "payload": {
-        "id": "#1",
+        "id": "#4",
         "patch": [
           [
             0
@@ -43,7 +62,7 @@
             [
               {
                 "_c": "View",
-                "_i": "#2",
+                "_i": "#5",
                 "route": "/",
                 "_internals": {
                   "host_expanded": true
@@ -51,19 +70,19 @@
                 "controls": [
                   {
                     "_c": "SafeArea",
-                    "_i": "#3",
+                    "_i": "#6",
                     "avoid_intrusions_bottom": true,
                     "avoid_intrusions_left": true,
                     "avoid_intrusions_right": true,
                     "avoid_intrusions_top": true,
                     "content": {
                       "_c": "Container",
-                      "_i": "#4",
+                      "_i": "#7",
                       "expand": true,
                       "padding": 24,
                       "content": {
                         "_c": "Column",
-                        "_i": "#5",
+                        "_i": "#8",
                         "_internals": {
                           "host_expanded": true
                         },
@@ -71,14 +90,14 @@
                         "controls": [
                           {
                             "_c": "Text",
-                            "_i": "#6",
+                            "_i": "#9",
                             "size": 24,
                             "weight": "bold",
                             "value": "Rails App"
                           },
                           {
                             "_c": "Text",
-                            "_i": "#7",
+                            "_i": "#10",
                             "value": "Edit app/views/ruflet/main.rb to build your app."
                           }
                         ]
@@ -104,40 +123,7 @@
             "window",
             {
               "_c": "Window",
-              "_i": "#8"
-            }
-          ],
-          [
-            0,
-            0,
-            "_overlay",
-            {
-              "_c": "Overlay",
-              "_i": "#9",
-              "controls": []
-            }
-          ],
-          [
-            0,
-            0,
-            "_services",
-            {
-              "_c": "ServiceRegistry",
-              "_i": "#10",
-              "_services": [],
-              "_internals": {
-                "uid": "00000001"
-              }
-            }
-          ],
-          [
-            0,
-            0,
-            "_dialogs",
-            {
-              "_c": "Dialogs",
-              "_i": "#11",
-              "controls": []
+              "_i": "#11"
             }
           ],
           [
