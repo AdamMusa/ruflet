@@ -40,15 +40,15 @@ module Ruflet
 
       def base_page(**props, &block) = build_widget(:base_page, **props, &block)
       def basepage(**props, &block) = base_page(**props, &block)
-      def dialogs(controls = nil, **props)
+      def dialogs(controls = nil, **props, &block)
         mapped = props.dup
         mapped[:controls] = controls unless controls.nil?
-        build_widget(:dialogs, **mapped)
+        build_widget(:dialogs, **mapped, &block)
       end
       def pagelet(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:pagelet, **mapped, &block)
+        build_with_legacy_block_slot(:pagelet, "pagelet", :content, mapped, block)
       end
       def ruflet_app(**props) = build_widget(:ruflet_app, **props)
       def rufletapp(**props) = ruflet_app(**props)
@@ -112,13 +112,13 @@ module Ruflet
         build_widget(:gridview, **mapped, &block)
       end
       def gridview(children = nil, **props, &block) = grid_view(children, **props, &block)
-      def container(**props, &block) = build_widget(:container, **normalize_container_props(props), &block)
-      def animated_switcher(content = nil, **props)
+      def container(**props, &block) = build_with_legacy_block_slot(:container, "container", :content, normalize_container_props(props), block)
+      def animated_switcher(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:animatedswitcher, **mapped)
+        build_with_block_slot(:animatedswitcher, "animated_switcher", :content, mapped, block)
       end
-      def animatedswitcher(content = nil, **props) = animated_switcher(content, **props)
+      def animatedswitcher(content = nil, **props, &block) = animated_switcher(content, **props, &block)
       def animation(duration = nil, **props)
         duration = props.delete(:duration) if duration.nil? && props.key?(:duration)
         AnimationValues.animation(duration, **props)
@@ -130,7 +130,7 @@ module Ruflet
       def barometer(**props) = build_service(:barometer, **props)
       def battery(**props) = build_service(:battery, **props)
       def browser_context_menu(**props) = build_service(:browser_context_menu, **props)
-      def camera(**props) = build_widget(:camera, **props)
+      def camera(**props, &block) = build_with_block_slot(:camera, "camera", :content, props.dup, block)
       def connectivity(**props) = build_service(:connectivity, **props)
       def file_picker(**props) = build_service(:file_picker, **props)
       def flashlight(**props) = build_service(:flashlight, **props)
@@ -164,38 +164,38 @@ module Ruflet
       end
       def autocomplete_suggestion(key = nil, **props) = auto_complete_suggestion(key, **props)
       def autocompletesuggestion(key = nil, **props) = auto_complete_suggestion(key, **props)
-      def context_menu(content = nil, **props)
+      def context_menu(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:contextmenu, **mapped)
+        build_with_block_slot(:contextmenu, "context_menu", :content, mapped, block)
       end
-      def contextmenu(content = nil, **props) = context_menu(content, **props)
-      def autofill_group(content = nil, **props)
+      def contextmenu(content = nil, **props, &block) = context_menu(content, **props, &block)
+      def autofill_group(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:autofillgroup, **mapped)
+        build_with_block_slot(:autofillgroup, "autofill_group", :content, mapped, block)
       end
-      def autofillgroup(content = nil, **props) = autofill_group(content, **props)
-      def hero(content = nil, **props)
+      def autofillgroup(content = nil, **props, &block) = autofill_group(content, **props, &block)
+      def hero(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:hero, **mapped)
+        build_with_block_slot(:hero, "hero", :content, mapped, block)
       end
-      def overlay(children = nil, **props)
+      def overlay(children = nil, **props, &block)
         mapped = props.dup
         mapped[:controls] = children unless children.nil?
-        build_widget(:overlay, **mapped)
+        build_widget(:overlay, **mapped, &block)
       end
-      def shader_mask(content = nil, **props)
+      def shader_mask(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:shadermask, **mapped)
+        build_with_block_slot(:shadermask, "shader_mask", :content, mapped, block)
       end
-      def shadermask(content = nil, **props) = shader_mask(content, **props)
-      def shimmer(content = nil, **props)
+      def shadermask(content = nil, **props, &block) = shader_mask(content, **props, &block)
+      def shimmer(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:shimmer, **mapped)
+        build_with_block_slot(:shimmer, "shimmer", :content, mapped, block)
       end
       def text_span(text = nil, **props)
         mapped = props.dup
@@ -203,24 +203,24 @@ module Ruflet
         build_widget(:textspan, **mapped)
       end
       def textspan(text = nil, **props) = text_span(text, **props)
-      def keyboard_listener(content = nil, **props)
+      def keyboard_listener(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:keyboardlistener, **mapped)
+        build_with_block_slot(:keyboardlistener, "keyboard_listener", :content, mapped, block)
       end
-      def keyboardlistener(content = nil, **props) = keyboard_listener(content, **props)
-      def form_row(content = nil, **props)
+      def keyboardlistener(content = nil, **props, &block) = keyboard_listener(content, **props, &block)
+      def form_row(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:formrow, **mapped)
+        build_with_block_slot(:formrow, "form_row", :content, mapped, block)
       end
-      def formrow(content = nil, **props) = form_row(content, **props)
-      def gesture_detector(**props, &block) = build_widget(:gesturedetector, **props, &block)
+      def formrow(content = nil, **props, &block) = form_row(content, **props, &block)
+      def gesture_detector(**props, &block) = build_with_legacy_block_slot(:gesturedetector, "gesture_detector", :content, props.dup, block)
       def gesturedetector(**props, &block) = gesture_detector(**props, &block)
-      def canvas(shapes = nil, **props)
+      def canvas(shapes = nil, **props, &block)
         mapped = props.dup
         mapped[:shapes] = shapes unless shapes.nil?
-        build_widget(:canvas, **mapped)
+        build_with_block_slot(:canvas, "canvas", :shapes, mapped, block)
       end
       def line(**props) = build_widget(:line, **props)
       def circle(**props) = build_widget(:circle, **props)
@@ -247,7 +247,7 @@ module Ruflet
       def draggable(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:draggable, **mapped, &block)
+        build_with_legacy_block_slot(:draggable, "draggable", :content, mapped, block)
       end
       def draggable_scrollable_sheet(children = nil, **props, &block)
         mapped = props.dup
@@ -255,21 +255,21 @@ module Ruflet
         build_widget(:draggablescrollablesheet, **mapped, &block)
       end
       def draggablescrollablesheet(children = nil, **props, &block) = draggable_scrollable_sheet(children, **props, &block)
-      def dismissible(content = nil, **props)
+      def dismissible(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:dismissible, **mapped)
+        build_with_block_slot(:dismissible, "dismissible", :content, mapped, block)
       end
       def drag_target(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:dragtarget, **mapped, &block)
+        build_with_legacy_block_slot(:dragtarget, "drag_target", :content, mapped, block)
       end
       def dragtarget(content = nil, **props, &block) = drag_target(content, **props, &block)
-      def card(content = nil, **props)
+      def card(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:card, **mapped)
+        build_with_block_slot(:card, "card", :content, mapped, block)
       end
       def carousel_view(children = nil, **props, &block)
         mapped = props.dup
@@ -363,12 +363,12 @@ module Ruflet
         build_widget(:textsourceattribution, **mapped)
       end
       def textsourceattribution(text = nil, **props) = text_source_attribution(text, **props)
-      def list_view(children = nil, **props)
+      def list_view(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
-        build_widget(:listview, **mapped)
+        build_widget(:listview, **mapped, &block)
       end
-      def listview(children = nil, **props) = list_view(children, **props)
+      def listview(children = nil, **props, &block) = list_view(children, **props, &block)
       def custom_scroll_view(slivers = nil, **props, &block)
         mapped = props.dup
         mapped[:slivers] = slivers unless slivers.nil?
@@ -387,63 +387,64 @@ module Ruflet
         build_widget(:slivergrid, **mapped, &block)
       end
       def slivergrid(children = nil, **props, &block) = sliver_grid(children, **props, &block)
-      def sliver_to_box_adapter(content = nil, **props)
+      def sliver_to_box_adapter(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:slivertoboxadapter, **mapped)
+        build_with_block_slot(:slivertoboxadapter, "sliver_to_box_adapter", :content, mapped, block)
       end
-      def slivertoboxadapter(content = nil, **props) = sliver_to_box_adapter(content, **props)
-      def sliver_fill_remaining(content = nil, **props)
+      def slivertoboxadapter(content = nil, **props, &block) = sliver_to_box_adapter(content, **props, &block)
+      def sliver_fill_remaining(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:sliverfillremaining, **mapped)
+        build_with_block_slot(:sliverfillremaining, "sliver_fill_remaining", :content, mapped, block)
       end
-      def sliverfillremaining(content = nil, **props) = sliver_fill_remaining(content, **props)
-      def sliver_app_bar(**props) = build_widget(:sliverappbar, **props)
-      def sliverappbar(**props) = sliver_app_bar(**props)
-      def menu_bar(children = nil, **props)
+      def sliverfillremaining(content = nil, **props, &block) = sliver_fill_remaining(content, **props, &block)
+      def sliver_app_bar(**props, &block) = build_with_block_slot(:sliverappbar, "sliver_app_bar", :actions, props.dup, block)
+      def sliverappbar(**props, &block) = sliver_app_bar(**props, &block)
+      def menu_bar(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
-        build_widget(:menubar, **mapped)
+        build_widget(:menubar, **mapped, &block)
       end
-      def menubar(children = nil, **props) = menu_bar(children, **props)
-      def menu_item_button(content = nil, **props)
+      def menubar(children = nil, **props, &block) = menu_bar(children, **props, &block)
+      def menu_item_button(content = nil, **props, &block)
+        ignore_block("menu_item_button", block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
         build_widget(:menuitembutton, **mapped)
       end
-      def menuitembutton(content = nil, **props) = menu_item_button(content, **props)
-      def merge_semantics(content = nil, **props)
+      def menuitembutton(content = nil, **props, &block) = menu_item_button(content, **props, &block)
+      def merge_semantics(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:mergesemantics, **mapped)
+        build_with_block_slot(:mergesemantics, "merge_semantics", :content, mapped, block)
       end
-      def mergesemantics(content = nil, **props) = merge_semantics(content, **props)
-      def submenu_button(children = nil, **props)
+      def mergesemantics(content = nil, **props, &block) = merge_semantics(content, **props, &block)
+      def submenu_button(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
-        build_widget(:submenubutton, **mapped)
+        build_widget(:submenubutton, **mapped, &block)
       end
-      def submenubutton(children = nil, **props) = submenu_button(children, **props)
+      def submenubutton(children = nil, **props, &block) = submenu_button(children, **props, &block)
       def divider(**props) = build_widget(:divider, **props)
       def vertical_divider(**props) = build_widget(:verticaldivider, **props)
       def verticaldivider(**props) = vertical_divider(**props)
-      def window_drag_area(content = nil, **props)
+      def window_drag_area(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:windowdragarea, **mapped)
+        build_with_block_slot(:windowdragarea, "window_drag_area", :content, mapped, block)
       end
-      def windowdragarea(content = nil, **props) = window_drag_area(content, **props)
+      def windowdragarea(content = nil, **props, &block) = window_drag_area(content, **props, &block)
       def date_picker(**props) = build_widget(:datepicker, **props)
       def datepicker(**props) = date_picker(**props)
       def date_range_picker(**props) = build_widget(:daterangepicker, **props)
       def daterangepicker(**props) = date_range_picker(**props)
-      def data_table(columns = nil, **props)
+      def data_table(columns = nil, **props, &block)
         mapped = props.dup
         mapped[:columns] = columns unless columns.nil?
-        build_widget(:datatable, **mapped)
+        build_with_block_slot(:datatable, "data_table", :rows, mapped, block)
       end
-      def datatable(columns = nil, **props) = data_table(columns, **props)
+      def datatable(columns = nil, **props, &block) = data_table(columns, **props, &block)
       def data_column(label = nil, **props)
         mapped = props.dup
         mapped[:label] = label unless label.nil?
@@ -456,12 +457,12 @@ module Ruflet
         build_widget(:datarow, **mapped)
       end
       def datarow(cells = nil, **props) = data_row(cells, **props)
-      def data_cell(content = nil, **props)
+      def data_cell(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:datacell, **mapped)
+        build_with_block_slot(:datacell, "data_cell", :content, mapped, block)
       end
-      def datacell(content = nil, **props) = data_cell(content, **props)
+      def datacell(content = nil, **props, &block) = data_cell(content, **props, &block)
       def table(rows = nil, **props, &block)
         mapped = props.dup
         mapped[:rows] = rows unless rows.nil?
@@ -473,7 +474,8 @@ module Ruflet
         build_widget(:tablerow, **mapped, &block)
       end
       def tablerow(children = nil, **props, &block) = table_row(children, **props, &block)
-      def option(key = nil, **props)
+      def option(key = nil, **props, &block)
+        ignore_block("option", block)
         mapped = props.dup
         mapped[:key] = key unless key.nil?
         build_widget(:option, **mapped)
@@ -496,48 +498,48 @@ module Ruflet
         build_widget(:data_row2, **mapped)
       end
       def datarow2(cells = nil, **props) = data_row2(cells, **props)
-      def expansion_tile(children = nil, **props)
+      def expansion_tile(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
-        build_widget(:expansiontile, **mapped)
+        build_widget(:expansiontile, **mapped, &block)
       end
-      def expansiontile(children = nil, **props) = expansion_tile(children, **props)
-      def expansion_panel(**props) = build_widget(:expansionpanel, **props)
-      def expansionpanel(**props) = expansion_panel(**props)
-      def expansion_panel_list(children = nil, **props)
+      def expansiontile(children = nil, **props, &block) = expansion_tile(children, **props, &block)
+      def expansion_panel(**props, &block) = build_with_block_slot(:expansionpanel, "expansion_panel", :content, props.dup, block)
+      def expansionpanel(**props, &block) = expansion_panel(**props, &block)
+      def expansion_panel_list(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
-        build_widget(:expansionpanellist, **mapped)
+        build_widget(:expansionpanellist, **mapped, &block)
       end
-      def expansionpanellist(children = nil, **props) = expansion_panel_list(children, **props)
-      def dropdown(options = nil, **props)
+      def expansionpanellist(children = nil, **props, &block) = expansion_panel_list(children, **props, &block)
+      def dropdown(options = nil, **props, &block)
         mapped = props.dup
         mapped[:options] = options unless options.nil?
-        build_widget(:dropdown, **mapped)
+        build_with_block_slot(:dropdown, "dropdown", :options, mapped, block)
       end
-      def dropdown_option(key = nil, **props)
+      def dropdown_option(key = nil, **props, &block)
         mapped = props.dup
         mapped[:key] = key unless key.nil?
-        build_widget(:dropdownoption, **mapped)
+        build_with_block_slot(:dropdownoption, "dropdown_option", :content, mapped, block)
       end
-      def dropdownoption(key = nil, **props) = dropdown_option(key, **props)
-      def dropdown_m2(options = nil, **props)
-        dropdown(options, **props)
+      def dropdownoption(key = nil, **props, &block) = dropdown_option(key, **props, &block)
+      def dropdown_m2(options = nil, **props, &block)
+        dropdown(options, **props, &block)
       end
-      def dropdownm2(options = nil, **props) = dropdown_m2(options, **props)
+      def dropdownm2(options = nil, **props, &block) = dropdown_m2(options, **props, &block)
       def progress_bar(**props) = build_widget(:progressbar, **props)
       def progressbar(**props) = progress_bar(**props)
-      def placeholder(content = nil, **props)
+      def placeholder(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:placeholder, **mapped)
+        build_with_block_slot(:placeholder, "placeholder", :content, mapped, block)
       end
-      def page_view(children = nil, **props)
+      def page_view(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
-        build_widget(:pageview, **mapped)
+        build_widget(:pageview, **mapped, &block)
       end
-      def pageview(children = nil, **props) = page_view(children, **props)
+      def pageview(children = nil, **props, &block) = page_view(children, **props, &block)
       def progress_ring(**props) = build_widget(:progressring, **props)
       def progressring(**props) = progress_ring(**props)
       SPINKIT_VARIANTS = [:rotating_circle, :rotating_plain, :double_bounce, :wave, :wandering_cubes, :fading_four, :fading_cube, :pulse, :chasing_dots, :three_bounce, :circle, :cube_grid, :fading_circle, :folding_cube, :pumping_heart, :hour_glass, :pouring_hour_glass, :pouring_hour_glass_refined, :fading_grid, :ring, :ripple, :dual_ring, :spinning_circle, :spinning_lines, :square_circle, :three_in_out, :dancing_square, :piano_wave, :pulsing_grid, :wave_spinner].freeze
@@ -559,35 +561,35 @@ module Ruflet
         build_widget(:responsiverow, **mapped, &block)
       end
       def responsiverow(children = nil, **props, &block) = responsive_row(children, **props, &block)
-      def reorderable_drag_handle(content = nil, **props)
+      def reorderable_drag_handle(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:reorderabledraghandle, **mapped)
+        build_with_block_slot(:reorderabledraghandle, "reorderable_drag_handle", :content, mapped, block)
       end
-      def reorderabledraghandle(content = nil, **props) = reorderable_drag_handle(content, **props)
-      def reorderable_list_view(children = nil, **props)
+      def reorderabledraghandle(content = nil, **props, &block) = reorderable_drag_handle(content, **props, &block)
+      def reorderable_list_view(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
-        build_widget(:reorderablelistview, **mapped)
+        build_widget(:reorderablelistview, **mapped, &block)
       end
-      def reorderablelistview(children = nil, **props) = reorderable_list_view(children, **props)
-      def safe_area(content = nil, **props)
+      def reorderablelistview(children = nil, **props, &block) = reorderable_list_view(children, **props, &block)
+      def safe_area(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:safearea, **mapped)
+        build_with_block_slot(:safearea, "safe_area", :content, mapped, block)
       end
-      def safearea(content = nil, **props) = safe_area(content, **props)
+      def safearea(content = nil, **props, &block) = safe_area(content, **props, &block)
       def segment(value = nil, **props)
         mapped = props.dup
         mapped[:value] = value unless value.nil?
         build_widget(:segment, **mapped)
       end
-      def segmented_button(segments = nil, **props)
+      def segmented_button(segments = nil, **props, &block)
         mapped = props.dup
         mapped[:segments] = segments unless segments.nil?
-        build_widget(:segmentedbutton, **mapped)
+        build_widget(:segmentedbutton, **mapped, &block)
       end
-      def segmentedbutton(segments = nil, **props) = segmented_button(segments, **props)
+      def segmentedbutton(segments = nil, **props, &block) = segmented_button(segments, **props, &block)
       def stepper(steps = nil, **props, &block)
         mapped = props.dup
         mapped[:steps] = steps unless steps.nil?
@@ -596,24 +598,24 @@ module Ruflet
       # Deliberately no bare `step` helper or registry key: these methods are
       # forwarded into Kernel and every registry key becomes a Rails view
       # helper, so a `step` name would shadow user code (SPEC D-6).
-      def stepper_step(**props) = build_widget(:stepper_step, **props)
-      def stepperstep(**props) = stepper_step(**props)
-      def selection_area(content = nil, **props)
+      def stepper_step(**props, &block) = build_with_block_slot(:stepper_step, "stepper_step", :content, props.dup, block)
+      def stepperstep(**props, &block) = stepper_step(**props, &block)
+      def selection_area(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:selectionarea, **mapped)
+        build_with_block_slot(:selectionarea, "selection_area", :content, mapped, block)
       end
-      def selectionarea(content = nil, **props) = selection_area(content, **props)
-      def search_bar(children = nil, **props)
+      def selectionarea(content = nil, **props, &block) = selection_area(content, **props, &block)
+      def search_bar(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
-        build_widget(:searchbar, **mapped)
+        build_widget(:searchbar, **mapped, &block)
       end
-      def searchbar(children = nil, **props) = search_bar(children, **props)
-      def semantics(content = nil, **props)
+      def searchbar(children = nil, **props, &block) = search_bar(children, **props, &block)
+      def semantics(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:semantics, **mapped)
+        build_with_block_slot(:semantics, "semantics", :content, mapped, block)
       end
       def time_picker(**props) = build_widget(:timepicker, **props)
       def timepicker(**props) = time_picker(**props)
@@ -627,23 +629,23 @@ module Ruflet
         mapped[:label] = label unless label.nil?
         build_widget(:chip, **mapped)
       end
-      def circle_avatar(content = nil, **props)
+      def circle_avatar(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:circleavatar, **mapped)
+        build_with_block_slot(:circleavatar, "circle_avatar", :content, mapped, block)
       end
-      def circleavatar(content = nil, **props) = circle_avatar(content, **props)
-      def banner(content = nil, **props)
+      def circleavatar(content = nil, **props, &block) = circle_avatar(content, **props, &block)
+      def banner(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:banner, **mapped)
+        build_with_block_slot(:banner, "banner", :content, mapped, block)
       end
-      def bottom_app_bar(content = nil, **props)
+      def bottom_app_bar(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:bottomappbar, **mapped)
+        build_with_block_slot(:bottomappbar, "bottom_app_bar", :content, mapped, block)
       end
-      def bottomappbar(content = nil, **props) = bottom_app_bar(content, **props)
+      def bottomappbar(content = nil, **props, &block) = bottom_app_bar(content, **props, &block)
 
       def text(value = nil, **props)
         mapped = props.dup
@@ -651,50 +653,58 @@ module Ruflet
         build_widget(:text, **mapped)
       end
 
-      def button(content = nil, **props)
+      def button(content = nil, **props, &block)
+        ignore_block("button", block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
         build_widget(:button, **mapped)
       end
       # Ruflet currently uses a single Material button control schema.
       # Keep elevated_button DSL available by routing to :button.
-      def elevated_button(content = nil, **props) = button(content, **props)
-      def text_button(content = nil, **props)
+      def elevated_button(content = nil, **props, &block)
+        ignore_block("elevated_button", block)
+        button(content, **props)
+      end
+      def text_button(content = nil, **props, &block)
+        ignore_block("text_button", block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
         build_widget(:textbutton, **mapped)
       end
-      def textbutton(content = nil, **props) = text_button(content, **props)
-      def filled_button(content = nil, **props)
+      def textbutton(content = nil, **props, &block) = text_button(content, **props, &block)
+      def filled_button(content = nil, **props, &block)
+        ignore_block("filled_button", block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
         build_widget(:filledbutton, **mapped)
       end
-      def filledbutton(content = nil, **props) = filled_button(content, **props)
+      def filledbutton(content = nil, **props, &block) = filled_button(content, **props, &block)
       def filled_icon_button(icon = nil, **props)
         mapped = props.dup
         mapped[:icon] = icon unless icon.nil?
         build_widget(:fillediconbutton, **mapped)
       end
       def fillediconbutton(icon = nil, **props) = filled_icon_button(icon, **props)
-      def filled_tonal_button(content = nil, **props)
+      def filled_tonal_button(content = nil, **props, &block)
+        ignore_block("filled_tonal_button", block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
         build_widget(:filledtonalbutton, **mapped)
       end
-      def filledtonalbutton(content = nil, **props) = filled_tonal_button(content, **props)
+      def filledtonalbutton(content = nil, **props, &block) = filled_tonal_button(content, **props, &block)
       def filled_tonal_icon_button(icon = nil, **props)
         mapped = props.dup
         mapped[:icon] = icon unless icon.nil?
         build_widget(:filledtonaliconbutton, **mapped)
       end
       def filledtonaliconbutton(icon = nil, **props) = filled_tonal_icon_button(icon, **props)
-      def outlined_button(content = nil, **props)
+      def outlined_button(content = nil, **props, &block)
+        ignore_block("outlined_button", block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
         build_widget(:outlinedbutton, **mapped)
       end
-      def outlinedbutton(content = nil, **props) = outlined_button(content, **props)
+      def outlinedbutton(content = nil, **props, &block) = outlined_button(content, **props, &block)
       def outlined_icon_button(icon = nil, **props)
         mapped = props.dup
         mapped[:icon] = icon unless icon.nil?
@@ -708,24 +718,25 @@ module Ruflet
         build_widget(:iconbutton, **mapped)
       end
       def iconbutton(icon = nil, **props) = icon_button(icon, **props)
-      def interactive_viewer(content = nil, **props)
+      def interactive_viewer(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:interactiveviewer, **mapped)
+        build_with_block_slot(:interactiveviewer, "interactive_viewer", :content, mapped, block)
       end
-      def interactiveviewer(content = nil, **props) = interactive_viewer(content, **props)
-      def popup_menu_button(items = nil, **props)
+      def interactiveviewer(content = nil, **props, &block) = interactive_viewer(content, **props, &block)
+      def popup_menu_button(items = nil, **props, &block)
         mapped = props.dup
         mapped[:items] = items unless items.nil?
-        build_widget(:popupmenubutton, **mapped)
+        build_with_block_slot(:popupmenubutton, "popup_menu_button", :items, mapped, block)
       end
-      def popupmenubutton(items = nil, **props) = popup_menu_button(items, **props)
-      def popup_menu_item(content = nil, **props)
+      def popupmenubutton(items = nil, **props, &block) = popup_menu_button(items, **props, &block)
+      def popup_menu_item(content = nil, **props, &block)
+        ignore_block("popup_menu_item", block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
         build_widget(:popupmenuitem, **mapped)
       end
-      def popupmenuitem(content = nil, **props) = popup_menu_item(content, **props)
+      def popupmenuitem(content = nil, **props, &block) = popup_menu_item(content, **props, &block)
       def text_field(value = nil, **props)
         mapped = props.dup
         mapped[:value] = value unless value.nil?
@@ -735,96 +746,96 @@ module Ruflet
       def checkbox(**props) = build_widget(:checkbox, **props)
       def switch(**props) = build_widget(:switch, **props)
       def slider(**props) = build_widget(:slider, **props)
-      def transparent_pointer(content = nil, **props)
+      def transparent_pointer(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:transparentpointer, **mapped)
+        build_with_block_slot(:transparentpointer, "transparent_pointer", :content, mapped, block)
       end
-      def transparentpointer(content = nil, **props) = transparent_pointer(content, **props)
-      def rotated_box(content = nil, **props)
+      def transparentpointer(content = nil, **props, &block) = transparent_pointer(content, **props, &block)
+      def rotated_box(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:rotatedbox, **mapped)
+        build_with_block_slot(:rotatedbox, "rotated_box", :content, mapped, block)
       end
-      def rotatedbox(content = nil, **props) = rotated_box(content, **props)
-      def absorb_pointer(content = nil, **props)
+      def rotatedbox(content = nil, **props, &block) = rotated_box(content, **props, &block)
+      def absorb_pointer(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:absorbpointer, **mapped)
+        build_with_block_slot(:absorbpointer, "absorb_pointer", :content, mapped, block)
       end
-      def absorbpointer(content = nil, **props) = absorb_pointer(content, **props)
-      def fractionally_sized_box(content = nil, **props)
+      def absorbpointer(content = nil, **props, &block) = absorb_pointer(content, **props, &block)
+      def fractionally_sized_box(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:fractionallysizedbox, **mapped)
+        build_with_block_slot(:fractionallysizedbox, "fractionally_sized_box", :content, mapped, block)
       end
-      def fractionallysizedbox(content = nil, **props) = fractionally_sized_box(content, **props)
-      def ignore_pointer(content = nil, **props)
+      def fractionallysizedbox(content = nil, **props, &block) = fractionally_sized_box(content, **props, &block)
+      def ignore_pointer(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:ignorepointer, **mapped)
+        build_with_block_slot(:ignorepointer, "ignore_pointer", :content, mapped, block)
       end
-      def ignorepointer(content = nil, **props) = ignore_pointer(content, **props)
-      def intrinsic_height(content = nil, **props)
+      def ignorepointer(content = nil, **props, &block) = ignore_pointer(content, **props, &block)
+      def intrinsic_height(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:intrinsicheight, **mapped)
+        build_with_block_slot(:intrinsicheight, "intrinsic_height", :content, mapped, block)
       end
-      def intrinsicheight(content = nil, **props) = intrinsic_height(content, **props)
-      def intrinsic_width(content = nil, **props)
+      def intrinsicheight(content = nil, **props, &block) = intrinsic_height(content, **props, &block)
+      def intrinsic_width(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:intrinsicwidth, **mapped)
+        build_with_block_slot(:intrinsicwidth, "intrinsic_width", :content, mapped, block)
       end
-      def intrinsicwidth(content = nil, **props) = intrinsic_width(content, **props)
+      def intrinsicwidth(content = nil, **props, &block) = intrinsic_width(content, **props, &block)
       def sliver_padding(slivers = nil, **props, &block)
         mapped = props.dup
         mapped[:slivers] = slivers unless slivers.nil?
         build_widget(:sliverpadding, **mapped, &block)
       end
       def sliverpadding(slivers = nil, **props, &block) = sliver_padding(slivers, **props, &block)
-      def clip_oval(content = nil, **props)
+      def clip_oval(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:clipoval, **mapped)
+        build_with_block_slot(:clipoval, "clip_oval", :content, mapped, block)
       end
-      def clipoval(content = nil, **props) = clip_oval(content, **props)
-      def clip_rsuperellipse(content = nil, **props)
+      def clipoval(content = nil, **props, &block) = clip_oval(content, **props, &block)
+      def clip_rsuperellipse(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:cliprsuperellipse, **mapped)
+        build_with_block_slot(:cliprsuperellipse, "clip_rsuperellipse", :content, mapped, block)
       end
-      def cliprsuperellipse(content = nil, **props) = clip_rsuperellipse(content, **props)
-      def fade_transition(content = nil, **props)
+      def cliprsuperellipse(content = nil, **props, &block) = clip_rsuperellipse(content, **props, &block)
+      def fade_transition(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:fadetransition, **mapped)
+        build_with_block_slot(:fadetransition, "fade_transition", :content, mapped, block)
       end
-      def fadetransition(content = nil, **props) = fade_transition(content, **props)
-      def rotation_transition(content = nil, **props)
+      def fadetransition(content = nil, **props, &block) = fade_transition(content, **props, &block)
+      def rotation_transition(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:rotationtransition, **mapped)
+        build_with_block_slot(:rotationtransition, "rotation_transition", :content, mapped, block)
       end
-      def rotationtransition(content = nil, **props) = rotation_transition(content, **props)
-      def scale_transition(content = nil, **props)
+      def rotationtransition(content = nil, **props, &block) = rotation_transition(content, **props, &block)
+      def scale_transition(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:scaletransition, **mapped)
+        build_with_block_slot(:scaletransition, "scale_transition", :content, mapped, block)
       end
-      def scaletransition(content = nil, **props) = scale_transition(content, **props)
-      def size_transition(content = nil, **props)
+      def scaletransition(content = nil, **props, &block) = scale_transition(content, **props, &block)
+      def size_transition(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:sizetransition, **mapped)
+        build_with_block_slot(:sizetransition, "size_transition", :content, mapped, block)
       end
-      def sizetransition(content = nil, **props) = size_transition(content, **props)
-      def slide_transition(content = nil, **props)
+      def sizetransition(content = nil, **props, &block) = size_transition(content, **props, &block)
+      def slide_transition(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:slidetransition, **mapped)
+        build_with_block_slot(:slidetransition, "slide_transition", :content, mapped, block)
       end
-      def slidetransition(content = nil, **props) = slide_transition(content, **props)
+      def slidetransition(content = nil, **props, &block) = slide_transition(content, **props, &block)
       # A group of fields validated, reset and saved together (Flutter's
       # Form), laid out like a column: form([fields], on_submit: ...) or
       # form(...) { text_field(validator: ...) }.
@@ -839,46 +850,46 @@ module Ruflet
         build_widget(:nestedscrollview, **mapped, &block)
       end
       def nestedscrollview(header_slivers = nil, **props, &block) = nested_scroll_view(header_slivers, **props, &block)
-      def fitted_box(content = nil, **props)
+      def fitted_box(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:fittedbox, **mapped)
+        build_with_block_slot(:fittedbox, "fitted_box", :content, mapped, block)
       end
-      def fittedbox(content = nil, **props) = fitted_box(content, **props)
-      def screenshot(content = nil, **props)
+      def fittedbox(content = nil, **props, &block) = fitted_box(content, **props, &block)
+      def screenshot(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:screenshot, **mapped)
+        build_with_block_slot(:screenshot, "screenshot", :content, mapped, block)
       end
       def radio(**props) = build_widget(:radio, **props)
-      def radio_group(content = nil, **props)
+      def radio_group(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:radiogroup, **mapped)
+        build_with_block_slot(:radiogroup, "radio_group", :content, mapped, block)
       end
-      def radiogroup(content = nil, **props) = radio_group(content, **props)
-      def about_dialog(**props) = build_widget(:aboutdialog, **props)
-      def aboutdialog(**props) = about_dialog(**props)
-      def alert_dialog(**props) = build_widget(:alertdialog, **props)
-      def alertdialog(**props) = alert_dialog(**props)
-      def snack_bar(content = nil, **props)
+      def radiogroup(content = nil, **props, &block) = radio_group(content, **props, &block)
+      def about_dialog(**props, &block) = build_widget(:aboutdialog, **props, &block)
+      def aboutdialog(**props, &block) = about_dialog(**props, &block)
+      def alert_dialog(**props, &block) = build_with_block_slot(:alertdialog, "alert_dialog", :content, props.dup, block)
+      def alertdialog(**props, &block) = alert_dialog(**props, &block)
+      def snack_bar(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:snackbar, **mapped)
+        build_with_block_slot(:snackbar, "snack_bar", :content, mapped, block)
       end
-      def snackbar(content = nil, **props) = snack_bar(content, **props)
+      def snackbar(content = nil, **props, &block) = snack_bar(content, **props, &block)
       def snack_bar_action(label = nil, **props)
         mapped = props.dup
         mapped[:label] = label unless label.nil?
         build_widget(:snackbaraction, **mapped)
       end
       def snackbaraction(label = nil, **props) = snack_bar_action(label, **props)
-      def bottom_sheet(content = nil, **props)
+      def bottom_sheet(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:bottomsheet, **mapped)
+        build_with_block_slot(:bottomsheet, "bottom_sheet", :content, mapped, block)
       end
-      def bottomsheet(content = nil, **props) = bottom_sheet(content, **props)
+      def bottomsheet(content = nil, **props, &block) = bottom_sheet(content, **props, &block)
 
       def markdown(value = nil, **props)
         mapped = props.dup
@@ -900,15 +911,23 @@ module Ruflet
         build_widget(:image, **mapped)
       end
 
-      def app_bar(**props) = build_widget(:appbar, **props)
-      def appbar(**props) = app_bar(**props)
+      def app_bar(**props, &block) = build_with_block_slot(:appbar, "app_bar", :actions, props.dup, block)
+      def appbar(**props, &block) = app_bar(**props, &block)
       def clipboard(**props) = build_service(:clipboard, **props)
-      def floating_action_button(**props) = build_widget(:floatingactionbutton, **props)
-      def floatingactionbutton(**props) = floating_action_button(**props)
+      # Takes its content positionally like the other buttons (and Flet's
+      # FloatingActionButton("Add")); floating_action_button(content: ...) is
+      # the same call.
+      def floating_action_button(content = nil, **props, &block)
+        ignore_block("floating_action_button", block)
+        mapped = props.dup
+        mapped[:content] = content unless content.nil?
+        build_widget(:floatingactionbutton, **mapped)
+      end
+      def floatingactionbutton(content = nil, **props, &block) = floating_action_button(content, **props, &block)
       def tabs(content = nil, **props, &block)
         mapped = props.dup
         mapped[:content] = content unless content.nil?
-        build_widget(:tabs, **mapped, &block)
+        build_with_legacy_block_slot(:tabs, "tabs", :content, mapped, block)
       end
 
       def tab(label = nil, **props, &block)
@@ -920,7 +939,7 @@ module Ruflet
       def tab_bar(tabs = nil, **props, &block)
         mapped = props.dup
         mapped[:tabs] = tabs unless tabs.nil?
-        build_widget(:tabbar, **mapped, &block)
+        build_with_legacy_block_slot(:tabbar, "tab_bar", :tabs, mapped, block)
       end
       def tabbar(tabs = nil, **props, &block) = tab_bar(tabs, **props, &block)
       def tab_bar_view(children = nil, **props, &block)
@@ -929,20 +948,20 @@ module Ruflet
         build_widget(:tabbarview, **mapped, &block)
       end
       def tabbarview(children = nil, **props, &block) = tab_bar_view(children, **props, &block)
-      def navigation_bar(**props, &block) = build_widget(:navigationbar, **props, &block)
+      def navigation_bar(**props, &block) = build_with_legacy_block_slot(:navigationbar, "navigation_bar", :destinations, props.dup, block)
       def navigationbar(**props, &block) = navigation_bar(**props, &block)
       def navigation_bar_destination(**props, &block) = build_widget(:navigationbardestination, **props, &block)
       def navigationbardestination(**props, &block) = navigation_bar_destination(**props, &block)
-      def navigation_rail(**props, &block) = build_widget(:navigationrail, **props, &block)
+      def navigation_rail(**props, &block) = build_with_legacy_block_slot(:navigationrail, "navigation_rail", :destinations, props.dup, block)
       def navigationrail(**props, &block) = navigation_rail(**props, &block)
       def navigation_rail_destination(**props, &block) = build_widget(:navigationraildestination, **props, &block)
       def navigationraildestination(**props, &block) = navigation_rail_destination(**props, &block)
-      def navigation_drawer(children = nil, **props)
+      def navigation_drawer(children = nil, **props, &block)
         mapped = props.dup
         mapped[:children] = children unless children.nil?
-        build_widget(:navigationdrawer, **mapped)
+        build_widget(:navigationdrawer, **mapped, &block)
       end
-      def navigationdrawer(children = nil, **props) = navigation_drawer(children, **props)
+      def navigationdrawer(children = nil, **props, &block) = navigation_drawer(children, **props, &block)
       def navigation_drawer_destination(**props) = build_widget(:navigationdrawerdestination, **props)
       def navigationdrawerdestination(**props) = navigation_drawer_destination(**props)
       def bar_chart(**props) = build_widget(:barchart, **props)
@@ -1021,7 +1040,8 @@ module Ruflet
         build_widget(:rive, **mapped)
       end
 
-      def fab(content = nil, **props)
+      def fab(content = nil, **props, &block)
+        ignore_block("fab", block)
         mapped = normalize_fab_props(props.dup, content)
         build_widget(:floatingactionbutton, **mapped)
       end
