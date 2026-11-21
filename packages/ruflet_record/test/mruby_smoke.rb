@@ -58,6 +58,33 @@ RufletRecord.connection.execute("BEGIN IMMEDIATE")
 RufletRecord.connection.execute("ROLLBACK")
 raise "non-local exit lost writes" unless Note.count == 5
 
+# The VM's threads are cooperative, so its connection takes no lock, and
+# nested transactions are still savepoints.
+raise "mruby connection must not lock" unless RufletRecord.connection.instance_variable_get(:@lock).is_a?(RufletRecord::Adapters::NullLock)
+begin
+  Note.transaction do
+    Note.create!(title: "Outer")
+    begin
+      Note.transaction { Note.create!(title: "Inner"); raise "inner fails" }
+    rescue RuntimeError => error
+      raise error unless error.message == "inner fails"
+    end
+    raise "savepoint rollback failed" unless Note.where(title: "Inner").count.zero? && Note.where(title: "Outer").count == 1
+    raise "outer fails"
+  end
+rescue RuntimeError => error
+  raise error unless error.message == "outer fails"
+end
+raise "nested transaction rollback failed" unless Note.count == 5
+
+# touch saves updated_at only; other unsaved changes stay pending.
+first.title = "Renamed"
+first.touch
+raise "touch dropped a pending change" unless first.changes.keys == ["title"]
+raise "touch saved a pending change" unless Note.find(first.id).title == "Ship RufletRecord"
+first.title = "Ship RufletRecord"
+raise "touch left updated_at pending" if first.changed?
+
 # An error raised in a transaction block keeps its class and rolls back.
 begin
   Note.transaction do
