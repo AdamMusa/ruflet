@@ -1,0 +1,31 @@
+# frozen_string_literal: true
+
+# Development and test dependencies only. The gem's own dependencies are in
+# ruflet.gemspec, and this file is not part of the published gem (the gemspec
+# ships lib/, assets/, bin/ruflet and the README).
+#
+#   bundle install
+#   bundle exec ruby ../../tools/run_ruby_tests.rb ruflet
+
+source "https://rubygems.org"
+
+gemspec
+
+# Test against the packages beside this one, not released versions.
+gem "ruflet_core", path: "../ruflet_core"
+gem "ruflet_server", path: "../ruflet_server"
+
+group :test do
+  # minitest 6 moved minitest/mock into the minitest-mock gem; with both, the
+  # suites run on minitest 5 and 6 alike.
+  gem "minitest", ">= 5.25", "< 7"
+  gem "minitest-mock"
+
+  # run_command_test reloads an app under bootsnap, which `ruflet run` sets up
+  # whenever it is installed, and skips that case without it.
+  gem "bootsnap"
+
+  # compat_goldens_test checks the generator stub against real railties 8.1+
+  # (the line the stub follows), and skips that check without it.
+  gem "railties", ">= 8.1"
+end

@@ -60,27 +60,36 @@ supported client target.
 
 ## Tests
 
-Run focused tests from the package you changed:
+Each Ruby package has a development-only Gemfile with its test toolchain.
+Run `bundle install` in a package before its first test run. Then run
+focused tests from the package you changed:
 
 ```bash
 cd packages/ruflet_core
-bundle exec ruby -Itest test/bare_widget_helpers_test.rb
+bundle exec ruby -Ilib -Itest test/dsl_presented_controls_test.rb
 
 cd ../ruflet_server
-bundle exec ruby -Itest test/wire_codec_test.rb
+bundle exec ruby -Ilib -Itest test/wire_codec_test.rb
 
 cd ../ruflet
-bundle exec ruby -Itest test/new_command_test.rb
+bundle exec ruby -Ilib -Itest test/new_command_test.rb
 
 cd ../ruflet_rails
-bundle exec ruby -Itest test/scaffold_generator_test.rb
+bundle exec ruby -Ilib -Itest test/template_source_test.rb
 ```
 
-Run all tests for a Ruby package:
+Run a package's whole suite, or every suite, the way CI does
+(`.github/workflows/ruby-tests.yml`):
 
 ```bash
-bundle exec ruby -Itest -e 'Dir["test/**/*_test.rb"].sort.each { |file| require_relative file }'
+ruby tools/run_ruby_tests.rb ruflet_core      # one suite
+ruby tools/run_ruby_tests.rb                  # all of them
 ```
+
+The core packages run one process per test file. Loading them all into one
+process lets ruflet_core's `Kernel#method_missing` leak across suites.
+`--strict` fails on any skipped test. See release.md for the environment
+variables CI sets.
 
 Run Flutter checks in a changed Flutter package:
 

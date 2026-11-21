@@ -16,4 +16,7 @@ gem "ruflet_server", path: "../ruflet_server"
 group :development, :test do
   gem "minitest", "~> 5.0"
   gem "rake", "~> 13.0"
+  # rails_executor_test boots a Rails app with Active Record on SQLite for its
+  # query-cache and connection-lease scenarios, and skips those without it.
+  gem "sqlite3", ">= 2.1"
 end

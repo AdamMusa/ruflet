@@ -1,6 +1,8 @@
 source "https://rubygems.org"
 
 gemspec
-gem "minitest"
+# The same test toolchain as the other packages: minitest 5 or 6 (the suite
+# needs nothing minitest 6 moved out).
+gem "minitest", ">= 5.25", "< 7"
 gem "rake"
 gem "sqlite3", ">= 2.0"

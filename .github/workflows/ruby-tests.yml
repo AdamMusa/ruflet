@@ -1,0 +1,183 @@
+name: Ruby tests
+
+# Every Ruby test suite in the repository, run by tools/run_ruby_tests.rb with
+# no Flutter:
+# - ruflet_core, ruflet_server and ruflet, one process per test file;
+# - ruflet_rails and ruflet_record, through their Rakefiles;
+# - ruby_runtime/test and tools/*_test.rb.
+#
+# Each package runs under its own Gemfile, which declares its test toolchain
+# and the gems its cross-checks use. This workflow also provides the rest of
+# what those checks need: a ruflet-template checkout, a ruflet-engine checkout
+# and the pinned mruby. Because of that, --strict fails the run on any skipped
+# test: a skip here means a check quietly stopped running.
+#
+# build-ruflet-client.yml still runs the core suites before it builds the
+# release clients. It runs them on the default gems of the .ruby-version Ruby,
+# without Bundler, so that path stays covered as well.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/ruby-tests.yml'
+      - '.ruby-version'
+      - 'packages/**'
+      - 'ruby_runtime/**'
+      - 'tools/**'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ruby-tests.yml'
+      - '.ruby-version'
+      - 'packages/**'
+      - 'ruby_runtime/**'
+      - 'tools/**'
+
+permissions:
+  contents: read
+
+# A newer push to a pull request replaces its unfinished run. Every other run
+# gets a group of its own: with one group per branch, a merge to main would
+# cancel the pending run of the merge before it, and that commit would never
+# get a result.
+concurrency:
+  group: ruby-tests-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
+# macOS: parts of the CLI branch on the host being darwin, and the suites have
+# only been verified there. ubuntu-24.04 for the audit, not ubuntu-latest:
+# ruby/setup-ruby has no build of the .ruby-version Ruby for ubuntu-26.04.
+jobs:
+  core:
+    name: ruflet_core, ruflet_server, ruflet
+    runs-on: macos-latest
+    steps:
+      - name: Checkout ruflet
+        uses: actions/checkout@v5
+        with:
+          path: ruflet
+
+      # Not pinned: published gems fetch ruflet-template main at build time,
+      # so the CLI tests check against what users get.
+      - name: Checkout Ruflet template
+        uses: actions/checkout@v5
+        with:
+          repository: AdamMusa/ruflet-template
+          path: ruflet-template
+
+      # dsl_presented_controls_test checks ruflet_core's list of engine
+      # services against the engine (tools/sync_engine_service_types.rb).
+      # Pinned, so an engine merge cannot turn later ruflet runs red. To move
+      # to a newer engine, run tools/sync_engine_service_types.rb --engine
+      # against a checkout of that commit and update ref in the same change.
+      - name: Checkout Ruflet engine
+        uses: actions/checkout@v5
+        with:
+          repository: AdamMusa/ruflet-engine
+          ref: f96aeee64068af7914873cdea08012401eec81da
+          path: ruflet-engine
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          working-directory: ruflet
+
+      - name: Install test dependencies
+        working-directory: ruflet
+        run: |
+          for package in ruflet_core ruflet_server ruflet; do
+            (cd "packages/$package" && bundle install --jobs 4)
+          done
+
+      - name: Run tests
+        working-directory: ruflet
+        env:
+          RUFLET_TEMPLATE_ROOT: ${{ github.workspace }}/ruflet-template
+          RUFLET_ENGINE_ROOT: ${{ github.workspace }}/ruflet-engine
+        run: ruby tools/run_ruby_tests.rb --strict ruflet_core ruflet_server ruflet
+
+  packages-and-tools:
+    name: ruflet_rails, ruflet_record, ruby_runtime, tools
+    runs-on: macos-latest
+    steps:
+      - name: Checkout ruflet
+        uses: actions/checkout@v5
+        with:
+          path: ruflet
+
+      # ruby_runtime/third_party/mruby is a gitlink with no .gitmodules entry,
+      # so checkout cannot fetch it as a submodule. Fetch that commit of mruby
+      # directly instead: mruby_patches_test checks the patches still fit it.
+      - name: Resolve the pinned mruby
+        id: mruby
+        working-directory: ruflet
+        run: |
+          sha=$(git ls-tree HEAD ruby_runtime/third_party/mruby | awk '$2 == "commit" { print $3 }')
+          if [ -z "$sha" ]; then
+            echo "ruby_runtime/third_party/mruby is not a gitlink"
+            exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout the pinned mruby
+        uses: actions/checkout@v5
+        with:
+          repository: mruby/mruby
+          ref: ${{ steps.mruby.outputs.sha }}
+          path: mruby
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          working-directory: ruflet
+
+      # Frozen: these two commit their Gemfile.lock. A Gemfile change that
+      # did not update the lock fails here instead of being resolved anew.
+      - name: Install test dependencies
+        working-directory: ruflet
+        env:
+          BUNDLE_FROZEN: 'true'
+        run: |
+          for package in ruflet_rails ruflet_record; do
+            (cd "packages/$package" && bundle install --jobs 4)
+          done
+
+      - name: Run tests
+        working-directory: ruflet
+        env:
+          RUFLET_MRUBY: ${{ github.workspace }}/mruby
+        run: ruby tools/run_ruby_tests.rb --strict ruflet_rails ruflet_record ruby_runtime tools
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout ruflet
+        uses: actions/checkout@v5
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+
+      - name: Install bundler-audit
+        run: gem install bundler-audit --no-document
+
+      # The core packages commit no lockfile. Resolve one as `bundle install`
+      # would, so their test toolchains are audited too.
+      - name: Audit every package's lockfile
+        run: |
+          bundle-audit update
+          status=0
+          for package in ruflet_core ruflet_server ruflet ruflet_rails ruflet_record; do
+            echo "== packages/$package"
+            (
+              cd "packages/$package"
+              [ -f Gemfile.lock ] || bundle lock
+              bundle-audit check --no-update
+            ) || status=1
+          done
+          exit $status

@@ -33,6 +33,12 @@ Desktop.ini
 pkg/
 *.gem
 *.rbc
+# The core packages' Gemfiles only declare test tools; their lock is resolved
+# fresh, as a user's app resolves these gems. ruflet_rails and ruflet_record
+# keep theirs committed.
+/packages/ruflet/Gemfile.lock
+/packages/ruflet_core/Gemfile.lock
+/packages/ruflet_server/Gemfile.lock
 
 # Logs, coverage, and temporary runtime files
 *.log
