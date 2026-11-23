@@ -149,6 +149,7 @@ module RufletRecord
       def scope(name, callable = nil, &block)
         body = callable || block
         raise ArgumentError, "scope requires a callable" unless body
+        (@scope_names ||= []) << name.to_s
         define_singleton_method(name) do |*args|
           value = body.call(*args)
           value.is_a?(Relation) ? value : all
@@ -211,6 +212,21 @@ module RufletRecord
         while model
           names = model.instance_variable_get(:@belongs_to_names)
           return true if names && names.include?(name)
+          return false if model.equal?(Base)
+
+          model = model.superclass
+        end
+        false
+      end
+
+      # Whether +name+ is a scope of this model or a parent. Relations chain
+      # these (see Relation#method_missing).
+      def scope_defined?(name)
+        key = name.to_s
+        model = self
+        while model
+          names = model.instance_variable_get(:@scope_names)
+          return true if names && names.include?(key)
           return false if model.equal?(Base)
 
           model = model.superclass
