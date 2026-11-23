@@ -120,7 +120,9 @@ user.destroy
 The common persistence API includes `new`, `create`, `create!`, `save`,
 `save!`, `update`, `update!`, `update_columns`, `touch`, `destroy`, `delete`,
 `reload`, `find_or_initialize_by`, `find_or_create_by`, and
-`find_or_create_by!`.
+`find_or_create_by!`. `update_columns` and `touch` write only their own
+columns, without validations. Other unsaved changes stay pending for the next
+`save`.
 
 ## Lazy queries
 
@@ -178,6 +180,21 @@ end
 ```
 
 Nested transactions use SQLite savepoints.
+
+Every thread shares the one connection. On CRuby a thread holds it for each
+statement and for a whole transaction block. Another thread's reads and writes
+wait until the block ends; they never join its transaction. A thread that
+waits longer than `timeout` milliseconds gets
+`StatementInvalid: database is locked`. A `timeout` below the default 5000
+still waits 5000 ms for another thread. So do not wait inside a transaction
+block for another thread that uses the database. A `Signal.trap` handler
+cannot take the connection (CRuby does not allow locking a `Mutex` there). Its
+statements run at once, as before, even inside another thread's transaction.
+
+On Ruflet's mruby VM threads are cooperative and the connection takes no lock.
+A VM thread that writes while another VM thread's transaction block is
+paused, in a `sleep` for example, writes inside that transaction, and its
+write is lost if the transaction rolls back.
 
 ## Deliberate limits
 

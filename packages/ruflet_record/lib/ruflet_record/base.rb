@@ -372,7 +372,9 @@ module RufletRecord
         values[name.to_s] = read_attribute(name)
       end
       self.class.where(primary => read_attribute(primary)).update_all(values)
-      @original_attributes = @attributes.dup
+      # Only the written columns are saved now; other unsaved changes stay
+      # pending for the next save, as in Active Record.
+      values.each_key { |name| @original_attributes[name] = @attributes[name] }
       true
     end
 
