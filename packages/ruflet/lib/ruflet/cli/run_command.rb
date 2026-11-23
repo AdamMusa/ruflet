@@ -13,6 +13,7 @@ require "thread"
 require "io/console"
 require "open3"
 require "time"
+require_relative "verified_install"
 
 module Ruflet
   module CLI
@@ -738,16 +739,53 @@ module Ruflet
             mark_client_update_checked(cache_root)
             return cache_root
           end
-
-          force = true
         end
 
         release ||= fetch_release_for_version(wanted_assets: wanted_assets)
         return nil unless release
 
+        # On the run path a complete cache outlives a failed refresh, as it
+        # outlives a failed check: the cached client is still usable.
+        keep_cache = use_cache_if_check_fails && cache_ready
+        begin
+          installed_assets = install_prebuilt_assets(cache_root, release, wanted_assets, platform)
+        rescue StandardError => e
+          raise unless keep_cache
+
+          # Not marked as checked, so the next run tries again.
+          warn "Could not install the newer client (#{e.message}); using the cached one"
+          return cache_root
+        end
+        unless installed_assets
+          return nil unless keep_cache
+
+          warn "Could not install the newer client; using the cached one"
+          return cache_root
+        end
+
+        if prebuilt_assets_present?(
+          cache_root, web: web, desktop: desktop, platform: platform
+        )
+          write_client_manifest(cache_root, platform: platform, release: release, assets: installed_assets)
+          return cache_root
+        end
+
+        nil
+      rescue StandardError => e
+        warn "Prebuilt client bootstrap failed: #{e.class}: #{e.message}"
+        nil
+      end
+
+      # Downloads every wanted asset, checks it against the SHA-256 GitHub
+      # lists for it, and unpacks it beside its target before any target is
+      # replaced. A failed download, a digest mismatch or a failed extraction
+      # leaves the cached client exactly as it was. Returns the manifest
+      # entries for the installed targets, or nil after warning why.
+      def install_prebuilt_assets(cache_root, release, wanted_assets, platform)
         assets = release.fetch("assets", [])
         asset_names = assets.map { |a| a["name"].to_s }
         installed_assets = []
+        staged = []
         release_revision = client_release_revision(release)
         Dir.mktmpdir("ruflet-prebuilt-") do |tmpdir|
           wanted_assets.each do |wanted|
@@ -763,15 +801,21 @@ module Ruflet
             puts "Downloading prebuilt client asset: #{resolved_name}"
             archive_path = File.join(tmpdir, resolved_name)
             download_file(asset.fetch("browser_download_url"), archive_path)
+            return nil unless VerifiedInstall.verified?(archive_path, asset["digest"], label: resolved_name)
+
             subdir = case wanted[:kind]
             when :web then "web"
             when :desktop then "desktop"
             end
             target = File.join(cache_root, subdir)
-            FileUtils.rm_rf(target) if force && Dir.exist?(target)
-            FileUtils.mkdir_p(target)
-            unless extract_archive(archive_path, target)
+            staging = VerifiedInstall.stage(self, archive_path, target)
+            unless staging
               warn "Failed to extract asset: #{resolved_name}"
+              return nil
+            end
+            staged << [staging, target]
+            unless staged_client_complete?(staging, wanted, platform)
+              warn "#{resolved_name} does not contain a complete #{wanted[:kind]} client; not installing it"
               return nil
             end
             installed_assets << {
@@ -784,17 +828,18 @@ module Ruflet
           end
         end
 
-        if prebuilt_assets_present?(
-          cache_root, web: web, desktop: desktop, platform: platform
-        )
-          write_client_manifest(cache_root, platform: platform, release: release, assets: installed_assets)
-          return cache_root
-        end
+        staged.each { |staging, target| VerifiedInstall.promote(staging, target) }
+        installed_assets
+      ensure
+        staged&.each { |staging, _target| VerifiedInstall.discard(staging) }
+      end
 
-        nil
-      rescue StandardError => e
-        warn "Prebuilt client bootstrap failed: #{e.class}: #{e.message}"
-        nil
+      def staged_client_complete?(dir, wanted, platform)
+        case wanted[:kind]
+        when :web then built_web_client_dir?(dir)
+        when :desktop then desktop_client_in?(dir, wanted[:platform] || platform)
+        else false
+        end
       end
 
       # This decides both "the download installed correctly" and "the cache is
@@ -816,7 +861,10 @@ module Ruflet
         platform ||= host_platform_name
         return false if platform.nil?
 
-        desktop = File.join(root, "desktop")
+        desktop_client_in?(File.join(root, "desktop"), platform)
+      end
+
+      def desktop_client_in?(desktop, platform)
         return false unless Dir.exist?(desktop)
 
         case platform
@@ -876,11 +924,16 @@ module Ruflet
       end
 
       # The manifest is written last, so its presence means the run finished
-      # uploading every platform. Accept either naming for releases published
-      # before the assets were renamed.
+      # uploading every platform, and its id and timestamp are the channel's
+      # revision. Prefer the current name and fall back to the legacy one only
+      # for releases published before the assets were renamed: prebuild-main
+      # still carries a stale ruflet_client-manifest.json from before the
+      # rename, which the API lists first (assets come sorted by name), and
+      # taking it pinned the revision so a cached client never saw a new build.
       def channel_manifest_asset(release)
-        names = [CLIENT_CHANNEL_MANIFEST, LEGACY_CLIENT_CHANNEL_MANIFEST]
-        release.fetch("assets", []).find { |asset| names.include?(asset["name"]) }
+        assets = release.fetch("assets", [])
+        assets.find { |asset| asset["name"] == CLIENT_CHANNEL_MANIFEST } ||
+          assets.find { |asset| asset["name"] == LEGACY_CLIENT_CHANNEL_MANIFEST }
       end
 
       def release_has_wanted_assets?(release, wanted_assets)

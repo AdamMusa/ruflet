@@ -8,12 +8,17 @@ require "rbconfig"
 require "tmpdir"
 require "uri"
 require "yaml"
+require_relative "verified_install"
 
 module Ruflet
   module CLI
     module FlutterSdk
       RELEASES_BASE = "https://storage.googleapis.com/flutter_infra_release/releases".freeze
       DEFAULT_FLUTTER_CHANNEL = "stable".freeze
+      # Written beside flutter/ when an SDK installed before installs were
+      # marked complete fails `flutter --version` (see managed_flutter_sdk_complete?).
+      INCOMPLETE_MARKER = ".ruflet-incomplete".freeze
+      LEGACY_SDK_PROBE_SECONDS = 120
 
       def ensure_flutter!(command_name, client_dir: nil, auto_install: true)
         tools = flutter_tools(client_dir: client_dir, auto_install: auto_install)
@@ -185,31 +190,186 @@ module Ruflet
         return installed_managed_flutter_sdk_root(client_dir: client_dir) unless release_info
 
         release = release_info[:release]
-        host = release_info[:host]
-        archive = release.fetch("archive")
-        install_root = File.join(Dir.home, ".ruflet", "flutter", release.fetch("version"), host)
+        install_root = File.join(Dir.home, ".ruflet", "flutter", release.fetch("version"), release_info[:host])
         sdk_root = File.join(install_root, "flutter")
-        flutter_bin = File.join(sdk_root, "bin", flutter_executable_name)
-        return sdk_root if File.executable?(flutter_bin)
+        return sdk_root if managed_flutter_sdk_complete?(install_root)
 
-        FileUtils.mkdir_p(install_root)
-        Dir.mktmpdir("ruflet-flutter-sdk-") do |tmpdir|
-          archive_path = File.join(tmpdir, File.basename(archive))
-          download_file("#{RELEASES_BASE}/#{archive}", archive_path)
-          extract_archive(archive_path, install_root)
-        end
+        pinned = %i[env fvmrc].include?(desired_flutter_spec(client_dir: client_dir)[:source])
+        installed = install_managed_flutter_sdk(release, install_root, pinned: pinned)
+        return installed if installed
 
-        return sdk_root if File.executable?(flutter_bin)
-
-        # Some archives may unpack into a different folder name.
-        guessed = Dir.glob(File.join(install_root, "**", flutter_executable_name))
-          .map { |p| File.expand_path("../..", p) }
-          .find { |root| File.executable?(File.join(root, "bin", flutter_executable_name)) }
-        return guessed if guessed
-
-        nil
+        installed_flutter_sdk_after_failed_install(client_dir)
       rescue StandardError => e
         warn "Flutter auto-install failed: #{e.class}: #{e.message}"
+        installed_flutter_sdk_after_failed_install(client_dir)
+      end
+
+      # A newer SDK that could not be installed must not cost the build the
+      # SDK it already has (a pin still only accepts its own version).
+      def installed_flutter_sdk_after_failed_install(client_dir)
+        installed = installed_managed_flutter_sdk_root(client_dir: client_dir)
+        warn "Using the Flutter SDK already installed at #{installed}" if installed
+        installed
+      end
+
+      # Downloads the release archive, checks it against the sha256 Flutter's
+      # release manifest lists for it, unpacks it beside install_root and
+      # swaps it into place with the complete marker. Returns the SDK root, or
+      # nil after warning why; whatever install_root held before is kept then.
+      def install_managed_flutter_sdk(release, install_root, pinned: false)
+        archive = release.fetch("archive")
+        url = "#{RELEASES_BASE}/#{archive}"
+        label = File.basename(archive)
+        announce_managed_flutter_sdk_download(release, url, install_root, pinned: pinned)
+        FileUtils.mkdir_p(File.dirname(install_root))
+        staging = nil
+        Dir.mktmpdir("ruflet-flutter-sdk-") do |tmpdir|
+          archive_path = File.join(tmpdir, label)
+          download_file(url, archive_path)
+          return nil unless VerifiedInstall.verified?(archive_path, release["sha256"], label: label)
+
+          staging = VerifiedInstall.stage(self, archive_path, install_root)
+          unless staging
+            warn "Failed to extract #{label}"
+            return nil
+          end
+        end
+
+        # Some archives may unpack into a different folder name.
+        sdk_dir = staged_flutter_sdk_dir(staging)
+        unless sdk_dir
+          warn "#{label} does not contain a Flutter SDK; not installing it"
+          return nil
+        end
+        # Another process may have finished the same install meanwhile; never
+        # pull an SDK out from under a build that is using it.
+        return File.join(install_root, sdk_dir) if completed_managed_flutter_sdk?(install_root, sdk_dir)
+
+        File.write(
+          File.join(staging, VerifiedInstall::COMPLETE_MARKER),
+          JSON.pretty_generate("version" => release["version"], "archive" => archive, "sha256" => release["sha256"])
+        )
+        VerifiedInstall.promote(staging, install_root)
+        File.join(install_root, sdk_dir)
+      ensure
+        VerifiedInstall.discard(staging)
+      end
+
+      def staged_flutter_sdk_dir(staging)
+        return "flutter" if File.executable?(File.join(staging, "flutter", "bin", flutter_executable_name))
+
+        root = Dir.glob(File.join(staging, "**", "bin", flutter_executable_name))
+          .select { |path| File.file?(path) && File.executable?(path) }
+          .map { |path| File.expand_path("../..", path) }
+          .min_by(&:length)
+        return nil unless root
+
+        root == staging ? "." : root.delete_prefix("#{staging}/")
+      end
+
+      def completed_managed_flutter_sdk?(install_root, sdk_dir)
+        File.file?(File.join(install_root, VerifiedInstall::COMPLETE_MARKER)) &&
+          File.executable?(File.join(install_root, sdk_dir, "bin", flutter_executable_name))
+      end
+
+      # On stderr, so a command whose stdout is Flutter's (`ruflet devices
+      # --machine`) stays parseable. The hint only applies without a pin: a
+      # pinned version is never taken from the flutter on PATH.
+      def announce_managed_flutter_sdk_download(release, url, install_root, pinned: false)
+        size = remote_file_size(url)
+        size_note = size ? " (#{VerifiedInstall.human_size(size)})" : ""
+        notice = "Downloading Flutter #{release['version']}#{size_note} to #{install_root}."
+        unless pinned
+          notice += " To use your own SDK, put flutter on PATH, or pin a version with RUFLET_FLUTTER_VERSION or .fvmrc."
+        end
+        warn notice
+      end
+
+      def remote_file_size(url)
+        uri = URI(url)
+        response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 10, read_timeout: 10) do |http|
+          req = Net::HTTP::Head.new(uri)
+          req["User-Agent"] = "ruflet-cli"
+          http.request(req)
+        end
+        return nil unless response.is_a?(Net::HTTPSuccess)
+
+        size = Integer(response["content-length"].to_s, 10)
+        size.positive? ? size : nil
+      rescue StandardError
+        nil
+      end
+
+      # install_root is ~/.ruflet/flutter/<version>/<host>, holding flutter/.
+      # An install this CLI completed carries the marker. One made before
+      # installs were marked (or extracted in place by an older CLI) has no
+      # marker: it is accepted once its `flutter --version` succeeds, which
+      # marks it, and is otherwise marked incomplete and left for a fresh
+      # download of that version to replace.
+      def managed_flutter_sdk_complete?(install_root)
+        flutter_bin = File.join(install_root, "flutter", "bin", flutter_executable_name)
+        return false unless File.file?(flutter_bin) && File.executable?(flutter_bin)
+        return true if File.file?(File.join(install_root, VerifiedInstall::COMPLETE_MARKER))
+        return false if File.file?(File.join(install_root, INCOMPLETE_MARKER))
+
+        works = legacy_flutter_sdk_works?(flutter_bin)
+        unless works
+          warn "Ignoring the Flutter SDK at #{File.dirname(File.dirname(flutter_bin))}: " \
+               "`flutter --version` fails there, so it may be a partial install"
+        end
+        marker = File.join(install_root, works ? VerifiedInstall::COMPLETE_MARKER : INCOMPLETE_MARKER)
+        File.write(marker, JSON.pretty_generate("checked" => "flutter --version", "at" => Time.now.utc.to_s))
+        works
+      rescue SystemCallError
+        works || false
+      end
+
+      # A partial SDK can try to rebuild its tool or fetch its Dart SDK, so
+      # the check gives up after `timeout` seconds. bin/flutter is a script
+      # that starts those as children, so it runs in its own process group
+      # and the whole group is killed: a surviving child would keep running
+      # (and may hold bin/cache/lockfile). Ctrl-C during the check kills the
+      # group too, since a separate group does not get the terminal's SIGINT.
+      def legacy_flutter_sdk_works?(flutter_bin, timeout: LEGACY_SDK_PROBE_SECONDS)
+        group = windows_host? ? {} : { pgroup: true }
+        pid = Process.spawn(utf8_locale_env, flutter_bin, "--version", out: File::NULL, err: File::NULL, in: File::NULL, **group)
+        reaped = false
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
+        begin
+          loop do
+            _, status = Process.wait2(pid, Process::WNOHANG)
+            if status
+              reaped = true
+              return status.success?
+            end
+            return false if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+
+            sleep 0.1
+          end
+        ensure
+          unless reaped
+            kill_process_tree(pid)
+            begin
+              Process.wait(pid)
+            rescue SystemCallError
+              nil
+            end
+          end
+        end
+      rescue SystemCallError
+        false
+      end
+
+      # pid leads its own process group off Windows; taskkill /T ends the
+      # tree there.
+      def kill_process_tree(pid)
+        if windows_host?
+          system("taskkill", "/T", "/F", "/PID", pid.to_s, out: File::NULL, err: File::NULL)
+          Process.kill("KILL", pid)
+        else
+          Process.kill("KILL", -pid)
+        end
+      rescue SystemCallError
         nil
       end
 
@@ -217,7 +377,8 @@ module Ruflet
       # without the release manifest: ~/.ruflet/flutter/<version>/<host>/flutter.
       # An explicit version pin (RUFLET_FLUTTER_VERSION or .fvmrc) only accepts
       # that exact version; otherwise the newest installed SDK wins, preferring
-      # stable releases on the stable channel.
+      # stable releases on the stable channel. Only complete installs count
+      # (see managed_flutter_sdk_complete?).
       def installed_managed_flutter_sdk_root(client_dir: nil)
         host = flutter_host
         return nil unless host
@@ -226,23 +387,26 @@ module Ruflet
         return nil unless File.directory?(base)
 
         installed = Dir.children(base).sort.filter_map do |version|
-          sdk_root = File.join(base, version, host, "flutter")
-          flutter_bin = File.join(sdk_root, "bin", flutter_executable_name)
-          [version, sdk_root] if File.file?(flutter_bin) && File.executable?(flutter_bin)
+          install_root = File.join(base, version, host)
+          flutter_bin = File.join(install_root, "flutter", "bin", flutter_executable_name)
+          [version, install_root] if File.file?(flutter_bin) && File.executable?(flutter_bin)
         end
         return nil if installed.empty?
 
         desired = desired_flutter_spec(client_dir: client_dir)
         pinned = desired[:version].to_s.split("@").first.to_s.strip
-        exact = installed.find { |version, _| version == pinned }
-        return exact.last if exact
-        return nil if pinned.match?(/\A\d+\.\d+\.\d+/)
+        candidates = installed.select { |version, _| version == pinned }
+        if candidates.empty?
+          return nil if pinned.match?(/\A\d+\.\d+\.\d+/)
 
-        stable_only = (desired[:channel] || DEFAULT_FLUTTER_CHANNEL) == DEFAULT_FLUTTER_CHANNEL
-        installed.max_by do |version, _|
-          parsed = Gem::Version.correct?(version) ? Gem::Version.new(version) : Gem::Version.new("0")
-          [stable_only && parsed.prerelease? ? 0 : 1, parsed]
-        end.last
+          stable_only = (desired[:channel] || DEFAULT_FLUTTER_CHANNEL) == DEFAULT_FLUTTER_CHANNEL
+          candidates = installed.sort_by do |version, _|
+            parsed = Gem::Version.correct?(version) ? Gem::Version.new(version) : Gem::Version.new("0")
+            [stable_only && parsed.prerelease? ? 0 : 1, parsed]
+          end.reverse
+        end
+        found = candidates.find { |_, install_root| managed_flutter_sdk_complete?(install_root) }
+        found && File.join(found.last, "flutter")
       rescue SystemCallError
         nil
       end
@@ -251,7 +415,7 @@ module Ruflet
         host = flutter_host
         return nil unless host
 
-        manifest = fetch_releases_manifest(host)
+        manifest = flutter_releases_manifest_for(host)
         return nil unless manifest
 
         desired = desired_flutter_spec(client_dir: client_dir)
@@ -362,6 +526,27 @@ module Ruflet
         nil
       end
 
+      # Flutter publishes one macOS manifest, releases_macos.json, for both
+      # architectures (releases_macos_arm64.json does not exist); each entry
+      # names its dart_sdk_arch. Keep only this Mac's architecture.
+      def flutter_releases_manifest_for(host)
+        return fetch_releases_manifest(host) unless host.start_with?("macos")
+
+        manifest = fetch_releases_manifest("macos")
+        return nil unless manifest
+
+        arch = host == "macos_arm64" ? "arm64" : "x64"
+        manifest.merge("releases" => manifest.fetch("releases", []).select { |r| flutter_release_arch(r) == arch })
+      end
+
+      # Releases from before Apple Silicon builds existed name no arch: x64.
+      def flutter_release_arch(release)
+        arch = release["dart_sdk_arch"].to_s.strip
+        return arch unless arch.empty?
+
+        release["archive"].to_s.include?("_arm64_") ? "arm64" : "x64"
+      end
+
       def fetch_releases_manifest(host)
         url = "#{RELEASES_BASE}/releases_#{host}.json"
         uri = URI(url)
@@ -383,7 +568,8 @@ module Ruflet
           warn "Requested Flutter revision #{revision} not found for host #{flutter_host}; falling back."
         end
 
-        if version
+        # "stable" is the unpinned default, a channel rather than a version.
+        if version && version != DEFAULT_FLUTTER_CHANNEL
           pinned = releases.find { |r| r["channel"] == "stable" && r["version"] == version }
           return pinned if pinned
           warn "Requested Flutter #{version} not found in stable releases; falling back to latest stable."
@@ -469,7 +655,7 @@ module Ruflet
       def extract_archive(archive, destination)
         if archive.end_with?(".zip")
           if windows_host?
-            return system("powershell", "-NoProfile", "-Command", "Expand-Archive -Path '#{archive}' -DestinationPath '#{destination}' -Force")
+            return system("powershell", "-NoProfile", "-Command", expand_archive_command(archive, destination))
           end
           return system("unzip", "-oq", archive, "-d", destination)
         end
@@ -479,6 +665,14 @@ module Ruflet
         end
 
         false
+      end
+
+      # PowerShell single-quoted strings take every character literally except
+      # the quote itself, which is doubled; -LiteralPath also keeps [ and ]
+      # from being read as wildcards.
+      def expand_archive_command(archive, destination)
+        quote = ->(path) { "'#{path.to_s.gsub("'", "''")}'" }
+        "Expand-Archive -LiteralPath #{quote.call(archive)} -DestinationPath #{quote.call(destination)} -Force"
       end
     end
   end

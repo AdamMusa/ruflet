@@ -65,7 +65,10 @@ Desktop and web runs use the completed `prebuild-main` client channel by
 default. Ruflet checks the channel at most once every six hours and downloads
 a new platform build only after every required prebuild job has finished.
 If that check cannot reach GitHub, `ruflet run` keeps using the cached client
-and checks again on the next run.
+and checks again on the next run. A download is checked against the SHA-256
+GitHub lists for it and unpacked beside the cache before it replaces it, so a
+truncated or failed download never leaves a partial client behind; `ruflet
+run` keeps the cached client then, too.
 Use `ruflet update --force` for an immediate refresh. Set
 `RUFLET_CLIENT_CHANNEL=stable` to stay on versioned release assets,
 `RUFLET_CLIENT_UPDATE_INTERVAL=0` to check on every run, or

@@ -16,7 +16,7 @@ exit: 0
    env: BUNDLE_GEMFILE=<PROJECT>/Gemfile RUFLET_APP_SCRIPT=<PROJECT>/main.rb RUFLET_ASSETS_DIR=<PROJECT>/assets RUFLET_BOOTSNAP_DIR=<HOME>/.ruflet/bootsnap/<RUBY_VERSION>/<PROJECT_KEY> RUFLET_PORT=8550 RUFLET_SUPPRESS_SERVER_BANNER=1 RUFLET_TARGET=desktop RUFLET_WATCH_ROOT=<PROJECT>
    options: pgroup
 3. system exit=0
-   unzip -oq <TMP>/ruflet-prebuilt-XXXXXXXX/ruflet_explorer-macos-universal.zip -d <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop
+   unzip -oq <TMP>/ruflet-prebuilt-XXXXXXXX/ruflet_explorer-macos-universal.zip -d <HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop.partial-<PID>
 4. spawn
    "<HOME>/.ruflet/client/<RUFLET_VERSION>/macos/desktop/Ruflet Explorer.app/Contents/MacOS/Ruflet Explorer" http://localhost:8550
    env: RUFLET_URL=http://localhost:8550
