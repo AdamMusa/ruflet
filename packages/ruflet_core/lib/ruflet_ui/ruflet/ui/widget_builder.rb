@@ -45,7 +45,11 @@ module Ruflet
 
       if prop_children
         Array(prop_children).each do |child|
-          node.children << child if child.is_a?(Control)
+          if child.is_a?(Control)
+            node.children << child
+          else
+            UI::BlockSlots.dropped_child(node.wire_type, child)
+          end
         end
       end
 
@@ -66,6 +70,10 @@ module Ruflet
     end
 
     private
+
+    # Services built in a slot block (card { audio(...) }) go where this
+    # builder's own go (see UI::BlockSlotMethods).
+    def block_services = @services
 
     def collect_service(node)
       @services << node if @services && !@services.include?(node)

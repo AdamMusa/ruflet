@@ -128,9 +128,13 @@ class RufletNestedScrollViewCompatibilityTest < Minitest::Test
       end
     end
 
+    # Tabs renders its block's control from "content" (material_tabs.dart,
+    # cupertino_content_controls.dart); it read "controls" before #135, and
+    # the renderers showed "Tabs.content must be provided and visible".
     patch = layout.to_patch
-    view = patch["controls"].first
+    view = patch["content"]
     assert_equal "Tabs", patch["_c"]
+    refute patch.key?("controls")
     assert_equal "NestedScrollView", view["_c"]
     assert_equal ["SliverAppBar"], view["controls"].map { |sliver| sliver["_c"] }
     assert_equal "TabBar", view["controls"].first["bottom"]["_c"]
