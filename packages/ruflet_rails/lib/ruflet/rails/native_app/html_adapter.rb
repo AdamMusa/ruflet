@@ -198,6 +198,7 @@ module Ruflet
 
       def handle_message(screen, message)
         return if message.nil?
+        return unless bridge_message_allowed?(@main_frame, message, screen.webview)
 
         if message.start_with?(ACTION_PREFIX)
           spec = parse_json(message[ACTION_PREFIX.length..])
@@ -217,8 +218,9 @@ module Ruflet
         end
       end
 
-      def handle_sheet_message(message)
+      def handle_sheet_message(frame, sheet_webview, message)
         return if message.nil?
+        return unless bridge_message_allowed?(frame, message, sheet_webview)
 
         if message.start_with?(ACTION_PREFIX)
           spec = parse_json(message[ACTION_PREFIX.length..])
