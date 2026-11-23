@@ -56,6 +56,9 @@ MethodContract.define(
     "cupertino_tinted_button" => {
       "focus" => { sends: {} }
     },
+    "dismissible" => {
+      "confirm_dismiss" => { sends: {"dismiss" => true}, also: [{ args: [false], sends: {"dismiss" => false} }, { args: [nil], sends: {"dismiss" => false} }, { kwargs: { dismiss: false }, sends: {"dismiss" => false} }, { kwargs: { dismiss: true }, sends: {"dismiss" => true} }] }
+    },
     "draggable_scrollable_sheet" => {
       "animate_to" => { args: ["sample:size"], sends: {"size" => "sample:size", "duration" => 300, "curve" => "easeOut"} },
       "jump_to" => { args: ["sample:size"], sends: {"size" => "sample:size"} }
@@ -114,6 +117,9 @@ MethodContract.define(
       "save_state" => {  },
       "zoom" => { args: ["sample:factor"], sends: {"factor" => "sample:factor"} }
     },
+    "keyboard_listener" => {
+      "focus" => { sends: {} }
+    },
     "list_view" => {
       "end_refresh" => {  },
       "scroll_to" => { sends: {} }
@@ -139,6 +145,12 @@ MethodContract.define(
       "jump_to_page" => { args: ["sample:index"], sends: {"index" => "sample:index"} },
       "next_page" => { kwargs: { duration: 250, curve: :ease_in }, sends: {"duration" => 250, "curve" => "ease_in"}, also: [{ sends: {} }] },
       "previous_page" => { kwargs: { curve: :ease_out }, sends: {"curve" => "ease_out"}, also: [{ sends: {} }] }
+    },
+    "pagelet" => {
+      "close_drawer" => {  },
+      "close_end_drawer" => {  },
+      "show_drawer" => {  },
+      "show_end_drawer" => {  }
     },
     "reorderable_list_view" => {
       "end_refresh" => {  },
@@ -208,8 +220,13 @@ MethodContract.define(
       "set_javascript_mode" => { args: [:unrestricted], sends: {"mode" => "unrestricted"} }
     },
     "view" => {
+      "close_drawer" => {  },
+      "close_end_drawer" => {  },
+      "confirm_pop" => { sends: {"should_pop" => true}, also: [{ args: [false], sends: {"should_pop" => false} }, { args: [nil], sends: {"should_pop" => false} }, { kwargs: { should_pop: false }, sends: {"should_pop" => false} }, { kwargs: { should_pop: true }, sends: {"should_pop" => true} }] },
       "end_refresh" => {  },
-      "scroll_to" => { sends: {} }
+      "scroll_to" => { sends: {} },
+      "show_drawer" => {  },
+      "show_end_drawer" => {  }
     },
     "window" => {
       "center" => {  },

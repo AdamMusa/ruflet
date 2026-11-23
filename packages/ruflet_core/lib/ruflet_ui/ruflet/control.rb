@@ -100,8 +100,29 @@ module Ruflet
       handler = @handlers[normalized_event_name(event_name)]
       return false unless handler
 
-      handler.call(event)
+      Control.call_handler(handler, event)
       true
+    end
+
+    # Runs an event handler. Like Flet, a handler that takes no parameters
+    # is called without the event: a lambda or Method of arity 0
+    # (`on_click: -> { count += 1 }`, `on_click: method(:refresh)`) would
+    # raise ArgumentError on call(event). Every other handler gets the event
+    # as before; a proc or block already drops what it does not take.
+    def self.call_handler(handler, event)
+      return handler.call if takes_no_arguments?(handler)
+
+      handler.call(event)
+    end
+
+    def self.takes_no_arguments?(handler)
+      strict =
+        if handler.is_a?(Proc)
+          handler.respond_to?(:lambda?) && handler.lambda?
+        else
+          Object.const_defined?(:Method) && handler.is_a?(Object.const_get(:Method))
+        end
+      strict && handler.respond_to?(:arity) && handler.arity == 0
     end
 
     def has_handler?(event_name)

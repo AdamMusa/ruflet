@@ -436,7 +436,7 @@ module Ruflet
               if event.is_a?(Ruflet::Event) && event.name.to_s != legacy
                 event = event.with_name(legacy)
               end
-              handler.call(event)
+              Ruflet::Control.call_handler(handler, event)
             end
           end
         end

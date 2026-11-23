@@ -118,6 +118,16 @@ module Ruflet
             props[:on_update] = on_update unless on_update.nil?
             super(type: TYPE, id: id, **props)
           end
+
+          # Answers on_confirm_dismiss: the client holds the swipe until this
+          # arrives (dismissible.dart; after 5 minutes it keeps the item). As
+          # Flet's Dismissible.confirm_dismiss, true dismisses the item and
+          # false puts it back. The answer is positional
+          # (`confirm_dismiss(false)`) or Flet's keyword
+          # (`confirm_dismiss(dismiss: false)`); the keyword wins if both.
+          def confirm_dismiss(confirmed = true, dismiss: confirmed, timeout: 10, on_result: nil)
+            runtime_page&.invoke(self, "confirm_dismiss", args: { "dismiss" => !!dismiss }, timeout: timeout, on_result: on_result)
+          end
         end
       end
     end
