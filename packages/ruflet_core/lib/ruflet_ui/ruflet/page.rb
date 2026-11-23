@@ -233,6 +233,10 @@ module Ruflet
       @root_controls = []
       @views = []
       @dialogs = []
+      # The client's _dialogs.controls as last published, and the dialogs in
+      # it the client reported closed (see #dialogs_list_changes).
+      @published_dialogs = nil
+      @client_closed_dialogs = []
       @overlay_container_mounted = false
       @dialogs_container_mounted = false
       @services_container_mounted = false
@@ -263,6 +267,11 @@ module Ruflet
       @invoke_waiters = {}
       @invoke_callbacks = {}
       @invoke_waiters_mutex = Mutex.new
+      # Messages a hot reload holds back (see reload_transaction); nil while
+      # nothing is held.
+      @held_messages = nil
+      @held_messages_mutex = Mutex.new
+      @reload_transaction = nil
       @shared_preferences_proxy = SharedPreferencesService.new(self)
       @wakelock_proxy = WakelockService.new(self)
       @flashlight_proxy = FlashlightService.new(self)
@@ -302,6 +311,7 @@ module Ruflet
       @dialogs_container_mounted = false
       @services_container_mounted = false
       @published_shell_state = nil
+      forget_published_dialogs!
       self
     end
 
@@ -389,6 +399,7 @@ module Ruflet
       @overlay_container_mounted = true if @overlay_container.wire_id
       @dialogs_container_mounted = true if @dialogs_container.wire_id
       @services_container_mounted = true if @services_container.wire_id
+      record_published_dialogs! if patch.key?("_dialogs")
       capture_published_wire_state!
       patch
     end
@@ -461,6 +472,51 @@ module Ruflet
       return self unless @page_event_handlers["route_change"].respond_to?(:call)
 
       dispatch_page_event(name: "route_change", data: @page_props["route"])
+      self
+    end
+
+    # Page state a failed hot reload does not put back: the transport and
+    # what it holds, pending invoke waits and callbacks (other threads may be
+    # waiting on them), and the wire id counter, so ids stay unique even for
+    # controls the failed render built.
+    RELOAD_UNRESTORED_STATE = %i[
+      @sender @held_messages @held_messages_mutex @reload_transaction
+      @next_wire_id @invoke_waiters @invoke_callbacks @invoke_waiters_mutex
+    ].freeze
+
+    # Runs a hot reload of this page (the block: reset_for_reload!, the app
+    # block, finalize_reload!, ...) as one unit. What the page sends while it
+    # runs is held back and goes out, in the same order, once the block
+    # returns. If the block raises, the held messages are dropped and the
+    # page is put back as it was before, so the client keeps the last working
+    # UI and the page still matches what the client shows; the error is
+    # raised again.
+    #
+    # A synchronous invoke (invoke_sync and the *_sync helpers) waits for the
+    # client's reply, so it sends what is held first and the rest of the
+    # reload goes out as it runs, as without a transaction. A reload that
+    # raises after that leaves the page as the failed render left it.
+    def reload_transaction
+      if @reload_transaction
+        yield self
+        return self
+      end
+
+      transaction = @reload_transaction = { state: capture_reload_state, committed: false }
+      @held_messages_mutex.synchronize { @held_messages = [] }
+      completed = false
+      begin
+        yield self
+        completed = true
+      ensure
+        @reload_transaction = nil
+        if completed || transaction[:committed]
+          release_held_messages!
+        else
+          @held_messages_mutex.synchronize { @held_messages = nil }
+          restore_reload_state!(transaction[:state])
+        end
+      end
       self
     end
 
@@ -1535,6 +1591,7 @@ module Ruflet
         "patch" => [[0], *patch_ops]
       })
       capture_published_control_tree!(control)
+      forget_reopened_dialog_closes!
 
       self
     end
@@ -1560,10 +1617,12 @@ module Ruflet
         return self
       end
 
+      patch = normalize_props(props || {})
+      note_dialog_closed_on_client(control_or_id) if patch.key?("open") && patch["open"] == false
+
       control = resolve_control(control_or_id)
       return self unless control
 
-      patch = normalize_props(props || {})
       patch.each { |k, v| control.props[k] = v }
       capture_published_control_tree!(control)
 
@@ -1595,6 +1654,7 @@ module Ruflet
         return
       end
 
+      note_dialog_closed_on_client(target) if name.to_s == "dismiss"
       control = @wire_index[target.to_i] || @control_index[target.to_s]
       return unless control
 
@@ -1711,6 +1771,7 @@ module Ruflet
       waiter = Queue.new
       @invoke_waiters_mutex.synchronize { @invoke_waiters[call_id] = waiter }
 
+      release_reload_transaction_for_wait!
       send_message(Protocol::ACTIONS[:invoke_control_method], {
         "control_id" => control_id,
         "call_id" => call_id,
@@ -1804,7 +1865,78 @@ module Ruflet
     end
 
     def send_message(action, payload)
+      if @held_messages
+        held = @held_messages_mutex.synchronize { @held_messages&.push([action, payload]) }
+        return if held
+      end
+
       @sender.call(action, payload)
+    end
+
+    # Sends what a reload transaction holds, in order. Messages sent while it
+    # runs (from another thread) are held behind it, so they go out after.
+    def release_held_messages!
+      loop do
+        batch = @held_messages_mutex.synchronize do
+          held = @held_messages
+          @held_messages = held.nil? || held.empty? ? nil : []
+          held
+        end
+        break if batch.nil? || batch.empty?
+
+        batch.each { |action, payload| @sender.call(action, payload) }
+      end
+    end
+
+    # A synchronous invoke waits for the client's reply, which a held request
+    # would never get: the reload transaction sends what it holds and stops
+    # holding (see reload_transaction).
+    def release_reload_transaction_for_wait!
+      transaction = @reload_transaction
+      return unless transaction && !transaction[:committed]
+
+      transaction[:committed] = true
+      release_held_messages!
+    end
+
+    def capture_reload_state
+      ivars = {}
+      instance_variables.each do |name|
+        next if RELOAD_UNRESTORED_STATE.include?(name)
+
+        ivars[name] = reload_state_copy(instance_variable_get(name))
+      end
+      # The overlay, dialogs and services containers stay the same objects
+      # across a reload; what changes is inside them.
+      containers = [@overlay_container, @dialogs_container, @services_container].map do |container|
+        props = {}
+        container.props.each { |key, value| props[key] = reload_state_copy(value) }
+        [container, container.children.dup, props]
+      end
+      { ivars: ivars, containers: containers }
+    end
+
+    def restore_reload_state!(state)
+      ivars = state[:ivars]
+      instance_variables.each do |name|
+        next if RELOAD_UNRESTORED_STATE.include?(name) || ivars.key?(name)
+
+        remove_instance_variable(name)
+      end
+      ivars.each { |name, value| instance_variable_set(name, value) }
+      state[:containers].each do |container, children, props|
+        container.children.replace(children)
+        container.props.replace(props)
+      end
+    end
+
+    # A copy of a piece of page state that later in-place changes (<<,
+    # clear, []=) do not reach. Controls and other values are kept as is.
+    def reload_state_copy(value)
+      case value
+      when Array, Hash, Set then value.dup
+      else value
+      end
     end
 
     # Bare page.update is the public commit point for direct mutations such as
@@ -1815,6 +1947,7 @@ module Ruflet
     # Column's children patches the Column.
     def send_changed_control_patches
       refresh_control_indexes!
+      forget_reopened_dialog_closes!
       current = build_wire_state_snapshot
 
       # Navigation, root controls, and page/view chrome are page-owned rather
@@ -1825,9 +1958,34 @@ module Ruflet
         return
       end
 
-      dirty_ids = current[:controls].each_with_object(Set.new) do |(wire_id, entry), dirty|
+      send_dirty_control_patches(current[:controls])
+      publish_wire_state_snapshot!(current)
+    end
+
+    # The state a control was never published with: every prop differs.
+    UNPUBLISHED_WIRE_STATE = { "props" => {}, "children" => [] }.freeze
+
+    # Patches every control in `controls` whose wire state changed since it
+    # was published. The dialogs container changes by list operations
+    # (dialogs_list_changes): passed in by push_dialogs_update!, or worked
+    # out here when its list changed.
+    def send_dirty_control_patches(controls, dialogs = nil)
+      dialogs_id = @dialogs_container.wire_id
+      if dialogs.nil? && @published_dialogs && dialogs_id && controls.key?(dialogs_id)
+        prior = @published_control_states[dialogs_id]
+        dialogs = dialogs_list_changes if prior && prior != controls[dialogs_id][:state]
+      end
+      unpublished = dialogs ? dialogs[:unpublished] : []
+
+      dirty_ids = controls.each_with_object(Set.new) do |(wire_id, entry), dirty|
         prior = @published_control_states[wire_id]
-        dirty << wire_id if prior && prior != entry[:state]
+        if dialogs && wire_id == dialogs_id
+          dirty << wire_id
+        elsif prior
+          dirty << wire_id if prior != entry[:state]
+        elsif unpublished.include?(wire_id)
+          dirty << wire_id
+        end
       end
 
       # A changed control's patch re-sends only the props (or children list)
@@ -1838,9 +1996,18 @@ module Ruflet
       patches = {}
       resent = {}
       dirty_ids.each do |wire_id|
-        entry = current[:controls][wire_id]
-        prior = @published_control_states.fetch(wire_id)
-        patches[wire_id] = changed_control_patch_ops(entry[:control], prior, entry[:state])
+        entry = controls[wire_id]
+        prior = @published_control_states[wire_id] || UNPUBLISHED_WIRE_STATE
+        if dialogs && wire_id == dialogs_id
+          ops = changed_control_patch_ops(entry[:control], prior, entry[:state]).reject { |op| op[2] == "controls" }
+          ops.concat(dialogs[:ops])
+          patches[wire_id] = ops.empty? ? nil : [[0, { "controls" => [1] }], *ops]
+          dialogs[:added].each { |control| collect_subtree_wire_ids(control, resent, {}) }
+          next
+        end
+
+        ops = changed_control_patch_ops(entry[:control], prior, entry[:state])
+        patches[wire_id] = ops.empty? ? nil : [[0], *ops]
         changed_control_values(entry[:control], prior, entry[:state]).each do |value|
           collect_subtree_wire_ids(value, resent, {})
         end
@@ -1849,16 +2016,21 @@ module Ruflet
       dirty_ids.each do |wire_id|
         next if resent[wire_id]
 
-        patch_ops = patches[wire_id]
-        next if patch_ops.empty?
+        if dialogs && wire_id == dialogs_id
+          publish_dialogs_list!(patches[wire_id], dialogs)
+          next
+        end
+
+        patch = patches[wire_id]
+        next unless patch
 
         send_message(Protocol::ACTIONS[:patch_control], {
           "id" => wire_id,
-          "patch" => [[0], *patch_ops]
+          "patch" => patch
         })
+        # A whole-list patch (the client's list was unknown) is the new baseline.
+        record_published_dialogs! if wire_id == dialogs_id && patch.any? { |op| op[2] == "controls" }
       end
-
-      publish_wire_state_snapshot!(current)
     end
 
     # The values a changed_control_patch_ops patch re-sends in full.
@@ -2049,6 +2221,7 @@ module Ruflet
       refresh_control_indexes!
       view_patches = build_view_patches
       page_patch_ops = build_page_patch_ops
+      dialogs_sent = page_patch_ops.any? { |op| op[2] == "_dialogs" }
 
       send_message(Protocol::ACTIONS[:patch_control], {
         "id" => 1,
@@ -2061,6 +2234,7 @@ module Ruflet
       @overlay_container_mounted = true if @overlay_container.wire_id
       @dialogs_container_mounted = true if @dialogs_container.wire_id
       @services_container_mounted = true if @services_container.wire_id
+      record_published_dialogs! if dialogs_sent
       capture_published_wire_state!
     end
 
@@ -2405,15 +2579,132 @@ module Ruflet
     def push_dialogs_update!
       refresh_control_indexes!
 
-      if @dialogs_container.wire_id
+      unless @dialogs_container.wire_id
+        send_view_patch
+        return
+      end
+
+      if @published_dialogs
+        controls = {}
+        collect_control_wire_state(@dialogs_container, nil, controls, {}, Set.new)
+        send_dirty_control_patches(controls, dialogs_list_changes)
+      else
         send_message(Protocol::ACTIONS[:patch_control], {
           "id" => @dialogs_container.wire_id,
           "patch" => [[0], [0, 0, "controls", serialize_patch_value(@dialogs_container.props["controls"])]]
         })
-        capture_published_control_tree!(@dialogs_container)
-      else
-        send_view_patch
+        record_published_dialogs!
       end
+      capture_published_control_tree!(@dialogs_container)
+    end
+
+    # The dialogs layer changes by list operations on the client's copy of
+    # `_dialogs.controls`, never by sending the whole list again. A dialog in
+    # a re-sent list is a new control on the client: it presents a second
+    # copy while the first stays on screen, and that first copy no longer
+    # answers `open: false`. So Ruby keeps the list it last published
+    # (@published_dialogs) and sends only the dialogs that joined or left it.
+    #
+    # A dialog that left the list while it is closing (`open: false` sent,
+    # dismiss not reported yet) stays on the client until the client reports
+    # it closed: removed in the same frame as its `open: false`, its route
+    # would never be popped. The client reports a close with `open: false`
+    # and a `dismiss` event (@client_closed_dialogs); such a dialog is then
+    # removed, and re-added as a new control when it is shown again, as a
+    # whole-list send did.
+    #
+    # Returns the operations, the dialogs they add, the client's list after
+    # them, and the wire ids of dialogs the client keeps that have no
+    # published state to diff against (their props are sent in full).
+    def dialogs_list_changes
+      wanted = Array(@dialogs_container.props["controls"])
+      client = @published_dialogs.dup
+      ops = []
+
+      (client.length - 1).downto(0) do |index|
+        control = client[index]
+        closed_on_client = includes_control?(@client_closed_dialogs, control)
+        next unless closed_on_client || !(includes_control?(wanted, control) || control.props["open"] == false)
+
+        ops << [2, 1, index]
+        client.delete_at(index)
+      end
+
+      added = []
+      position = 0
+      wanted.each do |control|
+        position += 1 while position < client.length && !includes_control?(wanted, client[position])
+        found = control_position(client, control)
+        if found.nil?
+          ops << [1, 1, position, serialize_patch_value(control)]
+          client.insert(position, control)
+          added << control
+        elsif found != position
+          ops << [3, 1, found, 1, position]
+          client.insert(position, client.delete_at(found))
+        end
+        position += 1
+      end
+
+      unpublished = client.filter_map do |control|
+        next unless control.wire_id && includes_control?(wanted, control) && !includes_control?(added, control)
+
+        control.wire_id unless @published_control_states.key?(control.wire_id)
+      end
+      { id: @dialogs_container.wire_id, ops: ops, added: added, client: client, unpublished: unpublished }
+    end
+
+    # The whole dialogs list reached the client (a view patch that mounted
+    # the container, the register reply, or a whole-list patch).
+    def record_published_dialogs!
+      @published_dialogs = Array(@dialogs_container.props["controls"]).dup
+      @client_closed_dialogs = []
+    end
+
+    # The client's list is unknown (a new client is about to mount the
+    # container): the next dialogs update sends the whole list.
+    def forget_published_dialogs!
+      @published_dialogs = nil
+      @client_closed_dialogs = []
+    end
+
+    def publish_dialogs_list!(patch, changes)
+      if patch
+        # A send that raises leaves the client's list unknown.
+        @published_dialogs = nil
+        send_message(Protocol::ACTIONS[:patch_control], { "id" => changes[:id], "patch" => patch })
+      end
+      @published_dialogs = changes[:client]
+      @client_closed_dialogs = @client_closed_dialogs.select do |control|
+        includes_control?(@published_dialogs, control) && !includes_control?(changes[:added], control)
+      end
+    end
+
+    # The client reported a dialog in its list closed (`open: false` or
+    # `dismiss`), so it can leave the list without cutting its close short.
+    # Looked up in the client's list, not the page tree: a dialog that left
+    # the page (hot reload, a cleared slot) still reports its dismiss.
+    def note_dialog_closed_on_client(target)
+      return unless @published_dialogs
+
+      wire_id = (target.respond_to?(:wire_id) ? target.wire_id : target).to_s
+      control = @published_dialogs.find { |dialog| dialog.wire_id.to_s == wire_id }
+      @client_closed_dialogs << control if control && !includes_control?(@client_closed_dialogs, control)
+    end
+
+    # A dialog the client reported closed and the app opened again since is
+    # open on the client once that is sent: it must not be removed as closed.
+    def forget_reopened_dialog_closes!
+      @client_closed_dialogs.reject! { |control| control.props["open"] == true }
+    end
+
+    def includes_control?(controls, control)
+      controls.any? { |entry| entry.equal?(control) }
+    end
+
+    def control_position(controls, control)
+      controls.each_with_index { |entry, index| return index if entry.equal?(control) }
+      nil
     end
 
     def dialog_slots
