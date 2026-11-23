@@ -129,8 +129,8 @@ bundle exec rake ruflet:install[DEVICE_ID]
 Beyond the WebView shell, Ruflet can treat HTML itself as the UI language:
 Rails views describe screens with markup, and `Ruflet::Rails.erb_to_native`
 compiles each page into **real native Ruflet controls** — no WebView anywhere.
-This is HTML-over-the-wire for native UI: state lives in Rails, every
-interaction is a request, and the response markup re-renders the screen.
+State lives in Rails: each interaction runs a controller action inside the
+WebSocket session, and the markup it renders re-renders the screen.
 
 ```ruby
 # app/views/ruflet/main.rb
@@ -139,22 +139,36 @@ Ruflet.run do |page|
 end
 ```
 
-Screens are ordinary Rails views (ERB, controllers, sessions, and redirects
-all work — requests carry the Rails session cookie and CSRF token, plus an
-`X-Ruflet-Native: 1` header so a controller can render native markup and a
-browser page from the same action):
+Screens are ordinary Rails views and controller actions (ERB, partials,
+helpers, `params`, `render` and `redirect_to` all work). A screen path names
+the action by convention, so a screen needs no route of its own: `/native`
+runs `NativeController#home` (without `home`, `#index`, then `#show`),
+`/native/counter` runs `#counter`, and `/native/counter/increment` runs
+`#counter_increment`, which re-renders `counter.html.erb`.
+
+No request is made for a screen. Ruflet calls the action directly, inside the
+WebSocket session, and keeps the controller instance for the life of the
+session, so `@count` survives from one tap to the next. Rails routing,
+middleware and the controller's callbacks (`before_action`, `after_action`,
+`around_action`) do not run, and `cookies`, `flash` and CSRF tokens are not
+available. `session` is a hash held by the connection, and `params` holds form
+fields and trailing path segments. A filter such as
+`before_action :authenticate_user!` therefore does not guard an erb_to_native
+screen; check what the screen needs inside the action. The first time a
+controller with callbacks of its own serves a screen, the log names the
+skipped callbacks once (set `RUFLET_RAILS_QUIET_CALLBACKS=1` to silence it).
 
 ```erb
-<%# app/views/counters/show.html.erb %>
+<%# app/views/native/counter.html.erb %>
 <appbar title="Counter"></appbar>
 
 <column class="p-6 gap-4 items-center justify-center flex-1">
   <text class="text-5xl font-bold text-slate-900"><%= @count %></text>
   <row class="gap-3">
-    <button variant="outlined" icon="remove" on-click="<%= counter_decrement_path %>">Down</button>
-    <button variant="filled" icon="add" on-click="<%= counter_increment_path %>">Up</button>
+    <button variant="outlined" icon="remove" on-click="/native/counter/decrement">Down</button>
+    <button variant="filled" icon="add" on-click="/native/counter/increment">Up</button>
   </row>
-  <a href="<%= settings_path %>">Settings</a>
+  <a href="/native/settings">Settings</a>
 </column>
 ```
 
@@ -185,12 +199,15 @@ browser page from the same action):
   an explicit attribute (`gradient='{…}'`, `blur="8"`, …).
 - **Navigation** — `<a href>` pushes a native screen; `nav="replace|root|back"`
   change the mode. The native back button/gesture pops.
-- **Actions** — `on-click="/counter/increment"` posts to Rails and re-renders
-  the current screen in place with the response (`redirect_to` is followed).
-  Prefix a verb for other methods: `on-click="delete:/items/3"`.
-- **Forms** — `<form action method>` with named `<input>`, `<textarea>`,
-  `<select>` fields tracks values natively and submits them like a normal
-  Rails form, then renders the response.
+- **Actions** — `on-click="/native/counter/increment"` runs
+  `NativeController#counter_increment` and re-renders the current screen in
+  place with the markup it renders (`redirect_to` is followed). A leading verb
+  such as `post:` or `delete:` is stripped, not obeyed.
+- **Forms** — `<form action>` with named `<input>`, `<textarea>`, `<select>`
+  fields tracks values natively, runs the action its `action` names with the
+  field values in `params`, and shows the screen that action renders or
+  redirects to. Field names become `params` keys as written; they are not
+  nested.
 - **App chrome** — `<appbar title="Inbox" leading-icon="menu">` with
   `<action icon="search" href="/search"/>` children becomes the native AppBar.
 - **The whole widget catalog** — any other tag falls through to the ruflet_core
@@ -284,7 +301,7 @@ update an inline Text control instead.
 
 ```erb
 <%# a form, natively rendered %>
-<form action="<%= session_path %>" method="post">
+<form action="/sessions/create">
   <column class="p-6 gap-4">
     <h2>Sign in</h2>
     <input type="email" name="email" label="Email" placeholder="you@example.com">
@@ -309,11 +326,11 @@ Hash/Array values serialize as JSON:
   <%= text @count, class: "text-[96] font-bold" %>
   <%= row class: "gap-3" do %>
     <%= button "Down", variant: "outlined", icon: "remove",
-               on_click: counter_decrement_path %>
+               on_click: "/native/counter/decrement" %>
     <%= button "Up", variant: "filled", icon: "add",
-               on_click: counter_increment_path %>
+               on_click: "/native/counter/increment" %>
   <% end %>
-  <%= link "Settings", settings_path %>
+  <%= link "Settings", "/native/settings" %>
 <% end %>
 ```
 

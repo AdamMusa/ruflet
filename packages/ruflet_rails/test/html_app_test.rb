@@ -692,6 +692,24 @@ class RufletHtmlAppTest < Minitest::Test
     assert_includes texts.join(" "), "connection refused"
   end
 
+  # An exception message often quotes a record or the markup that failed. The
+  # error screen shows it as text, the way TemplateSource's own failure
+  # screen does, instead of parsing it as screen markup.
+  def test_error_screen_shows_the_message_and_url_as_text
+    fetcher = Object.new
+    def fetcher.fetch(*, **)
+      raise ArgumentError, %(bad record #<User id: 1, name: "Bob"> <button on-click="/native/x">Pwn</button>)
+    end
+    url = %(/native/<button on-click="/native/y">Url</button>?a=1&b=2)
+    Ruflet::Rails.erb_to_native(@page, start_url: url, fetcher: fetcher)
+
+    view = @page.views.first
+    texts = find_all_text_values(view)
+    assert_includes texts, %(bad record #<User id: 1, name: "Bob"> <button on-click="/native/x">Pwn</button>)
+    assert_includes texts, url
+    assert_nil find(view, "button"), "neither the message nor the URL may become a control"
+  end
+
   # --- one session, many screens ------------------------------------------
   #
   # The screens are Rails renders, but the *session* is not per screen: one
